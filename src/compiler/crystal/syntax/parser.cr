@@ -3170,7 +3170,7 @@ module Crystal
 
     record CallArgs, args, block, block_arg, named_args, stopped_on_do_after_space, end_location
 
-    def parse_call_args(stop_on_do_after_space = false, allow_curly = false)
+    def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false)
       case @token.type
       when :"{"
         @last_call_has_parenthesis = false
@@ -3223,10 +3223,14 @@ module Crystal
         slash_is_not_regex!
         end_location = token_end_location
         next_token
-        @last_call_has_parenthesis = false
+        @last_call_has_parenthesis = false unless control
 
         if stop_on_do_after_space && @token.keyword?(:do)
           return CallArgs.new nil, nil, nil, nil, true, end_location
+        end
+
+        if control && @token.keyword?(:do)
+          unexpected_token
         end
 
         parse_call_args_space_consumed check_plus_and_minus: true, allow_curly: allow_curly
@@ -3924,7 +3928,10 @@ module Crystal
       end_location = token_end_location
       next_token
 
-      call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis { parse_call_args allow_curly: true }
+      call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis do
+        @last_call_has_parenthesis = true
+        parse_call_args allow_curly: true, control: true
+      end
       args = call_args.args if call_args
 
       if args
