@@ -26,10 +26,20 @@ class UNIXServer < UNIXSocket
   end
 
   def accept
-    client_fd = LibC.accept(@fd, out client_addr, out client_addrlen)
-    sock = UNIXSocket.new(client_fd)
-    sock.sync = sync?
-    sock
+    loop do
+      client_fd = LibC.accept(@fd, out client_addr, out client_addrlen)
+      if client_fd == -1
+        if LibC.errno == Errno::EAGAIN
+          wait_readable
+        else
+          raise Errno.new("Error accepting socket at #{path}")
+        end
+      else
+        sock = UNIXSocket.new(client_fd)
+        sock.sync = sync?
+        return sock
+      end
+    end
   end
 
   def accept
