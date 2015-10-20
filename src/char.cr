@@ -26,7 +26,7 @@
 #
 # You can use a backslash followed by at most three digits to denote a code point written in octal:
 #
-# ```text
+# ```
 # '\101' # == 'A'
 # '\123' # == 'S'
 # '\12'  # == '\n'
@@ -35,13 +35,13 @@
 #
 # You can use a backslash followed by an *u* and four hexadecimal characters to denote a unicode codepoint written:
 #
-# ```text
+# ```
 # '\u0041' # == 'A'
 # ```
 #
 # Or you can use curly braces and specify up to four hexadecimal numbers:
 #
-# ```text
+# ```
 # '\u{41}' # == 'A'
 # ```
 struct Char

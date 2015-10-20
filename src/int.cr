@@ -9,7 +9,7 @@
 # If no suffix is present, the literal's type is the lowest between `Int32`, `Int64` and `UInt64`
 # in which the number fits:
 #
-# ```text
+# ```
 # 1      # Int32
 #
 # 1_i8   # Int8
@@ -33,25 +33,25 @@
 #
 # Underscores can be used to make some numbers more readable:
 #
-# ```text
+# ```
 # 1_000_000 # better than 1000000
 # ```
 #
 # Binary numbers start with `0b`:
 #
-# ```text
+# ```
 # 0b1101 # == 13
 # ```
 #
 # Octal numbers start with `0o`:
 #
-# ```text
+# ```
 # 0o123 # == 83
 # ```
 #
 # Hexadecimal numbers start with `0x`:
 #
-# ```text
+# ```
 # 0xFE012D # == 16646445
 # 0xfe012d # == 16646445
 # ```

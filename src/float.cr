@@ -10,7 +10,7 @@
 # followed by numbers or underscores, followed by an optional exponent suffix,
 # followed by an optional type suffix. If no suffix is present, the literal's type is `Float64`.
 #
-# ```text
+# ```
 # 1.0      # Float64
 # 1.0_f32  # Float32
 # 1_f32    # Float32
@@ -27,7 +27,7 @@
 #
 # Underscores can be used to make some numbers more readable:
 #
-# ```text
+# ```
 # 1_000_000.111_111 # better than 1000000.111111
 # ```
 struct Float

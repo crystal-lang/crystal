@@ -30,7 +30,7 @@ end
 #
 # You can use a backslash followed by at most three digits to denote a code point written in octal:
 #
-# ```text
+# ```
 # "\101" # == "A"
 # "\123" # == "S"
 # "\12"  # == "\n"
@@ -39,19 +39,19 @@ end
 #
 # You can use a backslash followed by an *u* and four hexadecimal characters to denote a unicode codepoint written:
 #
-# ```text
+# ```
 # "\u0041" # == "A"
 # ```
 #
 # Or you can use curly braces and specify up to six hexadecimal numbers (0 to 10FFFF):
 #
-# ```text
+# ```
 # "\u{41}" # == "A"
 # ```
 #
 # A string can span multiple lines:
 #
-# ```text
+# ```
 # "hello
 #       world" # same as "hello      \nworld"
 # ```
@@ -60,7 +60,7 @@ end
 # end up in the resulting string. To avoid this, you can split a string into multiple lines
 # by joining multiple literals with a backslash:
 #
-# ```text
+# ```
 # "hello " \
 # "world, " \
 # "no newlines" # same as "hello world, no newlines"
@@ -68,7 +68,7 @@ end
 #
 # Alterantively, a backlash followed by a newline can be inserted inside the string literal:
 #
-# ```text
+# ```
 # "hello \
 #      world, \
 #      no newlines" # same as "hello world, no newlines"
@@ -79,7 +79,7 @@ end
 # If you need to write a string that has many double quotes, parenthesis, or similar
 # characters, you can use alternative literals:
 #
-# ```text
+# ```
 # # Supports double quotes and nested parenthesis
 # %(hello ("world")) # same as "hello (\"world\")"
 #
