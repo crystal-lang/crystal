@@ -4,19 +4,15 @@ class IPSocket < Socket
       addr = uninitialized LibC::SockAddrIn6
       addrlen = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
 
-      if LibC.{{method.id}}(fd, pointerof(addr) as LibC::SockAddr*, pointerof(addrlen)) != 0
+      if LibC.{{method.id}}(fd, pointerof(sockaddr) as LibC::SockAddr*, pointerof(addrlen)) != 0
         raise Errno.new("{{method.id}}")
       end
 
       if addrlen == sizeof(LibC::SockAddrIn6)
-        family_name = "AF_INET6"
-        result_addr = (pointerof(addr) as LibC::SockAddrIn6*).value
+        Addr.new((pointerof(sockaddr) as LibC::SockAddrIn6*).value)
       else
-        family_name = "AF_INET"
-        result_addr = (pointerof(addr) as LibC::SockAddrIn*).value
+        Addr.new((pointerof(sockaddr) as LibC::SockAddrIn*).value)
       end
-
-      Addr.new(family_name, LibC.htons(result_addr.port).to_u16, Socket.inet_ntop(result_addr))
     end
   end
 
