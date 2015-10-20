@@ -53,7 +53,7 @@ class Logger(T)
     UNKNOWN
   end
 
-  alias Formatter = String, Time, String, String, String::Builder -> String::Builder
+  alias Formatter = String, Time, String, String, IO ->
 
   # :nodoc:
   DEFAULT_FORMATTER = Formatter.new do |severity, datetime, progname, message, io|
@@ -61,14 +61,19 @@ class Logger(T)
     io << severity.rjust(5) << " -- " << progname << ": " << message
   end
 
+  # :nodoc:
+  record Message, severity, datetime, progname, message
+
   def initialize(@io : T)
     @level = Severity::INFO
     @formatter = DEFAULT_FORMATTER
     @progname = ""
+    @channel = Channel(Message).new(100)
+    spawn write_messages
   end
 
   def close
-    @io.close
+    @channel.close
   end
 
   {% for name in Severity.constants %}
@@ -87,18 +92,27 @@ class Logger(T)
     end
   {% end %}
 
-  def log(severity, progname = nil)
-    log(severity, yield, progname)
-  end
-
   def log(severity, message, progname = nil)
     return if severity < level
+    enqueue(severity, Time.now, progname || @progname, message)
+  end
 
-    @io << String.build do |str|
-      label = severity == Severity::UNKNOWN ? "ANY" : severity.to_s
-      formatter.call(label, Time.now, progname || @progname, message.to_s, str) << "\n"
+  def log(severity, progname = nil)
+    return if severity < level
+    enqueue(severity, Time.now, progname || @progname, yield)
+  end
+
+  private def enqueue(severity, datetime, progname, message)
+    @channel.send Message.new(severity, datetime, progname, message)
+  end
+
+  private def write_messages
+    while msg = @channel.receive?
+      label = msg.severity == Severity::UNKNOWN ? "ANY" : msg.severity.to_s
+      formatter.call(label, msg.datetime, msg.progname.to_s, msg.message.to_s, @io)
+      @io.puts
+      @io.flush
     end
-
-    @io.flush
+    @io.close
   end
 end
