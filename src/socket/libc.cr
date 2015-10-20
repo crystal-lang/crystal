@@ -164,6 +164,7 @@ lib LibC
   fun inet_pton(af : Int, src : Char*, dst : Void*) : Int
   fun inet_ntop(af : Int, src : Void*, dst : Char*, size : SocklenT) : Char*
   fun htons(n : UInt16T) : UInt16T
+  fun ntohs(n : UInt16T) : UInt16T
   fun bind(fd : Int, addr : SockAddr*, addr_len : SocklenT) : Int
   fun listen(fd : Int, backlog : Int) : Int
   fun accept(fd : Int, addr : SockAddr*, addr_len : SocklenT*) : Int
