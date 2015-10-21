@@ -954,4 +954,15 @@ describe "Block inference" do
       ),
       "recursive block expansion"
   end
+
+  it "binds to proc, not only to its body (#1796)" do
+    assert_type(%(
+      def yielder(&block : Int32 -> U)
+        yield 1
+        U
+      end
+
+      yielder { next 'a' if true; 1 }
+      )) { union_of(int32, char).metaclass }
+  end
 end
