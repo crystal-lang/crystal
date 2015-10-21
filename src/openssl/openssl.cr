@@ -22,5 +22,5 @@ end
 
 require "./bio"
 require "./ssl/*"
-require "./digest"
+require "./digest/*"
 require "./md5"
