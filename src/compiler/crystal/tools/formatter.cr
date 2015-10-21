@@ -3541,7 +3541,7 @@ module Crystal
       result
     end
 
-    # Align series of succesive inline when/else (in a case),
+    # Align series of successive inline when/else (in a case),
     # or hash literals (the left side of the =>)
     def align_infos(lines, align_infos)
       max_size = nil
