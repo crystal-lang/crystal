@@ -965,4 +965,15 @@ describe "Block inference" do
       yielder { next 'a' if true; 1 }
       )) { union_of(int32, char).metaclass }
   end
+
+  it "binds block return type free variable even if there are no block arguments (#1797)" do
+    assert_type(%(
+      def yielder(&block : -> U)
+        yield
+        U
+      end
+
+      yielder { 1 }
+      )) { int32.metaclass }
+  end
 end

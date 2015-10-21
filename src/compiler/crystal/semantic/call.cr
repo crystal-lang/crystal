@@ -635,7 +635,7 @@ class Crystal::Call
   def match_block_arg(match)
     block_arg = match.def.block_arg
     return nil, nil unless block_arg
-    return nil, nil  unless ((yields = match.def.yields) && yields > 0) || match.def.uses_block_arg
+    return nil, nil  unless match.def.yields || match.def.uses_block_arg
 
     yield_vars = nil
     block_arg_type = nil
