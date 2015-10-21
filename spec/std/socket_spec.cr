@@ -212,7 +212,7 @@ describe "TCPSocket" do
 end
 
 describe "UDPSocket" do
-  it "sends and receives messages" do
+  it "sends and receives messages by reading and writing" do
     server = UDPSocket.new(Socket::Family::INET6)
     server.bind("::", 0)
 
@@ -233,6 +233,28 @@ describe "UDPSocket" do
 
     client.close
     server.close
+  end
+
+  it "sends and receives messages by sendto and recvfrom" do
+    server = UDPSocket.new
+    server.bind("localhost", 12347)
+
+    client = UDPSocket.new
+
+    client.sendto("message equal to buffer".to_slice, server.addr)
+    message1, addr1 = server.recvfrom(23)
+    String.new(message1).should eq("message equal to buffer")
+    addr1.family.should eq(server.addr.family)
+    addr1.ip_address.should eq(server.addr.ip_address)
+
+    client.sendto("message less than buffer".to_slice, server.addr)
+    message2, addr2 = server.recvfrom(256)
+    String.new(message2).should eq("message less than buffer")
+    addr2.family.should eq(server.addr.family)
+    addr2.ip_address.should eq(server.addr.ip_address)
+
+    server.close
+    client.close
   end
 
   it "broadcast messages" do
