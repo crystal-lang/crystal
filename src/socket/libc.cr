@@ -175,6 +175,8 @@ lib LibC
   fun getsockopt(sock : Int, level : Int, opt : Int, optval : Void*, optlen : SocklenT*) : Int
   fun setsockopt(sock : Int, level : Int, opt : Int, optval : Void*, optlen : SocklenT) : Int
   fun shutdown(sock : Int, how : Shutdown) : Int
+  fun sendto(sock : Int, buffer : Void*, length : SizeT, flags : Int, dest_addr : SockAddr*, dest_len : SocklenT) : SSizeT
+  fun recvfrom(sock : Int, buffer : Void*, length : SizeT, flags : Int, addr : SockAddr*, addr_len : SocklenT*) : SSizeT
 
   SOCK_STREAM = 1
   SOCK_DGRAM  = 2
