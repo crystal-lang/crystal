@@ -102,9 +102,9 @@ require "./*"
 #
 # ```
 # /a(sd)f/.match("_asdf_")  #=> #<Regex::MatchData "asdf" 1:"sd">
-# /a(sd)f/.match("_asdf_") { |md| md[1] } } #=> "sd"
+# /a(sd)f/.match("_asdf_") { |md| md[1] } #=> "sd"
 # /a(?<grp>sd)f/.match("_asdf_") #=> #<Regex::MatchData "asdf" grp:"sd">
-# /a(?<grp>sd)f/.match("_asdf_") { |md| md["grp"] } } #=> "sd"
+# /a(?<grp>sd)f/.match("_asdf_") { |md| md["grp"] } #=> "sd"
 # ```
 #
 # Capture groups are indexed starting from 1. Methods that accept a capture
