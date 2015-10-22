@@ -37,7 +37,7 @@ class Socket < IO::FileDescriptor
       @family = case sockaddr.family
       when LibC::AF_INET then "AF_INET"
       when LibC::AF_INET6 then "AF_INET6"
-      else raise "Unsupported family address"
+      else raise "Unsupported address family"
       end
       @ip_port = LibC.htons(sockaddr.port).to_u16
       @ip_address = Socket.inet_ntop(sockaddr)
@@ -45,29 +45,34 @@ class Socket < IO::FileDescriptor
 
     def to_sockaddr
       case family
-      when "AF_INET"
-        sockaddr1 = LibC::SockAddrIn.new
-        sockaddr1.family = LibC::AF_INET.to_u8
-
-        addr1 = sockaddr1.addr
-        LibC.inet_pton(LibC::AF_INET, ip_address || "", pointerof(addr1) as Void*)
-
-        sockaddr1.port = LibC.ntohs(ip_port || 0_i16).to_i16
-        sockaddr1.addr = addr1
-        sockaddr1
-      when "AF_INET6"
-        sockaddr = LibC::SockAddrIn6.new
-        sockaddr.family = LibC::AF_INET6.to_u8
-
-        addr = sockaddr.addr
-        LibC.inet_pton(LibC::AF_INET6, ip_address || "", pointerof(addr) as Void*)
-
-        sockaddr.port = LibC.ntohs(ip_port || 0_i16).to_i16
-        sockaddr.addr = addr
-        sockaddr
-      else
-        raise "Unsupported family address"
+      when "AF_INET" then to_sockaddrin
+      when "AF_INET6" then to_sockaddrin6
+      else raise "Unsupported address family"
       end
+    end
+
+    private def to_sockaddrin
+      sockaddr = LibC::SockAddrIn.new
+      sockaddr.family = LibC::AF_INET.to_u8
+
+      addr = sockaddr.addr
+      LibC.inet_pton(LibC::AF_INET, ip_address || "", pointerof(addr) as Void*)
+
+      sockaddr.port = LibC.ntohs(ip_port || 0_i16).to_i16
+      sockaddr.addr = addr
+      sockaddr
+    end
+
+    private def to_sockaddrin6
+      sockaddr = LibC::SockAddrIn6.new
+      sockaddr.family = LibC::AF_INET6.to_u8
+
+      addr = sockaddr.addr
+      LibC.inet_pton(LibC::AF_INET6, ip_address || "", pointerof(addr) as Void*)
+
+      sockaddr.port = LibC.ntohs(ip_port || 0_i16).to_i16
+      sockaddr.addr = addr
+      sockaddr
     end
   end
 
