@@ -76,8 +76,17 @@ class UDPSocket < IPSocket
   end
 
   def sendto(slice : Slice(UInt8), dest_addr : Addr)
-    sockaddr = dest_addr.to_sockaddr as LibC::SockAddrIn
-    bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::SockAddr*, sizeof(LibC::SockAddrIn))
+    case dest_addr.family
+    when "AF_INET"
+      d4 = dest_addr.to_sockaddr as LibC::SockAddrIn
+      bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(d4) as LibC::SockAddr*, sizeof(LibC::SockAddrIn))
+    when "AF_INET6"
+      d6 = dest_addr.to_sockaddr as LibC::SockAddrIn6
+      bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(d6) as LibC::SockAddr*, sizeof(LibC::SockAddrIn6))
+    else
+      raise "Unsupported family"
+    end
+
     if bytes_sent != -1
       return bytes_sent
     end
