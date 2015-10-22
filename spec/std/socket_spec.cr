@@ -2,7 +2,7 @@ require "spec"
 require "socket"
 
 describe "Socket::Addr" do
-  it "transforms into C SockAddr struct ip4" do
+  it "transforms into C SockAddr struct IPv4" do
     addr1 = Socket::Addr.new("AF_INET", 8080.to_u16, "127.0.0.1")
     sockaddr = addr1.to_sockaddr
     addr2 = Socket::Addr.new(sockaddr)
@@ -12,7 +12,7 @@ describe "Socket::Addr" do
     addr1.ip_address.should eq(addr2.ip_address)
   end
 
-  it "transforms into C SockAddr struct ip6" do
+  it "transforms into C SockAddr struct IPv6" do
     addr1 = Socket::Addr.new("AF_INET6", 12345.to_u16, "2001:db8:8714:3a90::12")
     sockaddr = addr1.to_sockaddr
     addr2 = Socket::Addr.new(sockaddr)
@@ -235,7 +235,7 @@ describe "UDPSocket" do
     server.close
   end
 
-  it "sends and receives messages by sendto and recvfrom" do
+  it "sends and receives messages by sendto and recvfrom over IPv4" do
     server = UDPSocket.new
     server.bind("localhost", 12347)
 
@@ -257,9 +257,25 @@ describe "UDPSocket" do
     client.close
   end
 
+  it "sends and receives messages by sendto and recvfrom over IPv6" do
+    server = UDPSocket.new(Socket::Family::INET6)
+    server.bind("::1", 12348)
+
+    client = UDPSocket.new(Socket::Family::INET6)
+
+    client.sendto("message".to_slice, server.addr)
+    message, addr = server.recvfrom(1500)
+    String.new(message).should eq("message")
+    addr.family.should eq(server.addr.family)
+    addr.ip_address.should eq(server.addr.ip_address)
+
+    server.close
+    client.close
+  end
+
   it "broadcast messages" do
     client = UDPSocket.new
-    client.connect("255.255.255.255", 12348)
+    client.connect("255.255.255.255", 12349)
     client.broadcast = true
     client.broadcast?.should be_true
     client.write("broadcast".to_slice).should eq(9)
