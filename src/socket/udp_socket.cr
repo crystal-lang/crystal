@@ -75,6 +75,17 @@ class UDPSocket < IPSocket
     end
   end
 
+  def send(slice : Slice(UInt8))
+    bytes_sent = LibC.send(fd, (slice.to_unsafe as Void*), slice.size, 0)
+    if bytes_sent != -1
+      return bytes_sent
+    end
+
+    raise Errno.new("Error writing datagram")
+  ensure
+    add_write_event unless writers.empty?
+  end
+
   def sendto(slice : Slice(UInt8), dest_addr : Addr)
     case dest_addr.family
     when "AF_INET"
