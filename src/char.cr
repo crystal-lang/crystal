@@ -51,18 +51,38 @@ struct Char
   # Returns the difference of the codepoint values of this char and `other`.
   #
   # ```
-  # 'a' - 'a' #=> 0
-  # 'b' - 'a' #=> 1
-  # 'c' - 'a' #=> 2
+  # 'a' - 'a' # => 0
+  # 'b' - 'a' # => 1
+  # 'c' - 'a' # => 2
   # ```
   def -(other : Char)
     ord - other.ord
   end
 
+  # Concatenates this char and *string*.
+  #
+  # ```
+  # 'f' + "oo" # => "foo"
+  # ```
+  def +(str : String)
+    bytesize = str.bytesize + bytesize
+    String.new(bytesize) do |buffer|
+      count = 0
+      each_byte do |byte|
+        buffer[count] = byte
+        count += 1
+      end
+
+      (buffer + count).copy_from(str.cstr, str.bytesize)
+
+      {bytesize, str.size + 1}
+    end
+  end
+
   # Implements the comparison operator.
   #
   # ```
-  # 'a' <=> 'c' #=> -2
+  # 'a' <=> 'c' # => -2
   # ```
   #
   # See `Object#<=>`
@@ -73,8 +93,8 @@ struct Char
   # Returns true if this char is an ASCII digit ('0' to '9').
   #
   # ```
-  # '4'.digit? #=> true
-  # 'z'.digit? #=> false
+  # '4'.digit? # => true
+  # 'z'.digit? # => false
   # ```
   def digit?
     '0' <= self && self <= '9'
@@ -83,8 +103,8 @@ struct Char
   # Returns true if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
   #
   # ```
-  # 'c'.alpha? #=> true
-  # '8'.alpha? #=> false
+  # 'c'.alpha? # => true
+  # '8'.alpha? # => false
   # ```
   def alpha?
     ('a' <= self && self <= 'z') ||
@@ -94,9 +114,9 @@ struct Char
   # Returns true if this char is an ASCII letter or digit ('0' to '9', 'a' to 'z', 'A' to 'Z').
   #
   # ```
-  # 'c'.alphanumeric? #=> true
-  # '8'.alphanumeric? #=> true
-  # '.'.alphanumeric? #=> false
+  # 'c'.alphanumeric? # => true
+  # '8'.alphanumeric? # => true
+  # '.'.alphanumeric? # => false
   # ```
   def alphanumeric?
     alpha? || digit?
@@ -105,9 +125,9 @@ struct Char
   # Returns true if this char is an ASCII whitespace.
   #
   # ```
-  # ' '.whitespace?  #=> true
-  # '\t'.whitespace? #=> true
-  # 'b'.whitespace?  #=> false
+  # ' '.whitespace?  # => true
+  # '\t'.whitespace? # => true
+  # 'b'.whitespace?  # => false
   # ```
   def whitespace?
     self == ' ' || 9 <= ord <= 13
@@ -128,21 +148,21 @@ struct Char
   # or the end of a a set.
   #
   # ```
-  # 'l'.in_set? "lo"          #=> true
-  # 'l'.in_set? "lo", "o"     #=>  false
-  # 'l'.in_set? "hello", "^l" #=> false
-  # 'l'.in_set? "j-m"         #=> true
+  # 'l'.in_set? "lo"          # => true
+  # 'l'.in_set? "lo", "o"     # => false
+  # 'l'.in_set? "hello", "^l" # => false
+  # 'l'.in_set? "j-m"         # => true
   #
-  # '^'.in_set? "\\^aeiou"    #=> true
-  # '-'.in_set? "a\\-eo"      #=> true
+  # '^'.in_set? "\\^aeiou" # => true
+  # '-'.in_set? "a\\-eo"   # => true
   #
-  # '\\'.in_set? "\\"         #=> true
-  # '\\'.in_set? "\\A"        #=> false
-  # '\\'.in_set? "X-\\w"      #=> true
+  # '\\'.in_set? "\\"    # => true
+  # '\\'.in_set? "\\A"   # => false
+  # '\\'.in_set? "X-\\w" # => true
   # ```
-  def in_set? *sets : String
+  def in_set?(*sets : String)
     if sets.size > 1
-      return sets.all? {|set| in_set?(set) }
+      return sets.all? { |set| in_set?(set) }
     end
 
     set = sets.first
@@ -183,7 +203,6 @@ struct Char
         return not_negated if self == char
       end
 
-
       previous = char
     end
 
@@ -196,9 +215,9 @@ struct Char
   # Returns the ASCII downcase equivalent of this char.
   #
   # ```
-  # 'Z'.downcase #=> 'z'
-  # 'x'.downcase #=> 'x'
-  # '.'.downcase #=> '.'
+  # 'Z'.downcase # => 'z'
+  # 'x'.downcase # => 'x'
+  # '.'.downcase # => '.'
   # ```
   def downcase
     if 'A' <= self && self <= 'Z'
@@ -211,9 +230,9 @@ struct Char
   # Returns the ASCII upcase equivalent of this char.
   #
   # ```
-  # 'z'.upcase #=> 'Z'
-  # 'X'.upcase #=> 'X'
-  # '.'.upcase #=> '.'
+  # 'z'.upcase # => 'Z'
+  # 'X'.upcase # => 'X'
+  # '.'.upcase # => '.'
   # ```
   def upcase
     if 'a' <= self && self <= 'z'
@@ -231,8 +250,8 @@ struct Char
   # Returns a Char that is one codepoint bigger than this char's codepoint.
   #
   # ```
-  # 'a'.succ #=> 'b'
-  # 'あ'.succ #=> 'ぃ'
+  # 'a'.succ # => 'b'
+  # 'あ'.succ # => 'ぃ'
   # ```
   #
   # This method allows creating a `Range` of chars.
@@ -243,8 +262,8 @@ struct Char
   # Returns a Char that is one codepoint smaller than this char's codepoint.
   #
   # ```
-  # 'b'.succ #=> 'a'
-  # 'ぃ'.succ #=> 'あ'
+  # 'b'.succ # => 'a'
+  # 'ぃ'.succ # => 'あ'
   # ```
   def pred
     (ord - 1).chr
@@ -254,11 +273,11 @@ struct Char
   #
   # ```
   # ('\u0000'..'\u0019').each do |char|
-  #   char.control? #=> true
+  #   char.control? # => true
   # end
   #
   # ('\u007F'..'\u009F').each do |char|
-  #   char.control? #=> true
+  #   char.control? # => true
   # end
   #
   # # false in every other case
@@ -270,10 +289,10 @@ struct Char
   # Returns this Char as a String that contains a char literal as written in Crystal.
   #
   # ```
-  # 'a'.inspect      #=> "'a'"
-  # '\t'.inspect     #=> "'\t'"
-  # 'あ'.inspect     #=> "'あ'"
-  # '\u0012'.inspect #=> "'\u{12}'"
+  # 'a'.inspect      # => "'a'"
+  # '\t'.inspect     # => "'\t'"
+  # 'あ'.inspect      # => "'あ'"
+  # '\u0012'.inspect # => "'\u{12}'"
   # ```
   def inspect
     dump_or_inspect do |io|
@@ -298,10 +317,10 @@ struct Char
   # with characters with a codepoint greater than 0x79 written as `\u{...}`.
   #
   # ```
-  # 'a'.dump      #=> "'a'"
-  # '\t'.dump     #=> "'\t'"
-  # 'あ'.dump     #=> "'\u{3042}'"
-  # '\u0012'.dump #=> "'\u{12}'"
+  # 'a'.dump      # => "'a'"
+  # '\t'.dump     # => "'\t'"
+  # 'あ'.dump      # => "'\u{3042}'"
+  # '\u0012'.dump # => "'\u{12}'"
   # ```
   def dump
     dump_or_inspect do |io|
@@ -326,8 +345,8 @@ struct Char
 
   private def dump_or_inspect
     case self
-    when '\''  then "'\\''"
-    when '\\'  then "'\\\\'"
+    when '\'' then "'\\''"
+    when '\\' then "'\\\\'"
     when '\e' then "'\\e'"
     when '\f' then "'\\f'"
     when '\n' then "'\\n'"
@@ -347,9 +366,9 @@ struct Char
   # 0 otherwise.
   #
   # ```
-  # '1'.to_i #=> 1
-  # '8'.to_i #=> 8
-  # 'c'.to_i #=> 0
+  # '1'.to_i # => 1
+  # '8'.to_i # => 8
+  # 'c'.to_i # => 0
   # ```
   def to_i
     to_i { 0 }
@@ -359,9 +378,9 @@ struct Char
   # otherwise the value returned by the block.
   #
   # ```
-  # '1'.to_i { 10 } #=> 1
-  # '8'.to_i { 10 } #=> 8
-  # 'c'.to_i { 10 } #=> 10
+  # '1'.to_i { 10 } # => 1
+  # '8'.to_i { 10 } # => 8
+  # 'c'.to_i { 10 } # => 10
   # ```
   def to_i
     if '0' <= self <= '9'
@@ -375,11 +394,11 @@ struct Char
   # otherwise the value of `or_else`.
   #
   # ```
-  # '1'.to_i(16)     #=> 1
-  # 'a'.to_i(16)     #=> 10
-  # 'f'.to_i(16)     #=> 15
-  # 'z'.to_i(16)     #=> 0
-  # 'z'.to_i(16, 20) #=> 20
+  # '1'.to_i(16)     # => 1
+  # 'a'.to_i(16)     # => 10
+  # 'f'.to_i(16)     # => 15
+  # 'z'.to_i(16)     # => 0
+  # 'z'.to_i(16, 20) # => 20
   # ```
   def to_i(base, or_else = 0)
     to_i(base) { or_else }
@@ -389,10 +408,10 @@ struct Char
   # otherwise the value return by the block.
   #
   # ```
-  # '1'.to_i(16) { 20 } #=> 1
-  # 'a'.to_i(16) { 20 } #=> 10
-  # 'f'.to_i(16) { 20 } #=> 15
-  # 'z'.to_i(16) { 20 } #=> 20
+  # '1'.to_i(16) { 20 } # => 1
+  # 'a'.to_i(16) { 20 } # => 10
+  # 'f'.to_i(16) { 20 } # => 15
+  # 'z'.to_i(16) { 20 } # => 20
   # ```
   def to_i(base)
     raise ArgumentError.new "invalid base #{base}" unless 2 <= base <= 36
@@ -462,11 +481,38 @@ struct Char
     end
   end
 
+  # Returns the number of UTF-8 bytes in this char.
+  #
+  # ```
+  # 'a'.bytesize # => 1
+  # '好'.bytesize # => 3
+  # ```
+  def bytesize
+    # See http://en.wikipedia.org/wiki/UTF-8#Sample_code
+
+    c = ord
+    if c < 0x80
+      # 0xxxxxxx
+      1
+    elsif c <= 0x7ff
+      # 110xxxxx  10xxxxxx
+      2
+    elsif c <= 0xffff
+      # 1110xxxx  10xxxxxx  10xxxxxx
+      3
+    elsif c <= 0x10ffff
+      # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
+      4
+    else
+      raise "Invalid char value"
+    end
+  end
+
   # Returns this Char bytes as encoded by UTF-8, as an `Array(UInt8)`.
   #
   # ```
-  # 'a'.bytes #=> [97]
-  # 'あ'.bytes #=> [227, 129, 130]
+  # 'a'.bytes # => [97]
+  # 'あ'.bytes # => [227, 129, 130]
   # ```
   def bytes
     bytes = [] of UInt8
@@ -479,8 +525,8 @@ struct Char
   # Returns this Char as a String containing this Char as a single character.
   #
   # ```
-  # 'a'.to_s #=> "'a'"
-  # 'あ'.to_s #=> "'あ'"
+  # 'a'.to_s # => "'a'"
+  # 'あ'.to_s # => "'あ'"
   # ```
   def to_s
     String.new(4) do |buffer|
