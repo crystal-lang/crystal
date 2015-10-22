@@ -24,6 +24,11 @@ lib LibCrypto
     num_write : ULong
   end
 
+  PKCS5_SALT_LEN     =  8
+  EVP_MAX_KEY_LENGTH = 32
+  EVP_MAX_IV_LENGTH  = 16
+
+
   CTRL_PUSH = 6
   CTRL_POP = 7
   CTRL_FLUSH = 11
@@ -69,12 +74,36 @@ lib LibCrypto
   fun evp_sha384    = EVP_sha384 : EVP_MD
   fun evp_sha512    = EVP_sha512 : EVP_MD
 
+  alias EVP_CIPHER = Void*
+  alias EVP_CIPHER_CTX = Void*
+
+  fun obj_nid2sn = OBJ_nid2sn(n : Int32) : UInt8*
+
+  fun evp_get_cipherbyname = EVP_get_cipherbyname(name : UInt8*) : EVP_CIPHER
+
+  fun evp_cipher_name = EVP_CIPHER_name(cipher : EVP_CIPHER) : UInt8*
+  fun evp_cipher_nid = EVP_CIPHER_nid(cipher : EVP_CIPHER) : Int32
+  fun evp_cipher_block_size = EVP_CIPHER_block_size(cipher : EVP_CIPHER) : Int32
+  fun evp_cipher_key_length = EVP_CIPHER_key_length(cipher : EVP_CIPHER) : Int32
+  fun evp_cipher_iv_length = EVP_CIPHER_iv_length(cipher : EVP_CIPHER) : Int32
+
+  fun evp_cipher_ctx_new = EVP_CIPHER_CTX_new : EVP_CIPHER_CTX
+  fun evp_cipher_ctx_free = EVP_CIPHER_CTX_free(ctx : EVP_CIPHER_CTX)
+  fun evp_cipherinit_ex = EVP_CipherInit_ex(ctx : EVP_CIPHER_CTX, type : EVP_CIPHER, engine : Void*, key : UInt8*, iv : UInt8*, enc : Int32) : Int32
+  fun evp_cipherupdate = EVP_CipherUpdate(ctx : EVP_CIPHER_CTX, out : UInt8*, outl : Int32*, in : UInt8*, inl : Int32) : Int32
+  fun evp_cipherfinal_ex = EVP_CipherFinal_ex(ctx : EVP_CIPHER_CTX, out : UInt8*, outl : Int32*) : Int32
+  fun evp_cipher_ctx_set_padding = EVP_CIPHER_CTX_set_padding(ctx : EVP_CIPHER_CTX, padding : Int32) : Int32
+  fun evp_cipher_ctx_cipher = EVP_CIPHER_CTX_cipher(ctx : EVP_CIPHER_CTX) : EVP_CIPHER
+
   fun hmac = HMAC(evp : EVP_MD, key : Char*, key_len : Int,
                   d : Char*, n : SizeT, md : Char*, md_len : UInt*) : Char*
 
   fun rand_bytes = RAND_bytes(buf : Char*, num : Int) : Int
   fun err_get_error = ERR_get_error : ULong
   fun err_error_string = ERR_error_string(e : ULong, buf : Char*) : Char*
+  
+  fun openssl_add_all_algorithms = OPENSSL_add_all_algorithms_noconf
+  fun err_load_crypto_strings = ERR_load_crypto_strings
 
   struct MD5Context
     a : UInt
