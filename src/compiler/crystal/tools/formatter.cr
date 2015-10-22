@@ -100,24 +100,22 @@ module Crystal
       has_paren = false
       has_begin = false
 
-      unless starts_with_expressions?(node)
-        if @token.type == :"("
-          write "("
-          next_needs_indent = false
-          next_token
-          has_paren = true
-        elsif @token.keyword?(:begin)
-          write "begin"
-          write_line
+      if node.keyword == :"(" && @token.type == :"("
+        write "("
+        next_needs_indent = false
+        next_token
+        has_paren = true
+      elsif node.keyword == :begin && @token.keyword?(:begin)
+        write "begin"
+        @indent += 2
+        write_line
+        next_token_skip_space_or_newline
+        if @token.type == :";"
           next_token_skip_space_or_newline
-          if @token.type == :";"
-            next_token_skip_space_or_newline
-          end
-          has_begin = true
-          @indent += 2
-          base_indent = @indent
-          next_needs_indent = true
         end
+        has_begin = true
+        base_indent = @indent
+        next_needs_indent = true
       end
 
       last_aligned_assign = nil
@@ -263,20 +261,6 @@ module Crystal
       end
 
       {last, max_length}
-    end
-
-    def starts_with_expressions?(node)
-      case node
-      when Expressions
-        first = node.expressions.first?
-        first && starts_with_expressions?(first)
-      when Call
-        node.obj.is_a?(Expressions) || starts_with_expressions?(node.obj)
-      when ExceptionHandler
-        !node.implicit && !node.suffix
-      else
-        false
-      end
     end
 
     def needs_two_lines?(node)
@@ -3527,7 +3511,7 @@ module Crystal
     def finish
       skip_space
       write_line
-      skip_space_or_newline
+      skip_space_or_newline last: true
       result = to_s.strip
       lines = result.split("\n")
       align_infos(lines, @when_infos)

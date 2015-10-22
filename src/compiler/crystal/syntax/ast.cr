@@ -87,6 +87,7 @@ module Crystal
   # A container for one or many expressions.
   class Expressions < ASTNode
     property :expressions
+    property :keyword
 
     def self.from(obj : Nil)
       Nop.new

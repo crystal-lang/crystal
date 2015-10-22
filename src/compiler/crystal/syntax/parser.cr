@@ -1104,6 +1104,7 @@ module Crystal
       if !node.is_a?(ExceptionHandler) && !node.is_a?(Expressions)
         node = Expressions.new([node]).at(node).at_end(node)
       end
+      node.keyword = :begin if node.is_a?(Expressions)
       node
     end
 
@@ -1462,7 +1463,9 @@ module Crystal
 
       unexpected_token "(" if @token.type == :"("
 
-      Expressions.new exps
+      node = Expressions.new exps
+      node.keyword = :"("
+      node
     end
 
     def parse_fun_literal
