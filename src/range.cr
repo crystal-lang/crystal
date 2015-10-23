@@ -186,7 +186,7 @@ struct Range(B, E)
     @exclusive
   end
 
-  # Returns true if this range includes the given value.
+  # Returns true if this range includes the given *value*.
   #
   # ```
   # (1..10).includes?(4)   #=> true

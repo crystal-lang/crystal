@@ -15,7 +15,7 @@ struct Bool
     self ? false : true
   end
 
-  # Bitwise OR. Returns `true` if this bool or `other` is `true`, otherwise returns `false`.
+  # Bitwise OR. Returns `true` if this bool or *other* is `true`, otherwise returns `false`.
   #
   # ```
   # false | false #=> false
@@ -27,7 +27,7 @@ struct Bool
     self ? true : other
   end
 
-  # Bitwise AND. Returns `true` if this bool and `other` are `true`, otherwise returns `false`.
+  # Bitwise AND. Returns `true` if this bool and *other* are `true`, otherwise returns `false`.
   #
   # ```
   # false & false #=> false
@@ -39,7 +39,7 @@ struct Bool
     self ? other : false
   end
 
-  # Exclusive Or. Returns `true` if this bool is different from `other`, otherwise returns `false`.
+  # Exclusive Or. Returns `true` if this bool is different from *other*, otherwise returns `false`.
   #
   # ```
   # false ^ false #=> false

@@ -62,7 +62,7 @@ class Object
   end
 
   # Comparison operator. Returns 0 if the two objects are equal,
-  # a negative number if this object is considered less than `other`,
+  # a negative number if this object is considered less than *other*,
   # or a positive number otherwise.
   #
   # Subclasses define this method to provide class-specific ordering.
@@ -99,7 +99,7 @@ class Object
   # as this will in turn call `to_s(io)` on it.
   abstract def to_s(io : IO)
 
-  # Returns a String representation of this object.
+  # Returns a `String` representation of this object.
   #
   # Similar to `to_s`, but usually returns more information about
   # this object.
