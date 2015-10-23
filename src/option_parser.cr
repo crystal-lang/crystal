@@ -131,7 +131,7 @@ class OptionParser
     end
   end
 
-  # Parses the passed `args`, running the handlers associated to each option.
+  # Parses the passed *args*, running the handlers associated to each option.
   def parse(args)
     ParseTask.new(args, @flags, @handlers, @unknown_args).parse
   end

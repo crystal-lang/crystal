@@ -110,8 +110,8 @@ struct Number
     self < 0 ? -1 : (self == 0 ? 0 : 1)
   end
 
-  # Return a tuple of two elements containing the quotient
-  # and modulus obtained by dividing self by `number`.
+  # Returns a `Tuple` of two elements containing the quotient
+  # and modulus obtained by dividing self by *number*.
   #
   # ```
   # 11.divmod(3)  #=> {3, 2}
@@ -128,7 +128,7 @@ struct Number
     self > other ? 1 : (self < other ? -1 : 0)
   end
 
-  # Keeps `digits` significants digits of this number in the given `base`.
+  # Keeps *digits* significants digits of this number in the given *base*.
   #
   # ```
   # 1234.567.significant(1)         #=> 1000
@@ -164,7 +164,7 @@ struct Number
     self.class.new((x / y).round * y)
   end
 
-  # Rounds this number to a given precision in decimal digits.
+  # Rounds this number to a given precision in decimal *digits*.
   #
   # ```
   # -1763.116.round(2) #=> -1763.12
@@ -186,7 +186,7 @@ struct Number
     clamp range.begin, range.end
   end
 
-  # Clamps a value between `min` and `max`.
+  # Clamps a value between *min* and *max*.
   # ```
   # 5.clamp(10, 100) #=> 10
   # 50.clamp(10, 100) #=> 50
