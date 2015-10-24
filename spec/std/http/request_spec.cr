@@ -257,5 +257,42 @@ module HTTP
         request.query_params.to_s.should eq(new_query)
       end
     end
+
+    describe "#body_params" do
+      it "returns parsed HTTP::Params" do
+        request = Request.from_io(MemoryIO.new("POST /api/v3/some/resource HTTP/1.1\r\nContent-Length: 23\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nfoo=bar&foo=baz&baz=qux")).not_nil!
+        params = request.body_params
+
+        params["foo"].should eq("bar")
+        params.fetch_all("foo").should eq(["bar", "baz"])
+        params["baz"].should eq("qux")
+      end
+
+      it "fails to parse body with non x-www-form-urlencoded content type" do
+        expect_raises(Exception, "Content-Type should be application/x-www-form-urlencoded to use #body_params") do
+          request = Request.from_io(MemoryIO.new("POST /api/v3/some/resource HTTP/1.1\r\nContent-Length: 23\r\n\r\nfoo=bar&foo=baz&baz=qux")).not_nil!
+          request.body_params
+        end
+      end
+
+      it "affects body when modified" do
+        request = Request.from_io(MemoryIO.new("POST /api/v3/some/resource HTTP/1.1\r\nContent-Length: 23\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nfoo=bar&foo=baz&baz=qux")).not_nil!
+        params = request.body_params
+
+        params["foo"] = "not-bar"
+        request.body.should eq("foo=not-bar&foo=baz&baz=qux")
+      end
+
+      it "updates serialized form when modified" do
+        request = Request.from_io(MemoryIO.new("POST /api/v3/some/resource HTTP/1.1\r\nContent-Length: 23\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nfoo=bar&foo=baz&baz=qux")).not_nil!
+        params = request.body_params
+
+        params["foo"] = "not-bar"
+
+        io = MemoryIO.new
+        request.to_io(io)
+        io.to_s.should eq("POST /api/v3/some/resource HTTP/1.1\r\nContent-Length: 27\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nfoo=not-bar&foo=baz&baz=qux")
+      end
+    end
   end
 end
