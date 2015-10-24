@@ -76,11 +76,11 @@ end
 #
 # In this case, leading whitespace is not included in the resulting string.
 #
-# If you need to write a string that has many double quotes, parenthesis, or similar
+# If you need to write a string that has many double quotes, parentheses, or similar
 # characters, you can use alternative literals:
 #
 # ```
-# # Supports double quotes and nested parenthesis
+# # Supports double quotes and nested parentheses
 # %(hello ("world")) # same as "hello (\"world\")"
 #
 # # Supports double quotes and nested brackets
@@ -113,7 +113,7 @@ class String
 
   include Comparable(self)
 
-  # Creates a String form the given slice. Bytes will be copied from the slice.
+  # Creates a String from the given *slice*. Bytes will be copied from the slice.
   #
   # This method is always safe to call, and the resulting string will have
   # the contents and size of the slice.
@@ -579,7 +579,7 @@ class String
     LibC.atof cstr
   end
 
-  # Returns the `Char` at the give index, or raises `IndexError` if out of bounds.
+  # Returns the `Char` at the given *index*, or raises `IndexError` if out of bounds.
   #
   # Negative indices can be used to start counting from the end of the string.
   #
