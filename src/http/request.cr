@@ -35,6 +35,12 @@ class HTTP::Request
     @body_params ||= parse_body_params
   end
 
+  # Returns true if Content-Type is application/x-www-form-urlencoded.
+  # Otherwise returns false.
+  def has_body_params?
+    headers["Content-Type"]? == BODY_PARAMS_CONTENT_TYPE
+  end
+
   def resource
     update_uri
     @uri.try(&.full_path) || @resource
@@ -102,7 +108,7 @@ class HTTP::Request
   end
 
   private def parse_body_params
-    unless headers["Content-Type"]? == BODY_PARAMS_CONTENT_TYPE
+    unless has_body_params?
       raise "Content-Type should be #{BODY_PARAMS_CONTENT_TYPE} to use #body_params"
     end
 

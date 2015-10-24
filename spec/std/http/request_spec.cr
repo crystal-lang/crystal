@@ -258,6 +258,18 @@ module HTTP
       end
     end
 
+    describe "#has_body_params?" do
+      it "is true when Content-Type is correct" do
+        request = Request.from_io(MemoryIO.new("POST /api/v3/some/resource HTTP/1.1\r\nContent-Length: 23\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nfoo=bar&foo=baz&baz=qux")).not_nil!
+        request.has_body_params?.should be_true
+      end
+
+      it "is false when Content-Type is incorrect" do
+        request = Request.from_io(MemoryIO.new("POST /api/v3/some/resource HTTP/1.1\r\nContent-Length: 23\r\nContent-Type: application/json\r\n\r\nfoo=bar&foo=baz&baz=qux")).not_nil!
+        request.has_body_params?.should be_false
+      end
+    end
+
     describe "#body_params" do
       it "returns parsed HTTP::Params" do
         request = Request.from_io(MemoryIO.new("POST /api/v3/some/resource HTTP/1.1\r\nContent-Length: 23\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nfoo=bar&foo=baz&baz=qux")).not_nil!
