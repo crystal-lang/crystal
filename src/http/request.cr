@@ -3,9 +3,10 @@ require "uri"
 require "http/params"
 
 class HTTP::Request
+  BODY_PARAMS_CONTENT_TYPE = "application/x-www-form-urlencoded"
+
   getter method
   getter headers
-  getter body
   getter version
 
   def initialize(@method : String, @resource, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
@@ -28,6 +29,18 @@ class HTTP::Request
     @query_params ||= parse_query_params
   end
 
+  # Returns a convenience wrapper around querying and setting body url-encoded
+  # params, see `HTTP::Params`.
+  def body_params
+    @body_params ||= parse_body_params
+  end
+
+  # Returns true if Content-Type is application/x-www-form-urlencoded.
+  # Otherwise returns false.
+  def has_body_params?
+    headers["Content-Type"]? == BODY_PARAMS_CONTENT_TYPE
+  end
+
   def resource
     update_uri
     @uri.try(&.full_path) || @resource
@@ -45,7 +58,7 @@ class HTTP::Request
     io << @method << " " << resource << " " << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
-    HTTP.serialize_headers_and_body(io, headers, @body, @version)
+    HTTP.serialize_headers_and_body(io, headers, body, @version)
   end
 
   def self.from_io(io)
@@ -80,12 +93,26 @@ class HTTP::Request
     value
   end
 
+  # Request's body.
+  def body
+    update_body
+    @body
+  end
+
   private def uri
     (@uri ||= URI.parse(@resource)).not_nil!
   end
 
   private def parse_query_params
     HTTP::Params.parse(uri.query || "")
+  end
+
+  private def parse_body_params
+    unless has_body_params?
+      raise "Content-Type should be #{BODY_PARAMS_CONTENT_TYPE} to use #body_params"
+    end
+
+    HTTP::Params.parse(body || "")
   end
 
   private def update_query_params
@@ -96,5 +123,10 @@ class HTTP::Request
   private def update_uri
     return unless @query_params
     uri.query = query_params.to_s
+  end
+
+  private def update_body
+    return unless @body_params
+    @body = body_params.to_s
   end
 end
