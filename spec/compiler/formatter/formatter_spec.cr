@@ -265,6 +265,7 @@ describe Crystal::Formatter do
   assert_format "10**a", "10**a"
   assert_format "10 ** a", "10 ** a"
   assert_format %(" " * 2)
+  assert_format "foo.bar / 2\n", "foo.bar / 2"
 
   assert_format "! 1", "!1"
   assert_format "- 1", "-1"

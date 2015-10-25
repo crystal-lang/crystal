@@ -1936,7 +1936,11 @@ module Crystal
         format_block block, base_column, needs_space
       end
 
-      finish_args(has_parentheses, has_newlines, has_first_newline, ends_with_newline, found_comment, base_column, column)
+      if has_args || node.block_arg
+        finish_args(has_parentheses, has_newlines, has_first_newline, ends_with_newline, found_comment, base_column, column)
+      elsif has_parentheses
+        write_token :")"
+      end
 
       @dot_column = current_dot_column
       false
