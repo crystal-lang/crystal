@@ -49,7 +49,7 @@ h1.type-name {
   display: block;
   box-sizing: border-box;
   margin: 0;
-  padding: 5px;
+  padding: 5px 10px;
   font: inherit;
   font-family: inherit;
   line-height: 1.2;
