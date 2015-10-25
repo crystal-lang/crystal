@@ -89,8 +89,6 @@ h1.type-name {
 #types-list li ul {
   overflow: hidden;
   height: 0;
-  max-height: 0;
-  transition: 1s ease-in-out;
 }
 
 
@@ -100,7 +98,7 @@ h1.type-name {
 
 #types-list li.parent::before {
   box-sizing: border-box;
-  content: "▼";
+  content: "▶";
   display: block;
   width: 30px;
   height: 30px;
@@ -111,9 +109,7 @@ h1.type-name {
   color: white;
   font-size: 8px;
   line-height: 30px;
-  transform: rotateZ(-90deg);
   cursor: pointer;
-  transition: .2s linear;
 }
 
 
@@ -122,12 +118,11 @@ h1.type-name {
 }
 
 #types-list li.parent.open::before {
-  transform: rotateZ(0);
+  content: "▼";
 }
 
 #types-list li.open > ul {
   height: auto;
-  max-height: 1000em;
 }
 
 #main-content {
