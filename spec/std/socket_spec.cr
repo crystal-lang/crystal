@@ -21,6 +21,13 @@ describe "Socket::Addr" do
     addr1.ip_port.should eq(addr2.ip_port)
     addr1.ip_address.should eq(addr2.ip_address)
   end
+
+  it "raises when the address family is not IPv4 or IPv6" do
+    addr = Socket::Addr.new("AF_UNIX", "/tmp/test")
+    expect_raises(Exception, "Unsupported address family") do
+      addr.to_sockaddr
+    end
+  end
 end
 
 describe "UNIXSocket" do
