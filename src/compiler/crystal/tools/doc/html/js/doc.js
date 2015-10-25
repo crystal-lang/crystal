@@ -45,35 +45,40 @@ document.addEventListener('DOMContentLoaded', function() {
     return false;
   };
 
+  var search = function(text) {
+    var types = document.querySelectorAll('#types-list li');
+    var words = text.toLowerCase().split(/\s+/).filter(function(word) {
+      return word.length > 0;
+    });
+    var regexp = new RegExp(words.join('|'));
+
+    for(var i = 0; i < types.length; i++) {
+      var type = types[i];
+      if(words.length == 0 || regexp.exec(type.getAttribute('data-name')) || childMatch(type, regexp)) {
+        type.className = type.className.replace(/ +hide/g, '');
+        var is_parent     =   new RegExp("parent").exec(type.className);
+        var is_not_opened = !(new RegExp("open").exec(type.className));
+        if(childMatch(type,regexp) && is_parent && is_not_opened){
+          type.className += " open";
+        };
+      } else {
+        if(type.className.indexOf('hide') == -1) {
+          type.className += ' hide';
+        };
+      };
+      if(words.length == 0){
+        type.className = type.className.replace(/ +open/g, '');
+      };
+    }
+  };
+
   var searchTimeout;
   searchInput.addEventListener('keyup', function() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(function() {
       var text = searchInput.value;
-      var types = document.querySelectorAll('#types-list li');
-      var words = text.toLowerCase().split(/\s+/).filter(function(word) {
-        return word.length > 0;
-      });
-      var regexp = new RegExp(words.join('|'));
-
-      for(var i = 0; i < types.length; i++) {
-        var type = types[i];
-        if(words.length == 0 || regexp.exec(type.getAttribute('data-name')) || childMatch(type, regexp)) {
-          type.className = type.className.replace(/ +hide/g, '');
-          var is_parent     =   new RegExp("parent").exec(type.className);
-          var is_not_opened = !(new RegExp("open").exec(type.className));
-          if(childMatch(type,regexp) && is_parent && is_not_opened){
-            type.className += " open";
-          };
-        } else {
-          if(type.className.indexOf('hide') == -1) {
-            type.className += ' hide';
-          };
-        };
-        if(words.length == 0){
-          type.className = type.className.replace(/ +open/g, '');
-        };
-      }
+      search(text);
+      sessionStorage.setItem(repositoryName + ':::searchText', text);
     }, 200);
   });
 
@@ -85,5 +90,11 @@ document.addEventListener('DOMContentLoaded', function() {
   var initialY = parseInt(sessionStorage.getItem(repositoryName + '::types-list:scrollTop') + "", 10);
   if(initialY > 0) {
     typesList.scrollTop = initialY;
+  }
+
+  var initialSearch = sessionStorage.getItem(repositoryName + ':::searchText');
+  if(initialSearch && initialSearch.length > 0) {
+    searchInput.value = initialSearch;
+    search(initialSearch);
   }
 });
