@@ -10,8 +10,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   var repositoryName = document.getElementById('repository-name').getAttribute('content');
   var typesList = document.getElementById('types-list');
+  var methodsList = document.getElementById('methods-list');
   var searchInput = document.getElementById('search-input');
   var parents = document.querySelectorAll('#types-list li.parent');
+  var tabSelectors = document.querySelectorAll('#search-box ul li a');
 
   for(var i = 0; i < parents.length; i++) {
     var _parent = parents[i];
@@ -34,6 +36,32 @@ document.addEventListener('DOMContentLoaded', function() {
     if(sessionStorage.getItem(_parent.getAttribute('data-id')) == '1') {
       _parent.className += ' open';
     }
+  };
+
+  var selectTab = function(name) {
+    var link = document.querySelectorAll('a[href="#' + name + '"]')[0];
+
+    if(link) {
+      var currents = document.querySelectorAll('#search-box ul li.current, #side-list div.current');
+      for(var i = 0; i < currents.length; i++) {
+        currents[i].className = currents[i].className.replace(/(^| +)current/g, '');
+      }
+
+      link.parentElement.className += ' current';
+      var tab = document.getElementById(name);
+      tab.className += ' current';
+
+      sessionStorage.setItem(repositoryName + '::currentTab', name);
+    }
+  };
+
+  for(var i = 0; i < tabSelectors.length; i++) {
+    var tabSelector = tabSelectors[i];
+    tabSelector.addEventListener('click', function(e) {
+      e.preventDefault();
+
+      selectTab(e.target.getAttribute('href').slice(1));
+    });
   };
 
   var childMatch = function(type, regexp){
@@ -87,9 +115,19 @@ document.addEventListener('DOMContentLoaded', function() {
     sessionStorage.setItem(repositoryName + '::types-list:scrollTop', y);
   };
 
-  var initialY = parseInt(sessionStorage.getItem(repositoryName + '::types-list:scrollTop') + "", 10);
-  if(initialY > 0) {
-    typesList.scrollTop = initialY;
+  var initialTypesY = parseInt(sessionStorage.getItem(repositoryName + '::types-list:scrollTop') + "", 10);
+  if(initialTypesY > 0) {
+    typesList.scrollTop = initialTypesY;
+  }
+
+  methodsList.onscroll = function() {
+    var y = methodsList.scrollTop;
+    sessionStorage.setItem(repositoryName + '::methods-list:scrollTop', y);
+  };
+
+  var initialMethodsY = parseInt(sessionStorage.getItem(repositoryName + '::methods-list:scrollTop') + "", 10);
+  if(initialMethodsY > 0) {
+    methodsList.scrollTop = initialMethodsY;
   }
 
   var initialSearch = sessionStorage.getItem(repositoryName + ':::searchText');
@@ -97,4 +135,10 @@ document.addEventListener('DOMContentLoaded', function() {
     searchInput.value = initialSearch;
     search(initialSearch);
   }
+
+  var initialTab = sessionStorage.getItem(repositoryName + '::currentTab');
+  if(initialTab && initialTab.length > 0) {
+    selectTab(initialTab);
+  }
+
 });

@@ -9,16 +9,29 @@
 </head>
 <body>
 
-<div id="types-list">
+<div id="side-list">
   <div id="search-box">
     <input type="search" id="search-input" placeholder="Search...">
+
+    <ul>
+      <li class="current"><a href="#types-list">Types</a></li>
+      <li><a href="#methods-list">Methods</a></li>
+    </ul>
   </div>
 
-  <ul>
-    <li class="current"><a href="index.html">README</a></li>
-  </ul>
+  <div id="types-list" class="current">
+    <ul>
+      <li class="current"><a href="index.html">README</a></li>
+    </ul>
 
-  <%= ListItemsTemplate.new(types, nil) %>
+    <%= ListItemsTemplate.new(types, nil) %>
+  </div>
+
+  <div id="methods-list">
+    <ul>
+      <%= MethodListTemplate.new(types, nil) %>
+    </ul>
+  </div>
 </div>
 
 <div id="main-content">

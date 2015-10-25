@@ -28,24 +28,23 @@ h1.type-name {
   color: #47266E;
 }
 
-#types-list, #main-content {
+#side-list, #main-content {
   position: absolute;
   top: 0;
   bottom: 0;
-  overflow: auto;
 }
 
-#types-list {
+#side-list {
   left: 0;
   width: 20%;
-  background-color: #1A0435;
+  background-color: #333;
 }
 
-#types-list #search-box {
-  padding: 5px;
+#side-list #search-box {
+  padding: 10px 5px 0 5px;
 }
 
-#types-list input {
+#side-list input {
   display: block;
   box-sizing: border-box;
   margin: 0;
@@ -59,44 +58,100 @@ h1.type-name {
   outline: 0;
 }
 
-#types-list ul {
+#side-list #search-box ul {
+  margin: 10px -5px 0 -5px;
+}
+
+#side-list #search-box ul:after {
+  content:"";
+  display:table;
+  clear:both;
+}
+
+#side-list #search-box li {
+  display: block;
+  width: 50%;
+  float: left;
+  text-align: center;
+}
+
+#side-list #search-box a {
+  display: block;
+  margin: 0;
+  padding: 10px 15px;
+  color: #fff;
+  font-size: 100%;
+}
+
+#side-list #search-box .current a {
+  font-weight: bold;
+  color: #8367A4;
+  background-color: #1A0435;
+}
+
+#side-list #types-list,
+#side-list #methods-list {
+  position: absolute;
+  top: 87px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+  background-color: #1A0435;
+}
+
+#side-list #types-list.current,
+#side-list #methods-list.current {
+  z-index: 10;
+}
+
+#side-list ul {
   margin: 0;
   padding: 0;
   list-style: none outside;
 }
 
-#types-list li {
+#side-list li {
   display: block;
   position: relative;
 }
 
-#types-list li.hide {
+#side-list li.hide {
   display: none;
 }
 
-#types-list a {
+#side-list a {
   display: block;
   padding: 5px 15px 5px 30px;
   text-decoration: none;
   color: #fff;
 }
 
-#types-list .current > a,
-#types-list a:hover {
-  color: #866BA6;
+#side-list #methods-list a {
+  padding: 5px 15px;
 }
 
-#types-list li ul {
+#side-list #methods-list a small {
+  margin-top: 5px;
+  font-size: 50%;
+}
+
+#side-list .current > a,
+#side-list a:hover {
+  color: #8367A4;
+}
+
+#side-list li ul {
   overflow: hidden;
   height: 0;
 }
 
 
-#types-list li.parent {
+#side-list li.parent {
   padding-left: 30px;
 }
 
-#types-list li.parent::before {
+#side-list li.parent::before {
   box-sizing: border-box;
   content: "▶";
   display: block;
@@ -113,15 +168,15 @@ h1.type-name {
 }
 
 
-#types-list li.parent > a {
+#side-list li.parent > a {
   padding-left: 0;
 }
 
-#types-list li.parent.open::before {
+#side-list li.parent.open::before {
   content: "▼";
 }
 
-#types-list li.open > ul {
+#side-list li.open > ul {
   height: auto;
 }
 
@@ -129,6 +184,7 @@ h1.type-name {
   padding: 0 30px 30px 30px;
   left: 20%;
   right: 0;
+  overflow: auto;
 }
 
 .kind {
