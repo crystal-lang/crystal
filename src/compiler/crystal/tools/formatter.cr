@@ -61,6 +61,7 @@ module Crystal
       @assign_infos = [] of AlignInfo
       @doc_comments = [] of CommentInfo
       @current_doc_comment = nil
+      @hash_in_same_line = Set(typeof(object_id)).new
     end
 
     def visit(node : Expressions)
@@ -135,9 +136,9 @@ module Crystal
         else
           next_exp = node.expressions[i + 1]
           needs_two_lines = !last?(i, node.expressions) && !exp.is_a?(Attribute) &&
-                              (!(exp.is_a?(IfDef) && next_exp.is_a?(LibDef))) &&
-                              (!(exp.is_a?(Def) && exp.abstract && next_exp.is_a?(Def) && next_exp.abstract)) &&
-                              (needs_two_lines?(exp) || needs_two_lines?(next_exp))
+            (!(exp.is_a?(IfDef) && next_exp.is_a?(LibDef))) &&
+            (!(exp.is_a?(Def) && exp.abstract && next_exp.is_a?(Def) && next_exp.abstract)) &&
+            (needs_two_lines?(exp) || needs_two_lines?(next_exp))
         end
 
         @assign_length = max_length
@@ -633,6 +634,10 @@ module Crystal
         format_hash_entry nil, node_of
       end
 
+      if @hash_in_same_line.includes? node.object_id
+        @hash_infos.reject! { |info| info.id == node.object_id }
+      end
+
       false
     end
 
@@ -643,6 +648,7 @@ module Crystal
     def format_hash_entry(hash, entry)
       start_line = @line
       start_column = @column
+      found_in_same_line = false
 
       if entry.key.is_a?(SymbolLiteral) && (@token.type == :IDENT || @token.type == :CONST)
         write @token
@@ -650,7 +656,7 @@ module Crystal
         slash_is_regex!
         write_token :":", " "
         middle_column = @column
-        check_hash_info hash, entry.key, start_line, start_column, middle_column
+        found_in_same_line ||= check_hash_info hash, entry.key, start_line, start_column, middle_column
       else
         accept entry.key
         skip_space_or_newline
@@ -660,15 +666,19 @@ module Crystal
           slash_is_regex!
           next_token
           middle_column = @column
-          check_hash_info hash, entry.key, start_line, start_column, middle_column
+          found_in_same_line ||= check_hash_info hash, entry.key, start_line, start_column, middle_column
         else
           slash_is_regex!
           write_token " ", :"=>", " "
-          check_hash_info hash, entry.key, start_line, start_column, middle_column
+          found_in_same_line ||= check_hash_info hash, entry.key, start_line, start_column, middle_column
         end
       end
       skip_space_or_newline
       accept entry.value
+
+      if found_in_same_line
+        @hash_in_same_line << hash.object_id
+      end
     end
 
     def finish_list(suffix, prefix_indent, has_newlines, found_comment, found_first_newline, write_space_at_end)
@@ -699,13 +709,17 @@ module Crystal
 
     def check_hash_info(hash, key, start_line, start_column, middle_column)
       end_column = @column
+      found_in_same_line = false
       if @line == start_line
         last_info = @hash_infos.last?
-        unless last_info && last_info.line == @line
+        if last_info && last_info.line == @line
+          found_in_same_line = true
+        else
           number = key.is_a?(NumberLiteral)
           @hash_infos << AlignInfo.new(hash.object_id, @line, start_column, middle_column, end_column, number)
         end
       end
+      found_in_same_line
     end
 
     def visit(node : RangeLiteral)
@@ -3582,10 +3596,10 @@ module Crystal
       before = line[0...middle]
       after = line[middle..-1]
       result = String.build do |str|
-                 str << before
-                 gap.times { str << " " }
-                 str << after
-               end
+        str << before
+        gap.times { str << " " }
+        str << after
+      end
 
       lines[info.line] = result
 
@@ -3636,10 +3650,10 @@ module Crystal
       gap = max_column - comment_column
 
       result = String.build do |str|
-                 str << source_line
-                 gap.times { str << " " }
-                 str << comment_line
-               end
+        str << source_line
+        gap.times { str << " " }
+        str << comment_line
+      end
       result
     end
 
@@ -3651,13 +3665,13 @@ module Crystal
         sharp_index = first_line.index('#').not_nil!
 
         comment = String.build do |str|
-                    (doc_comment.start_line..doc_comment.end_line).each do |i|
-                      line = lines[i].strip[1..-1]
-                      line = line[1..-1] if line[0]? == ' '
-                      str << line
-                      str << '\n'
-                    end
-                  end
+          (doc_comment.start_line..doc_comment.end_line).each do |i|
+            line = lines[i].strip[1..-1]
+            line = line[1..-1] if line[0]? == ' '
+            str << line
+            str << '\n'
+          end
+        end
 
         begin
           formatted_comment = Formatter.format(comment)

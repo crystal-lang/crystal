@@ -721,7 +721,7 @@ describe Crystal::Formatter do
   assert_format "macro bar\n  1\nend\n\ncase 1\nwhen  2 then 3\nwhen 45 then 6\nend"
   assert_format "{\n         1 => 2,\n        10 => 30,\n        30 => 40,\n  \"foobar\" => 50,\n  \"coco\"   => 60,\n}"
   assert_format "{1 => 2, 3 => 4}\n{5234234 => 234098234, 7 => 8}"
-  assert_format "{\n    1 => 2, 3 => 4,\n  567 => 8910,\n}"
+  assert_format "{\n    1 => 2, 3 => 4,\n  567 => 8910,\n}", "{\n  1 => 2, 3 => 4,\n  567 => 8910,\n}"
   assert_format "{\n  foo:    1,\n  b:      2,\n  barbaz: 3,\n}"
   assert_format "{\n  a:     1,\n  foo => bar,\n}"
   assert_format "%(\n1\n)\n\n{\n    1 => 2,\n  234 => 5,\n}"
@@ -764,4 +764,5 @@ describe Crystal::Formatter do
   assert_format "begin\n  #hola\n  1\nend\n", "begin\n  # hola\n  1\nend"
   assert_format "begin\nend\n\n# a\n", "begin\n\nend\n\n# a"
   assert_format "begin\n  1\nend\n\n1\n", "begin\n  1\nend\n\n1"
+  assert_format "{\n  \"a\" => 1, \"b\" => 2,\n  \"foo\" => 3, \"bar\" => 4,\n  \"coconio\" => 5, \"lala\" => 6,\n}\n", "{\n  \"a\" => 1, \"b\" => 2,\n  \"foo\" => 3, \"bar\" => 4,\n  \"coconio\" => 5, \"lala\" => 6,\n}"
 end
