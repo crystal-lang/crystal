@@ -143,7 +143,8 @@ class Process
   @@after_fork_child_callbacks = [
     -> { Scheduler.after_fork; nil },
     -> { Event::SignalHandler.after_fork; nil },
-    -> { Event::SignalChildHandler.instance.after_fork; nil }
+    -> { Event::SignalChildHandler.instance.after_fork; nil },
+    -> { Random::DEFAULT.new_seed; nil },
   ]
 end
 
