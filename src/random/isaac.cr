@@ -16,6 +16,11 @@ class Random::ISAAC
     init_by_array(seeds)
   end
 
+  def new_seed(seeds = StaticArray(UInt32, 8).new { Random.new_seed })
+    @aa = @bb = @cc = 0_u32
+    init_by_array(seeds)
+  end
+
   def next_u32
     if (@counter -= 1) == -1
       isaac

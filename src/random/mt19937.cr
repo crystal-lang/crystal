@@ -59,6 +59,11 @@ class Random::MT19937
     init_by_array(seeds)
   end
 
+  def new_seed(seeds = StaticArray(UInt32, 4).new { Random.new_seed })
+    @mti = N + 1
+    init_by_array(seeds)
+  end
+
   def self.new(seed : Int)
     seeds = UInt32[1]
     seeds[0] = seed.to_u32
