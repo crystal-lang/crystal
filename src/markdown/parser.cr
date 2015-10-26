@@ -39,15 +39,15 @@ class Markdown::Parser
       return render_horizontal_rule
     end
 
-    if starts_with_star?(line)
+    if starts_with_bullet_list_marker?(line, '*')
       return render_unordered_list('*')
     end
 
-    if starts_with_plus?(line)
+    if starts_with_bullet_list_marker?(line, '+')
       return render_unordered_list('+')
     end
 
-    if starts_with_hyphen?(line)
+    if starts_with_bullet_list_marker?(line, '-')
       return render_unordered_list('-')
     end
 
@@ -100,7 +100,12 @@ class Markdown::Parser
         break
       end
 
-      if starts_with_star?(line) || starts_with_backticks?(line) || starts_with_digits_dot?(line)
+      if (
+        starts_with_bullet_list_marker?(line, '*') ||
+        starts_with_bullet_list_marker?(line, '+') ||
+        starts_with_bullet_list_marker?(line, '-') ||
+        starts_with_backticks?(line) || starts_with_digits_dot?(line)
+      )
         break
       end
 
@@ -192,11 +197,7 @@ class Markdown::Parser
         next
       end
 
-      break unless (
-        (prefix == '*' && starts_with_star?(line)) ||
-        (prefix == '+' && starts_with_plus?(line)) ||
-        (prefix == '-' && starts_with_hyphen?(line))
-      )
+      break unless starts_with_bullet_list_marker?(line, prefix)
 
       @renderer.begin_list_item
       process_line line.byte_slice(line.index(prefix).not_nil! + 1)
@@ -464,7 +465,7 @@ class Markdown::Parser
     end
   end
 
-  def starts_with_star?(line)
+  def starts_with_bullet_list_marker?(line, prefix = '*')
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
@@ -473,41 +474,7 @@ class Markdown::Parser
     end
 
     return false unless pos < bytesize
-    return false unless str[pos].chr == '*'
-
-    pos += 1
-
-    return false unless pos < bytesize
-    str[pos].chr.whitespace?
-  end
-
-  def starts_with_plus?(line)
-    bytesize = line.bytesize
-    str = line.to_unsafe
-    pos = 0
-    while pos < bytesize && str[pos].chr.whitespace?
-      pos += 1
-    end
-
-    return false unless pos < bytesize
-    return false unless str[pos].chr == '+'
-
-    pos += 1
-
-    return false unless pos < bytesize
-    str[pos].chr.whitespace?
-  end
-
-  def starts_with_hyphen?(line)
-    bytesize = line.bytesize
-    str = line.to_unsafe
-    pos = 0
-    while pos < bytesize && str[pos].chr.whitespace?
-      pos += 1
-    end
-
-    return false unless pos < bytesize
-    return false unless str[pos].chr == '-'
+    return false unless str[pos].chr == prefix
 
     pos += 1
 
