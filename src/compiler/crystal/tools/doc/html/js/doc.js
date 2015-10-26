@@ -100,6 +100,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   };
 
+  searchInput.addEventListener('input', function() {
+    var text = searchInput.value;
+    search(text);
+    sessionStorage.setItem(repositoryName + ':::searchText', text);
+  });
+
   var searchTimeout;
   searchInput.addEventListener('keyup', function() {
     clearTimeout(searchTimeout);
