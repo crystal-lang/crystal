@@ -189,6 +189,24 @@ describe Time::Span do
     # TODO check overflow
   end
 
+  it "test multiply" do
+    t1 = Time::Span.new 5, 4, 3, 2, 1
+    t2 = t1 * 61
+
+    t2.should eq(Time::Span.new 315, 7, 5, 2, 61)
+
+    # TODO check overflow
+  end
+
+  it "test divide" do
+    t1 = Time::Span.new 3, 3, 3, 3, 3
+    t2 = t1 / 2
+
+    t2.should eq(Time::Span.new(1, 13, 31, 31, 501) + Time::Span.new(5000))
+
+    # TODO check overflow
+  end
+
   it "test to_s" do
     t1 = Time::Span.new 1, 2, 3, 4, 5
     t2 = -t1
