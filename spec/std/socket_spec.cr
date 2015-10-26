@@ -243,10 +243,10 @@ describe "UDPSocket" do
   end
 
   it "sends and receives messages by sendto and recvfrom over IPv4" do
-    server = UDPSocket.new
-    server.bind("localhost", 12347)
+    server = UDPSocket.new(Socket::Family::INET)
+    server.bind("127.0.0.1", 12347)
 
-    client = UDPSocket.new
+    client = UDPSocket.new(Socket::Family::INET)
 
     client.sendto("message equal to buffer".to_slice, server.addr)
     message1, addr1 = server.recvfrom(23)
@@ -281,7 +281,7 @@ describe "UDPSocket" do
   end
 
   it "broadcast messages" do
-    client = UDPSocket.new
+    client = UDPSocket.new(Socket::Family::INET)
     client.connect("255.255.255.255", 12349)
     client.broadcast = true
     client.broadcast?.should be_true
