@@ -39,8 +39,16 @@ class Markdown::Parser
       return render_horizontal_rule
     end
 
-    if starts_with_star? line
-      return render_unordered_list
+    if starts_with_star?(line)
+      return render_unordered_list('*')
+    end
+
+    if starts_with_plus?(line)
+      return render_unordered_list('+')
+    end
+
+    if starts_with_hyphen?(line)
+      return render_unordered_list('-')
     end
 
     if starts_with_backticks? line
@@ -168,7 +176,7 @@ class Markdown::Parser
     append_double_newline_if_has_more
   end
 
-  def render_unordered_list
+  def render_unordered_list(prefix = '*')
     @renderer.begin_unordered_list
 
     while true
@@ -184,10 +192,14 @@ class Markdown::Parser
         next
       end
 
-      break unless starts_with_star? line
+      break unless (
+        (prefix == '*' && starts_with_star?(line)) ||
+        (prefix == '+' && starts_with_plus?(line)) ||
+        (prefix == '-' && starts_with_hyphen?(line))
+      )
 
       @renderer.begin_list_item
-      process_line line.byte_slice(line.index('*').not_nil! + 1)
+      process_line line.byte_slice(line.index(prefix).not_nil! + 1)
       @renderer.end_list_item
       @line += 1
 
@@ -462,6 +474,40 @@ class Markdown::Parser
 
     return false unless pos < bytesize
     return false unless str[pos].chr == '*'
+
+    pos += 1
+
+    return false unless pos < bytesize
+    str[pos].chr.whitespace?
+  end
+
+  def starts_with_plus?(line)
+    bytesize = line.bytesize
+    str = line.to_unsafe
+    pos = 0
+    while pos < bytesize && str[pos].chr.whitespace?
+      pos += 1
+    end
+
+    return false unless pos < bytesize
+    return false unless str[pos].chr == '+'
+
+    pos += 1
+
+    return false unless pos < bytesize
+    str[pos].chr.whitespace?
+  end
+
+  def starts_with_hyphen?(line)
+    bytesize = line.bytesize
+    str = line.to_unsafe
+    pos = 0
+    while pos < bytesize && str[pos].chr.whitespace?
+      pos += 1
+    end
+
+    return false unless pos < bytesize
+    return false unless str[pos].chr == '-'
 
     pos += 1
 
