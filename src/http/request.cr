@@ -61,7 +61,7 @@ class HTTP::Request
     nil
   end
 
-  # Lazily parses request's path component.
+  # Lazily parses and return the request's path component.
   def path
     uri.path
   end
@@ -71,7 +71,7 @@ class HTTP::Request
     uri.path = path
   end
 
-  # Lazily parses request's query component.
+  # Lazily parses and returns the request's query component.
   def query
     update_uri
     uri.query
