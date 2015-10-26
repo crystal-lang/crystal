@@ -282,9 +282,9 @@ describe "UDPSocket" do
 
   it "broadcast messages" do
     client = UDPSocket.new(Socket::Family::INET)
-    client.connect("255.255.255.255", 12349)
     client.broadcast = true
     client.broadcast?.should be_true
+    client.connect("255.255.255.255", 12349)
     client.send("broadcast".to_slice).should eq(9)
     client.close
   end
