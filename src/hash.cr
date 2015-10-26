@@ -171,6 +171,44 @@ class Hash(K, V)
     indexes.map {|index| self[index] }
   end
 
+  # Returns the first key with the given *value*, else raises `KeyError`.
+  #
+  # ```
+  # hash = {"foo": "bar", "baz": "qux"}
+  # hash.key("bar")    #=> "foo"
+  # hash.key("qux")    #=> "baz"
+  # hash.key("foobar") #=> Missing hash key for value: foobar (KeyError)
+  # ```
+  def key(value)
+    key(value) { raise KeyError.new "Missing hash key for value: #{value}" }
+  end
+
+  # Returns the first key with the given *value*, else `nil`.
+  #
+  # ```
+  # hash = {"foo": "bar", "baz": "qux"}
+  # hash.key?("bar")    #=> "foo"
+  # hash.key?("qux")    #=> "baz"
+  # hash.key?("foobar") #=> nil
+  # ```
+  def key?(value)
+    key(value) { nil }
+  end
+
+  # Returns the first key with the given *value*, else yields *value* with the given block.
+  #
+  # ```
+  # hash = { "foo" => "bar" }
+  # hash.key("bar") { |value| value.upcase } #=> "foo"
+  # hash.key("qux") { |value| value.upcase } #=> "QUX"
+  # ```
+  def key(value)
+    each do |k, v|
+      return k if v == value
+    end   
+    yield value
+  end
+
   # Deletes the key-value pair and returns the value.
   #
   # ```
