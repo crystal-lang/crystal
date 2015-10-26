@@ -3000,6 +3000,8 @@ module Crystal
           node_ensure.accept self
 
           @vars = after_handler_vars
+        else
+          @vars = exception_handler_vars
         end
 
         # However, those previous variables can't be nil afterwards:

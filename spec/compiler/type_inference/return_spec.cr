@@ -132,4 +132,20 @@ describe "Type inference: return" do
       foo.bar
       )) { no_return }
   end
+
+  it "types bug (#1823)" do
+    assert_type(%(
+      def test
+        b = nil
+
+        begin
+        rescue
+          b ? return 1 : return 2
+        end
+
+        b
+      end
+
+      test)) { nilable int32 }
+  end
 end

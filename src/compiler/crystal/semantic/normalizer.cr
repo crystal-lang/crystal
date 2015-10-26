@@ -38,7 +38,7 @@ module Crystal
       case node
       when Return, Break, Next
         @dead_code = true
-      when If, Unless, Expressions, Block
+      when If, Unless, Expressions, Block, Assign
        # Skip
       else
         @dead_code = false
@@ -322,6 +322,17 @@ module Crystal
       node.raise "while requiring \"#{node.string}\"", ex
     rescue ex
       node.raise "while requiring \"#{node.string}\": #{ex.message}"
+    end
+
+    # Check if the right hand side is dead code
+    def transform(node : Assign)
+      super
+
+      if @dead_code
+        node.value
+      else
+        node
+      end
     end
 
     def new_temp_var
