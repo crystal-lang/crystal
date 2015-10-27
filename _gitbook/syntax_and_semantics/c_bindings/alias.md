@@ -34,4 +34,4 @@ lib C
 end
 ```
 
-Refer to the [type grammar](type_grammar.html) for the notation used in alias types.
+Refer to the [type grammar](../type_grammar.html) for the notation used in alias types.
