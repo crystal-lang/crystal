@@ -1,32 +1,23 @@
 require "spec"
 require "socket"
 
-describe "Socket::Addr" do
-  it "transforms into C SockAddr struct IPv4" do
-    addr1 = Socket::Addr.new("AF_INET", 8080.to_u16, "127.0.0.1")
-    sockaddr = addr1.to_sockaddr
-    addr2 = Socket::Addr.new(sockaddr)
+describe "Socket::IPAddr" do
+  it "transforms an IPv4 address into a C struct and back again" do
+    addr1 = Socket::IPAddr.new(Socket::Family::INET, "127.0.0.1", 8080.to_i16)
+    addr2 = Socket::IPAddr.new(addr1.sockaddr, addr1.addrlen)
 
     addr1.family.should eq(addr2.family)
-    addr1.ip_port.should eq(addr2.ip_port)
-    addr1.ip_address.should eq(addr2.ip_address)
+    addr1.port.should eq(addr2.port)
+    addr1.address.should eq(addr2.address)
   end
 
-  it "transforms into C SockAddr struct IPv6" do
-    addr1 = Socket::Addr.new("AF_INET6", 12345.to_u16, "2001:db8:8714:3a90::12")
-    sockaddr = addr1.to_sockaddr
-    addr2 = Socket::Addr.new(sockaddr)
+  it "transforms an IPv6 address into a C struct and back again" do
+    addr1 = Socket::IPAddr.new(Socket::Family::INET6, "2001:db8:8714:3a90::12", 8080.to_i16)
+    addr2 = Socket::IPAddr.new(addr1.sockaddr, addr1.addrlen)
 
     addr1.family.should eq(addr2.family)
-    addr1.ip_port.should eq(addr2.ip_port)
-    addr1.ip_address.should eq(addr2.ip_address)
-  end
-
-  it "raises when the address family is not IPv4 or IPv6" do
-    addr = Socket::Addr.new("AF_UNIX", "/tmp/test")
-    expect_raises(Exception, "Unsupported address family") do
-      addr.to_sockaddr
-    end
+    addr1.port.should eq(addr2.port)
+    addr1.address.should eq(addr2.address)
   end
 end
 
@@ -35,20 +26,20 @@ describe "UNIXSocket" do
     path = "/tmp/crystal-test-unix-sock"
 
     UNIXServer.open(path) do |server|
-      server.addr.family.should eq("AF_UNIX")
+      server.addr.family.should eq(Socket::Family::UNIX)
       server.addr.path.should eq(path)
 
       UNIXSocket.open(path) do |client|
-        client.addr.family.should eq("AF_UNIX")
+        client.addr.family.should eq(Socket::Family::UNIX)
         client.addr.path.should eq(path)
 
         server.accept do |sock|
           sock.sync?.should eq(server.sync?)
 
-          sock.addr.family.should eq("AF_UNIX")
+          sock.addr.family.should eq(Socket::Family::UNIX)
           sock.addr.path.should eq("")
 
-          sock.peeraddr.family.should eq("AF_UNIX")
+          sock.peeraddr.family.should eq(Socket::Family::UNIX)
           sock.peeraddr.path.should eq("")
 
           client << "ping"
@@ -57,7 +48,6 @@ describe "UNIXSocket" do
           client.gets(4).should eq("pong")
         end
       end
-
 
       # test sync flag propagation after accept
       server.sync = !server.sync?
@@ -72,7 +62,7 @@ describe "UNIXSocket" do
 
   it "creates a pair of sockets" do
     UNIXSocket.pair do |left, right|
-      left.addr.family.should eq("AF_UNIX")
+      left.addr.family.should eq(Socket::Family::UNIX)
       left.addr.path.should eq("")
 
       left << "ping"
@@ -125,9 +115,9 @@ end
 describe "TCPSocket" do
   it "sends and receives messages" do
     TCPServer.open("::", 12345) do |server|
-      server.addr.family.should eq("AF_INET6")
-      server.addr.ip_port.should eq(12345)
-      server.addr.ip_address.should eq("::")
+      server.addr.family.should eq(Socket::Family::INET6)
+      server.addr.port.should eq(12345)
+      server.addr.address.should eq("::")
 
       # test protocol specific socket options
       server.reuse_address?.should be_true # defaults to true
@@ -212,18 +202,18 @@ describe "UDPSocket" do
     server = UDPSocket.new(Socket::Family::INET6)
     server.bind("::", 12346)
 
-    server.addr.family.should eq("AF_INET6")
-    server.addr.ip_port.should eq(12346)
-    server.addr.ip_address.should eq("::")
+    server.addr.family.should eq(Socket::Family::INET6)
+    server.addr.port.should eq(12346)
+    server.addr.address.should eq("::")
 
     client = UDPSocket.new(Socket::Family::INET)
-    client.connect("localhost", 12346)
+    client.connect("127.0.0.1", 12346)
 
-    client.addr.family.should eq("AF_INET")
-    client.addr.ip_address.should eq("127.0.0.1")
-    client.peeraddr.family.should eq("AF_INET")
-    client.peeraddr.ip_port.should eq(12346)
-    client.peeraddr.ip_address.should eq("127.0.0.1")
+    client.addr.family.should eq(Socket::Family::INET)
+    client.addr.address.should eq("127.0.0.1")
+    client.peeraddr.family.should eq(Socket::Family::INET)
+    client.peeraddr.port.should eq(12346)
+    client.peeraddr.address.should eq("127.0.0.1")
 
     client << "message"
     server.gets(7).should eq("message")
@@ -242,13 +232,13 @@ describe "UDPSocket" do
     message1, addr1 = server.recvfrom(23)
     String.new(message1).should eq("message equal to buffer")
     addr1.family.should eq(server.addr.family)
-    addr1.ip_address.should eq(server.addr.ip_address)
+    addr1.address.should eq(server.addr.address)
 
     client.sendto("message less than buffer".to_slice, server.addr)
     message2, addr2 = server.recvfrom(256)
     String.new(message2).should eq("message less than buffer")
     addr2.family.should eq(server.addr.family)
-    addr2.ip_address.should eq(server.addr.ip_address)
+    addr2.address.should eq(server.addr.address)
 
     server.close
     client.close
@@ -264,7 +254,7 @@ describe "UDPSocket" do
     message, addr = server.recvfrom(1500)
     String.new(message).should eq("message")
     addr.family.should eq(server.addr.family)
-    addr.ip_address.should eq(server.addr.ip_address)
+    addr.address.should eq(server.addr.address)
 
     server.close
     client.close

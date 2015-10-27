@@ -8,11 +8,7 @@ class IPSocket < Socket
         raise Errno.new("{{method.id}}")
       end
 
-      if addrlen == sizeof(LibC::SockAddrIn6)
-        Addr.new((pointerof(sockaddr) as LibC::SockAddrIn6*).value)
-      else
-        Addr.new((pointerof(sockaddr) as LibC::SockAddrIn*).value)
-      end
+      IPAddr.new(sockaddr, addrlen)
     end
   end
 

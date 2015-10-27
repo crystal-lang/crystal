@@ -86,18 +86,9 @@ class UDPSocket < IPSocket
     add_write_event unless writers.empty?
   end
 
-  def sendto(slice : Slice(UInt8), dest_addr : Addr)
-    case dest_addr.family
-    when "AF_INET"
-      d4 = dest_addr.to_sockaddr as LibC::SockAddrIn
-      bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(d4) as LibC::SockAddr*, sizeof(LibC::SockAddrIn))
-    when "AF_INET6"
-      d6 = dest_addr.to_sockaddr as LibC::SockAddrIn6
-      bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(d6) as LibC::SockAddr*, sizeof(LibC::SockAddrIn6))
-    else
-      raise "Unsupported family"
-    end
-
+  def sendto(slice : Slice(UInt8), addr : IPAddr)
+    sockaddr = addr.sockaddr
+    bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::SockAddr*, addr.addrlen)
     if bytes_sent != -1
       return bytes_sent
     end
@@ -124,11 +115,7 @@ class UDPSocket < IPSocket
       if bytes_read != -1
         return {
           slice[0, bytes_read.to_i32],
-          if addrlen == sizeof(LibC::SockAddrIn6)
-            Addr.new((pointerof(sockaddr) as LibC::SockAddrIn6*).value)
-          else
-            Addr.new((pointerof(sockaddr) as LibC::SockAddrIn*).value)
-          end
+          IPAddr.new(sockaddr, addrlen)
         }
       end
 
