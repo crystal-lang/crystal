@@ -55,80 +55,120 @@ describe "Dir" do
     end
   end
 
-  it "tests glob with a single pattern" do
-    result = Dir["#{__DIR__}/*.cr"]
-    Dir.foreach(__DIR__) do |file|
-      next unless file.ends_with?(".cr")
-
-      result.includes?(File.join(__DIR__, file)).should be_true
+  describe "glob" do
+    it "tests glob with a single pattern" do
+      result = Dir["#{__DIR__}/data/dir/*.txt"]
+      result.should eq([
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+      ])
     end
-  end
 
-  it "tests glob with multiple patterns" do
-    result = Dir["#{__DIR__}/*.cr", "#{__DIR__}/{io,html}/*.cr"]
+    it "tests glob with multiple patterns" do
+      result = Dir["#{__DIR__}/data/dir/*.txt", "#{__DIR__}/data/dir/subdir/*.txt"]
+      result.should eq([
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir/f1.txt",
+      ])
+    end
 
-    {__DIR__, "#{__DIR__}/io", "#{__DIR__}/html"}.each do |dir|
-      Dir.foreach(dir) do |file|
-        next unless file.ends_with?(".cr")
-        result.includes?(File.join(dir, file)).should be_true
+    it "tests glob with a single pattern with block" do
+      result = [] of String
+      Dir.glob("#{__DIR__}/data/dir/*.txt") do |filename|
+        result << filename
       end
-    end
-  end
-
-  it "tests glob with a single pattern with block" do
-    result = [] of String
-    Dir.glob("#{__DIR__}/*.cr") do |filename|
-      result << filename
+      result.should eq([
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+      ])
     end
 
-    Dir.foreach(__DIR__) do |file|
-      next unless file.ends_with?(".cr")
-
-      result.includes?(File.join(__DIR__, file)).should be_true
+    it "tests a recursive glob" do
+      result = Dir["#{__DIR__}/data/dir/**/*.txt"]
+      result.should eq([
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir/f1.txt",
+        "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
+      ])
     end
-  end
-  
-  it "tests a recursive glob" do
-    result = Dir["**/*.cr"]
-    result.all? { |path| path.ends_with? ".cr" }.should be_true
-    result.any? { |path| path.ends_with? "/compiler.cr" }.should be_true
-    result.any? { |path| path.ends_with? "xml.cr" }.should be_true
-    result.any? { |path| path.ends_with? "dir.cr" }.should be_true
-  end
 
-  it "tests a recursive glob with '?'" do
-    result = Dir["**/??r.cr"]
-    result.all? { |path| path.ends_with? ".cr" }.should be_true
-    result.any? { |path| path.ends_with? "/compiler.cr" }.should be_false
-    result.any? { |path| path.ends_with? "xml.cr" }.should be_false
-    result.any? { |path| path.ends_with? "dir.cr" }.should be_true
-  end
-  
-  it "tests a recursive glob with alternation" do
-    result = Dir["{spec/std,src}/**/*.cr"]
-    result.any? { |path| path.ends_with? "array_spec.cr" }.should be_true
-    result.any? { |path| path.ends_with? "compiler.cr" }.should be_true
-    result.any? { |path| path.ends_with? "brainfuck.cr" }.should be_false
-  end
+    it "tests a recursive glob with '?'" do
+      result = Dir["#{__DIR__}/data/dir/f?.tx?"]
+      result.should eq([
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/f3.txx",
+      ])
+    end
 
-  it "tests a glob with alternation" do
-    result = Dir["src/file{/*.cr,.cr}"]
-    result.any? { |path| path.ends_with? "stat.cr" }.should be_true
-    result.any? { |path| path.ends_with? "file.cr" }.should be_true
-    result.any? { |path| path.ends_with? "file_utils.cr" }.should be_false
-  end
+    it "tests a recursive glob with alternation" do
+      result = Dir["#{__DIR__}/data/{dir,dir/subdir}/*.txt"]
+      result.should eq([
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir/f1.txt",
+      ])
+    end
 
-  it "tests a glob with recursion inside alternation" do
-    result = Dir["spec/{**/*_spec,spec_helper}.cr"]
-    result.any? { |path| path.ends_with? "all_spec.cr" }.should be_true
-    result.any? { |path| path.ends_with? "spec_helper.cr" }.should be_true
-  end
+    it "tests a glob with recursion inside alternation" do
+      result = Dir["#{__DIR__}/data/dir/{**/*.txt,**/*.txx}"]
+      result.should eq([
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/f3.txx",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir/f1.txt",
+        "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
+      ])
+    end
 
-  it "tests a recursive glob with nested alternations" do
-    result = Dir["src/i{?,{terable,terator}}.cr"]
-    result.any? { |path| path.ends_with? "iterable.cr" }.should be_true
-    result.any? { |path| path.ends_with? "iterator.cr" }.should be_true
-    result.any? { |path| path.ends_with? "io.cr" }.should be_true
+    it "tests a recursive glob with nested alternations" do
+      result = Dir["#{__DIR__}/data/dir/{?1.*,{f,g}2.txt}"]
+      result.should eq([
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+      ])
+    end
+
+    it "tests with *" do
+      result = Dir["#{__DIR__}/data/dir/*"]
+      result.should eq([
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/f3.txx",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir",
+        "#{__DIR__}/data/dir/subdir2",
+      ])
+    end
+
+    it "tests with ** (same as *)" do
+      result = Dir["#{__DIR__}/data/dir/**"]
+      result.should eq([
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/f3.txx",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir",
+        "#{__DIR__}/data/dir/subdir2",
+      ])
+    end
+
+    it "tests with */" do
+      result = Dir["#{__DIR__}/data/dir/*/"]
+      result.should eq([
+        "#{__DIR__}/data/dir/subdir/",
+        "#{__DIR__}/data/dir/subdir2/",
+      ])
+    end
   end
 
   describe "cd" do
