@@ -1,5 +1,4 @@
 lib LibC
-  alias UInt16T = UShort
   alias SocklenT = UInt
 
   ifdef darwin
@@ -163,8 +162,8 @@ lib LibC
   fun socketpair(domain : Int, t : Int, protocol : Int, sockets : StaticArray(Int, 2)*) : Int
   fun inet_pton(af : Int, src : Char*, dst : Void*) : Int
   fun inet_ntop(af : Int, src : Void*, dst : Char*, size : SocklenT) : Char*
-  fun htons(n : UInt16T) : UInt16T
-  fun ntohs(n : UInt16T) : UInt16T
+  fun htons(n : UInt16) : UInt16
+  fun ntohs(n : UInt16) : UInt16
   fun bind(fd : Int, addr : SockAddr*, addr_len : SocklenT) : Int
   fun listen(fd : Int, backlog : Int) : Int
   fun accept(fd : Int, addr : SockAddr*, addr_len : SocklenT*) : Int
