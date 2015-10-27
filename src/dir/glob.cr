@@ -1,7 +1,4 @@
 class Dir
-  class GlobError < Exception
-  end
-
   def self.[](*patterns)
     glob(patterns)
   end
