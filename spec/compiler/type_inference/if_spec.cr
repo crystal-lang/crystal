@@ -80,4 +80,11 @@ describe "Type inference: if" do
       n
       )) { int32 }
   end
+
+  it "restricts the type of the right hand side of an || when using is_a? (#1728)" do
+    assert_type(%(
+      n = 3 || "foobar"
+      n.is_a?(String) || (n + 1 == 2)
+      )) { bool }
+  end
 end

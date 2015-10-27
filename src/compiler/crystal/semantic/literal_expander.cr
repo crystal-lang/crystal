@@ -236,7 +236,7 @@ module Crystal
         left = left.expressions.first
       end
 
-      new_node = if left.is_a?(Var)
+      new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
                    If.new(left, left.clone, node.right)
                  elsif left.is_a?(Assign) && left.target.is_a?(Var)
                    If.new(left, left.target.clone, node.right)
