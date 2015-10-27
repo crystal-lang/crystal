@@ -1,18 +1,14 @@
 class IPSocket < Socket
   macro sockname(name, method)
     def {{name.id}}
-      addr = uninitialized LibC::SockAddrIn6
+      sockaddr = uninitialized LibC::SockAddrIn6
       addrlen = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
 
       if LibC.{{method.id}}(fd, pointerof(sockaddr) as LibC::SockAddr*, pointerof(addrlen)) != 0
         raise Errno.new("{{method.id}}")
       end
 
-      if addrlen == sizeof(LibC::SockAddrIn6)
-        Addr.new((pointerof(sockaddr) as LibC::SockAddrIn6*).value)
-      else
-        Addr.new((pointerof(sockaddr) as LibC::SockAddrIn*).value)
-      end
+      IPAddr.new(sockaddr, addrlen)
     end
   end
 

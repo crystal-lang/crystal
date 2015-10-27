@@ -51,10 +51,10 @@ class UNIXSocket < Socket
   end
 
   def addr
-    Addr.new("AF_UNIX", path.to_s)
+    UNIXAddr.new(path.to_s)
   end
 
   def peeraddr
-    Addr.new("AF_UNIX", path.to_s)
+    UNIXAddr.new(path.to_s)
   end
 end
