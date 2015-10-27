@@ -345,10 +345,16 @@ struct Int
     yield ptr, count
   end
 
+  # Writes this integer to the given *io* in the given *format*.
+  #
+  # See `IO#write_bytes`.
   def to_io(io : IO, format : IO::ByteFormat)
     format.encode(self, io)
   end
 
+  # Reads an integer from the given *io* in the given *format*.
+  #
+  # See `IO#read_bytes`.
   def self.from_io(io : IO, format : IO::ByteFormat)
     format.decode(self, io)
   end

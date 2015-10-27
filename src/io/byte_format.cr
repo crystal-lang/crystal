@@ -1,7 +1,9 @@
+# Defines a byte format to encode integers and floats.
 module IO::ByteFormat
   abstract def encode(int : Int::Primitive, io : IO)
-  abstract def decode(type : Int::Primitive.class, io : IO)
   abstract def encode(int : Float::Primitive, io : IO)
+
+  abstract def decode(type : Int::Primitive.class, io : IO)
   abstract def decode(type : Float::Primitive.class, io : IO)
 
   def encode(float : Float32, io : IO)

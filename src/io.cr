@@ -620,10 +620,34 @@ module IO
     write Slice.new(pointerof(x), 1)
   end
 
+  # Writes the given object to this IO using the specified *format*.
+  # This ends up invoking `object.to_io(self, format)`, so any object defining
+  # a `to_io` method can be written in this way.
+  #
+  # See `Int#to_io` and `Float#to_io`.
+  #
+  # ```
+  # io = MemoryIO.new
+  # io.write_bytes(0x01020304, IO::ByteFormat::LittleEndian)
+  # io.rewind
+  # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
+  # ```
   def write_bytes(object, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
     object.to_io(self, format)
   end
 
+  # Reads an instance of the given *type* from this IO using the specified *format*.
+  # This ends up invoking `type.to_io(self, forma)`, so any type defining a `to_io`
+  # method can be read in this way.
+  #
+  # See `Int#from_io` and `Float#from_io`.
+  #
+  # ```
+  # io = MemoryIO.new
+  # io.puts "\u{4}\u{3}\u{2}\u{1}"
+  # io.rewind
+  # io.read_bytes(Int32, IO::ByteFormat::LittleEndian) # => 0x01020304
+  # ```
   def read_bytes(type, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
     type.from_io(self, format)
   end
