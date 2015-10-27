@@ -100,12 +100,7 @@ class Markdown::Parser
         break
       end
 
-      if (
-        starts_with_bullet_list_marker?(line, '*') ||
-        starts_with_bullet_list_marker?(line, '+') ||
-        starts_with_bullet_list_marker?(line, '-') ||
-        starts_with_backticks?(line) || starts_with_digits_dot?(line)
-      )
+      if (starts_with_bullet_list_marker?(line) || starts_with_backticks?(line) || starts_with_digits_dot?(line))
         break
       end
 
@@ -465,7 +460,7 @@ class Markdown::Parser
     end
   end
 
-  def starts_with_bullet_list_marker?(line, prefix = '*')
+  def starts_with_bullet_list_marker?(line, prefix = nil)
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
@@ -474,7 +469,7 @@ class Markdown::Parser
     end
 
     return false unless pos < bytesize
-    return false unless str[pos].chr == prefix
+    return false unless prefix ? str[pos].chr == prefix : (str[pos].chr == '*' || str[pos].chr == '-' || str[pos].chr == '+')
 
     pos += 1
 
