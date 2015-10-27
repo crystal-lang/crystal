@@ -1904,7 +1904,7 @@ module Crystal
         write "("
         has_parentheses = true
         has_newlines, found_comment = format_call_args(node, true)
-        skip_space
+        found_comment ||= skip_space
         if @token.type == :NEWLINE
           ends_with_newline = true
         end
@@ -2062,6 +2062,8 @@ module Crystal
             end
             write_indent(column)
           end
+        elsif found_comment
+          write_indent(column)
         end
         check :")"
 

@@ -764,4 +764,5 @@ describe Crystal::Formatter do
   assert_format "begin\nend\n\n# a\n", "begin\n\nend\n\n# a"
   assert_format "begin\n  1\nend\n\n1\n", "begin\n  1\nend\n\n1"
   assert_format "{\n  \"a\" => 1, \"b\" => 2,\n  \"foo\" => 3, \"bar\" => 4,\n  \"coconio\" => 5, \"lala\" => 6,\n}\n", "{\n  \"a\" => 1, \"b\" => 2,\n  \"foo\" => 3, \"bar\" => 4,\n  \"coconio\" => 5, \"lala\" => 6,\n}"
+  assert_format "if 1\n  foo(\n    1,\n    2 # lala\n    )\nend\n", "if 1\n  foo(\n    1,\n    2 # lala\n  )\nend"
 end
