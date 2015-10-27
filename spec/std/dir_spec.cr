@@ -1,5 +1,10 @@
 require "spec"
 
+private def assert_dir_glob(*patterns, expected_result)
+  result = Dir[*patterns]
+  result.sort.should eq(expected_result.sort)
+end
+
 describe "Dir" do
   it "tests exists? on existing directory" do
     Dir.exists?(File.join([__DIR__, "../"])).should be_true
@@ -57,22 +62,22 @@ describe "Dir" do
 
   describe "glob" do
     it "tests glob with a single pattern" do
-      result = Dir["#{__DIR__}/data/dir/*.txt"]
-      result.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-      ])
+      assert_dir_glob "#{__DIR__}/data/dir/*.txt",
+        [
+          "#{__DIR__}/data/dir/f1.txt",
+          "#{__DIR__}/data/dir/f2.txt",
+          "#{__DIR__}/data/dir/g2.txt",
+        ]
     end
 
     it "tests glob with multiple patterns" do
-      result = Dir["#{__DIR__}/data/dir/*.txt", "#{__DIR__}/data/dir/subdir/*.txt"]
-      result.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-      ])
+      assert_dir_glob "#{__DIR__}/data/dir/*.txt", "#{__DIR__}/data/dir/subdir/*.txt",
+        [
+          "#{__DIR__}/data/dir/f1.txt",
+          "#{__DIR__}/data/dir/f2.txt",
+          "#{__DIR__}/data/dir/g2.txt",
+          "#{__DIR__}/data/dir/subdir/f1.txt",
+        ]
     end
 
     it "tests glob with a single pattern with block" do
@@ -80,94 +85,94 @@ describe "Dir" do
       Dir.glob("#{__DIR__}/data/dir/*.txt") do |filename|
         result << filename
       end
-      result.should eq([
+      result.sort.should eq([
         "#{__DIR__}/data/dir/f1.txt",
         "#{__DIR__}/data/dir/f2.txt",
         "#{__DIR__}/data/dir/g2.txt",
-      ])
+      ].sort)
     end
 
     it "tests a recursive glob" do
-      result = Dir["#{__DIR__}/data/dir/**/*.txt"]
-      result.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-        "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
-      ])
+      assert_dir_glob "#{__DIR__}/data/dir/**/*.txt",
+        [
+          "#{__DIR__}/data/dir/f1.txt",
+          "#{__DIR__}/data/dir/f2.txt",
+          "#{__DIR__}/data/dir/g2.txt",
+          "#{__DIR__}/data/dir/subdir/f1.txt",
+          "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
+        ]
     end
 
     it "tests a recursive glob with '?'" do
-      result = Dir["#{__DIR__}/data/dir/f?.tx?"]
-      result.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-      ])
+      assert_dir_glob "#{__DIR__}/data/dir/f?.tx?",
+        [
+          "#{__DIR__}/data/dir/f1.txt",
+          "#{__DIR__}/data/dir/f2.txt",
+          "#{__DIR__}/data/dir/f3.txx",
+        ]
     end
 
     it "tests a recursive glob with alternation" do
-      result = Dir["#{__DIR__}/data/{dir,dir/subdir}/*.txt"]
-      result.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-      ])
+      assert_dir_glob "#{__DIR__}/data/{dir,dir/subdir}/*.txt",
+        [
+          "#{__DIR__}/data/dir/f1.txt",
+          "#{__DIR__}/data/dir/f2.txt",
+          "#{__DIR__}/data/dir/g2.txt",
+          "#{__DIR__}/data/dir/subdir/f1.txt",
+        ]
     end
 
     it "tests a glob with recursion inside alternation" do
-      result = Dir["#{__DIR__}/data/dir/{**/*.txt,**/*.txx}"]
-      result.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir/f1.txt",
-        "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
-      ])
+      assert_dir_glob "#{__DIR__}/data/dir/{**/*.txt,**/*.txx}",
+        [
+          "#{__DIR__}/data/dir/f1.txt",
+          "#{__DIR__}/data/dir/f2.txt",
+          "#{__DIR__}/data/dir/f3.txx",
+          "#{__DIR__}/data/dir/g2.txt",
+          "#{__DIR__}/data/dir/subdir/f1.txt",
+          "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
+        ]
     end
 
     it "tests a recursive glob with nested alternations" do
-      result = Dir["#{__DIR__}/data/dir/{?1.*,{f,g}2.txt}"]
-      result.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/g2.txt",
-      ])
+      assert_dir_glob "#{__DIR__}/data/dir/{?1.*,{f,g}2.txt}",
+        [
+          "#{__DIR__}/data/dir/f1.txt",
+          "#{__DIR__}/data/dir/f2.txt",
+          "#{__DIR__}/data/dir/g2.txt",
+        ]
     end
 
     it "tests with *" do
-      result = Dir["#{__DIR__}/data/dir/*"]
-      result.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir",
-        "#{__DIR__}/data/dir/subdir2",
-      ])
+      assert_dir_glob "#{__DIR__}/data/dir/*",
+        [
+          "#{__DIR__}/data/dir/f1.txt",
+          "#{__DIR__}/data/dir/f2.txt",
+          "#{__DIR__}/data/dir/f3.txx",
+          "#{__DIR__}/data/dir/g2.txt",
+          "#{__DIR__}/data/dir/subdir",
+          "#{__DIR__}/data/dir/subdir2",
+        ]
     end
 
     it "tests with ** (same as *)" do
-      result = Dir["#{__DIR__}/data/dir/**"]
-      result.should eq([
-        "#{__DIR__}/data/dir/f1.txt",
-        "#{__DIR__}/data/dir/f2.txt",
-        "#{__DIR__}/data/dir/f3.txx",
-        "#{__DIR__}/data/dir/g2.txt",
-        "#{__DIR__}/data/dir/subdir",
-        "#{__DIR__}/data/dir/subdir2",
-      ])
+      assert_dir_glob "#{__DIR__}/data/dir/**",
+        [
+          "#{__DIR__}/data/dir/f1.txt",
+          "#{__DIR__}/data/dir/f2.txt",
+          "#{__DIR__}/data/dir/f3.txx",
+          "#{__DIR__}/data/dir/g2.txt",
+          "#{__DIR__}/data/dir/subdir",
+          "#{__DIR__}/data/dir/subdir2",
+        ]
     end
 
     it "tests with */" do
-      result = Dir["#{__DIR__}/data/dir/*/"]
-      result.should eq([
-        "#{__DIR__}/data/dir/subdir/",
-        "#{__DIR__}/data/dir/subdir2/",
-      ])
+      assert_dir_glob "#{__DIR__}/data/dir/*/",
+        [
+          "#{__DIR__}/data/dir/subdir/",
+          "#{__DIR__}/data/dir/subdir2/",
+        ]
     end
   end
 
