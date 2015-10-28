@@ -121,6 +121,7 @@ h1.type-name {
   bottom: 0;
   overflow: auto;
   background-color: #1A0435;
+  -webkit-overflow-scrolling: touch;
 }
 
 #side-list #types-list.current,
@@ -208,6 +209,7 @@ h1.type-name {
   left: 20%;
   right: 0;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .kind {
