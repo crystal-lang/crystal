@@ -156,7 +156,7 @@ h1.type-name {
 
 #side-list #methods-list a small {
   margin-top: 5px;
-  font-size: 50%;
+  font-size: 12px;
 }
 
 #side-list .current > a,
@@ -185,7 +185,7 @@ h1.type-name {
   left: 0;
   text-align: center;
   color: white;
-  font-size: 8px;
+  font-size: 12px;
   line-height: 30px;
   cursor: pointer;
 }
