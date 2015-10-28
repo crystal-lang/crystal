@@ -86,4 +86,4 @@ change_it tz
 tz.minutes_west #=> 0
 ```
 
-Refer to the [type grammar](type_grammar.html) for the notation used in struct field types.
+Refer to the [type grammar](../type_grammar.html) for the notation used in struct field types.
