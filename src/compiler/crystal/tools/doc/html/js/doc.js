@@ -232,7 +232,12 @@ document.addEventListener('DOMContentLoaded', function() {
   fuzzySearch.addEventListener('change', function() {
     var text = searchInput.value;
     search(text);
-    sessionStorage.setItem(repositoryName + ':::fuzzySearch', fuzzySearch.checked);
+
+    if(fuzzySearch.checked) {
+      sessionStorage.setItem(repositoryName + ':::fuzzySearch', 'true');
+    } else {
+      sessionStorage.removeItem(repositoryName + ':::fuzzySearch');
+    }
   });
 
   var searchTimeout;
