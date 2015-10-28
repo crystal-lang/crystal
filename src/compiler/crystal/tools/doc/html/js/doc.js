@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
   var searchInput = document.getElementById('search-input');
   var parents = document.querySelectorAll('#types-list li.parent');
   var tabSelectors = document.querySelectorAll('#search-box ul li a');
+  var wrapper = document.getElementById('wrapper');
+  var main = document.getElementById('main-content');
+  var sidebarOpener = document.getElementById('sidebar-opener');
 
   for(var i = 0; i < parents.length; i++) {
     var _parent = parents[i];
@@ -114,6 +117,22 @@ document.addEventListener('DOMContentLoaded', function() {
       search(text);
       sessionStorage.setItem(repositoryName + ':::searchText', text);
     }, 200);
+  });
+
+  sidebarOpener.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    wrapper.className = 'sidebar-opened';
+  });
+
+  main.addEventListener('click', function(e) {
+    if(wrapper.className.indexOf('sidebar-opened') == -1) {
+      return;
+    }
+
+    e.preventDefault();
+    wrapper.className = '';
   });
 
   typesList.onscroll = function() {

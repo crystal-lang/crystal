@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta id="repository-name" content="<%= repository_name %>">
   <link href="css/style.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="js/doc.js"></script>
@@ -9,6 +10,7 @@
 </head>
 <body>
 
+<div id="wrapper">
 <div id="side-list">
   <div id="search-box">
     <input type="search" id="search-input" placeholder="Search...">
@@ -35,7 +37,10 @@
 </div>
 
 <div id="main-content">
+  <a href="#" id="sidebar-opener">Search or Types list</a>
+
 <%= body %>
+</div>
 </div>
 </body>
 </html>
