@@ -6,7 +6,7 @@ When:
 * specifying [type arguments](generics.html)
 * [declaring variables](declare_var.html)
 * declaring [aliases](alias.html)
-* declaring [typedefs](type.html)
+* declaring [typedefs](c_bindings/type.html)
 * the argument of an [is_a?](is_a.html) pseudo-call
 * the argument of an [as](as.html) expression
 * the argument of a [sizeof](sizeof.html) expression
