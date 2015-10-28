@@ -339,7 +339,8 @@ struct Enum
   # end
 
   # Returns the enum member that has the given name, or
-  # raises if no such member exists. The lookup is case-insensitive.
+  # raises if no such member exists. The comparison is made by using
+  # `String#camelcase` between *string* and the enum members names.
   #
   # ```
   # Color.parse("Red")    #=> Color::Red
@@ -351,7 +352,8 @@ struct Enum
   end
 
   # Returns the enum member that has the given name, or
-  # `nil` if no such member exists. The lookup is case-insensitive.
+  # `nil` if no such member exists. The comparison is made by using
+  # `String#camelcase` between *string* and the enum members names.
   #
   # ```
   # Color.parse?("Red")    #=> Color::Red
