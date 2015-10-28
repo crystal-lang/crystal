@@ -174,6 +174,15 @@ describe "Dir" do
           "#{__DIR__}/data/dir/subdir2/",
         ]
     end
+
+    it "tests glob with a single pattern with extra slashes" do
+      assert_dir_glob "#{__DIR__}////data////dir////*.txt",
+        [
+          "#{__DIR__}/data/dir/f1.txt",
+          "#{__DIR__}/data/dir/f2.txt",
+          "#{__DIR__}/data/dir/g2.txt",
+        ]
+    end
   end
 
   describe "cd" do

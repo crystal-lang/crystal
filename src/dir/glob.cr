@@ -59,21 +59,35 @@ class Dir
       lastidx = 0
       depth = 0
       escaped = false
-      ptrn.each_char_with_index do |c, i|
-        if c == '\\'
-          escaped = true
-          next
-        elsif c == File::SEPARATOR
-          depth += 1
-          lastidx = i
-        elsif !escaped && special.includes? c
-          break
+      last_is_file_separator = false
+      count = 0
+      nested_path = String.build do |str|
+        ptrn.each_char_with_index do |c, i|
+          if c == '\\'
+            escaped = true
+            last_is_file_separator = false
+            next
+          elsif c == File::SEPARATOR
+            unless last_is_file_separator
+              depth += 1
+              str << c
+              count += 1
+            end
+            lastidx = count
+            last_is_file_separator = true
+          elsif !escaped && special.includes? c
+            break
+          else
+            last_is_file_separator = false
+            str << c
+            count += 1
+          end
+          escaped = false
         end
-        escaped = false
       end
+      nested_path = nested_path[0...lastidx]
 
       recursion_depth -= depth if recursion_depth != Int32::MAX
-      nested_path = ptrn[0...lastidx]
       dir = File.join(dir, nested_path)
       if !nested_path.empty? && nested_path[0] == File::SEPARATOR
         nested_path = nested_path[1..-1]
@@ -102,6 +116,8 @@ class Dir
     # characters which must be escaped in a PCRE regex:
     escaped = {'$', '(', ')', '+', '.', '[', '^', '|', '/'}
 
+    last_is_file_separator = false
+
     regex_pattern = String.build do |str|
       str << "\\A"
       idx = 0
@@ -112,6 +128,14 @@ class Dir
 
       while idx < size
         char = pattern[idx]
+
+        if last_is_file_separator && char == File::SEPARATOR
+          idx += 1
+          next
+        end
+
+        last_is_file_separator = char == File::SEPARATOR
+
         if char == '\\'
           if idx + 1 < size && escapable.includes?(peek = pattern[idx + 1])
             str << '\\'
