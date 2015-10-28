@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.5" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.7.5" data-basepath=".." data-revision="Wed Oct 28 2015 19:27:22 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2120,13 +2120,6 @@ box.value = <span class="hljs-string">&quot;hello&quot;</span>       <span class
 <li>Because <code>MyBox</code> is actually <code>MyBox(T)</code>, and <code>T</code> is both a free variable and a type argument, <code>T</code> becomes the type of the passed value</li>
 </ul>
 <p>In this way generic types are less tedious to work with.</p>
-<h2 id="other-uses-for-generic-types">Other uses for generic types</h2>
-<p>Although generic types are usually associated with containers, they can also be used to improve execution performance at the cost of a larger executable size. The main trick is to use a generic type to avoid runtime method dispatch. For example there&apos;s the standard library&apos;s <code>BufferedIO(T)</code>:</p>
-<pre><code class="lang-crystal">file = <span class="hljs-constant">File</span>.open(<span class="hljs-string">&quot;myfile.txt&quot;</span>)
-io = <span class="hljs-constant">BufferedIO</span>.new(file) <span class="hljs-comment">#:: BufferedIO(File)</span>
-io.gets
-</code></pre>
-<p>That <code>io</code> variable is a specified <code>BufferedIO(File)</code> instance, so invoking <code>gets</code> on it will end up invoking <code>File#gets</code>. If <code>BufferedIO</code> wasn&apos;t generic, that <code>gets</code> call would make a dispatch over all the <code>IO</code> types that were used to create buffered IOs. It being generic avoids this dispatch and gives better opportunities for the optimizer to inline stuff. However, each instantiation of <code>BufferedIO</code> will repeat almost the same code, but this is usually not as important as execution performance. Furthermore, many method calls will be inlined.</p>
 <h2 id="generic-structs-and-modules">Generic structs and modules</h2>
 <p>Structs and modules can be generic too. When a module is generic you include it like this:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Moo</span>(<span class="hljs-title">T</span>)</span>
