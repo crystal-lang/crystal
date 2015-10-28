@@ -178,18 +178,6 @@ In the above code we didn't have to specify the type arguments of `MyBox`, the c
 
 In this way generic types are less tedious to work with.
 
-## Other uses for generic types
-
-Although generic types are usually associated with containers, they can also be used to improve execution performance at the cost of a larger executable size. The main trick is to use a generic type to avoid runtime method dispatch. For example there's the standard library's `BufferedIO(T)`:
-
-```crystal
-file = File.open("myfile.txt")
-io = BufferedIO.new(file) #:: BufferedIO(File)
-io.gets
-```
-
-That `io` variable is a specified `BufferedIO(File)` instance, so invoking `gets` on it will end up invoking `File#gets`. If `BufferedIO` wasn't generic, that `gets` call would make a dispatch over all the `IO` types that were used to create buffered IOs. It being generic avoids this dispatch and gives better opportunities for the optimizer to inline stuff. However, each instantiation of `BufferedIO` will repeat almost the same code, but this is usually not as important as execution performance. Furthermore, many method calls will be inlined.
-
 ## Generic structs and modules
 
 Structs and modules can be generic too. When a module is generic you include it like this:
