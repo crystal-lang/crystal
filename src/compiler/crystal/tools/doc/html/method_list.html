@@ -1,6 +1,6 @@
 <% types.each do |type| %>
 <% type.class_methods.each do |method| %>
-<li>
+<li data-name="<%= method.prefix + method.name %>">
   <a href="<%= type.path_from(current_type) %><%= method.anchor %>">
     <%= method.prefix %><%= method.name %><br />
     <small><%= type.full_name %></small>
@@ -8,7 +8,7 @@
 </li>
 <% end %>
 <% type.instance_methods.each do |method| %>
-<li>
+<li data-name="<%= method.prefix + method.name %>">
   <a href="<%= type.path_from(current_type) %><%= method.anchor %>">
     <%= method.prefix %><%= method.name %><br />
     <small><%= type.full_name %></small>
@@ -16,7 +16,7 @@
 </li>
 <% end %>
 <% type.macros.each do |method| %>
-<li>
+<li data-name="<%= method.prefix + method.name %>">
   <a href="<%= type.path_from(current_type) %><%= method.anchor %>">
     <%= method.prefix %><%= method.name %><br />
     <small><%= type.full_name %></small>

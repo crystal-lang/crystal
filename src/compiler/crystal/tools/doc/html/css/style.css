@@ -57,7 +57,7 @@ h1.type-name {
   padding: 10px 5px 0 5px;
 }
 
-#side-list input {
+#side-list input[type="search"] {
   display: block;
   box-sizing: border-box;
   margin: 0;
@@ -69,6 +69,16 @@ h1.type-name {
   border: 0;
   border-radius: 50px;
   outline: 0;
+}
+
+#side-list label {
+  display: block;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 5px 10px;
+  font-size: 12px;
+  text-align: right;
+  color: #fff;
 }
 
 #side-list #search-box ul {
@@ -105,7 +115,7 @@ h1.type-name {
 #side-list #types-list,
 #side-list #methods-list {
   position: absolute;
-  top: 87px;
+  top: 115px;
   left: 0;
   right: 0;
   bottom: 0;
