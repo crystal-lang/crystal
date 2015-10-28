@@ -366,22 +366,25 @@ USAGE
         options.delete_at target_index
         cwd = Dir.working_directory
         if target_filename.starts_with?(cwd)
-          target_filename = "#{target_filename[cwd.size..-1]}"
+          target_filenames = [target_filename[cwd.size..-1]]
+        else
+          target_filenames = [target_filename]
         end
         if splitted.size == 2
           target_line = splitted[1]
           options << "-l" << target_line
         end
       elsif File.directory?(target_filename)
-        target_filename = "#{target_filename}/**"
+        target_filenames = Dir["#{target_filename}/**/*_spec.cr"]
       else
         error "'#{target_filename}' is not a file"
       end
     else
-      target_filename = "spec/**"
+      target_filenames = Dir["spec/**/*_spec.cr"]
     end
 
-    sources = [Compiler::Source.new("spec", %(require "./#{target_filename}"))]
+    source = target_filenames.map { |filename| %(require "./#{filename}") }.join("\n")
+    sources = [Compiler::Source.new("spec", source)]
 
     output_filename = tempfile "spec"
 
