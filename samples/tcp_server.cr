@@ -3,7 +3,7 @@ require "socket"
 # goes with tcp_client.cr
 
 def process(client)
-  client_addr = "#{client.peeraddr.ip_address}:#{client.peeraddr.ip_port}"
+  client_addr = "#{client.peeraddr.address}:#{client.peeraddr.port}"
   puts "#{client_addr} connected"
 
   while msg = client.read_line
