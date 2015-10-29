@@ -97,7 +97,7 @@ USAGE
     end
   rescue ex : Crystal::Exception
     ex.color = @color
-    if @config.try(&.output_format) == "json"
+    if @output_format == "json"
       puts ex.to_json
     else
       puts ex
@@ -516,7 +516,7 @@ USAGE
                       end
 
                       opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-                        output_format = f
+                        output_format = @output_format = f
                       end
 
                       opts.on("-h", "--help", "Show this message") do
@@ -612,7 +612,7 @@ USAGE
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 
-    @config = CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
+    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
   rescue ex : OptionParser::Exception
     error ex.message
   end
