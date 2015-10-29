@@ -242,6 +242,25 @@ struct Range(B, E)
     to_s(io)
   end
 
+  # If self is a `Int` range, it provides O(1) implementation,
+  # otherwise it is same as `Enumerable#sum`.
+  def sum(initial)
+    b = self.begin
+    e = self.end
+
+    if b.is_a?(Int) && e.is_a?(Int)
+      e -= 1 if @exclusive
+      n = e - b + 1
+      if n >= 0
+        initial + n * (b + e) / 2
+      else
+        initial
+      end
+    else
+      super
+    end
+  end
+
   # :nodoc:
   class ItemIterator(B, E)
     include Iterator(B)
@@ -303,6 +322,27 @@ struct Range(B, E)
       @current = @range.begin
       @reached_end = false
       self
+    end
+
+    def sum(initial)
+      super if @reached_end
+
+      b = @current
+      e = @range.end
+      d = @step
+
+      if b.is_a?(Int) && e.is_a?(Int) && d.is_a?(Int)
+        e -= 1 if @range.excludes_end?
+        n = (e - b) / d + 1
+        if n >= 0
+          e = b + (n - 1) * d
+          initial + n * (b + e) / 2
+        else
+          initial
+        end
+      else
+        super
+      end
     end
   end
 end
