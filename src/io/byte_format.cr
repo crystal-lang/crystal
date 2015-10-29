@@ -48,7 +48,7 @@ module IO::ByteFormat
           buffer :: UInt8[{{2 ** (i / 2)}}]
           io.read_fully(buffer.to_slice)
           buffer.reverse! unless SystemEndian == self
-          (buffer.to_slice.to_unsafe as Pointer({{type.id}})).value
+          (buffer.to_unsafe as Pointer({{type.id}})).value
         end
       {% end %}
     end

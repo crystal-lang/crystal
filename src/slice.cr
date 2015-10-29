@@ -174,14 +174,30 @@ struct Slice(T)
     @size == 0
   end
 
-  def each
+  # Pass each element of slice to block.
+  def each(&block)
     size.times do |i|
       yield @pointer[i]
     end
+
+    self
   end
 
   def each
     ItemIterator(T).new(self)
+  end
+
+  # Same as `#each`, but works in reverse.
+  def each_reverse(&block)
+    (size-1).downto(0) do |i|
+      yield @pointer[i]
+    end
+
+    self
+  end
+
+  def each_reverse
+    ReverseIterator(T).new(self)
   end
 
   def pointer(size)
@@ -282,13 +298,30 @@ struct Slice(T)
     end
 
     def next
-      value = @slice.at(@index) { stop }
+      return stop if @index >= @slice.size
       @index += 1
-      value
+      @slice.at(@index - 1)
     end
 
     def rewind
       @index = 0
+      self
+    end
+  end
+
+  class ReverseIterator(T)
+    include Iterator(T)
+
+    def initialize(@slice : ::Slice(T), @index = slice.size)
+    end
+
+    def next
+      return stop if @index <= 0
+      @slice.at(@index -= 1)
+    end
+
+    def rewind
+      @index = @slice.size
       self
     end
   end
