@@ -113,6 +113,18 @@ describe "Slice" do
     iter.next.should eq(1)
   end
 
+  it "does reverse iterator" do
+    slice = Slice(Int32).new(3) { |i| i + 1 }
+    iter = slice.each_reverse
+    iter.next.should eq(3)
+    iter.next.should eq(2)
+    iter.next.should eq(1)
+    iter.next.should be_a(Iterator::Stop)
+
+    iter.rewind
+    iter.next.should eq(3)
+  end
+
   it "does to_a" do
     slice = Slice.new(3) { |i| i }
     ary = slice.to_a
