@@ -141,18 +141,18 @@ describe "TCPSocket" do
         # so for now we keep it commented. Once we can force the family
         # we can uncomment them.
 
-        # client.addr.family.should eq("AF_INET")
-        # client.addr.ip_address.should eq("127.0.0.1")
+        # client.addr.family.should eq(Socket::Family::INET)
+        # client.addr.address.should eq("127.0.0.1")
 
         sock = server.accept
         sock.sync?.should eq(server.sync?)
 
-        # sock.addr.family.should eq("AF_INET6")
-        # sock.addr.ip_port.should eq(12345)
-        # sock.addr.ip_address.should eq("::ffff:127.0.0.1")
+        # sock.addr.family.should eq(Socket::Family::INET6)
+        # sock.addr.port.should eq(12345)
+        # sock.addr.address.should eq("::ffff:127.0.0.1")
 
-        # sock.peeraddr.family.should eq("AF_INET6")
-        # sock.peeraddr.ip_address.should eq("::ffff:127.0.0.1")
+        # sock.peeraddr.family.should eq(Socket::Family::INET6)
+        # sock.peeraddr.address.should eq("::ffff:127.0.0.1")
 
         # test protocol specific socket options
         (client.tcp_nodelay = true).should be_true
