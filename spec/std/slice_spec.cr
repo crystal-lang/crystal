@@ -115,7 +115,7 @@ describe "Slice" do
 
   it "does reverse iterator" do
     slice = Slice(Int32).new(3) { |i| i + 1 }
-    iter = slice.each_reverse
+    iter = slice.reverse_each
     iter.next.should eq(3)
     iter.next.should eq(2)
     iter.next.should eq(1)

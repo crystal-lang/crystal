@@ -188,7 +188,7 @@ struct Slice(T)
   end
 
   # Same as `#each`, but works in reverse.
-  def each_reverse(&block)
+  def reverse_each(&block)
     (size-1).downto(0) do |i|
       yield @pointer[i]
     end
@@ -196,7 +196,7 @@ struct Slice(T)
     self
   end
 
-  def each_reverse
+  def reverse_each
     ReverseIterator(T).new(self)
   end
 
@@ -317,7 +317,8 @@ struct Slice(T)
 
     def next
       return stop if @index <= 0
-      @slice.at(@index -= 1)
+      @index -= 1
+      @slice.at(@index)
     end
 
     def rewind
