@@ -97,7 +97,7 @@ USAGE
     end
   rescue ex : Crystal::Exception
     ex.color = @color
-    if @config.try(&.output_format) == "json"
+    if @output_format == "json"
       puts ex.to_json
     else
       puts ex
@@ -151,13 +151,16 @@ USAGE
   end
 
   private def build
-    config = create_compiler "build"
-    config.compile
+    configs = create_compiler "build"
+    configs.each(&.compile)
   end
 
   private def browser
-    config, result = compile_no_codegen "tool browser"
-    Browser.open result.original_node
+    compiles = compile_no_codegen "tool browser"
+    compiles.each do |compile|
+      config, result = compile
+      Browser.open result.original_node
+    end
   end
 
   private def eval
@@ -301,8 +304,11 @@ USAGE
   end
 
   private def hierarchy
-    config, result = compile_no_codegen "tool hierarchy", hierarchy: true
-    Crystal.print_hierarchy result.program, config.hierarchy_exp
+    compiles = compile_no_codegen "tool hierarchy", hierarchy: true
+    compiles.each do |compile|
+      config, result = compile
+      Crystal.print_hierarchy result.program, config.hierarchy_exp
+    end
   end
 
   private def implementations
@@ -318,42 +324,47 @@ USAGE
   end
 
   private def cursor_command(command)
-    config, result = compile_no_codegen command, cursor_command: true
+    compiles = compile_no_codegen command, cursor_command: true
+    compiles.each do |compile|
+      config, result = compile
 
-    format = config.output_format
+      format = config.output_format
 
-    file = ""
-    line = ""
-    col = ""
+      file = ""
+      line = ""
+      col = ""
 
-    loc = config.cursor_location.not_nil!.split(':')
-    if loc.size == 3
-      file, line, col = loc
-    end
+      loc = config.cursor_location.not_nil!.split(':')
+      if loc.size == 3
+        file, line, col = loc
+      end
 
-    file = File.expand_path(file)
+      file = File.expand_path(file)
 
-    result = yield Location.new(line.to_i, col.to_i, file), config, result
+      result = yield Location.new(line.to_i, col.to_i, file), config, result
 
-    case format
-    when "json"
-      result.to_json(STDOUT)
-    else
-      result.to_text(STDOUT)
+      case format
+      when "json"
+        result.to_json(STDOUT)
+      else
+        result.to_text(STDOUT)
+      end
     end
   end
 
   private def run_command
-    config = create_compiler "run", run: true
-    if config.specified_output
-      config.compile
-      return
+    configs = create_compiler "run", run: true
+    configs.each do |config|
+      if config.specified_output
+        config.compile
+        return
+      end
+
+      output_filename = tempfile(config.output_filename)
+
+      result = config.compile output_filename
+      execute output_filename, config.arguments unless config.compiler.no_codegen?
     end
-
-    output_filename = tempfile(config.output_filename)
-
-    result = config.compile output_filename
-    execute output_filename, config.arguments unless config.compiler.no_codegen?
   end
 
   private def run_specs
@@ -423,15 +434,20 @@ USAGE
   end
 
   private def types
-    config, result = compile_no_codegen "tool types"
-    Crystal.print_types result.original_node
+    compiles = compile_no_codegen "tool types"
+    compiles.each do |compile|
+      config, result = compile
+      Crystal.print_types result.original_node
+    end
   end
 
   private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false)
-    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
-    config.compiler.no_codegen = true
-    config.compiler.wants_doc = wants_doc
-    {config, config.compile}
+    configs = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
+    configs.map do |config|
+      config.compiler.no_codegen = true
+      config.compiler.wants_doc = wants_doc
+      {config, config.compile}
+    end
   end
 
   private def execute(output_filename, run_args)
@@ -516,7 +532,7 @@ USAGE
                       end
 
                       opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-                        output_format = f
+                        output_format = @output_format = f
                       end
 
                       opts.on("-h", "--help", "Show this message") do
@@ -586,33 +602,39 @@ USAGE
 
     compiler.link_flags = link_flags.join(" ") unless link_flags.empty?
 
-    output_filename = opt_output_filename
     filenames = opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
+
+    if filenames.size == 0
+      filenames = Dir["./src/*.cr"]
+    end
 
     if filenames.size == 0 || (cursor_command && cursor_location.nil?)
       puts option_parser
       exit 1
     end
 
-    sources = gather_sources(filenames)
-    first_filename = sources.first.filename
-    first_file_ext = File.extname(first_filename)
-    original_output_filename = File.basename(first_filename, first_file_ext)
+    filenames.map do |filename|
+      output_filename = opt_output_filename
+      source = gather_sources([filename]).first
+      filename = source.filename
+      file_ext = File.extname(filename)
+      original_output_filename = File.basename(filename, file_ext)
 
-    # Check if we'll overwrite the main source file
-    if first_file_ext.empty? && !output_filename && !no_codegen && !run && first_filename == File.expand_path(original_output_filename)
-      error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+      # Check if we'll overwrite the main source file
+      if file_ext.empty? && !output_filename && !no_codegen && !run && filename == File.expand_path(original_output_filename)
+        error "compilation will overwrite source file '#{Crystal.relative_filename(filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+      end
+
+      output_filename ||= original_output_filename
+      output_format ||= "text"
+
+      if !no_codegen && Dir.exists?(output_filename)
+        error "can't use `#{output_filename}` as output filename because it's a directory"
+      end
+
+      CompilerConfig.new compiler, source, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
     end
-
-    output_filename ||= original_output_filename
-    output_format ||= "text"
-
-    if !no_codegen && Dir.exists?(output_filename)
-      error "can't use `#{output_filename}` as output filename because it's a directory"
-    end
-
-    @config = CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
   rescue ex : OptionParser::Exception
     error ex.message
   end
