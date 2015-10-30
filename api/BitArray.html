@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2119,7 +2174,7 @@ immutable.</p>
 
 <h3>Example</h3>
 
-<pre><code><span class="k">require</span> <span class="s">"bit_array"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;bit_array&quot;</span>
 ba <span class="o">=</span> <span class="t">BitArray</span>.<span class="k">new</span>(<span class="n">12</span>) <span class="c"># =&gt; &quot;BitArray[000000000000]&quot;</span>
 ba[<span class="n">2</span>]                 <span class="c"># =&gt; false</span>
 <span class="n">0</span>.upto(<span class="n">5</span>) { <span class="o">|</span>i<span class="o">|</span> ba[i<span class="o">*</span><span class="n">2</span>] <span class="o">=</span> <span class="n">true</span> }
@@ -2149,7 +2204,7 @@ ba[<span class="n">2</span>]                 <span class="c"># =&gt; true</span>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bit_array.cr" target="_blank">bit_array.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bit_array.cr" target="_blank">bit_array.cr</a>
     
     <br/>
   
@@ -2230,7 +2285,7 @@ ba[<span class="n">2</span>]                 <span class="c"># =&gt; true</span>
   
     
 
-  <h3>Methods inherited from module <code><a href="Enumerable.html">Enumerable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Enumerable.html">Enumerable(T)</a></code></h3>
   
     <a href="Enumerable.html#all%3F-instance-method" class="tooltip">
       <span>all?<br/>all?(&block)</span>
@@ -2317,7 +2372,7 @@ ba[<span class="n">2</span>]                 <span class="c"># =&gt; true</span>
     inject</a>, 
   
     <a href="Enumerable.html#join%28separator%2Cio%2C%26block%29-instance-method" class="tooltip">
-      <span>join(separator, io, &block)<br/>join(separator = <span class="s">""</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">""</span>)</span>
+      <span>join(separator, io, &block)<br/>join(separator = <span class="s">&quot;&quot;</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">&quot;&quot;</span>)</span>
     join</a>, 
   
     <a href="Enumerable.html#map%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
@@ -2458,10 +2513,13 @@ ba[<span class="n">2</span>]                 <span class="c"># =&gt; true</span>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="Struct.html">Struct</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="Struct.html">Struct</a></code></h3>
   
     <a href="Struct.html#%3D%3D%28other%3Aself%29%3ABool-instance-method" class="tooltip">
       <span>==(other : self) : Bool</span>
@@ -2481,10 +2539,13 @@ ba[<span class="n">2</span>]                 <span class="c"># =&gt; true</span>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
   
     <a href="Value.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2500,10 +2561,13 @@ ba[<span class="n">2</span>]                 <span class="c"># =&gt; true</span>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2583,6 +2647,48 @@ ba[<span class="n">2</span>]                 <span class="c"># =&gt; true</span>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2605,7 +2711,7 @@ in the array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bit_array.cr#L27" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bit_array.cr#L27" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2633,7 +2739,7 @@ ba[<span class="n">3</span>] <span class="c"># =&gt; false</span></code></pre></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bit_array.cr#L38" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bit_array.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2656,7 +2762,7 @@ ba[<span class="n">3</span>] <span class="o">=</span> <span class="n">true</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bit_array.cr#L49" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bit_array.cr#L49" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2672,7 +2778,7 @@ ba[<span class="n">3</span>] <span class="o">=</span> <span class="n">true</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bit_array.cr#L86" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bit_array.cr#L86" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2697,7 +2803,7 @@ ba <span class="c"># =&gt; BitArray[11001]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bit_array.cr#L80" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bit_array.cr#L80" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2715,7 +2821,7 @@ ba <span class="c"># =&gt; BitArray[11001]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bit_array.cr#L21" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bit_array.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2731,7 +2837,7 @@ ba <span class="c"># =&gt; BitArray[11001]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bit_array.cr#L92" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bit_array.cr#L92" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2757,7 +2863,7 @@ ba[<span class="n">3</span>] <span class="c"># =&gt; false</span></code></pre></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bit_array.cr#L67" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bit_array.cr#L67" target="_blank">View source</a>]
         
       </div>
     </div>

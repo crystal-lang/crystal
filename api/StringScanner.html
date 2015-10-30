@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2113,8 +2168,8 @@
 
 <h3>Example</h3>
 
-<pre><code><span class="k">require</span> <span class="s">"string_scanner"</span>
-s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">"This is an example string"</span>)
+<pre><code><span class="k">require</span> <span class="s">&quot;string_scanner&quot;</span>
+s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">&quot;This is an example string&quot;</span>)
 s.eos?         <span class="c"># =&gt; false</span>
 
 s.scan(<span class="s">/\w+/</span>)  <span class="c"># =&gt; &quot;This&quot;</span>
@@ -2177,7 +2232,7 @@ after the offset; usually immediately after it.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr" target="_blank">string_scanner.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr" target="_blank">string_scanner.cr</a>
     
     <br/>
   
@@ -2330,7 +2385,7 @@ after the offset; usually immediately after it.</p>
   
     
 
-  <h3>Methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
   
     <a href="Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2366,10 +2421,13 @@ after the offset; usually immediately after it.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2449,6 +2507,48 @@ after the offset; usually immediately after it.</p>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2466,7 +2566,7 @@ after the offset; usually immediately after it.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L59" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L59" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2488,21 +2588,21 @@ after the offset; usually immediately after it.</p>
 
 <p>Raises an exception if there was no last match or if there is no subgroup.</p>
 
-<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">"Fri Dec 12 1975 14:39"</span>)
-regex <span class="o">=</span> <span class="s">/(?<wday>\w+) (?<month>\w+) (?<day>\d+)/</span>
+<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">&quot;Fri Dec 12 1975 14:39&quot;</span>)
+regex <span class="o">=</span> <span class="s">/(?&lt;wday&gt;\w+) (?&lt;month&gt;\w+) (?&lt;day&gt;\d+)/</span>
 s.scan(regex)  <span class="c"># =&gt; &quot;Fri Dec 12&quot;</span>
 s[<span class="n">0</span>]           <span class="c"># =&gt; &quot;Fri Dec 12&quot;</span>
 s[<span class="n">1</span>]           <span class="c"># =&gt; &quot;Fri&quot;</span>
 s[<span class="n">2</span>]           <span class="c"># =&gt; &quot;Dec&quot;</span>
 s[<span class="n">3</span>]           <span class="c"># =&gt; &quot;12&quot;</span>
-s[<span class="s">"wday"</span>]      <span class="c"># =&gt; &quot;Fri&quot;</span>
-s[<span class="s">"month"</span>]     <span class="c"># =&gt; &quot;Dec&quot;</span>
-s[<span class="s">"day"</span>]       <span class="c"># =&gt; &quot;12&quot;</span></code></pre></div>
+s[<span class="s">&quot;wday&quot;</span>]      <span class="c"># =&gt; &quot;Fri&quot;</span>
+s[<span class="s">&quot;month&quot;</span>]     <span class="c"># =&gt; &quot;Dec&quot;</span>
+s[<span class="s">&quot;day&quot;</span>]       <span class="c"># =&gt; &quot;12&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L178" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L178" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2519,25 +2619,25 @@ s[<span class="s">"day"</span>]       <span class="c"># =&gt; &quot;12&quot;</sp
 
 <p>Returns <code>nil</code> if there was no last match or if there is no subgroup.</p>
 
-<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">"Fri Dec 12 1975 14:39"</span>)
-regex <span class="o">=</span> <span class="s">/(?<wday>\w+) (?<month>\w+) (?<day>\d+)/</span>
+<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">&quot;Fri Dec 12 1975 14:39&quot;</span>)
+regex <span class="o">=</span> <span class="s">/(?&lt;wday&gt;\w+) (?&lt;month&gt;\w+) (?&lt;day&gt;\d+)/</span>
 s.scan(regex)  <span class="c"># =&gt; &quot;Fri Dec 12&quot;</span>
 s[<span class="n">0</span>]?           <span class="c"># =&gt; &quot;Fri Dec 12&quot;</span>
 s[<span class="n">1</span>]?           <span class="c"># =&gt; &quot;Fri&quot;</span>
 s[<span class="n">2</span>]?           <span class="c"># =&gt; &quot;Dec&quot;</span>
 s[<span class="n">3</span>]?           <span class="c"># =&gt; &quot;12&quot;</span>
 s[<span class="n">4</span>]?           <span class="c"># =&gt; nil</span>
-s[<span class="s">"wday"</span>]?      <span class="c"># =&gt; &quot;Fri&quot;</span>
-s[<span class="s">"month"</span>]?     <span class="c"># =&gt; &quot;Dec&quot;</span>
-s[<span class="s">"day"</span>]?       <span class="c"># =&gt; &quot;12&quot;</span>
-s[<span class="s">"year"</span>]?      <span class="c"># =&gt; nil</span>
+s[<span class="s">&quot;wday&quot;</span>]?      <span class="c"># =&gt; &quot;Fri&quot;</span>
+s[<span class="s">&quot;month&quot;</span>]?     <span class="c"># =&gt; &quot;Dec&quot;</span>
+s[<span class="s">&quot;day&quot;</span>]?       <span class="c"># =&gt; &quot;12&quot;</span>
+s[<span class="s">&quot;year&quot;</span>]?      <span class="c"># =&gt; nil</span>
 s.scan(<span class="s">/more/</span>)  <span class="c"># =&gt; nil</span>
 s[<span class="n">0</span>]?           <span class="c"># =&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L200" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L200" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2553,7 +2653,7 @@ s[<span class="n">0</span>]?           <span class="c"># =&gt; nil</span></code>
         <div class="doc"><p>Returns the value that <code><a href="StringScanner.html#scan%28pattern%29-instance-method">#scan</a></code> would return, without advancing the scan
 offset. The last match is still saved, however.</p>
 
-<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">"this is a string"</span>)
+<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">&quot;this is a string&quot;</span>)
 s.offset <span class="o">=</span> <span class="n">5</span>
 s.check(<span class="s">/\w+/</span>)  <span class="c"># =&gt; &quot;is&quot;</span>
 s.check(<span class="s">/\w+/</span>)  <span class="c"># =&gt; &quot;is&quot;</span></code></pre></div>
@@ -2561,7 +2661,7 @@ s.check(<span class="s">/\w+/</span>)  <span class="c"># =&gt; &quot;is&quot;</s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L150" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L150" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2577,14 +2677,14 @@ s.check(<span class="s">/\w+/</span>)  <span class="c"># =&gt; &quot;is&quot;</s
         <div class="doc"><p>Returns the value that <code><a href="StringScanner.html#scan_until%28pattern%29-instance-method">#scan_until</a></code> would return, without advancing the
 scan offset. The last match is still saved, however.</p>
 
-<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">"test string"</span>)
+<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">&quot;test string&quot;</span>)
 s.check_until(<span class="s">/tr/</span>) <span class="c"># =&gt; &quot;test str&quot;</span>
 s.check_until(<span class="s">/g/</span>)  <span class="c"># =&gt; &quot;test string&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L160" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L160" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2599,7 +2699,7 @@ s.check_until(<span class="s">/g/</span>)  <span class="c"># =&gt; &quot;test st
       
         <div class="doc"><p>Returns true if the scan offset is at the end of the string.</p>
 
-<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">"this is a string"</span>)
+<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">&quot;this is a string&quot;</span>)
 s.eos?                 <span class="c"># =&gt; false</span>
 s.scan(<span class="s">/(\w+\s?){4}/</span>)  <span class="c"># =&gt; &quot;this is a string&quot;</span>
 s.eos?                 <span class="c"># =&gt; true</span></code></pre></div>
@@ -2607,7 +2707,7 @@ s.eos?                 <span class="c"># =&gt; true</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L211" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L211" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2628,7 +2728,7 @@ and five characters near the current position.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L251" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L251" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2646,7 +2746,7 @@ and five characters near the current position.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L65" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2664,7 +2764,7 @@ and five characters near the current position.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L68" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L68" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2683,7 +2783,7 @@ the scan offset.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L234" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L234" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2701,7 +2801,7 @@ the scan offset.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L216" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L216" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2716,14 +2816,14 @@ the scan offset.</p></div>
       
         <div class="doc"><p>Returns the remainder of the string after the scan offset.</p>
 
-<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">"this is a string"</span>)
+<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">&quot;this is a string&quot;</span>)
 s.scan(<span class="s">/(\w+\s?){2}/</span>)  <span class="c"># =&gt; &quot;this is &quot;</span>
 s.rest                 <span class="c"># =&gt; &quot;a string&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L243" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L243" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2740,7 +2840,7 @@ s.rest                 <span class="c"># =&gt; &quot;a string&quot;</span></code
 the scanner advances the scan offset, the last match is saved, and it
 returns the matched string.  Otherwise, the scanner returns nil.</p>
 
-<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">"test string"</span>)
+<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">&quot;test string&quot;</span>)
 s.scan(<span class="s">/\w+/</span>)   <span class="c"># =&gt; &quot;test&quot;</span>
 s.scan(<span class="s">/\w+/</span>)   <span class="c"># =&gt; nil</span>
 s.scan(<span class="s">/\s\w+/</span>) <span class="c"># =&gt; &quot; string&quot;</span>
@@ -2749,7 +2849,7 @@ s.scan(<span class="s">/.*/</span>)    <span class="c"># =&gt; nil</span></code>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2766,7 +2866,7 @@ s.scan(<span class="s">/.*/</span>)    <span class="c"># =&gt; nil</span></code>
 to and including the end of the match, the last match is saved, and
 advances the scan offset.  Returns <code>nil</code> if no match.</p>
 
-<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">"test string"</span>)
+<pre><code>s <span class="o">=</span> <span class="t">StringScanner</span>.<span class="k">new</span>(<span class="s">&quot;test string&quot;</span>)
 s.scan_until(<span class="s">/tr/</span>)   <span class="c"># =&gt; &quot;test str&quot;</span>
 s.scan_until(<span class="s">/tr/</span>)   <span class="c"># =&gt; nil</span>
 s.scan_until(<span class="s">/g/</span>)    <span class="c"># =&gt; &quot;ing&quot;</span></code></pre></div>
@@ -2774,7 +2874,7 @@ s.scan_until(<span class="s">/g/</span>)    <span class="c"># =&gt; &quot;ing&qu
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L94" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L94" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2801,7 +2901,7 @@ string.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L122" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L122" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2829,7 +2929,7 @@ string.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L138" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L138" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2847,7 +2947,7 @@ string.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L228" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L228" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2865,7 +2965,7 @@ string.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string_scanner.cr#L222" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string_scanner.cr#L222" target="_blank">View source</a>]
         
       </div>
     </div>

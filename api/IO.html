@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2144,7 +2199,7 @@ slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new<
 
 io <span class="o">=</span> <span class="t">SimpleSliceIO</span>.<span class="k">new</span>(slice)
 io.gets(<span class="n">3</span>) <span class="c">#=&gt; &quot;abc&quot;</span>
-io.print <span class="s">"xyz"</span>
+io.print <span class="s">&quot;xyz&quot;</span>
 <span class="t">String</span>.<span class="k">new</span>(slice) <span class="c">#=&gt; &quot;abcxyzghi&quot;</span></code></pre>
 
 
@@ -2193,22 +2248,22 @@ io.print <span class="s">"xyz"</span>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr" target="_blank">io.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr" target="_blank">io.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io/console.cr" target="_blank">io/console.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/console.cr" target="_blank">io/console.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io/error.cr" target="_blank">io/error.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/error.cr" target="_blank">io/error.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -2447,6 +2502,8 @@ io.print <span class="s">"xyz"</span>
       <li class="entry-summary">
         <a href="#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method" class="signature"><strong>#read_bytes</strong>(type, format = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span> : IO::ByteFormat)</a>
         
+          <div class="summary"><p>Reads an instance of the given <em>type</em> from this IO using the specified <em>format</em>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -2506,6 +2563,8 @@ io.print <span class="s">"xyz"</span>
       <li class="entry-summary">
         <a href="#write_bytes%28object%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method" class="signature"><strong>#write_bytes</strong>(object, format = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span> : IO::ByteFormat)</a>
         
+          <div class="summary"><p>Writes the given object to this IO using the specified <em>format</em>.</p></div>
+        
       </li>
     
   </ul>
@@ -2533,7 +2592,7 @@ io.print <span class="s">"xyz"</span>
   
     
 
-  <h3>Methods inherited from module <code><a href="JSON/Builder.html">JSON::Builder</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="JSON/Builder.html">JSON::Builder</a></code></h3>
   
     <a href="JSON/Builder.html#json_array%28%26block%29-instance-method" class="tooltip">
       <span>json_array(&block)</span>
@@ -2543,6 +2602,9 @@ io.print <span class="s">"xyz"</span>
       <span>json_object(&block)</span>
     json_object</a>
   
+
+
+    
 
 
   
@@ -2561,7 +2623,7 @@ io.print <span class="s">"xyz"</span>
       
         <div class="doc"><p>Copy all contents from <em>src</em> to <em>dst</em>.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
 io2 <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
 
 <span class="t">IO</span>.copy io, io2
@@ -2571,7 +2633,7 @@ io2.to_s <span class="c">#=&gt; &quot;hello&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L760" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L784" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2588,8 +2650,8 @@ io2.to_s <span class="c">#=&gt; &quot;hello&quot;</span></code></pre></div>
 to the given block. Both endpoints are closed after the block.</p>
 
 <pre><code><span class="t">IO</span>.pipe <span class="k">do</span> <span class="o">|</span>reader, writer<span class="o">|</span>
-  writer.puts <span class="s">"hello"</span>
-  writer.puts <span class="s">"world"</span>
+  writer.puts <span class="s">&quot;hello&quot;</span>
+  writer.puts <span class="s">&quot;world&quot;</span>
   reader.gets <span class="c">#=&gt; &quot;hello&quot;</span>
   reader.gets <span class="c">#=&gt; &quot;world&quot;</span>
 <span class="k">end</span></code></pre></div>
@@ -2597,7 +2659,7 @@ to the given block. Both endpoints are closed after the block.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L262" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L262" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2614,15 +2676,15 @@ to the given block. Both endpoints are closed after the block.</p>
 two-element tuple.</p>
 
 <pre><code>reader, writer <span class="o">=</span> <span class="t">IO</span>.pipe
-writer.puts <span class="s">"hello"</span>
-writer.puts <span class="s">"world"</span>
+writer.puts <span class="s">&quot;hello&quot;</span>
+writer.puts <span class="s">&quot;world&quot;</span>
 reader.gets <span class="c">#=&gt; &quot;hello&quot;</span>
 reader.gets <span class="c">#=&gt; &quot;world&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L237" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L237" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2648,7 +2710,7 @@ are supported.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L145" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L145" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2664,7 +2726,7 @@ are supported.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L131" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L131" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2688,13 +2750,13 @@ This ends up calling <code>to_s(io)</code> on the object.</p>
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
 io <span class="o"><<</span> <span class="n">1</span>
 io <span class="o"><<</span> <span class="s">'-'</span>
-io <span class="o"><<</span> <span class="s">"Crystal"</span>
+io <span class="o"><<</span> <span class="s">&quot;Crystal&quot;</span>
 io.to_s <span class="c">#=&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L283" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L283" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2710,7 +2772,7 @@ io.to_s <span class="c">#=&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io/console.cr#L175" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/console.cr#L175" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2726,7 +2788,7 @@ io.to_s <span class="c">#=&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io/console.cr#L182" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/console.cr#L182" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2741,7 +2803,7 @@ io.to_s <span class="c">#=&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       
         <div class="doc"><p>Inovkes the given block with each byte (<code><a href="UInt8.html">UInt8</a></code>) in this IO.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">"aあ"</span>)
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">&quot;aあ&quot;</span>)
 io.each_byte <span class="k">do</span> <span class="o">|</span>byte<span class="o">|</span>
   puts byte
 <span class="k">end</span></code></pre>
@@ -2756,7 +2818,7 @@ io.each_byte <span class="k">do</span> <span class="o">|</span>byte<span class="
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L730" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L754" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2771,7 +2833,7 @@ io.each_byte <span class="k">do</span> <span class="o">|</span>byte<span class="
       
         <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the bytes in this IO.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">"aあ"</span>)
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">&quot;aあ&quot;</span>)
 iter <span class="o">=</span> io.each_byte
 iter.<span class="k">next</span> <span class="c">#=&gt; 97</span>
 iter.<span class="k">next</span> <span class="c">#=&gt; 227</span>
@@ -2781,7 +2843,7 @@ iter.<span class="k">next</span> <span class="c">#=&gt; 130</span></code></pre><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L746" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L770" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2796,7 +2858,7 @@ iter.<span class="k">next</span> <span class="c">#=&gt; 130</span></code></pre><
       
         <div class="doc"><p>Inovkes the given block with each <code><a href="Char.html">Char</a></code> in this IO.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">"あめ"</span>)
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">&quot;あめ&quot;</span>)
 io.each_char <span class="k">do</span> <span class="o">|</span>char<span class="o">|</span>
   puts char
 <span class="k">end</span></code></pre>
@@ -2809,7 +2871,7 @@ io.each_char <span class="k">do</span> <span class="o">|</span>char<span class="
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L695" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L719" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2824,7 +2886,7 @@ io.each_char <span class="k">do</span> <span class="o">|</span>char<span class="
       
         <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the chars in this IO.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">"あめ"</span>)
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">&quot;あめ&quot;</span>)
 iter <span class="o">=</span> io.each_char
 iter.<span class="k">next</span> <span class="c">#=&gt; &apos;あ&apos;</span>
 iter.<span class="k">next</span> <span class="c">#=&gt; &apos;め&apos;</span></code></pre></div>
@@ -2832,7 +2894,7 @@ iter.<span class="k">next</span> <span class="c">#=&gt; &apos;め&apos;</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L709" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L733" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2849,7 +2911,7 @@ iter.<span class="k">next</span> <span class="c">#=&gt; &apos;め&apos;</span></
 is defined by the arguments passed to this method, which can be the same
 ones as in the <code><a href="IO.html#gets%3AString%7CNil-instance-method">#gets</a></code> methods.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">"hello\nworld"</span>)
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">&quot;hello\nworld&quot;</span>)
 io.each_line <span class="k">do</span> <span class="o">|</span>line<span class="o">|</span>
   puts line.chomp.reverse
 <span class="k">end</span></code></pre>
@@ -2862,7 +2924,7 @@ dlrow</code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L660" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L684" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2879,7 +2941,7 @@ dlrow</code></pre></div>
 is defined by the arguments passed to this method, which can be the same
 ones as in the <code><a href="IO.html#gets%3AString%7CNil-instance-method">#gets</a></code> methods.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">"hello\nworld"</span>)
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">&quot;hello\nworld&quot;</span>)
 iter <span class="o">=</span> io.each_line
 iter.<span class="k">next</span> <span class="c">#=&gt; &quot;hello\n&quot;</span>
 iter.<span class="k">next</span> <span class="c">#=&gt; &quot;world&quot;</span></code></pre></div>
@@ -2887,7 +2949,7 @@ iter.<span class="k">next</span> <span class="c">#=&gt; &quot;world&quot;</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L676" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L700" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2907,7 +2969,7 @@ iter.<span class="k">next</span> <span class="c">#=&gt; &quot;world&quot;</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L224" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L224" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2923,7 +2985,7 @@ iter.<span class="k">next</span> <span class="c">#=&gt; &quot;world&quot;</span>
         <div class="doc"><p>Reads a line of at most <code>limit</code> bytes from this IO. A line is terminated by the <code>\n</code> character.
 Returns <code>nil</code> if called at the end of this IO.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello\nworld"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello\nworld&quot;</span>
 io.gets(<span class="n">3</span>) <span class="c">#=&gt; &quot;hel&quot;</span>
 io.gets(<span class="n">3</span>) <span class="c">#=&gt; &quot;lo\n&quot;</span>
 io.gets(<span class="n">3</span>) <span class="c">#=&gt; &quot;wor&quot;</span>
@@ -2933,7 +2995,7 @@ io.gets(<span class="n">3</span>) <span class="c">#=&gt; nil</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L495" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L495" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2949,7 +3011,7 @@ io.gets(<span class="n">3</span>) <span class="c">#=&gt; nil</span></code></pre>
         <div class="doc"><p>Reads until <em>delimiter</em> is found, <code>limit</code> bytes are read, or the end of the IO is reached.
 Returns <code>nil</code> if called at the end of this IO.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello\nworld"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello\nworld&quot;</span>
 io.gets(<span class="s">'o'</span>, <span class="n">3</span>) <span class="c">#=&gt; &quot;hel&quot;</span>
 io.gets(<span class="s">'r'</span>, <span class="n">10</span>) <span class="c">#=&gt; &quot;lo\nwor&quot;</span>
 io.gets(<span class="s">'z'</span>, <span class="n">10</span>) <span class="c">#=&gt; &quot;ld&quot;</span>
@@ -2958,7 +3020,7 @@ io.gets(<span class="s">'w'</span>, <span class="n">10</span>) <span class="c">#
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L523" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L523" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2974,7 +3036,7 @@ io.gets(<span class="s">'w'</span>, <span class="n">10</span>) <span class="c">#
         <div class="doc"><p>Reads until <em>delimiter</em> is found, or the end of the IO is reached.
 Returns <code>nil</code> if called at the end of this IO.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello\nworld"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello\nworld&quot;</span>
 io.gets(<span class="s">'o'</span>) <span class="c">#=&gt; &quot;hello&quot;</span>
 io.gets(<span class="s">'r'</span>) <span class="c">#=&gt; &quot;\nwor&quot;</span>
 io.gets(<span class="s">'z'</span>) <span class="c">#=&gt; &quot;ld&quot;</span>
@@ -2983,7 +3045,7 @@ io.gets(<span class="s">'w'</span>) <span class="c">#=&gt; nil</span></code></pr
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L509" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L509" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2999,7 +3061,7 @@ io.gets(<span class="s">'w'</span>) <span class="c">#=&gt; nil</span></code></pr
         <div class="doc"><p>Reads a line from this IO. A line is terminated by the <code>\n</code> character.
 Returns <code>nil</code> if called at the end of this IO.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello\nworld"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello\nworld&quot;</span>
 io.gets <span class="c">#=&gt; &quot;hello\n&quot;</span>
 io.gets <span class="c">#=&gt; &quot;world&quot;</span>
 io.gets <span class="c">#=&gt; nil</span></code></pre></div>
@@ -3007,7 +3069,7 @@ io.gets <span class="c">#=&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L480" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L480" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3023,15 +3085,15 @@ io.gets <span class="c">#=&gt; nil</span></code></pre></div>
         <div class="doc"><p>Reads until <em>delimiter</em> is found or the end of the IO is reached.
 Returns <code>nil</code> if called at the end of this IO.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello\nworld"</span>
-io.gets(<span class="s">"wo"</span>) <span class="c">#=&gt; &quot;hello\nwo&quot;</span>
-io.gets(<span class="s">"wo"</span>) <span class="c">#=&gt; &quot;rld&quot;</span>
-io.gets(<span class="s">"wo"</span>) <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello\nworld&quot;</span>
+io.gets(<span class="s">&quot;wo&quot;</span>) <span class="c">#=&gt; &quot;hello\nwo&quot;</span>
+io.gets(<span class="s">&quot;wo&quot;</span>) <span class="c">#=&gt; &quot;rld&quot;</span>
+io.gets(<span class="s">&quot;wo&quot;</span>) <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L554" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L554" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3046,14 +3108,14 @@ io.gets(<span class="s">"wo"</span>) <span class="c">#=&gt; nil</span></code></p
       
         <div class="doc"><p>Reads the rest of this IO data as a <code><a href="String.html">String</a></code>.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello world"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello world&quot;</span>
 io.read <span class="c">#=&gt; &quot;hello world&quot;</span>
 io.read <span class="c">#=&gt; &quot;&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L462" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L462" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3070,13 +3132,13 @@ io.read <span class="c">#=&gt; &quot;&quot;</span></code></pre></div>
 on each of the objects.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
-io.print <span class="n">1</span>, <span class="s">'-'</span>, <span class="s">"Crystal"</span>
+io.print <span class="n">1</span>, <span class="s">'-'</span>, <span class="s">&quot;Crystal&quot;</span>
 io.to_s <span class="c">#=&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L310" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L310" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3094,13 +3156,13 @@ io.to_s <span class="c">#=&gt; &quot;1-Crystal&quot;</span></code></pre></div>
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
 io.print <span class="n">1</span>
 io.print <span class="s">'-'</span>
-io.print <span class="s">"Crystal"</span>
+io.print <span class="s">&quot;Crystal&quot;</span>
 io.to_s <span class="c">#=&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L297" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L297" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3116,7 +3178,7 @@ io.to_s <span class="c">#=&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L376" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L376" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3132,7 +3194,7 @@ io.to_s <span class="c">#=&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L371" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L371" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3154,7 +3216,7 @@ io.to_s <span class="c">#=&gt; &quot;\n&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L352" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L352" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3170,13 +3232,13 @@ io.to_s <span class="c">#=&gt; &quot;\n&quot;</span></code></pre></div>
         <div class="doc"><p>Writes the given objects, each followed by a newline character.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
-io.puts <span class="n">1</span>, <span class="s">'-'</span>, <span class="s">"Crystal"</span>
+io.puts <span class="n">1</span>, <span class="s">'-'</span>, <span class="s">&quot;Crystal&quot;</span>
 io.to_s <span class="c">#=&gt; &quot;1\n-\nCrystal\n&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L364" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L364" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3193,14 +3255,14 @@ io.to_s <span class="c">#=&gt; &quot;1\n-\nCrystal\n&quot;</span></code></pre></
 unless the string already ends with one.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
-io.puts <span class="s">"hello\n"</span>
-io.puts <span class="s">"world"</span>
+io.puts <span class="s">&quot;hello\n&quot;</span>
+io.puts <span class="s">&quot;world&quot;</span>
 io.to_s <span class="c">#=&gt; &quot;hello\nworld\n&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L326" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L326" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3217,13 +3279,13 @@ io.to_s <span class="c">#=&gt; &quot;hello\nworld\n&quot;</span></code></pre></d
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
 io.puts <span class="n">1</span>
-io.puts <span class="s">"Crystal"</span>
+io.puts <span class="s">&quot;Crystal&quot;</span>
 io.to_s <span class="c">#=&gt; &quot;1\nCrystal\n&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L340" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L340" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3239,7 +3301,7 @@ io.to_s <span class="c">#=&gt; &quot;1\nCrystal\n&quot;</span></code></pre></div
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io/console.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/console.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3255,7 +3317,7 @@ io.to_s <span class="c">#=&gt; &quot;1\nCrystal\n&quot;</span></code></pre></div
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io/console.cr#L212" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/console.cr#L212" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3270,7 +3332,7 @@ io.to_s <span class="c">#=&gt; &quot;1\nCrystal\n&quot;</span></code></pre></div
       
         <div class="doc"><p>Reads at most <em>slice.size</em> bytes from this IO into <em>slice</em>. Returns the number of bytes read.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
 slice <span class="o">=</span> <span class="t">Slice</span>(<span class="t">UInt8</span>).<span class="k">new</span>(<span class="n">4</span>)
 io.read(slice) <span class="c">#=&gt; 4</span>
 slice <span class="c">#=&gt; [104, 101, 108, 108]</span>
@@ -3280,7 +3342,7 @@ slice <span class="c">#=&gt; [111, 101, 108, 108]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L210" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L210" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3296,14 +3358,14 @@ slice <span class="c">#=&gt; [111, 101, 108, 108]</span></code></pre></div>
         <div class="doc"><p>Reads a single byte from this IO. Returns <code>nil</code> if there is no more
 data to read.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"a"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;a&quot;</span>
 io.read_byte <span class="c">#=&gt; 97</span>
 io.read_byte <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L389" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L389" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3316,10 +3378,21 @@ io.read_byte <span class="c">#=&gt; nil</span></code></pre></div>
         <a class="method-permalink" href="#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Reads an instance of the given <em>type</em> from this IO using the specified <em>format</em>.
+This ends up invoking <code>type.to_io(self, forma)</code>, so any type defining a <code>to_io</code>
+method can be read in this way.</p>
+
+<p>See <code><a href="Int.html#from_io%28io%3AIO%2Cformat%3AIO%3A%3AByteFormat%29-class-method">Int#from_io</a></code> and <code><a href="Float.html#from_io%28io%3AIO%2Cformat%3AIO%3A%3AByteFormat%29-class-method">Float#from_io</a></code>.</p>
+
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
+io.puts <span class="s">&quot;\u{4}\u{3}\u{2}\u{1}&quot;</span>
+io.rewind
+io.read_bytes(<span class="t">Int32</span>, <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">LittleEndian</span>) <span class="c"># =&gt; 0x01020304</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L627" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L651" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3335,14 +3408,14 @@ io.read_byte <span class="c">#=&gt; nil</span></code></pre></div>
         <div class="doc"><p>Reads a single <code><a href="Char.html">Char</a></code> from this IO. Returns <code>nil</code> if there is no
 more data to read.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"あ"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;あ&quot;</span>
 io.read_char <span class="c">#=&gt; &apos;あ&apos;</span>
 io.read_char <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L406" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L406" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3358,7 +3431,7 @@ io.read_char <span class="c">#=&gt; nil</span></code></pre></div>
         <div class="doc"><p>Tries to read exactly <code>slice.size</code> bytes from this IO into <code>slice</code>.
 Raises <code><a href="IO/EOFError.html">EOFError</a></code> if there aren't <code>slice.size</code> bytes of data.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"123451234"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;123451234&quot;</span>
 slice <span class="o">=</span> <span class="t">Slice</span>(<span class="t">UInt8</span>).<span class="k">new</span>(<span class="n">5</span>)
 io.read_fully(slice)
 slice <span class="c">#=&gt; [49, 50, 51, 52, 53]</span>
@@ -3367,7 +3440,7 @@ io.read_fully <span class="c">#=&gt; EOFError</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L445" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L445" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3385,7 +3458,7 @@ io.read_fully <span class="c">#=&gt; EOFError</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L591" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L591" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3401,7 +3474,7 @@ io.read_fully <span class="c">#=&gt; EOFError</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io/console.cr#L237" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/console.cr#L237" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3416,14 +3489,14 @@ io.read_fully <span class="c">#=&gt; EOFError</span></code></pre></div>
       
         <div class="doc"><p>Reads and discards <em>bytes_count</em> bytes.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello world"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello world&quot;</span>
 io.skip(<span class="n">6</span>)
 io.gets <span class="c">#=&gt; &quot;world&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L602" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L602" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3446,7 +3519,7 @@ io.gets <span class="c">#=&gt; &quot;world&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L639" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L663" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3469,7 +3542,7 @@ io.to_s <span class="c">#=&gt; &quot;abcd&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L219" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3485,13 +3558,13 @@ io.to_s <span class="c">#=&gt; &quot;abcd&quot;</span></code></pre></div>
         <div class="doc"><p>Writes a single byte into this IO.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
-io.write_byte <span class="n">97</span>
+io.write_byte <span class="n">97_u8</span>
 io.to_s <span class="c">#=&gt; &quot;a&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L618" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L618" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3504,10 +3577,21 @@ io.to_s <span class="c">#=&gt; &quot;a&quot;</span></code></pre></div>
         <a class="method-permalink" href="#write_bytes%28object%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Writes the given object to this IO using the specified <em>format</em>.
+This ends up invoking <code>object.to_io(self, format)</code>, so any object defining
+a <code>to_io</code> method can be written in this way.</p>
+
+<p>See <code><a href="Int.html#to_io%28io%3AIO%2Cformat%3AIO%3A%3AByteFormat%29-instance-method">Int#to_io</a></code> and <code><a href="Float.html#to_io%28io%3AIO%2Cformat%3AIO%3A%3AByteFormat%29-instance-method">Float#to_io</a></code>.</p>
+
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
+io.write_bytes(<span class="n">0x01020304</span>, <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">LittleEndian</span>)
+io.rewind
+io.gets(<span class="n">4</span>) <span class="c"># =&gt; &quot;\u{4}\u{3}\u{2}\u{1}&quot;</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io.cr#L623" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io.cr#L635" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3528,7 +3612,7 @@ io.to_s <span class="c">#=&gt; &quot;a&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io/console.cr#L189" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/console.cr#L189" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3544,7 +3628,7 @@ io.to_s <span class="c">#=&gt; &quot;a&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/io/console.cr#L220" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/console.cr#L220" target="_blank">View source</a>]
         
       </div>
     </div>

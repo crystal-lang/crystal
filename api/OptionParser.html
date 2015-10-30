@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2117,20 +2172,20 @@
 
 <p>Short example:</p>
 
-<pre><code><span class="k">require</span> <span class="s">"option_parser"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;option_parser&quot;</span>
 
 upcase <span class="o">=</span> <span class="n">false</span>
-destination <span class="o">=</span> <span class="s">"World"</span>
+destination <span class="o">=</span> <span class="s">&quot;World&quot;</span>
 
 <span class="t">OptionParser</span>.parse! <span class="k">do</span> <span class="o">|</span>parser<span class="o">|</span>
-  parser.banner <span class="o">=</span> <span class="s">"Usage: salute [arguments]"</span>
-  parser.on(<span class="s">"-u"</span>, <span class="s">"--upcase"</span>, <span class="s">"Upcases the sallute"</span>) { upcase <span class="o">=</span> <span class="n">true</span> }
-  parser.on(<span class="s">"-t NAME"</span>, <span class="s">"--to=NAME"</span>, <span class="s">"Specifies the name to salute"</span>) { <span class="o">|</span>name<span class="o">|</span> destination <span class="o">=</span> name }
-  parser.on(<span class="s">"-h"</span>, <span class="s">"--help"</span>, <span class="s">"Show this help"</span>) { puts parser }
+  parser.banner <span class="o">=</span> <span class="s">&quot;Usage: salute [arguments]&quot;</span>
+  parser.on(<span class="s">&quot;-u&quot;</span>, <span class="s">&quot;--upcase&quot;</span>, <span class="s">&quot;Upcases the sallute&quot;</span>) { upcase <span class="o">=</span> <span class="n">true</span> }
+  parser.on(<span class="s">&quot;-t NAME&quot;</span>, <span class="s">&quot;--to=NAME&quot;</span>, <span class="s">&quot;Specifies the name to salute&quot;</span>) { <span class="o">|</span>name<span class="o">|</span> destination <span class="o">=</span> name }
+  parser.on(<span class="s">&quot;-h&quot;</span>, <span class="s">&quot;--help&quot;</span>, <span class="s">&quot;Show this help&quot;</span>) { puts parser }
 <span class="k">end</span>
 
 destination <span class="o">=</span> destination.upcase <span class="k">if</span> upcase
-puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<span class="s"><span class="i">}</span>!"</span></code></pre>
+puts <span class="s">&quot;Hello </span><span class="i">#{</span></span>destination<span class="s"><span class="i">}</span>!&quot;</span></code></pre>
 
 
 
@@ -2148,7 +2203,7 @@ puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<s
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr" target="_blank">option_parser.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr" target="_blank">option_parser.cr</a>
     
     <br/>
   
@@ -2219,7 +2274,7 @@ puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<s
       <li class="entry-summary">
         <a href="#parse%28args%29-instance-method" class="signature"><strong>#parse</strong>(args)</a>
         
-          <div class="summary"><p>Parses the passed <code>args</code>, running the handlers associated to each option.</p></div>
+          <div class="summary"><p>Parses the passed <em>args</em>, running the handlers associated to each option.</p></div>
         
       </li>
     
@@ -2231,7 +2286,7 @@ puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<s
       </li>
     
       <li class="entry-summary">
-        <a href="#separator%28message%3D%3Cspanclass%3D%22s%22%3E%22%22%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#separator</strong>(message = <span class="s">""</span>)</a>
+        <a href="#separator%28message%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#separator</strong>(message = <span class="s">&quot;&quot;</span>)</a>
         
           <div class="summary"><p>Adds a separator, with an optional header message, that will be used to print the help.</p></div>
         
@@ -2261,7 +2316,7 @@ puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<s
   
     
 
-  <h3>Methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
   
     <a href="Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2297,10 +2352,13 @@ puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<s
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2380,6 +2438,48 @@ puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<s
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2399,7 +2499,7 @@ puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L64" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L64" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2417,7 +2517,7 @@ puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L45" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2435,7 +2535,7 @@ puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L53" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L53" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2453,7 +2553,7 @@ puts <span class="s">"Hello </span><span class="i">#{</span></span>destination<s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L58" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2476,12 +2576,12 @@ and a one-line template of its invocation.</p>
 
 <p>Example:</p>
 
-<pre><code>parser.banner <span class="o">=</span> <span class="s">"Usage: crystal [command] [switches] [program file] [--] [arguments]"</span></code></pre></div>
+<pre><code>parser.banner <span class="o">=</span> <span class="s">&quot;Usage: crystal [command] [switches] [program file] [--] [arguments]&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L75" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L75" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2506,7 +2606,7 @@ the block. Each flag has a description, which will be used for the help message.
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L87" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L87" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2526,7 +2626,7 @@ the block. Each flag has a description, which will be used for the help message.
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L95" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2539,12 +2639,12 @@ the block. Each flag has a description, which will be used for the help message.
         <a class="method-permalink" href="#parse%28args%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Parses the passed <code>args</code>, running the handlers associated to each option.</p></div>
+        <div class="doc"><p>Parses the passed <em>args</em>, running the handlers associated to each option.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L135" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L135" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2562,17 +2662,17 @@ the block. Each flag has a description, which will be used for the help message.
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L140" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L140" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="separator(message=&lt;spanclass=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;)-instance-method">
+    <div class="entry-detail" id="separator(message=&lt;spanclass=&quot;s&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;)-instance-method">
       <div class="signature">
         
-        def <strong>separator</strong>(message = <span class="s">""</span>)
+        def <strong>separator</strong>(message = <span class="s">&quot;&quot;</span>)
 
-        <a class="method-permalink" href="#separator%28message%3D%3Cspanclass%3D%22s%22%3E%22%22%3C%2Fspan%3E%29-instance-method">#</a>
+        <a class="method-permalink" href="#separator%28message%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Adds a separator, with an optional header message, that will be used to print the help.</p>
@@ -2582,7 +2682,7 @@ the block. Each flag has a description, which will be used for the help message.
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L104" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L104" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2600,7 +2700,7 @@ the block. Each flag has a description, which will be used for the help message.
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L115" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L115" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2620,7 +2720,7 @@ the block. Each flag has a description, which will be used for the help message.
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/option_parser.cr#L111" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/option_parser.cr#L111" target="_blank">View source</a>]
         
       </div>
     </div>

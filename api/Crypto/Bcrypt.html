@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="../Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="../Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="../Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="../GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="../OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="../OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="../OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="../OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="../OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="../OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="../OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="../OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="../Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="../Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2097,26 +2152,47 @@
 <div id="main-content">
 <h1 class="type-name">
 
-  <span class="kind">module</span> Crypto::Bcrypt
+  <span class="kind">class</span> Crypto::Bcrypt
 
 </h1>
 
 
+  <ul class="superclass-hierarchy"><li class="superclass"><a href="../Crypto/Bcrypt.html">Crypto::Bcrypt</a></li><li class="superclass"><a href="../Reference.html">Reference</a></li><li class="superclass"><a href="../Object.html">Object</a></li></ul>
+
+
+
+
+  <h2>Overview</h2>
+
+  <p>Pure Crystal implementation of the Bcrypt algorythm by Niels Provos and David
+Mazières, as [presented at USENIX in
+1999](https://www.usenix.org/legacy/events/usenix99/provos/provos_html/index.html).</p>
+
+<p>Refer to <code><a href="../Crypto/Bcrypt.html">Crypto::Bcrypt</a>::<a href="../Crypto/Bcrypt/Password.html">Password</a></code> for a higher level interface.</p>
+
+<p>About the Cost</p>
+
+<p>Bcrypt, like the PBKDF2 or scrypt ciphers, are designed to be slow, so
+generating rainbow tables or cracking passwords is nearly impossible. Yet,
+computers are always getting faster and faster, so the actual cost must be
+incremented every once in a while.
+Always use the maximum cost that is tolerable, performance wise, for your
+application. Be sure to test and select this based on your server, not your
+home computer.</p>
+
+<p>This implementation of Bcrypt is currently 50% slower than pure C solutions,
+so keep this in mind when selecting your cost. It may be wise to test with
+Ruby's bcrypt gem which is a binding to OpenBSD's implementation.</p>
+
+<p>Last but not least: beware of denial of services! Always protect your
+application using an external strategy (eg: rate limiting), otherwise
+endpoints that verifies bcrypt hashes will be an easy target.</p>
 
 
 
 
 
 
-
-
-
-  <h2>Extended Modules</h2>
-  <ul class="other-types-list">
-  
-    <li class="other-type"><a href="../Crypto/Bcrypt.html">Crypto::Bcrypt</a></li>
-  
-  </ul>
 
 
 
@@ -2128,12 +2204,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/crypto/bcrypt/base64.cr" target="_blank">crypto/bcrypt/base64.cr</a>
-    
-    <br/>
-  
-    
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/crypto/bcrypt.cr" target="_blank">crypto/bcrypt.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr" target="_blank">crypto/bcrypt.cr</a>
     
     <br/>
   
@@ -2146,37 +2217,32 @@
   <dl>
     
       <dt class="entry-const">
-        <strong>DEFAULT_COST</strong> = <code><span class="n">10</span></code>
+        <strong>CIPHER_TEXT</strong> = <code><span class="t">Int32</span>[<span class="n">1332899944</span>, <span class="n">1700884034</span>, <span class="n">1701343084</span>, <span class="n">1684370003</span>, <span class="n">1668446532</span>, <span class="n">1869963892</span>]</code>
+      </dt>
+      
+      <dd class="entry-const-doc">
+        <p>bcrypt IV: "OrpheanBeholderScryDoubt"
+:nodoc:</p>
+      </dd>
+      
+    
+      <dt class="entry-const">
+        <strong>COST_RANGE</strong> = <code><span class="n">4</span>..<span class="n">31</span></code>
       </dt>
       
     
       <dt class="entry-const">
-        <strong>ENCODED_SALT_SIZE</strong> = <code><span class="n">22</span></code>
+        <strong>DEFAULT_COST</strong> = <code><span class="n">11</span></code>
       </dt>
       
     
       <dt class="entry-const">
-        <strong>MAJOR_VERSION</strong> = <code><span class="s">"2"</span></code>
+        <strong>PASSWORD_RANGE</strong> = <code><span class="n">1</span>..<span class="n">51</span></code>
       </dt>
       
     
       <dt class="entry-const">
-        <strong>MAX_COST</strong> = <code><span class="n">63</span></code>
-      </dt>
-      
-    
-      <dt class="entry-const">
-        <strong>MIN_COST</strong> = <code><span class="n">4</span></code>
-      </dt>
-      
-    
-      <dt class="entry-const">
-        <strong>MIN_HASH_SIZE</strong> = <code><span class="n">59</span></code>
-      </dt>
-      
-    
-      <dt class="entry-const">
-        <strong>MINOR_VERSION</strong> = <code><span class="s">"a"</span></code>
+        <strong>SALT_SIZE</strong> = <code><span class="n">16</span></code>
       </dt>
       
     
@@ -2184,18 +2250,68 @@
 
 
 
+  <h2>Class Method Summary</h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#hash_secret%28password%2Ccost%3D%3Cspanclass%3D%22t%22%3EDEFAULT_COST%3C%2Fspan%3E%29-class-method" class="signature"><strong>.hash_secret</strong>(password, cost = <span class="t">DEFAULT_COST</span>)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28password%3AString%2Csalt%3AString%2Ccost%3D%3Cspanclass%3D%22t%22%3EDEFAULT_COST%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(password : String, salt : String, cost = <span class="t">DEFAULT_COST</span>)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28password%2Csalt%2Ccost%3D%3Cspanclass%3D%22t%22%3EDEFAULT_COST%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(password, salt, cost = <span class="t">DEFAULT_COST</span>)</a>
+        
+      </li>
+    
+  </ul>
+
 
 
   <h2>Instance Method Summary</h2>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#digest%28password%2Ccost%3D%3Cspanclass%3D%22t%22%3EDEFAULT_COST%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#digest</strong>(password, cost = <span class="t">DEFAULT_COST</span>)</a>
+        <a href="#cost-instance-method" class="signature"><strong>#cost</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#verify%28password%2ChashedPassword%29-instance-method" class="signature"><strong>#verify</strong>(password, hashedPassword)</a>
+        <a href="#digest-instance-method" class="signature"><strong>#digest</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#password-instance-method" class="signature"><strong>#password</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#salt-instance-method" class="signature"><strong>#salt</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_slice%28%2Aargs%29-instance-method" class="signature"><strong>#to_slice</strong>(*args)</a>
         
       </li>
     
@@ -2207,41 +2323,355 @@
 
 <div class="methods-inherited">
   
+    
+
+  <h3>Instance methods inherited from class <code><a href="../Reference.html">Reference</a></code></h3>
+  
+    <a href="../Reference.html#%21-instance-method" class="tooltip">
+      <span>!</span>
+    !</a>, 
+  
+    <a href="../Reference.html#%3D%3D%28other%29-instance-method" class="tooltip">
+      <span>==(other)<br/>==(other : self)</span>
+    ==</a>, 
+  
+    <a href="../Reference.html#hash-instance-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Reference.html#inspect%28io%3AIO%29%3ANil-instance-method" class="tooltip">
+      <span>inspect(io : IO) : Nil</span>
+    inspect</a>, 
+  
+    <a href="../Reference.html#nil%3F-instance-method" class="tooltip">
+      <span>nil?</span>
+    nil?</a>, 
+  
+    <a href="../Reference.html#object_id-instance-method" class="tooltip">
+      <span>object_id</span>
+    object_id</a>, 
+  
+    <a href="../Reference.html#same%3F%28other%3ANil%29-instance-method" class="tooltip">
+      <span>same?(other : Nil)<br/>same?(other : Reference)</span>
+    same?</a>, 
+  
+    <a href="../Reference.html#to_s%28io%3AIO%29%3ANil-instance-method" class="tooltip">
+      <span>to_s(io : IO) : Nil</span>
+    to_s</a>
+  
+
+
+    
+
+
+  
+    
+
+  <h3>Instance methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  
+    <a href="../Object.html#%21-instance-method" class="tooltip">
+      <span>!</span>
+    !</a>, 
+  
+    <a href="../Object.html#%21%3D%28other%29-instance-method" class="tooltip">
+      <span>!=(other)</span>
+    !=</a>, 
+  
+    <a href="../Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
+      <span><=>(other)</span>
+    <=></a>, 
+  
+    <a href="../Object.html#%3D%3D%28other%29-instance-method" class="tooltip">
+      <span>==(other)</span>
+    ==</a>, 
+  
+    <a href="../Object.html#%3D%3D%3D%28other%29-instance-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="../Object.html#%3D%7E%28other%29-instance-method" class="tooltip">
+      <span>=~(other)</span>
+    =~</a>, 
+  
+    <a href="../Object.html#class-instance-method" class="tooltip">
+      <span>class</span>
+    class</a>, 
+  
+    <a href="../Object.html#clone-instance-method" class="tooltip">
+      <span>clone</span>
+    clone</a>, 
+  
+    <a href="../Object.html#crystal_type_id-instance-method" class="tooltip">
+      <span>crystal_type_id</span>
+    crystal_type_id</a>, 
+  
+    <a href="../Object.html#dup-instance-method" class="tooltip">
+      <span>dup</span>
+    dup</a>, 
+  
+    <a href="../Object.html#hash-instance-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Object.html#inspect-instance-method" class="tooltip">
+      <span>inspect<br/>inspect(io : IO)</span>
+    inspect</a>, 
+  
+    <a href="../Object.html#itself-instance-method" class="tooltip">
+      <span>itself</span>
+    itself</a>, 
+  
+    <a href="../Object.html#not_nil%21-instance-method" class="tooltip">
+      <span>not_nil!</span>
+    not_nil!</a>, 
+  
+    <a href="../Object.html#tap%28%26block%29-instance-method" class="tooltip">
+      <span>tap(&block)</span>
+    tap</a>, 
+  
+    <a href="../Object.html#to_json-instance-method" class="tooltip">
+      <span>to_json</span>
+    to_json</a>, 
+  
+    <a href="../Object.html#to_pretty_json%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_pretty_json(io : IO)<br/>to_pretty_json</span>
+    to_pretty_json</a>, 
+  
+    <a href="../Object.html#to_s-instance-method" class="tooltip">
+      <span>to_s<br/>to_s(io : IO)</span>
+    to_s</a>, 
+  
+    <a href="../Object.html#try%28%26block%29-instance-method" class="tooltip">
+      <span>try(&block)</span>
+    try</a>
+  
+
+
+    
+
+  <h3>Class methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  
+    <a href="../Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="../Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="../Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="../Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="../Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="../Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
+  
 </div>
 
+
+  <h2>Class Method Detail</h2>
+  
+    <div class="entry-detail" id="hash_secret(password,cost=&lt;spanclass=&quot;t&quot;&gt;DEFAULT_COST&lt;/span&gt;)-class-method">
+      <div class="signature">
+        
+        def self.<strong>hash_secret</strong>(password, cost = <span class="t">DEFAULT_COST</span>)
+
+        <a class="method-permalink" href="#hash_secret%28password%2Ccost%3D%3Cspanclass%3D%22t%22%3EDEFAULT_COST%3C%2Fspan%3E%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L49" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="new(password:String,salt:String,cost=&lt;spanclass=&quot;t&quot;&gt;DEFAULT_COST&lt;/span&gt;)-class-method">
+      <div class="signature">
+        
+        def self.<strong>new</strong>(password : <a href="../String.html">String</a>, salt : <a href="../String.html">String</a>, cost = <span class="t">DEFAULT_COST</span>)
+
+        <a class="method-permalink" href="#new%28password%3AString%2Csalt%3AString%2Ccost%3D%3Cspanclass%3D%22t%22%3EDEFAULT_COST%3C%2Fspan%3E%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L55" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="new(password,salt,cost=&lt;spanclass=&quot;t&quot;&gt;DEFAULT_COST&lt;/span&gt;)-class-method">
+      <div class="signature">
+        
+        def self.<strong>new</strong>(password, salt, cost = <span class="t">DEFAULT_COST</span>)
+
+        <a class="method-permalink" href="#new%28password%2Csalt%2Ccost%3D%3Cspanclass%3D%22t%22%3EDEFAULT_COST%3C%2Fspan%3E%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L63" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
 
 
 
   <h2>Instance Method Detail</h2>
   
-    <div class="entry-detail" id="digest(password,cost=&lt;spanclass=&quot;t&quot;&gt;DEFAULT_COST&lt;/span&gt;)-instance-method">
+    <div class="entry-detail" id="cost-instance-method">
       <div class="signature">
         
-        def <strong>digest</strong>(password, cost = <span class="t">DEFAULT_COST</span>)
+        def <strong>cost</strong>
 
-        <a class="method-permalink" href="#digest%28password%2Ccost%3D%3Cspanclass%3D%22t%22%3EDEFAULT_COST%3C%2Fspan%3E%29-instance-method">#</a>
+        <a class="method-permalink" href="#cost-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/crypto/bcrypt.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L61" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="verify(password,hashedPassword)-instance-method">
+    <div class="entry-detail" id="digest-instance-method">
       <div class="signature">
         
-        def <strong>verify</strong>(password, hashedPassword)
+        def <strong>digest</strong>
 
-        <a class="method-permalink" href="#verify%28password%2ChashedPassword%29-instance-method">#</a>
+        <a class="method-permalink" href="#digest-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/crypto/bcrypt.cr#L25" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L69" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="inspect(io)-instance-method">
+      <div class="signature">
+        
+        def <strong>inspect</strong>(io)
+
+        <a class="method-permalink" href="#inspect%28io%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L85" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="password-instance-method">
+      <div class="signature">
+        
+        def <strong>password</strong>
+
+        <a class="method-permalink" href="#password-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L61" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="salt-instance-method">
+      <div class="signature">
+        
+        def <strong>salt</strong>
+
+        <a class="method-permalink" href="#salt-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L61" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_s-instance-method">
+      <div class="signature">
+        
+        def <strong>to_s</strong>
+
+        <a class="method-permalink" href="#to_s-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L73" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_s(io)-instance-method">
+      <div class="signature">
+        
+        def <strong>to_s</strong>(io)
+
+        <a class="method-permalink" href="#to_s%28io%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L81" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_slice(*args)-instance-method">
+      <div class="signature">
+        
+        def <strong>to_slice</strong>(*args)
+
+        <a class="method-permalink" href="#to_slice%28%2Aargs%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/crypto/bcrypt.cr#L89" target="_blank">View source</a>]
         
       </div>
     </div>

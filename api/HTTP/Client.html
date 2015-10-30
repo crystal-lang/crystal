@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="../Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="../Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="../Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="../GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="../OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="../OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="../OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="../OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="../OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="../OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="../OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="../OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="../Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="../Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2116,18 +2171,18 @@
 <p>Without a block, an <code><a href="../HTTP/Response.html">HTTP::Response</a></code> is returned and the response's body
 is available as a <code><a href="../String.html">String</a></code> by invoking <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code><span class="k">require</span> <span class="s">"http/client"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;http/client&quot;</span>
 
-response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get <span class="s">"http://www.example.com"</span>
+response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get <span class="s">&quot;http://www.example.com&quot;</span>
 response.status_code <span class="c">#=&gt; 200</span>
 response.body.lines.first <span class="c">#=&gt; &quot;&lt;!doctype html&gt;&quot;</span></code></pre>
 
 <p>With a block, an <code><a href="../HTTP/Response.html">HTTP::Response</a></code> body is returned and the response's body
 is available as an <code><a href="../IO.html">IO</a></code> by invoking <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code><span class="k">require</span> <span class="s">"http/client"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;http/client&quot;</span>
 
-<span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="s">"http://www.example.com"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="s">&quot;http://www.example.com&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.status_code  <span class="c">#=&gt; 200</span>
   response.body_io.gets <span class="c">#=&gt; &quot;&lt;!doctype html&gt;&quot;</span>
 <span class="k">end</span></code></pre>
@@ -2136,10 +2191,10 @@ is available as an <code><a href="../IO.html">IO</a></code> by invoking <code><a
 
 <p>Similar to the above cases, but creating an instance of an <code><a href="../HTTP/Client.html">HTTP::Client</a></code>.</p>
 
-<pre><code><span class="k">require</span> <span class="s">"http/client"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;http/client&quot;</span>
 
-client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">"www.example.com"</span>
-response <span class="o">=</span> client.get <span class="s">"/"</span>
+client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">&quot;www.example.com&quot;</span>
+response <span class="o">=</span> client.get <span class="s">&quot;/&quot;</span>
 response.status_code <span class="c">#=&gt; 200</span>
 response.body.lines.first <span class="c">#=&gt; &quot;&lt;!doctype html&gt;&quot;</span>
 client.close</code></pre>
@@ -2160,7 +2215,7 @@ client.close</code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr" target="_blank">http/client/client.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr" target="_blank">http/client/client.cr</a>
     
     <br/>
   
@@ -2504,7 +2559,7 @@ client.close</code></pre>
   
     
 
-  <h3>Methods inherited from class <code><a href="../Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Reference.html">Reference</a></code></h3>
   
     <a href="../Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2540,10 +2595,13 @@ client.close</code></pre>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
   
     <a href="../Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2623,6 +2681,48 @@ client.close</code></pre>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  
+    <a href="../Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="../Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="../Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="../Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="../Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="../Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2640,14 +2740,14 @@ client.close</code></pre>
         <div class="doc"><p>Executes a DELETE request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.delete(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2663,13 +2763,13 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a DELETE request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.delete(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2685,13 +2785,13 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a request.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.exec <span class="s">"GET"</span>, <span class="s">"http://www.example.com"</span>
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.exec <span class="s">&quot;GET&quot;</span>, <span class="s">&quot;http://www.example.com&quot;</span>
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L353" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L363" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2707,14 +2807,14 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a request.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.exec(<span class="s">"GET"</span>, <span class="s">"http://www.example.com"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.exec(<span class="s">&quot;GET&quot;</span>, <span class="s">&quot;http://www.example.com&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L367" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L377" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2730,14 +2830,14 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a GET request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2753,13 +2853,13 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a GET request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2775,14 +2875,14 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a HEAD request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.head(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2798,13 +2898,13 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a HEAD request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.head(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2820,14 +2920,14 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Creates a new HTTP client, yields it to the block, and closes
 the client afterwards.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>) <span class="k">do</span> <span class="o">|</span>client<span class="o">|</span>
-  client.get <span class="s">"/"</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>) <span class="k">do</span> <span class="o">|</span>client<span class="o">|</span>
+  client.get <span class="s">&quot;/&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L88" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L88" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2843,13 +2943,13 @@ the client afterwards.</p>
         <div class="doc"><p>Executes a PATCH request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.patch(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2865,14 +2965,14 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a PATCH request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.patch(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2888,13 +2988,13 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a POST request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.post(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2910,14 +3010,14 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a POST request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.post(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2933,12 +3033,12 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a POST with form data. The "Content-type" header is set
 to "application/x-www-form-urlencoded".</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.post_form <span class="s">"http://www.example.com"</span>, <span class="s">"foo=bar"</span></code></pre></div>
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.post_form <span class="s">&quot;http://www.example.com&quot;</span>, <span class="s">&quot;foo=bar&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L273" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L273" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2954,14 +3054,14 @@ to "application/x-www-form-urlencoded".</p>
         <div class="doc"><p>Executes a PUT request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.put(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2977,13 +3077,13 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a PUT request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.put(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3004,7 +3104,7 @@ be used depending on the <em>ssl</em> arguments: 80 for if <em>ssl</em> is <code
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L76" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L76" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3028,7 +3128,7 @@ request.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L99" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L99" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3045,16 +3145,16 @@ request.</p></div>
 used to set an authorization header. Any number of callbacks
 can be added.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
 client.before_request <span class="k">do</span> <span class="o">|</span>request<span class="o">|</span>
-  request.headers[<span class="s">"Authorization"</span>] <span class="o">=</span> <span class="s">"XYZ123"</span>
+  request.headers[<span class="s">&quot;Authorization&quot;</span>] <span class="o">=</span> <span class="s">&quot;XYZ123&quot;</span>
 <span class="k">end</span>
-client.get <span class="s">"/"</span></code></pre></div>
+client.get <span class="s">&quot;/&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L178" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L178" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3072,7 +3172,7 @@ client.get <span class="s">"/"</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L376" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L386" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3087,18 +3187,18 @@ client.get <span class="s">"/"</span></code></pre></div>
       
         <div class="doc"><p>Set the open timeout with a <code><a href="../Time/Span.html">Time::Span</a></code> to wait when connecting, before raising an <code><a href="../IO/Timeout.html">IO::Timeout</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"example.org"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;example.org&quot;</span>)
 client.connect_timeout <span class="o">=</span> <span class="n">5</span>.minutes
 <span class="k">begin</span>
-  response <span class="o">=</span> client.get(<span class="s">"/"</span>)
+  response <span class="o">=</span> client.get(<span class="s">&quot;/&quot;</span>)
 <span class="k">rescue</span> <span class="t">IO</span><span class="t">::</span><span class="t">Timeout</span>
-  puts <span class="s">"Timeout!"</span>
+  puts <span class="s">&quot;Timeout!&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L162" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L162" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3113,18 +3213,18 @@ client.connect_timeout <span class="o">=</span> <span class="n">5</span>.minutes
       
         <div class="doc"><p>Set the number of seconds to wait when connecting, before raising an <code><a href="../IO/Timeout.html">IO::Timeout</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"example.org"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;example.org&quot;</span>)
 client.connect_timeout <span class="o">=</span> <span class="n">1.5</span>
 <span class="k">begin</span>
-  response <span class="o">=</span> client.get(<span class="s">"/"</span>)
+  response <span class="o">=</span> client.get(<span class="s">&quot;/&quot;</span>)
 <span class="k">rescue</span> <span class="t">IO</span><span class="t">::</span><span class="t">Timeout</span>
-  puts <span class="s">"Timeout!"</span>
+  puts <span class="s">&quot;Timeout!&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L147" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L147" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3140,15 +3240,15 @@ client.connect_timeout <span class="o">=</span> <span class="n">1.5</span>
         <div class="doc"><p>Executes a DELETE request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-client.delete(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+client.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3164,14 +3264,14 @@ client.delete(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><s
         <div class="doc"><p>Executes a DELETE request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-response <span class="o">=</span> client.delete(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+response <span class="o">=</span> client.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3187,14 +3287,14 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">"www.example.com"</span>
-response <span class="o">=</span> client.exec <span class="t">HTTP</span><span class="t">::</span><span class="t">Request</span>.<span class="k">new</span>(<span class="s">"GET"</span>, <span class="s">"/"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">&quot;www.example.com&quot;</span>
+response <span class="o">=</span> client.exec <span class="t">HTTP</span><span class="t">::</span><span class="t">Request</span>.<span class="k">new</span>(<span class="s">&quot;GET&quot;</span>, <span class="s">&quot;/&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L287" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L287" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3210,14 +3310,14 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">"www.example.com"</span>
-response <span class="o">=</span> client.exec <span class="s">"GET"</span>, <span class="s">"/"</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">&quot;www.example.com&quot;</span>
+response <span class="o">=</span> client.exec <span class="s">&quot;GET&quot;</span>, <span class="s">&quot;/&quot;</span>
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L327" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L337" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3233,15 +3333,15 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a request request and yields an <code><a href="../HTTP/Response.html">HTTP::Response</a></code> to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">"www.example.com"</span>
-client.exec(<span class="t">HTTP</span><span class="t">::</span><span class="t">Request</span>.<span class="k">new</span>(<span class="s">"GET"</span>, <span class="s">"/"</span>)) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">&quot;www.example.com&quot;</span>
+client.exec(<span class="t">HTTP</span><span class="t">::</span><span class="t">Request</span>.<span class="k">new</span>(<span class="s">&quot;GET&quot;</span>, <span class="s">&quot;/&quot;</span>)) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L306" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L310" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3257,15 +3357,15 @@ client.exec(<span class="t">HTTP</span><span class="t">::</span><span class="t">
         <div class="doc"><p>Executes a request.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">"www.example.com"</span>
-client.exec(<span class="s">"GET"</span>, <span class="s">"/"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">&quot;www.example.com&quot;</span>
+client.exec(<span class="s">&quot;GET&quot;</span>, <span class="s">&quot;/&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L340" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L350" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3281,15 +3381,15 @@ client.exec(<span class="s">"GET"</span>, <span class="s">"/"</span>) <span clas
         <div class="doc"><p>Executes a GET request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-client.get(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+client.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3305,14 +3405,14 @@ client.get(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span
         <div class="doc"><p>Executes a GET request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-response <span class="o">=</span> client.get(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+response <span class="o">=</span> client.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3328,15 +3428,15 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a HEAD request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-client.head(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+client.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3352,14 +3452,14 @@ client.head(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><spa
         <div class="doc"><p>Executes a HEAD request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-response <span class="o">=</span> client.head(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+response <span class="o">=</span> client.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3374,13 +3474,13 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
         <div class="doc"><p>Returns the target host.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">"www.example.com"</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">&quot;www.example.com&quot;</span>
 client.host <span class="c">#=&gt; &quot;www.example.com&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L54" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L54" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3396,15 +3496,15 @@ client.host <span class="c">#=&gt; &quot;www.example.com&quot;</span></code></pr
         <div class="doc"><p>Executes a PATCH request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-client.patch(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+client.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3420,14 +3520,14 @@ client.patch(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><sp
         <div class="doc"><p>Executes a PATCH request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-response <span class="o">=</span> client.patch(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+response <span class="o">=</span> client.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3442,13 +3542,13 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
         <div class="doc"><p>Returns the target port.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">"www.example.com"</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">&quot;www.example.com&quot;</span>
 client.port <span class="c">#=&gt; 80</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L62" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L62" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3464,14 +3564,14 @@ client.port <span class="c">#=&gt; 80</span></code></pre></div>
         <div class="doc"><p>Executes a POST request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-response <span class="o">=</span> client.post(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+response <span class="o">=</span> client.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3487,15 +3587,15 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a POST request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-client.post(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+client.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3511,13 +3611,13 @@ client.post(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><spa
         <div class="doc"><p>Executes a POST with form data. The "Content-type" header is set
 to "application/x-www-form-urlencoded".</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">"www.example.com"</span>
-response <span class="o">=</span> client.post_form <span class="s">"/"</span>, {<span class="s">"foo"</span>: <span class="s">"bar"</span>}</code></pre></div>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">&quot;www.example.com&quot;</span>
+response <span class="o">=</span> client.post_form <span class="s">&quot;/&quot;</span>, {<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>}</code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L257" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L257" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3533,13 +3633,13 @@ response <span class="o">=</span> client.post_form <span class="s">"/"</span>, {
         <div class="doc"><p>Executes a POST with form data. The "Content-type" header is set
 to "application/x-www-form-urlencoded".</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">"www.example.com"</span>
-response <span class="o">=</span> client.post_form <span class="s">"/"</span>, <span class="s">"foo=bar"</span></code></pre></div>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">&quot;www.example.com&quot;</span>
+response <span class="o">=</span> client.post_form <span class="s">&quot;/&quot;</span>, <span class="s">&quot;foo=bar&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L244" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L244" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3555,14 +3655,14 @@ response <span class="o">=</span> client.post_form <span class="s">"/"</span>, <
         <div class="doc"><p>Executes a PUT request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Response.html#body-instance-method">HTTP::Response#body</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-response <span class="o">=</span> client.put(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+response <span class="o">=</span> client.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>)
 response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3578,15 +3678,15 @@ response.body <span class="c">#=&gt; &quot;...&quot;</span></code></pre></div>
         <div class="doc"><p>Executes a PUT request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Response.html#body_io-instance-method">HTTP::Response#body_io</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"www.example.com"</span>)
-client.put(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">"User-agent"</span>: <span class="s">"AwesomeApp"</span>}, body: <span class="s">"Hello!"</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
+client.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello!&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#=&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3601,18 +3701,18 @@ client.put(<span class="s">"/"</span>, headers: <span class="t">HTTP</span><span
       
         <div class="doc"><p>Set the number of seconds to wait when reading before raising an <code><a href="../IO/Timeout.html">IO::Timeout</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"example.org"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;example.org&quot;</span>)
 client.read_timeout <span class="o">=</span> <span class="n">1.5</span>
 <span class="k">begin</span>
-  response <span class="o">=</span> client.get(<span class="s">"/"</span>)
+  response <span class="o">=</span> client.get(<span class="s">&quot;/&quot;</span>)
 <span class="k">rescue</span> <span class="t">IO</span><span class="t">::</span><span class="t">Timeout</span>
-  puts <span class="s">"Timeout!"</span>
+  puts <span class="s">&quot;Timeout!&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L117" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L117" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3627,18 +3727,18 @@ client.read_timeout <span class="o">=</span> <span class="n">1.5</span>
       
         <div class="doc"><p>Set the read timeout with a <code><a href="../Time/Span.html">Time::Span</a></code>, to wait when reading before raising an <code><a href="../IO/Timeout.html">IO::Timeout</a></code>.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">"example.org"</span>)
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;example.org&quot;</span>)
 client.read_timeout <span class="o">=</span> <span class="n">5</span>.minutes
 <span class="k">begin</span>
-  response <span class="o">=</span> client.get(<span class="s">"/"</span>)
+  response <span class="o">=</span> client.get(<span class="s">&quot;/&quot;</span>)
 <span class="k">rescue</span> <span class="t">IO</span><span class="t">::</span><span class="t">Timeout</span>
-  puts <span class="s">"Timeout!"</span>
+  puts <span class="s">&quot;Timeout!&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L132" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L132" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3653,13 +3753,13 @@ client.read_timeout <span class="o">=</span> <span class="n">5</span>.minutes
       
         <div class="doc"><p>Returns whether this client is using SSL.</p>
 
-<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">"www.example.com"</span>, ssl: <span class="n">true</span>
+<pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span> <span class="s">&quot;www.example.com&quot;</span>, ssl: <span class="n">true</span>
 client.ssl? <span class="c">#=&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/client/client.cr#L70" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/client/client.cr#L70" target="_blank">View source</a>]
         
       </div>
     </div>

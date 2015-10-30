@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="../Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="../Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="../Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="../GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="../OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="../OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="../OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="../OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="../OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="../OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="../OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="../OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="../Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="../Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2118,9 +2173,9 @@ unsuccessful match, but there are overloads of both methods that accept a
 block. These overloads are convenient to access the <code><a href="../Regex/MatchData.html">Regex::MatchData</a></code> of a
 successful match, since the block argument can't be <code>nil</code>.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/[p-s]/</span>).size <span class="c">#=&gt; undefined method &apos;size&apos; for Nil</span>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/[p-s]/</span>).size <span class="c">#=&gt; undefined method &apos;size&apos; for Nil</span>
 
-<span class="s">"Crystal"</span>.match(<span class="s">/[p-s]/</span>) <span class="k">do</span> <span class="o">|</span>md<span class="o">|</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/[p-s]/</span>) <span class="k">do</span> <span class="o">|</span>md<span class="o">|</span>
   md.string <span class="c">#=&gt; &quot;Crystal&quot;</span>
   md[<span class="n">0</span>]     <span class="c">#=&gt; &quot;r&quot;</span>
   md[<span class="n">1</span>]?    <span class="c">#=&gt; nil</span>
@@ -2147,7 +2202,7 @@ expression without needing to capture it explicitly.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr" target="_blank">regex/match_data.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr" target="_blank">regex/match_data.cr</a>
     
     <br/>
   
@@ -2272,7 +2327,7 @@ expression without needing to capture it explicitly.</p>
   
     
 
-  <h3>Methods inherited from class <code><a href="../Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Reference.html">Reference</a></code></h3>
   
     <a href="../Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2308,10 +2363,13 @@ expression without needing to capture it explicitly.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
   
     <a href="../Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2391,6 +2449,48 @@ expression without needing to capture it explicitly.</p>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  
+    <a href="../Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="../Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="../Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="../Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="../Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="../Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2410,13 +2510,13 @@ expression without needing to capture it explicitly.</p>
         <div class="doc"><p>Returns the match of the capture group named by <code>group_name</code>, or
 raises an <code><a href="../ArgumentError.html">ArgumentError</a></code> if there is no such named capture group.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/r(?<ok>ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="s">"ok"</span>] } <span class="c">#=&gt; &quot;ys&quot;</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(?<ok>ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="s">"ng"</span>] } <span class="c">#=&gt; raises ArgumentError</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(?&lt;ok&gt;ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="s">&quot;ok&quot;</span>] } <span class="c">#=&gt; &quot;ys&quot;</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(?&lt;ok&gt;ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="s">&quot;ng&quot;</span>] } <span class="c">#=&gt; raises ArgumentError</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L163" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L163" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2432,13 +2532,13 @@ raises an <code><a href="../ArgumentError.html">ArgumentError</a></code> if ther
         <div class="doc"><p>Returns the match of the <code>n</code>th capture group, or raises an <code><a href="../IndexError.html">IndexError</a></code>
 if there is no <code>n</code>th capture group.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">1</span>]? } <span class="c">#=&gt; &quot;ys&quot;</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">2</span>]? } <span class="c">#=&gt; raises IndexError</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">1</span>]? } <span class="c">#=&gt; &quot;ys&quot;</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">2</span>]? } <span class="c">#=&gt; raises IndexError</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L137" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L137" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2454,13 +2554,13 @@ if there is no <code>n</code>th capture group.</p>
         <div class="doc"><p>Returns the match of the capture group named by <code>group_name</code>, or
 <code>nil</code> if there is no such named capture group.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/r(?<ok>ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="s">"ok"</span>]? } <span class="c">#=&gt; &quot;ys&quot;</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(?<ok>ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="s">"ng"</span>]? } <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(?&lt;ok&gt;ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="s">&quot;ok&quot;</span>]? } <span class="c">#=&gt; &quot;ys&quot;</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(?&lt;ok&gt;ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="s">&quot;ng&quot;</span>]? } <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L150" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L150" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2478,14 +2578,14 @@ an <code>n</code>th capture group.</p>
 
 <p>When <code>n</code> is <code>0</code>, returns the match for the entire <code><a href="../Regex.html">Regex</a></code>.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">0</span>]? } <span class="c">#=&gt; &quot;rys&quot;</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">1</span>]? } <span class="c">#=&gt; &quot;ys&quot;</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">2</span>]? } <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">0</span>]? } <span class="c">#=&gt; &quot;rys&quot;</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">1</span>]? } <span class="c">#=&gt; &quot;ys&quot;</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">2</span>]? } <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L121" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L121" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2503,14 +2603,14 @@ an <code>n</code>th capture group.</p>
 <p>When <code>n</code> is <code>0</code> or not given, uses the match of the entire <code><a href="../Regex.html">Regex</a></code>.
 Otherwise, uses the match of the <code>n</code>th capture group.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/r/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">begin</span>(<span class="n">0</span>) }       <span class="c">#=&gt; 1</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">begin</span>(<span class="n">1</span>) }   <span class="c">#=&gt; 2</span>
-<span class="s">"クリスタル"</span>.match(<span class="s">/リ(ス)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">begin</span>(<span class="n">0</span>) } <span class="c">#=&gt; 1</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">begin</span>(<span class="n">0</span>) }       <span class="c">#=&gt; 1</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">begin</span>(<span class="n">1</span>) }   <span class="c">#=&gt; 2</span>
+<span class="s">&quot;クリスタル&quot;</span>.match(<span class="s">/リ(ス)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">begin</span>(<span class="n">0</span>) } <span class="c">#=&gt; 1</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L63" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L63" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2528,14 +2628,14 @@ Otherwise, uses the match of the <code>n</code>th capture group.</p>
 <p>When <code>n</code> is <code>0</code> or not given, uses the match of the entire <code><a href="../Regex.html">Regex</a></code>.
 Otherwise, uses the match of the <code>n</code>th capture group.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/r/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_begin(<span class="n">0</span>) }       <span class="c">#=&gt; 1</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_begin(<span class="n">1</span>) }   <span class="c">#=&gt; 4</span>
-<span class="s">"クリスタル"</span>.match(<span class="s">/リ(ス)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_begin(<span class="n">0</span>) } <span class="c">#=&gt; 3</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_begin(<span class="n">0</span>) }       <span class="c">#=&gt; 1</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_begin(<span class="n">1</span>) }   <span class="c">#=&gt; 4</span>
+<span class="s">&quot;クリスタル&quot;</span>.match(<span class="s">/リ(ス)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_begin(<span class="n">0</span>) } <span class="c">#=&gt; 3</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L91" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L91" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2553,14 +2653,14 @@ Otherwise, uses the match of the <code>n</code>th capture group.</p>
 <p>When <code>n</code> is <code>0</code> or not given, uses the match of the entire <code><a href="../Regex.html">Regex</a></code>.
 Otherwise, uses the match of the <code>n</code>th capture group.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/r/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_end(<span class="n">0</span>) }       <span class="c">#=&gt; 2</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_end(<span class="n">1</span>) }   <span class="c">#=&gt; 4</span>
-<span class="s">"クリスタル"</span>.match(<span class="s">/リ(ス)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_end(<span class="n">0</span>) } <span class="c">#=&gt; 9</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_end(<span class="n">0</span>) }       <span class="c">#=&gt; 2</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_end(<span class="n">1</span>) }   <span class="c">#=&gt; 4</span>
+<span class="s">&quot;クリスタル&quot;</span>.match(<span class="s">/リ(ス)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.byte_end(<span class="n">0</span>) } <span class="c">#=&gt; 9</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L106" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L106" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2578,14 +2678,14 @@ Otherwise, uses the match of the <code>n</code>th capture group.</p>
 <p>When <code>n</code> is <code>0</code> or not given, uses the match of the entire <code><a href="../Regex.html">Regex</a></code>.
 Otherwise, uses the match of the <code>n</code>th capture group.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/r/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">end</span>(<span class="n">0</span>) }       <span class="c">#=&gt; 2</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">end</span>(<span class="n">1</span>) }   <span class="c">#=&gt; 4</span>
-<span class="s">"クリスタル"</span>.match(<span class="s">/リ(ス)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">end</span>(<span class="n">0</span>) } <span class="c">#=&gt; 3</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">end</span>(<span class="n">0</span>) }       <span class="c">#=&gt; 2</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">end</span>(<span class="n">1</span>) }   <span class="c">#=&gt; 4</span>
+<span class="s">&quot;クリスタル&quot;</span>.match(<span class="s">/リ(ス)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.<span class="k">end</span>(<span class="n">0</span>) } <span class="c">#=&gt; 3</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L77" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L77" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2601,7 +2701,7 @@ Otherwise, uses the match of the <code>n</code>th capture group.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L191" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L191" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2617,12 +2717,12 @@ Otherwise, uses the match of the <code>n</code>th capture group.</p>
         <div class="doc"><p>Returns the part of the original string after the match. If the match ends
 at the end of the string, returns the empty string.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/yst/</span>) { <span class="o">|</span>md<span class="o">|</span> md.post_match } <span class="c">#=&gt; &quot;al&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/yst/</span>) { <span class="o">|</span>md<span class="o">|</span> md.post_match } <span class="c">#=&gt; &quot;al&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L187" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L187" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2638,12 +2738,12 @@ at the end of the string, returns the empty string.</p>
         <div class="doc"><p>Returns the part of the original string before the match. If the match
 starts at the start of the string, returns the empty string.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/yst/</span>) { <span class="o">|</span>md<span class="o">|</span> md.pre_match } <span class="c">#=&gt; &quot;Cr&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/yst/</span>) { <span class="o">|</span>md<span class="o">|</span> md.pre_match } <span class="c">#=&gt; &quot;Cr&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L177" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L177" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2658,12 +2758,12 @@ starts at the start of the string, returns the empty string.</p>
       
         <div class="doc"><p>Returns the original regular expression.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/[p-s]/</span>) { <span class="o">|</span>md<span class="o">|</span> md.regex } <span class="c">#=&gt; /[p-s]/</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/[p-s]/</span>) { <span class="o">|</span>md<span class="o">|</span> md.regex } <span class="c">#=&gt; /[p-s]/</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L31" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L31" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2678,14 +2778,14 @@ starts at the start of the string, returns the empty string.</p>
       
         <div class="doc"><p>Returns the number of capture groups, including named capture groups.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/[p-s]/</span>) { <span class="o">|</span>md<span class="o">|</span> md.size }          <span class="c">#=&gt; 0</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.size }          <span class="c">#=&gt; 1</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/r(ys)(?<ok>ta)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.size } <span class="c">#=&gt; 2</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/[p-s]/</span>) { <span class="o">|</span>md<span class="o">|</span> md.size }          <span class="c">#=&gt; 0</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.size }          <span class="c">#=&gt; 1</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/r(ys)(?&lt;ok&gt;ta)/</span>) { <span class="o">|</span>md<span class="o">|</span> md.size } <span class="c">#=&gt; 2</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L40" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L40" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2700,12 +2800,12 @@ starts at the start of the string, returns the empty string.</p>
       
         <div class="doc"><p>Returns the original string.</p>
 
-<pre><code><span class="s">"Crystal"</span>.match(<span class="s">/[p-s]/</span>) { <span class="o">|</span>md<span class="o">|</span> md.string } <span class="c">#=&gt; &quot;Crystal&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/[p-s]/</span>) { <span class="o">|</span>md<span class="o">|</span> md.string } <span class="c">#=&gt; &quot;Crystal&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L47" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L47" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2721,7 +2821,7 @@ starts at the start of the string, returns the empty string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr#L195" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr#L195" target="_blank">View source</a>]
         
       </div>
     </div>

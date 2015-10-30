@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2120,23 +2175,23 @@ and would set the Logger to DEBUG.</p>
 
 <h3>Example</h3>
 
-<pre><code><span class="k">require</span> <span class="s">"logger"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;logger&quot;</span>
 
 log <span class="o">=</span> <span class="t">Logger</span>.<span class="k">new</span>(<span class="t">STDOUT</span>)
 log.level <span class="o">=</span> <span class="t">Logger</span><span class="t">::</span><span class="t">WARN</span>
 
-log.debug(<span class="s">"Created logger"</span>)
-log.info(<span class="s">"Program started"</span>)
-log.warn(<span class="s">"Nothing to do!"</span>)
+log.debug(<span class="s">&quot;Created logger&quot;</span>)
+log.info(<span class="s">&quot;Program started&quot;</span>)
+log.warn(<span class="s">&quot;Nothing to do!&quot;</span>)
 
 <span class="k">begin</span>
   <span class="t">File</span>.each_line(path) <span class="k">do</span> <span class="o">|</span>line<span class="o">|</span>
     <span class="k">unless</span> line <span class="o">=~</span> <span class="s">/^(\w+) = (.*)$/</span>
-      log.error(<span class="s">"Line in wrong format: </span><span class="i">#{</span></span>line<span class="s"><span class="i">}</span>"</span>)
+      log.error(<span class="s">&quot;Line in wrong format: </span><span class="i">#{</span></span>line<span class="s"><span class="i">}</span>&quot;</span>)
     <span class="k">end</span>
   <span class="k">end</span>
 <span class="k">rescue</span> err
-  log.fatal(<span class="s">"Caught exception; exiting"</span>)
+  log.fatal(<span class="s">&quot;Caught exception; exiting&quot;</span>)
   log.fatal(err)
 <span class="k">end</span></code></pre>
 
@@ -2156,7 +2211,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr" target="_blank">logger.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr" target="_blank">logger.cr</a>
     
     <br/>
   
@@ -2362,7 +2417,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
   
     
 
-  <h3>Methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
   
     <a href="Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2398,10 +2453,13 @@ log.warn(<span class="s">"Nothing to do!"</span>)
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2481,6 +2539,48 @@ log.warn(<span class="s">"Nothing to do!"</span>)
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2498,7 +2598,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L67" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L67" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2519,7 +2619,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L75" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L75" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2535,7 +2635,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2551,7 +2651,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2567,7 +2667,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2583,7 +2683,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2599,7 +2699,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2615,7 +2715,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2631,7 +2731,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2647,7 +2747,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2663,7 +2763,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2707,7 +2807,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2723,7 +2823,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2739,7 +2839,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2783,7 +2883,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L95" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2799,7 +2899,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L100" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L100" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2843,7 +2943,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2859,7 +2959,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2875,7 +2975,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2891,7 +2991,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2907,7 +3007,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2923,7 +3023,7 @@ log.warn(<span class="s">"Nothing to do!"</span>)
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/logger.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/logger.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>

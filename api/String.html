@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2114,75 +2169,75 @@
 <p>A String is typically created with a string literal, enclosing UTF-8 characters
 in double quotes:</p>
 
-<pre><code><span class="s">"hello world"</span></code></pre>
+<pre><code><span class="s">&quot;hello world&quot;</span></code></pre>
 
 <p>A backslash can be used to denote some characters inside the string:</p>
 
-<pre><code><span class="s">"\&quot;"</span> <span class="c"># double quote</span>
-<span class="s">"\\"</span> <span class="c"># backslash</span>
-<span class="s">"\e"</span> <span class="c"># escape</span>
-<span class="s">"\f"</span> <span class="c"># form feed</span>
-<span class="s">"\n"</span> <span class="c"># newline</span>
-<span class="s">"\r"</span> <span class="c"># carriage return</span>
-<span class="s">"\t"</span> <span class="c"># tab</span>
-<span class="s">"\v"</span> <span class="c"># vertical tab</span></code></pre>
+<pre><code><span class="s">&quot;\&quot;&quot;</span> <span class="c"># double quote</span>
+<span class="s">&quot;\\&quot;</span> <span class="c"># backslash</span>
+<span class="s">&quot;\e&quot;</span> <span class="c"># escape</span>
+<span class="s">&quot;\f&quot;</span> <span class="c"># form feed</span>
+<span class="s">&quot;\n&quot;</span> <span class="c"># newline</span>
+<span class="s">&quot;\r&quot;</span> <span class="c"># carriage return</span>
+<span class="s">&quot;\t&quot;</span> <span class="c"># tab</span>
+<span class="s">&quot;\v&quot;</span> <span class="c"># vertical tab</span></code></pre>
 
 <p>You can use a backslash followed by at most three digits to denote a code point written in octal:</p>
 
-<pre><code>"\101" # == "A"
-"\123" # == "S"
-"\12"  # == "\n"
-"\1"   # string with one character with code point 1</code></pre>
+<pre><code><span class="s">&quot;\101&quot;</span> <span class="c"># == &quot;A&quot;</span>
+<span class="s">&quot;\123&quot;</span> <span class="c"># == &quot;S&quot;</span>
+<span class="s">&quot;\12&quot;</span>  <span class="c"># == &quot;\n&quot;</span>
+<span class="s">&quot;\1&quot;</span>   <span class="c"># string with one character with code point 1</span></code></pre>
 
 <p>You can use a backslash followed by an <em>u</em> and four hexadecimal characters to denote a unicode codepoint written:</p>
 
-<pre><code>"\u0041" # == "A"</code></pre>
+<pre><code><span class="s">&quot;\u0041&quot;</span> <span class="c"># == &quot;A&quot;</span></code></pre>
 
 <p>Or you can use curly braces and specify up to six hexadecimal numbers (0 to 10FFFF):</p>
 
-<pre><code>"\u{41}" # == "A"</code></pre>
+<pre><code><span class="s">&quot;\u{41}&quot;</span> <span class="c"># == &quot;A&quot;</span></code></pre>
 
 <p>A string can span multiple lines:</p>
 
-<pre><code>"hello
-      world" # same as "hello      \nworld"</code></pre>
+<pre><code><span class="s">&quot;hello
+      world&quot;</span> <span class="c"># same as &quot;hello      \nworld&quot;</span></code></pre>
 
 <p>Note that in the above example trailing and leading spaces, as well as newlines,
 end up in the resulting string. To avoid this, you can split a string into multiple lines
 by joining multiple literals with a backslash:</p>
 
-<pre><code>"hello " \
-"world, " \
-"no newlines" # same as "hello world, no newlines"</code></pre>
+<pre><code><span class="s">&quot;hello &quot;</span> \
+<span class="s">&quot;world, &quot;</span> \
+<span class="s">&quot;no newlines&quot;</span> <span class="c"># same as &quot;hello world, no newlines&quot;</span></code></pre>
 
 <p>Alterantively, a backlash followed by a newline can be inserted inside the string literal:</p>
 
-<pre><code>"hello \
+<pre><code><span class="s">&quot;hello \
      world, \
-     no newlines" # same as "hello world, no newlines"</code></pre>
+     no newlines&quot;</span> <span class="c"># same as &quot;hello world, no newlines&quot;</span></code></pre>
 
 <p>In this case, leading whitespace is not included in the resulting string.</p>
 
-<p>If you need to write a string that has many double quotes, parenthesis, or similar
+<p>If you need to write a string that has many double quotes, parentheses, or similar
 characters, you can use alternative literals:</p>
 
-<pre><code># Supports double quotes and nested parenthesis
-%(hello ("world")) # same as "hello (\"world\")"
+<pre><code><span class="c"># Supports double quotes and nested parentheses</span>
+<span class="s">%(hello (&quot;world&quot;))</span> <span class="c"># same as &quot;hello (\&quot;world\&quot;)&quot;</span>
 
-# Supports double quotes and nested brackets
-%[hello ["world"]] # same as "hello [\"world\"]"
+<span class="c"># Supports double quotes and nested brackets</span>
+<span class="s">%[hello [&quot;world&quot;]]</span> <span class="c"># same as &quot;hello [\&quot;world\&quot;]&quot;</span>
 
-# Supports double quotes and nested curlies
-%{hello {"world"}} # same as "hello {\"world\"}"
+<span class="c"># Supports double quotes and nested curlies</span>
+<span class="s">%{hello {&quot;world&quot;}}</span> <span class="c"># same as &quot;hello {\&quot;world\&quot;}&quot;</span>
 
-# Supports double quotes and nested angles
-%&lt;hello &lt;"world">> # same as "hello &lt;\"world\">"</code></pre>
+<span class="c"># Supports double quotes and nested angles</span>
+<span class="s">%&lt;hello &lt;&quot;world&quot;&gt;&gt;</span> <span class="c"># same as &quot;hello &lt;\&quot;world\&quot;&gt;&quot;</span></code></pre>
 
 <p>To create a String with embedded expressions, you can use string interpolation:</p>
 
 <pre><code>a <span class="o">=</span> <span class="n">1</span>
 b <span class="o">=</span> <span class="n">2</span>
-<span class="s">"sum = </span><span class="i">#{</span></span>a <span class="o">+</span> b<span class="s"><span class="i">}</span>"</span>        <span class="c"># &quot;sum = 3&quot;</span></code></pre>
+<span class="s">&quot;sum = </span><span class="i">#{</span></span>a <span class="o">+</span> b<span class="s"><span class="i">}</span>&quot;</span>        <span class="c"># &quot;sum = 3&quot;</span></code></pre>
 
 <p>This ends up invoking <code><a href="Object.html#to_s%28io%3AIO%29-instance-method">Object#to_s(IO)</a></code> on each expression enclosed by <code>#{...}</code>.</p>
 
@@ -2211,17 +2266,17 @@ b <span class="o">=</span> <span class="n">2</span>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr" target="_blank">string.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr" target="_blank">string.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -2267,7 +2322,7 @@ b <span class="o">=</span> <span class="n">2</span>
       <li class="entry-summary">
         <a href="#new%28slice%3ASlice%28UInt8%29%29-class-method" class="signature"><strong>.new</strong>(slice : Slice(UInt8))</a>
         
-          <div class="summary"><p>Creates a String form the given slice.</p></div>
+          <div class="summary"><p>Creates a String from the given <em>slice</em>.</p></div>
         
       </li>
     
@@ -2352,7 +2407,7 @@ b <span class="o">=</span> <span class="n">2</span>
       <li class="entry-summary">
         <a href="#%5B%5D%28index%3AInt%29-instance-method" class="signature"><strong>#[]</strong>(index : Int)</a>
         
-          <div class="summary"><p>Returns the <code><a href="Char.html">Char</a></code> at the give index, or raises <code><a href="IndexError.html">IndexError</a></code> if out of bounds.</p></div>
+          <div class="summary"><p>Returns the <code><a href="Char.html">Char</a></code> at the given <em>index</em>, or raises <code><a href="IndexError.html">IndexError</a></code> if out of bounds.</p></div>
         
       </li>
     
@@ -3307,7 +3362,7 @@ b <span class="o">=</span> <span class="n">2</span>
   
     
 
-  <h3>Methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
   
     <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
       <span><(other : T)</span>
@@ -3335,10 +3390,13 @@ b <span class="o">=</span> <span class="n">2</span>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
   
     <a href="Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -3374,10 +3432,13 @@ b <span class="o">=</span> <span class="n">2</span>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -3457,6 +3518,48 @@ b <span class="o">=</span> <span class="n">2</span>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -3476,7 +3579,7 @@ it to the block and finally getting a String out of it. The <code><a href="Strin
 resizes as needed.</p>
 
 <pre><code>str <span class="o">=</span> <span class="t">String</span>.build <span class="k">do</span> <span class="o">|</span>str<span class="o">|</span>
-  str <span class="o"><<</span> <span class="s">"hello "</span>
+  str <span class="o"><<</span> <span class="s">&quot;hello &quot;</span>
   str <span class="o"><<</span> <span class="n">1</span>
 <span class="k">end</span>
 str <span class="c">#=&gt; &quot;hello 1&quot;</span></code></pre></div>
@@ -3484,7 +3587,7 @@ str <span class="c">#=&gt; &quot;hello 1&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L219" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3500,7 +3603,7 @@ str <span class="c">#=&gt; &quot;hello 1&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/from_json.cr#L51" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/from_json.cr#L51" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3516,7 +3619,7 @@ str <span class="c">#=&gt; &quot;hello 1&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/yaml/from_yaml.cr#L38" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/from_yaml.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3553,7 +3656,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L196" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L196" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3574,7 +3677,7 @@ copied from the pointer.</p>
 lazily computed when needed.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> (<span class="s">'a'</span>.ord <span class="o">+</span> i).to_u8 }
-<span class="t">String</span>.<span class="k">new</span>(ptr, <span class="n">2</span>) => <span class="s">"ab"</span></code></pre>
+<span class="t">String</span>.<span class="k">new</span>(ptr, <span class="n">2</span>) => <span class="s">&quot;ab&quot;</span></code></pre>
 
 <p>Note: if the chars don't denote a valid UTF-8 sequence, this method still succeeds.
 However, when iterating it or indexing it, an <code><a href="InvalidByteSequenceError.html">InvalidByteSequenceError</a></code> will be raised.</p></div>
@@ -3582,7 +3685,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L167" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L167" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3595,7 +3698,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
         <a class="method-permalink" href="#new%28slice%3ASlice%28UInt8%29%29-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Creates a String form the given slice. Bytes will be copied from the slice.</p>
+        <div class="doc"><p>Creates a String from the given <em>slice</em>. Bytes will be copied from the slice.</p>
 
 <p>This method is always safe to call, and the resulting string will have
 the contents and size of the slice.</p>
@@ -3609,7 +3712,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L128" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L128" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3632,7 +3735,7 @@ the result of this method is undefined and might cause a segmentation fault.</p>
 library and the library guarantees that this pointer eventually has an
 ending zero byte.</p>
 
-<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">5</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">==</span> <span class="n">4</span> ? <span class="n">0</span> : (<span class="s">'a'</span>.ord <span class="o">+</span> i).to_u8 }
+<pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">5</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">==</span> <span class="n">4</span> ? <span class="n">0_u8</span> : (<span class="s">'a'</span>.ord <span class="o">+</span> i).to_u8 }
 <span class="t">String</span>.<span class="k">new</span>(ptr) <span class="c">#=&gt; &quot;abcd&quot;</span></code></pre>
 
 <p>Note: if the chars don't denote a valid UTF-8 sequence, this method still succeeds.
@@ -3641,7 +3744,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L149" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L149" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3661,12 +3764,12 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
         <div class="doc"><p>Interpolates <em>other</em> into the string using <code>Kernel#sprintf</code></p>
 
-<pre><code><span class="s">"Party like it&apos;s %d!!!"</span> <span class="o">%</span> <span class="n">1999</span> <span class="c">#=&gt; Party like it&apos;s 1999!!!</span></code></pre></div>
+<pre><code><span class="s">&quot;Party like it&apos;s %d!!!&quot;</span> <span class="o">%</span> <span class="n">1999</span> <span class="c">#=&gt; Party like it&apos;s 1999!!!</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2572" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2572" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3681,13 +3784,13 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
         <div class="doc"><p>Makes a new string by adding <em>str</em> to itself <em>times</em> times.</p>
 
-<pre><code><span class="s">"Developers! "</span> <span class="o">*</span> <span class="n">4</span>
+<pre><code><span class="s">&quot;Developers! &quot;</span> <span class="o">*</span> <span class="n">4</span>
 <span class="c">#=&gt; &quot;Developers! Developers! Developers! Developers!&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1549" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1549" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3702,13 +3805,13 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
         <div class="doc"><p>Concatenates <em>str</em> and <em>other</em>.</p>
 
-<pre><code><span class="s">"abc"</span> <span class="o">+</span> <span class="s">"def"</span> <span class="c">#=&gt; &quot;abcdef&quot;</span>
-<span class="s">"abc"</span> <span class="o">+</span> <span class="s">'d'</span>   <span class="c">#=&gt; &quot;abcd&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;abc&quot;</span> <span class="o">+</span> <span class="s">&quot;def&quot;</span> <span class="c">#=&gt; &quot;abcdef&quot;</span>
+<span class="s">&quot;abc&quot;</span> <span class="o">+</span> <span class="s">'d'</span>   <span class="c">#=&gt; &quot;abcd&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1521" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1521" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3723,13 +3826,13 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       
         <div class="doc"><p>Concatenates <em>str</em> and <em>other</em>.</p>
 
-<pre><code><span class="s">"abc"</span> <span class="o">+</span> <span class="s">"def"</span> <span class="c">#=&gt; &quot;abcdef&quot;</span>
-<span class="s">"abc"</span> <span class="o">+</span> <span class="s">'d'</span>   <span class="c">#=&gt; &quot;abcd&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;abc&quot;</span> <span class="o">+</span> <span class="s">&quot;def&quot;</span> <span class="c">#=&gt; &quot;abcdef&quot;</span>
+<span class="s">&quot;abc&quot;</span> <span class="o">+</span> <span class="s">'d'</span>   <span class="c">#=&gt; &quot;abcd&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1506" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1506" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3752,15 +3855,15 @@ byte, -1 is returned and so on.</p>
 up to the shortest length, then the longer string is considered greater than
 the shorter one.</p>
 
-<pre><code><span class="s">"abcdef"</span> <span class="o"><=></span> <span class="s">"abcde"</span>     <span class="c">#=&gt; 1</span>
-<span class="s">"abcdef"</span> <span class="o"><=></span> <span class="s">"abcdef"</span>    <span class="c">#=&gt; 0</span>
-<span class="s">"abcdef"</span> <span class="o"><=></span> <span class="s">"abcdefg"</span>   <span class="c">#=&gt; -1</span>
-<span class="s">"abcdef"</span> <span class="o"><=></span> <span class="s">"ABCDEF"</span>    <span class="c">#=&gt; 1</span></code></pre></div>
+<pre><code><span class="s">&quot;abcdef&quot;</span> <span class="o"><=></span> <span class="s">&quot;abcde&quot;</span>     <span class="c">#=&gt; 1</span>
+<span class="s">&quot;abcdef&quot;</span> <span class="o"><=></span> <span class="s">&quot;abcdef&quot;</span>    <span class="c">#=&gt; 0</span>
+<span class="s">&quot;abcdef&quot;</span> <span class="o"><=></span> <span class="s">&quot;abcdefg&quot;</span>   <span class="c">#=&gt; -1</span>
+<span class="s">&quot;abcdef&quot;</span> <span class="o"><=></span> <span class="s">&quot;ABCDEF&quot;</span>    <span class="c">#=&gt; 1</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1427" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1427" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3776,7 +3879,7 @@ the shorter one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1405" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1405" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3795,15 +3898,15 @@ If unsuccessful, it returns <code>nil</code>.</p>
 
 <p>If the argument isn't a <code><a href="Regex.html">Regex</a></code>, it returns <code>nil</code>.</p>
 
-<pre><code><span class="s">"Haystack"</span> <span class="o">=~</span> <span class="s">/ay/</span>  <span class="c">#=&gt; 1</span>
-<span class="s">"Haystack"</span> <span class="o">=~</span> <span class="s">/z/</span>   <span class="c">#=&gt; nil</span>
+<pre><code><span class="s">&quot;Haystack&quot;</span> <span class="o">=~</span> <span class="s">/ay/</span>  <span class="c">#=&gt; 1</span>
+<span class="s">&quot;Haystack&quot;</span> <span class="o">=~</span> <span class="s">/z/</span>   <span class="c">#=&gt; nil</span>
 
-<span class="s">"Haystack"</span> <span class="o">=~</span> <span class="n">45</span>    <span class="c">#=&gt; nil</span></code></pre></div>
+<span class="s">&quot;Haystack&quot;</span> <span class="o">=~</span> <span class="n">45</span>    <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1496" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1496" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3822,15 +3925,15 @@ If unsuccessful, it returns <code>nil</code>.</p>
 
 <p>If the argument isn't a <code><a href="Regex.html">Regex</a></code>, it returns <code>nil</code>.</p>
 
-<pre><code><span class="s">"Haystack"</span> <span class="o">=~</span> <span class="s">/ay/</span>  <span class="c">#=&gt; 1</span>
-<span class="s">"Haystack"</span> <span class="o">=~</span> <span class="s">/z/</span>   <span class="c">#=&gt; nil</span>
+<pre><code><span class="s">&quot;Haystack&quot;</span> <span class="o">=~</span> <span class="s">/ay/</span>  <span class="c">#=&gt; 1</span>
+<span class="s">&quot;Haystack&quot;</span> <span class="o">=~</span> <span class="s">/z/</span>   <span class="c">#=&gt; nil</span>
 
-<span class="s">"Haystack"</span> <span class="o">=~</span> <span class="n">45</span>    <span class="c">#=&gt; nil</span></code></pre></div>
+<span class="s">&quot;Haystack&quot;</span> <span class="o">=~</span> <span class="n">45</span>    <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1489" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1489" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3846,7 +3949,7 @@ If unsuccessful, it returns <code>nil</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L694" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L694" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3862,7 +3965,7 @@ If unsuccessful, it returns <code>nil</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L698" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L698" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3875,20 +3978,20 @@ If unsuccessful, it returns <code>nil</code>.</p>
         <a class="method-permalink" href="#%5B%5D%28index%3AInt%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the <code><a href="Char.html">Char</a></code> at the give index, or raises <code><a href="IndexError.html">IndexError</a></code> if out of bounds.</p>
+        <div class="doc"><p>Returns the <code><a href="Char.html">Char</a></code> at the given <em>index</em>, or raises <code><a href="IndexError.html">IndexError</a></code> if out of bounds.</p>
 
 <p>Negative indices can be used to start counting from the end of the string.</p>
 
-<pre><code><span class="s">"hello"</span>[<span class="n">0</span>]  <span class="c"># &apos;h&apos;</span>
-<span class="s">"hello"</span>[<span class="n">1</span>]  <span class="c"># &apos;e&apos;</span>
-<span class="s">"hello"</span>[<span class="n">-1</span>] <span class="c"># &apos;o&apos;</span>
-<span class="s">"hello"</span>[<span class="n">-2</span>] <span class="c"># &apos;l&apos;</span>
-<span class="s">"hello"</span>[<span class="n">5</span>]  <span class="c"># raises IndexError</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>[<span class="n">0</span>]  <span class="c"># &apos;h&apos;</span>
+<span class="s">&quot;hello&quot;</span>[<span class="n">1</span>]  <span class="c"># &apos;e&apos;</span>
+<span class="s">&quot;hello&quot;</span>[<span class="n">-1</span>] <span class="c"># &apos;o&apos;</span>
+<span class="s">&quot;hello&quot;</span>[<span class="n">-2</span>] <span class="c"># &apos;l&apos;</span>
+<span class="s">&quot;hello&quot;</span>[<span class="n">5</span>]  <span class="c"># raises IndexError</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L593" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L593" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3907,15 +4010,15 @@ counting from the end of the string.</p>
 
 <p>Raises <code><a href="IndexError.html">IndexError</a></code> if the range's start is not in range.</p>
 
-<pre><code><span class="s">"hello"</span>[<span class="n">0</span>..<span class="n">2</span>]  <span class="c"># &quot;hel&quot;</span>
-<span class="s">"hello"</span>[<span class="n">0</span>...<span class="n">2</span>] <span class="c"># &quot;he&quot;</span>
-<span class="s">"hello"</span>[<span class="n">1</span>..<span class="n">-1</span>]  <span class="c"># &quot;ello&quot;</span>
-<span class="s">"hello"</span>[<span class="n">1</span>...<span class="n">-1</span>]  <span class="c"># &quot;ell&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>[<span class="n">0</span>..<span class="n">2</span>]  <span class="c"># &quot;hel&quot;</span>
+<span class="s">&quot;hello&quot;</span>[<span class="n">0</span>...<span class="n">2</span>] <span class="c"># &quot;he&quot;</span>
+<span class="s">&quot;hello&quot;</span>[<span class="n">1</span>..<span class="n">-1</span>]  <span class="c"># &quot;ello&quot;</span>
+<span class="s">&quot;hello&quot;</span>[<span class="n">1</span>...<span class="n">-1</span>]  <span class="c"># &quot;ell&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L609" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L609" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3941,7 +4044,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L631" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L631" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3957,7 +4060,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L702" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L702" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3973,7 +4076,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L681" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L681" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3989,7 +4092,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L685" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L685" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4005,7 +4108,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L689" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L689" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4021,7 +4124,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L677" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L677" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4037,7 +4140,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2620" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2620" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4053,7 +4156,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L710" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L710" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4069,7 +4172,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L706" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L706" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4085,7 +4188,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L773" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L773" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4101,7 +4204,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L765" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L765" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4117,7 +4220,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L769" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L769" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4133,7 +4236,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1672" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1672" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4149,7 +4252,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1663" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1663" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4165,7 +4268,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L727" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L727" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4181,7 +4284,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L753" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L753" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4196,13 +4299,13 @@ from the end of the string.</p>
       
         <div class="doc"><p>Returns this string's bytes as an <code><a href="Array.html">Array</a>(<a href="UInt8.html">UInt8</a>)</code>.</p>
 
-<pre><code><span class="s">"hello"</span>.bytes          <span class="c">#=&gt; [104, 101, 108, 108, 111]</span>
-<span class="s">"你好"</span>.bytes           <span class="c">#=&gt; [228, 189, 160, 229, 165, 189]</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.bytes          <span class="c">#=&gt; [104, 101, 108, 108, 111]</span>
+<span class="s">&quot;你好&quot;</span>.bytes           <span class="c">#=&gt; [228, 189, 160, 229, 165, 189]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2420" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2420" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4217,13 +4320,13 @@ from the end of the string.</p>
       
         <div class="doc"><p>Returns the number of bytes in this string.</p>
 
-<pre><code><span class="s">"hello"</span>.bytesize         <span class="c">#=&gt; 5</span>
-<span class="s">"你好"</span>.bytesize          <span class="c">#=&gt; 6</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.bytesize         <span class="c">#=&gt; 5</span>
+<span class="s">&quot;你好&quot;</span>.bytesize          <span class="c">#=&gt; 6</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L231" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L231" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4238,12 +4341,12 @@ from the end of the string.</p>
       
         <div class="doc"><p>Converts underscores to camelcase boundaries.</p>
 
-<pre><code><span class="s">"eiffel_tower"</span>.underscore <span class="c">#=&gt; &quot;EiffelTower&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;eiffel_tower&quot;</span>.underscore <span class="c">#=&gt; &quot;EiffelTower&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2041" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2041" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4259,7 +4362,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L802" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L802" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4275,7 +4378,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L761" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L761" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4292,15 +4395,15 @@ from the end of the string.</p>
 It is valid to pass <code><a href="String.html#size-instance-method">#size</a></code> to <em>index</em>, and in this case the answer
 will be the bytesize of this string.</p>
 
-<pre><code><span class="s">"hello"</span>.char_index_to_byte_index(<span class="n">1</span>)     <span class="c">#=&gt; 1</span>
-<span class="s">"hello"</span>.char_index_to_byte_index(<span class="n">5</span>)     <span class="c">#=&gt; 5</span>
-<span class="s">"こんにちは"</span>.char_index_to_byte_index(<span class="n">1</span>) <span class="c">#=&gt; 3</span>
-<span class="s">"こんにちは"</span>.char_index_to_byte_index(<span class="n">5</span>) <span class="c">#=&gt; 15</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.char_index_to_byte_index(<span class="n">1</span>)     <span class="c">#=&gt; 1</span>
+<span class="s">&quot;hello&quot;</span>.char_index_to_byte_index(<span class="n">5</span>)     <span class="c">#=&gt; 5</span>
+<span class="s">&quot;こんにちは&quot;</span>.char_index_to_byte_index(<span class="n">1</span>) <span class="c">#=&gt; 3</span>
+<span class="s">&quot;こんにちは&quot;</span>.char_index_to_byte_index(<span class="n">5</span>) <span class="c">#=&gt; 15</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1697" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1697" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4315,12 +4418,12 @@ will be the bytesize of this string.</p>
       
         <div class="doc"><p>Returns an array of all characters in the string.</p>
 
-<pre><code><span class="s">"ab☃"</span>.chars <span class="c">#=&gt; [&apos;a&apos;, &apos;b&apos;, &apos;☃&apos;]</span></code></pre></div>
+<pre><code><span class="s">&quot;ab☃&quot;</span>.chars <span class="c">#=&gt; [&apos;a&apos;, &apos;b&apos;, &apos;☃&apos;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2339" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2339" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4336,7 +4439,7 @@ will be the bytesize of this string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L845" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L845" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4352,7 +4455,7 @@ will be the bytesize of this string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L816" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L816" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4368,7 +4471,7 @@ will be the bytesize of this string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L833" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L833" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4385,18 +4488,18 @@ will be the bytesize of this string.</p>
 If the string ends with <code>\r\n</code>, both characters are removed.
 Applying chop to an empty string returns an empty string.</p>
 
-<pre><code><span class="s">"string\r\n"</span>.chop   <span class="c">#=&gt; &quot;string&quot;</span>
-<span class="s">"string\n\r"</span>.chop   <span class="c">#=&gt; &quot;string\n&quot;</span>
-<span class="s">"string\n"</span>.chop     <span class="c">#=&gt; &quot;string&quot;</span>
-<span class="s">"string"</span>.chop       <span class="c">#=&gt; &quot;strin&quot;</span>
-<span class="s">"x"</span>.chop.chop       <span class="c">#=&gt; &quot;&quot;</span></code></pre>
+<pre><code><span class="s">&quot;string\r\n&quot;</span>.chop   <span class="c">#=&gt; &quot;string&quot;</span>
+<span class="s">&quot;string\n\r&quot;</span>.chop   <span class="c">#=&gt; &quot;string\n&quot;</span>
+<span class="s">&quot;string\n&quot;</span>.chop     <span class="c">#=&gt; &quot;string&quot;</span>
+<span class="s">&quot;string&quot;</span>.chop       <span class="c">#=&gt; &quot;strin&quot;</span>
+<span class="s">&quot;x&quot;</span>.chop.chop       <span class="c">#=&gt; &quot;&quot;</span></code></pre>
 
 <p>See also: <code><a href="String.html#chomp-instance-method">#chomp</a></code></p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L878" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L878" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4412,7 +4515,7 @@ Applying chop to an empty string returns an empty string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L757" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L757" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4427,12 +4530,12 @@ Applying chop to an empty string returns an empty string.</p>
       
         <div class="doc"><p>Returns an array of the codepoints that make the string. See Char#ord</p>
 
-<pre><code><span class="s">"ab☃"</span>.codepoints <span class="c">#=&gt; [97, 98, 9731]</span></code></pre></div>
+<pre><code><span class="s">&quot;ab☃&quot;</span>.codepoints <span class="c">#=&gt; [97, 98, 9731]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2378" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2378" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4453,18 +4556,18 @@ manner.</p>
 the strings are compared char-by-char, and ASCII characters are compared in a
 case-insensitive way.</p>
 
-<pre><code><span class="s">"abcdef"</span>.compare(<span class="s">"abcde"</span>)     <span class="c">#=&gt; 1</span>
-<span class="s">"abcdef"</span>.compare(<span class="s">"abcdef"</span>)    <span class="c">#=&gt; 0</span>
-<span class="s">"abcdef"</span>.compare(<span class="s">"abcdefg"</span>)   <span class="c">#=&gt; -1</span>
-<span class="s">"abcdef"</span>.compare(<span class="s">"ABCDEF"</span>)    <span class="c">#=&gt; 1</span>
+<pre><code><span class="s">&quot;abcdef&quot;</span>.compare(<span class="s">&quot;abcde&quot;</span>)     <span class="c">#=&gt; 1</span>
+<span class="s">&quot;abcdef&quot;</span>.compare(<span class="s">&quot;abcdef&quot;</span>)    <span class="c">#=&gt; 0</span>
+<span class="s">&quot;abcdef&quot;</span>.compare(<span class="s">&quot;abcdefg&quot;</span>)   <span class="c">#=&gt; -1</span>
+<span class="s">&quot;abcdef&quot;</span>.compare(<span class="s">&quot;ABCDEF&quot;</span>)    <span class="c">#=&gt; 1</span>
 
-<span class="s">"abcdef"</span>.compare(<span class="s">"ABCDEF"</span>, case_insensitive: <span class="n">true</span>)    <span class="c">#=&gt; 0</span>
-<span class="s">"abcdef"</span>.compare(<span class="s">"ABCDEG"</span>, case_insensitive: <span class="n">true</span>)    <span class="c">#=&gt; -1</span></code></pre></div>
+<span class="s">&quot;abcdef&quot;</span>.compare(<span class="s">&quot;ABCDEF&quot;</span>, case_insensitive: <span class="n">true</span>)    <span class="c">#=&gt; 0</span>
+<span class="s">&quot;abcdef&quot;</span>.compare(<span class="s">&quot;ABCDEG&quot;</span>, case_insensitive: <span class="n">true</span>)    <span class="c">#=&gt; -1</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1452" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1452" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4484,7 +4587,7 @@ in this string that match the given set.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1308" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1308" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4500,12 +4603,12 @@ in this string that match the given set.</p></div>
         <div class="doc"><p>Yields each char in this string to the block,
 returns the number of times the block returned a truthy value.</p>
 
-<pre><code><span class="s">"aabbcc"</span>.count {<span class="o">|</span>c<span class="o">|</span> [<span class="s">'a'</span>, <span class="s">'b'</span>].includes?(c) } <span class="c">#=&gt; 4</span></code></pre></div>
+<pre><code><span class="s">&quot;aabbcc&quot;</span>.count {<span class="o">|</span>c<span class="o">|</span> [<span class="s">'a'</span>, <span class="s">'b'</span>].includes?(c) } <span class="c">#=&gt; 4</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1288" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1288" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4520,12 +4623,12 @@ returns the number of times the block returned a truthy value.</p>
       
         <div class="doc"><p>Counts the occurrences of other in this string.</p>
 
-<pre><code><span class="s">"aabbcc"</span>.count(<span class="s">'a'</span>) <span class="c">#=&gt; 2</span></code></pre></div>
+<pre><code><span class="s">&quot;aabbcc&quot;</span>.count(<span class="s">'a'</span>) <span class="c">#=&gt; 2</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1301" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1301" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4541,7 +4644,7 @@ returns the number of times the block returned a truthy value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2644" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2644" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4558,12 +4661,12 @@ returns the number of times the block returned a truthy value.</p>
 described at Char#in_set?. Returns a new string with
 all characters that match the given set removed.</p>
 
-<pre><code><span class="s">"aabbccdd"</span>.delete(<span class="s">"a-c"</span>) <span class="c">#=&gt; &quot;dd&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;aabbccdd&quot;</span>.delete(<span class="s">&quot;a-c&quot;</span>) <span class="c">#=&gt; &quot;dd&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1343" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1343" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4578,12 +4681,12 @@ all characters that match the given set removed.</p>
       
         <div class="doc"><p>Returns a new string with all occurrences of char removed.</p>
 
-<pre><code><span class="s">"aabbcc"</span>.delete(<span class="s">'b'</span>) <span class="c">#=&gt; &quot;aacc&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;aabbcc&quot;</span>.delete(<span class="s">'b'</span>) <span class="c">#=&gt; &quot;aacc&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1332" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1332" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4600,12 +4703,12 @@ all characters that match the given set removed.</p>
 Returns a new string with all characters for which the
 block returned a truthy value removed.</p>
 
-<pre><code><span class="s">"aabbcc"</span>.delete {<span class="o">|</span>c<span class="o">|</span> [<span class="s">'a'</span>, <span class="s">'b'</span>].includes?(c) } <span class="c">#=&gt; &quot;cc&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;aabbcc&quot;</span>.delete {<span class="o">|</span>c<span class="o">|</span> [<span class="s">'a'</span>, <span class="s">'b'</span>].includes?(c) } <span class="c">#=&gt; &quot;cc&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1319" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1319" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4621,7 +4724,7 @@ block returned a truthy value removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L786" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L786" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4637,7 +4740,7 @@ block returned a truthy value removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2448" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2448" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4653,7 +4756,7 @@ block returned a truthy value removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2442" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2442" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4669,7 +4772,7 @@ block returned a truthy value removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2454" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2454" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4685,7 +4788,7 @@ block returned a truthy value removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2460" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2460" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4700,14 +4803,14 @@ block returned a truthy value removed.</p>
       
         <div class="doc"><p>Yields each byte in the string to the block.</p>
 
-<pre><code><span class="s">"ab☃"</span>.each_byte <span class="k">do</span> <span class="o">|</span>byte<span class="o">|</span>
+<pre><code><span class="s">&quot;ab☃&quot;</span>.each_byte <span class="k">do</span> <span class="o">|</span>byte<span class="o">|</span>
   byte <span class="c">#=&gt; 97, 98, 226, 152, 131</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2393" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2393" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4722,7 +4825,7 @@ block returned a truthy value removed.</p>
       
         <div class="doc"><p>Returns an iterator over each byte in the string.</p>
 
-<pre><code>bytes <span class="o">=</span> <span class="s">"ab☃"</span>.each_byte
+<pre><code>bytes <span class="o">=</span> <span class="s">&quot;ab☃&quot;</span>.each_byte
 bytes.<span class="k">next</span> <span class="c">#=&gt; 97</span>
 bytes.<span class="k">next</span> <span class="c">#=&gt; 98</span>
 bytes.<span class="k">next</span> <span class="c">#=&gt; 226</span>
@@ -4732,7 +4835,7 @@ bytes.<span class="k">next</span> <span class="c">#=&gt; 131</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2410" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2410" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4747,7 +4850,7 @@ bytes.<span class="k">next</span> <span class="c">#=&gt; 131</span></code></pre>
       
         <div class="doc"><p>Returns an iterator over each character in the string.</p>
 
-<pre><code>chars <span class="o">=</span> <span class="s">"ab☃"</span>.each_char
+<pre><code>chars <span class="o">=</span> <span class="s">&quot;ab☃&quot;</span>.each_char
 chars.<span class="k">next</span> <span class="c">#=&gt; &apos;a&apos;</span>
 chars.<span class="k">next</span> <span class="c">#=&gt; &apos;b&apos;</span>
 chars.<span class="k">next</span> <span class="c">#=&gt; &apos;☃&apos;</span></code></pre></div>
@@ -4755,7 +4858,7 @@ chars.<span class="k">next</span> <span class="c">#=&gt; &apos;☃&apos;</span><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2313" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2313" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4770,14 +4873,14 @@ chars.<span class="k">next</span> <span class="c">#=&gt; &apos;☃&apos;</span><
       
         <div class="doc"><p>Yields each character in the string to the block.</p>
 
-<pre><code><span class="s">"ab☃"</span>.each_char <span class="k">do</span> <span class="o">|</span>char<span class="o">|</span>
+<pre><code><span class="s">&quot;ab☃&quot;</span>.each_char <span class="k">do</span> <span class="o">|</span>char<span class="o">|</span>
   char <span class="c">#=&gt; &apos;a&apos;, &apos;b&apos;, &apos;☃&apos;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2292" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2292" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4792,7 +4895,7 @@ chars.<span class="k">next</span> <span class="c">#=&gt; &apos;☃&apos;</span><
       
         <div class="doc"><p>Yields each character and its index in the string to the block.</p>
 
-<pre><code><span class="s">"ab☃"</span>.each_char_with_index <span class="k">do</span> <span class="o">|</span>char, index<span class="o">|</span>
+<pre><code><span class="s">&quot;ab☃&quot;</span>.each_char_with_index <span class="k">do</span> <span class="o">|</span>char, index<span class="o">|</span>
   char  <span class="c">#=&gt; &apos;a&apos;, &apos;b&apos;, &apos;☃&apos;</span>
   index <span class="c">#=&gt;  0,   1,   2</span>
 <span class="k">end</span></code></pre></div>
@@ -4800,7 +4903,7 @@ chars.<span class="k">next</span> <span class="c">#=&gt; &apos;☃&apos;</span><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2325" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2325" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4815,7 +4918,7 @@ chars.<span class="k">next</span> <span class="c">#=&gt; &apos;☃&apos;</span><
       
         <div class="doc"><p>Returns an iterator for each codepoint. See Char#ord</p>
 
-<pre><code>codepoints <span class="o">=</span> <span class="s">"ab☃"</span>.each_codepoint
+<pre><code>codepoints <span class="o">=</span> <span class="s">&quot;ab☃&quot;</span>.each_codepoint
 codepoints.<span class="k">next</span> <span class="c">#=&gt; 97</span>
 codepoints.<span class="k">next</span> <span class="c">#=&gt; 98</span>
 codepoints.<span class="k">next</span> <span class="c">#=&gt; 9731</span></code></pre></div>
@@ -4823,7 +4926,7 @@ codepoints.<span class="k">next</span> <span class="c">#=&gt; 9731</span></code>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2368" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2368" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4838,14 +4941,14 @@ codepoints.<span class="k">next</span> <span class="c">#=&gt; 9731</span></code>
       
         <div class="doc"><p>Yields each codepoint to the block. See Char#ord</p>
 
-<pre><code><span class="s">"ab☃"</span>.each_codepoint <span class="k">do</span> <span class="o">|</span>codepoint<span class="o">|</span>
+<pre><code><span class="s">&quot;ab☃&quot;</span>.each_codepoint <span class="k">do</span> <span class="o">|</span>codepoint<span class="o">|</span>
   codepoint <span class="c">#=&gt; 97, 98, 9731</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2354" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2354" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4860,7 +4963,9 @@ codepoints.<span class="k">next</span> <span class="c">#=&gt; 9731</span></code>
       
         <div class="doc"><p>Splits the string after each newline and yields each line to a block.</p>
 
-<pre><code>haiku <span class="o">=</span> <span class="s">"the first cold shower\neven the monkey seems to want\na little coat of straw"</span>
+<pre><code>haiku <span class="o">=</span> <span class="s">&quot;the first cold shower
+even the monkey seems to want
+a little coat of straw&quot;</span>
 haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span class="o">|</span>
   puts stanza.upcase
 <span class="k">end</span>
@@ -4871,7 +4976,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1957" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1957" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4889,7 +4994,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1971" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1971" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4907,7 +5012,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1401" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1401" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4923,7 +5028,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2538" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2538" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4939,7 +5044,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2543" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2543" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4955,13 +5060,13 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
         <div class="doc"><p>Returns a string where each character yielded to the given block
 is replaced by the block's return value.</p>
 
-<pre><code><span class="s">"hello"</span>.gsub { <span class="o">|</span>x<span class="o">|</span> (x.ord <span class="o">+</span> <span class="n">1</span>).chr } <span class="c">#=&gt; &quot;ifmmp&quot;</span>
-<span class="s">"hello"</span>.gsub { <span class="s">"hi"</span> } <span class="c">#=&gt; &quot;hihihihihi&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.gsub { <span class="o">|</span>x<span class="o">|</span> (x.ord <span class="o">+</span> <span class="n">1</span>).chr } <span class="c">#=&gt; &quot;ifmmp&quot;</span>
+<span class="s">&quot;hello&quot;</span>.gsub { <span class="s">&quot;hi&quot;</span> } <span class="c">#=&gt; &quot;hihihihihi&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1137" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1137" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4977,13 +5082,13 @@ is replaced by the block's return value.</p>
         <div class="doc"><p>Returns a string where all occurrences of the given char are
 replaced with the given <em>replacement</em>.</p>
 
-<pre><code><span class="s">"hello"</span>.gsub(<span class="s">'l'</span>, <span class="s">"lo"</span>) <span class="c">#=&gt; &quot;heloloo&quot;</span>
-<span class="s">"hello world"</span>.gsub(<span class="s">'o'</span>, <span class="s">'a'</span>) <span class="c">#=&gt; &quot;hella warld&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.gsub(<span class="s">'l'</span>, <span class="s">&quot;lo&quot;</span>) <span class="c">#=&gt; &quot;heloloo&quot;</span>
+<span class="s">&quot;hello world&quot;</span>.gsub(<span class="s">'o'</span>, <span class="s">'a'</span>) <span class="c">#=&gt; &quot;hella warld&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1152" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1152" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4999,12 +5104,12 @@ replaced with the given <em>replacement</em>.</p>
         <div class="doc"><p>Returns a string where all occurrences of the given <em>string</em> are replaced
 with the given <em>replacement</em>.</p>
 
-<pre><code><span class="s">"hello yellow"</span>.gsub(<span class="s">"ll"</span>, <span class="s">"dd"</span>) <span class="c">#=&gt; &quot;heddo yeddow&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello yellow&quot;</span>.gsub(<span class="s">&quot;ll&quot;</span>, <span class="s">&quot;dd&quot;</span>) <span class="c">#=&gt; &quot;heddo yeddow&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1231" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1231" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5020,12 +5125,12 @@ with the given <em>replacement</em>.</p>
         <div class="doc"><p>Returns a string where all occurrences of the given <em>pattern</em> are replaced
 with the given <em>replacement</em>.</p>
 
-<pre><code><span class="s">"hello"</span>.gsub(<span class="s">/[aeiou]/</span>, <span class="s">'*'</span>) <span class="c">#=&gt; &quot;h*ll*&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.gsub(<span class="s">/[aeiou]/</span>, <span class="s">'*'</span>) <span class="c">#=&gt; &quot;h*ll*&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1205" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5041,12 +5146,12 @@ with the given <em>replacement</em>.</p>
         <div class="doc"><p>Returns a string where all chars in the given hash are replaced
 by the corresponding <em>hash</em> values.</p>
 
-<pre><code><span class="s">"hello"</span>.gsub({<span class="s">'e'</span> => <span class="s">'a'</span>, <span class="s">'l'</span> => <span class="s">'d'</span>}) <span class="c">#=&gt; &quot;haddo&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.gsub({<span class="s">'e'</span> => <span class="s">'a'</span>, <span class="s">'l'</span> => <span class="s">'d'</span>}) <span class="c">#=&gt; &quot;haddo&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1276" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1276" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5066,12 +5171,12 @@ not included in the returned string.</p>
 
 <pre><code><span class="c"># &quot;he&quot; and &quot;l&quot; are matched and replaced,</span>
 <span class="c"># but &quot;o&quot; is not and so is not included</span>
-<span class="s">"hello"</span>.gsub(<span class="s">/(he|l|o)/</span>, {<span class="s">"he"</span>: <span class="s">"ha"</span>, <span class="s">"l"</span>: <span class="s">"la"</span>}) <span class="c">#=&gt; &quot;halala&quot;</span></code></pre></div>
+<span class="s">&quot;hello&quot;</span>.gsub(<span class="s">/(he|l|o)/</span>, {<span class="s">&quot;he&quot;</span>: <span class="s">&quot;ha&quot;</span>, <span class="s">&quot;l&quot;</span>: <span class="s">&quot;la&quot;</span>}) <span class="c">#=&gt; &quot;halala&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1219" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5087,12 +5192,12 @@ not included in the returned string.</p>
         <div class="doc"><p>Returns a string where all occurrences of the given <em>string</em> are replaced
 with the block's value.</p>
 
-<pre><code><span class="s">"hello yellow"</span>.gsub(<span class="s">"ll"</span>) { <span class="s">"dd"</span> } <span class="c">#=&gt; &quot;heddo yeddow&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello yellow&quot;</span>.gsub(<span class="s">&quot;ll&quot;</span>) { <span class="s">&quot;dd&quot;</span> } <span class="c">#=&gt; &quot;heddo yeddow&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1241" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1241" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5108,12 +5213,12 @@ with the block's value.</p>
         <div class="doc"><p>Returns a string where all occurrences of the given <em>pattern</em> are replaced
 by the block value's value.</p>
 
-<pre><code><span class="s">"hello"</span>.gsub(<span class="s">/./</span>) {<span class="o">|</span>s<span class="o">|</span> s[<span class="n">0</span>].ord.to_s <span class="o">+</span> <span class="s">' '</span>} <span class="c">#=&gt; #=&gt; &quot;104 101 108 108 111 &quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.gsub(<span class="s">/./</span>) {<span class="o">|</span>s<span class="o">|</span> s[<span class="n">0</span>].ord.to_s <span class="o">+</span> <span class="s">' '</span>} <span class="c">#=&gt; #=&gt; &quot;104 101 108 108 111 &quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1166" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1166" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5133,7 +5238,7 @@ by the block value's value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2579" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2579" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5148,13 +5253,13 @@ by the block value's value.</p>
       
         <div class="doc"><p>Returns true if the string contains <em>search</em>.</p>
 
-<pre><code><span class="s">"Team"</span>.includes?(<span class="s">'i'</span>)             <span class="c">#=&gt; false</span>
-<span class="s">"Dysfunctional"</span>.includes?(<span class="s">"fun"</span>)  <span class="c">#=&gt; true</span></code></pre></div>
+<pre><code><span class="s">&quot;Team&quot;</span>.includes?(<span class="s">'i'</span>)             <span class="c">#=&gt; false</span>
+<span class="s">&quot;Dysfunctional&quot;</span>.includes?(<span class="s">&quot;fun&quot;</span>)  <span class="c">#=&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1714" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1714" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5170,15 +5275,15 @@ by the block value's value.</p>
         <div class="doc"><p>Returns the index of <em>search</em> in the string, or <code>nil</code> if the string is not present.
 If <code>offset</code> is present, it defines the position to start the search.</p>
 
-<pre><code><span class="s">"Hello, World"</span>.index(<span class="s">'o'</span>)     <span class="c">#=&gt; 4</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">'Z'</span>)     <span class="c">#=&gt; nil</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">"o"</span>, <span class="n">5</span>)  <span class="c">#=&gt; 8</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">"H"</span>, <span class="n">2</span>)  <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'o'</span>)     <span class="c">#=&gt; 4</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'Z'</span>)     <span class="c">#=&gt; nil</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;o&quot;</span>, <span class="n">5</span>)  <span class="c">#=&gt; 8</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;H&quot;</span>, <span class="n">2</span>)  <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1585" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1585" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5194,15 +5299,15 @@ If <code>offset</code> is present, it defines the position to start the search.<
         <div class="doc"><p>Returns the index of <em>search</em> in the string, or <code>nil</code> if the string is not present.
 If <code>offset</code> is present, it defines the position to start the search.</p>
 
-<pre><code><span class="s">"Hello, World"</span>.index(<span class="s">'o'</span>)     <span class="c">#=&gt; 4</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">'Z'</span>)     <span class="c">#=&gt; nil</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">"o"</span>, <span class="n">5</span>)  <span class="c">#=&gt; 8</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">"H"</span>, <span class="n">2</span>)  <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'o'</span>)     <span class="c">#=&gt; 4</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'Z'</span>)     <span class="c">#=&gt; nil</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;o&quot;</span>, <span class="n">5</span>)  <span class="c">#=&gt; 8</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;H&quot;</span>, <span class="n">2</span>)  <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1599" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1599" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5218,7 +5323,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2424" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2424" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5234,7 +5339,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2436" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2436" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5250,7 +5355,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2430" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2430" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5266,7 +5371,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1936" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1936" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5281,14 +5386,14 @@ If <code>offset</code> is present, it defines the position to start the search.<
       
         <div class="doc"><p>Adds instances of <code>char</code> to right of the string until it is at least size of <code>len</code>.</p>
 
-<pre><code><span class="s">"Purple"</span>.ljust(<span class="n">8</span>)       <span class="c">#=&gt; &quot;Purple  &quot;</span>
-<span class="s">"Purple"</span>.ljust(<span class="n">8</span>, <span class="s">'-'</span>)  <span class="c">#=&gt; &quot;Purple--&quot;</span>
-<span class="s">"Aubergine"</span>.ljust(<span class="n">8</span>)    <span class="c">#=&gt; &quot;Aubergine&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;Purple&quot;</span>.ljust(<span class="n">8</span>)       <span class="c">#=&gt; &quot;Purple  &quot;</span>
+<span class="s">&quot;Purple&quot;</span>.ljust(<span class="n">8</span>, <span class="s">'-'</span>)  <span class="c">#=&gt; &quot;Purple--&quot;</span>
+<span class="s">&quot;Aubergine&quot;</span>.ljust(<span class="n">8</span>)    <span class="c">#=&gt; &quot;Aubergine&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2091" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2091" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5304,7 +5409,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L927" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L927" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5319,12 +5424,12 @@ If <code>offset</code> is present, it defines the position to start the search.<
       
         <div class="doc"><p>Searches the string for <em>regex</em> starting at <em>pos</em>, yielding the match if there is one.</p>
 
-<pre><code><span class="s">"Pine"</span>.match(<span class="s">/P/</span>) <span class="k">do</span> <span class="o">|</span>match<span class="o">|</span>
+<pre><code><span class="s">&quot;Pine&quot;</span>.match(<span class="s">/P/</span>) <span class="k">do</span> <span class="o">|</span>match<span class="o">|</span>
   puts match
 <span class="k">end</span>
 <span class="c">#=&gt; #&lt;Regex::MatchData &quot;P&quot;&gt;</span>
 
-<span class="s">"Oak"</span>.match(<span class="s">/P/</span>) <span class="k">do</span> <span class="o">|</span>match<span class="o">|</span>
+<span class="s">&quot;Oak&quot;</span>.match(<span class="s">/P/</span>) <span class="k">do</span> <span class="o">|</span>match<span class="o">|</span>
   <span class="c"># This is never invoked.</span>
   puts match
 <span class="k">end</span></code></pre></div>
@@ -5332,7 +5437,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2230" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2230" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5350,7 +5455,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2211" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2211" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5365,13 +5470,13 @@ If <code>offset</code> is present, it defines the position to start the search.<
       
         <div class="doc"><p>Reverses the order of characters in the string.</p>
 
-<pre><code><span class="s">"Argentina"</span>.reverse <span class="c">#=&gt; &quot;anitnegrA&quot;</span>
-<span class="s">"racecar"</span>.reverse   <span class="c">#=&gt; &quot;racecar&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;Argentina&quot;</span>.reverse <span class="c">#=&gt; &quot;anitnegrA&quot;</span>
+<span class="s">&quot;racecar&quot;</span>.reverse   <span class="c">#=&gt; &quot;racecar&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2068" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2068" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5388,15 +5493,15 @@ If <code>offset</code> is present, it defines the position to start the search.<
 If <code>offset</code> is present, it defines the position to <em>end</em> the search
 (characters beyond that point will be ignored).</p>
 
-<pre><code><span class="s">"Hello, World"</span>.index(<span class="s">'o'</span>)     <span class="c">#=&gt; 8</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">'Z'</span>)     <span class="c">#=&gt; nil</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">"o"</span>, <span class="n">5</span>)  <span class="c">#=&gt; 4</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">"H"</span>, <span class="n">2</span>)  <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'o'</span>)     <span class="c">#=&gt; 8</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'Z'</span>)     <span class="c">#=&gt; nil</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;o&quot;</span>, <span class="n">5</span>)  <span class="c">#=&gt; 4</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;H&quot;</span>, <span class="n">2</span>)  <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1629" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1629" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5413,15 +5518,15 @@ If <code>offset</code> is present, it defines the position to <em>end</em> the s
 If <code>offset</code> is present, it defines the position to <em>end</em> the search
 (characters beyond that point will be ignored).</p>
 
-<pre><code><span class="s">"Hello, World"</span>.index(<span class="s">'o'</span>)     <span class="c">#=&gt; 8</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">'Z'</span>)     <span class="c">#=&gt; nil</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">"o"</span>, <span class="n">5</span>)  <span class="c">#=&gt; 4</span>
-<span class="s">"Hello, World"</span>.index(<span class="s">"H"</span>, <span class="n">2</span>)  <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'o'</span>)     <span class="c">#=&gt; 8</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'Z'</span>)     <span class="c">#=&gt; nil</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;o&quot;</span>, <span class="n">5</span>)  <span class="c">#=&gt; 4</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;H&quot;</span>, <span class="n">2</span>)  <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1645" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1645" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5436,14 +5541,14 @@ If <code>offset</code> is present, it defines the position to <em>end</em> the s
       
         <div class="doc"><p>Adds instances of <code>char</code> to left of the string until it is at least size of <code>len</code>.</p>
 
-<pre><code><span class="s">"Purple"</span>.ljust(<span class="n">8</span>)       <span class="c">#=&gt; &quot;  Purple&quot;</span>
-<span class="s">"Purple"</span>.ljust(<span class="n">8</span>, <span class="s">'-'</span>)  <span class="c">#=&gt; &quot;--Purple&quot;</span>
-<span class="s">"Aubergine"</span>.ljust(<span class="n">8</span>)    <span class="c">#=&gt; &quot;Aubergine&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;Purple&quot;</span>.ljust(<span class="n">8</span>)       <span class="c">#=&gt; &quot;  Purple&quot;</span>
+<span class="s">&quot;Purple&quot;</span>.ljust(<span class="n">8</span>, <span class="s">'-'</span>)  <span class="c">#=&gt; &quot;--Purple&quot;</span>
+<span class="s">&quot;Aubergine&quot;</span>.ljust(<span class="n">8</span>)    <span class="c">#=&gt; &quot;Aubergine&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2102" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2102" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5459,7 +5564,7 @@ If <code>offset</code> is present, it defines the position to <em>end</em> the s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L914" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L914" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5478,7 +5583,7 @@ returning an array of the matched string for each match.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2277" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2277" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5497,7 +5602,7 @@ yielding the matched string for each match.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2265" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2265" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5515,7 +5620,7 @@ yielding the matched string for each match.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2238" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2238" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5534,7 +5639,7 @@ returning an array of <code><a href="Regex/MatchData.html">Regex::MatchData</a><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2255" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2255" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5549,13 +5654,13 @@ returning an array of <code><a href="Regex/MatchData.html">Regex::MatchData</a><
       
         <div class="doc"><p>Returns the number of unicode codepoints in this string.</p>
 
-<pre><code><span class="s">"hello"</span>.size         <span class="c">#=&gt; 5</span>
-<span class="s">"你好"</span>.size          <span class="c">#=&gt; 2</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.size         <span class="c">#=&gt; 5</span>
+<span class="s">&quot;你好&quot;</span>.size          <span class="c">#=&gt; 2</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2593" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2593" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5572,14 +5677,18 @@ returning an array of <code><a href="Regex/MatchData.html">Regex::MatchData</a><
 If <em>limit</em> is present, up to <em>limit</em> new strings will be created,
 with the entire remainder added to the last string.</p>
 
-<pre><code>old_pond <span class="o">=</span> <span class="s">"\n  Old pond\n  a frog leaps in\n  water&apos;s sound\n"</span>
+<pre><code>old_pond <span class="o">=</span> <span class="s">&quot;
+  Old pond
+  a frog leaps in
+  water&apos;s sound
+&quot;</span>
 old_pond.split    <span class="c">#=&gt; [&quot;Old&quot;, &quot;pond&quot;, &quot;a&quot;, &quot;frog&quot;, &quot;leaps&quot;, &quot;in&quot;, &quot;water&apos;s&quot;, &quot;sound&quot;]</span>
 old_pond.split(<span class="n">3</span>) <span class="c">#=&gt; [&quot;Old&quot;, &quot;pond&quot;, &quot;a frog leaps in\n  water&apos;s sound\n&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1731" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1731" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5596,14 +5705,18 @@ old_pond.split(<span class="n">3</span>) <span class="c">#=&gt; [&quot;Old&quot;
 If <em>limit</em> is present, up to <em>limit</em> new strings will be created,
 with the entire remainder added to the last string.</p>
 
-<pre><code>old_pond <span class="o">=</span> <span class="s">"\n  Old pond\n  a frog leaps in\n  water&apos;s sound\n"</span>
+<pre><code>old_pond <span class="o">=</span> <span class="s">&quot;
+  Old pond
+  a frog leaps in
+  water&apos;s sound
+&quot;</span>
 old_pond.split    <span class="c">#=&gt; [&quot;Old&quot;, &quot;pond&quot;, &quot;a&quot;, &quot;frog&quot;, &quot;leaps&quot;, &quot;in&quot;, &quot;water&apos;s&quot;, &quot;sound&quot;]</span>
 old_pond.split(<span class="n">3</span>) <span class="c">#=&gt; [&quot;Old&quot;, &quot;pond&quot;, &quot;a frog leaps in\n  water&apos;s sound\n&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1783" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1783" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5619,7 +5732,7 @@ old_pond.split(<span class="n">3</span>) <span class="c">#=&gt; [&quot;Old&quot;
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1881" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1881" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5640,15 +5753,15 @@ the final item will contain the remainder of the string.</p>
 
 <p>If <em>separator</em> is an empty string (<code>""</code>), the string will be separated into one-character strings.</p>
 
-<pre><code>long_river_name <span class="o">=</span> <span class="s">"Mississippi"</span>
-long_river_name.split(<span class="s">"ss"</span>) <span class="c">#=&gt; [&quot;Mi&quot;, &quot;i&quot;, &quot;ippi&quot;]</span>
+<pre><code>long_river_name <span class="o">=</span> <span class="s">&quot;Mississippi&quot;</span>
+long_river_name.split(<span class="s">&quot;ss&quot;</span>) <span class="c">#=&gt; [&quot;Mi&quot;, &quot;i&quot;, &quot;ippi&quot;]</span>
 long_river_name.split(<span class="s">'i'</span>)  <span class="c">#=&gt; [&quot;M&quot;, &quot;ss&quot;, &quot;ss&quot;, &quot;pp&quot;]</span>
-long_river<span class="o">-</span>name.split(<span class="s">""</span>)   <span class="c">#=&gt; [&quot;M&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;p&quot;, &quot;p&quot;, &quot;i&quot;]</span></code></pre></div>
+long_river<span class="o">-</span>name.split(<span class="s">&quot;&quot;</span>)   <span class="c">#=&gt; [&quot;M&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;p&quot;, &quot;p&quot;, &quot;i&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1831" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1831" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5666,13 +5779,13 @@ Returns a new string, that has all characters removed,
 that were the same as the previous one and for which the given
 block returned a truthy value.</p>
 
-<pre><code><span class="s">"aaabbbccc"</span>.squeeze {<span class="o">|</span>c<span class="o">|</span> [<span class="s">'a'</span>, <span class="s">'b'</span>].includes?(c) } <span class="c">#=&gt; &quot;abccc&quot;</span>
-<span class="s">"aaabbbccc"</span>.squeeze {<span class="o">|</span>c<span class="o">|</span> [<span class="s">'a'</span>, <span class="s">'c'</span>].includes?(c) } <span class="c">#=&gt; &quot;abbbc&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;aaabbbccc&quot;</span>.squeeze {<span class="o">|</span>c<span class="o">|</span> [<span class="s">'a'</span>, <span class="s">'b'</span>].includes?(c) } <span class="c">#=&gt; &quot;abccc&quot;</span>
+<span class="s">&quot;aaabbbccc&quot;</span>.squeeze {<span class="o">|</span>c<span class="o">|</span> [<span class="s">'a'</span>, <span class="s">'c'</span>].includes?(c) } <span class="c">#=&gt; &quot;abbbc&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1356" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1356" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5687,12 +5800,12 @@ block returned a truthy value.</p>
       
         <div class="doc"><p>Returns a new string, with all runs of char replaced by one instance.</p>
 
-<pre><code><span class="s">"a    bbb"</span>.squeeze(<span class="s">' '</span>) <span class="c">#=&gt; &quot;a bbb&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;a    bbb&quot;</span>.squeeze(<span class="s">' '</span>) <span class="c">#=&gt; &quot;a bbb&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1371" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1371" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5712,13 +5825,13 @@ they match the given set.</p>
 
 <p>If no set is given, all characters are matched.</p>
 
-<pre><code><span class="s">"aaabbbcccddd"</span>.squeeze(<span class="s">"b-d"</span>) <span class="c">#=&gt; &quot;aaabcd&quot;</span>
-<span class="s">"a       bbb"</span>.squeeze <span class="c">#=&gt; &quot;a b&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;aaabbbcccddd&quot;</span>.squeeze(<span class="s">&quot;b-d&quot;</span>) <span class="c">#=&gt; &quot;aaabcd&quot;</span>
+<span class="s">&quot;a       bbb&quot;</span>.squeeze <span class="c">#=&gt; &quot;a b&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1386" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1386" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5734,12 +5847,12 @@ they match the given set.</p>
         <div class="doc"><p>Returns a new string, that has all characters removed,
 that were the same as the previous one.</p>
 
-<pre><code><span class="s">"a       bbb"</span>.squeeze <span class="c">#=&gt; &quot;a b&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;a       bbb&quot;</span>.squeeze <span class="c">#=&gt; &quot;a b&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1396" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1396" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5755,7 +5868,7 @@ that were the same as the previous one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2530" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2530" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5771,7 +5884,7 @@ that were the same as the previous one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2525" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2525" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5787,7 +5900,7 @@ that were the same as the previous one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L892" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L892" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5803,12 +5916,12 @@ that were the same as the previous one.</p>
         <div class="doc"><p>Returns a string where the first char in the string matching a key in the
 given <em>hash</em> is replaced by the corresponding hash value.</p>
 
-<pre><code><span class="s">"hello"</span>.sub({<span class="s">'a'</span> => <span class="s">'b'</span>, <span class="s">'l'</span> => <span class="s">'d'</span>}) <span class="c">#=&gt; &quot;hedlo&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.sub({<span class="s">'a'</span> => <span class="s">'b'</span>, <span class="s">'l'</span> => <span class="s">'d'</span>}) <span class="c">#=&gt; &quot;hedlo&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1105" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1105" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5824,12 +5937,12 @@ given <em>hash</em> is replaced by the corresponding hash value.</p>
         <div class="doc"><p>Returns a string where the first occurrence of <em>pattern</em> is replaced by
 <em>replacement</em></p>
 
-<pre><code><span class="s">"hello"</span>.sub(<span class="s">/[aeiou]/</span>, <span class="s">'*'</span>) <span class="c">#=&gt; &quot;h*llo&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.sub(<span class="s">/[aeiou]/</span>, <span class="s">'*'</span>) <span class="c">#=&gt; &quot;h*llo&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1050" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1050" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5845,12 +5958,12 @@ given <em>hash</em> is replaced by the corresponding hash value.</p>
         <div class="doc"><p>Returns a string where the first occurrences of the given <em>string</em> is replaced
 with the given <em>replacement</em>.</p>
 
-<pre><code><span class="s">"hello yellow"</span>.sub(<span class="s">"ll"</span>, <span class="s">"dd"</span>) <span class="c">#=&gt; &quot;heddo yellow&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello yellow&quot;</span>.sub(<span class="s">&quot;ll&quot;</span>, <span class="s">&quot;dd&quot;</span>) <span class="c">#=&gt; &quot;heddo yellow&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1078" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1078" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5866,12 +5979,12 @@ with the given <em>replacement</em>.</p>
         <div class="doc"><p>Returns a string where the first occurrences of the given <em>string</em> is replaced
 with the block's value.</p>
 
-<pre><code><span class="s">"hello yellow"</span>.sub(<span class="s">"ll"</span>) { <span class="s">"dd"</span> } <span class="c">#=&gt; &quot;heddo yellow&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello yellow&quot;</span>.sub(<span class="s">&quot;ll&quot;</span>) { <span class="s">&quot;dd&quot;</span> } <span class="c">#=&gt; &quot;heddo yellow&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1088" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1088" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5887,13 +6000,13 @@ with the block's value.</p>
         <div class="doc"><p>Returns a new string where the first character is yielded to the given
 block and replaced by its return value.</p>
 
-<pre><code><span class="s">"hello"</span>.sub {<span class="o">|</span>x<span class="o">|</span> (x.ord <span class="o">+</span> <span class="n">1</span>).chr } <span class="c">#=&gt; &quot;iello&quot;</span>
-<span class="s">"hello"</span>.sub { <span class="s">"hi"</span> } <span class="c">#=&gt; &quot;hiello&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.sub {<span class="o">|</span>x<span class="o">|</span> (x.ord <span class="o">+</span> <span class="n">1</span>).chr } <span class="c">#=&gt; &quot;iello&quot;</span>
+<span class="s">&quot;hello&quot;</span>.sub { <span class="s">&quot;hi&quot;</span> } <span class="c">#=&gt; &quot;hiello&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L986" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L986" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5909,13 +6022,13 @@ block and replaced by its return value.</p>
         <div class="doc"><p>Returns a string where the first occurrence of <em>char</em> is replaced by
 <em>replacement</em>.</p>
 
-<pre><code><span class="s">"hello"</span>.sub(<span class="s">'l'</span>, <span class="s">"lo"</span>) <span class="c">#=&gt; &quot;helolo&quot;</span>
-<span class="s">"hello world"</span>.sub(<span class="s">'o'</span>, <span class="s">'a'</span>) <span class="c">#=&gt; &quot;hella world&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.sub(<span class="s">'l'</span>, <span class="s">&quot;lo&quot;</span>) <span class="c">#=&gt; &quot;helolo&quot;</span>
+<span class="s">&quot;hello world&quot;</span>.sub(<span class="s">'o'</span>, <span class="s">'a'</span>) <span class="c">#=&gt; &quot;hella world&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1004" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1004" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5932,13 +6045,13 @@ block and replaced by its return value.</p>
 with the matching entry from the <em>hash</em> of replacements. If the first match
 is not included in the <em>hash</em>, nothing is replaced.</p>
 
-<pre><code><span class="s">"hello"</span>.sub(<span class="s">/(he|l|o)/</span>, {<span class="s">"he"</span>: <span class="s">"ha"</span>, <span class="s">"l"</span>: <span class="s">"la"</span>}) <span class="c">#=&gt; &quot;hallo&quot;</span>
-<span class="s">"hello"</span>.sub(<span class="s">/(he|l|o)/</span>, {<span class="s">"l"</span>: <span class="s">"la"</span>}) <span class="c">#=&gt; &quot;hello&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.sub(<span class="s">/(he|l|o)/</span>, {<span class="s">&quot;he&quot;</span>: <span class="s">&quot;ha&quot;</span>, <span class="s">&quot;l&quot;</span>: <span class="s">&quot;la&quot;</span>}) <span class="c">#=&gt; &quot;hallo&quot;</span>
+<span class="s">&quot;hello&quot;</span>.sub(<span class="s">/(he|l|o)/</span>, {<span class="s">&quot;l&quot;</span>: <span class="s">&quot;la&quot;</span>}) <span class="c">#=&gt; &quot;hello&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1062" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1062" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5954,12 +6067,12 @@ is not included in the <em>hash</em>, nothing is replaced.</p>
         <div class="doc"><p>Returns a string where the first occurrence of <em>pattern</em> is replaced by
 the block's return value.</p>
 
-<pre><code><span class="s">"hello"</span>.sub(<span class="s">/./</span>) {<span class="o">|</span>s<span class="o">|</span> s[<span class="n">0</span>].ord.to_s <span class="o">+</span> <span class="s">' '</span> } <span class="c">#=&gt; &quot;104 ello&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;hello&quot;</span>.sub(<span class="s">/./</span>) {<span class="o">|</span>s<span class="o">|</span> s[<span class="n">0</span>].ord.to_s <span class="o">+</span> <span class="s">' '</span> } <span class="c">#=&gt; &quot;104 ello&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1031" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1031" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5979,17 +6092,17 @@ results in another digit, and incrementing a letter results in another letter of
 <p>If the increment generates a “carry”, the character to the left of it is incremented. This process repeats until
 there is no carry, adding an additional character if necessary.</p>
 
-<pre><code><span class="s">"abcd"</span>.succ        <span class="c">#=&gt; &quot;abce&quot;</span>
-<span class="s">"THX1138"</span>.succ     <span class="c">#=&gt; &quot;THX1139&quot;</span>
-<span class="s">"((koala))"</span>.succ   <span class="c">#=&gt; &quot;((koalb))&quot;</span>
-<span class="s">"1999zzz"</span>.succ     <span class="c">#=&gt; &quot;2000aaa&quot;</span>
-<span class="s">"ZZZ9999"</span>.succ     <span class="c">#=&gt; &quot;AAAA0000&quot;</span>
-<span class="s">"***"</span>.succ         <span class="c">#=&gt; &quot;**+&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;abcd&quot;</span>.succ        <span class="c">#=&gt; &quot;abce&quot;</span>
+<span class="s">&quot;THX1138&quot;</span>.succ     <span class="c">#=&gt; &quot;THX1139&quot;</span>
+<span class="s">&quot;((koala))&quot;</span>.succ   <span class="c">#=&gt; &quot;((koalb))&quot;</span>
+<span class="s">&quot;1999zzz&quot;</span>.succ     <span class="c">#=&gt; &quot;2000aaa&quot;</span>
+<span class="s">&quot;ZZZ9999&quot;</span>.succ     <span class="c">#=&gt; &quot;AAAA0000&quot;</span>
+<span class="s">&quot;***&quot;</span>.succ         <span class="c">#=&gt; &quot;**+&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2163" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2163" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6005,7 +6118,7 @@ there is no carry, adding an additional character if necessary.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/big_int/big_int.cr#L320" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr#L320" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6023,14 +6136,14 @@ Extraneous characters past the end of a valid number are ignored. If there is no
 
 <ol><li>0 is returned. This method never raises an exception.</li></ol>
 
-<pre><code><span class="s">"123.45e1"</span>.to_f        <span class="c">#=&gt; 1234.5</span>
-<span class="s">"45.67 degrees"</span>.to_f   <span class="c">#=&gt; 45.67</span>
-<span class="s">"thx1138"</span>.to_f         <span class="c">#=&gt; 0.0</span></code></pre></div>
+<pre><code><span class="s">&quot;123.45e1&quot;</span>.to_f        <span class="c">#=&gt; 1234.5</span>
+<span class="s">&quot;45.67 degrees&quot;</span>.to_f   <span class="c">#=&gt; 45.67</span>
+<span class="s">&quot;thx1138&quot;</span>.to_f         <span class="c">#=&gt; 0.0</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L564" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L564" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6053,7 +6166,7 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L573" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L573" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6071,7 +6184,7 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L578" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L578" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6094,31 +6207,31 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
 
 <ul><li><strong>whitespace</strong>: if true, leading and trailing whitespaces are allowed</li><li><strong>underscore</strong>: if true, underscores in numbers are allowed</li><li><strong>prefix</strong>: if true, the prefixes "0x", "0" and "0b" override the base</li><li><strong>strict</strong>: if true, extraneous characters past the end of the number are disallowed</li></ul>
 
-<pre><code><span class="s">"12345"</span>.to_i                             <span class="c">#=&gt; 12345</span>
-<span class="s">"0a"</span>.to_i                                <span class="c">#=&gt; 0</span>
-<span class="s">"hello"</span>.to_i                             <span class="c">#=&gt; raises</span>
-<span class="s">"0a"</span>.to_i(<span class="n">16</span>)                            <span class="c">#=&gt; 10</span>
-<span class="s">"1100101"</span>.to_i(<span class="n">2</span>)                        <span class="c">#=&gt; 101</span>
-<span class="s">"1100101"</span>.to_i(<span class="n">8</span>)                        <span class="c">#=&gt; 294977</span>
-<span class="s">"1100101"</span>.to_i(<span class="n">10</span>)                       <span class="c">#=&gt; 1100101</span>
-<span class="s">"1100101"</span>.to_i(base: <span class="n">16</span>)                 <span class="c">#=&gt; 17826049</span>
+<pre><code><span class="s">&quot;12345&quot;</span>.to_i                             <span class="c">#=&gt; 12345</span>
+<span class="s">&quot;0a&quot;</span>.to_i                                <span class="c">#=&gt; 0</span>
+<span class="s">&quot;hello&quot;</span>.to_i                             <span class="c">#=&gt; raises</span>
+<span class="s">&quot;0a&quot;</span>.to_i(<span class="n">16</span>)                            <span class="c">#=&gt; 10</span>
+<span class="s">&quot;1100101&quot;</span>.to_i(<span class="n">2</span>)                        <span class="c">#=&gt; 101</span>
+<span class="s">&quot;1100101&quot;</span>.to_i(<span class="n">8</span>)                        <span class="c">#=&gt; 294977</span>
+<span class="s">&quot;1100101&quot;</span>.to_i(<span class="n">10</span>)                       <span class="c">#=&gt; 1100101</span>
+<span class="s">&quot;1100101&quot;</span>.to_i(base: <span class="n">16</span>)                 <span class="c">#=&gt; 17826049</span>
 
-<span class="s">"12_345"</span>.to_i                            <span class="c">#=&gt; raises</span>
-<span class="s">"12_345"</span>.to_i(underscore: <span class="n">true</span>)          <span class="c">#=&gt; 12345</span>
+<span class="s">&quot;12_345&quot;</span>.to_i                            <span class="c">#=&gt; raises</span>
+<span class="s">&quot;12_345&quot;</span>.to_i(underscore: <span class="n">true</span>)          <span class="c">#=&gt; 12345</span>
 
-<span class="s">"  12345  "</span>.to_i                         <span class="c">#=&gt; 12345</span>
-<span class="s">"  12345  "</span>.to_i(whitepsace: <span class="n">false</span>)      <span class="c">#=&gt; raises</span>
+<span class="s">&quot;  12345  &quot;</span>.to_i                         <span class="c">#=&gt; 12345</span>
+<span class="s">&quot;  12345  &quot;</span>.to_i(whitepsace: <span class="n">false</span>)      <span class="c">#=&gt; raises</span>
 
-<span class="s">"0x123abc"</span>.to_i                          <span class="c">#=&gt; raises</span>
-<span class="s">"0x123abc"</span>.to_i(prefix: <span class="n">true</span>)            <span class="c">#=&gt; 1194684</span>
+<span class="s">&quot;0x123abc&quot;</span>.to_i                          <span class="c">#=&gt; raises</span>
+<span class="s">&quot;0x123abc&quot;</span>.to_i(prefix: <span class="n">true</span>)            <span class="c">#=&gt; 1194684</span>
 
-<span class="s">"99 red balloons"</span>.to_i                   <span class="c">#=&gt; raises</span>
-<span class="s">"99 red balloons"</span>.to_i(strict: <span class="n">false</span>)    <span class="c">#=&gt; 99</span></code></pre></div>
+<span class="s">&quot;99 red balloons&quot;</span>.to_i                   <span class="c">#=&gt; raises</span>
+<span class="s">&quot;99 red balloons&quot;</span>.to_i(strict: <span class="n">false</span>)    <span class="c">#=&gt; 99</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L269" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L269" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6134,13 +6247,13 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
         <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29-instance-method">#to_i</a></code>, but returns the block's value if there is not a valid number at the start
 of this string, or if the resulting integer doesn't fit an Int32.</p>
 
-<pre><code><span class="s">"12345"</span>.to_i { <span class="n">0</span> }       <span class="c">#=&gt; 12345</span>
-<span class="s">"hello"</span>.to_i { <span class="n">0</span> }       <span class="c">#=&gt; 0</span></code></pre></div>
+<pre><code><span class="s">&quot;12345&quot;</span>.to_i { <span class="n">0</span> }       <span class="c">#=&gt; 12345</span>
+<span class="s">&quot;hello&quot;</span>.to_i { <span class="n">0</span> }       <span class="c">#=&gt; 0</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L293" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L293" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6158,7 +6271,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L328" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L328" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6176,7 +6289,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L338" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L338" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6194,7 +6307,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L333" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L333" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6212,7 +6325,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L358" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L358" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6230,7 +6343,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L368" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L368" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6248,7 +6361,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L363" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L363" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6266,7 +6379,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L398" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L398" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6284,7 +6397,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L388" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L388" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6302,7 +6415,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L393" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L393" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6320,7 +6433,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L308" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L308" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6338,7 +6451,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L298" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L298" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6356,7 +6469,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L303" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L303" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6372,15 +6485,15 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
         <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29-instance-method">#to_i</a></code>, but returns <code>nil</code> if there is not a valid number at the start
 of this string, or if the resulting integer doesn't fit an Int32.</p>
 
-<pre><code><span class="s">"12345"</span>.to_i?            <span class="c">#=&gt; 12345</span>
-<span class="s">"99 red balloons"</span>.to_i?  <span class="c">#=&gt; 99</span>
-<span class="s">"0a"</span>.to_i?               <span class="c">#=&gt; 0</span>
-<span class="s">"hello"</span>.to_i?            <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="s">&quot;12345&quot;</span>.to_i?            <span class="c">#=&gt; 12345</span>
+<span class="s">&quot;99 red balloons&quot;</span>.to_i?  <span class="c">#=&gt; 99</span>
+<span class="s">&quot;0a&quot;</span>.to_i?               <span class="c">#=&gt; 0</span>
+<span class="s">&quot;hello&quot;</span>.to_i?            <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L282" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L282" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6396,7 +6509,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/to_json.cr#L172" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr#L172" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6412,7 +6525,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2640" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2640" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6428,7 +6541,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2636" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2636" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6444,7 +6557,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2632" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2632" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6462,7 +6575,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L353" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L353" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6480,7 +6593,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L343" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L343" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6498,7 +6611,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L348" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L348" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6516,7 +6629,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L383" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L383" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6534,7 +6647,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L373" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L373" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6552,7 +6665,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L378" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L378" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6570,7 +6683,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L403" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L403" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6588,7 +6701,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L413" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L413" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6606,7 +6719,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L408" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L408" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6624,7 +6737,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L323" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L323" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6642,7 +6755,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L313" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L313" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6660,7 +6773,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L318" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L318" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6676,7 +6789,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2648" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2648" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6692,7 +6805,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L940" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L940" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6707,14 +6820,14 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       
         <div class="doc"><p>Converts camelcase boundaries to underscores.</p>
 
-<pre><code><span class="s">"DoesWhatItSaysOnTheTin"</span>.underscore <span class="c">#=&gt; &quot;does_what_it_says_on_the_tin&quot;</span>
-<span class="s">"PartyInTheUSA"</span>.underscore          <span class="c">#=&gt; &quot;party_in_the_usa&quot;</span>
-<span class="s">"HTTP_CLIENT"</span>.underscore            <span class="c">#=&gt; &quot;http_client&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;DoesWhatItSaysOnTheTin&quot;</span>.underscore <span class="c">#=&gt; &quot;does_what_it_says_on_the_tin&quot;</span>
+<span class="s">&quot;PartyInTheUSA&quot;</span>.underscore          <span class="c">#=&gt; &quot;party_in_the_usa&quot;</span>
+<span class="s">&quot;HTTP_CLIENT&quot;</span>.underscore            <span class="c">#=&gt; &quot;http_client&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L1982" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L1982" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6730,7 +6843,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L782" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L782" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6746,7 +6859,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2656" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2656" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6762,7 +6875,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L2652" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L2652" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6778,7 +6891,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L794" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L794" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6801,7 +6914,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/string.cr#L434" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/string.cr#L434" target="_blank">View source</a>]
         
       </div>
     </div>

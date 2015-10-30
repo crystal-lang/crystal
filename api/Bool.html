@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2130,12 +2185,12 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bool.cr" target="_blank">bool.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr" target="_blank">bool.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -2242,7 +2297,7 @@
   
     
 
-  <h3>Methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
   
     <a href="Value.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2258,10 +2313,13 @@
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2341,6 +2399,48 @@
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2358,7 +2458,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/yaml/from_yaml.cr#L26" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/from_yaml.cr#L26" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2374,7 +2474,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/from_json.cr#L17" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/from_json.cr#L17" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2400,7 +2500,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bool.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L14" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2429,7 +2529,7 @@
         <a class="method-permalink" href="#%26%28other%3ABool%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Bitwise AND. Returns <code>true</code> if this bool and <code>other</code> are <code>true</code>, otherwise returns <code>false</code>.</p>
+        <div class="doc"><p>Bitwise AND. Returns <code>true</code> if this bool and <em>other</em> are <code>true</code>, otherwise returns <code>false</code>.</p>
 
 <pre><code><span class="n">false</span> <span class="o">&</span> <span class="n">false</span> <span class="c">#=&gt; false</span>
 <span class="n">false</span> <span class="o">&</span> <span class="n">true</span>  <span class="c">#=&gt; false</span>
@@ -2439,7 +2539,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bool.cr#L38" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2468,7 +2568,7 @@
         <a class="method-permalink" href="#%5E%28other%3ABool%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Exclusive Or. Returns <code>true</code> if this bool is different from <code>other</code>, otherwise returns <code>false</code>.</p>
+        <div class="doc"><p>Exclusive Or. Returns <code>true</code> if this bool is different from <em>other</em>, otherwise returns <code>false</code>.</p>
 
 <pre><code><span class="n">false</span> <span class="o">^</span> <span class="n">false</span> <span class="c">#=&gt; false</span>
 <span class="n">false</span> <span class="o">^</span> <span class="n">true</span>  <span class="c">#=&gt; true</span>
@@ -2478,7 +2578,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bool.cr#L50" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L50" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2496,7 +2596,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bool.cr#L55" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L55" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2512,7 +2612,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/to_json.cr#L154" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr#L154" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2530,7 +2630,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bool.cr#L60" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L60" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2548,7 +2648,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bool.cr#L65" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2561,7 +2661,7 @@
         <a class="method-permalink" href="#%7C%28other%3ABool%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Bitwise OR. Returns <code>true</code> if this bool or <code>other</code> is <code>true</code>, otherwise returns <code>false</code>.</p>
+        <div class="doc"><p>Bitwise OR. Returns <code>true</code> if this bool or <em>other</em> is <code>true</code>, otherwise returns <code>false</code>.</p>
 
 <pre><code><span class="n">false</span> <span class="o">|</span> <span class="n">false</span> <span class="c">#=&gt; false</span>
 <span class="n">false</span> <span class="o">|</span> <span class="n">true</span>  <span class="c">#=&gt; true</span>
@@ -2571,7 +2671,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/bool.cr#L26" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L26" target="_blank">View source</a>]
         
       </div>
     </div>

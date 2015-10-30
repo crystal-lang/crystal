@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2115,10 +2170,10 @@
 A <code><a href="YAML/Type.html">Type</a></code> is a union of all possible YAML types, so casting to a specific type is necessary
 before the value is practically usable.</p>
 
-<pre><code><span class="k">require</span> <span class="s">"yaml"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
 
-data <span class="o">=</span> <span class="t">YAML</span>.load(<span class="s">"foo: bar"</span>)
-(data <span class="k">as</span> <span class="t">Hash</span>)[<span class="s">"foo"</span>] <span class="c">#=&gt; &quot;bar&quot;</span></code></pre>
+data <span class="o">=</span> <span class="t">YAML</span>.load(<span class="s">&quot;foo: bar&quot;</span>)
+(data <span class="k">as</span> <span class="t">Hash</span>)[<span class="s">&quot;foo&quot;</span>] <span class="c">#=&gt; &quot;bar&quot;</span></code></pre>
 
 <h3>Parsing with <code><a href="YAML.html#mapping%28properties%2Cstrict%3Dfalse%29-macro">YAML#mapping</a></code></h3>
 
@@ -2141,12 +2196,12 @@ through generated properties like <em>Foo#bar</em>. It is more type-safe and eff
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/yaml/mapping.cr" target="_blank">yaml/mapping.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/mapping.cr" target="_blank">yaml/mapping.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/yaml/yaml.cr" target="_blank">yaml/yaml.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/yaml.cr" target="_blank">yaml/yaml.cr</a>
     
     <br/>
   
@@ -2220,8 +2275,8 @@ data:
     foo
     bar</code></pre>
 
-<pre><code><span class="k">require</span> <span class="s">"yaml"</span>
-<span class="t">YAML</span>.load(<span class="t">File</span>.read(<span class="s">"./foo.yml"</span>))
+<pre><code><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
+<span class="t">YAML</span>.load(<span class="t">File</span>.read(<span class="s">&quot;./foo.yml&quot;</span>))
 <span class="c">#=&gt; {</span>
 <span class="c">#=&gt;  &quot;data&quot; =&gt; {</span>
 <span class="c">#=&gt;    &quot;string&quot; =&gt; &quot;foobar&quot;,</span>
@@ -2233,7 +2288,7 @@ data:
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/yaml/yaml.cr#L64" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/yaml.cr#L64" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2253,14 +2308,14 @@ foo: bar
 ---
 hello: world</code></pre>
 
-<pre><code><span class="k">require</span> <span class="s">"yaml"</span>
-<span class="t">YAML</span>.load_all(<span class="t">File</span>.read(<span class="s">"./foo.yml"</span>))
+<pre><code><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
+<span class="t">YAML</span>.load_all(<span class="t">File</span>.read(<span class="s">&quot;./foo.yml&quot;</span>))
 <span class="c">#=&gt; [{&quot;foo&quot; =&gt; &quot;bar&quot;}, {&quot;hello&quot; =&gt; &quot;world&quot;}]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/yaml/yaml.cr#L87" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/yaml.cr#L87" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2286,7 +2341,7 @@ hello: world</code></pre>
 Once defined, <code><a href="Object.html#from_yaml%28string%3AString%29-class-method">Object#from_yaml</a></code> populates properties of the class from the
 YAML document.</p>
 
-<pre><code><span class="k">require</span> <span class="s">"yaml"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
 
 <span class="k">class</span> <span class="t">Employee</span>
   <span class="t">YAML</span>.mapping({
@@ -2295,20 +2350,20 @@ YAML document.</p>
   })
 <span class="k">end</span>
 
-employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<span class="s">"title: Manager\nname: John"</span>)
+employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<span class="s">&quot;title: Manager\nname: John&quot;</span>)
 employee.title <span class="c"># =&gt; &quot;Manager&quot;</span>
 employee.name  <span class="c"># =&gt; &quot;John&quot;</span>
 
-employee.name <span class="o">=</span> <span class="s">"Jenny"</span>
+employee.name <span class="o">=</span> <span class="s">&quot;Jenny&quot;</span>
 employee.name <span class="c"># =&gt; &quot;Jenny&quot;</span></code></pre>
 
 <p>Attributes not mapped with <code><a href="YAML.html">YAML</a>.mapping</code> are not defined as properties.
 Also, missing attributes raise a <code><a href="YAML/ParseException.html">ParseException</a></code>.</p>
 
-<pre><code>employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<span class="s">"title: Manager\nname: John\nage: 30"</span>)
+<pre><code>employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<span class="s">&quot;title: Manager\nname: John\nage: 30&quot;</span>)
 employee.age <span class="c"># =&gt; undefined method &apos;age&apos;.</span>
 
-employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<span class="s">"title: Manager"</span>)
+employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<span class="s">&quot;title: Manager&quot;</span>)
 <span class="c"># =&gt; ParseException: missing yaml attribute: name</span></code></pre>
 
 <p>You can also define attributes for each property.</p>
@@ -2319,7 +2374,7 @@ employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<spa
     name:  {
       <span class="k">type</span>:    <span class="t">String</span>,
       nilable: <span class="n">true</span>,
-      key:     <span class="s">"firstname"</span>,
+      key:     <span class="s">&quot;firstname&quot;</span>,
     },
   })
 <span class="k">end</span></code></pre>
@@ -2331,7 +2386,7 @@ employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<spa
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/yaml/mapping.cr#L58" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/mapping.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>

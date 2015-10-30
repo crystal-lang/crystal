@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="../Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="../Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="../Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="../GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="../OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="../OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="../OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="../OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="../OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="../OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="../OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="../OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="../Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="../Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2115,8 +2170,8 @@
 
 <p>Usage:</p>
 
-<pre><code>html <span class="o">=</span> <span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.a({href: <span class="s">"google.com"</span>}) <span class="k">do</span>
-  text <span class="s">"crystal is awesome"</span>
+<pre><code>html <span class="o">=</span> <span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.a({href: <span class="s">&quot;google.com&quot;</span>}) <span class="k">do</span>
+  text <span class="s">&quot;crystal is awesome&quot;</span>
 <span class="k">end</span>
 
 puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;crystal is awesome&lt;/a&gt;</span></code></pre>
@@ -2124,8 +2179,8 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
 <p>Or also you can use <code><a href="../HTML/Builder.html#build%28%26block%29-instance-method">#build</a></code> method:</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  a({href: <span class="s">"google.com"</span>}) <span class="k">do</span>
-    text <span class="s">"crystal is awesome"</span>
+  a({href: <span class="s">&quot;google.com&quot;</span>}) <span class="k">do</span>
+    text <span class="s">&quot;crystal is awesome&quot;</span>
   <span class="k">end</span>
 <span class="k">end</span> <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;crystal is awesome&lt;/a&gt;</span></code></pre>
 
@@ -2145,7 +2200,7 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr" target="_blank">html/builder.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr" target="_blank">html/builder.cr</a>
     
     <br/>
   
@@ -2436,7 +2491,7 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
   
     
 
-  <h3>Methods inherited from struct <code><a href="../Struct.html">Struct</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="../Struct.html">Struct</a></code></h3>
   
     <a href="../Struct.html#%3D%3D%28other%3Aself%29%3ABool-instance-method" class="tooltip">
       <span>==(other : self) : Bool</span>
@@ -2456,10 +2511,13 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="../Value.html">Value</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="../Value.html">Value</a></code></h3>
   
     <a href="../Value.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2475,10 +2533,13 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
   
     <a href="../Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2558,6 +2619,48 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  
+    <a href="../Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="../Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="../Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="../Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="../Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="../Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2575,7 +2678,7 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L27" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L27" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2596,14 +2699,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>A</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  a({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  a({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;a class=&quot;crystal&quot;&gt;crystal is awesome&lt;/a&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2619,14 +2722,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>B</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  b({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  b({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;b class=&quot;crystal&quot;&gt;crystal is awesome&lt;/b&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2642,14 +2745,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>BODY</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  body({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  body({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;body class=&quot;crystal&quot;&gt;crystal is awesome&lt;/body&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2669,7 +2772,7 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L50" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L50" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2685,7 +2788,7 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L31" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L31" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2701,14 +2804,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>BUTTON</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  button({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  button({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;button class=&quot;crystal&quot;&gt;crystal is awesome&lt;/button&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2724,14 +2827,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>DIV</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  div({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  div({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;div class=&quot;crystal&quot;&gt;crystal is awesome&lt;/div&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2751,7 +2854,7 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2767,14 +2870,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>EM</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  em({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  em({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;em class=&quot;crystal&quot;&gt;crystal is awesome&lt;/em&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2790,14 +2893,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>FORM</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  form({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  form({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;form class=&quot;crystal&quot;&gt;crystal is awesome&lt;/form&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2813,14 +2916,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>H1</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  h1({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  h1({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;h1 class=&quot;crystal&quot;&gt;crystal is awesome&lt;/h1&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2836,14 +2939,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>H2</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  h2({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  h2({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;h2 class=&quot;crystal&quot;&gt;crystal is awesome&lt;/h2&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2859,14 +2962,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>H3</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  h3({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  h3({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;h3 class=&quot;crystal&quot;&gt;crystal is awesome&lt;/h3&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2882,14 +2985,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>HEAD</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  head({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  head({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;head class=&quot;crystal&quot;&gt;crystal is awesome&lt;/head&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2909,7 +3012,7 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L59" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L59" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2925,14 +3028,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code><a href="../HTML.html">HTML</a></code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  html({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  html({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;html class=&quot;crystal&quot;&gt;crystal is awesome&lt;/html&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2948,14 +3051,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>I</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  i({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  i({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;i class=&quot;crystal&quot;&gt;crystal is awesome&lt;/i&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2971,14 +3074,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>IMG</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  img({ <span class="k">class</span>: <span class="s">"crystal"</span> })
+  img({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> })
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;img class=&quot;crystal&quot;&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L91" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L91" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2994,14 +3097,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>INPUT</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  input({ <span class="k">class</span>: <span class="s">"crystal"</span> })
+  input({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> })
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;input class=&quot;crystal&quot;&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L91" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L91" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3017,14 +3120,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>LI</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  li({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  li({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;li class=&quot;crystal&quot;&gt;crystal is awesome&lt;/li&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3040,14 +3143,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>LINK</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  link({ <span class="k">class</span>: <span class="s">"crystal"</span> })
+  link({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> })
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;link class=&quot;crystal&quot;&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L91" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L91" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3063,14 +3166,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>OL</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  ol({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  ol({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;ol class=&quot;crystal&quot;&gt;crystal is awesome&lt;/ol&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3086,14 +3189,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>P</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  p({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  p({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;p class=&quot;crystal&quot;&gt;crystal is awesome&lt;/p&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3109,14 +3212,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>S</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  s({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  s({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;s class=&quot;crystal&quot;&gt;crystal is awesome&lt;/s&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3132,14 +3235,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>SCRIPT</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  script({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  script({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;script class=&quot;crystal&quot;&gt;crystal is awesome&lt;/script&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3155,14 +3258,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>SPAN</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  span({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  span({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;span class=&quot;crystal&quot;&gt;crystal is awesome&lt;/span&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3178,14 +3281,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>STRONG</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  strong({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  strong({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;strong class=&quot;crystal&quot;&gt;crystal is awesome&lt;/strong&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3201,14 +3304,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>TABLE</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  table({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  table({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;table class=&quot;crystal&quot;&gt;crystal is awesome&lt;/table&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3224,14 +3327,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>TBODY</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  tbody({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  tbody({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;tbody class=&quot;crystal&quot;&gt;crystal is awesome&lt;/tbody&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3247,14 +3350,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>TD</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  td({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  td({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;td class=&quot;crystal&quot;&gt;crystal is awesome&lt;/td&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3269,13 +3372,13 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
       
         <div class="doc"><p>Renders escaped text in html tag.</p>
 
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build { text <span class="s">"crystal is awesome"</span> }
+<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="c"># =&gt; crystal is awesome</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L69" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L69" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3291,14 +3394,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>TEXTAREA</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  textarea({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  textarea({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;textarea class=&quot;crystal&quot;&gt;crystal is awesome&lt;/textarea&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3314,14 +3417,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>THEAD</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  thead({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  thead({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;thead class=&quot;crystal&quot;&gt;crystal is awesome&lt;/thead&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3337,14 +3440,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>TITLE</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  title({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  title({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;title class=&quot;crystal&quot;&gt;crystal is awesome&lt;/title&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3360,14 +3463,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>TR</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  tr({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  tr({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;tr class=&quot;crystal&quot;&gt;crystal is awesome&lt;/tr&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3383,14 +3486,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>U</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  u({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  u({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;u class=&quot;crystal&quot;&gt;crystal is awesome&lt;/u&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3406,14 +3509,14 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
         <div class="doc"><p>Renders <code>UL</code> html tag with any options.</p>
 
 <pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  ul({ <span class="k">class</span>: <span class="s">"crystal"</span> }) { text <span class="s">"crystal is awesome"</span> }
+  ul({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
 <span class="k">end</span>
 <span class="c"># =&gt; &lt;ul class=&quot;crystal&quot;&gt;crystal is awesome&lt;/ul&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>

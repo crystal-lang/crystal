@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2105,6 +2160,26 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p><code><a href="Random.html">Random</a></code> provides an interface for random values generation, using a pseudo random number generator (PRNG).</p>
+
+<pre><code><span class="t">Random</span>.new_seed <span class="c"># =&gt; 112705036</span>
+<span class="t">Random</span>.rand     <span class="c"># =&gt; 0.167595</span>
+<span class="t">Random</span>.rand(<span class="n">5</span>)  <span class="c"># =&gt; 2</span></code></pre>
+
+<p>The above methods delegate to a <code><a href="Random.html">Random</a></code> instance.</p>
+
+<pre><code>r <span class="o">=</span> <span class="t">Random</span>.<span class="k">new</span>
+r.rand      <span class="c"># =&gt; 0.0372991</span>
+r.next_bool <span class="c"># =&gt; true</span>
+r.next_int  <span class="c"># =&gt; 2223112</span></code></pre>
+
+<p>This module also defines a global method <code><a href="Random.html#rand%3AFloat64-instance-method">#rand</a></code>, which <code><a href="Array.html#sample-instance-method">Array#sample</a></code> and <code><a href="Array.html#shuffle-instance-method">Array#shuffle</a></code> delegates.</p>
+
+<pre><code>rand     <span class="c"># =&gt; 0.293829</span>
+rand(<span class="n">10</span>) <span class="c"># =&gt; 8</span></code></pre>
+
 
 
 
@@ -2128,12 +2203,12 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random/mt19937.cr" target="_blank">random/mt19937.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random/mt19937.cr" target="_blank">random/mt19937.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr" target="_blank">random.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr" target="_blank">random.cr</a>
     
     <br/>
   
@@ -2160,20 +2235,28 @@
       <li class="entry-summary">
         <a href="#new%28seed%3Dnew_seed%29-class-method" class="signature"><strong>.new</strong>(seed = new_seed)</a>
         
+          <div class="summary"><p>Initiates an instance with the given <em>seed</em>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#new_seed%3AUInt32-class-method" class="signature"><strong>.new_seed</strong> : UInt32</a>
+        
+          <div class="summary"><p>Returns a <code><a href="UInt32.html">UInt32</a></code> read from a counter value  generated by the cycle counter register.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#rand%3AFloat64-class-method" class="signature"><strong>.rand</strong> : Float64</a>
         
+          <div class="summary"><p>see <code><a href="Random.html#rand%3AFloat64-instance-method">#rand</a></code></p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#rand%28x%29%3AInt32-class-method" class="signature"><strong>.rand</strong>(x) : Int32</a>
+        
+          <div class="summary"><p>see <code><a href="Random.html#rand%28range%3ARange%28Int%2CInt%29%29%3AInt32-instance-method">#rand(x)</a></code></p></div>
         
       </li>
     
@@ -2187,35 +2270,49 @@
       <li class="entry-summary">
         <a href="#next_bool%3ABool-instance-method" class="signature"><strong>#next_bool</strong> : Bool</a>
         
+          <div class="summary"><p>Generates a random <code><a href="Bool.html">Bool</a></code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#next_float%3AFloat64-instance-method" class="signature"><strong>#next_float</strong> : Float64</a>
+        
+          <div class="summary"><p>see <code><a href="Random.html#rand%3AFloat64-instance-method">#rand</a></code></p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#next_int%3AInt32-instance-method" class="signature"><strong>#next_int</strong> : Int32</a>
         
+          <div class="summary"><p>Generates a random <code><a href="Int32.html">Int32</a></code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#next_u32-instance-method" class="signature"><strong>#next_u32</strong></a>
+        
+          <div class="summary"><p>Generates a random <code><a href="UInt32.html">UInt32</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#rand%3AFloat64-instance-method" class="signature"><strong>#rand</strong> : Float64</a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#rand%28x%3ARange%28Int%2CInt%29%29%3AInt32-instance-method" class="signature"><strong>#rand</strong>(x : Range(Int, Int)) : Int32</a>
+          <div class="summary"><p>Generates a random <code><a href="Float64.html">Float64</a></code> between 0 and 1.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#rand%28x%3AInt%29%3AInt32-instance-method" class="signature"><strong>#rand</strong>(x : Int) : Int32</a>
+        <a href="#rand%28range%3ARange%28Int%2CInt%29%29%3AInt32-instance-method" class="signature"><strong>#rand</strong>(range : Range(Int, Int)) : Int32</a>
+        
+          <div class="summary"><p>Returns a random <code><a href="Int32.html">Int32</a></code> in the given <em>range</em>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#rand%28max%3AInt%29%3AInt32-instance-method" class="signature"><strong>#rand</strong>(max : Int) : Int32</a>
+        
+          <div class="summary"><p>Returns a random <code><a href="Int32.html">Int32</a></code> which is greater than 0 and less than <em>max</em>.</p></div>
         
       </li>
     
@@ -2240,10 +2337,12 @@
         <a class="method-permalink" href="#new%28seed%3Dnew_seed%29-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Initiates an instance with the given <em>seed</em>. (Default: <code><a href="Random.html#new_seed%3AUInt32-class-method">#new_seed</a></code>)</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L10" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L36" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2256,10 +2355,13 @@
         <a class="method-permalink" href="#new_seed%3AUInt32-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns a <code><a href="UInt32.html">UInt32</a></code> read from a counter value 
+generated by the cycle counter register.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L31" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2272,10 +2374,12 @@
         <a class="method-permalink" href="#rand%3AFloat64-class-method">#</a>
       </div>
       
+        <div class="doc"><p>see <code><a href="Random.html#rand%3AFloat64-instance-method">#rand</a></code></p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L51" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L109" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2288,10 +2392,12 @@
         <a class="method-permalink" href="#rand%28x%29%3AInt32-class-method">#</a>
       </div>
       
+        <div class="doc"><p>see <code><a href="Random.html#rand%28range%3ARange%28Int%2CInt%29%29%3AInt32-instance-method">#rand(x)</a></code></p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L55" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L114" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2309,10 +2415,14 @@
         <a class="method-permalink" href="#next_bool%3ABool-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Generates a random <code><a href="Bool.html">Bool</a></code>.</p>
+
+<pre><code><span class="t">Random</span>.<span class="k">new</span>.next_bool <span class="c"># =&gt; true</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L16" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L48" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2325,10 +2435,12 @@
         <a class="method-permalink" href="#next_float%3AFloat64-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>see <code><a href="Random.html#rand%3AFloat64-instance-method">#rand</a></code></p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L24" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L63" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2341,10 +2453,15 @@
         <a class="method-permalink" href="#next_int%3AInt32-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Generates a random <code><a href="Int32.html">Int32</a></code>.</p>
+
+<pre><code><span class="t">Random</span>.<span class="k">new</span>.next_int <span class="c"># =&gt; 440038499</span>
+<span class="t">Random</span>.<span class="k">new</span>.next_int <span class="c"># =&gt; -1848788484</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L20" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2357,10 +2474,12 @@
         <a class="method-permalink" href="#next_u32-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Generates a random <code><a href="UInt32.html">UInt32</a></code>.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2373,42 +2492,57 @@
         <a class="method-permalink" href="#rand%3AFloat64-instance-method">#</a>
       </div>
       
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L29" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="rand(x:Range(Int,Int)):Int32-instance-method">
-      <div class="signature">
-        
-        def <strong>rand</strong>(x : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>, <a href="Int.html">Int</a>)) : <a href="Int32.html">Int32</a>
+        <div class="doc"><p>Generates a random <code><a href="Float64.html">Float64</a></code> between 0 and 1.</p>
 
-        <a class="method-permalink" href="#rand%28x%3ARange%28Int%2CInt%29%29%3AInt32-instance-method">#</a>
-      </div>
+<pre><code>r <span class="o">=</span> <span class="t">Random</span>.<span class="k">new</span>
+r.rand <span class="c"># =&gt; 0.167595</span>
+r.rand <span class="c"># =&gt; 0.0372991</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L75" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="rand(x:Int):Int32-instance-method">
+    <div class="entry-detail" id="rand(range:Range(Int,Int)):Int32-instance-method">
       <div class="signature">
         
-        def <strong>rand</strong>(x : <a href="Int.html">Int</a>) : <a href="Int32.html">Int32</a>
+        def <strong>rand</strong>(range : <a href="Range.html">Range</a>(<a href="Int.html">Int</a>, <a href="Int.html">Int</a>)) : <a href="Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#rand%28x%3AInt%29%3AInt32-instance-method">#</a>
+        <a class="method-permalink" href="#rand%28range%3ARange%28Int%2CInt%29%29%3AInt32-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns a random <code><a href="Int32.html">Int32</a></code> in the given <em>range</em>.</p>
+
+<pre><code><span class="t">Random</span>.<span class="k">new</span>.rand(<span class="n">10</span>..<span class="n">20</span>) <span class="c"># =&gt; 14</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/random.cr#L33" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L98" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="rand(max:Int):Int32-instance-method">
+      <div class="signature">
+        
+        def <strong>rand</strong>(max : <a href="Int.html">Int</a>) : <a href="Int32.html">Int32</a>
+
+        <a class="method-permalink" href="#rand%28max%3AInt%29%3AInt32-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a random <code><a href="Int32.html">Int32</a></code> which is greater than 0 and less than <em>max</em>.</p>
+
+<pre><code><span class="t">Random</span>.<span class="k">new</span>.rand(<span class="n">10</span>)   <span class="c"># =&gt; 5</span>
+<span class="t">Random</span>.<span class="k">new</span>.rand(<span class="n">5000</span>) <span class="c"># =&gt; 2243</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/random.cr#L85" target="_blank">View source</a>]
         
       </div>
     </div>

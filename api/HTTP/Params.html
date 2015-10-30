@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="../Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="../Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="../Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="../GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="../OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="../OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="../OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="../OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="../OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="../OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="../OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="../OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="../Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="../Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2127,7 +2182,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr" target="_blank">http/params.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr" target="_blank">http/params.cr</a>
     
     <br/>
   
@@ -2290,7 +2345,7 @@
   
     
 
-  <h3>Methods inherited from struct <code><a href="../Struct.html">Struct</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="../Struct.html">Struct</a></code></h3>
   
     <a href="../Struct.html#%3D%3D%28other%3Aself%29%3ABool-instance-method" class="tooltip">
       <span>==(other : self) : Bool</span>
@@ -2310,10 +2365,13 @@
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="../Value.html">Value</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="../Value.html">Value</a></code></h3>
   
     <a href="../Value.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2329,10 +2387,13 @@
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
   
     <a href="../Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2412,6 +2473,48 @@
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  
+    <a href="../Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="../Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="../Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="../Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="../Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="../Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2433,16 +2536,16 @@ a key (String) and a value (String or Nil). Keys and values are escaped
 using <code><a href="../URI.html#escape%28string%3AString%2Cio%3AIO%29-class-method">URI#escape</a></code>.</p>
 
 <pre><code>params <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Params</span>.build <span class="k">do</span> <span class="o">|</span>form<span class="o">|</span>
-  form.add <span class="s">"color"</span>, <span class="s">"black"</span>
-  form.add <span class="s">"name"</span>, <span class="s">"crystal"</span>
-  form.add <span class="s">"year"</span>, <span class="s">"2012 - today"</span>
+  form.add <span class="s">&quot;color&quot;</span>, <span class="s">&quot;black&quot;</span>
+  form.add <span class="s">&quot;name&quot;</span>, <span class="s">&quot;crystal&quot;</span>
+  form.add <span class="s">&quot;year&quot;</span>, <span class="s">&quot;2012 - today&quot;</span>
 <span class="k">end</span>
 params <span class="c">#=&gt; &quot;color=black&amp;name=crystal&amp;year=2012%20-%20today&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2464,7 +2567,7 @@ params <span class="c">#=&gt; &quot;color=black&amp;name=crystal&amp;year=2012%2
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L24" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L24" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2479,13 +2582,13 @@ params <span class="c">#=&gt; &quot;color=black&amp;name=crystal&amp;year=2012%2
       
         <div class="doc"><p>Parses an HTTP query string into a <code><a href="../HTTP/Params.html">HTTP::Params</a></code></p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Params</span>.parse(<span class="s">"foo=bar&amp;foo=baz&amp;qux=zoo"</span>)
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Params</span>.parse(<span class="s">&quot;foo=bar&amp;foo=baz&amp;qux=zoo&quot;</span>)
 <span class="c">#=&gt; #&lt;HTTP::Params @raw_params = {&quot;foo&quot; =&gt; [&quot;bar&quot;, &quot;baz&quot;], &quot;qux&quot; =&gt; [&quot;zoo&quot;]}&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L10" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L10" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2501,7 +2604,7 @@ params <span class="c">#=&gt; &quot;color=black&amp;name=crystal&amp;year=2012%2
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L86" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L86" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2522,7 +2625,7 @@ params <span class="c">#=&gt; &quot;color=black&amp;name=crystal&amp;year=2012%2
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L93" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L93" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2538,7 +2641,7 @@ params <span class="c">#=&gt; &quot;color=black&amp;name=crystal&amp;year=2012%2
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L89" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L89" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2553,13 +2656,13 @@ params <span class="c">#=&gt; &quot;color=black&amp;name=crystal&amp;year=2012%2
       
         <div class="doc"><p>Returns first value for specified param name.</p>
 
-<pre><code>params[<span class="s">"email"</span>]                <span class="c"># =&gt; &quot;john@example.org&quot;</span>
-params[<span class="s">"non_existent_param"</span>]   <span class="c"># KeyError</span></code></pre></div>
+<pre><code>params[<span class="s">&quot;email&quot;</span>]                <span class="c"># =&gt; &quot;john@example.org&quot;</span>
+params[<span class="s">&quot;non_existent_param&quot;</span>]   <span class="c"># KeyError</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L103" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L103" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2574,12 +2677,12 @@ params[<span class="s">"non_existent_param"</span>]   <span class="c"># KeyError
       
         <div class="doc"><p>Sets first value for specified param name.</p>
 
-<pre><code>params[<span class="s">"item"</span>] <span class="o">=</span> <span class="s">"pencil"</span></code></pre></div>
+<pre><code>params[<span class="s">&quot;item&quot;</span>] <span class="o">=</span> <span class="s">&quot;pencil&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L130" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L130" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2594,13 +2697,13 @@ params[<span class="s">"non_existent_param"</span>]   <span class="c"># KeyError
       
         <div class="doc"><p>Returns first value or nil for specified param name.</p>
 
-<pre><code>params[<span class="s">"email"</span>]                <span class="c"># =&gt; &quot;john@example.org&quot;</span>
-params[<span class="s">"non_existent_param"</span>]   <span class="c"># nil</span></code></pre></div>
+<pre><code>params[<span class="s">&quot;email&quot;</span>]?                <span class="c"># =&gt; &quot;john@example.org&quot;</span>
+params[<span class="s">&quot;non_existent_param&quot;</span>]?   <span class="c"># nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L113" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L113" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2616,13 +2719,13 @@ params[<span class="s">"non_existent_param"</span>]   <span class="c"># nil</spa
         <div class="doc"><p>Appends new value for specified param name. Creates param when there was
 no such param.</p>
 
-<pre><code>params.add(<span class="s">"item"</span>, <span class="s">"keychain"</span>)
-params.fetch_all(<span class="s">"item"</span>)        <span class="c"># =&gt; [&quot;pencil&quot;, &quot;book&quot;, &quot;workbook&quot;, &quot;keychain&quot;]</span></code></pre></div>
+<pre><code>params.add(<span class="s">&quot;item&quot;</span>, <span class="s">&quot;keychain&quot;</span>)
+params.fetch_all(<span class="s">&quot;item&quot;</span>)        <span class="c"># =&gt; [&quot;pencil&quot;, &quot;book&quot;, &quot;workbook&quot;, &quot;keychain&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L185" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L185" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2638,18 +2741,18 @@ params.fetch_all(<span class="s">"item"</span>)        <span class="c"># =&gt; [
         <div class="doc"><p>Deletes first value for provided param name. If there are no values left,
 deletes param itself. Returns deleted value.</p>
 
-<pre><code>params.delete(<span class="s">"item"</span>)     <span class="c"># =&gt; &quot;keychain&quot;</span>
-params.fetch_all(<span class="s">"item"</span>)  <span class="c"># =&gt; [&quot;keynote&quot;]</span>
+<pre><code>params.delete(<span class="s">&quot;item&quot;</span>)     <span class="c"># =&gt; &quot;keychain&quot;</span>
+params.fetch_all(<span class="s">&quot;item&quot;</span>)  <span class="c"># =&gt; [&quot;keynote&quot;]</span>
 
-params.delete(<span class="s">"item"</span>)     <span class="c"># =&gt; &quot;keynote&quot;</span>
-params[<span class="s">"item"</span>]            <span class="c"># KeyError</span>
+params.delete(<span class="s">&quot;item&quot;</span>)     <span class="c"># =&gt; &quot;keynote&quot;</span>
+params[<span class="s">&quot;item&quot;</span>]            <span class="c"># KeyError</span>
 
-params.delete(<span class="s">"non_existent_param"</span>)  <span class="c"># KeyError</span></code></pre></div>
+params.delete(<span class="s">&quot;non_existent_param&quot;</span>)  <span class="c"># KeyError</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L233" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L233" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2665,13 +2768,13 @@ params.delete(<span class="s">"non_existent_param"</span>)  <span class="c"># Ke
         <div class="doc"><p>Deletes all values for provided param name. Returns array of deleted
 values.</p>
 
-<pre><code>params.delete_all(<span class="s">"comments"</span>)   <span class="c"># =&gt; [&quot;hello, world!&quot;, &quot;:+1:&quot;]</span>
-params.has_key?(<span class="s">"comments"</span>)     <span class="c"># =&gt; false</span></code></pre></div>
+<pre><code>params.delete_all(<span class="s">&quot;comments&quot;</span>)   <span class="c"># =&gt; [&quot;hello, world!&quot;, &quot;:+1:&quot;]</span>
+params.has_key?(<span class="s">&quot;comments&quot;</span>)     <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L246" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L246" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2687,7 +2790,7 @@ params.has_key?(<span class="s">"comments"</span>)     <span class="c"># =&gt; f
         <div class="doc"><p>Allows to iterate over all name-value pairs.</p>
 
 <pre><code>params.each <span class="k">do</span> <span class="o">|</span>name, value<span class="o">|</span>
-  puts <span class="s">"</span><span class="i">#{</span></span>name<span class="s"><span class="i">}</span> =&gt; </span><span class="i">#{</span></span>value<span class="s"><span class="i">}</span>"</span>
+  puts <span class="s">&quot;</span><span class="i">#{</span></span>name<span class="s"><span class="i">}</span> =&gt; </span><span class="i">#{</span></span>value<span class="s"><span class="i">}</span>&quot;</span>
 <span class="k">end</span>
 
 <span class="c"># Outputs:</span>
@@ -2698,7 +2801,7 @@ params.has_key?(<span class="s">"comments"</span>)     <span class="c"># =&gt; f
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L213" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L213" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2714,13 +2817,13 @@ params.has_key?(<span class="s">"comments"</span>)     <span class="c"># =&gt; f
         <div class="doc"><p>Returns first value for specified param name. Fallbacks to return value
 of provided block when there is no such param.</p>
 
-<pre><code>params.fetch(<span class="s">"email"</span>) { raise <span class="t">InvalidUser</span>(<span class="s">"email is missing"</span>) }    <span class="c"># InvalidUser &quot;email is missing&quot;</span>
-params.fetch(<span class="s">"non_existent_param"</span>) { <span class="s">"default computed value"</span> }    <span class="c"># =&gt; &quot;default computed value&quot;</span></code></pre></div>
+<pre><code>params.fetch(<span class="s">&quot;email&quot;</span>) { raise <span class="t">InvalidUser</span>(<span class="s">&quot;email is missing&quot;</span>) }    <span class="c"># InvalidUser &quot;email is missing&quot;</span>
+params.fetch(<span class="s">&quot;non_existent_param&quot;</span>) { <span class="s">&quot;default computed value&quot;</span> }    <span class="c"># =&gt; &quot;default computed value&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L173" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L173" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2736,13 +2839,13 @@ params.fetch(<span class="s">"non_existent_param"</span>) { <span class="s">"def
         <div class="doc"><p>Returns first value for specified param name. Fallbacks to provided
 default value when there is no such param.</p>
 
-<pre><code>params.fetch(<span class="s">"email"</span>, <span class="s">"none@example.org"</span>)                <span class="c"># =&gt; &quot;john@example.org&quot;</span>
-params.fetch(<span class="s">"non_existent_param"</span>, <span class="s">"default value"</span>)      <span class="c"># =&gt; &quot;default value&quot;</span></code></pre></div>
+<pre><code>params.fetch(<span class="s">&quot;email&quot;</span>, <span class="s">&quot;none@example.org&quot;</span>)                <span class="c"># =&gt; &quot;john@example.org&quot;</span>
+params.fetch(<span class="s">&quot;non_existent_param&quot;</span>, <span class="s">&quot;default value&quot;</span>)      <span class="c"># =&gt; &quot;default value&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L161" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L161" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2757,13 +2860,13 @@ params.fetch(<span class="s">"non_existent_param"</span>, <span class="s">"defau
       
         <div class="doc"><p>Returns first value for specified param name.</p>
 
-<pre><code>params.fetch(<span class="s">"email"</span>)                <span class="c"># =&gt; &quot;john@example.org&quot;</span>
-params.fetch(<span class="s">"non_existent_param"</span>)   <span class="c"># KeyError</span></code></pre></div>
+<pre><code>params.fetch(<span class="s">&quot;email&quot;</span>)                <span class="c"># =&gt; &quot;john@example.org&quot;</span>
+params.fetch(<span class="s">&quot;non_existent_param&quot;</span>)   <span class="c"># KeyError</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L150" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L150" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2778,12 +2881,12 @@ params.fetch(<span class="s">"non_existent_param"</span>)   <span class="c"># Ke
       
         <div class="doc"><p>Returns all values for specified param name.</p>
 
-<pre><code>params.fetch_all(<span class="s">"item"</span>)       <span class="c"># =&gt; [&quot;pencil&quot;, &quot;book&quot;, &quot;workbook&quot;]</span></code></pre></div>
+<pre><code>params.fetch_all(<span class="s">&quot;item&quot;</span>)       <span class="c"># =&gt; [&quot;pencil&quot;, &quot;book&quot;, &quot;workbook&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L140" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L140" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2798,13 +2901,13 @@ params.fetch(<span class="s">"non_existent_param"</span>)   <span class="c"># Ke
       
         <div class="doc"><p>Returns true if param with provided name exists.</p>
 
-<pre><code>params.has_key?(<span class="s">"email"</span>)       <span class="c"># =&gt; true</span>
-params.has_key?(<span class="s">"garbage"</span>)     <span class="c"># =&gt; false</span></code></pre></div>
+<pre><code>params.has_key?(<span class="s">&quot;email&quot;</span>)       <span class="c"># =&gt; true</span>
+params.has_key?(<span class="s">&quot;garbage&quot;</span>)     <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L123" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L123" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2819,13 +2922,13 @@ params.has_key?(<span class="s">"garbage"</span>)     <span class="c"># =&gt; fa
       
         <div class="doc"><p>Sets all values for specified param name at once.</p>
 
-<pre><code>params.set_all(<span class="s">"item"</span>, [<span class="s">"keychain"</span>, <span class="s">"keynote"</span>])
-params.fetch_all(<span class="s">"item"</span>)        <span class="c"># =&gt; [&quot;keychain&quot;, &quot;keynote&quot;]</span></code></pre></div>
+<pre><code>params.set_all(<span class="s">&quot;item&quot;</span>, [<span class="s">&quot;keychain&quot;</span>, <span class="s">&quot;keynote&quot;</span>])
+params.fetch_all(<span class="s">&quot;item&quot;</span>)        <span class="c"># =&gt; [&quot;keychain&quot;, &quot;keynote&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L197" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L197" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2845,7 +2948,7 @@ params.fetch_all(<span class="s">"item"</span>)        <span class="c"># =&gt; [
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/params.cr#L255" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/params.cr#L255" target="_blank">View source</a>]
         
       </div>
     </div>

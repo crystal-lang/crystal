@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2118,9 +2173,9 @@ components of an instance.</p>
 
 <p>Basic example:</p>
 
-<pre><code><span class="k">require</span> <span class="s">"uri"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;uri&quot;</span>
 
-uri <span class="o">=</span> <span class="t">URI</span>.parse <span class="s">"http://foo.com/posts?id=30&amp;limit=5#time=1305298413"</span>
+uri <span class="o">=</span> <span class="t">URI</span>.parse <span class="s">&quot;http://foo.com/posts?id=30&amp;limit=5#time=1305298413&quot;</span>
 <span class="c"># =&gt; #&amp;lt;URI:0x1003f1e40 @scheme=&quot;http&quot;, @host=&quot;foo.com&quot;, @port=nil, @path=&quot;/posts&quot;, @query=&quot;id=30&amp;limit=5&quot;, ... &gt;</span>
 uri.scheme
 <span class="c"># =&gt; &quot;http&quot;</span>
@@ -2147,7 +2202,7 @@ uri.to_s
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr" target="_blank">uri.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr" target="_blank">uri.cr</a>
     
     <br/>
   
@@ -2160,12 +2215,12 @@ uri.to_s
   <dl>
     
       <dt class="entry-const">
-        <strong>RFC3986_relative_ref</strong> = <code><span class="s">/\A(?<relative_ref>(?<relative_part>\/\/(?<authority>(?:(?<userinfo>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?<IPv6address>(?:[0-9a-fA-F]{1,4}:){6}(?<ls32>[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:[0-9a-fA-F]{1,4}:){5}\g<ls32>|[0-9a-fA-F]{1,4}?::(?:[0-9a-fA-F]{1,4}:){4}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,1}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){3}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,2}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){2}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,3}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}:\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,4}[0-9a-fA-F]{1,4})?::\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,5}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}|(?:(?:[0-9a-fA-F]{1,4}:){,6}[0-9a-fA-F]{1,4})?::)|(?<IPvFuture>v[0-9a-fA-F]+\.[!$&-.0-;=A-Z_a-z~]+)\])|\g<IPv4address>|(?<reg_name>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_noscheme>(?<segment_nz_nc>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-9;=@-Z_a-z~])+)(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/</span></code>
+        <strong>RFC3986_relative_ref</strong> = <code><span class="s">/\A(?&lt;relative_ref&gt;(?&lt;relative_part&gt;\/\/(?&lt;authority&gt;(?:(?&lt;userinfo&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-;=A-Z_a-z~])*)@)?(?&lt;host&gt;(?&lt;IP_literal&gt;\[(?&lt;IPv6address&gt;(?:[0-9a-fA-F]{1,4}:){6}(?&lt;ls32&gt;[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}|(?&lt;IPv4address&gt;(?&lt;dec_octet&gt;[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g&lt;dec_octet&gt;\.\g&lt;dec_octet&gt;\.\g&lt;dec_octet&gt;))|::(?:[0-9a-fA-F]{1,4}:){5}\g&lt;ls32&gt;|[0-9a-fA-F]{1,4}?::(?:[0-9a-fA-F]{1,4}:){4}\g&lt;ls32&gt;|(?:(?:[0-9a-fA-F]{1,4}:){,1}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){3}\g&lt;ls32&gt;|(?:(?:[0-9a-fA-F]{1,4}:){,2}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){2}\g&lt;ls32&gt;|(?:(?:[0-9a-fA-F]{1,4}:){,3}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}:\g&lt;ls32&gt;|(?:(?:[0-9a-fA-F]{1,4}:){,4}[0-9a-fA-F]{1,4})?::\g&lt;ls32&gt;|(?:(?:[0-9a-fA-F]{1,4}:){,5}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}|(?:(?:[0-9a-fA-F]{1,4}:){,6}[0-9a-fA-F]{1,4})?::)|(?&lt;IPvFuture&gt;v[0-9a-fA-F]+\.[!$&amp;-.0-;=A-Z_a-z~]+)\])|\g&lt;IPv4address&gt;|(?&lt;reg_name&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-9;=A-Z_a-z~])+))?(?::(?&lt;port&gt;\d*))?)(?&lt;path_abempty&gt;(?:\/(?&lt;segment&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-;=@-Z_a-z~])*))*)|(?&lt;path_absolute&gt;\/(?:(?&lt;segment_nz&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-;=@-Z_a-z~])+)(?:\/\g&lt;segment&gt;)*)?)|(?&lt;path_noscheme&gt;(?&lt;segment_nz_nc&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-9;=@-Z_a-z~])+)(?:\/\g&lt;segment&gt;)*)|(?&lt;path_empty&gt;))(?:\?(?&lt;query&gt;[^#]*))?(?:\#(?&lt;fragment&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-;=@-Z_a-z~\/?])*))?)\z/</span></code>
       </dt>
       
     
       <dt class="entry-const">
-        <strong>RFC3986_URI</strong> = <code><span class="s">/\A(?<URI>(?<scheme>[A-Za-z][+\-.0-9A-Za-z]*):(?<hier_part>\/\/(?<authority>(?:(?<userinfo>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?:(?<IPv6address>(?:[0-9a-fA-F]{1,4}:){6}(?<ls32>[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:[0-9a-fA-F]{1,4}:){5}\g<ls32>|[0-9a-fA-F]{1,4}?::(?:[0-9a-fA-F]{1,4}:){4}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){3}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,2}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){2}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,3}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}:\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,4}[0-9a-fA-F]{1,4})?::\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,5}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}|(?:(?:[0-9a-fA-F]{1,4}:){,6}[0-9a-fA-F]{1,4})?::)|(?<IPvFuture>v[0-9a-fA-F]+\.[!$&-.0-;=A-Z_a-z~]+))\])|\g<IPv4address>|(?<reg_name>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_rootless>\g<segment_nz>(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/</span></code>
+        <strong>RFC3986_URI</strong> = <code><span class="s">/\A(?&lt;URI&gt;(?&lt;scheme&gt;[A-Za-z][+\-.0-9A-Za-z]*):(?&lt;hier_part&gt;\/\/(?&lt;authority&gt;(?:(?&lt;userinfo&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-;=A-Z_a-z~])*)@)?(?&lt;host&gt;(?&lt;IP_literal&gt;\[(?:(?&lt;IPv6address&gt;(?:[0-9a-fA-F]{1,4}:){6}(?&lt;ls32&gt;[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}|(?&lt;IPv4address&gt;(?&lt;dec_octet&gt;[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g&lt;dec_octet&gt;\.\g&lt;dec_octet&gt;\.\g&lt;dec_octet&gt;))|::(?:[0-9a-fA-F]{1,4}:){5}\g&lt;ls32&gt;|[0-9a-fA-F]{1,4}?::(?:[0-9a-fA-F]{1,4}:){4}\g&lt;ls32&gt;|(?:(?:[0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){3}\g&lt;ls32&gt;|(?:(?:[0-9a-fA-F]{1,4}:){,2}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){2}\g&lt;ls32&gt;|(?:(?:[0-9a-fA-F]{1,4}:){,3}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}:\g&lt;ls32&gt;|(?:(?:[0-9a-fA-F]{1,4}:){,4}[0-9a-fA-F]{1,4})?::\g&lt;ls32&gt;|(?:(?:[0-9a-fA-F]{1,4}:){,5}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}|(?:(?:[0-9a-fA-F]{1,4}:){,6}[0-9a-fA-F]{1,4})?::)|(?&lt;IPvFuture&gt;v[0-9a-fA-F]+\.[!$&amp;-.0-;=A-Z_a-z~]+))\])|\g&lt;IPv4address&gt;|(?&lt;reg_name&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-9;=A-Z_a-z~])+))?(?::(?&lt;port&gt;\d*))?)(?&lt;path_abempty&gt;(?:\/(?&lt;segment&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-;=@-Z_a-z~])*))*)|(?&lt;path_absolute&gt;\/(?:(?&lt;segment_nz&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-;=@-Z_a-z~])+)(?:\/\g&lt;segment&gt;)*)?)|(?&lt;path_rootless&gt;\g&lt;segment_nz&gt;(?:\/\g&lt;segment&gt;)*)|(?&lt;path_empty&gt;))(?:\?(?&lt;query&gt;[^#]*))?(?:\#(?&lt;fragment&gt;(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&amp;-.0-;=@-Z_a-z~\/?])*))?)\z/</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2389,7 +2444,7 @@ uri.to_s
   
     
 
-  <h3>Methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
   
     <a href="Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2425,10 +2480,13 @@ uri.to_s
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2508,6 +2566,48 @@ uri.to_s
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2527,7 +2627,7 @@ uri.to_s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L245" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L245" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2542,12 +2642,12 @@ uri.to_s
       
         <div class="doc"><p>URL-encode a string.</p>
 
-<pre><code><span class="t">URI</span>.escape(<span class="s">"&apos;Stop!&apos; said Fred"</span>) <span class="c">#=&gt; &quot;%27Stop%21%27+said+Fred&quot;</span></code></pre></div>
+<pre><code><span class="t">URI</span>.escape(<span class="s">&quot;&apos;Stop!&apos; said Fred&quot;</span>) <span class="c">#=&gt; &quot;%27Stop%21%27+said+Fred&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L240" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L240" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2567,7 +2667,7 @@ uri.to_s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L182" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L182" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2582,12 +2682,12 @@ uri.to_s
       
         <div class="doc"><p>URL-decode a string.</p>
 
-<pre><code><span class="t">URI</span>.unescape(<span class="s">"%27Stop%21%27+said+Fred"</span>) <span class="c">#=&gt; &quot;&apos;Stop!&apos; said Fred&quot;</span></code></pre></div>
+<pre><code><span class="t">URI</span>.unescape(<span class="s">&quot;%27Stop%21%27+said+Fred&quot;</span>) <span class="c">#=&gt; &quot;&apos;Stop!&apos; said Fred&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L221" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L221" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2605,7 +2705,7 @@ uri.to_s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L226" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L226" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2624,7 +2724,7 @@ Unescapes one character. Private API</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L274" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L274" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2640,7 +2740,7 @@ Unescapes one character. Private API</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L120" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L120" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2660,12 +2760,12 @@ Unescapes one character. Private API</p></div>
       
         <div class="doc"><p>Returns the fragment component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com/bar#section1"</span>).fragment <span class="c"># =&gt; &quot;section1&quot;</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">&quot;http://foo.com/bar#section1&quot;</span>).fragment <span class="c"># =&gt; &quot;section1&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L105" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L105" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2683,7 +2783,7 @@ Unescapes one character. Private API</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L108" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L108" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2698,13 +2798,13 @@ Unescapes one character. Private API</p></div>
       
         <div class="doc"><p>Returns the full path of this URI.</p>
 
-<pre><code>uri <span class="o">=</span> <span class="t">URI</span>.parse <span class="s">"http://foo.com/posts?id=30&amp;limit=5#time=1305298413"</span>
+<pre><code>uri <span class="o">=</span> <span class="t">URI</span>.parse <span class="s">&quot;http://foo.com/posts?id=30&amp;limit=5#time=1305298413&quot;</span>
 uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L129" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L129" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2719,12 +2819,12 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       
         <div class="doc"><p>Returns the host component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com"</span>).host <span class="c"># =&gt; &quot;foo.com&quot;</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">&quot;http://foo.com&quot;</span>).host <span class="c"># =&gt; &quot;foo.com&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L45" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2742,7 +2842,7 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L48" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L48" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2757,12 +2857,12 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       
         <div class="doc"><p>Returns the opaque component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"mailto:alice@example.com"</span>).opaque <span class="c"># =&gt; &quot;alice@example.com&quot;</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">&quot;mailto:alice@example.com&quot;</span>).opaque <span class="c"># =&gt; &quot;alice@example.com&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L115" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L115" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2780,7 +2880,7 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L118" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L118" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2795,12 +2895,12 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       
         <div class="doc"><p>Returns the password component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"http://admin:password@foo.com"</span>).password <span class="c"># =&gt; &quot;password&quot;</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">&quot;http://admin:password@foo.com&quot;</span>).password <span class="c"># =&gt; &quot;password&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L95" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2818,7 +2918,7 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L98" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L98" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2833,12 +2933,12 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       
         <div class="doc"><p>Returns the path component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com/bar"</span>).path <span class="c"># =&gt; &quot;/bar&quot;</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">&quot;http://foo.com/bar&quot;</span>).path <span class="c"># =&gt; &quot;/bar&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L65" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2856,7 +2956,7 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L68" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L68" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2871,12 +2971,12 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       
         <div class="doc"><p>Returns the port component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com:5432"</span>).port <span class="c"># =&gt; 5432</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">&quot;http://foo.com:5432&quot;</span>).port <span class="c"># =&gt; 5432</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L55" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L55" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2894,7 +2994,7 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L58" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2909,12 +3009,12 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       
         <div class="doc"><p>Returns the query component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com/bar?q=1"</span>).query <span class="c"># =&gt; &quot;q=1&quot;</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">&quot;http://foo.com/bar?q=1&quot;</span>).query <span class="c"># =&gt; &quot;q=1&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L75" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L75" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2932,7 +3032,7 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L78" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L78" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2947,13 +3047,13 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       
         <div class="doc"><p>Returns the scheme component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"http://foo.com"</span>).scheme <span class="c"># =&gt; &quot;http&quot;</span>
-<span class="t">URI</span>.parse(<span class="s">"mailto:alice@example.com"</span>).scheme <span class="c"># =&gt; &quot;mailto&quot;</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">&quot;http://foo.com&quot;</span>).scheme <span class="c"># =&gt; &quot;http&quot;</span>
+<span class="t">URI</span>.parse(<span class="s">&quot;mailto:alice@example.com&quot;</span>).scheme <span class="c"># =&gt; &quot;mailto&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L35" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L35" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2971,7 +3071,7 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L38" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2987,7 +3087,7 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L136" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L136" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3002,12 +3102,12 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       
         <div class="doc"><p>Returns the user component of the URI.</p>
 
-<pre><code><span class="t">URI</span>.parse(<span class="s">"http://admin:password@foo.com"</span>).user <span class="c"># =&gt; &quot;admin&quot;</span></code></pre></div>
+<pre><code><span class="t">URI</span>.parse(<span class="s">&quot;http://admin:password@foo.com&quot;</span>).user <span class="c"># =&gt; &quot;admin&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L85" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L85" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3025,7 +3125,7 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L88" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L88" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3040,13 +3140,13 @@ uri.full_path <span class="c"># =&gt; &quot;/posts?id=30&amp;limit=5&quot;</span
       
         <div class="doc"><p>Returns the user-information component containing the provided username and password.</p>
 
-<pre><code>uri <span class="o">=</span> <span class="t">URI</span>.parse <span class="s">"http://admin:password@foo.com"</span>
+<pre><code>uri <span class="o">=</span> <span class="t">URI</span>.parse <span class="s">&quot;http://admin:password@foo.com&quot;</span>
 uri.userinfo <span class="c"># =&gt; &quot;admin:password&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/uri.cr#L266" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/uri.cr#L266" target="_blank">View source</a>]
         
       </div>
     </div>

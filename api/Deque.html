@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2148,7 +2203,7 @@ and remove the item at the beginning of the queue.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr" target="_blank">deque.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr" target="_blank">deque.cr</a>
     
     <br/>
   
@@ -2514,7 +2569,7 @@ and remove the item at the beginning of the queue.</p>
   
     
 
-  <h3>Methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
   
     <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
       <span><(other : T)</span>
@@ -2542,10 +2597,13 @@ and remove the item at the beginning of the queue.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from module <code><a href="Iterable.html">Iterable</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Iterable.html">Iterable</a></code></h3>
   
     <a href="Iterable.html#cycle-instance-method" class="tooltip">
       <span>cycle<br/>cycle(n)</span>
@@ -2573,10 +2631,13 @@ and remove the item at the beginning of the queue.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from module <code><a href="Enumerable.html">Enumerable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Enumerable.html">Enumerable(T)</a></code></h3>
   
     <a href="Enumerable.html#all%3F-instance-method" class="tooltip">
       <span>all?<br/>all?(&block)</span>
@@ -2663,7 +2724,7 @@ and remove the item at the beginning of the queue.</p>
     inject</a>, 
   
     <a href="Enumerable.html#join%28separator%2Cio%2C%26block%29-instance-method" class="tooltip">
-      <span>join(separator, io, &block)<br/>join(separator = <span class="s">""</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">""</span>)</span>
+      <span>join(separator, io, &block)<br/>join(separator = <span class="s">&quot;&quot;</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">&quot;&quot;</span>)</span>
     join</a>, 
   
     <a href="Enumerable.html#map%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
@@ -2804,10 +2865,13 @@ and remove the item at the beginning of the queue.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
   
     <a href="Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2843,10 +2907,13 @@ and remove the item at the beginning of the queue.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2926,6 +2993,48 @@ and remove the item at the beginning of the queue.</p>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2947,7 +3056,7 @@ and remove the item at the beginning of the queue.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L102" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L102" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2967,7 +3076,7 @@ and remove the item at the beginning of the queue.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L60" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L60" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2992,7 +3101,7 @@ deq.size <span class="c">#=&gt; 0</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3010,7 +3119,7 @@ deq.size <span class="c">#=&gt; 0</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L25" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L25" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3031,7 +3140,7 @@ value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L80" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L80" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3055,7 +3164,7 @@ deque is the union of the types of both the other deques.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L126" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L126" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3073,7 +3182,7 @@ deque is the union of the types of both the other deques.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L136" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L136" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3097,7 +3206,7 @@ deq <span class="o">==</span> <span class="t">Deque</span>{<span class="n">2</sp
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L115" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L115" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3118,7 +3227,7 @@ Raises <code><a href="IndexError.html">IndexError</a></code> if trying to access
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L144" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L144" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3138,7 +3247,7 @@ Raises <code><a href="IndexError.html">IndexError</a></code> if trying to access
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L159" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L159" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3159,7 +3268,7 @@ Returns <code>nil</code> if trying to access an element outside the deque's rang
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L152" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L152" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3177,7 +3286,7 @@ Returns <code>nil</code> if trying to access an element outside the deque's rang
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L175" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L175" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3195,7 +3304,7 @@ Returns <code>nil</code> if trying to access an element outside the deque's rang
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L170" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L170" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3213,7 +3322,7 @@ Returns <code>nil</code> if trying to access an element outside the deque's rang
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L187" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L187" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3234,7 +3343,7 @@ That is, it returns a deep copy of this deque.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L200" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L200" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3252,7 +3361,7 @@ That is, it returns a deep copy of this deque.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3274,7 +3383,7 @@ a.delete_at(<span class="n">1</span>) <span class="c"># =&gt; Deque{1, 3}</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L219" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3293,7 +3402,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L269" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L269" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3311,7 +3420,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L285" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L285" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3331,7 +3440,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L276" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L276" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3349,7 +3458,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L298" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L298" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3367,7 +3476,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L290" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L290" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3385,7 +3494,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L303" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L303" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3403,7 +3512,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L308" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L308" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3422,7 +3531,7 @@ value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L323" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L323" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3440,7 +3549,7 @@ value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L317" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L317" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3458,7 +3567,7 @@ value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L328" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L328" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3474,7 +3583,7 @@ value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L332" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L332" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3495,7 +3604,7 @@ a.insert_at(<span class="n">1</span>, <span class="n">7</span>) <span class="c">
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L344" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L344" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3511,7 +3620,7 @@ a.insert_at(<span class="n">1</span>, <span class="n">7</span>) <span class="c">
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L392" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L392" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3530,7 +3639,7 @@ returns its value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L408" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L408" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3548,7 +3657,7 @@ returns its value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L402" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L402" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3566,7 +3675,7 @@ returns its value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L413" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L413" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3588,7 +3697,7 @@ a.pop <span class="c"># =&gt; 3</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L433" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L433" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3606,7 +3715,7 @@ a.pop <span class="c"># =&gt; 3</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L438" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L438" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3624,7 +3733,7 @@ a.pop <span class="c"># =&gt; 3</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L457" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L457" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3642,7 +3751,7 @@ a.pop <span class="c"># =&gt; 3</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L452" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L452" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3663,7 +3772,7 @@ a.push <span class="n">3</span> <span class="c"># =&gt; Deque{1, 2, 3}</span></c
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L472" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L472" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3683,7 +3792,7 @@ a.push <span class="n">3</span> <span class="c"># =&gt; Deque{1, 2, 3}</span></c
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L484" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L484" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3704,7 +3813,7 @@ For negative <code>n</code>, equivalent to <code>(-n).times { unshift(pop) }</co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L495" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L495" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3726,7 +3835,7 @@ a.shift <span class="c"># =&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L522" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L522" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3744,7 +3853,7 @@ a.shift <span class="c"># =&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L527" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L527" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3762,7 +3871,7 @@ a.shift <span class="c"># =&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L546" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L546" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3780,7 +3889,7 @@ a.shift <span class="c"># =&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L541" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L541" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3800,7 +3909,7 @@ a.shift <span class="c"># =&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L422" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L422" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3818,7 +3927,7 @@ a.shift <span class="c"># =&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L556" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L556" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3836,7 +3945,7 @@ a.shift <span class="c"># =&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L562" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L562" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3852,7 +3961,7 @@ a.shift <span class="c"># =&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L570" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L570" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3873,7 +3982,7 @@ a.unshift <span class="n">0</span> <span class="c"># =&gt; Deque{0, 1, 2}</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/deque.cr#L580" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/deque.cr#L580" target="_blank">View source</a>]
         
       </div>
     </div>

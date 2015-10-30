@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2111,21 +2166,21 @@
 
 <p>A basic spec looks like this:</p>
 
-<pre><code><span class="k">require</span> <span class="s">"spec"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;spec&quot;</span>
 
-describe <span class="s">"Array"</span> <span class="k">do</span>
-  describe <span class="s">"#size"</span> <span class="k">do</span>
-    it <span class="s">"correctly reports the number of elements in the Array"</span> <span class="k">do</span>
+describe <span class="s">&quot;Array&quot;</span> <span class="k">do</span>
+  describe <span class="s">&quot;#size&quot;</span> <span class="k">do</span>
+    it <span class="s">&quot;correctly reports the number of elements in the Array&quot;</span> <span class="k">do</span>
       [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>].size.should eq <span class="n">3</span>
     <span class="k">end</span>
   <span class="k">end</span>
 
-  describe <span class="s">"#empty?"</span> <span class="k">do</span>
-    it <span class="s">"is empty when no elements are in the array"</span> <span class="k">do</span>
+  describe <span class="s">&quot;#empty?&quot;</span> <span class="k">do</span>
+    it <span class="s">&quot;is empty when no elements are in the array&quot;</span> <span class="k">do</span>
       (<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>).empty?.should be_true
     <span class="k">end</span>
 
-    it <span class="s">"is not empty if there are elements in the array"</span> <span class="k">do</span>
+    it <span class="s">&quot;is not empty if there are elements in the array&quot;</span> <span class="k">do</span>
       [<span class="n">1</span>].empty?.should be_false
     <span class="k">end</span>
   <span class="k">end</span>
@@ -2179,27 +2234,27 @@ number:</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/spec/context.cr" target="_blank">spec/context.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/spec/context.cr" target="_blank">spec/context.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/spec/expectations.cr" target="_blank">spec/expectations.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/spec/expectations.cr" target="_blank">spec/expectations.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/spec/formatter.cr" target="_blank">spec/formatter.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/spec/formatter.cr" target="_blank">spec/formatter.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/spec/source.cr" target="_blank">spec/source.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/spec/source.cr" target="_blank">spec/source.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/spec/spec.cr" target="_blank">spec/spec.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/spec/spec.cr" target="_blank">spec/spec.cr</a>
     
     <br/>
   
@@ -2264,7 +2319,7 @@ number:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/spec/spec.cr#L168" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/spec/spec.cr#L168" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2280,7 +2335,7 @@ number:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/spec/spec.cr#L163" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/spec/spec.cr#L163" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2298,7 +2353,7 @@ number:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/spec/spec.cr#L184" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/spec/spec.cr#L184" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2314,7 +2369,7 @@ number:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/spec/spec.cr#L100" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/spec/spec.cr#L100" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2330,7 +2385,7 @@ number:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/spec/spec.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/spec/spec.cr#L96" target="_blank">View source</a>]
         
       </div>
     </div>

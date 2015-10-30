@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2112,10 +2167,10 @@ detailed reports on the time taken for each task.</p>
 
 <h3>Measure the number of iterations per second of each task</h3>
 
-<pre><code><span class="k">require</span> <span class="s">"benchmark"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;benchmark&quot;</span>
 <span class="t">Benchmark</span>.ips <span class="k">do</span> <span class="o">|</span>x<span class="o">|</span>
-  x.report(<span class="s">"short sleep"</span>)   { sleep <span class="n">0.01</span>  }
-  x.report(<span class="s">"shorter sleep"</span>) { sleep <span class="n">0.001</span> }
+  x.report(<span class="s">&quot;short sleep&quot;</span>)   { sleep <span class="n">0.01</span>  }
+  x.report(<span class="s">&quot;shorter sleep&quot;</span>) { sleep <span class="n">0.001</span> }
 <span class="k">end</span></code></pre>
 
 <p>This generates the following output showing the mean iterations per second,
@@ -2135,9 +2190,9 @@ calculation time. This can be configured:</p>
 
 <h3>Measure the time to construct the string given by the expression: <code>"a"*1_000_000_000</code></h3>
 
-<pre><code><span class="k">require</span> <span class="s">"benchmark"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;benchmark&quot;</span>
 
-puts <span class="t">Benchmark</span>.measure { <span class="s">"a"</span><span class="o">*</span><span class="n">1000000000</span> }</code></pre>
+puts <span class="t">Benchmark</span>.measure { <span class="s">&quot;a&quot;</span><span class="o">*</span><span class="n">1_000_000_000</span> }</code></pre>
 
 <p>This generates the following output:</p>
 
@@ -2149,12 +2204,12 @@ of time is seconds.</p>
 
 <h3>Do some experiments sequentially using the <code><a href="Benchmark.html#bm%28%26block%29-instance-method">#bm</a></code> method:</h3>
 
-<pre><code><span class="k">require</span> <span class="s">"benchmark"</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;benchmark&quot;</span>
 
 n <span class="o">=</span> <span class="n">5000000</span>
 <span class="t">Benchmark</span>.bm <span class="k">do</span> <span class="o">|</span>x<span class="o">|</span>
- x.report(<span class="s">"times:"</span>) { n.times <span class="k">do</span> ; a <span class="o">=</span> <span class="s">"1"</span>; <span class="k">end</span> }
- x.report(<span class="s">"upto:"</span>) { <span class="n">1</span>.upto(n) <span class="k">do</span> ; a <span class="o">=</span> <span class="s">"1"</span>; <span class="k">end</span> }
+ x.report(<span class="s">&quot;times:&quot;</span>) { n.times <span class="k">do</span> ; a <span class="o">=</span> <span class="s">&quot;1&quot;</span>; <span class="k">end</span> }
+ x.report(<span class="s">&quot;upto:&quot;</span>) { <span class="n">1</span>.upto(n) <span class="k">do</span> ; a <span class="o">=</span> <span class="s">&quot;1&quot;</span>; <span class="k">end</span> }
 <span class="k">end</span></code></pre>
 
 <p>The result:</p>
@@ -2188,17 +2243,17 @@ upto:    0.010000   0.000000   0.010000 (  0.010466)</code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/benchmark/bm.cr" target="_blank">benchmark/bm.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/benchmark/bm.cr" target="_blank">benchmark/bm.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/benchmark/ips.cr" target="_blank">benchmark/ips.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/benchmark/ips.cr" target="_blank">benchmark/ips.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/benchmark/benchmark.cr" target="_blank">benchmark/benchmark.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/benchmark/benchmark.cr" target="_blank">benchmark/benchmark.cr</a>
     
     <br/>
   
@@ -2227,7 +2282,7 @@ upto:    0.010000   0.000000   0.010000 (  0.010466)</code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#measure%28label%3D%3Cspanclass%3D%22s%22%3E%22%22%3C%2Fspan%3E%2C%26block%29%3ABM%3A%3ATms-instance-method" class="signature"><strong>#measure</strong>(label = <span class="s">""</span>, &block) : BM::Tms</a>
+        <a href="#measure%28label%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2C%26block%29%3ABM%3A%3ATms-instance-method" class="signature"><strong>#measure</strong>(label = <span class="s">&quot;&quot;</span>, &block) : BM::Tms</a>
         
           <div class="summary"><p>Returns the time used to execute the given block.</p></div>
         
@@ -2269,7 +2324,7 @@ one can report the benchmarks. See the module's description.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/benchmark/benchmark.cr#L78" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/benchmark/benchmark.cr#L78" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2293,17 +2348,17 @@ displayed and updated as they are calculated, otherwise all at once.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/benchmark/benchmark.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/benchmark/benchmark.cr#L96" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="measure(label=&lt;spanclass=&quot;s&quot;&gt;&quot;&quot;&lt;/span&gt;,&amp;block):BM::Tms-instance-method">
+    <div class="entry-detail" id="measure(label=&lt;spanclass=&quot;s&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;,&amp;block):BM::Tms-instance-method">
       <div class="signature">
         
-        def <strong>measure</strong>(label = <span class="s">""</span>, &block) : <a href="Benchmark/BM/Tms.html">BM::Tms</a>
+        def <strong>measure</strong>(label = <span class="s">&quot;&quot;</span>, &block) : <a href="Benchmark/BM/Tms.html">BM::Tms</a>
 
-        <a class="method-permalink" href="#measure%28label%3D%3Cspanclass%3D%22s%22%3E%22%22%3C%2Fspan%3E%2C%26block%29%3ABM%3A%3ATms-instance-method">#</a>
+        <a class="method-permalink" href="#measure%28label%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2C%26block%29%3ABM%3A%3ATms-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the time used to execute the given block.</p></div>
@@ -2311,7 +2366,7 @@ displayed and updated as they are calculated, otherwise all at once.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/benchmark/benchmark.cr#L109" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/benchmark/benchmark.cr#L109" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2326,12 +2381,12 @@ displayed and updated as they are calculated, otherwise all at once.</p></div>
       
         <div class="doc"><p>Returns the elapsed real time used to execute the given block.</p>
 
-<pre><code><span class="t">Benchmark</span>.realtime { <span class="s">"a"</span> <span class="o">*</span> <span class="n">100000</span> } <span class="c">#=&gt; 00:00:00.0005840</span></code></pre></div>
+<pre><code><span class="t">Benchmark</span>.realtime { <span class="s">&quot;a&quot;</span> <span class="o">*</span> <span class="n">100_000</span> } <span class="c">#=&gt; 00:00:00.0005840</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/benchmark/benchmark.cr#L126" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/benchmark/benchmark.cr#L126" target="_blank">View source</a>]
         
       </div>
     </div>

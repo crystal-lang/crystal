@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2114,7 +2169,7 @@ of possibly different types.</p>
 
 <p>A tuple can be created with the usual <code><a href="Tuple.html#new%28%2Aargs%29-class-method">.new</a></code> method or with a tuple literal:</p>
 
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>} <span class="c"># Tuple(Int32, String, Char)</span>
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>, <span class="s">'x'</span>} <span class="c"># Tuple(Int32, String, Char)</span>
 tuple[<span class="n">0</span>]                  <span class="c">#=&gt; 1       (Int32)</span>
 tuple[<span class="n">1</span>]                  <span class="c">#=&gt; &quot;hello&quot; (String)</span>
 tuple[<span class="n">2</span>]                  <span class="c">#=&gt; &apos;x&apos;     (Char)</span></code></pre>
@@ -2133,7 +2188,7 @@ a value whose type is the union of all the types in the tuple, and might raise
 values because no memory is needed to be allocated for them:</p>
 
 <pre><code><span class="k">def</span> <span class="m">one_and_hello</span>
-  {<span class="n">1</span>, <span class="s">"hello"</span>}
+  {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>}
 <span class="k">end</span>
 
 one, hello <span class="o">=</span> one_and_hello
@@ -2148,7 +2203,7 @@ hello                      <span class="c">#=&gt; &quot;hello&quot;</span></code
   string <span class="o">*</span> value
 <span class="k">end</span>
 
-tuple <span class="o">=</span> {<span class="s">"hey"</span>, <span class="n">2</span>}
+tuple <span class="o">=</span> {<span class="s">&quot;hey&quot;</span>, <span class="n">2</span>}
 value <span class="o">=</span> multiply(<span class="o">*</span>tuple) <span class="c"># same as multiply tuple[0], tuple[1]</span>
 value <span class="c">#=&gt; &quot;heyhey&quot;</span></code></pre>
 
@@ -2159,7 +2214,7 @@ will be a tuple of the call arguments:</p>
   args
 <span class="k">end</span>
 
-tuple <span class="o">=</span> splat_test <span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>
+tuple <span class="o">=</span> splat_test <span class="n">1</span>, <span class="s">&quot;hello&quot;</span>, <span class="s">'x'</span>
 tuple                              <span class="c">#=&gt; {1, &quot;hello&quot;, &apos;x&apos;} (Tuple(Int32, String, Char))</span></code></pre>
 
 
@@ -2189,12 +2244,12 @@ tuple                              <span class="c">#=&gt; {1, &quot;hello&quot;,
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr" target="_blank">tuple.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr" target="_blank">tuple.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -2420,7 +2475,7 @@ tuple                              <span class="c">#=&gt; {1, &quot;hello&quot;,
   
     
 
-  <h3>Methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
   
     <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
       <span><(other : T)</span>
@@ -2448,10 +2503,13 @@ tuple                              <span class="c">#=&gt; {1, &quot;hello&quot;,
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from module <code><a href="Iterable.html">Iterable</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Iterable.html">Iterable</a></code></h3>
   
     <a href="Iterable.html#cycle-instance-method" class="tooltip">
       <span>cycle<br/>cycle(n)</span>
@@ -2479,10 +2537,13 @@ tuple                              <span class="c">#=&gt; {1, &quot;hello&quot;,
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from module <code><a href="Enumerable.html">Enumerable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Enumerable.html">Enumerable(T)</a></code></h3>
   
     <a href="Enumerable.html#all%3F-instance-method" class="tooltip">
       <span>all?<br/>all?(&block)</span>
@@ -2569,7 +2630,7 @@ tuple                              <span class="c">#=&gt; {1, &quot;hello&quot;,
     inject</a>, 
   
     <a href="Enumerable.html#join%28separator%2Cio%2C%26block%29-instance-method" class="tooltip">
-      <span>join(separator, io, &block)<br/>join(separator = <span class="s">""</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">""</span>)</span>
+      <span>join(separator, io, &block)<br/>join(separator = <span class="s">&quot;&quot;</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">&quot;&quot;</span>)</span>
     join</a>, 
   
     <a href="Enumerable.html#map%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
@@ -2710,10 +2771,13 @@ tuple                              <span class="c">#=&gt; {1, &quot;hello&quot;,
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
   
     <a href="Value.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2729,10 +2793,13 @@ tuple                              <span class="c">#=&gt; {1, &quot;hello&quot;,
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2812,6 +2879,48 @@ tuple                              <span class="c">#=&gt; {1, &quot;hello&quot;,
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2831,7 +2940,7 @@ tuple                              <span class="c">#=&gt; {1, &quot;hello&quot;,
 <p>This method is useful in macors and generic code because with it you can
 creates empty tuples, something that you can't do with a tuple literal.</p>
 
-<pre><code><span class="t">Tuple</span>.<span class="k">new</span>(<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>) <span class="c">#=&gt; {1, &quot;hello&quot;, &apos;x&apos;}</span>
+<pre><code><span class="t">Tuple</span>.<span class="k">new</span>(<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>, <span class="s">'x'</span>) <span class="c">#=&gt; {1, &quot;hello&quot;, &apos;x&apos;}</span>
 <span class="t">Tuple</span>.<span class="k">new</span>                  <span class="c">#=&gt; {}</span>
 
 {}                         <span class="c"># syntax error</span></code></pre></div>
@@ -2839,7 +2948,7 @@ creates empty tuples, something that you can't do with a tuple literal.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L77" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L77" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2855,7 +2964,7 @@ creates empty tuples, something that you can't do with a tuple literal.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/yaml/from_yaml.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/from_yaml.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2871,7 +2980,7 @@ creates empty tuples, something that you can't do with a tuple literal.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/from_json.cr#L81" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/from_json.cr#L81" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2902,7 +3011,7 @@ etc. As soon as the result of any such comparison is non zero
 Thus, two tuples are "equal" according to <code><a href="Tuple.html#%3C%3D%3E%28other%3ATuple%29-instance-method">#<=></a></code> if, and only if, they have the same size
 and the value of each element is equal to the value of the corresponding element in the other tuple.</p>
 
-<pre><code>{ <span class="s">"a"</span>, <span class="s">"a"</span>, <span class="s">"c"</span> }    <span class="o"><=></span> { <span class="s">"a"</span>, <span class="s">"b"</span>, <span class="s">"c"</span> }   <span class="c">#=&gt; -1</span>
+<pre><code>{ <span class="s">&quot;a&quot;</span>, <span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span> }    <span class="o"><=></span> { <span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span> }   <span class="c">#=&gt; -1</span>
 { <span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">6</span> } <span class="o"><=></span> { <span class="n">1</span>, <span class="n">2</span> }            <span class="c">#=&gt; +1</span>
 { <span class="n">1</span>, <span class="n">2</span> }             <span class="o"><=></span> { <span class="n">1</span>, <span class="n">2.0</span> }          <span class="c">#=&gt;  0</span></code></pre>
 
@@ -2911,7 +3020,7 @@ and the value of each element is equal to the value of the corresponding element
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L236" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L236" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2937,7 +3046,7 @@ etc. As soon as the result of any such comparison is non zero
 Thus, two tuples are "equal" according to <code><a href="Tuple.html#%3C%3D%3E%28other%3ATuple%29-instance-method">#<=></a></code> if, and only if, they have the same size
 and the value of each element is equal to the value of the corresponding element in the other tuple.</p>
 
-<pre><code>{ <span class="s">"a"</span>, <span class="s">"a"</span>, <span class="s">"c"</span> }    <span class="o"><=></span> { <span class="s">"a"</span>, <span class="s">"b"</span>, <span class="s">"c"</span> }   <span class="c">#=&gt; -1</span>
+<pre><code>{ <span class="s">&quot;a&quot;</span>, <span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span> }    <span class="o"><=></span> { <span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span> }   <span class="c">#=&gt; -1</span>
 { <span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">6</span> } <span class="o"><=></span> { <span class="n">1</span>, <span class="n">2</span> }            <span class="c">#=&gt; +1</span>
 { <span class="n">1</span>, <span class="n">2</span> }             <span class="o"><=></span> { <span class="n">1</span>, <span class="n">2.0</span> }          <span class="c">#=&gt;  0</span></code></pre>
 
@@ -2946,7 +3055,7 @@ and the value of each element is equal to the value of the corresponding element
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L227" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L227" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2962,9 +3071,9 @@ and the value of each element is equal to the value of the corresponding element
         <div class="doc"><p>Returns <code>true</code> if this tuple has the same size as the other tuple
 and their elements are equal to each other when  compared with <code><a href="Tuple.html#%3D%3D%28other%3ATuple%29-instance-method">#==</a></code>.</p>
 
-<pre><code>t1 <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>}
-t2 <span class="o">=</span> {<span class="n">1.0</span>, <span class="s">"hello"</span>}
-t3 <span class="o">=</span> {<span class="n">2</span>, <span class="s">"hello"</span>}
+<pre><code>t1 <span class="o">=</span> {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>}
+t2 <span class="o">=</span> {<span class="n">1.0</span>, <span class="s">&quot;hello&quot;</span>}
+t3 <span class="o">=</span> {<span class="n">2</span>, <span class="s">&quot;hello&quot;</span>}
 
 t1 <span class="o">==</span> t2            <span class="c">#=&gt; true</span>
 t1 <span class="o">==</span> t3            <span class="c">#=&gt; false</span></code></pre></div>
@@ -2972,7 +3081,7 @@ t1 <span class="o">==</span> t3            <span class="c">#=&gt; false</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L197" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L197" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2988,9 +3097,9 @@ t1 <span class="o">==</span> t3            <span class="c">#=&gt; false</span></
         <div class="doc"><p>Returns <code>true</code> if this tuple has the same size as the other tuple
 and their elements are equal to each other when  compared with <code><a href="Tuple.html#%3D%3D%28other%3ATuple%29-instance-method">#==</a></code>.</p>
 
-<pre><code>t1 <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>}
-t2 <span class="o">=</span> {<span class="n">1.0</span>, <span class="s">"hello"</span>}
-t3 <span class="o">=</span> {<span class="n">2</span>, <span class="s">"hello"</span>}
+<pre><code>t1 <span class="o">=</span> {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>}
+t2 <span class="o">=</span> {<span class="n">1.0</span>, <span class="s">&quot;hello&quot;</span>}
+t3 <span class="o">=</span> {<span class="n">2</span>, <span class="s">&quot;hello&quot;</span>}
 
 t1 <span class="o">==</span> t2            <span class="c">#=&gt; true</span>
 t1 <span class="o">==</span> t3            <span class="c">#=&gt; false</span></code></pre></div>
@@ -2998,7 +3107,7 @@ t1 <span class="o">==</span> t3            <span class="c">#=&gt; false</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L189" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L189" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3014,7 +3123,7 @@ t1 <span class="o">==</span> t3            <span class="c">#=&gt; false</span></
         <div class="doc"><p>Returns the element at the given index. Read the type docs to understand
 the difference between indexing with a number literal or a variable.</p>
 
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>}
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>, <span class="s">'x'</span>}
 tuple[<span class="n">0</span>]                  <span class="c">#=&gt; 1 (Int32)</span>
 tuple[<span class="n">3</span>]                  <span class="c">#=&gt; compile error: index out of bounds for tuple {Int32, String, Char}</span>
 
@@ -3027,7 +3136,7 @@ tuple[i]                  <span class="c">#=&gt; runtime error: IndexError</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L95" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3042,14 +3151,14 @@ tuple[i]                  <span class="c">#=&gt; runtime error: IndexError</span
       
         <div class="doc"><p>Returns the element at the given index or <code>nil</code> if out of bounds.</p>
 
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>}
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>, <span class="s">'x'</span>}
 tuple[<span class="n">0</span>]                  <span class="c">#=&gt; 1</span>
 tuple[<span class="n">3</span>]                  <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L106" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L106" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3065,14 +3174,14 @@ tuple[<span class="n">3</span>]                  <span class="c">#=&gt; nil</spa
         <div class="doc"><p>Returns the element at the given index or the value returned by the block if
 out of bounds.</p>
 
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>}
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>, <span class="s">'x'</span>}
 tuple.at(<span class="n">0</span>) { <span class="n">10</span> }        <span class="c">#=&gt; 1</span>
 tuple.at(<span class="n">3</span>) { <span class="n">10</span> }        <span class="c">#=&gt; 10</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L129" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L129" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3087,14 +3196,14 @@ tuple.at(<span class="n">3</span>) { <span class="n">10</span> }        <span cl
       
         <div class="doc"><p>Returns the element at the given index or raises IndexError if out of bounds.</p>
 
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>}
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>, <span class="s">'x'</span>}
 tuple[<span class="n">0</span>]                  <span class="c">#=&gt; 1</span>
 tuple[<span class="n">3</span>]                  <span class="c">#=&gt; raises IndexError</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L117" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L117" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3112,7 +3221,7 @@ tuple[<span class="n">3</span>]                  <span class="c">#=&gt; raises I
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L262" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L262" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3130,7 +3239,7 @@ tuple[<span class="n">3</span>]                  <span class="c">#=&gt; raises I
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L257" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L257" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3145,7 +3254,7 @@ tuple[<span class="n">3</span>]                  <span class="c">#=&gt; raises I
       
         <div class="doc"><p>Yields each of the elements in this tuple.</p>
 
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>}
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>, <span class="s">'x'</span>}
 tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o">|</span>
   puts value
 <span class="k">end</span></code></pre>
@@ -3159,7 +3268,7 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L162" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L162" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3179,7 +3288,7 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L174" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L174" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3200,7 +3309,7 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L278" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L278" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3222,7 +3331,7 @@ tuple.first <span class="c">#=&gt; 1</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L358" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L358" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3247,7 +3356,7 @@ empty.first? <span class="c">#=&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L371" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L371" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3267,7 +3376,7 @@ empty.first? <span class="c">#=&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L248" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L248" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3285,7 +3394,7 @@ empty.first? <span class="c">#=&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L302" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L302" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3307,7 +3416,7 @@ tuple.last <span class="c">#=&gt; 2.5</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L386" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L386" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3332,7 +3441,7 @@ empty.last? <span class="c">#=&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L402" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L402" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3347,13 +3456,13 @@ empty.last? <span class="c">#=&gt; nil</span></code></pre></div>
       
         <div class="doc"><p>Returns a new tuple where elements are mapped by the given block.</p>
 
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="n">2.5</span>, <span class="s">"a"</span>}
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="n">2.5</span>, <span class="s">&quot;a&quot;</span>}
 tuple.map <span class="o">&</span>.to_s <span class="c">#=&gt; {&quot;1&quot;, &quot;2.5&quot;, &quot;a&quot;}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L324" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L324" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3368,13 +3477,13 @@ tuple.map <span class="o">&</span>.to_s <span class="c">#=&gt; {&quot;1&quot;, &
       
         <div class="doc"><p>Returns a new tuple where the elements are in reverse order.</p>
 
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="n">2.5</span>, <span class="s">"a"</span>}
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="n">2.5</span>, <span class="s">&quot;a&quot;</span>}
 tuple.reverse <span class="c">#=&gt; {&quot;a&quot;, 2.5, 1}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L341" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L341" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3394,7 +3503,7 @@ tuple.reverse <span class="c">#=&gt; {&quot;a&quot;, 2.5, 1}</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L287" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L287" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3410,7 +3519,7 @@ tuple.reverse <span class="c">#=&gt; {&quot;a&quot;, 2.5, 1}</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/to_json.cr#L242" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr#L242" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3425,13 +3534,13 @@ tuple.reverse <span class="c">#=&gt; {&quot;a&quot;, 2.5, 1}</span></code></pre>
       
         <div class="doc"><p>Appends a string representation of this tuple to the given <code><a href="IO.html">IO</a></code>.</p>
 
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>}
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>}
 tuple.to_s           <span class="c">#=&gt; &quot;{1, \&quot;hello\&quot;}&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L312" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L312" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3446,13 +3555,13 @@ tuple.to_s           <span class="c">#=&gt; &quot;{1, \&quot;hello\&quot;}&quot;
       
         <div class="doc"><p>Returns a tuple containing the types of this tuple.</p>
 
-<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">"hello"</span>, <span class="s">'x'</span>}
+<pre><code>tuple <span class="o">=</span> {<span class="n">1</span>, <span class="s">&quot;hello&quot;</span>, <span class="s">'x'</span>}
 tuple.types               <span class="c">#=&gt; {Int32, String, Char}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L297" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L297" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3468,12 +3577,12 @@ tuple.types               <span class="c">#=&gt; {Int32, String, Char}</span></c
         <div class="doc"><p>Returns a tuple populated with the elements at the given indexes.
 Raises if any index is invalid.</p>
 
-<pre><code>{<span class="s">"a"</span>, <span class="s">"b"</span>, <span class="s">"c"</span>, <span class="s">"d"</span>}.values_at(<span class="n">0</span>, <span class="n">2</span>) <span class="c">#=&gt; {&quot;a&quot;, &quot;c&quot;}</span></code></pre></div>
+<pre><code>{<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>, <span class="s">&quot;d&quot;</span>}.values_at(<span class="n">0</span>, <span class="n">2</span>) <span class="c">#=&gt; {&quot;a&quot;, &quot;c&quot;}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/tuple.cr#L142" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/tuple.cr#L142" target="_blank">View source</a>]
         
       </div>
     </div>

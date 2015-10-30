@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="../Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="../Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="../Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="../GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="../OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="../OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="../OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="../OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="../OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="../OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="../OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="../OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="../Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="../Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2135,7 +2190,7 @@ a HTTP request or response.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr" target="_blank">http/cookie.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr" target="_blank">http/cookie.cr</a>
     
     <br/>
   
@@ -2248,7 +2303,7 @@ a HTTP request or response.</p>
   
     
 
-  <h3>Methods inherited from module <code><a href="../Enumerable.html">Enumerable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="../Enumerable.html">Enumerable(T)</a></code></h3>
   
     <a href="../Enumerable.html#all%3F-instance-method" class="tooltip">
       <span>all?<br/>all?(&block)</span>
@@ -2335,7 +2390,7 @@ a HTTP request or response.</p>
     inject</a>, 
   
     <a href="../Enumerable.html#join%28separator%2Cio%2C%26block%29-instance-method" class="tooltip">
-      <span>join(separator, io, &block)<br/>join(separator = <span class="s">""</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">""</span>)</span>
+      <span>join(separator, io, &block)<br/>join(separator = <span class="s">&quot;&quot;</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">&quot;&quot;</span>)</span>
     join</a>, 
   
     <a href="../Enumerable.html#map%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
@@ -2476,10 +2531,13 @@ a HTTP request or response.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="../Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Reference.html">Reference</a></code></h3>
   
     <a href="../Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2515,10 +2573,13 @@ a HTTP request or response.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
   
     <a href="../Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2598,6 +2659,48 @@ a HTTP request or response.</p>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  
+    <a href="../Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="../Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="../Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="../Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="../Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="../Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2620,7 +2723,7 @@ headers in the given <code><a href="../HTTP/Headers.html">HTTP::Headers</a></cod
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L72" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L72" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2638,7 +2741,7 @@ headers in the given <code><a href="../HTTP/Headers.html">HTTP::Headers</a></cod
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L86" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L86" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2659,12 +2762,12 @@ headers in the given <code><a href="../HTTP/Headers.html">HTTP::Headers</a></cod
         <div class="doc"><p>Add the given <em>cookie</em> to this collection, overrides an existing cookie
 with the same name if present.</p>
 
-<pre><code>response.cookies <span class="o"><<</span> <span class="t">Cookie</span>.<span class="k">new</span>(<span class="s">"foo"</span>, <span class="s">"bar"</span>, http_only: <span class="n">true</span>)</code></pre></div>
+<pre><code>response.cookies <span class="o"><<</span> <span class="t">Cookie</span>.<span class="k">new</span>(<span class="s">&quot;foo&quot;</span>, <span class="s">&quot;bar&quot;</span>, http_only: <span class="n">true</span>)</code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L150" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L150" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2679,12 +2782,12 @@ with the same name if present.</p>
       
         <div class="doc"><p>Get the current <code><a href="../HTTP/Cookie.html">HTTP::Cookie</a></code> for the given <em>key</em>.</p>
 
-<pre><code>request.cookies[<span class="s">"foo"</span>].value <span class="c">#=&gt; &quot;bar&quot;</span></code></pre></div>
+<pre><code>request.cookies[<span class="s">&quot;foo&quot;</span>].value <span class="c">#=&gt; &quot;bar&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L121" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L121" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2701,12 +2804,12 @@ with the same name if present.</p>
 This creates a never expiring, insecure, not HTTP only cookie with
 no explicit domain restriction and the path <code>/</code>.</p>
 
-<pre><code>request.cookies[<span class="s">"foo"</span>] <span class="o">=</span> <span class="s">"bar"</span></code></pre></div>
+<pre><code>request.cookies[<span class="s">&quot;foo&quot;</span>] <span class="o">=</span> <span class="s">&quot;bar&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L97" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L97" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2723,12 +2826,12 @@ no explicit domain restriction and the path <code>/</code>.</p>
 instance. The name attribute must match the given <em>key</em>, else
 <code><a href="../ArgumentError.html">ArgumentError</a></code> is raised.</p>
 
-<pre><code>response.cookies[<span class="s">"foo"</span>] <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Cookie</span>.<span class="k">new</span>(<span class="s">"foo"</span>, <span class="s">"bar"</span>, <span class="s">"/admin"</span>, <span class="t">Time</span>.now <span class="o">+</span> <span class="n">12</span>.hours, secure: <span class="n">true</span>)</code></pre></div>
+<pre><code>response.cookies[<span class="s">&quot;foo&quot;</span>] <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Cookie</span>.<span class="k">new</span>(<span class="s">&quot;foo&quot;</span>, <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;/admin&quot;</span>, <span class="t">Time</span>.now <span class="o">+</span> <span class="n">12</span>.hours, secure: <span class="n">true</span>)</code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L108" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L108" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2743,14 +2846,14 @@ instance. The name attribute must match the given <em>key</em>, else
       
         <div class="doc"><p>Get the current <code><a href="../HTTP/Cookie.html">HTTP::Cookie</a></code> for the given <em>key</em> or <code>nil</code> if none is set.</p>
 
-<pre><code>request.cookies[<span class="s">"foo"</span>]? <span class="c">#=&gt; nil</span>
-request.cookies[<span class="s">"foo"</span>] <span class="o">=</span> <span class="s">"bar"</span>
-request.cookies[<span class="s">"foo"</span>]?.try <span class="o">&</span>.value <span class="c">#&gt; &quot;bar&quot;</span></code></pre></div>
+<pre><code>request.cookies[<span class="s">&quot;foo&quot;</span>]? <span class="c">#=&gt; nil</span>
+request.cookies[<span class="s">&quot;foo&quot;</span>] <span class="o">=</span> <span class="s">&quot;bar&quot;</span>
+request.cookies[<span class="s">&quot;foo&quot;</span>]?.try <span class="o">&</span>.value <span class="c">#&gt; &quot;bar&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L132" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L132" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2770,7 +2873,7 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L169" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L169" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2790,7 +2893,7 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L176" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L176" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2808,7 +2911,7 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L162" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L162" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2826,7 +2929,7 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2841,12 +2944,12 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       
         <div class="doc"><p>Returns <code>true</code> if a cookie with the given <em>key</em> exists.</p>
 
-<pre><code>request.cookies.has_key?(<span class="s">"foo"</span>) <span class="c">#=&gt; true</span></code></pre></div>
+<pre><code>request.cookies.has_key?(<span class="s">&quot;foo&quot;</span>) <span class="c">#=&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/http/cookie.cr#L140" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/cookie.cr#L140" target="_blank">View source</a>]
         
       </div>
     </div>

@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="../Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="../Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="../Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="../GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="../OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="../OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="../OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="../OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="../OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="../OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="../OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="../OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="../Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="../Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2112,7 +2167,7 @@
   <p>A CSV lexer lets you consume a CSV token by token. You can use this to efficiently
 parse a CSV without the need to allocate intermediate arrays.</p>
 
-<pre><code>lexer <span class="o">=</span> <span class="t">CSV</span><span class="t">::</span><span class="t">Lexer</span>.<span class="k">new</span> <span class="s">"one,two\nthree"</span>
+<pre><code>lexer <span class="o">=</span> <span class="t">CSV</span><span class="t">::</span><span class="t">Lexer</span>.<span class="k">new</span> <span class="s">&quot;one,two\nthree&quot;</span>
 lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Cell, @value=&quot;one&quot;)</span>
 lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Cell, @value=&quot;two&quot;)</span>
 lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Newline, @value=&quot;two&quot;)</span>
@@ -2135,7 +2190,7 @@ lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Eof, @value=&quot;three
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/csv/lexer.cr" target="_blank">csv/lexer.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/lexer.cr" target="_blank">csv/lexer.cr</a>
     
     <br/>
   
@@ -2199,7 +2254,7 @@ lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Eof, @value=&quot;three
   
     
 
-  <h3>Methods inherited from class <code><a href="../Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Reference.html">Reference</a></code></h3>
   
     <a href="../Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2235,10 +2290,13 @@ lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Eof, @value=&quot;three
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
   
     <a href="../Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2318,6 +2376,48 @@ lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Eof, @value=&quot;three
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  
+    <a href="../Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="../Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="../Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="../Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="../Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="../Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2337,7 +2437,7 @@ lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Eof, @value=&quot;three
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/csv/lexer.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/lexer.cr#L19" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2355,7 +2455,7 @@ lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Eof, @value=&quot;three
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/csv/lexer.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/lexer.cr#L14" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2378,7 +2478,7 @@ lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Eof, @value=&quot;three
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/csv/lexer.cr#L43" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/lexer.cr#L43" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2396,7 +2496,7 @@ lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Eof, @value=&quot;three
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/csv/lexer.cr#L40" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/lexer.cr#L40" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2414,7 +2514,7 @@ lexer.next_token <span class="c">#=&gt; CSV::Token(@kind=Eof, @value=&quot;three
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/csv/lexer.cr#L24" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/lexer.cr#L24" target="_blank">View source</a>]
         
       </div>
     </div>

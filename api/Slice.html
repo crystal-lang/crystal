@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" current" data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent current" data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2140,7 +2195,7 @@ In this way, a slice is a safe alternative to Pointer.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr" target="_blank">slice.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr" target="_blank">slice.cr</a>
     
     <br/>
   
@@ -2248,6 +2303,8 @@ In this way, a slice is a safe alternative to Pointer.</p>
       <li class="entry-summary">
         <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
         
+          <div class="summary"><p>Pass each element of slice to block.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -2261,12 +2318,12 @@ In this way, a slice is a safe alternative to Pointer.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#hexstring%28buffer%29-instance-method" class="signature"><strong>#hexstring</strong>(buffer)</a>
+        <a href="#hexstring-instance-method" class="signature"><strong>#hexstring</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#hexstring-instance-method" class="signature"><strong>#hexstring</strong></a>
+        <a href="#hexstring%28buffer%29-instance-method" class="signature"><strong>#hexstring</strong>(buffer)</a>
         
       </li>
     
@@ -2277,6 +2334,18 @@ In this way, a slice is a safe alternative to Pointer.</p>
     
       <li class="entry-summary">
         <a href="#pointer%28size%29-instance-method" class="signature"><strong>#pointer</strong>(size)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#reverse_each%28%26block%29-instance-method" class="signature"><strong>#reverse_each</strong>(&block)</a>
+        
+          <div class="summary"><p>Same as <code><a href="Slice.html#each%28%26block%29-instance-method">#each</a></code>, but works in reverse.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#reverse_each-instance-method" class="signature"><strong>#reverse_each</strong></a>
         
       </li>
     
@@ -2327,7 +2396,7 @@ In this way, a slice is a safe alternative to Pointer.</p>
   
     
 
-  <h3>Methods inherited from module <code><a href="Iterable.html">Iterable</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Iterable.html">Iterable</a></code></h3>
   
     <a href="Iterable.html#cycle-instance-method" class="tooltip">
       <span>cycle<br/>cycle(n)</span>
@@ -2355,10 +2424,13 @@ In this way, a slice is a safe alternative to Pointer.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from module <code><a href="Enumerable.html">Enumerable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Enumerable.html">Enumerable(T)</a></code></h3>
   
     <a href="Enumerable.html#all%3F-instance-method" class="tooltip">
       <span>all?<br/>all?(&block)</span>
@@ -2445,7 +2517,7 @@ In this way, a slice is a safe alternative to Pointer.</p>
     inject</a>, 
   
     <a href="Enumerable.html#join%28separator%2Cio%2C%26block%29-instance-method" class="tooltip">
-      <span>join(separator, io, &block)<br/>join(separator = <span class="s">""</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">""</span>)</span>
+      <span>join(separator, io, &block)<br/>join(separator = <span class="s">&quot;&quot;</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">&quot;&quot;</span>)</span>
     join</a>, 
   
     <a href="Enumerable.html#map%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
@@ -2586,10 +2658,13 @@ In this way, a slice is a safe alternative to Pointer.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="Struct.html">Struct</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="Struct.html">Struct</a></code></h3>
   
     <a href="Struct.html#%3D%3D%28other%3Aself%29%3ABool-instance-method" class="tooltip">
       <span>==(other : self) : Bool</span>
@@ -2609,10 +2684,13 @@ In this way, a slice is a safe alternative to Pointer.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
   
     <a href="Value.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2628,10 +2706,13 @@ In this way, a slice is a safe alternative to Pointer.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2711,6 +2792,48 @@ In this way, a slice is a safe alternative to Pointer.</p>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2738,7 +2861,7 @@ slice <span class="c">#=&gt; [10, 11, 12]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L59" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L59" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2763,7 +2886,7 @@ slice <span class="c">#=&gt; [0, 0, 0]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L43" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L43" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2788,7 +2911,7 @@ slice <span class="c">#=&gt; [10, 10, 10]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L74" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L74" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2815,7 +2938,7 @@ slice             <span class="c">#=&gt; [97, 98, 99]</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L29" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L29" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2844,7 +2967,7 @@ slice2 <span class="c">#=&gt; [12, 13, 14]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L87" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L87" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2860,7 +2983,7 @@ slice2 <span class="c">#=&gt; [12, 13, 14]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L251" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L267" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2887,7 +3010,7 @@ slice[<span class="n">5</span>]  <span class="c">#=&gt; IndexError</span></code>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L108" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L108" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2914,7 +3037,7 @@ slice2 <span class="c">#=&gt; [11, 12, 13]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L147" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L147" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2942,7 +3065,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L126" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L126" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2958,7 +3081,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L164" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L164" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2974,7 +3097,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L160" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L160" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2990,7 +3113,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L247" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L263" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3006,7 +3129,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L195" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L211" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3022,7 +3145,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L199" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L215" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3035,10 +3158,12 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
         <a class="method-permalink" href="#each%28%26block%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Pass each element of slice to block.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L177" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L178" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3054,7 +3179,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L186" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3070,23 +3195,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L173" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="hexstring(buffer)-instance-method">
-      <div class="signature">
-        
-        def <strong>hexstring</strong>(buffer)
-
-        <a class="method-permalink" href="#hexstring%28buffer%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L217" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L173" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3102,7 +3211,23 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L207" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L223" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="hexstring(buffer)-instance-method">
+      <div class="signature">
+        
+        def <strong>hexstring</strong>(buffer)
+
+        <a class="method-permalink" href="#hexstring%28buffer%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L233" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3118,7 +3243,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L203" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3134,7 +3259,41 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L187" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L203" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="reverse_each(&amp;block)-instance-method">
+      <div class="signature">
+        
+        def <strong>reverse_each</strong>(&block)
+
+        <a class="method-permalink" href="#reverse_each%28%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Same as <code><a href="Slice.html#each%28%26block%29-instance-method">#each</a></code>, but works in reverse.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L191" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="reverse_each-instance-method">
+      <div class="signature">
+        
+        def <strong>reverse_each</strong>
+
+        <a class="method-permalink" href="#reverse_each-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L199" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3150,7 +3309,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L234" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L250" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3166,7 +3325,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L230" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L246" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3186,7 +3345,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L15" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L15" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3202,7 +3361,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L266" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L282" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3218,7 +3377,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L260" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L276" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3234,7 +3393,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L256" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L272" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3250,7 +3409,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/slice.cr#L273" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L289" target="_blank">View source</a>]
         
       </div>
     </div>

@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2123,17 +2178,17 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr" target="_blank">file.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr" target="_blank">file.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file/flock.cr" target="_blank">file/flock.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file/flock.cr" target="_blank">file/flock.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file/stat.cr" target="_blank">file/stat.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file/stat.cr" target="_blank">file/stat.cr</a>
     
     <br/>
   
@@ -2155,7 +2210,7 @@
       
     
       <dt class="entry-const">
-        <strong>SEPARATOR_STRING</strong> = <code><span class="s">"/"</span></code>
+        <strong>SEPARATOR_STRING</strong> = <code><span class="s">&quot;/&quot;</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2261,12 +2316,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#open%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%22r%22%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%2C%26block%29-class-method" class="signature"><strong>.open</strong>(filename, mode = <span class="s">"r"</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>, &block)</a>
+        <a href="#open%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%26quot%3Br%26quot%3B%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%2C%26block%29-class-method" class="signature"><strong>.open</strong>(filename, mode = <span class="s">&quot;r&quot;</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>, &block)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#open%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%22r%22%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%29-class-method" class="signature"><strong>.open</strong>(filename, mode = <span class="s">"r"</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>)</a>
+        <a href="#open%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%26quot%3Br%26quot%3B%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%29-class-method" class="signature"><strong>.open</strong>(filename, mode = <span class="s">&quot;r&quot;</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>)</a>
         
       </li>
     
@@ -2325,7 +2380,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%22r%22%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(filename, mode = <span class="s">"r"</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>)</a>
+        <a href="#new%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%26quot%3Br%26quot%3B%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(filename, mode = <span class="s">&quot;r&quot;</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>)</a>
         
       </li>
     
@@ -2427,7 +2482,7 @@
   
     
 
-  <h3>Methods inherited from class <code><a href="IO/FileDescriptor.html">IO::FileDescriptor</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="IO/FileDescriptor.html">IO::FileDescriptor</a></code></h3>
   
     <a href="IO/FileDescriptor.html#blocking-instance-method" class="tooltip">
       <span>blocking</span>
@@ -2503,10 +2558,24 @@
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="IO/FileDescriptor.html">IO::FileDescriptor</a></code></h3>
+  
+    <a href="IO/FileDescriptor.html#fcntl%28fd%2Ccmd%2Carg%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-class-method" class="tooltip">
+      <span>fcntl(fd, cmd, arg = <span class="n">0</span>)</span>
+    fcntl</a>, 
+  
+    <a href="IO/FileDescriptor.html#new%28fd%2Cblocking%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cedge_triggerable%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-class-method" class="tooltip">
+      <span>new(fd, blocking = <span class="n">false</span>, edge_triggerable = <span class="n">false</span>)</span>
+    new</a>
+  
+
+
   
     
 
-  <h3>Methods inherited from module <code><a href="IO/Buffered.html">IO::Buffered</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="IO/Buffered.html">IO::Buffered</a></code></h3>
   
     <a href="IO/Buffered.html#close-instance-method" class="tooltip">
       <span>close</span>
@@ -2566,10 +2635,13 @@
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from module <code><a href="IO.html">IO</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="IO.html">IO</a></code></h3>
   
     <a href="IO.html#%3C%3C%28obj%29%3Aself-instance-method" class="tooltip">
       <span><<(obj) : self</span>
@@ -2677,10 +2749,28 @@
   
 
 
+    
+
+  <h3>Class methods inherited from module <code><a href="IO.html">IO</a></code></h3>
+  
+    <a href="IO.html#copy%28src%2Cdst%29-class-method" class="tooltip">
+      <span>copy(src, dst)</span>
+    copy</a>, 
+  
+    <a href="IO.html#pipe%28read_blocking%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cwrite_blocking%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2C%26block%29-class-method" class="tooltip">
+      <span>pipe(read_blocking = <span class="n">false</span>, write_blocking = <span class="n">false</span>, &block)<br/>pipe(read_blocking = <span class="n">false</span>, write_blocking = <span class="n">false</span>)</span>
+    pipe</a>, 
+  
+    <a href="IO.html#select%28read_ios%2Cwrite_ios%2Cerror_ios%2Ctimeout_sec%3ALibC%3A%3ATimeT%7CInt%7CFloat%7CNil%29-class-method" class="tooltip">
+      <span>select(read_ios, write_ios, error_ios, timeout_sec : LibC::TimeT | Int | Float | Nil)<br/>select(read_ios, write_ios = <span class="n">nil</span>, error_ios = <span class="n">nil</span>)</span>
+    select</a>
+  
+
+
   
     
 
-  <h3>Methods inherited from module <code><a href="JSON/Builder.html">JSON::Builder</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="JSON/Builder.html">JSON::Builder</a></code></h3>
   
     <a href="JSON/Builder.html#json_array%28%26block%29-instance-method" class="tooltip">
       <span>json_array(&block)</span>
@@ -2692,10 +2782,13 @@
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
   
     <a href="Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2731,10 +2824,13 @@
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2814,6 +2910,48 @@
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2831,7 +2969,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L240" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L240" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2847,7 +2985,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L226" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L226" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2863,15 +3001,15 @@
         <div class="doc"><p>Delete a file. Deleting non-existent file will raise an exception.</p>
 
 <pre><code><span class="c"># touch foo</span>
-<span class="t">File</span>.delete(<span class="s">"./foo"</span>)
+<span class="t">File</span>.delete(<span class="s">&quot;./foo&quot;</span>)
 <span class="c">#=&gt; nil</span>
-<span class="t">File</span>.delete(<span class="s">"./bar"</span>)
+<span class="t">File</span>.delete(<span class="s">&quot;./bar&quot;</span>)
 <span class="c">#=&gt; Error deleting file &apos;./bar&apos;: No such file or directory (Errno)</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L255" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L255" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2888,14 +3026,14 @@
 
 <pre><code><span class="c"># touch foo</span>
 <span class="c"># mkdir bar</span>
-<span class="t">File</span>.directory?(<span class="s">"foo"</span>)    <span class="c">#=&gt; false</span>
-<span class="t">File</span>.directory?(<span class="s">"bar"</span>)    <span class="c">#=&gt; true</span>
-<span class="t">File</span>.directory?(<span class="s">"foobar"</span>) <span class="c">#=&gt; false</span></code></pre></div>
+<span class="t">File</span>.directory?(<span class="s">&quot;foo&quot;</span>)    <span class="c">#=&gt; false</span>
+<span class="t">File</span>.directory?(<span class="s">&quot;bar&quot;</span>)    <span class="c">#=&gt; true</span>
+<span class="t">File</span>.directory?(<span class="s">&quot;foobar&quot;</span>) <span class="c">#=&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L209" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L209" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2911,7 +3049,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L213" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L213" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2926,14 +3064,14 @@
       
         <div class="doc"><p>Yields each line of the given file to the given block.</p>
 
-<pre><code><span class="t">File</span>.each_line(<span class="s">"./foo"</span>) <span class="k">do</span> <span class="o">|</span>line<span class="o">|</span>
+<pre><code><span class="t">File</span>.each_line(<span class="s">&quot;./foo&quot;</span>) <span class="k">do</span> <span class="o">|</span>line<span class="o">|</span>
   <span class="c"># loop</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L379" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L379" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2948,14 +3086,14 @@
       
         <div class="doc"><p>Returns true if file exists else returns false</p>
 
-<pre><code><span class="t">File</span>.exists?(<span class="s">"foo"</span>)    <span class="c">#=&gt; false</span>
-echo <span class="s">"foo"</span> <span class="o">></span> foo
-<span class="t">File</span>.exists?(<span class="s">"foo"</span>)    <span class="c">#=&gt; true</span></code></pre></div>
+<pre><code><span class="t">File</span>.exists?(<span class="s">&quot;foo&quot;</span>)    <span class="c">#=&gt; false</span>
+echo <span class="s">&quot;foo&quot;</span> <span class="o">></span> foo
+<span class="t">File</span>.exists?(<span class="s">&quot;foo&quot;</span>)    <span class="c">#=&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L176" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L176" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2971,7 +3109,7 @@ echo <span class="s">"foo"</span> <span class="o">></span> foo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L278" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L278" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2986,13 +3124,13 @@ echo <span class="s">"foo"</span> <span class="o">></span> foo
       
         <div class="doc"><p>Returns a file's extension, or an empty string if the file has no extension.</p>
 
-<pre><code><span class="t">File</span>.extname(<span class="s">"foo.cr"</span>)
+<pre><code><span class="t">File</span>.extname(<span class="s">&quot;foo.cr&quot;</span>)
 <span class="c">#=&gt; .cr</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L268" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L268" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3009,14 +3147,14 @@ echo <span class="s">"foo"</span> <span class="o">></span> foo
 
 <pre><code><span class="c"># touch foo</span>
 <span class="c"># mkdir bar</span>
-<span class="t">File</span>.file?(<span class="s">"foo"</span>)    <span class="c">#=&gt; true</span>
-<span class="t">File</span>.file?(<span class="s">"bar"</span>)    <span class="c">#=&gt; false</span>
-<span class="t">File</span>.file?(<span class="s">"foobar"</span>) <span class="c">#=&gt; false</span></code></pre></div>
+<span class="t">File</span>.file?(<span class="s">&quot;foo&quot;</span>)    <span class="c">#=&gt; true</span>
+<span class="t">File</span>.file?(<span class="s">&quot;bar&quot;</span>)    <span class="c">#=&gt; false</span>
+<span class="t">File</span>.file?(<span class="s">&quot;foobar&quot;</span>) <span class="c">#=&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L189" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L189" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3031,14 +3169,14 @@ echo <span class="s">"foo"</span> <span class="o">></span> foo
       
         <div class="doc"><p>Returns a new string formed by joining the strings using File::SEPARATOR.</p>
 
-<pre><code><span class="t">File</span>.join(<span class="s">"foo"</span>, <span class="s">"bar"</span>, <span class="s">"baz"</span>) <span class="c">#=&gt; &quot;foo/bar/baz&quot;</span>
-<span class="t">File</span>.join(<span class="s">"foo/"</span>, <span class="s">"/bar/"</span>, <span class="s">"/baz"</span>) <span class="c">#=&gt; &quot;foo/bar/baz&quot;</span>
-<span class="t">File</span>.join(<span class="s">"/foo/"</span>, <span class="s">"/bar/"</span>, <span class="s">"/baz/"</span>) <span class="c">#=&gt; &quot;/foo/bar/baz/&quot;</span></code></pre></div>
+<pre><code><span class="t">File</span>.join(<span class="s">&quot;foo&quot;</span>, <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span>) <span class="c">#=&gt; &quot;foo/bar/baz&quot;</span>
+<span class="t">File</span>.join(<span class="s">&quot;foo/&quot;</span>, <span class="s">&quot;/bar/&quot;</span>, <span class="s">&quot;/baz&quot;</span>) <span class="c">#=&gt; &quot;foo/bar/baz&quot;</span>
+<span class="t">File</span>.join(<span class="s">&quot;/foo/&quot;</span>, <span class="s">&quot;/bar/&quot;</span>, <span class="s">&quot;/baz/&quot;</span>) <span class="c">#=&gt; &quot;/foo/bar/baz/&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L433" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L433" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3053,14 +3191,14 @@ echo <span class="s">"foo"</span> <span class="o">></span> foo
       
         <div class="doc"><p>Returns a new string formed by joining the strings using File::SEPARATOR.</p>
 
-<pre><code><span class="t">File</span>.join(<span class="s">"foo"</span>, <span class="s">"bar"</span>, <span class="s">"baz"</span>) <span class="c">#=&gt; &quot;foo/bar/baz&quot;</span>
-<span class="t">File</span>.join(<span class="s">"foo/"</span>, <span class="s">"/bar/"</span>, <span class="s">"/baz"</span>) <span class="c">#=&gt; &quot;foo/bar/baz&quot;</span>
-<span class="t">File</span>.join(<span class="s">"/foo/"</span>, <span class="s">"/bar/"</span>, <span class="s">"/baz/"</span>) <span class="c">#=&gt; &quot;/foo/bar/baz/&quot;</span></code></pre></div>
+<pre><code><span class="t">File</span>.join(<span class="s">&quot;foo&quot;</span>, <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span>) <span class="c">#=&gt; &quot;foo/bar/baz&quot;</span>
+<span class="t">File</span>.join(<span class="s">&quot;foo/&quot;</span>, <span class="s">&quot;/bar/&quot;</span>, <span class="s">&quot;/baz&quot;</span>) <span class="c">#=&gt; &quot;foo/bar/baz&quot;</span>
+<span class="t">File</span>.join(<span class="s">&quot;/foo/&quot;</span>, <span class="s">&quot;/bar/&quot;</span>, <span class="s">&quot;/baz/&quot;</span>) <span class="c">#=&gt; &quot;/foo/bar/baz/&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L422" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L422" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3078,7 +3216,7 @@ echo <span class="s">"foo"</span> <span class="o">></span> foo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L317" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L317" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3095,46 +3233,46 @@ echo <span class="s">"foo"</span> <span class="o">></span> foo
 <code><a href="Errno.html">Errno</a></code> in case of an error. In case of a symbolic link
 information about it is returned.</p>
 
-<pre><code>echo <span class="s">"foo"</span> <span class="o">></span> foo
-<span class="t">File</span>.lstat(<span class="s">"foo"</span>).size    <span class="c">#=&gt; 4</span>
-<span class="t">File</span>.lstat(<span class="s">"foo"</span>).mtime   <span class="c">#=&gt; 2015-09-23 06:24:19 UTC</span></code></pre></div>
+<pre><code>echo <span class="s">&quot;foo&quot;</span> <span class="o">></span> foo
+<span class="t">File</span>.lstat(<span class="s">&quot;foo&quot;</span>).size    <span class="c">#=&gt; 4</span>
+<span class="t">File</span>.lstat(<span class="s">&quot;foo&quot;</span>).mtime   <span class="c">#=&gt; 2015-09-23 06:24:19 UTC</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L162" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L162" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="open(filename,mode=&lt;spanclass=&quot;s&quot;&gt;&quot;r&quot;&lt;/span&gt;,perm=&lt;spanclass=&quot;t&quot;&gt;DEFAULT_CREATE_MODE&lt;/span&gt;,&amp;block)-class-method">
+    <div class="entry-detail" id="open(filename,mode=&lt;spanclass=&quot;s&quot;&gt;&amp;quot;r&amp;quot;&lt;/span&gt;,perm=&lt;spanclass=&quot;t&quot;&gt;DEFAULT_CREATE_MODE&lt;/span&gt;,&amp;block)-class-method">
       <div class="signature">
         
-        def self.<strong>open</strong>(filename, mode = <span class="s">"r"</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>, &block)
+        def self.<strong>open</strong>(filename, mode = <span class="s">&quot;r&quot;</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>, &block)
 
-        <a class="method-permalink" href="#open%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%22r%22%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%2C%26block%29-class-method">#</a>
+        <a class="method-permalink" href="#open%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%26quot%3Br%26quot%3B%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%2C%26block%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L346" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L346" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="open(filename,mode=&lt;spanclass=&quot;s&quot;&gt;&quot;r&quot;&lt;/span&gt;,perm=&lt;spanclass=&quot;t&quot;&gt;DEFAULT_CREATE_MODE&lt;/span&gt;)-class-method">
+    <div class="entry-detail" id="open(filename,mode=&lt;spanclass=&quot;s&quot;&gt;&amp;quot;r&amp;quot;&lt;/span&gt;,perm=&lt;spanclass=&quot;t&quot;&gt;DEFAULT_CREATE_MODE&lt;/span&gt;)-class-method">
       <div class="signature">
         
-        def self.<strong>open</strong>(filename, mode = <span class="s">"r"</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>)
+        def self.<strong>open</strong>(filename, mode = <span class="s">&quot;r&quot;</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>)
 
-        <a class="method-permalink" href="#open%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%22r%22%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%29-class-method">#</a>
+        <a class="method-permalink" href="#open%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%26quot%3Br%26quot%3B%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L342" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L342" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3150,13 +3288,13 @@ information about it is returned.</p>
         <div class="doc"><p>Returns the content of the given file as a string.</p>
 
 <pre><code><span class="c"># echo &quot;foo&quot; &gt;&gt; bar</span>
-<span class="t">File</span>.read(<span class="s">"./bar"</span>)
+<span class="t">File</span>.read(<span class="s">&quot;./bar&quot;</span>)
 <span class="c">#=&gt; foo</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L362" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L362" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3173,13 +3311,13 @@ information about it is returned.</p>
 
 <pre><code><span class="c"># echo &quot;foo&quot; &gt;&gt; foobar</span>
 <span class="c"># echo &quot;bar&quot; &gt;&gt; foobar</span>
-<span class="t">File</span>.read_lines(<span class="s">"./foobar"</span>)
+<span class="t">File</span>.read_lines(<span class="s">&quot;./foobar&quot;</span>)
 <span class="c">#=&gt; [&quot;foo\n&quot;,&quot;bar\n&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L395" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L395" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3195,7 +3333,7 @@ information about it is returned.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L460" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L460" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3213,7 +3351,7 @@ information about it is returned.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L456" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L456" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3230,14 +3368,14 @@ information about it is returned.</p>
 <code><a href="Errno.html">Errno</a></code> in case of an error. In case of a symbolic link
 it is followed and information about the target is returned.</p>
 
-<pre><code>echo <span class="s">"foo"</span> <span class="o">></span> foo
-<span class="t">File</span>.stat(<span class="s">"foo"</span>).size    <span class="c">#=&gt; 4</span>
-<span class="t">File</span>.stat(<span class="s">"foo"</span>).mtime   <span class="c">#=&gt; 2015-09-23 06:24:19 UTC</span></code></pre></div>
+<pre><code>echo <span class="s">&quot;foo&quot;</span> <span class="o">></span> foo
+<span class="t">File</span>.stat(<span class="s">&quot;foo&quot;</span>).size    <span class="c">#=&gt; 4</span>
+<span class="t">File</span>.stat(<span class="s">&quot;foo&quot;</span>).mtime   <span class="c">#=&gt; 2015-09-23 06:24:19 UTC</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L146" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L146" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3255,7 +3393,7 @@ it is followed and information about the target is returned.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L324" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L324" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3273,7 +3411,7 @@ it is followed and information about the target is returned.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L331" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L331" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3289,28 +3427,28 @@ it is followed and information about the target is returned.</p>
         <div class="doc"><p>Write the given content to the given filename.
 An existing file will be overwritten, or a file will be created with the given filename.</p>
 
-<pre><code><span class="t">File</span>.write(<span class="s">"./foo"</span>, <span class="s">"bar"</span>)</code></pre></div>
+<pre><code><span class="t">File</span>.write(<span class="s">&quot;./foo&quot;</span>, <span class="s">&quot;bar&quot;</span>)</code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L409" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L409" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="new(filename,mode=&lt;spanclass=&quot;s&quot;&gt;&quot;r&quot;&lt;/span&gt;,perm=&lt;spanclass=&quot;t&quot;&gt;DEFAULT_CREATE_MODE&lt;/span&gt;)-class-method">
+    <div class="entry-detail" id="new(filename,mode=&lt;spanclass=&quot;s&quot;&gt;&amp;quot;r&amp;quot;&lt;/span&gt;,perm=&lt;spanclass=&quot;t&quot;&gt;DEFAULT_CREATE_MODE&lt;/span&gt;)-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(filename, mode = <span class="s">"r"</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>)
+        def self.<strong>new</strong>(filename, mode = <span class="s">&quot;r&quot;</span>, perm = <span class="t">DEFAULT_CREATE_MODE</span>)
 
-        <a class="method-permalink" href="#new%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%22r%22%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28filename%2Cmode%3D%3Cspanclass%3D%22s%22%3E%26quot%3Br%26quot%3B%3C%2Fspan%3E%2Cperm%3D%3Cspanclass%3D%22t%22%3EDEFAULT_CREATE_MODE%3C%2Fspan%3E%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L25" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L25" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3331,7 +3469,7 @@ An existing file will be overwritten, or a file will be created with the given f
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file/flock.cr#L29" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file/flock.cr#L29" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3350,7 +3488,7 @@ Errno::EWOULDBLOCK is raised if <em>blocking</em> is set to <code>false</code> a
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file/flock.cr#L40" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file/flock.cr#L40" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3366,7 +3504,7 @@ Errno::EWOULDBLOCK is raised if <em>blocking</em> is set to <code>false</code> a
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file/flock.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file/flock.cr#L14" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3385,7 +3523,7 @@ Errno::EWOULDBLOCK is raised if <em>blocking</em> is set to <code>false</code> a
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file/flock.cr#L25" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file/flock.cr#L25" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3403,7 +3541,7 @@ Errno::EWOULDBLOCK is raised if <em>blocking</em> is set to <code>false</code> a
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file/flock.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file/flock.cr#L45" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3419,7 +3557,7 @@ Errno::EWOULDBLOCK is raised if <em>blocking</em> is set to <code>false</code> a
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L76" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L76" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3434,7 +3572,7 @@ Errno::EWOULDBLOCK is raised if <em>blocking</em> is set to <code>false</code> a
       
         <div class="doc"><p>Returns the current position (in bytes) in this File.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
 io.pos     <span class="c">#=&gt; 0</span>
 io.gets(<span class="n">2</span>) <span class="c">#=&gt; &quot;he&quot;</span>
 io.pos     <span class="c">#=&gt; 2</span></code></pre></div>
@@ -3442,7 +3580,7 @@ io.pos     <span class="c">#=&gt; 2</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L116" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L116" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3457,14 +3595,14 @@ io.pos     <span class="c">#=&gt; 2</span></code></pre></div>
       
         <div class="doc"><p>Sets the current position (in bytes) in this File.</p>
 
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">"hello"</span>
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
 io.pos <span class="o">=</span> <span class="n">3</span>
 io.gets_to_end <span class="c">#=&gt; &quot;lo&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L132" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L132" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3480,7 +3618,7 @@ io.gets_to_end <span class="c">#=&gt; &quot;lo&quot;</span></code></pre></div>
         <div class="doc"><p>Seeks to a given <em>offset</em> (in bytes) according to the <em>whence</em> argument.
 Returns <code>self</code>.</p>
 
-<pre><code>file <span class="o">=</span> <span class="t">File</span>.<span class="k">new</span>(<span class="s">"testfile"</span>)
+<pre><code>file <span class="o">=</span> <span class="t">File</span>.<span class="k">new</span>(<span class="s">&quot;testfile&quot;</span>)
 file.gets(<span class="n">3</span>) <span class="c">#=&gt; &quot;abc&quot;</span>
 file.seek(<span class="n">1</span>, <span class="t">IO</span><span class="t">::</span><span class="t">Seek</span><span class="t">::</span><span class="t">Set</span>)
 file.gets(<span class="n">2</span>) <span class="c">#=&gt; &quot;bc&quot;</span>
@@ -3490,7 +3628,7 @@ file.gets(<span class="n">1</span>) <span class="c">#=&gt; &quot;c&quot;</span><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L89" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L89" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3506,7 +3644,7 @@ file.gets(<span class="n">1</span>) <span class="c">#=&gt; &quot;c&quot;</span><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L468" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L468" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3524,7 +3662,7 @@ file.gets(<span class="n">1</span>) <span class="c">#=&gt; &quot;c&quot;</span><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L104" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L104" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3540,7 +3678,7 @@ file.gets(<span class="n">1</span>) <span class="c">#=&gt; &quot;c&quot;</span><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L482" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L482" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3558,7 +3696,7 @@ file.gets(<span class="n">1</span>) <span class="c">#=&gt; &quot;c&quot;</span><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/file.cr#L473" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/file.cr#L473" target="_blank">View source</a>]
         
       </div>
     </div>

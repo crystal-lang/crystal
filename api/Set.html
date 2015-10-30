@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2161,7 +2216,7 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr" target="_blank">set.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr" target="_blank">set.cr</a>
     
     <br/>
   
@@ -2183,7 +2238,7 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
       <li class="entry-summary">
         <a href="#new%28initial_capacity%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(initial_capacity = <span class="n">nil</span>)</a>
         
-          <div class="summary"><p>Create a new, empty <code><a href="Set.html">Set</a></code></p></div>
+          <div class="summary"><p>Creates a new, empty <code><a href="Set.html">Set</a></code></p></div>
         
       </li>
     
@@ -2253,14 +2308,14 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
       <li class="entry-summary">
         <a href="#clear-instance-method" class="signature"><strong>#clear</strong></a>
         
-          <div class="summary"><p>Removes all elements in the set, and returns <code>self</code></p></div>
+          <div class="summary"><p>Removes all elements in the set, and returns <code>self</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#delete%28object%29-instance-method" class="signature"><strong>#delete</strong>(object)</a>
         
-          <div class="summary"><p>Removes the <code>object</code> from the set and returns <code>self</code></p></div>
+          <div class="summary"><p>Removes the <em>object</em> from the set and returns <code>self</code>.</p></div>
         
       </li>
     
@@ -2274,21 +2329,21 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
       <li class="entry-summary">
         <a href="#each-instance-method" class="signature"><strong>#each</strong></a>
         
-          <div class="summary"><p>Returns an iterator for each element of the set</p></div>
+          <div class="summary"><p>Returns an iterator for each element of the set.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
         
-          <div class="summary"><p>Yeilds each element of the set, and returns <code>self</code></p></div>
+          <div class="summary"><p>Yeilds each element of the set, and returns <code>self</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#empty%3F-instance-method" class="signature"><strong>#empty?</strong></a>
         
-          <div class="summary"><p>Returns <code>true</code> if the set is empty</p></div>
+          <div class="summary"><p>Returns <code>true</code> if the set is empty.</p></div>
         
       </li>
     
@@ -2300,7 +2355,7 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
       <li class="entry-summary">
         <a href="#includes%3F%28object%29-instance-method" class="signature"><strong>#includes?</strong>(object)</a>
         
-          <div class="summary"><p>Returns <code>true</code> if <code>object</code> exists in the set</p></div>
+          <div class="summary"><p>Returns <code>true</code> if <em>object</em> exists in the set.</p></div>
         
       </li>
     
@@ -2321,7 +2376,7 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
       <li class="entry-summary">
         <a href="#merge%28elems%29-instance-method" class="signature"><strong>#merge</strong>(elems)</a>
         
-          <div class="summary"><p>Adds <code><a href="Set.html#each-instance-method">#each</a></code> element of <code>elems</code> to the set and returns <code>self</code></p></div>
+          <div class="summary"><p>Adds <code><a href="Set.html#each-instance-method">#each</a></code> element of <em>elems</em> to the set and returns <code>self</code>.</p></div>
         
       </li>
     
@@ -2342,7 +2397,7 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
       <li class="entry-summary">
         <a href="#size-instance-method" class="signature"><strong>#size</strong></a>
         
-          <div class="summary"><p>Returns the number of elements in the set</p></div>
+          <div class="summary"><p>Returns the number of elements in the set.</p></div>
         
       </li>
     
@@ -2398,7 +2453,7 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
   
     
 
-  <h3>Methods inherited from module <code><a href="Iterable.html">Iterable</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Iterable.html">Iterable</a></code></h3>
   
     <a href="Iterable.html#cycle-instance-method" class="tooltip">
       <span>cycle<br/>cycle(n)</span>
@@ -2426,10 +2481,13 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from module <code><a href="Enumerable.html">Enumerable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Enumerable.html">Enumerable(T)</a></code></h3>
   
     <a href="Enumerable.html#all%3F-instance-method" class="tooltip">
       <span>all?<br/>all?(&block)</span>
@@ -2516,7 +2574,7 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
     inject</a>, 
   
     <a href="Enumerable.html#join%28separator%2Cio%2C%26block%29-instance-method" class="tooltip">
-      <span>join(separator, io, &block)<br/>join(separator = <span class="s">""</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">""</span>)</span>
+      <span>join(separator, io, &block)<br/>join(separator = <span class="s">&quot;&quot;</span>, &block)<br/>join(separator, io)<br/>join(separator = <span class="s">&quot;&quot;</span>)</span>
     join</a>, 
   
     <a href="Enumerable.html#map%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
@@ -2657,10 +2715,13 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="Struct.html">Struct</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="Struct.html">Struct</a></code></h3>
   
     <a href="Struct.html#%3D%3D%28other%3Aself%29%3ABool-instance-method" class="tooltip">
       <span>==(other : self) : Bool</span>
@@ -2680,10 +2741,13 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
   
     <a href="Value.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2699,10 +2763,13 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2782,6 +2849,48 @@ s2.subset? s1    <span class="c"># =&gt; true</span></code></pre>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2804,7 +2913,7 @@ s.empty? => <span class="n">false</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L43" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L43" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2817,7 +2926,7 @@ s.empty? => <span class="n">false</span></code></pre></div>
         <a class="method-permalink" href="#new%28initial_capacity%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Create a new, empty <code><a href="Set.html">Set</a></code></p>
+        <div class="doc"><p>Creates a new, empty <code><a href="Set.html">Set</a></code></p>
 
 <pre><code>s <span class="o">=</span> <span class="t">Set</span>(<span class="t">Int32</span>).<span class="k">new</span>
 set.empty? <span class="c"># =&gt; true</span></code></pre>
@@ -2828,7 +2937,7 @@ of the internal Hash.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L35" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L35" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2854,7 +2963,7 @@ of the internal Hash.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L139" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L139" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2876,7 +2985,7 @@ present in the other.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L163" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L163" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2898,7 +3007,7 @@ present in the other enumerable.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L176" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L176" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2916,7 +3025,7 @@ present in the other enumerable.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L48" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L48" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2936,7 +3045,7 @@ present in the other enumerable.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L228" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L228" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2958,7 +3067,7 @@ Equivalently, returns <code>(self | other) - (self & other)</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L201" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L201" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2980,7 +3089,7 @@ Equivalently, returns <code>(self | other) - (self & other)</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L185" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L185" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3003,7 +3112,7 @@ s.includes? <span class="n">8</span>     <span class="c"># =&gt; true</span></co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L58" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3016,7 +3125,7 @@ s.includes? <span class="n">8</span>     <span class="c"># =&gt; true</span></co
         <a class="method-permalink" href="#clear-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Removes all elements in the set, and returns <code>self</code></p>
+        <div class="doc"><p>Removes all elements in the set, and returns <code>self</code>.</p>
 
 <pre><code>s <span class="o">=</span> <span class="t">Set</span>.<span class="k">new</span> [<span class="n">1</span>,<span class="n">5</span>]
 s.size  <span class="c"># =&gt; 2</span>
@@ -3026,7 +3135,7 @@ s.size  <span class="c"># =&gt; 0</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L107" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L107" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3039,7 +3148,7 @@ s.size  <span class="c"># =&gt; 0</span></code></pre></div>
         <a class="method-permalink" href="#delete%28object%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Removes the <code>object</code> from the set and returns <code>self</code></p>
+        <div class="doc"><p>Removes the <em>object</em> from the set and returns <code>self</code>.</p>
 
 <pre><code>s <span class="o">=</span> <span class="t">Set</span>.<span class="k">new</span> [<span class="n">1</span>,<span class="n">5</span>]
 s.includes? <span class="n">5</span>  <span class="c"># =&gt; true</span>
@@ -3049,7 +3158,7 @@ s.includes? <span class="n">5</span>  <span class="c"># =&gt; false</span></code
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L88" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L88" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3067,7 +3176,7 @@ s.includes? <span class="n">5</span>  <span class="c"># =&gt; false</span></code
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L233" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L233" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3080,12 +3189,12 @@ s.includes? <span class="n">5</span>  <span class="c"># =&gt; false</span></code
         <a class="method-permalink" href="#each-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns an iterator for each element of the set</p></div>
+        <div class="doc"><p>Returns an iterator for each element of the set.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L131" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L131" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3098,12 +3207,12 @@ s.includes? <span class="n">5</span>  <span class="c"># =&gt; false</span></code
         <a class="method-permalink" href="#each%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Yeilds each element of the set, and returns <code>self</code></p></div>
+        <div class="doc"><p>Yeilds each element of the set, and returns <code>self</code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L123" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L123" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3116,7 +3225,7 @@ s.includes? <span class="n">5</span>  <span class="c"># =&gt; false</span></code
         <a class="method-permalink" href="#empty%3F-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if the set is empty</p>
+        <div class="doc"><p>Returns <code>true</code> if the set is empty.</p>
 
 <pre><code>s <span class="o">=</span> <span class="t">Set</span>(<span class="t">Int32</span>).<span class="k">new</span>
 s.empty? <span class="c"># =&gt; true</span>
@@ -3126,7 +3235,7 @@ s.empty? <span class="c"># =&gt; false</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L118" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L118" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3142,7 +3251,7 @@ s.empty? <span class="c"># =&gt; false</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L249" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L249" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3155,7 +3264,7 @@ s.empty? <span class="c"># =&gt; false</span></code></pre></div>
         <a class="method-permalink" href="#includes%3F%28object%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if <code>object</code> exists in the set</p>
+        <div class="doc"><p>Returns <code>true</code> if <em>object</em> exists in the set.</p>
 
 <pre><code>s <span class="o">=</span> <span class="t">Set</span>.<span class="k">new</span> [<span class="n">1</span>,<span class="n">5</span>]
 s.includes? <span class="n">5</span>  <span class="c"># =&gt; true</span>
@@ -3164,7 +3273,7 @@ s.includes? <span class="n">9</span>  <span class="c"># =&gt; false</span></code
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L78" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L78" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3182,7 +3291,7 @@ s.includes? <span class="n">9</span>  <span class="c"># =&gt; false</span></code
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L245" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L245" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3204,7 +3313,7 @@ common.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L260" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L260" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3217,7 +3326,7 @@ common.</p>
         <a class="method-permalink" href="#merge%28elems%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Adds <code><a href="Set.html#each-instance-method">#each</a></code> element of <code>elems</code> to the set and returns <code>self</code></p>
+        <div class="doc"><p>Adds <code><a href="Set.html#each-instance-method">#each</a></code> element of <em>elems</em> to the set and returns <code>self</code>.</p>
 
 <pre><code>s <span class="o">=</span> <span class="t">Set</span>.<span class="k">new</span> [<span class="n">1</span>,<span class="n">5</span>]
 s.merge [<span class="n">5</span>,<span class="n">5</span>,<span class="n">8</span>,<span class="n">9</span>]
@@ -3226,7 +3335,7 @@ s.size            <span class="c"># =&gt; 4</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L68" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L68" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3250,7 +3359,7 @@ of elements in this set must be present in the <code>other</code> set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L294" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L294" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3274,7 +3383,7 @@ elements in the <code>other</code> set must be present in this set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L317" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L317" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3287,7 +3396,7 @@ elements in the <code>other</code> set must be present in this set.</p>
         <a class="method-permalink" href="#size-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the number of elements in the set</p>
+        <div class="doc"><p>Returns the number of elements in the set.</p>
 
 <pre><code>s <span class="o">=</span> <span class="t">Set</span>.<span class="k">new</span> [<span class="n">1</span>,<span class="n">5</span>]
 s.size  <span class="c"># =&gt; 2</span></code></pre></div>
@@ -3295,7 +3404,7 @@ s.size  <span class="c"># =&gt; 2</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L97" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L97" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3319,7 +3428,7 @@ of elements in this set must be present in the <code>other</code> set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L282" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L282" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3341,7 +3450,7 @@ the given enumerable.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L218" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L218" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3365,7 +3474,7 @@ elements in the <code>other</code> set must be present in this set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L306" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L306" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3385,7 +3494,7 @@ elements in the <code>other</code> set must be present in this set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L240" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L240" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3403,7 +3512,7 @@ elements in the <code>other</code> set must be present in this set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L269" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L269" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3424,7 +3533,7 @@ elements in the <code>other</code> set must be present in this set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/set.cr#L151" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/set.cr#L151" target="_blank">View source</a>]
         
       </div>
     </div>

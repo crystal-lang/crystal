@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2120,42 +2175,42 @@ a sequence of digits and underscores, optionally followed by a suffix.
 If no suffix is present, the literal's type is the lowest between <code><a href="Int32.html">Int32</a></code>, <code><a href="Int64.html">Int64</a></code> and <code><a href="UInt64.html">UInt64</a></code>
 in which the number fits:</p>
 
-<pre><code>1      # Int32
+<pre><code><span class="n">1</span>      <span class="c"># Int32</span>
 
-1_i8   # Int8
-1_i16  # Int16
-1_i32  # Int32
-1_i64  # Int64
+<span class="n">1_i8</span>   <span class="c"># Int8</span>
+<span class="n">1_i16</span>  <span class="c"># Int16</span>
+<span class="n">1_i32</span>  <span class="c"># Int32</span>
+<span class="n">1_i64</span>  <span class="c"># Int64</span>
 
-1_u8   # UInt8
-1_u16  # UInt16
-1_u32  # UInt32
-1_u64  # UInt64
+<span class="n">1_u8</span>   <span class="c"># UInt8</span>
+<span class="n">1_u16</span>  <span class="c"># UInt16</span>
+<span class="n">1_u32</span>  <span class="c"># UInt32</span>
+<span class="n">1_u64</span>  <span class="c"># UInt64</span>
 
-+10    # Int32
--20    # Int32
+<span class="n">+10</span>    <span class="c"># Int32</span>
+<span class="n">-20</span>    <span class="c"># Int32</span>
 
-2147483648          # Int64
-9223372036854775808 # UInt64</code></pre>
+<span class="n">2147483648</span>          <span class="c"># Int64</span>
+<span class="n">9223372036854775808</span> <span class="c"># UInt64</span></code></pre>
 
 <p>The underscore <code>_</code> before the suffix is optional.</p>
 
 <p>Underscores can be used to make some numbers more readable:</p>
 
-<pre><code>1_000_000 # better than 1000000</code></pre>
+<pre><code><span class="n">1_000_000</span> <span class="c"># better than 1000000</span></code></pre>
 
 <p>Binary numbers start with <code>0b</code>:</p>
 
-<pre><code>0b1101 # == 13</code></pre>
+<pre><code><span class="n">0b1101</span> <span class="c"># == 13</span></code></pre>
 
 <p>Octal numbers start with <code>0o</code>:</p>
 
-<pre><code>0o123 # == 83</code></pre>
+<pre><code><span class="n">0o123</span> <span class="c"># == 83</span></code></pre>
 
 <p>Hexadecimal numbers start with <code>0x</code>:</p>
 
-<pre><code>0xFE012D # == 16646445
-0xfe012d # == 16646445</code></pre>
+<pre><code><span class="n">0xFE012D</span> <span class="c"># == 16646445</span>
+<span class="n">0xfe012d</span> <span class="c"># == 16646445</span></code></pre>
 
 
 
@@ -2203,27 +2258,27 @@ in which the number fits:</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr" target="_blank">int.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr" target="_blank">int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr" target="_blank">time/span.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr" target="_blank">time/span.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr" target="_blank">time/span.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr" target="_blank">time/span.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -2237,6 +2292,8 @@ in which the number fits:</p>
     
       <li class="entry-summary">
         <a href="#from_io%28io%3AIO%2Cformat%3AIO%3A%3AByteFormat%29-class-method" class="signature"><strong>.from_io</strong>(io : IO, format : IO::ByteFormat)</a>
+        
+          <div class="summary"><p>Reads an integer from the given <em>io</em> in the given <em>format</em>.</p></div>
         
       </li>
     
@@ -2581,6 +2638,8 @@ in which the number fits:</p>
       <li class="entry-summary">
         <a href="#to_io%28io%3AIO%2Cformat%3AIO%3A%3AByteFormat%29-instance-method" class="signature"><strong>#to_io</strong>(io : IO, format : IO::ByteFormat)</a>
         
+          <div class="summary"><p>Writes this integer to the given <em>io</em> in the given <em>format</em>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -2858,7 +2917,7 @@ in which the number fits:</p>
   
     
 
-  <h3>Methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
   
     <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
       <span><(other : T)</span>
@@ -2886,10 +2945,13 @@ in which the number fits:</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="Number.html">Number</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="Number.html">Number</a></code></h3>
   
     <a href="Number.html#%2A%28other%3AComplex%29-instance-method" class="tooltip">
       <span>*(other : Complex)</span>
@@ -2961,10 +3023,24 @@ in which the number fits:</p>
   
 
 
+    
+
+  <h3>Class methods inherited from struct <code><a href="Number.html">Number</a></code></h3>
+  
+    <a href="Number.html#%5B%5D%28%2Anums%29-class-method" class="tooltip">
+      <span>[](*nums)</span>
+    []</a>, 
+  
+    <a href="Number.html#zero-class-method" class="tooltip">
+      <span>zero</span>
+    zero</a>
+  
+
+
   
     
 
-  <h3>Methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
   
     <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
       <span><(other : T)</span>
@@ -2992,10 +3068,13 @@ in which the number fits:</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
+  <h3>Instance methods inherited from struct <code><a href="Value.html">Value</a></code></h3>
   
     <a href="Value.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -3011,10 +3090,13 @@ in which the number fits:</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -3094,6 +3176,48 @@ in which the number fits:</p>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -3108,10 +3232,14 @@ in which the number fits:</p>
         <a class="method-permalink" href="#from_io%28io%3AIO%2Cformat%3AIO%3A%3AByteFormat%29-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Reads an integer from the given <em>io</em> in the given <em>format</em>.</p>
+
+<p>See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method">IO#read_bytes</a></code>.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L352" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L358" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3132,7 +3260,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3148,7 +3276,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/big_int/big_int.cr#L304" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr#L304" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3292,7 +3420,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/big_int/big_int.cr#L296" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr#L296" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3308,7 +3436,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L167" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L167" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3324,7 +3452,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L163" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L163" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3340,7 +3468,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/big_int/big_int.cr#L279" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr#L279" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3356,7 +3484,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/big_int/big_int.cr#L283" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr#L283" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3372,7 +3500,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L67" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L67" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3388,7 +3516,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/big_int/big_int.cr#L300" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr#L300" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3413,7 +3541,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L133" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L133" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3429,7 +3557,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/big_int/big_int.cr#L275" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr#L275" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3445,7 +3573,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L171" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L171" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3473,7 +3601,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L112" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L112" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3617,7 +3745,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L143" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L143" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3641,7 +3769,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L184" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L184" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3657,7 +3785,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L147" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L147" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3689,7 +3817,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L282" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L292" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3705,7 +3833,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L286" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L296" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3721,7 +3849,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L196" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L196" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3737,7 +3865,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L246" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L246" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3753,7 +3881,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L255" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L255" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3769,7 +3897,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L200" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L200" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3785,7 +3913,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L75" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L75" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3801,7 +3929,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L151" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L151" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3817,7 +3945,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L188" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L188" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3833,7 +3961,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L208" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L208" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3849,7 +3977,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L290" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L300" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3865,7 +3993,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L294" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L304" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3881,7 +4009,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L192" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L192" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3897,7 +4025,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L314" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L324" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3913,7 +4041,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L318" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L328" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3929,7 +4057,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L298" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L308" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3945,7 +4073,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L302" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L312" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3961,7 +4089,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L274" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L274" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3977,7 +4105,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L362" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L372" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3993,7 +4121,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L366" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L376" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4009,7 +4137,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L204" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L204" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4025,7 +4153,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L216" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L216" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4041,7 +4169,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L90" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L90" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4057,7 +4185,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4073,7 +4201,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L306" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L316" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4089,7 +4217,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L310" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L320" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4105,7 +4233,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L212" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L212" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4121,7 +4249,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L229" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L229" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4137,7 +4265,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L220" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L220" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4153,7 +4281,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L270" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L270" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4169,7 +4297,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L259" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L259" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4185,7 +4313,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/big_int/big_int.cr#L308" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr#L308" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4198,10 +4326,14 @@ Also known as arithmetic right shift.</p>
         <a class="method-permalink" href="#to_io%28io%3AIO%2Cformat%3AIO%3A%3AByteFormat%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Writes this integer to the given <em>io</em> in the given <em>format</em>.</p>
+
+<p>See <code><a href="IO.html#write_bytes%28object%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method">IO#write_bytes</a></code>.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L348" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L351" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4217,7 +4349,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/json/to_json.cr#L160" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr#L160" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4233,7 +4365,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L283" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L283" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4249,7 +4381,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L287" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L287" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4265,7 +4397,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L291" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L291" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4281,7 +4413,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L306" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L306" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4297,7 +4429,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L159" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L159" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4825,7 +4957,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L233" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L233" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4841,7 +4973,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L242" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L242" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4857,7 +4989,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L274" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L284" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4873,7 +5005,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L278" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L288" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4889,7 +5021,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L370" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L380" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4905,7 +5037,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/time/span.cr#L374" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L384" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5049,7 +5181,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/int.cr#L63" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/int.cr#L63" target="_blank">View source</a>]
         
       </div>
     </div>

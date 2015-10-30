@@ -235,8 +235,13 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Info" data-name="crypto::bcrypt::info">
-      <a href="Crypto/Bcrypt/Info.html">Info</a>
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Error" data-name="crypto::bcrypt::error">
+      <a href="Crypto/Bcrypt/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Crypto/Bcrypt/Password" data-name="crypto::bcrypt::password">
+      <a href="Crypto/Bcrypt/Password.html">Password</a>
       
     </li>
   
@@ -447,11 +452,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/GlobError" data-name="globerror">
-      <a href="GlobError.html">GlobError</a>
       
     </li>
   
@@ -1475,6 +1475,51 @@
       
         <ul>
   
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Cipher" data-name="openssl::cipher">
+      <a href="OpenSSL/Cipher.html">Cipher</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Cipher/Error" data-name="openssl::cipher::error">
+      <a href="OpenSSL/Cipher/Error.html">Error</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/manastech/crystal/OpenSSL/Digest" data-name="openssl::digest">
+      <a href="OpenSSL/Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/Error" data-name="openssl::digest::error">
+      <a href="OpenSSL/Digest/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Digest/UnsupportedError" data-name="openssl::digest::unsupportederror">
+      <a href="OpenSSL/Digest/UnsupportedError.html">UnsupportedError</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/DigestBase" data-name="openssl::digestbase">
+      <a href="OpenSSL/DigestBase.html">DigestBase</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/Error" data-name="openssl::error">
+      <a href="OpenSSL/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/HMAC" data-name="openssl::hmac">
       <a href="OpenSSL/HMAC.html">HMAC</a>
       
@@ -1695,8 +1740,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
+  <li class="parent " data-id="github.com/manastech/crystal/Slice" data-name="slice(t)">
       <a href="Slice.html">Slice</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/Slice/ReverseIterator" data-name="slice::reverseiterator(t)">
+      <a href="Slice/ReverseIterator.html">ReverseIterator</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2116,17 +2171,17 @@ its description, and extract the parts of the string that match.</p>
 <p>A Regex can be created using the literal syntax, in which it is delimited by
 forward slashes (<code>/</code>):</p>
 
-<pre><code><span class="s">/hay/</span> <span class="o">=~</span> <span class="s">"haystack"</span>   <span class="c">#=&gt; 0</span>
-<span class="s">/y/</span>.match(<span class="s">"haystack"</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;y&quot;&gt;</span></code></pre>
+<pre><code><span class="s">/hay/</span> <span class="o">=~</span> <span class="s">&quot;haystack&quot;</span>   <span class="c">#=&gt; 0</span>
+<span class="s">/y/</span>.match(<span class="s">&quot;haystack&quot;</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;y&quot;&gt;</span></code></pre>
 
 <p>Interpolation works in regular expression literals just as it does in string
 literals. Be aware that using this feature will cause an exception to be
 raised at runtime, if the resulting string would not be a valid regular
 expression.</p>
 
-<pre><code>x <span class="o">=</span> <span class="s">"a"</span>
-<span class="s">/</span><span class="i">#{</span></span>x<span class="s"><span class="i">}</span>/</span>.match(<span class="s">"asdf"</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;a&quot;&gt;</span>
-x <span class="o">=</span> <span class="s">"("</span>
+<pre><code>x <span class="o">=</span> <span class="s">&quot;a&quot;</span>
+<span class="s">/</span><span class="i">#{</span></span>x<span class="s"><span class="i">}</span>/</span>.match(<span class="s">&quot;asdf&quot;</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;a&quot;&gt;</span>
+x <span class="o">=</span> <span class="s">&quot;(&quot;</span>
 <span class="s">/</span><span class="i">#{</span></span>x<span class="s"><span class="i">}</span>/</span> <span class="c">#=&gt; ArgumentError</span></code></pre>
 
 <p>When we check to see if a particular regular expression describes a string,
@@ -2137,11 +2192,11 @@ a match.</p>
 
 <p>Here <code>"haystack"</code> does not contain the pattern <code>/needle/</code>, so it doesn't match:</p>
 
-<pre><code><span class="s">/needle/</span>.match(<span class="s">"haystack"</span>) <span class="c">#=&gt; nil</span></code></pre>
+<pre><code><span class="s">/needle/</span>.match(<span class="s">&quot;haystack&quot;</span>) <span class="c">#=&gt; nil</span></code></pre>
 
 <p>Here <code>"haystack"</code> contains the pattern <code>/hay/</code>, so it matches:</p>
 
-<pre><code><span class="s">/hay/</span>.match(<span class="s">"haystack"</span>)    <span class="c">#=&gt; #&lt;Regex::MatchData &quot;hay&quot;&gt;</span></code></pre>
+<pre><code><span class="s">/hay/</span>.match(<span class="s">&quot;haystack&quot;</span>)    <span class="c">#=&gt; #&lt;Regex::MatchData &quot;hay&quot;&gt;</span></code></pre>
 
 <p>Regex methods that perform a match usually return a truthy value if there was
 a match and <code>nil</code> if there was no match. After performing a match, the
@@ -2152,22 +2207,22 @@ otherwise.</p>
 <code><a href="Regex.html#%3D%7E%28other%3AString%29-instance-method">Regex#=~</a></code>), the returned value will be the index of the first match in the
 string if the expression matched, <code>nil</code> otherwise.</p>
 
-<pre><code><span class="s">/stack/</span> <span class="o">=~</span> <span class="s">"haystack"</span>  <span class="c">#=&gt; 3</span>
-<span class="s">"haystack"</span> <span class="o">=~</span> <span class="s">/stack/</span>  <span class="c">#=&gt; 3</span>
+<pre><code><span class="s">/stack/</span> <span class="o">=~</span> <span class="s">&quot;haystack&quot;</span>  <span class="c">#=&gt; 3</span>
+<span class="s">&quot;haystack&quot;</span> <span class="o">=~</span> <span class="s">/stack/</span>  <span class="c">#=&gt; 3</span>
 $~                     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;stack&quot;&gt;</span>
-<span class="s">/needle/</span> <span class="o">=~</span> <span class="s">"haystack"</span> <span class="c">#=&gt; nil</span>
-<span class="s">"haystack"</span> <span class="o">=~</span> <span class="s">/needle/</span> <span class="c">#=&gt; nil</span>
+<span class="s">/needle/</span> <span class="o">=~</span> <span class="s">&quot;haystack&quot;</span> <span class="c">#=&gt; nil</span>
+<span class="s">&quot;haystack&quot;</span> <span class="o">=~</span> <span class="s">/needle/</span> <span class="c">#=&gt; nil</span>
 $~                     <span class="c">#=&gt; nil</span></code></pre>
 
 <p>When matching a regular expression using <code><a href="Regex.html#match%28str%2Cpos%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%2Coptions%3D%3Cspanclass%3D%22t%22%3ERegex%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EOptions%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ENone%3C%2Fspan%3E%29-instance-method">#match</a></code> (either <code><a href="String.html#match%28regex%3ARegex%2Cpos%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%2C%26block%29-instance-method">String#match</a></code> or
 <code><a href="Regex.html#match%28str%2Cpos%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%2Coptions%3D%3Cspanclass%3D%22t%22%3ERegex%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EOptions%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ENone%3C%2Fspan%3E%29-instance-method">Regex#match</a></code>), the returned value will be a <code><a href="Regex/MatchData.html">Regex::MatchData</a></code> if the expression
 matched, <code>nil</code> otherwise.</p>
 
-<pre><code><span class="s">/hay/</span>.match(<span class="s">"haystack"</span>)    <span class="c">#=&gt; #&lt;Regex::MatchData &quot;hay&quot;&gt;</span>
-<span class="s">"haystack"</span>.match(<span class="s">/hay/</span>)    <span class="c">#=&gt; #&lt;Regex::MatchData &quot;hay&quot;&gt;</span>
+<pre><code><span class="s">/hay/</span>.match(<span class="s">&quot;haystack&quot;</span>)    <span class="c">#=&gt; #&lt;Regex::MatchData &quot;hay&quot;&gt;</span>
+<span class="s">&quot;haystack&quot;</span>.match(<span class="s">/hay/</span>)    <span class="c">#=&gt; #&lt;Regex::MatchData &quot;hay&quot;&gt;</span>
 $~                         <span class="c">#=&gt; #&lt;Regex::MatchData &quot;hay&quot;&gt;</span>
-<span class="s">/needle/</span>.match(<span class="s">"haystack"</span>) <span class="c">#=&gt; nil</span>
-<span class="s">"haystack"</span>.match(<span class="s">/needle/</span>) <span class="c">#=&gt; nil</span>
+<span class="s">/needle/</span>.match(<span class="s">&quot;haystack&quot;</span>) <span class="c">#=&gt; nil</span>
+<span class="s">&quot;haystack&quot;</span>.match(<span class="s">/needle/</span>) <span class="c">#=&gt; nil</span>
 $~                         <span class="c">#=&gt; nil</span></code></pre>
 
 <p><a href="https://en.wikipedia.org/wiki/Regular_expression" target="_blank">Regular expressions</a>
@@ -2197,10 +2252,10 @@ regular expression, they must be escaped by being preceded with a backslash
 can be identified by enclosing it in parentheses (<code>()</code>). The contents of
 each capture group can be extracted on a successful match:</p>
 
-<pre><code><span class="s">/a(sd)f/</span>.match(<span class="s">"_asdf_"</span>)  <span class="c">#=&gt; #&lt;Regex::MatchData &quot;asdf&quot; 1:&quot;sd&quot;&gt;</span>
-<span class="s">/a(sd)f/</span>.match(<span class="s">"_asdf_"</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">1</span>] } } <span class="c">#=&gt; &quot;sd&quot;</span>
-<span class="s">/a(?<grp>sd)f/</span>.match(<span class="s">"_asdf_"</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;asdf&quot; grp:&quot;sd&quot;&gt;</span>
-<span class="s">/a(?<grp>sd)f/</span>.match(<span class="s">"_asdf_"</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="s">"grp"</span>] } } <span class="c">#=&gt; &quot;sd&quot;</span></code></pre>
+<pre><code><span class="s">/a(sd)f/</span>.match(<span class="s">&quot;_asdf_&quot;</span>)  <span class="c">#=&gt; #&lt;Regex::MatchData &quot;asdf&quot; 1:&quot;sd&quot;&gt;</span>
+<span class="s">/a(sd)f/</span>.match(<span class="s">&quot;_asdf_&quot;</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="n">1</span>] } <span class="c">#=&gt; &quot;sd&quot;</span>
+<span class="s">/a(?&lt;grp&gt;sd)f/</span>.match(<span class="s">&quot;_asdf_&quot;</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;asdf&quot; grp:&quot;sd&quot;&gt;</span>
+<span class="s">/a(?&lt;grp&gt;sd)f/</span>.match(<span class="s">&quot;_asdf_&quot;</span>) { <span class="o">|</span>md<span class="o">|</span> md[<span class="s">&quot;grp&quot;</span>] } <span class="c">#=&gt; &quot;sd&quot;</span></code></pre>
 
 <p>Capture groups are indexed starting from 1. Methods that accept a capture
 group index will usually also accept 0 to refer to the full match. Capture
@@ -2214,17 +2269,17 @@ or made optional using an asterisk (<code>*</code> - zero or more), a plus sign
 (<code>{n,m}</code>) (at least <code>n</code>, no more than <code>m</code>), or a question mark
 (<code>?</code>) (zero or one).</p>
 
-<pre><code><span class="s">/fo*/</span>.match(<span class="s">"_f_"</span>)         <span class="c">#=&gt; #&lt;Regex::MatchData &quot;f&quot;&gt;</span>
-<span class="s">/fo+/</span>.match(<span class="s">"_f_"</span>)         <span class="c">#=&gt; nil</span>
-<span class="s">/fo*/</span>.match(<span class="s">"_foo_"</span>)       <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foo&quot;&gt;</span>
-<span class="s">/fo{3,}/</span>.match(<span class="s">"_foo_"</span>)    <span class="c">#=&gt; nil</span>
-<span class="s">/fo{1,3}/</span>.match(<span class="s">"_foo_"</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foo&quot;&gt;</span>
-<span class="s">/fo*/</span>.match(<span class="s">"_foo_"</span>)       <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foo&quot;&gt;</span>
-<span class="s">/fo*/</span>.match(<span class="s">"_foooooooo_"</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foooooooo&quot;&gt;</span>
-<span class="s">/fo{,3}/</span>.match(<span class="s">"_foooo_"</span>)  <span class="c">#=&gt; nil</span>
-<span class="s">/f(op)*/</span>.match(<span class="s">"fopopo"</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;fopop&quot; 1: &quot;op&quot;&gt;</span>
-<span class="s">/foo?bar/</span>.match(<span class="s">"foobar"</span>)  <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foobar&quot;&gt;</span>
-<span class="s">/foo?bar/</span>.match(<span class="s">"fobar"</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;fobar&quot;&gt;</span></code></pre>
+<pre><code><span class="s">/fo*/</span>.match(<span class="s">&quot;_f_&quot;</span>)         <span class="c">#=&gt; #&lt;Regex::MatchData &quot;f&quot;&gt;</span>
+<span class="s">/fo+/</span>.match(<span class="s">&quot;_f_&quot;</span>)         <span class="c">#=&gt; nil</span>
+<span class="s">/fo*/</span>.match(<span class="s">&quot;_foo_&quot;</span>)       <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foo&quot;&gt;</span>
+<span class="s">/fo{3,}/</span>.match(<span class="s">&quot;_foo_&quot;</span>)    <span class="c">#=&gt; nil</span>
+<span class="s">/fo{1,3}/</span>.match(<span class="s">&quot;_foo_&quot;</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foo&quot;&gt;</span>
+<span class="s">/fo*/</span>.match(<span class="s">&quot;_foo_&quot;</span>)       <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foo&quot;&gt;</span>
+<span class="s">/fo*/</span>.match(<span class="s">&quot;_foooooooo_&quot;</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foooooooo&quot;&gt;</span>
+<span class="s">/fo{,3}/</span>.match(<span class="s">&quot;_foooo_&quot;</span>)  <span class="c">#=&gt; nil</span>
+<span class="s">/f(op)*/</span>.match(<span class="s">&quot;fopopo&quot;</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;fopop&quot; 1: &quot;op&quot;&gt;</span>
+<span class="s">/foo?bar/</span>.match(<span class="s">&quot;foobar&quot;</span>)  <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foobar&quot;&gt;</span>
+<span class="s">/foo?bar/</span>.match(<span class="s">&quot;fobar&quot;</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;fobar&quot;&gt;</span></code></pre>
 
 <p>Alternatives can be separated using a
 <a href="http://www.pcre.org/original/doc/html/pcrepattern.html#SEC12" target="_blank">vertical bar</a>
@@ -2235,27 +2290,27 @@ alternatives can be expressed as a
 <a href="http://www.pcre.org/original/doc/html/pcrepattern.html#SEC9" target="_blank">character class</a>,
 enclosed in square brackets (<code>[]</code>):</p>
 
-<pre><code><span class="s">/foo|bar/</span>.match(<span class="s">"foo"</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foo&quot;&gt;</span>
-<span class="s">/foo|bar/</span>.match(<span class="s">"bar"</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;bar&quot;&gt;</span>
-<span class="s">/_(x|y)_/</span>.match(<span class="s">"_x_"</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_x_&quot; 1: &quot;x&quot;&gt;</span>
-<span class="s">/_(x|y)_/</span>.match(<span class="s">"_y_"</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_y_&quot; 1: &quot;y&quot;&gt;</span>
-<span class="s">/_(x|y)_/</span>.match(<span class="s">"_(x|y)_"</span>) <span class="c">#=&gt; nil</span>
-<span class="s">/_(x|y)_/</span>.match(<span class="s">"_(x|y)_"</span>) <span class="c">#=&gt; nil</span>
-<span class="s">/_._/</span>.match(<span class="s">"_x_"</span>)         <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_x_&quot;&gt;</span>
-<span class="s">/_[xyz]_/</span>.match(<span class="s">"_x_"</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_x_&quot;&gt;</span>
-<span class="s">/_[a-z]_/</span>.match(<span class="s">"_x_"</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_x_&quot;&gt;</span>
-<span class="s">/_[^a-z]_/</span>.match(<span class="s">"_x_"</span>)    <span class="c">#=&gt; nil</span>
-<span class="s">/_[^a-wy-z]_/</span>.match(<span class="s">"_x_"</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_x_&quot;&gt;</span></code></pre>
+<pre><code><span class="s">/foo|bar/</span>.match(<span class="s">&quot;foo&quot;</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;foo&quot;&gt;</span>
+<span class="s">/foo|bar/</span>.match(<span class="s">&quot;bar&quot;</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;bar&quot;&gt;</span>
+<span class="s">/_(x|y)_/</span>.match(<span class="s">&quot;_x_&quot;</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_x_&quot; 1: &quot;x&quot;&gt;</span>
+<span class="s">/_(x|y)_/</span>.match(<span class="s">&quot;_y_&quot;</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_y_&quot; 1: &quot;y&quot;&gt;</span>
+<span class="s">/_(x|y)_/</span>.match(<span class="s">&quot;_(x|y)_&quot;</span>) <span class="c">#=&gt; nil</span>
+<span class="s">/_(x|y)_/</span>.match(<span class="s">&quot;_(x|y)_&quot;</span>) <span class="c">#=&gt; nil</span>
+<span class="s">/_._/</span>.match(<span class="s">&quot;_x_&quot;</span>)         <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_x_&quot;&gt;</span>
+<span class="s">/_[xyz]_/</span>.match(<span class="s">&quot;_x_&quot;</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_x_&quot;&gt;</span>
+<span class="s">/_[a-z]_/</span>.match(<span class="s">&quot;_x_&quot;</span>)     <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_x_&quot;&gt;</span>
+<span class="s">/_[^a-z]_/</span>.match(<span class="s">&quot;_x_&quot;</span>)    <span class="c">#=&gt; nil</span>
+<span class="s">/_[^a-wy-z]_/</span>.match(<span class="s">&quot;_x_&quot;</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;_x_&quot;&gt;</span></code></pre>
 
 <p>Regular expressions can be defined with these 3
 <a href="http://www.pcre.org/original/doc/html/pcreapi.html#SEC11" target="_blank">optional flags</a>:</p>
 
 <ul><li><code>i</code>: ignore case (PCRE_CASELESS)</li><li><code>m</code>: multiline (PCRE_MULTILINE and PCRE_DOTALL)</li><li><code>x</code>: extended (PCRE_EXTENDED)</li></ul>
 
-<pre><code><span class="s">/asdf/</span> <span class="o">=~</span> <span class="s">"ASDF"</span>         <span class="c">#=&gt; nil</span>
-<span class="s">/asdf/</span>i <span class="o">=~</span> <span class="s">"ASDF"</span>        <span class="c">#=&gt; 0</span>
-<span class="s">/asdf\nz/</span>i <span class="o">=~</span> <span class="s">"ASDF\nZ"</span>  <span class="c">#=&gt; nil</span>
-<span class="s">/asdf\nz/</span>im <span class="o">=~</span> <span class="s">"ASDF\nZ"</span> <span class="c">#=&gt; 0</span></code></pre>
+<pre><code><span class="s">/asdf/</span> <span class="o">=~</span> <span class="s">&quot;ASDF&quot;</span>         <span class="c">#=&gt; nil</span>
+<span class="s">/asdf/</span>i <span class="o">=~</span> <span class="s">&quot;ASDF&quot;</span>        <span class="c">#=&gt; 0</span>
+<span class="s">/asdf\nz/</span>i <span class="o">=~</span> <span class="s">&quot;ASDF\nZ&quot;</span>  <span class="c">#=&gt; nil</span>
+<span class="s">/asdf\nz/</span>im <span class="o">=~</span> <span class="s">&quot;ASDF\nZ&quot;</span> <span class="c">#=&gt; 0</span></code></pre>
 
 <p>PCRE supports other encodings, but Crystal strings are UTF-8 only, so Crystal
 regular expressions are also UTF-8 only (by default).</p>
@@ -2281,12 +2336,12 @@ unique names within a single Regex.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/match_data.cr" target="_blank">regex/match_data.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/match_data.cr" target="_blank">regex/match_data.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr" target="_blank">regex/regex.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr" target="_blank">regex/regex.cr</a>
     
     <br/>
   
@@ -2434,7 +2489,7 @@ unique names within a single Regex.</p>
   
     
 
-  <h3>Methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Reference.html">Reference</a></code></h3>
   
     <a href="Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2470,10 +2525,13 @@ unique names within a single Regex.</p>
   
 
 
+    
+
+
   
     
 
-  <h3>Methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="Object.html">Object</a></code></h3>
   
     <a href="Object.html#%21-instance-method" class="tooltip">
       <span>!</span>
@@ -2553,6 +2611,48 @@ unique names within a single Regex.</p>
   
 
 
+    
+
+  <h3>Class methods inherited from class <code><a href="Object.html">Object</a></code></h3>
+  
+    <a href="Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2570,13 +2670,13 @@ unique names within a single Regex.</p>
         <div class="doc"><p>Determines Regex's source validity. If it is, <code>nil</code> is returned.
 If it's not, a String containing the error message is returned.</p>
 
-<pre><code><span class="t">Regex</span>.error?(<span class="s">"(foo|bar)"</span>) <span class="c">#=&gt; nil</span>
-<span class="t">Regex</span>.error?(<span class="s">"(foo|bar"</span>) <span class="c">#=&gt; &quot;missing ) at 8&quot;</span></code></pre></div>
+<pre><code><span class="t">Regex</span>.error?(<span class="s">&quot;(foo|bar)&quot;</span>) <span class="c">#=&gt; nil</span>
+<span class="t">Regex</span>.error?(<span class="s">&quot;(foo|bar&quot;</span>) <span class="c">#=&gt; &quot;missing ) at 8&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L241" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L241" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2591,13 +2691,13 @@ If it's not, a String containing the error message is returned.</p>
       
         <div class="doc"><p>Returns a String constructed by escaping any metacharacters in <code>str</code>.</p>
 
-<pre><code>string <span class="o">=</span> <span class="t">Regex</span>.escape(<span class="s">"*?{}."</span>) <span class="c">#=&gt; &quot;\\*\\?\\{\\}\\.&quot;</span>
+<pre><code>string <span class="o">=</span> <span class="t">Regex</span>.escape(<span class="s">&quot;\*?{}.&quot;</span>) <span class="c">#=&gt; &quot;\\*\\?\\{\\}\\.&quot;</span>
 <span class="s">/</span><span class="i">#{</span></span>string<span class="s"><span class="i">}</span>/</span> <span class="c">#=&gt; /\*\?\{\}\./</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L256" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L256" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2616,14 +2716,14 @@ group in any other pattern, an ArgumentError will be raised at runtime.
 All capture groups in the patterns after the first one will have their
 indexes offset.</p>
 
-<pre><code>re <span class="o">=</span> <span class="t">Regex</span>.<span class="k">union</span>(<span class="s">/skiing/</span>i, <span class="s">"sledding"</span>)
-re.match(<span class="s">"Skiing"</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;Skiing&quot;&gt;</span>
-re.match(<span class="s">"sledding"</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;sledding&quot;&gt;</span></code></pre></div>
+<pre><code>re <span class="o">=</span> <span class="t">Regex</span>.<span class="k">union</span>(<span class="s">/skiing/</span>i, <span class="s">&quot;sledding&quot;</span>)
+re.match(<span class="s">&quot;Skiing&quot;</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;Skiing&quot;&gt;</span>
+re.match(<span class="s">&quot;sledding&quot;</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;sledding&quot;&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L301" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L301" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2642,17 +2742,17 @@ group in any other pattern, an ArgumentError will be raised at runtime.
 All capture groups in the patterns after the first one will have their
 indexes offset.</p>
 
-<pre><code>re <span class="o">=</span> <span class="t">Regex</span>.<span class="k">union</span>([<span class="s">/skiing/</span>i, <span class="s">"sledding"</span>])
-re.match(<span class="s">"Skiing"</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;Skiing&quot;&gt;</span>
-re.match(<span class="s">"sledding"</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;sledding&quot;&gt;</span>
-re <span class="o">=</span> <span class="t">Regex</span>.<span class="k">union</span>({<span class="s">/skiing/</span>i, <span class="s">"sledding"</span>})
-re.match(<span class="s">"Skiing"</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;Skiing&quot;&gt;</span>
-re.match(<span class="s">"sledding"</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;sledding&quot;&gt;</span></code></pre></div>
+<pre><code>re <span class="o">=</span> <span class="t">Regex</span>.<span class="k">union</span>([<span class="s">/skiing/</span>i, <span class="s">&quot;sledding&quot;</span>])
+re.match(<span class="s">&quot;Skiing&quot;</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;Skiing&quot;&gt;</span>
+re.match(<span class="s">&quot;sledding&quot;</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;sledding&quot;&gt;</span>
+re <span class="o">=</span> <span class="t">Regex</span>.<span class="k">union</span>({<span class="s">/skiing/</span>i, <span class="s">&quot;sledding&quot;</span>})
+re.match(<span class="s">&quot;Skiing&quot;</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;Skiing&quot;&gt;</span>
+re.match(<span class="s">&quot;sledding&quot;</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;sledding&quot;&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L286" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L286" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2667,15 +2767,15 @@ re.match(<span class="s">"sledding"</span>) <span class="c">#=&gt; #&lt;Regex::M
       
         <div class="doc"><p>Creates a new Regex out of the given source String.</p>
 
-<pre><code><span class="t">Regexp</span>.<span class="k">new</span>(<span class="s">"^a-z+:s+w+"</span>) <span class="c">#=&gt; /^a-z+:\s+\w+/</span>
-<span class="t">Regexp</span>.<span class="k">new</span>(<span class="s">"cat"</span>, <span class="t">Regex</span><span class="t">::</span><span class="t">Options</span><span class="t">::</span><span class="t">IGNORE_CASE</span>) <span class="c">#=&gt; /cat/i</span>
+<pre><code><span class="t">Regexp</span>.<span class="k">new</span>(<span class="s">&quot;^a-z+:\s+\w+&quot;</span>) <span class="c">#=&gt; /^a-z+:\s+\w+/</span>
+<span class="t">Regexp</span>.<span class="k">new</span>(<span class="s">&quot;cat&quot;</span>, <span class="t">Regex</span><span class="t">::</span><span class="t">Options</span><span class="t">::</span><span class="t">IGNORE_CASE</span>) <span class="c">#=&gt; /cat/i</span>
 options <span class="o">=</span> <span class="t">Regex</span><span class="t">::</span><span class="t">Options</span><span class="t">::</span><span class="t">IGNORE_CASE</span> <span class="o">|</span> <span class="t">Regex</span><span class="t">::</span><span class="t">Options</span><span class="t">::</span><span class="t">EXTENDED</span>
-<span class="t">Regexp</span>.<span class="k">new</span>(<span class="s">"dog"</span>, options) <span class="c">#=&gt; /dog/ix</span></code></pre></div>
+<span class="t">Regexp</span>.<span class="k">new</span>(<span class="s">&quot;dog&quot;</span>, options) <span class="c">#=&gt; /dog/ix</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L222" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L222" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2700,13 +2800,13 @@ runtime. All capture groups in the second operand will have their indexes
 offset.</p>
 
 <pre><code>re <span class="o">=</span> <span class="s">/skiing/</span>i <span class="o">+</span> <span class="s">/sledding/</span>
-re.match(<span class="s">"Skiing"</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;Skiing&quot;&gt;</span>
-re.match(<span class="s">"sledding"</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;sledding&quot;&gt;</span></code></pre></div>
+re.match(<span class="s">&quot;Skiing&quot;</span>)   <span class="c">#=&gt; #&lt;Regex::MatchData &quot;Skiing&quot;&gt;</span>
+re.match(<span class="s">&quot;sledding&quot;</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;sledding&quot;&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L324" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L324" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2728,7 +2828,7 @@ re.match(<span class="s">"sledding"</span>) <span class="c">#=&gt; #&lt;Regex::M
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L335" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L335" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2745,21 +2845,21 @@ re.match(<span class="s">"sledding"</span>) <span class="c">#=&gt; #&lt;Regex::M
 <code>true</code> or <code>false</code>. Used in <code>case</code> expressions. The special variable
 <code>$~</code> will contain a <code><a href="Regex/MatchData.html">Regex::MatchData</a></code> if there was a match, <code>nil</code> otherwise.</p>
 
-<pre><code>a <span class="o">=</span> <span class="s">"HELLO"</span>
+<pre><code>a <span class="o">=</span> <span class="s">&quot;HELLO&quot;</span>
 b <span class="o">=</span> <span class="k">case</span> a
     <span class="k">when</span> <span class="s">/^[a-z]*$/</span>
-      <span class="s">"Lower case"</span>
+      <span class="s">&quot;Lower case&quot;</span>
     <span class="k">when</span> <span class="s">/^[A-Z]*$/</span>
-      <span class="s">"Upper case"</span>
+      <span class="s">&quot;Upper case&quot;</span>
     <span class="k">else</span>
-      <span class="s">"Mixed case"</span>
+      <span class="s">&quot;Mixed case&quot;</span>
     <span class="k">end</span>
 b <span class="c">#=&gt; &quot;Upper case&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L355" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L355" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2777,13 +2877,13 @@ the starting position of the match if <code>other</code> is a matching String,
 otherwise <code>nil</code>. <code>$~</code> will contain a Regex::MatchData if there was a match,
 <code>nil</code> otherwise.</p>
 
-<pre><code><span class="s">/at/</span> <span class="o">=~</span> <span class="s">"input data"</span>   <span class="c">#=&gt; 7</span>
-<span class="s">/ax/</span> <span class="o">=~</span> <span class="s">"input data"</span>   <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="s">/at/</span> <span class="o">=~</span> <span class="s">&quot;input data&quot;</span>   <span class="c">#=&gt; 7</span>
+<span class="s">/ax/</span> <span class="o">=~</span> <span class="s">&quot;input data&quot;</span>   <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L370" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L370" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2798,13 +2898,13 @@ otherwise <code>nil</code>. <code>$~</code> will contain a Regex::MatchData if t
       
         <div class="doc"><p>Match. When the argument is not a String, always returns <code>nil</code>.</p>
 
-<pre><code><span class="s">/at/</span> <span class="o">=~</span> <span class="s">"input data"</span>   <span class="c">#=&gt; 7</span>
-<span class="s">/ax/</span> <span class="o">=~</span> <span class="s">"input data"</span>   <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="s">/at/</span> <span class="o">=~</span> <span class="s">&quot;input data&quot;</span>   <span class="c">#=&gt; 7</span>
+<span class="s">/ax/</span> <span class="o">=~</span> <span class="s">&quot;input data&quot;</span>   <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L382" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L382" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2826,7 +2926,7 @@ optional flags included.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L393" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L393" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2844,14 +2944,14 @@ optional flags included.</p>
 the start of <code>str</code>. Returns a <code><a href="Regex/MatchData.html">Regex::MatchData</a></code> if <code>str</code> matched, otherwise
 <code>nil</code>. <code>$~</code> will contain the same value that was returned.</p>
 
-<pre><code><span class="s">/(.)(.)(.)/</span>.match(<span class="s">"abc"</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;b&quot;</span>
-<span class="s">/(.)(.)/</span>.match(<span class="s">"abc"</span>, <span class="n">1</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;c&quot;</span>
-<span class="s">/(.)(.)/</span>.match(<span class="s">"クリスタル"</span>, <span class="n">3</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;ル&quot;</span></code></pre></div>
+<pre><code><span class="s">/(.)(.)(.)/</span>.match(<span class="s">&quot;abc&quot;</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;b&quot;</span>
+<span class="s">/(.)(.)/</span>.match(<span class="s">&quot;abc&quot;</span>, <span class="n">1</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;c&quot;</span>
+<span class="s">/(.)(.)/</span>.match(<span class="s">&quot;クリスタル&quot;</span>, <span class="n">3</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;ル&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L412" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L412" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2869,14 +2969,14 @@ the start of <code>str</code>. Returns a <code><a href="Regex/MatchData.html">Re
 the start of <code>str</code>. Returns a Regex::MatchData if <code>str</code> matched, otherwise
 <code>nil</code>. <code>$~</code> will contain the same value that was returned.</p>
 
-<pre><code><span class="s">/(.)(.)(.)/</span>.match_at_byte_index(<span class="s">"abc"</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;b&quot;</span>
-<span class="s">/(.)(.)/</span>.match_at_byte_index(<span class="s">"abc"</span>, <span class="n">1</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;c&quot;</span>
-<span class="s">/(.)(.)/</span>.match_at_byte_index(<span class="s">"クリスタル"</span>, <span class="n">3</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;ス&quot;</span></code></pre></div>
+<pre><code><span class="s">/(.)(.)(.)/</span>.match_at_byte_index(<span class="s">&quot;abc&quot;</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;b&quot;</span>
+<span class="s">/(.)(.)/</span>.match_at_byte_index(<span class="s">&quot;abc&quot;</span>, <span class="n">1</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;c&quot;</span>
+<span class="s">/(.)(.)/</span>.match_at_byte_index(<span class="s">&quot;クリスタル&quot;</span>, <span class="n">3</span>).not_nil![<span class="n">2</span>] <span class="c">#=&gt; &quot;ス&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L432" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L432" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2894,14 +2994,14 @@ keys are their indexes. Non-named capture groups will not have entries in
 the Hash. Capture groups are indexed starting from 1.</p>
 
 <pre><code><span class="s">/(.)/</span>.name_table                         <span class="c">#=&gt; {}</span>
-<span class="s">/(?<foo>.)/</span>.name_table                   <span class="c">#=&gt; {1 =&gt; &quot;foo&quot;}</span>
-<span class="s">/(?<foo>.)(?<bar>.)/</span>.name_table          <span class="c">#=&gt; {2 =&gt; &quot;bar&quot;, 1 =&gt; &quot;foo&quot;}</span>
-<span class="s">/(.)(?<foo>.)(.)(?<bar>.)(.)/</span>.name_table <span class="c">#=&gt; {4 =&gt; &quot;bar&quot;, 2 =&gt; &quot;foo&quot;}</span></code></pre></div>
+<span class="s">/(?&lt;foo&gt;.)/</span>.name_table                   <span class="c">#=&gt; {1 =&gt; &quot;foo&quot;}</span>
+<span class="s">/(?&lt;foo&gt;.)(?&lt;bar&gt;.)/</span>.name_table          <span class="c">#=&gt; {2 =&gt; &quot;bar&quot;, 1 =&gt; &quot;foo&quot;}</span>
+<span class="s">/(.)(?&lt;foo&gt;.)(.)(?&lt;bar&gt;.)(.)/</span>.name_table <span class="c">#=&gt; {4 =&gt; &quot;bar&quot;, 2 =&gt; &quot;foo&quot;}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L457" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L457" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2921,7 +3021,7 @@ the Hash. Capture groups are indexed starting from 1.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2941,7 +3041,7 @@ the Hash. Capture groups are indexed starting from 1.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L212" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L212" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2960,14 +3060,14 @@ as a non-capturing subexpression in another regular expression.</p>
 
 <pre><code>re <span class="o">=</span> <span class="s">/A*/</span>i                 <span class="c">#=&gt; /A*/i</span>
 re.to_s                    <span class="c">#=&gt; &quot;(?i-msx:A*)&quot;</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/t</span><span class="i">#{</span></span>re<span class="s"><span class="i">}</span>l/</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;tal&quot;&gt;</span>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/t</span><span class="i">#{</span></span>re<span class="s"><span class="i">}</span>l/</span>) <span class="c">#=&gt; #&lt;Regex::MatchData &quot;tal&quot;&gt;</span>
 re <span class="o">=</span> <span class="s">/A*/</span>                  <span class="c">#=&gt; &quot;(?-imsx:A*)&quot;</span>
-<span class="s">"Crystal"</span>.match(<span class="s">/t</span><span class="i">#{</span></span>re<span class="s"><span class="i">}</span>l/</span>) <span class="c">#=&gt; nil</span></code></pre></div>
+<span class="s">&quot;Crystal&quot;</span>.match(<span class="s">/t</span><span class="i">#{</span></span>re<span class="s"><span class="i">}</span>l/</span>) <span class="c">#=&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/be93828ce2e95645a7f7be83bc7ac8865fd7e478/src/regex/regex.cr#L490" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/regex/regex.cr#L490" target="_blank">View source</a>]
         
       </div>
     </div>
