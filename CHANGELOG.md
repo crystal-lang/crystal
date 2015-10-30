@@ -1,9 +1,13 @@
-## Next
+## 0.9.1 (2015-10-30)
 
 * Docs search now finds nested entries (thanks @adlerhsieh)
-* Many corrections and changes to the formatter.
-* Added OpenSSL::Cipher (thanks @benoist)
+* Many corrections and changes to the formatter, for better consistency and less obtrusion.
+* Added `OpenSSL::Cipher` and `OpenSSL::Digest` (thanks @benoist)
 * Added `Char#+(String)` (thanks @hangyas)
+* Added `Hash#key` and `Hash#key?` (thanks @adlerhsieh)
+* Added `Time::Span#*` and `Time::Span#/` (thanks @jbaum98)
+* Added `Slice#reverse_each` (thanks @omninonsense)
+* Added docs for `Random` and `Tempfile` (thanks @adlerhsieh)
 * Fixed some bugs.
 
 ## 0.9.0 (2015-10-16)
