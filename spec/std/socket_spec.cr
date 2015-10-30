@@ -92,6 +92,16 @@ describe "UNIXSocket" do
   end
 end
 
+describe "TCPServer" do
+  it "fails when port is in use" do
+    expect_raises Errno, /already in use/ do
+      TCPServer.open("::", 5432) do
+        TCPServer.open("::", 5432) {}
+      end
+    end
+  end
+end
+
 describe "TCPSocket" do
   it "sends and receives messages" do
     TCPServer.open("::", 12345) do |server|
