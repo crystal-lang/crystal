@@ -682,7 +682,7 @@ module Crystal
 
       case target
       when Underscore
-        request_value(false) { accept value }
+        accept value
         return false
       when Path
         # Initialize constants if they are used

@@ -311,4 +311,24 @@ describe "Code gen: struct" do
       foo(Foo.new)
       ").to_i.should eq(2)
   end
+
+  it "codegens struct assigned to underscore (#1842)" do
+    run(%(
+      struct Foo
+        def initialize
+          @value = 123
+        end
+
+        def value
+          @value
+        end
+      end
+
+      def foo
+        _ = Foo.new
+      end
+
+      foo.value
+      )).to_i.should eq(123)
+  end
 end
