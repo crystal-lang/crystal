@@ -1,4 +1,5 @@
 require "./lib_pcl"
+require "mmap"
 
 @[NoInline]
 fun get_stack_top : Void*
@@ -11,7 +12,7 @@ class Fiber
 
   @@first_fiber = nil
   @@last_fiber = nil
-  @@stack_pool = [] of Void*
+  @@stack_pool = [] of Mmap(Void)
 
   protected property :stack_top
   protected property :stack_bottom
@@ -19,9 +20,9 @@ class Fiber
   protected property :prev_fiber
 
   def initialize(&@proc)
-    @stack = Fiber.allocate_stack
-    @stack_top = @stack_bottom = @stack + STACK_SIZE
-    @cr = LibPcl.co_create(->(fiber) { (fiber as Fiber).run }, self as Void*, @stack, STACK_SIZE)
+    @stack = stack = Fiber.allocate_stack
+    @stack_top = @stack_bottom = stack.to_unsafe + STACK_SIZE
+    @cr = LibPcl.co_create(->(fiber) { (fiber as Fiber).run }, self as Void*, stack.to_unsafe, STACK_SIZE)
     LibPcl.co_set_data(@cr, self as Void*)
 
     @prev_fiber = nil
@@ -36,7 +37,7 @@ class Fiber
   def initialize
     @cr = LibPcl.co_current
     @proc = ->{}
-    @stack = Pointer(Void).null
+    @stack = nil
     @stack_top = get_stack_top
     @stack_bottom = LibGC.stackbottom
     LibPcl.co_set_data(@cr, self as Void*)
@@ -45,12 +46,7 @@ class Fiber
   end
 
   protected def self.allocate_stack
-    @@stack_pool.pop? || LibC.mmap(nil, Fiber::STACK_SIZE,
-      LibC::PROT_READ | LibC::PROT_WRITE,
-      LibC::MAP_PRIVATE | LibC::MAP_ANON,
-      -1, LibC::SSizeT.new(0)).tap do |pointer|
-        raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
-      end
+    @@stack_pool.pop? || Mmap(Void).new(size: Fiber::STACK_SIZE)
   end
 
   def self.stack_pool_collect
@@ -58,13 +54,15 @@ class Fiber
     free_count = @@stack_pool.size > 1 ? @@stack_pool.size / 2 : 1
     free_count.times do
       stack = @@stack_pool.pop
-      LibC.munmap(stack, Fiber::STACK_SIZE)
+      stack.close
     end
   end
 
   def run
     @proc.call
-    @@stack_pool << @stack
+    if stack = @stack
+      @@stack_pool << stack
+    end
 
     # Remove the current fiber from the linked list
 
