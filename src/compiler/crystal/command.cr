@@ -480,109 +480,109 @@ USAGE
     output_format = nil
 
     option_parser = OptionParser.parse(options) do |opts|
-                      opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
+      opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
 
-                      unless no_codegen
-                        unless run
-                          opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
-                            compiler.cross_compile_flags = cross_compile
-                          end
-                        end
-                        opts.on("-d", "--debug", "Add symbolic debug info") do
-                          compiler.debug = true
-                        end
-                      end
+      unless no_codegen
+        unless run
+          opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
+            compiler.cross_compile_flags = cross_compile
+          end
+        end
+        opts.on("-d", "--debug", "Add symbolic debug info") do
+          compiler.debug = true
+        end
+      end
 
-                      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
-                        compiler.add_flag flag
-                      end
+      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+        compiler.add_flag flag
+      end
 
-                      unless no_codegen
-                        opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
-                          compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
-                        end
-                      end
+      unless no_codegen
+        opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
+          compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
+        end
+      end
 
-                      if hierarchy
-                        opts.on("-e NAME", "Filter types by NAME regex") do |exp|
-                          hierarchy_exp = exp
-                        end
-                      end
+      if hierarchy
+        opts.on("-e NAME", "Filter types by NAME regex") do |exp|
+          hierarchy_exp = exp
+        end
+      end
 
-                      if cursor_command
-                        opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
-                          cursor_location = cursor
-                        end
-                      end
+      if cursor_command
+        opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
+          cursor_location = cursor
+        end
+      end
 
-                      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-                        output_format = f
-                      end
+      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+        output_format = f
+      end
 
-                      opts.on("-h", "--help", "Show this message") do
-                        puts opts
-                        exit 1
-                      end
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit 1
+      end
 
-                      unless no_codegen
-                        opts.on("--ll", "Dump ll to .crystal directory") do
-                          compiler.dump_ll = true
-                        end
-                        opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
-                          link_flags << some_link_flags
-                        end
-                        opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
-                          compiler.mcpu = cpu
-                        end
-                      end
+      unless no_codegen
+        opts.on("--ll", "Dump ll to .crystal directory") do
+          compiler.dump_ll = true
+        end
+        opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
+          link_flags << some_link_flags
+        end
+        opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
+          compiler.mcpu = cpu
+        end
+      end
 
-                      opts.on("--no-color", "Disable colored output") do
-                        @color = false
-                        compiler.color = false
-                      end
+      opts.on("--no-color", "Disable colored output") do
+        @color = false
+        compiler.color = false
+      end
 
-                      unless no_codegen
-                        opts.on("--no-codegen", "Don't do code generation") do
-                          compiler.no_codegen = true
-                        end
-                        opts.on("-o ", "Output filename") do |an_output_filename|
-                          opt_output_filename = an_output_filename
-                          specified_output = true
-                        end
-                      end
+      unless no_codegen
+        opts.on("--no-codegen", "Don't do code generation") do
+          compiler.no_codegen = true
+        end
+        opts.on("-o ", "Output filename") do |an_output_filename|
+          opt_output_filename = an_output_filename
+          specified_output = true
+        end
+      end
 
-                      opts.on("--prelude ", "Use given file as prelude") do |prelude|
-                        compiler.prelude = prelude
-                      end
+      opts.on("--prelude ", "Use given file as prelude") do |prelude|
+        compiler.prelude = prelude
+      end
 
-                      unless no_codegen
-                        opts.on("--release", "Compile in release mode") do
-                          compiler.release = true
-                        end
-                        opts.on("-s", "--stats", "Enable statistics output") do
-                          compiler.stats = true
-                        end
-                        opts.on("--single-module", "Generate a single LLVM module") do
-                          compiler.single_module = true
-                        end
-                        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
-                          compiler.n_threads = n_threads.to_i
-                        end
-                        unless run
-                          opts.on("--target TRIPLE", "Target triple") do |triple|
-                            compiler.target_triple = triple
-                          end
-                        end
-                        opts.on("--verbose", "Display executed commands") do
-                          compiler.verbose = true
-                        end
-                      end
+      unless no_codegen
+        opts.on("--release", "Compile in release mode") do
+          compiler.release = true
+        end
+        opts.on("-s", "--stats", "Enable statistics output") do
+          compiler.stats = true
+        end
+        opts.on("--single-module", "Generate a single LLVM module") do
+          compiler.single_module = true
+        end
+        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
+          compiler.n_threads = n_threads.to_i
+        end
+        unless run
+          opts.on("--target TRIPLE", "Target triple") do |triple|
+            compiler.target_triple = triple
+          end
+        end
+        opts.on("--verbose", "Display executed commands") do
+          compiler.verbose = true
+        end
+      end
 
-                      opts.unknown_args do |before, after|
-                        opt_filenames = before
-                        opt_arguments = after
-                      end
-                    end
+      opts.unknown_args do |before, after|
+        opt_filenames = before
+        opt_arguments = after
+      end
+    end
 
     compiler.link_flags = link_flags.join(" ") unless link_flags.empty?
 

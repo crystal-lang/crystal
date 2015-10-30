@@ -1,6 +1,6 @@
 # Copied with little modifications from: http://benchmarksgame.alioth.debian.org/u32/program.php?test=nbody&lang=yarv&id=2
 
-SOLAR_MASS = 4 * Math::PI**2
+SOLAR_MASS    = 4 * Math::PI**2
 DAYS_PER_YEAR = 365.24
 
 class Planet
@@ -73,9 +73,9 @@ def offset_momentum(bodies)
   end
 
   b = bodies[0]
-  b.vx = - px / SOLAR_MASS
-  b.vy = - py / SOLAR_MASS
-  b.vz = - pz / SOLAR_MASS
+  b.vx = -px / SOLAR_MASS
+  b.vy = -py / SOLAR_MASS
+  b.vz = -pz / SOLAR_MASS
 end
 
 BODIES = [
@@ -120,7 +120,7 @@ BODIES = [
     2.68067772490389322e-03,
     1.62824170038242295e-03,
     -9.51592254519715870e-05,
-    5.15138902046611451e-05)
+    5.15138902046611451e-05),
 ]
 
 if ARGV.size != 1

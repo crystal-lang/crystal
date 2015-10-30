@@ -30,14 +30,14 @@ module Crystal
   end
 
   class TypeVisitor < Visitor
-    ThreadLocalAttributes = %w(ThreadLocal)
-    ValidGlobalAttributes = ThreadLocalAttributes
+    ThreadLocalAttributes      = %w(ThreadLocal)
+    ValidGlobalAttributes      = ThreadLocalAttributes
     ValidExternalVarAttributes = ThreadLocalAttributes
-    ValidClassVarAttributes = ThreadLocalAttributes
-    ValidStructDefAttributes = %w(Packed)
-    ValidDefAttributes = %w(AlwaysInline NoInline Raises ReturnsTwice)
-    ValidFunDefAttributes = %w(AlwaysInline NoInline Raises ReturnsTwice CallConvention)
-    ValidEnumDefAttributes = %w(Flags)
+    ValidClassVarAttributes    = ThreadLocalAttributes
+    ValidStructDefAttributes   = %w(Packed)
+    ValidDefAttributes         = %w(AlwaysInline NoInline Raises ReturnsTwice)
+    ValidFunDefAttributes      = %w(AlwaysInline NoInline Raises ReturnsTwice CallConvention)
+    ValidEnumDefAttributes     = %w(Flags)
 
     getter mod
     property! scope
@@ -88,7 +88,7 @@ module Crystal
       @used_ivars_in_calls_in_initialize = nil
       @in_type_args = 0
       @in_is_a = false
-      @attributes  = nil
+      @attributes = nil
       @lib_def_pass = 0
       @exp_nest = 0
 
@@ -1375,10 +1375,10 @@ module Crystal
       end
 
       generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
-                                                inside_def: !!@typed_def,
-                                                inside_type: !current_type.is_a?(Program),
-                                                inside_exp: @exp_nest > 0,
-                                                )
+        inside_def: !!@typed_def,
+        inside_type: !current_type.is_a?(Program),
+        inside_exp: @exp_nest > 0,
+      )
 
       if node_doc = node.doc
         generated_nodes.accept PropagateDocVisitor.new(node_doc)
@@ -2125,8 +2125,8 @@ module Crystal
       case node.kind
       when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64, :i64
         case target_type.kind
-        when :i8 then node.value.to_i8? || node.raise "invalid Int8: #{node.value}"
-        when :u8 then node.value.to_u8? || node.raise "invalid UInt8: #{node.value}"
+        when :i8  then node.value.to_i8? || node.raise "invalid Int8: #{node.value}"
+        when :u8  then node.value.to_u8? || node.raise "invalid UInt8: #{node.value}"
         when :i16 then node.value.to_i16? || node.raise "invalid Int16: #{node.value}"
         when :u16 then node.value.to_u16? || node.raise "invalid UInt16: #{node.value}"
         when :i32 then node.value.to_i32? || node.raise "invalid Int32: #{node.value}"
@@ -2155,7 +2155,7 @@ module Crystal
         when "+" then +left
         when "-"
           case left
-          when Int8 then -left
+          when Int8  then -left
           when Int16 then -left
           when Int32 then -left
           when Int64 then -left
@@ -2329,9 +2329,9 @@ module Crystal
         case node.binary
         when :and
           @type_filters = TypeFilters.and(cond_type_filters, then_type_filters, else_type_filters)
-        # TODO: or type filters
-        # when :or
-        #   node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
+          # TODO: or type filters
+          # when :or
+          #   node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
         end
       end
 
@@ -2419,7 +2419,7 @@ module Crystal
     end
 
     def conditional_no_return(node, var)
-       node.filtered_by NoReturnFilter.new(var)
+      node.filtered_by NoReturnFilter.new(var)
     end
 
     def visit(node : While)
@@ -2479,8 +2479,8 @@ module Crystal
           after_while_var.nil_if_read = after_cond_var.nil_if_read
           after_while_vars[name] = after_while_var
 
-        # If there was a previous variable, we use that type merged
-        # with the last type inside the while.
+          # If there was a previous variable, we use that type merged
+          # with the last type inside the while.
         elsif before_cond_var
           before_cond_var.bind_to(while_var)
           after_while_var = MetaVar.new(name)
@@ -2496,8 +2496,8 @@ module Crystal
           end
           after_while_vars[name] = after_while_var
 
-        # Otherwise, it's a new variable inside the while: used
-        # outside it must be nilable, unless the loop is endless.
+          # Otherwise, it's a new variable inside the while: used
+          # outside it must be nilable, unless the loop is endless.
         else
           after_while_var = MetaVar.new(name)
           after_while_var.bind_to(while_var)
@@ -2703,18 +2703,18 @@ module Crystal
       node.type =
         case typed_def.name
         when "to_i", "to_i32", "ord" then mod.int32
-        when "to_i8" then mod.int8
-        when "to_i16" then mod.int16
-        when "to_i32" then mod.int32
-        when "to_i64" then mod.int64
-        when "to_u", "to_u32" then mod.uint32
-        when "to_u8" then mod.uint8
-        when "to_u16" then mod.uint16
-        when "to_u32" then mod.uint32
-        when "to_u64" then mod.uint64
-        when "to_f", "to_f64" then mod.float64
-        when "to_f32" then mod.float32
-        when "chr" then mod.char
+        when "to_i8"                 then mod.int8
+        when "to_i16"                then mod.int16
+        when "to_i32"                then mod.int32
+        when "to_i64"                then mod.int64
+        when "to_u", "to_u32"        then mod.uint32
+        when "to_u8"                 then mod.uint8
+        when "to_u16"                then mod.uint16
+        when "to_u32"                then mod.uint32
+        when "to_u64"                then mod.uint64
+        when "to_f", "to_f64"        then mod.float64
+        when "to_f32"                then mod.float32
+        when "chr"                   then mod.char
         else
           raise "Bug: unknown cast operator #{typed_def.name}"
         end
@@ -2769,7 +2769,7 @@ module Crystal
     def visit_struct_or_union_set(node)
       scope = @scope as CStructOrUnionType
 
-      field_name = call.not_nil!.name[0 ... -1]
+      field_name = call.not_nil!.name[0...-1]
       expected_type = scope.vars[field_name].type
       value = @vars["value"]
       actual_type = value.type
@@ -3315,7 +3315,7 @@ module Crystal
       if free_vars && !node.global && (type = free_vars[node.names.first]?)
         target_type = type
         if node.names.size > 1
-          target_type = lookup_type target_type, node.names[1 .. -1], node
+          target_type = lookup_type target_type, node.names[1..-1], node
         end
       else
         base_lookup = node.global ? mod : (@type_lookup || @scope || @types.last)
@@ -3397,7 +3397,7 @@ module Crystal
       type
     end
 
-    ## Literals
+    # # Literals
 
     def visit(node : Nop)
       node.type = @mod.nil
@@ -3413,17 +3413,17 @@ module Crystal
 
     def visit(node : NumberLiteral)
       node.type = case node.kind
-                  when :i8 then mod.int8
+                  when :i8  then mod.int8
                   when :i16 then mod.int16
                   when :i32 then mod.int32
                   when :i64 then mod.int64
-                  when :u8 then mod.uint8
+                  when :u8  then mod.uint8
                   when :u16 then mod.uint16
                   when :u32 then mod.uint32
                   when :u64 then mod.uint64
                   when :f32 then mod.float32
                   when :f64 then mod.float64
-                  else raise "Invalid node kind: #{node.kind}"
+                  else           raise "Invalid node kind: #{node.kind}"
                   end
     end
 
@@ -3536,7 +3536,7 @@ module Crystal
     end
 
     def expand_named(node)
-      expand(node) { @mod.literal_expander.expand_named node  }
+      expand(node) { @mod.literal_expander.expand_named node }
     end
 
     def expand(node)
@@ -3547,7 +3547,7 @@ module Crystal
       false
     end
 
-    ## Helpers
+    # # Helpers
 
     def current_type
       @types.last

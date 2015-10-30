@@ -33,10 +33,10 @@
 #
 # mut = Mutable.new 1
 # change_bad(mut)
-# mut.value              #=> 1
+# mut.value # => 1
 #
 # mut = change_good(mut)
-# mut.value              #=> 2
+# mut.value # => 2
 # ```
 #
 # The standard library provides a useful `record` macro that allows you to
@@ -60,8 +60,8 @@ struct Struct
   # p2 = Point.new 1, 2
   # p3 = Point.new 3, 4
   #
-  # p1 == p2            #=> true
-  # p1 == p3            #=> false
+  # p1 == p2 # => true
+  # p1 == p3 # => false
   # ```
   macro def ==(other : self) : Bool
     {% for ivar in @type.instance_vars %}
@@ -91,8 +91,8 @@ struct Struct
   # end
   #
   # p1 = Point.new 1, 2
-  # p1.to_s             # "Point(@x=1, @y=2)"
-  # p1.inspect          # "Point(@x=1, @y=2)"
+  # p1.to_s    # "Point(@x=1, @y=2)"
+  # p1.inspect # "Point(@x=1, @y=2)"
   # ```
   macro def inspect(io : IO) : Nil
     io << "{{@type.name.id}}("

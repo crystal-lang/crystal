@@ -84,7 +84,7 @@ class Crystal::CodeGenVisitor
     case op
     when "==" then builder.icmp LLVM::IntPredicate::EQ, p1, p2
     when "!=" then builder.icmp LLVM::IntPredicate::NE, p1, p2
-    else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+    else           raise "Bug: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
@@ -92,11 +92,11 @@ class Crystal::CodeGenVisitor
     case op
     when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
     when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-    when "<" then return builder.icmp LLVM::IntPredicate::ULT, p1, p2
+    when "<"  then return builder.icmp LLVM::IntPredicate::ULT, p1, p2
     when "<=" then return builder.icmp LLVM::IntPredicate::ULE, p1, p2
-    when ">" then return builder.icmp LLVM::IntPredicate::UGT, p1, p2
+    when ">"  then return builder.icmp LLVM::IntPredicate::UGT, p1, p2
     when ">=" then return builder.icmp LLVM::IntPredicate::UGE, p1, p2
-    else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+    else           raise "Bug: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
@@ -104,7 +104,7 @@ class Crystal::CodeGenVisitor
     case op
     when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
     when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-    else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+    else           raise "Bug: trying to codegen #{t1} #{op} #{t2}"
     end
   end
 
@@ -118,26 +118,26 @@ class Crystal::CodeGenVisitor
     end
 
     @last = case op
-            when "+" then builder.add p1, p2
-            when "-" then builder.sub p1, p2
-            when "*" then builder.mul p1, p2
+            when "+"               then builder.add p1, p2
+            when "-"               then builder.sub p1, p2
+            when "*"               then builder.mul p1, p2
             when "/", "unsafe_div" then t1.signed? ? builder.sdiv(p1, p2) : builder.udiv(p1, p2)
             when "%", "unsafe_mod" then t1.signed? ? builder.srem(p1, p2) : builder.urem(p1, p2)
-            when "unsafe_shl" then builder.shl(p1, p2)
-            when "unsafe_shr" then t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2)
-            when "|" then or(p1, p2)
-            when "&" then and(p1, p2)
-            when "^" then builder.xor(p1, p2)
-            when "==" then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
-            when "!=" then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-            when "<" then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SLT : LLVM::IntPredicate::ULT), p1, p2
-            when "<=" then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SLE : LLVM::IntPredicate::ULE), p1, p2
-            when ">" then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SGT : LLVM::IntPredicate::UGT), p1, p2
-            when ">=" then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SGE : LLVM::IntPredicate::UGE), p1, p2
-            else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+            when "unsafe_shl"      then builder.shl(p1, p2)
+            when "unsafe_shr"      then t1.signed? ? builder.ashr(p1, p2) : builder.lshr(p1, p2)
+            when "|"               then or(p1, p2)
+            when "&"               then and(p1, p2)
+            when "^"               then builder.xor(p1, p2)
+            when "=="              then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
+            when "!="              then return builder.icmp LLVM::IntPredicate::NE, p1, p2
+            when "<"               then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SLT : LLVM::IntPredicate::ULT), p1, p2
+            when "<="              then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SLE : LLVM::IntPredicate::ULE), p1, p2
+            when ">"               then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SGT : LLVM::IntPredicate::UGT), p1, p2
+            when ">="              then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SGE : LLVM::IntPredicate::UGE), p1, p2
+            else                        raise "Bug: trying to codegen #{t1} #{op} #{t2}"
             end
 
-    if t1.normal_rank != t2.normal_rank  && t1.rank < t2.rank
+    if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
       @last = trunc @last, llvm_type(t1)
     end
 
@@ -162,17 +162,17 @@ class Crystal::CodeGenVisitor
     end
 
     @last = case op
-            when "+" then builder.fadd p1, p2
-            when "-" then builder.fsub p1, p2
-            when "*" then builder.fmul p1, p2
-            when "/" then builder.fdiv p1, p2
+            when "+"  then builder.fadd p1, p2
+            when "-"  then builder.fsub p1, p2
+            when "*"  then builder.fmul p1, p2
+            when "/"  then builder.fdiv p1, p2
             when "==" then return builder.fcmp LLVM::RealPredicate::OEQ, p1, p2
             when "!=" then return builder.fcmp LLVM::RealPredicate::ONE, p1, p2
-            when "<" then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
+            when "<"  then return builder.fcmp LLVM::RealPredicate::OLT, p1, p2
             when "<=" then return builder.fcmp LLVM::RealPredicate::OLE, p1, p2
-            when ">" then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
+            when ">"  then return builder.fcmp LLVM::RealPredicate::OGT, p1, p2
             when ">=" then return builder.fcmp LLVM::RealPredicate::OGE, p1, p2
-            else raise "Bug: trying to codegen #{t1} #{op} #{t2}"
+            else           raise "Bug: trying to codegen #{t1} #{op} #{t2}"
             end
     @last = trunc_float t1, @last if t1.rank < t2.rank
     @last
@@ -306,7 +306,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_struct_set(node, target_def, call_args)
     set_aggregate_field(node, target_def, call_args) do
       type = context.type as CStructOrUnionType
-      name = target_def.name[0 .. -2]
+      name = target_def.name[0..-2]
 
       struct_field_ptr(type, name, call_args[0])
     end
@@ -353,7 +353,7 @@ class Crystal::CodeGenVisitor
       context.vars["value"] = existing_value if existing_value
     end
 
-    var_name = target_def.name[0 ... -1]
+    var_name = target_def.name[0...-1]
     scope = context.type as CStructOrUnionType
     field_type = scope.vars[var_name].type
 
@@ -484,7 +484,7 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_fun_call(node, target_def, call_args)
     closure_ptr = call_args[0]
-    args = call_args[1 .. -1]
+    args = call_args[1..-1]
 
     fun_type = context.type as FunInstanceType
     0.upto(target_def.args.size - 1) do |i|

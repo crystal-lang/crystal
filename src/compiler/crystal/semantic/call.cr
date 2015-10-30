@@ -33,7 +33,6 @@ class Crystal::Call
     ::raise "Zero target defs for #{self}"
   end
 
-
   def update_input(from)
     recalculate
   end
@@ -527,16 +526,16 @@ class Crystal::Call
     when NonGenericModuleType
       ancestors = parent_visitor.scope.ancestors
       index_of_ancestor = ancestors.index(lookup).not_nil!
-      parents = ancestors[index_of_ancestor + 1 .. -1]
+      parents = ancestors[index_of_ancestor + 1..-1]
     when GenericModuleType
       ancestors = parent_visitor.scope.ancestors
       index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(IncludedGenericModule) && ancestor.module == lookup }.not_nil!
-      parents = ancestors[index_of_ancestor + 1 .. -1]
+      parents = ancestors[index_of_ancestor + 1..-1]
     when GenericType
       ancestors = parent_visitor.scope.ancestors
       index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(InheritedGenericClass) && ancestor.extended_class == lookup }
       if index_of_ancestor
-        parents = ancestors[index_of_ancestor + 1 .. -1]
+        parents = ancestors[index_of_ancestor + 1..-1]
       else
         parents = ancestors
       end
@@ -635,7 +634,7 @@ class Crystal::Call
   def match_block_arg(match)
     block_arg = match.def.block_arg
     return nil, nil unless block_arg
-    return nil, nil  unless match.def.yields || match.def.uses_block_arg
+    return nil, nil unless match.def.yields || match.def.uses_block_arg
 
     yield_vars = nil
     block_arg_type = nil
@@ -918,7 +917,7 @@ class Crystal::Call
 
     args = MetaVars.new
 
-    if self_type#.is_a?(Type)
+    if self_type # .is_a?(Type)
       args["self"] = MetaVar.new("self", self_type)
     end
 

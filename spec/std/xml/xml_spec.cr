@@ -113,7 +113,7 @@ describe XML do
   </person>
 </people>
 XML
-)
+    )
   end
 
   it "navigates in tree" do
@@ -181,7 +181,7 @@ XML
       ))
     namespaces = doc.root.not_nil!.namespaces
     namespaces.should eq({
-      "xmlns" => "http://www.w3.org/2005/Atom",
+      "xmlns"          => "http://www.w3.org/2005/Atom",
       "xmlns:openSearch": "http://a9.com/-/spec/opensearchrss/1.0/",
     })
   end

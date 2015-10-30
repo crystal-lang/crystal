@@ -11,7 +11,7 @@ lib LibC
 end
 
 class File
-  def flock_shared blocking = true
+  def flock_shared(blocking = true)
     flock_shared blocking
     begin
       yield
@@ -22,11 +22,11 @@ class File
 
   # Place a shared advisory lock. More than one process may hold a shared lock for a given file at a given time.
   # Errno::EWOULDBLOCK is raised if *blocking* is set to `false` and an existing exclusive lock is set.
-  def flock_shared blocking = true
+  def flock_shared(blocking = true)
     flock LibC::FlockOp::SH, blocking
   end
 
-  def flock_exclusive blocking = true
+  def flock_exclusive(blocking = true)
     flock_exclusive blocking
     begin
       yield
@@ -37,7 +37,7 @@ class File
 
   # Place an exclusive advisory lock. Only one process may hold an exclusive lock for a given file at a given time.
   # Errno::EWOULDBLOCK is raised if *blocking* is set to `false` and any existing lock is set.
-  def flock_exclusive blocking = true
+  def flock_exclusive(blocking = true)
     flock LibC::FlockOp::EX, blocking
   end
 
@@ -46,7 +46,7 @@ class File
     flock LibC::FlockOp::UN
   end
 
-  private def flock op : LibC::FlockOp, blocking = true : Bool
+  private def flock(op : LibC::FlockOp, blocking = true : Bool)
     op |= LibC::FlockOp::NB unless blocking
 
     if LibC.flock(@fd, op) != 0

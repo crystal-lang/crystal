@@ -135,7 +135,7 @@ describe "Type inference: NoReturn" do
   end
 
   it "computes NoReturn in a lazy way inside if then (#314) (5)" do
-    assert_error  %(
+    assert_error %(
       require "prelude"
 
       a = 1
@@ -258,7 +258,7 @@ describe "Type inference: NoReturn" do
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (5)" do
-    assert_error  %(
+    assert_error %(
       require "prelude"
 
       a = 1

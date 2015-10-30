@@ -16,7 +16,7 @@ module Spec
   def self.relative_file(file)
     cwd = Dir.working_directory
     if file.starts_with?(cwd)
-      file = ".#{file[cwd.size .. -1]}"
+      file = ".#{file[cwd.size..-1]}"
     end
     file
   end

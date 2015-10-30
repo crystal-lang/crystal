@@ -148,7 +148,7 @@ class HTTP::Response
     when 503 then "Service Unavailable"
     when 504 then "Gateway Timeout"
     when 505 then "HTTP Version Not Supported"
-    else ""
+    else          ""
     end
   end
 end

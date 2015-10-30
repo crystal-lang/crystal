@@ -9,7 +9,7 @@ class Crystal::Call
 
   def raise_struct_or_union_field_not_found(owner, def_name)
     if def_name.ends_with?('=')
-    def_name = def_name[0 .. -2]
+      def_name = def_name[0..-2]
     end
 
     var = owner.vars[def_name]?

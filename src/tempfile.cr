@@ -10,9 +10,9 @@ end
 # tempfile = Tempfile.new("foo")
 # # or
 # tempfile = Tempfile.open("foo") { |file|
-#              file.print("foobar")
-#            }
-# 
+#   file.print("foobar")
+# }
+#
 # File.size(tempfile.path)       # => 6
 # File.stat(tempfile.path).mtime # => 2015-10-20 13:11:12 UTC
 # File.exists?(tempfile.path)    # => true
@@ -60,8 +60,8 @@ class Tempfile < IO::FileDescriptor
   #
   # ```
   # tempfile = Tempfile.open("foo") { |file|
-  #              file.print("bar")
-  #            }
+  #   file.print("bar")
+  # }
   # File.read(tempfile.path) # => "bar"
   # ```
   def self.open(filename)

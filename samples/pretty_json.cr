@@ -103,4 +103,3 @@ end
 printer = PrettyPrinter.new(STDIN, STDOUT)
 printer.print
 STDOUT.puts
-

@@ -26,7 +26,7 @@ describe "Normalize: multi assign" do
   end
 
   it "normalizes n to 1 with []" do
-    assert_normalize "a = 1; a[0] = 1, 2, 3","a = 1\na[0] = [1, 2, 3]"
+    assert_normalize "a = 1; a[0] = 1, 2, 3", "a = 1\na[0] = [1, 2, 3]"
   end
 
   it "normalizes n to n with call" do
@@ -38,6 +38,6 @@ describe "Normalize: multi assign" do
   end
 
   it "normalizes n to 1 with call" do
-    assert_normalize "a = 1; a.foo = 1, 2, 3","a = 1\na.foo = [1, 2, 3]"
+    assert_normalize "a = 1; a.foo = 1, 2, 3", "a = 1\na.foo = [1, 2, 3]"
   end
 end

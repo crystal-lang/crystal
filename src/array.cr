@@ -7,7 +7,7 @@
 # An Array can be created using the usual `new` method (several are provided), or with an array literal:
 #
 # ```
-# Array(Int32).new  #=> []
+# Array(Int32).new  # => []
 # [1, 2, 3]         # Array(Int32)
 # [1, "hello", 'x'] # Array(Int32 | String | Char)
 # ```
@@ -31,8 +31,8 @@
 # `new` method and a `<<` method. `Set` is one such type:
 #
 # ```
-# set = Set{1, 2, 3} #=> [1, 2, 3]
-# set.class          #=> Set(Int32)
+# set = Set{1, 2, 3} # => [1, 2, 3]
+# set.class          # => Set(Int32)
 # ```
 #
 # The above is the same as this:
@@ -51,7 +51,7 @@ class Array(T)
   # Returns the number of elements in the array.
   #
   # ```
-  # [:foo, :bar].size #=> 2
+  # [:foo, :bar].size # => 2
   # ```
   getter size
   @size :: Int32
@@ -75,7 +75,7 @@ class Array(T)
   #
   # ```
   # ary = Array(Int32).new(5)
-  # ary.size #=> 0
+  # ary.size # => 0
   # ```
   def initialize(initial_capacity : Int)
     if initial_capacity < 0
@@ -95,12 +95,12 @@ class Array(T)
   # same value in each position.
   #
   # ```
-  # Array.new(3, 'a') #=> ['a', 'a', 'a']
+  # Array.new(3, 'a') # => ['a', 'a', 'a']
   #
   # ary = Array.new(3, [1])
-  # puts ary #=> [[1], [1], [1]]
+  # puts ary # => [[1], [1], [1]]
   # ary[0][0] = 2
-  # puts ary #=> [[2], [2], [2]]
+  # puts ary # => [[2], [2], [2]]
   # ```
   def initialize(size : Int, value : T)
     if size < 0
@@ -122,12 +122,12 @@ class Array(T)
   # block's value in that index.
   #
   # ```
-  # Array.new(3) { |i| (i + 1) ** 2 } #=> [1, 4, 9]
+  # Array.new(3) { |i| (i + 1) ** 2 } # => [1, 4, 9]
   #
   # ary = Array.new(3) { [1] }
-  # puts ary #=> [[1], [1], [1]]
+  # puts ary # => [[1], [1], [1]]
   # ary[0][0] = 2
-  # puts ary #=> [[2], [1], [1]]
+  # puts ary # => [[2], [1], [1]]
   # ```
   def self.new(size : Int, &block : Int32 -> T)
     Array(T).build(size) do |buffer|
@@ -159,9 +159,9 @@ class Array(T)
   # returns true for both arrays, the caller and the argument.
   #
   # ```
-  # ary = [1,2,3]
-  # ary == [1,2,3] # => true
-  # ary == [2,3]   # => false
+  # ary = [1, 2, 3]
+  # ary == [1, 2, 3] # => true
+  # ary == [2, 3]    # => false
   # ```
   def ==(other : Array)
     equals?(other) { |x, y| x == y }
@@ -183,9 +183,9 @@ class Array(T)
   # If all elements are equal, the comparison is based on the size of the arrays.
   #
   # ```
-  # [8] <=> [1,2,3] # => 1
-  # [2] <=> [4,2,3] # => -1
-  # [1,2] <=> [1,2] # => 0
+  # [8] <=> [1, 2, 3] # => 1
+  # [2] <=> [4, 2, 3] # => -1
+  # [1, 2] <=> [1, 2] # => 0
   # ```
   def <=>(other : Array)
     min_size = Math.min(size, other.size)
@@ -201,8 +201,8 @@ class Array(T)
   # array.
   #
   # ```
-  # [ 1, 1, 3, 5 ] & [ 1, 2, 3 ]                 #=> [ 1, 3 ]
-  # [ 'a', 'b', 'b', 'z' ] & [ 'a', 'b', 'c' ]   #=> [ 'a', 'b' ]
+  # [1, 1, 3, 5] & [1, 2, 3]               # => [ 1, 3 ]
+  # ['a', 'b', 'b', 'z'] & ['a', 'b', 'c'] # => [ 'a', 'b' ]
   # ```
   #
   # See also: `#uniq`.
@@ -230,7 +230,7 @@ class Array(T)
   # any duplicates and preserving the order from the original array.
   #
   # ```
-  # [ "a", "b", "c" ] | [ "c", "d", "a" ]    #=> [ "a", "b", "c", "d" ]
+  # ["a", "b", "c"] | ["c", "d", "a"] # => [ "a", "b", "c", "d" ]
   # ```
   #
   # See also: `#uniq`.
@@ -261,8 +261,8 @@ class Array(T)
   # types of both the other arrays.
   #
   # ```
-  # [1,2] + ["a"] # => [1,2,"a"] of (Int32 | String)
-  # [1,2] + [2,3] # => [1,2,2,3]
+  # [1, 2] + ["a"]  # => [1,2,"a"] of (Int32 | String)
+  # [1, 2] + [2, 3] # => [1,2,2,3]
   # ```
   def +(other : Array(U))
     new_size = size + other.size
@@ -278,7 +278,7 @@ class Array(T)
   # preserved.
   #
   # ```
-  # [1,2,3] - [2,1] # => [3]
+  # [1, 2, 3] - [2, 1] # => [3]
   # ```
   def -(other : Array(U))
     ary = Array(T).new(Math.max(size - other.size, 0))
@@ -292,7 +292,7 @@ class Array(T)
   # Repetition: Returns a new array built by concatenating `times` copies of `ary`.
   #
   # ```
-  # [ "a", "b", "c" ] * 2   #=> [ "a", "b", "c", "a", "b", "c" ]
+  # ["a", "b", "c"] * 2 # => [ "a", "b", "c", "a", "b", "c" ]
   # ```
   def *(times : Int)
     ary = Array(T).new(size * times)
@@ -305,7 +305,7 @@ class Array(T)
   # Append. Alias for `push`.
   #
   # ```
-  # a = [1,2]
+  # a = [1, 2]
   # a << 3 # => [1,2,3]
   # ```
   def <<(value : T)
@@ -319,10 +319,10 @@ class Array(T)
   #
   # ```
   # ary = ['a', 'b', 'c']
-  # ary[0]  #=> 'a'
-  # ary[2]  #=> 'c'
-  # ary[-1] #=> 'c'
-  # ary[-2] #=> 'b'
+  # ary[0]  # => 'a'
+  # ary[2]  # => 'c'
+  # ary[-1] # => 'c'
+  # ary[-2] # => 'b'
   #
   # ary[3]  # raises IndexError
   # ary[-4] # raises IndexError
@@ -339,10 +339,10 @@ class Array(T)
   #
   # ```
   # ary = ['a', 'b', 'c']
-  # ary[0]?  #=> 'a'
-  # ary[2]?  #=> 'c'
-  # ary[-1]? #=> 'c'
-  # ary[-2]? #=> 'b'
+  # ary[0]?  # => 'a'
+  # ary[2]?  # => 'c'
+  # ary[-1]? # => 'c'
+  # ary[-2]? # => 'b'
   #
   # ary[3]?  # nil
   # ary[-4]? # nil
@@ -358,7 +358,7 @@ class Array(T)
   # Raises `IndexError` if trying to set an element outside the array's range.
   #
   # ```
-  # ary = [1,2,3]
+  # ary = [1, 2, 3]
   # ary[0] = 5
   # p ary # => [5,2,3]
   #
@@ -381,11 +381,11 @@ class Array(T)
   # ```
   # a = [1, 2, 3, 4, 5]
   # a[1, 3] = 6
-  # a #=> [1, 6, 5]
+  # a # => [1, 6, 5]
   #
   # a = [1, 2, 3, 4, 5]
   # a[1, 0] = 6
-  # a #=> [1, 6, 2, 3, 4, 5]
+  # a # => [1, 6, 2, 3, 4, 5]
   # ```
   def []=(index : Int, count : Int, value : T)
     raise ArgumentError.new "negative count: #{count}" if count < 0
@@ -413,12 +413,12 @@ class Array(T)
   #
   # ```
   # a = [1, 2, 3, 4, 5]
-  # a[1 .. 3] = 6
-  # a #=> [1, 6, 5]
+  # a[1..3] = 6
+  # a # => [1, 6, 5]
   #
   # a = [1, 2, 3, 4, 5]
-  # a[1 ... 1] = 6
-  # a #=> [1, 6, 2, 3, 4, 5]
+  # a[1...1] = 6
+  # a # => [1, 6, 2, 3, 4, 5]
   # ```
   def []=(range : Range(Int, Int), value : T)
     self[*range_to_index_and_count(range)] = value
@@ -429,15 +429,15 @@ class Array(T)
   # ```
   # a = [1, 2, 3, 4, 5]
   # a[1, 3] = [6, 7, 8]
-  # a #=> [1, 6, 7, 8, 5]
+  # a # => [1, 6, 7, 8, 5]
   #
   # a = [1, 2, 3, 4, 5]
   # a[1, 3] = [6, 7]
-  # a #=> [1, 6, 7, 5]
+  # a # => [1, 6, 7, 5]
   #
   # a = [1, 2, 3, 4, 5]
   # a[1, 3] = [6, 7, 8, 9, 10]
-  # a #=> [1, 6, 7, 8, 9, 10, 5]
+  # a # => [1, 6, 7, 8, 9, 10, 5]
   # ```
   def []=(index : Int, count : Int, values : Array(T))
     raise ArgumentError.new "negative count: #{count}" if count < 0
@@ -471,16 +471,16 @@ class Array(T)
   #
   # ```
   # a = [1, 2, 3, 4, 5]
-  # a[1 .. 3] = [6, 7, 8]
-  # a #=> [1, 6, 7, 8, 5]
+  # a[1..3] = [6, 7, 8]
+  # a # => [1, 6, 7, 8, 5]
   #
   # a = [1, 2, 3, 4, 5]
-  # a[1 .. 3] = [6, 7]
-  # a #=> [1, 6, 7, 5]
+  # a[1..3] = [6, 7]
+  # a # => [1, 6, 7, 5]
   #
   # a = [1, 2, 3, 4, 5]
-  # a[1 .. 3] = [6, 7, 8, 9, 10]
-  # a #=> [1, 6, 7, 8, 9, 10, 5]
+  # a[1..3] = [6, 7, 8, 9, 10]
+  # a # => [1, 6, 7, 8, 9, 10, 5]
   # ```
   def []=(range : Range(Int, Int), values : Array(T))
     self[*range_to_index_and_count(range)] = values
@@ -495,11 +495,11 @@ class Array(T)
   # Raises `IndexError` if the starting index is out of range.
   #
   # ```
-  # a = [ "a", "b", "c", "d", "e" ]
-  # a[1..3] # => ["b", "c", "d"]
-  # a[4..7] # => ["e"]
-  # a[6..10] # => Index Error
-  # a[5..10] # => []
+  # a = ["a", "b", "c", "d", "e"]
+  # a[1..3]    # => ["b", "c", "d"]
+  # a[4..7]    # => ["e"]
+  # a[6..10]   # => Index Error
+  # a[5..10]   # => []
   # a[-2...-1] # => ["d"]
   # ```
   def [](range : Range(Int, Int))
@@ -516,11 +516,11 @@ class Array(T)
   # Raises `IndexError` if the starting index is out of range.
   #
   # ```
-  # a = [ "a", "b", "c", "d", "e" ]
+  # a = ["a", "b", "c", "d", "e"]
   # a[-3, 3] # => ["c", "d", "e"]
-  # a[6, 1] # => Index Error
-  # a[1, 2] # => ["b", "c"]
-  # a[5, 1] # => []
+  # a[6, 1]  # => Index Error
+  # a[1, 2]  # => ["b", "c"]
+  # a[5, 1]  # => []
   # ```
   def [](start : Int, count : Int)
     raise ArgumentError.new "negative count: #{count}" if count < 0
@@ -549,8 +549,8 @@ class Array(T)
   #
   # ```
   # a = [:foo, :bar]
-  # a.at(0) #=> :foo
-  # a.at(2) #=> IndexError
+  # a.at(0) # => :foo
+  # a.at(2) # => IndexError
   # ```
   @[AlwaysInline]
   def at(index : Int)
@@ -562,8 +562,8 @@ class Array(T)
   #
   # ```
   # a = [:foo, :bar]
-  # a.at(0) { :baz } #=> :foo
-  # a.at(2) { :baz } #=> :baz
+  # a.at(0) { :baz } # => :foo
+  # a.at(2) { :baz } # => :baz
   # ```
   def at(index : Int)
     index += size if index < 0
@@ -578,10 +578,10 @@ class Array(T)
   # Raises if any index is invalid.
   #
   # ```
-  # ["a", "b", "c", "d"].values_at(0, 2) #=> {"a", "c"}
+  # ["a", "b", "c", "d"].values_at(0, 2) # => {"a", "c"}
   # ```
   def values_at(*indexes : Int)
-    indexes.map {|index| self[index] }
+    indexes.map { |index| self[index] }
   end
 
   # :nodoc:
@@ -592,8 +592,8 @@ class Array(T)
   # Removes all elements from self.
   #
   # ```
-  # a = [ "a", "b", "c", "d", "e" ]
-  # a.clear    #=> []
+  # a = ["a", "b", "c", "d", "e"]
+  # a.clear # => []
   # ```
   def clear
     @buffer.clear(@size)
@@ -610,12 +610,12 @@ class Array(T)
   # ary = [[1, 2], [3, 4]]
   # ary2 = ary.clone
   # ary[0][0] = 5
-  # puts ary  #=> [[5, 2], [3, 4]]
-  # puts ary2 #=> [[1, 2], [3, 4]]
+  # puts ary  # => [[5, 2], [3, 4]]
+  # puts ary2 # => [[1, 2], [3, 4]]
   #
   # ary2 << [7, 8]
-  # puts ary  #=> [[5, 2], [3, 4]]
-  # puts ary2 #=> [[1, 2], [3, 4], [7, 8]]
+  # puts ary  # => [[5, 2], [3, 4]]
+  # puts ary2 # => [[1, 2], [3, 4], [7, 8]]
   # ```
   def clone
     Array(T).new(size) { |i| @buffer[i].clone as T }
@@ -624,7 +624,7 @@ class Array(T)
   # Returns a copy of self with all nil elements removed.
   #
   # ```
-  # ["a", nil, "b", nil, "c", nil].compact #=> ["a", "b", "c"]
+  # ["a", nil, "b", nil, "c", nil].compact # => ["a", "b", "c"]
   # ```
   def compact
     compact_map &.itself
@@ -635,7 +635,7 @@ class Array(T)
   # ```
   # ary = ["a", nil, "b", nil, "c"]
   # ary.compact!
-  # ary          #=> ["a", "b", "c"]
+  # ary # => ["a", "b", "c"]
   # ```
   def compact!
     delete nil
@@ -646,7 +646,7 @@ class Array(T)
   # ```
   # ary = ["a", "b"]
   # ary.concat(["c", "d"])
-  # ary                    #=> ["a", "b", "c", "d"]
+  # ary # => ["a", "b", "c", "d"]
   # ```
   def concat(other : Array)
     other_size = other.size
@@ -688,7 +688,7 @@ class Array(T)
   # ```
   # a = ["a", "b", "b", "b", "c"]
   # a.delete("b")
-  # a #=> ["a", "c"]
+  # a # => ["a", "c"]
   # ```
   def delete(obj)
     reject! { |e| e == obj } != nil
@@ -699,9 +699,9 @@ class Array(T)
   #
   # ```
   # a = ["ant", "bat", "cat", "dog"]
-  # a.delete_at(2)  #=> "cat"
-  # a               #=> ["ant", "bat", "dog"]
-  # a.delete_at(99) #=> IndexError
+  # a.delete_at(2)  # => "cat"
+  # a               # => ["ant", "bat", "dog"]
+  # a.delete_at(99) # => IndexError
   # ```
   def delete_at(index : Int)
     index = check_index_out_of_bounds index
@@ -719,9 +719,9 @@ class Array(T)
   #
   # ```
   # a = ["ant", "bat", "cat", "dog"]
-  # a.delete_at(1..2)  #=> ["bat", "cat"]
-  # a                  #=> ["ant", "dog"]
-  # a.delete_at(99..100)  #=> IndexError
+  # a.delete_at(1..2)    # => ["bat", "cat"]
+  # a                    # => ["ant", "dog"]
+  # a.delete_at(99..100) # => IndexError
   # ```
   def delete_at(range : Range(Int, Int))
     from, size = range_to_index_and_count(range)
@@ -734,9 +734,9 @@ class Array(T)
   #
   # ```
   # a = ["ant", "bat", "cat", "dog"]
-  # a.delete_at(1, 2)  #=> ["bat", "cat"]
-  # a                  #=> ["ant", "dog"]
-  # a.delete_at(99,1)  #=> IndexError
+  # a.delete_at(1, 2)  # => ["bat", "cat"]
+  # a                  # => ["ant", "dog"]
+  # a.delete_at(99, 1) # => IndexError
   # ```
   def delete_at(index : Int, count : Int)
     val = self[index, count]
@@ -756,12 +756,12 @@ class Array(T)
   # ary = [[1, 2], [3, 4]]
   # ary2 = ary.dup
   # ary[0][0] = 5
-  # puts ary  #=> [[5, 2], [3, 4]]
-  # puts ary2 #=> [[5, 2], [3, 4]]
+  # puts ary  # => [[5, 2], [3, 4]]
+  # puts ary2 # => [[5, 2], [3, 4]]
   #
   # ary2 << [7, 8]
-  # puts ary  #=> [[5, 2], [3, 4]]
-  # puts ary2 #=> [[5, 2], [3, 4], [7, 8]]
+  # puts ary  # => [[5, 2], [3, 4]]
+  # puts ary2 # => [[5, 2], [3, 4], [7, 8]]
   # ```
   def dup
     Array(T).build(@capacity) do |buffer|
@@ -1065,10 +1065,10 @@ class Array(T)
   # That is, for every element that is an array, extract its elements into the new array
   #
   # ```
-  # s = [ 1, 2, 3 ]           #=> [1, 2, 3]
-  # t = [ 4, 5, 6, [7, 8] ]   #=> [4, 5, 6, [7, 8]]
-  # a = [ s, t, 9, 10 ]       #=> [[1, 2, 3], [4, 5, 6, [7, 8]], 9, 10]
-  # a.flatten                 #=> [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  # s = [1, 2, 3]         # => [1, 2, 3]
+  # t = [4, 5, 6, [7, 8]] # => [4, 5, 6, [7, 8]]
+  # a = [s, t, 9, 10]     # => [[1, 2, 3], [4, 5, 6, [7, 8]], 9, 10]
+  # a.flatten             # => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   # ```
   def flatten
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
@@ -1232,11 +1232,11 @@ class Array(T)
   # ```
   # a = ["a", "b"]
   # a.push("c") # => ["a", "b", "c"]
-  # a.push(1) # => Errors, because the array only accepts String
+  # a.push(1)   # => Errors, because the array only accepts String
   #
-  # a = ["a", "b"] of (Int32|String)
+  # a = ["a", "b"] of (Int32 | String)
   # a.push("c") # => ["a", "b", "c"]
-  # a.push(1) # => ["a", "b", "c", 1]
+  # a.push(1)   # => ["a", "b", "c", 1]
   # ```
   def push(value : T)
     check_needs_resize
@@ -1411,7 +1411,7 @@ class Array(T)
     dup.sort!
   end
 
-  def sort(&block: T, T -> Int32)
+  def sort(&block : T, T -> Int32)
     dup.sort! &block
   end
 
@@ -1420,16 +1420,16 @@ class Array(T)
     self
   end
 
-  def sort!(&block: T, T -> Int32)
+  def sort!(&block : T, T -> Int32)
     Array.quicksort!(@buffer, @size, block)
     self
   end
 
-  def sort_by(&block: T -> _)
+  def sort_by(&block : T -> _)
     dup.sort_by! &block
   end
 
-  def sort_by!(&block: T -> _)
+  def sort_by!(&block : T -> _)
     sort! { |x, y| block.call(x) <=> block.call(y) }
   end
 
@@ -1467,8 +1467,8 @@ class Array(T)
   #
   # ```
   # a = [[:a, :b], [:c, :d], [:e, :f]]
-  # a.transpose   # => [[:a, :c, :e], [:b, :d, :f]]
-  # a             # => [[:a, :b], [:c, :d], [:e, :f]]
+  # a.transpose # => [[:a, :c, :e], [:b, :d, :f]]
+  # a           # => [[:a, :b], [:c, :d], [:e, :f]]
   # ```
   def transpose
     return Array(Array(typeof(first.first))).new if empty?
@@ -1489,9 +1489,9 @@ class Array(T)
   # Returns a new array by removing duplicate values in `self`.
   #
   # ```
-  # a = [ "a", "a", "b", "b", "c" ]
-  # a.uniq   # => ["a", "b", "c"]
-  # a        # => [ "a", "a", "b", "b", "c" ]
+  # a = ["a", "a", "b", "b", "c"]
+  # a.uniq # => ["a", "b", "c"]
+  # a      # => [ "a", "a", "b", "b", "c" ]
   # ```
   def uniq
     uniq &.itself
@@ -1501,7 +1501,7 @@ class Array(T)
   # value for comparison.
   #
   # ```
-  # a = [{"student","sam"}, {"student","george"}, {"teacher","matz"}]
+  # a = [{"student", "sam"}, {"student", "george"}, {"teacher", "matz"}]
   # a.uniq { |s| s[0] } # => [{"student", "sam"}, {"teacher", "matz"}]
   # a                   # => [{"student", "sam"}, {"student", "george"}, {"teacher", "matz"}]
   # ```
@@ -1517,9 +1517,9 @@ class Array(T)
   # Removes duplicate elements from `self`. Returns `self`.
   #
   # ```
-  # a = [ "a", "a", "b", "b", "c" ]
-  # a.uniq!   # => ["a", "b", "c"]
-  # a         # => ["a", "b", "c"]
+  # a = ["a", "a", "b", "b", "c"]
+  # a.uniq! # => ["a", "b", "c"]
+  # a       # => ["a", "b", "c"]
   # ```
   def uniq!
     uniq! &.itself
@@ -1528,7 +1528,7 @@ class Array(T)
   # Removes duplicate elements from `self`, using the block's value for comparison. Returns `self`.
   #
   # ```
-  # a = [{"student","sam"}, {"student","george"}, {"teacher","matz"}]
+  # a = [{"student", "sam"}, {"student", "george"}, {"teacher", "matz"}]
   # a.uniq! { |s| s[0] } # => [{"student", "sam"}, {"teacher", "matz"}]
   # a                    # => [{"student", "sam"}, {"teacher", "matz"}]
   # ```

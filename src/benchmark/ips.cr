@@ -66,7 +66,7 @@ module Benchmark
 
           after = Time.now
 
-          item.set_cycles(after-before, count)
+          item.set_cycles(after - before, count)
         end
       end
 
@@ -82,7 +82,7 @@ module Benchmark
             item.call_for_100ms
             after = Time.now
 
-            measurements << after-before
+            measurements << after - before
 
             break if Time.now >= target
           end
@@ -143,7 +143,8 @@ module Benchmark
 
       @ran = false
 
-      def initialize(@label, @action) end
+      def initialize(@label, @action)
+      end
 
       def ran?
         @ran

@@ -204,13 +204,13 @@ module Crystal
       end
 
       new_node = if left.is_a?(Var) || (left.is_a?(IsA) && left.obj.is_a?(Var))
-               If.new(left, node.right, left.clone)
-             elsif left.is_a?(Assign) && left.target.is_a?(Var)
-               If.new(left, node.right, left.target.clone)
-             else
-               temp_var = new_temp_var
-               If.new(Assign.new(temp_var.clone, left), node.right, temp_var.clone)
-             end
+                   If.new(left, node.right, left.clone)
+                 elsif left.is_a?(Assign) && left.target.is_a?(Var)
+                   If.new(left, node.right, left.target.clone)
+                 else
+                   temp_var = new_temp_var
+                   If.new(Assign.new(temp_var.clone, left), node.right, temp_var.clone)
+                 end
       new_node.binary = :and
       new_node.location = node.location
       new_node

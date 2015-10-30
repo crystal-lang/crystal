@@ -77,7 +77,7 @@ def intersect_sphere(ray, center, radius)
 
   thc = Math.sqrt(r2 - d2)
   t0 = tca - thc
-  #t1 = tca + thc
+  # t1 = tca + thc
   if t0 > 10_000
     return nil
   end
@@ -105,10 +105,10 @@ w = 20 * 4
 h = 10 * 4
 
 scene = [
-    Sphere.new(Vector.new(-1.0, 0.0, 3.0), 0.3, RED),
-    Sphere.new(Vector.new( 0.0, 0.0, 3.0), 0.8, GREEN),
-    Sphere.new(Vector.new( 1.0, 0.0, 3.0), 0.4, BLUE),
-  ]
+  Sphere.new(Vector.new(-1.0, 0.0, 3.0), 0.3, RED),
+  Sphere.new(Vector.new(0.0, 0.0, 3.0), 0.8, GREEN),
+  Sphere.new(Vector.new(1.0, 0.0, 3.0), 0.4, BLUE),
+]
 
 (0...h).each do |j|
   puts "--"
@@ -116,9 +116,9 @@ scene = [
     fw, fi, fj, fh = w.to_f, i.to_f, j.to_f, h.to_f
 
     ray = Ray.new(
-            Vector.new(0.0, 0.0, 0.0),
-            Vector.new((fi-fw/2.0)/fw, (fj-fh/2.0)/fh, 1.0).normalize
-          )
+      Vector.new(0.0, 0.0, 0.0),
+      Vector.new((fi - fw/2.0)/fw, (fj - fh/2.0)/fh, 1.0).normalize
+    )
 
     hit = nil
 

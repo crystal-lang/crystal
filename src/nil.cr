@@ -6,8 +6,8 @@
 #
 # ```
 # str = "Hello world"
-# str.index 'e' #=> 1
-# str.index 'a' #=> nil
+# str.index 'e' # => 1
+# str.index 'a' # => nil
 # ```
 #
 # In the above example, trying to invoke a method on the returned value will

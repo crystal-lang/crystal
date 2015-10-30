@@ -50,19 +50,18 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
         |
       (\#(?:\w|\<|\=|\>|\+|\-|\*|\/|\[|\]|\&|\||\?|\!|\^|\~)+(?:\?|\!)?(?:\(.+?\))?)
       /x do |match_text, match|
-
       # Type#method(...)
       if match[1]?
         sharp_index = match_text.index('#').not_nil!
-        type_name = match_text[0 ... sharp_index]
+        type_name = match_text[0...sharp_index]
 
         paren_index = match_text.index('(')
 
         if paren_index
-          method_name = match_text[sharp_index + 1 ... paren_index]
-          method_args = match_text[paren_index + 1 .. -2]
+          method_name = match_text[sharp_index + 1...paren_index]
+          method_args = match_text[paren_index + 1..-2]
         else
-          method_name = match_text[sharp_index + 1 .. -1]
+          method_name = match_text[sharp_index + 1..-1]
           method_args = ""
         end
 
@@ -88,10 +87,10 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
         paren_index = match_text.index('(')
 
         if paren_index
-          method_name = match_text[1 ... paren_index]
-          method_args = match_text[paren_index + 1 .. -2]
+          method_name = match_text[1...paren_index]
+          method_args = match_text[paren_index + 1..-2]
         else
-          method_name = match_text[1 .. -1]
+          method_name = match_text[1..-1]
           method_args = ""
         end
 

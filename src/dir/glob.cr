@@ -145,8 +145,8 @@ class Dir
           end
         elsif char == '*'
           if idx + 2 < size &&
-                       pattern[idx + 1] == '*' &&
-                       pattern[idx + 2] == File::SEPARATOR
+             pattern[idx + 1] == '*' &&
+             pattern[idx + 2] == File::SEPARATOR
             str << "(?:.*\\" << File::SEPARATOR << ")?"
             idx += 3
             next

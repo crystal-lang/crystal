@@ -7,8 +7,8 @@ require "../subtle"
 # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
 # # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
 #
-# password == "wrong secret"  # => false
-# password == "super secret"  # => true
+# password == "wrong secret" # => false
+# password == "super secret" # => true
 # ```
 #
 # See `Crypto::Bcrypt` for hints to select the cost when generating hashes.
@@ -29,17 +29,17 @@ class Crypto::Bcrypt::Password
   #
   # ```
   # password = Crypto::Bcrypt::Password.new("$2a$10$X6rw/jDiLBuzHV./JjBNXe8/Po4wTL0fhdDNdAdjcKN/Fup8tGCya")
-  # password.version  # => "2a"
-  # password.salt     # => X6rw/jDiLBuzHV./JjBNXe
-  # password.digest   # => 8/Po4wTL0fhdDNdAdjcKN/Fup8tGCya
+  # password.version # => "2a"
+  # password.salt    # => X6rw/jDiLBuzHV./JjBNXe
+  # password.digest  # => 8/Po4wTL0fhdDNdAdjcKN/Fup8tGCya
   # ```
   def initialize(@raw_hash)
     parts = @raw_hash.split("$")
 
     @version = parts[1]
     @cost = parts[2].to_i
-    @salt = parts[3][0 .. 21]
-    @digest = parts[3][22 .. -1]
+    @salt = parts[3][0..21]
+    @digest = parts[3][22..-1]
 
     raise Error.new("Invalid cost") unless COST_RANGE.includes?(cost)
     raise Error.new("Invalid salt size") unless salt.size == 22
@@ -50,8 +50,8 @@ class Crypto::Bcrypt::Password
   #
   # ```
   # password = Crypto::Bcrypt::Password.create("super secret")
-  # password == "wrong secret"  # => false
-  # password == "super secret"  # => true
+  # password == "wrong secret" # => false
+  # password == "super secret" # => true
   # ```
   def ==(password)
     hashed_password = Bcrypt.new(password, salt, cost)

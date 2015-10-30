@@ -36,7 +36,7 @@ class Deque(T)
   #
   # ```
   # deq = Deque(Int32).new(5)
-  # deq.size #=> 0
+  # deq.size # => 0
   # ```
   def initialize(initial_capacity : Int)
     if initial_capacity < 0
@@ -55,7 +55,7 @@ class Deque(T)
   # Creates a new Deque of the given size filled with the same value in each position.
   #
   # ```
-  # Deque.new(3, 'a') #=> Deque{'a', 'a', 'a'}
+  # Deque.new(3, 'a') # => Deque{'a', 'a', 'a'}
   # ```
   def initialize(size : Int, value : T)
     if size < 0
@@ -75,7 +75,7 @@ class Deque(T)
   # value in that index.
   #
   # ```
-  # Deque.new(3) { |i| (i + 1) ** 2 } #=> Deque{1, 4, 9}
+  # Deque.new(3) { |i| (i + 1) ** 2 } # => Deque{1, 4, 9}
   # ```
   def initialize(size : Int, &block : Int32 -> T)
     if size < 0
@@ -97,7 +97,7 @@ class Deque(T)
   # Creates a new Deque that copies its items from an Array.
   #
   # ```
-  # Deque.new([1, 2, 3]) #=> Deque{1, 2, 3}
+  # Deque.new([1, 2, 3]) # => Deque{1, 2, 3}
   # ```
   def self.new(array : Array(T))
     Deque(T).new(array.size) { |i| array[i] }
@@ -417,7 +417,7 @@ class Deque(T)
   # Returns the number of elements in the deque.
   #
   # ```
-  # Deque{:foo, :bar}.size #=> 2
+  # Deque{:foo, :bar}.size # => 2
   # ```
   def size
     @size
@@ -675,5 +675,4 @@ class Deque(T)
       self
     end
   end
-
 end

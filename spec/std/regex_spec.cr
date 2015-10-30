@@ -113,7 +113,7 @@ describe "Regex" do
     end
 
     it "returns a Regex with an Array(String) with special characters" do
-      Regex.union(["+","-"]).should eq /\+|\-/
+      Regex.union(["+", "-"]).should eq /\+|\-/
     end
 
     it "accepts a single Array(String | Regexp) argument" do

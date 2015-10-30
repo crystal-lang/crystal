@@ -1,7 +1,7 @@
 require "./sdl/sdl"
 
 class Point
-  MAX_LIFE = 50
+  MAX_LIFE  = 50
   HALF_LIFE = MAX_LIFE / 2
 
   property :x
@@ -63,9 +63,9 @@ class Point
 end
 
 class MainPoint < Point
-  COUNT = 4
+  COUNT          = 4
   MAX_TAIL_ANGLE = Math::PI / 3
-  TAIL_SPEED = 0.05
+  TAIL_SPEED     = 0.05
 
   def initialize(x, y, angle, speed, color_pattern)
     super

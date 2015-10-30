@@ -18,7 +18,7 @@ class Class
   # Returns the name of this class.
   #
   # ```
-  # String.name #=> "String"
+  # String.name # => "String"
   # ```
   macro def name : String
     {{ @type.name.stringify }}

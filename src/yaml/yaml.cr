@@ -12,7 +12,7 @@ require "./*"
 # require "yaml"
 #
 # data = YAML.load("foo: bar")
-# (data as Hash)["foo"] #=> "bar"
+# (data as Hash)["foo"] # => "bar"
 # ```
 #
 # ### Parsing with `YAML#mapping`
@@ -53,13 +53,13 @@ module YAML
   # ```crystal
   # require "yaml"
   # YAML.load(File.read("./foo.yml"))
-  # #=> {
-  # #=>  "data" => {
-  # #=>    "string" => "foobar",
-  # #=>    "array" => ["John", "Sarah"],
-  # #=>    "hash" => {"key" => "value"},
-  # #=>    "paragraph" => "foo\nbar\n"
-  # #=> }
+  # # => {
+  # # => "data" => {
+  # # => "string" => "foobar",
+  # # => "array" => ["John", "Sarah"],
+  # # => "hash" => {"key" => "value"},
+  # # => "paragraph" => "foo\nbar\n"
+  # # => }
   # ```
   def self.load(data : String)
     parser = YAML::Parser.new(data)
@@ -82,7 +82,7 @@ module YAML
   # ```crystal
   # require "yaml"
   # YAML.load_all(File.read("./foo.yml"))
-  # #=> [{"foo" => "bar"}, {"hello" => "world"}]
+  # # => [{"foo" => "bar"}, {"hello" => "world"}]
   # ```
   def self.load_all(data : String)
     parser = YAML::Parser.new(data)

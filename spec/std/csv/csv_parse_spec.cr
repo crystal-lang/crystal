@@ -19,14 +19,14 @@ describe CSV do
       CSV.parse("hello,world\ngood,bye").should eq([
         ["hello", "world"],
         ["good", "bye"],
-        ])
+      ])
     end
 
     it "parses two rows with the last one having a newline" do
       CSV.parse("hello,world\ngood,bye\n").should eq([
         ["hello", "world"],
         ["good", "bye"],
-        ])
+      ])
     end
 
     it "parses with quote" do

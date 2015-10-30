@@ -23,7 +23,7 @@ describe "HTML" do
 
     it "builds html with some tag attributes" do
       str = HTML::Builder.new.build do
-        a({ href: "http://crystal-lang.org", class: "crystal", id: "main" }) do
+        a({href: "http://crystal-lang.org", class: "crystal", id: "main"}) do
           text "Crystal rocks!"
         end
       end
@@ -32,7 +32,7 @@ describe "HTML" do
 
     it "escapes attribute values" do
       str = HTML::Builder.new.build do
-        a({href: "<>"}) {}
+        a({href: "<>"}) { }
       end
       str.should eq %(<a href="&lt;&gt;"></a>)
     end

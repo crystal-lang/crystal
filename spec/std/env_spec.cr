@@ -31,16 +31,16 @@ describe "ENV" do
   end
 
   it "does .keys" do
-    %w[FOO BAR].each {|k| ENV.keys.should_not contain(k) }
+    %w(FOO BAR).each { |k| ENV.keys.should_not contain(k) }
     ENV["FOO"] = ENV["BAR"] = "1"
-    %w[FOO BAR].each {|k| ENV.keys.should contain(k) }
+    %w(FOO BAR).each { |k| ENV.keys.should contain(k) }
   end
 
   it "does .values" do
-    [1,2].each {|i| ENV.values.should_not contain("SOMEVALUE_#{i}") }
+    [1, 2].each { |i| ENV.values.should_not contain("SOMEVALUE_#{i}") }
     ENV["FOO"] = "SOMEVALUE_1"
     ENV["BAR"] = "SOMEVALUE_2"
-    [1,2].each {|i| ENV.values.should contain("SOMEVALUE_#{i}") }
+    [1, 2].each { |i| ENV.values.should contain("SOMEVALUE_#{i}") }
   end
 
   describe "fetch" do

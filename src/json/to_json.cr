@@ -91,7 +91,7 @@ end
 #     end
 #   end
 # end
-# result #=> %({"address":"Crystal Road 1234","location":[12.3,34.5]})
+# result # => %({"address":"Crystal Road 1234","location":[12.3,34.5]})
 # ```
 module JSON::Builder
   # Writes a JSON object to the given IO. Yields a `JSON::ObjectBuilder`.
@@ -241,7 +241,7 @@ end
 struct Tuple
   def to_json(io)
     io.json_array do |array|
-      {% for i in 0 ... @type.size %}
+      {% for i in 0...@type.size %}
         array << self[{{i}}]
       {% end %}
     end

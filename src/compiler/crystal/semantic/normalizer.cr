@@ -39,7 +39,7 @@ module Crystal
       when Return, Break, Next
         @dead_code = true
       when If, Unless, Expressions, Block, Assign
-       # Skip
+        # Skip
       else
         @dead_code = false
       end
@@ -103,28 +103,28 @@ module Crystal
         end
         exps = Expressions.new(assigns)
 
-      # From:
-      #
-      #     a = 1, 2, 3
-      #
-      # To:
-      #
-      #     a = [1, 2, 3]
+        # From:
+        #
+        #     a = 1, 2, 3
+        #
+        # To:
+        #
+        #     a = [1, 2, 3]
       elsif node.targets.size == 1
         target = node.targets.first
         array = ArrayLiteral.new(node.values)
         exps = transform_multi_assign_target(target, array)
 
-      # From:
-      #
-      #     a, b = c, d
-      #
-      # To:
-      #
-      #     temp1 = c
-      #     temp2 = d
-      #     a = temp1
-      #     b = temp2
+        # From:
+        #
+        #     a, b = c, d
+        #
+        # To:
+        #
+        #     temp1 = c
+        #     temp2 = d
+        #     a = temp1
+        #     b = temp2
       else
         temp_vars = node.values.map { new_temp_var }
 
@@ -239,7 +239,7 @@ module Crystal
       node.else = node.else.transform(self)
       else_dead_code = @dead_code
 
-      @dead_code = then_dead_code &&  else_dead_code
+      @dead_code = then_dead_code && else_dead_code
       node
     end
 

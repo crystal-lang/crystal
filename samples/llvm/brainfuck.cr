@@ -2,8 +2,8 @@
 
 require "llvm"
 
-NUM_CELLS = 30000
-CELL_SIZE_IN_BYTES = 1
+NUM_CELLS          = 30000
+CELL_SIZE_IN_BYTES =     1
 
 def error(message)
   puts message
@@ -243,7 +243,7 @@ end
 
 def get_output_name(filename)
   if filename.ends_with?(".bf")
-    "#{filename[0 .. filename.size - 4]}.ll"
+    "#{filename[0..filename.size - 4]}.ll"
   else
     "#{filename}.ll"
   end

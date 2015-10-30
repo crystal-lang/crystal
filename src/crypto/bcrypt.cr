@@ -28,10 +28,10 @@ class Crypto::Bcrypt
   class Error < Exception
   end
 
-  DEFAULT_COST = 11
-  COST_RANGE = 4 .. 31
-  PASSWORD_RANGE = 1 .. 51
-  SALT_SIZE = 16
+  DEFAULT_COST   = 11
+  COST_RANGE     = 4..31
+  PASSWORD_RANGE = 1..51
+  SALT_SIZE      = 16
 
   # :nodoc:
   BLOWFISH_ROUNDS = 16
@@ -43,7 +43,7 @@ class Crypto::Bcrypt
   # :nodoc:
   CIPHER_TEXT = Int32[
     0x4f727068, 0x65616e42, 0x65686f6c,
-    0x64657253, 0x63727944, 0x6f756274
+    0x64657253, 0x63727944, 0x6f756274,
   ]
 
   def self.hash_secret(password, cost = DEFAULT_COST)
@@ -72,10 +72,10 @@ class Crypto::Bcrypt
 
   def to_s
     @hash ||= begin
-                salt64 = Base64.encode(salt, salt.size)
-                digest64 = Base64.encode(digest, digest.size - 1)
-                "$2a$%02d$%s%s" % {cost, salt64, digest64}
-              end
+      salt64 = Base64.encode(salt, salt.size)
+      digest64 = Base64.encode(digest, digest.size - 1)
+      "$2a$%02d$%s%s" % {cost, salt64, digest64}
+    end
   end
 
   def to_s(io)

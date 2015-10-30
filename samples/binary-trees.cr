@@ -3,6 +3,7 @@
 class Node
   def initialize(@a, @b, @c)
   end
+
   property :a
   property :b
   property :c

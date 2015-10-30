@@ -1123,25 +1123,25 @@ describe "Parser" do
   end
 
   assert_syntax_error "def foo(x = 1, y); end",
-                      "argument must have a default value"
+    "argument must have a default value"
 
   assert_syntax_error " [1, 2, 3 end",
-                      "unterminated array literal", 1, 2
+    "unterminated array literal", 1, 2
 
   assert_syntax_error " {1 => end",
-                      "unterminated hash literal", 1, 2
+    "unterminated hash literal", 1, 2
 
   assert_syntax_error " {1, 2, 3 end",
-                      "unterminated tuple literal", 1, 2
+    "unterminated tuple literal", 1, 2
 
   assert_syntax_error " (1, 2, 3 end",
-                      "unterminated parenthesized expression", 1, 2
+    "unterminated parenthesized expression", 1, 2
 
   assert_syntax_error "foo(1, 2, 3 end",
-                      "expecting token ')', not 'end'", 1, 13
+    "expecting token ')', not 'end'", 1, 13
 
   assert_syntax_error "foo(foo(&.block)",
-                      "expecting token ')', not 'EOF'", 1, 17
+    "expecting token ')', not 'EOF'", 1, 17
 
   assert_syntax_error "case when .foo? then 1; end"
   assert_syntax_error "macro foo;{%end};end"
@@ -1191,15 +1191,15 @@ describe "Parser" do
   assert_syntax_error "lib LibC\n$Errno : Int32\nend", "external variables must start with lowercase, use for example `$errno = Errno : Int32`"
 
   assert_syntax_error "a += 1",
-                      "'+=' before definition of 'a'"
+    "'+=' before definition of 'a'"
   assert_syntax_error "self = 1",
-                      "can't change the value of self"
+    "can't change the value of self"
   assert_syntax_error "self += 1",
-                      "can't change the value of self"
+    "can't change the value of self"
   assert_syntax_error "self, x = 1, 2",
-                      "can't change the value of self"
+    "can't change the value of self"
   assert_syntax_error "x, self = 1, 2",
-                      "can't change the value of self"
+    "can't change the value of self"
 
   assert_syntax_error "macro foo(x : Int32); end"
 

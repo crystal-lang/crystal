@@ -4,6 +4,7 @@ alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
 
 class HashBreaker
   getter x
+
   def initialize(@x)
   end
 end
@@ -79,8 +80,8 @@ describe "Hash" do
     end
 
     it "compares hash of nested hash" do
-      a = { {1 => 2} => 3}
-      b = { {1 => 2} => 3}
+      a = { {1 => 2} => 3 }
+      b = { {1 => 2} => 3 }
       a.should eq(b)
     end
   end
@@ -227,7 +228,7 @@ describe "Hash" do
       a.has_key?(3).should be_true
       a.has_key?(5).should be_false
       a.size.should eq(2)
-      a.should eq({1 => 2, 3 =>4})
+      a.should eq({1 => 2, 3 => 4})
     end
 
     it "deletes only remaining entry" do
@@ -376,7 +377,7 @@ describe "Hash" do
   it "selects" do
     h1 = {a: 1, b: 2, c: 3}
 
-    h2 = h1.select{|k, v| k == :b}
+    h2 = h1.select { |k, v| k == :b }
     h2.should eq({b: 2})
     h2.should_not be(h1)
   end
@@ -384,7 +385,7 @@ describe "Hash" do
   it "selects!" do
     h1 = {a: 1, b: 2, c: 3}
 
-    h2 = h1.select!{|k, v| k == :b}
+    h2 = h1.select! { |k, v| k == :b }
     h2.should eq({b: 2})
     h2.should be(h1)
   end
@@ -392,7 +393,7 @@ describe "Hash" do
   it "returns nil when using select! and no changes were made" do
     h1 = {a: 1, b: 2, c: 3}
 
-    h2 = h1.select!{ true }
+    h2 = h1.select! { true }
     h2.should eq(nil)
     h1.should eq({a: 1, b: 2, c: 3})
   end
@@ -400,7 +401,7 @@ describe "Hash" do
   it "rejects" do
     h1 = {a: 1, b: 2, c: 3}
 
-    h2 = h1.reject{|k, v| k == :b}
+    h2 = h1.reject { |k, v| k == :b }
     h2.should eq({a: 1, c: 3})
     h2.should_not be(h1)
   end
@@ -408,7 +409,7 @@ describe "Hash" do
   it "rejects!" do
     h1 = {a: 1, b: 2, c: 3}
 
-    h2 = h1.reject!{|k, v| k == :b}
+    h2 = h1.reject! { |k, v| k == :b }
     h2.should eq({a: 1, c: 3})
     h2.should be(h1)
   end
@@ -416,7 +417,7 @@ describe "Hash" do
   it "returns nil when using reject! and no changes were made" do
     h1 = {a: 1, b: 2, c: 3}
 
-    h2 = h1.reject!{ false }
+    h2 = h1.reject! { false }
     h2.should eq(nil)
     h1.should eq({a: 1, b: 2, c: 3})
   end
@@ -536,7 +537,7 @@ describe "Hash" do
 
     h3 = h2.invert
     h3.size.should eq(2)
-    %w[a c].should contain h3[1]
+    %w(a c).should contain h3[1]
   end
 
   it "gets each iterator" do
@@ -688,44 +689,44 @@ describe "Hash" do
   end
 
   describe "reject" do
-    assert { { a: 2, b: 3 }.reject(:b, :d).should eq({ a: 2 }) }
-    assert { { a: 2, b: 3 }.reject(:b, :a).should eq({ } of Symbol => Int32) }
+    assert { {a: 2, b: 3}.reject(:b, :d).should eq({a: 2}) }
+    assert { {a: 2, b: 3}.reject(:b, :a).should eq({} of Symbol => Int32) }
     it "does not change currrent hash" do
-      h = { a: 3, b: 6, c: 9 }
+      h = {a: 3, b: 6, c: 9}
       h2 = h.reject(:b, :c)
-      h.should eq({ a: 3, b: 6, c: 9 })
+      h.should eq({a: 3, b: 6, c: 9})
     end
   end
 
   describe "reject!" do
-    assert { { a: 2, b: 3 }.reject!(:b, :d).should eq({ a: 2 }) }
-    assert { { a: 2, b: 3 }.reject!(:b, :a).should eq({ } of Symbol => Int32) }
+    assert { {a: 2, b: 3}.reject!(:b, :d).should eq({a: 2}) }
+    assert { {a: 2, b: 3}.reject!(:b, :a).should eq({} of Symbol => Int32) }
     it "changes currrent hash" do
-      h = { a: 3, b: 6, c: 9 }
+      h = {a: 3, b: 6, c: 9}
       h.reject!(:b, :c)
-      h.should eq({ a: 3 })
+      h.should eq({a: 3})
     end
   end
 
   describe "select" do
-    assert { { a: 2, b: 3 }.select(:b, :d).should eq({ b: 3 }) }
-    assert { { a: 2, b: 3 }.select.should eq({ } of Symbol => Int32) }
-    assert { { a: 2, b: 3 }.select(:b, :a).should eq({ a: 2, b: 3 }) }
+    assert { {a: 2, b: 3}.select(:b, :d).should eq({b: 3}) }
+    assert { {a: 2, b: 3}.select.should eq({} of Symbol => Int32) }
+    assert { {a: 2, b: 3}.select(:b, :a).should eq({a: 2, b: 3}) }
     it "does not change currrent hash" do
-      h = { a: 3, b: 6, c: 9 }
+      h = {a: 3, b: 6, c: 9}
       h2 = h.select(:b, :c)
-      h.should eq({ a: 3, b: 6, c: 9 })
+      h.should eq({a: 3, b: 6, c: 9})
     end
   end
 
   describe "select!" do
-    assert { { a: 2, b: 3 }.select!(:b, :d).should eq({ b: 3 }) }
-    assert { { a: 2, b: 3 }.select!.should eq({ } of Symbol => Int32) }
-    assert { { a: 2, b: 3 }.select!(:b, :a).should eq({ a: 2, b: 3 }) }
+    assert { {a: 2, b: 3}.select!(:b, :d).should eq({b: 3}) }
+    assert { {a: 2, b: 3}.select!.should eq({} of Symbol => Int32) }
+    assert { {a: 2, b: 3}.select!(:b, :a).should eq({a: 2, b: 3}) }
     it "does change currrent hash" do
-      h = { a: 3, b: 6, c: 9 }
+      h = {a: 3, b: 6, c: 9}
       h.select!(:b, :c)
-      h.should eq({ b: 6, c: 9 })
+      h.should eq({b: 6, c: 9})
     end
   end
 

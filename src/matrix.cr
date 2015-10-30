@@ -316,7 +316,7 @@ class Matrix(T)
       when :strict_lower then yield e, r, c if r > c
       when :upper        then yield e, r, c if r <= c
       when :strict_upper then yield e, r, c if r < c
-      else raise ArgumentError.new
+      else                    raise ArgumentError.new
       end
       c += 1
       if r == @rows
@@ -487,7 +487,7 @@ class Matrix(T)
         case e
         when 0 then next
         when 1 then found += 1
-        else return false
+        else        return false
         end
       end
       return false unless found == 1
@@ -496,7 +496,7 @@ class Matrix(T)
         case e
         when 0 then next
         when 1 then found += 1
-        else return false
+        else        return false
         end
       end
       return false unless found == 1
@@ -553,7 +553,7 @@ class Matrix(T)
     matrix = Matrix(T).new(rows, columns)
 
     matrix.each_index do |r, c|
-      min_r = start_row - r + rows    - 1
+      min_r = start_row - r + rows - 1
       min_c = start_col - c + columns - 1
       i = -1 - ((c + (r * columns)) - (rows * columns))
       matrix[i] = at(min_r, min_c)
@@ -582,22 +582,22 @@ class Matrix(T)
     when 2
       at(0) * at(3) - at(1) * at(2)
     when 3
-      + at(0) * at(4) * at(8) - at(0) * at(5) * at(7) \
-      - at(1) * at(3) * at(8) + at(1) * at(5) * at(6) \
-      + at(2) * at(3) * at(7) - at(2) * at(4) * at(6)
+      at(0) * at(4) * at(8) - at(0) * at(5) * at(7) -
+        at(1) * at(3) * at(8) + at(1) * at(5) * at(6) +
+        at(2) * at(3) * at(7) - at(2) * at(4) * at(6)
     when 4
-      + at( 0) * at( 5) * at(10) * at(15) - at( 0) * at( 5) * at(11) * at(14) \
-      - at( 0) * at( 6) * at( 9) * at(15) + at( 0) * at( 6) * at(11) * at(13) \
-      + at( 0) * at( 7) * at( 9) * at(14) - at( 0) * at( 7) * at(10) * at(13) \
-      - at( 1) * at( 4) * at(10) * at(15) + at( 1) * at( 4) * at(11) * at(14) \
-      + at( 1) * at( 6) * at( 8) * at(15) - at( 1) * at( 6) * at(11) * at(12) \
-      - at( 1) * at( 7) * at( 8) * at(14) + at( 1) * at( 7) * at(10) * at(12) \
-      + at( 2) * at( 4) * at( 9) * at(15) - at( 2) * at( 4) * at(11) * at(13) \
-      - at( 2) * at( 5) * at( 8) * at(15) + at( 2) * at( 5) * at(11) * at(12) \
-      + at( 2) * at( 7) * at( 8) * at(13) - at( 2) * at( 7) * at( 9) * at(12) \
-      - at( 3) * at( 4) * at( 9) * at(14) + at( 3) * at( 4) * at(10) * at(13) \
-      + at( 3) * at( 5) * at( 8) * at(14) - at( 3) * at( 5) * at(10) * at(12) \
-      - at( 3) * at( 6) * at( 8) * at(13) + at( 3) * at( 6) * at( 9) * at(12)
+      at(0) * at(5) * at(10) * at(15) - at(0) * at(5) * at(11) * at(14) -
+        at(0) * at(6) * at(9) * at(15) + at(0) * at(6) * at(11) * at(13) +
+        at(0) * at(7) * at(9) * at(14) - at(0) * at(7) * at(10) * at(13) -
+        at(1) * at(4) * at(10) * at(15) + at(1) * at(4) * at(11) * at(14) +
+        at(1) * at(6) * at(8) * at(15) - at(1) * at(6) * at(11) * at(12) -
+        at(1) * at(7) * at(8) * at(14) + at(1) * at(7) * at(10) * at(12) +
+        at(2) * at(4) * at(9) * at(15) - at(2) * at(4) * at(11) * at(13) -
+        at(2) * at(5) * at(8) * at(15) + at(2) * at(5) * at(11) * at(12) +
+        at(2) * at(7) * at(8) * at(13) - at(2) * at(7) * at(9) * at(12) -
+        at(3) * at(4) * at(9) * at(14) + at(3) * at(4) * at(10) * at(13) +
+        at(3) * at(5) * at(8) * at(14) - at(3) * at(5) * at(10) * at(12) -
+        at(3) * at(6) * at(8) * at(13) + at(3) * at(6) * at(9) * at(12)
     else
       m = clone
       last = @rows - 1
@@ -676,10 +676,10 @@ class Matrix(T)
         end
         pivot = m[pivot_row, k]
         (pivot_row + 1).upto(@rows - 1) do |i|
-           (k + 1).upto(@columns - 1) do |j|
-             m[i, j] = (pivot * m[i, j] - m[i, k] * m[pivot_row, j]) / prev_piv
-           end
-         end
+          (k + 1).upto(@columns - 1) do |j|
+            m[i, j] = (pivot * m[i, j] - m[i, k] * m[pivot_row, j]) / prev_piv
+          end
+        end
         pivot_row += 1
         prev_piv = pivot
       end
@@ -882,15 +882,15 @@ class Matrix(T)
 
     def next
       skip = case @directive
-      when :all          then false
-      when :diagonal     then @row != @col
-      when :off_diagonal then @row == @col
-      when :lower        then @row <  @col
-      when :strict_lower then @row <= @col
-      when :upper        then @row >  @col
-      when :strict_upper then @row >= @col
-      else raise ArgumentError.new
-      end
+             when :all          then false
+             when :diagonal     then @row != @col
+             when :off_diagonal then @row == @col
+             when :lower        then @row < @col
+             when :strict_lower then @row <= @col
+             when :upper        then @row > @col
+             when :strict_upper then @row >= @col
+             else                    raise ArgumentError.new
+             end
 
       no_more_rows? = @row + 1 >= @matrix.row_count
       no_more_cols? = @col + 1 >= @matrix.column_count
@@ -925,15 +925,15 @@ class Matrix(T)
 
     def next
       skip = case @directive
-      when :all          then false
-      when :diagonal     then @row != @col
-      when :off_diagonal then @row == @col
-      when :lower        then @row <  @col
-      when :strict_lower then @row <= @col
-      when :upper        then @row >  @col
-      when :strict_upper then @row >= @col
-      else raise ArgumentError.new
-      end
+             when :all          then false
+             when :diagonal     then @row != @col
+             when :off_diagonal then @row == @col
+             when :lower        then @row < @col
+             when :strict_lower then @row <= @col
+             when :upper        then @row > @col
+             when :strict_upper then @row >= @col
+             else                    raise ArgumentError.new
+             end
 
       value = {@row, @col}
       no_more_rows? = @row + 1 >= @matrix.row_count

@@ -36,7 +36,7 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
     digest = case mac_algorithm
              when "hmac-sha-1"   then :sha1
              when "hmac-sha-256" then :sha256
-             else raise "unsupported algorithm: #{mac_algorithm}"
+             else                     raise "unsupported algorithm: #{mac_algorithm}"
              end
     Base64.strict_encode OpenSSL::HMAC.digest(digest, mac_key, normalized_request_string)
   end
@@ -58,8 +58,8 @@ class OAuth2::AccessToken::Mac < OAuth2::AccessToken
   private def host_and_port(request, ssl)
     host_header = request.headers["Host"]
     if colon_index = host_header.index ':'
-      host = host_header[0 ... colon_index]
-      port = host_header[colon_index + 1 .. -1].to_i
+      host = host_header[0...colon_index]
+      port = host_header[colon_index + 1..-1].to_i
     else
       host = host_header
       port = ssl ? 443 : 80

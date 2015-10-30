@@ -956,7 +956,7 @@ describe "Code gen: block" do
       end
       n.to_i
       ").to_i.should eq(3)
-   end
+  end
 
   it "codegens block call when argument type changes" do
     run("

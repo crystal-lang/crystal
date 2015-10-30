@@ -10,7 +10,7 @@ lib LibC
       name : UInt8[1024]
     end
   elsif linux
-   struct DirEntry
+    struct DirEntry
       d_ino : UInt64
       d_off : Int64
       reclen : UInt16
@@ -77,7 +77,7 @@ class Dir
   #
   # ```
   # d = Dir.new("testdir")
-  # d.each  {|x| puts "Got #{x}" }
+  # d.each { |x| puts "Got #{x}" }
   # ```
   #
   # produces:
@@ -102,9 +102,9 @@ class Dir
   #
   # ```
   # d = Dir.new("testdir")
-  # d.read   #=> "."
-  # d.read   #=> ".."
-  # d.read   #=> "config.h"
+  # d.read # => "."
+  # d.read # => ".."
+  # d.read # => "config.h"
   # ```
   def read
     # readdir() returns NULL for failure and sets errno or returns NULL for EOF but leaves errno as is.  wtf.
@@ -143,7 +143,7 @@ class Dir
   end
 
   # Changes the current working directory of the process to the given string.
-  def self.cd path
+  def self.cd(path)
     if LibC.chdir(path) != 0
       raise Errno.new("Error while changing directory to #{path.inspect}")
     end
@@ -192,14 +192,14 @@ class Dir
     File::Stat.new(stat).directory?
   end
 
-  def self.mkdir(path, mode=0o777)
+  def self.mkdir(path, mode = 0o777)
     if LibC.mkdir(path, mode) == -1
       raise Errno.new("Unable to create directory '#{path}'")
     end
     0
   end
 
-  def self.mkdir_p(path, mode=0o777)
+  def self.mkdir_p(path, mode = 0o777)
     return 0 if Dir.exists?(path)
 
     components = path.split(File::SEPARATOR)

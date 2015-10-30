@@ -49,7 +49,7 @@ describe "Proc" do
 
   it "does new" do
     a = 1
-    f = ->(x : Int32){ x + a }
+    f = ->(x : Int32) { x + a }
     f2 = Proc(Int32, Int32).new(f.pointer, f.closure_data)
     f2.call(3).should eq(4)
   end

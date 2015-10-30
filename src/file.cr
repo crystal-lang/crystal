@@ -14,10 +14,18 @@ end
 
 class File < IO::FileDescriptor
   # The file/directory separator character. '/' in unix, '\\' in windows.
-  SEPARATOR = ifdef windows; '\\'; else; '/'; end
+  SEPARATOR = ifdef windows
+    '\\'
+  else
+    '/'
+  end
 
   # The file/directory separator string. "/" in unix, "\\" in windows.
-  SEPARATOR_STRING = ifdef windows; "\\"; else; "/"; end
+  SEPARATOR_STRING = ifdef windows
+    "\\"
+  else
+    "/"
+  end
 
   # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
@@ -80,11 +88,11 @@ class File < IO::FileDescriptor
   #
   # ```
   # file = File.new("testfile")
-  # file.gets(3) #=> "abc"
+  # file.gets(3) # => "abc"
   # file.seek(1, IO::Seek::Set)
-  # file.gets(2) #=> "bc"
+  # file.gets(2) # => "bc"
   # file.seek(-1, IO::Seek::Current)
-  # file.gets(1) #=> "c"
+  # file.gets(1) # => "c"
   # ```
   def seek(offset, whence = Seek::Set : Seek)
     check_open
@@ -109,9 +117,9 @@ class File < IO::FileDescriptor
   #
   # ```
   # io = MemoryIO.new "hello"
-  # io.pos     #=> 0
-  # io.gets(2) #=> "he"
-  # io.pos     #=> 2
+  # io.pos     # => 0
+  # io.gets(2) # => "he"
+  # io.pos     # => 2
   # ```
   def pos
     check_open
@@ -127,7 +135,7 @@ class File < IO::FileDescriptor
   # ```
   # io = MemoryIO.new "hello"
   # io.pos = 3
-  # io.gets_to_end #=> "lo"
+  # io.gets_to_end # => "lo"
   # ```
   def pos=(value)
     seek value
@@ -140,8 +148,8 @@ class File < IO::FileDescriptor
   #
   # ```
   # echo "foo" > foo
-  # File.stat("foo").size    #=> 4
-  # File.stat("foo").mtime   #=> 2015-09-23 06:24:19 UTC
+  # File.stat("foo").size  # => 4
+  # File.stat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.stat(path)
     if LibC.stat(path, out stat) != 0
@@ -156,8 +164,8 @@ class File < IO::FileDescriptor
   #
   # ```
   # echo "foo" > foo
-  # File.lstat("foo").size    #=> 4
-  # File.lstat("foo").mtime   #=> 2015-09-23 06:24:19 UTC
+  # File.lstat("foo").size  # => 4
+  # File.lstat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.lstat(path)
     if LibC.lstat(path, out stat) != 0
@@ -169,9 +177,9 @@ class File < IO::FileDescriptor
   # Returns true if file exists else returns false
   #
   # ```
-  # File.exists?("foo")    #=> false
+  # File.exists?("foo") # => false
   # echo "foo" > foo
-  # File.exists?("foo")    #=> true
+  # File.exists?("foo") # => true
   # ```
   def self.exists?(filename)
     LibC.access(filename, LibC::F_OK) == 0
@@ -182,9 +190,9 @@ class File < IO::FileDescriptor
   # ```crystal
   # # touch foo
   # # mkdir bar
-  # File.file?("foo")    #=> true
-  # File.file?("bar")    #=> false
-  # File.file?("foobar") #=> false
+  # File.file?("foo")    # => true
+  # File.file?("bar")    # => false
+  # File.file?("foobar") # => false
   # ```
   def self.file?(path)
     if LibC.stat(path, out stat) != 0
@@ -202,9 +210,9 @@ class File < IO::FileDescriptor
   # ```crystal
   # # touch foo
   # # mkdir bar
-  # File.directory?("foo")    #=> false
-  # File.directory?("bar")    #=> true
-  # File.directory?("foobar") #=> false
+  # File.directory?("foo")    # => false
+  # File.directory?("bar")    # => true
+  # File.directory?("foobar") # => false
   # ```
   def self.directory?(path)
     Dir.exists?(path)
@@ -248,9 +256,9 @@ class File < IO::FileDescriptor
   # ```crystal
   # # touch foo
   # File.delete("./foo")
-  # #=> nil
+  # # => nil
   # File.delete("./bar")
-  # #=> Error deleting file './bar': No such file or directory (Errno)
+  # # => Error deleting file './bar': No such file or directory (Errno)
   # ```
   def self.delete(filename)
     err = LibC.unlink(filename)
@@ -263,12 +271,12 @@ class File < IO::FileDescriptor
   #
   # ```crystal
   # File.extname("foo.cr")
-  # #=> .cr
+  # # => .cr
   # ```
   def self.extname(filename)
     dot_index = filename.rindex('.')
 
-    if dot_index && dot_index != filename.size - 1  && filename[dot_index - 1] != SEPARATOR
+    if dot_index && dot_index != filename.size - 1 && filename[dot_index - 1] != SEPARATOR
       filename[dot_index, filename.size - dot_index]
     else
       ""
@@ -357,7 +365,7 @@ class File < IO::FileDescriptor
   # ```crystal
   # # echo "foo" >> bar
   # File.read("./bar")
-  # #=> foo
+  # # => foo
   # ```
   def self.read(filename)
     File.open(filename, "r") do |file|
@@ -390,7 +398,7 @@ class File < IO::FileDescriptor
   # # echo "foo" >> foobar
   # # echo "bar" >> foobar
   # File.read_lines("./foobar")
-  # #=> ["foo\n","bar\n"]
+  # # => ["foo\n","bar\n"]
   # ```
   def self.read_lines(filename)
     lines = [] of String
@@ -415,9 +423,9 @@ class File < IO::FileDescriptor
   # Returns a new string formed by joining the strings using File::SEPARATOR.
   #
   # ```
-  # File.join("foo", "bar", "baz") #=> "foo/bar/baz"
-  # File.join("foo/", "/bar/", "/baz") #=> "foo/bar/baz"
-  # File.join("/foo/", "/bar/", "/baz/") #=> "/foo/bar/baz/"
+  # File.join("foo", "bar", "baz")       # => "foo/bar/baz"
+  # File.join("foo/", "/bar/", "/baz")   # => "foo/bar/baz"
+  # File.join("/foo/", "/bar/", "/baz/") # => "/foo/bar/baz/"
   # ```
   def self.join(*parts)
     join parts
@@ -426,9 +434,9 @@ class File < IO::FileDescriptor
   # Returns a new string formed by joining the strings using File::SEPARATOR.
   #
   # ```
-  # File.join("foo", "bar", "baz") #=> "foo/bar/baz"
-  # File.join("foo/", "/bar/", "/baz") #=> "foo/bar/baz"
-  # File.join("/foo/", "/bar/", "/baz/") #=> "/foo/bar/baz/"
+  # File.join("foo", "bar", "baz")       # => "foo/bar/baz"
+  # File.join("foo/", "/bar/", "/baz")   # => "foo/bar/baz"
+  # File.join("/foo/", "/bar/", "/baz/") # => "/foo/bar/baz/"
   # ```
   def self.join(parts : Array | Tuple)
     String.build do |str|

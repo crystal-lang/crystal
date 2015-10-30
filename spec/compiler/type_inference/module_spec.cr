@@ -216,9 +216,9 @@ describe "Type inference: module" do
 
       Bar(Int32).new.foo
       ") {
-        baz = types["Baz"] as GenericClassType
-        baz.instantiate([int32] of ASTNode | Type).metaclass
-      }
+      baz = types["Baz"] as GenericClassType
+      baz.instantiate([int32] of ASTNode | Type).metaclass
+    }
   end
 
   it "includes generic module with self" do
@@ -238,9 +238,9 @@ describe "Type inference: module" do
 
       Bar(Int32).new.foo
       ") {
-        bar = types["Bar"] as GenericClassType
-        bar.instantiate([int32] of ASTNode | Type).metaclass
-      }
+      bar = types["Bar"] as GenericClassType
+      bar.instantiate([int32] of ASTNode | Type).metaclass
+    }
   end
 
   it "includes module but can't access metaclass methods" do

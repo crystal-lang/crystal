@@ -137,7 +137,6 @@ module HTTP
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=bar; path=/\r\n\r\nhello")
 
-
       response.cookies["foo"] = "baz"
       response.cookies << Cookie.new("quux", "baz")
 

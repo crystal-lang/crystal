@@ -1,4 +1,5 @@
 require "./**"
+
 # The Benchmark module provides methods for benchmarking Crystal code, giving
 # detailed reports on the time taken for each task.
 #
@@ -7,7 +8,7 @@ require "./**"
 # ```
 # require "benchmark"
 # Benchmark.ips do |x|
-#   x.report("short sleep")   { sleep 0.01  }
+#   x.report("short sleep") { sleep 0.01 }
 #   x.report("shorter sleep") { sleep 0.001 }
 # end
 # ```
@@ -56,8 +57,12 @@ require "./**"
 #
 # n = 5000000
 # Benchmark.bm do |x|
-#  x.report("times:") { n.times do ; a = "1"; end }
-#  x.report("upto:") { 1.upto(n) do ; a = "1"; end }
+#   x.report("times:") { n.times do
+#     a = "1"
+#   end }
+#   x.report("upto:") { 1.upto(n) do
+#     a = "1"
+#   end }
 # end
 # ```
 #
@@ -77,7 +82,7 @@ module Benchmark
   # one can report the benchmarks. See the module's description.
   def bm
     ifdef !release
-      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id  }}
+      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id }}
     end
 
     report = BM::Job.new
@@ -95,7 +100,7 @@ module Benchmark
   # displayed and updated as they are calculated, otherwise all at once.
   def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
     ifdef !release
-      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id  }}
+      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id }}
     end
 
     job = IPS::Job.new(calculation, warmup, interactive)
@@ -110,18 +115,18 @@ module Benchmark
     t0, r0 = Process.times, Time.now
     yield
     t1, r1 = Process.times, Time.now
-    BM::Tms.new(t1.utime  - t0.utime,
-                     t1.stime  - t0.stime,
-                     t1.cutime - t0.cutime,
-                     t1.cstime - t0.cstime,
-                     (r1.ticks - r0.ticks).to_f / Time::Span::TicksPerSecond,
-                     label)
+    BM::Tms.new(t1.utime - t0.utime,
+      t1.stime - t0.stime,
+      t1.cutime - t0.cutime,
+      t1.cstime - t0.cstime,
+      (r1.ticks - r0.ticks).to_f / Time::Span::TicksPerSecond,
+      label)
   end
 
   # Returns the elapsed real time used to execute the given block.
   #
   # ```
-  # Benchmark.realtime { "a" * 100_000 } #=> 00:00:00.0005840
+  # Benchmark.realtime { "a" * 100_000 } # => 00:00:00.0005840
   # ```
   def realtime : Time::Span
     r0 = Time.now

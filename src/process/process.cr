@@ -34,7 +34,7 @@ class Process
   end
 
   def self.pid
-    LibC.getpid()
+    LibC.getpid
   end
 
   def self.getpgid(pid : Int32)
@@ -52,7 +52,7 @@ class Process
   end
 
   def self.ppid
-    LibC.getppid()
+    LibC.getppid
   end
 
   # Returns a `Process`.
@@ -72,7 +72,7 @@ class Process
     end
   end
 
-  protected def self.fork_internal run_hooks = true : Bool, &block
+  protected def self.fork_internal(run_hooks = true : Bool, &block)
     pid = self.fork_internal(run_hooks)
 
     unless pid
@@ -93,7 +93,7 @@ class Process
 
   # run_hooks should ALWAYS be true unless exec* is used immediately after fork.
   # Channels, IO and other will not work reliably if run_hooks is false.
-  protected def self.fork_internal run_hooks = true : Bool
+  protected def self.fork_internal(run_hooks = true : Bool)
     pid = LibC.fork
     case pid
     when 0
@@ -118,8 +118,8 @@ def fork
   Process.fork { yield }
 end
 
-def fork()
-  Process.fork()
+def fork
+  Process.fork
 end
 
 require "./*"

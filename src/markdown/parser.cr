@@ -141,7 +141,7 @@ class Markdown::Parser
 
   def render_fenced_code
     line = @lines[@line]
-    language = line[3 .. -1].strip
+    language = line[3..-1].strip
 
     if language.empty?
       @renderer.begin_code

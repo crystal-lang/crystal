@@ -16,7 +16,7 @@ module Crystal
   end
 
   module MatchesLookup
-    SuggestableName =/\A[a-z_]/
+    SuggestableName = /\A[a-z_]/
 
     def lookup_similar_def_name(name, args_size, block)
       return nil unless name =~ SuggestableName
@@ -65,7 +65,7 @@ module Crystal
           end
 
           if best_match
-            return (names[0 ... idx] + [best_match]).join "::"
+            return (names[0...idx] + [best_match]).join "::"
           else
             break
           end

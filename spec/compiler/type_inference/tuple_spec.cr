@@ -49,10 +49,10 @@ describe "Type inference: tuples" do
       x = {1, 1.5, 'a'}
       x.types
       ") do
-        meta = tuple_of([int32, float64, char]).metaclass
-        meta.metaclass?.should be_true
-        meta
-      end
+      meta = tuple_of([int32, float64, char]).metaclass
+      meta.metaclass?.should be_true
+      meta
+    end
   end
 
   it "errors on recursive splat expansion (#218)" do

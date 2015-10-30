@@ -28,15 +28,15 @@ class DegreeDays
     end
 
     {
-      :heating => heating,
-      :cooling => cooling,
+      :heating      => heating,
+      :cooling      => cooling,
       :heating_days => heating_days,
-      :cooling_days => cooling_days
+      :cooling_days => cooling_days,
     }
   end
 
   private def sum(ary)
-    ary.inject(0) { |a,i| a + i }
+    ary.inject(0) { |a, i| a + i }
   end
 
   private def avg(ary)
@@ -44,12 +44,12 @@ class DegreeDays
   end
 
   private def heating_day(temps)
-    heat = avg temps.map {|temp| heating_degree(temp)}
+    heat = avg temps.map { |temp| heating_degree(temp) }
     (heat > heating_threshold) ? heat : nil
   end
 
   private def cooling_day(temps)
-    cool = avg temps.map {|temp| cooling_degree(temp)}
+    cool = avg temps.map { |temp| cooling_degree(temp) }
     (cool > cooling_threshold) ? cool : nil
   end
 
@@ -100,10 +100,9 @@ end
   cold_day = Array.new(hours_in_day, 37)
 
   temperatures = Array.new((days_in_year / 2.0).floor.to_i, hot_day) + # 182 hot days
-    Array.new((days_in_year / 2.0).ceil.to_i, cold_day)   # 183 cold days
+    Array.new((days_in_year / 2.0).ceil.to_i, cold_day)                # 183 cold days
 
   degree_days = DegreeDays.new(temperatures)
   res = degree_days.calculate
   p res if i == 0
 end
-

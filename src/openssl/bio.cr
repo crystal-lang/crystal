@@ -22,15 +22,15 @@ struct OpenSSL::BIO
       io = Box(IO).unbox(bio.value.ptr)
 
       val = case cmd
-      when LibCrypto::CTRL_FLUSH
-        io.flush
-        1
-      when LibCrypto::CTRL_PUSH, LibCrypto::CTRL_POP
-        0
-      else
-        STDERR.puts "WARNING: Unsupported BIO ctrl call (#{cmd})"
-        0
-      end
+            when LibCrypto::CTRL_FLUSH
+              io.flush
+              1
+            when LibCrypto::CTRL_PUSH, LibCrypto::CTRL_POP
+              0
+            else
+              STDERR.puts "WARNING: Unsupported BIO ctrl call (#{cmd})"
+              0
+            end
       LibCrypto::Long.new(val)
     end
 
@@ -41,7 +41,7 @@ struct OpenSSL::BIO
     end
 
     crystal_bio.destroy = LibCrypto::BioMethodDestroy.new do |bio|
-      bio.value.ptr = Pointer(Void).null;
+      bio.value.ptr = Pointer(Void).null
       1
     end
 

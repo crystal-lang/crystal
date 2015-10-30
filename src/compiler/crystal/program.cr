@@ -33,7 +33,7 @@ module Crystal
       @def_macros = [] of Def
       @splat_expansions = {} of Def => Type
       @initialized_global_vars = Set(String).new
-      @file_modules = {} of String => FileModule
+      @file_modules = {} of String       => FileModule
       @unions = {} of Array(Int32) => Type
       @wants_doc = false
       @color = true
@@ -290,8 +290,8 @@ module Crystal
     end
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64
-                      uint8 uint16 uint32 uint64 float float32 float64 string symbol pointer array static_array
-                      exception tuple proc enum) %}
+                     uint8 uint16 uint32 uint64 float float32 float64 string symbol pointer array static_array
+                     exception tuple proc enum) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end

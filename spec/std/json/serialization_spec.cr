@@ -156,7 +156,7 @@ describe "JSON serialization" do
     end
 
     it "does for nested Hash" do
-      {"foo" => {"bar" => 1} }.to_pretty_json.should eq(%({\n  "foo": {\n    "bar": 1\n  }\n}))
+      {"foo" => {"bar" => 1}}.to_pretty_json.should eq(%({\n  "foo": {\n    "bar": 1\n  }\n}))
     end
 
     it "does for empty Hash" do

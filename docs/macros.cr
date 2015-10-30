@@ -89,9 +89,9 @@ module Macros
     # define_method "bar", 2
     # define_method baz, 3
     #
-    # puts foo #=> prints 1
-    # puts bar #=> prints 2
-    # puts baz #=> prints 3
+    # puts foo # => prints 1
+    # puts bar # => prints 2
+    # puts baz # => prints 3
     # ```
     def id : MacroId
     end
@@ -116,7 +116,7 @@ module Macros
     #   {{ "foo".class_name }}
     # end
     #
-    # puts test #=> prints StringLiteral
+    # puts test # => prints StringLiteral
     # ```
     def class_name : StringLiteral
     end
@@ -146,8 +146,8 @@ module Macros
     #   {% end %}
     # end
     #
-    # test 1    #=> prints "Got a number literal"
-    # test "hi" #=> prints "Didn't get a number literal"
+    # test 1    # => prints "Got a number literal"
+    # test "hi" # => prints "Didn't get a number literal"
     # ```
     def is_a?(name) : BoolLiteral
     end

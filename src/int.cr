@@ -10,20 +10,20 @@
 # in which the number fits:
 #
 # ```
-# 1      # Int32
+# 1 # Int32
 #
-# 1_i8   # Int8
-# 1_i16  # Int16
-# 1_i32  # Int32
-# 1_i64  # Int64
+# 1_i8  # Int8
+# 1_i16 # Int16
+# 1_i32 # Int32
+# 1_i64 # Int64
 #
-# 1_u8   # UInt8
-# 1_u16  # UInt16
-# 1_u32  # UInt32
-# 1_u64  # UInt64
+# 1_u8  # UInt8
+# 1_u16 # UInt16
+# 1_u32 # UInt32
+# 1_u64 # UInt64
 #
-# +10    # Int32
-# -20    # Int32
+# +10 # Int32
+# -20 # Int32
 #
 # 2147483648          # Int64
 # 9223372036854775808 # UInt64
@@ -102,12 +102,12 @@ struct Int
   # * If *count* is negative, a left shift is performed
   #
   # ```
-  # 8000 >> 1   #=> 4000
-  # 8000 >> 2   #=> 2000
-  # 8000 >> 32  #=> 0
-  # 8000 >> -1  #=> 16000
+  # 8000 >> 1  # => 4000
+  # 8000 >> 2  # => 2000
+  # 8000 >> 32 # => 0
+  # 8000 >> -1 # => 16000
   #
-  # -8000 >> 1  #=> -4000
+  # -8000 >> 1 # => -4000
   # ```
   def >>(count : Int)
     if count < 0
@@ -125,10 +125,10 @@ struct Int
   # * If *count* is negative, a right shift is performed
   #
   # ```
-  # 8000 << 1  #=> 4000
-  # 8000 << 2  #=> 2000
-  # 8000 << 32 #=> 0
-  # 8000 << -1 #=> 16000
+  # 8000 << 1  # => 4000
+  # 8000 << 2  # => 2000
+  # 8000 << 32 # => 0
+  # 8000 << -1 # => 16000
   # ```
   def <<(count : Int)
     if count < 0
@@ -175,11 +175,11 @@ struct Int
   # Returns this number's *bit*th bit, starting with the least-significant.
   #
   # ```
-  # 11.bit(0) #=> 1
-  # 11.bit(1) #=> 1
-  # 11.bit(2) #=> 0
-  # 11.bit(3) #=> 1
-  # 11.bit(4) #=> 0
+  # 11.bit(0) # => 1
+  # 11.bit(1) # => 1
+  # 11.bit(2) # => 0
+  # 11.bit(3) # => 1
+  # 11.bit(4) # => 0
   # ```
   def bit(bit)
     self >> bit & 1
@@ -217,7 +217,7 @@ struct Int
     self - 1
   end
 
-  def times(&block : self -> )
+  def times(&block : self ->)
     i = self ^ self
     while i < self
       yield i
@@ -230,7 +230,7 @@ struct Int
     TimesIterator(typeof(self)).new(self)
   end
 
-  def upto(n, &block : self -> )
+  def upto(n, &block : self ->)
     x = self
     while x <= n
       yield x
@@ -243,7 +243,7 @@ struct Int
     UptoIterator(typeof(self), typeof(n)).new(self, n)
   end
 
-  def downto(n, &block : self -> )
+  def downto(n, &block : self ->)
     x = self
     while x >= n
       yield x
@@ -256,7 +256,7 @@ struct Int
     DowntoIterator(typeof(self), typeof(n)).new(self, n)
   end
 
-  def to(n, &block : self -> )
+  def to(n, &block : self ->)
     if self < n
       upto(n) { |i| yield i }
     elsif self > n
@@ -275,10 +275,10 @@ struct Int
     self % other
   end
 
-  #:nodoc:
+  # :nodoc:
   DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
-  #:nodoc:
-  DIGITS_UPCASE   = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  # :nodoc:
+  DIGITS_UPCASE = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
   def to_s
     to_s(10)
@@ -468,7 +468,7 @@ struct Int64
 end
 
 struct UInt8
-  MIN = 0_u8
+  MIN =   0_u8
   MAX = 255_u8
 
   def abs
@@ -477,7 +477,7 @@ struct UInt8
 end
 
 struct UInt16
-  MIN = 0_u16
+  MIN =     0_u16
   MAX = 65535_u16
 
   def abs
@@ -486,7 +486,7 @@ struct UInt16
 end
 
 struct UInt32
-  MIN = 0_u32
+  MIN =          0_u32
   MAX = 4294967295_u32
 
   def abs
@@ -495,7 +495,7 @@ struct UInt32
 end
 
 struct UInt64
-  MIN = 0_u64
+  MIN =                    0_u64
   MAX = 18446744073709551615_u64
 
   def abs

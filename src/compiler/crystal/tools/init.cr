@@ -100,8 +100,7 @@ DIR  - directory where project will be generated,
                      @author = "none",
                      @email = "none",
                      @github_name = "none",
-                     @silent = false
-                    )
+                     @silent = false)
       end
     end
 

@@ -8,9 +8,9 @@ require "./llvm_builder_helper"
 LLVM.init_x86
 
 module Crystal
-  MAIN_NAME = "__crystal_main"
-  RAISE_NAME = "__crystal_raise"
-  MALLOC_NAME = "__crystal_malloc"
+  MAIN_NAME    = "__crystal_main"
+  RAISE_NAME   = "__crystal_raise"
+  MALLOC_NAME  = "__crystal_malloc"
   REALLOC_NAME = "__crystal_realloc"
 
   class Program
@@ -34,7 +34,7 @@ module Crystal
       main_return_type = LLVM::Void if node.type.nil_type?
 
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LLVM::Type, main_return_type) do |func|
-        func.basic_blocks.append "entry"  do |builder|
+        func.basic_blocks.append "entry" do |builder|
           argc = LLVM.int(LLVM::Int32, 0)
           argv = LLVM::VoidPointer.pointer.null
           ret = builder.call(main, [argc, argv])
@@ -58,9 +58,9 @@ module Crystal
   end
 
   class CodeGenVisitor < Visitor
-    PERSONALITY_NAME = "__crystal_personality"
+    PERSONALITY_NAME   = "__crystal_personality"
     GET_EXCEPTION_NAME = "__crystal_get_exception"
-    SYMBOL_TABLE_NAME = ":symbol_table"
+    SYMBOL_TABLE_NAME  = ":symbol_table"
 
     include LLVMBuilderHelper
 
@@ -132,7 +132,7 @@ module Crystal
 
       @in_lib = false
       @strings = {} of StringKey => LLVM::Value
-      @symbols = {} of String => Int32
+      @symbols = {} of String    => Int32
       @symbol_table_values = [] of LLVM::Value
       mod.symbols.each_with_index do |sym, index|
         @symbols[sym] = index
@@ -1306,7 +1306,7 @@ module Crystal
       end
     end
 
-    def br_block_chain *blocks
+    def br_block_chain(*blocks)
       old_block = insert_block
 
       0.upto(blocks.size - 2) do |i|
@@ -1650,7 +1650,7 @@ module Crystal
     end
 
     def build_string_constant(str, name = "str")
-      name = "#{name[0 .. 18]}..." if name.bytesize > 18
+      name = "#{name[0..18]}..." if name.bytesize > 18
       name = name.gsub '@', '.'
       name = "'#{name}'"
       key = StringKey.new(@llvm_mod, str)
@@ -1659,11 +1659,11 @@ module Crystal
         global.linkage = LLVM::Linkage::Private
         global.global_constant = true
         global.initializer = LLVM.struct [
-                               type_id(@mod.string),
-                               int32(str.bytesize),
-                               int32(str.size),
-                               LLVM.string(str),
-                             ]
+          type_id(@mod.string),
+          int32(str.bytesize),
+          int32(str.size),
+          LLVM.string(str),
+        ]
         cast_to global, @mod.string
       end
     end

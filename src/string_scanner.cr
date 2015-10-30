@@ -95,7 +95,7 @@ class StringScanner
     match(pattern, advance: true, options: Regex::Options::None)
   end
 
-  private def match(pattern, advance=true, options=Regex::Options::ANCHORED)
+  private def match(pattern, advance = true, options = Regex::Options::ANCHORED)
     match = pattern.match(@str, @offset, options)
     @last_match = match
     if match
@@ -103,7 +103,7 @@ class StringScanner
       new_offset = match.end(0).to_i
       @offset = new_offset if advance
 
-      @str[start, new_offset-start]
+      @str[start, new_offset - start]
     else
       nil
     end
@@ -201,7 +201,6 @@ class StringScanner
     @last_match.try(&.[n]?)
   end
 
-
   # Returns true if the scan offset is at the end of the string.
   #
   #     s = StringScanner.new("this is a string")
@@ -251,7 +250,7 @@ class StringScanner
   def inspect(io : IO)
     io << "#<StringScanner "
     io << @offset.to_s << "/" << @size.to_s
-    start = Math.min( Math.max(@offset-2, 0), @size-5)
+    start = Math.min(Math.max(@offset - 2, 0), @size - 5)
     io << " \"" << @str[start, 5] << "\" >"
   end
 end

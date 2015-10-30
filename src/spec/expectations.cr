@@ -225,7 +225,7 @@ module Spec
     end
 
     def match(value)
-     Spec::MatchExpectation.new(value)
+      Spec::MatchExpectation.new(value)
     end
 
     # Passes if actual includes expected. Works on collections and String.

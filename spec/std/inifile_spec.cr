@@ -30,7 +30,7 @@ describe "IniFile" do
         },
         "section2" => {
           "x.y.z" => "coco lala",
-        }
+        },
       })
     end
   end

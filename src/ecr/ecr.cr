@@ -1,12 +1,12 @@
-# Embedded Crystal (ECR) is a template language for embedding Crystal code into other text, 
-# that includes but is not limited to HTML. The template is read and transformed 
+# Embedded Crystal (ECR) is a template language for embedding Crystal code into other text,
+# that includes but is not limited to HTML. The template is read and transformed
 # at compile time and then embedded into the binary.
-# 
+#
 # There are `<%= %>` and `<% %>` syntax. The former will render returned values.
 # The latter will not, but instead serve to control the structure as we do in normal Crystal.
 #
 # Quick Example:
-# 
+#
 #     require "ecr"
 #
 #     class Greeting
@@ -14,7 +14,7 @@
 #       end
 #       ecr_file "greeting.ecr"
 #     end
-#     
+#
 #     # greeting.ecr
 #     Greeting, <%= @name %>!
 #
@@ -41,7 +41,7 @@
 #       end
 #       ecr_file "greeting.ecr"
 #     end
-#     
+#
 #     # greeting.ecr
 #     <% @names.each do |name| %>
 #       Hi, <%= name %>!
@@ -104,5 +104,3 @@ module ECR
 end
 
 require "./lexer"
-
-

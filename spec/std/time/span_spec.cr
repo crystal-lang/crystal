@@ -116,7 +116,7 @@ describe Time::Span do
   it "test add" do
     t1 = Time::Span.new 2, 3, 4, 5, 6
     t2 = Time::Span.new 1, 2, 3, 4, 5
-    t3 = t1 + t2;
+    t3 = t1 + t2
 
     t3.days.should eq(3)
     t3.hours.should eq(5)

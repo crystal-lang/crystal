@@ -29,7 +29,6 @@ describe "UNIXSocket" do
         end
       end
 
-
       # test sync flag propagation after accept
       server.sync = !server.sync?
 
@@ -55,7 +54,7 @@ describe "UNIXSocket" do
 
   it "tests read and write timeouts" do
     UNIXSocket.pair do |left, right|
-# BUG: shrink the socket buffers first
+      # BUG: shrink the socket buffers first
       left.write_timeout = 0.0001
       right.read_timeout = 0.0001
       buf = ("a" * 4096).to_slice
@@ -153,7 +152,6 @@ describe "TCPSocket" do
         sock << "pong"
         client.gets(4).should eq("pong")
       end
-
 
       # test sync flag propagation after accept
       server.sync = !server.sync?

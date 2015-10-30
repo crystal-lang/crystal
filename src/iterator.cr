@@ -5,7 +5,7 @@
 # multiplied by three. One way to do this is:
 #
 # ```
-# (1..10_000_000).select(&.even?).map { |x| x * 3 }.take(3) #=> [6, 12, 18]
+# (1..10_000_000).select(&.even?).map { |x| x * 3 }.take(3) # => [6, 12, 18]
 # ```
 #
 # The above works, but creates many intermediate arrays: one for the *select* call,
@@ -14,7 +14,7 @@
 # lazily:
 #
 # ```
-# (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.take(3) #=> #< Iterator(T)::Take...
+# (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.take(3) # => #< Iterator(T)::Take...
 # ```
 #
 # Iterator redefines many of `Enumerable`'s method in a lazy way, returning iterators
@@ -24,7 +24,7 @@
 # using `each` or `Enumerable#to_a`:
 #
 # ```
-# (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.take(3).to_a #=> [6, 12, 18]
+# (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.take(3).to_a # => [6, 12, 18]
 # ```
 #
 # To implement an Iterator you need to define a `next` method that must return the next
@@ -60,10 +60,10 @@
 # end
 #
 # zeros = Zeros.new(5)
-# zeros.to_a            #=> [0, 0, 0, 0, 0]
+# zeros.to_a # => [0, 0, 0, 0, 0]
 #
 # zeros.rewind
-# zeros.take(3).to_a    #=> [0, 0, 0]
+# zeros.take(3).to_a # => [0, 0, 0]
 # ```
 #
 # The standard library provides iterators for many classes, like `Array`, `Hash`, `Range`, `String` and `IO`.
@@ -413,7 +413,7 @@ module Iterator(T)
       flatten value
     end
 
-    def make_rewinder iter
+    def make_rewinder(iter)
       ->{
         iter.rewind
         # Return nil to disguise the individual iterator types
@@ -426,7 +426,7 @@ module Iterator(T)
       @generator = @iterator
       @top = true
       @to_rewind.each &.call
-      @to_rewind.clear()
+      @to_rewind.clear
     end
 
     def flatten(element)
@@ -697,7 +697,6 @@ module Iterator(T)
       end
     end
   end
-
 
   # Returns an iterator that only returns the first n elements of the
   # initial iterator.

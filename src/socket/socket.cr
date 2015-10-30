@@ -34,7 +34,7 @@ class Socket < IO::FileDescriptor
     end
   end
 
-  def initialize fd, blocking = false
+  def initialize(fd, blocking = false)
     super fd, blocking
     self.sync = true
   end
@@ -47,7 +47,7 @@ class Socket < IO::FileDescriptor
   end
 
   # only used when SOCK_CLOEXEC doesn't exist on the current platform
-  protected def init_close_on_exec fd : Int32
+  protected def init_close_on_exec(fd : Int32)
     {% if LibC::SOCK_CLOEXEC == 0 %}
        LibC.fcntl(fd, LibC::FCNTL::F_SETFD, LibC::FD_CLOEXEC)
     {% end %}
@@ -63,7 +63,7 @@ class Socket < IO::FileDescriptor
     shutdown LibC::Shutdown::WRITE
   end
 
-  private def shutdown how : LibC::Shutdown
+  private def shutdown(how : LibC::Shutdown)
     if LibC.shutdown(@fd, how) != 0
       raise Errno.new("shutdown #{how}")
     end
@@ -77,7 +77,7 @@ class Socket < IO::FileDescriptor
     getsockopt LibC::SO_SNDBUF, 0
   end
 
-  def send_buffer_size= val : Int32
+  def send_buffer_size=(val : Int32)
     setsockopt LibC::SO_SNDBUF, val
     val
   end
@@ -86,7 +86,7 @@ class Socket < IO::FileDescriptor
     getsockopt LibC::SO_RCVBUF, 0
   end
 
-  def recv_buffer_size= val : Int32
+  def recv_buffer_size=(val : Int32)
     setsockopt LibC::SO_RCVBUF, val
     val
   end
@@ -95,7 +95,7 @@ class Socket < IO::FileDescriptor
     getsockopt_bool LibC::SO_REUSEADDR
   end
 
-  def reuse_address= val : Bool
+  def reuse_address=(val : Bool)
     setsockopt_bool LibC::SO_REUSEADDR, val
   end
 
@@ -103,7 +103,7 @@ class Socket < IO::FileDescriptor
     getsockopt_bool LibC::SO_KEEPALIVE
   end
 
-  def keepalive= val : Bool
+  def keepalive=(val : Bool)
     setsockopt_bool LibC::SO_KEEPALIVE, val
   end
 
@@ -129,14 +129,14 @@ class Socket < IO::FileDescriptor
   #
   #   0 => abort on close (socket buffer is discarded and RST sent to peer).  Depends on platform and whether shutdown() was called first.
   # >=1 => abort after Num seconds on close.  Linux and Cygwin may block on close.
-  def linger= val : Int?
+  def linger=(val : Int?)
     v = LibC::Linger.new
     case val
     when Int
       v.on = 1
       v.secs = val
     when nil
-     v.on = 0
+      v.on = 0
     end
 
     setsockopt LibC::SO_LINGER, v
@@ -144,7 +144,7 @@ class Socket < IO::FileDescriptor
   end
 
   # returns the modified optval
-  def getsockopt optname, optval, level = LibC::SOL_SOCKET
+  def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.getsockopt(fd, level, optname, (pointerof(optval) as Void*), pointerof(optsize))
     raise Errno.new("getsockopt") if ret == -1
@@ -152,24 +152,23 @@ class Socket < IO::FileDescriptor
   end
 
   # optval is restricted to Int32 until sizeof works on variables
-  def setsockopt optname, optval, level = LibC::SOL_SOCKET
+  def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
     ret = LibC.setsockopt(fd, level, optname, (pointerof(optval) as Void*), optsize)
     raise Errno.new("setsockopt") if ret == -1
     ret
   end
 
-  private def getsockopt_bool optname, level = LibC::SOL_SOCKET
+  private def getsockopt_bool(optname, level = LibC::SOL_SOCKET)
     ret = getsockopt optname, 0, level
     ret != 0
   end
 
-  private def setsockopt_bool optname, optval : Bool, level = LibC::SOL_SOCKET
+  private def setsockopt_bool(optname, optval : Bool, level = LibC::SOL_SOCKET)
     v = optval ? 1 : 0
     ret = setsockopt optname, v, level
     optval
   end
-
 
   def self.inet_ntop(sa : LibC::SockAddrIn6)
     ip_address = GC.malloc_atomic(LibC::INET6_ADDRSTRLEN.to_u32) as UInt8*
@@ -189,7 +188,7 @@ class Socket < IO::FileDescriptor
     String.new(ip_address)
   end
 
-  private def nonblocking_connect host, port, ai, timeout = nil
+  private def nonblocking_connect(host, port, ai, timeout = nil)
     loop do
       ret = LibC.connect(@fd, ai.addr, ai.addrlen)
       return nil if ret == 0 # success

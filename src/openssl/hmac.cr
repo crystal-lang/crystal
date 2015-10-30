@@ -14,7 +14,7 @@ class OpenSSL::HMAC
           when :sha256    then LibCrypto.evp_sha256
           when :sha384    then LibCrypto.evp_sha384
           when :sha512    then LibCrypto.evp_sha512
-          else raise "Unsupported digest algorithm: #{algorithm}"
+          else                 raise "Unsupported digest algorithm: #{algorithm}"
           end
     key_slice = key.to_slice
     data_slice = data.to_slice

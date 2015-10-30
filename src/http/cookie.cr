@@ -46,9 +46,9 @@ module HTTP
     end
 
     def to_header
-      path    = @path
+      path = @path
       expires = @expires
-      domain  = @domain
+      domain = @domain
       String.build do |header|
         header << "#{@name}=#{URI.escape value}"
         header << "; path=#{path}" if path
@@ -116,7 +116,7 @@ module HTTP
     # Get the current `HTTP::Cookie` for the given *key*.
     #
     # ```
-    # request.cookies["foo"].value #=> "bar"
+    # request.cookies["foo"].value # => "bar"
     # ```
     def [](key)
       @cookies[key]
@@ -125,9 +125,9 @@ module HTTP
     # Get the current `HTTP::Cookie` for the given *key* or `nil` if none is set.
     #
     # ```
-    # request.cookies["foo"]? #=> nil
+    # request.cookies["foo"]? # => nil
     # request.cookies["foo"] = "bar"
-    # request.cookies["foo"]?.try &.value #> "bar"
+    # request.cookies["foo"]?.try &.value # > "bar"
     # ```
     def []?(key)
       @cookies[key]?
@@ -177,7 +177,7 @@ module HTTP
       add_headers "Set-Cookie", headers
     end
 
-    private def add_headers key, headers
+    private def add_headers(key, headers)
       headers.delete(key)
 
       each do |cookie|

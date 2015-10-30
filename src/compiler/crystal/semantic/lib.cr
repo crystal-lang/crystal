@@ -156,7 +156,7 @@ class Crystal::Call
       # If converting from a float to integer, we need to remove the dot
       # so that later the codegen finds a correct value
       if unaliased_type.is_a?(IntegerType) && (dot_index = self_arg.value.index('.'))
-        self_arg.value = self_arg.value[0 ... dot_index]
+        self_arg.value = self_arg.value[0...dot_index]
       end
 
       self_arg.kind = unaliased_type.kind

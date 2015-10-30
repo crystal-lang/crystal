@@ -11,7 +11,7 @@ module Zlib
       @flush :: LibZ::Flush
       @stream = LibZ::ZStream.new
       ret = LibZ.deflateInit2(pointerof(@stream), level, LibZ::Z_DEFLATED, wbits, mem_level,
-                              strategy, LibZ.zlibVersion(), sizeof(LibZ::ZStream))
+        strategy, LibZ.zlibVersion, sizeof(LibZ::ZStream))
 
       check_error(ret)
       reset_state

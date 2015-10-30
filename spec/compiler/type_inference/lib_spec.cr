@@ -293,7 +293,7 @@ describe "Type inference: lib" do
       "wrong number of link arguments (5 for 1..4)"
   end
 
-it "errors if unknown named arg" do
+  it "errors if unknown named arg" do
     assert_error %(
       @[Link(boo: "bar")]
       lib LibFoo
@@ -343,7 +343,7 @@ it "errors if unknown named arg" do
   end
 
   it "errors if lib fun call is part of dispatch" do
-    assert_error  %(
+    assert_error %(
       lib LibFoo
         fun foo : Int32
       end

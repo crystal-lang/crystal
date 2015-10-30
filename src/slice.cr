@@ -10,7 +10,7 @@ struct Slice(T)
   # Returns the size of this slice.
   #
   # ```
-  # Slice(UInt8).new(3).size #=> 3
+  # Slice(UInt8).new(3).size # => 3
   # ```
   getter size
 
@@ -21,10 +21,10 @@ struct Slice(T)
   # ptr = Pointer.malloc(9) { |i| ('a'.ord + i).to_u8 }
   #
   # slice = Slice.new(ptr, 3)
-  # slice.size      #=> 3
-  # slice             #=> [97, 98, 99]
+  # slice.size # => 3
+  # slice      # => [97, 98, 99]
   #
-  # String.new(slice) #=> "abc"
+  # String.new(slice) # => "abc"
   # ```
   def initialize(@pointer : Pointer(T), size : Int)
     @size = size.to_i32
@@ -38,7 +38,7 @@ struct Slice(T)
   #
   # ```
   # slice = Slice(UInt8).new(3)
-  # slice #=> [0, 0, 0]
+  # slice # => [0, 0, 0]
   # ```
   def self.new(size : Int)
     pointer = Pointer(T).malloc(size)
@@ -54,7 +54,7 @@ struct Slice(T)
   #
   # ```
   # slice = Slice.new(3) { |i| i + 10 }
-  # slice #=> [10, 11, 12]
+  # slice # => [10, 11, 12]
   # ```
   def self.new(size : Int)
     pointer = Pointer.malloc(size) { |i| yield i }
@@ -69,7 +69,7 @@ struct Slice(T)
   #
   # ```
   # slice = Slice.new(3, 10)
-  # slice #=> [10, 10, 10]
+  # slice # => [10, 10, 10]
   # ```
   def self.new(size : Int, value : T)
     new(size) { value }
@@ -79,10 +79,10 @@ struct Slice(T)
   #
   # ```
   # slice = Slice.new(5) { |i| i + 10 }
-  # slice #=> [10, 11, 12, 13, 14]
+  # slice # => [10, 11, 12, 13, 14]
   #
   # slice2 = slice + 2
-  # slice2 #=> [12, 13, 14]
+  # slice2 # => [12, 13, 14]
   # ```
   def +(offset : Int)
     unless 0 <= offset <= size
@@ -99,10 +99,10 @@ struct Slice(T)
   #
   # ```
   # slice = Slice.new(5) { |i| i + 10 }
-  # slice[0]  #=> 10
-  # slice[4]  #=> 14
-  # slice[-1] #=> 14
-  # slice[5]  #=> IndexError
+  # slice[0]  # => 10
+  # slice[4]  # => 14
+  # slice[-1] # => 14
+  # slice[5]  # => IndexError
   # ```
   @[AlwaysInline]
   def [](index : Int)
@@ -118,9 +118,9 @@ struct Slice(T)
   # slice = Slice.new(5) { |i| i + 10 }
   # slice[0] = 20
   # slice[-1] = 30
-  # slice #=> [20, 11, 12, 13, 30]
+  # slice # => [20, 11, 12, 13, 30]
   #
-  # slice[4] = 1 #=> IndexError
+  # slice[4] = 1 # => IndexError
   # ```
   @[AlwaysInline]
   def []=(index : Int, value : T)
@@ -139,10 +139,10 @@ struct Slice(T)
   #
   # ```
   # slice = Slice.new(5) { |i| i + 10 }
-  # slice #=> [10, 11, 12, 13, 14]
+  # slice # => [10, 11, 12, 13, 14]
   #
   # slice2 = slice[1, 3]
-  # slice2 #=> [11, 12, 13]
+  # slice2 # => [11, 12, 13]
   # ```
   def [](start, count)
     unless 0 <= start <= @size
@@ -189,7 +189,7 @@ struct Slice(T)
 
   # Same as `#each`, but works in reverse.
   def reverse_each(&block)
-    (size-1).downto(0) do |i|
+    (size - 1).downto(0) do |i|
       yield @pointer[i]
     end
 

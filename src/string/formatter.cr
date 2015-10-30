@@ -133,7 +133,7 @@ struct String::Formatter
     next_char
     while true
       case char = current_char
-      when '0' .. '9'
+      when '0'..'9'
         num *= 10
         num += char - '0'
         size += 1

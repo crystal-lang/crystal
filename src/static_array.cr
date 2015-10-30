@@ -7,7 +7,7 @@ struct StaticArray(T, N)
   # block's value in that index.
   #
   # ```
-  # StaticArray(Int32, 3).new { |i| i * 2 } #=> [0, 2, 4]
+  # StaticArray(Int32, 3).new { |i| i * 2 } # => [0, 2, 4]
   # ```
   def self.new(&block : Int32 -> T)
     array :: self
@@ -20,7 +20,7 @@ struct StaticArray(T, N)
   # Creates a new static array filled with the given value.
   #
   # ```
-  # StaticArray(Int32, 3).new(42) #=> [42, 42, 42]
+  # StaticArray(Int32, 3).new(42) # => [42, 42, 42]
   # ```
   def self.new(value : T)
     new { value }
@@ -61,10 +61,10 @@ struct StaticArray(T, N)
   #
   # ```
   # a = StaticArray(Int32, 4).new { |i| i + 1 }
-  # a.values_at(0, 2) #=> {1, 3}
+  # a.values_at(0, 2) # => {1, 3}
   # ```
   def values_at(*indexes : Int)
-    indexes.map {|index| self[index] }
+    indexes.map { |index| self[index] }
   end
 
   def update(index : Int)

@@ -9,12 +9,12 @@ module HTTP
     server.close
 
     Server.new("0.0.0.0", 8080, [
-        ErrorHandler.new,
-        LogHandler.new,
-        DeflateHandler.new,
-        StaticFileHandler.new("."),
-      ]
-      ).listen
+      ErrorHandler.new,
+      LogHandler.new,
+      DeflateHandler.new,
+      StaticFileHandler.new("."),
+    ]
+    ).listen
 
     server = Server.new("0.0.0.0", 8080, [StaticFileHandler.new(".")]) { |req| HTTP::Response.ok("text/plain", "OK") }
     server.listen
@@ -27,12 +27,12 @@ module HTTP
     server.close
 
     Server.new(8080, [
-        ErrorHandler.new,
-        LogHandler.new,
-        DeflateHandler.new,
-        StaticFileHandler.new("."),
-      ]
-      ).listen
+      ErrorHandler.new,
+      LogHandler.new,
+      DeflateHandler.new,
+      StaticFileHandler.new("."),
+    ]
+    ).listen
 
     server = Server.new(8080, [StaticFileHandler.new(".")]) { |req| HTTP::Response.ok("text/plain", "OK") }
     server.listen

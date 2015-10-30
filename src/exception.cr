@@ -130,7 +130,7 @@ end
 #
 # ```
 # a = [:foo, :bar]
-# a[2] #=> IndexError: index out of bounds
+# a[2] # => IndexError: index out of bounds
 # ```
 class IndexError < Exception
   def initialize(message = "Index out of bounds")
@@ -141,7 +141,7 @@ end
 # Raised when the arguments are wrong and there isn't a more specific `Exception` class.
 #
 # ```
-# [1, 2, 3].take(-4) #=> ArgumentError: attempt to take negative size
+# [1, 2, 3].take(-4) # => ArgumentError: attempt to take negative size
 # ```
 class ArgumentError < Exception
   def initialize(message = "Argument error")
@@ -152,7 +152,7 @@ end
 # Raised when the type cast failed.
 #
 # ```
-# [1, "hi"][1] as Int32 #=> TypeCastError: cast to Int32 failed
+# [1, "hi"][1] as Int32 # => TypeCastError: cast to Int32 failed
 # ```
 class TypeCastError < Exception
   def initialize(message = "Type Cast error")
@@ -170,7 +170,7 @@ end
 #
 # ```
 # h = {"foo" => "bar"}
-# h["baz"] #=> KeyError: Missing hash key: "baz"
+# h["baz"] # => KeyError: Missing hash key: "baz"
 # ```
 class KeyError < Exception
 end

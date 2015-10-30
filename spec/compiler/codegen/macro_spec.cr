@@ -1013,7 +1013,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(6)
   end
 
-  it "codegens macro def with default arg (similar to #496)"  do
+  it "codegens macro def with default arg (similar to #496)" do
     run(%(
       class Foo
         macro def bar(foo = 1) : Int32

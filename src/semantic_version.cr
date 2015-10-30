@@ -5,7 +5,7 @@ class SemanticVersion
 
   getter major, minor, patch, prerelease, build
 
-  def self.parse str : String
+  def self.parse(str : String)
     m = str.match /^(\d+)\.(\d+)\.(\d+)(-([\w\.]+))?(\+(\w+))??$/
     if m
       major = m[1].to_i
@@ -19,20 +19,20 @@ class SemanticVersion
     end
   end
 
-  def initialize @major : Int, @minor : Int, @patch : Int, prerelease = nil: String | Prerelease | Nil, @build = nil : String?
+  def initialize(@major : Int, @minor : Int, @patch : Int, prerelease = nil : String | Prerelease | Nil, @build = nil : String?)
     @prerelease = case prerelease
-    when Prerelease
-      prerelease
-    when String
-      Prerelease.parse prerelease
-    when nil
-      Prerelease.new
-    else
-      raise ArgumentError.new("invalid prerelease #{prerelease.inspect}")
-    end
+                  when Prerelease
+                    prerelease
+                  when String
+                    Prerelease.parse prerelease
+                  when nil
+                    Prerelease.new
+                  else
+                    raise ArgumentError.new("invalid prerelease #{prerelease.inspect}")
+                  end
   end
 
-  def to_s io : IO
+  def to_s(io : IO)
     io << major << "." << minor << "." << patch
     unless prerelease.identifiers.empty?
       io << "-"
@@ -58,7 +58,7 @@ class SemanticVersion
   end
 
   struct Prerelease
-    def self.parse str : String
+    def self.parse(str : String)
       identifiers = [] of String | Int32
       str.split(".").each do |val|
         if val.match /^\d+$/
@@ -72,17 +72,17 @@ class SemanticVersion
 
     getter identifiers
 
-    def initialize(@identifiers = [] of String | Int32 : Array(String | Int32) )
+    def initialize(@identifiers = [] of String | Int32 : Array(String | Int32))
     end
 
-    def to_s io : IO
+    def to_s(io : IO)
       identifiers.each_with_index do |s, i|
         io << "." if i > 0
         io << s
       end
     end
 
-    def <=>(other : self ) : Int32
+    def <=>(other : self) : Int32
       if identifiers.empty?
         if other.identifiers.empty?
           return 0

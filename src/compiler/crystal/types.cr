@@ -675,7 +675,7 @@ module Crystal
     end
 
     def has_def_without_parents?(name)
-      self.defs().try &.has_key?(name)
+      self.defs.try &.has_key?(name)
     end
   end
 
@@ -2220,7 +2220,7 @@ module Crystal
     end
 
     private def remove_at_from_var_name(name)
-      name.starts_with?('@') ? name[1 .. -1] : name
+      name.starts_with?('@') ? name[1..-1] : name
     end
   end
 
@@ -2605,7 +2605,6 @@ module Crystal
     end
   end
 
-
   # A union type that doesn't match any of the previous definitions,
   # so it can contain Nil with primitive types, or Reference types with
   # primitives types.
@@ -2925,7 +2924,7 @@ module Crystal
     end
 
     def arg_types
-      fun_types[0 .. -2]
+      fun_types[0..-2]
     end
 
     def return_type

@@ -36,7 +36,7 @@ class YAMLWithKey
   YAML.mapping({
     key:   String,
     value: Int32,
-    pull: Int32,
+    pull:  Int32,
   })
 end
 

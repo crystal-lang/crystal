@@ -1,19 +1,19 @@
 lib LibC
   struct TimeZone
     tz_minuteswest : Int
-    tz_dsttime     : Int
+    tz_dsttime : Int
   end
 
   fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int
 end
 
 # The `Time` library allows you to inspect, analyze, calculate, and format time. Here are some examples:
-# 
+#
 # ### Basic Usage
-# 
+#
 #     time = Time.now
 #     #=> 2016-02-15 10:20:30 UTC
-#     
+#
 #     time.year    #=> 2015
 #     time.month   #=> 2
 #     time.day     #=> 15
@@ -25,18 +25,18 @@ end
 #     # Creating a time instance with a date only
 #     Time.new(2016,2,15)
 #     #=> 2016-02-15 00:00:00
-# 
+#
 #     # Specifying a time
 #     Time.new(2016,2,15,10,20,30)
-#     #=> 2016-02-15 10:20:30 UTC 
-#     
+#     #=> 2016-02-15 10:20:30 UTC
+#
 # ### Formatting Time
-# 
+#
 # The `to_s` method returns a `String` value in the assigned format.
-# 
+#
 #     Time.now.to_s("%Y-%m-%d")
 #     #=> "2015-10-12"
-#     
+#
 #     # Format specifiers include but are not limited to:
 #     %Y  => year
 #     %m  => month
@@ -46,19 +46,19 @@ end
 #     %S  => second
 #     %D  => date
 #     %u  => weekday
-#     
+#
 # ### Calculation
-# 
+#
 #     Time.new(2015,10,10) - 5.day
 #     #=> 2015-10-05 00:00:00
-#     
+#
 #     # Time calculation returns a Time::Span instance,
 #     # which can be analyzed with its methods.
 #     span = Time.new(2015,10,10) - Time.new(2015,9,10)
 #     span.days          #=> 30
-#     span.total_hours   #=> 720     
+#     span.total_hours   #=> 720
 #     span.total_minutes #=> 43200
-#     
+#
 #     # Calculation between Time::Span instances
 #     span_a = Time::Span.new(3,0,0)
 #     span_b = Time::Span.new(2,0,0)
@@ -72,19 +72,19 @@ struct Time
 
   include Comparable(self)
 
-  TicksMask       = 0x3fffffffffffffff
-  KindMask        = 0xc000000000000000
+  TicksMask       =      0x3fffffffffffffff
+  KindMask        =      0xc000000000000000
   MAX_VALUE_TICKS = 3155378975999999999_i64
 
-  DAYS_MONTH = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  DAYS_MONTH      = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
   DAYS_MONTH_LEAP = [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
   DP400 = 146097
-  DP100 = 36524
-  DP4   = 1461
+  DP100 =  36524
+  DP4   =   1461
 
   # `Kind` represents a specified time zone.
-  # 
+  #
   # Initializing a `Time` instance with specified `Kind`:
   # ```crystal
   # time = Time.new(2016, 2, 15, 21, 1, 10, 0, Time::Kind::Local)
@@ -92,16 +92,16 @@ struct Time
   #
   # Alternatively, you can switch the `Kind` for any instance:
   #
-  # ```crystal 
-  # time.to_utc   #=> 2016-02-15 21:00:00 UTC
-  # time.to_local #=> 2016-02-16 05:01:10 +0800
+  # ```crystal
+  # time.to_utc   # => 2016-02-15 21:00:00 UTC
+  # time.to_local # => 2016-02-16 05:01:10 +0800
   # ```
-  # 
+  #
   # Inspection:
   #
   # ```crystal
-  # time.local? #=> true
-  # time.utc?   #=> false
+  # time.local? # => true
+  # time.utc?   # => false
   # ```
   #
   enum Kind : Int64
@@ -379,13 +379,13 @@ struct Time
     end
   end
 
-  def_at(beginning_of_year)     { Time.new(year, 1, 1) }
+  def_at(beginning_of_year) { Time.new(year, 1, 1) }
   def_at(beginning_of_semester) { Time.new(year, ((month - 1) / 6) * 6 + 1, 1) }
-  def_at(beginning_of_quarter)  { Time.new(year, ((month - 1) / 3) * 3 + 1, 1) }
-  def_at(beginning_of_month)    { Time.new(year, month, 1) }
-  def_at(beginning_of_day)      { Time.new(year, month, day) }
-  def_at(beginning_of_hour)     { Time.new(year, month, day, hour) }
-  def_at(beginning_of_minute)   { Time.new(year, month, day, hour, minute) }
+  def_at(beginning_of_quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1) }
+  def_at(beginning_of_month) { Time.new(year, month, 1) }
+  def_at(beginning_of_day) { Time.new(year, month, day) }
+  def_at(beginning_of_hour) { Time.new(year, month, day, hour) }
+  def_at(beginning_of_minute) { Time.new(year, month, day, hour, minute) }
 
   def at_beginning_of_week
     dow = day_of_week.value
@@ -433,10 +433,10 @@ struct Time
     end
   end
 
-  def_at(end_of_day)    { Time.new(year, month, day, 23, 59, 59, 999) }
-  def_at(end_of_hour)   { Time.new(year, month, day, hour, 59, 59, 999) }
+  def_at(end_of_day) { Time.new(year, month, day, 23, 59, 59, 999) }
+  def_at(end_of_hour) { Time.new(year, month, day, hour, 59, 59, 999) }
   def_at(end_of_minute) { Time.new(year, month, day, hour, minute, 59, 999) }
-  def_at(midday)        { Time.new(year, month, day, 12, 0, 0, 0) }
+  def_at(midday) { Time.new(year, month, day, 12, 0, 0, 0) }
 
   {% for name, index in %w(sunday monday tuesday wednesday thursday friday saturday) %}
     def {{name.id}}?
@@ -454,7 +454,7 @@ struct Time
       m += 1
     end
 
-    (day-1) + temp + (365* (year-1)) + ((year-1)/4) - ((year-1)/100) + ((year-1)/400)
+    (day - 1) + temp + (365*(year - 1)) + ((year - 1)/4) - ((year - 1)/100) + ((year - 1)/400)
   end
 
   private def year_month_day_day_year
@@ -522,7 +522,7 @@ struct Time
   #
   # ```
   # # Assume in Argentina, where it's GMT-3
-  # Time.local_offset_in_minutes #=> -180
+  # Time.local_offset_in_minutes # => -180
   # ```
   def self.local_offset_in_minutes
     if LibC.gettimeofday(nil, out tzp) != 0
@@ -554,4 +554,3 @@ struct Time
 end
 
 require "./**"
-

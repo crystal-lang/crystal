@@ -2,9 +2,9 @@
 # Note: This library is in its early stage. Many features are still in development.
 #
 # Usage:
-# 
+#
 #     require "markdown"
-#     
+#
 #     text = "## This is title \n This is a [link](http://crystal-lang.org)"
 #
 #     Markdown.to_html(text)

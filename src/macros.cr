@@ -11,7 +11,7 @@
 # record Point, x, y
 #
 # point = Point.new 1, 2
-# point.to_s #=> "Point(@x=1, @y=2)"
+# point.to_s # => "Point(@x=1, @y=2)"
 # ```
 #
 # An example with the block version:
@@ -24,7 +24,7 @@
 # end
 #
 # person = Person.new "John", "Doe"
-# person.full_name #=> "John Doe"
+# person.full_name # => "John Doe"
 # ```
 macro record(name, *properties)
   struct {{name.id}}

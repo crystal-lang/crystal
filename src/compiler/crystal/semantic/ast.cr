@@ -609,9 +609,9 @@ module Crystal
   end
 
   {% for name in %w(And Or
-                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
-                    Case StringInterpolation
-                    MacroExpression MacroIf MacroFor) %}
+                   ArrayLiteral HashLiteral RegexLiteral RangeLiteral
+                   Case StringInterpolation
+                   MacroExpression MacroIf MacroFor) %}
     class {{name.id}}
       include ExpandableNode
     end

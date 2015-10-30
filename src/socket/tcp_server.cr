@@ -20,7 +20,6 @@ class TCPServer < TCPSocket
         raise Errno.new("Error listening TCP server at #{host}#{port}")
       end
 
-
       true
     end
   end

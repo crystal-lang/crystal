@@ -133,7 +133,7 @@ describe "Type inference: enum" do
   end
 
   it "errors if reopen but not enum" do
-    assert_error  %(
+    assert_error %(
       class Foo
       end
 
@@ -146,7 +146,7 @@ describe "Type inference: enum" do
   end
 
   it "errors if reopen and tries to define constant" do
-    assert_error  %(
+    assert_error %(
       enum Foo
         A
         B

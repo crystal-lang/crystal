@@ -76,7 +76,7 @@ describe Process do
   end
 
   it "closes ios after block" do
-    Process.run("/bin/cat") {}
+    Process.run("/bin/cat") { }
     $?.exit_code.should eq(0)
   end
 
@@ -114,7 +114,7 @@ describe Process do
     end
 
     it "sets an environment variable" do
-      env = { "FOO" => "bar" }
+      env = {"FOO" => "bar"}
       value = Process.run("env", clear_env: true, env: env) do |proc|
         proc.output.gets_to_end
       end
@@ -122,7 +122,7 @@ describe Process do
     end
 
     it "deletes an environment variable" do
-      env = { "HOME" => nil }
+      env = {"HOME" => nil}
       value = Process.run("env | egrep '^HOME='", env: env, shell: true) do |proc|
         proc.output.gets_to_end
       end
@@ -132,20 +132,20 @@ describe Process do
 
   describe "kill" do
     it "kills a process" do
-      process = fork { loop {} }
+      process = fork { loop { } }
       process.kill(Signal::KILL).should be_nil
     end
 
     it "kills many process" do
-      process1 = fork { loop {} }
-      process2 = fork { loop {} }
+      process1 = fork { loop { } }
+      process2 = fork { loop { } }
       process1.kill(Signal::KILL).should be_nil
       process2.kill(Signal::KILL).should be_nil
     end
   end
 
   it "gets the pgid of a process id" do
-    process = fork { loop {} }
+    process = fork { loop { } }
     Process.getpgid(process.pid).should be_a(Int32)
     process.kill(Signal::KILL)
   end

@@ -203,11 +203,11 @@ module Crystal
 
     def to_number
       case @kind
-      when :i8 then @value.to_i8
+      when :i8  then @value.to_i8
       when :i16 then @value.to_i16
       when :i32 then @value.to_i32
       when :i64 then @value.to_i64
-      when :u8 then @value.to_u8
+      when :u8  then @value.to_u8
       when :u16 then @value.to_u16
       when :u32 then @value.to_u32
       when :u64 then @value.to_u64
@@ -852,7 +852,7 @@ module Crystal
       all_ivars.each do |name, ivar|
         # An instance var might not have a type, so we skip it
         if ivar_type = ivar.type?
-          ivars.push MetaVar.new((is_struct ? name : name[1 .. -1]), ivar_type)
+          ivars.push MetaVar.new((is_struct ? name : name[1..-1]), ivar_type)
         end
       end
 

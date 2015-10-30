@@ -4,7 +4,7 @@ require "./inflate"
 
 module Zlib
   def self.version
-    String.new LibZ.zlibVersion()
+    String.new LibZ.zlibVersion
   end
 
   def self.adler32(data, adler)
@@ -62,10 +62,16 @@ module Zlib
       super("#{@code}: #{@msg}")
     end
   end
+
   class NeedDictError < ZStreamError; end
+
   class StreamError < ZStreamError; end
+
   class DataError < ZStreamError; end
+
   class MemError < ZStreamError; end
+
   class BufError < ZStreamError; end
+
   class VersionError < ZStreamError; end
 end

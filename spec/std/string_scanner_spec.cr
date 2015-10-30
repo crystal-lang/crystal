@@ -12,10 +12,10 @@ describe StringScanner, "#scan" do
 
   it "returns nil if it can't match from the offset" do
     s = StringScanner.new("test string")
-    s.scan(/\w+/  ).should_not be_nil # => "test"
-    s.scan(/\w+/  ).should     be_nil
+    s.scan(/\w+/).should_not be_nil # => "test"
+    s.scan(/\w+/).should be_nil
     s.scan(/\s\w+/).should_not be_nil # => " string"
-    s.scan(/.*/   ).should_not be_nil # => ""
+    s.scan(/.*/).should_not be_nil    # => ""
   end
 end
 
@@ -24,7 +24,7 @@ describe StringScanner, "#scan_until" do
     s = StringScanner.new("test string")
     s.scan_until(/tr/).should eq("test str")
     s.offset.should eq(8)
-    s.scan_until(/g/ ).should eq("ing")
+    s.scan_until(/g/).should eq("ing")
   end
 
   it "returns nil if it can't match from the offset" do
@@ -51,7 +51,7 @@ describe StringScanner, "#skip" do
     s.skip(/\w+\s/).should eq(2)
     s.offset.should eq(10)
 
-    s.skip(/\w+/).should   eq(6)
+    s.skip(/\w+/).should eq(6)
     s.offset.should eq(16)
   end
 end
@@ -104,7 +104,7 @@ describe StringScanner, "#check_until" do
     s = StringScanner.new("test string")
     s.check_until(/tr/).should eq("test str")
     s.offset.should eq(0)
-    s.check_until(/g/ ).should eq("test string")
+    s.check_until(/g/).should eq("test string")
     s.offset.should eq(0)
   end
 

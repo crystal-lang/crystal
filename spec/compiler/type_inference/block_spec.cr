@@ -660,7 +660,6 @@ describe "Block inference" do
       )) { fun_of(types["Bar"], void) }
   end
 
-
   it "types bug with yield not_nil! that is never not nil" do
     assert_type(%(
       lib LibC

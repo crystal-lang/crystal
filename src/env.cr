@@ -62,7 +62,7 @@ module ENV
 
   # Retrieves a value corresponding to a key. Return the value of the block if
   # the key does not exist.
-  def self.fetch(key : String, &block : String -> String?|NoReturn)
+  def self.fetch(key : String, &block : String -> String? | NoReturn)
     value = LibC.getenv key
     return String.new(value) if value
     yield(key)
@@ -71,14 +71,14 @@ module ENV
   # Returns an array of all the environment variable names.
   def self.keys
     keys = [] of String
-    each {|key, v| keys << key}
+    each { |key, v| keys << key }
     keys
   end
 
   # Returns an array of all the environment variable values.
   def self.values
     values = [] of String
-    each {|k, value| values << value}
+    each { |k, value| values << value }
     values
   end
 

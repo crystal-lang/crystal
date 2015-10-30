@@ -56,9 +56,9 @@ module Crystal
           flags = [] of String
           `pkg-config #{libname} --libs --static`.split.each do |cfg|
             if cfg.starts_with?("-L")
-              library_path << cfg[2 .. -1]
+              library_path << cfg[2..-1]
             elsif cfg.starts_with?("-l")
-              flags << (find_static_lib(cfg[2 .. -1], library_path) || cfg)
+              flags << (find_static_lib(cfg[2..-1], library_path) || cfg)
             else
               flags << cfg
             end
@@ -91,4 +91,3 @@ module Crystal
     end
   end
 end
-

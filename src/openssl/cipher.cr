@@ -52,11 +52,11 @@ class OpenSSL::Cipher
 
   def update(data : (String | Slice))
     slice = case data
-      when String
-        data.to_slice
-      else
-        data
-    end
+            when String
+              data.to_slice
+            else
+              data
+            end
 
     buffer_length = slice.size + block_size
     buffer = Slice(UInt8).new(buffer_length)

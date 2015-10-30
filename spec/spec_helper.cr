@@ -126,7 +126,7 @@ def assert_macro_internal(program, sub_node, macro_args, macro_body, expected)
   call = Call.new(nil, "", sub_node)
   result = program.expand_macro a_macro, call, program
   result = result.source
-  result = result[0 .. -2] if result.ends_with?(';')
+  result = result[0..-2] if result.ends_with?(';')
   result.should eq(expected)
 end
 
@@ -204,4 +204,3 @@ ensure
   File.delete("./temp_abi.c")
   File.delete("./temp_abi.o")
 end
-

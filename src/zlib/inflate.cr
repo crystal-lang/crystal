@@ -5,7 +5,7 @@ module Zlib
     def initialize(@input : IO, wbits = LibZ::MAX_BITS)
       @buf :: UInt8[8192] # input buffer used by zlib
       @stream = LibZ::ZStream.new
-      ret = LibZ.inflateInit2(pointerof(@stream), wbits, LibZ.zlibVersion(), sizeof(LibZ::ZStream))
+      ret = LibZ.inflateInit2(pointerof(@stream), wbits, LibZ.zlibVersion, sizeof(LibZ::ZStream))
       check_error(ret)
     end
 

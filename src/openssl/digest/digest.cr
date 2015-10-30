@@ -4,6 +4,7 @@ require "./digest_base"
 module OpenSSL
   class Digest
     class Error < OpenSSL::Error; end
+
     class UnsupportedError < Error; end
 
     include DigestBase

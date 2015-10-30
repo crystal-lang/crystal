@@ -50,7 +50,7 @@ describe "types to_s of" do
       end
 
       it "in tuples" do
-        assert_type_to_s "{String, String | Int32}" { tuple_of [string, union_of(string, int32)]  }
+        assert_type_to_s "{String, String | Int32}" { tuple_of [string, union_of(string, int32)] }
       end
     end
 

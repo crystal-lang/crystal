@@ -13,8 +13,8 @@ class MemoryIO
   #
   # ```
   # io = MemoryIO.new
-  # io.pos  #=> 0
-  # io.read #=> ""
+  # io.pos  # => 0
+  # io.read # => ""
   # ```
   def initialize(capacity = 64 : Int)
     String.check_capacity_in_bounds(capacity)
@@ -33,7 +33,7 @@ class MemoryIO
   #
   # ```
   # io = MemoryIO.new "hello"
-  # io.pos #=> 0
+  # io.pos # => 0
   # io.gets(2).should eq("he")
   # ```
   def self.new(string : String)
@@ -138,10 +138,10 @@ class MemoryIO
   #
   # ```
   # io = MemoryIO.new "hello"
-  # io.gets(3) #=> "hel"
+  # io.gets(3) # => "hel"
   # io.clear
-  # io.pos     #=> 0
-  # io.gets_to_end    #=> ""
+  # io.pos         # => 0
+  # io.gets_to_end # => ""
   # ```
   def clear
     @bytesize = 0
@@ -152,9 +152,9 @@ class MemoryIO
   #
   # ```
   # io = MemoryIO.new
-  # io.empty? #=> true
+  # io.empty? # => true
   # io.print "hello"
-  # io.empty? #=> false
+  # io.empty? # => false
   # ```
   def empty?
     @bytesize == 0
@@ -177,7 +177,7 @@ class MemoryIO
   #
   # ```
   # io = MemoryIO.new "hello"
-  # io.size #=> 5
+  # io.size # => 5
   # ```
   def size
     @bytesize
@@ -192,11 +192,11 @@ class MemoryIO
   #
   # ```
   # io = MemoryIO.new("abcdef")
-  # io.gets(3) #=> "abc"
+  # io.gets(3) # => "abc"
   # io.seek(1, IO::Seek::Set)
-  # io.gets(2) #=> "bc"
+  # io.gets(2) # => "bc"
   # io.seek(-1, IO::Seek::Current)
-  # io.gets(1) #=> "c"
+  # io.gets(1) # => "c"
   # ```
   def seek(offset, whence = Seek::Set : Seek)
     check_open
@@ -217,9 +217,9 @@ class MemoryIO
   #
   # ```
   # io = MemoryIO.new "hello"
-  # io.pos     #=> 0
-  # io.gets(2) #=> "he"
-  # io.pos     #=> 2
+  # io.pos     # => 0
+  # io.gets(2) # => "he"
+  # io.pos     # => 2
   # ```
   def pos
     tell
@@ -230,7 +230,7 @@ class MemoryIO
   # ```
   # io = MemoryIO.new "hello"
   # io.pos = 3
-  # io.gets #=> "lo"
+  # io.gets # => "lo"
   # ```
   def pos=(value)
     raise ArgumentError.new("negative pos") if value < 0
@@ -243,7 +243,7 @@ class MemoryIO
   # ```
   # io = MemoryIO.new "hello"
   # io.close
-  # io.gets_to_end #=> IO::Error: closed stream
+  # io.gets_to_end # => IO::Error: closed stream
   # ```
   def close
     @closed = true
@@ -253,9 +253,9 @@ class MemoryIO
   #
   # ```
   # io = MemoryIO.new "hello"
-  # io.closed? #=> false
+  # io.closed? # => false
   # io.close
-  # io.closed? #=> true
+  # io.closed? # => true
   # ```
   def closed?
     @closed
@@ -266,7 +266,7 @@ class MemoryIO
   # ```
   # io = MemoryIO.new
   # io.print 1, 2, 3
-  # io.to_s #=> "123"
+  # io.to_s # => "123"
   # ```
   def to_s
     String.new @buffer, @bytesize
@@ -279,7 +279,7 @@ class MemoryIO
   # io = MemoryIO.new "hello"
   # slice = io.to_slice
   # slice[0] = 97_u8
-  # io.gets_to_end #=> "aello"
+  # io.gets_to_end # => "aello"
   # ```
   def to_slice
     Slice.new(@buffer, @bytesize)

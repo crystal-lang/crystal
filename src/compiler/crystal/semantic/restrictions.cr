@@ -544,7 +544,7 @@ module Crystal
       remove_alias.is_restriction_of?(other, owner)
     end
 
-    def restrict(other  : Path, context)
+    def restrict(other : Path, context)
       other_type = context.type_lookup.lookup_type other
       if other_type
         if other_type == self
@@ -642,8 +642,8 @@ module Crystal
     def compatible_with?(other : FunInstanceType)
       arg_types = arg_types()
       return_type = return_type()
-      other_arg_types = other.arg_types()
-      other_return_type = other.return_type()
+      other_arg_types = other.arg_types
+      other_return_type = other.return_type
 
       if return_type == other_return_type
         # Ok

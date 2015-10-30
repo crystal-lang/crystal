@@ -6,18 +6,18 @@ def matmul(a, b)
   p = b[0].size
   # transpose
   b2 = Array.new(n) { Array.new(p, 0.0) }
-  (0 ... n).each do |i|
-    (0 ... p).each do |j|
+  (0...n).each do |i|
+    (0...p).each do |j|
       b2[j][i] = b[i][j]
     end
   end
   # multiplication
   c = Array.new(m) { Array.new(p, 0.0) }
-  (0 ... m).each do |i|
-    (0 ... p).each do |j|
+  (0...m).each do |i|
+    (0...p).each do |j|
       s = 0.0
       ai, b2j = a[i], b2[j]
-      (0 ... n).each do |k|
+      (0...n).each do |k|
         s += ai[k] * b2j[k]
       end
       c[i][j] = s
@@ -29,8 +29,8 @@ end
 def matgen(n)
   tmp = 1.0 / n / n
   a = Array.new(n) { Array.new(n, 0.0) }
-  (0 ... n).each do |i|
-    (0 ... n).each do |j|
+  (0...n).each do |i|
+    (0...n).each do |j|
       a[i][j] = tmp * (i - j) * (i + j)
     end
   end

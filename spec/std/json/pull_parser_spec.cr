@@ -70,7 +70,7 @@ class JSON::PullParser
   end
 
   def assert_array
-    assert_array {}
+    assert_array { }
   end
 
   def assert_object
@@ -82,7 +82,7 @@ class JSON::PullParser
   end
 
   def assert_object
-    assert_object {}
+    assert_object { }
   end
 
   def assert_error

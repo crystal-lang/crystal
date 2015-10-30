@@ -203,7 +203,7 @@ class Crystal::Doc::Generator
 
     dot_index = line =~ /\.($|\s)/
     if dot_index
-      line = line[0 .. dot_index]
+      line = line[0..dot_index]
     end
 
     doc context, line
@@ -234,7 +234,7 @@ class Crystal::Doc::Generator
 
   def compute_repository
     remotes = `git remote -v`
-    return unless  $?.success?
+    return unless $?.success?
 
     github_remote_pattern = /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_|\.)+)/
     github_remotes = remotes.lines.select &.match(github_remote_pattern)
@@ -283,7 +283,7 @@ class Crystal::Doc::Generator
     filename = location.filename
     return unless filename.is_a?(String)
     return unless filename.starts_with? @base_dir
-    filename[@base_dir.size .. -1]
+    filename[@base_dir.size..-1]
   end
 
   record RelativeLocation, filename, url
@@ -301,8 +301,8 @@ class Crystal::Doc::Generator
 
       url = "#{repository}#{filename}" if repository
 
-      filename = filename[1 .. -1] if filename.starts_with? File::SEPARATOR
-      filename = filename[4 .. -1] if filename.starts_with? SRC_SEP
+      filename = filename[1..-1] if filename.starts_with? File::SEPARATOR
+      filename = filename[4..-1] if filename.starts_with? SRC_SEP
 
       locations << RelativeLocation.new(filename, url)
     end

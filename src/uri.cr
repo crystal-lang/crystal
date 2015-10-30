@@ -23,13 +23,13 @@
 # ```
 class URI
   # URI defined in RFC3986
-  RFC3986_URI = /\A(?<URI>(?<scheme>[A-Za-z][+\-.0-9A-Za-z]*):(?<hier_part>\/\/(?<authority>(?:(?<userinfo>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?:(?<IPv6address>(?:[0-9a-fA-F]{1,4}:){6}(?<ls32>[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:[0-9a-fA-F]{1,4}:){5}\g<ls32>|[0-9a-fA-F]{1,4}?::(?:[0-9a-fA-F]{1,4}:){4}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){3}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,2}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){2}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,3}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}:\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,4}[0-9a-fA-F]{1,4})?::\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,5}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}|(?:(?:[0-9a-fA-F]{1,4}:){,6}[0-9a-fA-F]{1,4})?::)|(?<IPvFuture>v[0-9a-fA-F]+\.[!$&-.0-;=A-Z_a-z~]+))\])|\g<IPv4address>|(?<reg_name>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_rootless>\g<segment_nz>(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/
+  RFC3986_URI          = /\A(?<URI>(?<scheme>[A-Za-z][+\-.0-9A-Za-z]*):(?<hier_part>\/\/(?<authority>(?:(?<userinfo>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?:(?<IPv6address>(?:[0-9a-fA-F]{1,4}:){6}(?<ls32>[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:[0-9a-fA-F]{1,4}:){5}\g<ls32>|[0-9a-fA-F]{1,4}?::(?:[0-9a-fA-F]{1,4}:){4}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){3}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,2}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){2}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,3}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}:\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,4}[0-9a-fA-F]{1,4})?::\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,5}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}|(?:(?:[0-9a-fA-F]{1,4}:){,6}[0-9a-fA-F]{1,4})?::)|(?<IPvFuture>v[0-9a-fA-F]+\.[!$&-.0-;=A-Z_a-z~]+))\])|\g<IPv4address>|(?<reg_name>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_rootless>\g<segment_nz>(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/
   RFC3986_relative_ref = /\A(?<relative_ref>(?<relative_part>\/\/(?<authority>(?:(?<userinfo>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?<IPv6address>(?:[0-9a-fA-F]{1,4}:){6}(?<ls32>[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:[0-9a-fA-F]{1,4}:){5}\g<ls32>|[0-9a-fA-F]{1,4}?::(?:[0-9a-fA-F]{1,4}:){4}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,1}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){3}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,2}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){2}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,3}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}:\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,4}[0-9a-fA-F]{1,4})?::\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,5}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}|(?:(?:[0-9a-fA-F]{1,4}:){,6}[0-9a-fA-F]{1,4})?::)|(?<IPvFuture>v[0-9a-fA-F]+\.[!$&-.0-;=A-Z_a-z~]+)\])|\g<IPv4address>|(?<reg_name>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_noscheme>(?<segment_nz_nc>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-9;=@-Z_a-z~])+)(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/
 
   # Returns the scheme component of the URI.
   #
   # ```
-  # URI.parse("http://foo.com").scheme # => "http"
+  # URI.parse("http://foo.com").scheme           # => "http"
   # URI.parse("mailto:alice@example.com").scheme # => "mailto"
   # ```
   getter scheme
@@ -128,7 +128,7 @@ class URI
   # ```
   def full_path
     String.build do |str|
-      str << (@path.try {|p| !p.empty?} ? @path : "/")
+      str << (@path.try { |p| !p.empty? } ? @path : "/")
       str << "?" << @query if @query
     end
   end

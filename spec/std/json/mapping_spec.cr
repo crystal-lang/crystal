@@ -4,7 +4,7 @@ require "json"
 class JSONPerson
   JSON.mapping({
     name: {type: String},
-    age: {type: Int32, nilable: true},
+    age:  {type: Int32, nilable: true},
   })
 
   def_equals name, age
@@ -16,14 +16,14 @@ end
 class StrictJSONPerson
   JSON.mapping({
     name: {type: String},
-    age: {type: Int32, nilable: true},
+    age:  {type: Int32, nilable: true},
   }, true)
 end
 
 class JSONPersonEmittingNull
   JSON.mapping({
     name: {type: String},
-    age: {type: Int32, nilable: true, emit_null: true},
+    age:  {type: Int32, nilable: true, emit_null: true},
   })
 end
 

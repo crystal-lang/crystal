@@ -20,7 +20,7 @@ module Base64
   class Error < Exception; end
 
   # :nodoc:
-  CHARS_STD  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  CHARS_STD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
   # :nodoc:
   CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
   # :nodoc:
@@ -226,12 +226,12 @@ module Base64
   # :nodoc:
   DECODE_TABLE = Array(Int8).new(256) do |i|
     case i.chr
-    when 'A'..'Z'   then (i - 0x41).to_i8
-    when 'a'..'z'   then (i - 0x47).to_i8
-    when '0'..'9'   then (i + 0x04).to_i8
-    when '+', '-'   then 0x3E_i8
-    when '/', '_'   then 0x3F_i8
-    else                 -1_i8
+    when 'A'..'Z' then (i - 0x41).to_i8
+    when 'a'..'z' then (i - 0x47).to_i8
+    when '0'..'9' then (i + 0x04).to_i8
+    when '+', '-' then 0x3E_i8
+    when '/', '_' then 0x3F_i8
+    else               -1_i8
     end
   end
 end

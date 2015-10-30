@@ -153,13 +153,13 @@ describe "Type inference: exception" do
   end
 
   assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex",
-                      "specific rescue must come before catch-all rescue"
+    "specific rescue must come before catch-all rescue"
 
   assert_syntax_error "begin; rescue ex; rescue; end; ex",
-                      "catch-all rescue can only be specified once"
+    "catch-all rescue can only be specified once"
 
   assert_syntax_error "begin; else; 1; end",
-                      "'else' is useless without 'rescue'"
+    "'else' is useless without 'rescue'"
 
   it "types code with abstract exception that delegates method" do
     assert_type(%(

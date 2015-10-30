@@ -11,16 +11,16 @@
 # followed by an optional type suffix. If no suffix is present, the literal's type is `Float64`.
 #
 # ```
-# 1.0      # Float64
-# 1.0_f32  # Float32
-# 1_f32    # Float32
+# 1.0     # Float64
+# 1.0_f32 # Float32
+# 1_f32   # Float32
 #
-# 1e10     # Float64
-# 1.5e10   # Float64
-# 1.5e-7   # Float64
+# 1e10   # Float64
+# 1.5e10 # Float64
+# 1.5e-7 # Float64
 #
-# +1.3     # Float64
-# -0.5     # Float64
+# +1.3 # Float64
+# -0.5 # Float64
 # ```
 #
 # The underscore `_` before the suffix is optional.
@@ -92,10 +92,10 @@ struct Float
 end
 
 struct Float32
-  NAN = 0_f32 / 0_f32
+  NAN      = 0_f32 / 0_f32
   INFINITY = 1_f32 / 0_f32
-  MIN = -INFINITY
-  MAX =  INFINITY
+  MIN      = -INFINITY
+  MAX      = INFINITY
 
   def -
     0.0_f32 - self
@@ -144,10 +144,10 @@ struct Float32
 end
 
 struct Float64
-  NAN = 0_f64 / 0_f64
+  NAN      = 0_f64 / 0_f64
   INFINITY = 1_f64 / 0_f64
-  MIN = -INFINITY
-  MAX =  INFINITY
+  MIN      = -INFINITY
+  MAX      = INFINITY
 
   def -
     0.0 - self

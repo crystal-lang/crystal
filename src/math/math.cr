@@ -3,13 +3,13 @@ require "./libm"
 module Math
   extend self
 
-  PI = 3.14159265358979323846
-  E = LibM.exp_f64(1.0)
-  LOG2 = LibM.log_f64(2.0)
+  PI    = 3.14159265358979323846
+  E     = LibM.exp_f64(1.0)
+  LOG2  = LibM.log_f64(2.0)
   LOG10 = LibM.log_f64(10.0)
 
   {% for name in %w(acos acosh asin asinh atan atanh cbrt cos cosh erf erfc exp
-    exp2 expm1 ilogb log log10 log1p log2 logb sin sinh sqrt tan tanh) %}
+                   exp2 expm1 ilogb log log10 log1p log2 logb sin sinh sqrt tan tanh) %}
     def {{name.id}}(value : Float32)
       LibM.{{name.id}}_f32(value)
     end
@@ -83,7 +83,7 @@ module Math
     end
   {% end %}
 
-  ### To be uncommented once LLVM is updated
+  # ## To be uncommented once LLVM is updated
   # def div(value1 : Int32, value2 : Int32)
   #   LibM.div_i32(value1, value2)
   # end
@@ -104,7 +104,7 @@ module Math
     log(numeric) / log(base)
   end
 
-  ### To be uncommented once LLVM is updated
+  # ## To be uncommented once LLVM is updated
   # def max(value1 : Float32, value2 : Float32)
   #   LibM.max_f32(value1, value2)
   # end
@@ -117,20 +117,20 @@ module Math
     value1 >= value2 ? value1 : value2
   end
 
-  ### To be uncommented once LLVM is updated
-  #def min(value1 : Float32, value2 : Float32)
+  # ## To be uncommented once LLVM is updated
+  # def min(value1 : Float32, value2 : Float32)
   #  LibM.min_f32(value1, value2)
-  #end
+  # end
   #
-  #def min(value1 : Float64, value2 : Float64)
+  # def min(value1 : Float64, value2 : Float64)
   #  LibM.min_f64(value1, value2)
-  #end
+  # end
 
   def min(value1, value2)
     value1 <= value2 ? value1 : value2
   end
 
-  ### To be uncommented once LLVM is updated
+  # ## To be uncommented once LLVM is updated
   # def rem(value1 : Int32, value2 : Int32)
   #   LibM.rem_i32(value1, value2)
   # end

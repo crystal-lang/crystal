@@ -32,7 +32,7 @@ class Crystal::Browser
   end
 
   def handle(path)
-    object_id = path[1 .. -1].to_u64 { 0_u64 }
+    object_id = path[1..-1].to_u64 { 0_u64 }
     case object_id
     when 0
       render_html @node

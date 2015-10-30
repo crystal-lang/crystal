@@ -10,7 +10,7 @@ class Process
   # * `true`: inherit from parent
   # * `IO`: use the given IO
   alias Stdio = Nil | Bool | IO
-  alias Env = Nil | Hash(String, Nil) | Hash(String, String?) |  Hash(String, String)
+  alias Env = Nil | Hash(String, Nil) | Hash(String, String?) | Hash(String, String)
 
   # Executes a process and waits for it to complete.
   #
@@ -144,13 +144,13 @@ class Process
     fork_error.try &.close
   end
 
-  protected def initialize @pid
+  protected def initialize(@pid)
     @waitpid_future = Event::SignalChildHandler.instance.waitpid(pid)
     @wait_count = 0
   end
 
   # See Process.kill
-  def kill sig = Signal::TERM
+  def kill(sig = Signal::TERM)
     Process.kill sig, @pid
   end
 
@@ -268,7 +268,7 @@ end
 # Example:
 #
 # ```
-# `echo *` #=> "LICENSE shard.yml Readme.md spec src\n"
+# `echo *` # => "LICENSE shard.yml Readme.md spec src\n"
 # ```
 def `(command) : String
   process = Process.new(command, shell: true, input: true, output: nil, error: true)

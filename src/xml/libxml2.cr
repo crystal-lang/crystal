@@ -63,9 +63,9 @@ lib LibXML
 
   enum ParserSeverity
     VALIDITY_WARNING = 1
-    VALIDITY_ERROR = 2
-    WARNING = 3
-    ERROR = 4
+    VALIDITY_ERROR   = 2
+    WARNING          = 3
+    ERROR            = 4
   end
 
   alias TextReaderErrorFunc = (Void*, UInt8*, ParserSeverity, XMLTextReaderLocator) ->
@@ -120,10 +120,10 @@ lib LibXML
   fun xmlSaveClose(ctx : SaveCtxPtr) : Int
 
   enum ErrorLevel
-    NONE = 0
+    NONE    = 0
     WARNING = 1
-    ERROR = 2
-    FATAL = 3
+    ERROR   = 2
+    FATAL   = 3
   end
 
   struct Error
@@ -142,7 +142,7 @@ lib LibXML
     node : Void*
   end
 
-  fun xmlGetLastError() : Error*
+  fun xmlGetLastError : Error*
 
   struct XPathContext
     doc : DocPtr
@@ -187,16 +187,16 @@ lib LibXML
   end
 
   enum XPathObjectType
-    UNDEFINED = 0
-    NODESET = 1
-    BOOLEAN = 2
-    NUMBER = 3
-    STRING = 4
-    POINT = 5
-    RANGE = 6
+    UNDEFINED   = 0
+    NODESET     = 1
+    BOOLEAN     = 2
+    NUMBER      = 3
+    STRING      = 4
+    POINT       = 5
+    RANGE       = 6
     LOCATIONSET = 7
-    USERS = 8
-    XSLT_TREE = 9
+    USERS       = 8
+    XSLT_TREE   = 9
   end
 
   struct XPathObject

@@ -3,6 +3,7 @@ require "./codegen"
 module Crystal
   class CodeGenVisitor
     CRYSTAL_LANG_DEBUG_IDENTIFIER = 0x8002_u32
+
     def di_builder(llvm_module = @llvm_mod || @main_mod)
       di_builders = @di_builders ||= {} of LLVM::Module => LLVM::DIBuilder
       di_builders[llvm_module] ||= LLVM::DIBuilder.new(llvm_module)
@@ -56,10 +57,10 @@ module Crystal
     def create_debug_type(type : EnumType)
       elements = type.types.map do |name, item|
         value = if item.is_a?(Const) && (value = item.value).is_a?(NumberLiteral)
-          value.value.to_i64 rescue value.value.to_u64
-        else
-          0
-        end
+                  value.value.to_i64 rescue value.value.to_u64
+                else
+                  0
+                end
         di_builder.create_enumerator(name, value)
       end
       elements = di_builder.get_or_create_array(elements)
@@ -129,31 +130,31 @@ module Crystal
     def file_and_dir(file)
       # @file_and_dir ||= {} of String | VirtualFile => {String, String}
       realfile = case file
-        when String then file
-        when VirtualFile
-          Dir.mkdir_p(".crystal")
-          File.write(".crystal/macro#{file.object_id}.cr", file.source)
-          ".crystal/macro#{file.object_id}.cr"
-        else
-          raise "Unknown file type: #{file}"
-        end
+                 when String then file
+                 when VirtualFile
+                   Dir.mkdir_p(".crystal")
+                   File.write(".crystal/macro#{file.object_id}.cr", file.source)
+                   ".crystal/macro#{file.object_id}.cr"
+                 else
+                   raise "Unknown file type: #{file}"
+                 end
       {
-        File.basename(realfile),                  # File
-        File.dirname(realfile)                    # Directory
+        File.basename(realfile), # File
+        File.dirname(realfile),  # Directory
       }
     end
 
-    def metadata args
+    def metadata(args)
       values = args.map do |value|
         case value
-        when String then LLVM::Value.new LibLLVM.md_string(value, value.bytesize)
-        when Symbol then LLVM::Value.new LibLLVM.md_string(value.to_s, value.to_s.bytesize)
-        when Number then int32(value)
-        when Bool then int1(value ? 1 : 0)
-        when LLVM::Value then value
+        when String         then LLVM::Value.new LibLLVM.md_string(value, value.bytesize)
+        when Symbol         then LLVM::Value.new LibLLVM.md_string(value.to_s, value.to_s.bytesize)
+        when Number         then int32(value)
+        when Bool           then int1(value ? 1 : 0)
+        when LLVM::Value    then value
         when LLVM::Function then LLVM::Value.new value.unwrap
-        when Nil then LLVM::Value.new(Pointer(Void).null as LibLLVM::ValueRef)
-        else raise "Unsuported value type: #{value.class}"
+        when Nil            then LLVM::Value.new(Pointer(Void).null as LibLLVM::ValueRef)
+        else                     raise "Unsuported value type: #{value.class}"
         end
       end
       LLVM::Value.new LibLLVM.md_node((values.buffer as LibLLVM::ValueRef*), values.size)
@@ -200,8 +201,8 @@ module Crystal
       file, dir = file_and_dir(filename)
       scope = di_builder.create_file(file, dir)
       fn_metadata = di_builder.create_function(scope, MAIN_NAME, MAIN_NAME, scope,
-          0, fun_type, 1, 1, 0, 0_u32, 0, main_fun)
-        fun_metadatas[main_fun] = fn_metadata
+        0, fun_type, 1, 1, 0, 0_u32, 0, main_fun)
+      fun_metadatas[main_fun] = fn_metadata
     end
 
     def emit_def_debug_metadata(target_def)

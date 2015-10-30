@@ -15,20 +15,20 @@ module Crystal
     record Source, filename, code
     record Result, program, node, original_node
 
-    property  cross_compile_flags
-    property  flags
+    property cross_compile_flags
+    property flags
     property? debug
     property? dump_ll
-    property  link_flags
-    property  mcpu
+    property link_flags
+    property mcpu
     property? color
     property? no_codegen
-    property  n_threads
-    property  prelude
+    property n_threads
+    property prelude
     property? release
     property? single_module
     property? stats
-    property  target_triple
+    property target_triple
     property? verbose
     property? wants_doc
     property emit
@@ -293,12 +293,12 @@ module Crystal
       end
     end
 
-    private def system(command, args=nil)
+    private def system(command, args = nil)
       puts command if verbose?
 
       ::system(command, args)
       unless $?.success?
-        msg  = $?.normal_exit? ? "code: #{$?.exit_code}" : "signal: #{$?.exit_signal} (#{$?.exit_signal.value})"
+        msg = $?.normal_exit? ? "code: #{$?.exit_code}" : "signal: #{$?.exit_signal} (#{$?.exit_signal.value})"
         code = $?.normal_exit? ? $?.exit_code : 1
         error "execution of command failed with #{msg}: `#{command}`", exit_code: code
       end
@@ -428,7 +428,7 @@ module Crystal
   def self.relative_filename(filename : String)
     dir = Dir.working_directory
     if filename.starts_with?(dir)
-      filename = filename[dir.size .. -1]
+      filename = filename[dir.size..-1]
       if filename.starts_with? "/"
         ".#{filename}"
       else

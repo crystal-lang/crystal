@@ -55,7 +55,7 @@ class CSV::Parser
       when Token::Kind::Cell
         row << token.value
         token = @lexer.next_token
-      else #:newline, :eof
+      else # :newline, :eof
         @max_row_size = row.size if row.size > @max_row_size
         return row
       end

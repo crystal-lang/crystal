@@ -112,7 +112,6 @@ describe "Type inference: nil" do
       ") { int32 }
   end
 
-
   it "restricts type of 'while foo'" do
     assert_type("
       class Foo

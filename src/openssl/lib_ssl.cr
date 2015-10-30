@@ -9,13 +9,13 @@ lib LibSSL
   type SSL = Void*
 
   enum SSLFileType
-    PEM = 1
+    PEM  = 1
     ASN1 = 2
   end
 
-  fun ssl_load_error_strings = SSL_load_error_strings()
-  fun ssl_library_init = SSL_library_init()
-  fun sslv23_method  = SSLv23_method() : SSLMethod
+  fun ssl_load_error_strings = SSL_load_error_strings
+  fun ssl_library_init = SSL_library_init
+  fun sslv23_method = SSLv23_method : SSLMethod
   fun ssl_ctx_new = SSL_CTX_new(method : SSLMethod) : SSLContext
   fun ssl_ctx_free = SSL_CTX_free(context : SSLContext)
 

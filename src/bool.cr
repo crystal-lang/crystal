@@ -8,8 +8,8 @@ struct Bool
   # Negates this boolean.
   #
   # ```
-  # !true  #=> false
-  # !false #=> true
+  # !true  # => false
+  # !false # => true
   # ```
   def !
     self ? false : true
@@ -18,10 +18,10 @@ struct Bool
   # Bitwise OR. Returns `true` if this bool or *other* is `true`, otherwise returns `false`.
   #
   # ```
-  # false | false #=> false
-  # false | true  #=> true
-  # true  | false #=> true
-  # true  | true  #=> true
+  # false | false # => false
+  # false | true  # => true
+  # true | false  # => true
+  # true | true   # => true
   # ```
   def |(other : Bool)
     self ? true : other
@@ -30,10 +30,10 @@ struct Bool
   # Bitwise AND. Returns `true` if this bool and *other* are `true`, otherwise returns `false`.
   #
   # ```
-  # false & false #=> false
-  # false & true  #=> false
-  # true  & false #=> false
-  # true  & true  #=> true
+  # false & false # => false
+  # false & true  # => false
+  # true & false  # => false
+  # true & true   # => true
   # ```
   def &(other : Bool)
     self ? other : false
@@ -42,10 +42,10 @@ struct Bool
   # Exclusive Or. Returns `true` if this bool is different from *other*, otherwise returns `false`.
   #
   # ```
-  # false ^ false #=> false
-  # false ^ true  #=> true
-  # true  ^ false #=> true
-  # true  ^ true  #=> false
+  # false ^ false # => false
+  # false ^ true  # => true
+  # true ^ false  # => true
+  # true ^ true   # => false
   # ```
   def ^(other : Bool)
     self != other

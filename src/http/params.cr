@@ -74,7 +74,7 @@ module HTTP
     #   form.add "name", "crystal"
     #   form.add "year", "2012 - today"
     # end
-    # params #=> "color=black&name=crystal&year=2012%20-%20today"
+    # params # => "color=black&name=crystal&year=2012%20-%20today"
     # ```
     def self.build
       form_builder = Builder.new
@@ -83,6 +83,7 @@ module HTTP
     end
 
     protected getter raw_params
+
     def initialize(@raw_params)
     end
 
@@ -97,8 +98,8 @@ module HTTP
     # Returns first value for specified param name.
     #
     # ```
-    # params["email"]                # => "john@example.org"
-    # params["non_existent_param"]   # KeyError
+    # params["email"]              # => "john@example.org"
+    # params["non_existent_param"] # KeyError
     # ```
     def [](name)
       raw_params[name].first
@@ -107,8 +108,8 @@ module HTTP
     # Returns first value or nil for specified param name.
     #
     # ```
-    # params["email"]?                # => "john@example.org"
-    # params["non_existent_param"]?   # nil
+    # params["email"]?              # => "john@example.org"
+    # params["non_existent_param"]? # nil
     # ```
     def []?(name)
       fetch(name) { nil }
@@ -117,8 +118,8 @@ module HTTP
     # Returns true if param with provided name exists.
     #
     # ```
-    # params.has_key?("email")       # => true
-    # params.has_key?("garbage")     # => false
+    # params.has_key?("email")   # => true
+    # params.has_key?("garbage") # => false
     # ```
     delegate has_key?, raw_params
 
@@ -135,7 +136,7 @@ module HTTP
     # Returns all values for specified param name.
     #
     # ```
-    # params.fetch_all("item")       # => ["pencil", "book", "workbook"]
+    # params.fetch_all("item") # => ["pencil", "book", "workbook"]
     # ```
     def fetch_all(name)
       raw_params.fetch(name) { [] of String }
@@ -144,8 +145,8 @@ module HTTP
     # Returns first value for specified param name.
     #
     # ```
-    # params.fetch("email")                # => "john@example.org"
-    # params.fetch("non_existent_param")   # KeyError
+    # params.fetch("email")              # => "john@example.org"
+    # params.fetch("non_existent_param") # KeyError
     # ```
     def fetch(name)
       raw_params.fetch(name).first
@@ -155,8 +156,8 @@ module HTTP
     # default value when there is no such param.
     #
     # ```
-    # params.fetch("email", "none@example.org")                # => "john@example.org"
-    # params.fetch("non_existent_param", "default value")      # => "default value"
+    # params.fetch("email", "none@example.org")           # => "john@example.org"
+    # params.fetch("non_existent_param", "default value") # => "default value"
     # ```
     def fetch(name, default)
       return default unless has_key?(name)
@@ -180,7 +181,7 @@ module HTTP
     #
     # ```
     # params.add("item", "keychain")
-    # params.fetch_all("item")        # => ["pencil", "book", "workbook", "keychain"]
+    # params.fetch_all("item") # => ["pencil", "book", "workbook", "keychain"]
     # ```
     def add(name, value)
       raw_params[name] ||= [] of String
@@ -192,7 +193,7 @@ module HTTP
     #
     # ```
     # params.set_all("item", ["keychain", "keynote"])
-    # params.fetch_all("item")        # => ["keychain", "keynote"]
+    # params.fetch_all("item") # => ["keychain", "keynote"]
     # ```
     def set_all(name, values)
       raw_params[name] = values
@@ -222,13 +223,13 @@ module HTTP
     # deletes param itself. Returns deleted value.
     #
     # ```
-    # params.delete("item")     # => "keychain"
-    # params.fetch_all("item")  # => ["keynote"]
+    # params.delete("item")    # => "keychain"
+    # params.fetch_all("item") # => ["keynote"]
     #
-    # params.delete("item")     # => "keynote"
-    # params["item"]            # KeyError
+    # params.delete("item") # => "keynote"
+    # params["item"]        # KeyError
     #
-    # params.delete("non_existent_param")  # KeyError
+    # params.delete("non_existent_param") # KeyError
     # ```
     def delete(name)
       value = raw_params[name].shift
@@ -240,8 +241,8 @@ module HTTP
     # values.
     #
     # ```
-    # params.delete_all("comments")   # => ["hello, world!", ":+1:"]
-    # params.has_key?("comments")     # => false
+    # params.delete_all("comments") # => ["hello, world!", ":+1:"]
+    # params.has_key?("comments")   # => false
     # ```
     def delete_all(name)
       raw_params.delete(name)
@@ -250,7 +251,7 @@ module HTTP
     # Serializes to string representation as http url encoded form
     #
     # ```
-    # params.to_s     # => "item=keychain&item=keynote&email=john@example.org"
+    # params.to_s # => "item=keychain&item=keynote&email=john@example.org"
     # ```
     def to_s(io)
       builder = Builder.new(io)

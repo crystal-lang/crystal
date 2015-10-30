@@ -80,7 +80,7 @@ describe IO do
     it "doesn't block on first read.  blocks on 2nd read" do
       IO.pipe do |read, write|
         write.puts "hello"
-	slice = Slice(UInt8).new 1024
+        slice = Slice(UInt8).new 1024
 
         read.read_timeout = 1
         read.read(slice).should eq(6)

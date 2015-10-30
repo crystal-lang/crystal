@@ -243,9 +243,9 @@ describe "Math" do
     end
   end
 
-# div rem
+  # div rem
 
-# pw2ceil
+  # pw2ceil
 
-# ** (float and int)
+  # ** (float and int)
 end

@@ -31,7 +31,7 @@ describe "Slice" do
   end
 
   it "does +" do
-    slice = Slice.new(3) { |i| i + 1}
+    slice = Slice.new(3) { |i| i + 1 }
 
     slice1 = slice + 1
     slice1.size.should eq(2)
@@ -46,7 +46,7 @@ describe "Slice" do
   end
 
   it "does [] with start and count" do
-    slice = Slice.new(4) { |i| i + 1}
+    slice = Slice.new(4) { |i| i + 1 }
     slice1 = slice[1, 2]
     slice1.size.should eq(2)
     slice1[0].should eq(2)
@@ -68,7 +68,7 @@ describe "Slice" do
   end
 
   it "does to_s" do
-    slice = Slice.new(4) { |i| i + 1}
+    slice = Slice.new(4) { |i| i + 1 }
     slice.to_s.should eq("[1, 2, 3, 4]")
   end
 

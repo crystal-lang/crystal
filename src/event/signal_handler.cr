@@ -1,11 +1,11 @@
 # :nodoc:
 # Singleton that runs Signal events (libevent2) in it's own Fiber.
 class Event::SignalHandler
-  def self.add_handler *args
+  def self.add_handler(*args)
     instance.add_handler *args
   end
 
-  def self.del_handler signal
+  def self.del_handler(signal)
     @@instance.try &.del_handler(signal)
   end
 
@@ -38,10 +38,10 @@ class Event::SignalHandler
     slice = Slice(UInt8).new pointerof(sig) as Pointer(UInt8), sizeof(typeof(sig))
 
     loop do
-     bytes = read_pipe.read slice
-     break if bytes == 0
-     raise "bad read #{bytes} : #{slice.size}" if bytes != slice.size
-     handle_signal Signal.new(sig)
+      bytes = read_pipe.read slice
+      break if bytes == 0
+      raise "bad read #{bytes} : #{slice.size}" if bytes != slice.size
+      handle_signal Signal.new(sig)
     end
   end
 
@@ -57,7 +57,7 @@ class Event::SignalHandler
     @pipes[1].close
   end
 
-  def add_handler signal : Signal, callback
+  def add_handler(signal : Signal, callback)
     @callbacks[signal] = callback
 
     LibC.signal signal.value, ->(sig) do
@@ -67,13 +67,13 @@ class Event::SignalHandler
     end
   end
 
-  def del_handler signal : Signal
+  def del_handler(signal : Signal)
     if callback = @callbacks[signal]?
       @callbacks.delete signal
     end
   end
 
-  private def handle_signal sig
+  private def handle_signal(sig)
     if callback = @callbacks[sig]?
       callback.call sig
     else
@@ -90,5 +90,3 @@ class Event::SignalHandler
     spawn { run }
   end
 end
-
-

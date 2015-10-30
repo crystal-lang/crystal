@@ -47,14 +47,14 @@ require "./handlers/*"
 # require "http/server"
 #
 # Server.new("127.0.0.1", 8080, [
-#         ErrorHandler.new,
-#         LogHandler.new,
-#         DeflateHandler.new,
-#         StaticFileHandler.new("."),
+#   ErrorHandler.new,
+#   LogHandler.new,
+#   DeflateHandler.new,
+#   StaticFileHandler.new("."),
 # ]
 # ).listen
 #
-# ### Add handlers and block
+# # ## Add handlers and block
 # ```
 # require "http/server"
 #
@@ -172,4 +172,3 @@ class HTTP::Server
     handlers.first
   end
 end
-

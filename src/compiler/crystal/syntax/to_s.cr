@@ -309,7 +309,7 @@ module Crystal
           @str << "."
         end
         if node.name.ends_with?('=')
-          @str << decorate_call(node, node.name[0 .. -2])
+          @str << decorate_call(node, node.name[0..-2])
           @str << " = "
           node.args.each_with_index do |arg, i|
             @str << ", " if i > 0
@@ -419,14 +419,13 @@ module Crystal
       @str << '`'
       case exp
       when StringLiteral
-        @str << exp.value.inspect[1 .. -2]
+        @str << exp.value.inspect[1..-2]
       when StringInterpolation
         visit_interpolation exp, &.gsub('`', "\\`")
       end
       @str << '`'
       false
     end
-
 
     def keyword(str)
       str
@@ -786,7 +785,7 @@ module Crystal
 
     def visit(node : Union)
       node.types.each_with_index do |ident, i|
-        @str << " | " if  i > 0
+        @str << " | " if i > 0
         ident.accept self
       end
       false

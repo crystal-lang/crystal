@@ -29,9 +29,8 @@ lib LibCrypto
   EVP_MAX_KEY_LENGTH = 32
   EVP_MAX_IV_LENGTH  = 16
 
-
-  CTRL_PUSH = 6
-  CTRL_POP = 7
+  CTRL_PUSH  =  6
+  CTRL_POP   =  7
   CTRL_FLUSH = 11
 
   alias BioMethodWrite = (Bio*, Char*, Int) -> Int
@@ -63,17 +62,17 @@ lib LibCrypto
 
   type EVP_MD = Void*
 
-  fun evp_dss       = EVP_dss : EVP_MD
-  fun evp_dss1      = EVP_dss1 : EVP_MD
-  fun evp_md4       = EVP_md4 : EVP_MD
-  fun evp_md5       = EVP_md5 : EVP_MD
+  fun evp_dss = EVP_dss : EVP_MD
+  fun evp_dss1 = EVP_dss1 : EVP_MD
+  fun evp_md4 = EVP_md4 : EVP_MD
+  fun evp_md5 = EVP_md5 : EVP_MD
   fun evp_ripemd160 = EVP_ripemd160 : EVP_MD
-  fun evp_sha       = EVP_sha : EVP_MD
-  fun evp_sha1      = EVP_sha1 : EVP_MD
-  fun evp_sha224    = EVP_sha224 : EVP_MD
-  fun evp_sha256    = EVP_sha256 : EVP_MD
-  fun evp_sha384    = EVP_sha384 : EVP_MD
-  fun evp_sha512    = EVP_sha512 : EVP_MD
+  fun evp_sha = EVP_sha : EVP_MD
+  fun evp_sha1 = EVP_sha1 : EVP_MD
+  fun evp_sha224 = EVP_sha224 : EVP_MD
+  fun evp_sha256 = EVP_sha256 : EVP_MD
+  fun evp_sha384 = EVP_sha384 : EVP_MD
+  fun evp_sha512 = EVP_sha512 : EVP_MD
 
   alias EVP_CIPHER = Void*
   alias EVP_CIPHER_CTX = Void*
@@ -144,7 +143,6 @@ lib LibCrypto
   fun rand_bytes = RAND_bytes(buf : Char*, num : Int) : Int
   fun err_get_error = ERR_get_error : ULong
   fun err_error_string = ERR_error_string(e : ULong, buf : Char*) : Char*
-  
   fun openssl_add_all_algorithms = OPENSSL_add_all_algorithms_noconf
   fun err_load_crypto_strings = ERR_load_crypto_strings
 

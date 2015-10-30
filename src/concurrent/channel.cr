@@ -1,9 +1,8 @@
 require "fiber"
 
-
 abstract class Channel(T)
   class ClosedError < Exception
-    def initialize msg = "Channel is closed"
+    def initialize(msg = "Channel is closed")
       super(msg)
     end
   end

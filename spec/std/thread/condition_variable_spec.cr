@@ -20,11 +20,11 @@ describe ConditionVariable do
 
     while signaled < 3
       mutex.synchronize do
-       if waiting > 0
-         waiting -= 1
-         signaled += 1
-         cond.signal
-       end
+        if waiting > 0
+          waiting -= 1
+          signaled += 1
+          cond.signal
+        end
       end
     end
     threads.map &.join

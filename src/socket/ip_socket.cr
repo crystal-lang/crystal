@@ -30,7 +30,7 @@ class IPSocket < Socket
       @fiber = Fiber.current
     end
 
-    def value= val
+    def value=(val)
       @value = val
       @fiber.resume
     end
@@ -52,14 +52,14 @@ class IPSocket < Socket
 
     # may fire immediately or on the next event loop
     req = Scheduler.create_dns_request(host, port.to_s, pointerof(hints), dns_req) do |err, addr, data|
-            dreq = data as DnsRequestCbArg
+      dreq = data as DnsRequestCbArg
 
-            if err == 0
-              dreq.value = addr
-            else
-              dreq.value = err
-            end
-          end
+      if err == 0
+        dreq.value = addr
+      else
+        dreq.value = err
+      end
+    end
 
     if timeout && req
       spawn do
