@@ -74,4 +74,58 @@ class UDPSocket < IPSocket
       true
     end
   end
+
+  def send(slice : Slice(UInt8))
+    bytes_sent = LibC.send(fd, (slice.to_unsafe as Void*), slice.size, 0)
+    if bytes_sent != -1
+      return bytes_sent
+    end
+
+    raise Errno.new("Error writing datagram")
+  ensure
+    add_write_event unless writers.empty?
+  end
+
+  def sendto(slice : Slice(UInt8), addr : IPAddr)
+    sockaddr = addr.sockaddr
+    bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::SockAddr*, addr.addrlen)
+    if bytes_sent != -1
+      return bytes_sent
+    end
+
+    raise Errno.new("Error writing datagram")
+  ensure
+    add_write_event unless writers.empty?
+  end
+
+  def recvfrom(size : Int)
+    if size < 0
+      raise ArgumentError.new("negative size")
+    else
+      recvfrom(Slice(UInt8).new(size))
+    end
+  end
+
+  def recvfrom(slice : Slice(UInt8))
+    loop do
+      sockaddr :: LibC::SockAddrIn6
+      addrlen = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
+
+      bytes_read = LibC.recvfrom(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::SockAddr*, pointerof(addrlen))
+      if bytes_read != -1
+        return {
+          slice[0, bytes_read.to_i32],
+          IPAddr.new(sockaddr, addrlen)
+        }
+      end
+
+      if LibC.errno == Errno::EAGAIN
+        wait_readable
+      else
+        raise Errno.new("Error receiving datagram")
+      end
+    end
+  ensure
+    add_read_event unless readers.empty?
+  end
 end

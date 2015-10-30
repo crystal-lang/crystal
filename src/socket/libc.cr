@@ -86,6 +86,7 @@ lib LibC
     SOL_SOCKET = 0xffff
     SO_REUSEADDR = 0x0004
     SO_KEEPALIVE = 0x0008
+    SO_BROADCAST = 0x0020
     SO_LINGER = 0x0080
     SO_SNDBUF = 0x1001
     SO_RCVBUF = 0x1002
@@ -129,6 +130,7 @@ lib LibC
 
     SOL_SOCKET = 1
     SO_REUSEADDR = 2
+    SO_BROADCAST = 6
     SO_SNDBUF = 7
     SO_RCVBUF = 8
     SO_KEEPALIVE = 9
@@ -163,6 +165,7 @@ lib LibC
   fun inet_pton(af : Int, src : Char*, dst : Void*) : Int
   fun inet_ntop(af : Int, src : Void*, dst : Char*, size : SocklenT) : Char*
   fun htons(n : UInt16T) : UInt16T
+  fun ntohs(n : UInt16T) : UInt16T
   fun bind(fd : Int, addr : SockAddr*, addr_len : SocklenT) : Int
   fun listen(fd : Int, backlog : Int) : Int
   fun accept(fd : Int, addr : SockAddr*, addr_len : SocklenT*) : Int
@@ -173,6 +176,9 @@ lib LibC
   fun getsockopt(sock : Int, level : Int, opt : Int, optval : Void*, optlen : SocklenT*) : Int
   fun setsockopt(sock : Int, level : Int, opt : Int, optval : Void*, optlen : SocklenT) : Int
   fun shutdown(sock : Int, how : Shutdown) : Int
+  fun send(sock : Int, buffer : Void*, length : SizeT, flags : Int) : SSizeT
+  fun sendto(sock : Int, buffer : Void*, length : SizeT, flags : Int, dest_addr : SockAddr*, dest_len : SocklenT) : SSizeT
+  fun recvfrom(sock : Int, buffer : Void*, length : SizeT, flags : Int, addr : SockAddr*, addr_len : SocklenT*) : SSizeT
 
   SOCK_STREAM = 1
   SOCK_DGRAM = 2
