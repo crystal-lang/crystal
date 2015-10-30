@@ -14,7 +14,7 @@ class TestServer < TCPServer
         io.flush
       end
 
-      yield
+      yield server
     ensure
       server.close
     end
@@ -42,13 +42,13 @@ module HTTP
     typeof(Client.get("http://www.example.com"))
 
     it "doesn't read the body if request was HEAD" do
-      resp_get = TestServer.open("localhost", 8080, 0) do
-        client = Client.new("localhost", 8080)
+      resp_get = TestServer.open("localhost", 0, 0) do |server|
+        client = Client.new("localhost", server.addr.ip_port)
         break client.get("/")
       end
 
-      TestServer.open("localhost", 8080, 0) do
-        client = Client.new("localhost", 8080)
+      TestServer.open("localhost", 0, 0) do |server|
+        client = Client.new("localhost", server.addr.ip_port)
         resp_head = client.head("/")
         resp_head.headers.should eq(resp_get.headers)
         resp_head.body.should eq("")
@@ -62,14 +62,14 @@ module HTTP
     end
 
     it "tests read_timeout" do
-      TestServer.open("localhost", 8080, 0) do
-        client = Client.new("localhost", 8080)
+      TestServer.open("localhost", 0, 0) do |server|
+        client = Client.new("localhost", server.addr.ip_port)
         client.read_timeout = 1.second
         client.get("/")
       end
 
-      TestServer.open("localhost", 8080, 0.5) do
-        client = Client.new("localhost", 8080)
+      TestServer.open("localhost", 0, 0.5) do |server|
+        client = Client.new("localhost", server.addr.ip_port)
         expect_raises(IO::Timeout, "read timed out") do
           client.read_timeout = 0.001
           client.get("/?sleep=1")
@@ -78,8 +78,8 @@ module HTTP
     end
 
     it "tests connect_timeout" do
-      TestServer.open("localhost", 8080, 0) do
-        client = Client.new("localhost", 8080)
+      TestServer.open("localhost", 0, 0) do |server|
+        client = Client.new("localhost", server.addr.ip_port)
         client.connect_timeout = 0.5
         client.get("/")
       end
