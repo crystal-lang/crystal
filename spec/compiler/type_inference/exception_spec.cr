@@ -312,4 +312,45 @@ describe "Type inference: exception" do
       x
       )) { int32 }
   end
+
+  it "types instance variable as nilable if assigned inside an exception handler (#1845)" do
+    assert_type(%(
+      class Foo
+        def initialize
+          begin
+            @bar = 1
+          rescue
+          end
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      foo = Foo.new
+      foo.bar
+      )) { nilable int32 }
+  end
+
+  it "doesn't type instance variable as nilable if assigned inside an exception handler after being assigned" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @bar = 1
+          begin
+            @bar = 1
+          rescue
+          end
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      foo = Foo.new
+      foo.bar
+      )) { int32 }
+  end
 end

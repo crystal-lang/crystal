@@ -2938,6 +2938,15 @@ module Crystal
         after_exception_handler_vars = @vars.dup
       end
 
+      # If inside an initialize we must bind instance variables to nil
+      if @is_initialize
+        @vars.each do |name, var|
+          if name.starts_with?('@') && !before_body_vars.has_key?(name)
+            scope.lookup_instance_var(name).bind_to mod.nil_var
+          end
+        end
+      end
+
       @exception_handler_vars = nil
 
       if node.rescues || node.else
