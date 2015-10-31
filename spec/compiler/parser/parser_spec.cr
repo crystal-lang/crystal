@@ -1254,6 +1254,10 @@ describe "Parser" do
     ), "invalid trailing comma in call"
 
   assert_syntax_error "foo 1,", "invalid trailing comma in call"
+  assert_syntax_error "def foo:String\nend", "a space is mandatory between ':' and return type"
+  assert_syntax_error "def foo :String\nend", "a space is mandatory between ':' and return type"
+  assert_syntax_error "def foo():String\nend", "a space is mandatory between ':' and return type"
+  assert_syntax_error "def foo() :String\nend", "a space is mandatory between ':' and return type"
 
   describe "end locations" do
     assert_end_location "nil"

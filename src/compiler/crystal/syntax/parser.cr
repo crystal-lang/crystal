@@ -2603,6 +2603,9 @@ module Crystal
           index += 1
         end
         next_token_skip_space
+        if @token.type == :SYMBOL
+          raise "a space is mandatory between ':' and return type", @token
+        end
       when :IDENT, :INSTANCE_VAR, :"*"
         if @token.keyword?(:end)
           unexpected_token @token.to_s, "expected ';' or newline"
@@ -2638,6 +2641,8 @@ module Crystal
         next_token_skip_space_or_newline
         block_arg = parse_block_arg(extra_assigns)
         compute_block_arg_yields block_arg
+      when :SYMBOL
+        raise "a space is mandatory between ':' and return type", @token
       else
         if is_abstract && @token.type == :EOF
           # OK
