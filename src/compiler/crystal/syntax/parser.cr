@@ -765,6 +765,8 @@ module Crystal
         next_token
         name = parse_responds_to_name
         next_token_skip_space
+      else
+        unexpected_token msg: "expected space or '('"
       end
 
       RespondsTo.new(atomic, name)

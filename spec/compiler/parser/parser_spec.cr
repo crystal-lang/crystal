@@ -1259,6 +1259,8 @@ describe "Parser" do
   assert_syntax_error "def foo():String\nend", "a space is mandatory between ':' and return type"
   assert_syntax_error "def foo() :String\nend", "a space is mandatory between ':' and return type"
 
+  assert_syntax_error "foo.responds_to?"
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"
