@@ -608,7 +608,7 @@ USAGE
     output_filename ||= original_output_filename
     output_format ||= "text"
 
-    if !no_codegen && Dir.exists?(output_filename)
+    if !no_codegen && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 
