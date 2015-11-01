@@ -461,7 +461,7 @@ class Regex
     LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMETABLE, pointerof(table_pointer) as Pointer(Int32))
     name_table = table_pointer.to_slice(name_entry_size*name_count)
 
-    lookup = Hash(UInt16, String).new
+    lookup = Hash(Int32, String).new
 
     name_count.times do |i|
       capture_offset = i * name_entry_size
@@ -470,7 +470,7 @@ class Regex
       name_offset = capture_offset + 2
       name = String.new((name_table + name_offset).pointer(name_entry_size - 3))
 
-      lookup[capture_number] = name
+      lookup[capture_number.to_i] = name
     end
 
     lookup

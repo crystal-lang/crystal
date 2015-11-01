@@ -98,7 +98,7 @@ module Enumerable(T)
   #
   #     [1, 2, 3, 4].count(3)  #=> 1
   #
-  def count(item)
+  def count(item : T)
     count { |e| e == item }
   end
 
@@ -321,7 +321,7 @@ module Enumerable(T)
   #     [1, 2, 3].includes?(2)  #=> true
   #     [1, 2, 3].includes?(5)  #=> false
   #
-  def includes?(obj)
+  def includes?(obj : T)
     any? { |e| e == obj }
   end
 
@@ -342,7 +342,7 @@ module Enumerable(T)
   #     ["Alice", "Bob"].index("Alice")  #=> 0
   #
   # Returns `nil` if *obj* is not in the collection.
-  def index(obj)
+  def index(obj : T)
     index { |e| e == obj }
   end
 

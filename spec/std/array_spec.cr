@@ -339,15 +339,15 @@ describe "Array" do
   end
 
   describe "compact!" do
-    it "returns true if removed" do
+    it "returns self if removed" do
       a = [1, nil, 2, nil, 3]
-      b = a.compact!.should be_true
+      a.compact!.should be(a)
       a.should eq([1, 2, 3])
     end
 
-    it "returns false if not removed" do
+    it "returns nil if not removed" do
       a = [1]
-      b = a.compact!.should be_false
+      a.compact!.should be_nil
       a.should eq([1])
     end
   end
