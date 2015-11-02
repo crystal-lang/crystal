@@ -127,7 +127,7 @@ class Process
           end
         end
 
-        Dir.chdir(chdir) if chdir
+        Dir.cd(chdir) if chdir
 
         LibC.execvp(command, argv)
       rescue ex
