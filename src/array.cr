@@ -1770,4 +1770,12 @@ class Array(T)
       end
     end
   end
+
+  def bsearch
+    idx=(0...self.size).bsearch{|i|yield self[i]}
+    idx ? self[idx] : nil
+  end
+  def bsearch_index
+    (0...self.size).bsearch{|i|yield self[i]}
+  end
 end
