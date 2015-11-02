@@ -80,6 +80,14 @@ describe Process do
     $?.exit_code.should eq(0)
   end
 
+  it "sets working directory" do
+    parent = File.dirname(Dir.working_directory)
+    value = Process.run("pwd", shell: true, chdir: parent, output: nil) do |proc|
+      proc.output.gets_to_end
+    end
+    value.should eq "#{parent}\n"
+  end
+
   it "disallows passing arguments to nowhere" do
     expect_raises ArgumentError, /args.+@/ do
       Process.run("foo bar", {"baz"}, shell: true)
