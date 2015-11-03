@@ -353,4 +353,50 @@ describe "Type inference: exception" do
       foo.bar
       )) { int32 }
   end
+
+  it "doesn't type instance variable if initialized inside begin and rescue raises" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        def initialize
+          begin
+            @bar = 1
+          rescue
+            raise "OH NO"
+          end
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      foo = Foo.new
+      foo.bar
+      )) { int32 }
+  end
+
+  it "doesn't type instance variable if initialized inside begin and in rescue" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        def initialize
+          begin
+            @bar = 1
+          rescue
+            @bar = 2
+          end
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      foo = Foo.new
+      foo.bar
+      )) { int32 }
+  end
 end

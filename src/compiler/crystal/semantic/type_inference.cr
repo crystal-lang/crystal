@@ -539,6 +539,8 @@ module Crystal
         end
 
         @vars[var_name] = simple_var
+
+        check_exception_handler_vars var_name, value
       end
     end
 
@@ -2936,15 +2938,6 @@ module Crystal
       # but we don't dup them if we don't need them
       if node.else
         after_exception_handler_vars = @vars.dup
-      end
-
-      # If inside an initialize we must bind instance variables to nil
-      if @is_initialize
-        @vars.each do |name, var|
-          if name.starts_with?('@') && !before_body_vars.has_key?(name)
-            scope.lookup_instance_var(name).bind_to mod.nil_var
-          end
-        end
       end
 
       @exception_handler_vars = nil
