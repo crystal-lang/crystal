@@ -593,11 +593,12 @@ describe "Type inference: macro" do
   it "expands macro with break inside while (#1852)" do
     assert_type(%(
       macro test
+        foo = "bar"
+        break
       end
 
       while true
-        foo = "bar"
-        break
+        test
       end
       )) { |mod| mod.nil }
   end
