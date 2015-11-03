@@ -37,6 +37,13 @@ lib LibC
     alias UsecT = Long
   end
 
+  # This is for __builtin_va_list
+  ifdef x86_64
+    alias VaList = UInt8[24]
+  else
+    alias VaList = UInt32
+  end
+
   fun malloc(size : SizeT) : Void*
   fun realloc(ptr : Void*, size : SizeT) : Void*
   fun free(ptr : Void*)
