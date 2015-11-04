@@ -203,6 +203,17 @@ describe "String" do
     assert { expect_raises(ArgumentError) { "000b123".to_i(prefix: true) } }
     assert { expect_raises(ArgumentError) { "000x123".to_i(prefix: true) } }
     assert { expect_raises(ArgumentError) { "123hello".to_i } }
+    assert { "z".to_i(36).should eq(35) }
+    assert { "Z".to_i(36).should eq(35) }
+    assert { "0".to_i(62).should eq(0) }
+    assert { "1".to_i(62).should eq(1) }
+    assert { "a".to_i(62).should eq(10) }
+    assert { "z".to_i(62).should eq(35) }
+    assert { "A".to_i(62).should eq(36) }
+    assert { "Z".to_i(62).should eq(61) }
+    assert { "10".to_i(62).should eq(62) }
+    assert { "1z".to_i(62).should eq(97) }
+    assert { "ZZ".to_i(62).should eq(3843) }
 
     describe "to_i8" do
       assert { "127".to_i8.should eq(127) }

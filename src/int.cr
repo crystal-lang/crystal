@@ -279,6 +279,8 @@ struct Int
   DIGITS_DOWNCASE = "0123456789abcdefghijklmnopqrstuvwxyz"
   # :nodoc:
   DIGITS_UPCASE = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  # :nodoc:
+  DIGITS_BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
   def to_s
     to_s(10)
@@ -289,7 +291,8 @@ struct Int
   end
 
   def to_s(base : Int, upcase = false : Bool)
-    raise "Invalid base #{base}" unless 2 <= base <= 36
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+    raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
     case self
     when 0
@@ -304,7 +307,8 @@ struct Int
   end
 
   def to_s(base : Int, io : IO, upcase = false : Bool)
-    raise "Invalid base #{base}" unless 2 <= base <= 36
+    raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
+    raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
     case self
     when 0
@@ -328,7 +332,7 @@ struct Int
 
     neg = num < 0
 
-    digits = (upcase ? DIGITS_UPCASE : DIGITS_DOWNCASE).to_unsafe
+    digits = (base == 62 ? DIGITS_BASE62 : (upcase ? DIGITS_UPCASE : DIGITS_DOWNCASE)).to_unsafe
 
     while num != 0
       ptr -= 1
