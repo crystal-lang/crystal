@@ -233,6 +233,7 @@ class File < IO::FileDescriptor
 
   def self.basename(filename)
     return "" if filename.bytesize == 0
+    return SEPARATOR_STRING if filename == SEPARATOR_STRING
 
     last = filename.size - 1
     last -= 1 if filename[last] == SEPARATOR
