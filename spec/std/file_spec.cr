@@ -122,6 +122,7 @@ describe "File" do
     File.basename("/foo/").should eq("foo")
     File.basename("foo").should eq("foo")
     File.basename("").should eq("")
+    File.basename("/").should eq("/")
   end
 
   it "gets basename removing suffix" do
