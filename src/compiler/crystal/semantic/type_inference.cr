@@ -2192,6 +2192,8 @@ module Crystal
     end
 
     def visit(node : ExternalVar)
+      return unless @lib_def_pass == 2
+
       check_valid_attributes node, ValidExternalVarAttributes, "external var"
 
       node.type_spec.accept self

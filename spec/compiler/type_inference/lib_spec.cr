@@ -126,6 +126,18 @@ describe "Type inference: lib" do
       ") { int32 }
   end
 
+  it "types lib var get with forward declaration" do
+    assert_type("
+      lib LibC
+        $errno : A
+
+        alias A = Int32
+      end
+
+      LibC.errno
+      ") { int32 }
+  end
+
   it "defined fun with aliased type" do
     assert_type("
       lib LibC
