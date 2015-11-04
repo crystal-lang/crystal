@@ -428,6 +428,15 @@ class String
   end
 
   # :nodoc:
+  CHAR_TO_DIGIT62 = begin
+    table = CHAR_TO_DIGIT.clone
+    26_i8.times do |i|
+      table.to_unsafe[65 + i] = i + 36
+    end
+    table
+  end
+
+  # :nodoc:
   record ToU64Info, value, negative, invalid
 
   # :nodoc
@@ -451,7 +460,7 @@ class String
   end
 
   private def to_u64_info(base, whitespace, underscore, prefix, strict)
-    raise ArgumentError.new "invalid base #{base}" unless 2 <= base <= 36
+    raise ArgumentError.new("invalid base #{base}") unless 2 <= base <= 36 || base == 62
 
     ptr = cstr
 
@@ -500,7 +509,7 @@ class String
     last_is_underscore = true
     invalid = false
 
-    digits = CHAR_TO_DIGIT.to_unsafe
+    digits = (base == 62 ? CHAR_TO_DIGIT62 : CHAR_TO_DIGIT).to_unsafe
     while ptr.value != 0
       if ptr.value.chr == '_' && underscore
         break if last_is_underscore
