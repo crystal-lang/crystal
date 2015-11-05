@@ -18,7 +18,7 @@ module OpenSSL
     protected def self.create_evp_mt_ctx(name)
       md = LibCrypto.evp_get_digestbyname(name)
       unless md
-        raise UnsupportedError.new("Unsupported digest algoritm: #{name}")
+        raise UnsupportedError.new("Unsupported digest algorithm: #{name}")
       end
       ctx = LibCrypto.evp_md_ctx_create
       unless ctx
