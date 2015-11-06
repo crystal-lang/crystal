@@ -25,7 +25,7 @@
 #
 # ### Generating with `JSON::Builder`
 #
-# Use `JSON::Buidler` to generate JSON on the fly by directly emitting data
+# Use `JSON::Builder` to generate JSON on the fly by directly emitting data
 # to an `IO`.
 #
 # ### Generating with `to_json`
