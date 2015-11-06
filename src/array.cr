@@ -577,6 +577,44 @@ class Array(T)
     indexes.map { |index| self[index] }
   end
 
+  # By using binary search, returns the first element
+  # for which the passed block returns `true`.
+  #
+  # If the block returns `false`, the finding element exists
+  # behind. If the block returns `true`, the finding element
+  # is itself or exists infront.
+  #
+  # Binary search need sorted array, so self have to be sorted.
+  #
+  # ```
+  # [2, 5, 7, 10].bsearch{ |x| x >= 4 } # => 5
+  # [2, 5, 7, 10].bsearch{ |x| x > 10 } # => nil
+  # ```
+  #
+  # Returns `nil` if the block didn't return `true` for any element.
+  def bsearch
+    bsearch_index{ |value| yield value }.try { |index| self[index] }
+  end
+
+  # By using binary search, returns the index of the first element
+  # for which the passed block returns `true`.
+  #
+  # If the block returns `false`, the finding element exists
+  # behind. If the block returns `true`, the finding element
+  # is itself or exists infront.
+  #
+  # Binary search need sorted array, so self have to be sorted.
+  #
+  # ```
+  # [2, 5, 7, 10].bsearch_index{ |x, i| x >= 4 } # => 1
+  # [2, 5, 7, 10].bsearch_index{ |x, i| x > 10 } # => nil
+  # ```
+  #
+  # Returns `nil` if the block didn't return `true` for any element.
+  def bsearch_index
+    (0...size).bsearch{ |index| yield self[index], index }
+  end
+
   # Removes all elements from self.
   #
   # ```
