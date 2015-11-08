@@ -48,6 +48,14 @@ module Crystal
     end
 
     def parse_expressions
+      value, _ = preserve_last_call_has_parenthesis do
+        @last_call_has_parenthesis = true
+        parse_expressions_internal
+      end
+      value
+    end
+
+    def parse_expressions_internal
       if is_end_token
         return Nop.new
       end
@@ -1097,10 +1105,7 @@ module Crystal
     def parse_begin
       slash_is_regex!
       next_token_skip_statement_end
-      exps, _ = preserve_last_call_has_parenthesis do
-        @last_call_has_parenthesis = true
-        parse_expressions
-      end
+      exps = parse_expressions
       node, end_location = parse_exception_handler exps
       node.end_location = end_location
       if !node.is_a?(ExceptionHandler) && !node.is_a?(Expressions)
@@ -1507,6 +1512,7 @@ module Crystal
       elsif @token.type == :"{"
         next_token_skip_statement_end
         check_not_pipe_before_proc_literal_body
+        @last_call_has_parenthesis = true
         body = parse_expressions
         end_location = token_end_location
         check :"}"
