@@ -128,21 +128,21 @@ describe Matrix do
       end
     end
 
-    it "does substraction with another matrix (1)" do
+    it "does subtraction with another matrix (1)" do
       a = Matrix[[1, 2], [3, 4], [5, 6], [7, 8]]
       b = Matrix[[2, 4], [6, 8], [10, 12], [14, 16]]
       c = Matrix[[-1, -2], [-3, -4], [-5, -6], [-7, -8]]
       (a - b).should eq(c)
     end
 
-    it "does substraction with another matrix (2)" do
+    it "does subtraction with another matrix (2)" do
       a = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
       b = a.reverse
       c = Matrix[[-8, -6, -4], [-2, 0, 2], [4, 6, 8]]
       (a - b).should eq(c)
     end
 
-    it "does substraction with another T" do
+    it "does subtraction with another T" do
       a = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
       b = Matrix[[-4, -3, -2], [-1, 0, 1], [2, 3, 4]]
       (a - 5).should eq(b)
