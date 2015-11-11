@@ -436,6 +436,12 @@ class Hash(K, V)
     keys
   end
 
+  # Returns only the values as an `Array`.
+  #
+  # ```
+  # h = {"foo" => "bar", "baz" => "qux"}
+  # h.values # => ["bar", "qux"]
+  # ```
   def values
     values = Array(V).new(@size)
     each { |key, value| values << value }
@@ -613,6 +619,11 @@ class Hash(K, V)
     self
   end
 
+  # Zips two arrays into a `Hash`, taking keys from *ary1* and values from *ary2*.
+  #
+  # ```
+  # Hash.zip(["foo", "bar"], ["baz", "qux"]) # => {"foo" => "baz", "baz" => "quz"}
+  # ```
   def self.zip(ary1 : Array(K), ary2 : Array(V))
     hash = {} of K => V
     ary1.each_with_index do |key, i|
@@ -654,14 +665,47 @@ class Hash(K, V)
     @first.try &.value
   end
 
+  # Deletes and returns the first key-value pair in the hash,
+  # or raises `IndexError` if the hash is empty.
+  #
+  # ```
+  # hash = {"foo" => "bar", "baz" => "qux"}
+  # hash.shift # => {"foo", "bar"}
+  # hash       # => {"baz" => "qux"}
+  # 
+  # hash = {} of String => String
+  # hash.shift # => Index out of bounds (IndexError)
+  # ```
   def shift
     shift { raise IndexError.new }
   end
 
+  # Same as `#shift`, but returns nil if the hash is empty.
+  #
+  # ```
+  # hash = {"foo" => "bar", "baz" => "qux"}
+  # hash.shift? # => {"foo", "bar"}
+  # hash        # => {"baz" => "qux"}
+  # 
+  # hash = {} of String => String
+  # hash.shift? # => nil
+  # ```
   def shift?
     shift { nil }
   end
 
+  # Deletes and returns the first key-value pair in the hash.
+  # Yields to the given block if the hash is empty.
+  #
+  # ```
+  # hash = {"foo" => "bar", "baz" => "qux"}
+  # hash.shift { true } # => {"foo", "bar"}
+  # hash                # => {"baz" => "qux"}
+  # 
+  # hash = {} of String => String
+  # hash.shift { true } # => true
+  # hash                # => {}
+  # ```
   def shift
     first = @first
     if first
@@ -698,6 +742,12 @@ class Hash(K, V)
     true
   end
 
+  # See `Object#hash`.
+  #
+  # ```
+  # foo = {"foo" => "bar"}
+  # foo.hash # => 3247054
+  # ```
   def hash
     hash = size
     each do |key, value|
