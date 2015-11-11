@@ -8,20 +8,25 @@
 #
 # ### Parsing with `JSON#parse`
 #
-# `JSON#parse` will return a `Type`, which is a union of all possible JSON types,
-# making it mandatory to use casts or type checks to deal with parsed values:
+# `JSON#parse` will return an `Any`, which is a convenient wrapper around all possible JSON types,
+# making it easy to traverse a complex JSON structure but requires some casts from time time,
+# mostly via some method invocations.
 #
 # ```
 # require "json"
 #
-# value = JSON.parse("[1, 2, 3]") # :: JSON::Type
-# # value[0] # compile-error, compiler can't know that value is indeed an Array
-# array = value as Array
-# array[0]               # :: JSON::Type
-# (array[0] as Int) + 10 # => 11
+# value = JSON.parse("[1, 2, 3]") # :: JSON::Any
+#
+# value[0]              # => 1
+# typeof(value[0])      # => JSON::Any
+# value[0].as_i         # => 1
+# typeof(value[0].as_i) # => Int32
+#
+# value[0] + 1       # Error, because value[0] is JSON::Any
+# value[0].as_i + 10 # => 11
 # ```
 #
-# The above becomes tedious quickly, but can be useful for handling dynamic JSON content.
+# The above is useful for dealing with a dynamic JSON structure but is slower than using `JSON#mapping`.
 #
 # ### Generating with `JSON::Builder`
 #
@@ -48,8 +53,8 @@ module JSON
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(Type) | Hash(String, Type)
 
   # Parses a JSON document.
-  def self.parse(input : String | IO) : Type
-    Parser.new(input).parse
+  def self.parse(input : String | IO) : Any
+    Any.new Parser.new(input).parse
   end
 end
 

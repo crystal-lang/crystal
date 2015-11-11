@@ -63,7 +63,7 @@ private def it_lexes_float(string, float_value, file = __FILE__, line = __LINE__
   end
 end
 
-describe "JSON::Lexer" do
+describe JSON::Lexer do
   it_lexes "", :EOF
   it_lexes "{", :"{"
   it_lexes "}", :"}"

@@ -35,7 +35,7 @@ module JSON
   # that accepts a `JSON::PullParser` and returns an object from it.
   #
   # The value can also be another hash literal with the following options:
-  # * type: (required) the single type described above
+  # * type: (required) the single type described above (you can use `JSON::Any` too)
   # * key: the property name in the JSON document (as opposed to the property name in the Crystal code)
   # * nilable: if true, the property can be `Nil`
   # * emit_null: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
