@@ -176,7 +176,7 @@ describe "JSON mapping" do
   it "parses json with any" do
     json = JSONWithAny.from_json(%({"name": "Hi", "any": [{"x": 1}, 2, "hey", true, false, 1.5, null]}))
     json.name.should eq("Hi")
-    json.any.should eq([{"x": 1}, 2, "hey", true, false, 1.5, nil])
+    json.any.raw.should eq([{"x": 1}, 2, "hey", true, false, 1.5, nil])
     json.to_json.should eq(%({"name":"Hi","any":[{"x":1},2,"hey",true,false,1.5,null]}))
   end
 
