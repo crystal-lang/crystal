@@ -262,8 +262,8 @@ struct Char
   # Returns a Char that is one codepoint smaller than this char's codepoint.
   #
   # ```
-  # 'b'.succ # => 'a'
-  # 'ぃ'.succ # => 'あ'
+  # 'b'.pred # => 'a'
+  # 'ぃ'.pred # => 'あ'
   # ```
   def pred
     (ord - 1).chr
@@ -525,8 +525,8 @@ struct Char
   # Returns this Char as a String containing this Char as a single character.
   #
   # ```
-  # 'a'.to_s # => "'a'"
-  # 'あ'.to_s # => "'あ'"
+  # 'a'.to_s # => "a"
+  # 'あ'.to_s # => "あ"
   # ```
   def to_s
     String.new(4) do |buffer|
