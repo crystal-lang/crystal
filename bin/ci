@@ -57,7 +57,6 @@ on_osx() {
 
 prepare_system() {
   on_osx brew update
-  on_osx brew tap manastech/crystal
 }
 
 prepare_build() {
@@ -83,8 +82,7 @@ with_build_env() {
     "jhass/crystal-build-$ARCH" \
     "$ARCH_CMD" /bin/bash -c "'$command'"
 
-  on_osx LIBRARY_PATH="/usr/local/opt/crystal-lang/embedded/lib" \
-    PATH="/tmp/llvm-3.5.0-1/bin:\$PATH" \
+  on_osx PATH="/tmp/llvm-3.5.0-1/bin:\$PATH" \
     CRYSTAL_CONFIG_VERSION="ci" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/bash -c "'$command'"
