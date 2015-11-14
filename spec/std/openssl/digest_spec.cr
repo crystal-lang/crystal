@@ -19,4 +19,14 @@ describe OpenSSL::Digest do
       OpenSSL::Digest.new("unsupported")
     end
   end
+
+  it "returns the digest size" do
+    OpenSSL::Digest.new("SHA1").digest_size.should eq 20
+    OpenSSL::Digest.new("SHA256").digest_size.should eq 32
+  end
+
+  it "returns the block size" do
+    OpenSSL::Digest.new("SHA1").block_size.should eq 64
+    OpenSSL::Digest.new("SHA256").block_size.should eq 64
+  end
 end
