@@ -31,32 +31,32 @@ module HTTP
 
       io = MemoryIO.new
       request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar; path=/\r\n\r\n")
+      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
     end
 
     it "serialize GET (with cookies, from headers)" do
       headers = HTTP::Headers.new
       headers["Host"] = "host.example.org"
-      headers["Cookie"] = "foo=bar; path=/"
+      headers["Cookie"] = "foo=bar"
 
       request = Request.new "GET", "/", headers
 
       io = MemoryIO.new
       request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar; path=/\r\n\r\n")
+      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
 
       request.cookies["foo"].value.should eq "bar" # Force lazy initialization
 
       io.clear
       request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar; path=/\r\n\r\n")
+      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=bar\r\n\r\n")
 
       request.cookies["foo"] = "baz"
       request.cookies["quux"] = "baz"
 
       io.clear
       request.to_io(io)
-      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=baz; path=/\r\nCookie: quux=baz; path=/\r\n\r\n")
+      io.to_s.should eq("GET / HTTP/1.1\r\nHost: host.example.org\r\nCookie: foo=baz; quux=baz\r\n\r\n")
     end
 
     it "serialize POST (with body)" do

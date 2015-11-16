@@ -4,31 +4,6 @@ module HTTP
   # Represents a cookie with all its attributes. Provides convenient
   # access and modification of them.
   class Cookie
-    def self.parse(str : String) : Cookie
-      # TODO: error handling, empty string + no name=value pair
-      parts = str.split(/[;]\s?/)
-      name, value = parts[0].split(/\s*=\s*/, 2)
-
-      cookie = HTTP::Cookie.new(name, value)
-      (1...parts.size).each do |i|
-        part = parts[i]
-        case part
-        when /^\s*path=(.+)/i
-          cookie.path = $~[1] if $~
-        when /^\s*domain=(.+)/i
-          cookie.domain = $~[1] if $~
-        when /Secure/
-          cookie.secure = true
-        when /HttpOnly/
-          cookie.http_only = true
-        when /^\s*expires=(.+)/
-          cookie.expires = HTTP.parse_time($~[1]) if $~
-        end
-      end
-
-      cookie
-    end
-
     property name
     property value
     property path
@@ -41,11 +16,12 @@ module HTTP
 
     def initialize(@name : String, value : String, @path = "/" : String,
                    @expires = nil : Time?, @domain = nil : String?,
-                   @secure = false : Bool, @http_only = false : Bool)
+                   @secure = false : Bool, @http_only = false : Bool,
+                   @extension = nil : String?)
       @value = URI.unescape value
     end
 
-    def to_header
+    def to_set_cookie_header
       path = @path
       expires = @expires
       domain = @domain
@@ -56,7 +32,77 @@ module HTTP
         header << "; domain=#{domain}" if domain
         header << "; Secure" if @secure
         header << "; HttpOnly" if @http_only
+        header << "; #{@extension}" if @extension
       end
+    end
+
+    def to_cookie_header
+      "#{@name}=#{URI.escape value}"
+    end
+
+    # :nodoc:
+    module Parser
+      module Regex
+        CookieName = /[^()<>@,;:\\"\/\[\]?={} \t\x00-\x1f\x7f]+/
+        CookieOctet = /[!#-+\--:<-\[\]-~]/
+        CookieValue = /(?:"#{CookieOctet}*"|#{CookieOctet}*)/
+        CookiePair = /(?<name>#{CookieName})=(?<value>#{CookieValue})/
+        DomainLabel = /[A-Za-z0-9\-]+/
+        Time = /(?:\d{2}:\d{2}:\d{2})/
+        Month = /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/
+        Weekday = /(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/
+        Wkday = /(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)/
+        PathValue = /[^\x00-\x1f\x7f;]+/
+        DomainValue = /(?:#{DomainLabel}(?:\.#{DomainLabel})?)+/
+        RFC1036Date = /#{Weekday}, \d{2}-#{Month}-\d{2} #{Time} GMT/
+        RFC1123Date = /#{Wkday}, \d{2} #{Month} \d{4} #{Time} GMT/
+        ANSICDate = /#{Wkday} #{Month} (?:\d{2}| \d) #{Time} \d{4}/
+        SaneCookieDate = /(?:#{RFC1123Date}|#{RFC1036Date}|#{ANSICDate})/
+        ExtensionAV = /(?<extension>[^\x00-\x1f\x7f]+)/
+        HttpOnlyAV = /(?<http_only>HttpOnly)/i
+        SecureAV = /(?<secure>Secure)/i
+        PathAV = /Path=(?<path>#{PathValue})/i
+        DomainAV = /Domain=(?<domain>#{DomainValue})/i
+        MaxAgeAV = /Max-Age=(?<max_age>[1-9]*)/i
+        ExpiresAV = /Expires=(?<expires>#{SaneCookieDate})/i
+        CookieAV = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{ExtensionAV})/
+      end
+
+      CookieString = /(?:^|; )#{Regex::CookiePair}/
+      SetCookieString = /^#{Regex::CookiePair}(?:; #{Regex::CookieAV})*$/
+
+      def parse_cookies(header)
+        header.scan(CookieString).each do |pair|
+          yield Cookie.new(pair["name"], pair["value"])
+        end
+      end
+
+      def parse_cookies(header)
+        cookies = [] of Cookie
+        parse_cookies(header) { |cookie| cookies << cookie }
+        cookies
+      end
+
+      def parse_set_cookie(header)
+        match = header.match(SetCookieString)
+        return unless match
+        Cookie.new(
+          match["name"], match["value"],
+          path: match["path"]? || "/",
+          expires: parse_time(match["expires"]?),
+          domain: match["domain"]?,
+          secure: match["secure"]? != nil,
+          http_only: match["http_only"]? != nil,
+          extension: match["extension"]?
+        )
+      end
+
+      private def parse_time(string)
+        return unless string
+        HTTP.parse_time(string)
+      end
+
+      extend self
     end
   end
 
@@ -71,13 +117,18 @@ module HTTP
     # See `HTTP::Request#cookies` and `HTTP::Response#cookies`.
     def self.from_headers(headers)
       new.tap do |cookies|
-        {"Cookie", "Set-Cookie"}.each do |key|
-          if values = headers.get?(key)
-            values.each do |header|
-              cookies << Cookie.parse(header)
-            end
-            headers.delete key
+        if values = headers.get?("Cookie")
+          values.each do |header|
+            Cookie::Parser.parse_cookies(header) { |cookie| cookies << cookie }
           end
+          headers.delete "Cookie"
+        end
+
+        if values = headers.get?("Set-Cookie")
+          values.each do |header|
+            Cookie::Parser.parse_set_cookie(header).try { |cookie| cookies << cookie }
+          end
+          headers.delete "Set-Cookie"
         end
       end
     end
@@ -167,21 +218,19 @@ module HTTP
     # given `HTTP::Header` instance and returns it. Removes any existing
     # `Cookie` headers in it.
     def add_request_headers(headers)
-      add_headers "Cookie", headers
+      headers.delete("Cookie")
+      headers.add("Cookie", map(&.to_cookie_header).join("; "))
+
+      headers
     end
 
     # Adds `Set-Cookie` headers for the cookies in this collection to the
     # given `HTTP::Header` instance and returns it. Removes any existing
     # `Set-Cookie` headers in it.
     def add_response_headers(headers)
-      add_headers "Set-Cookie", headers
-    end
-
-    private def add_headers(key, headers)
-      headers.delete(key)
-
+      headers.delete("Set-Cookie")
       each do |cookie|
-        headers.add(key, cookie.to_header)
+        headers.add("Set-Cookie", cookie.to_set_cookie_header)
       end
 
       headers
