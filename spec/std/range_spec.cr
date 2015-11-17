@@ -45,12 +45,42 @@ describe "Range" do
     r.excludes_end?.should be_true
   end
 
+  it "size" do
+    (10..20).size.should eq(11)
+    (10...20).size.should eq(10)
+    (20..10).size.should eq(0)
+    (1.21..3.14).size.should eq(2)
+    ("a".."zz").size.should eq(702)
+  end
+
   it "includes?" do
     (1..5).includes?(1).should be_true
     (1..5).includes?(5).should be_true
 
     (1...5).includes?(1).should be_true
     (1...5).includes?(5).should be_false
+
+    ("a".."z").includes?("c").should be_true
+    ("a".."z").includes?("cc").should be_false
+    ("a".."zz").includes?("c").should be_true
+    ("a".."zz").includes?("zz").should be_true
+    ("a"..."zz").includes?("z").should be_true
+    ("a"..."zz").includes?("zz").should be_false
+  end
+
+  it "covers?" do
+    (1..5).covers?(1).should be_true
+    (1..5).covers?(5).should be_true
+
+    (1...5).covers?(1).should be_true
+    (1...5).covers?(5).should be_false
+
+    ("a".."z").covers?("c").should be_true
+    ("a".."z").covers?("cc").should be_true
+    ("a".."zz").covers?("c").should be_true
+    ("a".."zz").covers?("zz").should be_true
+    ("a"..."zz").covers?("z").should be_true
+    ("a"..."zz").covers?("zz").should be_false
   end
 
   it "does to_s" do
@@ -166,6 +196,51 @@ describe "Range" do
 
       iter.rewind
       iter.next.should eq(1)
+    end
+
+    it "cycles" do
+      (1..3).cycle.take(8).join.should eq("12312312")
+    end
+
+    it "is empty with .. and begin > end" do
+      (1..0).each.to_a.empty?.should be_true
+    end
+
+    it "is empty with ... and begin > end" do
+      (1...0).each.to_a.empty?.should be_true
+    end
+
+    it "is not empty with .. and begin == end" do
+      (1..1).each.to_a.should eq([1])
+    end
+
+    it "is not empty with ... and begin.succ == end" do
+      (1...2).each.to_a.should eq([1])
+    end
+  end
+
+  describe "reverse_each iterator" do
+    it "does next with inclusive range" do
+      a = 1..3
+      iter = a.reverse_each
+      iter.next.should eq(3)
+      iter.next.should eq(2)
+      iter.next.should eq(1)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(3)
+    end
+
+    it "does next with exclusive range" do
+      r = 1...3
+      iter = r.reverse_each
+      iter.next.should eq(2)
+      iter.next.should eq(1)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(2)
     end
 
     it "cycles" do

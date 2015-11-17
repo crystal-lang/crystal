@@ -42,7 +42,7 @@ struct CallStack
         # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
         # The unwind info is corrupted when `makecontext` is used.
         # Stop the backtrace here. There is nothing interest beyond this point anyway.
-        if CallStack.makecontext_range.includes?(ip)
+        if CallStack.makecontext_range.covers?(ip)
           return LibUnwind::ReasonCode::END_OF_STACK
         end
       end

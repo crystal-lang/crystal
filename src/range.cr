@@ -82,7 +82,59 @@ struct Range(B, E)
   def initialize(@begin : B, @end : E, @exclusive = false : Bool)
   end
 
-  # Returns an `Iterator` that cycles over the values of this range.
+  # Returns the size of the range. It requires O(1) time if both ends are Numeric
+  # Returns `0` if the beginning of the range is bigger than the end.
+  #
+  # ```
+  # (10..20).size => 11
+  # (10...20).size => 10
+  # (20..10).size => 0
+  # (1.21..3.14).size => 2
+  # ("a".."zz").size => 702
+  # ```
+  # def size
+  #   b, e = @begin, @end
+  #   return super unless b.is_a? Number && e.is_a? Number
+  #
+  #   return size_for_floats(b, e) if b.is_a? Float || e.is_a? Float
+  #
+  #   return 0 if b > e
+  #   e - b + (@exclusive ? 0 : 1)
+  # end
+  def size
+    b, e = @begin, @end
+    {% if %w(Int8 UInt8 Int16 UInt16 Int32 UInt32 Int64 UInt64).includes? "#{B}" %}
+      return 0 if b > e
+      e - b + (@exclusive ? 0 : 1)
+    {% elsif %w(Float32 Float64).includes? "#{B}" %}
+      size_for_floats(b, e)
+    {% else %}
+      super
+    {% end %}
+  end
+
+  # :nodoc:
+  private def size_for_floats(b, e)
+    n = e - b
+    err = (b.abs + e.abs + (e-b).abs) * Float::EPSILON
+
+    err = 0.5 if err > 0.5
+
+    if @exclusive
+      return 0 if n <= 0
+
+      n = ( n < 1 ? 0 : (n - err).floor )
+    else
+      return 0 if n < 0
+
+      n = (n + err).floor
+    end
+
+    (n + 1).to_i
+  end
+
+  # Returns an `Iterator` that cycles over the values of this range in reverse
+  # order.
   #
   # ```
   # (1..3).cycle.take(5).to_a # => [1, 2, 3, 1, 3]
@@ -97,7 +149,7 @@ struct Range(B, E)
   # (10..15).each { |n| print n, ' ' }
   # # prints: 10 11 12 13 14 15
   # ```
-  def each
+  def each(&block)
     current = @begin
     while current < @end
       yield current
@@ -122,7 +174,7 @@ struct Range(B, E)
   # (10...15).reverse_each { |n| print n, ' ' }
   # # prints: 14 13 12 11 10
   # ```
-  def reverse_each
+  def reverse_each(&block)
     yield @end if !@exclusive && !(@end < @begin)
     current = @end
     while @begin < current
@@ -130,6 +182,15 @@ struct Range(B, E)
       yield current
     end
     self
+  end
+
+  # Returns an `Iterator` over the elements of this range.
+  #
+  # ```
+  # (1..3).reverse_each.skip(1).to_a # => [2, 1]
+  # ```
+  def reverse_each
+    ReverseIterator.new(self)
   end
 
   # Iterates over this range, passing each nth element to the block.
@@ -157,7 +218,7 @@ struct Range(B, E)
   # ```
   #
   # See `Range`'s overview for the definition of `Xs`.
-  def step(n = 1)
+  def step(n = 1, &block)
     current = @begin
     while current < @end
       yield current
@@ -187,26 +248,41 @@ struct Range(B, E)
   end
 
   # Returns true if this range includes the given *value*.
+  # For numeric values it takes O(1) time.
   #
-  # ```
-  # (1..10).includes?(4)  # => true
-  # (1..10).includes?(10) # => true
-  # (1..10).includes?(11) # => false
+  #```
+  # (1..10).includes? 2 # => true
+  # (1..10).includes? 10 # => true
+  # (1...10).includes? 10 # => false
   #
-  # (1...10).includes?(9)  # => true
-  # (1...10).includes?(10) # => false
-  # ```
+  # ("a".."zz").includes? "cc" # => true
+  # ("a".."zz").includes? "zz" # => true
+  # ("a"..."zz").includes? "zz" # => false
+  #```
   def includes?(value)
+    if (@begin.is_a? Number && @end.is_a? Number) || (@begin.is_a? Char && @end.is_a? Char)
+      return covers?(value)
+    end
+
+    any? {|e| e == value }
+  end
+
+  # Returns true if this range covers the given *value*.
+  #
+  # ```
+  # (1..10).covers?(4)  # => true
+  # (1..10).covers?(10) # => true
+  # (1..10).covers?(11) # => false
+  #
+  # (1...10).covers?(9)  # => true
+  # (1...10).covers?(10) # => false
+  # ```
+  def covers?(value)
     if @exclusive
       @begin <= value < @end
     else
       @begin <= value <= @end
     end
-  end
-
-  # Same as `includes?`
-  def covers?(value)
-    includes?(value)
   end
 
   # Same as `includes?`, useful for the `case` expression.
@@ -289,6 +365,29 @@ struct Range(B, E)
     def rewind
       @current = @range.begin
       @reached_end = false
+      self
+    end
+  end
+
+  # :nodoc:
+  class ReverseIterator(B, E)
+    include Iterator(E)
+    def initialize(@range : Range(B, E), @current = range.end)
+      rewind
+    end
+
+    def next
+      return stop if @current <= @range.begin
+      return @current = @current.pred
+    end
+
+    def rewind
+      if @range.excludes_end?
+        @current = @range.end
+      else
+        @current = @range.end.succ
+      end
+
       self
     end
   end
