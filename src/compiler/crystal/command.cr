@@ -399,7 +399,8 @@ USAGE
       error "`shards` executable is missing. Please install shards: https://github.com/ysbaddaden/shards"
     end
 
-    Process.run(path_to_shards, args: options, output: true, error: true)
+    status = Process.run(path_to_shards, args: options, output: true, error: true)
+    exit status.exit_code unless status.success?
   end
 
   private def docs
