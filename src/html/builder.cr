@@ -70,7 +70,7 @@ struct HTML::Builder
     @str << HTML.escape(text)
   end
 
-  {% for tag in %w(a b body button div em h1 h2 h3 head html i li ol p s script span strong table tbody td textarea thead title tr u ul form) %}
+  {% for tag in %w(a b body button div em fieldset h1 h2 h3 head html i label li ol option p s script select span strong table tbody td textarea thead title tr u ul form) %}
     # Renders `{{tag.id.upcase}}` html tag with any options.
     #
     # ```
