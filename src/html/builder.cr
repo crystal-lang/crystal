@@ -70,6 +70,32 @@ struct HTML::Builder
     @str << HTML.escape(text)
   end
 
+  # Renders the provided html string.
+  #
+  # ```
+  # HTML::Builder.new.build { html "<p>crystal is awesome</p>" }
+  # # => <>crystal is awesome</p>
+  # ```
+  def html(html)
+    @str << html
+  end
+
+  # Renders the provided html tag with any options.
+  #
+  # ```
+  # HTML::Builder.new.build do
+  #   tag("section", { class: "crystal" }) { text "crystal is awesome" }
+  # end
+  # # => <section class="crystal">crystal is awesome</section>
+  # ```
+  def tag(name, attrs = nil : Hash(Symbol, String)?)
+    @str << "<#{name}"
+    append_attributes_string(attrs)
+    @str << ">"
+    with self yield self
+    @str << "</#{name}>"
+  end
+
   {% for tag in %w(a b body button div em h1 h2 h3 head html i li ol p s script span strong table tbody td textarea thead title tr u ul form) %}
     # Renders `{{tag.id.upcase}}` html tag with any options.
     #
