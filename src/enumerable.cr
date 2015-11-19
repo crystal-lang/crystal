@@ -234,6 +234,87 @@ module Enumerable(T)
     nil
   end
 
+  # Returns the first `n` members of the collection, if `n` is bigger than the whole
+  # collection, the collection itself is returned as an array (equivalent to calling
+  # `to_a` on the collection).
+  #
+  # Raises `Enumerable::EmptyError` if the collection is empty. See `#first?`
+  #
+  # ```
+  #  (5..25).first 3 # => [5, 6, 7]
+  # ```
+  def first(n : Int)
+    arr = first?(n)
+    raise Enumerable::EmptyError.new if arr.empty?
+
+    arr
+  end
+
+  # Same as `#first(n)`, but returns an empty array if the collection is empty.
+  def first?(n : Int)
+    if s = size
+      return to_a if n > s
+    end
+
+    elements = Array(T).new(n)
+
+    each do |e|
+      elements << e
+      break if (n-=1) <= 0
+    end
+
+    elements
+  end
+
+  # Returns the last element in the collection. Raises `Enumerable::EmptyError` if the collection is empty.
+  #
+  # ```
+  #  (5..25).last # => 25
+  #  (5...25).last # => 24
+  # ```
+  def last
+    reverse_each {|e| return e }
+    raise Enumerable::EmptyError.new
+  end
+
+  # Same as `#last`, but returns `nil` if the collection is empty.
+  def last?
+    reverse_each {|e| return e }
+    nil
+  end
+
+  # Returns the last `n` members of the collection, if `n` is bigger than the whole
+  # collection, the collection itself is returned as an array (equivalent to calling
+  # `to_a` on the collection).
+  #
+  # Returns an empty array if the collection is empty.
+  #
+  # ```
+  #  (5..25).last 3 # => [22, 23, 24]
+  # ```
+  def last(n : Int)
+    arr = last?(n)
+    raise Enumerable::EmptyError.new if arr.empty?
+
+    arr
+  end
+
+  # Same as `#last(n)`, but returns an empty array if the collection is empty.
+  def last?(n : Int)
+    if s = size
+      return to_a if n > s
+    end
+
+    elements = Array(T).new(n)
+
+    reverse_each do |e|
+      elements << e
+      break if (n-=1) <= 0
+    end
+
+    elements.reverse!
+  end
+
   # Returns a new array with the concatenated results of running the block (which is expected to return arrays) once for
   # every element in the collection.
   #
@@ -888,14 +969,7 @@ module Enumerable(T)
   # If *count* is bigger than the number of elements in the collection, returns as many as possible. This
   # include the case of calling it over an empty collection, in which case it returns an empty array.
   def take(count : Int)
-    raise ArgumentError.new("attempt to take negative size") if count < 0
-
-    ary = Array(T).new(count)
-    each_with_index do |e, i|
-      break if i == count
-      ary << e
-    end
-    ary
+    return first?(count)
   end
 
   # Passes elements to the block until the block returns nil or false, then stops iterating and returns an array of all prior elements.
