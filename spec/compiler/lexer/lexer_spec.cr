@@ -221,6 +221,8 @@ describe "Lexer" do
   it_lexes_char "'\\10'", 8.chr
   it_lexes_char "'\\110'", 72.chr
   it_lexes_char "'\\8'", '8'
+  assert_syntax_error "'", "unterminated char literal"
+  assert_syntax_error "'\\", "unterminated char literal"
   it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"(", :")",
     :"==", :"!=", :"=~", :"!", :",", :".", :"..", :"...", :"&&", :"||",
     :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"/=", :"%=", :"&=",

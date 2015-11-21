@@ -527,9 +527,13 @@ module Crystal
           when '0', '1', '2', '3', '4', '5', '6', '7'
             char_value = consume_octal_escape(char2)
             @token.value = char_value.chr
+          when '\0'
+            raise "unterminated char literal", line, column
           else
             @token.value = char2
           end
+        when '\0'
+          raise "unterminated char literal", line, column
         else
           @token.value = char1
         end
