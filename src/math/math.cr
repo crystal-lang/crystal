@@ -79,7 +79,7 @@ module Math
     end
 
     def {{name.id}}(value1, value2)
-      {{name.id}}(value1.to_f, value1.to_f)
+      {{name.id}}(value1.to_f, value2.to_f)
     end
   {% end %}
 

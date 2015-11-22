@@ -150,6 +150,7 @@ describe "Math" do
     it "atan2" do
       Math.atan2(3.5_f32, 2.1_f32).should be_close(1.0303768265243125, 1e-7)
       Math.atan2(3.5, 2.1).should be_close(1.0303768265243125, 1e-7)
+      Math.atan2(1, 0).should eq(Math.atan2(1.0, 0.0))
     end
   end
 
