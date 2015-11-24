@@ -109,7 +109,9 @@ describe "MemoryIO" do
   end
 
   it "writes after reading" do
-    io = MemoryIO.new("abcdefghi")
+    io = MemoryIO.new
+    io << "abcdefghi"
+    io.rewind
     io.gets(3)
     io.print("xyz")
     io.rewind
@@ -142,7 +144,9 @@ describe "MemoryIO" do
   end
 
   it "can seek past the end" do
-    io = MemoryIO.new("abc")
+    io = MemoryIO.new
+    io << "abc"
+    io.rewind
     io.seek(6)
     io.gets_to_end.should eq("")
     io.print("xyz")
@@ -172,7 +176,8 @@ describe "MemoryIO" do
   end
 
   it "can be closed" do
-    io = MemoryIO.new("abc")
+    io = MemoryIO.new
+    io << "abc"
     io.close
     io.closed?.should be_true
 
@@ -192,7 +197,9 @@ describe "MemoryIO" do
   end
 
   it "clears" do
-    io = MemoryIO.new("abc")
+    io = MemoryIO.new
+    io << "abc"
+    io.rewind
     io.gets(1)
     io.clear
     io.pos.should eq(0)
@@ -208,6 +215,39 @@ describe "MemoryIO" do
   it "raises if capacity too big" do
     expect_raises(ArgumentError, "capacity too big") do
       MemoryIO.new(UInt32::MAX)
+    end
+  end
+
+  it "creates from string" do
+    io = MemoryIO.new "abcdef"
+    io.gets(2).should eq("ab")
+    io.gets(3).should eq("cde")
+
+    expect_raises(IO::Error, "read-only stream") do
+      io.print 1
+    end
+  end
+
+  it "creates from slice" do
+    slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
+    io = MemoryIO.new slice
+    io.gets(2).should eq("ab")
+    io.gets(3).should eq("cde")
+    io.print 'x'
+
+    String.new(slice).should eq("abcdex")
+
+    expect_raises(IO::Error, "non-resizeable stream") do
+      io.print 'z'
+    end
+  end
+
+  it "creates from slice, non-writeable" do
+    slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
+    io = MemoryIO.new slice, writeable: false
+
+    expect_raises(IO::Error, "read-only stream") do
+      io.print 'z'
     end
   end
 end

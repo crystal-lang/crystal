@@ -189,7 +189,9 @@ describe "IO::Buffered" do
         end
       end
     end
-    strio = MemoryIO.new(s)
+    strio = MemoryIO.new
+    strio << s
+    strio.rewind
     io = IO::BufferedWrapper.new(strio)
     io.write(s.to_slice)
     strio.rewind.gets_to_end.should eq(s)

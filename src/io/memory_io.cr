@@ -1,4 +1,7 @@
-# An IO object that reads and writes from a buffer in memory.
+# An IO that reads and writes from a buffer in memory.
+#
+# The internal buffer can be resizeable and/or writeable depending
+# on how a MemoryIO is constructed.
 class MemoryIO
   include IO
 
@@ -8,8 +11,8 @@ class MemoryIO
   # Same as `size`.
   getter bytesize
 
-  # Creates an empty MemoryIO with the given initialize capactiy for
-  # the internal buffer.
+  # Creates an empty, resizeable and writeable MemoryIO with the given
+  # initialize capactiy for the internal buffer.
   #
   # ```
   # io = MemoryIO.new
@@ -24,25 +27,46 @@ class MemoryIO
     @capacity = capacity
     @pos = 0
     @closed = false
+    @resizeable = true
+    @writeable = true
   end
 
-  # Creates a MemoryIO whose contents are the contents of *string*
-  # (which are duplicated, as strings are immutable).
+  # Creates a MemoryIO that will read, and optionally write, from/to
+  # the given slice. The created MemoryIO is non-resizeable.
   #
-  # The IO starts at position zero for reading and writing.
+  # The IO starts at position zero for reading.
+  #
+  # ```
+  # slice = Slice.new(6) { |i| ('a'.ord + i).to_u8 }
+  # io = MemoryIO.new slice, writeable: false
+  # io.pos  # => 0
+  # io.read # => "abcdef"
+  # ```
+  def initialize(slice : Slice(UInt8), writeable = true)
+    @buffer = slice.to_unsafe
+    @bytesize = @capacity = slice.size
+    @pos = 0
+    @closed = false
+    @resizeable = false
+    @writeable = writeable
+  end
+
+  # Creates a MemoryIO whose contents are the exact contents of *string*.
+  # The created MemoryIO is non-resizeable and non-writeable.
+  #
+  # The IO starts at position zero for reading.
   #
   # ```
   # io = MemoryIO.new "hello"
-  # io.pos # => 0
-  # io.gets(2).should eq("he")
+  # io.pos        # => 0
+  # io.gets(2)    # => "he"
+  # io.print "hi" # raises
   # ```
   def self.new(string : String)
-    io = new(string.bytesize)
-    io << string
-    io.rewind
-    io
+    new string.to_slice, writeable: false
   end
 
+  # See `IO#read(slice)`.
   def read(slice : Slice(UInt8))
     count = slice.size
     count = Math.min(count, @bytesize - @pos)
@@ -51,15 +75,19 @@ class MemoryIO
     count
   end
 
+  # See `IO#write(slice)`. Raises if this MemoryIO is non-writeable,
+  # or if it's non-resizeable and a resize is needed.
   def write(slice : Slice(UInt8))
+    check_writeable
     check_open
 
     count = slice.size
 
     return if count == 0
 
-    new_bytesize = bytesize + count
+    new_bytesize = @pos + count
     if new_bytesize > @capacity
+      check_resizeable
       resize_to_capacity(Math.pw2ceil(new_bytesize))
     end
 
@@ -134,7 +162,8 @@ class MemoryIO
     end
   end
 
-  # Clears the internal buffer and resets the position to zero.
+  # Clears the internal buffer and resets the position to zero. Raises
+  # if this MemoryIO is non-resizeable.
   #
   # ```
   # io = MemoryIO.new "hello"
@@ -144,6 +173,7 @@ class MemoryIO
   # io.gets_to_end # => ""
   # ```
   def clear
+    check_resizeable
     @bytesize = 0
     @pos = 0
   end
@@ -293,6 +323,18 @@ class MemoryIO
   private def check_open
     if closed?
       raise IO::Error.new "closed stream"
+    end
+  end
+
+  private def check_writeable
+    unless @writeable
+      raise IO::Error.new "read-only stream"
+    end
+  end
+
+  private def check_resizeable
+    unless @resizeable
+      raise IO::Error.new "non-resizeable stream"
     end
   end
 
