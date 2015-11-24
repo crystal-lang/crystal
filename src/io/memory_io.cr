@@ -43,6 +43,23 @@ class MemoryIO
     io
   end
 
+  # Creates a MemoryIO whose contents are the contents of *slice*
+  # (which are duplicated).
+  #
+  # The IO starts at position zero for reading and writing.
+  #
+  # ```
+  # io = MemoryIO.new  Slice(UInt8).new(3) { |i| i + 1 }
+  # io.pos #=> 0
+  # io.gets(2).should eq("\u{1}\u{2}")
+  # ```
+  def self.new(slice : Slice(UInt8))
+    io = new(slice.bytesize)
+    io.write(slice)
+    io.rewind
+    io
+  end
+
   def read(slice : Slice(UInt8))
     count = slice.size
     count = Math.min(count, @bytesize - @pos)
