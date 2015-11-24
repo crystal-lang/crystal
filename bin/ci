@@ -64,7 +64,7 @@ prepare_build() {
 
   on_linux docker pull "jhass/crystal-build-$ARCH"
 
-  on_osx brew install gmp libevent crystal-lang
+  on_osx brew install libevent crystal-lang
   on_osx /bin/bash -c "'curl \"http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-darwin-x86_64.tar.gz\" | tar xz -C /tmp'"
 }
 
