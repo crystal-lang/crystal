@@ -6,13 +6,13 @@ thumbnail: T
 author: asterite
 ---
 
-Here we'll [continue explaining](/2013/09/23/type-inference-part-1.html) how Crystal assings
+Here we'll [continue explaining](/2013/09/23/type-inference-part-1.html) how Crystal assigns
 types to each variable and expression of your program. This post is a bit long, but in the end
 it's just about making Crystal behave in the most intuitive way for the programmer, to make it
 behave as similar as possible to Ruby.
 
-We'll starts with literals, C functions and some primitives. Then we'll continue with flow
-control structures, like ```if```, ```while``` and blocks. Then we'll talk about the special
+We'll start with literals, C functions and some primitives. Then we'll continue with flow
+control structures, like ```if```, ```while```, and blocks. Then we'll talk about the special
 ```NoReturn``` type and type filters.
 
 ### Literals
