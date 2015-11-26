@@ -672,7 +672,7 @@ class Hash(K, V)
   # hash = {"foo" => "bar", "baz" => "qux"}
   # hash.shift # => {"foo", "bar"}
   # hash       # => {"baz" => "qux"}
-  # 
+  #
   # hash = {} of String => String
   # hash.shift # => Index out of bounds (IndexError)
   # ```
@@ -686,7 +686,7 @@ class Hash(K, V)
   # hash = {"foo" => "bar", "baz" => "qux"}
   # hash.shift? # => {"foo", "bar"}
   # hash        # => {"baz" => "qux"}
-  # 
+  #
   # hash = {} of String => String
   # hash.shift? # => nil
   # ```
@@ -701,7 +701,7 @@ class Hash(K, V)
   # hash = {"foo" => "bar", "baz" => "qux"}
   # hash.shift { true } # => {"foo", "bar"}
   # hash                # => {"baz" => "qux"}
-  # 
+  #
   # hash = {} of String => String
   # hash.shift { true } # => true
   # hash                # => {}
@@ -751,8 +751,7 @@ class Hash(K, V)
   def hash
     hash = size
     each do |key, value|
-      hash = 31 * hash + key.hash
-      hash = 31 * hash + value.hash
+      hash += key.hash ^ value.hash
     end
     hash
   end

@@ -516,6 +516,10 @@ describe "Hash" do
 
     h2 = { {1 => 2} => {3 => 4} }
     h.hash.should eq(h2.hash)
+
+    h3 = {1 => 2, 3 => 4}
+    h4 = {3 => 4, 1 => 2}
+    h3.hash.should eq(h4.hash)
   end
 
   it "fetches from empty hash with default value" do
