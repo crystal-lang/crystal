@@ -18,6 +18,7 @@ module HTTP
                    @expires = nil : Time?, @domain = nil : String?,
                    @secure = false : Bool, @http_only = false : Bool,
                    @extension = nil : String?)
+      @name = URI.unescape name
       @value = URI.unescape value
     end
 
@@ -26,7 +27,7 @@ module HTTP
       expires = @expires
       domain = @domain
       String.build do |header|
-        header << "#{@name}=#{URI.escape value}"
+        header << "#{URI.escape @name}=#{URI.escape value}"
         header << "; path=#{path}" if path
         header << "; expires=#{HTTP.rfc1123_date(expires)}" if expires
         header << "; domain=#{domain}" if domain
