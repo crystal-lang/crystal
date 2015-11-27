@@ -104,4 +104,11 @@ describe Crystal::CrystalPath do
       path.find "test_files/missing_file.cr"
     end
   end
+
+  it "ignore an empty directory path" do
+    path = Crystal::CrystalPath.new(":")
+    expect_raises Exception, /can't find file/ do
+      path.find __FILE__[1..-1]
+    end
+  end
 end
