@@ -81,7 +81,7 @@ describe Process do
   end
 
   it "sets working directory" do
-    parent = File.dirname(Dir.working_directory)
+    parent = File.dirname(Dir.current)
     value = Process.run("pwd", shell: true, chdir: parent, output: nil) do |proc|
       proc.output.gets_to_end
     end

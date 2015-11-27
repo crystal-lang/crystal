@@ -2,7 +2,7 @@ require "spec"
 require "tempfile"
 
 private def base
-  Dir.working_directory
+  Dir.current
 end
 
 private def tmpdir

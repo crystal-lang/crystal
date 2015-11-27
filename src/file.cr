@@ -295,7 +295,7 @@ class File < IO::FileDescriptor
     end
 
     unless path.starts_with?(SEPARATOR)
-      dir = dir ? expand_path(dir) : Dir.working_directory
+      dir = dir ? expand_path(dir) : Dir.current
       path = "#{dir}#{SEPARATOR}#{path}"
     end
 

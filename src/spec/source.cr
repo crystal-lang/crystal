@@ -14,7 +14,7 @@ module Spec
 
   # :nodoc:
   def self.relative_file(file)
-    cwd = Dir.working_directory
+    cwd = Dir.current
     if file.starts_with?(cwd)
       file = ".#{file[cwd.size..-1]}"
     end

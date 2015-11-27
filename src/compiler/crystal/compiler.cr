@@ -426,7 +426,7 @@ module Crystal
   end
 
   def self.relative_filename(filename : String)
-    dir = Dir.working_directory
+    dir = Dir.current
     if filename.starts_with?(dir)
       filename = filename[dir.size..-1]
       if filename.starts_with? "/"

@@ -187,11 +187,11 @@ describe "Dir" do
 
   describe "cd" do
     it "should work" do
-      cwd = Dir.working_directory
+      cwd = Dir.current
       Dir.cd("..")
-      Dir.working_directory.should_not eq(cwd)
+      Dir.current.should_not eq(cwd)
       Dir.cd(cwd)
-      Dir.working_directory.should eq(cwd)
+      Dir.current.should eq(cwd)
     end
 
     it "raises" do
@@ -201,13 +201,13 @@ describe "Dir" do
     end
 
     it "accepts a block" do
-      cwd = Dir.working_directory
+      cwd = Dir.current
 
       Dir.cd("..") do
-        Dir.working_directory.should_not eq(cwd)
+        Dir.current.should_not eq(cwd)
       end
 
-      Dir.working_directory.should eq(cwd)
+      Dir.current.should eq(cwd)
     end
   end
 

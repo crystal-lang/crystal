@@ -27,7 +27,7 @@ class Dir
 
   def self.glob(patterns : Enumerable(String))
     special = {'*', '?', '{', '}'}
-    cwd = self.working_directory
+    cwd = self.current
     root = File::SEPARATOR_STRING
     patterns.each do |ptrn|
       next if ptrn.empty?
