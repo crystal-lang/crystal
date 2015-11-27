@@ -183,7 +183,9 @@ module Spec
   # :nodoc
   def self.run
     start_time = Time.now
-    at_exit do
+    at_exit do |status|
+      exit status unless status == 0
+
       elapsed_time = Time.now - start_time
       Spec::RootContext.print_results(elapsed_time)
       exit 1 unless Spec::RootContext.succeeded
