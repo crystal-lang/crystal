@@ -820,6 +820,11 @@ describe "Parser" do
   it_parses "foo $?", Call.new(nil, "foo", Call.new("$?".var, "not_nil!"))
   it_parses "$? = 1", Assign.new("$?".var, 1.int32)
 
+  it_parses "$!", Global.new("$!")
+  it_parses "$!.foo", Call.new(Global.new("$!"), "foo")
+  it_parses "foo $!", Call.new(nil, "foo", Global.new("$!"))
+  it_parses "$! = 1", Assign.new(Global.new("$!"), 1.int32)
+
   it_parses "$0", Path.global("PROGRAM_NAME")
   it_parses "foo $0", Call.new(nil, "foo", Path.global("PROGRAM_NAME"))
 

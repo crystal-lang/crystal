@@ -583,6 +583,9 @@ module Crystal
         when '?'
           next_char
           @token.type = :"$?"
+        when '!'
+          next_char
+          @token.type = :"$!"
         when .digit?
           start = current_pos
           char = next_char
