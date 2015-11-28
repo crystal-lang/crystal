@@ -223,6 +223,21 @@ class Array
   end
 end
 
+struct Set
+  def to_json(io)
+    if empty?
+      io << "[]"
+      return
+    end
+
+    io.json_array do |array|
+      each do |element|
+        array << element
+      end
+    end
+  end
+end
+
 class Hash
   def to_json(io)
     if empty?
