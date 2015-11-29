@@ -66,6 +66,14 @@ def Array.new(pull : JSON::PullParser)
   end
 end
 
+def Set.new(pull : JSON::PullParser)
+  set = new
+  pull.read_array do
+    set << T.new(pull)
+  end
+  set
+end
+
 def Hash.new(pull : JSON::PullParser)
   hash = new
   pull.read_object do |key|

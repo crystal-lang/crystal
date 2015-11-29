@@ -76,6 +76,10 @@ class JsonWithProblematicKeys
   })
 end
 
+class JsonWithSet
+  JSON.mapping({set: Set(String)})
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -185,4 +189,10 @@ describe "JSON mapping" do
     json.key.should eq(1)
     json.pull.should eq(2)
   end
+
+  it "parses json array as set" do
+    json = JsonWithSet.from_json(%({"set": ["a", "a", "b"]}))
+    json.set.should eq(Set(String){"a", "b"})
+  end
+
 end

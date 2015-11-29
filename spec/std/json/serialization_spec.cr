@@ -101,6 +101,10 @@ describe "JSON serialization" do
       [1, 2, 3].to_json.should eq("[1,2,3]")
     end
 
+    it "does for Set" do
+      Set(Int32).new([1, 1, 2]).to_json.should eq("[1,2]")
+    end
+
     it "does for Hash" do
       {"foo" => 1, "bar" => 2}.to_json.should eq(%({"foo":1,"bar":2}))
     end
