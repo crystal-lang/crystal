@@ -180,3 +180,21 @@ class DivisionByZero < Exception
     super(message)
   end
 end
+
+# Created when the program exit.
+#
+# This exception is not raised, but created in `exit` method internaly.
+# You can see this in `at_exit` block.
+#
+# ```
+# at_exit do |error|
+#   p error
+# end
+#
+# exit 1 # SystemExit: Program exit with status 1
+# ```
+class SystemExit < Exception
+  def initialize(status, message = "Program exit with status #{status}")
+    super(message)
+  end
+end
