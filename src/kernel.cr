@@ -82,16 +82,16 @@ module AtExitHandlers
   @@handlers = nil
 
   def self.add(handler)
-    handlers = @@handlers ||= [] of Int32 ->
+    handlers = @@handlers ||= [] of Exception? ->
     handlers << handler
   end
 
-  def self.run(status)
+  def self.run(error)
     return if @@running
     @@running = true
 
     begin
-      @@handlers.try &.reverse_each &.call status
+      @@handlers.try &.reverse_each &.call error
     rescue handler_ex
       puts "Error running at_exit handler: #{handler_ex}"
     end
@@ -116,7 +116,7 @@ end
 # ```text
 # goodbye cruel world
 # ```
-def at_exit(&handler : Int32 ->)
+def at_exit(&handler : Exception? ->)
   AtExitHandlers.add(handler)
 end
 
@@ -125,9 +125,12 @@ end
 #
 # Registered `at_exit` procs are executed.
 def exit(status = 0)
-  AtExitHandlers.run status
+  error = status == 0 ? nil : SystemExit.new(status)
+
+  AtExitHandlers.run error
   STDOUT.flush
   STDERR.flush
+
   Process.exit(status)
 end
 
