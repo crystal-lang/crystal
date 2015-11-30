@@ -230,6 +230,8 @@ module Crystal
 
     def restrict(other : Generic, context)
       parents.try &.each do |parent|
+        next if parent.is_a?(NonGenericModuleType)
+
         restricted = parent.restrict other, context
         return self if restricted
       end
@@ -534,6 +536,12 @@ module Crystal
         subclass.virtual_type.restrict(other, context) as Type?
       end
       program.type_merge_union_of types
+    end
+  end
+
+  class NonGenericModuleType
+    def restrict(other, context)
+      including_types.try &.restrict(other, context)
     end
   end
 

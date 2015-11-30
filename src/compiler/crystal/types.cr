@@ -815,6 +815,14 @@ module Crystal
       @including_types
     end
 
+    def cover
+      including_types.try(&.cover) || self
+    end
+
+    def cover_size
+      including_types.try(&.cover_size) || 1
+    end
+
     def filter_by_responds_to(name)
       including_types.try &.filter_by_responds_to(name)
     end
