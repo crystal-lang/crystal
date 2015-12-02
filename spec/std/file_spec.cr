@@ -56,6 +56,24 @@ describe "File" do
     end
   end
 
+  describe "executable?" do
+    it "gives false" do
+      File.executable?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+  end
+
+  describe "readable?" do
+    it "gives true" do
+      File.readable?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+  end
+
+  describe "writable?" do
+    it "gives true" do
+      File.writable?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+  end
+
   describe "file?" do
     it "gives true" do
       File.file?("#{__DIR__}/data/test_file.txt").should be_true
