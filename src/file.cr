@@ -182,7 +182,42 @@ class File < IO::FileDescriptor
   # File.exists?("foo") # => true
   # ```
   def self.exists?(filename)
-    LibC.access(filename, LibC::F_OK) == 0
+    File.accessible?(filename, LibC::F_OK)
+  end
+
+  # Returns true if file is readable by the effective user id of this process else returns false
+  #
+  # ```
+  # echo "foo" > foo
+  # File.readable?("foo") # => true
+  # ```
+  def self.readable?(filename)
+    File.accessible?(filename, LibC::R_OK)
+  end
+
+  # Returns true if file is writable by the effective user id of this process else returns false
+  #
+  # ```
+  # echo "foo" > foo
+  # File.writable?("foo") # => true
+  # ```
+  def self.writable?(filename)
+    File.accessible?(filename, LibC::W_OK)
+  end
+
+  # Returns true if file is executable by the effective user id of this process else returns false
+  #
+  # ```
+  # echo "foo" > foo
+  # File.executable?("foo") # => false
+  # ```
+  def self.executable?(filename)
+    File.accessible?(filename, LibC::X_OK)
+  end
+
+  # Convenience method to avoid code on LibC.access calls. Not meant to be called by users of this class
+  def self.accessible?(filename, flag)
+    LibC.access(filename, flag) == 0
   end
 
   # Returns true if given path exists and is a file
