@@ -90,10 +90,12 @@ module AtExitHandlers
     return if @@running
     @@running = true
 
-    begin
-      @@handlers.try &.reverse_each &.call status
-    rescue handler_ex
-      puts "Error running at_exit handler: #{handler_ex}"
+    @@handlers.try &.reverse_each do |handler|
+      begin
+        handler.call status
+      rescue handler_ex
+        STDERR.puts "Error running at_exit handler: #{handler_ex}"
+      end
     end
   end
 end
