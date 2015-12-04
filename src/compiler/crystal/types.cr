@@ -2652,6 +2652,29 @@ module Crystal
       type
     end
 
+    def filter_by_responds_to(name)
+      filtered = virtual_lookup(base_type).filter_by_responds_to(name)
+      return filtered.virtual_type if filtered
+
+      result = [] of Type
+      collect_filtered_by_responds_to(name, base_type, result)
+      program.type_merge_union_of(result)
+    end
+
+    def collect_filtered_by_responds_to(name, type, result)
+      type.subclasses.each do |subclass|
+        unless subclass.is_a?(GenericClassType)
+          filtered = virtual_lookup(subclass).filter_by_responds_to(name)
+          if filtered
+            result << virtual_lookup(subclass).virtual_type
+            next
+          end
+        end
+
+        collect_filtered_by_responds_to(name, subclass, result)
+      end
+    end
+
     def devirtualize
       base_type
     end
@@ -2688,29 +2711,6 @@ module Crystal
     delegate implements?, base_type
     delegate covariant?, base_type
     delegate ancestors, base_type
-
-    def filter_by_responds_to(name)
-      filtered = base_type.filter_by_responds_to(name)
-      return filtered.virtual_type if filtered
-
-      result = [] of Type
-      collect_filtered_by_responds_to(name, base_type, result)
-      program.type_merge_union_of(result)
-    end
-
-    def collect_filtered_by_responds_to(name, type, result)
-      type.subclasses.each do |subclass|
-        unless subclass.is_a?(GenericClassType)
-          filtered = subclass.filter_by_responds_to(name)
-          if filtered
-            result << subclass.virtual_type
-            next
-          end
-        end
-
-        collect_filtered_by_responds_to(name, subclass, result)
-      end
-    end
 
     def has_instance_var_in_initialize?(name)
       if base_type.abstract

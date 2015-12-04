@@ -101,6 +101,38 @@ describe "Codegen: responds_to?" do
       )).to_b.should be_true
   end
 
+  it "works with virtual class type (1) (#1926)" do
+    run(%(
+      class Foo
+      end
+
+      class Bar < Foo
+        def self.foo
+          1
+        end
+      end
+
+      foo = Bar || Foo
+      foo.responds_to?(:foo)
+      )).to_b.should be_true
+  end
+
+  it "works with virtual class type (2) (#1926)" do
+    run(%(
+      class Foo
+      end
+
+      class Bar < Foo
+        def self.foo
+          1
+        end
+      end
+
+      foo = Foo || Bar
+      foo.responds_to?(:foo)
+      )).to_b.should be_false
+  end
+
   it "works with module" do
     run(%(
       module Moo
