@@ -134,7 +134,8 @@ class Dir
     @closed = true
   end
 
-  def self.working_directory
+  # Returns the current working directory.
+  def self.current
     if dir = LibC.getcwd(nil, 0)
       String.new(dir).tap { LibC.free(dir as Void*) }
     else
@@ -153,7 +154,7 @@ class Dir
   # and invokes the block, restoring the original working directory
   # when the block exits.
   def self.cd(path)
-    old = working_directory
+    old = current
     begin
       cd(path)
       yield

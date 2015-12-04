@@ -364,7 +364,7 @@ USAGE
       target_filename = splitted[0]
       if File.file?(target_filename)
         options.delete_at target_index
-        cwd = Dir.working_directory
+        cwd = Dir.current
         if target_filename.starts_with?(cwd)
           target_filenames = [target_filename[cwd.size..-1]]
         else
