@@ -30,6 +30,20 @@ describe "HTML" do
       str.should eq %(<a href="http://crystal-lang.org" class="crystal" id="main">Crystal rocks!</a>)
     end
 
+    it "builds html with an provided html string" do
+      str = HTML::Builder.new.build do
+        html "<section>Crystal rocks!</section>"
+      end
+      str.should eq %(<section>Crystal rocks!</section>)
+    end
+
+    it "builds html with a custom tag with attributes" do
+      str = HTML::Builder.new.build do
+        tag("section", { class: "crystal" }) { text "Crystal rocks!" }
+      end
+      str.should eq %(<section class="crystal">Crystal rocks!</section>)
+    end
+
     it "escapes attribute values" do
       str = HTML::Builder.new.build do
         a({href: "<>"}) { }
