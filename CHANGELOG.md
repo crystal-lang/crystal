@@ -1,3 +1,19 @@
+## Next
+
+* **(breaking change)** A space is now required before and after def return type restriction
+* **(breaking change)** Renamed `Dir.working_dir` to `Dir.current`
+* **(breaking change)** Moved `HTML::Builder` to [its own shard](https://github.com/crystal-lang/html_builder)
+* Optimized Range#sum (thanks @MakeNowJust)
+* Allow forward declarations for lib external vars
+* Added `Int#to_s(base)` for `base = 62` (thanks @jhass)
+* `JSON.parse` now returns `JSON::Any`, which allows traversal of JSON objects with less casts
+* Added `OpenSSL::PKCS5` (thanks @benoist)
+* MemoryIO can now be created to read/write from a Slice(UInt8). In this mode MemoryIO can't be exapnded, and can optionally be written. And when creating a MemoryIO from a String, it's non-resizeable and read-only.
+* Added `Object#!~` (the opposite of `=~`)
+* `at_exit` now receives that exit status code in the block (thanks @MakeNowJust)
+* Allow using `Set` in JSON mappings (thanks @benoist)
+* Added `File.executable?`, `File.readable?` and `File.writeable?` (thanks @mverzilli)
+
 ## 0.9.1 (2015-10-30)
 
 * Docs search now finds nested entries (thanks @adlerhsieh)
