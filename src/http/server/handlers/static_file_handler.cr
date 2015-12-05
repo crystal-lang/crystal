@@ -1,4 +1,4 @@
-require "html/builder"
+require "ecr/macros"
 
 class HTTP::StaticFileHandler < HTTP::Handler
   def initialize(@publicdir)
@@ -26,23 +26,11 @@ class HTTP::StaticFileHandler < HTTP::Handler
     end
   end
 
+  record DirectoryListing, request_path, path do
+    ecr_file "#{__DIR__}/static_file_handler.html"
+  end
+
   private def directory_listing(request_path, path)
-    HTML::Builder.new.build do
-      html do
-        title { text "Directory listing for #{request_path}" }
-        body do
-          h2 { text "Directory listing for #{request_path}" }
-          hr
-          ul do
-            Dir.foreach(path) do |entry|
-              next if entry == "." || entry == ".."
-              li do
-                a({href: "#{request_path == "/" ? "" : request_path}/#{entry}"}) { text entry }
-              end
-            end
-          end
-        end
-      end
-    end
+    DirectoryListing.new(request_path, path).to_s
   end
 end

@@ -19,6 +19,7 @@ require "./handlers/*"
 # An HTTP::Server
 #
 # ### Simple Setup
+#
 # ```
 # require "http/server"
 #
@@ -31,6 +32,7 @@ require "./handlers/*"
 # ```
 #
 # ### With non-localhost bind address
+#
 # ```
 # require "http/server"
 #
@@ -43,6 +45,7 @@ require "./handlers/*"
 # ```
 #
 # ### Add handlers
+#
 # ```
 # require "http/server"
 #
@@ -51,18 +54,19 @@ require "./handlers/*"
 #   LogHandler.new,
 #   DeflateHandler.new,
 #   StaticFileHandler.new("."),
-# ]
-# ).listen
+# ]).listen
+# ```
 #
-# # ## Add handlers and block
+# ### Add handlers and block
+#
 # ```
 # require "http/server"
 #
 # server = HTTP::Server.new("0.0.0.0", 8080,
-#       [
-#         ErrorHandler.new,
-#         LogHandler.new
-#        ]) do |request|
+#   [
+#     ErrorHandler.new,
+#     LogHandler.new,
+#   ]) do |request|
 #   HTTP::Response.ok "text/plain", "Hello world!"
 # end
 #
