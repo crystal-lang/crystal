@@ -363,6 +363,14 @@ struct Int
     format.decode(self, io)
   end
 
+  # Counts `1`-bits in the binary representation of this integer.
+  #
+  # ```
+  # 5.popcount    #=> 2
+  # -15.popcount  #=> 5
+  # ```
+  abstract def popcount
+
   # :nodoc:
   class TimesIterator(T)
     include Iterator(T)
@@ -442,6 +450,10 @@ struct Int8
   def -
     0_i8 - self
   end
+
+  def popcount
+    Intrinsics.popcount8(self)
+  end
 end
 
 struct Int16
@@ -450,6 +462,10 @@ struct Int16
 
   def -
     0_i16 - self
+  end
+
+  def popcount
+    Intrinsics.popcount16(self)
   end
 end
 
@@ -460,6 +476,10 @@ struct Int32
   def -
     0 - self
   end
+
+  def popcount
+    Intrinsics.popcount32(self)
+  end
 end
 
 struct Int64
@@ -468,6 +488,10 @@ struct Int64
 
   def -
     0_i64 - self
+  end
+
+  def popcount
+    Intrinsics.popcount64(self)
   end
 end
 
@@ -478,6 +502,10 @@ struct UInt8
   def abs
     self
   end
+
+  def popcount
+    Intrinsics.popcount8(self)
+  end
 end
 
 struct UInt16
@@ -486,6 +514,10 @@ struct UInt16
 
   def abs
     self
+  end
+
+  def popcount
+    Intrinsics.popcount16(self)
   end
 end
 
@@ -496,6 +528,10 @@ struct UInt32
   def abs
     self
   end
+
+  def popcount
+    Intrinsics.popcount32(self)
+  end
 end
 
 struct UInt64
@@ -504,5 +540,9 @@ struct UInt64
 
   def abs
     self
+  end
+
+  def popcount
+    Intrinsics.popcount64(self)
   end
 end
