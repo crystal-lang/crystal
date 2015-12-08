@@ -1,6 +1,6 @@
 # On Mac OSX using Homebrew
 
-To easily install Crystall on Mac you can use [Homebrew](http://brew.sh/).
+To easily install Crystal on Mac you can use [Homebrew](http://brew.sh/).
 
 ```
 brew update
