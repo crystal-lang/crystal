@@ -47,7 +47,11 @@ class Markdown::HTMLRenderer
   end
 
   def begin_code(language = nil)
-    @io << "<pre><code>"
+    if language.nil?
+      @io << "<pre><code>"
+    else
+      @io << "<pre><code class='language-#{language}'>"
+    end
   end
 
   def end_code
