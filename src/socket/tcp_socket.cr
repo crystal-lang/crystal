@@ -57,7 +57,7 @@ class TCPSocket < IPSocket
     val
   end
 
-  # The number of probes sent, without response before dropping the connectino.
+  # The number of probes sent, without response before dropping the connection.
   def tcp_keepalive_count
     getsockopt LibC::TCP_KEEPCNT, 0, level: LibC::IPPROTO_TCP
   end
