@@ -76,7 +76,7 @@ struct Struct
   macro def hash : Int32
     hash = 0
     {% for ivar in @type.instance_vars %}
-      hash = 31 * hash + @{{ivar.id}}.hash
+      hash = 31 * hash + @{{ivar.id}}.hash.to_i32
     {% end %}
     hash
   end
