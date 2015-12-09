@@ -28,7 +28,6 @@ describe "Struct" do
   end
 
   it "does hash for struct wrapper (#1940)" do
-    i = BigInt.new(0)
-    StructSpecBigIntWrapper.new(i).hash.should eq(0)
+    StructSpecBigIntWrapper.new(BigInt.new(0)).hash.should eq(0)
   end
 end
