@@ -204,7 +204,7 @@ class Game
     elsif lost?
       end_game "You lost!"
     else
-      raise "Game loop quitted unexpectedly"
+      raise "Game loop quit unexpectedly"
     end
   end
 

@@ -126,7 +126,7 @@ describe "TCPSocket" do
       server.linger.should eq 42
 
       TCPSocket.open("::", server.addr.ip_port) do |client|
-        # The commented lines are actually dependant on the system configuration,
+        # The commented lines are actually dependent on the system configuration,
         # so for now we keep it commented. Once we can force the family
         # we can uncomment them.
 

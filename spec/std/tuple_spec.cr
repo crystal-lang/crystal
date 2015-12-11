@@ -81,7 +81,7 @@ describe "Tuple" do
     a.should_not eq(d)
   end
 
-  it "does == with differnt types but same size" do
+  it "does == with different types but same size" do
     {1, 2}.should eq({1.0, 2.0})
   end
 

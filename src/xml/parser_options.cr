@@ -36,7 +36,7 @@ enum XML::ParserOptions
   # Forbid network access
   NONET = 2048
 
-  # Do not reuse the context dictionnary
+  # Do not reuse the context dictionary
   NODICT = 4096
 
   # Remove redundant namespaces declarations
