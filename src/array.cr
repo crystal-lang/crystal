@@ -1139,6 +1139,12 @@ class Array(T)
     end
   end
 
+  def each_repeated_combination(size = self.size : Int)
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    RepeatedCombinationIterator.new(self, size.to_i)
+  end
+
   def self.product(arrays)
     result = [] of Array(typeof(arrays.first.first))
     each_product(arrays) do |product|
@@ -1875,6 +1881,62 @@ class Array(T)
     def rewind
       @pool.replace(@copy)
       @indices = (0...@size).to_a
+      @stop = @size > @n
+      @i = @size - 1
+      @first = true
+      self
+    end
+  end
+
+  # :nodoc:
+  class RepeatedCombinationIterator(T)
+    include Iterator(Array(T))
+
+    def initialize(array : Array(T), @size)
+      @n = array.size
+      @copy = array.dup
+      @indices = Array.new(@size, 0)
+      @pool = @indices.map { |i| @copy[i] }
+      @stop = @size > @n
+      @i = @size - 1
+      @first = true
+    end
+
+    def next
+      return stop if @stop
+
+      if @first
+        @first = false
+        return @pool[0, @size]
+      end
+
+      @stop = true
+
+      while @i >= 0
+        if @indices[@i] != @n - 1
+          @stop = false
+          break
+        end
+        @i -= 1
+      end
+
+      return stop if @stop
+
+      ii = @indices[@i] + 1
+      tmp = @copy[ii]
+      @indices.fill(@i, @size - @i) { ii }
+      @pool.fill(@i, @size - @i) { tmp }
+
+      value = @pool[0, @size]
+      @i = @size - 1
+      value
+    end
+
+    def rewind
+      if @n > 0
+        @indices.fill(0)
+        @pool.fill(@copy[0])
+      end
       @stop = @size > @n
       @i = @size - 1
       @first = true
