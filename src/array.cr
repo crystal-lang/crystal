@@ -1799,8 +1799,6 @@ class Array(T)
         return @pool[0, @size]
       end
 
-      @stop = true
-
       while @i >= 0
         ci = (@cycles[@i] -= 1)
         if ci == 0
@@ -1811,13 +1809,13 @@ class Array(T)
         else
           @pool.swap @i, -ci
           value = @pool[0, @size]
-          @stop = false
           @i = @size - 1
           return value
         end
         @i -= 1
       end
 
+      @stop = true
       stop
     end
 
@@ -1853,29 +1851,25 @@ class Array(T)
         return @pool[0, @size]
       end
 
-      @stop = true
-
       while @i >= 0
         if @indices[@i] != @i + @n - @size
-          @stop = false
-          break
+          @indices[@i] += 1
+          @pool[@i] = @copy[@indices[@i]]
+
+          (@i + 1).upto(@size - 1) do |j|
+            @indices[j] = @indices[j - 1] + 1
+            @pool[j] = @copy[@indices[j]]
+          end
+
+          value = @pool[0, @size]
+          @i = @size - 1
+          return value
         end
         @i -= 1
       end
 
-      return stop if @stop
-
-      @indices[@i] += 1
-      @pool[@i] = @copy[@indices[@i]]
-
-      (@i + 1).upto(@size - 1) do |j|
-        @indices[j] = @indices[j - 1] + 1
-        @pool[j] = @copy[@indices[j]]
-      end
-
-      value = @pool[0, @size]
-      @i = @size - 1
-      value
+      @stop = true
+      stop
     end
 
     def rewind
@@ -1910,26 +1904,22 @@ class Array(T)
         return @pool[0, @size]
       end
 
-      @stop = true
-
       while @i >= 0
         if @indices[@i] != @n - 1
-          @stop = false
-          break
+          ii = @indices[@i] + 1
+          tmp = @copy[ii]
+          @indices.fill(@i, @size - @i) { ii }
+          @pool.fill(@i, @size - @i) { tmp }
+
+          value = @pool[0, @size]
+          @i = @size - 1
+          return value
         end
         @i -= 1
       end
 
-      return stop if @stop
-
-      ii = @indices[@i] + 1
-      tmp = @copy[ii]
-      @indices.fill(@i, @size - @i) { ii }
-      @pool.fill(@i, @size - @i) { tmp }
-
-      value = @pool[0, @size]
-      @i = @size - 1
-      value
+      @stop = true
+      stop
     end
 
     def rewind
