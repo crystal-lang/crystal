@@ -1789,12 +1789,8 @@ class String
   end
 
   # ditto
-  def split(separator : Char, limit = nil)
-    if separator == ' '
-      return split(limit)
-    end
-
-    if limit && limit <= 1
+  def split(separator : Char, limit = nil, remove_trailing_empty_strings = false)
+    if empty? || (limit && limit <= 1)
       return [self]
     end
 
@@ -1814,11 +1810,9 @@ class String
       end
     end
 
-    if byte_offset != bytesize
-      piece_bytesize = bytesize - byte_offset
-      piece_size = single_byte_optimizable ? piece_bytesize : 0
-      ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
-    end
+    piece_bytesize = bytesize - byte_offset
+    piece_size = single_byte_optimizable ? piece_bytesize : 0
+    ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
 
     ary
   end
@@ -1838,31 +1832,18 @@ class String
   # long_river - name.split("") # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : String, limit = nil)
-    ary = Array(String).new
-    byte_offset = 0
-    buffer = cstr
-    separator_bytesize = separator.bytesize
-
-    if limit && limit <= 1
+    if empty? || (limit && limit <= 1)
       return [self]
     end
 
     if separator.empty?
-      # Special case: return all chars as strings
-      each_char do |c|
-        ary.push c.to_s
-        break if limit && ary.size + 1 == limit
-      end
-
-      if limit && ary.size != size
-        ary.push(self[ary.size..-1])
-      end
-
-      return ary
-    elsif separator == " "
-      # Another special case: split ignoring empty results
-      return split(limit)
+      return split_by_empty_separator(limit)
     end
+
+    ary = Array(String).new
+    byte_offset = 0
+    buffer = cstr
+    separator_bytesize = separator.bytesize
 
     single_byte_optimizable = single_byte_optimizable?
 
@@ -1879,17 +1860,21 @@ class String
       end
       i += 1
     end
-    if byte_offset != bytesize
-      piece_bytesize = bytesize - byte_offset
-      piece_size = single_byte_optimizable ? piece_bytesize : 0
-      ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
-    end
+
+    piece_bytesize = bytesize - byte_offset
+    piece_size = single_byte_optimizable ? piece_bytesize : 0
+    ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
+
     ary
   end
 
   def split(separator : Regex, limit = nil)
-    if limit && limit <= 1
+    if empty? || (limit && limit <= 1)
       return [self]
+    end
+
+    if separator.source.empty?
+      return split_by_empty_separator(limit)
     end
 
     ary = Array(String).new
@@ -1929,14 +1914,21 @@ class String
       break if slice_offset > bytesize
     end
 
-    if slice_offset < bytesize
-      ary.push byte_slice(slice_offset)
+    ary.push byte_slice(slice_offset)
+
+    ary
+  end
+
+  private def split_by_empty_separator(limit)
+    ary = Array(String).new
+
+    each_char do |c|
+      ary.push c.to_s
+      break if limit && ary.size + 1 == limit
     end
 
-    unless limit
-      while ary.last?.try &.empty?
-        ary.pop
-      end
+    if limit && ary.size != size
+      ary.push(self[ary.size..-1])
     end
 
     ary
