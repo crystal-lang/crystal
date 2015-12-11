@@ -1420,6 +1420,19 @@ describe "Array" do
     end
 
     assert { expect_raises(ArgumentError, "size must be positive") { [1].each_combination(-1) { } } }
+
+    it "returns iterator" do
+      a = [1, 2, 3, 4]
+      combs = a.combinations(2)
+      iter = a.each_combination(2)
+      combs.each do |comb|
+        iter.next.should eq(comb)
+      end
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(combs[0])
+    end
   end
 
   describe "repeated_combinations" do

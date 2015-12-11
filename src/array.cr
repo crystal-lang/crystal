@@ -1078,6 +1078,12 @@ class Array(T)
     end
   end
 
+  def each_combination(size = self.size : Int)
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    CombinationIterator.new(self, size.to_i)
+  end
+
   # Returns a new array that is a one-dimensional flattening of self (recursively).
   #
   # That is, for every element that is an array, extract its elements into the new array
@@ -1812,6 +1818,63 @@ class Array(T)
     def rewind
       @cycles = (@n - @size + 1..@n).to_a.reverse!
       @pool.replace(@array)
+      @stop = @size > @n
+      @i = @size - 1
+      @first = true
+      self
+    end
+  end
+
+  # :nodoc:
+  class CombinationIterator(T)
+    include Iterator(Array(T))
+
+    def initialize(array : Array(T), @size)
+      @n = array.size
+      @copy = array.dup
+      @pool = array.dup
+      @indices = (0...@size).to_a
+      @stop = @size > @n
+      @i = @size - 1
+      @first = true
+    end
+
+    def next
+      return stop if @stop
+
+      if @first
+        @first = false
+        return @pool[0, @size]
+      end
+
+      @stop = true
+
+      while @i >= 0
+        if @indices[@i] != @i + @n - @size
+          @stop = false
+          break
+        end
+        @i -= 1
+      end
+
+      return stop if @stop
+
+      @indices[@i] += 1
+      @pool[@i] = @copy[@indices[@i]]
+
+      (@i + 1).upto(@size - 1) do |j|
+        @indices[j] = @indices[j - 1] + 1
+        @pool[j] = @copy[@indices[j]]
+      end
+
+      value = @pool[0, @size]
+      @i = @size - 1
+      value
+    end
+
+    def rewind
+      @pool.replace(@copy)
+      @indices = (0...@size).to_a
       @stop = @size > @n
       @i = @size - 1
       @first = true
