@@ -1725,6 +1725,7 @@ class String
   end
 
   # Makes an array by splitting the string on any ASCII whitespace characters (and removing that whitespace).
+  #
   # If *limit* is present, up to *limit* new strings will be created,
   # with the entire remainder added to the last string.
   #
@@ -1788,8 +1789,16 @@ class String
     ary
   end
 
-  # ditto
-  def split(separator : Char, limit = nil, remove_trailing_empty_strings = false)
+  # Makes an array by splitting the string on the given character *separator* (and removing that character).
+  #
+  # If *limit* is present, up to *limit* new strings will be created,
+  # with the entire remainder added to the last string.
+  #
+  # ```
+  # "foo,bar,baz".split(',')    # => ["foo", "bar", "baz"]
+  # "foo,bar,baz".split(',', 2) # => ["foo", "bar,baz"]
+  # ```
+  def split(separator : Char, limit = nil)
     if empty? || (limit && limit <= 1)
       return [self]
     end
@@ -1818,18 +1827,17 @@ class String
   end
 
   # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
+  #
   # If *limit* is present, the array will be limited to *limit* items and
   # the final item will contain the remainder of the string.
-  #
-  # If *separator* is a single space (`' '`, `" "`), it splits on any whitespace (see `#split()`).
   #
   # If *separator* is an empty string (`""`), the string will be separated into one-character strings.
   #
   # ```
   # long_river_name = "Mississippi"
   # long_river_name.split("ss") # => ["Mi", "i", "ippi"]
-  # long_river_name.split('i')  # => ["M", "ss", "ss", "pp"]
-  # long_river - name.split("") # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # long_river_name.split("i")  # => ["M", "ss", "ss", "pp"]
+  # long_river_name.split("")   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
   # ```
   def split(separator : String, limit = nil)
     if empty? || (limit && limit <= 1)
@@ -1868,6 +1876,18 @@ class String
     ary
   end
 
+  # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
+  #
+  # If *limit* is present, the array will be limited to *limit* items and
+  # the final item will contain the remainder of the string.
+  #
+  # If *separator* is an empty regex (`//`), the string will be separated into one-character strings.
+  #
+  # ```
+  # long_river_name = "Mississippi"
+  # long_river_name.split(/s+/) # => ["Mi", "i", "ippi"]
+  # long_river_name.split(//)   # => ["M", "i", "s", "s", "i", "s", "s", "i", "p", "p", "i"]
+  # ```
   def split(separator : Regex, limit = nil)
     if empty? || (limit && limit <= 1)
       return [self]
