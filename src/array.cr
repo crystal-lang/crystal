@@ -1430,7 +1430,11 @@ class Array(T)
   end
 
   def sort_by!(&block : T -> _)
-    sort! { |x, y| block.call(x) <=> block.call(y) }
+    sorted = map { |e| {e, block.call(e)} }.sort! { |x, y| x[1] <=> y[1] }
+    @size.times do |i|
+      @buffer[i] = sorted.buffer[i][0]
+    end
+    self
   end
 
   def swap(index0, index1)

@@ -934,6 +934,13 @@ describe "Array" do
       a.sort_by! &.size
       a.should eq(["a", "foo", "hello"])
     end
+
+    it "calls given block exactly once for each element" do
+      calls = Hash(String, Int32).new(0)
+      a = ["foo", "a", "hello"]
+      a.sort_by! { |e| calls[e] += 1; e.size }
+      calls.should eq({"foo": 1, "a": 1, "hello": 1})
+    end
   end
 
   describe "swap" do
