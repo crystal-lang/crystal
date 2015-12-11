@@ -2098,7 +2098,7 @@ module Crystal
     def_equals_and_hash constraint, exp
   end
 
-  # Ficticious node to represent primitives
+  # Fictitious node to represent primitives
   class Primitive < ASTNode
     getter name
 
@@ -2112,7 +2112,7 @@ module Crystal
     def_equals_and_hash name
   end
 
-  # Ficticious node to represent a tuple indexer
+  # Fictitious node to represent a tuple indexer
   class TupleIndexer < Primitive
     getter index
 
@@ -2127,7 +2127,7 @@ module Crystal
     def_equals_and_hash index
   end
 
-  # Ficticious node to represent an id inside a macro
+  # Fictitious node to represent an id inside a macro
   class MacroId < ASTNode
     property value
 
@@ -2145,7 +2145,7 @@ module Crystal
     def_equals_and_hash value
   end
 
-  # Ficticious node to represent a type
+  # Fictitious node to represent a type
   class TypeNode < ASTNode
     def initialize(@type)
     end
