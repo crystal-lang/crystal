@@ -1358,12 +1358,21 @@ class Array(T)
     res
   end
 
-  def sample
+  # Returns a random element from this array, using the given *random* number generator.
+  # Raises if this array is empty.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.sample                # => 2
+  # a.sample                # => 1
+  # a.sample(Random.new(1)) # => 3
+  # ```
+  def sample(random = Random::DEFAULT)
     raise IndexError.new if @size == 0
-    @buffer[rand(@size)]
+    @buffer[random.rand(@size)]
   end
 
-  def sample(n)
+  def sample(n : Int, random = Random::DEFAULT)
     if n < 0
       raise ArgumentError.new("can't get negative count sample")
     end
@@ -1382,12 +1391,12 @@ class Array(T)
       buffer = ary.buffer
 
       n.upto(@size - 1) do |i|
-        j = rand(i + 1)
+        j = random.rand(i + 1)
         if j <= n
           buffer[j] = @buffer[i]
         end
       end
-      ary.shuffle!
+      ary.shuffle!(random)
 
       ary
     end
@@ -1428,12 +1437,12 @@ class Array(T)
     shift { nil }
   end
 
-  def shuffle
-    dup.shuffle!
+  def shuffle(random = Random::DEFAULT)
+    dup.shuffle!(random)
   end
 
-  def shuffle!
-    @buffer.shuffle!(size)
+  def shuffle!(random = Random::DEFAULT)
+    @buffer.shuffle!(size, random)
     self
   end
 

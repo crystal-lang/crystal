@@ -788,6 +788,11 @@ describe "Array" do
       [1, 2, 3].includes?(x).should be_true
     end
 
+    it "sample with random" do
+      x = [1, 2, 3]
+      x.sample(Random.new(1)).should eq(3)
+    end
+
     it "gets sample of negative count elements raises" do
       expect_raises ArgumentError do
         [1].sample(-1)
@@ -828,6 +833,12 @@ describe "Array" do
       set.each do |e|
         a.includes?(e).should be_true
       end
+    end
+
+    it "gets sample of k elements out of n, with random" do
+      a = [1, 2, 3, 4, 5]
+      b = a.sample(3, Random.new(1))
+      b.should eq([4, 3, 5])
     end
   end
 
@@ -881,6 +892,18 @@ describe "Array" do
       a.should eq([1, 2, 3])
 
       3.times { b.includes?(a.shift).should be_true }
+    end
+
+    it "shuffle! with random" do
+      a = [1, 2, 3]
+      a.shuffle!(Random.new(1))
+      a.should eq([2, 1, 3])
+    end
+
+    it "shuffle with random" do
+      a = [1, 2, 3]
+      b = a.shuffle(Random.new(1))
+      b.should eq([2, 1, 3])
     end
   end
 
