@@ -56,7 +56,7 @@ describe "Set" do
   end
 
   describe "dup" do
-    it "creates an independant copy" do
+    it "creates an independent copy" do
       set1 = Set{1, 2, 3}
       set2 = set1.dup
 
