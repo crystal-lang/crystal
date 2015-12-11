@@ -1362,6 +1362,32 @@ describe "Array" do
     end
 
     assert { expect_raises(ArgumentError, "size must be positive") { [1].each_permutation(-1) { } } }
+
+    it "returns iterator" do
+      a = [1, 2, 3]
+      perms = a.permutations
+      iter = a.each_permutation
+      perms.each do |perm|
+        iter.next.should eq(perm)
+      end
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(perms[0])
+    end
+
+    it "returns iterator with given size" do
+      a = [1, 2, 3]
+      perms = a.permutations(2)
+      iter = a.each_permutation(2)
+      perms.each do |perm|
+        iter.next.should eq(perm)
+      end
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(perms[0])
+    end
   end
 
   describe "combinations" do

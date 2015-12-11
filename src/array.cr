@@ -976,7 +976,7 @@ class Array(T)
     ary
   end
 
-  # Yields each possible permutation of size `n` of this array.
+  # Yields each possible permutation of size `size` of this array.
   #
   #     a = [1, 2, 3]
   #     sums = [] of Int32
@@ -1014,6 +1014,24 @@ class Array(T)
 
       return self if stop
     end
+  end
+
+  # Returns an `Iterator` over each possible permutation of size `size` of this array.
+  #
+  # ```
+  # iter = [1, 2, 3].each_permutation
+  # iter.next # => [1, 2, 3]
+  # iter.next # => [1, 3, 2]
+  # iter.next # => [2, 1, 3]
+  # iter.next # => [2, 3, 1]
+  # iter.next # => [3, 1, 2]
+  # iter.next # => [3, 2, 1]
+  # iter.next # => Iterator::Stop
+  # ```
+  def each_permutation(size = self.size : Int)
+    raise ArgumentError.new("size must be positive") if size < 0
+
+    PermutationIterator.new(self, size.to_i)
   end
 
   def combinations(size = self.size : Int)
@@ -1744,6 +1762,59 @@ class Array(T)
 
     def rewind
       @index = @array.size - 1
+      self
+    end
+  end
+
+  # :nodoc:
+  class PermutationIterator(T)
+    include Iterator(Array(T))
+
+    def initialize(@array : Array(T), @size)
+      @n = @array.size
+      @cycles = (@n - @size + 1..@n).to_a.reverse!
+      @pool = @array.dup
+      @stop = @size > @n
+      @i = @size - 1
+      @first = true
+    end
+
+    def next
+      return stop if @stop
+
+      if @first
+        @first = false
+        return @pool[0, @size]
+      end
+
+      @stop = true
+
+      while @i >= 0
+        ci = (@cycles[@i] -= 1)
+        if ci == 0
+          e = @pool[@i]
+          (@i + 1).upto(@n - 1) { |j| @pool[j - 1] = @pool[j] }
+          @pool[@n - 1] = e
+          @cycles[@i] = @n - @i
+        else
+          @pool.swap @i, -ci
+          value = @pool[0, @size]
+          @stop = false
+          @i = @size - 1
+          return value
+        end
+        @i -= 1
+      end
+
+      stop
+    end
+
+    def rewind
+      @cycles = (@n - @size + 1..@n).to_a.reverse!
+      @pool.replace(@array)
+      @stop = @size > @n
+      @i = @size - 1
+      @first = true
       self
     end
   end
