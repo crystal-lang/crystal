@@ -7,8 +7,11 @@ class HTTP::Request
   getter headers
   getter body
   getter version
+  getter addr
+  getter peeraddr
 
-  def initialize(@method : String, @resource, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
+  def initialize(@method : String, @resource, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1",
+                 @addr = nil, @peeraddr = nil)
     if body = @body
       @headers["Content-Length"] = body.bytesize.to_s
     elsif @method == "POST" || @method == "PUT"
@@ -49,12 +52,14 @@ class HTTP::Request
   end
 
   def self.from_io(io)
+    addr         = io.peeraddr
+    peeraddr     = io.addr
     request_line = io.gets
     return unless request_line
 
     method, resource, http_version = request_line.split
     HTTP.parse_headers_and_body(io) do |headers, body|
-      return new method, resource, headers, body.try &.gets_to_end, http_version
+      return new method, resource, headers, body.try &.gets_to_end, http_version, addr, peeraddr
     end
 
     # Unexpected end of http request
