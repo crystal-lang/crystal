@@ -116,5 +116,5 @@ This error isn't very frequent, and is usually gone if a `Person` is instantiate
 Person.new "John"
 
 a = [] of Person
-x = a.map { |f| f.name as String } # OK
+x = a.map { |f| f.name } # OK
 ```
