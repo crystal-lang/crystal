@@ -111,4 +111,11 @@ describe Crystal::CrystalPath do
       path.find __FILE__[1..-1]
     end
   end
+
+  it "finds file in added path" do
+    path = Crystal::CrystalPath.new("")
+    path.add_path __DIR__
+    matches = path.find "test_files/file_one.cr"
+    matches.should eq(["#{__DIR__}/test_files/file_one.cr"])
+  end
 end

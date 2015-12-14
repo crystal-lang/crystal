@@ -17,6 +17,7 @@ module Crystal
     property vars
     property literal_expander
     property initialized_global_vars
+    property crystal_path
     property? wants_doc
     property? color
 

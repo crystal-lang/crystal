@@ -15,6 +15,8 @@ module Crystal
     record Source, filename, code
     record Result, program, node, original_node
 
+    getter crystal_path
+
     property cross_compile_flags
     property flags
     property? debug
@@ -47,6 +49,7 @@ module Crystal
       @verbose = false
       @wants_doc = false
       @flags = [] of String
+      @crystal_path = CrystalPath.new
     end
 
     def compile(source : Source, output_filename)
@@ -63,6 +66,7 @@ module Crystal
       program.flags.merge @flags
       program.wants_doc = wants_doc?
       program.color = color?
+      program.crystal_path = crystal_path
 
       @link_flags = "#{@link_flags} -rdynamic"
 
