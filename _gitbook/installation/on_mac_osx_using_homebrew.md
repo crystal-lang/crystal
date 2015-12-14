@@ -12,3 +12,12 @@ If you're planning to contribute to the project you might find useful to install
 ```
 brew install crystal-lang --with-llvm
 ```
+
+## Troubleshooting on OSX 10.11 (El Capitan)
+
+Reinstall Xcode Command Line Tools, then set the path for the active developer directory.
+
+```
+xcode-select --install
+xcode-select --switch /Library/Developer/CommandLineTools
+``
