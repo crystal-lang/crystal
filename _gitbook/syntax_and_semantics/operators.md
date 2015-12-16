@@ -63,7 +63,6 @@ v1 = Vector2.new(1, 2)
 *   # multiplication
 /   # division
 %   # modulo
-!   # negation
 &   # bitwise and
 |   # bitwise or
 ^   # bitwise xor
