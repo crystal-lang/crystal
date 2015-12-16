@@ -467,15 +467,15 @@ class Object
   # wrapper.empty?         # => false
   # wrapper.capitalize     # => "Hello"
   # ```
-  macro delegate(*names)
-    {% to_object = names.last %}
+  macro delegate(method, *other_methods, to_object)
+    def {{method.id}}(*args)
+      {{to_object.id}}.{{method.id}}(*args)
+    end
 
-    {% for name, index in names %}
-      {% if index != names.size - 1 %}
-        def {{name.id}}(*args)
-          {{to_object.id}}.{{name.id}}(*args)
-        end
-      {% end %}
+    {% for name, index in other_methods %}
+      def {{name.id}}(*args)
+        {{to_object.id}}.{{name.id}}(*args)
+      end
     {% end %}
   end
 
