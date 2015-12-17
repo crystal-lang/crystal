@@ -1,6 +1,6 @@
 require "./*"
 
-# The YAML module provides deserialization of YAML to native Crystal data structures.
+# The YAML module provides serialization and deserialization of YAML to/from native Crystal data structures.
 #
 # ### Parsing with `#load` and `#load_all`
 #
@@ -10,7 +10,7 @@ require "./*"
 #
 # ```crystal
 # require "yaml"
-#
+# 
 # data = YAML.load("foo: bar")
 # (data as Hash)["foo"] # => "bar"
 # ```
@@ -20,6 +20,18 @@ require "./*"
 # `YAML#mapping` defines how an object is mapped to YAML. Mapped data is accessible
 # through generated properties like *Foo#bar*. It is more type-safe and efficient.
 #
+# ### Dumping with `YAML.dump` or `#to_yaml`
+#
+# `YAML.dump` generates the YAML representation for an object. An `IO` can be passed and it will be written there,
+# otherwise it will be returned as a string. Similarly, `#to_yaml` (with or without an `IO`) on any object does the same.
+#
+# ```crystal
+# yaml = YAML.dump({hello: "world"})                                # => "--- \nhello: world"
+# File.open("file.yml", "w") { |f| YAML.dump({hello: "world"}, f) } # => writes it to the file
+# # or:
+# yaml = {hello: "world"}.to_yaml                                # => "--- \nhello: world"
+# File.open("file.yml", "w") { |f| {hello: "world"}.to_yaml(f) } # => writes it to the file
+# ```
 module YAML
   # Exception thrown on a YAML parse error.
   class ParseException < Exception
@@ -91,5 +103,15 @@ module YAML
     ensure
       parser.close
     end
+  end
+
+  # Serializes an object to YAML, returning it as a string.
+  def self.dump(object)
+    object.to_yaml
+  end
+
+  # Serializes an object to YAML, writing it to `io`.
+  def self.dump(object, io : IO)
+    object.to_yaml(io)
   end
 end

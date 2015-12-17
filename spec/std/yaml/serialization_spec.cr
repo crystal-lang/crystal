@@ -63,4 +63,80 @@ describe "YAML serialization" do
       end
     end
   end
+
+  describe "to_yaml" do
+    it "does for Nil" do
+      Nil.from_yaml(nil.to_yaml).should eq(nil)
+    end
+
+    it "does for Bool" do
+      Bool.from_yaml(true.to_yaml).should eq(true)
+      Bool.from_yaml(false.to_yaml).should eq(false)
+    end
+
+    it "does for Int32" do
+      Int32.from_yaml(1.to_yaml).should eq(1)
+    end
+
+    it "does for Float64" do
+      Float64.from_yaml(1.5.to_yaml).should eq(1.5)
+    end
+
+    it "does for String" do
+      String.from_yaml("hello".to_yaml).should eq("hello")
+    end
+
+    it "does for String with quote" do
+      String.from_yaml("hel\"lo".to_yaml).should eq("hel\"lo")
+    end
+
+    it "does for String with slash" do
+      String.from_yaml("hel\\lo".to_yaml).should eq("hel\\lo")
+    end
+
+    it "does for Array" do
+      Array(Int32).from_yaml([1, 2, 3].to_yaml).should eq([1, 2, 3])
+    end
+
+    it "does for Set" do
+      Array(Int32).from_yaml(Set(Int32).new([1, 1, 2]).to_yaml).should eq([1, 2])
+    end
+
+    it "does for Hash" do
+      Hash(String, Int32).from_yaml({"foo" => 1, "bar" => 2}.to_yaml).should eq({"foo" => 1, "bar" => 2})
+    end
+
+    it "does for Hash with symbol keys" do
+      Hash(String, Int32).from_yaml({foo: 1, bar: 2}.to_yaml).should eq({"foo" => 1, "bar" => 2})
+    end
+
+    it "does for Tuple" do
+      Tuple(Int32, String).from_yaml({1, "hello"}.to_yaml).should eq({1, "hello"})
+    end
+
+    it "does a full document" do
+      data = {
+               hello:   "World",
+               integer: 2,
+               float:   3.5,
+               hash:    {
+                 a: 1,
+                 b: 2,
+               },
+               array: [1, 2, 3],
+               null:  nil,
+             }
+
+      expected = "--- \nhello: World\ninteger: 2\nfloat: 3.5\nhash: \n  a: 1\n  b: 2\narray: \n  - 1\n  - 2\n  - 3\nnull: "
+
+      data.to_yaml.should eq(expected)
+    end
+
+    it "writes to a stream" do
+      string = String.build do |str|
+                 %w(a b c).to_yaml(str)
+               end
+      string.should eq("--- \n- a\n- b\n- c")
+    end
+  end
 end
