@@ -45,7 +45,7 @@ module LLVM
   end
 
   def self.string(string)
-    Value.new LibLLVM.const_string(string.cstr, string.bytesize, 0)
+    Value.new LibLLVM.const_string(string, string.bytesize, 0)
   end
 
   def self.start_multithreaded

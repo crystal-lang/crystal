@@ -40,7 +40,7 @@ class StringPool
   end
 
   def get(str : String)
-    get(str.cstr, str.bytesize)
+    get(str.to_unsafe, str.bytesize)
   end
 
   def rehash
@@ -51,7 +51,7 @@ class StringPool
 
     old_buckets.each do |bucket|
       bucket.try &.each do |entry|
-        get(entry.cstr, entry.size)
+        get(entry.to_unsafe, entry.size)
       end
     end
   end
@@ -64,7 +64,7 @@ class StringPool
   private def find_entry_in_bucket(bucket, str, len)
     bucket.each do |entry|
       if entry.size == len
-        if str.memcmp(entry.cstr, len) == 0
+        if str.memcmp(entry.to_unsafe, len) == 0
           return entry
         end
       end

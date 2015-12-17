@@ -73,7 +73,7 @@ struct Char
         count += 1
       end
 
-      (buffer + count).copy_from(str.cstr, str.bytesize)
+      (buffer + count).copy_from(str.to_unsafe, str.bytesize)
 
       {bytesize, str.size + 1}
     end

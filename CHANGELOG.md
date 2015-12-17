@@ -5,6 +5,7 @@
 * **(breaking change)** Moved `HTML::Builder` to [its own shard](https://github.com/crystal-lang/html_builder)
 * **(breaking change)** `String#split` now always keeps all results (never drops trailing empty strings)
 * **(breaking change)** Removed `Array#buffer`, `StaticArray#buffer` and `Slice#buffer`. Use `to_unsafe` instead (so unsafe usages are easier to spot)
+* **(breaking change)** Removed `String#cstr`. Use `to_unsafe` instead (so unsafe usages are easier to spot)
 * Optimized Range#sum (thanks @MakeNowJust)
 * Allow forward declarations for lib external vars
 * Added `Int#to_s(base)` for `base = 62` (thanks @jhass)

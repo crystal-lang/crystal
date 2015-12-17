@@ -129,7 +129,7 @@ describe HTTP::WebSocket do
     end
 
     it "read long packet" do
-      data = File.read("#{__DIR__}/../data/websocket_longpacket.bin").cstr
+      data = File.read("#{__DIR__}/../data/websocket_longpacket.bin").to_unsafe
       io = PointerIO.new(pointerof(data))
       ws = HTTP::WebSocket.new(io)
 

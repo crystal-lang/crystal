@@ -2,7 +2,7 @@ require "./lib_crypto"
 
 class OpenSSL::SHA1
   def self.hash(data : String)
-    hash(data.cstr, LibC::SizeT.new(data.bytesize))
+    hash(data.to_unsafe, LibC::SizeT.new(data.bytesize))
   end
 
   def self.hash(data : UInt8*, bytesize : LibC::SizeT)

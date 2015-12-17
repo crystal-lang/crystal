@@ -145,7 +145,7 @@ module Base64
   end
 
   private def to_base64(data, chars, pad = false)
-    bytes = chars.cstr
+    bytes = chars.to_unsafe
     size = data.size
     cstr = data.pointer(size)
     endcstr = cstr + size - size % 3

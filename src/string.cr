@@ -197,7 +197,7 @@ class String
     check_capacity_in_bounds(capacity)
 
     str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32) as UInt8*
-    buffer = (str as String).cstr
+    buffer = (str as String).to_unsafe
     bytesize, size = yield buffer
     str_header = str as {Int32, Int32, Int32}*
     str_header.value = {TYPE_ID, bytesize.to_i, size.to_i}
@@ -462,7 +462,7 @@ class String
   private def to_u64_info(base, whitespace, underscore, prefix, strict)
     raise ArgumentError.new("invalid base #{base}") unless 2 <= base <= 36 || base == 62
 
-    ptr = cstr
+    ptr = to_unsafe
 
     # Skip leading whitespace
     if whitespace
@@ -580,12 +580,12 @@ class String
   #
   # See `#to_f`.
   def to_f32
-    LibC.strtof cstr, nil
+    LibC.strtof self, nil
   end
 
   # Same as `#to_f`.
   def to_f64
-    LibC.atof cstr
+    LibC.atof self
   end
 
   # Returns the `Char` at the given *index*, or raises `IndexError` if out of bounds.
@@ -669,7 +669,7 @@ class String
 
       count = end_pos - start_pos
       String.new(count) do |buffer|
-        buffer.copy_from(cstr + start_pos, count)
+        buffer.copy_from(to_unsafe + start_pos, count)
         {count, 0}
       end
     elsif start == i
@@ -744,7 +744,7 @@ class String
       return "" if count == 0
 
       String.new(count) do |buffer|
-        buffer.copy_from(cstr + start, count)
+        buffer.copy_from(to_unsafe + start, count)
         slice_size = single_byte_optimizable ? count : 0
         {count, slice_size}
       end
@@ -782,14 +782,14 @@ class String
   def byte_at(index)
     index += bytesize if index < 0
     if 0 <= index < bytesize
-      cstr[index]
+      to_unsafe[index]
     else
       yield
     end
   end
 
   def unsafe_byte_at(index)
-    cstr[index]
+    to_unsafe[index]
   end
 
   def downcase
@@ -825,9 +825,9 @@ class String
   def chomp
     return self if bytesize == 0
 
-    case cstr[bytesize - 1]
+    case to_unsafe[bytesize - 1]
     when '\n'
-      if bytesize > 1 && cstr[bytesize - 2] === '\r'
+      if bytesize > 1 && to_unsafe[bytesize - 2] === '\r'
         byte_slice 0, bytesize - 2
       else
         byte_slice 0, bytesize - 1
@@ -856,8 +856,8 @@ class String
       return self if empty?
 
       pos = bytesize - 1
-      while pos > 0 && cstr[pos] === '\n'
-        if pos > 1 && cstr[pos - 1] === '\r'
+      while pos > 0 && to_unsafe[pos] === '\n'
+        if pos > 1 && to_unsafe[pos - 1] === '\r'
           pos -= 2
         else
           pos -= 1
@@ -887,11 +887,11 @@ class String
   def chop
     return "" if bytesize <= 1
 
-    if bytesize >= 2 && cstr[bytesize - 1] === '\n' && cstr[bytesize - 2] === '\r'
+    if bytesize >= 2 && to_unsafe[bytesize - 1] === '\n' && to_unsafe[bytesize - 2] === '\r'
       return byte_slice(0, bytesize - 2)
     end
 
-    if cstr[bytesize - 1] < 128 || single_byte_optimizable?
+    if to_unsafe[bytesize - 1] < 128 || single_byte_optimizable?
       return byte_slice(0, bytesize - 1)
     end
 
@@ -900,7 +900,7 @@ class String
 
   def strip
     excess_right = 0
-    while cstr[bytesize - 1 - excess_right].chr.whitespace?
+    while to_unsafe[bytesize - 1 - excess_right].chr.whitespace?
       excess_right += 1
     end
 
@@ -909,7 +909,7 @@ class String
     end
 
     excess_left = 0
-    while cstr[excess_left].chr.whitespace?
+    while to_unsafe[excess_left].chr.whitespace?
       excess_left += 1
     end
 
@@ -922,7 +922,7 @@ class String
 
   def rstrip
     excess_right = 0
-    while cstr[bytesize - 1 - excess_right].chr.whitespace?
+    while to_unsafe[bytesize - 1 - excess_right].chr.whitespace?
       excess_right += 1
     end
 
@@ -935,7 +935,7 @@ class String
 
   def lstrip
     excess_left = 0
-    while cstr[excess_left].chr.whitespace?
+    while to_unsafe[excess_left].chr.whitespace?
       excess_left += 1
     end
 
@@ -1414,7 +1414,7 @@ class String
   def ==(other : self)
     return true if same?(other)
     return false unless bytesize == other.bytesize
-    cstr.memcmp(other.cstr, bytesize) == 0
+    to_unsafe.memcmp(other.to_unsafe, bytesize) == 0
   end
 
   # Compares this string with *other*, returning -1, 0 or +1 depending on whether
@@ -1437,7 +1437,7 @@ class String
     return 0 if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
 
-    cmp = cstr.memcmp(other.cstr, bytesize)
+    cmp = to_unsafe.memcmp(other.to_unsafe, bytesize)
     cmp == 0 ? (bytesize <=> other.bytesize) : cmp.sign
   end
 
@@ -1515,8 +1515,8 @@ class String
   def +(other : self)
     size = bytesize + other.bytesize
     String.new(size) do |buffer|
-      buffer.copy_from(cstr, bytesize)
-      (buffer + bytesize).copy_from(other.cstr, other.bytesize)
+      buffer.copy_from(to_unsafe, bytesize)
+      (buffer + bytesize).copy_from(other.to_unsafe, other.bytesize)
 
       if size_known? && other.size_known?
         {size, @length + other.@length}
@@ -1538,7 +1538,7 @@ class String
 
     size = bytesize + count
     String.new(size) do |buffer|
-      buffer.copy_from(cstr, bytesize)
+      buffer.copy_from(to_unsafe, bytesize)
       (buffer + bytesize).copy_from(bytes.to_unsafe, count)
 
       if size_known?
@@ -1562,14 +1562,14 @@ class String
       return ""
     elsif bytesize == 1
       return String.new(times) do |buffer|
-        Intrinsics.memset(buffer as Void*, cstr[0], times, 0, false)
+        Intrinsics.memset(buffer as Void*, to_unsafe[0], times, 0, false)
         {times, times}
       end
     end
 
     total_bytesize = bytesize * times
     String.new(total_bytesize) do |buffer|
-      buffer.copy_from(cstr, bytesize)
+      buffer.copy_from(to_unsafe, bytesize)
       n = bytesize
 
       while n <= total_bytesize / 2
@@ -1614,7 +1614,7 @@ class String
     reader = Char::Reader.new(self)
     reader.each_with_index do |char, i|
       if reader.pos <= end_pos
-        if i >= offset && (cstr + reader.pos).memcmp(search.cstr, search.bytesize) == 0
+        if i >= offset && (to_unsafe + reader.pos).memcmp(search.to_unsafe, search.bytesize) == 0
           return i
         end
       else
@@ -1661,7 +1661,7 @@ class String
 
     reader = Char::Reader.new(self)
     reader.each_with_index do |char, i|
-      if i <= end_size && i <= offset && (cstr + reader.pos).memcmp(search.cstr, search.bytesize) == 0
+      if i <= end_size && i <= offset && (to_unsafe + reader.pos).memcmp(search.to_unsafe, search.bytesize) == 0
         last_index = i
       end
     end
@@ -1671,7 +1671,7 @@ class String
 
   def byte_index(byte : Int, offset = 0)
     offset.upto(bytesize - 1) do |i|
-      if cstr[i] == byte
+      if to_unsafe[i] == byte
         return i
       end
     end
@@ -1685,7 +1685,7 @@ class String
     end_pos = bytesize - string.bytesize
 
     offset.upto(end_pos) do |pos|
-      if (cstr + pos).memcmp(string.cstr, string.bytesize) == 0
+      if (to_unsafe + pos).memcmp(string.to_unsafe, string.bytesize) == 0
         return pos
       end
     end
@@ -1752,12 +1752,12 @@ class String
     while i < bytesize
       if looking_for_space
         while i < bytesize
-          c = cstr[i]
+          c = to_unsafe[i]
           i += 1
           if c.chr.whitespace?
             piece_bytesize = i - 1 - index
             piece_size = single_byte_optimizable ? piece_bytesize : 0
-            ary.push String.new(cstr + index, piece_bytesize, piece_size)
+            ary.push String.new(to_unsafe + index, piece_bytesize, piece_size)
             looking_for_space = false
 
             if limit && ary.size + 1 == limit
@@ -1769,7 +1769,7 @@ class String
         end
       else
         while i < bytesize
-          c = cstr[i]
+          c = to_unsafe[i]
           i += 1
           unless c.chr.whitespace?
             index = i - 1
@@ -1784,7 +1784,7 @@ class String
     if looking_for_space
       piece_bytesize = bytesize - index
       piece_size = single_byte_optimizable ? piece_bytesize : 0
-      ary.push String.new(cstr + index, piece_bytesize, piece_size)
+      ary.push String.new(to_unsafe + index, piece_bytesize, piece_size)
     end
     ary
   end
@@ -1813,7 +1813,7 @@ class String
       if char == separator
         piece_bytesize = reader.pos - byte_offset
         piece_size = single_byte_optimizable ? piece_bytesize : 0
-        ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
+        ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
         byte_offset = reader.pos + reader.current_char_width
         break if limit && ary.size + 1 == limit
       end
@@ -1821,7 +1821,7 @@ class String
 
     piece_bytesize = bytesize - byte_offset
     piece_size = single_byte_optimizable ? piece_bytesize : 0
-    ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
+    ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
 
     ary
   end
@@ -1850,7 +1850,6 @@ class String
 
     ary = Array(String).new
     byte_offset = 0
-    buffer = cstr
     separator_bytesize = separator.bytesize
 
     single_byte_optimizable = single_byte_optimizable?
@@ -1858,10 +1857,10 @@ class String
     i = 0
     stop = bytesize - separator.bytesize + 1
     while i < stop
-      if (buffer + i).memcmp(separator.cstr, separator_bytesize) == 0
+      if (to_unsafe + i).memcmp(separator.to_unsafe, separator_bytesize) == 0
         piece_bytesize = i - byte_offset
         piece_size = single_byte_optimizable ? piece_bytesize : 0
-        ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
+        ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
         byte_offset = i + separator_bytesize
         i += separator_bytesize - 1
         break if limit && ary.size + 1 == limit
@@ -1871,7 +1870,7 @@ class String
 
     piece_bytesize = bytesize - byte_offset
     piece_size = single_byte_optimizable ? piece_bytesize : 0
-    ary.push String.new(cstr + byte_offset, piece_bytesize, piece_size)
+    ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
 
     ary
   end
@@ -2144,7 +2143,7 @@ class String
 
     String.new(new_bytesize) do |buffer|
       if left
-        buffer.copy_from(cstr, bytesize)
+        buffer.copy_from(to_unsafe, bytesize)
         buffer += bytesize
       end
 
@@ -2159,7 +2158,7 @@ class String
       end
 
       unless left
-        buffer.copy_from(cstr, bytesize)
+        buffer.copy_from(to_unsafe, bytesize)
       end
 
       {new_bytesize, len}
@@ -2411,7 +2410,7 @@ class String
   # end
   # ```
   def each_byte
-    cstr.to_slice(bytesize).each do |byte|
+    to_unsafe.to_slice(bytesize).each do |byte|
       yield byte
     end
     self
@@ -2438,7 +2437,7 @@ class String
   # "你好".bytes    # => [228, 189, 160, 229, 165, 189]
   # ```
   def bytes
-    Array.new(bytesize) { |i| cstr[i] }
+    Array.new(bytesize) { |i| to_unsafe[i] }
   end
 
   def inspect(io)
@@ -2544,7 +2543,7 @@ class String
 
   def starts_with?(str : String)
     return false if str.bytesize > bytesize
-    cstr.memcmp(str.cstr, str.bytesize) == 0
+    to_unsafe.memcmp(str.to_unsafe, str.bytesize) == 0
   end
 
   def starts_with?(char : Char)
@@ -2557,14 +2556,14 @@ class String
 
   def ends_with?(str : String)
     return false if str.bytesize > bytesize
-    (cstr + bytesize - str.bytesize).memcmp(str.cstr, str.bytesize) == 0
+    (to_unsafe + bytesize - str.bytesize).memcmp(str.to_unsafe, str.bytesize) == 0
   end
 
   def ends_with?(char : Char)
     return false unless bytesize > 0
 
     if char.ord < 0x80 || single_byte_optimizable?
-      return cstr[bytesize - 1] == char.ord
+      return to_unsafe[bytesize - 1] == char.ord
     end
 
     bytes :: UInt8[4]
@@ -2578,7 +2577,7 @@ class String
     return false if bytesize < count
 
     count.times do |i|
-      return false unless cstr[bytesize - count + i] == bytes[i]
+      return false unless to_unsafe[bytesize - count + i] == bytes[i]
     end
 
     true
@@ -2619,7 +2618,7 @@ class String
     count = 0
 
     while i < bytesize
-      c = cstr[i]
+      c = to_unsafe[i]
 
       if c < 0x80
         i += 1
@@ -2650,7 +2649,7 @@ class String
   end
 
   def to_slice
-    Slice.new(cstr, bytesize)
+    Slice.new(to_unsafe, bytesize)
   end
 
   def to_s
@@ -2658,23 +2657,19 @@ class String
   end
 
   def to_s(io)
-    io.write Slice.new(cstr, bytesize)
-  end
-
-  def cstr
-    pointerof(@c)
+    io.write Slice.new(to_unsafe, bytesize)
   end
 
   def to_unsafe
-    cstr
+    pointerof(@c)
   end
 
   def unsafe_byte_slice(byte_offset, count)
-    Slice.new(cstr + byte_offset, count)
+    Slice.new(to_unsafe + byte_offset, count)
   end
 
   def unsafe_byte_slice(byte_offset)
-    Slice.new(cstr + byte_offset, bytesize - byte_offset)
+    Slice.new(to_unsafe + byte_offset, bytesize - byte_offset)
   end
 
   # :nodoc:

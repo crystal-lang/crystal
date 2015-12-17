@@ -4,7 +4,7 @@ describe "MemoryIO" do
   it "writes" do
     io = MemoryIO.new
     io.bytesize.should eq(0)
-    io.write Slice.new("hello".cstr, 3)
+    io.write Slice.new("hello".to_unsafe, 3)
     io.bytesize.should eq(3)
     io.rewind
     io.gets_to_end.should eq("hel")
@@ -13,7 +13,7 @@ describe "MemoryIO" do
   it "writes big" do
     s = "hi" * 100
     io = MemoryIO.new
-    io.write Slice.new(s.cstr, s.bytesize)
+    io.write Slice.new(s.to_unsafe, s.bytesize)
     io.rewind
     io.gets_to_end.should eq(s)
   end

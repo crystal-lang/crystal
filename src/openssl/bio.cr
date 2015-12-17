@@ -4,7 +4,7 @@ require "./lib_crypto"
 struct OpenSSL::BIO
   CRYSTAL_BIO = begin
     crystal_bio = LibCrypto::BioMethod.new
-    crystal_bio.name = "Crystal BIO".cstr
+    crystal_bio.name = "Crystal BIO".to_unsafe
 
     crystal_bio.bwrite = LibCrypto::BioMethodWrite.new do |bio, data, len|
       io = Box(IO).unbox(bio.value.ptr)
