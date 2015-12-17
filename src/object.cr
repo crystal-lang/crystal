@@ -444,7 +444,9 @@ class Object
     setter {{*names}}
   end
 
-  # Delegate method to to_object.
+  # Delegate methods to to_object.
+  #
+  # Syntax is: delegate method1, [method2, ..., ], to_object
   #
   # Note that due to current language limitations this is only useful
   # when neither named arguments nor blocks are involved.
@@ -456,16 +458,25 @@ class Object
   #
   #   delegate downcase, @string
   #   delegate gsub, @string
+  #   delegate empty?, capitalize, @string
   # end
   #
   # wrapper = StringWrapper.new "HELLO"
   # wrapper.downcase       # => "hello"
   # wrapper.gsub(/E/, "A") # => "HALLO"
+  # wrapper.empty?         # => false
+  # wrapper.capitalize     # => "Hello"
   # ```
-  macro delegate(method, to_object)
+  macro delegate(method, *other_methods, to_object)
     def {{method.id}}(*args)
       {{to_object.id}}.{{method.id}}(*args)
     end
+
+    {% for name, index in other_methods %}
+      def {{name.id}}(*args)
+        {{to_object.id}}.{{name.id}}(*args)
+      end
+    {% end %}
   end
 
   # Defines a `hash` method computed from the given fields.
