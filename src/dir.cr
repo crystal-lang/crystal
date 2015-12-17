@@ -111,7 +111,7 @@ class Dir
     LibC.errno = 0
     ent = LibC.readdir(@dir)
     if ent
-      String.new(ent.value.name.buffer)
+      String.new(ent.value.name.to_unsafe)
     elsif LibC.errno != 0
       raise Errno.new("readdir")
     else

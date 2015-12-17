@@ -157,7 +157,7 @@ module Crystal
         else                     raise "Unsuported value type: #{value.class}"
         end
       end
-      LLVM::Value.new LibLLVM.md_node((values.buffer as LibLLVM::ValueRef*), values.size)
+      LLVM::Value.new LibLLVM.md_node((values.to_unsafe as LibLLVM::ValueRef*), values.size)
     end
 
     def set_current_debug_location(node : ASTNode)

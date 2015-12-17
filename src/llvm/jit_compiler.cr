@@ -16,7 +16,7 @@ class LLVM::JITCompiler
   end
 
   def run_function(func, args : Array(LLVM::GenericValue))
-    ret = LibLLVM.run_function(self, func, args.size, (args.buffer as LibLLVM::GenericValueRef*))
+    ret = LibLLVM.run_function(self, func, args.size, (args.to_unsafe as LibLLVM::GenericValueRef*))
     GenericValue.new(ret)
   end
 

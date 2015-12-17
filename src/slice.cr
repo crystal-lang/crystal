@@ -286,7 +286,13 @@ struct Slice(T)
     end
   end
 
-  def to_unsafe
+  # Returns this slice's pointer.
+  #
+  # ```
+  # slice = Slice.new(3, 10)
+  # slice.to_unsafe[0] # => 10
+  # ```
+  def to_unsafe : Pointer(T)
     @pointer
   end
 

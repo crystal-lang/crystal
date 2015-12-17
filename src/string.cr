@@ -1539,7 +1539,7 @@ class String
     size = bytesize + count
     String.new(size) do |buffer|
       buffer.copy_from(cstr, bytesize)
-      (buffer + bytesize).copy_from(bytes.buffer, count)
+      (buffer + bytesize).copy_from(bytes.to_unsafe, count)
 
       if size_known?
         {size, @length + 1}
@@ -2153,7 +2153,7 @@ class String
         buffer += difference
       else
         difference.times do
-          buffer.copy_from(bytes.buffer, count)
+          buffer.copy_from(bytes.to_unsafe, count)
           buffer += count
         end
       end

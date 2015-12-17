@@ -178,7 +178,7 @@ module Base64
 
   private def from_base64(data, decode_table)
     size = data.size
-    dt = DECODE_TABLE.buffer
+    dt = DECODE_TABLE.to_unsafe
     cstr = data.pointer(size)
     while (size > 0) && (sym = cstr[size - 1]) && (sym == NL || sym == NR || sym == PAD)
       size -= 1

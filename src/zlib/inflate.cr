@@ -34,7 +34,7 @@ module Zlib
 
     private def prepare_input_data
       return if @stream.avail_in > 0
-      @stream.next_in = @buf.buffer
+      @stream.next_in = @buf.to_unsafe
       @stream.avail_in = @input.read(@buf.to_slice).to_u32
     end
 

@@ -151,7 +151,7 @@ class Array(T)
   # ```
   def self.build(capacity : Int)
     ary = Array(T).new(capacity)
-    ary.size = (yield ary.buffer).to_i
+    ary.size = (yield ary.to_unsafe).to_i
     ary
   end
 
@@ -190,7 +190,7 @@ class Array(T)
   def <=>(other : Array)
     min_size = Math.min(size, other.size)
     0.upto(min_size - 1) do |i|
-      n = buffer[i] <=> other.buffer[i]
+      n = @buffer[i] <=> other.to_unsafe[i]
       return n if n != 0
     end
     size <=> other.size
@@ -267,8 +267,8 @@ class Array(T)
   def +(other : Array(U))
     new_size = size + other.size
     Array(T | U).build(new_size) do |buffer|
-      buffer.copy_from(self.buffer, size)
-      (buffer + size).copy_from(other.buffer, other.size)
+      buffer.copy_from(@buffer, size)
+      (buffer + size).copy_from(other.to_unsafe, other.size)
       new_size
     end
   end
@@ -584,11 +584,6 @@ class Array(T)
     indexes.map { |index| self[index] }
   end
 
-  # :nodoc:
-  def buffer
-    @buffer
-  end
-
   # Removes all elements from self.
   #
   # ```
@@ -655,7 +650,7 @@ class Array(T)
       resize_to_capacity(Math.pw2ceil(new_size))
     end
 
-    (@buffer + @size).copy_from(other.buffer, other_size)
+    (@buffer + @size).copy_from(other.to_unsafe, other_size)
     @size += other_size
 
     self
@@ -765,7 +760,7 @@ class Array(T)
   # ```
   def dup
     Array(T).build(@capacity) do |buffer|
-      buffer.copy_from(self.buffer, size)
+      buffer.copy_from(@buffer, size)
       size
     end
   end
@@ -915,7 +910,7 @@ class Array(T)
   end
 
   def map(&block : T -> U)
-    Array(U).new(size) { |i| yield buffer[i] }
+    Array(U).new(size) { |i| yield @buffer[i] }
   end
 
   def map!
@@ -955,7 +950,7 @@ class Array(T)
   end
 
   def map_with_index(&block : T, Int32 -> U)
-    Array(U).new(size) { |i| yield buffer[i], i }
+    Array(U).new(size) { |i| yield @buffer[i], i }
   end
 
   # Returns an `Array` with all possible permutations of the given *size*.
@@ -1286,7 +1281,7 @@ class Array(T)
   def replace(other : Array)
     @size = other.size
     resize_to_capacity(Math.pw2ceil(@size)) if @size > @capacity
-    @buffer.copy_from(other.buffer, other.size)
+    @buffer.copy_from(other.to_unsafe, other.size)
     self
   end
 
@@ -1337,11 +1332,11 @@ class Array(T)
     if n <= size / 2
       tmp = self[0..n]
       @buffer.move_from(@buffer + n, size - n)
-      (@buffer + size - n).copy_from(tmp.buffer, n)
+      (@buffer + size - n).copy_from(tmp.to_unsafe, n)
     else
       tmp = self[n..-1]
       (@buffer + size - n).move_from(@buffer, n)
-      @buffer.copy_from(tmp.buffer, size - n)
+      @buffer.copy_from(tmp.to_unsafe, size - n)
     end
     self
   end
@@ -1352,8 +1347,8 @@ class Array(T)
     n += size if n < 0
     return self if n == 0
     res = Array(T).new(size)
-    res.buffer.copy_from(@buffer + n, size - n)
-    (res.buffer + size - n).copy_from(@buffer, n)
+    res.to_unsafe.copy_from(@buffer + n, size - n)
+    (res.to_unsafe + size - n).copy_from(@buffer, n)
     res.size = size
     res
   end
@@ -1388,7 +1383,7 @@ class Array(T)
       end
 
       ary = Array(T).new(n) { |i| @buffer[i] }
-      buffer = ary.buffer
+      buffer = ary.to_unsafe
 
       n.upto(@size - 1) do |i|
         j = random.rand(i + 1)
@@ -1471,7 +1466,7 @@ class Array(T)
   def sort_by!(&block : T -> _)
     sorted = map { |e| {e, block.call(e)} }.sort! { |x, y| x[1] <=> y[1] }
     @size.times do |i|
-      @buffer[i] = sorted.buffer[i][0]
+      @buffer[i] = sorted.to_unsafe[i][0]
     end
     self
   end
@@ -1502,7 +1497,16 @@ class Array(T)
     io << "[...]" unless executed
   end
 
-  def to_unsafe
+  # Returns a pointer to the internal buffer where this array's elements are stored.
+  #
+  # This method is unsafe because it returns a pointer, and the pointed data might eventually
+  # not be that of this array if the array grows and its internal buffer is realloced.
+  #
+  # ```
+  # ary = [1, 2, 3]
+  # ary.to_unsafe[0] # => 1
+  # ```
+  def to_unsafe : Pointer(T)
     @buffer
   end
 
@@ -1607,7 +1611,7 @@ class Array(T)
 
   def update(index : Int)
     index = check_index_out_of_bounds index
-    buffer[index] = yield buffer[index]
+    @buffer[index] = yield @buffer[index]
   end
 
   def zip(other : Array)

@@ -12,7 +12,7 @@ struct StaticArray(T, N)
   def self.new(&block : Int32 -> T)
     array :: self
     N.times do |i|
-      array.buffer[i] = yield i
+      array.to_unsafe[i] = yield i
     end
     array
   end
@@ -40,20 +40,20 @@ struct StaticArray(T, N)
 
   def each
     N.times do |i|
-      yield buffer[i]
+      yield to_unsafe[i]
     end
   end
 
   @[AlwaysInline]
   def [](index : Int)
     index = check_index_out_of_bounds index
-    buffer[index]
+    to_unsafe[index]
   end
 
   @[AlwaysInline]
   def []=(index : Int, value : T)
     index = check_index_out_of_bounds index
-    buffer[index] = value
+    to_unsafe[index] = value
   end
 
   # Returns a tuple populated with the elements at the given indexes.
@@ -69,7 +69,7 @@ struct StaticArray(T, N)
 
   def update(index : Int)
     index = check_index_out_of_bounds index
-    buffer[index] = yield buffer[index]
+    to_unsafe[index] = yield to_unsafe[index]
   end
 
   def size
@@ -78,17 +78,17 @@ struct StaticArray(T, N)
 
   def []=(value : T)
     size.times do |i|
-      buffer[i] = value
+      to_unsafe[i] = value
     end
   end
 
   def shuffle!
-    buffer.shuffle!(size)
+    to_unsafe.shuffle!(size)
     self
   end
 
   def map!
-    buffer.map!(size) { |e| yield e }
+    to_unsafe.map!(size) { |e| yield e }
     self
   end
 
@@ -96,23 +96,25 @@ struct StaticArray(T, N)
     i = 0
     j = size - 1
     while i < j
-      buffer.swap i, j
+      to_unsafe.swap i, j
       i += 1
       j -= 1
     end
     self
   end
 
-  def buffer
-    pointerof(@buffer)
-  end
-
   def to_slice
-    Slice.new(buffer, size)
+    Slice.new(to_unsafe, size)
   end
 
-  def to_unsafe
-    buffer
+  # Returns a pointer to this static array's data.
+  #
+  # ```
+  # ary = StaticArray(Int32, 3).new(42)
+  # ary.to_unsafe[0] # => 42
+  # ```
+  def to_unsafe : Pointer(T)
+    pointerof(@buffer)
   end
 
   def to_s(io : IO)
