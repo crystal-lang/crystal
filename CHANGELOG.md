@@ -20,6 +20,7 @@
 * Added `Array#each_permutation`, `Array#each_combination` and `Array#each_repeated_combination` iterators
 * Added optional *random* argument to `Array#sample` and `Array#shuffle`
 * The `delegate` macro can now delegate multiple methods to an object (thanks @elthariel)
+* Added basic YAML generation (thanks @porras)
 
 ## 0.9.1 (2015-10-30)
 
