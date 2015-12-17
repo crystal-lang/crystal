@@ -3,6 +3,8 @@
 * **(breaking change)** A space is now required before and after def return type restriction
 * **(breaking change)** Renamed `Dir.working_dir` to `Dir.current`
 * **(breaking change)** Moved `HTML::Builder` to [its own shard](https://github.com/crystal-lang/html_builder)
+* **(breaking change)** `String#split` now always keeps all results (never drops trailing empty strings)
+* **(breaking change)** Removed `Array#buffer`, `StaticArray#buffer` and `Slice#buffer`. Use `to_unsafe` instead (so unsafe usages are easier to spot)
 * Optimized Range#sum (thanks @MakeNowJust)
 * Allow forward declarations for lib external vars
 * Added `Int#to_s(base)` for `base = 62` (thanks @jhass)
@@ -13,6 +15,10 @@
 * `at_exit` now receives that exit status code in the block (thanks @MakeNowJust)
 * Allow using `Set` in JSON mappings (thanks @benoist)
 * Added `File.executable?`, `File.readable?` and `File.writeable?` (thanks @mverzilli)
+* `Array#sort_by` and `Array#sort_by!` now use a [Schwartzian transform](https://en.wikipedia.org/wiki/Schwartzian_transform) (thanks @radarek)
+* Added `Array#each_permutation`, `Array#each_combination` and `Array#each_repeated_combination` iterators
+* Added optional *random* argument to `Array#sample` and `Array#shuffle`
+* The `delegate` macro can now delegate multiple methods to an object (thanks @elthariel)
 
 ## 0.9.1 (2015-10-30)
 
