@@ -5,7 +5,6 @@ module HTTP
     # Initialize with custom host
     server = Server.new("0.0.0.0", 0) { |req| HTTP::Response.ok("text/plain", "OK") }
     server.listen
-    server.listen_fork(workers: 2)
     server.close
 
     server = Server.new("0.0.0.0", 0, [
@@ -25,7 +24,6 @@ module HTTP
     # Initialize with default host
     server = Server.new(0) { |req| HTTP::Response.ok("text/plain", "OK") }
     server.listen
-    server.listen_fork(workers: 2)
     server.close
 
     server = Server.new(0, [
