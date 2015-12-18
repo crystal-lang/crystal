@@ -765,16 +765,53 @@ class Array(T)
     end
   end
 
+  # Calls the given block once for each element in this array, passing that
+  # element as a parameter.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # a.each { |x| print x, " -- " }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # a -- b -- c --
+  # ```
   def each
     each_index do |i|
       yield @buffer[i]
     end
   end
 
+  # Returns an `Iterator` for the elements of this array.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # iter = a.each
+  # iter.next # => "a"
+  # iter.next # => "b"
+  # ```
+  #
+  # The returned iterator keeps a reference to this array: if the array
+  # changes, the returned values of the iterator change as well.
   def each
     ItemIterator.new(self)
   end
 
+  # Calls the given block once for each index in this array, passing that
+  # index as a parameter.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # a.each_index { |x| print x, " -- " }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # 0 -- 1 -- 2 --
+  # ```
   def each_index
     i = 0
     while i < size
@@ -784,14 +821,44 @@ class Array(T)
     self
   end
 
+  # Returns an `Iterator` for each index in this this array.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # iter = a.each_index
+  # iter.next # => 0
+  # iter.next # => 1
+  # ```
+  #
+  # The returned iterator keeps a reference to this array: if the array
+  # changes, the returned values of the iterator change as well.
   def each_index
     IndexIterator.new(self)
   end
 
+  # Returns `true` if this array is empty, `false` otherwise.
+  #
+  # ```
+  # ([] of Int32).empty? # => true
+  # ([1]).empty?         # => false
+  # ```
   def empty?
     @size == 0
   end
 
+  # Determines if this array equals *other* according to a comparison
+  # done by the given block.
+  #
+  # If this array's size is the same as *other*'s size, this method yields
+  # elements from this array and *other* in tandem: if the block returns true
+  # for all of them, this method returns `true`. Otherwise it returns `false`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # b = ["a", "ab", "abc"]
+  # a.equals?(b) { |x, y| x == y.size } # => true
+  # a.equals?(b) { |x, y| x == y }      # => false
+  # ```
   def equals?(other : Array)
     return false if @size != other.size
     each_with_index do |item, i|
@@ -800,12 +867,28 @@ class Array(T)
     true
   end
 
+  # Yields each index of this array to the given block and then assigns
+  # the block's value in that position. Returns `self`.
+  #
+  # ```
+  # a = [1, 2, 3, 4]
+  # a.fill { |i| i * i } # => [0, 1, 4, 9]
+  # ```
   def fill
     each_index { |i| @buffer[i] = yield i }
 
     self
   end
 
+  # Yields each index of this array, starting from *from*, to the given block and then assigns
+  # the block's value in that position. Returns `self`.
+  #
+  # Negative values of *from* count from the end of the array.
+  #
+  # ```
+  # a = [1, 2, 3, 4]
+  # a.fill(2) { |i| i * i } # => [1, 2, 4, 9]
+  # ```
   def fill(from : Int)
     from += size if from < 0
 
@@ -816,6 +899,15 @@ class Array(T)
     self
   end
 
+  # Yields each index of this array, starting from *from* and just *count* times,
+  # to the given block and then assigns the block's value in that position. Returns `self`.
+  #
+  # Negative values of *from* count from the end of the array.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5, 6]
+  # a.fill(2, 2) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
+  # ```
   def fill(from : Int, count : Int)
     return self if count < 0
 
@@ -831,47 +923,121 @@ class Array(T)
     self
   end
 
+  # Yields each index of this array, in the given *range*,
+  # to the given block and then assigns the block's value in that position. Returns `self`.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5, 6]
+  # a.fill(2..3) { |i| i * i } # => [1, 2, 4, 9, 5, 6]
+  # ```
   def fill(range : Range(Int, Int))
     fill(*range_to_index_and_count(range)) do |i|
       yield i
     end
   end
 
+  # Replaces every element in this array with the given *value*. Returns `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.fill(9) # => [9, 9, 9]
+  # ```
   def fill(value : T)
     fill { value }
   end
 
+  # Replaces every element starting from the given index *from* in this array with
+  # the given *value*. Returns `self`.
+  #
+  # Negative values of *from* count from the end of the array.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5]
+  # a.fill(9, 2) # => [1, 2, 9, 9, 9]
+  # ```
   def fill(value : T, from : Int)
     fill(from) { value }
   end
 
-  def fill(value : T, from : Int, size : Int)
-    fill(from, size) { value }
+  # Replaces every element starting from the given index *from* and only *count* times,
+  # in this array with the given *value*. Returns `self`.
+  #
+  # Negative values of *from* count from the end of the array.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5]
+  # a.fill(9, 2, 2) # => [1, 2, 9, 9, 5]
+  # ```
+  def fill(value : T, from : Int, count : Int)
+    fill(from, count) { value }
   end
 
+  # Replaces every element in the given *range* with the given *value*. Returns `self`.
+  #
+  # Negative values of *from* count from the end of the array.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5]
+  # a.fill(9, 2..3) # => [1, 2, 9, 9, 5]
+  # ```
   def fill(value : T, range : Range(Int, Int))
     fill(range) { value }
   end
 
+  # Returns the first element of this array, if it's not empty,
+  # else raises `IndexError`.
+  #
+  # ```
+  # ([1, 2, 3]).first   # => 1
+  # ([] of Int32).first # => raises IndexError
+  # ```
   def first
     first { raise IndexError.new }
   end
 
+  # Returns the first element of this array, if it's not empty,
+  # or the block's value.
+  #
+  # ```
+  # ([1, 2, 3]).first { 4 }   # => 1
+  # ([] of Int32).first { 4 } # => 4
+  # ```
   def first
     @size == 0 ? yield : @buffer[0]
   end
 
+  # Returns the first element of this array, if it's not empty,
+  # or `nil`.
+  #
+  # ```
+  # ([1, 2, 3]).first?   # => 1
+  # ([] of Int32).first? # => nil
+  # ```
   def first?
     first { nil }
   end
 
+  # Returns a hash code based on this array's size and elements.
+  #
+  # See `Object#hash`.
   def hash
     inject(31 * @size) do |memo, elem|
       31 * memo + elem.hash
     end
   end
 
-  def insert(index : Int, obj : T)
+  # Insert the given *object* before the element with the given *index*, shifting successive elements if any.
+  # Returns `self`.
+  #
+  # Negative indices count from the end of the array.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # a.insert(0, "x")  # => ["x", "a", "b", "c"]
+  # a.insert(2, "y")  # => ["x", "a", "y", "b", "c"]
+  # a.insert(-1, "z") # => ["x", "a", "y", "b", "c", "z"]
+  # ```
+  def insert(index : Int, object : T)
     check_needs_resize
 
     if index < 0
@@ -883,23 +1049,45 @@ class Array(T)
     end
 
     (@buffer + index + 1).move_from(@buffer + index, size - index)
-    @buffer[index] = obj
+    @buffer[index] = object
     @size += 1
     self
   end
 
+  # :nodoc:
   def inspect(io : IO)
     to_s io
   end
 
+  # Returns the last element of this array, if it's not empty,
+  # else raises `IndexError`.
+  #
+  # ```
+  # ([1, 2, 3]).last   # => 3
+  # ([] of Int32).last # => raises IndexError
+  # ```
   def last
     last { raise IndexError.new }
   end
 
+  # Returns the last element of this array, if it's not empty,
+  # or the block's value.
+  #
+  # ```
+  # ([1, 2, 3]).last { 4 }   # => 3
+  # ([] of Int32).last { 4 } # => 4
+  # ```
   def last
     @size == 0 ? yield : @buffer[@size - 1]
   end
 
+  # Returns the last element of this array, if it's not empty,
+  # or `nil`.
+  #
+  # ```
+  # ([1, 2, 3]).last?   # => 1
+  # ([] of Int32).last? # => nil
+  # ```
   def last?
     last { nil }
   end
@@ -909,10 +1097,19 @@ class Array(T)
     @size = size.to_i
   end
 
+  # Optimized version of `Enumerable#map`.
   def map(&block : T -> U)
     Array(U).new(size) { |i| yield @buffer[i] }
   end
 
+  # Invokes the given block once for each element of this array, replacing the element with the value returned
+  # by the block. Returns `self`.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.map! { |x| x * x }
+  # a # => [1, 4, 9]
+  # ```
   def map!
     @buffer.map!(size) { |e| yield e }
     self
@@ -949,6 +1146,7 @@ class Array(T)
     end
   end
 
+  # Optimized version of `Enumerable#map_with_index`.
   def map_with_index(&block : T, Int32 -> U)
     Array(U).new(size) { |i| yield @buffer[i], i }
   end
