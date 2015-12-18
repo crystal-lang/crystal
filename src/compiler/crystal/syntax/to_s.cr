@@ -244,25 +244,7 @@ module Crystal
 
       node_obj = ignore_obj ? nil : node.obj
 
-      need_parens =
-        case node_obj
-        when Call
-          case node_obj.args.size
-          when 0
-            !is_alpha(node_obj.name)
-          else
-            true
-          end
-        when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
-             StringInterpolation, Path, Generic, InstanceVar, Global
-          false
-        when ArrayLiteral
-          !!node_obj.of
-        when HashLiteral
-          !!node_obj.of
-        else
-          true
-        end
+      need_parens = need_parens(node_obj)
       call_args_need_parens = false
 
       @str << "::" if node.global
@@ -302,7 +284,9 @@ module Crystal
         @str << " "
         @str << decorate_call(node, node.name)
         @str << " "
-        node.args[0].accept self
+
+        arg = node.args[0]
+        in_parenthesis(need_parens(arg), arg)
       else
         if node_obj
           in_parenthesis(need_parens, node_obj)
@@ -376,6 +360,27 @@ module Crystal
       end
 
       false
+    end
+
+    private def need_parens(obj)
+      case obj
+      when Call
+        case obj.args.size
+        when 0
+          !is_alpha(obj.name)
+        else
+          true
+        end
+      when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
+           StringInterpolation, Path, Generic, InstanceVar, Global
+        false
+      when ArrayLiteral
+        !!obj.of
+      when HashLiteral
+        !!obj.of
+      else
+        true
+      end
     end
 
     def in_parenthesis(need_parens)
