@@ -766,4 +766,7 @@ describe Crystal::Formatter do
   assert_format "{\n  \"a\" => 1, \"b\" => 2,\n  \"foo\" => 3, \"bar\" => 4,\n  \"coconio\" => 5, \"lala\" => 6,\n}\n", "{\n  \"a\" => 1, \"b\" => 2,\n  \"foo\" => 3, \"bar\" => 4,\n  \"coconio\" => 5, \"lala\" => 6,\n}"
   assert_format "if 1\n  foo(\n    1,\n    2 # lala\n    )\nend\n", "if 1\n  foo(\n    1,\n    2 # lala\n  )\nend"
   assert_format "case foo\nwhen 1\n  # A\nelse\n# B\nend\n", "case foo\nwhen 1\n  # A\nelse\n  # B\nend"
+  assert_format "return 1\n# end"
+  assert_format "case\n# hello\nwhen 1\n  2\nend"
+  assert_format "case 1\nwhen 2 # a\n  # b\nend"
 end
