@@ -1,5 +1,6 @@
 language: generic
 sudo: required
+group: legacy
 services:
   - docker
 matrix:
