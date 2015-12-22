@@ -69,11 +69,17 @@ class Logger(T)
     @formatter = DEFAULT_FORMATTER
     @progname = ""
     @channel = Channel(Message).new(100)
+    @close_channel = Channel(Nil).new
+    @closed = false
     spawn write_messages
+    at_exit { close }
   end
 
   def close
-    @channel.close
+    return if @closed
+    @closed = true
+    @close_channel.send(nil)
+    @close_channel.receive
   end
 
   {% for name in Severity.constants %}
@@ -107,12 +113,27 @@ class Logger(T)
   end
 
   private def write_messages
-    while msg = @channel.receive?
-      label = msg.severity == Severity::UNKNOWN ? "ANY" : msg.severity.to_s
-      formatter.call(label, msg.datetime, msg.progname.to_s, msg.message.to_s, @io)
-      @io.puts
-      @io.flush
+    loop do
+      index, value = Channel.select(@channel.receive_op, @close_channel.receive_op)
+      case index
+      when 0
+        msg = value as Message
+        label = msg.severity == Severity::UNKNOWN ? "ANY" : msg.severity.to_s
+
+        # We write to an intermediate String because the IO might be sync'ed so
+        # we avoid some system calls. In the future we might want to add an IO#sync?
+        # method to every IO so we can do this conditionally.
+        @io << String.build do |str|
+          formatter.call(label, msg.datetime, msg.progname.to_s, msg.message.to_s, str)
+          str.puts
+        end
+
+        @io.flush
+      when 1
+        @io.close
+        @close_channel.send(nil)
+        break
+      end
     end
-    @io.close
   end
 end
