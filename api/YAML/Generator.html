@@ -5,7 +5,7 @@
   <meta id="repository-name" content="github.com/manastech/crystal">
   <link href="../css/style.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="../js/doc.js"></script>
-  <title>HTML::Builder - github.com/manastech/crystal</title>
+  <title>YAML::Generator - github.com/manastech/crystal</title>
 </head>
 <body>
 
@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent open current" data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="../HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" current" data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="../HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="../HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="../HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="../OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="../OpenSSL/SHA1.html">SHA1</a>
       
@@ -2050,13 +2055,18 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/YAML" data-name="yaml">
+  <li class="parent open current" data-id="github.com/manastech/crystal/YAML" data-name="yaml">
       <a href="../YAML.html">YAML</a>
       
         <ul>
   
   <li class=" " data-id="github.com/manastech/crystal/YAML/EventKind" data-name="yaml::eventkind">
       <a href="../YAML/EventKind.html">EventKind</a>
+      
+    </li>
+  
+  <li class=" current" data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="../YAML/Generator.html">Generator</a>
       
     </li>
   
@@ -2152,37 +2162,15 @@
 <div id="main-content">
 <h1 class="type-name">
 
-  <span class="kind">struct</span> HTML::Builder
+  <span class="kind">class</span> YAML::Generator
 
 </h1>
 
 
-  <ul class="superclass-hierarchy"><li class="superclass"><a href="../HTML/Builder.html">HTML::Builder</a></li><li class="superclass"><a href="../Struct.html">Struct</a></li><li class="superclass"><a href="../Value.html">Value</a></li><li class="superclass"><a href="../Object.html">Object</a></li></ul>
+  <ul class="superclass-hierarchy"><li class="superclass"><a href="../YAML/Generator.html">YAML::Generator</a></li><li class="superclass"><a href="../Reference.html">Reference</a></li><li class="superclass"><a href="../Object.html">Object</a></li></ul>
 
 
 
-
-  <h2>Overview</h2>
-
-  <p>HTML::Builder</p>
-
-<p>HTML::Builder is a library for representing HTML in Crystal.</p>
-
-<p>Usage:</p>
-
-<pre><code>html <span class="o">=</span> <span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.a({href: <span class="s">&quot;google.com&quot;</span>}) <span class="k">do</span>
-  text <span class="s">&quot;crystal is awesome&quot;</span>
-<span class="k">end</span>
-
-puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;crystal is awesome&lt;/a&gt;</span></code></pre>
-
-<p>Or also you can use <code><a href="../HTML/Builder.html#build%28%26block%29-instance-method">#build</a></code> method:</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  a({href: <span class="s">&quot;google.com&quot;</span>}) <span class="k">do</span>
-    text <span class="s">&quot;crystal is awesome&quot;</span>
-  <span class="k">end</span>
-<span class="k">end</span> <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;crystal is awesome&lt;/a&gt;</span></code></pre>
 
 
 
@@ -2200,7 +2188,7 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr" target="_blank">html/builder.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
     
     <br/>
   
@@ -2213,7 +2201,7 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new-class-method" class="signature"><strong>.new</strong></a>
+        <a href="#new%28io%29-class-method" class="signature"><strong>.new</strong>(io)</a>
         
       </li>
     
@@ -2225,259 +2213,17 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#a%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#a</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>A</code> html tag with any options.</p></div>
+        <a href="#%3C%3C%28s%29-instance-method" class="signature"><strong>#<<</strong>(s)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#b%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#b</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>B</code> html tag with any options.</p></div>
+        <a href="#indented%28indent%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2C%26block%29-instance-method" class="signature"><strong>#indented</strong>(indent = <span class="s">&quot;  &quot;</span>, &block)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#body%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#body</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>BODY</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#br-instance-method" class="signature"><strong>#br</strong></a>
-        
-          <div class="summary"><p>Renders <code>BR</code> html tag.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#build%28%26block%29-instance-method" class="signature"><strong>#build</strong>(&block)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#button%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#button</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>BUTTON</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#div%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#div</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>DIV</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#doctype-instance-method" class="signature"><strong>#doctype</strong></a>
-        
-          <div class="summary"><p>Renders <code><a href="../HTML.html">HTML</a></code> doctype tag.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#em%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#em</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>EM</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#form%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#form</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>FORM</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#h1%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#h1</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>H1</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#h2%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#h2</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>H2</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#h3%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#h3</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>H3</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#head%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#head</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>HEAD</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#hr-instance-method" class="signature"><strong>#hr</strong></a>
-        
-          <div class="summary"><p>Renders <code>HR</code> html tag.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#html%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#html</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code><a href="../HTML.html">HTML</a></code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#i%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#i</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>I</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#img%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%29-instance-method" class="signature"><strong>#img</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil)</a>
-        
-          <div class="summary"><p>Renders <code>IMG</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#input%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%29-instance-method" class="signature"><strong>#input</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil)</a>
-        
-          <div class="summary"><p>Renders <code>INPUT</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#li%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#li</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>LI</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#link%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%29-instance-method" class="signature"><strong>#link</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil)</a>
-        
-          <div class="summary"><p>Renders <code>LINK</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#ol%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#ol</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>OL</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#p%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#p</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>P</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#s%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#s</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>S</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#script%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#script</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>SCRIPT</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#span%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#span</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>SPAN</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#strong%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#strong</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>STRONG</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#table%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#table</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>TABLE</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#tbody%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#tbody</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>TBODY</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#td%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#td</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>TD</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#text%28text%29-instance-method" class="signature"><strong>#text</strong>(text)</a>
-        
-          <div class="summary"><p>Renders escaped text in html tag.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#textarea%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#textarea</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>TEXTAREA</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#thead%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#thead</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>THEAD</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#title%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#title</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>TITLE</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#tr%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#tr</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>TR</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#u%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#u</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>U</code> html tag with any options.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#ul%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method" class="signature"><strong>#ul</strong>(attrs = <span class="n">nil</span> : Hash(Symbol, String) | Nil, &block)</a>
-        
-          <div class="summary"><p>Renders <code>UL</code> html tag with any options.</p></div>
+        <a href="#nl%28s%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#nl</strong>(s = <span class="s">&quot;&quot;</span>)</a>
         
       </li>
     
@@ -2491,45 +2237,39 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
   
     
 
-  <h3>Instance methods inherited from struct <code><a href="../Struct.html">Struct</a></code></h3>
+  <h3>Instance methods inherited from class <code><a href="../Reference.html">Reference</a></code></h3>
   
-    <a href="../Struct.html#%3D%3D%28other%3Aself%29%3ABool-instance-method" class="tooltip">
-      <span>==(other : self) : Bool</span>
-    ==</a>, 
-  
-    <a href="../Struct.html#hash%3AInt32-instance-method" class="tooltip">
-      <span>hash : Int32</span>
-    hash</a>, 
-  
-    <a href="../Struct.html#inspect%28io%3AIO%29%3ANil-instance-method" class="tooltip">
-      <span>inspect(io : IO) : Nil</span>
-    inspect</a>, 
-  
-    <a href="../Struct.html#to_s%28io%29-instance-method" class="tooltip">
-      <span>to_s(io)</span>
-    to_s</a>
-  
-
-
-    
-
-
-  
-    
-
-  <h3>Instance methods inherited from struct <code><a href="../Value.html">Value</a></code></h3>
-  
-    <a href="../Value.html#%21-instance-method" class="tooltip">
+    <a href="../Reference.html#%21-instance-method" class="tooltip">
       <span>!</span>
     !</a>, 
   
-    <a href="../Value.html#%3D%3D%28other%29-instance-method" class="tooltip">
-      <span>==(other)</span>
+    <a href="../Reference.html#%3D%3D%28other%29-instance-method" class="tooltip">
+      <span>==(other)<br/>==(other : self)</span>
     ==</a>, 
   
-    <a href="../Value.html#nil%3F-instance-method" class="tooltip">
+    <a href="../Reference.html#hash-instance-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Reference.html#inspect%28io%3AIO%29%3ANil-instance-method" class="tooltip">
+      <span>inspect(io : IO) : Nil</span>
+    inspect</a>, 
+  
+    <a href="../Reference.html#nil%3F-instance-method" class="tooltip">
       <span>nil?</span>
-    nil?</a>
+    nil?</a>, 
+  
+    <a href="../Reference.html#object_id-instance-method" class="tooltip">
+      <span>object_id</span>
+    object_id</a>, 
+  
+    <a href="../Reference.html#same%3F%28other%3ANil%29-instance-method" class="tooltip">
+      <span>same?(other : Nil)<br/>same?(other : Reference)</span>
+    same?</a>, 
+  
+    <a href="../Reference.html#to_s%28io%3AIO%29%3ANil-instance-method" class="tooltip">
+      <span>to_s(io : IO) : Nil</span>
+    to_s</a>
   
 
 
@@ -2548,6 +2288,10 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
     <a href="../Object.html#%21%3D%28other%29-instance-method" class="tooltip">
       <span>!=(other)</span>
     !=</a>, 
+  
+    <a href="../Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
   
     <a href="../Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
@@ -2613,6 +2357,10 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
   
+    <a href="../Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
+  
     <a href="../Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
     try</a>
@@ -2667,18 +2415,18 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="new-class-method">
+    <div class="entry-detail" id="new(io)-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>
+        def self.<strong>new</strong>(io)
 
-        <a class="method-permalink" href="#new-class-method">#</a>
+        <a class="method-permalink" href="#new%28io%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L27" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr#L3" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2688,835 +2436,50 @@ puts html <span class="c"># =&gt; &quot;&lt;a href=&quot;google.com&quot;&gt;cry
 
   <h2>Instance Method Detail</h2>
   
-    <div class="entry-detail" id="a(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
+    <div class="entry-detail" id="&lt;&lt;(s)-instance-method">
       <div class="signature">
         
-        def <strong>a</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
+        def <strong><<</strong>(s)
 
-        <a class="method-permalink" href="#a%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
+        <a class="method-permalink" href="#%3C%3C%28s%29-instance-method">#</a>
       </div>
-      
-        <div class="doc"><p>Renders <code>A</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  a({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;a class=&quot;crystal&quot;&gt;crystal is awesome&lt;/a&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr#L8" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="b(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
+    <div class="entry-detail" id="indented(indent=&lt;spanclass=&quot;s&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;,&amp;block)-instance-method">
       <div class="signature">
         
-        def <strong>b</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
+        def <strong>indented</strong>(indent = <span class="s">&quot;  &quot;</span>, &block)
 
-        <a class="method-permalink" href="#b%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
+        <a class="method-permalink" href="#indented%28indent%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2C%26block%29-instance-method">#</a>
       </div>
-      
-        <div class="doc"><p>Renders <code>B</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  b({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;b class=&quot;crystal&quot;&gt;crystal is awesome&lt;/b&gt;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr#L20" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="body(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
+    <div class="entry-detail" id="nl(s=&lt;spanclass=&quot;s&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;)-instance-method">
       <div class="signature">
         
-        def <strong>body</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
+        def <strong>nl</strong>(s = <span class="s">&quot;&quot;</span>)
 
-        <a class="method-permalink" href="#body%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>BODY</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  body({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;body class=&quot;crystal&quot;&gt;crystal is awesome&lt;/body&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="br-instance-method">
-      <div class="signature">
-        
-        def <strong>br</strong>
-
-        <a class="method-permalink" href="#br-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>BR</code> html tag.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build { br } <span class="c"># =&gt; &lt;br/&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L50" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="build(&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>build</strong>(&block)
-
-        <a class="method-permalink" href="#build%28%26block%29-instance-method">#</a>
+        <a class="method-permalink" href="#nl%28s%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%29-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L31" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="button(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>button</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#button%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>BUTTON</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  button({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;button class=&quot;crystal&quot;&gt;crystal is awesome&lt;/button&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="div(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>div</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#div%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>DIV</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  div({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;div class=&quot;crystal&quot;&gt;crystal is awesome&lt;/div&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="doctype-instance-method">
-      <div class="signature">
-        
-        def <strong>doctype</strong>
-
-        <a class="method-permalink" href="#doctype-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code><a href="../HTML.html">HTML</a></code> doctype tag.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build { doctype } <span class="c"># =&gt; &lt;doctype/&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L41" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="em(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>em</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#em%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>EM</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  em({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;em class=&quot;crystal&quot;&gt;crystal is awesome&lt;/em&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="form(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>form</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#form%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>FORM</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  form({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;form class=&quot;crystal&quot;&gt;crystal is awesome&lt;/form&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="h1(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>h1</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#h1%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>H1</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  h1({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;h1 class=&quot;crystal&quot;&gt;crystal is awesome&lt;/h1&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="h2(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>h2</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#h2%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>H2</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  h2({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;h2 class=&quot;crystal&quot;&gt;crystal is awesome&lt;/h2&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="h3(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>h3</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#h3%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>H3</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  h3({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;h3 class=&quot;crystal&quot;&gt;crystal is awesome&lt;/h3&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="head(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>head</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#head%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>HEAD</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  head({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;head class=&quot;crystal&quot;&gt;crystal is awesome&lt;/head&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="hr-instance-method">
-      <div class="signature">
-        
-        def <strong>hr</strong>
-
-        <a class="method-permalink" href="#hr-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>HR</code> html tag.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build { hr } <span class="c"># =&gt; &lt;hr/&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L59" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="html(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>html</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#html%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code><a href="../HTML.html">HTML</a></code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  html({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;html class=&quot;crystal&quot;&gt;crystal is awesome&lt;/html&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="i(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>i</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#i%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>I</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  i({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;i class=&quot;crystal&quot;&gt;crystal is awesome&lt;/i&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="img(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil)-instance-method">
-      <div class="signature">
-        
-        def <strong>img</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>)
-
-        <a class="method-permalink" href="#img%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>IMG</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  img({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> })
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;img class=&quot;crystal&quot;&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L91" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="input(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil)-instance-method">
-      <div class="signature">
-        
-        def <strong>input</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>)
-
-        <a class="method-permalink" href="#input%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>INPUT</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  input({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> })
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;input class=&quot;crystal&quot;&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L91" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="li(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>li</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#li%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>LI</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  li({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;li class=&quot;crystal&quot;&gt;crystal is awesome&lt;/li&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="link(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil)-instance-method">
-      <div class="signature">
-        
-        def <strong>link</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>)
-
-        <a class="method-permalink" href="#link%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>LINK</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  link({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> })
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;link class=&quot;crystal&quot;&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L91" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="ol(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>ol</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#ol%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>OL</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  ol({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;ol class=&quot;crystal&quot;&gt;crystal is awesome&lt;/ol&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="p(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>p</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#p%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>P</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  p({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;p class=&quot;crystal&quot;&gt;crystal is awesome&lt;/p&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="s(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>s</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#s%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>S</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  s({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;s class=&quot;crystal&quot;&gt;crystal is awesome&lt;/s&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="script(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>script</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#script%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>SCRIPT</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  script({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;script class=&quot;crystal&quot;&gt;crystal is awesome&lt;/script&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="span(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>span</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#span%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>SPAN</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  span({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;span class=&quot;crystal&quot;&gt;crystal is awesome&lt;/span&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="strong(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>strong</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#strong%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>STRONG</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  strong({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;strong class=&quot;crystal&quot;&gt;crystal is awesome&lt;/strong&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="table(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>table</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#table%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>TABLE</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  table({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;table class=&quot;crystal&quot;&gt;crystal is awesome&lt;/table&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="tbody(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>tbody</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#tbody%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>TBODY</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  tbody({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;tbody class=&quot;crystal&quot;&gt;crystal is awesome&lt;/tbody&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="td(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>td</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#td%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>TD</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  td({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;td class=&quot;crystal&quot;&gt;crystal is awesome&lt;/td&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="text(text)-instance-method">
-      <div class="signature">
-        
-        def <strong>text</strong>(text)
-
-        <a class="method-permalink" href="#text%28text%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders escaped text in html tag.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="c"># =&gt; crystal is awesome</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L69" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="textarea(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>textarea</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#textarea%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>TEXTAREA</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  textarea({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;textarea class=&quot;crystal&quot;&gt;crystal is awesome&lt;/textarea&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="thead(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>thead</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#thead%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>THEAD</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  thead({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;thead class=&quot;crystal&quot;&gt;crystal is awesome&lt;/thead&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="title(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>title</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#title%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>TITLE</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  title({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;title class=&quot;crystal&quot;&gt;crystal is awesome&lt;/title&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="tr(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>tr</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#tr%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>TR</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  tr({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;tr class=&quot;crystal&quot;&gt;crystal is awesome&lt;/tr&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="u(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>u</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#u%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>U</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  u({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;u class=&quot;crystal&quot;&gt;crystal is awesome&lt;/u&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="ul(attrs=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Hash(Symbol,String)|Nil,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>ul</strong>(attrs = <span class="n">nil</span> : <a href="../Hash.html">Hash</a>(<a href="../Symbol.html">Symbol</a>, <a href="../String.html">String</a>) | <a href="../Nil.html">Nil</a>, &block)
-
-        <a class="method-permalink" href="#ul%28attrs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AHash%28Symbol%2CString%29%7CNil%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Renders <code>UL</code> html tag with any options.</p>
-
-<pre><code><span class="t">HTML</span><span class="t">::</span><span class="t">Builder</span>.<span class="k">new</span>.build <span class="k">do</span>
-  ul({ <span class="k">class</span>: <span class="s">&quot;crystal&quot;</span> }) { text <span class="s">&quot;crystal is awesome&quot;</span> }
-<span class="k">end</span>
-<span class="c"># =&gt; &lt;ul class=&quot;crystal&quot;&gt;crystal is awesome&lt;/ul&gt;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/html/builder.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr#L14" target="_blank">View source</a>]
         
       </div>
     </div>

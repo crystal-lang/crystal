@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2185,12 +2195,17 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr" target="_blank">bool.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/bool.cr" target="_blank">bool.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
     
     <br/>
   
@@ -2281,6 +2296,11 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#to_yaml%28yaml%3AYAML%3A%3AGenerator%29-instance-method" class="signature"><strong>#to_yaml</strong>(yaml : YAML::Generator)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#%7C%28other%3ABool%29-instance-method" class="signature"><strong>#|</strong>(other : Bool)</a>
         
           <div class="summary"><p>Bitwise OR.</p></div>
@@ -2328,6 +2348,10 @@
     <a href="Object.html#%21%3D%28other%29-instance-method" class="tooltip">
       <span>!=(other)</span>
     !=</a>, 
+  
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
   
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
@@ -2392,6 +2416,10 @@
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2458,7 +2486,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/from_yaml.cr#L26" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/from_yaml.cr#L26" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2474,7 +2502,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/from_json.cr#L17" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/from_json.cr#L17" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2494,13 +2522,13 @@
       
         <div class="doc"><p>Negates this boolean.</p>
 
-<pre><code><span class="o">!</span><span class="n">true</span>  <span class="c">#=&gt; false</span>
-<span class="o">!</span><span class="n">false</span> <span class="c">#=&gt; true</span></code></pre></div>
+<pre><code><span class="o">!</span><span class="n">true</span>  <span class="c"># =&gt; false</span>
+<span class="o">!</span><span class="n">false</span> <span class="c"># =&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/bool.cr#L14" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2531,15 +2559,15 @@
       
         <div class="doc"><p>Bitwise AND. Returns <code>true</code> if this bool and <em>other</em> are <code>true</code>, otherwise returns <code>false</code>.</p>
 
-<pre><code><span class="n">false</span> <span class="o">&</span> <span class="n">false</span> <span class="c">#=&gt; false</span>
-<span class="n">false</span> <span class="o">&</span> <span class="n">true</span>  <span class="c">#=&gt; false</span>
-<span class="n">true</span>  <span class="o">&</span> <span class="n">false</span> <span class="c">#=&gt; false</span>
-<span class="n">true</span>  <span class="o">&</span> <span class="n">true</span>  <span class="c">#=&gt; true</span></code></pre></div>
+<pre><code><span class="n">false</span> <span class="o">&</span> <span class="n">false</span> <span class="c"># =&gt; false</span>
+<span class="n">false</span> <span class="o">&</span> <span class="n">true</span>  <span class="c"># =&gt; false</span>
+<span class="n">true</span> <span class="o">&</span> <span class="n">false</span>  <span class="c"># =&gt; false</span>
+<span class="n">true</span> <span class="o">&</span> <span class="n">true</span>   <span class="c"># =&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L38" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/bool.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2570,15 +2598,15 @@
       
         <div class="doc"><p>Exclusive Or. Returns <code>true</code> if this bool is different from <em>other</em>, otherwise returns <code>false</code>.</p>
 
-<pre><code><span class="n">false</span> <span class="o">^</span> <span class="n">false</span> <span class="c">#=&gt; false</span>
-<span class="n">false</span> <span class="o">^</span> <span class="n">true</span>  <span class="c">#=&gt; true</span>
-<span class="n">true</span>  <span class="o">^</span> <span class="n">false</span> <span class="c">#=&gt; true</span>
-<span class="n">true</span>  <span class="o">^</span> <span class="n">true</span>  <span class="c">#=&gt; false</span></code></pre></div>
+<pre><code><span class="n">false</span> <span class="o">^</span> <span class="n">false</span> <span class="c"># =&gt; false</span>
+<span class="n">false</span> <span class="o">^</span> <span class="n">true</span>  <span class="c"># =&gt; true</span>
+<span class="n">true</span> <span class="o">^</span> <span class="n">false</span>  <span class="c"># =&gt; true</span>
+<span class="n">true</span> <span class="o">^</span> <span class="n">true</span>   <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L50" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/bool.cr#L50" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2596,7 +2624,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L55" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/bool.cr#L55" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2612,7 +2640,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr#L154" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr#L154" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2630,7 +2658,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L60" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/bool.cr#L60" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2648,7 +2676,23 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L65" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/bool.cr#L65" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_yaml(yaml:YAML::Generator)-instance-method">
+      <div class="signature">
+        
+        def <strong>to_yaml</strong>(yaml : <a href="YAML/Generator.html">YAML::Generator</a>)
+
+        <a class="method-permalink" href="#to_yaml%28yaml%3AYAML%3A%3AGenerator%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2663,15 +2707,15 @@
       
         <div class="doc"><p>Bitwise OR. Returns <code>true</code> if this bool or <em>other</em> is <code>true</code>, otherwise returns <code>false</code>.</p>
 
-<pre><code><span class="n">false</span> <span class="o">|</span> <span class="n">false</span> <span class="c">#=&gt; false</span>
-<span class="n">false</span> <span class="o">|</span> <span class="n">true</span>  <span class="c">#=&gt; true</span>
-<span class="n">true</span>  <span class="o">|</span> <span class="n">false</span> <span class="c">#=&gt; true</span>
-<span class="n">true</span>  <span class="o">|</span> <span class="n">true</span>  <span class="c">#=&gt; true</span></code></pre></div>
+<pre><code><span class="n">false</span> <span class="o">|</span> <span class="n">false</span> <span class="c"># =&gt; false</span>
+<span class="n">false</span> <span class="o">|</span> <span class="n">true</span>  <span class="c"># =&gt; true</span>
+<span class="n">true</span> <span class="o">|</span> <span class="n">false</span>  <span class="c"># =&gt; true</span>
+<span class="n">true</span> <span class="o">|</span> <span class="n">true</span>   <span class="c"># =&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/bool.cr#L26" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/bool.cr#L26" target="_blank">View source</a>]
         
       </div>
     </div>

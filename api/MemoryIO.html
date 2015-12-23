@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2164,7 +2174,10 @@
 
   <h2>Overview</h2>
 
-  <p>An IO object that reads and writes from a buffer in memory.</p>
+  <p>An IO that reads and writes from a buffer in memory.</p>
+
+<p>The internal buffer can be resizeable and/or writeable depending
+on how a MemoryIO is constructed.</p>
 
 
 
@@ -2189,7 +2202,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr" target="_blank">io/memory_io.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr" target="_blank">io/memory_io.cr</a>
     
     <br/>
   
@@ -2204,14 +2217,21 @@
       <li class="entry-summary">
         <a href="#new%28string%3AString%29-class-method" class="signature"><strong>.new</strong>(string : String)</a>
         
-          <div class="summary"><p>Creates a MemoryIO whose contents are the contents of <em>string</em> (which are duplicated, as strings are immutable).</p></div>
+          <div class="summary"><p>Creates a MemoryIO whose contents are the exact contents of <em>string</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#new%28capacity%3D%3Cspanclass%3D%22n%22%3E64%3C%2Fspan%3E%3AInt%29-class-method" class="signature"><strong>.new</strong>(capacity = <span class="n">64</span> : Int)</a>
         
-          <div class="summary"><p>Creates an empty MemoryIO with the given initialize capactiy for the internal buffer.</p></div>
+          <div class="summary"><p>Creates an empty, resizeable and writeable MemoryIO with the given initialize capactiy for the internal buffer.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28slice%3ASlice%28UInt8%29%2Cwriteable%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(slice : Slice(UInt8), writeable = <span class="n">true</span>)</a>
+        
+          <div class="summary"><p>Creates a MemoryIO that will read, and optionally write, from/to the given slice.</p></div>
         
       </li>
     
@@ -2281,6 +2301,8 @@
       <li class="entry-summary">
         <a href="#read%28slice%3ASlice%28UInt8%29%29-instance-method" class="signature"><strong>#read</strong>(slice : Slice(UInt8))</a>
         
+          <div class="summary"><p>See <code><a href="IO.html#read%28slice%3ASlice%28UInt8%29%29-instance-method">IO#read(slice)</a></code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -2334,6 +2356,8 @@
     
       <li class="entry-summary">
         <a href="#write%28slice%3ASlice%28UInt8%29%29-instance-method" class="signature"><strong>#write</strong>(slice : Slice(UInt8))</a>
+        
+          <div class="summary"><p>See <code><a href="IO.html#write%28slice%3ASlice%28UInt8%29%29%3ANil-instance-method">IO#write(slice)</a></code>.</p></div>
         
       </li>
     
@@ -2546,6 +2570,10 @@
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2610,6 +2638,10 @@
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
   
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
+  
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
     try</a>
@@ -2672,19 +2704,20 @@
         <a class="method-permalink" href="#new%28string%3AString%29-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Creates a MemoryIO whose contents are the contents of <em>string</em>
-(which are duplicated, as strings are immutable).</p>
+        <div class="doc"><p>Creates a MemoryIO whose contents are the exact contents of <em>string</em>.
+The created MemoryIO is non-resizeable and non-writeable.</p>
 
-<p>The IO starts at position zero for reading and writing.</p>
+<p>The IO starts at position zero for reading.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
-io.pos <span class="c">#=&gt; 0</span>
-io.gets(<span class="n">2</span>).should eq(<span class="s">&quot;he&quot;</span>)</code></pre></div>
+io.pos        <span class="c"># =&gt; 0</span>
+io.gets(<span class="n">2</span>)    <span class="c"># =&gt; &quot;he&quot;</span>
+io.print <span class="s">&quot;hi&quot;</span> <span class="c"># raises</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L39" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2697,17 +2730,43 @@ io.gets(<span class="n">2</span>).should eq(<span class="s">&quot;he&quot;</span
         <a class="method-permalink" href="#new%28capacity%3D%3Cspanclass%3D%22n%22%3E64%3C%2Fspan%3E%3AInt%29-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Creates an empty MemoryIO with the given initialize capactiy for
-the internal buffer.</p>
+        <div class="doc"><p>Creates an empty, resizeable and writeable MemoryIO with the given
+initialize capactiy for the internal buffer.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
-io.pos  <span class="c">#=&gt; 0</span>
-io.read <span class="c">#=&gt; &quot;&quot;</span></code></pre></div>
+io.pos  <span class="c"># =&gt; 0</span>
+io.read <span class="c"># =&gt; &quot;&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L22" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="new(slice:Slice(UInt8),writeable=&lt;spanclass=&quot;n&quot;&gt;true&lt;/span&gt;)-class-method">
+      <div class="signature">
+        
+        def self.<strong>new</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>), writeable = <span class="n">true</span>)
+
+        <a class="method-permalink" href="#new%28slice%3ASlice%28UInt8%29%2Cwriteable%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Creates a MemoryIO that will read, and optionally write, from/to
+the given slice. The created MemoryIO is non-resizeable.</p>
+
+<p>The IO starts at position zero for reading.</p>
+
+<pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">6</span>) { <span class="o">|</span>i<span class="o">|</span> (<span class="s">'a'</span>.ord <span class="o">+</span> i).to_u8 }
+io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> slice, writeable: <span class="n">false</span>
+io.pos  <span class="c"># =&gt; 0</span>
+io.read <span class="c"># =&gt; &quot;abcdef&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L45" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2730,7 +2789,7 @@ io.read <span class="c">#=&gt; &quot;&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L9" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2748,7 +2807,7 @@ io.read <span class="c">#=&gt; &quot;&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L9" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L12" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2761,18 +2820,19 @@ io.read <span class="c">#=&gt; &quot;&quot;</span></code></pre></div>
         <a class="method-permalink" href="#clear-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Clears the internal buffer and resets the position to zero.</p>
+        <div class="doc"><p>Clears the internal buffer and resets the position to zero. Raises
+if this MemoryIO is non-resizeable.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
-io.gets(<span class="n">3</span>) <span class="c">#=&gt; &quot;hel&quot;</span>
+io.gets(<span class="n">3</span>) <span class="c"># =&gt; &quot;hel&quot;</span>
 io.clear
-io.pos     <span class="c">#=&gt; 0</span>
-io.gets_to_end    <span class="c">#=&gt; &quot;&quot;</span></code></pre></div>
+io.pos         <span class="c"># =&gt; 0</span>
+io.gets_to_end <span class="c"># =&gt; &quot;&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L146" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L175" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2789,12 +2849,12 @@ io.gets_to_end    <span class="c">#=&gt; &quot;&quot;</span></code></pre></div>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
 io.close
-io.gets_to_end <span class="c">#=&gt; IO::Error: closed stream</span></code></pre></div>
+io.gets_to_end <span class="c"># =&gt; IO::Error: closed stream</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L248" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L278" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2810,14 +2870,14 @@ io.gets_to_end <span class="c">#=&gt; IO::Error: closed stream</span></code></pr
         <div class="doc"><p>Determines if this IO is closed.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
-io.closed? <span class="c">#=&gt; false</span>
+io.closed? <span class="c"># =&gt; false</span>
 io.close
-io.closed? <span class="c">#=&gt; true</span></code></pre></div>
+io.closed? <span class="c"># =&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L260" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L290" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2833,14 +2893,14 @@ io.closed? <span class="c">#=&gt; true</span></code></pre></div>
         <div class="doc"><p>Returns <code>true</code> if this MemoryIO has no contents.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
-io.empty? <span class="c">#=&gt; true</span>
+io.empty? <span class="c"># =&gt; true</span>
 io.print <span class="s">&quot;hello&quot;</span>
-io.empty? <span class="c">#=&gt; false</span></code></pre></div>
+io.empty? <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L159" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L189" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2856,14 +2916,14 @@ io.empty? <span class="c">#=&gt; false</span></code></pre></div>
         <div class="doc"><p>Returns the current position (in bytes) of this IO.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
-io.pos     <span class="c">#=&gt; 0</span>
-io.gets(<span class="n">2</span>) <span class="c">#=&gt; &quot;he&quot;</span>
-io.pos     <span class="c">#=&gt; 2</span></code></pre></div>
+io.pos     <span class="c"># =&gt; 0</span>
+io.gets(<span class="n">2</span>) <span class="c"># =&gt; &quot;he&quot;</span>
+io.pos     <span class="c"># =&gt; 2</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L224" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L254" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2880,12 +2940,12 @@ io.pos     <span class="c">#=&gt; 2</span></code></pre></div>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
 io.pos <span class="o">=</span> <span class="n">3</span>
-io.gets <span class="c">#=&gt; &quot;lo&quot;</span></code></pre></div>
+io.gets <span class="c"># =&gt; &quot;lo&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L235" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L265" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2898,10 +2958,12 @@ io.gets <span class="c">#=&gt; &quot;lo&quot;</span></code></pre></div>
         <a class="method-permalink" href="#read%28slice%3ASlice%28UInt8%29%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>See <code><a href="IO.html#read%28slice%3ASlice%28UInt8%29%29-instance-method">IO#read(slice)</a></code>.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L70" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2924,7 +2986,7 @@ io.gets(<span class="n">2</span>) <span class="c">#=&gt; &quot;he&quot;</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L171" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L201" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2940,16 +3002,16 @@ io.gets(<span class="n">2</span>) <span class="c">#=&gt; &quot;he&quot;</span></
         <div class="doc"><p>Seeks to a given <em>offset</em> (in bytes) according to the <em>whence</em> argument.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">&quot;abcdef&quot;</span>)
-io.gets(<span class="n">3</span>) <span class="c">#=&gt; &quot;abc&quot;</span>
+io.gets(<span class="n">3</span>) <span class="c"># =&gt; &quot;abc&quot;</span>
 io.seek(<span class="n">1</span>, <span class="t">IO</span><span class="t">::</span><span class="t">Seek</span><span class="t">::</span><span class="t">Set</span>)
-io.gets(<span class="n">2</span>) <span class="c">#=&gt; &quot;bc&quot;</span>
+io.gets(<span class="n">2</span>) <span class="c"># =&gt; &quot;bc&quot;</span>
 io.seek(<span class="n">-1</span>, <span class="t">IO</span><span class="t">::</span><span class="t">Seek</span><span class="t">::</span><span class="t">Current</span>)
-io.gets(<span class="n">1</span>) <span class="c">#=&gt; &quot;c&quot;</span></code></pre></div>
+io.gets(<span class="n">1</span>) <span class="c"># =&gt; &quot;c&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L201" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L231" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2965,12 +3027,12 @@ io.gets(<span class="n">1</span>) <span class="c">#=&gt; &quot;c&quot;</span></c
         <div class="doc"><p>Returns the total number of bytes in this IO.</p>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
-io.size <span class="c">#=&gt; 5</span></code></pre></div>
+io.size <span class="c"># =&gt; 5</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L182" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L212" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2988,7 +3050,7 @@ io.size <span class="c">#=&gt; 5</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L187" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L217" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3005,12 +3067,12 @@ io.size <span class="c">#=&gt; 5</span></code></pre></div>
 
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
 io.print <span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>
-io.to_s <span class="c">#=&gt; &quot;123&quot;</span></code></pre></div>
+io.to_s <span class="c"># =&gt; &quot;123&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L271" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L301" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3028,7 +3090,7 @@ io.to_s <span class="c">#=&gt; &quot;123&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L289" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L319" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3047,12 +3109,12 @@ modifies the internal buffer.</p>
 <pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span> <span class="s">&quot;hello&quot;</span>
 slice <span class="o">=</span> io.to_slice
 slice[<span class="n">0</span>] <span class="o">=</span> <span class="n">97_u8</span>
-io.gets_to_end <span class="c">#=&gt; &quot;aello&quot;</span></code></pre></div>
+io.gets_to_end <span class="c"># =&gt; &quot;aello&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L284" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L314" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3065,10 +3127,13 @@ io.gets_to_end <span class="c">#=&gt; &quot;aello&quot;</span></code></pre></div
         <a class="method-permalink" href="#write%28slice%3ASlice%28UInt8%29%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>See <code><a href="IO.html#write%28slice%3ASlice%28UInt8%29%29%3ANil-instance-method">IO#write(slice)</a></code>. Raises if this MemoryIO is non-writeable,
+or if it's non-resizeable and a resize is needed.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/io/memory_io.cr#L54" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L80" target="_blank">View source</a>]
         
       </div>
     </div>

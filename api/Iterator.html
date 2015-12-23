@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2168,14 +2178,14 @@ sequences eagerly and produces an <code><a href="Array.html">Array</a></code> in
 <p>As an example, let's compute the first three numbers in the range <code>1..10_000_000</code> that are even,
 multiplied by three. One way to do this is:</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">10_000_000</span>).select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>) <span class="c">#=&gt; [6, 12, 18]</span></code></pre>
+<pre><code>(<span class="n">1</span>..<span class="n">10_000_000</span>).select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>) <span class="c"># =&gt; [6, 12, 18]</span></code></pre>
 
 <p>The above works, but creates many intermediate arrays: one for the <em>select</em> call,
 one for the <em>map</em> call and one for the <em>take</em> call. A more efficient way is to invoke
 <code><a href="Range.html#each-instance-method">Range#each</a></code> without a block, which gives us an Iterator so we can process the operations
 lazily:</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">10_000_000</span>).each.select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>) <span class="c">#=&gt; #&lt; Iterator(T)::Take...</span></code></pre>
+<pre><code>(<span class="n">1</span>..<span class="n">10_000_000</span>).each.select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>) <span class="c"># =&gt; #&lt; Iterator(T)::Take...</span></code></pre>
 
 <p>Iterator redefines many of <code><a href="Enumerable.html">Enumerable</a></code>'s method in a lazy way, returning iterators
 instead of arrays.</p>
@@ -2183,7 +2193,7 @@ instead of arrays.</p>
 <p>At the end of the call chain we get back a new iterator: we need to consume it, either
 using <code><a href="Iterator.html#each-instance-method">#each</a></code> or <code><a href="Enumerable.html#to_a-instance-method">Enumerable#to_a</a></code>:</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">10_000_000</span>).each.select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>).to_a <span class="c">#=&gt; [6, 12, 18]</span></code></pre>
+<pre><code>(<span class="n">1</span>..<span class="n">10_000_000</span>).each.select(<span class="o">&</span>.even?).map { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> <span class="n">3</span> }.take(<span class="n">3</span>).to_a <span class="c"># =&gt; [6, 12, 18]</span></code></pre>
 
 <p>To implement an Iterator you need to define a <code><a href="Iterator.html#next-instance-method">#next</a></code> method that must return the next
 element in the sequence or <code><a href="Iterator/Stop.html">Iterator::Stop</a>::INSTANCE</code>, which signals the end of the sequence
@@ -2217,10 +2227,10 @@ its initial state. This is needed to implement the <code><a href="Iterator.html#
 <span class="k">end</span>
 
 zeros <span class="o">=</span> <span class="t">Zeros</span>.<span class="k">new</span>(<span class="n">5</span>)
-zeros.to_a            <span class="c">#=&gt; [0, 0, 0, 0, 0]</span>
+zeros.to_a <span class="c"># =&gt; [0, 0, 0, 0, 0]</span>
 
 zeros.rewind
-zeros.take(<span class="n">3</span>).to_a    <span class="c">#=&gt; [0, 0, 0]</span></code></pre>
+zeros.take(<span class="n">3</span>).to_a <span class="c"># =&gt; [0, 0, 0]</span></code></pre>
 
 <p>The standard library provides iterators for many classes, like <code><a href="Array.html">Array</a></code>, <code><a href="Hash.html">Hash</a></code>, <code><a href="Range.html">Range</a></code>, <code><a href="String.html">String</a></code> and <code><a href="IO.html">IO</a></code>.
 Usually to get an iterator you invoke a method that would usually yield elements to a block,
@@ -2261,7 +2271,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr" target="_blank">iterator.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr" target="_blank">iterator.cr</a>
     
     <br/>
   
@@ -2742,7 +2752,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L131" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L131" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2758,7 +2768,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L111" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L111" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2776,7 +2786,7 @@ but without passing a block: <code><a href="Array.html#each%28%26block%29-instan
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L107" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L107" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2807,7 +2817,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L164" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L164" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2832,7 +2842,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2856,7 +2866,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L235" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L235" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2885,7 +2895,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L312" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L312" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2914,7 +2924,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; &quot;a&quot;</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L277" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L277" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2930,7 +2940,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; &quot;a&quot;</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L345" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L345" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2952,7 +2962,7 @@ iter.each {<span class="o">|</span>x<span class="o">|</span> print x, <span clas
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L355" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L355" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2977,7 +2987,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L372" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L372" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3004,7 +3014,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L387" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L387" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3034,7 +3044,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L475" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L475" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3059,7 +3069,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L511" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L511" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3078,7 +3088,7 @@ are no more elements.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L149" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L149" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3101,7 +3111,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L536" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L536" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3119,7 +3129,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L152" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L152" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3143,7 +3153,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L566" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L566" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3166,7 +3176,7 @@ iter.<span class="k">next</span> <span class="c"># -&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L595" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L595" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3191,7 +3201,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L632" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L632" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3216,7 +3226,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L671" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L671" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3234,7 +3244,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L102" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L102" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3258,7 +3268,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L710" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L709" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3282,7 +3292,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L747" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L746" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3311,7 +3321,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L790" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L789" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3336,7 +3346,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L830" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L829" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3360,7 +3370,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L817" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L816" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3384,7 +3394,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L869" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L868" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3408,7 +3418,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L902" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L901" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3435,7 +3445,7 @@ iter.next # => Iterator::Stop::INSTANCE</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/iterator.cr#L931" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/iterator.cr#L930" target="_blank">View source</a>]
         
       </div>
     </div>

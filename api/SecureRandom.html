@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2167,9 +2177,9 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
 
 <p>For example:</p>
 
-<pre><code><span class="t">SecureRandom</span>.base64 <span class="c">#=&gt; &quot;LIa9s/zWzJx49m/9zDX+VQ==&quot;</span>
-<span class="t">SecureRandom</span>.hex    <span class="c">#=&gt; &quot;c8353864ff9764a39ef74983ec0d4a38&quot;</span>
-<span class="t">SecureRandom</span>.uuid   <span class="c">#=&gt; &quot;c7ee4add-207f-411a-97b7-0d22788566d6&quot;</span></code></pre>
+<pre><code class='language-crystal'><span class="t">SecureRandom</span>.base64 <span class="c"># =&gt; &quot;LIa9s/zWzJx49m/9zDX+VQ==&quot;</span>
+<span class="t">SecureRandom</span>.hex    <span class="c"># =&gt; &quot;c8353864ff9764a39ef74983ec0d4a38&quot;</span>
+<span class="t">SecureRandom</span>.uuid   <span class="c"># =&gt; &quot;c7ee4add-207f-411a-97b7-0d22788566d6&quot;</span></code></pre>
 
 
 
@@ -2187,7 +2197,7 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/secure_random.cr" target="_blank">secure_random.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/secure_random.cr" target="_blank">secure_random.cr</a>
     
     <br/>
   
@@ -2261,12 +2271,12 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
 
 <p>Check <code><a href="Base64.html#strict_encode%28data%29-instance-method">Base64#strict_encode</a></code> for details.</p>
 
-<pre><code><span class="t">SecureRandom</span>.base64(<span class="n">4</span>) <span class="c">#=&gt; &quot;fK1eYg==&quot;</span></code></pre></div>
+<pre><code class='language-crystal'><span class="t">SecureRandom</span>.base64(<span class="n">4</span>) <span class="c"># =&gt; &quot;fK1eYg==&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/secure_random.cr#L21" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/secure_random.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2283,13 +2293,13 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
 
 <p>The bytes are encoded into a string of a two-digit hexadecimal number (00-ff) per byte.</p>
 
-<pre><code><span class="t">SecureRandom</span>.hex    <span class="c">#=&gt; &quot;05f100a1123f6bdbb427698ab664ff5f&quot;</span>
-<span class="t">SecureRandom</span>.hex(<span class="n">1</span>) <span class="c">#=&gt; &quot;1a&quot;</span></code></pre></div>
+<pre><code class='language-crystal'><span class="t">SecureRandom</span>.hex    <span class="c"># =&gt; &quot;05f100a1123f6bdbb427698ab664ff5f&quot;</span>
+<span class="t">SecureRandom</span>.hex(<span class="n">1</span>) <span class="c"># =&gt; &quot;1a&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/secure_random.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/secure_random.cr#L46" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2304,13 +2314,13 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
       
         <div class="doc"><p>Generates a slice filled with <em>n</em> random bytes.</p>
 
-<pre><code><span class="t">SecureRandom</span>.random_bytes    <span class="c">#=&gt; [145, 255, 191, 133, 132, 139, 53, 136, 93, 238, 2, 37, 138, 244, 3, 216]</span>
-<span class="t">SecureRandom</span>.random_bytes(<span class="n">4</span>) <span class="c">#=&gt; [217, 118, 38, 196]</span></code></pre></div>
+<pre><code class='language-crystal'><span class="t">SecureRandom</span>.random_bytes    <span class="c"># =&gt; [145, 255, 191, 133, 132, 139, 53, 136, 93, 238, 2, 37, 138, 244, 3, 216]</span>
+<span class="t">SecureRandom</span>.random_bytes(<span class="n">4</span>) <span class="c"># =&gt; [217, 118, 38, 196]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/secure_random.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/secure_random.cr#L56" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2327,14 +2337,14 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
 
 <p>Check <code><a href="Base64.html#urlsafe_encode%28data%2Cpadding%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method">Base64#urlsafe_encode</a></code> for details.</p>
 
-<pre><code><span class="t">SecureRandom</span>.urlsafe_base64          <span class="c">#=&gt; &quot;MAD2bw8QaBdvITCveBNCrw&quot;</span>
-<span class="t">SecureRandom</span>.urlsafe_base64(<span class="n">8</span>,<span class="n">true</span>)  <span class="c">#=&gt; &quot;vvP1kcs841I=&quot;</span>
-<span class="t">SecureRandom</span>.urlsafe_base64(<span class="n">16</span>,<span class="n">true</span>) <span class="c">#=&gt; &quot;og2aJrELDZWSdJfVGkxNKw==&quot;</span></code></pre></div>
+<pre><code class='language-crystal'><span class="t">SecureRandom</span>.urlsafe_base64           <span class="c"># =&gt; &quot;MAD2bw8QaBdvITCveBNCrw&quot;</span>
+<span class="t">SecureRandom</span>.urlsafe_base64(<span class="n">8</span>, <span class="n">true</span>)  <span class="c"># =&gt; &quot;vvP1kcs841I=&quot;</span>
+<span class="t">SecureRandom</span>.urlsafe_base64(<span class="n">16</span>, <span class="n">true</span>) <span class="c"># =&gt; &quot;og2aJrELDZWSdJfVGkxNKw==&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/secure_random.cr#L34" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/secure_random.cr#L34" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2352,12 +2362,12 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
 <p>It generates a random v4 UUID. Check <a href="https://tools.ietf.org/html/rfc4122#section-4.4" target="_blank">RFC 4122 Section 4.4</a>
 for the used algorithm and its implications.</p>
 
-<pre><code><span class="t">SecureRandom</span>.uuid <span class="c">#=&gt; &quot;a4e319dd-a778-4a51-804e-66a07bc63358&quot;</span></code></pre></div>
+<pre><code class='language-crystal'><span class="t">SecureRandom</span>.uuid <span class="c"># =&gt; &quot;a4e319dd-a778-4a51-804e-66a07bc63358&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/secure_random.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/secure_random.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>

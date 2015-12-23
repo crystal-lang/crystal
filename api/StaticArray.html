@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2189,7 +2199,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr" target="_blank">static_array.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr" target="_blank">static_array.cr</a>
     
     <br/>
   
@@ -2248,11 +2258,6 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#buffer-instance-method" class="signature"><strong>#buffer</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
         
       </li>
@@ -2288,7 +2293,9 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#to_unsafe-instance-method" class="signature"><strong>#to_unsafe</strong></a>
+        <a href="#to_unsafe%3APointer%28T%29-instance-method" class="signature"><strong>#to_unsafe</strong> : Pointer(T)</a>
+        
+          <div class="summary"><p>Returns a pointer to this static array's data.</p></div>
         
       </li>
     
@@ -2580,6 +2587,10 @@
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2643,6 +2654,10 @@
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2708,12 +2723,12 @@
       
         <div class="doc"><p>Creates a new static array filled with the given value.</p>
 
-<pre><code><span class="t">StaticArray</span>(<span class="t">Int32</span>, <span class="n">3</span>).<span class="k">new</span>(<span class="n">42</span>) <span class="c">#=&gt; [42, 42, 42]</span></code></pre></div>
+<pre><code><span class="t">StaticArray</span>(<span class="t">Int32</span>, <span class="n">3</span>).<span class="k">new</span>(<span class="n">42</span>) <span class="c"># =&gt; [42, 42, 42]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L25" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L25" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2730,12 +2745,12 @@
 block once for each index of the array, assigning the
 block's value in that index.</p>
 
-<pre><code><span class="t">StaticArray</span>(<span class="t">Int32</span>, <span class="n">3</span>).<span class="k">new</span> { <span class="o">|</span>i<span class="o">|</span> i <span class="o">*</span> <span class="n">2</span> } <span class="c">#=&gt; [0, 2, 4]</span></code></pre></div>
+<pre><code><span class="t">StaticArray</span>(<span class="t">Int32</span>, <span class="n">3</span>).<span class="k">new</span> { <span class="o">|</span>i<span class="o">|</span> i <span class="o">*</span> <span class="n">2</span> } <span class="c"># =&gt; [0, 2, 4]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L12" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L12" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2756,7 +2771,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L37" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L37" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2772,7 +2787,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L29" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L29" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2788,7 +2803,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L48" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L48" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2804,7 +2819,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2820,23 +2835,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L54" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="buffer-instance-method">
-      <div class="signature">
-        
-        def <strong>buffer</strong>
-
-        <a class="method-permalink" href="#buffer-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L106" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L54" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2852,7 +2851,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2868,7 +2867,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L90" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L90" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2884,7 +2883,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L95" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2900,7 +2899,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L85" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L85" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2916,7 +2915,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L75" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L75" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2932,7 +2931,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L118" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L120" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2948,23 +2947,28 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L110" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L106" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="to_unsafe-instance-method">
+    <div class="entry-detail" id="to_unsafe:Pointer(T)-instance-method">
       <div class="signature">
         
-        def <strong>to_unsafe</strong>
+        def <strong>to_unsafe</strong> : <a href="Pointer.html">Pointer</a>(T)
 
-        <a class="method-permalink" href="#to_unsafe-instance-method">#</a>
+        <a class="method-permalink" href="#to_unsafe%3APointer%28T%29-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns a pointer to this static array's data.</p>
+
+<pre><code>ary <span class="o">=</span> <span class="t">StaticArray</span>(<span class="t">Int32</span>, <span class="n">3</span>).<span class="k">new</span>(<span class="n">42</span>)
+ary.to_unsafe[<span class="n">0</span>] <span class="c"># =&gt; 42</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L114" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L116" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2980,7 +2984,7 @@ block's value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L70" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L70" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2997,12 +3001,12 @@ block's value in that index.</p>
 Raises if any index is invalid.</p>
 
 <pre><code>a <span class="o">=</span> <span class="t">StaticArray</span>(<span class="t">Int32</span>, <span class="n">4</span>).<span class="k">new</span> { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> }
-a.values_at(<span class="n">0</span>, <span class="n">2</span>) <span class="c">#=&gt; {1, 3}</span></code></pre></div>
+a.values_at(<span class="n">0</span>, <span class="n">2</span>) <span class="c"># =&gt; {1, 3}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/static_array.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/static_array.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>

@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2162,7 +2172,7 @@
 
   <h2>Overview</h2>
 
-  <p>The YAML module provides deserialization of YAML to native Crystal data structures.</p>
+  <p>The YAML module provides serialization and deserialization of YAML to/from native Crystal data structures.</p>
 
 <h3>Parsing with <code><a href="YAML.html#load%28data%3AString%29-class-method">#load</a></code> and <code><a href="YAML.html#load_all%28data%3AString%29-class-method">#load_all</a></code></h3>
 
@@ -2170,15 +2180,26 @@
 A <code><a href="YAML/Type.html">Type</a></code> is a union of all possible YAML types, so casting to a specific type is necessary
 before the value is practically usable.</p>
 
-<pre><code><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
+<pre><code class='language-crystal'><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
 
 data <span class="o">=</span> <span class="t">YAML</span>.load(<span class="s">&quot;foo: bar&quot;</span>)
-(data <span class="k">as</span> <span class="t">Hash</span>)[<span class="s">&quot;foo&quot;</span>] <span class="c">#=&gt; &quot;bar&quot;</span></code></pre>
+(data <span class="k">as</span> <span class="t">Hash</span>)[<span class="s">&quot;foo&quot;</span>] <span class="c"># =&gt; &quot;bar&quot;</span></code></pre>
 
 <h3>Parsing with <code><a href="YAML.html#mapping%28properties%2Cstrict%3Dfalse%29-macro">YAML#mapping</a></code></h3>
 
 <p><code><a href="YAML.html#mapping%28properties%2Cstrict%3Dfalse%29-macro">YAML#mapping</a></code> defines how an object is mapped to YAML. Mapped data is accessible
 through generated properties like <em>Foo#bar</em>. It is more type-safe and efficient.</p>
+
+<h3>Dumping with <code><a href="YAML.html">YAML</a>.dump</code> or <code>#to_yaml</code></h3>
+
+<p><code><a href="YAML.html">YAML</a>.dump</code> generates the YAML representation for an object. An <code><a href="IO.html">IO</a></code> can be passed and it will be written there,
+otherwise it will be returned as a string. Similarly, <code>#to_yaml</code> (with or without an <code><a href="IO.html">IO</a></code>) on any object does the same.</p>
+
+<pre><code class='language-crystal'>yaml <span class="o">=</span> <span class="t">YAML</span>.dump({hello: <span class="s">&quot;world&quot;</span>})                                <span class="c"># =&gt; &quot;--- \nhello: world&quot;</span>
+<span class="t">File</span>.open(<span class="s">&quot;file.yml&quot;</span>, <span class="s">&quot;w&quot;</span>) { <span class="o">|</span>f<span class="o">|</span> <span class="t">YAML</span>.dump({hello: <span class="s">&quot;world&quot;</span>}, f) } <span class="c"># =&gt; writes it to the file</span>
+<span class="c"># or:</span>
+yaml <span class="o">=</span> {hello: <span class="s">&quot;world&quot;</span>}.to_yaml                                <span class="c"># =&gt; &quot;--- \nhello: world&quot;</span>
+<span class="t">File</span>.open(<span class="s">&quot;file.yml&quot;</span>, <span class="s">&quot;w&quot;</span>) { <span class="o">|</span>f<span class="o">|</span> {hello: <span class="s">&quot;world&quot;</span>}.to_yaml(f) } <span class="c"># =&gt; writes it to the file</span></code></pre>
 
 
 
@@ -2196,12 +2217,17 @@ through generated properties like <em>Foo#bar</em>. It is more type-safe and eff
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/mapping.cr" target="_blank">yaml/mapping.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/mapping.cr" target="_blank">yaml/mapping.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/yaml.cr" target="_blank">yaml/yaml.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/yaml.cr" target="_blank">yaml/yaml.cr</a>
     
     <br/>
   
@@ -2212,6 +2238,20 @@ through generated properties like <em>Foo#bar</em>. It is more type-safe and eff
 
   <h2>Class Method Summary</h2>
   <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#dump%28object%2Cio%3AIO%29-class-method" class="signature"><strong>.dump</strong>(object, io : IO)</a>
+        
+          <div class="summary"><p>Serializes an object to YAML, writing it to <code>io</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#dump%28object%29-class-method" class="signature"><strong>.dump</strong>(object)</a>
+        
+          <div class="summary"><p>Serializes an object to YAML, returning it as a string.</p></div>
+        
+      </li>
     
       <li class="entry-summary">
         <a href="#load%28data%3AString%29-class-method" class="signature"><strong>.load</strong>(data : String)</a>
@@ -2254,6 +2294,42 @@ through generated properties like <em>Foo#bar</em>. It is more type-safe and eff
 
   <h2>Class Method Detail</h2>
   
+    <div class="entry-detail" id="dump(object,io:IO)-class-method">
+      <div class="signature">
+        
+        def self.<strong>dump</strong>(object, io : <a href="IO.html">IO</a>)
+
+        <a class="method-permalink" href="#dump%28object%2Cio%3AIO%29-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Serializes an object to YAML, writing it to <code>io</code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/yaml.cr#L114" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="dump(object)-class-method">
+      <div class="signature">
+        
+        def self.<strong>dump</strong>(object)
+
+        <a class="method-permalink" href="#dump%28object%29-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Serializes an object to YAML, returning it as a string.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/yaml.cr#L109" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
     <div class="entry-detail" id="load(data:String)-class-method">
       <div class="signature">
         
@@ -2264,7 +2340,7 @@ through generated properties like <em>Foo#bar</em>. It is more type-safe and eff
       
         <div class="doc"><p>Deserializes a YAML document.</p>
 
-<pre><code># ./foo.yml
+<pre><code class='language-yaml'># ./foo.yml
 data:
   string: "foobar"
   array:
@@ -2275,20 +2351,20 @@ data:
     foo
     bar</code></pre>
 
-<pre><code><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
+<pre><code class='language-crystal'><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
 <span class="t">YAML</span>.load(<span class="t">File</span>.read(<span class="s">&quot;./foo.yml&quot;</span>))
-<span class="c">#=&gt; {</span>
-<span class="c">#=&gt;  &quot;data&quot; =&gt; {</span>
-<span class="c">#=&gt;    &quot;string&quot; =&gt; &quot;foobar&quot;,</span>
-<span class="c">#=&gt;    &quot;array&quot; =&gt; [&quot;John&quot;, &quot;Sarah&quot;],</span>
-<span class="c">#=&gt;    &quot;hash&quot; =&gt; {&quot;key&quot; =&gt; &quot;value&quot;},</span>
-<span class="c">#=&gt;    &quot;paragraph&quot; =&gt; &quot;foo\nbar\n&quot;</span>
-<span class="c">#=&gt; }</span></code></pre></div>
+<span class="c"># =&gt; {</span>
+<span class="c"># =&gt; &quot;data&quot; =&gt; {</span>
+<span class="c"># =&gt; &quot;string&quot; =&gt; &quot;foobar&quot;,</span>
+<span class="c"># =&gt; &quot;array&quot; =&gt; [&quot;John&quot;, &quot;Sarah&quot;],</span>
+<span class="c"># =&gt; &quot;hash&quot; =&gt; {&quot;key&quot; =&gt; &quot;value&quot;},</span>
+<span class="c"># =&gt; &quot;paragraph&quot; =&gt; &quot;foo\nbar\n&quot;</span>
+<span class="c"># =&gt; }</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/yaml.cr#L64" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/yaml.cr#L76" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2303,19 +2379,19 @@ data:
       
         <div class="doc"><p>Deserializes multiple YAML documents.</p>
 
-<pre><code># ./foo.yml
+<pre><code class='language-yaml'># ./foo.yml
 foo: bar
 ---
 hello: world</code></pre>
 
-<pre><code><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
+<pre><code class='language-crystal'><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
 <span class="t">YAML</span>.load_all(<span class="t">File</span>.read(<span class="s">&quot;./foo.yml&quot;</span>))
-<span class="c">#=&gt; [{&quot;foo&quot; =&gt; &quot;bar&quot;}, {&quot;hello&quot; =&gt; &quot;world&quot;}]</span></code></pre></div>
+<span class="c"># =&gt; [{&quot;foo&quot; =&gt; &quot;bar&quot;}, {&quot;hello&quot; =&gt; &quot;world&quot;}]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/yaml.cr#L87" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/yaml.cr#L99" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2341,7 +2417,7 @@ hello: world</code></pre>
 Once defined, <code><a href="Object.html#from_yaml%28string%3AString%29-class-method">Object#from_yaml</a></code> populates properties of the class from the
 YAML document.</p>
 
-<pre><code><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
+<pre><code class='language-crystal'><span class="k">require</span> <span class="s">&quot;yaml&quot;</span>
 
 <span class="k">class</span> <span class="t">Employee</span>
   <span class="t">YAML</span>.mapping({
@@ -2360,7 +2436,7 @@ employee.name <span class="c"># =&gt; &quot;Jenny&quot;</span></code></pre>
 <p>Attributes not mapped with <code><a href="YAML.html">YAML</a>.mapping</code> are not defined as properties.
 Also, missing attributes raise a <code><a href="YAML/ParseException.html">ParseException</a></code>.</p>
 
-<pre><code>employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<span class="s">&quot;title: Manager\nname: John\nage: 30&quot;</span>)
+<pre><code class='language-crystal'>employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<span class="s">&quot;title: Manager\nname: John\nage: 30&quot;</span>)
 employee.age <span class="c"># =&gt; undefined method &apos;age&apos;.</span>
 
 employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<span class="s">&quot;title: Manager&quot;</span>)
@@ -2368,7 +2444,7 @@ employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<spa
 
 <p>You can also define attributes for each property.</p>
 
-<pre><code><span class="k">class</span> <span class="t">Employee</span>
+<pre><code class='language-crystal'><span class="k">class</span> <span class="t">Employee</span>
   <span class="t">YAML</span>.mapping({
     title: <span class="t">String</span>,
     name:  {
@@ -2386,7 +2462,7 @@ employee <span class="o">=</span> <span class="t">Employee</span>.from_yaml(<spa
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/mapping.cr#L58" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/mapping.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>

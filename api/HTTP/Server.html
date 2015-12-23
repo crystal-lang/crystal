@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="../HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="../HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="../HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="../HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="../OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="../OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="../YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="../YAML/ParseException.html">ParseException</a>
       
@@ -2178,7 +2188,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr" target="_blank">http/server/server.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr" target="_blank">http/server/server.cr</a>
     
     <br/>
   
@@ -2192,6 +2202,8 @@
     
       <li class="entry-summary">
         <a href="#build_middleware%28handlers%2Clast_handler%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3ARequest-%3EResponse%29-class-method" class="signature"><strong>.build_middleware</strong>(handlers, last_handler = <span class="n">nil</span> : Request -> Response)</a>
+        
+          <div class="summary"><p>Builds all handlers as the middleware for HTTP::Server.</p></div>
         
       </li>
     
@@ -2249,11 +2261,6 @@
     
       <li class="entry-summary">
         <a href="#listen-instance-method" class="signature"><strong>#listen</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#listen_fork%28workers%3D%3Cspanclass%3D%22n%22%3E8%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#listen_fork</strong>(workers = <span class="n">8</span>)</a>
         
       </li>
     
@@ -2329,6 +2336,10 @@
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="../Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="../Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2393,6 +2404,10 @@
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
   
+    <a href="../Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
+  
     <a href="../Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
     try</a>
@@ -2455,10 +2470,12 @@
         <a class="method-permalink" href="#build_middleware%28handlers%2Clast_handler%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3ARequest-%3EResponse%29-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Builds all handlers as the middleware for HTTP::Server.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L159" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L168" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2474,7 +2491,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L89" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L108" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2490,7 +2507,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L85" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L104" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2506,7 +2523,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L81" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L100" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2522,7 +2539,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L77" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L96" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2538,7 +2555,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L115" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2554,7 +2571,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L93" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L112" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2570,7 +2587,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L100" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L119" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2586,7 +2603,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L104" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L123" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2607,7 +2624,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L125" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L133" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2623,23 +2640,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L107" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="listen_fork(workers=&lt;spanclass=&quot;n&quot;&gt;8&lt;/span&gt;)-instance-method">
-      <div class="signature">
-        
-        def <strong>listen_fork</strong>(workers = <span class="n">8</span>)
-
-        <a class="method-permalink" href="#listen_fork%28workers%3D%3Cspanclass%3D%22n%22%3E8%3C%2Fspan%3E%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/http/server/server.cr#L114" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/http/server/server.cr#L126" target="_blank">View source</a>]
         
       </div>
     </div>

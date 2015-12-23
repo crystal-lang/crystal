@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2167,12 +2177,12 @@
   <p>The Nil type has only one possible value: <code>nil</code>.</p>
 
 <p><code>nil</code> is commonly used to represent the absence of a value.
-For example, <code><a href="String.html#index%28search%3AChar%2Coffset%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method">String#index</a></code> returns the position of the character or <code>nil</code> if it's not
+For example, <code><a href="String.html#index%28search%3AString%2Coffset%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method">String#index</a></code> returns the position of the character or <code>nil</code> if it's not
 in the string:</p>
 
 <pre><code>str <span class="o">=</span> <span class="s">&quot;Hello world&quot;</span>
-str.index <span class="s">'e'</span> <span class="c">#=&gt; 1</span>
-str.index <span class="s">'a'</span> <span class="c">#=&gt; nil</span></code></pre>
+str.index <span class="s">'e'</span> <span class="c"># =&gt; 1</span>
+str.index <span class="s">'a'</span> <span class="c"># =&gt; nil</span></code></pre>
 
 <p>In the above example, trying to invoke a method on the returned value will
 give a compile time error unless both <code><a href="Int32.html">Int32</a></code> and <code><a href="Nil.html">Nil</a></code> define that method:</p>
@@ -2216,12 +2226,17 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr" target="_blank">nil.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr" target="_blank">nil.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
     
     <br/>
   
@@ -2340,6 +2355,11 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
       </li>
     
       <li class="entry-summary">
+        <a href="#to_yaml%28yaml%3AYAML%3A%3AGenerator%29-instance-method" class="signature"><strong>#to_yaml</strong>(yaml : YAML::Generator)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#try%28%26block%29-instance-method" class="signature"><strong>#try</strong>(&block)</a>
         
           <div class="summary"><p>Doesn't yields to the block.</p></div>
@@ -2387,6 +2407,10 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
     <a href="Object.html#%21%3D%28other%29-instance-method" class="tooltip">
       <span>!=(other)</span>
     !=</a>, 
+  
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
   
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
@@ -2451,6 +2475,10 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2517,7 +2545,7 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/from_yaml.cr#L21" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/from_yaml.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2533,7 +2561,7 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/from_json.cr#L13" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/from_json.cr#L13" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2556,7 +2584,7 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L76" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L76" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2574,7 +2602,7 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L56" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2592,7 +2620,7 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L81" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L81" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2610,7 +2638,7 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L96" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2628,7 +2656,7 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L101" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L101" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2646,7 +2674,7 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L71" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L71" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2664,7 +2692,7 @@ idx3 <span class="o">=</span> str.index(<span class="s">'o'</span>).not_nil!</co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L111" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L111" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2684,7 +2712,7 @@ object id for nil.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L46" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2702,7 +2730,7 @@ object id for nil.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2720,7 +2748,7 @@ object id for nil.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L61" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2736,7 +2764,7 @@ object id for nil.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr#L148" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr#L148" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2754,7 +2782,7 @@ object id for nil.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L91" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L91" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2772,7 +2800,23 @@ object id for nil.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L86" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L86" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_yaml(yaml:YAML::Generator)-instance-method">
+      <div class="signature">
+        
+        def <strong>to_yaml</strong>(yaml : <a href="YAML/Generator.html">YAML::Generator</a>)
+
+        <a class="method-permalink" href="#to_yaml%28yaml%3AYAML%3A%3AGenerator%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr#L89" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2790,7 +2834,7 @@ object id for nil.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/nil.cr#L106" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/nil.cr#L106" target="_blank">View source</a>]
         
       </div>
     </div>

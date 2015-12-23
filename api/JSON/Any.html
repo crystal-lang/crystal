@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="../HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="../HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="../HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="../HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="../OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="../OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="../YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="../YAML/ParseException.html">ParseException</a>
       
@@ -2152,19 +2162,31 @@
 <div id="main-content">
 <h1 class="type-name">
 
-  <span class="kind">module</span> JSON::Any
+  <span class="kind">struct</span> JSON::Any
 
 </h1>
 
+
+  <ul class="superclass-hierarchy"><li class="superclass"><a href="../JSON/Any.html">JSON::Any</a></li><li class="superclass"><a href="../Struct.html">Struct</a></li><li class="superclass"><a href="../Value.html">Value</a></li><li class="superclass"><a href="../Object.html">Object</a></li></ul>
 
 
 
 
   <h2>Overview</h2>
 
-  <p>You can use <code><a href="../JSON/Any.html">JSON::Any</a></code> inside a <code><a href="../JSON.html#mapping%28properties%2Cstrict%3Dfalse%29-macro">JSON#mapping</a></code> to make a property be parsed
-to a <code><a href="../JSON/Type.html">JSON::Type</a></code>. This is useful if you have properties with dynamic content
-that must later be inspected at runtime.</p>
+  <p><code><a href="../JSON/Any.html">JSON::Any</a></code> is a convenient wrapper around all possible JSON types (<code><a href="../JSON/Type.html">JSON::Type</a></code>)
+and can be used for traversing dynamic or unknown JSON structures.</p>
+
+<pre><code>obj <span class="o">=</span> <span class="t">JSON</span>.parse(<span class="s">%({&quot;access&quot;: [{&quot;name&quot;: &quot;mapping&quot;, &quot;speed&quot;: &quot;fast&quot;}, {&quot;name&quot;: &quot;any&quot;, &quot;speed&quot;: &quot;slow&quot;}]})</span>)
+obj[<span class="s">&quot;access&quot;</span>][<span class="n">1</span>][<span class="s">&quot;name&quot;</span>].as_s  <span class="c"># =&gt; &quot;any&quot;</span>
+obj[<span class="s">&quot;access&quot;</span>][<span class="n">1</span>][<span class="s">&quot;speed&quot;</span>].as_s <span class="c"># =&gt; &quot;slow&quot;</span></code></pre>
+
+<p>Note that methods used to traverse a JSON structure, <code><a href="../JSON/Any.html#%5B%5D%28index%3AInt%29%3AJSON%3A%3AAny-instance-method">#[]</a></code>, <code><a href="../JSON/Any.html#%5B%5D%3F%28index%3AInt%29%3AJSON%3A%3AAny%7CNil-instance-method">#[]?</a></code> and <code><a href="../JSON/Any.html#each%28%26block%29-instance-method">#each</a></code>,
+always return a <code><a href="../JSON/Any.html">JSON::Any</a></code> to allow further traversal. To convert them to <code><a href="../String.html">String</a></code>,
+<code><a href="../Int32.html">Int32</a></code>, etc., use the "as_" methods, such as <code><a href="../JSON/Any.html#as_s%3AString-instance-method">#as_s</a></code>, <code><a href="../JSON/Any.html#as_i%3AInt32-instance-method">#as_i</a></code>, which perform
+a type check against the raw underlying value. This means that invoking <code><a href="../JSON/Any.html#as_s%3AString-instance-method">#as_s</a></code>
+when the underlying value is not a String will raise: the value won't automatically
+be converted (parsed) to a String.</p>
 
 
 
@@ -2182,7 +2204,7 @@ that must later be inspected at runtime.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/any.cr" target="_blank">json/any.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr" target="_blank">json/any.cr</a>
     
     <br/>
   
@@ -2197,7 +2219,133 @@ that must later be inspected at runtime.</p>
       <li class="entry-summary">
         <a href="#new%28pull%3AJSON%3A%3APullParser%29-class-method" class="signature"><strong>.new</strong>(pull : JSON::PullParser)</a>
         
-          <div class="summary"><p>Reads a <code><a href="../JSON/Type.html">JSON::Type</a></code> value from the given pull parser.</p></div>
+          <div class="summary"><p>Reads a <code><a href="../JSON/Any.html">JSON::Any</a></code> value from the given pull parser.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28raw%3AJSON%3A%3AType%29-class-method" class="signature"><strong>.new</strong>(raw : JSON::Type)</a>
+        
+          <div class="summary"><p>Creates a <code><a href="../JSON/Any.html">JSON::Any</a></code> that wraps the given <code><a href="../JSON/Type.html">JSON::Type</a></code>.</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <h2>Instance Method Summary</h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28index%3AInt%29%3AJSON%3A%3AAny-instance-method" class="signature"><strong>#[]</strong>(index : Int) : JSON::Any</a>
+        
+          <div class="summary"><p>Assumes the underlying value is an Array and returns the element at the given index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28key%3AString%29%3AJSON%3A%3AAny-instance-method" class="signature"><strong>#[]</strong>(key : String) : JSON::Any</a>
+        
+          <div class="summary"><p>Assumes the underlying value is a Hash and returns the element with the given key.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%3F%28index%3AInt%29%3AJSON%3A%3AAny%7CNil-instance-method" class="signature"><strong>#[]?</strong>(index : Int) : JSON::Any | Nil</a>
+        
+          <div class="summary"><p>Assumes the underlying value is an Array and returns the element at the given index, or nil if out of bounds.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%3F%28key%3AString%29%3AJSON%3A%3AAny%7CNil-instance-method" class="signature"><strong>#[]?</strong>(key : String) : JSON::Any | Nil</a>
+        
+          <div class="summary"><p>Assumes the underlying value is a Hash and returns the element with the given key, or nil if the key is not present.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_a%3AArray%28Type%29-instance-method" class="signature"><strong>#as_a</strong> : Array(Type)</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Array.html">Array</a></code>, and returns its value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_bool%3ABool-instance-method" class="signature"><strong>#as_bool</strong> : Bool</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Bool.html">Bool</a></code>, and returns its value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_f%3AFloat64-instance-method" class="signature"><strong>#as_f</strong> : Float64</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Float.html">Float</a></code>, and returns its value as an <code><a href="../Float64.html">Float64</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_f32%3AFloat32-instance-method" class="signature"><strong>#as_f32</strong> : Float32</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Float.html">Float</a></code>, and returns its value as an <code><a href="../Float32.html">Float32</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_h%3AHash%28String%2CType%29-instance-method" class="signature"><strong>#as_h</strong> : Hash(String, Type)</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Hash.html">Hash</a></code>, and returns its value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_i%3AInt32-instance-method" class="signature"><strong>#as_i</strong> : Int32</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Int.html">Int</a></code>, and returns its value as an <code><a href="../Int32.html">Int32</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_i64%3AInt64-instance-method" class="signature"><strong>#as_i64</strong> : Int64</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Int.html">Int</a></code>, and returns its value as an <code><a href="../Int64.html">Int64</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_nil%3ANil-instance-method" class="signature"><strong>#as_nil</strong> : Nil</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Nil.html">Nil</a></code>, and returns <code>nil</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_s%3AString-instance-method" class="signature"><strong>#as_s</strong> : String</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../String.html">String</a></code>, and returns its value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
+        
+          <div class="summary"><p>Assumes the underlying value is an <code><a href="../Array.html">Array</a></code> or <code><a href="../Hash.html">Hash</a></code> and yields each of the elements or key/values, always as <code><a href="../JSON/Any.html">JSON::Any</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#raw-instance-method" class="signature"><strong>#raw</strong></a>
+        
+          <div class="summary"><p>Returns the raw underlying value, a <code><a href="../JSON/Type.html">JSON::Type</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#size%3AInt-instance-method" class="signature"><strong>#size</strong> : Int</a>
+        
+          <div class="summary"><p>Assumes the underlying value is an <code><a href="../Array.html">Array</a></code> or <code><a href="../Hash.html">Hash</a></code> and returns its size.</p></div>
         
       </li>
     
@@ -2207,9 +2355,188 @@ that must later be inspected at runtime.</p>
 
 
 
-
-
 <div class="methods-inherited">
+  
+    
+
+  <h3>Instance methods inherited from struct <code><a href="../Struct.html">Struct</a></code></h3>
+  
+    <a href="../Struct.html#%3D%3D%28other%3Aself%29%3ABool-instance-method" class="tooltip">
+      <span>==(other : self) : Bool</span>
+    ==</a>, 
+  
+    <a href="../Struct.html#hash%3AInt32-instance-method" class="tooltip">
+      <span>hash : Int32</span>
+    hash</a>, 
+  
+    <a href="../Struct.html#inspect%28io%3AIO%29%3ANil-instance-method" class="tooltip">
+      <span>inspect(io : IO) : Nil</span>
+    inspect</a>, 
+  
+    <a href="../Struct.html#to_s%28io%29-instance-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
+    
+
+
+  
+    
+
+  <h3>Instance methods inherited from struct <code><a href="../Value.html">Value</a></code></h3>
+  
+    <a href="../Value.html#%21-instance-method" class="tooltip">
+      <span>!</span>
+    !</a>, 
+  
+    <a href="../Value.html#%3D%3D%28other%29-instance-method" class="tooltip">
+      <span>==(other)</span>
+    ==</a>, 
+  
+    <a href="../Value.html#nil%3F-instance-method" class="tooltip">
+      <span>nil?</span>
+    nil?</a>
+  
+
+
+    
+
+
+  
+    
+
+  <h3>Instance methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  
+    <a href="../Object.html#%21-instance-method" class="tooltip">
+      <span>!</span>
+    !</a>, 
+  
+    <a href="../Object.html#%21%3D%28other%29-instance-method" class="tooltip">
+      <span>!=(other)</span>
+    !=</a>, 
+  
+    <a href="../Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
+    <a href="../Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
+      <span><=>(other)</span>
+    <=></a>, 
+  
+    <a href="../Object.html#%3D%3D%28other%29-instance-method" class="tooltip">
+      <span>==(other)</span>
+    ==</a>, 
+  
+    <a href="../Object.html#%3D%3D%3D%28other%29-instance-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="../Object.html#%3D%7E%28other%29-instance-method" class="tooltip">
+      <span>=~(other)</span>
+    =~</a>, 
+  
+    <a href="../Object.html#class-instance-method" class="tooltip">
+      <span>class</span>
+    class</a>, 
+  
+    <a href="../Object.html#clone-instance-method" class="tooltip">
+      <span>clone</span>
+    clone</a>, 
+  
+    <a href="../Object.html#crystal_type_id-instance-method" class="tooltip">
+      <span>crystal_type_id</span>
+    crystal_type_id</a>, 
+  
+    <a href="../Object.html#dup-instance-method" class="tooltip">
+      <span>dup</span>
+    dup</a>, 
+  
+    <a href="../Object.html#hash-instance-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Object.html#inspect-instance-method" class="tooltip">
+      <span>inspect<br/>inspect(io : IO)</span>
+    inspect</a>, 
+  
+    <a href="../Object.html#itself-instance-method" class="tooltip">
+      <span>itself</span>
+    itself</a>, 
+  
+    <a href="../Object.html#not_nil%21-instance-method" class="tooltip">
+      <span>not_nil!</span>
+    not_nil!</a>, 
+  
+    <a href="../Object.html#tap%28%26block%29-instance-method" class="tooltip">
+      <span>tap(&block)</span>
+    tap</a>, 
+  
+    <a href="../Object.html#to_json-instance-method" class="tooltip">
+      <span>to_json</span>
+    to_json</a>, 
+  
+    <a href="../Object.html#to_pretty_json%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_pretty_json(io : IO)<br/>to_pretty_json</span>
+    to_pretty_json</a>, 
+  
+    <a href="../Object.html#to_s-instance-method" class="tooltip">
+      <span>to_s<br/>to_s(io : IO)</span>
+    to_s</a>, 
+  
+    <a href="../Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
+  
+    <a href="../Object.html#try%28%26block%29-instance-method" class="tooltip">
+      <span>try(&block)</span>
+    try</a>
+  
+
+
+    
+
+  <h3>Class methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
+  
+    <a href="../Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
+      <span>==(other : Class)</span>
+    ==</a>, 
+  
+    <a href="../Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
+      <span>===(other)</span>
+    ===</a>, 
+  
+    <a href="../Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
+      <span>cast(other) : self</span>
+    cast</a>, 
+  
+    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
+      <span>from_json(string_or_io)</span>
+    from_json</a>, 
+  
+    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
+      <span>from_yaml(string : String)</span>
+    from_yaml</a>, 
+  
+    <a href="../Object.html#hash-class-method" class="tooltip">
+      <span>hash</span>
+    hash</a>, 
+  
+    <a href="../Object.html#inspect%28io%29-class-method" class="tooltip">
+      <span>inspect(io)</span>
+    inspect</a>, 
+  
+    <a href="../Object.html#name%3AString-class-method" class="tooltip">
+      <span>name : String</span>
+    name</a>, 
+  
+    <a href="../Object.html#to_s%28io%29-class-method" class="tooltip">
+      <span>to_s(io)</span>
+    to_s</a>
+  
+
+
   
 </div>
 
@@ -2224,18 +2551,339 @@ that must later be inspected at runtime.</p>
         <a class="method-permalink" href="#new%28pull%3AJSON%3A%3APullParser%29-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Reads a <code><a href="../JSON/Type.html">JSON::Type</a></code> value from the given pull parser.</p></div>
+        <div class="doc"><p>Reads a <code><a href="../JSON/Any.html">JSON::Any</a></code> value from the given pull parser.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/any.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L18" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="new(raw:JSON::Type)-class-method">
+      <div class="signature">
+        
+        def self.<strong>new</strong>(raw : <a href="../JSON/Type.html">JSON::Type</a>)
+
+        <a class="method-permalink" href="#new%28raw%3AJSON%3A%3AType%29-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Creates a <code><a href="../JSON/Any.html">JSON::Any</a></code> that wraps the given <code><a href="../JSON/Type.html">JSON::Type</a></code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L51" target="_blank">View source</a>]
         
       </div>
     </div>
   
 
 
+
+  <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail" id="[](index:Int):JSON::Any-instance-method">
+      <div class="signature">
+        
+        def <strong>[]</strong>(index : <a href="../Int.html">Int</a>) : <a href="../JSON/Any.html">JSON::Any</a>
+
+        <a class="method-permalink" href="#%5B%5D%28index%3AInt%29%3AJSON%3A%3AAny-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Assumes the underlying value is an Array and returns the element
+at the given index.
+Raises if the underlying value is not an Array.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L71" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="[](key:String):JSON::Any-instance-method">
+      <div class="signature">
+        
+        def <strong>[]</strong>(key : <a href="../String.html">String</a>) : <a href="../JSON/Any.html">JSON::Any</a>
+
+        <a class="method-permalink" href="#%5B%5D%28key%3AString%29%3AJSON%3A%3AAny-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Assumes the underlying value is a Hash and returns the element
+with the given key.
+Raises if the underlying value is not a Hash.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L96" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="[]?(index:Int):JSON::Any|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>[]?</strong>(index : <a href="../Int.html">Int</a>) : <a href="../JSON/Any.html">JSON::Any</a> | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#%5B%5D%3F%28index%3AInt%29%3AJSON%3A%3AAny%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Assumes the underlying value is an Array and returns the element
+at the given index, or nil if out of bounds.
+Raises if the underlying value is not an Array.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L83" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="[]?(key:String):JSON::Any|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>[]?</strong>(key : <a href="../String.html">String</a>) : <a href="../JSON/Any.html">JSON::Any</a> | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#%5B%5D%3F%28key%3AString%29%3AJSON%3A%3AAny%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Assumes the underlying value is a Hash and returns the element
+with the given key, or nil if the key is not present.
+Raises if the underlying value is not a Hash.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L108" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_a:Array(Type)-instance-method">
+      <div class="signature">
+        
+        def <strong>as_a</strong> : <a href="../Array.html">Array</a>(<a href="../JSON/Type.html">Type</a>)
+
+        <a class="method-permalink" href="#as_a%3AArray%28Type%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Array.html">Array</a></code>, and returns its value. Raises otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L172" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_bool:Bool-instance-method">
+      <div class="signature">
+        
+        def <strong>as_bool</strong> : <a href="../Bool.html">Bool</a>
+
+        <a class="method-permalink" href="#as_bool%3ABool-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Bool.html">Bool</a></code>, and returns its value. Raises otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L142" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_f:Float64-instance-method">
+      <div class="signature">
+        
+        def <strong>as_f</strong> : <a href="../Float64.html">Float64</a>
+
+        <a class="method-permalink" href="#as_f%3AFloat64-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Float.html">Float</a></code>, and returns its value as an <code><a href="../Float64.html">Float64</a></code>. Raises otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L157" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_f32:Float32-instance-method">
+      <div class="signature">
+        
+        def <strong>as_f32</strong> : <a href="../Float32.html">Float32</a>
+
+        <a class="method-permalink" href="#as_f32%3AFloat32-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Float.html">Float</a></code>, and returns its value as an <code><a href="../Float32.html">Float32</a></code>. Raises otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L162" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_h:Hash(String,Type)-instance-method">
+      <div class="signature">
+        
+        def <strong>as_h</strong> : <a href="../Hash.html">Hash</a>(<a href="../String.html">String</a>, <a href="../JSON/Type.html">Type</a>)
+
+        <a class="method-permalink" href="#as_h%3AHash%28String%2CType%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Hash.html">Hash</a></code>, and returns its value. Raises otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L177" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_i:Int32-instance-method">
+      <div class="signature">
+        
+        def <strong>as_i</strong> : <a href="../Int32.html">Int32</a>
+
+        <a class="method-permalink" href="#as_i%3AInt32-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Int.html">Int</a></code>, and returns its value as an <code><a href="../Int32.html">Int32</a></code>. Raises otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L147" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_i64:Int64-instance-method">
+      <div class="signature">
+        
+        def <strong>as_i64</strong> : <a href="../Int64.html">Int64</a>
+
+        <a class="method-permalink" href="#as_i64%3AInt64-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Int.html">Int</a></code>, and returns its value as an <code><a href="../Int64.html">Int64</a></code>. Raises otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L152" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_nil:Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>as_nil</strong> : <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#as_nil%3ANil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Nil.html">Nil</a></code>, and returns <code>nil</code>. Raises otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L137" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_s:String-instance-method">
+      <div class="signature">
+        
+        def <strong>as_s</strong> : <a href="../String.html">String</a>
+
+        <a class="method-permalink" href="#as_s%3AString-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../String.html">String</a></code>, and returns its value. Raises otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L167" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each(&amp;block)-instance-method">
+      <div class="signature">
+        
+        def <strong>each</strong>(&block)
+
+        <a class="method-permalink" href="#each%28%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Assumes the underlying value is an <code><a href="../Array.html">Array</a></code> or <code><a href="../Hash.html">Hash</a></code> and yields each
+of the elements or key/values, always as <code><a href="../JSON/Any.html">JSON::Any</a></code>.
+Raises if the underlying value is not an <code><a href="../Array.html">Array</a></code> or <code><a href="../Hash.html">Hash</a></code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L121" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="raw-instance-method">
+      <div class="signature">
+        
+        def <strong>raw</strong>
+
+        <a class="method-permalink" href="#raw-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the raw underlying value, a <code><a href="../JSON/Type.html">JSON::Type</a></code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L48" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="size:Int-instance-method">
+      <div class="signature">
+        
+        def <strong>size</strong> : <a href="../Int.html">Int</a>
+
+        <a class="method-permalink" href="#size%3AInt-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Assumes the underlying value is an <code><a href="../Array.html">Array</a></code> or <code><a href="../Hash.html">Hash</a></code> and returns
+its size.
+Raises if the underlying value is not an <code><a href="../Array.html">Array</a></code> or <code><a href="../Hash.html">Hash</a></code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/any.cr#L57" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
 
 
 

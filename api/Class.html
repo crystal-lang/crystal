@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2178,7 +2188,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr" target="_blank">class.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr" target="_blank">class.cr</a>
     
     <br/>
   
@@ -2324,9 +2334,9 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#delegate%28method%2Cto_object%29-macro" class="signature"><strong>delegate</strong>(method, to_object)</a>
+        <a href="#delegate%28method%2C%2Aother_methods%2Cto_object%29-macro" class="signature"><strong>delegate</strong>(method, *other_methods, to_object)</a>
         
-          <div class="summary"><p>Delegate method to to_object.</p></div>
+          <div class="summary"><p>Delegate methods to to_object.</p></div>
         
       </li>
     
@@ -2426,6 +2436,10 @@
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2489,6 +2503,10 @@
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2555,7 +2573,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L10" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L10" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2571,7 +2589,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L14" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2599,7 +2617,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L39" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L39" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2615,7 +2633,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/from_json.cr#L1" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/from_json.cr#L1" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2631,7 +2649,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/from_yaml.cr#L1" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/from_yaml.cr#L1" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2647,7 +2665,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2663,7 +2681,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L2" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L2" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2678,12 +2696,12 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       
         <div class="doc"><p>Returns the name of this class.</p>
 
-<pre><code><span class="t">String</span>.name <span class="c">#=&gt; &quot;String&quot;</span></code></pre></div>
+<pre><code><span class="t">String</span>.name <span class="c"># =&gt; &quot;String&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L23" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L23" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2699,7 +2717,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L43" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L43" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2720,7 +2738,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L10" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L10" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2736,7 +2754,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L14" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2764,7 +2782,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L39" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L39" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2780,7 +2798,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/from_json.cr#L1" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/from_json.cr#L1" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2796,7 +2814,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/from_yaml.cr#L1" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/from_yaml.cr#L1" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2812,7 +2830,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2828,7 +2846,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L2" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L2" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2843,12 +2861,12 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       
         <div class="doc"><p>Returns the name of this class.</p>
 
-<pre><code><span class="t">String</span>.name <span class="c">#=&gt; &quot;String&quot;</span></code></pre></div>
+<pre><code><span class="t">String</span>.name <span class="c"># =&gt; &quot;String&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L23" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L23" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2864,7 +2882,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/class.cr#L43" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/class.cr#L43" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2897,7 +2915,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L509" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L520" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2926,7 +2944,7 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L532" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L543" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2952,20 +2970,22 @@ number <span class="o">=</span> [<span class="n">99</span>, <span class="s">&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L482" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L493" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="delegate(method,to_object)-macro">
+    <div class="entry-detail" id="delegate(method,*other_methods,to_object)-macro">
       <div class="signature">
         
-        macro <strong>delegate</strong>(method, to_object)
+        macro <strong>delegate</strong>(method, *other_methods, to_object)
 
-        <a class="method-permalink" href="#delegate%28method%2Cto_object%29-macro">#</a>
+        <a class="method-permalink" href="#delegate%28method%2C%2Aother_methods%2Cto_object%29-macro">#</a>
       </div>
       
-        <div class="doc"><p>Delegate method to to_object.</p>
+        <div class="doc"><p>Delegate methods to to_object.</p>
+
+<p>Syntax is: delegate method1, [method2, ..., ], to_object</p>
 
 <p>Note that due to current language limitations this is only useful
 when neither named arguments nor blocks are involved.</p>
@@ -2976,16 +2996,19 @@ when neither named arguments nor blocks are involved.</p>
 
   delegate downcase, @string
   delegate gsub, @string
+  delegate empty?, capitalize, @string
 <span class="k">end</span>
 
 wrapper <span class="o">=</span> <span class="t">StringWrapper</span>.<span class="k">new</span> <span class="s">&quot;HELLO&quot;</span>
-wrapper.downcase <span class="c">#=&gt; &quot;hello&quot;</span>
-wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <span class="c">#=&gt; &quot;HALLO&quot;</span></code></pre></div>
+wrapper.downcase       <span class="c"># =&gt; &quot;hello&quot;</span>
+wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <span class="c"># =&gt; &quot;HALLO&quot;</span>
+wrapper.empty?         <span class="c"># =&gt; false</span>
+wrapper.capitalize     <span class="c"># =&gt; &quot;Hello&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L465" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L470" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3008,13 +3031,13 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <
 <span class="k">end</span>
 
 wrapper <span class="o">=</span> <span class="t">StringWrapper</span>.<span class="k">new</span> <span class="s">&quot;HELLO&quot;</span>
-wrapper.downcase <span class="c">#=&gt; &quot;hello&quot;</span>
-wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <span class="c">#=&gt; &quot;HALLO&quot;</span></code></pre></div>
+wrapper.downcase       <span class="c"># =&gt; &quot;hello&quot;</span>
+wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <span class="c"># =&gt; &quot;HALLO&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L550" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L561" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3052,7 +3075,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L208" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L208" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3094,7 +3117,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L249" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L249" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3132,7 +3155,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L290" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L290" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3173,7 +3196,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L368" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L368" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3218,7 +3241,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L407" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L407" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3259,7 +3282,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L442" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L442" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3296,7 +3319,7 @@ wrapper.gsub(<span class="s">/E/</span>, <span class="s">&quot;A&quot;</span>) <
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/object.cr#L326" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/object.cr#L326" target="_blank">View source</a>]
         
       </div>
     </div>

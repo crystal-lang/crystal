@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="../HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="../HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="../HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="../HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="../OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="../OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="../YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="../YAML/ParseException.html">ParseException</a>
       
@@ -2164,35 +2174,35 @@
 
   <h2>Overview</h2>
 
-  <p><code><a href="../Time/Span.html">Time::Span</a></code> represents one period of time. </p>
+  <p><code><a href="../Time/Span.html">Time::Span</a></code> represents one period of time.</p>
 
-<p>A <code><a href="../Time/Span.html">Time::Span</a></code> initializes with the specified period. 
-Different numbers of arguments generates a <code><a href="../Time/Span.html">Time::Span</a></code> in different length. 
+<p>A <code><a href="../Time/Span.html">Time::Span</a></code> initializes with the specified period.
+Different numbers of arguments generates a <code><a href="../Time/Span.html">Time::Span</a></code> in different length.
 Check all <code><a href="../Time/Span.html#new%28days%2Chours%2Cminutes%2Cseconds%2Cmilliseconds%29-class-method">#new</a></code> methods for details.</p>
 
-<pre><code><span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">10000</span>)          <span class="c">#=&gt; 0:0:0.010000</span>
-<span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">10</span>, <span class="n">10</span>, <span class="n">10</span>)     <span class="c">#=&gt; 10:10:10</span>
-<span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">10</span>, <span class="n">10</span>, <span class="n">10</span>, <span class="n">10</span>) <span class="c">#=&gt; 10.10:10:10</span></code></pre>
+<pre><code class='language-crystal'><span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">10000</span>)          <span class="c"># =&gt; 0:0:0.010000</span>
+<span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">10</span>, <span class="n">10</span>, <span class="n">10</span>)     <span class="c"># =&gt; 10:10:10</span>
+<span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">10</span>, <span class="n">10</span>, <span class="n">10</span>, <span class="n">10</span>) <span class="c"># =&gt; 10.10:10:10</span></code></pre>
 
 <p>Calculation between <code><a href="../Time.html">Time</a></code> also returns a <code><a href="../Time/Span.html">Time::Span</a></code>.</p>
 
-<pre><code>span <span class="o">=</span> <span class="t">Time</span>.<span class="k">new</span>(<span class="n">2015</span>, <span class="n">10</span>, <span class="n">10</span>) <span class="o">-</span> <span class="t">Time</span>.<span class="k">new</span>(<span class="n">2015</span>, <span class="n">9</span>, <span class="n">10</span>)
-span       <span class="c">#=&gt; 30.00:00:00</span>
-span.<span class="k">class</span> <span class="c">#=&gt; Time::Span</span></code></pre>
+<pre><code class='language-crystal'>span <span class="o">=</span> <span class="t">Time</span>.<span class="k">new</span>(<span class="n">2015</span>, <span class="n">10</span>, <span class="n">10</span>) <span class="o">-</span> <span class="t">Time</span>.<span class="k">new</span>(<span class="n">2015</span>, <span class="n">9</span>, <span class="n">10</span>)
+span       <span class="c"># =&gt; 30.00:00:00</span>
+span.<span class="k">class</span> <span class="c"># =&gt; Time::Span</span></code></pre>
 
 <p>Inspection:</p>
 
-<pre><code>span <span class="o">=</span> <span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">20</span>, <span class="n">10</span>, <span class="n">10</span>) 
-span.hours   <span class="c">#=&gt; 20</span>
-span.minutes <span class="c">#=&gt; 10</span>
-span.seconds <span class="c">#=&gt; 10</span></code></pre>
+<pre><code class='language-crystal'>span <span class="o">=</span> <span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">20</span>, <span class="n">10</span>, <span class="n">10</span>)
+span.hours   <span class="c"># =&gt; 20</span>
+span.minutes <span class="c"># =&gt; 10</span>
+span.seconds <span class="c"># =&gt; 10</span></code></pre>
 
 <p>Calculation:</p>
 
-<pre><code>a <span class="o">=</span> <span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">20</span>, <span class="n">10</span>, <span class="n">10</span>)   
+<pre><code class='language-crystal'>a <span class="o">=</span> <span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">20</span>, <span class="n">10</span>, <span class="n">10</span>)
 b <span class="o">=</span> <span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">10</span>, <span class="n">10</span>, <span class="n">10</span>)
-c <span class="o">=</span> a <span class="o">-</span> b <span class="c">#=&gt; 10:00:00</span>
-c.hours   <span class="c">#=&gt; 10</span></code></pre>
+c <span class="o">=</span> a <span class="o">-</span> b <span class="c"># =&gt; 10:00:00</span>
+c.hours   <span class="c"># =&gt; 10</span></code></pre>
 
 
 
@@ -2217,7 +2227,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr" target="_blank">time/span.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr" target="_blank">time/span.cr</a>
     
     <br/>
   
@@ -2540,6 +2550,10 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="../Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="../Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2603,6 +2617,10 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
     <a href="../Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="../Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="../Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2669,7 +2687,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L274" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L274" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2685,7 +2703,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L72" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L72" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2701,7 +2719,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L68" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L68" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2717,7 +2735,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L64" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L64" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2733,7 +2751,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L60" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L60" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2754,7 +2772,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L217" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L217" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2770,7 +2788,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L213" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L213" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2786,7 +2804,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L208" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L208" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2802,7 +2820,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L198" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L198" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2818,7 +2836,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L203" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L203" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2834,7 +2852,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L222" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L222" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2850,7 +2868,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L227" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L227" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2866,7 +2884,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L186" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L186" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2882,7 +2900,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L194" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L194" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2898,7 +2916,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L130" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L130" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2914,7 +2932,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L182" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L182" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2930,7 +2948,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L190" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L190" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2946,7 +2964,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L134" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L134" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2962,7 +2980,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L231" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L231" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2978,7 +2996,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L146" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L146" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2994,7 +3012,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L138" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L138" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3010,7 +3028,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L142" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L142" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3026,7 +3044,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L58" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3042,7 +3060,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L170" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L170" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3058,7 +3076,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L174" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L174" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3074,7 +3092,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L154" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L154" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3090,7 +3108,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L158" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L158" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3106,7 +3124,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L178" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L178" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3122,7 +3140,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L162" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L162" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3138,7 +3156,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L166" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L166" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3154,7 +3172,7 @@ c.hours   <span class="c">#=&gt; 10</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L150" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L150" target="_blank">View source</a>]
         
       </div>
     </div>

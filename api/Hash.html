@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2164,7 +2174,7 @@
 
   <h2>Overview</h2>
 
-  <p>A <code><a href="Hash.html">Hash</a></code> represents a mapping of keys to values. </p>
+  <p>A <code><a href="Hash.html">Hash</a></code> represents a mapping of keys to values.</p>
 
 <p>See the <a href="http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html" target="_blank">official docs</a> for the basics.</p>
 
@@ -2184,12 +2194,17 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr" target="_blank">hash.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr" target="_blank">hash.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
     
     <br/>
   
@@ -2234,6 +2249,8 @@
       <li class="entry-summary">
         <a href="#zip%28ary1%3AArray%28K%29%2Cary2%3AArray%28V%29%29-class-method" class="signature"><strong>.zip</strong>(ary1 : Array(K), ary2 : Array(V))</a>
         
+          <div class="summary"><p>Zips two arrays into a <code><a href="Hash.html">Hash</a></code>, taking keys from <em>ary1</em> and values from <em>ary2</em>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -2258,7 +2275,7 @@
       <li class="entry-summary">
         <a href="#%5B%5D%28key%29-instance-method" class="signature"><strong>#[]</strong>(key)</a>
         
-          <div class="summary"><p>See <code><a href="Hash.html#fetch%28key%29-instance-method">Hash#fetch</a></code></p></div>
+          <div class="summary"><p>See <code><a href="Hash.html#fetch%28key%2Cdefault%29-instance-method">Hash#fetch</a></code></p></div>
         
       </li>
     
@@ -2279,7 +2296,7 @@
       <li class="entry-summary">
         <a href="#all%3F%28%26block%29-instance-method" class="signature"><strong>#all?</strong>(&block)</a>
         
-          <div class="summary"><p>Yields all key-value pairs to the given block, and returns <em>true</em>  if the block returns a truthy value for all key-value pairs, else <em>false</em>.</p></div>
+          <div class="summary"><p>Yields all key-value pairs to the given block, and returns <em>true</em> if the block returns a truthy value for all key-value pairs, else <em>false</em>.</p></div>
         
       </li>
     
@@ -2293,7 +2310,7 @@
       <li class="entry-summary">
         <a href="#any%3F%28%26block%29-instance-method" class="signature"><strong>#any?</strong>(&block)</a>
         
-          <div class="summary"><p>Yields all key-value pairs to the given block, and returns <em>true</em>  if the block returns a truthy value for any key-value pair, else <em>false</em>.</p></div>
+          <div class="summary"><p>Yields all key-value pairs to the given block, and returns <em>true</em> if the block returns a truthy value for any key-value pair, else <em>false</em>.</p></div>
         
       </li>
     
@@ -2396,6 +2413,13 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#fetch%28key%2Cdefault%29-instance-method" class="signature"><strong>#fetch</strong>(key, default)</a>
+        
+          <div class="summary"><p>Returns the value for the key given by <em>key</em>, or when not found the value given by <em>default</em>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#fetch%28key%29-instance-method" class="signature"><strong>#fetch</strong>(key)</a>
         
           <div class="summary"><p>Returns the value for the key given by <em>key</em>.</p></div>
@@ -2406,13 +2430,6 @@
         <a href="#fetch%28key%2C%26block%29-instance-method" class="signature"><strong>#fetch</strong>(key, &block)</a>
         
           <div class="summary"><p>Returns the value for the key given by <em>key</em>, or when not found calls the given block with the key.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#fetch%28key%2Cdefault%29-instance-method" class="signature"><strong>#fetch</strong>(key, default)</a>
-        
-          <div class="summary"><p>Returns the value for the key given by <em>key</em>, or when not found the value given by <em>default</em>.</p></div>
         
       </li>
     
@@ -2461,6 +2478,8 @@
       <li class="entry-summary">
         <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
         
+          <div class="summary"><p>See <code><a href="Object.html#hash-instance-method">Object#hash</a></code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
@@ -2483,16 +2502,16 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#key%28value%29-instance-method" class="signature"><strong>#key</strong>(value)</a>
+        <a href="#key%28value%2C%26block%29-instance-method" class="signature"><strong>#key</strong>(value, &block)</a>
         
-          <div class="summary"><p>Returns the first key with the given <em>value</em>, else raises <code><a href="KeyError.html">KeyError</a></code>.</p></div>
+          <div class="summary"><p>Returns the first key with the given <em>value</em>, else yields <em>value</em> with the given block.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#key%28value%2C%26block%29-instance-method" class="signature"><strong>#key</strong>(value, &block)</a>
+        <a href="#key%28value%29-instance-method" class="signature"><strong>#key</strong>(value)</a>
         
-          <div class="summary"><p>Returns the first key with the given <em>value</em>, else yields <em>value</em> with the given block.</p></div>
+          <div class="summary"><p>Returns the first key with the given <em>value</em>, else raises <code><a href="KeyError.html">KeyError</a></code>.</p></div>
         
       </li>
     
@@ -2537,6 +2556,11 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#merge%21%28other%3AHash%28K%2CV%29%2C%26block%3AK%2CV%2CV-%3EV%29-instance-method" class="signature"><strong>#merge!</strong>(other : Hash(K, V), &block : K, V, V -> V)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#merge%21%28other%3AHash%28K%2CV%29%29-instance-method" class="signature"><strong>#merge!</strong>(other : Hash(K, V))</a>
         
           <div class="summary"><p>Similar to <code><a href="Hash.html#merge%28other%3AHash%28L%2CW%29%2C%26block%3AK%2CV%2CW-%3EV%7CW%29-instance-method">#merge</a></code>, but the receiver is modified.</p></div>
@@ -2544,19 +2568,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#merge%21%28other%3AHash%28K%2CV%29%2C%26block%3AK%2CV%2CV-%3EV%29-instance-method" class="signature"><strong>#merge!</strong>(other : Hash(K, V), &block : K, V, V -> V)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#rehash-instance-method" class="signature"><strong>#rehash</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#reject%28%26block%3AK%2CV-%3EU%29-instance-method" class="signature"><strong>#reject</strong>(&block : K, V -> U)</a>
-        
-          <div class="summary"><p>Returns a new hash consisting of entries for which the block returns false.</p></div>
         
       </li>
     
@@ -2568,9 +2580,9 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#reject%21%28%26block%3AK%2CV-%3EU%29-instance-method" class="signature"><strong>#reject!</strong>(&block : K, V -> U)</a>
+        <a href="#reject%28%26block%3AK%2CV-%3EU%29-instance-method" class="signature"><strong>#reject</strong>(&block : K, V -> U)</a>
         
-          <div class="summary"><p>Equivalent to <code><a href="Hash.html#reject%28%26block%3AK%2CV-%3EU%29-instance-method">Hash#reject</a></code>, but makes modification on the current object rather that returning a new one.</p></div>
+          <div class="summary"><p>Returns a new hash consisting of entries for which the block returns false.</p></div>
         
       </li>
     
@@ -2578,6 +2590,13 @@
         <a href="#reject%21%28%2Akeys%29-instance-method" class="signature"><strong>#reject!</strong>(*keys)</a>
         
           <div class="summary"><p>Removes a list of keys out of hash.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#reject%21%28%26block%3AK%2CV-%3EU%29-instance-method" class="signature"><strong>#reject!</strong>(&block : K, V -> U)</a>
+        
+          <div class="summary"><p>Equivalent to <code><a href="Hash.html#reject%28%26block%3AK%2CV-%3EU%29-instance-method">Hash#reject</a></code>, but makes modification on the current object rather that returning a new one.</p></div>
         
       </li>
     
@@ -2596,13 +2615,6 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#select%21%28%2Akeys%29-instance-method" class="signature"><strong>#select!</strong>(*keys)</a>
-        
-          <div class="summary"><p>Removes every element except the given ones.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#select%21%28%26block%3AK%2CV-%3EU%29-instance-method" class="signature"><strong>#select!</strong>(&block : K, V -> U)</a>
         
           <div class="summary"><p>Equivalent to <code><a href="Hash.html#select%28%26block%3AK%2CV-%3EU%29-instance-method">Hash#select</a></code> but makes modification on the current object rather that returning a new one.</p></div>
@@ -2610,17 +2622,30 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#select%21%28%2Akeys%29-instance-method" class="signature"><strong>#select!</strong>(*keys)</a>
+        
+          <div class="summary"><p>Removes every element except the given ones.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#shift%28%26block%29-instance-method" class="signature"><strong>#shift</strong>(&block)</a>
+        
+          <div class="summary"><p>Deletes and returns the first key-value pair in the hash.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#shift-instance-method" class="signature"><strong>#shift</strong></a>
         
+          <div class="summary"><p>Deletes and returns the first key-value pair in the hash, or raises <code><a href="IndexError.html">IndexError</a></code> if the hash is empty.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#shift%3F-instance-method" class="signature"><strong>#shift?</strong></a>
+        
+          <div class="summary"><p>Same as <code><a href="Hash.html#shift%28%26block%29-instance-method">#shift</a></code>, but returns nil if the hash is empty.</p></div>
         
       </li>
     
@@ -2656,7 +2681,14 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#to_yaml%28yaml%3AYAML%3A%3AGenerator%29-instance-method" class="signature"><strong>#to_yaml</strong>(yaml : YAML::Generator)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#values-instance-method" class="signature"><strong>#values</strong></a>
+        
+          <div class="summary"><p>Returns only the values as an <code><a href="Array.html">Array</a></code>.</p></div>
         
       </li>
     
@@ -2729,6 +2761,10 @@
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2792,6 +2828,10 @@
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2858,7 +2898,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/from_json.cr#L69" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/from_json.cr#L77" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2874,7 +2914,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/from_yaml.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/from_yaml.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2890,7 +2930,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L53" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L53" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2906,7 +2946,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/yaml/from_yaml.cr#L74" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/from_yaml.cr#L74" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2922,7 +2962,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L45" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2938,7 +2978,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L49" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L49" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2951,10 +2991,14 @@
         <a class="method-permalink" href="#zip%28ary1%3AArray%28K%29%2Cary2%3AArray%28V%29%29-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Zips two arrays into a <code><a href="Hash.html">Hash</a></code>, taking keys from <em>ary1</em> and values from <em>ary2</em>.</p>
+
+<pre><code><span class="t">Hash</span>.zip([<span class="s">&quot;foo&quot;</span>, <span class="s">&quot;bar&quot;</span>], [<span class="s">&quot;baz&quot;</span>, <span class="s">&quot;qux&quot;</span>]) <span class="c"># =&gt; {&quot;foo&quot; =&gt; &quot;baz&quot;, &quot;baz&quot; =&gt; &quot;quz&quot;}</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L616" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L627" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2970,7 +3014,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L35" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L35" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2993,7 +3037,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L692" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L736" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3006,12 +3050,12 @@
         <a class="method-permalink" href="#%5B%5D%28key%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>See <code><a href="Hash.html#fetch%28key%29-instance-method">Hash#fetch</a></code></p></div>
+        <div class="doc"><p>See <code><a href="Hash.html#fetch%28key%2Cdefault%29-instance-method">Hash#fetch</a></code></p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L84" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L84" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3028,12 +3072,12 @@
 
 <pre><code>h <span class="o">=</span> {} <span class="k">of</span> <span class="t">String</span> => <span class="t">String</span>
 h[<span class="s">&quot;foo&quot;</span>] <span class="o">=</span> <span class="s">&quot;bar&quot;</span>
-h[<span class="s">&quot;foo&quot;</span>] <span class="c">#=&gt; &quot;bar&quot;</span></code></pre></div>
+h[<span class="s">&quot;foo&quot;</span>] <span class="c"># =&gt; &quot;bar&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L64" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L64" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3049,17 +3093,17 @@ h[<span class="s">&quot;foo&quot;</span>] <span class="c">#=&gt; &quot;bar&quot;
         <div class="doc"><p>Returns the value for the key given by <em>key</em>.
 If not found, returns <code>nil</code>. This ignores the default value set by <code><a href="Hash.html">Hash</a>.new</code>.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
-h[<span class="s">&quot;foo&quot;</span>]? <span class="c">#=&gt; &quot;bar&quot;</span>
-h[<span class="s">&quot;bar&quot;</span>]? <span class="c">#=&gt; nil</span>
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+h[<span class="s">&quot;foo&quot;</span>]? <span class="c"># =&gt; &quot;bar&quot;</span>
+h[<span class="s">&quot;bar&quot;</span>]? <span class="c"># =&gt; nil</span>
 
 h <span class="o">=</span> <span class="t">Hash</span>(<span class="t">String</span>, <span class="t">String</span>).<span class="k">new</span>(<span class="s">&quot;bar&quot;</span>)
-h[<span class="s">&quot;foo&quot;</span>]? <span class="c">#=&gt; nil</span></code></pre></div>
+h[<span class="s">&quot;foo&quot;</span>]? <span class="c"># =&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L99" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L99" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3072,20 +3116,20 @@ h[<span class="s">&quot;foo&quot;</span>]? <span class="c">#=&gt; nil</span></co
         <a class="method-permalink" href="#all%3F%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Yields all key-value pairs to the given block, and returns <em>true</em> 
+        <div class="doc"><p>Yields all key-value pairs to the given block, and returns <em>true</em>
 if the block returns a truthy value for all key-value pairs, else <em>false</em>.</p>
 
 <pre><code>hash <span class="o">=</span> {
   <span class="s">&quot;foo&quot;</span>:   <span class="s">&quot;bar&quot;</span>,
-  <span class="s">&quot;hello&quot;</span>: <span class="s">&quot;world&quot;</span>
+  <span class="s">&quot;hello&quot;</span>: <span class="s">&quot;world&quot;</span>,
 }
-hash.all? {<span class="o">|</span>k, v<span class="o">|</span> v.<span class="k">is_a?</span> <span class="t">String</span> } <span class="c">#=&gt; true</span>
-hash.all? {<span class="o">|</span>k, v<span class="o">|</span> v.size <span class="o">==</span> <span class="n">3</span> }    <span class="c">#=&gt; false</span></code></pre></div>
+hash.all? { <span class="o">|</span>k, v<span class="o">|</span> v.<span class="k">is_a?</span> <span class="t">String</span> } <span class="c"># =&gt; true</span>
+hash.all? { <span class="o">|</span>k, v<span class="o">|</span> v.size <span class="o">==</span> <span class="n">3</span> }    <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L813" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L862" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3103,7 +3147,7 @@ hash.all? {<span class="o">|</span>k, v<span class="o">|</span> v.size <span cla
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L839" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L888" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3116,20 +3160,20 @@ hash.all? {<span class="o">|</span>k, v<span class="o">|</span> v.size <span cla
         <a class="method-permalink" href="#any%3F%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Yields all key-value pairs to the given block, and returns <em>true</em> 
+        <div class="doc"><p>Yields all key-value pairs to the given block, and returns <em>true</em>
 if the block returns a truthy value for any key-value pair, else <em>false</em>.</p>
 
 <pre><code>hash <span class="o">=</span> {
   <span class="s">&quot;foo&quot;</span>:   <span class="s">&quot;bar&quot;</span>,
-  <span class="s">&quot;hello&quot;</span>: <span class="s">&quot;world&quot;</span>
+  <span class="s">&quot;hello&quot;</span>: <span class="s">&quot;world&quot;</span>,
 }
-hash.any? {<span class="o">|</span>k, v<span class="o">|</span> v.<span class="k">is_a?</span> <span class="t">Int</span> } <span class="c">#=&gt; false</span>
-hash.any? {<span class="o">|</span>k, v<span class="o">|</span> v.size <span class="o">==</span> <span class="n">3</span> } <span class="c">#=&gt; true</span></code></pre></div>
+hash.any? { <span class="o">|</span>k, v<span class="o">|</span> v.<span class="k">is_a?</span> <span class="t">Int</span> } <span class="c"># =&gt; false</span>
+hash.any? { <span class="o">|</span>k, v<span class="o">|</span> v.size <span class="o">==</span> <span class="n">3</span> } <span class="c"># =&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L831" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L880" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3145,12 +3189,12 @@ hash.any? {<span class="o">|</span>k, v<span class="o">|</span> v.size <span cla
         <div class="doc"><p>Empties a <code><a href="Hash.html">Hash</a></code> and returns it.</p>
 
 <pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>}
-hash.clear <span class="c">#=&gt; {}</span></code></pre></div>
+hash.clear <span class="c"># =&gt; {}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L681" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L725" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3168,12 +3212,12 @@ hash.clear <span class="c">#=&gt; {}</span></code></pre></div>
 <pre><code>hash_a <span class="o">=</span> {<span class="s">&quot;foobar&quot;</span>: {<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>}}
 hash_b <span class="o">=</span> hash_a.clone
 hash_b[<span class="s">&quot;foobar&quot;</span>][<span class="s">&quot;foo&quot;</span>] <span class="o">=</span> <span class="s">&quot;baz&quot;</span>
-hash_a <span class="c">#=&gt; {&quot;foobar&quot;: {&quot;foo&quot;: &quot;bar&quot;}}</span></code></pre></div>
+hash_a <span class="c"># =&gt; {&quot;foobar&quot;: {&quot;foo&quot;: &quot;bar&quot;}}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L734" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L783" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3188,14 +3232,14 @@ hash_a <span class="c">#=&gt; {&quot;foobar&quot;: {&quot;foo&quot;: &quot;bar&q
       
         <div class="doc"><p>Deletes the key-value pair and returns the value.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
-h.delete(<span class="s">&quot;foo&quot;</span>)     <span class="c">#=&gt; &quot;bar&quot;</span>
-h.fetch(<span class="s">&quot;foo&quot;</span>, <span class="n">nil</span>) <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+h.delete(<span class="s">&quot;foo&quot;</span>)     <span class="c"># =&gt; &quot;bar&quot;</span>
+h.fetch(<span class="s">&quot;foo&quot;</span>, <span class="n">nil</span>) <span class="c"># =&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L219" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3210,14 +3254,14 @@ h.fetch(<span class="s">&quot;foo&quot;</span>, <span class="n">nil</span>) <spa
       
         <div class="doc"><p>Deletes each key-value pair for which the given block returns <code>true</code>.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;fob&quot;</span> => <span class="s">&quot;baz&quot;</span>, <span class="s">&quot;bar&quot;</span> => <span class="s">&quot;qux&quot;</span> }
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;fob&quot;</span> => <span class="s">&quot;baz&quot;</span>, <span class="s">&quot;bar&quot;</span> => <span class="s">&quot;qux&quot;</span>}
 h.delete_if { <span class="o">|</span>key, value<span class="o">|</span> key.starts_with?(<span class="s">&quot;fo&quot;</span>) }
-h <span class="c">#=&gt; { &quot;bar&quot; =&gt; &quot;qux&quot; }</span></code></pre></div>
+h <span class="c"># =&gt; { &quot;bar&quot; =&gt; &quot;qux&quot; }</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L266" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L266" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3235,12 +3279,12 @@ h <span class="c">#=&gt; { &quot;bar&quot; =&gt; &quot;qux&quot; }</span></code>
 <pre><code>hash_a <span class="o">=</span> {<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>}
 hash_b <span class="o">=</span> hash_a.dup
 hash_b.merge!({<span class="s">&quot;baz&quot;</span>: <span class="s">&quot;qux&quot;</span>})
-hash_a <span class="c">#=&gt; {&quot;foo&quot;: &quot;bar&quot;}</span></code></pre></div>
+hash_a <span class="c"># =&gt; {&quot;foo&quot;: &quot;bar&quot;}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L718" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L767" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3255,16 +3299,16 @@ hash_a <span class="c">#=&gt; {&quot;foo&quot;: &quot;bar&quot;}</span></code></
       
         <div class="doc"><p>Calls the given block for each key-value pair and passes in the key and the value.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
 h.each <span class="k">do</span> <span class="o">|</span>key, value<span class="o">|</span>
-  key   <span class="c">#=&gt; &quot;foo&quot;</span>
-  value <span class="c">#=&gt; &quot;bar&quot;</span>
+  key   <span class="c"># =&gt; &quot;foo&quot;</span>
+  value <span class="c"># =&gt; &quot;bar&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L299" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L299" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3280,21 +3324,21 @@ h.each <span class="k">do</span> <span class="o">|</span>key, value<span class="
         <div class="doc"><p>Returns an iterator over the hash entries.
 Which behaves like an <code><a href="Iterator.html">Iterator</a></code> returning a <code><a href="Tuple.html">Tuple</a></code> consisting of the key and value types.</p>
 
-<pre><code>hsh <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span> }
+<pre><code>hsh <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span>}
 iterator <span class="o">=</span> hsh.each
 
 entry <span class="o">=</span> iterator.<span class="k">next</span>
-entry[<span class="n">0</span>] <span class="c">#=&gt; &quot;foo&quot;</span>
-entry[<span class="n">1</span>] <span class="c">#=&gt; &quot;bar&quot;</span>
+entry[<span class="n">0</span>] <span class="c"># =&gt; &quot;foo&quot;</span>
+entry[<span class="n">1</span>] <span class="c"># =&gt; &quot;bar&quot;</span>
 
 entry <span class="o">=</span> iterator.<span class="k">next</span>
-entry[<span class="n">0</span>] <span class="c">#=&gt; &quot;baz&quot;</span>
-entry[<span class="n">1</span>] <span class="c">#=&gt; &quot;qux&quot;</span></code></pre></div>
+entry[<span class="n">0</span>] <span class="c"># =&gt; &quot;baz&quot;</span>
+entry[<span class="n">1</span>] <span class="c"># =&gt; &quot;qux&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L323" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L323" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3309,15 +3353,15 @@ entry[<span class="n">1</span>] <span class="c">#=&gt; &quot;qux&quot;</span></c
       
         <div class="doc"><p>Calls the given block for each key-value pair and passes in the key.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
 h.each_key <span class="k">do</span> <span class="o">|</span>key<span class="o">|</span>
-  key <span class="c">#=&gt; &quot;foo&quot;</span>
+  key <span class="c"># =&gt; &quot;foo&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L335" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L335" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3333,19 +3377,19 @@ h.each_key <span class="k">do</span> <span class="o">|</span>key<span class="o">
         <div class="doc"><p>Returns an iterator over the hash keys.
 Which behaves like an <code><a href="Iterator.html">Iterator</a></code> consisting of the key's types.</p>
 
-<pre><code>hsh <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span> }
+<pre><code>hsh <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span>}
 iterator <span class="o">=</span> hsh.each_key
 
 key <span class="o">=</span> iterator.<span class="k">next</span>
-key <span class="c">#=&gt; &quot;foo&quot;</span>
+key <span class="c"># =&gt; &quot;foo&quot;</span>
 
 key <span class="o">=</span> iterator.<span class="k">next</span>
-key <span class="c">#=&gt; &quot;baz&quot;</span></code></pre></div>
+key <span class="c"># =&gt; &quot;baz&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L354" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L354" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3361,19 +3405,19 @@ key <span class="c">#=&gt; &quot;baz&quot;</span></code></pre></div>
         <div class="doc"><p>Returns an iterator over the hash values.
 Which behaves like an <code><a href="Iterator.html">Iterator</a></code> consisting of the value's types.</p>
 
-<pre><code>hsh <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span> }
+<pre><code>hsh <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span>}
 iterator <span class="o">=</span> hsh.each_value
 
 value <span class="o">=</span> iterator.<span class="k">next</span>
-value <span class="c">#=&gt; &quot;bar&quot;</span>
+value <span class="c"># =&gt; &quot;bar&quot;</span>
 
 value <span class="o">=</span> iterator.<span class="k">next</span>
-value <span class="c">#=&gt; &quot;qux&quot;</span></code></pre></div>
+value <span class="c"># =&gt; &quot;qux&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L385" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L385" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3388,15 +3432,15 @@ value <span class="c">#=&gt; &quot;qux&quot;</span></code></pre></div>
       
         <div class="doc"><p>Calls the given block for each key-value pair and passes in the value.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
 h.each_value <span class="k">do</span> <span class="o">|</span>key<span class="o">|</span>
-  key <span class="c">#=&gt; &quot;bar&quot;</span>
+  key <span class="c"># =&gt; &quot;bar&quot;</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L366" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L366" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3411,24 +3455,24 @@ h.each_value <span class="k">do</span> <span class="o">|</span>key<span class="o
       
         <div class="doc"><p>Calls the given block for each key-value pair and passes in the key, value, and index.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
 
 h.each_with_index <span class="k">do</span> <span class="o">|</span>key, value, index<span class="o">|</span>
-  key   <span class="c">#=&gt; &quot;foo&quot;</span>
-  value <span class="c">#=&gt; &quot;bar&quot;</span>
-  index <span class="c">#=&gt; 0</span>
+  key   <span class="c"># =&gt; &quot;foo&quot;</span>
+  value <span class="c"># =&gt; &quot;bar&quot;</span>
+  index <span class="c"># =&gt; 0</span>
 <span class="k">end</span>
 
 h.each_with_index(<span class="n">3</span>) <span class="k">do</span> <span class="o">|</span>key, value, index<span class="o">|</span>
-  key   <span class="c">#=&gt; &quot;foo&quot;</span>
-  value <span class="c">#=&gt; &quot;bar&quot;</span>
-  index <span class="c">#=&gt; 3</span>
+  key   <span class="c"># =&gt; &quot;foo&quot;</span>
+  value <span class="c"># =&gt; &quot;bar&quot;</span>
+  index <span class="c"># =&gt; 3</span>
 <span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L406" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L406" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3444,12 +3488,12 @@ h.each_with_index(<span class="n">3</span>) <span class="k">do</span> <span clas
         <div class="doc"><p>Iterates the given block for each element with an arbitrary object given, and returns the initially given object.</p>
 
 <pre><code>evens <span class="o">=</span> (<span class="n">1</span>..<span class="n">10</span>).each_with_object(<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>) { <span class="o">|</span>i, a<span class="o">|</span> a <span class="o"><<</span> i<span class="o">*</span><span class="n">2</span> }
-<span class="c">#=&gt; [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]</span></code></pre></div>
+<span class="c"># =&gt; [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L420" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L420" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3465,68 +3509,15 @@ h.each_with_index(<span class="n">3</span>) <span class="k">do</span> <span clas
         <div class="doc"><p>Returns <code>true</code> when hash contains no key-value pairs.</p>
 
 <pre><code>h <span class="o">=</span> <span class="t">Hash</span>(<span class="t">String</span>, <span class="t">String</span>).<span class="k">new</span>
-h.empty? <span class="c">#=&gt; true</span>
+h.empty? <span class="c"># =&gt; true</span>
 
-h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
-h.empty? <span class="c">#=&gt; false</span></code></pre></div>
+h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+h.empty? <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L286" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="fetch(key)-instance-method">
-      <div class="signature">
-        
-        def <strong>fetch</strong>(key)
-
-        <a class="method-permalink" href="#fetch%28key%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns the value for the key given by <em>key</em>.
-If not found, returns the default value given by <code><a href="Hash.html">Hash</a>.new</code>, otherwise raises <code><a href="KeyError.html">KeyError</a></code>.</p>
-
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
-h[<span class="s">&quot;foo&quot;</span>] <span class="c">#=&gt; &quot;bar&quot;</span>
-
-h <span class="o">=</span> <span class="t">Hash</span>(<span class="t">String</span>, <span class="t">String</span>).<span class="k">new</span>(<span class="s">&quot;bar&quot;</span>)
-h[<span class="s">&quot;foo&quot;</span>] <span class="c">#=&gt; &quot;bar&quot;</span>
-
-h <span class="o">=</span> <span class="t">Hash</span>(<span class="t">String</span>, <span class="t">String</span>).<span class="k">new</span> { <span class="s">&quot;bar&quot;</span> }
-h[<span class="s">&quot;foo&quot;</span>] <span class="c">#=&gt; &quot;bar&quot;</span>
-
-h <span class="o">=</span> <span class="t">Hash</span>(<span class="t">String</span>, <span class="t">String</span>).<span class="k">new</span>
-h[<span class="s">&quot;foo&quot;</span>] <span class="c"># raises KeyError</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L130" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="fetch(key,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>fetch</strong>(key, &block)
-
-        <a class="method-permalink" href="#fetch%28key%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns the value for the key given by <em>key</em>, or when not found calls the given block with the key.</p>
-
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
-h.fetch(<span class="s">&quot;foo&quot;</span>) { <span class="o">|</span>key<span class="o">|</span> key.upcase } <span class="c">#=&gt; &quot;bar&quot;</span>
-h.fetch(<span class="s">&quot;bar&quot;</span>) { <span class="o">|</span>key<span class="o">|</span> key.upcase } <span class="c">#=&gt; &quot;BAR&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L159" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L286" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3542,14 +3533,67 @@ h.fetch(<span class="s">&quot;bar&quot;</span>) { <span class="o">|</span>key<sp
         <div class="doc"><p>Returns the value for the key given by <em>key</em>, or when not found the value given by <em>default</em>.
 This ignores the default value set by <code><a href="Hash.html">Hash</a>.new</code>.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
-h.fetch(<span class="s">&quot;foo&quot;</span>, <span class="s">&quot;foo&quot;</span>) <span class="c">#=&gt; &quot;bar&quot;</span>
-h.fetch(<span class="s">&quot;bar&quot;</span>, <span class="s">&quot;foo&quot;</span>) <span class="c">#=&gt; &quot;foo&quot;</span></code></pre></div>
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+h.fetch(<span class="s">&quot;foo&quot;</span>, <span class="s">&quot;foo&quot;</span>) <span class="c"># =&gt; &quot;bar&quot;</span>
+h.fetch(<span class="s">&quot;bar&quot;</span>, <span class="s">&quot;foo&quot;</span>) <span class="c"># =&gt; &quot;foo&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L148" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L148" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="fetch(key)-instance-method">
+      <div class="signature">
+        
+        def <strong>fetch</strong>(key)
+
+        <a class="method-permalink" href="#fetch%28key%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the value for the key given by <em>key</em>.
+If not found, returns the default value given by <code><a href="Hash.html">Hash</a>.new</code>, otherwise raises <code><a href="KeyError.html">KeyError</a></code>.</p>
+
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+h[<span class="s">&quot;foo&quot;</span>] <span class="c"># =&gt; &quot;bar&quot;</span>
+
+h <span class="o">=</span> <span class="t">Hash</span>(<span class="t">String</span>, <span class="t">String</span>).<span class="k">new</span>(<span class="s">&quot;bar&quot;</span>)
+h[<span class="s">&quot;foo&quot;</span>] <span class="c"># =&gt; &quot;bar&quot;</span>
+
+h <span class="o">=</span> <span class="t">Hash</span>(<span class="t">String</span>, <span class="t">String</span>).<span class="k">new</span> { <span class="s">&quot;bar&quot;</span> }
+h[<span class="s">&quot;foo&quot;</span>] <span class="c"># =&gt; &quot;bar&quot;</span>
+
+h <span class="o">=</span> <span class="t">Hash</span>(<span class="t">String</span>, <span class="t">String</span>).<span class="k">new</span>
+h[<span class="s">&quot;foo&quot;</span>] <span class="c"># raises KeyError</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L130" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="fetch(key,&amp;block)-instance-method">
+      <div class="signature">
+        
+        def <strong>fetch</strong>(key, &block)
+
+        <a class="method-permalink" href="#fetch%28key%2C%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the value for the key given by <em>key</em>, or when not found calls the given block with the key.</p>
+
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+h.fetch(<span class="s">&quot;foo&quot;</span>) { <span class="o">|</span>key<span class="o">|</span> key.upcase } <span class="c"># =&gt; &quot;bar&quot;</span>
+h.fetch(<span class="s">&quot;bar&quot;</span>) { <span class="o">|</span>key<span class="o">|</span> key.upcase } <span class="c"># =&gt; &quot;BAR&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L159" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3567,7 +3611,7 @@ h.fetch(<span class="s">&quot;bar&quot;</span>, <span class="s">&quot;foo&quot;<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L625" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L636" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3585,7 +3629,7 @@ h.fetch(<span class="s">&quot;bar&quot;</span>, <span class="s">&quot;foo&quot;<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L631" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L642" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3601,14 +3645,14 @@ h.fetch(<span class="s">&quot;bar&quot;</span>, <span class="s">&quot;foo&quot;<
         <div class="doc"><p>Returns the first key if it exists, or returns <code>nil</code>.</p>
 
 <pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>}
-hash.first_key? <span class="c">#=&gt; &quot;foo&quot;</span>
+hash.first_key? <span class="c"># =&gt; &quot;foo&quot;</span>
 hash.clear
-hash.first_key? <span class="c">#=&gt; nil</span></code></pre></div>
+hash.first_key? <span class="c"># =&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L643" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L654" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3626,7 +3670,7 @@ hash.first_key? <span class="c">#=&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L648" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L659" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3644,7 +3688,7 @@ hash.first_key? <span class="c">#=&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L653" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L664" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3659,14 +3703,14 @@ hash.first_key? <span class="c">#=&gt; nil</span></code></pre></div>
       
         <div class="doc"><p>Returns <code>true</code> when key given by <em>key</em> exists, otherwise <code>false</code>.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
-h.has_key?(<span class="s">&quot;foo&quot;</span>) <span class="c">#=&gt; true</span>
-h.has_key?(<span class="s">&quot;bar&quot;</span>) <span class="c">#=&gt; false</span></code></pre></div>
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+h.has_key?(<span class="s">&quot;foo&quot;</span>) <span class="c"># =&gt; true</span>
+h.has_key?(<span class="s">&quot;bar&quot;</span>) <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L110" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L110" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3679,10 +3723,15 @@ h.has_key?(<span class="s">&quot;bar&quot;</span>) <span class="c">#=&gt; false<
         <a class="method-permalink" href="#hash-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>See <code><a href="Object.html#hash-instance-method">Object#hash</a></code>.</p>
+
+<pre><code>foo <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+foo.hash <span class="c"># =&gt; 3247054</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L701" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L751" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3700,10 +3749,10 @@ which is replaced with each returned value in iteration.
 Returns the last value of <em>memo</em>.</p>
 
 <pre><code>prices <span class="o">=</span> {
-  <span class="s">&quot;apple&quot;</span>:   <span class="n">5</span>,
-  <span class="s">&quot;lemon&quot;</span>:   <span class="n">3</span>,
-  <span class="s">&quot;papaya&quot;</span>:  <span class="n">6</span>,
-  <span class="s">&quot;orange&quot;</span>:  <span class="n">4</span>
+  <span class="s">&quot;apple&quot;</span>:  <span class="n">5</span>,
+  <span class="s">&quot;lemon&quot;</span>:  <span class="n">3</span>,
+  <span class="s">&quot;papaya&quot;</span>: <span class="n">6</span>,
+  <span class="s">&quot;orange&quot;</span>: <span class="n">4</span>,
 }
 
 prices.inject(<span class="s">&quot;apple&quot;</span>) <span class="k">do</span> <span class="o">|</span>highest, item, price<span class="o">|</span>
@@ -3712,13 +3761,13 @@ prices.inject(<span class="s">&quot;apple&quot;</span>) <span class="k">do</span
   <span class="k">else</span>
     highest
   <span class="k">end</span>
-<span class="k">end</span> 
-<span class="c">#=&gt; &quot;papaya&quot;</span></code></pre></div>
+<span class="k">end</span>
+<span class="c"># =&gt; &quot;papaya&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L864" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L913" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3734,7 +3783,7 @@ prices.inject(<span class="s">&quot;apple&quot;</span>) <span class="k">do</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L742" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L791" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3749,13 +3798,35 @@ prices.inject(<span class="s">&quot;apple&quot;</span>) <span class="k">do</span
       
         <div class="doc"><p>Inverts keys and values. If there are duplicated values, the last key becomes the new value.</p>
 
-<pre><code>{<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>}.invert               <span class="c">#=&gt; {&quot;bar&quot;: &quot;foo&quot;}</span>
-{<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span>: <span class="s">&quot;bar&quot;</span>}.invert <span class="c">#=&gt; {&quot;bar&quot;: &quot;baz&quot;}</span></code></pre></div>
+<pre><code>{<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>}.invert               <span class="c"># =&gt; {&quot;bar&quot;: &quot;foo&quot;}</span>
+{<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span>: <span class="s">&quot;bar&quot;</span>}.invert <span class="c"># =&gt; {&quot;bar&quot;: &quot;baz&quot;}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L794" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L843" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="key(value,&amp;block)-instance-method">
+      <div class="signature">
+        
+        def <strong>key</strong>(value, &block)
+
+        <a class="method-permalink" href="#key%28value%2C%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the first key with the given <em>value</em>, else yields <em>value</em> with the given block.</p>
+
+<pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+hash.key(<span class="s">&quot;bar&quot;</span>) { <span class="o">|</span>value<span class="o">|</span> value.upcase } <span class="c"># =&gt; &quot;foo&quot;</span>
+hash.key(<span class="s">&quot;qux&quot;</span>) { <span class="o">|</span>value<span class="o">|</span> value.upcase } <span class="c"># =&gt; &quot;QUX&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3771,36 +3842,14 @@ prices.inject(<span class="s">&quot;apple&quot;</span>) <span class="k">do</span
         <div class="doc"><p>Returns the first key with the given <em>value</em>, else raises <code><a href="KeyError.html">KeyError</a></code>.</p>
 
 <pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span>: <span class="s">&quot;qux&quot;</span>}
-hash.key(<span class="s">&quot;bar&quot;</span>)    <span class="c">#=&gt; &quot;foo&quot;</span>
-hash.key(<span class="s">&quot;qux&quot;</span>)    <span class="c">#=&gt; &quot;baz&quot;</span>
-hash.key(<span class="s">&quot;foobar&quot;</span>) <span class="c">#=&gt; Missing hash key for value: foobar (KeyError)</span></code></pre></div>
+hash.key(<span class="s">&quot;bar&quot;</span>)    <span class="c"># =&gt; &quot;foo&quot;</span>
+hash.key(<span class="s">&quot;qux&quot;</span>)    <span class="c"># =&gt; &quot;baz&quot;</span>
+hash.key(<span class="s">&quot;foobar&quot;</span>) <span class="c"># =&gt; Missing hash key for value: foobar (KeyError)</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L182" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="key(value,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>key</strong>(value, &block)
-
-        <a class="method-permalink" href="#key%28value%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns the first key with the given <em>value</em>, else yields <em>value</em> with the given block.</p>
-
-<pre><code>hash <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span> }
-hash.key(<span class="s">&quot;bar&quot;</span>) { <span class="o">|</span>value<span class="o">|</span> value.upcase } <span class="c">#=&gt; &quot;foo&quot;</span>
-hash.key(<span class="s">&quot;qux&quot;</span>) { <span class="o">|</span>value<span class="o">|</span> value.upcase } <span class="c">#=&gt; &quot;QUX&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L182" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3816,14 +3865,14 @@ hash.key(<span class="s">&quot;qux&quot;</span>) { <span class="o">|</span>value
         <div class="doc"><p>Returns the first key with the given <em>value</em>, else <code>nil</code>.</p>
 
 <pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span>: <span class="s">&quot;qux&quot;</span>}
-hash.key?(<span class="s">&quot;bar&quot;</span>)    <span class="c">#=&gt; &quot;foo&quot;</span>
-hash.key?(<span class="s">&quot;qux&quot;</span>)    <span class="c">#=&gt; &quot;baz&quot;</span>
-hash.key?(<span class="s">&quot;foobar&quot;</span>) <span class="c">#=&gt; nil</span></code></pre></div>
+hash.key?(<span class="s">&quot;bar&quot;</span>)    <span class="c"># =&gt; &quot;foo&quot;</span>
+hash.key?(<span class="s">&quot;qux&quot;</span>)    <span class="c"># =&gt; &quot;baz&quot;</span>
+hash.key?(<span class="s">&quot;foobar&quot;</span>) <span class="c"># =&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L194" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L194" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3839,14 +3888,14 @@ hash.key?(<span class="s">&quot;foobar&quot;</span>) <span class="c">#=&gt; nil<
         <div class="doc"><p>Returns the index of the given key, or <code>nil</code> when not found.
 The keys are ordered based on when they were inserted.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span> }
-h.key_index(<span class="s">&quot;foo&quot;</span>) <span class="c">#=&gt; 0</span>
-h.key_index(<span class="s">&quot;qux&quot;</span>) <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span>}
+h.key_index(<span class="s">&quot;foo&quot;</span>) <span class="c"># =&gt; 0</span>
+h.key_index(<span class="s">&quot;qux&quot;</span>) <span class="c"># =&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L467" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L473" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3861,13 +3910,13 @@ h.key_index(<span class="s">&quot;qux&quot;</span>) <span class="c">#=&gt; nil</
       
         <div class="doc"><p>Returns a new <code><a href="Array.html">Array</a></code> with all the keys.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;bar&quot;</span> }
-h.keys <span class="c">#=&gt; [&quot;foo&quot;, &quot;baz&quot;]</span></code></pre></div>
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+h.keys <span class="c"># =&gt; [&quot;foo&quot;, &quot;baz&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L433" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L433" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3882,13 +3931,13 @@ h.keys <span class="c">#=&gt; [&quot;foo&quot;, &quot;baz&quot;]</span></code></
       
         <div class="doc"><p>Returns an <code><a href="Array.html">Array</a></code> populated with the results of each iteration in the given block.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span> }
-h.map {<span class="o">|</span>k, v<span class="o">|</span> v } <span class="c">#=&gt; [&quot;bar&quot;, &quot;qux&quot;]</span></code></pre></div>
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span>}
+h.map { <span class="o">|</span>k, v<span class="o">|</span> v } <span class="c"># =&gt; [&quot;bar&quot;, &quot;qux&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L480" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L486" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3904,7 +3953,7 @@ h.map {<span class="o">|</span>k, v<span class="o">|</span> v } <span class="c">
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L505" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L511" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3917,41 +3966,19 @@ h.map {<span class="o">|</span>k, v<span class="o">|</span> v } <span class="c">
         <a class="method-permalink" href="#merge%28other%3AHash%28L%2CW%29%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a new <code><a href="Hash.html">Hash</a></code> with the keys and values of this hash and <em>other</em> combined. 
-A value in <em>other</em> takes precedence over the one in this hash.  </p>
+        <div class="doc"><p>Returns a new <code><a href="Hash.html">Hash</a></code> with the keys and values of this hash and <em>other</em> combined.
+A value in <em>other</em> takes precedence over the one in this hash.</p>
 
 <pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
 hash.merge({<span class="s">&quot;baz&quot;</span>: <span class="s">&quot;qux&quot;</span>})
-<span class="c">#=&gt; {&quot;foo&quot; =&gt; &quot;bar&quot;, &quot;baz&quot; =&gt; &quot;qux&quot;}</span>
-hash 
-<span class="c">#=&gt; {&quot;foo&quot; =&gt; &quot;bar&quot;}</span></code></pre></div>
+<span class="c"># =&gt; {&quot;foo&quot; =&gt; &quot;bar&quot;, &quot;baz&quot; =&gt; &quot;qux&quot;}</span>
+hash
+<span class="c"># =&gt; {&quot;foo&quot; =&gt; &quot;bar&quot;}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L498" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="merge!(other:Hash(K,V))-instance-method">
-      <div class="signature">
-        
-        def <strong>merge!</strong>(other : <a href="Hash.html">Hash</a>(K, V))
-
-        <a class="method-permalink" href="#merge%21%28other%3AHash%28K%2CV%29%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Similar to <code><a href="Hash.html#merge%28other%3AHash%28L%2CW%29%2C%26block%3AK%2CV%2CW-%3EV%7CW%29-instance-method">#merge</a></code>, but the receiver is modified.</p>
-
-<pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
-hash.merge!({<span class="s">&quot;baz&quot;</span>: <span class="s">&quot;qux&quot;</span>}) 
-hash <span class="c">#=&gt; {&quot;foo&quot; =&gt; &quot;bar&quot;, &quot;baz&quot; =&gt; &quot;qux&quot;}</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L519" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L504" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3967,7 +3994,29 @@ hash <span class="c">#=&gt; {&quot;foo&quot; =&gt; &quot;bar&quot;, &quot;baz&qu
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L526" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L532" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="merge!(other:Hash(K,V))-instance-method">
+      <div class="signature">
+        
+        def <strong>merge!</strong>(other : <a href="Hash.html">Hash</a>(K, V))
+
+        <a class="method-permalink" href="#merge%21%28other%3AHash%28K%2CV%29%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Similar to <code><a href="Hash.html#merge%28other%3AHash%28L%2CW%29%2C%26block%3AK%2CV%2CW-%3EV%7CW%29-instance-method">#merge</a></code>, but the receiver is modified.</p>
+
+<pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>}
+hash.merge!({<span class="s">&quot;baz&quot;</span>: <span class="s">&quot;qux&quot;</span>})
+hash <span class="c"># =&gt; {&quot;foo&quot; =&gt; &quot;bar&quot;, &quot;baz&quot; =&gt; &quot;qux&quot;}</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L525" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3983,29 +4032,7 @@ hash <span class="c">#=&gt; {&quot;foo&quot; =&gt; &quot;bar&quot;, &quot;baz&qu
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L774" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="reject(&amp;block:K,V-&gt;U)-instance-method">
-      <div class="signature">
-        
-        def <strong>reject</strong>(&block : K, V -> U)
-
-        <a class="method-permalink" href="#reject%28%26block%3AK%2CV-%3EU%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns a new hash consisting of entries for which the block returns false.</p>
-
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;a&quot;</span> => <span class="n">100</span>, <span class="s">&quot;b&quot;</span> => <span class="n">200</span>, <span class="s">&quot;c&quot;</span> => <span class="n">300</span> }
-h.reject {<span class="o">|</span>k, v<span class="o">|</span> k <span class="o">></span> <span class="s">&quot;a&quot;</span>}  <span class="c">#=&gt; {&quot;a&quot; =&gt; 100}</span>
-h.reject {<span class="o">|</span>k, v<span class="o">|</span> v <span class="o"><</span> <span class="n">200</span>}  <span class="c">#=&gt; {&quot;b&quot; =&gt; 200, &quot;c&quot; =&gt; 300}</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L558" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L823" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4020,12 +4047,55 @@ h.reject {<span class="o">|</span>k, v<span class="o">|</span> v <span class="o"
       
         <div class="doc"><p>Returns a new <code><a href="Hash.html">Hash</a></code> without the given keys.</p>
 
-<pre><code>{<span class="s">&quot;a&quot;</span>: <span class="n">1</span>, <span class="s">&quot;b&quot;</span>: <span class="n">2</span>, <span class="s">&quot;c&quot;</span>: <span class="n">3</span>, <span class="s">&quot;d&quot;</span>: <span class="n">4</span>}.reject(<span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span>) <span class="c">#=&gt; {&quot;b&quot;: 2, &quot;d&quot;: 4}</span></code></pre></div>
+<pre><code>{<span class="s">&quot;a&quot;</span>: <span class="n">1</span>, <span class="s">&quot;b&quot;</span>: <span class="n">2</span>, <span class="s">&quot;c&quot;</span>: <span class="n">3</span>, <span class="s">&quot;d&quot;</span>: <span class="n">4</span>}.reject(<span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span>) <span class="c"># =&gt; {&quot;b&quot;: 2, &quot;d&quot;: 4}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L578" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L584" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="reject(&amp;block:K,V-&gt;U)-instance-method">
+      <div class="signature">
+        
+        def <strong>reject</strong>(&block : K, V -> U)
+
+        <a class="method-permalink" href="#reject%28%26block%3AK%2CV-%3EU%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a new hash consisting of entries for which the block returns false.</p>
+
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;a&quot;</span> => <span class="n">100</span>, <span class="s">&quot;b&quot;</span> => <span class="n">200</span>, <span class="s">&quot;c&quot;</span> => <span class="n">300</span>}
+h.reject { <span class="o">|</span>k, v<span class="o">|</span> k <span class="o">></span> <span class="s">&quot;a&quot;</span> } <span class="c"># =&gt; {&quot;a&quot; =&gt; 100}</span>
+h.reject { <span class="o">|</span>k, v<span class="o">|</span> v <span class="o"><</span> <span class="n">200</span> } <span class="c"># =&gt; {&quot;b&quot; =&gt; 200, &quot;c&quot; =&gt; 300}</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L564" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="reject!(*keys)-instance-method">
+      <div class="signature">
+        
+        def <strong>reject!</strong>(*keys)
+
+        <a class="method-permalink" href="#reject%21%28%2Akeys%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Removes a list of keys out of hash.</p>
+
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;a&quot;</span>: <span class="n">1</span>, <span class="s">&quot;b&quot;</span>: <span class="n">2</span>, <span class="s">&quot;c&quot;</span>: <span class="n">3</span>, <span class="s">&quot;d&quot;</span>: <span class="n">4</span>}.reject!(<span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span>)
+h <span class="c"># =&gt; {&quot;b&quot;: 2, &quot;d&quot;: 4}</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L595" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4043,28 +4113,7 @@ h.reject {<span class="o">|</span>k, v<span class="o">|</span> v <span class="o"
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L565" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="reject!(*keys)-instance-method">
-      <div class="signature">
-        
-        def <strong>reject!</strong>(*keys)
-
-        <a class="method-permalink" href="#reject%21%28%2Akeys%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Removes a list of keys out of hash.</p>
-
-<pre><code>h <span class="o">=</span> {<span class="s">&quot;a&quot;</span>: <span class="n">1</span>, <span class="s">&quot;b&quot;</span>: <span class="n">2</span>, <span class="s">&quot;c&quot;</span>: <span class="n">3</span>, <span class="s">&quot;d&quot;</span>: <span class="n">4</span>}.reject!(<span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span>)
-h <span class="c">#=&gt; {&quot;b&quot;: 2, &quot;d&quot;: 4}</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L589" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L571" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4079,12 +4128,12 @@ h <span class="c">#=&gt; {&quot;b&quot;: 2, &quot;d&quot;: 4}</span></code></pre
       
         <div class="doc"><p>Returns a new <code><a href="Hash.html">Hash</a></code> with the given keys.</p>
 
-<pre><code>{<span class="s">&quot;a&quot;</span>: <span class="n">1</span>, <span class="s">&quot;b&quot;</span>: <span class="n">2</span>, <span class="s">&quot;c&quot;</span>: <span class="n">3</span>, <span class="s">&quot;d&quot;</span>: <span class="n">4</span>}.select(<span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span>) <span class="c">#=&gt; {&quot;a&quot;: 1, &quot;c&quot;: 3}</span></code></pre></div>
+<pre><code>{<span class="s">&quot;a&quot;</span>: <span class="n">1</span>, <span class="s">&quot;b&quot;</span>: <span class="n">2</span>, <span class="s">&quot;c&quot;</span>: <span class="n">3</span>, <span class="s">&quot;d&quot;</span>: <span class="n">4</span>}.select(<span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span>) <span class="c"># =&gt; {&quot;a&quot;: 1, &quot;c&quot;: 3}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L599" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L605" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4099,35 +4148,14 @@ h <span class="c">#=&gt; {&quot;b&quot;: 2, &quot;d&quot;: 4}</span></code></pre
       
         <div class="doc"><p>Returns a new hash consisting of entries for which the block returns true.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;a&quot;</span> => <span class="n">100</span>, <span class="s">&quot;b&quot;</span> => <span class="n">200</span>, <span class="s">&quot;c&quot;</span> => <span class="n">300</span> }
-h.select {<span class="o">|</span>k, v<span class="o">|</span> k <span class="o">></span> <span class="s">&quot;a&quot;</span>}  <span class="c">#=&gt; {&quot;b&quot; =&gt; 200, &quot;c&quot; =&gt; 300}</span>
-h.select {<span class="o">|</span>k, v<span class="o">|</span> v <span class="o"><</span> <span class="n">200</span>}  <span class="c">#=&gt; {&quot;a&quot; =&gt; 100}</span></code></pre></div>
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;a&quot;</span> => <span class="n">100</span>, <span class="s">&quot;b&quot;</span> => <span class="n">200</span>, <span class="s">&quot;c&quot;</span> => <span class="n">300</span>}
+h.select { <span class="o">|</span>k, v<span class="o">|</span> k <span class="o">></span> <span class="s">&quot;a&quot;</span> } <span class="c"># =&gt; {&quot;b&quot; =&gt; 200, &quot;c&quot; =&gt; 300}</span>
+h.select { <span class="o">|</span>k, v<span class="o">|</span> v <span class="o"><</span> <span class="n">200</span> } <span class="c"># =&gt; {&quot;a&quot; =&gt; 100}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L543" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="select!(*keys)-instance-method">
-      <div class="signature">
-        
-        def <strong>select!</strong>(*keys)
-
-        <a class="method-permalink" href="#select%21%28%2Akeys%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Removes every element except the given ones.</p>
-
-<pre><code>h <span class="o">=</span> {<span class="s">&quot;a&quot;</span>: <span class="n">1</span>, <span class="s">&quot;b&quot;</span>: <span class="n">2</span>, <span class="s">&quot;c&quot;</span>: <span class="n">3</span>, <span class="s">&quot;d&quot;</span>: <span class="n">4</span>}.select!(<span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span>)
-h <span class="c">#=&gt; {&quot;a&quot;: 1, &quot;c&quot;: 3}</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L611" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L549" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4145,7 +4173,28 @@ h <span class="c">#=&gt; {&quot;a&quot;: 1, &quot;c&quot;: 3}</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L548" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L554" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="select!(*keys)-instance-method">
+      <div class="signature">
+        
+        def <strong>select!</strong>(*keys)
+
+        <a class="method-permalink" href="#select%21%28%2Akeys%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Removes every element except the given ones.</p>
+
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;a&quot;</span>: <span class="n">1</span>, <span class="s">&quot;b&quot;</span>: <span class="n">2</span>, <span class="s">&quot;c&quot;</span>: <span class="n">3</span>, <span class="s">&quot;d&quot;</span>: <span class="n">4</span>}.select!(<span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span>)
+h <span class="c"># =&gt; {&quot;a&quot;: 1, &quot;c&quot;: 3}</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L617" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4158,10 +4207,21 @@ h <span class="c">#=&gt; {&quot;a&quot;: 1, &quot;c&quot;: 3}</span></code></pre
         <a class="method-permalink" href="#shift%28%26block%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Deletes and returns the first key-value pair in the hash.
+Yields to the given block if the hash is empty.</p>
+
+<pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span>}
+hash.shift { <span class="n">true</span> } <span class="c"># =&gt; {&quot;foo&quot;, &quot;bar&quot;}</span>
+hash                <span class="c"># =&gt; {&quot;baz&quot; =&gt; &quot;qux&quot;}</span>
+
+hash <span class="o">=</span> {} <span class="k">of</span> <span class="t">String</span> => <span class="t">String</span>
+hash.shift { <span class="n">true</span> } <span class="c"># =&gt; true</span>
+hash                <span class="c"># =&gt; {}</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L665" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L709" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4174,10 +4234,20 @@ h <span class="c">#=&gt; {&quot;a&quot;: 1, &quot;c&quot;: 3}</span></code></pre
         <a class="method-permalink" href="#shift-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Deletes and returns the first key-value pair in the hash,
+or raises <code><a href="IndexError.html">IndexError</a></code> if the hash is empty.</p>
+
+<pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span>}
+hash.shift <span class="c"># =&gt; {&quot;foo&quot;, &quot;bar&quot;}</span>
+hash       <span class="c"># =&gt; {&quot;baz&quot; =&gt; &quot;qux&quot;}</span>
+
+hash <span class="o">=</span> {} <span class="k">of</span> <span class="t">String</span> => <span class="t">String</span>
+hash.shift <span class="c"># =&gt; Index out of bounds (IndexError)</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L657" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L679" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4190,10 +4260,19 @@ h <span class="c">#=&gt; {&quot;a&quot;: 1, &quot;c&quot;: 3}</span></code></pre
         <a class="method-permalink" href="#shift%3F-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Same as <code><a href="Hash.html#shift%28%26block%29-instance-method">#shift</a></code>, but returns nil if the hash is empty.</p>
+
+<pre><code>hash <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span>}
+hash.shift? <span class="c"># =&gt; {&quot;foo&quot;, &quot;bar&quot;}</span>
+hash        <span class="c"># =&gt; {&quot;baz&quot; =&gt; &quot;qux&quot;}</span>
+
+hash <span class="o">=</span> {} <span class="k">of</span> <span class="t">String</span> => <span class="t">String</span>
+hash.shift? <span class="c"># =&gt; nil</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L661" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L693" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4209,7 +4288,7 @@ h <span class="c">#=&gt; {&quot;a&quot;: 1, &quot;c&quot;: 3}</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L33" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L33" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4224,13 +4303,13 @@ h <span class="c">#=&gt; {&quot;a&quot;: 1, &quot;c&quot;: 3}</span></code></pre
       
         <div class="doc"><p>Returns a new <code><a href="Array.html">Array</a></code> of tuples populated with each key-value pair.</p>
 
-<pre><code>h <span class="o">=</span> { <span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span> }
-h.to_a <span class="c">#=&gt; [{&quot;foo&quot;, &quot;bar&quot;}, {&quot;baz&quot;, &quot;qux}]</span></code></pre></div>
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span>}
+h.to_a <span class="c"># =&gt; [{&quot;foo&quot;, &quot;bar&quot;}, {&quot;baz&quot;, &quot;qux}]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L451" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L457" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4248,7 +4327,7 @@ h.to_a <span class="c">#=&gt; [{&quot;foo&quot;, &quot;bar&quot;}, {&quot;baz&qu
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L770" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L819" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4264,7 +4343,7 @@ h.to_a <span class="c">#=&gt; [{&quot;foo&quot;, &quot;bar&quot;}, {&quot;baz&qu
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr#L227" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr#L242" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4280,13 +4359,29 @@ h.to_a <span class="c">#=&gt; [{&quot;foo&quot;, &quot;bar&quot;}, {&quot;baz&qu
         <div class="doc"><p>Converts to a <code><a href="String.html">String</a></code>.</p>
 
 <pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span>: <span class="s">&quot;bar&quot;</span>}
-h.to_s       <span class="c">#=&gt; &quot;{\&quot;foo\&quot; =&gt; \&quot;bar\&quot;}&quot;</span>
-h.to_s.<span class="k">class</span> <span class="c">#=&gt; String</span></code></pre></div>
+h.to_s       <span class="c"># =&gt; &quot;{\&quot;foo\&quot; =&gt; \&quot;bar\&quot;}&quot;</span>
+h.to_s.<span class="k">class</span> <span class="c"># =&gt; String</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L753" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L802" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_yaml(yaml:YAML::Generator)-instance-method">
+      <div class="signature">
+        
+        def <strong>to_yaml</strong>(yaml : <a href="YAML/Generator.html">YAML::Generator</a>)
+
+        <a class="method-permalink" href="#to_yaml%28yaml%3AYAML%3A%3AGenerator%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr#L42" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4299,10 +4394,15 @@ h.to_s.<span class="k">class</span> <span class="c">#=&gt; String</span></code><
         <a class="method-permalink" href="#values-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns only the values as an <code><a href="Array.html">Array</a></code>.</p>
+
+<pre><code>h <span class="o">=</span> {<span class="s">&quot;foo&quot;</span> => <span class="s">&quot;bar&quot;</span>, <span class="s">&quot;baz&quot;</span> => <span class="s">&quot;qux&quot;</span>}
+h.values <span class="c"># =&gt; [&quot;bar&quot;, &quot;qux&quot;]</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L439" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L445" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4318,12 +4418,12 @@ h.to_s.<span class="k">class</span> <span class="c">#=&gt; String</span></code><
         <div class="doc"><p>Returns a tuple populated with the elements at the given indexes.
 Raises if any index is invalid.</p>
 
-<pre><code>{<span class="s">&quot;a&quot;</span>: <span class="n">1</span>, <span class="s">&quot;b&quot;</span>: <span class="n">2</span>, <span class="s">&quot;c&quot;</span>: <span class="n">3</span>, <span class="s">&quot;d&quot;</span>: <span class="n">4</span>}.values_at(<span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span>) <span class="c">#=&gt; {1, 3}</span></code></pre></div>
+<pre><code>{<span class="s">&quot;a&quot;</span>: <span class="n">1</span>, <span class="s">&quot;b&quot;</span>: <span class="n">2</span>, <span class="s">&quot;c&quot;</span>: <span class="n">3</span>, <span class="s">&quot;d&quot;</span>: <span class="n">4</span>}.values_at(<span class="s">&quot;a&quot;</span>, <span class="s">&quot;c&quot;</span>) <span class="c"># =&gt; {1, 3}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/hash.cr#L170" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/hash.cr#L170" target="_blank">View source</a>]
         
       </div>
     </div>

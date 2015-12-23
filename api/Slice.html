@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2195,7 +2205,7 @@ In this way, a slice is a safe alternative to Pointer.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr" target="_blank">slice.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr" target="_blank">slice.cr</a>
     
     <br/>
   
@@ -2382,7 +2392,9 @@ In this way, a slice is a safe alternative to Pointer.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_unsafe-instance-method" class="signature"><strong>#to_unsafe</strong></a>
+        <a href="#to_unsafe%3APointer%28T%29-instance-method" class="signature"><strong>#to_unsafe</strong> : Pointer(T)</a>
+        
+          <div class="summary"><p>Returns this slice's pointer.</p></div>
         
       </li>
     
@@ -2722,6 +2734,10 @@ In this way, a slice is a safe alternative to Pointer.</p>
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2785,6 +2801,10 @@ In this way, a slice is a safe alternative to Pointer.</p>
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2856,12 +2876,12 @@ and returns a slice pointing to that memory.</p>
 no pointers to this memory, it will be automatically freed.</p>
 
 <pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">3</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> }
-slice <span class="c">#=&gt; [10, 11, 12]</span></code></pre></div>
+slice <span class="c"># =&gt; [10, 11, 12]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L59" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L59" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2881,12 +2901,12 @@ and returns a slice pointing to that memory.</p>
 no pointers to this memory, it will be automatically freed.</p>
 
 <pre><code>slice <span class="o">=</span> <span class="t">Slice</span>(<span class="t">UInt8</span>).<span class="k">new</span>(<span class="n">3</span>)
-slice <span class="c">#=&gt; [0, 0, 0]</span></code></pre></div>
+slice <span class="c"># =&gt; [0, 0, 0]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L43" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L43" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2906,12 +2926,12 @@ and returns a slice pointing to that memory.</p>
 no pointers to this memory, it will be automatically freed.</p>
 
 <pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">3</span>, <span class="n">10</span>)
-slice <span class="c">#=&gt; [10, 10, 10]</span></code></pre></div>
+slice <span class="c"># =&gt; [10, 10, 10]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L74" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L74" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2930,15 +2950,15 @@ method does not allocate heap memory.</p>
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">9</span>) { <span class="o">|</span>i<span class="o">|</span> (<span class="s">'a'</span>.ord <span class="o">+</span> i).to_u8 }
 
 slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(ptr, <span class="n">3</span>)
-slice.size      <span class="c">#=&gt; 3</span>
-slice             <span class="c">#=&gt; [97, 98, 99]</span>
+slice.size <span class="c"># =&gt; 3</span>
+slice      <span class="c"># =&gt; [97, 98, 99]</span>
 
-<span class="t">String</span>.<span class="k">new</span>(slice) <span class="c">#=&gt; &quot;abc&quot;</span></code></pre></div>
+<span class="t">String</span>.<span class="k">new</span>(slice) <span class="c"># =&gt; &quot;abc&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L29" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L29" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2959,15 +2979,15 @@ slice             <span class="c">#=&gt; [97, 98, 99]</span>
         <div class="doc"><p>Returns a new slice that i <em>offset</em> elements apart from this slice.</p>
 
 <pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">5</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> }
-slice <span class="c">#=&gt; [10, 11, 12, 13, 14]</span>
+slice <span class="c"># =&gt; [10, 11, 12, 13, 14]</span>
 
 slice2 <span class="o">=</span> slice <span class="o">+</span> <span class="n">2</span>
-slice2 <span class="c">#=&gt; [12, 13, 14]</span></code></pre></div>
+slice2 <span class="c"># =&gt; [12, 13, 14]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L87" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L87" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2983,7 +3003,7 @@ slice2 <span class="c">#=&gt; [12, 13, 14]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L267" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L267" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3002,15 +3022,15 @@ slice2 <span class="c">#=&gt; [12, 13, 14]</span></code></pre></div>
 Raises <code><a href="IndexError.html">IndexError</a></code> if trying to access an element outside the slice's range.</p>
 
 <pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">5</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> }
-slice[<span class="n">0</span>]  <span class="c">#=&gt; 10</span>
-slice[<span class="n">4</span>]  <span class="c">#=&gt; 14</span>
-slice[<span class="n">-1</span>] <span class="c">#=&gt; 14</span>
-slice[<span class="n">5</span>]  <span class="c">#=&gt; IndexError</span></code></pre></div>
+slice[<span class="n">0</span>]  <span class="c"># =&gt; 10</span>
+slice[<span class="n">4</span>]  <span class="c"># =&gt; 14</span>
+slice[<span class="n">-1</span>] <span class="c"># =&gt; 14</span>
+slice[<span class="n">5</span>]  <span class="c"># =&gt; IndexError</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L108" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L108" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3029,15 +3049,15 @@ and of <em>count</em> size.</p>
 <p>Raises <code><a href="IndexError.html">IndexError</a></code> if the new slice falls outside this slice.</p>
 
 <pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">5</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> }
-slice <span class="c">#=&gt; [10, 11, 12, 13, 14]</span>
+slice <span class="c"># =&gt; [10, 11, 12, 13, 14]</span>
 
 slice2 <span class="o">=</span> slice[<span class="n">1</span>, <span class="n">3</span>]
-slice2 <span class="c">#=&gt; [11, 12, 13]</span></code></pre></div>
+slice2 <span class="c"># =&gt; [11, 12, 13]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L147" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L147" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3058,14 +3078,14 @@ Raises <code><a href="IndexError.html">IndexError</a></code> if trying to set an
 <pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">5</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> }
 slice[<span class="n">0</span>] <span class="o">=</span> <span class="n">20</span>
 slice[<span class="n">-1</span>] <span class="o">=</span> <span class="n">30</span>
-slice <span class="c">#=&gt; [20, 11, 12, 13, 30]</span>
+slice <span class="c"># =&gt; [20, 11, 12, 13, 30]</span>
 
-slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span> <span class="c">#=&gt; IndexError</span></code></pre></div>
+slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span> <span class="c"># =&gt; IndexError</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L126" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L126" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3081,7 +3101,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L164" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L164" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3097,7 +3117,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L160" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L160" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3113,7 +3133,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L263" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L263" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3129,7 +3149,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L211" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L211" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3145,7 +3165,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L215" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L215" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3163,7 +3183,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L178" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L178" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3179,7 +3199,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L186" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L186" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3195,7 +3215,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L173" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L173" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3211,7 +3231,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L223" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L223" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3227,7 +3247,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L233" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L233" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3243,7 +3263,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L219" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3259,7 +3279,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L203" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L203" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3277,7 +3297,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L191" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L191" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3293,7 +3313,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L199" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L199" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3309,7 +3329,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L250" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L250" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3325,7 +3345,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L246" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L246" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3340,12 +3360,12 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       
         <div class="doc"><p>Returns the size of this slice.</p>
 
-<pre><code><span class="t">Slice</span>(<span class="t">UInt8</span>).<span class="k">new</span>(<span class="n">3</span>).size <span class="c">#=&gt; 3</span></code></pre></div>
+<pre><code><span class="t">Slice</span>(<span class="t">UInt8</span>).<span class="k">new</span>(<span class="n">3</span>).size <span class="c"># =&gt; 3</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L15" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L15" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3361,7 +3381,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L282" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L282" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3377,7 +3397,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L276" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L276" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3393,23 +3413,28 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L272" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L272" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="to_unsafe-instance-method">
+    <div class="entry-detail" id="to_unsafe:Pointer(T)-instance-method">
       <div class="signature">
         
-        def <strong>to_unsafe</strong>
+        def <strong>to_unsafe</strong> : <a href="Pointer.html">Pointer</a>(T)
 
-        <a class="method-permalink" href="#to_unsafe-instance-method">#</a>
+        <a class="method-permalink" href="#to_unsafe%3APointer%28T%29-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns this slice's pointer.</p>
+
+<pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">3</span>, <span class="n">10</span>)
+slice.to_unsafe[<span class="n">0</span>] <span class="c"># =&gt; 10</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/slice.cr#L289" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/slice.cr#L295" target="_blank">View source</a>]
         
       </div>
     </div>

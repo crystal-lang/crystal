@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2169,20 +2179,20 @@
 <p>An enum is a set of integer values, where each value has an associated name. For example:</p>
 
 <pre><code><span class="k">enum</span> <span class="t">Color</span>
-  <span class="t">Red</span>    <span class="c"># 0</span>
-  <span class="t">Green</span>  <span class="c"># 1</span>
-  <span class="t">Blue</span>   <span class="c"># 2</span>
+  <span class="t">Red</span>   <span class="c"># 0</span>
+  <span class="t">Green</span> <span class="c"># 1</span>
+  <span class="t">Blue</span>  <span class="c"># 2</span>
 <span class="k">end</span></code></pre>
 
 <p>Values start with the value 0 and are incremented by one, but can be overwritten.</p>
 
 <p>To get the underlying value you invoke value on it:</p>
 
-<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Green</span>.value <span class="c">#=&gt; 1</span></code></pre>
+<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Green</span>.value <span class="c"># =&gt; 1</span></code></pre>
 
 <p>Each constant (member) in the enum has the type of the enum:</p>
 
-<pre><code><span class="k">typeof</span>(<span class="t">Color</span><span class="t">::</span><span class="t">Red</span>) <span class="c">#=&gt; Color</span></code></pre>
+<pre><code><span class="k">typeof</span>(<span class="t">Color</span><span class="t">::</span><span class="t">Red</span>) <span class="c"># =&gt; Color</span></code></pre>
 
 <h3>Flags enum</h3>
 
@@ -2190,9 +2200,9 @@
 
 <pre><code>@[<span class="t">Flags</span>]
 <span class="k">enum</span> <span class="t">IOMode</span>
-  <span class="t">Read</span>   <span class="c"># 1</span>
-  <span class="t">Write</span>  <span class="c"># 2</span>
-  <span class="t">Async</span>  <span class="c"># 4</span>
+  <span class="t">Read</span>  <span class="c"># 1</span>
+  <span class="t">Write</span> <span class="c"># 2</span>
+  <span class="t">Async</span> <span class="c"># 4</span>
 <span class="k">end</span></code></pre>
 
 <p>Additionally, some methods change their behaviour.</p>
@@ -2201,12 +2211,12 @@
 
 <p>An enum can be created from an integer:</p>
 
-<pre><code>puts <span class="t">Color</span>.<span class="k">new</span>(<span class="n">1</span>) <span class="c">#=&gt; prints &quot;Green&quot;</span></code></pre>
+<pre><code>puts <span class="t">Color</span>.<span class="k">new</span>(<span class="n">1</span>) <span class="c"># =&gt; prints &quot;Green&quot;</span></code></pre>
 
 <p>Values that don't correspond to an enum's constants are allowed: the value will still be of type Color,
 but when printed you will get the underlying value:</p>
 
-<pre><code>puts <span class="t">Color</span>.<span class="k">new</span>(<span class="n">10</span>) <span class="c">#=&gt; prints &quot;10&quot;</span></code></pre>
+<pre><code>puts <span class="t">Color</span>.<span class="k">new</span>(<span class="n">10</span>) <span class="c"># =&gt; prints &quot;10&quot;</span></code></pre>
 
 <p>This method is mainly intended to convert integers from C to enums in Crystal.</p>
 
@@ -2217,13 +2227,13 @@ method name. If the case of regular enums, this compares by equality (<code><a h
 this invokes <code><a href="Enum.html#includes%3F%28other%3Aself%29-instance-method">#includes?</a></code>. For example:</p>
 
 <pre><code>color <span class="o">=</span> <span class="t">Color</span><span class="t">::</span><span class="t">Blue</span>
-color.red?  <span class="c">#=&gt; false</span>
-color.blue? <span class="c">#=&gt; true</span>
+color.red?  <span class="c"># =&gt; false</span>
+color.blue? <span class="c"># =&gt; true</span>
 
 mode <span class="o">=</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="o">|</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Async</span>
-mode.read?  <span class="c">#=&gt; true</span>
-mode.write? <span class="c">#=&gt; false</span>
-mode.async? <span class="c">#=&gt; true</span></code></pre>
+mode.read?  <span class="c"># =&gt; true</span>
+mode.write? <span class="c"># =&gt; false</span>
+mode.async? <span class="c"># =&gt; true</span></code></pre>
 
 <p>This is very convenient in <code>case</code> expressions:</p>
 
@@ -2257,7 +2267,7 @@ mode.async? <span class="c">#=&gt; true</span></code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr" target="_blank">enum.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr" target="_blank">enum.cr</a>
     
     <br/>
   
@@ -2567,6 +2577,10 @@ mode.async? <span class="c">#=&gt; true</span></code></pre>
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2630,6 +2644,10 @@ mode.async? <span class="c">#=&gt; true</span></code></pre>
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2696,15 +2714,15 @@ mode.async? <span class="c">#=&gt; true</span></code></pre>
         <div class="doc"><p>Returns the enum member that has the given value, or raises
 if no such member exists.</p>
 
-<pre><code><span class="t">Color</span>.from_value?(<span class="n">0</span>) <span class="c">#=&gt; Color::Red</span>
-<span class="t">Color</span>.from_value?(<span class="n">1</span>) <span class="c">#=&gt; Color::Green</span>
-<span class="t">Color</span>.from_value?(<span class="n">2</span>) <span class="c">#=&gt; Color::Blue</span>
-<span class="t">Color</span>.from_value?(<span class="n">3</span>) <span class="c">#=&gt; Exception</span></code></pre></div>
+<pre><code><span class="t">Color</span>.from_value?(<span class="n">0</span>) <span class="c"># =&gt; Color::Red</span>
+<span class="t">Color</span>.from_value?(<span class="n">1</span>) <span class="c"># =&gt; Color::Green</span>
+<span class="t">Color</span>.from_value?(<span class="n">2</span>) <span class="c"># =&gt; Color::Blue</span>
+<span class="t">Color</span>.from_value?(<span class="n">3</span>) <span class="c"># =&gt; Exception</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L329" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L328" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2720,15 +2738,15 @@ if no such member exists.</p>
         <div class="doc"><p>Returns the enum member that has the given value, or <code>nil</code> if
 no such member exists.</p>
 
-<pre><code><span class="t">Color</span>.from_value?(<span class="n">0</span>) <span class="c">#=&gt; Color::Red</span>
-<span class="t">Color</span>.from_value?(<span class="n">1</span>) <span class="c">#=&gt; Color::Green</span>
-<span class="t">Color</span>.from_value?(<span class="n">2</span>) <span class="c">#=&gt; Color::Blue</span>
-<span class="t">Color</span>.from_value?(<span class="n">3</span>) <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="t">Color</span>.from_value?(<span class="n">0</span>) <span class="c"># =&gt; Color::Red</span>
+<span class="t">Color</span>.from_value?(<span class="n">1</span>) <span class="c"># =&gt; Color::Green</span>
+<span class="t">Color</span>.from_value?(<span class="n">2</span>) <span class="c"># =&gt; Color::Blue</span>
+<span class="t">Color</span>.from_value?(<span class="n">3</span>) <span class="c"># =&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L313" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L312" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2743,12 +2761,12 @@ no such member exists.</p>
       
         <div class="doc"><p>Returns all enum members as an <code><a href="Array.html">Array</a>(<a href="String.html">String</a>)</code>.</p>
 
-<pre><code><span class="t">Color</span>.names <span class="c">#=&gt; [&quot;Red&quot;, &quot;Green&quot;, &quot;Blue&quot;]</span></code></pre></div>
+<pre><code><span class="t">Color</span>.names <span class="c"># =&gt; [&quot;Red&quot;, &quot;Green&quot;, &quot;Blue&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L283" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L282" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2765,14 +2783,14 @@ no such member exists.</p>
 raises if no such member exists. The comparison is made by using
 <code><a href="String.html#camelcase-instance-method">String#camelcase</a></code> between <em>string</em> and the enum members names.</p>
 
-<pre><code><span class="t">Color</span>.parse(<span class="s">&quot;Red&quot;</span>)    <span class="c">#=&gt; Color::Red</span>
-<span class="t">Color</span>.parse(<span class="s">&quot;BLUE&quot;</span>)   <span class="c">#=&gt; Color::Blue</span>
-<span class="t">Color</span>.parse(<span class="s">&quot;Yellow&quot;</span>) <span class="c">#=&gt; Exception</span></code></pre></div>
+<pre><code><span class="t">Color</span>.parse(<span class="s">&quot;Red&quot;</span>)    <span class="c"># =&gt; Color::Red</span>
+<span class="t">Color</span>.parse(<span class="s">&quot;BLUE&quot;</span>)   <span class="c"># =&gt; Color::Blue</span>
+<span class="t">Color</span>.parse(<span class="s">&quot;Yellow&quot;</span>) <span class="c"># =&gt; Exception</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L350" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L349" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2789,14 +2807,14 @@ raises if no such member exists. The comparison is made by using
 <code>nil</code> if no such member exists. The comparison is made by using
 <code><a href="String.html#camelcase-instance-method">String#camelcase</a></code> between <em>string</em> and the enum members names.</p>
 
-<pre><code><span class="t">Color</span>.parse?(<span class="s">&quot;Red&quot;</span>)    <span class="c">#=&gt; Color::Red</span>
-<span class="t">Color</span>.parse?(<span class="s">&quot;BLUE&quot;</span>)   <span class="c">#=&gt; Color::Blue</span>
-<span class="t">Color</span>.parse?(<span class="s">&quot;Yellow&quot;</span>) <span class="c">#=&gt; nil</span></code></pre></div>
+<pre><code><span class="t">Color</span>.parse?(<span class="s">&quot;Red&quot;</span>)    <span class="c"># =&gt; Color::Red</span>
+<span class="t">Color</span>.parse?(<span class="s">&quot;BLUE&quot;</span>)   <span class="c"># =&gt; Color::Blue</span>
+<span class="t">Color</span>.parse?(<span class="s">&quot;Yellow&quot;</span>) <span class="c"># =&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L363" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L362" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2811,12 +2829,12 @@ raises if no such member exists. The comparison is made by using
       
         <div class="doc"><p>Returns all enum members as an <code><a href="Array.html">Array</a>(self)</code>.</p>
 
-<pre><code><span class="t">Color</span>.values <span class="c">#=&gt; [Color::Red, Color::Green, Color::Blue]</span></code></pre></div>
+<pre><code><span class="t">Color</span>.values <span class="c"># =&gt; [Color::Red, Color::Green, Color::Blue]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L296" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L295" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2838,12 +2856,12 @@ raises if no such member exists. The comparison is made by using
 "and" operation between this enum member's value and <em>other</em>.
 This is mostly useful with flag enums.</p>
 
-<pre><code>(<span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="o">|</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Async</span>) <span class="o">&</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="c">#=&gt; IOMode::Read</span></code></pre></div>
+<pre><code>(<span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="o">|</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Async</span>) <span class="o">&</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="c"># =&gt; IOMode::Read</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L207" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L206" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2859,14 +2877,14 @@ This is mostly useful with flag enums.</p>
         <div class="doc"><p>Returns the enum member that results from adding <em>other</em>
 to this enum member's value.</p>
 
-<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o">+</span> <span class="n">1</span> <span class="c">#=&gt; Color::Blue</span>
-<span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o">+</span> <span class="n">2</span> <span class="c">#=&gt; Color::Green</span>
-<span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o">+</span> <span class="n">3</span> <span class="c">#=&gt; 3</span></code></pre></div>
+<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o">+</span> <span class="n">1</span> <span class="c"># =&gt; Color::Blue</span>
+<span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o">+</span> <span class="n">2</span> <span class="c"># =&gt; Color::Green</span>
+<span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o">+</span> <span class="n">3</span> <span class="c"># =&gt; 3</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L173" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L172" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2882,14 +2900,14 @@ to this enum member's value.</p>
         <div class="doc"><p>Returns the enum member that results from subtracting <em>other</em>
 to this enum member's value.</p>
 
-<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="o">-</span> <span class="n">1</span> <span class="c">#=&gt; Color::Green</span>
-<span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="o">-</span> <span class="n">2</span> <span class="c">#=&gt; Color::Red</span>
-<span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="o">-</span> <span class="n">3</span> <span class="c">#=&gt; -1</span></code></pre></div>
+<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="o">-</span> <span class="n">1</span> <span class="c"># =&gt; Color::Green</span>
+<span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="o">-</span> <span class="n">2</span> <span class="c"># =&gt; Color::Red</span>
+<span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="o">-</span> <span class="n">3</span> <span class="c"># =&gt; -1</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L185" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L184" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2905,14 +2923,14 @@ to this enum member's value.</p>
         <div class="doc"><p>Compares this enum member against another, according to their underlying
 value.</p>
 
-<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o"><=></span> <span class="t">Color</span><span class="t">::</span><span class="t">Blue</span>  <span class="c">#=&gt; -1</span>
-<span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="o"><=></span> <span class="t">Color</span><span class="t">::</span><span class="t">Red</span>  <span class="c">#=&gt; 1</span>
-<span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="o"><=></span> <span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="c">#=&gt; 0</span></code></pre></div>
+<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o"><=></span> <span class="t">Color</span><span class="t">::</span><span class="t">Blue</span>  <span class="c"># =&gt; -1</span>
+<span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="o"><=></span> <span class="t">Color</span><span class="t">::</span><span class="t">Red</span>  <span class="c"># =&gt; 1</span>
+<span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="o"><=></span> <span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="c"># =&gt; 0</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L232" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L231" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2927,13 +2945,13 @@ value.</p>
       
         <div class="doc"><p>Returns <code>true</code> if this enum member and <em>other</em> have the same underlying value.</p>
 
-<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o">==</span> <span class="t">Color</span><span class="t">::</span><span class="t">Red</span>  <span class="c">#=&gt; true</span>
-<span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o">==</span> <span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="c">#=&gt; false</span></code></pre></div>
+<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o">==</span> <span class="t">Color</span><span class="t">::</span><span class="t">Red</span>  <span class="c"># =&gt; true</span>
+<span class="t">Color</span><span class="t">::</span><span class="t">Red</span> <span class="o">==</span> <span class="t">Color</span><span class="t">::</span><span class="t">Blue</span> <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L269" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L268" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2953,7 +2971,7 @@ This is mostly useful with flag enums.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L214" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L213" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2971,7 +2989,7 @@ This is mostly useful with flag enums.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L274" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L273" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2999,13 +3017,13 @@ so instead of writing:</p>
 <p>For example:</p>
 
 <pre><code>mode <span class="o">=</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="o">|</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Write</span>
-mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span>)  <span class="c">#=&gt; true</span>
-mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class="t">Async</span>) <span class="c">#=&gt; false</span></code></pre></div>
+mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span>)  <span class="c"># =&gt; true</span>
+mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class="t">Async</span>) <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L259" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L258" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3023,7 +3041,7 @@ mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3041,7 +3059,7 @@ mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3056,15 +3074,15 @@ mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class
       
         <div class="doc"><p>Returns the value of this enum member as an <code><a href="Int32.html">Int32</a></code>.</p>
 
-<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Blue</span>.to_i <span class="c">#=&gt; 2</span>
-(<span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="o">|</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Write</span>).to_i <span class="c">#=&gt; 3</span>
+<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Blue</span>.to_i                    <span class="c"># =&gt; 2</span>
+(<span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="o">|</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Write</span>).to_i <span class="c"># =&gt; 3</span>
 
-<span class="t">Color</span>.<span class="k">new</span>(<span class="n">10</span>).to_i <span class="c">#=&gt; 10</span></code></pre></div>
+<span class="t">Color</span>.<span class="k">new</span>(<span class="n">10</span>).to_i <span class="c"># =&gt; 10</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L151" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L151" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3082,7 +3100,7 @@ mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3100,7 +3118,7 @@ mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3118,7 +3136,7 @@ mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3136,7 +3154,7 @@ mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3154,7 +3172,7 @@ mode.includes?(<span class="t">IOMode</span><span class="t">::</span><span class
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L90" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L90" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3175,16 +3193,16 @@ if the value is zero.</p>
 <p>If an enum's value doesn't match a member's value, the raw value
 is returned as a string.</p>
 
-<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Red</span>.to_s   <span class="c">#=&gt; &quot;Red&quot;</span>
-<span class="t">IOMode</span><span class="t">::</span><span class="t">None</span>.to_s <span class="c">#=&gt; &quot;None&quot;</span>
-(<span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="o">|</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Write</span>).to_s <span class="c">#=&gt; &quot;Read, Write&quot;</span>
+<pre><code><span class="t">Color</span><span class="t">::</span><span class="t">Red</span>.to_s                     <span class="c"># =&gt; &quot;Red&quot;</span>
+<span class="t">IOMode</span><span class="t">::</span><span class="t">None</span>.to_s                   <span class="c"># =&gt; &quot;None&quot;</span>
+(<span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="o">|</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Write</span>).to_s <span class="c"># =&gt; &quot;Read, Write&quot;</span>
 
-<span class="t">Color</span>.<span class="k">new</span>(<span class="n">10</span>).to_s <span class="c">#=&gt; &quot;10&quot;</span></code></pre></div>
+<span class="t">Color</span>.<span class="k">new</span>(<span class="n">10</span>).to_s <span class="c"># =&gt; &quot;10&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L128" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L128" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3202,7 +3220,7 @@ is returned as a string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3220,7 +3238,7 @@ is returned as a string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3238,7 +3256,7 @@ is returned as a string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3256,7 +3274,7 @@ is returned as a string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3273,12 +3291,12 @@ is returned as a string.</p>
 "or" operation between this enum member's value and <em>other</em>.
 This is mostly useful with flag enums.</p>
 
-<pre><code>(<span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="o">|</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Async</span>) <span class="c">#=&gt; IOMode::Read | IOMode::Async</span></code></pre></div>
+<pre><code>(<span class="t">IOMode</span><span class="t">::</span><span class="t">Read</span> <span class="o">|</span> <span class="t">IOMode</span><span class="t">::</span><span class="t">Async</span>) <span class="c"># =&gt; IOMode::Read | IOMode::Async</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L196" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L195" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3297,7 +3315,7 @@ This is mostly useful with flag enums.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L220" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3317,12 +3335,12 @@ This is mostly useful with flag enums.</p>
       
         <div class="doc"><p>Convenience macro to create an <em>or</em>ed enum from the given members.</p>
 
-<pre><code><span class="t">IOMode</span>.flags(<span class="t">Read</span>, <span class="t">Write</span>) <span class="c">#=&gt; IOMode::Read | IOMode::Write</span></code></pre></div>
+<pre><code><span class="t">IOMode</span>.flags(<span class="t">Read</span>, <span class="t">Write</span>) <span class="c"># =&gt; IOMode::Read | IOMode::Write</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/enum.cr#L379" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/enum.cr#L378" target="_blank">View source</a>]
         
       </div>
     </div>

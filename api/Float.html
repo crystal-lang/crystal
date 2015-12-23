@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2176,16 +2186,16 @@ a sequence of numbers or underscores, followed by a dot,
 followed by numbers or underscores, followed by an optional exponent suffix,
 followed by an optional type suffix. If no suffix is present, the literal's type is <code><a href="Float64.html">Float64</a></code>.</p>
 
-<pre><code><span class="n">1.0</span>      <span class="c"># Float64</span>
-<span class="n">1.0_f32</span>  <span class="c"># Float32</span>
-<span class="n">1_f32</span>    <span class="c"># Float32</span>
+<pre><code><span class="n">1.0</span>     <span class="c"># Float64</span>
+<span class="n">1.0_f32</span> <span class="c"># Float32</span>
+<span class="n">1_f32</span>   <span class="c"># Float32</span>
 
-<span class="n">1e10</span>     <span class="c"># Float64</span>
-<span class="n">1.5e10</span>   <span class="c"># Float64</span>
-<span class="n">1.5e-7</span>   <span class="c"># Float64</span>
+<span class="n">1e10</span>   <span class="c"># Float64</span>
+<span class="n">1.5e10</span> <span class="c"># Float64</span>
+<span class="n">1.5e-7</span> <span class="c"># Float64</span>
 
-<span class="n">+1.3</span>     <span class="c"># Float64</span>
-<span class="n">-0.5</span>     <span class="c"># Float64</span></code></pre>
+<span class="n">+1.3</span> <span class="c"># Float64</span>
+<span class="n">-0.5</span> <span class="c"># Float64</span></code></pre>
 
 <p>The underscore <code>_</code> before the suffix is optional.</p>
 
@@ -2218,22 +2228,22 @@ followed by an optional type suffix. If no suffix is present, the literal's type
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/float.cr" target="_blank">float.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/float.cr" target="_blank">float.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr" target="_blank">time/span.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr" target="_blank">time/span.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -2408,13 +2418,17 @@ followed by an optional type suffix. If no suffix is present, the literal's type
       <span>significant(digits, base = <span class="n">10</span>)</span>
     significant</a>, 
   
-    <a href="Number.html#step%28limit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%2Cby%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%2C%26block%29-instance-method" class="tooltip">
-      <span>step(limit = <span class="n">nil</span>, by = <span class="n">1</span>, &block)<br/>step(limit = <span class="n">nil</span>, by = <span class="n">1</span>)</span>
+    <a href="Number.html#step%28limit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%2Cby%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>step(limit = <span class="n">nil</span>, by = <span class="n">1</span>)<br/>step(limit = <span class="n">nil</span>, by = <span class="n">1</span>, &block)</span>
     step</a>, 
   
     <a href="Number.html#to_c-instance-method" class="tooltip">
       <span>to_c</span>
-    to_c</a>
+    to_c</a>, 
+  
+    <a href="Number.html#to_yaml%28yaml%3AYAML%3A%3AGenerator%29-instance-method" class="tooltip">
+      <span>to_yaml(yaml : YAML::Generator)</span>
+    to_yaml</a>
   
 
 
@@ -2501,6 +2515,10 @@ followed by an optional type suffix. If no suffix is present, the literal's type
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2564,6 +2582,10 @@ followed by an optional type suffix. If no suffix is present, the literal's type
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2633,7 +2655,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/float.cr#L89" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/float.cr#L89" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2654,7 +2676,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/float.cr#L36" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/float.cr#L36" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2670,7 +2692,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L334" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L334" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2686,7 +2708,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/float.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/float.cr#L56" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2702,7 +2724,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/float.cr#L52" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/float.cr#L52" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2718,7 +2740,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L338" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L338" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2734,7 +2756,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/float.cr#L44" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/float.cr#L44" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2750,7 +2772,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L350" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L350" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2766,7 +2788,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L342" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L342" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2782,7 +2804,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/float.cr#L60" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/float.cr#L60" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2798,7 +2820,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/float.cr#L40" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/float.cr#L40" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2814,7 +2836,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/float.cr#L68" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/float.cr#L68" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2830,7 +2852,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/time/span.cr#L346" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/time/span.cr#L346" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2846,7 +2868,7 @@ See <code><a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/big_int/big_int.cr#L314" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L314" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2865,7 +2887,7 @@ See <code><a href="IO.html#write_bytes%28object%2Cformat%3D%3Cspanclass%3D%22t%2
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/float.cr#L83" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/float.cr#L83" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2881,7 +2903,7 @@ See <code><a href="IO.html#write_bytes%28object%2Cformat%3D%3Cspanclass%3D%22t%2
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/json/to_json.cr#L166" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr#L166" target="_blank">View source</a>]
         
       </div>
     </div>

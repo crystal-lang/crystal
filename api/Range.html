@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2206,9 +2216,9 @@ for <code><a href="Range.html#reverse_each%28%26block%29-instance-method">#rever
 
 <p>An example of using <code>Xs</code> to construct a range:</p>
 
-<pre><code>r <span class="o">=</span> <span class="t">Xs</span>.<span class="k">new</span>(<span class="n">3</span>)..<span class="t">Xs</span>.<span class="k">new</span>(<span class="n">6</span>)   <span class="c">#=&gt; xxx..xxxxxx</span>
-r.to_a                     <span class="c">#=&gt; [xxx, xxxx, xxxxx, xxxxxx]</span>
-r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n">5</span>))     <span class="c">#=&gt; true</span></code></pre>
+<pre><code>r <span class="o">=</span> <span class="t">Xs</span>.<span class="k">new</span>(<span class="n">3</span>)..<span class="t">Xs</span>.<span class="k">new</span>(<span class="n">6</span>) <span class="c"># =&gt; xxx..xxxxxx</span>
+r.to_a                   <span class="c"># =&gt; [xxx, xxxx, xxxxx, xxxxxx]</span>
+r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n">5</span>))   <span class="c"># =&gt; true</span></code></pre>
 
 
 
@@ -2235,7 +2245,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr" target="_blank">range.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr" target="_blank">range.cr</a>
     
     <br/>
   
@@ -2349,6 +2359,13 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
         <a href="#step%28n%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#step</strong>(n = <span class="n">1</span>)</a>
         
           <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> that returns each nth element in this range.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sum%28initial%29-instance-method" class="signature"><strong>#sum</strong>(initial)</a>
+        
+          <div class="summary"><p>If self is a <code><a href="Int.html">Int</a></code> range, it provides O(1) implementation, otherwise it is same as <code><a href="Enumerable.html#sum%28%26block%29-instance-method">Enumerable#sum</a></code>.</p></div>
         
       </li>
     
@@ -2688,6 +2705,10 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2751,6 +2772,10 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2816,13 +2841,13 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       
         <div class="doc"><p>Constructs a range using the given beginning and end.</p>
 
-<pre><code><span class="t">Range</span>.<span class="k">new</span>(<span class="n">1</span>, <span class="n">10</span>)                  <span class="c">#=&gt; 1..10</span>
-<span class="t">Range</span>.<span class="k">new</span>(<span class="n">1</span>, <span class="n">10</span>, exclusive: <span class="n">true</span>) <span class="c">#=&gt; 1...10</span></code></pre></div>
+<pre><code><span class="t">Range</span>.<span class="k">new</span>(<span class="n">1</span>, <span class="n">10</span>)                  <span class="c"># =&gt; 1..10</span>
+<span class="t">Range</span>.<span class="k">new</span>(<span class="n">1</span>, <span class="n">10</span>, exclusive: <span class="n">true</span>) <span class="c"># =&gt; 1...10</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2843,21 +2868,21 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
         <div class="doc"><p>Same as <code><a href="Range.html#includes%3F%28value%29-instance-method">#includes?</a></code>, useful for the <code>case</code> expression.</p>
 
 <pre><code><span class="k">case</span> <span class="n">79</span>
-<span class="k">when</span> <span class="n">1</span>..<span class="n">50</span>   <span class="k">then</span>   puts <span class="s">&quot;low&quot;</span>
-<span class="k">when</span> <span class="n">51</span>..<span class="n">75</span>  <span class="k">then</span>   puts <span class="s">&quot;medium&quot;</span>
-<span class="k">when</span> <span class="n">76</span>..<span class="n">100</span> <span class="k">then</span>   puts <span class="s">&quot;high&quot;</span>
+<span class="k">when</span> <span class="n">1</span>..<span class="n">50</span>   <span class="k">then</span> puts <span class="s">&quot;low&quot;</span>
+<span class="k">when</span> <span class="n">51</span>..<span class="n">75</span>  <span class="k">then</span> puts <span class="s">&quot;medium&quot;</span>
+<span class="k">when</span> <span class="n">76</span>..<span class="n">100</span> <span class="k">then</span> puts <span class="s">&quot;high&quot;</span>
 <span class="k">end</span></code></pre>
 
 <p>Produces:</p>
 
-<pre><code>high</code></pre>
+<pre><code class='language-text'>high</code></pre>
 
 <p>See <code><a href="Object.html#%3D%3D%3D%28other%29-instance-method">Object#===</a></code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L229" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L229" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2872,13 +2897,13 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       
         <div class="doc"><p>Returns the object that defines the beginning of this range.</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">10</span>).<span class="k">begin</span>  <span class="c">#=&gt; 1</span>
-(<span class="n">1</span>...<span class="n">10</span>).<span class="k">begin</span> <span class="c">#=&gt; 1</span></code></pre></div>
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>).<span class="k">begin</span>  <span class="c"># =&gt; 1</span>
+(<span class="n">1</span>...<span class="n">10</span>).<span class="k">begin</span> <span class="c"># =&gt; 1</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L62" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L62" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2896,7 +2921,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L208" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L208" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2911,12 +2936,12 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       
         <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> that cycles over the values of this range.</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">3</span>).cycle.take(<span class="n">5</span>).to_a <span class="c">#=&gt; [1, 2, 3, 1, 3]</span></code></pre></div>
+<pre><code>(<span class="n">1</span>..<span class="n">3</span>).cycle.take(<span class="n">5</span>).to_a <span class="c"># =&gt; [1, 2, 3, 1, 3]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L90" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L90" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2931,12 +2956,12 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       
         <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> over the elements of this range.</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">3</span>).each.skip(<span class="n">1</span>).to_a <span class="c">#=&gt; [2, 3]</span></code></pre></div>
+<pre><code>(<span class="n">1</span>..<span class="n">3</span>).each.skip(<span class="n">1</span>).to_a <span class="c"># =&gt; [2, 3]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L115" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L115" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2951,13 +2976,13 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       
         <div class="doc"><p>Iterates over the elements of this range, passing each in turn to the block.</p>
 
-<pre><code>(<span class="n">10</span>..<span class="n">15</span>).each {<span class="o">|</span>n<span class="o">|</span> print n, <span class="s">' '</span> }
+<pre><code>(<span class="n">10</span>..<span class="n">15</span>).each { <span class="o">|</span>n<span class="o">|</span> print n, <span class="s">' '</span> }
 <span class="c"># prints: 10 11 12 13 14 15</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L100" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L100" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2972,13 +2997,13 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       
         <div class="doc"><p>Returns the object that defines the end of the range.</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">10</span>).<span class="k">end</span>  <span class="c">#=&gt; 10</span>
-(<span class="n">1</span>...<span class="n">10</span>).<span class="k">end</span> <span class="c">#=&gt; 10</span></code></pre></div>
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>).<span class="k">end</span>  <span class="c"># =&gt; 10</span>
+(<span class="n">1</span>...<span class="n">10</span>).<span class="k">end</span> <span class="c"># =&gt; 10</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L70" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L70" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2993,13 +3018,13 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       
         <div class="doc"><p>Returns true if this range excludes the <em>end</em> element.</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">10</span>).excludes_end?  <span class="c">#=&gt; false</span>
-(<span class="n">1</span>...<span class="n">10</span>).excludes_end? <span class="c">#=&gt; true</span></code></pre></div>
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>).excludes_end?  <span class="c"># =&gt; false</span>
+(<span class="n">1</span>...<span class="n">10</span>).excludes_end? <span class="c"># =&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L185" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L185" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3018,7 +3043,7 @@ Returns <code>false</code> otherwise (default).</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L74" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L74" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3033,17 +3058,17 @@ Returns <code>false</code> otherwise (default).</p></div>
       
         <div class="doc"><p>Returns true if this range includes the given <em>value</em>.</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">10</span>).includes?(<span class="n">4</span>)   <span class="c">#=&gt; true</span>
-(<span class="n">1</span>..<span class="n">10</span>).includes?(<span class="n">10</span>)  <span class="c">#=&gt; true</span>
-(<span class="n">1</span>..<span class="n">10</span>).includes?(<span class="n">11</span>)  <span class="c">#=&gt; false</span>
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>).includes?(<span class="n">4</span>)  <span class="c"># =&gt; true</span>
+(<span class="n">1</span>..<span class="n">10</span>).includes?(<span class="n">10</span>) <span class="c"># =&gt; true</span>
+(<span class="n">1</span>..<span class="n">10</span>).includes?(<span class="n">11</span>) <span class="c"># =&gt; false</span>
 
-(<span class="n">1</span>...<span class="n">10</span>).includes?(<span class="n">9</span>)  <span class="c">#=&gt; true</span>
-(<span class="n">1</span>...<span class="n">10</span>).includes?(<span class="n">10</span>) <span class="c">#=&gt; false</span></code></pre></div>
+(<span class="n">1</span>...<span class="n">10</span>).includes?(<span class="n">9</span>)  <span class="c"># =&gt; true</span>
+(<span class="n">1</span>...<span class="n">10</span>).includes?(<span class="n">10</span>) <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L199" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L199" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3058,13 +3083,13 @@ Returns <code>false</code> otherwise (default).</p></div>
       
         <div class="doc"><p>Iterates over the elements of this range in reverse order, passing each in turn to the block.</p>
 
-<pre><code>(<span class="n">10</span>...<span class="n">15</span>).reverse_each {<span class="o">|</span>n<span class="o">|</span> print n, <span class="s">' '</span> }
+<pre><code>(<span class="n">10</span>...<span class="n">15</span>).reverse_each { <span class="o">|</span>n<span class="o">|</span> print n, <span class="s">' '</span> }
 <span class="c"># prints: 14 13 12 11 10</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L125" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L125" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3080,13 +3105,13 @@ Returns <code>false</code> otherwise (default).</p></div>
         <div class="doc"><p>Iterates over this range, passing each nth element to the block.</p>
 
 <pre><code>range <span class="o">=</span> <span class="t">Xs</span>.<span class="k">new</span>(<span class="n">1</span>)..<span class="t">Xs</span>.<span class="k">new</span>(<span class="n">10</span>)
-range.step(<span class="n">2</span>) {<span class="o">|</span>x<span class="o">|</span> puts x}
+range.step(<span class="n">2</span>) { <span class="o">|</span>x<span class="o">|</span> puts x }
 puts
-range.step(<span class="n">3</span>) {<span class="o">|</span>x<span class="o">|</span> puts x}</code></pre>
+range.step(<span class="n">3</span>) { <span class="o">|</span>x<span class="o">|</span> puts x }</code></pre>
 
 <p>Produces:</p>
 
-<pre><code>1 x
+<pre><code class='language-text'>1 x
 3 xxx
 5 xxxxx
 7 xxxxxxx
@@ -3102,7 +3127,7 @@ range.step(<span class="n">3</span>) {<span class="o">|</span>x<span class="o">|
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L160" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L160" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3117,12 +3142,31 @@ range.step(<span class="n">3</span>) {<span class="o">|</span>x<span class="o">|
       
         <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> that returns each nth element in this range.</p>
 
-<pre><code>(<span class="n">1</span>..<span class="n">10</span>).step(<span class="n">3</span>).skip(<span class="n">1</span>).to_a <span class="c">#=&gt; [4, 7, 10]</span></code></pre></div>
+<pre><code>(<span class="n">1</span>..<span class="n">10</span>).step(<span class="n">3</span>).skip(<span class="n">1</span>).to_a <span class="c"># =&gt; [4, 7, 10]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/range.cr#L175" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L175" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sum(initial)-instance-method">
+      <div class="signature">
+        
+        def <strong>sum</strong>(initial)
+
+        <a class="method-permalink" href="#sum%28initial%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>If self is a <code><a href="Int.html">Int</a></code> range, it provides O(1) implementation,
+otherwise it is same as <code><a href="Enumerable.html#sum%28%26block%29-instance-method">Enumerable#sum</a></code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/range.cr#L247" target="_blank">View source</a>]
         
       </div>
     </div>

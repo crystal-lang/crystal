@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2199,22 +2209,22 @@ provides similar methods and can be converted to an <code><a href="Array.html">A
 <pre><code><span class="k">require</span> <span class="s">&quot;csv&quot;</span>
 
 csv <span class="o">=</span> <span class="t">CSV</span>.<span class="k">new</span>(<span class="s">&quot;Name, Age\nJohn, 20\nPeter, 30&quot;</span>, headers: <span class="n">true</span>)
-csv.<span class="k">next</span> <span class="c">#=&gt; true</span>
+csv.<span class="k">next</span> <span class="c"># =&gt; true</span>
 
-csv[<span class="s">&quot;Name&quot;</span>] <span class="c">#=&gt;  &quot;John&quot;</span>
-csv[<span class="n">0</span>]      <span class="c">#=&gt;  &quot;John&quot;</span>
-csv[<span class="n">-2</span>]     <span class="c">#=&gt;  &quot;John&quot;</span>
-csv[<span class="s">/name/</span>i] <span class="c">#=&gt; &quot;John&quot;</span>
+csv[<span class="s">&quot;Name&quot;</span>]  <span class="c"># =&gt; &quot;John&quot;</span>
+csv[<span class="n">0</span>]       <span class="c"># =&gt; &quot;John&quot;</span>
+csv[<span class="n">-2</span>]      <span class="c"># =&gt; &quot;John&quot;</span>
+csv[<span class="s">/name/</span>i] <span class="c"># =&gt; &quot;John&quot;</span>
 
-csv[<span class="s">&quot;Age&quot;</span>] <span class="c">#=&gt; &quot; 20&quot;</span>
+csv[<span class="s">&quot;Age&quot;</span>] <span class="c"># =&gt; &quot; 20&quot;</span>
 
-csv.row.to_a <span class="c">#=&gt; [&quot;John&quot;, &quot; 20&quot;]</span>
-csv.row.to_h <span class="c">#=&gt; {&quot;Name&quot; =&gt; &quot;John&quot;, &quot;Age&quot; =&gt; &quot; 20&quot;}</span>
+csv.row.to_a <span class="c"># =&gt; [&quot;John&quot;, &quot; 20&quot;]</span>
+csv.row.to_h <span class="c"># =&gt; {&quot;Name&quot; =&gt; &quot;John&quot;, &quot;Age&quot; =&gt; &quot; 20&quot;}</span>
 
-csv.<span class="k">next</span> <span class="c">#=&gt; true</span>
-csv[<span class="s">&quot;Name&quot;</span>] <span class="c">#=&gt; &quot;Peter&quot;</span>
+csv.<span class="k">next</span>    <span class="c"># =&gt; true</span>
+csv[<span class="s">&quot;Name&quot;</span>] <span class="c"># =&gt; &quot;Peter&quot;</span>
 
-csv.<span class="k">next</span> <span class="c">#=&gt; false</span></code></pre>
+csv.<span class="k">next</span> <span class="c"># =&gt; false</span></code></pre>
 
 <h3>Building</h3>
 
@@ -2236,17 +2246,17 @@ csv.<span class="k">next</span> <span class="c">#=&gt; false</span></code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr" target="_blank">csv/csv.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr" target="_blank">csv/csv.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/error.cr" target="_blank">csv/error.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/error.cr" target="_blank">csv/error.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr" target="_blank">csv/csv.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr" target="_blank">csv/csv.cr</a>
     
     <br/>
   
@@ -2446,6 +2456,10 @@ csv.<span class="k">next</span> <span class="c">#=&gt; false</span></code></pre>
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2509,6 +2523,10 @@ csv.<span class="k">next</span> <span class="c">#=&gt; false</span></code></pre>
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2581,12 +2599,12 @@ io.puts <span class="s">&quot;HEADER&quot;</span>
   csv.row <span class="s">&quot;one&quot;</span>, <span class="s">&quot;two&quot;</span>
   csv.row <span class="s">&quot;three&quot;</span>
 <span class="k">end</span>
-io.to_s <span class="c">#=&gt; &quot;HEADER\none,two\nthree&quot;</span></code></pre></div>
+io.to_s <span class="c"># =&gt; &quot;HEADER\none,two\nthree&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L130" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L130" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2605,12 +2623,12 @@ io.to_s <span class="c">#=&gt; &quot;HEADER\none,two\nthree&quot;</span></code><
   csv.row <span class="s">&quot;one&quot;</span>, <span class="s">&quot;two&quot;</span>
   csv.row <span class="s">&quot;three&quot;</span>
 <span class="k">end</span>
-result <span class="c">#=&gt; &quot;one,two\nthree&quot;</span></code></pre></div>
+result <span class="c"># =&gt; &quot;one,two\nthree&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L112" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L112" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2637,7 +2655,7 @@ result <span class="c">#=&gt; &quot;one,two\nthree&quot;</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L86" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L86" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2653,13 +2671,13 @@ result <span class="c">#=&gt; &quot;one,two\nthree&quot;</span></code></pre></di
         <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> of <code><a href="Array.html">Array</a>(<a href="String.html">String</a>)</code> over a CSV's rows.</p>
 
 <pre><code>rows <span class="o">=</span> <span class="t">CSV</span>.each_row(<span class="s">&quot;one,two\nthree&quot;</span>)
-rows.<span class="k">next</span> <span class="c">#=&gt; [&quot;one&quot;, &quot;two&quot;]</span>
-rows.<span class="k">next</span> <span class="c">#=&gt; [&quot;three&quot;]</span></code></pre></div>
+rows.<span class="k">next</span> <span class="c"># =&gt; [&quot;one&quot;, &quot;two&quot;]</span>
+rows.<span class="k">next</span> <span class="c"># =&gt; [&quot;three&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L99" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L99" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2684,7 +2702,7 @@ Headers are always stripped.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L163" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L163" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2699,12 +2717,12 @@ Headers are always stripped.</p></div>
       
         <div class="doc"><p>Parses a CSV or IO into an array.</p>
 
-<pre><code><span class="t">CSV</span>.parse(<span class="s">&quot;one,two\nthree&quot;</span>) <span class="c">#=&gt; [[&quot;one&quot;, &quot;two&quot;], [&quot;three&quot;]]</span></code></pre></div>
+<pre><code><span class="t">CSV</span>.parse(<span class="s">&quot;one,two\nthree&quot;</span>) <span class="c"># =&gt; [[&quot;one&quot;, &quot;two&quot;], [&quot;three&quot;]]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L68" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L68" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2728,7 +2746,7 @@ Headers are always stripped.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L142" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L142" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2753,7 +2771,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L204" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L204" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2773,7 +2791,7 @@ Raises <code><a href="IndexError.html">IndexError</a></code> if no such column e
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L218" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L218" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2793,7 +2811,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L232" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L232" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2813,7 +2831,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L211" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L211" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2833,7 +2851,7 @@ Returns nil if no such column exists.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L225" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L225" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2853,7 +2871,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L239" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L239" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2871,7 +2889,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L178" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L178" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2890,7 +2908,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L173" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L173" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2910,7 +2928,7 @@ the cursor in the first row. Returns <code>true</code> if a next row was found,
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L187" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L187" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2928,7 +2946,7 @@ the cursor in the first row. Returns <code>true</code> if a next row was found,
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/csv/csv.cr#L244" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/csv/csv.cr#L244" target="_blank">View source</a>]
         
       </div>
     </div>

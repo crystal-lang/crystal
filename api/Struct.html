@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2196,10 +2206,10 @@ method should return the modified struct:</p>
 
 mut <span class="o">=</span> <span class="t">Mutable</span>.<span class="k">new</span> <span class="n">1</span>
 change_bad(mut)
-mut.value              <span class="c">#=&gt; 1</span>
+mut.value <span class="c"># =&gt; 1</span>
 
 mut <span class="o">=</span> change_good(mut)
-mut.value              <span class="c">#=&gt; 2</span></code></pre>
+mut.value <span class="c"># =&gt; 2</span></code></pre>
 
 <p>The standard library provides a useful <code><a href="toplevel.html#record%28name%2C%2Aproperties%29-macro">record</a></code> macro that allows you to
 create immutable structs with some fields, similar to a <code><a href="Tuple.html">Tuple</a></code> but using
@@ -2242,15 +2252,17 @@ names instead of indices.</p>
   
     <li class="other-type"><a href="GC/Stats.html">GC::Stats</a></li>
   
-    <li class="other-type"><a href="HTML/Builder.html">HTML::Builder</a></li>
-  
     <li class="other-type"><a href="HTTP/Headers.html">HTTP::Headers</a></li>
   
     <li class="other-type"><a href="HTTP/Headers/Key.html">HTTP::Headers::Key</a></li>
   
     <li class="other-type"><a href="HTTP/Params.html">HTTP::Params</a></li>
   
+    <li class="other-type"><a href="HTTP/StaticFileHandler/DirectoryListing.html">HTTP::StaticFileHandler::DirectoryListing</a></li>
+  
     <li class="other-type"><a href="HTTP/WebSocket/PacketInfo.html">HTTP::WebSocket::PacketInfo</a></li>
+  
+    <li class="other-type"><a href="JSON/Any.html">JSON::Any</a></li>
   
     <li class="other-type"><a href="JSON/ArrayBuilder.html">JSON::ArrayBuilder(T)</a></li>
   
@@ -2338,7 +2350,7 @@ names instead of indices.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/struct.cr" target="_blank">struct.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/struct.cr" target="_blank">struct.cr</a>
     
     <br/>
   
@@ -2422,6 +2434,10 @@ names instead of indices.</p>
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2485,6 +2501,10 @@ names instead of indices.</p>
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2566,13 +2586,13 @@ p1 <span class="o">=</span> <span class="t">Point</span>.<span class="k">new</sp
 p2 <span class="o">=</span> <span class="t">Point</span>.<span class="k">new</span> <span class="n">1</span>, <span class="n">2</span>
 p3 <span class="o">=</span> <span class="t">Point</span>.<span class="k">new</span> <span class="n">3</span>, <span class="n">4</span>
 
-p1 <span class="o">==</span> p2            <span class="c">#=&gt; true</span>
-p1 <span class="o">==</span> p3            <span class="c">#=&gt; false</span></code></pre></div>
+p1 <span class="o">==</span> p2 <span class="c"># =&gt; true</span>
+p1 <span class="o">==</span> p3 <span class="c"># =&gt; false</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/struct.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/struct.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2592,7 +2612,7 @@ p1 <span class="o">==</span> p3            <span class="c">#=&gt; false</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/struct.cr#L76" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/struct.cr#L76" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2614,13 +2634,13 @@ to the given IO.</p>
 <span class="k">end</span>
 
 p1 <span class="o">=</span> <span class="t">Point</span>.<span class="k">new</span> <span class="n">1</span>, <span class="n">2</span>
-p1.to_s             <span class="c"># &quot;Point(@x=1, @y=2)&quot;</span>
-p1.inspect          <span class="c"># &quot;Point(@x=1, @y=2)&quot;</span></code></pre></div>
+p1.to_s    <span class="c"># &quot;Point(@x=1, @y=2)&quot;</span>
+p1.inspect <span class="c"># &quot;Point(@x=1, @y=2)&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/struct.cr#L97" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/struct.cr#L97" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2638,7 +2658,7 @@ p1.inspect          <span class="c"># &quot;Point(@x=1, @y=2)&quot;</span></code
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/struct.cr#L111" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/struct.cr#L111" target="_blank">View source</a>]
         
       </div>
     </div>

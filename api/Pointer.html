@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2178,10 +2188,10 @@ function that returns a pointer.</p>
 <p><code>pointerof(x)</code>, where <code>x</code> is a variable or an instance variable, returns a pointer to
 that variable:</p>
 
-<pre><code>x <span class="o">=</span> <span class="n">1</span>
+<pre><code class='language-crystal'>x <span class="o">=</span> <span class="n">1</span>
 ptr <span class="o">=</span> <span class="k">pointerof</span>(x)
 ptr.value <span class="o">=</span> <span class="n">2</span>
-puts x <span class="c">#=&gt; 2</span></code></pre>
+puts x <span class="c"># =&gt; 2</span></code></pre>
 
 <p>Note that a pointer is <em>falsey</em> if it's null (if it's address is zero).</p>
 
@@ -2213,7 +2223,7 @@ puts x <span class="c">#=&gt; 2</span></code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr" target="_blank">pointer.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr" target="_blank">pointer.cr</a>
     
     <br/>
   
@@ -2401,7 +2411,7 @@ puts x <span class="c">#=&gt; 2</span></code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#shuffle%21%28count%3AInt%29-instance-method" class="signature"><strong>#shuffle!</strong>(count : Int)</a>
+        <a href="#shuffle%21%28count%3AInt%2Crandom%3D%3Cspanclass%3D%22t%22%3ERandom%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EDEFAULT%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#shuffle!</strong>(count : Int, random = <span class="t">Random</span><span class="t">::</span><span class="t">DEFAULT</span>)</a>
         
           <div class="summary"><p>Shuffles <em>count</em> consecutive values pointed by this pointer.</p></div>
         
@@ -2518,6 +2528,10 @@ puts x <span class="c">#=&gt; 2</span></code></pre>
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2581,6 +2595,10 @@ puts x <span class="c">#=&gt; 2</span></code></pre>
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2653,15 +2671,15 @@ no pointers to this memory, it will be automatically freed.</p>
 <pre><code><span class="c"># An Int32 occupies 4 bytes, so here we are requesting 16 bytes.</span>
 <span class="c"># i is an index in the range 0 .. 3</span>
 ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> }
-ptr[<span class="n">0</span>] <span class="c">#=&gt; 10</span>
-ptr[<span class="n">1</span>] <span class="c">#=&gt; 11</span>
-ptr[<span class="n">2</span>] <span class="c">#=&gt; 12</span>
-ptr[<span class="n">3</span>] <span class="c">#=&gt; 13</span></code></pre></div>
+ptr[<span class="n">0</span>] <span class="c"># =&gt; 10</span>
+ptr[<span class="n">1</span>] <span class="c"># =&gt; 11</span>
+ptr[<span class="n">2</span>] <span class="c"># =&gt; 12</span>
+ptr[<span class="n">3</span>] <span class="c"># =&gt; 13</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L441" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L441" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2693,7 +2711,7 @@ ptr[<span class="n">9</span>] <span class="c">#=&gt; 0</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L400" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L400" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2714,13 +2732,13 @@ no pointers to this memory, it will be automatically freed.</p>
 <pre><code><span class="c"># An Int32 occupies 4 bytes, so here we are requesting 8 bytes</span>
 <span class="c"># initialized to the number 42</span>
 ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">2</span>, <span class="n">42</span>)
-ptr[<span class="n">0</span>] <span class="c">#=&gt; 42</span>
-ptr[<span class="n">1</span>] <span class="c">#=&gt; 42</span></code></pre></div>
+ptr[<span class="n">0</span>] <span class="c"># =&gt; 42</span>
+ptr[<span class="n">1</span>] <span class="c"># =&gt; 42</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L420" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L420" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2736,12 +2754,12 @@ ptr[<span class="n">1</span>] <span class="c">#=&gt; 42</span></code></pre></div
         <div class="doc"><p>Returns a pointer that points to the given memory address. This doesn't allocate memory.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">5678</span>)
-ptr.address <span class="c">#=&gt; 5678</span></code></pre></div>
+ptr.address <span class="c"># =&gt; 5678</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L379" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L379" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2760,12 +2778,12 @@ ptr.address <span class="c">#=&gt; 5678</span></code></pre></div>
 null pointer with this method.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).null
-ptr.address <span class="c">#=&gt; 0</span></code></pre></div>
+ptr.address <span class="c"># =&gt; 0</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L369" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L369" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2786,16 +2804,16 @@ ptr.address <span class="c">#=&gt; 0</span></code></pre></div>
         <div class="doc"><p>Returns a new pointer whose address is this pointer's address incremented by <code>other * sizeof(T)</code>.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">1234</span>)
-ptr.address                    <span class="c">#=&gt; 1234</span>
+ptr.address <span class="c"># =&gt; 1234</span>
 
 <span class="c"># An Int32 occupies four bytes</span>
 ptr2 <span class="o">=</span> ptr <span class="o">+</span> <span class="n">1</span>
-ptr2.address                   <span class="c">#=&gt; 1238</span></code></pre></div>
+ptr2.address <span class="c"># =&gt; 1238</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L81" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L81" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2832,16 +2850,16 @@ ptr2 <span class="o">-</span> ptr1 <span class="c">#=&gt; 2</span></code></pre><
         <div class="doc"><p>Returns a new pointer whose address is this pointer's address decremented by <code>other * sizeof(T)</code>.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">1234</span>)
-ptr.address                    <span class="c">#=&gt; 1234</span>
+ptr.address <span class="c"># =&gt; 1234</span>
 
 <span class="c"># An Int32 occupies four bytes</span>
 ptr2 <span class="o">=</span> ptr <span class="o">-</span> <span class="n">1</span>
-ptr2.address                   <span class="c">#=&gt; 1230</span></code></pre></div>
+ptr2.address <span class="c"># =&gt; 1230</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L95" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2862,7 +2880,7 @@ respectively.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L103" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L103" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2878,15 +2896,15 @@ respectively.</p>
         <div class="doc"><p>Gets the value pointed at this pointer's address plus <code>offset * sizeof(T)</code>.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> }
-ptr[<span class="n">0</span>] <span class="c">#=&gt; 10</span>
-ptr[<span class="n">1</span>] <span class="c">#=&gt; 11</span>
-ptr[<span class="n">2</span>] <span class="c">#=&gt; 12</span>
-ptr[<span class="n">3</span>] <span class="c">#=&gt; 13</span></code></pre></div>
+ptr[<span class="n">0</span>] <span class="c"># =&gt; 10</span>
+ptr[<span class="n">1</span>] <span class="c"># =&gt; 11</span>
+ptr[<span class="n">2</span>] <span class="c"># =&gt; 12</span>
+ptr[<span class="n">3</span>] <span class="c"># =&gt; 13</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L116" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L116" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2905,12 +2923,12 @@ ptr[<span class="n">3</span>] <span class="c">#=&gt; 13</span></code></pre></div
 ptr[<span class="n">1</span>] <span class="o">=</span> <span class="n">42</span>
 
 ptr2 <span class="o">=</span> ptr <span class="o">+</span> <span class="n">1</span>
-ptr2.value <span class="c">#=&gt; 42</span></code></pre></div>
+ptr2.value <span class="c"># =&gt; 42</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L129" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L129" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2947,7 +2965,7 @@ ptr.address <span class="c">#=&gt; 1234</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L448" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L448" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2964,12 +2982,12 @@ ptr.address <span class="c">#=&gt; 1234</span></code></pre></div>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">6</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> } <span class="c">#   [10, 11, 12, 13, 14, 15]</span>
 ptr.clear(<span class="n">3</span>)
-ptr                                    <span class="c">#   [0, 0, 0, 13, 14, 15]</span></code></pre></div>
+ptr <span class="c">#   [0, 0, 0, 13, 14, 15]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L470" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L470" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2994,15 +3012,15 @@ ptr2 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class=
 <span class="c"># ptr1 -&gt; [1,  2,  3,  4]</span>
 <span class="c">#          ^---^           &lt;- here</span>
 ptr1.copy_from(ptr2, <span class="n">2</span>)
-ptr1[<span class="n">0</span>] <span class="c">#=&gt; 11</span>
-ptr1[<span class="n">1</span>] <span class="c">#=&gt; 12</span>
-ptr1[<span class="n">2</span>] <span class="c">#=&gt; 3</span>
-ptr1[<span class="n">3</span>] <span class="c">#=&gt; 4</span></code></pre></div>
+ptr1[<span class="n">0</span>] <span class="c"># =&gt; 11</span>
+ptr1[<span class="n">1</span>] <span class="c"># =&gt; 12</span>
+ptr1[<span class="n">2</span>] <span class="c"># =&gt; 3</span>
+ptr1[<span class="n">3</span>] <span class="c"># =&gt; 4</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L151" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L151" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3027,15 +3045,15 @@ ptr2 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class=
 <span class="c"># ptr2 -&gt; [11, 12, 13, 14]</span>
 <span class="c">#          ^---^           &lt;- here</span>
 ptr1.copy_to(ptr2, <span class="n">2</span>)
-ptr2[<span class="n">0</span>] <span class="c">#=&gt; 1</span>
-ptr2[<span class="n">1</span>] <span class="c">#=&gt; 2</span>
-ptr2[<span class="n">2</span>] <span class="c">#=&gt; 13</span>
-ptr2[<span class="n">3</span>] <span class="c">#=&gt; 14</span></code></pre></div>
+ptr2[<span class="n">0</span>] <span class="c"># =&gt; 1</span>
+ptr2[<span class="n">1</span>] <span class="c"># =&gt; 2</span>
+ptr2[<span class="n">2</span>] <span class="c"># =&gt; 13</span>
+ptr2[<span class="n">3</span>] <span class="c"># =&gt; 14</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L187" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L187" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3051,12 +3069,12 @@ ptr2[<span class="n">3</span>] <span class="c">#=&gt; 14</span></code></pre></di
         <div class="doc"><p>Returns the address of this pointer.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">1234</span>)
-ptr.hash <span class="c">#=&gt; 1234</span></code></pre></div>
+ptr.hash <span class="c"># =&gt; 1234</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L288" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L288" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3074,12 +3092,12 @@ values returned by the block.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> } <span class="c"># [1, 2, 3, 4]</span>
 ptr.map!(<span class="n">4</span>) { <span class="o">|</span>value<span class="o">|</span> value <span class="o">*</span> <span class="n">2</span> }
-ptr                                   <span class="c"># [2, 4, 6, 8]</span></code></pre></div>
+ptr <span class="c"># [2, 4, 6, 8]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L354" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L354" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3100,14 +3118,14 @@ returns the difference between the first two differing bytes (treated as UInt8).
 <pre><code>ptr1 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> }  <span class="c"># [1, 2, 3, 4]</span>
 ptr2 <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">11</span> } <span class="c"># [11, 12, 13, 14]</span>
 
-ptr1.memcmp(ptr2, <span class="n">4</span>) <span class="c">#=&gt; -10</span>
-ptr2.memcmp(ptr1, <span class="n">4</span>) <span class="c">#=&gt; 10</span>
-ptr1.memcmp(ptr1, <span class="n">4</span>) <span class="c">#=&gt; 0</span></code></pre></div>
+ptr1.memcmp(ptr2, <span class="n">4</span>) <span class="c"># =&gt; -10</span>
+ptr2.memcmp(ptr1, <span class="n">4</span>) <span class="c"># =&gt; 10</span>
+ptr1.memcmp(ptr1, <span class="n">4</span>) <span class="c"># =&gt; 0</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L264" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L264" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3131,15 +3149,15 @@ ptr2 <span class="o">=</span> ptr1 <span class="o">+</span> <span class="n">1</s
 <span class="c">#     ^------^   &lt;- here</span>
 ptr2.move_from(ptr1, <span class="n">3</span>)
 
-ptr1[<span class="n">0</span>] <span class="c">#=&gt; 1</span>
-ptr1[<span class="n">1</span>] <span class="c">#=&gt; 1</span>
-ptr1[<span class="n">2</span>] <span class="c">#=&gt; 2</span>
-ptr1[<span class="n">3</span>] <span class="c">#=&gt; 3</span></code></pre></div>
+ptr1[<span class="n">0</span>] <span class="c"># =&gt; 1</span>
+ptr1[<span class="n">1</span>] <span class="c"># =&gt; 1</span>
+ptr1[<span class="n">2</span>] <span class="c"># =&gt; 2</span>
+ptr1[<span class="n">3</span>] <span class="c"># =&gt; 3</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L208" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L208" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3163,15 +3181,15 @@ ptr2 <span class="o">=</span> ptr1 <span class="o">+</span> <span class="n">1</s
 <span class="c">#     ^------^   &lt;- here</span>
 ptr1.move_to(ptr2, <span class="n">3</span>)
 
-ptr1[<span class="n">0</span>] <span class="c">#=&gt; 1</span>
-ptr1[<span class="n">1</span>] <span class="c">#=&gt; 1</span>
-ptr1[<span class="n">2</span>] <span class="c">#=&gt; 2</span>
-ptr1[<span class="n">3</span>] <span class="c">#=&gt; 3</span></code></pre></div>
+ptr1[<span class="n">0</span>] <span class="c"># =&gt; 1</span>
+ptr1[<span class="n">1</span>] <span class="c"># =&gt; 1</span>
+ptr1[<span class="n">2</span>] <span class="c"># =&gt; 2</span>
+ptr1[<span class="n">3</span>] <span class="c"># =&gt; 3</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L247" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L247" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3186,16 +3204,16 @@ ptr1[<span class="n">3</span>] <span class="c">#=&gt; 3</span></code></pre></div
       
         <div class="doc"><p>Returns true if this pointer's address is zero.</p>
 
-<pre><code>a <span class="o">=</span> <span class="n">1</span>
-<span class="k">pointerof</span>(a).nil?         <span class="c">#=&gt; false</span>
+<pre><code class='language-crystal'>a <span class="o">=</span> <span class="n">1</span>
+<span class="k">pointerof</span>(a).nil? <span class="c"># =&gt; false</span>
 
 b <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">0</span>)
-b.nil?                    <span class="c">#=&gt; true</span></code></pre></div>
+b.nil? <span class="c"># =&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L62" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L62" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3213,7 +3231,7 @@ b.nil?                    <span class="c">#=&gt; true</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L67" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L67" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3238,34 +3256,34 @@ If the block needs to be moved, realloc copies the old contents.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> } <span class="c"># [1, 2, 3, 4]</span>
 ptr <span class="o">=</span> ptr.realloc(<span class="n">8</span>)
-ptr                                   <span class="c"># [1, 2, 3, 4, 0, 0, 0, 0]</span></code></pre></div>
+ptr <span class="c"># [1, 2, 3, 4, 0, 0, 0, 0]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L327" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L327" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="shuffle!(count:Int)-instance-method">
+    <div class="entry-detail" id="shuffle!(count:Int,random=&lt;spanclass=&quot;t&quot;&gt;Random&lt;/span&gt;&lt;spanclass=&quot;t&quot;&gt;::&lt;/span&gt;&lt;spanclass=&quot;t&quot;&gt;DEFAULT&lt;/span&gt;)-instance-method">
       <div class="signature">
         
-        def <strong>shuffle!</strong>(count : <a href="Int.html">Int</a>)
+        def <strong>shuffle!</strong>(count : <a href="Int.html">Int</a>, random = <span class="t">Random</span><span class="t">::</span><span class="t">DEFAULT</span>)
 
-        <a class="method-permalink" href="#shuffle%21%28count%3AInt%29-instance-method">#</a>
+        <a class="method-permalink" href="#shuffle%21%28count%3AInt%2Crandom%3D%3Cspanclass%3D%22t%22%3ERandom%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EDEFAULT%3C%2Fspan%3E%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Shuffles <em>count</em> consecutive values pointed by this pointer.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> } <span class="c"># [1, 2, 3, 4]</span>
 ptr.shuffle!(<span class="n">4</span>)
-ptr                                   <span class="c"># [3, 4, 1, 2]</span></code></pre></div>
+ptr <span class="c"># [3, 4, 1, 2]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L338" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L338" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3281,16 +3299,16 @@ ptr                                   <span class="c"># [3, 4, 1, 2]</span></cod
         <div class="doc"><p>Swaps the contents pointed at the offsets <code>i</code> and <code>j</code>.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">1</span> }
-ptr[<span class="n">2</span>] <span class="c">#=&gt; 3</span>
-ptr[<span class="n">3</span>] <span class="c">#=&gt; 4</span>
+ptr[<span class="n">2</span>] <span class="c"># =&gt; 3</span>
+ptr[<span class="n">3</span>] <span class="c"># =&gt; 4</span>
 ptr.swap(<span class="n">2</span>, <span class="n">3</span>)
-ptr[<span class="n">2</span>] <span class="c">#=&gt; 4</span>
-ptr[<span class="n">3</span>] <span class="c">#=&gt; 3</span></code></pre></div>
+ptr[<span class="n">2</span>] <span class="c"># =&gt; 4</span>
+ptr[<span class="n">3</span>] <span class="c"># =&gt; 3</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L278" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L278" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3307,15 +3325,15 @@ ptr[<span class="n">3</span>] <span class="c">#=&gt; 3</span></code></pre></div>
 including its type and address in hexadecimal.</p>
 
 <pre><code>ptr1 <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">1234</span>)
-ptr1.to_s <span class="c">#=&gt; Pointer(Int32)@0x4D2</span>
+ptr1.to_s <span class="c"># =&gt; Pointer(Int32)@0x4D2</span>
 
 ptr2 <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">0</span>)
-ptr2.to_s <span class="c">#=&gt; Pointer(Int32).null</span></code></pre></div>
+ptr2.to_s <span class="c"># =&gt; Pointer(Int32).null</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L300" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L300" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3331,13 +3349,13 @@ ptr2.to_s <span class="c">#=&gt; Pointer(Int32).null</span></code></pre></div>
         <div class="doc"><p>Returns a <code><a href="Slice.html">Slice</a></code> that points to this pointer and is bounded by the given <em>size</em>.</p>
 
 <pre><code>ptr <span class="o">=</span> <span class="t">Pointer</span>.malloc(<span class="n">6</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">+</span> <span class="n">10</span> } <span class="c">#   [10, 11, 12, 13, 14, 15]</span>
-slice <span class="o">=</span> ptr.to_slice(<span class="n">4</span>)                <span class="c">#=&gt; [10, 11, 12, 13]</span>
-slice.<span class="k">class</span>                            <span class="c">#=&gt; Slice(Int32)</span></code></pre></div>
+slice <span class="o">=</span> ptr.to_slice(<span class="n">4</span>)                <span class="c"># =&gt; [10, 11, 12, 13]</span>
+slice.<span class="k">class</span>                            <span class="c"># =&gt; Slice(Int32)</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/pointer.cr#L459" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/pointer.cr#L459" target="_blank">View source</a>]
         
       </div>
     </div>

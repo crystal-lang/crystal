@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2165,48 +2175,48 @@
   <p>With Colorize you can change the fore- and background colors and text decorations when rendering text
 on terminals supporting ANSI escape codes. It adds the <code>colorize</code> method to <code><a href="Colorize/Object.html">Object</a></code> and thus all classes
 as its main interface, which calls <code>to_s</code> and surrounds it with the necessary escape codes
-when it comes to obtaining a string representation of the object. </p>
+when it comes to obtaining a string representation of the object.</p>
 
 <p>Its first argument changes the foreground color:</p>
 
-<pre><code><span class="k">require</span> <span class="s">&quot;colorize&quot;</span>
+<pre><code class='language-crystal'><span class="k">require</span> <span class="s">&quot;colorize&quot;</span>
 
 <span class="s">&quot;foo&quot;</span>.colorize(<span class="n">:green</span>)
 <span class="n">100</span>.colorize(<span class="n">:red</span>)
-[<span class="n">1</span>,<span class="n">2</span>,<span class="n">3</span>].colorize(<span class="n">:blue</span>)</code></pre>
+[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>].colorize(<span class="n">:blue</span>)</code></pre>
 
 <p>There are alternative ways to change the foreground color:</p>
 
-<pre><code><span class="s">&quot;foo&quot;</span>.colorize.fore(<span class="n">:green</span>)
+<pre><code class='language-crystal'><span class="s">&quot;foo&quot;</span>.colorize.fore(<span class="n">:green</span>)
 <span class="s">&quot;foo&quot;</span>.colorize.green</code></pre>
 
 <p>To change the background color, the following methods are available:</p>
 
-<pre><code><span class="s">&quot;foo&quot;</span>.colorize.back(<span class="n">:green</span>)
+<pre><code class='language-crystal'><span class="s">&quot;foo&quot;</span>.colorize.back(<span class="n">:green</span>)
 <span class="s">&quot;foo&quot;</span>.colorize.on(<span class="n">:green</span>)
 <span class="s">&quot;foo&quot;</span>.colorize.on_green</code></pre>
 
 <p>It's also possible to change the text decoration:</p>
 
-<pre><code><span class="s">&quot;foo&quot;</span>.colorize.mode(<span class="n">:underline</span>)
+<pre><code class='language-crystal'><span class="s">&quot;foo&quot;</span>.colorize.mode(<span class="n">:underline</span>)
 <span class="s">&quot;foo&quot;</span>.colorize.underline</code></pre>
 
-<p>The <code>colorize</code> method returns a <code><a href="Colorize/Object.html">Colorize::Object</a></code> instance, 
+<p>The <code>colorize</code> method returns a <code><a href="Colorize/Object.html">Colorize::Object</a></code> instance,
 which allows chaining methods together:</p>
 
-<pre><code><span class="s">&quot;foo&quot;</span>.colorize.fore(<span class="n">:yellow</span>).back(<span class="n">:blue</span>).mode(<span class="n">:underline</span>)</code></pre>
+<pre><code class='language-crystal'><span class="s">&quot;foo&quot;</span>.colorize.fore(<span class="n">:yellow</span>).back(<span class="n">:blue</span>).mode(<span class="n">:underline</span>)</code></pre>
 
-<p>With the <code>toggle</code> method you can temporarily disable adding the escape codes. 
+<p>With the <code>toggle</code> method you can temporarily disable adding the escape codes.
 Settings of the instance are preserved however and can be turned back on later:</p>
 
-<pre><code><span class="s">&quot;foo&quot;</span>.colorize(<span class="n">:red</span>).toggle(<span class="n">false</span>)
-<span class="c">#=&gt; &quot;foo&quot; without color</span>
+<pre><code class='language-crystal'><span class="s">&quot;foo&quot;</span>.colorize(<span class="n">:red</span>).toggle(<span class="n">false</span>)
+<span class="c"># =&gt; &quot;foo&quot; without color</span>
 <span class="s">&quot;foo&quot;</span>.colorize(<span class="n">:red</span>).toggle(<span class="n">false</span>).toggle(<span class="n">true</span>)
-<span class="c">#=&gt; &quot;foo&quot; in red</span></code></pre>
+<span class="c"># =&gt; &quot;foo&quot; in red</span></code></pre>
 
 <p>Available colors are:</p>
 
-<pre><code><span class="n">:black</span>
+<pre><code class='language-crystal'><span class="n">:black</span>
 <span class="n">:red</span>
 <span class="n">:green</span>
 <span class="n">:yellow</span>
@@ -2225,7 +2235,7 @@ Settings of the instance are preserved however and can be turned back on later:<
 
 <p>Available text decorations are:</p>
 
-<pre><code><span class="n">:bold</span>
+<pre><code class='language-crystal'><span class="n">:bold</span>
 <span class="n">:bright</span>
 <span class="n">:dim</span>
 <span class="n">:underline</span>
@@ -2249,7 +2259,7 @@ Settings of the instance are preserved however and can be turned back on later:<
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/colorize.cr" target="_blank">colorize.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/colorize.cr" target="_blank">colorize.cr</a>
     
     <br/>
   

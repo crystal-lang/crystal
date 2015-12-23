@@ -475,18 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/manastech/crystal/HTML" data-name="html">
+  <li class=" " data-id="github.com/manastech/crystal/HTML" data-name="html">
       <a href="HTML.html">HTML</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/manastech/crystal/HTML/Builder" data-name="html::builder">
-      <a href="HTML/Builder.html">Builder</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -570,8 +560,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
+  <li class="parent " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler" data-name="http::staticfilehandler">
       <a href="HTTP/StaticFileHandler.html">StaticFileHandler</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/StaticFileHandler/DirectoryListing" data-name="http::staticfilehandler::directorylisting">
+      <a href="HTTP/StaticFileHandler/DirectoryListing.html">DirectoryListing</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1530,6 +1530,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/OpenSSL/PKCS5" data-name="openssl::pkcs5">
+      <a href="OpenSSL/PKCS5.html">PKCS5</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/OpenSSL/SHA1" data-name="openssl::sha1">
       <a href="OpenSSL/SHA1.html">SHA1</a>
       
@@ -2060,6 +2065,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Generator" data-name="yaml::generator">
+      <a href="YAML/Generator.html">Generator</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/ParseException" data-name="yaml::parseexception">
       <a href="YAML/ParseException.html">ParseException</a>
       
@@ -2195,12 +2205,12 @@ the parent directory (..), and the directory itself (.).</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr" target="_blank">dir.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr" target="_blank">dir.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir/glob.cr" target="_blank">dir/glob.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir/glob.cr" target="_blank">dir/glob.cr</a>
     
     <br/>
   
@@ -2233,6 +2243,13 @@ the parent directory (..), and the directory itself (.).</p>
         <a href="#cd%28path%29-class-method" class="signature"><strong>.cd</strong>(path)</a>
         
           <div class="summary"><p>Changes the current working directory of the process to the given string.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#current-class-method" class="signature"><strong>.current</strong></a>
+        
+          <div class="summary"><p>Returns the current working directory.</p></div>
         
       </li>
     
@@ -2286,13 +2303,6 @@ the parent directory (..), and the directory itself (.).</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#open%28path%2C%26block%29-class-method" class="signature"><strong>.open</strong>(path, &block)</a>
-        
-          <div class="summary"><p>Opens a directory and yields it, closing it at the end of the block.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#open%28path%29-class-method" class="signature"><strong>.open</strong>(path)</a>
         
           <div class="summary"><p>Alias for <code><a href="Dir.html#new%28path%29-class-method">.new(path)</a></code></p></div>
@@ -2300,12 +2310,14 @@ the parent directory (..), and the directory itself (.).</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#rmdir%28path%29-class-method" class="signature"><strong>.rmdir</strong>(path)</a>
+        <a href="#open%28path%2C%26block%29-class-method" class="signature"><strong>.open</strong>(path, &block)</a>
+        
+          <div class="summary"><p>Opens a directory and yields it, closing it at the end of the block.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#working_directory-class-method" class="signature"><strong>.working_directory</strong></a>
+        <a href="#rmdir%28path%29-class-method" class="signature"><strong>.rmdir</strong>(path)</a>
         
       </li>
     
@@ -2696,6 +2708,10 @@ the parent directory (..), and the directory itself (.).</p>
       <span>!=(other)</span>
     !=</a>, 
   
+    <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
+      <span>!~(other)</span>
+    !~</a>, 
+  
     <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
       <span><=>(other)</span>
     <=></a>, 
@@ -2759,6 +2775,10 @@ the parent directory (..), and the directory itself (.).</p>
     <a href="Object.html#to_s-instance-method" class="tooltip">
       <span>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
+  
+    <a href="Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_yaml(io : IO)<br/>to_yaml</span>
+    to_yaml</a>, 
   
     <a href="Object.html#try%28%26block%29-instance-method" class="tooltip">
       <span>try(&block)</span>
@@ -2825,7 +2845,7 @@ the parent directory (..), and the directory itself (.).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir/glob.cr#L2" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir/glob.cr#L2" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2841,7 +2861,7 @@ the parent directory (..), and the directory itself (.).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir/glob.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir/glob.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2861,7 +2881,7 @@ when the block exits.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L156" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2879,7 +2899,25 @@ when the block exits.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L146" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L147" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="current-class-method">
+      <div class="signature">
+        
+        def self.<strong>current</strong>
+
+        <a class="method-permalink" href="#current-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the current working directory.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L138" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2897,7 +2935,7 @@ when the block exits.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L176" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L177" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2913,7 +2951,7 @@ when the block exits.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L184" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L185" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2932,7 +2970,7 @@ passing the filename of each entry as a parameter to the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L167" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L168" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2948,7 +2986,7 @@ passing the filename of each entry as a parameter to the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir/glob.cr#L28" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir/glob.cr#L28" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2964,7 +3002,7 @@ passing the filename of each entry as a parameter to the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir/glob.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir/glob.cr#L14" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2980,7 +3018,7 @@ passing the filename of each entry as a parameter to the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir/glob.cr#L10" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir/glob.cr#L10" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2996,7 +3034,7 @@ passing the filename of each entry as a parameter to the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir/glob.cr#L20" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir/glob.cr#L20" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3012,7 +3050,7 @@ passing the filename of each entry as a parameter to the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L195" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L196" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3028,7 +3066,25 @@ passing the filename of each entry as a parameter to the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L202" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L203" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="open(path)-class-method">
+      <div class="signature">
+        
+        def self.<strong>open</strong>(path)
+
+        <a class="method-permalink" href="#open%28path%29-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Alias for <code><a href="Dir.html#new%28path%29-class-method">.new(path)</a></code></p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L60" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3047,25 +3103,7 @@ Returns the value of the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L66" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="open(path)-class-method">
-      <div class="signature">
-        
-        def self.<strong>open</strong>(path)
-
-        <a class="method-permalink" href="#open%28path%29-class-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Alias for <code><a href="Dir.html#new%28path%29-class-method">.new(path)</a></code></p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L60" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3081,23 +3119,7 @@ Returns the value of the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L221" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="working_directory-class-method">
-      <div class="signature">
-        
-        def self.<strong>working_directory</strong>
-
-        <a class="method-permalink" href="#working_directory-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L137" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L222" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3115,7 +3137,7 @@ Returns the value of the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L51" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L51" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3138,7 +3160,7 @@ Returns the value of the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L129" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L129" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3154,7 +3176,7 @@ Returns the value of the block.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L97" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L97" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3171,11 +3193,11 @@ Returns the value of the block.</p></div>
 passing the filename of each entry as a parameter to the block.</p>
 
 <pre><code>d <span class="o">=</span> <span class="t">Dir</span>.<span class="k">new</span>(<span class="s">&quot;testdir&quot;</span>)
-d.each  {<span class="o">|</span>x<span class="o">|</span> puts <span class="s">&quot;Got </span><span class="i">#{</span></span>x<span class="s"><span class="i">}</span>&quot;</span> }</code></pre>
+d.each { <span class="o">|</span>x<span class="o">|</span> puts <span class="s">&quot;Got </span><span class="i">#{</span></span>x<span class="s"><span class="i">}</span>&quot;</span> }</code></pre>
 
 <p>produces:</p>
 
-<pre><code>Got .
+<pre><code class='language-text'>Got .
 Got ..
 Got config.h
 Got main.rb</code></pre></div>
@@ -3183,7 +3205,7 @@ Got main.rb</code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L91" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L91" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3199,7 +3221,7 @@ Got main.rb</code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L48" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L48" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3215,14 +3237,14 @@ Got main.rb</code></pre></div>
         <div class="doc"><p>Reads the next entry from dir and returns it as a string. Returns nil at the end of the stream.</p>
 
 <pre><code>d <span class="o">=</span> <span class="t">Dir</span>.<span class="k">new</span>(<span class="s">&quot;testdir&quot;</span>)
-d.read   <span class="c">#=&gt; &quot;.&quot;</span>
-d.read   <span class="c">#=&gt; &quot;..&quot;</span>
-d.read   <span class="c">#=&gt; &quot;config.h&quot;</span></code></pre></div>
+d.read <span class="c"># =&gt; &quot;.&quot;</span>
+d.read <span class="c"># =&gt; &quot;..&quot;</span>
+d.read <span class="c"># =&gt; &quot;config.h&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L109" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L109" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3240,7 +3262,7 @@ d.read   <span class="c">#=&gt; &quot;config.h&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L123" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L123" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3256,7 +3278,7 @@ d.read   <span class="c">#=&gt; &quot;config.h&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/b3b1223108806f31fdb29cca6110a5d11d82f504/src/dir.cr#L228" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/dir.cr#L229" target="_blank">View source</a>]
         
       </div>
     </div>
