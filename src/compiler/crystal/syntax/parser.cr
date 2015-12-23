@@ -2197,26 +2197,10 @@ module Crystal
         end
         next_token
       when :IDENT, :"*"
-        while @token.type != :NEWLINE && @token.type != :";"
-          extras = parse_arg(args, nil, false, found_default_value, found_splat, allow_restrictions: false)
-          if !found_default_value && extras.default_value
-            found_default_value = true
-          end
-          if !splat_index && extras.splat
-            splat_index = index
-            found_splat = true
-          end
-          if block_arg = extras.block_arg
-            break
-          elsif @token.type == :","
-            next_token_skip_space_or_newline
-          else
-            skip_space
-            if @token.type != :NEWLINE && @token.type != :";"
-              unexpected_token @token.to_s, "expected ';' or newline"
-            end
-          end
-          index += 1
+        if @token.keyword?(:end)
+          unexpected_token @token.to_s, "expected ';' or newline"
+        else
+          unexpected_token @token.to_s, "parentheses are mandatory for macro arguments"
         end
       end
 
@@ -2614,41 +2598,18 @@ module Crystal
         if @token.type == :SYMBOL
           raise "a space is mandatory between ':' and return type", @token
         end
-      when :IDENT, :INSTANCE_VAR, :"*"
+      when :IDENT, :INSTANCE_VAR, :CLASS_VAR, :"*"
         if @token.keyword?(:end)
           unexpected_token @token.to_s, "expected ';' or newline"
-        end
-
-        while @token.type != :NEWLINE && @token.type != :";"
-          extras = parse_arg(args, extra_assigns, false, found_default_value, found_splat)
-          if !found_default_value && extras.default_value
-            found_default_value = true
-          end
-          if !splat_index && extras.splat
-            splat_index = index
-            found_splat = true
-          end
-          if block_arg = extras.block_arg
-            compute_block_arg_yields block_arg
-            break
-          elsif @token.type == :","
-            next_token_skip_space_or_newline
-          else
-            skip_space
-            if @token.type != :NEWLINE && @token.type != :";"
-              unexpected_token @token.to_s, "expected ';' or newline"
-            end
-          end
-          index += 1
+        else
+          unexpected_token @token.to_s, "parentheses are mandatory for def arguments"
         end
       when :";", :"NEWLINE"
         # Skip
       when :":"
         # Skip
       when :"&"
-        next_token_skip_space_or_newline
-        block_arg = parse_block_arg(extra_assigns)
-        compute_block_arg_yields block_arg
+        unexpected_token @token.to_s, "parentheses are mandatory for def arguments"
       when :SYMBOL
         raise "a space is mandatory between ':' and return type", @token
       else

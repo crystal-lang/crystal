@@ -44,32 +44,32 @@ module HTTP
     # :nodoc:
     module Parser
       module Regex
-        CookieName = /[^()<>@,;:\\"\/\[\]?={} \t\x00-\x1f\x7f]+/
-        CookieOctet = /[!#-+\--:<-\[\]-~]/
-        CookieValue = /(?:"#{CookieOctet}*"|#{CookieOctet}*)/
-        CookiePair = /(?<name>#{CookieName})=(?<value>#{CookieValue})/
-        DomainLabel = /[A-Za-z0-9\-]+/
-        Time = /(?:\d{2}:\d{2}:\d{2})/
-        Month = /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/
-        Weekday = /(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/
-        Wkday = /(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)/
-        PathValue = /[^\x00-\x1f\x7f;]+/
-        DomainValue = /(?:#{DomainLabel}(?:\.#{DomainLabel})?)+/
-        RFC1036Date = /#{Weekday}, \d{2}-#{Month}-\d{2} #{Time} GMT/
-        RFC1123Date = /#{Wkday}, \d{2} #{Month} \d{4} #{Time} GMT/
-        ANSICDate = /#{Wkday} #{Month} (?:\d{2}| \d) #{Time} \d{4}/
+        CookieName     = /[^()<>@,;:\\"\/\[\]?={} \t\x00-\x1f\x7f]+/
+        CookieOctet    = /[!#-+\--:<-\[\]-~]/
+        CookieValue    = /(?:"#{CookieOctet}*"|#{CookieOctet}*)/
+        CookiePair     = /(?<name>#{CookieName})=(?<value>#{CookieValue})/
+        DomainLabel    = /[A-Za-z0-9\-]+/
+        Time           = /(?:\d{2}:\d{2}:\d{2})/
+        Month          = /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/
+        Weekday        = /(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/
+        Wkday          = /(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)/
+        PathValue      = /[^\x00-\x1f\x7f;]+/
+        DomainValue    = /(?:#{DomainLabel}(?:\.#{DomainLabel})?)+/
+        RFC1036Date    = /#{Weekday}, \d{2}-#{Month}-\d{2} #{Time} GMT/
+        RFC1123Date    = /#{Wkday}, \d{2} #{Month} \d{4} #{Time} GMT/
+        ANSICDate      = /#{Wkday} #{Month} (?:\d{2}| \d) #{Time} \d{4}/
         SaneCookieDate = /(?:#{RFC1123Date}|#{RFC1036Date}|#{ANSICDate})/
-        ExtensionAV = /(?<extension>[^\x00-\x1f\x7f]+)/
-        HttpOnlyAV = /(?<http_only>HttpOnly)/i
-        SecureAV = /(?<secure>Secure)/i
-        PathAV = /Path=(?<path>#{PathValue})/i
-        DomainAV = /Domain=(?<domain>#{DomainValue})/i
-        MaxAgeAV = /Max-Age=(?<max_age>[1-9]*)/i
-        ExpiresAV = /Expires=(?<expires>#{SaneCookieDate})/i
-        CookieAV = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{ExtensionAV})/
+        ExtensionAV    = /(?<extension>[^\x00-\x1f\x7f]+)/
+        HttpOnlyAV     = /(?<http_only>HttpOnly)/i
+        SecureAV       = /(?<secure>Secure)/i
+        PathAV         = /Path=(?<path>#{PathValue})/i
+        DomainAV       = /Domain=(?<domain>#{DomainValue})/i
+        MaxAgeAV       = /Max-Age=(?<max_age>[1-9]*)/i
+        ExpiresAV      = /Expires=(?<expires>#{SaneCookieDate})/i
+        CookieAV       = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{ExtensionAV})/
       end
 
-      CookieString = /(?:^|; )#{Regex::CookiePair}/
+      CookieString    = /(?:^|; )#{Regex::CookiePair}/
       SetCookieString = /^#{Regex::CookiePair}(?:; #{Regex::CookieAV})*$/
 
       def parse_cookies(header)

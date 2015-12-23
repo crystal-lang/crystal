@@ -143,6 +143,6 @@ end
 # spawn { maybe_use_computation(l) }
 # spawn { maybe_use_computation(l) }
 # ```
-def lazy &block : -> R
+def lazy(&block : -> R)
   Concurrent::Future.new run_immediately: false, &block
 end
