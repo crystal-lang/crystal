@@ -91,7 +91,17 @@ class HTTP::Response
   def self.from_io(io, ignore_body = false, &block)
     line = io.gets
     if line
-      http_version, status_code, status_message = line.split(3)
+      spaces = line.scan(" ")
+
+      # deal with malformed responses
+      if spaces.size == 1
+        http_version, status_code = line.split(2)
+        status_code = status_code.chomp.to_i
+        status_message = self.default_status_message_for(status_code)
+      else
+        http_version, status_code, status_message = line.split(3)
+      end
+
       status_code = status_code.to_i
       status_message = status_message.chomp
       body_type = HTTP::BodyType::OnDemand
