@@ -1,5 +1,6 @@
-## Next
+## 0.10.0 (2015-12-23)
 
+* **(breaking change)** `def` arguments must always be enclosed in parentheses
 * **(breaking change)** A space is now required before and after def return type restriction
 * **(breaking change)** Renamed `Dir.working_dir` to `Dir.current`
 * **(breaking change)** Moved `HTML::Builder` to [its own shard](https://github.com/crystal-lang/html_builder)
