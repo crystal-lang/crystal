@@ -1,7 +1,6 @@
 require "spec"
 require "deque"
 
-
 class DequeTester
   # Execute the same actions on an Array and a Deque and compare them at each step.
 
@@ -21,6 +20,7 @@ class DequeTester
   end
 
   getter i
+
   def c
     @c.not_nil!
   end
@@ -30,9 +30,7 @@ class DequeTester
   end
 end
 
-
 alias RecursiveDeque = Deque(RecursiveDeque)
-
 
 describe "Deque" do
   describe "implementation" do
@@ -176,7 +174,7 @@ describe "Deque" do
     end
 
     it "same access by at" do
-      Deque{1, 2, 3}[1].should eq(Deque{1,2,3}.at(1))
+      Deque{1, 2, 3}[1].should eq(Deque{1, 2, 3}.at(1))
     end
   end
 
@@ -611,5 +609,4 @@ describe "Deque" do
       Deque{1, 2, 3}.cycle(2).to_a.should eq([1, 2, 3, 1, 2, 3])
     end
   end
-
 end

@@ -133,7 +133,7 @@ struct String::Formatter
     next_char
     while true
       case char = current_char
-      when '0' .. '9'
+      when '0'..'9'
         num *= 10
         num += char - '0'
         size += 1
@@ -217,7 +217,7 @@ struct String::Formatter
     arg = next_arg unless arg_specified
 
     if arg.responds_to?(:to_f)
-      float = arg.is_a?(Float) ? arg : arg.to_f
+      float = arg.is_a?(Float64) ? arg : arg.to_f64
 
       format_buf = recreate_float_format_string(flags)
 

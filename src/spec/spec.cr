@@ -69,16 +69,16 @@ module Spec
   # :nodoc:
   COLORS = {
     success: :green,
-    fail: :red,
-    error: :red,
+    fail:    :red,
+    error:   :red,
     pending: :yellow,
   }
 
   # :nodoc:
   LETTERS = {
     success: '.',
-    fail: 'F',
-    error: 'E',
+    fail:    'F',
+    error:   'E',
     pending: '*',
   }
 

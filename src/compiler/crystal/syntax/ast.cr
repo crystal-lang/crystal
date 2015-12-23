@@ -87,6 +87,7 @@ module Crystal
   # A container for one or many expressions.
   class Expressions < ASTNode
     property :expressions
+    property :keyword
 
     def self.from(obj : Nil)
       Nop.new
@@ -846,28 +847,6 @@ module Crystal
     end
 
     def_equals_and_hash inputs, output
-  end
-
-  class BlockArg < ASTNode
-    property :name
-    property :fun
-
-    def initialize(@name, @fun = Fun.new)
-    end
-
-    def accept_children(visitor)
-      @fun.try &.accept visitor
-    end
-
-    def name_size
-      name.size
-    end
-
-    def clone_without_location
-      BlockArg.new(@name, @fun.clone)
-    end
-
-    def_equals_and_hash @name, @fun
   end
 
   # A method definition.
@@ -2119,7 +2098,7 @@ module Crystal
     def_equals_and_hash constraint, exp
   end
 
-  # Ficticious node to represent primitives
+  # Fictitious node to represent primitives
   class Primitive < ASTNode
     getter name
 
@@ -2133,7 +2112,7 @@ module Crystal
     def_equals_and_hash name
   end
 
-  # Ficticious node to represent a tuple indexer
+  # Fictitious node to represent a tuple indexer
   class TupleIndexer < Primitive
     getter index
 
@@ -2148,7 +2127,7 @@ module Crystal
     def_equals_and_hash index
   end
 
-  # Ficticious node to represent an id inside a macro
+  # Fictitious node to represent an id inside a macro
   class MacroId < ASTNode
     property value
 
@@ -2166,7 +2145,7 @@ module Crystal
     def_equals_and_hash value
   end
 
-  # Ficticious node to represent a type
+  # Fictitious node to represent a type
   class TypeNode < ASTNode
     def initialize(@type)
     end

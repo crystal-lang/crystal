@@ -16,9 +16,9 @@ describe "Int" do
   end
 
   describe "#===(:Char)" do
-    assert { (99 === 'c').should     be_true }
-    assert { (99_u8 === 'c').should  be_true }
-    assert { (99 === 'z').should     be_false }
+    assert { (99 === 'c').should be_true }
+    assert { (99_u8 === 'c').should be_true }
+    assert { (99 === 'z').should be_false }
     assert { (37202 === '酒').should be_true }
   end
 
@@ -93,6 +93,15 @@ describe "Int" do
     assert { 0.to_s(16).should eq("0") }
     assert { 1.to_s(2).should eq("1") }
     assert { 1.to_s(16).should eq("1") }
+    assert { 0.to_s(62).should eq("0") }
+    assert { 1.to_s(62).should eq("1") }
+    assert { 10.to_s(62).should eq("a") }
+    assert { 35.to_s(62).should eq("z") }
+    assert { 36.to_s(62).should eq("A") }
+    assert { 61.to_s(62).should eq("Z") }
+    assert { 62.to_s(62).should eq("10") }
+    assert { 97.to_s(62).should eq("1z") }
+    assert { 3843.to_s(62).should eq("ZZ") }
 
     it "raises on base 1" do
       expect_raises { 123.to_s(1) }
@@ -100,6 +109,10 @@ describe "Int" do
 
     it "raises on base 37" do
       expect_raises { 123.to_s(37) }
+    end
+
+    it "raises on base 62 with upcase" do
+      expect_raises { 123.to_s(62, upcase: true) }
     end
 
     assert { to_s_with_io(12, 2).should eq("1100") }
@@ -117,6 +130,15 @@ describe "Int" do
     assert { to_s_with_io(0, 16).should eq("0") }
     assert { to_s_with_io(1, 2).should eq("1") }
     assert { to_s_with_io(1, 16).should eq("1") }
+    assert { to_s_with_io(0, 62).should eq("0") }
+    assert { to_s_with_io(1, 62).should eq("1") }
+    assert { to_s_with_io(10, 62).should eq("a") }
+    assert { to_s_with_io(35, 62).should eq("z") }
+    assert { to_s_with_io(36, 62).should eq("A") }
+    assert { to_s_with_io(61, 62).should eq("Z") }
+    assert { to_s_with_io(62, 62).should eq("10") }
+    assert { to_s_with_io(97, 62).should eq("1z") }
+    assert { to_s_with_io(3843, 62).should eq("ZZ") }
 
     it "raises on base 1 with io" do
       expect_raises { to_s_with_io(123, 1) }
@@ -124,6 +146,10 @@ describe "Int" do
 
     it "raises on base 37 with io" do
       expect_raises { to_s_with_io(123, 37) }
+    end
+
+    it "raises on base 62 with upcase with io" do
+      expect_raises { to_s_with_io(12, 62, upcase: true) }
     end
   end
 

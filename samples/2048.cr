@@ -7,13 +7,13 @@ module Screen
   TILES = {
         0 => {:white, :black},
         2 => {:black, :white},
-        4 => {:blue,  :white},
+        4 => {:blue, :white},
         8 => {:black, :yellow},
        16 => {:white, :red},
        32 => {:black, :red},
        64 => {:white, :magenta},
-      128 => {:red,   :yellow},
-      256 => {:magenta,  :yellow},
+      128 => {:red, :yellow},
+      256 => {:magenta, :yellow},
       512 => {:white, :yellow},
      1024 => {:white, :yellow},
      2048 => {:white, :yellow},
@@ -21,7 +21,7 @@ module Screen
      8192 => {:white, :black},
     16384 => {:white, :black},
     32768 => {:white, :black},
-    65536 => {:white, :black}
+    65536 => {:white, :black},
   }
 
   def self.colorize_for(tile)
@@ -69,8 +69,8 @@ module Screen
 end
 
 class Drawer
-  INNER_CELL_WIDTH = 16
-  INNER_CELL_HEIGHT = 6
+  INNER_CELL_WIDTH  = 16
+  INNER_CELL_HEIGHT =  6
 
   def initialize
     @n = 0
@@ -94,12 +94,12 @@ class Drawer
   def box
     top_border
 
-    (@n-1).times do |row|
+    (@n - 1).times do |row|
       tile row
       mid_border
     end
 
-    tile @n-1
+    tile @n - 1
 
     bottom_border
   end
@@ -108,7 +108,7 @@ class Drawer
     set_current_row @grid[row]
 
     INNER_CELL_HEIGHT.times do |i|
-      if i == (@n / 2)+1
+      if i == (@n / 2) + 1
         content_line
       else
         space_line
@@ -143,13 +143,13 @@ class Drawer
   def line(left, fill, inner, right)
     print left
 
-    (@n-1).times do |cell|
+    (@n - 1).times do |cell|
       cell_line fill, cell
 
       print inner
     end
 
-    cell_line fill, @n-1
+    cell_line fill, @n - 1
 
     puts right
   end
@@ -204,7 +204,7 @@ class Game
     elsif lost?
       end_game "You lost!"
     else
-      raise "Game loop quitted unexpectedly"
+      raise "Game loop quit unexpectedly"
     end
   end
 
@@ -225,7 +225,7 @@ class Game
 
     empty_cells = @grid.map(&.count &.nil?).sum
 
-    fill_cell = empty_cells > 1 ? rand(empty_cells-1)+1 : 1
+    fill_cell = empty_cells > 1 ? rand(empty_cells - 1) + 1 : 1
 
     empty_cell_count = 0
 
@@ -240,8 +240,8 @@ class Game
   end
 
   def each_cell_with_index
-    0.upto(@grid.size-1) do |row|
-      0.upto(@grid.size-1) do |col|
+    0.upto(@grid.size - 1) do |row|
+      0.upto(@grid.size - 1) do |col|
         yield @grid[row][col], row, col
       end
     end
@@ -276,8 +276,8 @@ class Game
     while modified
       modified = false
       movable_tiles(direction, drow, dcol) do |tile, row, col|
-        unless @grid[row+drow][col+dcol]
-          @grid[row+drow][col+dcol] = tile
+        unless @grid[row + drow][col + dcol]
+          @grid[row + drow][col + dcol] = tile
           @grid[row][col] = nil
           modified = true
         end
@@ -287,15 +287,15 @@ class Game
 
   def merge_tiles(direction, drow, dcol)
     movable_tiles(direction, drow, dcol) do |tile, row, col|
-      if @grid[row+drow][col+dcol] == tile
+      if @grid[row + drow][col + dcol] == tile
         @grid[row][col] = nil
-        @grid[row+drow][col+dcol] = tile*2
+        @grid[row + drow][col + dcol] = tile*2
       end
     end
   end
 
   def movable_tiles(direction, drow, dcol)
-    max = @grid.size-1
+    max = @grid.size - 1
     from_row, to_row, from_column, to_column =
       case direction
       when :up, :left
@@ -319,7 +319,7 @@ class Game
     drow, dcol = offsets_for direction
 
     movable_tiles(direction, drow, dcol) do |tile, row, col|
-      target_tile = @grid[row+drow][col+dcol]
+      target_tile = @grid[row + drow][col + dcol]
       return true if !target_tile || target_tile == tile
     end
 
@@ -348,13 +348,13 @@ class Game
   def to_border?(direction, row, col, drow, dcol)
     case direction
     when :up
-      row+drow < 0
+      row + drow < 0
     when :down
-      row+drow >= @grid.size
+      row + drow >= @grid.size
     when :left
-      col+dcol < 0
+      col + dcol < 0
     when :right
-      col+dcol >= @grid.size
+      col + dcol >= @grid.size
     else
       false
     end
@@ -370,7 +370,7 @@ class Game
 
   def can_move?
     can_move_in?(:up) || can_move_in?(:down) ||
-    can_move_in?(:left) || can_move_in?(:right)
+      can_move_in?(:left) || can_move_in?(:right)
   end
 
   def end_game(msg)

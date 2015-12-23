@@ -8,6 +8,7 @@ class IO::FileDescriptor
   # :nodoc:
   property read_timed_out, write_timed_out # only used in event callbacks
 
+
   def initialize(fd, blocking = false, edge_triggerable = false)
     @edge_triggerable = !!edge_triggerable
     @flush_on_newline = false

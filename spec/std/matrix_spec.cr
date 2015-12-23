@@ -128,21 +128,21 @@ describe Matrix do
       end
     end
 
-    it "does substraction with another matrix (1)" do
+    it "does subtraction with another matrix (1)" do
       a = Matrix[[1, 2], [3, 4], [5, 6], [7, 8]]
       b = Matrix[[2, 4], [6, 8], [10, 12], [14, 16]]
       c = Matrix[[-1, -2], [-3, -4], [-5, -6], [-7, -8]]
       (a - b).should eq(c)
     end
 
-    it "does substraction with another matrix (2)" do
+    it "does subtraction with another matrix (2)" do
       a = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
       b = a.reverse
       c = Matrix[[-8, -6, -4], [-2, 0, 2], [4, 6, 8]]
       (a - b).should eq(c)
     end
 
-    it "does substraction with another T" do
+    it "does subtraction with another T" do
       a = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
       b = Matrix[[-4, -3, -2], [-1, 0, 1], [2, 3, 4]]
       (a - 5).should eq(b)
@@ -170,7 +170,7 @@ describe Matrix do
     end
 
     it "has the correct rows and columns after a product (2)" do
-      a = Matrix[[1,2], [3,4], [5,6], [7,8]]
+      a = Matrix[[1, 2], [3, 4], [5, 6], [7, 8]]
       b = Matrix[[1, 2, 3], [4, 5, 6]]
       (a * b).row_count.should eq(4)
       (a * b).column_count.should eq(3)
@@ -195,8 +195,8 @@ describe Matrix do
       a = Matrix[[1, 2, 3], [3, 2, 1], [2, 1, 3]]
       b = Matrix[[1, 2, 1], [2, 0, 4], [2, 1, 3]]
       c = Matrix[[3, 3, -4],
-                 [-3, -5, 8],
-                 [0, 0, 1]]
+        [-3, -5, 8],
+        [0, 0, 1]]
       (a / b).should eq(c)
     end
   end
@@ -559,7 +559,7 @@ describe Matrix do
     end
 
     it "returns the rank of the matrix (2)" do
-      m = Matrix[[7,6], [3,9]]
+      m = Matrix[[7, 6], [3, 9]]
       m.rank.should eq(2)
     end
 
@@ -634,14 +634,14 @@ describe Matrix do
     it "returns a hash: {row_index, column_index} => value (1)" do
       m = Matrix[[1, 2, 3], [4, 5, 6], [7, 8, 9]]
       h = { {0, 0} => 1, {0, 1} => 2, {0, 2} => 3, {1, 0} => 4, {1, 1} => 5,
-        {1, 2} => 6, {2, 0} => 7, {2, 1} => 8, {2, 2} => 9}
+        {1, 2} => 6, {2, 0} => 7, {2, 1} => 8, {2, 2} => 9 }
       m.to_h.should eq(h)
     end
 
     it "returns a hash: {row_index, column_index} => value (2)" do
-      m = Matrix[[1,2], [3,4], [5,6], [7,8]]
+      m = Matrix[[1, 2], [3, 4], [5, 6], [7, 8]]
       h = { {0, 0} => 1, {0, 1} => 2, {1, 0} => 3, {1, 1} => 4, {2, 0} => 5,
-        {2, 1} => 6, {3, 0} => 7, {3, 1} => 8}
+        {2, 1} => 6, {3, 0} => 7, {3, 1} => 8 }
       m.to_h.should eq(h)
     end
 
@@ -658,7 +658,7 @@ describe Matrix do
         [0.86, 0.55, 1.00, 0.83, 0.26, 0.69, 0.48, 0.33, 0.26, 0.85],
         [0.36, 0.15, 0.76, 0.92, 0.14, 0.50, 0.84, 0.91, 0.07, 0.88]]
       h = {
-        {0, 0} => 0.86, {0, 1} =>  0.6, {0, 2} => 0.27, {0, 3} => 0.24,
+        {0, 0} => 0.86, {0, 1} => 0.6, {0, 2} => 0.27, {0, 3} => 0.24,
         {0, 4} => 0.64, {0, 5} => 0.46, {0, 6} => 0.93, {0, 7} => 0.58,
         {0, 8} => 0.13, {0, 9} => 0.33, {1, 0} => 0.51, {1, 1} => 0.78,
         {1, 2} => 0.78, {1, 3} => 0.57, {1, 4} => 0.27, {1, 5} => 0.56,
@@ -682,7 +682,8 @@ describe Matrix do
         {8, 4} => 0.26, {8, 5} => 0.69, {8, 6} => 0.48, {8, 7} => 0.33,
         {8, 8} => 0.26, {8, 9} => 0.85, {9, 0} => 0.36, {9, 1} => 0.15,
         {9, 2} => 0.76, {9, 3} => 0.92, {9, 4} => 0.14, {9, 5} => 0.50,
-        {9, 6} => 0.84, {9, 7} => 0.91, {9, 8} => 0.07, {9, 9} => 0.88}
+        {9, 6} => 0.84, {9, 7} => 0.91, {9, 8} => 0.07, {9, 9} => 0.88,
+      }
       m.to_h.should eq(h)
     end
   end

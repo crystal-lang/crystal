@@ -2,9 +2,9 @@ require "spec"
 require "json"
 
 class JSONPerson
-  json_mapping({
+  JSON.mapping({
     name: {type: String},
-    age: {type: Int32, nilable: true},
+    age:  {type: Int32, nilable: true},
   })
 
   def_equals name, age
@@ -14,33 +14,33 @@ class JSONPerson
 end
 
 class StrictJSONPerson
-  json_mapping({
+  JSON.mapping({
     name: {type: String},
-    age: {type: Int32, nilable: true},
+    age:  {type: Int32, nilable: true},
   }, true)
 end
 
 class JSONPersonEmittingNull
-  json_mapping({
+  JSON.mapping({
     name: {type: String},
-    age: {type: Int32, nilable: true, emit_null: true},
+    age:  {type: Int32, nilable: true, emit_null: true},
   })
 end
 
 class JSONWithBool
-  json_mapping({
+  JSON.mapping({
     value: {type: Bool},
   })
 end
 
 class JSONWithTime
-  json_mapping({
+  JSON.mapping({
     value: {type: Time, converter: Time::Format.new("%F %T")},
   })
 end
 
 class JSONWithNilableTime
-  json_mapping({
+  JSON.mapping({
     value: {type: Time, converter: Time::Format.new("%F")},
   })
 
@@ -49,7 +49,7 @@ class JSONWithNilableTime
 end
 
 class JSONWithNilableTimeEmittingNull
-  json_mapping({
+  JSON.mapping({
     value: {type: Time, converter: Time::Format.new("%F"), emit_null: true},
   })
 
@@ -58,15 +58,26 @@ class JSONWithNilableTimeEmittingNull
 end
 
 class JSONWithSimpleMapping
-  json_mapping({name: String, age: Int32})
+  JSON.mapping({name: String, age: Int32})
 end
 
 class JSONWithKeywordsMapping
-  json_mapping({end: Int32, abstract: Int32})
+  JSON.mapping({end: Int32, abstract: Int32})
 end
 
 class JSONWithAny
-  json_mapping({name: String, any: JSON::Any})
+  JSON.mapping({name: String, any: JSON::Any})
+end
+
+class JsonWithProblematicKeys
+  JSON.mapping({
+    key:  Int32,
+    pull: Int32,
+  })
+end
+
+class JsonWithSet
+  JSON.mapping({set: Set(String)})
 end
 
 describe "JSON mapping" do
@@ -169,7 +180,19 @@ describe "JSON mapping" do
   it "parses json with any" do
     json = JSONWithAny.from_json(%({"name": "Hi", "any": [{"x": 1}, 2, "hey", true, false, 1.5, null]}))
     json.name.should eq("Hi")
-    json.any.should eq([{"x": 1}, 2, "hey", true, false, 1.5, nil])
+    json.any.raw.should eq([{"x": 1}, 2, "hey", true, false, 1.5, nil])
     json.to_json.should eq(%({"name":"Hi","any":[{"x":1},2,"hey",true,false,1.5,null]}))
   end
+
+  it "parses json with problematic keys" do
+    json = JsonWithProblematicKeys.from_json(%({"key": 1, "pull": 2}))
+    json.key.should eq(1)
+    json.pull.should eq(2)
+  end
+
+  it "parses json array as set" do
+    json = JsonWithSet.from_json(%({"set": ["a", "a", "b"]}))
+    json.set.should eq(Set(String){"a", "b"})
+  end
+
 end

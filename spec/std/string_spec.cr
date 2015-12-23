@@ -13,15 +13,15 @@ describe "String" do
     end
 
     it "gets with inclusive range" do
-      "hello!"[1 .. 4].should eq("ello")
+      "hello!"[1..4].should eq("ello")
     end
 
     it "gets with inclusive range with negative indices" do
-      "hello!"[-5 .. -2].should eq("ello")
+      "hello!"[-5..-2].should eq("ello")
     end
 
     it "gets with exclusive range" do
-      "hello!"[1 ... 4].should eq("ell")
+      "hello!"[1...4].should eq("ell")
     end
 
     it "gets with start and count" do
@@ -29,7 +29,7 @@ describe "String" do
     end
 
     it "gets with exclusive range with unicode" do
-      "há日本語"[1 .. 3].should eq("á日本")
+      "há日本語"[1..3].should eq("á日本")
     end
 
     it "gets when index is last and count is zero" do
@@ -46,7 +46,7 @@ describe "String" do
       end
     end
 
-    assert { "foo"[3 .. -10].should eq("") }
+    assert { "foo"[3..-10].should eq("") }
 
     it "gets when index is last and count is negative at last with utf-8" do
       expect_raises(ArgumentError) do
@@ -64,13 +64,13 @@ describe "String" do
 
     it "raises index out of bound on index out of range with range" do
       expect_raises(IndexError) do
-        "foo"[4 .. 1]
+        "foo"[4..1]
       end
     end
 
     it "raises index out of bound on index out of range with range and utf-8" do
       expect_raises(IndexError) do
-        "há日本語"[6 .. 1]
+        "há日本語"[6..1]
       end
     end
 
@@ -111,12 +111,12 @@ describe "String" do
     end
 
     it "gets with single char" do
-      ";"[0 .. -2].should eq("")
+      ";"[0..-2].should eq("")
     end
 
     it "raises on too negative left bound" do
       expect_raises IndexError do
-        "foo"[-4 .. 0]
+        "foo"[-4..0]
       end
     end
 
@@ -203,6 +203,17 @@ describe "String" do
     assert { expect_raises(ArgumentError) { "000b123".to_i(prefix: true) } }
     assert { expect_raises(ArgumentError) { "000x123".to_i(prefix: true) } }
     assert { expect_raises(ArgumentError) { "123hello".to_i } }
+    assert { "z".to_i(36).should eq(35) }
+    assert { "Z".to_i(36).should eq(35) }
+    assert { "0".to_i(62).should eq(0) }
+    assert { "1".to_i(62).should eq(1) }
+    assert { "a".to_i(62).should eq(10) }
+    assert { "z".to_i(62).should eq(35) }
+    assert { "A".to_i(62).should eq(36) }
+    assert { "Z".to_i(62).should eq(61) }
+    assert { "10".to_i(62).should eq(62) }
+    assert { "1z".to_i(62).should eq(97) }
+    assert { "ZZ".to_i(62).should eq(3843) }
 
     describe "to_i8" do
       assert { "127".to_i8.should eq(127) }
@@ -350,7 +361,7 @@ describe "String" do
     foo = "<foo>"
     bar = 123
     "foo #{bar}".should eq("foo 123")
-    "foo #{ bar}".should eq("foo 123")
+    "foo #{bar}".should eq("foo 123")
     "#{foo} bar".should eq("<foo> bar")
   end
 
@@ -539,31 +550,37 @@ describe "String" do
 
   describe "split" do
     describe "by char" do
-      assert { "".split(',').should eq([] of String) }
-      assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz"]) }
+      assert { "".split(',').should eq([""]) }
+      assert { "foo,bar,,baz,".split(',').should eq(["foo", "bar", "", "baz", ""]) }
       assert { "foo,bar,,baz".split(',').should eq(["foo", "bar", "", "baz"]) }
       assert { "foo".split(',').should eq(["foo"]) }
       assert { "foo".split(' ').should eq(["foo"]) }
-      assert { "   foo".split(' ').should eq(["foo"]) }
-      assert { "foo   ".split(' ').should eq(["foo"]) }
-      assert { "   foo  bar".split(' ').should eq(["foo", "bar"]) }
-      assert { "   foo   bar\n\t  baz   ".split(' ').should eq(["foo", "bar", "baz"]) }
+      assert { "   foo".split(' ').should eq(["", "", "", "foo"]) }
+      assert { "foo   ".split(' ').should eq(["foo", "", "", ""]) }
+      assert { "   foo  bar".split(' ').should eq(["", "", "", "foo", "", "bar"]) }
+      assert { "   foo   bar\n\t  baz   ".split(' ').should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
       assert { "   foo   bar\n\t  baz   ".split.should eq(["foo", "bar", "baz"]) }
       assert { "   foo   bar\n\t  baz   ".split(2).should eq(["foo", "bar\n\t  baz   "]) }
-      assert { "   foo   bar\n\t  baz   ".split(" ").should eq(["foo", "bar", "baz"]) }
+      assert { "   foo   bar\n\t  baz   ".split(" ").should eq(["", "", "", "foo", "", "", "bar\n\t", "", "baz", "", "", ""]) }
       assert { "foo,bar,baz,qux".split(',', 1).should eq(["foo,bar,baz,qux"]) }
       assert { "foo,bar,baz,qux".split(',', 3).should eq(["foo", "bar", "baz,qux"]) }
       assert { "foo,bar,baz,qux".split(',', 30).should eq(["foo", "bar", "baz", "qux"]) }
       assert { "foo bar baz qux".split(' ', 1).should eq(["foo bar baz qux"]) }
       assert { "foo bar baz qux".split(' ', 3).should eq(["foo", "bar", "baz qux"]) }
       assert { "foo bar baz qux".split(' ', 30).should eq(["foo", "bar", "baz", "qux"]) }
+      assert { "a,b,".split(',', 3).should eq(["a", "b", ""]) }
       assert { "日本語 \n\t 日本 \n\n 語".split.should eq(["日本語", "日本", "語"]) }
       assert { "日本ん語日本ん語".split('ん').should eq(["日本", "語日本", "語"]) }
+      assert { "=".split('=').should eq(["", ""]) }
+      assert { "a=".split('=').should eq(["a", ""]) }
+      assert { "=b".split('=').should eq(["", "b"]) }
+      assert { "=".split('=', 2).should eq(["", ""]) }
     end
 
     describe "by string" do
-      assert { "".split(":-").should eq([] of String) }
-      assert { "foo:-bar:-:-baz:-".split(":-").should eq(["foo", "bar", "", "baz"]) }
+      assert { "".split(",").should eq([""]) }
+      assert { "".split(":-").should eq([""]) }
+      assert { "foo:-bar:-:-baz:-".split(":-").should eq(["foo", "bar", "", "baz", ""]) }
       assert { "foo:-bar:-:-baz".split(":-").should eq(["foo", "bar", "", "baz"]) }
       assert { "foo".split(":-").should eq(["foo"]) }
       assert { "foo".split("").should eq(["f", "o", "o"]) }
@@ -572,22 +589,31 @@ describe "String" do
       assert { "foo,bar,baz,qux".split(",", 3).should eq(["foo", "bar", "baz,qux"]) }
       assert { "foo,bar,baz,qux".split(",", 30).should eq(["foo", "bar", "baz", "qux"]) }
       assert { "a b c".split(" ", 2).should eq(["a", "b c"]) }
+      assert { "=".split("=").should eq(["", ""]) }
+      assert { "a=".split("=").should eq(["a", ""]) }
+      assert { "=b".split("=").should eq(["", "b"]) }
+      assert { "=".split("=", 2).should eq(["", ""]) }
     end
 
     describe "by regex" do
-      assert { "".split(/\n\t/).should eq([] of String) }
+      assert { "".split(/\n\t/).should eq([""] of String) }
       assert { "foo\n\tbar\n\t\n\tbaz".split(/\n\t/).should eq(["foo", "bar", "", "baz"]) }
       assert { "foo\n\tbar\n\t\n\tbaz".split(/(?:\n\t)+/).should eq(["foo", "bar", "baz"]) }
       assert { "foo,bar".split(/,/, 1).should eq(["foo,bar"]) }
+      assert { "foo,bar,".split(/,/).should eq(["foo", "bar", ""]) }
       assert { "foo,bar,baz,qux".split(/,/, 1).should eq(["foo,bar,baz,qux"]) }
       assert { "foo,bar,baz,qux".split(/,/, 3).should eq(["foo", "bar", "baz,qux"]) }
       assert { "foo,bar,baz,qux".split(/,/, 30).should eq(["foo", "bar", "baz", "qux"]) }
       assert { "a b c".split(Regex.new(" "), 2).should eq(["a", "b c"]) }
       assert { "日本ん語日本ん語".split(/ん/).should eq(["日本", "語日本", "語"]) }
-      assert { "hello world".split(/\b/).should eq(["hello", " ", "world"]) }
+      assert { "hello world".split(/\b/).should eq(["hello", " ", "world", ""]) }
       assert { "abc".split(//).should eq(["a", "b", "c"]) }
-      assert { "hello".split(/\w+/).empty?.should be_true }
-      assert { "foo".split(/o/).should eq(["f"]) }
+      assert { "hello".split(/\w+/).should eq(["", ""]) }
+      assert { "foo".split(/o/).should eq(["f", "", ""]) }
+      assert { "=".split(/\=/).should eq(["", ""]) }
+      assert { "a=".split(/\=/).should eq(["a", ""]) }
+      assert { "=b".split(/\=/).should eq(["", "b"]) }
+      assert { "=".split(/\=/, 2).should eq(["", ""]) }
 
       it "keeps groups" do
         s = "split on the word on okay?"
@@ -635,7 +661,7 @@ describe "String" do
   end
 
   describe "delete" do
-    assert { "foobar".delete {|char| char == 'o' }.should eq("fbar") }
+    assert { "foobar".delete { |char| char == 'o' }.should eq("fbar") }
     assert { "hello world".delete("lo").should eq("he wrd") }
     assert { "hello world".delete("lo", "o").should eq("hell wrld") }
     assert { "hello world".delete("hello", "^l").should eq("ll wrld") }
@@ -684,7 +710,7 @@ describe "String" do
     end
 
     it "subs char with string" do
-      replaced = "foobar".sub {|char|
+      replaced = "foobar".sub { |char|
         char.should eq 'f'
         "some"
       }
@@ -696,14 +722,14 @@ describe "String" do
     end
 
     it "subs with regex and block" do
-      actual = "foo booor booooz".sub(/o+/) {|str|
+      actual = "foo booor booooz".sub(/o+/) { |str|
         "#{str}#{str.size}"
       }
       actual.should eq("foo2 booor booooz")
     end
 
     it "subs with regex and block with group" do
-      actual = "foo booor booooz".sub(/(o+).*?(o+)/) {|str, match|
+      actual = "foo booor booooz".sub(/(o+).*?(o+)/) { |str, match|
         "#{match[1].size}#{match[2].size}"
       }
       actual.should eq("f23r booooz")
@@ -749,7 +775,7 @@ describe "String" do
     end
 
     it "subs with string and block" do
-      result = "foo boo".sub("oo") {|value|
+      result = "foo boo".sub("oo") { |value|
         value.should eq("oo")
         "a"
       }
@@ -881,7 +907,6 @@ describe "String" do
     it "gsubs using $~" do
       "foo".gsub(/(o)/) { "x#{$1}x" }.should eq("fxoxxox")
     end
-
   end
 
   it "scans using $~" do
@@ -975,32 +1000,32 @@ describe "String" do
   end
 
   it "does %" do
-    ("foo" % 1).should        eq("foo")
-    ("foo %d" % 1).should     eq("foo 1")
-    ("%d" % 123).should       eq("123")
-    ("%+d" % 123).should      eq("+123")
-    ("%+d" % -123).should     eq("-123")
-    ("% d" % 123).should      eq(" 123")
-    ("%i" % 123).should       eq("123")
-    ("%+i" % 123).should      eq("+123")
-    ("%+i" % -123).should     eq("-123")
-    ("% i" % 123).should      eq(" 123")
-    ("%20d" % 123).should     eq("                 123")
-    ("%+20d" % 123).should    eq("                +123")
-    ("%+20d" % -123).should   eq("                -123")
-    ("% 20d" % 123).should    eq("                 123")
-    ("%020d" % 123).should    eq("00000000000000000123")
-    ("%+020d" % 123).should   eq("+0000000000000000123")
-    ("% 020d" % 123).should   eq(" 0000000000000000123")
-    ("%-d" % 123).should      eq("123")
-    ("%-20d" % 123).should    eq("123                 ")
-    ("%-+20d" % 123).should   eq("+123                ")
-    ("%-+20d" % -123).should  eq("-123                ")
-    ("%- 20d" % 123).should   eq(" 123                ")
-    ("%s" % 'a').should       eq("a")
-    ("%-s" % 'a').should      eq("a")
-    ("%20s" % 'a').should     eq("                   a")
-    ("%-20s" % 'a').should    eq("a                   ")
+    ("foo" % 1).should eq("foo")
+    ("foo %d" % 1).should eq("foo 1")
+    ("%d" % 123).should eq("123")
+    ("%+d" % 123).should eq("+123")
+    ("%+d" % -123).should eq("-123")
+    ("% d" % 123).should eq(" 123")
+    ("%i" % 123).should eq("123")
+    ("%+i" % 123).should eq("+123")
+    ("%+i" % -123).should eq("-123")
+    ("% i" % 123).should eq(" 123")
+    ("%20d" % 123).should eq("                 123")
+    ("%+20d" % 123).should eq("                +123")
+    ("%+20d" % -123).should eq("                -123")
+    ("% 20d" % 123).should eq("                 123")
+    ("%020d" % 123).should eq("00000000000000000123")
+    ("%+020d" % 123).should eq("+0000000000000000123")
+    ("% 020d" % 123).should eq(" 0000000000000000123")
+    ("%-d" % 123).should eq("123")
+    ("%-20d" % 123).should eq("123                 ")
+    ("%-+20d" % 123).should eq("+123                ")
+    ("%-+20d" % -123).should eq("-123                ")
+    ("%- 20d" % 123).should eq(" 123                ")
+    ("%s" % 'a').should eq("a")
+    ("%-s" % 'a').should eq("a")
+    ("%20s" % 'a').should eq("                   a")
+    ("%-20s" % 'a').should eq("a                   ")
 
     ("%%%d" % 1).should eq("%1")
     ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
@@ -1053,6 +1078,8 @@ describe "String" do
     ("%a" % 12345678.45).should eq("0x1.78c29ce666666p+23")
     ("%A" % 12345678.45).should eq("0X1.78C29CE666666P+23")
     ("%100.50g" % 123.45).should eq("                                                  123.4500000000000028421709430404007434844970703125")
+
+    ("%.2f" % 2.536_f32).should eq("2.54")
   end
 
   it "escapes chars" do
@@ -1123,7 +1150,7 @@ describe "String" do
     "Lisp".tr("Lisp", "Crys").should eq("Crys")
     "hello".tr("helo", "1212").should eq("12112")
     "this".tr("this", "ⓧ").should eq("ⓧⓧⓧⓧ")
-    "über".tr("ü","u").should eq("uber")
+    "über".tr("ü", "u").should eq("uber")
   end
 
   describe "compare" do
@@ -1284,12 +1311,12 @@ describe "String" do
     assert { "hello world\\r\\n".count("\\A").should eq(0) }
     assert { "hello world\\r\\n".count("X-\\w").should eq(3) }
     assert { "aabbcc".count('a').should eq(2) }
-    assert { "aabbcc".count {|c| ['a', 'b'].includes?(c) }.should eq(4) }
+    assert { "aabbcc".count { |c| ['a', 'b'].includes?(c) }.should eq(4) }
   end
 
   describe "squeeze" do
-    assert { "aaabbbccc".squeeze {|c| ['a', 'b'].includes?(c) }.should eq("abccc") }
-    assert { "aaabbbccc".squeeze {|c| ['a', 'c'].includes?(c) }.should eq("abbbc") }
+    assert { "aaabbbccc".squeeze { |c| ['a', 'b'].includes?(c) }.should eq("abccc") }
+    assert { "aaabbbccc".squeeze { |c| ['a', 'c'].includes?(c) }.should eq("abbbc") }
     assert { "a       bbb".squeeze.should eq("a b") }
     assert { "a    bbb".squeeze(' ').should eq("a bbb") }
     assert { "aaabbbcccddd".squeeze("b-d").should eq("aaabcd") }
@@ -1472,18 +1499,18 @@ describe "String" do
 
   context "%" do
     it "substitutes one placeholder" do
-      res = "change %{this}" % { "this": "nothing" }
+      res = "change %{this}" % {"this": "nothing"}
       res.should eq "change nothing"
     end
 
     it "substitutes multiple placeholder" do
-      res = "change %{this} and %{more}" % { "this": "nothing", "more": "something" }
+      res = "change %{this} and %{more}" % {"this": "nothing", "more": "something"}
       res.should eq "change nothing and something"
     end
 
     it "throws an error when the key is not found" do
       expect_raises KeyError do
-        "change %{this}" % { "that": "wrong key" }
+        "change %{this}" % {"that": "wrong key"}
       end
     end
 
@@ -1500,7 +1527,7 @@ describe "String" do
     end
 
     it "applies formatting to %<...> placeholder" do
-      res = "change %<this>.2f" % { "this": 23.456 }
+      res = "change %<this>.2f" % {"this": 23.456}
       res.should eq "change 23.46"
     end
   end

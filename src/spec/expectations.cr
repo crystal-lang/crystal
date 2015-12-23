@@ -10,7 +10,13 @@ module Spec
     end
 
     def failure_message
-      "expected: #{@value.inspect}\n     got: #{@target.inspect}"
+      expected = @value.inspect
+      got = @target.inspect
+      if expected == got
+        expected += " : #{@value.class}"
+        got += " : #{@target.class}"
+      end
+      "expected: #{expected}\n     got: #{got}"
     end
 
     def negative_failure_message
@@ -225,7 +231,7 @@ module Spec
     end
 
     def match(value)
-     Spec::MatchExpectation.new(value)
+      Spec::MatchExpectation.new(value)
     end
 
     # Passes if actual includes expected. Works on collections and String.

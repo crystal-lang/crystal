@@ -8,22 +8,22 @@ class HTTP::WebSocket
   @[Flags]
   enum Flags : UInt8
     FINAL = 0x80
-    RSV1 = 0x40
-    RSV2 = 0x20
-    RSV3 = 0x10
+    RSV1  = 0x40
+    RSV2  = 0x20
+    RSV3  = 0x10
   end
 
   enum Opcode : UInt8
-    CONTINUATION   = 0x0
-    TEXT           = 0x1
-    BINARY         = 0x2
-    CLOSE          = 0x8
-    PING           = 0x9
-    PONG           = 0xA
+    CONTINUATION = 0x0
+    TEXT         = 0x1
+    BINARY       = 0x2
+    CLOSE        = 0x8
+    PING         = 0x9
+    PONG         = 0xA
   end
 
-  MASK_BIT      = 128_u8
-  VERSION       = 13
+  MASK_BIT = 128_u8
+  VERSION  =     13
 
   record PacketInfo, opcode, size, final
 
@@ -54,10 +54,10 @@ class HTTP::WebSocket
       end
 
       if count < slice.size
-        count += write(slice + count)
+        write(slice + count)
       end
 
-      count
+      nil
     end
 
     def read(slice : Slice(UInt8))
@@ -162,12 +162,12 @@ class HTTP::WebSocket
     end
 
     if parsed_opcode == Opcode::CONTINUATION
-       @opcode
-     elsif control?
-       parsed_opcode
-     else
-       @opcode = parsed_opcode
-     end
+      @opcode
+    elsif control?
+      parsed_opcode
+    else
+      @opcode = parsed_opcode
+    end
   end
 
   private def read_size
@@ -214,8 +214,8 @@ class HTTP::WebSocket
   # and will raise an exception if the handshake did not complete successfully.
   #
   # ```
-  # WebSocket.open("websocket.example.com", "/chat")              # Creates a new WebSocket to `websocket.example.com`
-  # WebSocket.open("websocket.example.com", "/chat", ssl = true)  # Creates a new WebSocket with SSL to `ẁebsocket.example.com`
+  # WebSocket.open("websocket.example.com", "/chat")             # Creates a new WebSocket to `websocket.example.com`
+  # WebSocket.open("websocket.example.com", "/chat", ssl = true) # Creates a new WebSocket with SSL to `ẁebsocket.example.com`
   # ```
   def self.open(host, path, port = nil, ssl = false)
     port = port || (ssl ? 443 : 80)

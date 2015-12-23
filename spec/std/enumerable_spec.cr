@@ -11,7 +11,6 @@ class SpecEnumerable
 end
 
 describe "Enumerable" do
-
   describe "all? with block" do
     it "returns true" do
       ["ant", "bear", "cat"].all? { |word| word.size >= 3 }.should be_true
@@ -53,7 +52,7 @@ describe "Enumerable" do
   end
 
   describe "compact map" do
-    assert { Set { 1, nil, 2, nil, 3 }.compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
+    assert { Set{1, nil, 2, nil, 3}.compact_map { |x| x.try &.+(1) }.should eq([2, 3, 4]) }
   end
 
   describe "size without block" do
@@ -254,8 +253,8 @@ describe "Enumerable" do
     assert { [1, 2, 2, 3].group_by { |x| x == 2 }.should eq({true => [2, 2], false => [1, 3]}) }
 
     it "groups can group by size (like the doc example)" do
-      %w(Alice Bob Ary).group_by{|e| e.size}.should eq({ 3 => ["Bob", "Ary"],
-                                                           5 => ["Alice"]})
+      %w(Alice Bob Ary).group_by { |e| e.size }.should eq({3 => ["Bob", "Ary"],
+        5 => ["Alice"]})
     end
   end
 
@@ -310,12 +309,12 @@ describe "Enumerable" do
 
   describe "index_by" do
     it "creates a hash indexed by the value returned by the block" do
-      hash = ["Anna", "Ary", "Alice"].index_by {|e| e.size }
+      hash = ["Anna", "Ary", "Alice"].index_by { |e| e.size }
       hash.should eq({4 => "Anna", 3 => "Ary", 5 => "Alice"})
     end
 
     it "overrides values if a value is returned twice" do
-      hash = ["Anna", "Ary", "Alice", "Bob"].index_by {|e| e.size }
+      hash = ["Anna", "Ary", "Alice", "Bob"].index_by { |e| e.size }
       hash.should eq({4 => "Anna", 3 => "Bob", 5 => "Alice"})
     end
   end
@@ -331,7 +330,7 @@ describe "Enumerable" do
     end
 
     it "does not raise if empty if there is a memo argument" do
-      result = ([] of Int32).inject(10) {|memo, i| memo + i}
+      result = ([] of Int32).inject(10) { |memo, i| memo + i }
       result.should eq 10
     end
   end
@@ -348,7 +347,7 @@ describe "Enumerable" do
     end
 
     it "joins with io and block" do
-      str = StringIO.new
+      str = MemoryIO.new
       [1, 2, 3].join(", ", str) { |x, io| io << x + 1 }
       str.to_s.should eq("2, 3, 4")
     end
@@ -366,7 +365,7 @@ describe "Enumerable" do
 
     it "leaves the original unmodified" do
       original = [1, 2, 3]
-      original.map { |i| i * 10}
+      original.map { |i| i * 10 }
       original.should eq [1, 2, 3]
     end
   end
@@ -400,7 +399,7 @@ describe "Enumerable" do
 
   describe "max_by?" do
     it "returns nil if empty" do
-      ([] of Int32).max_by? {|x| -x }.should be_nil
+      ([] of Int32).max_by? { |x| -x }.should be_nil
     end
   end
 
@@ -410,7 +409,7 @@ describe "Enumerable" do
 
   describe "max_of?" do
     it "returns nil if empty" do
-      ([] of Int32).max_of? {|x| -x }.should be_nil
+      ([] of Int32).max_of? { |x| -x }.should be_nil
     end
   end
 
@@ -436,7 +435,7 @@ describe "Enumerable" do
 
   describe "min_by?" do
     it "returns nil if empty" do
-      ([] of Int32).max_by? {|x| -x }.should be_nil
+      ([] of Int32).max_by? { |x| -x }.should be_nil
     end
   end
 
@@ -446,7 +445,7 @@ describe "Enumerable" do
 
   describe "min_of?" do
     it "returns nil if empty" do
-      ([] of Int32).min_of? {|x| -x }.should be_nil
+      ([] of Int32).min_of? { |x| -x }.should be_nil
     end
   end
 
@@ -472,7 +471,7 @@ describe "Enumerable" do
 
   describe "minmax_by?" do
     it "returns two nils if empty" do
-      ([] of Int32).minmax_by? {|x| -x }.should eq({nil, nil})
+      ([] of Int32).minmax_by? { |x| -x }.should eq({nil, nil})
     end
   end
 
@@ -482,7 +481,7 @@ describe "Enumerable" do
 
   describe "minmax_of?" do
     it "returns two nils if empty" do
-      ([] of Int32).minmax_of? {|x| -x }.should eq({nil, nil})
+      ([] of Int32).minmax_of? { |x| -x }.should eq({nil, nil})
     end
   end
 
@@ -537,16 +536,16 @@ describe "Enumerable" do
 
   describe "skip_while" do
     it "skips elements while the condition holds true" do
-      result = [1, 2, 3, 4, 5, 0].skip_while {|i| i < 3}
+      result = [1, 2, 3, 4, 5, 0].skip_while { |i| i < 3 }
       result.should eq [3, 4, 5, 0]
     end
 
     it "returns an empty array if the condition is always true" do
-      [1, 2, 3].skip_while {true}.should eq [] of Int32
+      [1, 2, 3].skip_while { true }.should eq [] of Int32
     end
 
     it "returns the full Array if the the first check is false" do
-      [5, 0, 1, 2, 3].skip_while {|x| x < 4}.should eq [5, 0, 1, 2, 3]
+      [5, 0, 1, 2, 3].skip_while { |x| x < 4 }.should eq [5, 0, 1, 2, 3]
     end
 
     it "does not yield to the block anymore once it returned false" do
@@ -587,15 +586,15 @@ describe "Enumerable" do
 
   describe "take_while" do
     it "keeps elements while the block returns true" do
-      [1, 2, 3, 4, 5, 0].take_while {|i| i < 3}.should eq [1, 2]
+      [1, 2, 3, 4, 5, 0].take_while { |i| i < 3 }.should eq [1, 2]
     end
 
     it "returns the full Array if the condition is always true" do
-      [1, 2, 3, -3].take_while {true}.should eq [1, 2, 3, -3]
+      [1, 2, 3, -3].take_while { true }.should eq [1, 2, 3, -3]
     end
 
     it "returns an empty Array if the block is false for the first element" do
-      [1, 2, -1, 0].take_while {|i| i <= 0}.should eq [] of Int32
+      [1, 2, -1, 0].take_while { |i| i <= 0 }.should eq [] of Int32
     end
 
     it "does not call the block again once it returned false" do

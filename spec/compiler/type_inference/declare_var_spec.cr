@@ -30,10 +30,10 @@ describe "Type inference: declare var" do
       end
 
       Foo(Int32).new") do
-        foo = types["Foo"] as GenericClassType
-        foo_i32 = foo.instantiate([int32] of TypeVar)
-        foo_i32.lookup_instance_var("@x").type.should eq(int32)
-        foo_i32
+      foo = types["Foo"] as GenericClassType
+      foo_i32 = foo.instantiate([int32] of TypeVar)
+      foo_i32.lookup_instance_var("@x").type.should eq(int32)
+      foo_i32
     end
   end
 
@@ -49,10 +49,10 @@ describe "Type inference: declare var" do
       end
 
       f") do
-        foo = types["Foo"] as GenericClassType
-        foo_i32 = foo.instantiate([int32] of TypeVar)
-        foo_i32.lookup_instance_var("@x").type.should eq(int32)
-        foo_i32
+      foo = types["Foo"] as GenericClassType
+      foo_i32 = foo.instantiate([int32] of TypeVar)
+      foo_i32.lookup_instance_var("@x").type.should eq(int32)
+      foo_i32
     end
   end
 

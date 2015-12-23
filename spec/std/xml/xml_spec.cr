@@ -76,7 +76,7 @@ describe XML do
   end
 
   it "parses from io" do
-    io = StringIO.new(%(\
+    io = MemoryIO.new(%(\
       <?xml version='1.0' encoding='UTF-8'?>
       <people>
         <person id="1" id2="2">
@@ -113,7 +113,7 @@ describe XML do
   </person>
 </people>
 XML
-)
+    )
   end
 
   it "navigates in tree" do
@@ -181,7 +181,7 @@ XML
       ))
     namespaces = doc.root.not_nil!.namespaces
     namespaces.should eq({
-      "xmlns" => "http://www.w3.org/2005/Atom",
+      "xmlns"          => "http://www.w3.org/2005/Atom",
       "xmlns:openSearch": "http://a9.com/-/spec/opensearchrss/1.0/",
     })
   end
@@ -189,7 +189,7 @@ XML
   it "reads big xml file (#1455)" do
     content = "." * 20_000
     string = %(<?xml version="1.0"?><root>#{content}</root>)
-    parsed = XML.parse(StringIO.new(string))
+    parsed = XML.parse(MemoryIO.new(string))
     parsed.root.not_nil!.children[0].text.should eq(content)
   end
 

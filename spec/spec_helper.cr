@@ -126,7 +126,7 @@ def assert_macro_internal(program, sub_node, macro_args, macro_body, expected)
   call = Call.new(nil, "", sub_node)
   result = program.expand_macro a_macro, call, program
   result = result.source
-  result = result[0 .. -2] if result.ends_with?(';')
+  result = result[0..-2] if result.ends_with?(';')
   result.should eq(expected)
 end
 
@@ -170,7 +170,7 @@ def run(code, filename = nil)
     ast = Parser.parse(code) as Expressions
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
-    call = Call.new(nil, "print!", Var.new("__tempvar"))
+    call = Call.new(nil, "print", Var.new("__tempvar"))
     exps = Expressions.new([assign, call] of ASTNode)
     ast.expressions[-1] = exps
     code = ast.to_s
@@ -204,4 +204,3 @@ ensure
   File.delete("./temp_abi.c")
   File.delete("./temp_abi.o")
 end
-

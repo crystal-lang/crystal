@@ -40,7 +40,7 @@ describe "JSON serialization" do
     end
 
     it "does for Array(Int32) from IO" do
-      io = StringIO.new "[1, 2, 3]"
+      io = MemoryIO.new "[1, 2, 3]"
       Array(Int32).from_json(io).should eq([1, 2, 3])
     end
 
@@ -101,6 +101,10 @@ describe "JSON serialization" do
       [1, 2, 3].to_json.should eq("[1,2,3]")
     end
 
+    it "does for Set" do
+      Set(Int32).new([1, 1, 2]).to_json.should eq("[1,2]")
+    end
+
     it "does for Hash" do
       {"foo" => 1, "bar" => 2}.to_json.should eq(%({"foo":1,"bar":2}))
     end
@@ -156,7 +160,7 @@ describe "JSON serialization" do
     end
 
     it "does for nested Hash" do
-      {"foo" => {"bar" => 1} }.to_pretty_json.should eq(%({\n  "foo": {\n    "bar": 1\n  }\n}))
+      {"foo" => {"bar" => 1}}.to_pretty_json.should eq(%({\n  "foo": {\n    "bar": 1\n  }\n}))
     end
 
     it "does for empty Hash" do

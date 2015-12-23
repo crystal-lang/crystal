@@ -181,4 +181,16 @@ describe "Code gen: if" do
       foo
       ").to_i.should eq(2)
   end
+
+  it "codegens bug #1729" do
+    run(%(
+      n = true ? 3 : 3.2
+      z = if n.is_a?(Float64) || false
+        0
+      else
+        n
+      end
+      z.to_i
+      )).to_i.should eq(3)
+  end
 end

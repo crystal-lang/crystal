@@ -2,7 +2,7 @@ require "./lib_crypto"
 
 class OpenSSL::MD5
   def self.hash(data : String)
-    hash(data.cstr, data.bytesize)
+    hash(data.to_unsafe, data.bytesize)
   end
 
   def self.hash(data : UInt8*, bytesize : Int)

@@ -108,7 +108,7 @@ class OptionParser
   # Sets a handler for arguments that didn't match any of the setup options.
   #
   # You typically use this to get the main arguments (not modifiers) that your program expects (for example, filenames)
-  def unknown_args(&@unknown_args : Array(String), Array(String) -> )
+  def unknown_args(&@unknown_args : Array(String), Array(String) ->)
   end
 
   # Returns all the setup options, formatted in a help message.
@@ -131,7 +131,7 @@ class OptionParser
     end
   end
 
-  # Parses the passed `args`, running the handlers associated to each option.
+  # Parses the passed *args*, running the handlers associated to each option.
   def parse(args)
     ParseTask.new(args, @flags, @handlers, @unknown_args).parse
   end
@@ -158,8 +158,8 @@ class OptionParser
       if unknown_args = @unknown_args
         double_dash_index = @double_dash_index
         if double_dash_index
-          before_dash = @args[0 ... double_dash_index]
-          after_dash = @args[double_dash_index .. -1]
+          before_dash = @args[0...double_dash_index]
+          after_dash = @args[double_dash_index..-1]
         else
           before_dash = @args
           after_dash = [] of String
@@ -181,9 +181,9 @@ class OptionParser
       when /--\S+/
         process_flag_presence(flag, block)
       when /-(.)\s*\[\S+\]/
-        process_single_flag(flag[0 .. 1], block)
+        process_single_flag(flag[0..1], block)
       when /-(.)\s+\S+/, /-(.)\s+/, /-(.)\S+/
-        process_single_flag(flag[0 .. 1], block, true)
+        process_single_flag(flag[0..1], block, true)
       else
         process_flag_presence(flag, block)
       end
@@ -210,7 +210,7 @@ class OptionParser
           end
         elsif arg[flag.size] == '='
           delete_arg_at_index(index)
-          value = arg[flag.size + 1 .. -1]
+          value = arg[flag.size + 1..-1]
           if value.empty?
             raise MissingOption.new(flag)
           else
@@ -230,7 +230,7 @@ class OptionParser
             raise MissingOption.new(flag) if raise_if_missing
           end
         else
-          value = arg[2 .. -1]
+          value = arg[2..-1]
           raise MissingOption.new(flag) if raise_if_missing && value.empty?
           block.call value
         end

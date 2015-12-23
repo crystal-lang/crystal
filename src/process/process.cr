@@ -34,7 +34,7 @@ class Process
   end
 
   def self.pid
-    LibC.getpid()
+    LibC.getpid
   end
 
   def self.getpgid(pid : Int32)
@@ -52,7 +52,7 @@ class Process
   end
 
   def self.ppid
-    LibC.getppid()
+    LibC.getppid
   end
 
   # Returns a `Process`.
@@ -118,8 +118,8 @@ def fork
   Process.fork { yield }
 end
 
-def fork()
-  Process.fork()
+def fork
+  Process.fork
 end
 
 require "./*"

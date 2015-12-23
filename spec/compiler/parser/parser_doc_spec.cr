@@ -17,7 +17,7 @@ describe "Parser doc" do
     {"alias", "alias Foo = Bar"},
     {"attribute", "@[Some]"},
     {"private def", "private def foo\nend"},
-    ].each do |tuple|
+  ].each do |tuple|
     desc, code = tuple
 
     it "includes doc for #{desc}" do

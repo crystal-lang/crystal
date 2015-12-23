@@ -22,7 +22,7 @@ describe "Type inference: struct" do
       str = types["Foo"] as GenericClassType
       str.struct?.should be_true
 
-      str_inst = str.instantiate([int32] of TypeVar )
+      str_inst = str.instantiate([int32] of TypeVar)
       str_inst.struct?.should be_true
       str_inst.metaclass
     end
@@ -38,8 +38,8 @@ describe "Type inference: struct" do
 
       Foo.new || Bar.new
       ") do
-        union_of(types["Foo"], types["Bar"])
-      end
+      union_of(types["Foo"], types["Bar"])
+    end
   end
 
   it "can't be nilable" do
@@ -48,11 +48,11 @@ describe "Type inference: struct" do
       end
 
       Foo.new || nil
-      ") do | mod|
-        type = union_of(types["Foo"], mod.nil)
-        type.should_not be_a(NilableType)
-        type
-      end
+      ") do |mod|
+      type = union_of(types["Foo"], mod.nil)
+      type.should_not be_a(NilableType)
+      type
+    end
   end
 
   it "can't extend struct from class" do

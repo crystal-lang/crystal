@@ -1,4 +1,30 @@
 require "spec"
+require "big_int"
+
+struct RangeSpecIntWrapper
+  include Comparable(self)
+
+  getter value
+
+  def initialize(@value)
+  end
+
+  def succ
+    RangeSpecIntWrapper.new(@value + 1)
+  end
+
+  def <=>(other)
+    value <=> other.value
+  end
+
+  def self.zero
+    RangeSpecIntWrapper.new(0)
+  end
+
+  def +(other : RangeSpecIntWrapper)
+    RangeSpecIntWrapper.new(value + other.value)
+  end
+end
 
 describe "Range" do
   it "initialized with new method" do
@@ -8,23 +34,23 @@ describe "Range" do
   end
 
   it "gets basic properties" do
-    r = 1 .. 5
+    r = 1..5
     r.begin.should eq(1)
     r.end.should eq(5)
     r.excludes_end?.should be_false
 
-    r = 1 ... 5
+    r = 1...5
     r.begin.should eq(1)
     r.end.should eq(5)
     r.excludes_end?.should be_true
   end
 
   it "includes?" do
-    (1 .. 5).includes?(1).should be_true
-    (1 .. 5).includes?(5).should be_true
+    (1..5).includes?(1).should be_true
+    (1..5).includes?(5).should be_true
 
-    (1 ... 5).includes?(1).should be_true
-    (1 ... 5).includes?(5).should be_false
+    (1...5).includes?(1).should be_true
+    (1...5).includes?(5).should be_false
   end
 
   it "does to_s" do
@@ -50,6 +76,26 @@ describe "Range" do
 
   it "is not empty with ... and begin.succ == end" do
     (1...2).to_a.should eq([1])
+  end
+
+  describe "sum" do
+    it "called with no block is specialized for performance" do
+      (1..3).sum.should eq 6
+      (1...3).sum.should eq 3
+      (BigInt.new("1")..BigInt.new("1 000 000 000")).sum.should eq BigInt.new("500 000 000 500 000 000")
+      (1..3).sum(4).should eq 10
+      (3..1).sum(4).should eq 4
+      (1..11).step(2).sum.should eq 36
+      (1...11).step(2).sum.should eq 25
+      (BigInt.new("1")..BigInt.new("1 000 000 000")).step(2).sum.should eq BigInt.new("250 000 000 000 000 000")
+    end
+
+    it "is equivalent to Enumerable#sum" do
+      (1..3).sum{ |x| x * 2 }.should eq 12
+      (1..3).step(2).sum{ |x| x * 2 }.should eq 8
+      (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(3)).sum.should eq RangeSpecIntWrapper.new(6)
+      (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(3)).step(2).sum.should eq RangeSpecIntWrapper.new(4)
+    end
   end
 
   describe "each" do

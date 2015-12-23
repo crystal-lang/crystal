@@ -1,9 +1,9 @@
 require "spec"
 
-# This is a non-optimized version of StringIO so we can test
+# This is a non-optimized version of MemoryIO so we can test
 # raw IO. Optimizations for specific IOs are tested separately
 # (for example in buffered_io_spec)
-class SimpleStringIO
+class SimpleMemoryIO
   include IO
 
   getter buffer
@@ -40,7 +40,7 @@ class SimpleStringIO
     slice.copy_to(@buffer + @bytesize, count)
     @bytesize += count
 
-    count
+    nil
   end
 
   private def check_needs_resize
@@ -80,7 +80,7 @@ describe IO do
     it "doesn't block on first read.  blocks on 2nd read" do
       IO.pipe do |read, write|
         write.puts "hello"
-	slice = Slice(UInt8).new 1024
+        slice = Slice(UInt8).new 1024
 
         read.read_timeout = 1
         read.read(slice).should eq(6)
@@ -95,7 +95,7 @@ describe IO do
 
   describe "IO iterators" do
     it "iterates by line" do
-      io = StringIO.new("hello\nbye\n")
+      io = MemoryIO.new("hello\nbye\n")
       lines = io.each_line
       lines.next.should eq("hello\n")
       lines.next.should eq("bye\n")
@@ -106,7 +106,7 @@ describe IO do
     end
 
     it "iterates by char" do
-      io = StringIO.new("abあぼ")
+      io = MemoryIO.new("abあぼ")
       chars = io.each_char
       chars.next.should eq('a')
       chars.next.should eq('b')
@@ -119,7 +119,7 @@ describe IO do
     end
 
     it "iterates by byte" do
-      io = StringIO.new("ab")
+      io = MemoryIO.new("ab")
       bytes = io.each_byte
       bytes.next.should eq('a'.ord)
       bytes.next.should eq('b'.ord)
@@ -132,8 +132,8 @@ describe IO do
 
   it "copies" do
     string = "abあぼ"
-    src = StringIO.new(string)
-    dst = StringIO.new
+    src = MemoryIO.new(string)
+    dst = MemoryIO.new
     IO.copy(src, dst).should eq(string.bytesize)
     dst.to_s.should eq(string)
   end
@@ -149,7 +149,7 @@ describe IO do
 
   describe "read operations" do
     it "does gets" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.gets.should eq("hello\n")
       io.gets.should eq("world\n")
       io.gets.should be_nil
@@ -157,12 +157,12 @@ describe IO do
 
     it "does gets with big line" do
       big_line = "a" * 20_000
-      io = SimpleStringIO.new("#{big_line}\nworld\n")
+      io = SimpleMemoryIO.new("#{big_line}\nworld\n")
       io.gets.should eq("#{big_line}\n")
     end
 
     it "does gets with char delimiter" do
-      io = SimpleStringIO.new("hello world")
+      io = SimpleMemoryIO.new("hello world")
       io.gets('w').should eq("hello w")
       io.gets('r').should eq("or")
       io.gets('r').should eq("ld")
@@ -170,33 +170,33 @@ describe IO do
     end
 
     it "does gets with unicode char delimiter" do
-      io = SimpleStringIO.new("こんにちは")
+      io = SimpleMemoryIO.new("こんにちは")
       io.gets('ち').should eq("こんにち")
       io.gets('ち').should eq("は")
       io.gets('ち').should be_nil
     end
 
     it "gets with string as delimiter" do
-      io = SimpleStringIO.new("hello world")
+      io = SimpleMemoryIO.new("hello world")
       io.gets("lo").should eq("hello")
       io.gets("rl").should eq(" worl")
       io.gets("foo").should eq("d")
     end
 
     it "gets with empty string as delimiter" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.gets("").should eq("hello\nworld\n")
     end
 
     it "gets with single byte string as delimiter" do
-      io = SimpleStringIO.new("hello\nworld\nbye")
+      io = SimpleMemoryIO.new("hello\nworld\nbye")
       io.gets("\n").should eq("hello\n")
       io.gets("\n").should eq("world\n")
       io.gets("\n").should eq("bye")
     end
 
     it "does gets with limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.gets(3).should eq("hel")
       io.gets(10_000).should eq("lo\n")
       io.gets(10_000).should eq("world\n")
@@ -204,7 +204,7 @@ describe IO do
     end
 
     it "does gets with char and limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.gets('o', 2).should eq("he")
       io.gets('w', 10_000).should eq("llo\nw")
       io.gets('z', 10_000).should eq("orld\n")
@@ -212,14 +212,14 @@ describe IO do
     end
 
     it "raises if invoking gets with negative limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       expect_raises ArgumentError, "negative limit" do
         io.gets(-1)
       end
     end
 
     it "does read_line with limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.read_line(3).should eq("hel")
       io.read_line(10_000).should eq("lo\n")
       io.read_line(10_000).should eq("world\n")
@@ -227,7 +227,7 @@ describe IO do
     end
 
     it "does read_line with char and limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.read_line('o', 2).should eq("he")
       io.read_line('w', 10_000).should eq("llo\nw")
       io.read_line('z', 10_000).should eq("orld\n")
@@ -235,13 +235,13 @@ describe IO do
     end
 
     it "reads all remaining content" do
-      io = SimpleStringIO.new("foo\nbar\nbaz\n")
+      io = SimpleMemoryIO.new("foo\nbar\nbaz\n")
       io.gets.should eq("foo\n")
       io.gets_to_end.should eq("bar\nbaz\n")
     end
 
     it "reads char" do
-      io = SimpleStringIO.new("hi 世界")
+      io = SimpleMemoryIO.new("hi 世界")
       io.read_char.should eq('h')
       io.read_char.should eq('i')
       io.read_char.should eq(' ')
@@ -251,7 +251,7 @@ describe IO do
     end
 
     it "reads byte" do
-      io = SimpleStringIO.new("hello")
+      io = SimpleMemoryIO.new("hello")
       io.read_byte.should eq('h'.ord)
       io.read_byte.should eq('e'.ord)
       io.read_byte.should eq('l'.ord)
@@ -261,7 +261,7 @@ describe IO do
     end
 
     it "does each_line" do
-      io = SimpleStringIO.new("a\nbb\ncc")
+      io = SimpleMemoryIO.new("a\nbb\ncc")
       counter = 0
       io.each_line do |line|
         case counter
@@ -278,7 +278,7 @@ describe IO do
     end
 
     it "raises on EOF with read_line" do
-      str = SimpleStringIO.new("hello")
+      str = SimpleMemoryIO.new("hello")
       str.read_line.should eq("hello")
 
       expect_raises IO::EOFError, "end of file reached" do
@@ -287,7 +287,7 @@ describe IO do
     end
 
     it "raises on EOF with readline and delimiter" do
-      str = SimpleStringIO.new("hello")
+      str = SimpleMemoryIO.new("hello")
       str.read_line('e').should eq("he")
       str.read_line('e').should eq("llo")
 
@@ -297,7 +297,7 @@ describe IO do
     end
 
     it "does read_fully" do
-      str = SimpleStringIO.new("hello")
+      str = SimpleMemoryIO.new("hello")
       slice = Slice(UInt8).new(4)
       str.read_fully(slice)
       String.new(slice).should eq("hell")
@@ -310,13 +310,13 @@ describe IO do
 
   describe "write operations" do
     it "does puts" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.puts "Hello"
       io.gets_to_end.should eq("Hello\n")
     end
 
     it "does puts with big string" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       s = "*" * 20_000
       io << "hello"
       io << s
@@ -324,55 +324,49 @@ describe IO do
     end
 
     it "does puts many times" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       10_000.times { io << "hello" }
       io.gets_to_end.should eq("hello" * 10_000)
     end
 
     it "puts several arguments" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.puts(1, "aaa", "\n")
       io.gets_to_end.should eq("1\naaa\n\n")
     end
 
     it "prints" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.print "foo"
       io.gets_to_end.should eq("foo")
     end
 
     it "prints several arguments" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.print "foo", "bar", "baz"
       io.gets_to_end.should eq("foobarbaz")
     end
 
     it "writes bytes" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       10_000.times { io.write_byte 'a'.ord.to_u8 }
       io.gets_to_end.should eq("a" * 10_000)
     end
 
-    it "writes an array of bytes" do
-      io = SimpleStringIO.new
-      io.write ['a'.ord.to_u8, 'b'.ord.to_u8]
-      io.gets_to_end.should eq("ab")
-    end
-
     it "writes with printf" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.printf "Hello %d", 123
       io.gets_to_end.should eq("Hello 123")
     end
 
     it "writes with printf as an array" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.printf "Hello %d", [123]
       io.gets_to_end.should eq("Hello 123")
     end
 
     it "skips a few bytes" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io << "hello world"
       io.skip(6)
       io.gets_to_end.should eq("world")

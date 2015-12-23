@@ -2,7 +2,7 @@ struct Time::Format
   # :nodoc:
   module Pattern
     MONTH_NAMES = %w(January February March April May June July August September October November December)
-    DAY_NAMES = %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday)
+    DAY_NAMES   = %w(Sunday Monday Tuesday Wednesday Thursday Friday Saturday)
 
     def visit(pattern)
       reader = Char::Reader.new(pattern)

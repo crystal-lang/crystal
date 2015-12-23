@@ -7,4 +7,3 @@ macro ecr_file(filename)
     embed_ecr {{filename}}, "__io__"
   end
 end
-

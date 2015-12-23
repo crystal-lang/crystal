@@ -15,8 +15,8 @@ require "../common"
 # require "http/client"
 #
 # response = HTTP::Client.get "http://www.example.com"
-# response.status_code #=> 200
-# response.body.lines.first #=> "<!doctype html>"
+# response.status_code      # => 200
+# response.body.lines.first # => "<!doctype html>"
 # ```
 #
 # With a block, an `HTTP::Response` body is returned and the response's body
@@ -26,8 +26,8 @@ require "../common"
 # require "http/client"
 #
 # HTTP::Client.get("http://www.example.com") do |response|
-#   response.status_code  #=> 200
-#   response.body_io.gets #=> "<!doctype html>"
+#   response.status_code  # => 200
+#   response.body_io.gets # => "<!doctype html>"
 # end
 # ```
 #
@@ -40,8 +40,8 @@ require "../common"
 #
 # client = HTTP::Client.new "www.example.com"
 # response = client.get "/"
-# response.status_code #=> 200
-# response.body.lines.first #=> "<!doctype html>"
+# response.status_code      # => 200
+# response.body.lines.first # => "<!doctype html>"
 # client.close
 # ```
 class HTTP::Client
@@ -49,7 +49,7 @@ class HTTP::Client
   #
   # ```
   # client = HTTP::Client.new "www.example.com"
-  # client.host #=> "www.example.com"
+  # client.host # => "www.example.com"
   # ```
   getter host
 
@@ -57,7 +57,7 @@ class HTTP::Client
   #
   # ```
   # client = HTTP::Client.new "www.example.com"
-  # client.port #=> 80
+  # client.port # => 80
   # ```
   getter port
 
@@ -65,7 +65,7 @@ class HTTP::Client
   #
   # ```
   # client = HTTP::Client.new "www.example.com", ssl: true
-  # client.ssl? #=> true
+  # client.ssl? # => true
   # ```
   getter? ssl
 
@@ -282,10 +282,14 @@ class HTTP::Client
   # ```
   # client = HTTP::Client.new "www.example.com"
   # response = client.exec HTTP::Request.new("GET", "/")
-  # response.body #=> "..."
+  # response.body # => "..."
   # ```
   def exec(request : HTTP::Request) : HTTP::Response
     execute_callbacks(request)
+    exec_internal(request)
+  end
+
+  private def exec_internal(request)
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
     socket.flush
@@ -300,11 +304,17 @@ class HTTP::Client
   # ```
   # client = HTTP::Client.new "www.example.com"
   # client.exec(HTTP::Request.new("GET", "/")) do |response|
-  #   response.body_io.gets #=> "..."
+  #   response.body_io.gets # => "..."
   # end
   # ```
   def exec(request : HTTP::Request, &block)
     execute_callbacks(request)
+    exec_internal(request) do |response|
+      yield response
+    end
+  end
+
+  private def exec_internal(request, &block)
     request.headers["User-agent"] ||= "Crystal"
     request.to_io(socket)
     socket.flush
@@ -322,7 +332,7 @@ class HTTP::Client
   # ```
   # client = HTTP::Client.new "www.example.com"
   # response = client.exec "GET", "/"
-  # response.body #=> "..."
+  # response.body # => "..."
   # ```
   def exec(method : String, path, headers = nil : HTTP::Headers?, body = nil : String?) : HTTP::Response
     exec new_request method, path, headers, body
@@ -334,7 +344,7 @@ class HTTP::Client
   # ```
   # client = HTTP::Client.new "www.example.com"
   # client.exec("GET", "/") do |response|
-  #   response.body_io.gets #=> "..."
+  #   response.body_io.gets # => "..."
   # end
   # ```
   def exec(method : String, path, headers = nil : HTTP::Headers?, body = nil : String?)
@@ -348,7 +358,7 @@ class HTTP::Client
   #
   # ```
   # response = HTTP::Client.exec "GET", "http://www.example.com"
-  # response.body #=> "..."
+  # response.body # => "..."
   # ```
   def self.exec(method, url : String | URI, headers = nil : HTTP::Headers?, body = nil : String?) : HTTP::Response
     exec(url) do |client, path|
@@ -361,7 +371,7 @@ class HTTP::Client
   #
   # ```
   # HTTP::Client.exec("GET", "http://www.example.com") do |response|
-  #   response.body_io.gets #=> "..."
+  #   response.body_io.gets # => "..."
   # end
   # ```
   def self.exec(method, url : String | URI, headers = nil : HTTP::Headers?, body = nil : String?)

@@ -5,8 +5,8 @@ require "crypto/md5"
 describe "Base64" do
   it "simple test" do
     eqs = {"" => "", "a" => "YQ==\n", "ab" => "YWI=\n", "abc" => "YWJj\n",
-           "abcd" => "YWJjZA==\n", "abcde"  => "YWJjZGU=\n", "abcdef" => "YWJjZGVm\n",
-           "abcdefg" => "YWJjZGVmZw==\n"}
+      "abcd" => "YWJjZA==\n", "abcde" => "YWJjZGU=\n", "abcdef" => "YWJjZGVm\n",
+      "abcdefg" => "YWJjZGVmZw==\n"}
     eqs.each do |a, b|
       it "encode #{a.inspect} to #{b.inspect}" do
         Base64.encode(a).should eq(b)
@@ -32,11 +32,10 @@ describe "Base64" do
   end
 
   describe "base" do
-    eqs = {"Send reinforcements" => "U2VuZCByZWluZm9yY2VtZW50cw==\n",
-           "Now is the time for all good coders\nto learn Crystal" => "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g\nQ3J5c3RhbA==\n",
-           "This is line one\nThis is line two\nThis is line three\nAnd so on...\n" =>
-             "VGhpcyBpcyBsaW5lIG9uZQpUaGlzIGlzIGxpbmUgdHdvClRoaXMgaXMgbGlu\nZSB0aHJlZQpBbmQgc28gb24uLi4K\n",
-           "hahah⊙ⓧ⊙" => "aGFoYWjiipnik6fiipk=\n"}
+    eqs = {"Send reinforcements"                                                    => "U2VuZCByZWluZm9yY2VtZW50cw==\n",
+      "Now is the time for all good coders\nto learn Crystal"                  => "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g\nQ3J5c3RhbA==\n",
+      "This is line one\nThis is line two\nThis is line three\nAnd so on...\n" => "VGhpcyBpcyBsaW5lIG9uZQpUaGlzIGlzIGxpbmUgdHdvClRoaXMgaXMgbGlu\nZSB0aHJlZQpBbmQgc28gb24uLi4K\n",
+      "hahah⊙ⓧ⊙"                                                               => "aGFoYWjiipnik6fiipk=\n"}
     eqs.each do |a, b|
       it "encode #{a.inspect} to #{b.inspect}" do
         Base64.encode(a).should eq(b)
@@ -49,7 +48,7 @@ describe "Base64" do
 
     it "decode from strict form" do
       Base64.decode_string("Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==").should eq(
-       "Now is the time for all good coders\nto learn Crystal")
+        "Now is the time for all good coders\nto learn Crystal")
     end
 
     it "big message" do
@@ -79,8 +78,8 @@ describe "Base64" do
     it "decode \n in multiple places" do
       decoded = "hahah⊙ⓧ⊙"
       {"aGFoYWjiipnik6fiipk=", "aGFo\nYWjiipnik6fiipk=", "aGFo\nYWji\nipnik6fiipk=",
-       "aGFo\nYWji\nipni\nk6fiipk=", "aGFo\nYWji\nipni\nk6fi\nipk=",
-       "aGFo\nYWji\nipni\nk6fi\nipk=\n"}.each do |encoded|
+        "aGFo\nYWji\nipni\nk6fiipk=", "aGFo\nYWji\nipni\nk6fi\nipk=",
+        "aGFo\nYWji\nipni\nk6fi\nipk=\n"}.each do |encoded|
         Base64.decode(encoded).should eq(decoded.to_slice)
         Base64.decode_string(encoded).should eq(decoded)
       end
@@ -123,7 +122,7 @@ describe "Base64" do
         "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4gQ3J5c3RhbA==")
     end
     it "with spec symbols" do
-      s = String.build { |b| (160..179).each{|i| b << i.chr } }
+      s = String.build { |b| (160..179).each { |i| b << i.chr } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq/CsMKxwrLCsw=="
       Base64.strict_encode(s).should eq(se)
     end
@@ -131,10 +130,9 @@ describe "Base64" do
 
   describe "urlsafe" do
     it "work" do
-      s = String.build { |b| (160..179).each{|i| b << i.chr } }
+      s = String.build { |b| (160..179).each { |i| b << i.chr } }
       se = "wqDCocKiwqPCpMKlwqbCp8KowqnCqsKrwqzCrcKuwq_CsMKxwrLCsw"
       Base64.urlsafe_encode(s).should eq(se)
     end
   end
-
 end

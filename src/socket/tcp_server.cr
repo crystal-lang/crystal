@@ -9,17 +9,18 @@ class TCPServer < TCPSocket
       self.reuse_address = true
 
       if LibC.bind(sock, ai.addr as LibC::SockAddr*, ai.addrlen) != 0
+        errno = Errno.new("Error binding TCP server at #{host}:#{port}")
         LibC.close(sock)
         next false if ai.next
-        raise Errno.new("Error binding TCP server at #{host}#{port}")
+        raise errno
       end
 
       if LibC.listen(sock, backlog) != 0
+        errno = Errno.new("Error listening TCP server at #{host}:#{port}")
         LibC.close(sock)
         next false if ai.next
-        raise Errno.new("Error listening TCP server at #{host}#{port}")
+        raise errno
       end
-
 
       true
     end

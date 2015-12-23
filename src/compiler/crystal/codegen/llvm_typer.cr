@@ -4,9 +4,9 @@ require "llvm"
 module Crystal
   class LLVMTyper
     TYPE_ID_POINTER = LLVM::Int32.pointer
-    FUN_TYPE = LLVM::Type.struct [LLVM::VoidPointer, LLVM::VoidPointer], "->"
-    NIL_TYPE = LLVM::Type.struct([] of LLVM::Type, "Nil")
-    NIL_VALUE = NIL_TYPE.null
+    FUN_TYPE        = LLVM::Type.struct [LLVM::VoidPointer, LLVM::VoidPointer], "->"
+    NIL_TYPE        = LLVM::Type.struct([] of LLVM::Type, "Nil")
+    NIL_VALUE       = NIL_TYPE.null
 
     getter landing_pad_type
 
@@ -24,10 +24,10 @@ module Crystal
 
     def llvm_string_type(bytesize)
       LLVM::Type.struct [
-        LLVM::Int32,                              # type_id
-        LLVM::Int32,                              # @bytesize
-        LLVM::Int32,                              # @length
-        LLVM::Int8.array(bytesize + 1) # @c
+        LLVM::Int32,                    # type_id
+        LLVM::Int32,                    # @bytesize
+        LLVM::Int32,                    # @length
+        LLVM::Int8.array(bytesize + 1), # @c
       ]
     end
 

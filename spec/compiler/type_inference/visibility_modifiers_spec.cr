@@ -234,4 +234,87 @@ describe "Visibility modifiers" do
       Foo.new.foo
       )) { int32 }
   end
+
+  it "allows invoking protected method from container to contained" do
+    assert_type(%(
+      class Foo
+        def foo
+          Bar.new.bar
+        end
+
+        class Bar
+          protected def bar
+            1
+          end
+        end
+      end
+
+      Foo.new.foo
+      )) { int32 }
+  end
+
+  it "allows invoking protected method from contained to container" do
+    assert_type(%(
+      class Foo
+        protected def foo
+          1
+        end
+
+        class Bar
+          def bar
+            Foo.new.foo
+          end
+        end
+      end
+
+      Foo::Bar.new.bar
+      )) { int32 }
+  end
+
+  it "allows invoking protected method between types in the same namespace" do
+    assert_type(%(
+      module NS1
+        class NS2
+          class Foo
+            def foo
+              Bar.new.bar
+            end
+          end
+
+          class Bar
+            protected def bar
+              1
+            end
+          end
+        end
+      end
+
+      NS1::NS2::Foo.new.foo
+      )) { int32 }
+  end
+
+  it "allows invoking protected method between types in the same namespace when inheriting" do
+    assert_type(%(
+      module NS1
+        class NS2
+          class Foo
+            def foo
+              Bar.new.bar
+            end
+          end
+
+          class Bar
+            protected def bar
+              1
+            end
+          end
+        end
+      end
+
+      class MyFoo < NS1::NS2::Foo
+      end
+
+      MyFoo.new.foo
+      )) { int32 }
+  end
 end

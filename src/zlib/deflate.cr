@@ -11,7 +11,7 @@ module Zlib
       @flush :: LibZ::Flush
       @stream = LibZ::ZStream.new
       ret = LibZ.deflateInit2(pointerof(@stream), level, LibZ::Z_DEFLATED, wbits, mem_level,
-                              strategy, LibZ.zlibVersion(), sizeof(LibZ::ZStream))
+        strategy, LibZ.zlibVersion, sizeof(LibZ::ZStream))
 
       check_error(ret)
       reset_state
@@ -52,7 +52,7 @@ module Zlib
     end
 
     private def reset_state
-      @stream.next_out = @buf.buffer
+      @stream.next_out = @buf.to_unsafe
       @stream.avail_out = @buf.size.to_u32
 
       @buf_read_from = 0u32
@@ -71,7 +71,7 @@ module Zlib
       # if all generated output by zlib was consumed, read from io and deflate
       if @stream.avail_in == 0
         read = @input.read(@input_buf.to_slice)
-        @stream.next_in = @input_buf.buffer
+        @stream.next_in = @input_buf.to_unsafe
         @stream.avail_in = read.to_u32
       end
 

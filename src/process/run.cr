@@ -10,7 +10,7 @@ class Process
   # * `true`: inherit from parent
   # * `IO`: use the given IO
   alias Stdio = Nil | Bool | IO
-  alias Env = Nil | Hash(String, Nil) | Hash(String, String?) |  Hash(String, String)
+  alias Env = Nil | Hash(String, Nil) | Hash(String, String?) | Hash(String, String)
 
   # Executes a process and waits for it to complete.
   #
@@ -127,7 +127,7 @@ class Process
           end
         end
 
-        Dir.chdir(chdir) if chdir
+        Dir.cd(chdir) if chdir
 
         LibC.execvp(command, argv)
       rescue ex
@@ -268,7 +268,7 @@ end
 # Example:
 #
 # ```
-# `echo *` #=> "LICENSE shard.yml Readme.md spec src\n"
+# `echo *` # => "LICENSE shard.yml Readme.md spec src\n"
 # ```
 def `(command) : String
   process = Process.new(command, shell: true, input: true, output: nil, error: true)

@@ -29,10 +29,10 @@ module Crystal
   end
 
   class ContextResult
-    json_mapping({
-      status:           {type: String},
-      message:          {type: String},
-      contexts:         {type: Array(HashStringType), nilable: true},
+    JSON.mapping({
+      status:   {type: String},
+      message:  {type: String},
+      contexts: {type: Array(HashStringType), nilable: true},
     })
 
     def initialize(@status, @message)
@@ -64,7 +64,6 @@ module Crystal
           end
         end
         io.puts
-
       end
     end
   end
@@ -146,8 +145,8 @@ module Crystal
           process_type(instanced_types) do
             type_vars.each.zip(type_vars_args.each).each do |e|
               generic_arg_name, generic_arg_type = e
-                # TODO handle generic_arg_type that are not types but ASTNode
-                add_context generic_arg_name, generic_arg_type if generic_arg_type.is_a?(Type)
+              # TODO handle generic_arg_type that are not types but ASTNode
+              add_context generic_arg_name, generic_arg_type if generic_arg_type.is_a?(Type)
             end
           end
         end
@@ -204,7 +203,6 @@ module Crystal
 
     def visit(node : Def)
       if contains_target(node)
-
         if @def_with_yield.nil? && !node.yields.nil?
           @def_with_yield = node
           return false
@@ -228,7 +226,7 @@ module Crystal
           add_context arg.name, arg.type
         end
         node.vars.try do |vars|
-          vars.each do |_,var|
+          vars.each do |_, var|
             add_context var.name, var.type
           end
         end

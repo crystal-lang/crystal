@@ -4,7 +4,7 @@ require "http/response"
 module HTTP
   describe Response do
     it "parses response with body" do
-      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"))
+      response = Response.from_io(MemoryIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"))
       response.version.should eq("HTTP/1.1")
       response.status_code.should eq(200)
       response.status_message.should eq("OK")
@@ -14,7 +14,7 @@ module HTTP
     end
 
     it "parses response with streamed body" do
-      Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld")) do |response|
+      Response.from_io(MemoryIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld")) do |response|
         response.version.should eq("HTTP/1.1")
         response.status_code.should eq(200)
         response.status_message.should eq("OK")
@@ -26,7 +26,7 @@ module HTTP
     end
 
     it "parses response with body without \\r" do
-      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 5\n\nhelloworld"))
+      response = Response.from_io(MemoryIO.new("HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: 5\n\nhelloworld"))
       response.version.should eq("HTTP/1.1")
       response.status_code.should eq(200)
       response.status_message.should eq("OK")
@@ -36,7 +36,7 @@ module HTTP
     end
 
     it "parses response with body but without content-length" do
-      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\n\r\nhelloworld"))
+      response = Response.from_io(MemoryIO.new("HTTP/1.1 200 OK\r\n\r\nhelloworld"))
       response.status_code.should eq(200)
       response.status_message.should eq("OK")
       response.headers.size.should eq(0)
@@ -44,7 +44,7 @@ module HTTP
     end
 
     it "parses response with empty body but without content-length" do
-      response = Response.from_io(StringIO.new("HTTP/1.1 404 Not Found\r\n\r\n"))
+      response = Response.from_io(MemoryIO.new("HTTP/1.1 404 Not Found\r\n\r\n"))
       response.status_code.should eq(404)
       response.status_message.should eq("Not Found")
       response.headers.size.should eq(0)
@@ -52,7 +52,7 @@ module HTTP
     end
 
     it "parses response without body" do
-      response = Response.from_io(StringIO.new("HTTP/1.1 100 Continue\r\n\r\n"))
+      response = Response.from_io(MemoryIO.new("HTTP/1.1 100 Continue\r\n\r\n"))
       response.status_code.should eq(100)
       response.status_message.should eq("Continue")
       response.headers.size.should eq(0)
@@ -60,31 +60,31 @@ module HTTP
     end
 
     it "parses response with duplicated headers" do
-      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nWarning: 111 Revalidation failed\r\nWarning: 110 Response is stale\r\n\r\nhelloworld"))
+      response = Response.from_io(MemoryIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nWarning: 111 Revalidation failed\r\nWarning: 110 Response is stale\r\n\r\nhelloworld"))
       response.headers.get("Warning").should eq(["111 Revalidation failed", "110 Response is stale"])
     end
 
     it "parses response with cookies" do
-      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: a=b\r\nSet-Cookie: c=d\r\n\r\nhelloworld"))
+      response = Response.from_io(MemoryIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: a=b\r\nSet-Cookie: c=d\r\n\r\nhelloworld"))
       response.cookies["a"].value.should eq("b")
       response.cookies["c"].value.should eq("d")
     end
 
     it "parses response with chunked body" do
-      response = Response.from_io(io = StringIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n"))
+      response = Response.from_io(io = MemoryIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n"))
       response.body.should eq("abcde0123456789")
       io.gets.should be_nil
     end
 
     it "parses response with streamed chunked body" do
-      Response.from_io(io = StringIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n")) do |response|
+      Response.from_io(io = MemoryIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n")) do |response|
         response.body_io.gets_to_end.should eq("abcde0123456789")
         io.gets.should be_nil
       end
     end
 
     it "parses response ignoring body" do
-      response = Response.from_io(StringIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"), true)
+      response = Response.from_io(MemoryIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"), true)
       response.version.should eq("HTTP/1.1")
       response.status_code.should eq(200)
       response.status_message.should eq("OK")
@@ -114,7 +114,7 @@ module HTTP
       headers["Content-Length"] = "5"
 
       response = Response.new(200, "hello", headers)
-      io = StringIO.new
+      io = MemoryIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhello")
     end
@@ -127,7 +127,7 @@ module HTTP
 
       response = Response.new(200, "hello", headers)
 
-      io = StringIO.new
+      io = MemoryIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=bar; path=/\r\n\r\nhello")
 
@@ -136,7 +136,6 @@ module HTTP
       io.clear
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nSet-Cookie: foo=bar; path=/\r\n\r\nhello")
-
 
       response.cookies["foo"] = "baz"
       response.cookies << Cookie.new("quux", "baz")
@@ -148,49 +147,49 @@ module HTTP
 
     it "sets content length from body" do
       response = Response.new(200, "hello")
-      io = StringIO.new
+      io = MemoryIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello")
     end
 
     it "sets content length even without body" do
       response = Response.new(200)
-      io = StringIO.new
+      io = MemoryIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")
     end
 
     it "serialize as chunked with body_io" do
-      response = Response.new(200, body_io: StringIO.new("hello"))
-      io = StringIO.new
+      response = Response.new(200, body_io: MemoryIO.new("hello"))
+      io = MemoryIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nhello\r\n0\r\n\r\n")
     end
 
     it "serialize as not chunked with body_io if HTTP/1.0" do
-      response = Response.new(200, version: "HTTP/1.0", body_io: StringIO.new("hello"))
-      io = StringIO.new
+      response = Response.new(200, version: "HTTP/1.0", body_io: MemoryIO.new("hello"))
+      io = MemoryIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.0 200 OK\r\nContent-Length: 5\r\n\r\nhello")
     end
 
     it "builds default not found" do
       response = Response.not_found
-      io = StringIO.new
+      io = MemoryIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found")
     end
 
     it "builds default ok response" do
       response = Response.ok("text/plain", "Hello")
-      io = StringIO.new
+      io = MemoryIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
     end
 
     it "builds default error response" do
       response = Response.error("text/plain", "Error!")
-      io = StringIO.new
+      io = MemoryIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: 6\r\n\r\nError!")
     end

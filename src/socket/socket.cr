@@ -136,7 +136,7 @@ class Socket < IO::FileDescriptor
       v.on = 1
       v.secs = val
     when nil
-     v.on = 0
+      v.on = 0
     end
 
     setsockopt LibC::SO_LINGER, v
@@ -169,7 +169,6 @@ class Socket < IO::FileDescriptor
     ret = setsockopt optname, v, level
     optval
   end
-
 
   def self.inet_ntop(sa : LibC::SockAddrIn6)
     ip_address = GC.malloc_atomic(LibC::INET6_ADDRSTRLEN.to_u32) as UInt8*

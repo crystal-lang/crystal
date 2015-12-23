@@ -41,11 +41,11 @@ module Crystal
 
         # Check #<loc:"file",line,column> pragma comment
         if char == '<' &&
-          (char = next_char_no_column_increment) == 'l' &&
-          (char = next_char_no_column_increment) == 'o' &&
-          (char = next_char_no_column_increment) == 'c' &&
-          (char = next_char_no_column_increment) == ':' &&
-          (char = next_char_no_column_increment) == '"'
+           (char = next_char_no_column_increment) == 'l' &&
+           (char = next_char_no_column_increment) == 'o' &&
+           (char = next_char_no_column_increment) == 'c' &&
+           (char = next_char_no_column_increment) == ':' &&
+           (char = next_char_no_column_increment) == '"'
           next_char_no_column_increment
           consume_loc_pragma
           start = current_pos
@@ -134,7 +134,7 @@ module Crystal
           when '='
             next_char :"<<="
           when '-'
-            here = StringIO.new(20)
+            here = MemoryIO.new(20)
 
             while true
               case char = next_char
@@ -320,7 +320,7 @@ module Crystal
       when ']' then next_char :"]"
       when ',' then next_char :","
       when '?' then next_char :"?"
-      when ';' then
+      when ';'
         reset_regex_flags = false
         next_char :";"
       when ':'
@@ -527,9 +527,13 @@ module Crystal
           when '0', '1', '2', '3', '4', '5', '6', '7'
             char_value = consume_octal_escape(char2)
             @token.value = char_value.chr
+          when '\0'
+            raise "unterminated char literal", line, column
           else
             @token.value = char2
           end
+        when '\0'
+          raise "unterminated char literal", line, column
         else
           @token.value = char1
         end
@@ -597,8 +601,8 @@ module Crystal
             while ident_part?(next_char)
               # Nothing to do
             end
-          @token.type = :GLOBAL
-          @token.value = string_range(start)
+            @token.type = :GLOBAL
+            @token.value = string_range(start)
           else
             unknown_token
           end
@@ -776,7 +780,7 @@ module Crystal
       when 'o'
         case next_char
         when 'f'
-            return check_ident_or_keyword(:of, start)
+          return check_ident_or_keyword(:of, start)
         when 'u'
           if next_char == 't'
             return check_ident_or_keyword(:out, start)
@@ -1016,7 +1020,7 @@ module Crystal
       if doc_buffer = @token.doc_buffer
         doc_buffer << '\n'
       else
-        @token.doc_buffer = doc_buffer = StringIO.new
+        @token.doc_buffer = doc_buffer = MemoryIO.new
       end
 
       doc_buffer.write slice_range(start_pos)
@@ -1305,7 +1309,7 @@ module Crystal
 
     def absolute_integer_value(string_value, negative)
       if negative
-        string_value[1 .. -1].to_u64
+        string_value[1..-1].to_u64
       else
         string_value.to_u64
       end
@@ -1673,7 +1677,7 @@ module Crystal
 
         if delimiter_state.kind == :heredoc
           string_end = string_end.to_s
-          old_pos    = current_pos
+          old_pos = current_pos
           old_column = @column_number
 
           while current_char == ' '
@@ -1693,21 +1697,21 @@ module Crystal
             end
 
             if reached_end &&
-              (current_char == '\n' || current_char == '\0')
+               (current_char == '\n' || current_char == '\0')
               @token.type = :DELIMITER_END
             else
-              @reader.pos    = old_pos
+              @reader.pos = old_pos
               @column_number = old_column
               next_string_token delimiter_state
             end
           else
-            @reader.pos    = old_pos
+            @reader.pos = old_pos
             @column_number = old_column
-            @token.type    = :STRING
-            @token.value   = "\n"
+            @token.type = :STRING
+            @token.value = "\n"
           end
         else
-          @token.type  = :STRING
+          @token.type = :STRING
           @token.value = "\n"
         end
       else
@@ -1960,6 +1964,7 @@ module Crystal
             nest += 1 unless keyword == :abstract_def
             whitespace = true
             beginning_of_line = false
+            next
           else
             char = current_char
 
@@ -2034,34 +2039,34 @@ module Crystal
       when 'c'
         (char = next_char) && (
           (char == 'a' && next_char == 's' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :case) ||
-          (char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :class)
+            (char == 'l' && next_char == 'a' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :class)
         )
       when 'd'
         (char = next_char) &&
-                ((char == 'o' && peek_not_ident_part_or_end_next_char && :do) ||
-                 (char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :def))
+          ((char == 'o' && peek_not_ident_part_or_end_next_char && :do) ||
+            (char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :def))
       when 'f'
         next_char == 'u' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :fun
       when 'i'
         beginning_of_line && next_char == 'f' &&
           (char = next_char) && (
-            (!ident_part_or_end?(char) && :if) ||
+          (!ident_part_or_end?(char) && :if) ||
             (char == 'd' && next_char == 'e' && next_char == 'f' && peek_not_ident_part_or_end_next_char && :ifdef)
-          )
+        )
       when 'l'
         next_char == 'i' && next_char == 'b' && peek_not_ident_part_or_end_next_char && :lib
       when 'm'
         (char = next_char) && (
           (char == 'a' && next_char == 'c' && next_char == 'r' && next_char == 'o' && peek_not_ident_part_or_end_next_char && :macro) ||
-          (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :module)
+            (char == 'o' && next_char == 'd' && next_char == 'u' && next_char == 'l' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :module)
         )
       when 's'
         next_char == 't' && next_char == 'r' && next_char == 'u' && next_char == 'c' && next_char == 't' && !ident_part_or_end?(peek_next_char) && next_char && :struct
       when 'u'
         next_char == 'n' && (char = next_char) && (
           (char == 'i' && next_char == 'o' && next_char == 'n' && peek_not_ident_part_or_end_next_char && :union) ||
-          (beginning_of_line && char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :unless) ||
-          (beginning_of_line && char == 't' && next_char == 'i' && next_char == 'l' && peek_not_ident_part_or_end_next_char && :until)
+            (beginning_of_line && char == 'l' && next_char == 'e' && next_char == 's' && next_char == 's' && peek_not_ident_part_or_end_next_char && :unless) ||
+            (beginning_of_line && char == 't' && next_char == 'i' && next_char == 'l' && peek_not_ident_part_or_end_next_char && :until)
         )
       when 'w'
         beginning_of_line && next_char == 'h' && next_char == 'i' && next_char == 'l' && next_char == 'e' && peek_not_ident_part_or_end_next_char && :while
@@ -2165,7 +2170,6 @@ module Crystal
       codepoint
     end
 
-
     def expected_hexacimal_character_in_unicode_escape
       raise "expected hexadecimal character in unicode escape"
     end
@@ -2253,7 +2257,7 @@ module Crystal
       line_number = 0
       while true
         case current_char
-        when '0' .. '9'
+        when '0'..'9'
           line_number = 10 * line_number + (current_char - '0').to_i
         when ','
           next_char
@@ -2267,7 +2271,7 @@ module Crystal
       column_number = 0
       while true
         case current_char
-        when '0' .. '9'
+        when '0'..'9'
           column_number = 10 * column_number + (current_char - '0').to_i
         when '>'
           next_char

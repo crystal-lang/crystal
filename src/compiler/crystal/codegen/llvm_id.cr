@@ -5,7 +5,7 @@ module Crystal
     getter id_to_metaclass
 
     def initialize(program)
-      @ids = {} of Type => {Int32, Int32}
+      @ids = {} of Type  => {Int32, Int32}
       @id_to_metaclass = {} of Int32 => Int32
       @next_id = 0
       assign_id(program.object)

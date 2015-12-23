@@ -197,7 +197,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
       when RegClass::Int
         types << LLVM::Int64
       when RegClass::SSEFv
-        vec_len = llvec_len(reg_classes[i + 1 .. -1])
+        vec_len = llvec_len(reg_classes[i + 1..-1])
         vec_type = Type.vector(LLVM::Float, vec_len * 2)
         types << vec_type
         i += vec_len

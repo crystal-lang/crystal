@@ -18,31 +18,31 @@ lib LibC
     O_NONBLOCK = 0o0004000
     O_CLOEXEC  = 0o2000000
   elsif darwin
-    O_RDONLY   = 0x0000
-    O_WRONLY   = 0x0001
-    O_RDWR     = 0x0002
-    O_APPEND   = 0x0008
-    O_CREAT    = 0x0200
-    O_TRUNC    = 0x0400
-    O_NONBLOCK = 0x0004
+    O_RDONLY   =    0x0000
+    O_WRONLY   =    0x0001
+    O_RDWR     =    0x0002
+    O_APPEND   =    0x0008
+    O_CREAT    =    0x0200
+    O_TRUNC    =    0x0400
+    O_NONBLOCK =    0x0004
     O_CLOEXEC  = 0x1000000
   end
 
-  S_IRWXU    = 0o000700         # RWX mask for owner
-  S_IRUSR    = 0o000400         # R for owner
-  S_IWUSR    = 0o000200         # W for owner
-  S_IXUSR    = 0o000100         # X for owner
-  S_IRWXG    = 0o000070         # RWX mask for group
-  S_IRGRP    = 0o000040         # R for group
-  S_IWGRP    = 0o000020         # W for group
-  S_IXGRP    = 0o000010         # X for group
-  S_IRWXO    = 0o000007         # RWX mask for other
-  S_IROTH    = 0o000004         # R for other
-  S_IWOTH    = 0o000002         # W for other
-  S_IXOTH    = 0o000001         # X for other
+  S_IRWXU = 0o000700 # RWX mask for owner
+  S_IRUSR = 0o000400 # R for owner
+  S_IWUSR = 0o000200 # W for owner
+  S_IXUSR = 0o000100 # X for owner
+  S_IRWXG = 0o000070 # RWX mask for group
+  S_IRGRP = 0o000040 # R for group
+  S_IWGRP = 0o000020 # W for group
+  S_IXGRP = 0o000010 # X for group
+  S_IRWXO = 0o000007 # RWX mask for other
+  S_IROTH = 0o000004 # R for other
+  S_IWOTH = 0o000002 # W for other
+  S_IXOTH = 0o000001 # X for other
 
   EWOULDBLOCK = 140
-  EAGAIN      = 11
+  EAGAIN      =  11
 
   fun fcntl(fd : Int, cmd : FCNTL, ...) : Int
   fun getchar : Int
@@ -57,14 +57,14 @@ lib LibC
   fun write(fd : Int, buffer : Char*, nbyte : SizeT) : SSizeT
   fun pipe(filedes : Int[2]*) : Int
   fun select(nfds : Int, readfds : Void*, writefds : Void*, errorfds : Void*, timeout : TimeVal*) : Int
-  fun lseek(fd : Int, offset  : OffT, whence : Int) : OffT
+  fun lseek(fd : Int, offset : OffT, whence : Int) : OffT
   fun close(fd : Int) : Int
   fun isatty(fd : Int) : Int
 end
 
 # The IO module is the basis for all input and output in Crystal.
 #
-# This module is included by types like `File`, `Socket` and `StringIO` and
+# This module is included by types like `File`, `Socket` and `MemoryIO` and
 # provide many useful methods for reading to and writing from an IO, like `print`, `puts`,
 # `gets` and `printf`.
 #
@@ -92,23 +92,23 @@ end
 #   def write(slice : Slice(UInt8))
 #     slice.size.times { |i| @slice[i] = slice[i] }
 #     @slice += slice.size
-#     count
+#     nil
 #   end
 # end
 #
 # slice = Slice.new(9) { |i| ('a'.ord + i).to_u8 }
-# String.new(slice) #=> "abcdefghi"
+# String.new(slice) # => "abcdefghi"
 #
 # io = SimpleSliceIO.new(slice)
-# io.gets(3) #=> "abc"
+# io.gets(3) # => "abc"
 # io.print "xyz"
-# String.new(slice) #=> "abcxyzghi"
+# String.new(slice) # => "abcxyzghi"
 # ```
 module IO
   # Argument to a `seek` operation.
   enum Seek
     # Seeks to an absolute location
-    Set    = 0
+    Set = 0
 
     # Seeks to a location relative to the current location
     # in the stream
@@ -116,14 +116,14 @@ module IO
 
     # Seeks to a location relative to the end of the stream
     # (you probably want a negative value for the amount)
-    End    = 2
+    End = 2
   end
 
   # Raised when an IO operation times out.
   #
   # ```
   # STDIN.read_timeout = 1
-  # STDIN.gets #=> IO::Timeout (after 1 second)
+  # STDIN.gets # => IO::Timeout (after 1 second)
   # ```
   class Timeout < Exception
   end
@@ -142,7 +142,7 @@ module IO
   # are supported.
   #
   # If timeout_sec is nil, this method blocks until an IO is ready.
-  def self.select(read_ios, write_ios, error_ios, timeout_sec : LibC::TimeT|Int|Float?)
+  def self.select(read_ios, write_ios, error_ios, timeout_sec : LibC::TimeT | Int | Float?)
     nfds = 0
     read_ios.try &.each do |io|
       nfds = io.fd if io.fd > nfds
@@ -155,7 +155,7 @@ module IO
     end
     nfds += 1
 
-    read_fdset  = FdSet.from_ios(read_ios)
+    read_fdset = FdSet.from_ios(read_ios)
     write_fdset = FdSet.from_ios(write_ios)
     error_fdset = FdSet.from_ios(error_ios)
 
@@ -163,7 +163,7 @@ module IO
       sec = LibC::TimeT.new(timeout_sec)
 
       if timeout_sec.is_a? Float
-        usec = (timeout_sec-sec) * 10e6
+        usec = (timeout_sec - sec) * 10e6
       else
         usec = 0
       end
@@ -200,23 +200,23 @@ module IO
   # Reads at most *slice.size* bytes from this IO into *slice*. Returns the number of bytes read.
   #
   # ```
-  # io = StringIO.new "hello"
+  # io = MemoryIO.new "hello"
   # slice = Slice(UInt8).new(4)
-  # io.read(slice) #=> 4
-  # slice #=> [104, 101, 108, 108]
-  # io.read(slice) #=> 1
-  # slice #=> [111, 101, 108, 108]
+  # io.read(slice) # => 4
+  # slice          # => [104, 101, 108, 108]
+  # io.read(slice) # => 1
+  # slice          # => [111, 101, 108, 108]
   # ```
   abstract def read(slice : Slice(UInt8))
 
-  # Writes at most *slice.size* bytes from *slice* into this IO. Returns the number of bytes written.
+  # Writes the contents of *slice* into this IO.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # slice = Slice(UInt8).new(4) { |i| ('a'.ord + i).to_u8 }
-  # io.write(slice) #=> 4
+  # io.write(slice)
   # io.to_s #=> "abcd"
-  abstract def write(slice : Slice(UInt8))
+  abstract def write(slice : Slice(UInt8)) : Nil
 
   # Flushes buffered data, if any.
   #
@@ -231,8 +231,8 @@ module IO
   # reader, writer = IO.pipe
   # writer.puts "hello"
   # writer.puts "world"
-  # reader.gets #=> "hello"
-  # reader.gets #=> "world"
+  # reader.gets # => "hello"
+  # reader.gets # => "world"
   # ```
   def self.pipe(read_blocking = false, write_blocking = false)
     if LibC.pipe(out pipe_fds) != 0
@@ -255,8 +255,8 @@ module IO
   # IO.pipe do |reader, writer|
   #   writer.puts "hello"
   #   writer.puts "world"
-  #   reader.gets #=> "hello"
-  #   reader.gets #=> "world"
+  #   reader.gets # => "hello"
+  #   reader.gets # => "world"
   # end
   # ```
   def self.pipe(read_blocking = false, write_blocking = false)
@@ -274,11 +274,11 @@ module IO
   # This ends up calling `to_s(io)` on the object.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io << 1
   # io << '-'
   # io << "Crystal"
-  # io.to_s #=> "1-Crystal"
+  # io.to_s # => "1-Crystal"
   # ```
   def <<(obj) : self
     obj.to_s self
@@ -288,11 +288,11 @@ module IO
   # Same as `<<`
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.print 1
   # io.print '-'
   # io.print "Crystal"
-  # io.to_s #=> "1-Crystal"
+  # io.to_s # => "1-Crystal"
   # ```
   def print(obj) : Nil
     self << obj
@@ -303,9 +303,9 @@ module IO
   # on each of the objects.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.print 1, '-', "Crystal"
-  # io.to_s #=> "1-Crystal"
+  # io.to_s # => "1-Crystal"
   # ```
   def print(*objects : _) : Nil
     objects.each do |obj|
@@ -318,10 +318,10 @@ module IO
   # unless the string already ends with one.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.puts "hello\n"
   # io.puts "world"
-  # io.to_s #=> "hello\nworld\n"
+  # io.to_s # => "hello\nworld\n"
   # ```
   def puts(string : String) : Nil
     self << string
@@ -332,10 +332,10 @@ module IO
   # Writes the given object to this IO followed by a newline character.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.puts 1
   # io.puts "Crystal"
-  # io.to_s #=> "1\nCrystal\n"
+  # io.to_s # => "1\nCrystal\n"
   # ```
   def puts(obj) : Nil
     self << obj
@@ -345,9 +345,9 @@ module IO
   # Writes a newline character.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.puts
-  # io.to_s #=> "\n"
+  # io.to_s # => "\n"
   # ```
   def puts : Nil
     write_byte '\n'.ord.to_u8
@@ -357,9 +357,9 @@ module IO
   # Writes the given objects, each followed by a newline character.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.puts 1, '-', "Crystal"
-  # io.to_s #=> "1\n-\nCrystal\n"
+  # io.to_s # => "1\n-\nCrystal\n"
   # ```
   def puts(*objects : _) : Nil
     objects.each do |obj|
@@ -382,9 +382,9 @@ module IO
   # data to read.
   #
   # ```
-  # io = StringIO.new "a"
-  # io.read_byte #=> 97
-  # io.read_byte #=> nil
+  # io = MemoryIO.new "a"
+  # io.read_byte # => 97
+  # io.read_byte # => nil
   # ```
   def read_byte : UInt8?
     byte :: UInt8
@@ -399,9 +399,9 @@ module IO
   # more data to read.
   #
   # ```
-  # io = StringIO.new "あ"
-  # io.read_char #=> 'あ'
-  # io.read_char #=> nil
+  # io = MemoryIO.new "あ"
+  # io.read_char # => 'あ'
+  # io.read_char # => nil
   # ```
   def read_char : Char?
     info = read_char_with_bytesize
@@ -436,11 +436,11 @@ module IO
   # Raises `EOFError` if there aren't `slice.size` bytes of data.
   #
   # ```
-  # io = StringIO.new "123451234"
+  # io = MemoryIO.new "123451234"
   # slice = Slice(UInt8).new(5)
   # io.read_fully(slice)
-  # slice #=> [49, 50, 51, 52, 53]
-  # io.read_fully #=> EOFError
+  # slice         # => [49, 50, 51, 52, 53]
+  # io.read_fully # => EOFError
   # ```
   def read_fully(slice : Slice(UInt8))
     count = slice.size
@@ -455,9 +455,9 @@ module IO
   # Reads the rest of this IO data as a `String`.
   #
   # ```
-  # io = StringIO.new "hello world"
-  # io.read #=> "hello world"
-  # io.read #=> ""
+  # io = MemoryIO.new "hello world"
+  # io.read # => "hello world"
+  # io.read # => ""
   # ```
   def gets_to_end : String
     buffer :: UInt8[2048]
@@ -472,10 +472,10 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = StringIO.new "hello\nworld"
-  # io.gets #=> "hello\n"
-  # io.gets #=> "world"
-  # io.gets #=> nil
+  # io = MemoryIO.new "hello\nworld"
+  # io.gets # => "hello\n"
+  # io.gets # => "world"
+  # io.gets # => nil
   # ```
   def gets : String?
     gets '\n'
@@ -485,12 +485,12 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = StringIO.new "hello\nworld"
-  # io.gets(3) #=> "hel"
-  # io.gets(3) #=> "lo\n"
-  # io.gets(3) #=> "wor"
-  # io.gets(3) #=> "ld"
-  # io.gets(3) #=> nil
+  # io = MemoryIO.new "hello\nworld"
+  # io.gets(3) # => "hel"
+  # io.gets(3) # => "lo\n"
+  # io.gets(3) # => "wor"
+  # io.gets(3) # => "ld"
+  # io.gets(3) # => nil
   # ```
   def gets(limit : Int) : String?
     gets '\n', limit
@@ -500,11 +500,11 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = StringIO.new "hello\nworld"
-  # io.gets('o') #=> "hello"
-  # io.gets('r') #=> "\nwor"
-  # io.gets('z') #=> "ld"
-  # io.gets('w') #=> nil
+  # io = MemoryIO.new "hello\nworld"
+  # io.gets('o') # => "hello"
+  # io.gets('r') # => "\nwor"
+  # io.gets('z') # => "ld"
+  # io.gets('w') # => nil
   # ```
   def gets(delimiter : Char) : String?
     gets delimiter, Int32::MAX
@@ -514,11 +514,11 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = StringIO.new "hello\nworld"
-  # io.gets('o', 3) #=> "hel"
-  # io.gets('r', 10) #=> "lo\nwor"
-  # io.gets('z', 10) #=> "ld"
-  # io.gets('w', 10) #=> nil
+  # io = MemoryIO.new "hello\nworld"
+  # io.gets('o', 3)  # => "hel"
+  # io.gets('r', 10) # => "lo\nwor"
+  # io.gets('z', 10) # => "ld"
+  # io.gets('w', 10) # => nil
   # ```
   def gets(delimiter : Char, limit : Int) : String?
     raise ArgumentError.new "negative limit" if limit < 0
@@ -546,10 +546,10 @@ module IO
   # Returns `nil` if called at the end of this IO.
   #
   # ```
-  # io = StringIO.new "hello\nworld"
-  # io.gets("wo") #=> "hello\nwo"
-  # io.gets("wo") #=> "rld"
-  # io.gets("wo") #=> nil
+  # io = MemoryIO.new "hello\nworld"
+  # io.gets("wo") # => "hello\nwo"
+  # io.gets("wo") # => "rld"
+  # io.gets("wo") # => nil
   # ```
   def gets(delimiter : String) : String?
     # Empty string: read all
@@ -595,9 +595,9 @@ module IO
   # Reads and discards *bytes_count* bytes.
   #
   # ```
-  # io = StringIO.new "hello world"
+  # io = MemoryIO.new "hello world"
   # io.skip(6)
-  # io.gets #=> "world"
+  # io.gets # => "world"
   # ```
   def skip(bytes_count : Int) : Nil
     buffer :: UInt8[1024]
@@ -608,26 +608,48 @@ module IO
     nil
   end
 
-  # Writes the bytes in the given array to this IO.
-  def write(array : Array(UInt8))
-    # TODO: maybe we should remove this method? Array is heavy for IO
-    write Slice.new(array.buffer, array.size)
-  end
-
   # Writes a single byte into this IO.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.write_byte 97_u8
-  # io.to_s #=> "a"
+  # io.to_s # => "a"
   # ```
   def write_byte(byte : UInt8)
     x = byte
     write Slice.new(pointerof(x), 1)
   end
 
+  # Writes the given object to this IO using the specified *format*.
+  # This ends up invoking `object.to_io(self, format)`, so any object defining
+  # a `to_io` method can be written in this way.
+  #
+  # See `Int#to_io` and `Float#to_io`.
+  #
+  # ```
+  # io = MemoryIO.new
+  # io.write_bytes(0x01020304, IO::ByteFormat::LittleEndian)
+  # io.rewind
+  # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
+  # ```
   def write_bytes(object, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
     object.to_io(self, format)
+  end
+
+  # Reads an instance of the given *type* from this IO using the specified *format*.
+  # This ends up invoking `type.to_io(self, forma)`, so any type defining a `to_io`
+  # method can be read in this way.
+  #
+  # See `Int#from_io` and `Float#from_io`.
+  #
+  # ```
+  # io = MemoryIO.new
+  # io.puts "\u{4}\u{3}\u{2}\u{1}"
+  # io.rewind
+  # io.read_bytes(Int32, IO::ByteFormat::LittleEndian) # => 0x01020304
+  # ```
+  def read_bytes(type, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
+    type.from_io(self, format)
   end
 
   # Returns `true` if this IO is associated with a terminal device (tty), `false` otherwise.
@@ -635,8 +657,8 @@ module IO
   # IO returns `false`, but including types may override.
   #
   # ```
-  # STDIN.tty?        #=> true
-  # StringIO.new.tty? #=> false
+  # STDIN.tty?        # => true
+  # MemoryIO.new.tty? # => false
   # ```
   def tty? : Bool
     false
@@ -647,7 +669,7 @@ module IO
   # ones as in the `gets` methods.
   #
   # ```
-  # io = StringIO.new("hello\nworld")
+  # io = MemoryIO.new("hello\nworld")
   # io.each_line do |line|
   #   puts line.chomp.reverse
   # end
@@ -670,10 +692,10 @@ module IO
   # ones as in the `gets` methods.
   #
   # ```
-  # io = StringIO.new("hello\nworld")
+  # io = MemoryIO.new("hello\nworld")
   # iter = io.each_line
-  # iter.next #=> "hello\n"
-  # iter.next #=> "world"
+  # iter.next # => "hello\n"
+  # iter.next # => "world"
   # ```
   def each_line(*args)
     LineIterator.new(self, args)
@@ -682,7 +704,7 @@ module IO
   # Inovkes the given block with each `Char` in this IO.
   #
   # ```
-  # io = StringIO.new("あめ")
+  # io = MemoryIO.new("あめ")
   # io.each_char do |char|
   #   puts char
   # end
@@ -703,10 +725,10 @@ module IO
   # Returns an `Iterator` for the chars in this IO.
   #
   # ```
-  # io = StringIO.new("あめ")
+  # io = MemoryIO.new("あめ")
   # iter = io.each_char
-  # iter.next #=> 'あ'
-  # iter.next #=> 'め'
+  # iter.next # => 'あ'
+  # iter.next # => 'め'
   # ```
   def each_char
     CharIterator.new(self)
@@ -715,7 +737,7 @@ module IO
   # Inovkes the given block with each byte (`UInt8`) in this IO.
   #
   # ```
-  # io = StringIO.new("aあ")
+  # io = MemoryIO.new("aあ")
   # io.each_byte do |byte|
   #   puts byte
   # end
@@ -738,12 +760,12 @@ module IO
   # Returns an `Iterator` for the bytes in this IO.
   #
   # ```
-  # io = StringIO.new("aあ")
+  # io = MemoryIO.new("aあ")
   # iter = io.each_byte
-  # iter.next #=> 97
-  # iter.next #=> 227
-  # iter.next #=> 129
-  # iter.next #=> 130
+  # iter.next # => 97
+  # iter.next # => 227
+  # iter.next # => 129
+  # iter.next # => 130
   # ```
   def each_byte
     ByteIterator.new(self)
@@ -752,12 +774,12 @@ module IO
   # Copy all contents from *src* to *dst*.
   #
   # ```
-  # io = StringIO.new "hello"
-  # io2 = StringIO.new
+  # io = MemoryIO.new "hello"
+  # io2 = MemoryIO.new
   #
   # IO.copy io, io2
   #
-  # io2.to_s #=> "hello"
+  # io2.to_s # => "hello"
   # ```
   def self.copy(src, dst)
     buffer :: UInt8[1024]
@@ -822,4 +844,3 @@ module IO
 end
 
 require "./io/*"
-

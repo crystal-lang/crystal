@@ -5,7 +5,7 @@ module Zlib
     def initialize(@input : IO, wbits = LibZ::MAX_BITS)
       @buf :: UInt8[8192] # input buffer used by zlib
       @stream = LibZ::ZStream.new
-      ret = LibZ.inflateInit2(pointerof(@stream), wbits, LibZ.zlibVersion(), sizeof(LibZ::ZStream))
+      ret = LibZ.inflateInit2(pointerof(@stream), wbits, LibZ.zlibVersion, sizeof(LibZ::ZStream))
       check_error(ret)
     end
 
@@ -34,7 +34,7 @@ module Zlib
 
     private def prepare_input_data
       return if @stream.avail_in > 0
-      @stream.next_in = @buf.buffer
+      @stream.next_in = @buf.to_unsafe
       @stream.avail_in = @input.read(@buf.to_slice).to_u32
     end
 

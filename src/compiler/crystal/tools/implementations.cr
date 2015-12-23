@@ -4,10 +4,10 @@ require "json"
 
 module Crystal
   class ImplementationResult
-    json_mapping({
-      status:           {type: String},
-      message:          {type: String},
-      implementations:  {type: Array(ImplementationTrace), nilable: true},
+    JSON.mapping({
+      status:          {type: String},
+      message:         {type: String},
+      implementations: {type: Array(ImplementationTrace), nilable: true},
     })
 
     def initialize(@status, @message)
@@ -32,7 +32,7 @@ module Crystal
   # It keeps track of macro expansion in a human friendly way and
   # pointing to the exact line an expansion and method definition occurs.
   class ImplementationTrace
-    json_mapping({
+    JSON.mapping({
       line:     {type: Int32},
       column:   {type: Int32},
       filename: {type: String},
@@ -137,13 +137,11 @@ module Crystal
     def visit(node : Call)
       if node.location
         if @target_location.between?(node.name_location, node.name_end_location)
-
           if target_defs = node.target_defs
             target_defs.each do |target_def|
               @locations << target_def.location.not_nil!
             end
           end
-
         else
           contains_target(node)
         end

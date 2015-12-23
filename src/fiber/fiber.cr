@@ -49,8 +49,8 @@ class Fiber
       LibC::PROT_READ | LibC::PROT_WRITE,
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
       -1, LibC::SSizeT.new(0)).tap do |pointer|
-        raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
-      end
+      raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
+    end
   end
 
   def self.stack_pool_collect
@@ -135,7 +135,7 @@ class Fiber
   @@prev_push_other_roots = LibGC.get_push_other_roots
 
   # This will push all fibers stacks whenever the GC wants to collect some memory
-  LibGC.set_push_other_roots -> do
+  LibGC.set_push_other_roots ->do
     @@prev_push_other_roots.call
 
     fiber = @@first_fiber

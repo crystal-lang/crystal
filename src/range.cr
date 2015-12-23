@@ -45,9 +45,9 @@
 # An example of using `Xs` to construct a range:
 #
 # ```
-# r = Xs.new(3)..Xs.new(6)   #=> xxx..xxxxxx
-# r.to_a                     #=> [xxx, xxxx, xxxxx, xxxxxx]
-# r.includes?(Xs.new(5))     #=> true
+# r = Xs.new(3)..Xs.new(6) # => xxx..xxxxxx
+# r.to_a                   # => [xxx, xxxx, xxxxx, xxxxxx]
+# r.includes?(Xs.new(5))   # => true
 # ```
 struct Range(B, E)
   include Enumerable(B)
@@ -56,16 +56,16 @@ struct Range(B, E)
   # Returns the object that defines the beginning of this range.
   #
   # ```
-  # (1..10).begin  #=> 1
-  # (1...10).begin #=> 1
+  # (1..10).begin  # => 1
+  # (1...10).begin # => 1
   # ```
   getter :begin
 
   # Returns the object that defines the end of the range.
   #
   # ```
-  # (1..10).end  #=> 10
-  # (1...10).end #=> 10
+  # (1..10).end  # => 10
+  # (1...10).end # => 10
   # ```
   getter :end
 
@@ -76,8 +76,8 @@ struct Range(B, E)
   # Constructs a range using the given beginning and end.
   #
   # ```
-  # Range.new(1, 10)                  #=> 1..10
-  # Range.new(1, 10, exclusive: true) #=> 1...10
+  # Range.new(1, 10)                  # => 1..10
+  # Range.new(1, 10, exclusive: true) # => 1...10
   # ```
   def initialize(@begin : B, @end : E, @exclusive = false : Bool)
   end
@@ -85,7 +85,7 @@ struct Range(B, E)
   # Returns an `Iterator` that cycles over the values of this range.
   #
   # ```
-  # (1..3).cycle.take(5).to_a #=> [1, 2, 3, 1, 3]
+  # (1..3).cycle.take(5).to_a # => [1, 2, 3, 1, 3]
   # ```
   def cycle
     each.cycle
@@ -94,7 +94,7 @@ struct Range(B, E)
   # Iterates over the elements of this range, passing each in turn to the block.
   #
   # ```
-  # (10..15).each {|n| print n, ' ' }
+  # (10..15).each { |n| print n, ' ' }
   # # prints: 10 11 12 13 14 15
   # ```
   def each
@@ -110,7 +110,7 @@ struct Range(B, E)
   # Returns an `Iterator` over the elements of this range.
   #
   # ```
-  # (1..3).each.skip(1).to_a #=> [2, 3]
+  # (1..3).each.skip(1).to_a # => [2, 3]
   # ```
   def each
     ItemIterator.new(self)
@@ -119,7 +119,7 @@ struct Range(B, E)
   # Iterates over the elements of this range in reverse order, passing each in turn to the block.
   #
   # ```
-  # (10...15).reverse_each {|n| print n, ' ' }
+  # (10...15).reverse_each { |n| print n, ' ' }
   # # prints: 14 13 12 11 10
   # ```
   def reverse_each
@@ -136,9 +136,9 @@ struct Range(B, E)
   #
   # ```
   # range = Xs.new(1)..Xs.new(10)
-  # range.step(2) {|x| puts x}
+  # range.step(2) { |x| puts x }
   # puts
-  # range.step(3) {|x| puts x}
+  # range.step(3) { |x| puts x }
   # ```
   #
   # Produces:
@@ -170,7 +170,7 @@ struct Range(B, E)
   # Returns an `Iterator` that returns each nth element in this range.
   #
   # ```
-  # (1..10).step(3).skip(1).to_a #=> [4, 7, 10]
+  # (1..10).step(3).skip(1).to_a # => [4, 7, 10]
   # ```
   def step(n = 1)
     StepIterator.new(self, n)
@@ -179,22 +179,22 @@ struct Range(B, E)
   # Returns true if this range excludes the *end* element.
   #
   # ```
-  # (1..10).excludes_end?  #=> false
-  # (1...10).excludes_end? #=> true
+  # (1..10).excludes_end?  # => false
+  # (1...10).excludes_end? # => true
   # ```
   def excludes_end?
     @exclusive
   end
 
-  # Returns true if this range includes the given value.
+  # Returns true if this range includes the given *value*.
   #
   # ```
-  # (1..10).includes?(4)   #=> true
-  # (1..10).includes?(10)  #=> true
-  # (1..10).includes?(11)  #=> false
+  # (1..10).includes?(4)  # => true
+  # (1..10).includes?(10) # => true
+  # (1..10).includes?(11) # => false
   #
-  # (1...10).includes?(9)  #=> true
-  # (1...10).includes?(10) #=> false
+  # (1...10).includes?(9)  # => true
+  # (1...10).includes?(10) # => false
   # ```
   def includes?(value)
     if @exclusive
@@ -213,9 +213,9 @@ struct Range(B, E)
   #
   # ```
   # case 79
-  # when 1..50   then   puts "low"
-  # when 51..75  then   puts "medium"
-  # when 76..100 then   puts "high"
+  # when 1..50   then puts "low"
+  # when 51..75  then puts "medium"
+  # when 76..100 then puts "high"
   # end
   # ```
   #
@@ -240,6 +240,25 @@ struct Range(B, E)
   # :nodoc:
   def inspect(io)
     to_s(io)
+  end
+
+  # If self is a `Int` range, it provides O(1) implementation,
+  # otherwise it is same as `Enumerable#sum`.
+  def sum(initial)
+    b = self.begin
+    e = self.end
+
+    if b.is_a?(Int) && e.is_a?(Int)
+      e -= 1 if @exclusive
+      n = e - b + 1
+      if n >= 0
+        initial + n * (b + e) / 2
+      else
+        initial
+      end
+    else
+      super
+    end
   end
 
   # :nodoc:
@@ -303,6 +322,27 @@ struct Range(B, E)
       @current = @range.begin
       @reached_end = false
       self
+    end
+
+    def sum(initial)
+      super if @reached_end
+
+      b = @current
+      e = @range.end
+      d = @step
+
+      if b.is_a?(Int) && e.is_a?(Int) && d.is_a?(Int)
+        e -= 1 if @range.excludes_end?
+        n = (e - b) / d + 1
+        if n >= 0
+          e = b + (n - 1) * d
+          initial + n * (b + e) / 2
+        else
+          initial
+        end
+      else
+        super
+      end
     end
   end
 end

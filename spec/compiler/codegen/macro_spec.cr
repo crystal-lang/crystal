@@ -1013,7 +1013,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(6)
   end
 
-  it "codegens macro def with default arg (similar to #496)"  do
+  it "codegens macro def with default arg (similar to #496)" do
     run(%(
       class Foo
         macro def bar(foo = 1) : Int32
@@ -1237,5 +1237,21 @@ describe "Code gen: macro" do
 
       foo(1)
       )).to_string.should eq("Int32")
+  end
+
+  it "types macro expansion bug (#1734)" do
+    run(%(
+      class Foo
+        macro def foo : Int32
+          1 || 2
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      x = true ? Foo.new : Bar.new
+      x.foo
+      )).to_i.should eq(1)
   end
 end

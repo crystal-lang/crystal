@@ -145,7 +145,7 @@ struct Time::Format
     end
 
     def hour_12_blank_padded
-      @hour= consume_number_blank_padded(2)
+      @hour = consume_number_blank_padded(2)
     end
 
     def minute

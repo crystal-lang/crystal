@@ -5,6 +5,7 @@ module Crystal::Doc::Highlighter
     lexer = Lexer.new(code)
     lexer.comments_enabled = true
     lexer.count_whitespace = true
+    lexer.wants_raw = true
 
     String.build do |io|
       begin
@@ -27,9 +28,9 @@ module Crystal::Doc::Highlighter
       when :COMMENT
         highlight HTML.escape(token.value.to_s), "c", io
       when :NUMBER
-        highlight token, "n", io
+        highlight token.raw, "n", io
       when :CHAR
-        highlight token.value.inspect, "s", io
+        highlight token.raw, "s", io
       when :SYMBOL
         sym = token.value.to_s
         if Symbol.needs_quotes?(sym)
@@ -84,19 +85,13 @@ module Crystal::Doc::Highlighter
   private def highlight_delimiter_state(lexer, token, io)
     start_highlight_klass "s", io
 
-    delimiter_end = token.delimiter_state.end
-    case delimiter_end
-    when '/' then io << '/'
-    when '"' then io << '"'
-    when '`' then io << '`'
-    when ')' then io << "%("
-    end
+    HTML.escape(token.raw, io)
 
     while true
       token = lexer.next_string_token(token.delimiter_state)
       case token.type
       when :DELIMITER_END
-        io << delimiter_end
+        HTML.escape(token.raw, io)
         end_highlight_klass io
         break
       when :INTERPOLATION_START
@@ -109,11 +104,7 @@ module Crystal::Doc::Highlighter
       when :EOF
         break
       else
-        if delimiter_end == '/'
-          token.value.to_s(io)
-        else
-          HTML.escape(token.value.to_s.inspect_unquoted, io)
-        end
+        HTML.escape(token.raw, io)
       end
     end
   end

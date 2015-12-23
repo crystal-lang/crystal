@@ -14,7 +14,7 @@ module Crystal
   end
 
   class ToSVisitor < Visitor
-    def initialize(@str = StringIO.new)
+    def initialize(@str = MemoryIO.new)
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
@@ -244,25 +244,7 @@ module Crystal
 
       node_obj = ignore_obj ? nil : node.obj
 
-      need_parens =
-        case node_obj
-        when Call
-          case node_obj.args.size
-          when 0
-            !is_alpha(node_obj.name)
-          else
-            true
-          end
-        when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
-             StringInterpolation, Path, Generic, InstanceVar, Global
-          false
-        when ArrayLiteral
-          !!node_obj.of
-        when HashLiteral
-          !!node_obj.of
-        else
-          true
-        end
+      need_parens = need_parens(node_obj)
       call_args_need_parens = false
 
       @str << "::" if node.global
@@ -302,14 +284,16 @@ module Crystal
         @str << " "
         @str << decorate_call(node, node.name)
         @str << " "
-        node.args[0].accept self
+
+        arg = node.args[0]
+        in_parenthesis(need_parens(arg), arg)
       else
         if node_obj
           in_parenthesis(need_parens, node_obj)
           @str << "."
         end
         if node.name.ends_with?('=')
-          @str << decorate_call(node, node.name[0 .. -2])
+          @str << decorate_call(node, node.name[0..-2])
           @str << " = "
           node.args.each_with_index do |arg, i|
             @str << ", " if i > 0
@@ -378,6 +362,27 @@ module Crystal
       false
     end
 
+    private def need_parens(obj)
+      case obj
+      when Call
+        case obj.args.size
+        when 0
+          !is_alpha(obj.name)
+        else
+          true
+        end
+      when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
+           StringInterpolation, Path, Generic, InstanceVar, Global
+        false
+      when ArrayLiteral
+        !!obj.of
+      when HashLiteral
+        !!obj.of
+      else
+        true
+      end
+    end
+
     def in_parenthesis(need_parens)
       if need_parens
         @str << "("
@@ -419,14 +424,13 @@ module Crystal
       @str << '`'
       case exp
       when StringLiteral
-        @str << exp.value.inspect[1 .. -2]
+        @str << exp.value.inspect[1..-2]
       when StringInterpolation
         visit_interpolation exp, &.gsub('`', "\\`")
       end
       @str << '`'
       false
     end
-
 
     def keyword(str)
       str
@@ -720,15 +724,6 @@ module Crystal
       false
     end
 
-    def visit(node : BlockArg)
-      @str << node.name
-      if a_fun = node.fun
-        @str << " : "
-        a_fun.accept self
-      end
-      false
-    end
-
     def visit(node : Fun)
       if inputs = node.inputs
         inputs.each_with_index do |input, i|
@@ -795,7 +790,7 @@ module Crystal
 
     def visit(node : Union)
       node.types.each_with_index do |ident, i|
-        @str << " | " if  i > 0
+        @str << " | " if i > 0
         ident.accept self
       end
       false

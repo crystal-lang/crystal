@@ -5,17 +5,17 @@ module HTTP
   describe Params do
     describe ".parse" do
       {
-        { "", {} of String => Array(String) },
-        { "   ", {"   " => [""]} },
-        { "foo=bar", {"foo" => ["bar"]} },
-        { "foo=bar&foo=baz", {"foo" => ["bar", "baz"]} },
-        { "foo=bar&baz=qux", {"foo" => ["bar"], "baz" => ["qux"]} },
-        { "foo=bar;baz=qux", {"foo" => ["bar"], "baz" => ["qux"]} },
-        { "foo=hello%2Bworld", {"foo" => ["hello+world"]} },
-        { "foo=", {"foo" => [""]} },
-        { "foo", {"foo" => [""]} },
-        { "foo=&bar", { "foo" => [""], "bar" => [""] } },
-        { "bar&foo", { "bar" => [""], "foo" => [""] } },
+        {"", {} of String => Array(String)},
+        {"   ", {"   " => [""]}},
+        {"foo=bar", {"foo" => ["bar"]}},
+        {"foo=bar&foo=baz", {"foo" => ["bar", "baz"]}},
+        {"foo=bar&baz=qux", {"foo" => ["bar"], "baz" => ["qux"]}},
+        {"foo=bar;baz=qux", {"foo" => ["bar"], "baz" => ["qux"]}},
+        {"foo=hello%2Bworld", {"foo" => ["hello+world"]}},
+        {"foo=", {"foo" => [""]}},
+        {"foo", {"foo" => [""]}},
+        {"foo=&bar", {"foo" => [""], "bar" => [""]}},
+        {"bar&foo", {"bar" => [""], "foo" => [""]}},
       }.each do |tuple|
         from, to = tuple
 
@@ -27,13 +27,13 @@ module HTTP
 
     describe ".build" do
       {
-        { "foo=bar", {"foo" => ["bar"]} },
-        { "foo=bar&foo=baz", {"foo" => ["bar", "baz"]} },
-        { "foo=bar&baz=qux", {"foo" => ["bar"], "baz" => ["qux"]} },
-        { "foo=hello%2Bworld", {"foo" => ["hello+world"]} },
-        { "foo=", {"foo" => [""]} },
-        { "foo=&bar=", { "foo" => [""], "bar" => [""] } },
-        { "bar=&foo=", { "bar" => [""], "foo" => [""] } },
+        {"foo=bar", {"foo" => ["bar"]}},
+        {"foo=bar&foo=baz", {"foo" => ["bar", "baz"]}},
+        {"foo=bar&baz=qux", {"foo" => ["bar"], "baz" => ["qux"]}},
+        {"foo=hello%2Bworld", {"foo" => ["hello+world"]}},
+        {"foo=", {"foo" => [""]}},
+        {"foo=&bar=", {"foo" => [""], "bar" => [""]}},
+        {"bar=&foo=", {"bar" => [""], "foo" => [""]}},
       }.each do |tuple|
         to, from = tuple
 
@@ -70,6 +70,19 @@ module HTTP
         expect_raises KeyError do
           params["non_existent_param"]
         end
+      end
+    end
+
+    describe "#[]?(name)" do
+      it "returns first value for provided param name" do
+        params = Params.parse("foo=bar&foo=baz&baz=qux")
+        params["foo"]?.should eq("bar")
+        params["baz"]?.should eq("qux")
+      end
+
+      it "return nil when there is no such param" do
+        params = Params.parse("foo=bar&foo=baz&baz=qux")
+        params["non_existent_param"]?.should eq(nil)
       end
     end
 

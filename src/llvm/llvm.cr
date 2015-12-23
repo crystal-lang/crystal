@@ -37,15 +37,15 @@ module LLVM
   end
 
   def self.array(type, values : Array(LLVM::Value))
-    Value.new LibLLVM.const_array(type, (values.buffer as LibLLVM::ValueRef*), values.size)
+    Value.new LibLLVM.const_array(type, (values.to_unsafe as LibLLVM::ValueRef*), values.size)
   end
 
   def self.struct(values : Array(LLVM::Value), packed = false)
-    Value.new LibLLVM.const_struct((values.buffer as LibLLVM::ValueRef*), values.size, packed ? 1 : 0)
+    Value.new LibLLVM.const_struct((values.to_unsafe as LibLLVM::ValueRef*), values.size, packed ? 1 : 0)
   end
 
   def self.string(string)
-    Value.new LibLLVM.const_string(string.cstr, string.bytesize, 0)
+    Value.new LibLLVM.const_string(string, string.bytesize, 0)
   end
 
   def self.start_multithreaded
@@ -91,13 +91,13 @@ module LLVM
     string
   end
 
-  Void = Type.new LibLLVM.void_type
-  Int1 = Type.new LibLLVM.int1_type
-  Int8 = Type.new LibLLVM.int8_type
-  Int16 = Type.new LibLLVM.int16_type
-  Int32 = Type.new LibLLVM.int32_type
-  Int64 = Type.new LibLLVM.int64_type
-  Float = Type.new LibLLVM.float_type
+  Void   = Type.new LibLLVM.void_type
+  Int1   = Type.new LibLLVM.int1_type
+  Int8   = Type.new LibLLVM.int8_type
+  Int16  = Type.new LibLLVM.int16_type
+  Int32  = Type.new LibLLVM.int32_type
+  Int64  = Type.new LibLLVM.int64_type
+  Float  = Type.new LibLLVM.float_type
   Double = Type.new LibLLVM.double_type
 
   VoidPointer = Int8.pointer

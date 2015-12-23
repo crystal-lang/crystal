@@ -290,11 +290,6 @@ module Crystal
       node
     end
 
-    def transform(node : BlockArg)
-      node.fun = node.fun.transform(self)
-      node
-    end
-
     def transform(node : Fun)
       transform_many node.inputs
 

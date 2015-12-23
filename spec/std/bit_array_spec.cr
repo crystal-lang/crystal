@@ -67,10 +67,10 @@ describe "BitArray" do
 
     ary[50] = false
     ary[33] = false
-    ary.count {|b| b}.should eq(98)
+    ary.count { |b| b }.should eq(98)
 
     ary.invert
-    ary.count {|b| b}.should eq(2)
+    ary.count { |b| b }.should eq(2)
   end
 
   it "raises when out of bounds" do

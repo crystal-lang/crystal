@@ -46,23 +46,15 @@ lib LibEvent2
   fun event_del(event : Event) : Int
 
   type DnsBase = Void*
+  type DnsGetAddrinfoRequest = Void*
 
-  struct DnsGetAddrinfoRequest
-    dns_base : DnsBase
-    nodename : UInt8*
-    servname : UInt8*
-    hints : LibC::Addrinfo*
-    cb : DnsGetAddrinfoCallback
-    arg : Void*
-  end
+  EVUTIL_EAI_CANCEL = -90001
 
   alias DnsGetAddrinfoCallback = (Int32, LibC::Addrinfo*, Void*) ->
 
   fun evdns_base_new(base : EventBase, init : Int32) : DnsBase
   fun evdns_base_free(base : DnsBase, fail_requests : Int32)
-  fun evdns_getaddrinfo(base : DnsBase, nodename : UInt8*, servname : UInt8*, hints : LibC::Addrinfo*, cb : DnsGetAddrinfoCallback, arg : Void*) : DnsGetAddrinfoRequest*
-  fun evdns_cancel_request(base : DnsBase, request : DnsGetAddrinfoRequest*)
-  fun evdns_err_to_string(err : Int32) : UInt8*
-  fun evutil_getaddrinfo(nodename : UInt8*, servname : UInt8*, hints : LibC::Addrinfo*, res : LibC::Addrinfo**) : Int32
+  fun evdns_getaddrinfo(base : DnsBase, nodename : UInt8*, servname : UInt8*, hints : LibC::Addrinfo*, cb : DnsGetAddrinfoCallback, arg : Void*) : DnsGetAddrinfoRequest
+  fun evdns_getaddrinfo_cancel(DnsGetAddrinfoRequest)
   fun evutil_freeaddrinfo(ai : LibC::Addrinfo*)
 end

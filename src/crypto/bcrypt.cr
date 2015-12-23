@@ -1,153 +1,119 @@
 require "secure_random"
-require "./blowfish"
 require "./subtle"
-require "./bcrypt/base64"
 
-module Crypto::Bcrypt
-  extend self
-
-  MIN_COST = 4
-  MAX_COST = 63
-  DEFAULT_COST = 10
-  ENCODED_SALT_SIZE = 22
-  MIN_HASH_SIZE = 59
-  MAJOR_VERSION = "2"
-  MINOR_VERSION = "a"
-
-  record Info, major, minor, cost, salt, hash
-
-  def digest(password, cost = DEFAULT_COST)
-    p = generate(password, cost)
-
-    build_hash(p)
+# Pure Crystal implementation of the Bcrypt algorythm by Niels Provos and David
+# Mazières, as [presented at USENIX in
+# 1999](https://www.usenix.org/legacy/events/usenix99/provos/provos_html/index.html).
+#
+# Refer to `Crypto::Bcrypt::Password` for a higher level interface.
+#
+# About the Cost
+#
+# Bcrypt, like the PBKDF2 or scrypt ciphers, are designed to be slow, so
+# generating rainbow tables or cracking passwords is nearly impossible. Yet,
+# computers are always getting faster and faster, so the actual cost must be
+# incremented every once in a while.
+# Always use the maximum cost that is tolerable, performance wise, for your
+# application. Be sure to test and select this based on your server, not your
+# home computer.
+#
+# This implementation of Bcrypt is currently 50% slower than pure C solutions,
+# so keep this in mind when selecting your cost. It may be wise to test with
+# Ruby's bcrypt gem which is a binding to OpenBSD's implementation.
+#
+# Last but not least: beware of denial of services! Always protect your
+# application using an external strategy (eg: rate limiting), otherwise
+# endpoints that verifies bcrypt hashes will be an easy target.
+class Crypto::Bcrypt
+  class Error < Exception
   end
 
-  def verify(password, hashedPassword)
-    p = generate_from_hash(hashedPassword)
-    other_p_hash = bcrypt(password, p.cost, p.salt)
-    other_p = Info.new p.major, p.minor, p.cost, p.salt, other_p_hash
+  DEFAULT_COST   = 11
+  COST_RANGE     = 4..31
+  PASSWORD_RANGE = 1..51
+  SALT_SIZE      = 16
 
-    if Subtle.constant_time_compare(build_hash(p).to_slice, build_hash(other_p).to_slice) == 1
-      return true
+  # :nodoc:
+  BLOWFISH_ROUNDS = 16
+
+  # :nodoc:
+  DIGEST_SIZE = 31
+
+  # bcrypt IV: "OrpheanBeholderScryDoubt"
+  # :nodoc:
+  CIPHER_TEXT = Int32[
+    0x4f727068, 0x65616e42, 0x65686f6c,
+    0x64657253, 0x63727944, 0x6f756274,
+  ]
+
+  def self.hash_secret(password, cost = DEFAULT_COST)
+    passwordb = password.to_unsafe.to_slice(password.bytesize + 1) # include leading 0
+    saltb = SecureRandom.random_bytes(SALT_SIZE)
+    new(passwordb, saltb, cost).to_s
+  end
+
+  def self.new(password : String, salt : String, cost = DEFAULT_COST)
+    passwordb = password.to_unsafe.to_slice(password.bytesize + 1) # include leading 0
+    saltb = Base64.decode(salt, SALT_SIZE)
+    new(passwordb, saltb, cost)
+  end
+
+  getter :password, :salt, :cost
+
+  def initialize(@password, @salt, @cost = DEFAULT_COST)
+    raise Error.new("Invalid cost") unless COST_RANGE.includes?(cost)
+    raise Error.new("Invalid salt size") unless salt.size == SALT_SIZE
+    raise Error.new("Invalid password size") unless PASSWORD_RANGE.includes?(password.size)
+  end
+
+  def digest
+    @digest ||= hash_password
+  end
+
+  def to_s
+    @hash ||= begin
+      salt64 = Base64.encode(salt, salt.size)
+      digest64 = Base64.encode(digest, digest.size - 1)
+      "$2a$%02d$%s%s" % {cost, salt64, digest64}
     end
-
-    false
   end
 
-  private def generate(password, cost)
-    check_valid_cost cost
-
-    cost = cost.to_s
-    unencodedSalt = SecureRandom.hex(8)
-    salt = Bcrypt::Base64.encode(unencodedSalt)
-    hash = bcrypt(password, cost, salt)
-
-    Info.new MAJOR_VERSION, MINOR_VERSION, cost, salt, hash
+  def to_s(io)
+    io << to_s
   end
 
-  private def generate_from_hash(password)
-    if password.size < MIN_HASH_SIZE
-      raise ArgumentError.new "Invalid hashedSecret size: hashedSecret too short to be a bcrypted password"
-    end
-
-    major, minor = decode_version(password)
-    cost = decode_cost(password).to_s
-    salt = password[7..(ENCODED_SALT_SIZE+6)]
-    hash = password[(ENCODED_SALT_SIZE+7)..-1]
-
-    Info.new major, minor, cost, salt, hash
+  def inspect(io)
+    to_s(io)
   end
 
-  private def bcrypt(password, cost, salt)
-    bf = setup(password, cost, salt)
-    # OrpheanBeholderScryDoubt
-    slice :: Int64[24]
-    slice[ 0] = 0x4f_i64
-    slice[ 1] = 0x72_i64
-    slice[ 2] = 0x70_i64
-    slice[ 3] = 0x68_i64
-    slice[ 4] = 0x65_i64
-    slice[ 5] = 0x61_i64
-    slice[ 6] = 0x6e_i64
-    slice[ 7] = 0x42_i64
-    slice[ 8] = 0x65_i64
-    slice[ 9] = 0x68_i64
-    slice[10] = 0x6f_i64
-    slice[11] = 0x6c_i64
-    slice[12] = 0x64_i64
-    slice[13] = 0x65_i64
-    slice[14] = 0x72_i64
-    slice[15] = 0x53_i64
-    slice[16] = 0x63_i64
-    slice[17] = 0x72_i64
-    slice[18] = 0x79_i64
-    slice[19] = 0x44_i64
-    slice[20] = 0x6f_i64
-    slice[21] = 0x75_i64
-    slice[22] = 0x62_i64
-    slice[23] = 0x74_i64
+  delegate :to_slice, :to_s
 
-    0.step(23, 2) do |i|
-      0.upto(63) do |j|
-        l, r = bf.encrypt_pair(slice[i], slice[i+1])
-        slice[i] = l
-        slice[i+1] = r
+  private def hash_password
+    blowfish = Blowfish.new(BLOWFISH_ROUNDS)
+    blowfish.enhance_key_schedule(salt, password, cost)
+
+    cdata = CIPHER_TEXT.dup
+    size = cdata.size
+
+    0.step(4, 2) do |i|
+      64.times do
+        l, r = blowfish.encrypt_pair(cdata[i], cdata[i + 1])
+        cdata[i], cdata[i + 1] = l, r
       end
     end
 
-    Crypto::Bcrypt::Base64.encode(slice)
-  end
+    ret = Slice(UInt8).new(size * 4)
+    j = -1
 
-  private def setup(key, cost, salt)
-    sl = Crypto::Bcrypt::Base64.decode(salt)
-    bf = Blowfish.new
-    bf.salted_expand_key(sl, key)
-
-    1.upto(1_u64 << cost.to_i) do |i|
-      bf.expand_key(key)
-      bf.expand_key(salt)
+    size.times do |i|
+      ret[j += 1] = (cdata[i] >> 24).to_u8
+      ret[j += 1] = (cdata[i] >> 16).to_u8
+      ret[j += 1] = (cdata[i] >> 8).to_u8
+      ret[j += 1] = cdata[i].to_u8
     end
 
-    bf
-  end
-
-  private def build_hash(password)
-    String.build do |io|
-      io << "$"
-      io << password.major
-      io << password.minor
-      io << "$"
-      io << "%02d" % password.cost
-      io << "$"
-      io << password.salt
-      io << password.hash
-    end
-  end
-
-  private def decode_version(password)
-    if password[0] != '$'
-      raise ArgumentError.new "Invalid hash prefix"
-    end
-
-    if password[1] != MAJOR_VERSION[0]
-      raise ArgumentError.new "Invalid hash version"
-    end
-
-    minor = ""
-    minor = password[2] if password[2] != '$'
-
-    {password[1].to_s, minor.to_s}
-  end
-
-  private def decode_cost(password)
-    cost = password[4..5].to_i
-    check_valid_cost cost
-    cost
-  end
-
-  private def check_valid_cost(cost)
-    unless MIN_COST <= cost <= MAX_COST
-      raise ArgumentError.new "Invalid cost size: cost #{cost} is outside allowed range (#{MIN_COST}, #{MAX_COST})"
-    end
+    ret
   end
 end
+
+require "./bcrypt/*"

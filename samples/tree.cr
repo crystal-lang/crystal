@@ -31,5 +31,5 @@ root = Node.new('$')
   root.add c
 end
 
-root.print #=> !$accklorrssty
+root.print # => !$accklorrssty
 puts

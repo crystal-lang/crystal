@@ -675,7 +675,7 @@ module Crystal
     end
 
     def has_def_without_parents?(name)
-      self.defs().try &.has_key?(name)
+      self.defs.try &.has_key?(name)
     end
   end
 
@@ -813,6 +813,14 @@ module Crystal
 
     def raw_including_types
       @including_types
+    end
+
+    def cover
+      including_types.try(&.cover) || self
+    end
+
+    def cover_size
+      including_types.try(&.cover_size) || 1
     end
 
     def filter_by_responds_to(name)
@@ -2220,7 +2228,7 @@ module Crystal
     end
 
     private def remove_at_from_var_name(name)
-      name.starts_with?('@') ? name[1 .. -1] : name
+      name.starts_with?('@') ? name[1..-1] : name
     end
   end
 
@@ -2605,7 +2613,6 @@ module Crystal
     end
   end
 
-
   # A union type that doesn't match any of the previous definitions,
   # so it can contain Nil with primitive types, or Reference types with
   # primitives types.
@@ -2645,6 +2652,29 @@ module Crystal
       type
     end
 
+    def filter_by_responds_to(name)
+      filtered = virtual_lookup(base_type).filter_by_responds_to(name)
+      return filtered.virtual_type if filtered
+
+      result = [] of Type
+      collect_filtered_by_responds_to(name, base_type, result)
+      program.type_merge_union_of(result)
+    end
+
+    def collect_filtered_by_responds_to(name, type, result)
+      type.subclasses.each do |subclass|
+        unless subclass.is_a?(GenericClassType)
+          filtered = virtual_lookup(subclass).filter_by_responds_to(name)
+          if filtered
+            result << virtual_lookup(subclass).virtual_type
+            next
+          end
+        end
+
+        collect_filtered_by_responds_to(name, subclass, result)
+      end
+    end
+
     def devirtualize
       base_type
     end
@@ -2681,29 +2711,6 @@ module Crystal
     delegate implements?, base_type
     delegate covariant?, base_type
     delegate ancestors, base_type
-
-    def filter_by_responds_to(name)
-      filtered = base_type.filter_by_responds_to(name)
-      return filtered.virtual_type if filtered
-
-      result = [] of Type
-      collect_filtered_by_responds_to(name, base_type, result)
-      program.type_merge_union_of(result)
-    end
-
-    def collect_filtered_by_responds_to(name, type, result)
-      type.subclasses.each do |subclass|
-        unless subclass.is_a?(GenericClassType)
-          filtered = subclass.filter_by_responds_to(name)
-          if filtered
-            result << subclass.virtual_type
-            next
-          end
-        end
-
-        collect_filtered_by_responds_to(name, subclass, result)
-      end
-    end
 
     def has_instance_var_in_initialize?(name)
       if base_type.abstract
@@ -2925,7 +2932,7 @@ module Crystal
     end
 
     def arg_types
-      fun_types[0 .. -2]
+      fun_types[0..-2]
     end
 
     def return_type

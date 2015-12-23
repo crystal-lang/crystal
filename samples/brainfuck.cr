@@ -38,13 +38,13 @@ class Program
     pc = 0
     while pc < @chars.size
       case @chars[pc]
-        when '>'; tape.advance
-        when '<'; tape.devance
-        when '+'; tape.inc
-        when '-'; tape.dec
-        when '.'; print! tape.get.chr
-        when '['; pc = @bracket_map[pc] if tape.get == 0
-        when ']'; pc = @bracket_map[pc] if tape.get != 0
+      when '>'; tape.advance
+      when '<'; tape.devance
+      when '+'; tape.inc
+      when '-'; tape.dec
+      when '.'; print tape.get.chr
+      when '['; pc = @bracket_map[pc] if tape.get == 0
+      when ']'; pc = @bracket_map[pc] if tape.get != 0
       end
       pc += 1
     end
@@ -75,15 +75,14 @@ class Program
 end
 
 text = if ARGV.size > 0
-  File.read(ARGV[0])
-else
-  " Benchmark brainf*ck program
+         File.read(ARGV[0])
+       else
+         " Benchmark brainf*ck program
 >++[<+++++++++++++>-]<[[>+>+<<-]>[<+>-]++++++++
 [>++++++++<-]>.[-]<<>++++++++++[>++++++++++[>++
 ++++++++[>++++++++++[>++++++++++[>++++++++++[>+
 +++++++++[-]<-]<-]<-]<-]<-]<-]<-]++++++++++.
   "
-end
+       end
 
 Program.parse(text).run
-

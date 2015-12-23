@@ -2,7 +2,7 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   def visit(node : Asm)
-    constraints = StringIO.new
+    constraints = MemoryIO.new
 
     if ptrof = node.ptrof
       output = node.output.not_nil!

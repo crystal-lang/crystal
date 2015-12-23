@@ -112,7 +112,6 @@ class Concurrent::Future(R)
   end
 end
 
-
 # Spawns a `Fiber` to compute *&block* in the background after *delay* has elapsed.
 # Access to get is synchronized between fibers.  *&block* is only called once.
 # May be canceled before *&block* is called by calling `cancel`.
@@ -125,7 +124,6 @@ def delay(delay, &block : -> R)
   Concurrent::Future.new delay: delay, &block
 end
 
-
 # Spawns a `Fiber` to compute *&block* in the background.
 # Access to get is synchronized between fibers.  *&block* is only called once.
 # ```
@@ -136,7 +134,6 @@ end
 def future(&exp : -> R)
   Concurrent::Future.new &exp
 end
-
 
 # Conditionally spawns a `Fiber` to run *&block* in the background.
 # Access to get is synchronized between fibers.  *&block* is only called once.

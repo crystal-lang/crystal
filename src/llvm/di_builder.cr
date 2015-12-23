@@ -12,7 +12,7 @@ struct LLVM::DIBuilder
   end
 
   def get_or_create_type_array(types : Array(LibLLVMExt::Metadata))
-    LibLLVMExt.di_builder_get_or_create_type_array(self, types.buffer, types.size)
+    LibLLVMExt.di_builder_get_or_create_type_array(self, types, types.size)
   end
 
   def create_subroutine_type(file, parameter_types)
@@ -30,7 +30,7 @@ struct LLVM::DIBuilder
   def create_function(scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
                       scope_line, flags, is_optimized, func)
     LibLLVMExt.di_builder_create_function(self, scope, name, linkage_name, file, line, composite_type, is_local_to_unit, is_definition,
-                                          scope_line, flags, is_optimized, func)
+      scope_line, flags, is_optimized, func)
   end
 
   def create_local_variable(tag, scope, name, file, line, type)
@@ -46,7 +46,7 @@ struct LLVM::DIBuilder
   end
 
   def get_or_create_array(elements : Array(LibLLVMExt::Metadata))
-    LibLLVMExt.di_builder_get_or_create_array(self, elements.buffer, elements.size)
+    LibLLVMExt.di_builder_get_or_create_array(self, elements, elements.size)
   end
 
   def create_enumerator(name, value)

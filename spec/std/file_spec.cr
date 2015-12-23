@@ -2,7 +2,7 @@ require "spec"
 require "tempfile"
 
 private def base
-  Dir.working_directory
+  Dir.current
 end
 
 private def tmpdir
@@ -56,6 +56,24 @@ describe "File" do
     end
   end
 
+  describe "executable?" do
+    it "gives false" do
+      File.executable?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+  end
+
+  describe "readable?" do
+    it "gives true" do
+      File.readable?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+  end
+
+  describe "writable?" do
+    it "gives true" do
+      File.writable?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+  end
+
   describe "file?" do
     it "gives true" do
       File.file?("#{__DIR__}/data/test_file.txt").should be_true
@@ -78,9 +96,9 @@ describe "File" do
 
   describe "link" do
     it "creates a hard link" do
-      out_path = "#{ __DIR__ }/data/test_file_link.txt"
+      out_path = "#{__DIR__}/data/test_file_link.txt"
       begin
-        File.link("#{ __DIR__ }/data/test_file.txt", out_path)
+        File.link("#{__DIR__}/data/test_file.txt", out_path)
         File.exists?(out_path).should be_true
       ensure
         File.delete(out_path) if File.exists?(out_path)
@@ -90,9 +108,9 @@ describe "File" do
 
   describe "symlink" do
     it "creates a symbolic link" do
-      out_path = "#{ __DIR__ }/data/test_file_symlink.txt"
+      out_path = "#{__DIR__}/data/test_file_symlink.txt"
       begin
-        File.symlink("#{ __DIR__ }/data/test_file.txt", out_path)
+        File.symlink("#{__DIR__}/data/test_file.txt", out_path)
         File.symlink?(out_path).should be_true
       ensure
         File.delete(out_path) if File.exists?(out_path)
@@ -102,12 +120,12 @@ describe "File" do
 
   describe "symlink?" do
     it "gives true" do
-      File.symlink?("#{ __DIR__ }/data/symlink.txt").should be_true
+      File.symlink?("#{__DIR__}/data/symlink.txt").should be_true
     end
 
     it "gives false" do
-      File.symlink?("#{ __DIR__ }/data/test_file.txt").should be_false
-      File.symlink?("#{ __DIR__ }/data/unknown_file.txt").should be_false
+      File.symlink?("#{__DIR__}/data/test_file.txt").should be_false
+      File.symlink?("#{__DIR__}/data/unknown_file.txt").should be_false
     end
   end
 
@@ -122,6 +140,7 @@ describe "File" do
     File.basename("/foo/").should eq("foo")
     File.basename("foo").should eq("foo")
     File.basename("").should eq("")
+    File.basename("/").should eq("/")
   end
 
   it "gets basename removing suffix" do
@@ -227,7 +246,7 @@ describe "File" do
   describe "delete" do
     it "deletes a file" do
       filename = "#{__DIR__}/data/temp1.txt"
-      File.open(filename, "w") {}
+      File.open(filename, "w") { }
       File.exists?(filename).should be_true
       File.delete(filename)
       File.exists?(filename).should be_false
@@ -296,7 +315,7 @@ describe "File" do
 
     it "replaces multiple / with a single /" do
       File.expand_path("////some/path").should eq("/some/path")
-      File.expand_path("/some////path").should eq( "/some/path")
+      File.expand_path("/some////path").should eq("/some/path")
     end
 
     it "expand path with" do
@@ -320,7 +339,7 @@ describe "File" do
       File.expand_path("~/").should eq(home)
       File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
       File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
-      File.expand_path("~/a","~/b").should eq(File.join(home, "a"))
+      File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
       File.expand_path("~").should eq(home)
       File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
       File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
@@ -398,11 +417,11 @@ describe "File" do
 
   it "returns the current read position with tell" do
     file = File.new("#{__DIR__}/data/test_file.txt")
-    file.tell().should eq(0)
+    file.tell.should eq(0)
     file.gets(5).should eq("Hello")
-    file.tell().should eq(5)
+    file.tell.should eq(5)
     file.sync = true
-    file.tell().should eq(5)
+    file.tell.should eq(5)
   end
 
   it "can navigate with pos" do
@@ -499,7 +518,7 @@ describe "File" do
       File.open(__FILE__) do |file1|
         File.open(__FILE__) do |file2|
           file1.flock_exclusive do
-# BUG: check for EWOULDBLOCK when exception filters are implemented
+            # BUG: check for EWOULDBLOCK when exception filters are implemented
             expect_raises(Errno) do
               file2.flock_exclusive(blocking: false) { }
             end

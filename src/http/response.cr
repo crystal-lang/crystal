@@ -142,13 +142,14 @@ class HTTP::Response
     when 415 then "Unsupported Media Type"
     when 416 then "Requested Range Not Satisfiable"
     when 417 then "Expectation Failed"
+    when 451 then "Unavailable For Legal Reasons"
     when 500 then "Internal Server Error"
     when 501 then "Not Implemented"
     when 502 then "Bad Gateway"
     when 503 then "Service Unavailable"
     when 504 then "Gateway Timeout"
     when 505 then "HTTP Version Not Supported"
-    else ""
+    else          ""
     end
   end
 end

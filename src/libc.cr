@@ -37,6 +37,13 @@ lib LibC
     alias UsecT = Long
   end
 
+  # This is for __builtin_va_list
+  ifdef x86_64
+    alias VaList = UInt8[24]
+  else
+    alias VaList = UInt32
+  end
+
   fun malloc(size : SizeT) : Void*
   fun realloc(ptr : Void*, size : SizeT) : Void*
   fun free(ptr : Void*)
@@ -44,11 +51,11 @@ lib LibC
   fun memcmp(p1 : Void*, p2 : Void*, size : SizeT) : Int32
   fun _exit(status : Int) : NoReturn
 
-  PROT_NONE = 0x00
-  PROT_READ = 0x01
-  PROT_WRITE = 0x02
-  PROT_EXEC = 0x04
-  MAP_SHARED = 0x0001
+  PROT_NONE   =   0x00
+  PROT_READ   =   0x01
+  PROT_WRITE  =   0x02
+  PROT_EXEC   =   0x04
+  MAP_SHARED  = 0x0001
   MAP_PRIVATE = 0x0002
 
   ifdef darwin
@@ -65,13 +72,13 @@ lib LibC
 
   # used by [event, io, time]
   struct TimeSpec
-    tv_sec  : LibC::TimeT
+    tv_sec : LibC::TimeT
     tv_nsec : LibC::TimeT
   end
 
   # used by [file/stat, time]
   struct TimeVal
-    tv_sec  : LibC::TimeT
+    tv_sec : LibC::TimeT
     tv_usec : LibC::UsecT
   end
 end

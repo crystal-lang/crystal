@@ -144,6 +144,31 @@ describe "Char" do
     ('b' <=> 'a').should be > 0
   end
 
+  describe "+" do
+    it "does for both ascii" do
+      str = 'f' + "oo"
+      str.bytesize.should eq(3)
+      str.@length.should eq(3)
+      str.should eq("foo")
+    end
+
+    it "does for both unicode" do
+      str = '青' + "旅路"
+      str.@length.should eq(3)
+      str.should eq("青旅路")
+    end
+  end
+
+  describe "bytesize" do
+    it "does for ascii" do
+      'a'.bytesize.should eq(1)
+    end
+
+    it "does for unicode" do
+      '青'.bytesize.should eq(3)
+    end
+  end
+
   describe "in_set?" do
     assert { 'a'.in_set?("a").should be_true }
     assert { 'a'.in_set?("b").should be_false }

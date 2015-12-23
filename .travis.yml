@@ -1,5 +1,6 @@
 language: generic
 sudo: required
+dist: trusty
 services:
   - docker
 matrix:

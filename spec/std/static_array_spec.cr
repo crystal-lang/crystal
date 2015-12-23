@@ -98,7 +98,6 @@ describe "StaticArray" do
     a[2].should eq(4)
   end
 
-
   it "updates value" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.update(1) { |x| x * 2 }

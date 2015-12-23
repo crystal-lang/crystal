@@ -1,6 +1,6 @@
 require "http/server"
 
-server = HTTP::Server.new "0.0.0.0", 8080, do |request|
+server = HTTP::Server.new "0.0.0.0", 8080 do |request|
   HTTP::Response.ok "text/plain", "Hello world!"
 end
 

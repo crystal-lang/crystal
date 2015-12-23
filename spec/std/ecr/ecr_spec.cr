@@ -18,7 +18,7 @@ describe "ECR" do
       %((#<loc:"foo.cr",1,10> 1 ).to_s __str__),
       %(__str__ << " wor\\nld "),
       %(#<loc:"foo.cr",2,6> while true ),
-        %(__str__ << " 2 "),
+      %(__str__ << " 2 "),
       %(#<loc:"foo.cr",2,25> end ),
     ]
     program.should eq(pieces.join("\n") + "\n")

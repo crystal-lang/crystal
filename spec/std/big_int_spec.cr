@@ -187,4 +187,3 @@ describe "BigInt" do
     "abcabcabcabcabcabc".to_big_i(base: 16).should eq(BigInt.new("3169001976782853491388"))
   end
 end
-

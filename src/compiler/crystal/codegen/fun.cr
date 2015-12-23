@@ -317,7 +317,7 @@ class Crystal::CodeGenVisitor
       end
 
       if (closure_parent_context = context.closure_parent_context) &&
-          (parent_vars = closure_parent_context.closure_vars)
+         (parent_vars = closure_parent_context.closure_vars)
         parent_closure_ptr = gep(closure_ptr, 0, closure_vars.size, "parent_ptr")
         setup_closure_vars(parent_vars, closure_parent_context, load(parent_closure_ptr, "parent"))
       elsif closure_self = context.closure_self

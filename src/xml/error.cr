@@ -32,4 +32,3 @@ class XML::Error < Exception
     end
   end
 end
-

@@ -1,39 +1,39 @@
-# `Time::Span` represents one period of time. 
+# `Time::Span` represents one period of time.
 #
-# A `Time::Span` initializes with the specified period. 
-# Different numbers of arguments generates a `Time::Span` in different length. 
+# A `Time::Span` initializes with the specified period.
+# Different numbers of arguments generates a `Time::Span` in different length.
 # Check all `#new` methods for details.
 #
 # ```crystal
-# Time::Span.new(10000)          #=> 0:0:0.010000
-# Time::Span.new(10, 10, 10)     #=> 10:10:10
-# Time::Span.new(10, 10, 10, 10) #=> 10.10:10:10
+# Time::Span.new(10000)          # => 0:0:0.010000
+# Time::Span.new(10, 10, 10)     # => 10:10:10
+# Time::Span.new(10, 10, 10, 10) # => 10.10:10:10
 # ```
-# 
+#
 # Calculation between `Time` also returns a `Time::Span`.
 #
 # ```crystal
 # span = Time.new(2015, 10, 10) - Time.new(2015, 9, 10)
-# span       #=> 30.00:00:00
-# span.class #=> Time::Span
+# span       # => 30.00:00:00
+# span.class # => Time::Span
 # ```
 #
 # Inspection:
 #
 # ```crystal
-# span = Time::Span.new(20, 10, 10) 
-# span.hours   #=> 20
-# span.minutes #=> 10
-# span.seconds #=> 10
+# span = Time::Span.new(20, 10, 10)
+# span.hours   # => 20
+# span.minutes # => 10
+# span.seconds # => 10
 # ```
 #
 # Calculation:
 #
 # ```crystal
-# a = Time::Span.new(20, 10, 10)   
+# a = Time::Span.new(20, 10, 10)
 # b = Time::Span.new(10, 10, 10)
-# c = a - b #=> 10:00:00
-# c.hours   #=> 10
+# c = a - b # => 10:00:00
+# c.hours   # => 10
 # ```
 #
 struct Time::Span
@@ -83,18 +83,18 @@ struct Time::Span
     hrssec = hours * 3600 # break point at (Int32::MAX - 596523)
     minsec = minutes * 60
     t = (hrssec + minsec + seconds).to_i64 * 1000_i64 + milliseconds.to_i64
-    t *= 10000_i64;
+    t *= 10000_i64
 
-    result = 0_i64;
+    result = 0_i64
 
     overflow = false
     # days is problematic because it can overflow but that overflow can be
     # "legal" (i.e. temporary) (e.g. if other parameters are negative) or
     # illegal (e.g. sign change).
     if days > 0
-      td = TicksPerDay * days;
+      td = TicksPerDay * days
       if t < 0
-        ticks = t;
+        ticks = t
         t += td
         # positive days -> total ticks should be lower
         overflow = ticks > t
@@ -104,7 +104,7 @@ struct Time::Span
         overflow = t < 0
       end
     elsif days < 0
-      td = TicksPerDay * days;
+      td = TicksPerDay * days
       if t <= 0
         t += td
         # negative + negative != positive result
@@ -214,6 +214,16 @@ struct Time::Span
     self
   end
 
+  def *(number : Number)
+    # TODO check overflow
+    Span.new(ticks * number)
+  end
+
+  def /(number : Number)
+    # TODO check overflow
+    Span.new(ticks / number)
+  end
+
   def <=>(other : self)
     ticks <=> other.ticks
   end
@@ -252,11 +262,11 @@ struct Time::Span
     if fractional != 0
       io << '.'
       io << '0' if fractional < 1000000
-      io << '0' if fractional <  100000
-      io << '0' if fractional <   10000
-      io << '0' if fractional <    1000
-      io << '0' if fractional <     100
-      io << '0' if fractional <      10
+      io << '0' if fractional < 100000
+      io << '0' if fractional < 10000
+      io << '0' if fractional < 1000
+      io << '0' if fractional < 100
+      io << '0' if fractional < 10
       io << fractional
     end
   end
@@ -265,7 +275,7 @@ struct Time::Span
     # TODO check nan
     # TODO check infinity and overflow
     value = value * (tick_multiplicator / TicksPerMillisecond)
-      val = (value < 0 ? (value - 0.5)  : (value + 0.5)).to_i64 # round away from zero
+    val = (value < 0 ? (value - 0.5) : (value + 0.5)).to_i64 # round away from zero
     Span.new(val * TicksPerMillisecond)
   end
 end
@@ -375,4 +385,3 @@ struct Int
     Time::MonthSpan.new(self * 12)
   end
 end
-

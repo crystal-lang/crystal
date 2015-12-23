@@ -596,4 +596,16 @@ describe "Lexer macro" do
     token.macro_state.beginning_of_line.should be_false
     token.macro_state.nest.should eq(1)
   end
+
+  it "lexes begin end" do
+    lexer = Lexer.new(%(begin\nend end))
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("begin\n")
+
+    token = lexer.next_macro_token(token.macro_state, token.macro_state.beginning_of_line)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("end ")
+    token.line_number.should eq(2)
+  end
 end

@@ -1,6 +1,6 @@
 @[Link("m")] ifdef linux
 lib LibM
-  ### To be uncommented once LLVM is updated
+  # ## To be uncommented once LLVM is updated
   # LLVM binary operations
   # fun div_i32 = "llvm.sdiv"(value1 : Int32, value2 : Int32) : Int32
   # fun div_f32 = "llvm.fdiv"(value1 : Float32, value2 : Float32) : Float32
@@ -28,7 +28,7 @@ lib LibM
   fun log2_f64 = "llvm.log2.f64"(value : Float64) : Float64
   fun log10_f32 = "llvm.log10.f32"(value : Float32) : Float32
   fun log10_f64 = "llvm.log10.f64"(value : Float64) : Float64
-  ### To be uncommented once LLVM is updated
+  # ## To be uncommented once LLVM is updated
   # fun min_f32 = "llvm.minnum.f32"(value1 : Float32, value2 : Float32) : Float32
   # fun min_f64 = "llvm.minnum.f64"(value1 : Float64, value2 : Float64) : Float64
   # fun max_f32 = "llvm.maxnum.f32"(value1 : Float32, value2 : Float32) : Float32

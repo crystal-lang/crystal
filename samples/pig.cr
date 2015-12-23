@@ -1,7 +1,7 @@
 # Translated from Go: http://golang.org/doc/codewalk/functions/
 
-Win = 100            # The winning score in a game of Pig
-GamesPerSeries = 10  # The number of games per series to simulate
+Win            = 100 # The winning score in a game of Pig
+GamesPerSeries =  10 # The number of games per series to simulate
 
 # A score includes scores accumulated in previous turns for each player,
 # as well as the points scored by the current player in this turn.
@@ -59,9 +59,9 @@ end
 # roundRobin simulates a series of games between every pair of strategies.
 def round_robin(strategies)
   wins = Array.new(strategies.size, 0)
-  (0 ... strategies.size).each do |i|
-    (i + 1 ... strategies.size).each do |j|
-      (0 ... GamesPerSeries).each do |k|
+  (0...strategies.size).each do |i|
+    (i + 1...strategies.size).each do |j|
+      (0...GamesPerSeries).each do |k|
         winner = play strategies[i], strategies[j]
         if winner == 0
           wins[i] += 1

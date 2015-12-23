@@ -2,6 +2,21 @@ require "openssl"
 require "socket"
 require "../common"
 
+# A handler is a class which inherits from HTTP::Handler and implements the `call`method.
+# You can use a handler to intercept any incoming request and can modify the response. These can be used for request throttling,
+# ip-based whitelisting, adding custom headers e.g.
+#
+# ### A custom handler
+#
+# ```
+# class CustomHandler < HTTP::Handler
+#   def call(request)
+#     puts "Doing some stuff"
+#     call_next(request)
+#   end
+# end
+# ```
+
 abstract class HTTP::Handler
   property :next
 
@@ -19,6 +34,7 @@ require "./handlers/*"
 # An HTTP::Server
 #
 # ### Simple Setup
+#
 # ```
 # require "http/server"
 #
@@ -31,6 +47,7 @@ require "./handlers/*"
 # ```
 #
 # ### With non-localhost bind address
+#
 # ```
 # require "http/server"
 #
@@ -43,26 +60,28 @@ require "./handlers/*"
 # ```
 #
 # ### Add handlers
+#
 # ```
 # require "http/server"
 #
 # Server.new("127.0.0.1", 8080, [
-#         ErrorHandler.new,
-#         LogHandler.new,
-#         DeflateHandler.new,
-#         StaticFileHandler.new("."),
-# ]
-# ).listen
+#   ErrorHandler.new,
+#   LogHandler.new,
+#   DeflateHandler.new,
+#   StaticFileHandler.new("."),
+# ]).listen
+# ```
 #
 # ### Add handlers and block
+#
 # ```
 # require "http/server"
 #
 # server = HTTP::Server.new("0.0.0.0", 8080,
-#       [
-#         ErrorHandler.new,
-#         LogHandler.new
-#        ]) do |request|
+#   [
+#     ErrorHandler.new,
+#     LogHandler.new,
+#   ]) do |request|
 #   HTTP::Response.ok "text/plain", "Hello world!"
 # end
 #
@@ -111,17 +130,6 @@ class HTTP::Server
     end
   end
 
-  def listen_fork(workers = 8)
-    server = TCPServer.new(@host, @port)
-    workers.times do
-      fork do
-        loop { spawn handle_client(server.accept) }
-      end
-    end
-
-    gets
-  end
-
   def close
     @wants_close = true
   end
@@ -156,20 +164,11 @@ class HTTP::Server
     end
   end
 
+  # Builds all handlers as the middleware for HTTP::Server.
   def self.build_middleware(handlers, last_handler = nil : Request -> Response)
-    if handlers.empty?
-      raise ArgumentError.new "no handlers specified"
-    end
-
-    0.upto(handlers.size - 2) do |i|
-      handlers[i].next = handlers[i + 1]
-    end
-
-    if last_handler
-      handlers.last.next = last_handler
-    end
-
+    raise ArgumentError.new "You must specify at least one HTTP Handler." if handlers.empty?
+    0.upto(handlers.size - 2) { |i| handlers[i].next = handlers[i + 1] }
+    handlers.last.next = last_handler if last_handler
     handlers.first
   end
 end
-

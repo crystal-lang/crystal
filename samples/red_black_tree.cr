@@ -8,8 +8,8 @@ class RedBlackTree
     property! :right
     property! :parent
 
-    RED = :red
-    BLACK = :black
+    RED    = :red
+    BLACK  = :black
     COLORS = [RED, BLACK]
 
     def initialize(key, color = RED)
@@ -47,7 +47,7 @@ class RedBlackTree
     end
   end
 
-#  include Enumerable
+  #  include Enumerable
 
   property :root
   property :size
@@ -209,7 +209,7 @@ class RedBlackTree
     height = 0
     while !x.nil?
       x = x.left
-      height +=1 if x.nil? || x.black?
+      height += 1 if x.nil? || x.black?
     end
     height
   end
@@ -325,7 +325,6 @@ class RedBlackTree
 end
 
 class RedBlackTreeRunner
-
   property :tree
 
   def initialize(n = 10_000)
@@ -342,34 +341,34 @@ class RedBlackTreeRunner
 
   def run_delete
     @tree = RedBlackTree.new
-    @n.times { |i| @tree.add(i)}
+    @n.times { |i| @tree.add(i) }
     @n.times { @tree.delete(@tree.root) }
     tree.size
   end
 
   def run_add
     @tree = RedBlackTree.new
-    @a1.each {|e| @tree.add(e) }
+    @a1.each { |e| @tree.add(e) }
     tree.size
   end
 
   def run_search
     s = c = 0
-    @a2.each {|e| c += 1; s += @tree.search(e).key % 3 }
+    @a2.each { |e| c += 1; s += @tree.search(e).key % 3 }
     [s, c]
   end
 
   def run_inorder_walk
     s = 0
     c = 0
-    @tree.inorder_walk {|key| c += 1; s += key % 3 }
+    @tree.inorder_walk { |key| c += 1; s += key % 3 }
     [s, c]
   end
 
   def run_reverse_inorder_walk
     s = 0
     c = 0
-    @tree.reverse_inorder_walk {|key| c += 1; s += key % 3 }
+    @tree.reverse_inorder_walk { |key| c += 1; s += key % 3 }
     [s, c]
   end
 
@@ -401,7 +400,7 @@ end
 t = Time.now
 
 b = RedBlackTreeRunner.new 100_000
-bench("delete", 10) {  b.run_delete }
+bench("delete", 10) { b.run_delete }
 bench("add", 10) { b.run_add }
 bench("search", 10) { b.run_search }
 bench("walk", 100) { b.run_inorder_walk }

@@ -48,6 +48,14 @@ module Crystal
     end
 
     def parse_expressions
+      value, _ = preserve_last_call_has_parenthesis do
+        @last_call_has_parenthesis = true
+        parse_expressions_internal
+      end
+      value
+    end
+
+    def parse_expressions_internal
       if is_end_token
         return Nop.new
       end
@@ -118,7 +126,7 @@ module Crystal
         unexpected_token
       end
 
-      targets = exps[0 ... assign_index].map { |exp| to_lhs(exp) }
+      targets = exps[0...assign_index].map { |exp| to_lhs(exp) }
       if ivars = @instance_vars
         targets.each do |target|
           ivars.add target.name if target.is_a?(InstanceVar)
@@ -140,7 +148,7 @@ module Crystal
         raise "Bug: mutliassign index expression can only be Assign or Call"
       end
 
-      values.concat exps[assign_index + 1 .. -1]
+      values.concat exps[assign_index + 1..-1]
       if values.size != 1 && targets.size != 1 && targets.size != values.size
         raise "Multiple assignment count mismatch", location
       end
@@ -641,9 +649,9 @@ module Crystal
               value = parse_op_assign
 
               atomic = Or.new(
-                  Call.new(atomic, name).at(location),
-                  Call.new(atomic.clone, "#{name}=", value).at(location)
-                ).at(location)
+                Call.new(atomic, name).at(location),
+                Call.new(atomic.clone, "#{name}=", value).at(location)
+              ).at(location)
               next
             when :"&&="
               # Rewrite 'f.x &&= value' as 'f.x && f.x=(value)'
@@ -651,9 +659,9 @@ module Crystal
               value = parse_op_assign
 
               atomic = And.new(
-                  Call.new(atomic, name).at(location),
-                  Call.new(atomic.clone, "#{name}=", value).at(location)
-                ).at(location)
+                Call.new(atomic, name).at(location),
+                Call.new(atomic.clone, "#{name}=", value).at(location)
+              ).at(location)
               next
             else
               call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis { space_consumed ? parse_call_args_space_consumed : parse_call_args }
@@ -667,7 +675,7 @@ module Crystal
               end
             end
 
-            block = parse_block(block)
+            block = parse_block(block, stop_on_do: space_consumed && !@last_call_has_parenthesis)
             if block || block_arg
               atomic = Call.new atomic, name, (args || [] of ASTNode), block, block_arg, named_args, name_column_number: name_column_number
             else
@@ -765,6 +773,8 @@ module Crystal
         next_token
         name = parse_responds_to_name
         next_token_skip_space
+      else
+        unexpected_token msg: "expected space or '('"
       end
 
       RespondsTo.new(atomic, name)
@@ -1101,6 +1111,7 @@ module Crystal
       if !node.is_a?(ExceptionHandler) && !node.is_a?(Expressions)
         node = Expressions.new([node]).at(node).at_end(node)
       end
+      node.keyword = :begin if node.is_a?(Expressions)
       node
     end
 
@@ -1459,7 +1470,9 @@ module Crystal
 
       unexpected_token "(" if @token.type == :"("
 
-      Expressions.new exps
+      node = Expressions.new exps
+      node.keyword = :"("
+      node
     end
 
     def parse_fun_literal
@@ -1499,6 +1512,7 @@ module Crystal
       elsif @token.type == :"{"
         next_token_skip_statement_end
         check_not_pipe_before_proc_literal_body
+        @last_call_has_parenthesis = true
         body = parse_expressions
         end_location = token_end_location
         check :"}"
@@ -2588,7 +2602,7 @@ module Crystal
           unexpected_token @token.to_s, "parentheses are mandatory for def arguments"
         end
       when :";", :"NEWLINE"
-         # Skip
+        # Skip
       when :":"
         # Skip
       when :"&"
@@ -2664,9 +2678,9 @@ module Crystal
     end
 
     def compute_block_arg_yields(block_arg)
-      block_arg_fun = block_arg.fun
-      if block_arg_fun.is_a?(Fun)
-        @yields = block_arg_fun.inputs.try(&.size) || 0
+      block_arg_restriction = block_arg.restriction
+      if block_arg_restriction.is_a?(Fun)
+        @yields = block_arg_restriction.inputs.try(&.size) || 0
       else
         @yields = 0
       end
@@ -2776,11 +2790,9 @@ module Crystal
         location = @token.location
 
         type_spec = parse_single_type
-      else
-        type_spec = Fun.new
       end
 
-      block_arg = BlockArg.new(arg_name, type_spec).at(name_location)
+      block_arg = Arg.new(arg_name, restriction: type_spec).at(name_location)
 
       push_var block_arg
 
@@ -2795,7 +2807,7 @@ module Crystal
         arg_name = @token.value.to_s
         uses_arg = false
       when :INSTANCE_VAR
-        arg_name = @token.value.to_s[1 .. -1]
+        arg_name = @token.value.to_s[1..-1]
         ivar = InstanceVar.new(@token.value.to_s).at(location)
         var = Var.new(arg_name).at(location)
         assign = Assign.new(ivar, var).at(location)
@@ -2807,7 +2819,7 @@ module Crystal
         add_instance_var ivar.name
         uses_arg = true
       when :CLASS_VAR
-        arg_name = @token.value.to_s[2 .. -1]
+        arg_name = @token.value.to_s[2..-1]
         cvar = ClassVar.new(@token.value.to_s).at(location)
         var = Var.new(arg_name).at(location)
         assign = Assign.new(cvar, var).at(location)
@@ -2889,7 +2901,6 @@ module Crystal
 
       a_then = parse_ifdef_body(mode)
       skip_statement_end
-
 
       a_else = nil
       if @token.type == :IDENT
@@ -3068,8 +3079,10 @@ module Crystal
       {value, last_call_has_parenthesis}
     end
 
-    def parse_block(block)
+    def parse_block(block, stop_on_do = false)
       if @token.keyword?(:do)
+        return block if stop_on_do
+
         raise "block already specified with &" if block
         parse_block2 { check_ident :end }
       elsif @token.type == :"{"
@@ -3128,7 +3141,7 @@ module Crystal
 
     record CallArgs, args, block, block_arg, named_args, stopped_on_do_after_space, end_location
 
-    def parse_call_args(stop_on_do_after_space = false, allow_curly = false)
+    def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false)
       case @token.type
       when :"{"
         @last_call_has_parenthesis = false
@@ -3181,10 +3194,14 @@ module Crystal
         slash_is_not_regex!
         end_location = token_end_location
         next_token
-        @last_call_has_parenthesis = false
+        @last_call_has_parenthesis = false unless control
 
         if stop_on_do_after_space && @token.keyword?(:do)
           return CallArgs.new nil, nil, nil, nil, true, end_location
+        end
+
+        if control && @token.keyword?(:do)
+          unexpected_token
         end
 
         parse_call_args_space_consumed check_plus_and_minus: true, allow_curly: allow_curly
@@ -3882,7 +3899,10 @@ module Crystal
       end_location = token_end_location
       next_token
 
-      call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis { parse_call_args allow_curly: true }
+      call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis do
+        @last_call_has_parenthesis = true
+        parse_call_args allow_curly: true, control: true
+      end
       args = call_args.args if call_args
 
       if args
@@ -3965,7 +3985,7 @@ module Crystal
         Assign.new(ident, value)
       when :GLOBAL
         location = @token.location
-        name = @token.value.to_s[1 .. -1]
+        name = @token.value.to_s[1..-1]
         next_token_skip_space_or_newline
         if @token.type == :"="
           next_token_skip_space
@@ -4380,7 +4400,7 @@ module Crystal
       end
     end
 
-    def push_var(var : Var | Arg | BlockArg)
+    def push_var(var : Var | Arg)
       push_var_name var.name.to_s
     end
 

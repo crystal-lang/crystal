@@ -29,19 +29,19 @@ describe "Codegen: is_a?" do
     run("(1 == 1 ? nil : Reference.new).is_a?(Nil)").to_b.should be_true
   end
 
-  it "codegens is_a? with nilable gives false becuase other type 1" do
+  it "codegens is_a? with nilable gives false because other type 1" do
     run("(1 == 1 ? nil : Reference.new).is_a?(Reference)").to_b.should be_false
   end
 
-  it "codegens is_a? with nilable gives false becuase other type 2" do
+  it "codegens is_a? with nilable gives false because other type 2" do
     run("(1 == 2 ? nil : Reference.new).is_a?(Reference)").to_b.should be_true
   end
 
-  it "codegens is_a? with nilable gives false becuase no type" do
+  it "codegens is_a? with nilable gives false because no type" do
     run("(1 == 2 ? nil : Reference.new).is_a?(String)").to_b.should be_false
   end
 
-  it "codegens is_a? with nilable gives false becuase no type" do
+  it "codegens is_a? with nilable gives false because no type" do
     run("1.is_a?(Object)").to_b.should be_true
   end
 

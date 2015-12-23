@@ -55,7 +55,7 @@ describe "Spec matchers" do
     end
 
     it "works with range" do
-      (50 .. 55).should contain(53)
+      (50..55).should contain(53)
     end
 
     it "does not pass when string does not includes? specified substring" do

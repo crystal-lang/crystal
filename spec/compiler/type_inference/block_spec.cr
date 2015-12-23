@@ -660,7 +660,6 @@ describe "Block inference" do
       )) { fun_of(types["Bar"], void) }
   end
 
-
   it "types bug with yield not_nil! that is never not nil" do
     assert_type(%(
       lib LibC
@@ -953,5 +952,27 @@ describe "Block inference" do
       foo {}
       ),
       "recursive block expansion"
+  end
+
+  it "binds to proc, not only to its body (#1796)" do
+    assert_type(%(
+      def yielder(&block : Int32 -> U)
+        yield 1
+        U
+      end
+
+      yielder { next 'a' if true; 1 }
+      )) { union_of(int32, char).metaclass }
+  end
+
+  it "binds block return type free variable even if there are no block arguments (#1797)" do
+    assert_type(%(
+      def yielder(&block : -> U)
+        yield
+        U
+      end
+
+      yielder { 1 }
+      )) { int32.metaclass }
   end
 end

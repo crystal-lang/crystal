@@ -61,13 +61,17 @@ class HTTP::Request
     nil
   end
 
-  # Lazily parses request's path component.
-  delegate "path", uri
+  # Lazily parses and return the request's path component.
+  def path
+    uri.path
+  end
 
   # Sets request's path component.
-  delegate "path=", uri
+  def path=(path)
+    uri.path = path
+  end
 
-  # Lazily parses request's query component.
+  # Lazily parses and returns the request's query component.
   def query
     update_uri
     uri.query

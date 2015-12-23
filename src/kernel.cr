@@ -1,10 +1,10 @@
-STDIN = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
+STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
 STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
 STDERR = IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
-ARGV = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
-ARGF = IO::ARGF.new(ARGV, STDIN)
+ARGV         = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
+ARGF         = IO::ARGF.new(ARGV, STDIN)
 
 # Repeatedly executes the block, passing an incremental `Int32`
 # that starts with 0.
@@ -35,14 +35,9 @@ def read_line(*args)
   STDIN.read_line(*args)
 end
 
-# Prints objects to STDOUT. See `IO#print`.
+# Prints objects to STDOUT and then invokes `STDOUT.flush`. See `IO#print`.
 def print(*objects : _)
   STDOUT.print *objects
-end
-
-# Prints objects to STDOUT and then invokes `STDOUT.flush`. See `IO#print`.
-def print!(*objects : _)
-  print *objects
   STDOUT.flush
   nil
 end
@@ -87,18 +82,20 @@ module AtExitHandlers
   @@handlers = nil
 
   def self.add(handler)
-    handlers = @@handlers ||= [] of ->
+    handlers = @@handlers ||= [] of Int32 ->
     handlers << handler
   end
 
-  def self.run
+  def self.run(status)
     return if @@running
     @@running = true
 
-    begin
-      @@handlers.try &.reverse_each &.call
-    rescue handler_ex
-      puts "Error running at_exit handler: #{handler_ex}"
+    @@handlers.try &.reverse_each do |handler|
+      begin
+        handler.call status
+      rescue handler_ex
+        STDERR.puts "Error running at_exit handler: #{handler_ex}"
+      end
     end
   end
 end
@@ -121,7 +118,7 @@ end
 # ```text
 # goodbye cruel world
 # ```
-def at_exit(&handler)
+def at_exit(&handler : Int32 ->)
   AtExitHandlers.add(handler)
 end
 
@@ -130,7 +127,7 @@ end
 #
 # Registered `at_exit` procs are executed.
 def exit(status = 0)
-  AtExitHandlers.run
+  AtExitHandlers.run status
   STDOUT.flush
   STDERR.flush
   Process.exit(status)
@@ -146,9 +143,10 @@ end
 class Process
   # hooks defined here due to load order problems
   @@after_fork_child_callbacks = [
-    -> { Scheduler.after_fork; nil },
-    -> { Event::SignalHandler.after_fork; nil },
-    -> { Event::SignalChildHandler.instance.after_fork; nil }
+    ->{ Scheduler.after_fork; nil },
+    ->{ Event::SignalHandler.after_fork; nil },
+    ->{ Event::SignalChildHandler.instance.after_fork; nil },
+    ->{ Random::DEFAULT.new_seed; nil },
   ]
 end
 
@@ -163,4 +161,3 @@ spawn do
     Fiber.stack_pool_collect
   end
 end
-

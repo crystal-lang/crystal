@@ -5,13 +5,13 @@ require "../types"
 module Crystal
   class Program
     def after_type_inference(node)
-      node = node.transform(after_type_inference_transformer)
+      node = node.transform(AfterTypeInferenceTransformer.new(self))
       puts node if ENV["AFTER"]? == "1"
       node
     end
 
     def finish_types
-      transformer = after_type_inference_transformer()
+      transformer = AfterTypeInferenceTransformer.new(self)
       after_inference_types.each do |type|
         finish_type type, transformer
       end
@@ -34,10 +34,6 @@ module Crystal
       type.instance_vars_initializers.try &.each do |initializer|
         initializer.value = initializer.value.transform(transformer)
       end
-    end
-
-    def after_type_inference_transformer
-      @after_type_inference_transformer ||= AfterTypeInferenceTransformer.new(self)
     end
   end
 
@@ -287,10 +283,10 @@ module Crystal
       end
 
       # Check if the block has its type freezed and it doesn't match the current type
-      if block && (freeze_type = block.body.freeze_type) && (block_body_type = block.body.type?)
-        unless freeze_type.is_restriction_of_all?(block_body_type)
+      if block && (freeze_type = block.freeze_type) && (block_type = block.type?)
+        unless freeze_type.is_restriction_of_all?(block_type)
           freeze_type = freeze_type.base_type if freeze_type.is_a?(VirtualType)
-          node.raise "expected block to return #{freeze_type}, not #{block_body_type}"
+          node.raise "expected block to return #{freeze_type}, not #{block_type}"
         end
       end
 

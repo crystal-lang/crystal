@@ -19,17 +19,17 @@ class SemanticVersion
     end
   end
 
-  def initialize(@major : Int, @minor : Int, @patch : Int, prerelease = nil: String | Prerelease | Nil, @build = nil : String?)
+  def initialize(@major : Int, @minor : Int, @patch : Int, prerelease = nil : String | Prerelease | Nil, @build = nil : String?)
     @prerelease = case prerelease
-    when Prerelease
-      prerelease
-    when String
-      Prerelease.parse prerelease
-    when nil
-      Prerelease.new
-    else
-      raise ArgumentError.new("invalid prerelease #{prerelease.inspect}")
-    end
+                  when Prerelease
+                    prerelease
+                  when String
+                    Prerelease.parse prerelease
+                  when nil
+                    Prerelease.new
+                  else
+                    raise ArgumentError.new("invalid prerelease #{prerelease.inspect}")
+                  end
   end
 
   def to_s(io : IO)
@@ -72,7 +72,7 @@ class SemanticVersion
 
     getter identifiers
 
-    def initialize(@identifiers = [] of String | Int32 : Array(String | Int32) )
+    def initialize(@identifiers = [] of String | Int32 : Array(String | Int32))
     end
 
     def to_s(io : IO)
@@ -82,7 +82,7 @@ class SemanticVersion
       end
     end
 
-    def <=>(other : self ) : Int32
+    def <=>(other : self) : Int32
       if identifiers.empty?
         if other.identifiers.empty?
           return 0

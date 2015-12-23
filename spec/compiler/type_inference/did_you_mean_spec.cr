@@ -149,6 +149,18 @@ describe "Type inference: did you mean" do
     assert_error %(
       a if a = 1
       ),
-      "if you declared 'a' in a suffix if, declare it in a regular if for this to work"
+      "If you declared 'a' in a suffix if, declare it in a regular if for this to work"
+  end
+
+  it "doesn't suggest when declaring var inside macro (#466)" do
+    assert_error %(
+      macro foo
+        a = 1
+      end
+
+      foo
+      a
+      ),
+      "If the variable was declared in a macro it's not visible outside it"
   end
 end

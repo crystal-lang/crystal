@@ -1,4 +1,4 @@
-require "html/builder"
+require "ecr/macros"
 
 class HTTP::StaticFileHandler < HTTP::Handler
   def initialize(@publicdir)
@@ -18,31 +18,19 @@ class HTTP::StaticFileHandler < HTTP::Handler
 
   private def mime_type(path)
     case File.extname(path)
-    when ".txt" then "text/plain"
+    when ".txt"          then "text/plain"
     when ".htm", ".html" then "text/html"
-    when ".css" then "text/css"
-    when ".js" then "application/javascript"
-    else "application/octet-stream"
+    when ".css"          then "text/css"
+    when ".js"           then "application/javascript"
+    else                      "application/octet-stream"
     end
   end
 
+  record DirectoryListing, request_path, path do
+    ecr_file "#{__DIR__}/static_file_handler.html"
+  end
+
   private def directory_listing(request_path, path)
-    HTML::Builder.new.build do
-      html do
-        title { text "Directory listing for #{request_path}" }
-        body do
-          h2 { text "Directory listing for #{request_path}" }
-          hr
-          ul do
-            Dir.foreach(path) do |entry|
-              next if entry == "." || entry == ".."
-              li do
-                a({href: "#{request_path == "/" ? "" : request_path}/#{entry}"}) { text entry }
-              end
-            end
-          end
-        end
-      end
-    end
+    DirectoryListing.new(request_path, path).to_s
   end
 end

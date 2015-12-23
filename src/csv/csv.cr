@@ -38,22 +38,22 @@ require "./**"
 # require "csv"
 #
 # csv = CSV.new("Name, Age\nJohn, 20\nPeter, 30", headers: true)
-# csv.next #=> true
+# csv.next # => true
 #
-# csv["Name"] #=>  "John"
-# csv[0]      #=>  "John"
-# csv[-2]     #=>  "John"
-# csv[/name/i] #=> "John"
+# csv["Name"]  # => "John"
+# csv[0]       # => "John"
+# csv[-2]      # => "John"
+# csv[/name/i] # => "John"
 #
-# csv["Age"] #=> " 20"
+# csv["Age"] # => " 20"
 #
-# csv.row.to_a #=> ["John", " 20"]
-# csv.row.to_h #=> {"Name" => "John", "Age" => " 20"}
+# csv.row.to_a # => ["John", " 20"]
+# csv.row.to_h # => {"Name" => "John", "Age" => " 20"}
 #
-# csv.next #=> true
-# csv["Name"] #=> "Peter"
+# csv.next    # => true
+# csv["Name"] # => "Peter"
 #
-# csv.next #=> false
+# csv.next # => false
 # ```
 #
 # ### Building
@@ -63,7 +63,7 @@ class CSV
   # Parses a CSV or IO into an array.
   #
   # ```
-  # CSV.parse("one,two\nthree") #=> [["one", "two"], ["three"]]
+  # CSV.parse("one,two\nthree") # => [["one", "two"], ["three"]]
   # ```
   def self.parse(string_or_io : String | IO) : Array(Array(String))
     Parser.new(string_or_io).parse
@@ -93,8 +93,8 @@ class CSV
   #
   # ```
   # rows = CSV.each_row("one,two\nthree")
-  # rows.next #=> ["one", "two"]
-  # rows.next #=> ["three"]
+  # rows.next # => ["one", "two"]
+  # rows.next # => ["three"]
   # ```
   def self.each_row(string_or_io : String | IO)
     Parser.new(string_or_io).each_row
@@ -107,7 +107,7 @@ class CSV
   #   csv.row "one", "two"
   #   csv.row "three"
   # end
-  # result #=> "one,two\nthree"
+  # result # => "one,two\nthree"
   # ```
   def self.build : String
     String.build do |io|
@@ -119,13 +119,13 @@ class CSV
   # that writes to the given IO.
   #
   # ```
-  # io = StringIO.new
+  # io = MemoryIO.new
   # io.puts "HEADER"
   # CSV.build(io) do |csv|
   #   csv.row "one", "two"
   #   csv.row "three"
   # end
-  # io.to_s #=> "HEADER\none,two\nthree"
+  # io.to_s # => "HEADER\none,two\nthree"
   # ```
   def self.build(io : IO)
     builder = Builder.new(io)

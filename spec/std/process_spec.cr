@@ -47,7 +47,7 @@ describe Process do
   end
 
   it "sends input in IO" do
-    value = Process.run("/bin/cat", input: StringIO.new("hello")) do |proc|
+    value = Process.run("/bin/cat", input: MemoryIO.new("hello")) do |proc|
       proc.input?.should be_nil
       proc.output.gets_to_end
     end
@@ -55,13 +55,13 @@ describe Process do
   end
 
   it "sends output to IO" do
-    output = StringIO.new
+    output = MemoryIO.new
     Process.run("/bin/sh", {"-c", "echo hello"}, output: output)
     output.to_s.should eq("hello\n")
   end
 
   it "sends error to IO" do
-    error = StringIO.new
+    error = MemoryIO.new
     Process.run("/bin/sh", {"-c", "echo hello 1>&2"}, error: error)
     error.to_s.should eq("hello\n")
   end
@@ -76,8 +76,16 @@ describe Process do
   end
 
   it "closes ios after block" do
-    Process.run("/bin/cat") {}
+    Process.run("/bin/cat") { }
     $?.exit_code.should eq(0)
+  end
+
+  it "sets working directory" do
+    parent = File.dirname(Dir.current)
+    value = Process.run("pwd", shell: true, chdir: parent, output: nil) do |proc|
+      proc.output.gets_to_end
+    end
+    value.should eq "#{parent}\n"
   end
 
   it "disallows passing arguments to nowhere" do
@@ -114,7 +122,7 @@ describe Process do
     end
 
     it "sets an environment variable" do
-      env = { "FOO" => "bar" }
+      env = {"FOO" => "bar"}
       value = Process.run("env", clear_env: true, env: env) do |proc|
         proc.output.gets_to_end
       end
@@ -122,7 +130,7 @@ describe Process do
     end
 
     it "deletes an environment variable" do
-      env = { "HOME" => nil }
+      env = {"HOME" => nil}
       value = Process.run("env | egrep '^HOME='", env: env, shell: true) do |proc|
         proc.output.gets_to_end
       end
@@ -132,26 +140,26 @@ describe Process do
 
   describe "kill" do
     it "kills a process" do
-      process = fork { loop {} }
+      process = fork { loop { } }
       process.kill(Signal::KILL).should be_nil
     end
 
     it "kills many process" do
-      process1 = fork { loop {} }
-      process2 = fork { loop {} }
+      process1 = fork { loop { } }
+      process2 = fork { loop { } }
       process1.kill(Signal::KILL).should be_nil
       process2.kill(Signal::KILL).should be_nil
     end
   end
 
   it "gets the pgid of a process id" do
-    process = fork { loop {} }
+    process = fork { loop { } }
     Process.getpgid(process.pid).should be_a(Int32)
     process.kill(Signal::KILL)
   end
 
   it "can link processes together" do
-    buffer = StringIO.new
+    buffer = MemoryIO.new
     Process.run("/bin/cat") do |cat|
       Process.run("/bin/cat", input: cat.output, output: buffer) do
         1000.times { cat.input.puts "line" }

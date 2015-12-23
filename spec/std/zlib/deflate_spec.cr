@@ -4,7 +4,7 @@ require "zlib"
 module Zlib
   describe Deflate do
     it "should be able to deflate" do
-      deflate = Deflate.new(StringIO.new("this is a test string !!!!\n"))
+      deflate = Deflate.new(MemoryIO.new("this is a test string !!!!\n"))
       slice = Slice(UInt8).new(32)
       read = deflate.read_fully(slice)
 

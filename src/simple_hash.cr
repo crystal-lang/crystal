@@ -75,7 +75,7 @@ struct SimpleHash(K, V)
   # Iterates the given block for each element with an arbitrary object given, and returns the initially given object.
   # ```
   # evens = (1..10).each_with_object([] of Int32) { |i, a| a << i*2 }
-  # #=> [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+  # # => [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
   # ```
   def each_with_object(memo)
     each do |k, v|
@@ -94,10 +94,10 @@ struct SimpleHash(K, V)
 
   # Returns a new hash consisting of entries for which the block returns false.
   # ```
-  # h = { "a" => 100, "b" => 200, "c" => 300 }
-  # h.reject {|k,v| k > "a"}  #=> {"a" => 100}
-  # h.reject {|k,v| v < 200}  #=> {"b" => 200, "c" => 300}
-  # ``` 
+  # h = {"a" => 100, "b" => 200, "c" => 300}
+  # h.reject { |k, v| k > "a" } # => {"a" => 100}
+  # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
+  # ```
   def reject(&block : K, V -> U)
     each_with_object(SimpleHash(K, V).new) do |memo, k, v|
       memo[k] = v unless yield k, v
@@ -115,17 +115,17 @@ struct SimpleHash(K, V)
 
   # Returns a new hash consisting of entries for which the block returns true.
   # ```
-  # h = { "a" => 100, "b" => 200, "c" => 300 }
-  # h.select {|k,v| k > "a"}  #=> {"b" => 200, "c" => 300}
-  # h.select {|k,v| v < 200}  #=> {"a" => 100}
+  # h = {"a" => 100, "b" => 200, "c" => 300}
+  # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
+  # h.select { |k, v| v < 200 } # => {"a" => 100}
   # ```
   def select(&block : K, V -> U)
-    reject{ |k, v| !yield(k, v) }
+    reject { |k, v| !yield(k, v) }
   end
 
   # Equivalent to `Hash#select` but makes modification on the current object rather that returning a new one. Returns nil if no changes were made
   def select!(&block : K, V -> U)
-    reject!{ |k, v| !yield(k, v) }
+    reject! { |k, v| !yield(k, v) }
   end
 
   def size

@@ -32,7 +32,7 @@ class Crystal::Browser
   end
 
   def handle(path)
-    object_id = path[1 .. -1].to_u64 { 0_u64 }
+    object_id = path[1..-1].to_u64 { 0_u64 }
     case object_id
     when 0
       render_html @node
@@ -156,7 +156,7 @@ class Crystal::Browser
 
   class ToHtmlVisitor < ToSVisitor
     def initialize(@browser)
-      super(StringIO.new)
+      super(MemoryIO.new)
     end
 
     def visit(node : LibDef)
@@ -322,7 +322,7 @@ class Crystal::Browser
 
     def newline
       str = @str
-      return if str.is_a?(StringIO) && str.empty?
+      return if str.is_a?(MemoryIO) && str.empty?
       str << "<br/>"
     end
 

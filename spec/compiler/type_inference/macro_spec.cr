@@ -589,4 +589,17 @@ describe "Type inference: macro" do
       ),
       "private macros can only be declared at the top-level"
   end
+
+  it "expands macro with break inside while (#1852)" do
+    assert_type(%(
+      macro test
+        foo = "bar"
+        break
+      end
+
+      while true
+        test
+      end
+      )) { |mod| mod.nil }
+  end
 end

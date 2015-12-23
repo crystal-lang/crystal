@@ -39,8 +39,16 @@ class Markdown::Parser
       return render_horizontal_rule
     end
 
-    if starts_with_star? line
-      return render_unordered_list
+    if starts_with_bullet_list_marker?(line, '*')
+      return render_unordered_list('*')
+    end
+
+    if starts_with_bullet_list_marker?(line, '+')
+      return render_unordered_list('+')
+    end
+
+    if starts_with_bullet_list_marker?(line, '-')
+      return render_unordered_list('-')
     end
 
     if starts_with_backticks? line
@@ -92,7 +100,7 @@ class Markdown::Parser
         break
       end
 
-      if starts_with_star?(line) || starts_with_backticks?(line) || starts_with_digits_dot?(line)
+      if (starts_with_bullet_list_marker?(line) || starts_with_backticks?(line) || starts_with_digits_dot?(line))
         break
       end
 
@@ -133,7 +141,7 @@ class Markdown::Parser
 
   def render_fenced_code
     line = @lines[@line]
-    language = line[3 .. -1].strip
+    language = line[3..-1].strip
 
     if language.empty?
       @renderer.begin_code
@@ -168,7 +176,7 @@ class Markdown::Parser
     append_double_newline_if_has_more
   end
 
-  def render_unordered_list
+  def render_unordered_list(prefix = '*')
     @renderer.begin_unordered_list
 
     while true
@@ -184,10 +192,10 @@ class Markdown::Parser
         next
       end
 
-      break unless starts_with_star? line
+      break unless starts_with_bullet_list_marker?(line, prefix)
 
       @renderer.begin_list_item
-      process_line line.byte_slice(line.index('*').not_nil! + 1)
+      process_line line.byte_slice(line.index(prefix).not_nil! + 1)
       @renderer.end_list_item
       @line += 1
 
@@ -452,7 +460,7 @@ class Markdown::Parser
     end
   end
 
-  def starts_with_star?(line)
+  def starts_with_bullet_list_marker?(line, prefix = nil)
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
@@ -461,7 +469,7 @@ class Markdown::Parser
     end
 
     return false unless pos < bytesize
-    return false unless str[pos].chr == '*'
+    return false unless prefix ? str[pos].chr == prefix : (str[pos].chr == '*' || str[pos].chr == '-' || str[pos].chr == '+')
 
     pos += 1
 

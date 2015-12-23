@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Directory listing for <%= request_path %></title>
+  </head>
+  <body>
+    <h2>Directory listing for <%= request_path %></h2>
+    <hr/>
+    <ul>
+      <% Dir.foreach(path) do |entry| %>
+        <% next if entry == "." || entry == ".." %>
+        <li>
+          <a href="<%= request_path == "/" ? "" : request_path %>/<%= entry %>"><%= entry %></a>
+        </li>
+      <% end %>
+    </ul>
+  </body>
+</html>

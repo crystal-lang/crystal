@@ -23,13 +23,13 @@ module ENV
     fetch(key)
   end
 
-  # Retrieves the value for environment variable named `key` as a `String?`.
+  # Retrieves the value for environment variable named *key* as a `String?`.
   # Returns `nil` if the named variable does not exist.
   def self.[]?(key : String)
     fetch(key, nil)
   end
 
-  # Sets the value for environment variable named `key` as `value`.
+  # Sets the value for environment variable named *key* as *value*.
   # Overwrites existing environment variable if already present.
   # Returns `value` if successful, otherwise raises an exception.
   def self.[]=(key : String, value : String)
@@ -40,13 +40,13 @@ module ENV
     end
   end
 
-  # Returns `true` if the environment variable named `key` exists and `false`
+  # Returns `true` if the environment variable named *key* exists and `false`
   # if it doesn't.
   def self.has_key?(key : String)
     !!LibC.getenv(key)
   end
 
-  # Retrieve a value corresponding to a key. Raises a KeyError exception if the
+  # Retrieves a value corresponding to the given *key*. Raises a `KeyError` exception if the
   # key does not exist.
   def self.fetch(key)
     fetch(key) do
@@ -54,35 +54,35 @@ module ENV
     end
   end
 
-  # Retrieve a value corresponding to a key. Return the second argument's value
+  # Retrieves a value corresponding to the given *key*. Return the second argument's value
   # if the key does not exist.
   def self.fetch(key, default)
     fetch(key) { default }
   end
 
-  # Retrieve a value corresponding to a key. Return the value of the block if
+  # Retrieves a value corresponding to a key. Return the value of the block if
   # the key does not exist.
-  def self.fetch(key : String, &block : String -> String?|NoReturn)
+  def self.fetch(key : String, &block : String -> String? | NoReturn)
     value = LibC.getenv key
     return String.new(value) if value
     yield(key)
   end
 
-  # Returns an array of all the environment variable names
+  # Returns an array of all the environment variable names.
   def self.keys
     keys = [] of String
-    each {|key, v| keys << key}
+    each { |key, v| keys << key }
     keys
   end
 
-  # Returns an array of all the environment variable values
+  # Returns an array of all the environment variable values.
   def self.values
     values = [] of String
-    each {|k, value| values << value}
+    each { |k, value| values << value }
     values
   end
 
-  # Removes the environment variable named `key`. Returns the previous value if
+  # Removes the environment variable named *key*. Returns the previous value if
   # the environment variable existed, otherwise returns `nil`.
   def self.delete(key : String)
     if value = self[key]?
@@ -119,7 +119,7 @@ module ENV
     keys.each { |k| delete k }
   end
 
-  # Writes the contents of the environment to `io`.
+  # Writes the contents of the environment to *io*.
   def self.inspect(io)
     io << "{"
     found_one = false

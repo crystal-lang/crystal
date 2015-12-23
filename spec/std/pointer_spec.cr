@@ -118,7 +118,7 @@ describe "Pointer" do
   end
 
   it "shuffles!" do
-    a = Pointer(Int32).malloc(3) { |i| i + 1}
+    a = Pointer(Int32).malloc(3) { |i| i + 1 }
     a.shuffle!(3)
 
     (a[0] + a[1] + a[2]).should eq(6)
@@ -129,7 +129,7 @@ describe "Pointer" do
   end
 
   it "maps!" do
-    a = Pointer(Int32).malloc(3) { |i| i + 1}
+    a = Pointer(Int32).malloc(3) { |i| i + 1 }
     a.map!(3) { |i| i + 1 }
     a[0].should eq(2)
     a[1].should eq(3)

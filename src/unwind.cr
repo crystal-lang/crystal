@@ -10,23 +10,23 @@ lib LibUnwind
 
   @[Flags]
   enum Action
-    SEARCH_PHASE = 1
-    CLEANUP_PHASE = 2
-    HANDLER_FRAME = 4
-    FORCE_UNWIND = 8
-    END_OF_STACK = 16
+    SEARCH_PHASE  =  1
+    CLEANUP_PHASE =  2
+    HANDLER_FRAME =  4
+    FORCE_UNWIND  =  8
+    END_OF_STACK  = 16
   end
 
   enum ReasonCode
-    NO_REASON = 0
+    NO_REASON                = 0
     FOREIGN_EXCEPTION_CAUGHT = 1
-    FATAL_PHASE2_ERROR = 2
-    FATAL_PHASE1_ERROR = 3
-    NORMAL_STOP = 4
-    END_OF_STACK = 5
-    HANDLER_FOUND = 6
-    INSTALL_CONTEXT = 7
-    CONTINUE_UNWIND = 8
+    FATAL_PHASE2_ERROR       = 2
+    FATAL_PHASE1_ERROR       = 3
+    NORMAL_STOP              = 4
+    END_OF_STACK             = 5
+    HANDLER_FOUND            = 6
+    INSTALL_CONTEXT          = 7
+    CONTINUE_UNWIND          = 8
   end
 
   ifdef x86_64

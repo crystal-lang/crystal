@@ -42,16 +42,16 @@ ifdef darwin
   end
 else
   enum Signal
-    HUP    = 1
-    INT    = 2
-    QUIT   = 3
-    ILL    = 4
-    TRAP   = 5
-    ABRT   = 6
-    IOT    = 6
-    BUS    = 7
-    FPE    = 8
-    KILL   = 9
+    HUP    =  1
+    INT    =  2
+    QUIT   =  3
+    ILL    =  4
+    TRAP   =  5
+    ABRT   =  6
+    IOT    =  6
+    BUS    =  7
+    FPE    =  8
+    KILL   =  9
     USR1   = 10
     SEGV   = 11
     USR2   = 12
@@ -114,4 +114,3 @@ enum Signal
     LibC.signal value, block
   end
 end
-

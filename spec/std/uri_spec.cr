@@ -116,4 +116,3 @@ describe "URI" do
     end
   end
 end
-

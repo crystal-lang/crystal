@@ -9,11 +9,11 @@ lib LibGMP
 
   struct MPZ
     _mp_alloc : Int32
-    _mp_size  : Int32
-    _mp_d     : ULong*
+    _mp_size : Int32
+    _mp_d : ULong*
   end
 
-  ## Initialization
+  # # Initialization
 
   fun init = __gmpz_init(x : MPZ*)
   fun init2 = __gmpz_init2(x : MPZ*, bits : BitcntT)
@@ -22,7 +22,7 @@ lib LibGMP
   fun init_set_d = __gmpz_init_set_d(rop : MPZ*, op : Double)
   fun init_set_str = __gmpz_init_set_str(rop : MPZ*, str : UInt8*, base : Int)
 
-  ## I/O
+  # # I/O
 
   fun set_ui = __gmpz_set_ui(rop : MPZ*, op : ULong)
   fun set_si = __gmpz_set_si(rop : MPZ*, op : Long)
@@ -32,7 +32,7 @@ lib LibGMP
   fun get_si = __gmpz_get_si(op : MPZ*) : Long
   fun get_d = __gmpz_get_d(op : MPZ*) : Double
 
-  ## Arithmetic
+  # # Arithmetic
 
   fun add = __gmpz_add(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun add_ui = __gmpz_add_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
@@ -56,7 +56,7 @@ lib LibGMP
 
   fun pow_ui = __gmpz_pow_ui(rop : MPZ*, base : MPZ*, exp : ULong)
 
-  ## Bitwise operations
+  # # Bitwise operations
 
   fun and = __gmpz_and(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
   fun ior = __gmpz_ior(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
@@ -66,13 +66,13 @@ lib LibGMP
   fun fdiv_q_2exp = __gmpz_fdiv_q_2exp(q : MPZ*, n : MPZ*, b : BitcntT)
   fun mul_2exp = __gmpz_mul_2exp(rop : MPZ*, op1 : MPZ*, op2 : BitcntT)
 
-  ## Comparison
+  # # Comparison
 
   fun cmp = __gmpz_cmp(op1 : MPZ*, op2 : MPZ*) : Int
   fun cmp_si = __gmpz_cmp_si(op1 : MPZ*, op2 : Long) : Int
   fun cmp_ui = __gmpz_cmp_ui(op1 : MPZ*, op2 : ULong) : Int
 
-  ## Memory
+  # # Memory
 
   fun set_memory_functions = __gmp_set_memory_functions(malloc : SizeT -> Void*, realloc : Void*, SizeT, SizeT -> Void*, free : Void*, SizeT ->)
 end
@@ -81,5 +81,4 @@ LibGMP.set_memory_functions(
   ->(size) { GC.malloc(size) },
   ->(ptr, old_size, new_size) { GC.realloc(ptr, new_size) },
   ->(ptr, size) { GC.free(ptr) }
-  )
-
+)

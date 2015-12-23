@@ -13,7 +13,7 @@ end
 
 class Neuron
   LEARNING_RATE = 1.0
-  MOMENTUM = 0.3
+  MOMENTUM      = 0.3
 
   property :synapses_in
   property :synapses_out
@@ -58,7 +58,7 @@ class Neuron
   def update_weights(rate)
     synapses_in.each do |synapse|
       temp_weight = synapse.weight
-      synapse.weight += (rate * LEARNING_RATE * error * synapse.source_neuron.output) + (MOMENTUM * ( synapse.weight - synapse.prev_weight))
+      synapse.weight += (rate * LEARNING_RATE * error * synapse.source_neuron.output) + (MOMENTUM * (synapse.weight - synapse.prev_weight))
       synapse.prev_weight = temp_weight
     end
     temp_threshold = threshold
@@ -114,7 +114,6 @@ class NeuralNetwork
     end
   end
 end
-
 
 (ARGV[0]? || 5).to_i.times do
   xor = NeuralNetwork.new(2, 10, 1)

@@ -76,12 +76,12 @@ describe "Number" do
       50.5.clamp(10.1..100.1).should eq(50.5)
     end
 
-   it "fails with an exclusive range" do
-     expect_raises(ArgumentError) do
-       range = Range.new(1, 2, exclusive: true)
-       5.clamp(range)
-     end
-   end
+    it "fails with an exclusive range" do
+      expect_raises(ArgumentError) do
+        range = Range.new(1, 2, exclusive: true)
+        5.clamp(range)
+      end
+    end
   end
 
   it "creates an array with [] and some elements" do

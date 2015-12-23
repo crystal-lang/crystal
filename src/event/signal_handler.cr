@@ -38,10 +38,10 @@ class Event::SignalHandler
     slice = Slice(UInt8).new pointerof(sig) as Pointer(UInt8), sizeof(typeof(sig))
 
     loop do
-     bytes = read_pipe.read slice
-     break if bytes == 0
-     raise "bad read #{bytes} : #{slice.size}" if bytes != slice.size
-     handle_signal Signal.new(sig)
+      bytes = read_pipe.read slice
+      break if bytes == 0
+      raise "bad read #{bytes} : #{slice.size}" if bytes != slice.size
+      handle_signal Signal.new(sig)
     end
   end
 
@@ -90,5 +90,3 @@ class Event::SignalHandler
     spawn { run }
   end
 end
-
-

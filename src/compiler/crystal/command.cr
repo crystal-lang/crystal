@@ -20,8 +20,8 @@ Command:
     run (default)            compile and run program
     spec                     compile and run specs (in spec directory)
     tool                     run a tool
-    --help, -h               show this help
-    --version, -v            show version
+    help, --help, -h         show this help
+    version, --version, -v   show version
 USAGE
 
   COMMANDS_USAGE = <<-USAGE
@@ -78,10 +78,10 @@ USAGE
       when "tool".starts_with?(command)
         options.shift
         tool
-      when "--help" == command, "-h" == command
+      when "help".starts_with?(command), "--help" == command, "-h" == command
         puts USAGE
         exit
-      when "--version" == command, "-v" == command
+      when "version".starts_with?(command), "--version" == command, "-v" == command
         puts "Crystal #{Crystal.version_string}"
         exit
       else
@@ -364,24 +364,27 @@ USAGE
       target_filename = splitted[0]
       if File.file?(target_filename)
         options.delete_at target_index
-        cwd = Dir.working_directory
+        cwd = Dir.current
         if target_filename.starts_with?(cwd)
-          target_filename = "#{target_filename[cwd.size..-1]}"
+          target_filenames = [target_filename[cwd.size..-1]]
+        else
+          target_filenames = [target_filename]
         end
         if splitted.size == 2
           target_line = splitted[1]
           options << "-l" << target_line
         end
       elsif File.directory?(target_filename)
-        target_filename = "#{target_filename}/**"
+        target_filenames = Dir["#{target_filename}/**/*_spec.cr"]
       else
         error "'#{target_filename}' is not a file"
       end
     else
-      target_filename = "spec/**"
+      target_filenames = Dir["spec/**/*_spec.cr"]
     end
 
-    sources = [Compiler::Source.new("spec", %(require "./#{target_filename}"))]
+    source = target_filenames.map { |filename| %(require "./#{filename}") }.join("\n")
+    sources = [Compiler::Source.new("spec", source)]
 
     output_filename = tempfile "spec"
 
@@ -396,7 +399,8 @@ USAGE
       error "`shards` executable is missing. Please install shards: https://github.com/ysbaddaden/shards"
     end
 
-    Process.run(path_to_shards, args: options, output: true, error: true)
+    status = Process.run(path_to_shards, args: options, output: true, error: true)
+    exit status.exit_code unless status.success?
   end
 
   private def docs
@@ -477,109 +481,109 @@ USAGE
     output_format = nil
 
     option_parser = OptionParser.parse(options) do |opts|
-                      opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
+      opts.banner = "Usage: crystal #{command} [options] [programfile] [--] [arguments]\n\nOptions:"
 
-                      unless no_codegen
-                        unless run
-                          opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
-                            compiler.cross_compile_flags = cross_compile
-                          end
-                        end
-                        opts.on("-d", "--debug", "Add symbolic debug info") do
-                          compiler.debug = true
-                        end
-                      end
+      unless no_codegen
+        unless run
+          opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
+            compiler.cross_compile_flags = cross_compile
+          end
+        end
+        opts.on("-d", "--debug", "Add symbolic debug info") do
+          compiler.debug = true
+        end
+      end
 
-                      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
-                        compiler.add_flag flag
-                      end
+      opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
+        compiler.add_flag flag
+      end
 
-                      unless no_codegen
-                        opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
-                          compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
-                        end
-                      end
+      unless no_codegen
+        opts.on("--emit [#{VALID_EMIT_VALUES.join("|")}]", "Comma separated list of types of output for the compiler to emit") do |emit_values|
+          compiler.emit = validate_emit_values(emit_values.split(',').map(&.strip))
+        end
+      end
 
-                      if hierarchy
-                        opts.on("-e NAME", "Filter types by NAME regex") do |exp|
-                          hierarchy_exp = exp
-                        end
-                      end
+      if hierarchy
+        opts.on("-e NAME", "Filter types by NAME regex") do |exp|
+          hierarchy_exp = exp
+        end
+      end
 
-                      if cursor_command
-                        opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
-                          cursor_location = cursor
-                        end
-                      end
+      if cursor_command
+        opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
+          cursor_location = cursor
+        end
+      end
 
-                      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-                        output_format = f
-                      end
+      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+        output_format = f
+      end
 
-                      opts.on("-h", "--help", "Show this message") do
-                        puts opts
-                        exit 1
-                      end
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit 1
+      end
 
-                      unless no_codegen
-                        opts.on("--ll", "Dump ll to .crystal directory") do
-                          compiler.dump_ll = true
-                        end
-                        opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
-                          link_flags << some_link_flags
-                        end
-                        opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
-                          compiler.mcpu = cpu
-                        end
-                      end
+      unless no_codegen
+        opts.on("--ll", "Dump ll to .crystal directory") do
+          compiler.dump_ll = true
+        end
+        opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
+          link_flags << some_link_flags
+        end
+        opts.on("--mcpu CPU", "Target specific cpu type") do |cpu|
+          compiler.mcpu = cpu
+        end
+      end
 
-                      opts.on("--no-color", "Disable colored output") do
-                        @color = false
-                        compiler.color = false
-                      end
+      opts.on("--no-color", "Disable colored output") do
+        @color = false
+        compiler.color = false
+      end
 
-                      unless no_codegen
-                        opts.on("--no-codegen", "Don't do code generation") do
-                          compiler.no_codegen = true
-                        end
-                        opts.on("-o ", "Output filename") do |an_output_filename|
-                          opt_output_filename = an_output_filename
-                          specified_output = true
-                        end
-                      end
+      unless no_codegen
+        opts.on("--no-codegen", "Don't do code generation") do
+          compiler.no_codegen = true
+        end
+        opts.on("-o ", "Output filename") do |an_output_filename|
+          opt_output_filename = an_output_filename
+          specified_output = true
+        end
+      end
 
-                      opts.on("--prelude ", "Use given file as prelude") do |prelude|
-                        compiler.prelude = prelude
-                      end
+      opts.on("--prelude ", "Use given file as prelude") do |prelude|
+        compiler.prelude = prelude
+      end
 
-                      unless no_codegen
-                        opts.on("--release", "Compile in release mode") do
-                          compiler.release = true
-                        end
-                        opts.on("-s", "--stats", "Enable statistics output") do
-                          compiler.stats = true
-                        end
-                        opts.on("--single-module", "Generate a single LLVM module") do
-                          compiler.single_module = true
-                        end
-                        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
-                          compiler.n_threads = n_threads.to_i
-                        end
-                        unless run
-                          opts.on("--target TRIPLE", "Target triple") do |triple|
-                            compiler.target_triple = triple
-                          end
-                        end
-                        opts.on("--verbose", "Display executed commands") do
-                          compiler.verbose = true
-                        end
-                      end
+      unless no_codegen
+        opts.on("--release", "Compile in release mode") do
+          compiler.release = true
+        end
+        opts.on("-s", "--stats", "Enable statistics output") do
+          compiler.stats = true
+        end
+        opts.on("--single-module", "Generate a single LLVM module") do
+          compiler.single_module = true
+        end
+        opts.on("--threads ", "Maximum number of threads to use") do |n_threads|
+          compiler.n_threads = n_threads.to_i
+        end
+        unless run
+          opts.on("--target TRIPLE", "Target triple") do |triple|
+            compiler.target_triple = triple
+          end
+        end
+        opts.on("--verbose", "Display executed commands") do
+          compiler.verbose = true
+        end
+      end
 
-                      opts.unknown_args do |before, after|
-                        opt_filenames = before
-                        opt_arguments = after
-                      end
-                    end
+      opts.unknown_args do |before, after|
+        opt_filenames = before
+        opt_arguments = after
+      end
+    end
 
     compiler.link_flags = link_flags.join(" ") unless link_flags.empty?
 
@@ -605,7 +609,7 @@ USAGE
     output_filename ||= original_output_filename
     output_format ||= "text"
 
-    if !no_codegen && Dir.exists?(output_filename)
+    if !no_codegen && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 

@@ -26,4 +26,3 @@ struct IO::FdSet
     pointerof(@fdset) as Void*
   end
 end
-

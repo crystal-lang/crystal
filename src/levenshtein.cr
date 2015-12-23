@@ -3,10 +3,10 @@ module Levenshtein
   # Computes the [levenshtein distance](http://en.wikipedia.org/wiki/Levenshtein_distance) of two strings.
   #
   # ```
-  # levenshtein("algorithm", "altruistic") #=> 6
-  # levenshtein("hello", "hallo")          #=> 1
-  # levenshtein("こんにちは", "こんちは")    #=> 1
-  # levensthein("hey", "hey")              #=> 0
+  # levenshtein("algorithm", "altruistic") # => 6
+  # levenshtein("hello", "hallo")          # => 1
+  # levenshtein("こんにちは", "こんちは")           # => 1
+  # levensthein("hey", "hey")              # => 0
   # ```
   def self.distance(string1 : String, string2 : String)
     return 0 if string1 == string2
@@ -51,7 +51,7 @@ module Levenshtein
   # finder.test "hall"
   # finder.test "hallo world"
   #
-  # finder.best_match #=> "hall"
+  # finder.best_match # => "hall"
   # ```
   class Finder
     # :nodoc:

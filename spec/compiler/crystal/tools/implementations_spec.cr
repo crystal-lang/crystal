@@ -21,11 +21,11 @@ def assert_implementations(code)
 
   code.lines.each_with_index do |line, line_number_0|
     if column_number = line.index('‸')
-      cursor_location = Location.new(line_number_0+1, column_number+1, ".")
+      cursor_location = Location.new(line_number_0 + 1, column_number + 1, ".")
     end
 
     if column_number = line.index('༓')
-      expected_locations << Location.new(line_number_0+1, column_number+1, ".")
+      expected_locations << Location.new(line_number_0 + 1, column_number + 1, ".")
     end
   end
 
@@ -34,7 +34,7 @@ def assert_implementations(code)
   if cursor_location
     visitor, result = processed_implementation_visitor(code, cursor_location)
 
-    result_location = result.implementations.not_nil!.map{ |e| Location.new(e.line.not_nil!, e.column.not_nil!, e.filename.not_nil!).to_s }.sort
+    result_location = result.implementations.not_nil!.map { |e| Location.new(e.line.not_nil!, e.column.not_nil!, e.filename.not_nil!).to_s }.sort
 
     result_location.should eq(expected_locations.map(&.to_s))
   else
