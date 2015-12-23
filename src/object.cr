@@ -563,4 +563,24 @@ class Object
       {{delegate}}.\{{name.id}}(\{{*args}}) \{{block}}
     end
   end
+
+  # Gives another name to an existing method
+  # ```
+  # class AliasMethodExample
+  #   def long_method_name
+  #     42
+  #   end
+  #
+  #   alias_method short_name, long_method_name
+  # end
+  #
+  # ex = AliasMethodExample.new
+  # ex.long_method_name # => 42
+  # ex.short_name       # => 42
+  # ```
+  macro alias_method(new_name, existing_method)
+    def {{new_name.id}}(*args)
+      {{existing_method.id}}(*args)
+    end
+  end
 end

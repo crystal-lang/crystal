@@ -1,3 +1,4 @@
+# coding: utf-8
 lib LibC
   fun atof(str : Char*) : Double
   fun strtof(str : Char*, endp : Char**) : Float
@@ -570,9 +571,7 @@ class String
   # "45.67 degrees".to_f # => 45.67
   # "thx1138".to_f       # => 0.0
   # ```
-  def to_f
-    to_f64
-  end
+  alias_method :to_f, :to_f64
 
   # Returns the result of interpreting leading characters in this string as a floating point number (`Float32`).
   # Extraneous characters past the end of a valid number are ignored. If there is not a valid number at the start of str,
