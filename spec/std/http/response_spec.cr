@@ -59,6 +59,14 @@ module HTTP
       response.body?.should be_nil
     end
 
+    it "parses response without status message" do
+      response = Response.from_io(MemoryIO.new("HTTP/1.1 200\r\n\r\n"))
+      response.status_code.should eq(200)
+      response.status_message.should eq("")
+      response.headers.size.should eq(0)
+      response.body.should eq("")
+    end
+
     it "parses response with duplicated headers" do
       response = Response.from_io(MemoryIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\nWarning: 111 Revalidation failed\r\nWarning: 110 Response is stale\r\n\r\nhelloworld"))
       response.headers.get("Warning").should eq(["111 Revalidation failed", "110 Response is stale"])
