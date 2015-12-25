@@ -91,19 +91,13 @@ class HTTP::Response
   def self.from_io(io, ignore_body = false, &block)
     line = io.gets
     if line
-      spaces = line.scan(" ")
-
-      # deal with malformed responses
-      if spaces.size == 1
-        http_version, status_code = line.split(2)
-        status_code = status_code.chomp.to_i
-        status_message = self.default_status_message_for(status_code)
-      else
-        http_version, status_code, status_message = line.split(3)
+      http_version, status_code, status_message = "", 0, ""
+      line.match(/(HTTP\/\d+\.\d+)\s+(\d{3})\s*([\w\s]+)?/) do |md|
+        http_version   = md[1]
+        status_code    = md[2].to_i
+        status_message = md[3]? ? md[3].chop : self.default_status_message_for(status_code)
       end
 
-      status_code = status_code.to_i
-      status_message = status_message.chomp
       body_type = HTTP::BodyType::OnDemand
       body_type = HTTP::BodyType::Mandatory if mandatory_body?(status_code)
       body_type = HTTP::BodyType::Prohibited if ignore_body
