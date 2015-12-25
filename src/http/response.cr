@@ -91,12 +91,10 @@ class HTTP::Response
   def self.from_io(io, ignore_body = false, &block)
     line = io.gets
     if line
-      http_version, status_code, status_message = "", 0, ""
-      line.match(/(HTTP\/\d+\.\d+)\s+(\d{3})\s*([\w\s]+)?/) do |md|
-        http_version   = md[1]
-        status_code    = md[2].to_i
-        status_message = md[3]? ? md[3].chop : self.default_status_message_for(status_code)
-      end
+      pieces = line.split(3)
+      http_version = pieces[0]
+      status_code = pieces[1].to_i
+      status_message = pieces[2]? ? pieces[2].chop : ""
 
       body_type = HTTP::BodyType::OnDemand
       body_type = HTTP::BodyType::Mandatory if mandatory_body?(status_code)
