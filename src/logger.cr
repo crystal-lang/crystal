@@ -114,10 +114,8 @@ class Logger(T)
 
   private def write_messages
     loop do
-      index, value = Channel.select(@channel.receive_op, @close_channel.receive_op)
-      case index
-      when 0
-        msg = value as Message
+      msg = Channel.receive_first(@channel, @close_channel)
+      if msg.is_a?(Message)
         label = msg.severity == Severity::UNKNOWN ? "ANY" : msg.severity.to_s
 
         # We write to an intermediate String because the IO might be sync'ed so
@@ -129,7 +127,7 @@ class Logger(T)
         end
 
         @io.flush
-      when 1
+      else
         @io.close
         @close_channel.send(nil)
         break
