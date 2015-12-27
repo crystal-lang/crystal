@@ -54,6 +54,13 @@ describe "URI" do
       u.password = "s3cr3t"
       u.to_s.should eq("http://alice:s3cr3t@www.example.com")
     end
+    assert do
+      u = URI.new("http", "www.example.com")
+      u.user = ":D"
+      u.to_s.should eq("http://%3AD@www.example.com")
+      u.password = "@_@"
+      u.to_s.should eq("http://%3AD:%40_%40@www.example.com")
+    end
     assert { URI.new("http", "www.example.com", user: "@al:ce", password: "s/cr3t").to_s.should eq("http://%40al%3Ace:s%2Fcr3t@www.example.com") }
     assert { URI.new("http", "www.example.com", fragment: "top").to_s.should eq("http://www.example.com#top") }
     assert { URI.new("http", "www.example.com", 1234).to_s.should eq("http://www.example.com:1234") }
