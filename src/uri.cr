@@ -206,8 +206,10 @@ class URI
 
     if userinfo
       split = userinfo.split(":")
-      user = split[0]
-      password = split[1]?
+      user = URI.unescape split[0]
+      if password = split[1]?
+        password = URI.unescape split[1]
+      end
     else
       user = password = nil
     end
