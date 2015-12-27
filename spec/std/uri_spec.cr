@@ -25,6 +25,7 @@ describe "URI" do
   assert_uri("https://www.example.com", scheme: "https", host: "www.example.com")
   assert_uri("https://alice:pa55w0rd@www.example.com", scheme: "https", host: "www.example.com", user: "alice", password: "pa55w0rd")
   assert_uri("https://alice@www.example.com", scheme: "https", host: "www.example.com", user: "alice", password: nil)
+  assert_uri("https://%3AD:%40_%40@www.example.com", scheme: "https", host: "www.example.com", user: ":D", password: "@_@")
   assert_uri("https://www.example.com/#top", scheme: "https", host: "www.example.com", path: "/", fragment: "top")
   assert_uri("http://www.foo-bar.example.com", scheme: "http", host: "www.foo-bar.example.com")
   assert_uri("/foo", path: "/foo")
