@@ -822,6 +822,18 @@ class String
     end
   end
 
+  # Returns a new String with the last carriage return removed (that is it will
+  # remove \n, \r, and \r\n).
+  #
+  # ```
+  # "string\r\n".chomp # => "string"
+  # "string\n\r".chomp # => "string\n"
+  # "string\n".chomp   # => "string"
+  # "string".chomp     # => "string"
+  # "x".chomp.chmop    # => "x"
+  # ```
+  #
+  # See also: `#chop`
   def chomp
     return self if bytesize == 0
 
@@ -839,6 +851,12 @@ class String
     end
   end
 
+  # Returns a new String with *char* removed if the string ends with it.
+  #
+  # ```
+  # "hello".chomp('o') # => "hell"
+  # "hello".chomp('a') # => "hello"
+  # ```
   def chomp(char : Char)
     if ends_with?(char)
       count = 0
@@ -851,6 +869,17 @@ class String
     end
   end
 
+  # Returns a new String with *string* removed if the string ends with it.
+  # If *string* is `""`, all trailing `\r\n` or `\n` characters are removed.
+  #
+  # ```
+  # "hello".chomp("llo") # => "he"
+  # "hello".chomp("ol")  # => "hello"
+  #
+  # "hello\n\n\n\n".chomp("")   # => "hello"
+  # "hello\r\n\r\n".chomp("")   # => "hello"
+  # "hello\r\n\r\r\n".chomp("") # => "hello\r\n\r"
+  # ```
   def chomp(string : String)
     if string.empty?
       return self if empty?
@@ -898,6 +927,12 @@ class String
     self[0, size - 1]
   end
 
+  # Returns a new string with leading and trailing whitespace removed.
+  #
+  # ```
+  # "    hello    ".strip # => "hello"
+  # "\tgoodbye\r\n".strip # => "goodbye"
+  # ```
   def strip
     excess_right = calc_excess_right
     if excess_right == bytesize
@@ -913,6 +948,12 @@ class String
     end
   end
 
+  # Returns a new string with trailing whitespace removed.
+  #
+  # ```
+  # "    hello    ".strip # => "    hello"
+  # "\tgoodbye\r\n".strip # => "\tgoodbye"
+  # ```
   def rstrip
     excess_right = calc_excess_right
 
@@ -923,6 +964,12 @@ class String
     end
   end
 
+  # Returns a new string with leading whitespace removed.
+  #
+  # ```
+  # "    hello    ".strip # => "hello    "
+  # "\tgoodbye\r\n".strip # => "goodbye\r\n"
+  # ```
   def lstrip
     excess_left = calc_excess_left
 
