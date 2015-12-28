@@ -442,6 +442,7 @@ describe "String" do
     assert { "  \n\t かたな \n\f\v".strip.should eq("かたな") }
     assert { "  \n\t かたな".strip.should eq("かたな") }
     assert { "かたな".strip.should eq("かたな") }
+    assert { "".strip.should eq("") }
     assert { "\n".strip.should eq("") }
     assert { "\n\t  ".strip.should eq("") }
   end

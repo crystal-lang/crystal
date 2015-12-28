@@ -899,19 +899,12 @@ class String
   end
 
   def strip
-    excess_right = 0
-    while to_unsafe[bytesize - 1 - excess_right].chr.whitespace?
-      excess_right += 1
-    end
-
+    excess_right = calc_excess_right
     if excess_right == bytesize
       return ""
     end
 
-    excess_left = 0
-    while to_unsafe[excess_left].chr.whitespace?
-      excess_left += 1
-    end
+    excess_left = calc_excess_left
 
     if excess_right == 0 && excess_left == 0
       self
@@ -921,10 +914,7 @@ class String
   end
 
   def rstrip
-    excess_right = 0
-    while to_unsafe[bytesize - 1 - excess_right].chr.whitespace?
-      excess_right += 1
-    end
+    excess_right = calc_excess_right
 
     if excess_right == 0
       self
@@ -934,16 +924,29 @@ class String
   end
 
   def lstrip
-    excess_left = 0
-    while to_unsafe[excess_left].chr.whitespace?
-      excess_left += 1
-    end
+    excess_left = calc_excess_left
 
     if excess_left == 0
       self
     else
       byte_slice excess_left
     end
+  end
+
+  private def calc_excess_right
+    excess_right = 0
+    while c = to_unsafe[bytesize - 1 - excess_right].chr.whitespace?
+      excess_right += 1
+    end
+    excess_right
+  end
+
+  private def calc_excess_left
+    excess_left = 0
+    while to_unsafe[excess_left].chr.whitespace?
+      excess_left += 1
+    end
+    excess_left
   end
 
   def tr(from : String, to : String)
