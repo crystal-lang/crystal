@@ -232,9 +232,15 @@ describe Time do
   end
 
   it "gets unix epoch seconds" do
-    t1 = Time.new 2014, 10, 30, 21, 18, 13
+    t1 = Time.new 2014, 10, 30, 21, 18, 13, 0, Time::Kind::Utc
     t1.epoch.should eq(1414703893)
     t1.epoch_f.should be_close(1414703893, 1e-01)
+  end
+
+  it "gets unix epoch seconds at GMT" do
+    t1 = Time.now
+    t1.epoch.should eq(t1.to_utc.epoch)
+    t1.epoch_f.should be_close(t1.to_utc.epoch_f, 1e-01)
   end
 
   it "to_s" do
