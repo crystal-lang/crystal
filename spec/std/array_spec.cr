@@ -465,6 +465,20 @@ describe "Array" do
     end
   end
 
+  describe "delete_if" do
+    it "deletes many" do
+      a = [1, 2, 3, 4, 5, 6, 5, 6]
+      a.delete_if { |e| e > 3 }.should eq([1, 2, 3])
+      a.should eq([1, 2, 3])
+    end
+
+    it "delete not found" do
+      a = [1, 2]
+      a.delete_if { |e| e > 3 }.should eq(a)
+      a.should eq([1, 2])
+    end
+  end
+
   it "does dup" do
     x = {1 => 2}
     a = [x]

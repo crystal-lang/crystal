@@ -236,5 +236,10 @@ module HTTP
 
       headers
     end
+
+    # Returns the hash of this collection.
+    def to_h
+      @cookies
+    end
   end
 end

@@ -61,6 +61,12 @@ describe "Enumerable" do
     end
   end
 
+  describe "count without block" do
+    it "returns the number of elements in the Enumerable" do
+      SpecEnumerable.new.count.should eq 3
+    end
+  end
+
   describe "count with block" do
     it "returns the number of the times the item is present" do
       %w(a b c a d A).count("a").should eq 2
