@@ -84,11 +84,19 @@ module Enumerable(T)
     ary
   end
 
+  # Returns the number of elements in the collection.
+  #
+  #     [1, 2, 3, 4].count  #=> 4
+  #
+  def count
+    count { true }
+  end
+
   # Returns the number of elements in the collection for which the passed block returns `true`.
   #
   #     [1, 2, 3, 4].count { |i| i % 2 == 0 }  #=> 2
   #
-  def count
+  def count(&block)
     count = 0
     each { |e| count += 1 if yield e }
     count
@@ -796,12 +804,12 @@ module Enumerable(T)
     ary
   end
 
-  # Returns the number of elements in the collection.
+  # Alias for #count without block.
   #
   #     [1, 2, 3, 4].size  #=> 4
   #
   def size
-    count { true }
+    count
   end
 
   # Returns an array with the first *count* elements removed from the original collection.
