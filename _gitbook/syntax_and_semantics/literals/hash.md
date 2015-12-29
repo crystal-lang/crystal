@@ -16,20 +16,55 @@ When creating an empty hash you must always specify `K` and `V`:
 {}                   # syntax error
 ```
 
-## Symbol keys
+## Symbol / String key shorthand
 
-A special notation allows creating hashes with symbol keys:
+A special shorthand allows creating hashes with symbol keys:
 
 ```crystal
-{key1: 'a', key2: 'b'} # Hash(Symbol, Char)
+one = {key1: 'a', key2: 'b'} # Hash(Symbol, Char)
+two = {:key1 => 'a', :key2 => 'b'} # Hash(Symbol, Char)
+
+one == two #=> true
 ```
 
-## String keys
-
-A special notation allows creating hashes with string keys:
+similarly with string keys:
 
 ```crystal
-{"key1": 'a', "key2": 'b'} # Hash(String, Char)
+one = {"key1": 'a', "key2": 'b'} # Hash(String, Char)
+two = {"key1" => 'a', "key2" => 'b'} # Hash(String, Char)
+one == two #=> true
+```
+
+## Getting / Setting data
+
+A Hash value can be set using [Hash#\[\]=](http://crystal-lang.org/api/Hash.html#%5B%5D%3D%28key%3AK%2Cvalue%3AV%29-instance-method), but only as long as the key and value types match the declaration:
+
+```crystal
+one = {"foo": 'f', "bit": 'b'} # Hash(String, Char)
+
+one["zon"] = 'z'
+puts one[:aph] = 'a' # Compile error: no overload matches 'Hash(String, Char)#[]=' with types Symbol, Char
+```
+
+Hash values can be retrieved using [Hash#\[\]](http://crystal-lang.org/api/Hash.html#%5B%5D%28key%29-instance-method), [Hash#\[\]?](http://crystal-lang.org/api/Hash.html#%5B%5D%3F%28key%29-instance-method), or [Hash#fetch](http://crystal-lang.org/api/Hash.html#fetch%28key%2Cdefault%29-instance-method):
+
+```crystal
+one = {"foo": 'f', "bit": 'b'} # Hash(String, Char)
+
+# with []
+begin
+  one["foo"]  #=> 'f'
+  one["baz"]  # raises KeyError for Missing hash key: "bar"
+rescue KeyError
+  puts "no \"baz\" found"
+end
+
+# with []?
+one["baz"]?         #=> nil
+typeof(one["bar"]?) #=> (Nil | Char)
+
+# with fetch
+one.fetch "foo"     #=> 'f'
 ```
 
 ## Hash-like types
