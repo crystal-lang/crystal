@@ -742,6 +742,18 @@ class Array(T)
     val
   end
 
+  # Deletes all items from `self` for that block return `true`.
+  #
+  # ```
+  # a = [1, 2, 3, 4, 5, 6, 5, 6]
+  # a.delete_if { |e| e > 3 }
+  # a # => [1, 2, 3]
+  # ```
+  def delete_if(&block : T -> Bool)
+    reject! { |e| yield e }
+    self
+  end
+
   # Returns a new Array that has exactly this array's elements.
   # That is, it returns a shallow copy of this array.
   #
