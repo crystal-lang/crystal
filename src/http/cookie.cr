@@ -236,5 +236,10 @@ module HTTP
 
       headers
     end
+
+    # Returns this collection as a plain Hash.
+    def to_h
+      @cookies.dup
+    end
   end
 end
