@@ -749,7 +749,7 @@ class Array(T)
   # a.delete_if { |e| e > 3 }
   # a # => [1, 2, 3]
   # ```
-  def delete_if(&block : Int32 -> Bool)
+  def delete_if(&block : T -> Bool)
     reject! { |e| yield e }
     self
   end
