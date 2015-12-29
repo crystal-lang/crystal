@@ -859,11 +859,7 @@ class String
   # ```
   def chomp(char : Char)
     if ends_with?(char)
-      count = 0
-      char.each_byte do |byte|
-        count += 1
-      end
-      String.new(unsafe_byte_slice(0, bytesize - count))
+      String.new(unsafe_byte_slice(0, bytesize - char.bytesize))
     else
       self
     end
