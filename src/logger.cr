@@ -71,15 +71,15 @@ class Logger(T)
     @channel = Channel(Message).new(100)
     @close_channel = Channel(Nil).new
     @closed = false
+    @shutdown = false
     spawn write_messages
-    at_exit { close }
+    at_exit { shutdown }
   end
 
   def close
     return if @closed
     @closed = true
-    @close_channel.send(nil)
-    @close_channel.receive
+    shutdown
   end
 
   {% for name in Severity.constants %}
@@ -128,10 +128,17 @@ class Logger(T)
 
         @io.flush
       else
-        @io.close
+        @io.close if @closed
         @close_channel.send(nil)
         break
       end
     end
+  end
+
+  private def shutdown
+    return if @shutdown
+    @shutdown = true
+    @close_channel.send(nil)
+    @close_channel.receive
   end
 end
