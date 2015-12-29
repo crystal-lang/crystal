@@ -171,6 +171,7 @@ module HTTP
       cookies["c"] = Cookie.new("c", "d")
       cookies["d"] = "e"
       cookies.to_h.should eq ({ "a" => Cookie.new("a", "b"), "c" => Cookie.new("c", "d"), "d" => Cookie.new("d", "e") })
+      cookies.to_h.class.should eq Hash(String, Cookie)
     end
   end
 end
