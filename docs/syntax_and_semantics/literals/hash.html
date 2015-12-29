@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.2.9" data-basepath="../.." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.2.9" data-basepath="../.." data-revision="Tue Dec 29 2015 09:55:50 GMT-0700 (MST)">
     
 
 <div class="book-summary">
@@ -2005,13 +2005,42 @@
 <pre><code class="lang-crystal">{} <span class="hljs-keyword">of</span> <span class="hljs-constant">Int32</span> =&gt; <span class="hljs-constant">Int32</span> <span class="hljs-comment"># same as Hash(Int32, Int32).new</span>
 {}                   <span class="hljs-comment"># syntax error</span>
 </code></pre>
-<h2 id="symbol-keys">Symbol keys</h2>
-<p>A special notation allows creating hashes with symbol keys:</p>
-<pre><code class="lang-crystal">{<span class="hljs-symbol">key1:</span> <span class="hljs-string">&apos;a&apos;</span>, <span class="hljs-symbol">key2:</span> <span class="hljs-string">&apos;b&apos;</span>} <span class="hljs-comment"># Hash(Symbol, Char)</span>
+<h2 id="symbol-string-key-shorthand">Symbol / String key shorthand</h2>
+<p>A special shorthand allows creating hashes with symbol keys:</p>
+<pre><code class="lang-crystal">one = {<span class="hljs-symbol">key1:</span> <span class="hljs-string">&apos;a&apos;</span>, <span class="hljs-symbol">key2:</span> <span class="hljs-string">&apos;b&apos;</span>} <span class="hljs-comment"># Hash(Symbol, Char)</span>
+two = {<span class="hljs-symbol">:key1</span> =&gt; <span class="hljs-string">&apos;a&apos;</span>, <span class="hljs-symbol">:key2</span> =&gt; <span class="hljs-string">&apos;b&apos;</span>} <span class="hljs-comment"># Hash(Symbol, Char)</span>
+
+one == two <span class="hljs-comment">#=&gt; true</span>
 </code></pre>
-<h2 id="string-keys">String keys</h2>
-<p>A special notation allows creating hashes with string keys:</p>
-<pre><code class="lang-crystal">{<span class="hljs-string">&quot;key1&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&apos;a&apos;</span>, <span class="hljs-string">&quot;key2&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&apos;b&apos;</span>} <span class="hljs-comment"># Hash(String, Char)</span>
+<p>similarly with string keys:</p>
+<pre><code class="lang-crystal">one = {<span class="hljs-string">&quot;key1&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&apos;a&apos;</span>, <span class="hljs-string">&quot;key2&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&apos;b&apos;</span>} <span class="hljs-comment"># Hash(String, Char)</span>
+two = {<span class="hljs-string">&quot;key1&quot;</span> =&gt; <span class="hljs-string">&apos;a&apos;</span>, <span class="hljs-string">&quot;key2&quot;</span> =&gt; <span class="hljs-string">&apos;b&apos;</span>} <span class="hljs-comment"># Hash(String, Char)</span>
+one == two <span class="hljs-comment">#=&gt; true</span>
+</code></pre>
+<h2 id="getting-setting-data">Getting / Setting data</h2>
+<p>A Hash value can be set using <a href="http://crystal-lang.org/api/Hash.html#%5B%5D%3D%28key%3AK%2Cvalue%3AV%29-instance-method" target="_blank">Hash#[]=</a>, but only as long as the key and value types match the declaration:</p>
+<pre><code class="lang-crystal">one = {<span class="hljs-string">&quot;foo&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&apos;f&apos;</span>, <span class="hljs-string">&quot;bit&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&apos;b&apos;</span>} <span class="hljs-comment"># Hash(String, Char)</span>
+
+one[<span class="hljs-string">&quot;zon&quot;</span>] = <span class="hljs-string">&apos;z&apos;</span>
+puts one[<span class="hljs-symbol">:aph</span>] = <span class="hljs-string">&apos;a&apos;</span> <span class="hljs-comment"># Compile error: no overload matches &apos;Hash(String, Char)#[]=&apos; with types Symbol, Char</span>
+</code></pre>
+<p>Hash values can be retrieved using <a href="http://crystal-lang.org/api/Hash.html#%5B%5D%28key%29-instance-method" target="_blank">Hash#[]</a>, <a href="http://crystal-lang.org/api/Hash.html#%5B%5D%3F%28key%29-instance-method" target="_blank">Hash#[]?</a>, or <a href="http://crystal-lang.org/api/Hash.html#fetch%28key%2Cdefault%29-instance-method" target="_blank">Hash#fetch</a>:</p>
+<pre><code class="lang-crystal">one = {<span class="hljs-string">&quot;foo&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&apos;f&apos;</span>, <span class="hljs-string">&quot;bit&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&apos;b&apos;</span>} <span class="hljs-comment"># Hash(String, Char)</span>
+
+<span class="hljs-comment"># with []</span>
+<span class="hljs-keyword">begin</span>
+  one[<span class="hljs-string">&quot;foo&quot;</span>]  <span class="hljs-comment">#=&gt; &apos;f&apos;</span>
+  one[<span class="hljs-string">&quot;baz&quot;</span>]  <span class="hljs-comment"># raises KeyError for Missing hash key: &quot;bar&quot;</span>
+<span class="hljs-keyword">rescue</span> <span class="hljs-constant">KeyError</span>
+  puts <span class="hljs-string">&quot;no \&quot;baz\&quot; found&quot;</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># with []?</span>
+one[<span class="hljs-string">&quot;baz&quot;</span>]?         <span class="hljs-comment">#=&gt; nil</span>
+typeof(one[<span class="hljs-string">&quot;bar&quot;</span>]?) <span class="hljs-comment">#=&gt; (Nil | Char)</span>
+
+<span class="hljs-comment"># with fetch</span>
+one.fetch <span class="hljs-string">&quot;foo&quot;</span>     <span class="hljs-comment">#=&gt; &apos;f&apos;</span>
 </code></pre>
 <h2 id="hash-like-types">Hash-like types</h2>
 <p>You can use a special hash literal syntax with other types too, as long as they define an argless <code>new</code> method and a <code>[]=</code> method:</p>
