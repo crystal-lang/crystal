@@ -366,4 +366,26 @@ describe "Int" do
     iter.rewind
     iter.next.should eq(1)
   end
+
+  describe "#popcount" do
+    assert { 5_i8.popcount.should eq(2) }
+    assert { 127_i8.popcount.should eq(7) }
+    assert { -1_i8.popcount.should eq(8) }
+    assert { -128_i8.popcount.should eq(1) }
+
+    assert { 0_u8.popcount.should eq(0) }
+    assert { 255_u8.popcount.should eq(8) }
+
+    assert { 5_i16.popcount.should eq(2) }
+    assert { -6_i16.popcount.should eq(14) }
+    assert { 65535_u16.popcount.should eq(16) }
+
+    assert { 0_i32.popcount.should eq(0) }
+    assert { 2147483647_i32.popcount.should eq(31) }
+    assert { 4294967295_u32.popcount.should eq(32) }
+
+    assert { 5_i64.popcount.should eq(2) }
+    assert { 9223372036854775807_i64.popcount.should eq(63) }
+    assert { 18446744073709551615_u64.popcount.should eq(64) }
+  end
 end
