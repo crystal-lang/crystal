@@ -792,6 +792,12 @@ class String
     to_unsafe[index]
   end
 
+  # Returns a new string with each uppercase letter replaced with its lowercase
+  # counterpart.
+  #
+  # ```
+  # "hEllO".downcase # => "hello"
+  # ```
   def downcase
     String.build(bytesize) do |io|
       each_char do |char|
@@ -800,6 +806,12 @@ class String
     end
   end
 
+  # Returns a new string with each lowercase letter replaced with its uppercase
+  # counterpart.
+  #
+  # ```
+  # "hEllO".upcase # => "HELLO"
+  # ```
   def upcase
     String.build(bytesize) do |io|
       each_char do |char|
@@ -808,6 +820,12 @@ class String
     end
   end
 
+  # Returns a new string with the first letter converted to uppercase and every
+  # subsequent letter converted to lowercase.
+  #
+  # ```
+  # "hEllO".capitalize # => "Hello"
+  # ```
   def capitalize
     return self if bytesize == 0
 
@@ -992,6 +1010,15 @@ class String
     excess_left
   end
 
+  # Returns a new string _tr_anslating characters using *from* and *to* as a
+  # map. If *to* is shorter than *from*, the last character in *to* is used for
+  # the rest.
+  #
+  # ```
+  # "aabbcc".tr("abc", "xyz") # => "xxyyzz"
+  # "aabbcc".tr("abc", "x")   # => "xxxxxx"
+  # "aabbcc".tr("a", "xyz")   # => "xxbbcc"
+  # ```
   def tr(from : String, to : String)
     multi = nil
     table = StaticArray(Int32, 256).new(-1)
