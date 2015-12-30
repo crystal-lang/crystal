@@ -345,15 +345,15 @@ struct Time
 
   # Returns the number of seconds since the Epoch
   def epoch
-    (ticks - UnixEpoch) / Span::TicksPerSecond
+    (to_utc.ticks - UnixEpoch) / Span::TicksPerSecond
   end
 
   def epoch_ms
-    (ticks - UnixEpoch) / Span::TicksPerMillisecond
+    (to_utc.ticks - UnixEpoch) / Span::TicksPerMillisecond
   end
 
   def epoch_f
-    (ticks - UnixEpoch) / Span::TicksPerSecond.to_f
+    (to_utc.ticks - UnixEpoch) / Span::TicksPerSecond.to_f
   end
 
   def to_utc
