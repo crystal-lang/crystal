@@ -840,8 +840,8 @@ class String
     end
   end
 
-  # Returns a new String with the last carriage return removed (that is it will
-  # remove \n, \r, and \r\n).
+  # Returns a new String with the last carriage return removed (that is, it
+  # will remove \n, \r, and \r\n).
   #
   # ```
   # "string\r\n".chomp # => "string"
@@ -883,8 +883,8 @@ class String
     end
   end
 
-  # Returns a new String with *string* removed if the string ends with it.
-  # If *string* is `""`, all trailing `\r\n` or `\n` characters are removed.
+  # Returns a new String with *str* removed if the string ends with it.
+  # If *str* is `""`, all trailing `\r\n` or `\n` characters are removed.
   #
   # ```
   # "hello".chomp("llo") # => "he"
@@ -894,8 +894,8 @@ class String
   # "hello\r\n\r\n".chomp("")   # => "hello"
   # "hello\r\n\r\r\n".chomp("") # => "hello\r\n\r"
   # ```
-  def chomp(string : String)
-    if string.empty?
+  def chomp(str : String)
+    if str.empty?
       return self if empty?
 
       pos = bytesize - 1
@@ -907,8 +907,8 @@ class String
         end
       end
       String.new(unsafe_byte_slice(0, pos + 1))
-    elsif ends_with?(string)
-      String.new(unsafe_byte_slice(0, bytesize - string.bytesize))
+    elsif ends_with?(str)
+      String.new(unsafe_byte_slice(0, bytesize - str.bytesize))
     else
       self
     end
@@ -996,7 +996,7 @@ class String
 
   private def calc_excess_right
     excess_right = 0
-    while c = to_unsafe[bytesize - 1 - excess_right].chr.whitespace?
+    while to_unsafe[bytesize - 1 - excess_right].chr.whitespace?
       excess_right += 1
     end
     excess_right
