@@ -29,4 +29,16 @@ describe OpenSSL::Digest do
     OpenSSL::Digest.new("SHA1").block_size.should eq 64
     OpenSSL::Digest.new("SHA256").block_size.should eq 64
   end
+
+  it "correctly reads from IO" do
+    r, w = IO.pipe
+    digest = OpenSSL::Digest.new("SHA256")
+
+    w << "foo"
+    w.close
+    digest << r
+    r.close
+
+    digest.hexdigest.should eq("2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae")
+  end
 end

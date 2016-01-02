@@ -11,7 +11,7 @@ module OpenSSL
     def update(io : IO)
       buffer :: UInt8[2048]
       while (read_bytes = io.read(buffer.to_slice)) > 0
-        self << buffer.to_slice
+        self << buffer.to_slice[0, read_bytes]
       end
       self
     end
