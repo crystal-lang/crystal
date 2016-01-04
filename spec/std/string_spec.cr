@@ -419,9 +419,7 @@ describe "String" do
     assert { "hello".chomp("llo").should eq("he") }
     assert { "かたな".chomp("たな").should eq("か") }
 
-    assert { "hello\n\n\n\n".chomp("").should eq("hello") }
-    assert { "hello\r\n\r\n".chomp("").should eq("hello") }
-    assert { "hello\r\n\r\r\n".chomp("").should eq("hello\r\n\r") }
+    assert { "hello\n\n\n\n".chomp("").should eq("hello\n\n\n\n") }
   end
 
   describe "chop" do

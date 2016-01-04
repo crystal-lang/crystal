@@ -884,30 +884,13 @@ class String
   end
 
   # Returns a new String with *str* removed if the string ends with it.
-  # If *str* is `""`, all trailing `\r\n` or `\n` characters are removed.
   #
   # ```
   # "hello".chomp("llo") # => "he"
   # "hello".chomp("ol")  # => "hello"
-  #
-  # "hello\n\n\n\n".chomp("")   # => "hello"
-  # "hello\r\n\r\n".chomp("")   # => "hello"
-  # "hello\r\n\r\r\n".chomp("") # => "hello\r\n\r"
   # ```
   def chomp(str : String)
-    if str.empty?
-      return self if empty?
-
-      pos = bytesize - 1
-      while pos > 0 && to_unsafe[pos] === '\n'
-        if pos > 1 && to_unsafe[pos - 1] === '\r'
-          pos -= 2
-        else
-          pos -= 1
-        end
-      end
-      String.new(unsafe_byte_slice(0, pos + 1))
-    elsif ends_with?(str)
+    if ends_with?(str)
       String.new(unsafe_byte_slice(0, bytesize - str.bytesize))
     else
       self
