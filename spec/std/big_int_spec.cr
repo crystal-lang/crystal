@@ -36,6 +36,17 @@ describe "BigInt" do
     [3.to_big_i, 2.to_big_i, 10.to_big_i, 4, 8_u8].sort.should eq([2, 3, 4, 8, 10])
   end
 
+  it "compares against float" do
+    1.to_big_i.should eq(1.0)
+    1.to_big_i.should eq(1.0_f32)
+    1.to_big_i.should_not eq(1.1)
+    1.0.should eq(1.to_big_i)
+    1.0_f32.should eq(1.to_big_i)
+    1.1.should_not eq(1.to_big_i)
+
+    [1.1, 1.to_big_i, 3.to_big_i, 2.2].sort.should eq([1, 1.1, 2.2, 3])
+  end
+
   it "adds" do
     (1.to_big_i + 2.to_big_i).should eq(3.to_big_i)
     (1.to_big_i + 2).should eq(3.to_big_i)
