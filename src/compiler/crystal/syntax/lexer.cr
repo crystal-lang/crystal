@@ -1703,6 +1703,7 @@ module Crystal
               @reader.pos = old_pos
               @column_number = old_column
               next_string_token delimiter_state
+              @token.value = '\n' + @token.value.to_s
             end
           else
             @reader.pos = old_pos
@@ -1715,7 +1716,6 @@ module Crystal
           @token.value = "\n"
         end
       else
-        count = 0
         while current_char != string_end &&
               current_char != string_nest &&
               current_char != '\0' &&

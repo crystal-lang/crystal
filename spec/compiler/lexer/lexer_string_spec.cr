@@ -153,9 +153,9 @@ describe "Lexer string" do
 
     tester.string_should_start_correctly
     tester.next_string_token_should_be("Hello, mom! I am HERE.")
-    tester.next_string_token_should_be("HER dress is beautiful.")
-    tester.next_string_token_should_be("HE is OK.")
-    tester.next_string_token_should_be("  HERESY")
+    tester.next_string_token_should_be("\nHER dress is beautiful.")
+    tester.next_string_token_should_be("\nHE is OK.")
+    tester.next_string_token_should_be("\n  HERESY")
     tester.string_should_end_correctly
   end
 
@@ -186,9 +186,9 @@ describe "Lexer string" do
     tester.string_should_start_correctly
     tester.next_string_token_should_be("Hello, mom! I am HERE.")
     tester.token_should_be_at(line: 1)
-    tester.next_string_token_should_be("HER dress is beautiful.")
+    tester.next_string_token_should_be("\nHER dress is beautiful.")
     tester.token_should_be_at(line: 1)
-    tester.next_string_token_should_be("HE is OK.")
+    tester.next_string_token_should_be("\nHE is OK.")
     tester.token_should_be_at(line: 1)
     tester.string_should_end_correctly(false)
     tester.next_token_should_be(:NEWLINE)
