@@ -21,12 +21,23 @@ class Fiber
     @stack_top = @stack_bottom = @stack + STACK_SIZE
     fiber_main = ->(f : Void*) { (f as Fiber).run }
 
-    stack_ptr = @stack + STACK_SIZE - sizeof(UInt64)
-    stack_ptr = Pointer(UInt64).new(stack_ptr.address & ~0x0f_u64)
-    @stack_top = (stack_ptr - 7) as Void*
+    stack_ptr = @stack + STACK_SIZE - sizeof(Void*)
+    stack_ptr = Pointer(Void*).new(stack_ptr.address & ~0x0f_u64)
 
-    stack_ptr[0] = fiber_main.pointer.address
-    stack_ptr[-1] = self.object_id.to_u64
+    ifdef x86_64
+      @stack_top = (stack_ptr - 7) as Void*
+
+      stack_ptr[0] = fiber_main.pointer
+      stack_ptr[-1] = self as Void*
+    elsif i686
+      @stack_top = (stack_ptr - 6) as Void*
+
+      stack_ptr[0] = self as Void*
+      stack_ptr[-1] = Pointer(Void).null
+      stack_ptr[-2] = fiber_main.pointer
+    else
+      {{ raise "Unsupported platform, only x86_64 and i686 are supported." }}
+    end
 
     @prev_fiber = nil
     if last_fiber = @@last_fiber
@@ -93,24 +104,39 @@ class Fiber
   @[NoInline]
   @[Naked]
   protected def self.switch_stacks(current, to)
-    asm (%(
-      pushq %rdi
-      pushq %rbx
-      pushq %rbp
-      pushq %r12
-      pushq %r13
-      pushq %r14
-      pushq %r15
-      movq %rsp, ($0)
-      movq ($1), %rsp
-      popq %r15
-      popq %r14
-      popq %r13
-      popq %r12
-      popq %rbp
-      popq %rbx
-      popq %rdi)
-    :: "r"(current), "r"(to))
+    ifdef x86_64
+      asm (%(
+        pushq %rdi
+        pushq %rbx
+        pushq %rbp
+        pushq %r12
+        pushq %r13
+        pushq %r14
+        pushq %r15
+        movq %rsp, ($0)
+        movq ($1), %rsp
+        popq %r15
+        popq %r14
+        popq %r13
+        popq %r12
+        popq %rbp
+        popq %rbx
+        popq %rdi)
+      :: "r"(current), "r"(to))
+    elsif i686
+      asm (%(
+        pushl %edi
+        pushl %ebx
+        pushl %ebp
+        pushl %esi
+        movl %esp, ($0)
+        movl ($1), %esp
+        popl %esi
+        popl %ebp
+        popl %ebx
+        popl %edi)
+      :: "r"(current), "r"(to))
+    end
   end
 
   def resume
@@ -167,6 +193,4 @@ class Fiber
       fiber = fiber.next_fiber
     end
   end
-
-
 end
