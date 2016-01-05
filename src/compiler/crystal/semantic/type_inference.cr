@@ -35,8 +35,8 @@ module Crystal
     ValidExternalVarAttributes = ThreadLocalAttributes
     ValidClassVarAttributes    = ThreadLocalAttributes
     ValidStructDefAttributes   = %w(Packed)
-    ValidDefAttributes         = %w(AlwaysInline NoInline Raises ReturnsTwice)
-    ValidFunDefAttributes      = %w(AlwaysInline NoInline Raises ReturnsTwice CallConvention)
+    ValidDefAttributes         = %w(AlwaysInline Naked NoInline Raises ReturnsTwice)
+    ValidFunDefAttributes      = %w(AlwaysInline Naked NoInline Raises ReturnsTwice CallConvention)
     ValidEnumDefAttributes     = %w(Flags)
 
     getter mod

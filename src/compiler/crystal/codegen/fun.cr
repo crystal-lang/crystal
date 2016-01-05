@@ -302,6 +302,8 @@ class Crystal::CodeGenVisitor
         context.fun.add_attribute LLVM::Attribute::AlwaysInline
       when "ReturnsTwice"
         context.fun.add_attribute LLVM::Attribute::ReturnsTwice
+      when "Naked"
+        context.fun.add_attribute LLVM::Attribute::Naked
       end
     end
     no_inline
