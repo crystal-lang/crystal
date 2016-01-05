@@ -95,6 +95,7 @@ class Fiber
   end
 
   @[NoInline]
+  @[Naked]
   protected def self.switch_stacks(current, to)
     asm (%(
       pushq %rdi
