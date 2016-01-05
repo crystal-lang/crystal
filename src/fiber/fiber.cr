@@ -90,10 +90,6 @@ class Fiber
     Scheduler.reschedule
   end
 
-  protected def stack_top_ptr
-    pointerof(@stack_top)
-  end
-
   @[NoInline]
   @[Naked]
   protected def self.switch_stacks(current, to)
@@ -106,7 +102,7 @@ class Fiber
       pushq %r14
       pushq %r15
       movq %rsp, ($0)
-      movq $1, %rsp
+      movq ($1), %rsp
       popq %r15
       popq %r14
       popq %r13
@@ -120,7 +116,7 @@ class Fiber
   def resume
     current, @@current = @@current, self
     LibGC.stackbottom = @@current.stack_bottom
-    Fiber.switch_stacks(current.stack_top_ptr, @stack_top)
+    Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
   end
 
   def sleep(time)
