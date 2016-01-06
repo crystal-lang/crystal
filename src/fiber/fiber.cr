@@ -18,23 +18,29 @@ class Fiber
 
   def initialize(&@proc)
     @stack = Fiber.allocate_stack
-    @stack_top = @stack_bottom = @stack + STACK_SIZE
-    fiber_main = ->(f : Void*) { (f as Fiber).run }
+    @stack_bottom = @stack + STACK_SIZE
+    fiber_main = ->(f : Fiber) { f.run }
 
     stack_ptr = @stack + STACK_SIZE - sizeof(Void*)
+
+    # Align the stack pointer to 16 bytes
     stack_ptr = Pointer(Void*).new(stack_ptr.address & ~0x0f_u64)
 
+    # @stack_top will be the stack pointer on the initial call to `resume`
     ifdef x86_64
+      # In x86-64, the context switch push/pop 7 registers
       @stack_top = (stack_ptr - 7) as Void*
 
-      stack_ptr[0] = fiber_main.pointer
-      stack_ptr[-1] = self as Void*
+      stack_ptr[0] = fiber_main.pointer  # Initial `resume` will `ret` to this address
+      stack_ptr[-1] = self as Void*      # This will be `pop` into %rdi (first argument)
     elsif i686
+      # In IA32, the context switch push/pops 4 registers.
+      # Add two more to store the argument of `fiber_main`
       @stack_top = (stack_ptr - 6) as Void*
 
-      stack_ptr[0] = self as Void*
-      stack_ptr[-1] = Pointer(Void).null
-      stack_ptr[-2] = fiber_main.pointer
+      stack_ptr[0] = self as Void*        # First argument passed on the stack
+      stack_ptr[-1] = Pointer(Void).null  # Empty space to keep the stack alignment (16 bytes)
+      stack_ptr[-2] = fiber_main.pointer  # Initial `resume` will `ret` to this address
     else
       {{ raise "Unsupported platform, only x86_64 and i686 are supported." }}
     end
@@ -141,7 +147,7 @@ class Fiber
 
   def resume
     current, @@current = @@current, self
-    LibGC.stackbottom = @@current.stack_bottom
+    LibGC.stackbottom = @stack_bottom
     Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
   end
 
