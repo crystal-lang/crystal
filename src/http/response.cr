@@ -94,7 +94,7 @@ class HTTP::Response
       pieces = line.split(3)
       http_version = pieces[0]
       status_code = pieces[1].to_i
-      status_message = pieces[2]? ? pieces[2].chop : ""
+      status_message = pieces[2] ? pieces[2].chop : ""
 
       body_type = HTTP::BodyType::OnDemand
       body_type = HTTP::BodyType::Mandatory if mandatory_body?(status_code)
