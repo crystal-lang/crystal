@@ -1,10 +1,5 @@
 @[Link("pthread")]
-{% if flag?(:freebsd) %}
-  @[Link("gc-threaded")]
-{% else %}
-  @[Link("gc")]
-{% end %}
-
+@[Link(ldflags: "#{__DIR__}/libgc.a")]
 lib LibGC
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
@@ -41,7 +36,8 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  $stackbottom = GC_stackbottom : Void*
+  fun set_stackbottom = GC_set_stackbottom(Void*)
+  fun get_stackbottom = GC_get_stackbottom : Void*
 
   fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
 

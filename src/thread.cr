@@ -59,6 +59,7 @@ class Thread
 
   protected def start
     @@current = self
+    Fiber.current = Fiber.new
     begin
       @func.call
     rescue ex

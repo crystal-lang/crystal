@@ -13,6 +13,7 @@ class Fiber
   @@first_fiber : Fiber? = nil
   @@last_fiber : Fiber? = nil
   @@stack_pool = [] of Void*
+  @@fiber_list_mutex = Mutex.new
 
   @stack : Void*
   @resume_event : Event::Event?
@@ -52,12 +53,13 @@ class Fiber
       {{ raise "Unsupported platform, only x86_64 and i686 are supported." }}
     {% end %}
 
-    @prev_fiber = nil
-    if last_fiber = @@last_fiber
-      @prev_fiber = last_fiber
-      last_fiber.next_fiber = @@last_fiber = self
-    else
-      @@first_fiber = @@last_fiber = self
+    @@fiber_list_mutex.synchronize do
+      if last_fiber = @@last_fiber
+        @prev_fiber = last_fiber
+        last_fiber.next_fiber = @@last_fiber = self
+      else
+        @@first_fiber = @@last_fiber = self
+      end
     end
   end
 
@@ -65,10 +67,17 @@ class Fiber
     @proc = Proc(Void).new { }
     @stack = Pointer(Void).null
     @stack_top = _fiber_get_stack_top
-    @stack_bottom = LibGC.stackbottom
+    @stack_bottom = LibGC.get_stackbottom
     @name = "main"
 
-    @@first_fiber = @@last_fiber = self
+    @@fiber_list_mutex.synchronize do
+      if last_fiber = @@last_fiber
+        @prev_fiber = last_fiber
+        last_fiber.next_fiber = @@last_fiber = self
+      else
+        @@first_fiber = @@last_fiber = self
+      end
+    end
   end
 
   protected def self.allocate_stack
@@ -94,6 +103,7 @@ class Fiber
   end
 
   def run
+    GC.enable
     @proc.call
   rescue ex
     if name = @name
@@ -107,16 +117,18 @@ class Fiber
     @@stack_pool << @stack
 
     # Remove the current fiber from the linked list
-    if prev_fiber = @prev_fiber
-      prev_fiber.next_fiber = @next_fiber
-    else
-      @@first_fiber = @next_fiber
-    end
+    @@fiber_list_mutex.synchronize do
+      if prev_fiber = @prev_fiber
+        prev_fiber.next_fiber = @next_fiber
+      else
+        @@first_fiber = @next_fiber
+      end
 
-    if next_fiber = @next_fiber
-      next_fiber.prev_fiber = @prev_fiber
-    else
-      @@last_fiber = @prev_fiber
+      if next_fiber = @next_fiber
+        next_fiber.prev_fiber = @prev_fiber
+      else
+        @@last_fiber = @prev_fiber
+      end
     end
 
     # Delete the resume event if it was used by `yield` or `sleep`
@@ -166,9 +178,11 @@ class Fiber
   end
 
   def resume
+    GC.disable
     current, Thread.current.current_fiber = Thread.current.current_fiber, self
-    LibGC.stackbottom = @stack_bottom
+    LibGC.set_stackbottom @stack_bottom
     Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
+    GC.enable
   end
 
   def sleep(time)
@@ -219,6 +233,11 @@ class Fiber
     Thread.current.current_fiber
   end
 
+  def self.current=(fiber)
+    Thread.current.current_fiber = fiber
+  end
+
+  @@prev_push_other_roots : ->
   @@prev_push_other_roots = LibGC.get_push_other_roots
 
   # This will push all fibers stacks whenever the GC wants to collect some memory
