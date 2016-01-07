@@ -123,4 +123,13 @@ describe "Type inference: abstract def" do
       ),
       "can't define abstract def on non-abstract class"
   end
+
+  it "errors if using abstract def on metaclass" do
+    assert_error %(
+      class Foo
+        abstract def self.foo
+      end
+      ),
+      "can't define abstract def on metaclass"
+  end
 end
