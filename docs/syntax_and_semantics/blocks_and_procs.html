@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.9" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.7.9" data-basepath=".." data-revision="Thu Jan 07 2016 01:19:28 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2088,6 +2088,26 @@ some <span class="hljs-keyword">do</span> |first, second|
 <span class="hljs-keyword">end</span>
 </code></pre>
 <p>The block variable <code>second</code> also includes the <code>Nil</code> type because the last <code>yield</code> expression didn&apos;t include a second argument.</p>
+<h2 id="short-one-argument-syntax">Short one-argument syntax</h2>
+<p>A short syntax exists for specifying a block that receives a single argument and invokes a method on it. This:</p>
+<pre><code class="lang-crystal">method <span class="hljs-keyword">do</span> |argument|
+  argument.some_method
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Can be written as this:</p>
+<pre><code class="lang-crystal">method &amp;.some_method
+</code></pre>
+<p>Or like this:</p>
+<pre><code class="lang-crystal">method(&amp;.some_method)
+</code></pre>
+<p>The above is just syntax sugar and doesn&apos;t have any performance penalty.</p>
+<p>Arguments can be passed to <code>some_method</code> as well:</p>
+<pre><code class="lang-crystal">method &amp;.some_method(arg1, arg2)
+</code></pre>
+<p>And operators can be invoked too:</p>
+<pre><code class="lang-crystal">method &amp;.+(<span class="hljs-number">2</span>)
+method &amp;.[index]
+</code></pre>
 <h2 id="yield-value">yield value</h2>
 <p>The <code>yield</code> expression itself has a value: the last expression of the block. For example:</p>
 <pre><code class="lang-crystal"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">twice</span></span>
