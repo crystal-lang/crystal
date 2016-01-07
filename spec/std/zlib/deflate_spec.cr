@@ -11,5 +11,12 @@ module Zlib
       slice[0, read.to_i32].hexstring.should eq("789c2bc9c82c5600a2448592d4e21285e292a2ccbc74054520e00200854f087b")
       deflate.read(slice).should eq(0)
     end
+
+    it "can be closed" do
+      io = MemoryIO.new("")
+      deflate = Deflate.new(io)
+      deflate.close
+      io.closed?.should be_true
+    end
   end
 end
