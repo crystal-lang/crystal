@@ -1,19 +1,9 @@
 require "../../spec_helper"
 
 describe "Type inference: abstract def" do
-  it "errors if using abstract def" do
-    assert_error %(
-      class Foo
-        abstract def foo
-      end
-
-      Foo.new.foo
-      ), "abstract `def Foo#foo()` must be implemented by Foo"
-  end
-
   it "errors if using abstract def on subclass" do
     assert_error %(
-      class Foo
+      abstract class Foo
         abstract def foo
       end
 
@@ -96,18 +86,21 @@ describe "Type inference: abstract def" do
 
   it "says wrong number of arguments even if method is abstract" do
     assert_error %(
-      class Foo
+      abstract class Foo
         abstract def foo
       end
 
-      Foo.new.foo(1)
+      class Bar < Foo
+      end
+
+      Bar.new.foo(1)
       ),
       "wrong number of arguments"
   end
 
   it "gives correct error when no overload matches, when an abstract method is implemented (#1406)" do
     assert_error %(
-      class Foo
+      abstract class Foo
         abstract def foo(x : Int32)
       end
 
@@ -120,5 +113,14 @@ describe "Type inference: abstract def" do
       Bar.new.foo(1 || 'a')
       ),
       "no overload matches"
+  end
+
+  it "errors if using abstract def on non-abstract class" do
+    assert_error %(
+      class Foo
+        abstract def foo
+      end
+      ),
+      "can't define abstract def on non-abstract class"
   end
 end
