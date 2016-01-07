@@ -1,5 +1,6 @@
 require "openssl"
 require "socket"
+require "./response"
 require "../common"
 
 # A handler is a class which inherits from HTTP::Handler and implements the `call`method.
@@ -20,12 +21,8 @@ require "../common"
 abstract class HTTP::Handler
   property :next
 
-  def call_next(request)
-    if next_handler = @next
-      next_handler.call(request)
-    else
-      HTTP::Response.not_found
-    end
+  def call_next(context)
+    @next.try &.call(context)
   end
 end
 
@@ -87,17 +84,16 @@ require "./handlers/*"
 #
 # server.listen
 # ```
-
 class HTTP::Server
   property ssl
 
   @wants_close = false
 
-  def self.new(port, &handler : Request -> Response)
+  def self.new(port, &handler : Context ->)
     new("127.0.0.1", port, &handler)
   end
 
-  def self.new(port, handlers : Array(HTTP::Handler), &handler : Request -> Response)
+  def self.new(port, handlers : Array(HTTP::Handler), &handler : Context ->)
     new("127.0.0.1", port, handlers, &handler)
   end
 
@@ -109,10 +105,10 @@ class HTTP::Server
     new("127.0.0.1", port, handler)
   end
 
-  def initialize(@host, @port, &@handler : Request -> Response)
+  def initialize(@host, @port, &@handler : Context ->)
   end
 
-  def initialize(@host, @port, handlers : Array(HTTP::Handler), &handler : Request -> Response)
+  def initialize(@host, @port, handlers : Array(HTTP::Handler), &handler : Context ->)
     @handler = HTTP::Server.build_middleware handlers, handler
   end
 
@@ -147,14 +143,18 @@ class HTTP::Server
           return
         end
         break unless request
-        response = @handler.call(request)
+
+        response = Response.new(io)
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
-        response.to_io io
+        context = Context.new(request, response)
+
+        @handler.call(context)
+        response.output.close
         sock.flush
 
-        if upgrade_handler = response.upgrade_handler
-          return upgrade_handler.call(io)
-        end
+        # if upgrade_handler = response.upgrade_handler
+        #   return upgrade_handler.call(io)
+        # end
 
         break unless request.keep_alive?
       end
@@ -165,7 +165,7 @@ class HTTP::Server
   end
 
   # Builds all handlers as the middleware for HTTP::Server.
-  def self.build_middleware(handlers, last_handler = nil : Request -> Response)
+  def self.build_middleware(handlers, last_handler = nil : Context ->)
     raise ArgumentError.new "You must specify at least one HTTP Handler." if handlers.empty?
     0.upto(handlers.size - 2) { |i| handlers[i].next = handlers[i + 1] }
     handlers.last.next = last_handler if last_handler
