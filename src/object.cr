@@ -61,18 +61,6 @@ class Object
     nil
   end
 
-  # Comparison operator. Returns 0 if the two objects are equal,
-  # a negative number if this object is considered less than *other*,
-  # or a positive number otherwise.
-  #
-  # Subclasses define this method to provide class-specific ordering.
-  #
-  # ```
-  # # Sort in a descending way
-  # [4, 7, 2].sort { |x, y| x <=> y } # => [7, 4, 2]
-  # ```
-  abstract def <=>(other)
-
   # Generates an `Int` hash value for this object.
   #
   # This method must have the property that `a == b` implies `a.hash == b.hash`.
@@ -167,8 +155,12 @@ class Object
   end
 
   # Returns a shallow copy of this object.
-  # Not all objects implement this method.
-  abstract def dup
+  #
+  # Object returns self, but subclasses override this method to provide
+  # specific dup behaviour.
+  def dup
+    self
+  end
 
   # Returns a deep copy of this object.
   #

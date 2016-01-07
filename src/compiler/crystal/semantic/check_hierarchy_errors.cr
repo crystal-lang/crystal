@@ -1,6 +1,7 @@
 class Crystal::Program
   def check_hierarchy_errors
     RecursiveStructChecker.new(self).run
+    AbstractDefChecker.new(self).run
   end
 
   class RecursiveStructChecker
@@ -85,6 +86,112 @@ class Crystal::Program
 
     def struct?(type)
       type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.is_a?(FunInstanceType) && !type.is_a?(GenericClassType) && !type.abstract
+    end
+  end
+
+  class AbstractDefChecker
+    def initialize(@program)
+      @all_checked = Set(Type).new
+    end
+
+    def run
+      check_types(@program)
+    end
+
+    def check_types(type)
+      type.types.each_value do |type|
+        check_single(type)
+      end
+    end
+
+    def check_single(type)
+      return if @all_checked.includes?(type)
+      @all_checked << type
+
+      if type.abstract || type.module?
+        type.defs.try &.each_value do |defs_with_metadata|
+          defs_with_metadata.each do |def_with_metadata|
+            a_def = def_with_metadata.def
+            if a_def.abstract
+              # TODO: for now we skip methods with splats and default arguments
+              next if a_def.splat_index || a_def.args.any? &.default_value
+
+              check_implemented_in_subtypes(type, a_def)
+            end
+          end
+        end
+      end
+
+      check_types(type)
+    end
+
+    def check_implemented_in_subtypes(type, method)
+      check_implemented_in_subtypes(type, type, method)
+    end
+
+    def check_implemented_in_subtypes(base, type, method)
+      # TODO: check generic modules
+      subtypes = case type
+                 when NonGenericModuleType
+                   type.raw_including_types
+                 else
+                   type.subclasses
+                 end
+
+      subtypes.try &.each do |subtype|
+        next if implements?(subtype, method, base)
+
+        if subtype.abstract || subtype.module?
+          check_implemented_in_subtypes(base, subtype, method)
+        else
+          method.raise "abstract `def #{Call.def_full_name(base, method)}` must be implemented by #{subtype}"
+        end
+      end
+    end
+
+    def implements?(type : Type, method : Def, base)
+      return true if implements?(type, method)
+
+      type.parents.try &.each do |parent|
+        break if parent == base
+        return true if implements?(parent, method)
+      end
+
+      return false
+    end
+
+    def implements?(type : Type, method : Def)
+      type.defs.try &.each_value do |defs_with_metadata|
+        defs_with_metadata.each do |def_with_metadata|
+          a_def = def_with_metadata.def
+          return true if implements?(a_def, method)
+        end
+      end
+      false
+    end
+
+    def implements?(m1 : Def, m2 : Def)
+      return false if m1.abstract
+      return false unless m1.name == m2.name
+      return false unless m1.yields == m2.yields
+
+      # TODO: for now we consider that if there's a splat, the method is implemented
+      return true if m1.splat_index
+
+      return false if m1.args.size < m2.args.size
+
+      m2.args.zip(m1.args) do |a2, a1|
+        if a2.restriction && a1.restriction && a1.restriction != a2.restriction
+          return false
+        end
+      end
+
+      # If the method has more arguments, but default values for them, it implements it
+      if m1.args.size > m2.args.size
+        return false unless m1.args[m2.args.size].default_value
+      end
+
+      true
     end
   end
 end

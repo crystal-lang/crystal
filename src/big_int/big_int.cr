@@ -199,6 +199,10 @@ struct BigInt < Int
     ary
   end
 
+  def popcount
+    LibGMP.popcount(self)
+  end
+
   def to_i
     to_i32
   end
