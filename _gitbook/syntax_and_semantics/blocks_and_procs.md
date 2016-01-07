@@ -126,6 +126,43 @@ end
 
 The block variable `second` also includes the `Nil` type because the last `yield` expression didn't include a second argument.
 
+## Short one-argument syntax
+
+A short syntax exists for specifying a block that receives a single argument and invokes a method on it. This:
+
+```crystal
+method do |argument|
+  argument.some_method
+end
+```
+
+Can be written as this:
+
+```crystal
+method &.some_method
+```
+
+Or like this:
+
+```crystal
+method(&.some_method)
+```
+
+The above is just syntax sugar and doesn't have any performance penalty.
+
+Arguments can be passed to `some_method` as well:
+
+```crystal
+method &.some_method(arg1, arg2)
+```
+
+And operators can be invoked too:
+
+```crystal
+method &.+(2)
+method &.[index]
+```
+
 ## yield value
 
 The `yield` expression itself has a value: the last expression of the block. For example:
