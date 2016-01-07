@@ -41,4 +41,16 @@ module Comparable(T)
   def between?(min, max)
     min <= self && self <= max
   end
+
+  # Comparison operator. Returns 0 if the two objects are equal,
+  # a negative number if this object is considered less than *other*,
+  # or a positive number otherwise.
+  #
+  # Subclasses define this method to provide class-specific ordering.
+  #
+  # ```
+  # # Sort in a descending way
+  # [4, 7, 2].sort { |x, y| x <=> y } # => [7, 4, 2]
+  # ```
+  abstract def <=>(other : T)
 end

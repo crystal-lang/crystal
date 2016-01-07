@@ -267,10 +267,18 @@ class Crystal::Call
   end
 
   def def_full_name(owner, a_def)
+    Call.def_full_name(owner, a_def)
+  end
+
+  def self.def_full_name(owner, a_def)
     String.build { |io| append_def_full_name(owner, a_def, io) }
   end
 
   def append_def_full_name(owner, a_def, str)
+    Call.append_def_full_name(owner, a_def, str)
+  end
+
+  def self.append_def_full_name(owner, a_def, str)
     str << full_name(owner, a_def.name)
     str << '('
     a_def.args.each_with_index do |arg, i|
@@ -439,6 +447,10 @@ class Crystal::Call
   end
 
   def full_name(owner, def_name = name)
+    Call.full_name(owner, def_name)
+  end
+
+  def self.full_name(owner, def_name = name)
     owner.to_s_with_method_name(def_name)
   end
 

@@ -132,4 +132,225 @@ describe "Type inference: abstract def" do
       ),
       "can't define abstract def on metaclass"
   end
+
+  it "errors if abstract method is not implemented by subclass" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo
+      end
+
+      class Bar < Foo
+      end
+      ),
+      "abstract `def Foo#foo()` must be implemented by Bar"
+  end
+
+  it "errors if abstract method with arguments is not implemented by subclass" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(x, y)
+      end
+
+      class Bar < Foo
+      end
+      ),
+      "abstract `def Foo#foo(x, y)` must be implemented by Bar"
+  end
+
+  it "errors if abstract method with arguments is not implemented by subclass (wrong number of arguments)" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(x)
+      end
+
+      class Bar < Foo
+        def foo(x, y)
+        end
+      end
+      ),
+      "abstract `def Foo#foo(x)` must be implemented by Bar"
+  end
+
+  it "errors if abstract method with arguments is not implemented by subclass (wrong type)" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo(x, y : Int32)
+      end
+
+      class Bar < Foo
+        def foo(x, y : Float64)
+        end
+      end
+      ),
+      "abstract `def Foo#foo(x, y : Int32)` must be implemented by Bar"
+  end
+
+  it "errors if abstract method with arguments is not implemented by subclass (block difference)" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo
+      end
+
+      class Bar < Foo
+        def foo
+          yield
+        end
+      end
+      ),
+      "abstract `def Foo#foo()` must be implemented by Bar"
+  end
+
+  it "doesn't error if abstract method is implemented by subclass" do
+    infer_type %(
+      abstract class Foo
+        abstract def foo
+      end
+
+      class Bar < Foo
+        def foo
+        end
+      end
+      )
+  end
+
+  it "doesn't error if abstract method with args is implemented by subclass" do
+    infer_type %(
+      abstract class Foo
+        abstract def foo(x, y)
+      end
+
+      class Bar < Foo
+        def foo(x, y)
+        end
+      end
+      )
+  end
+
+  it "doesn't error if abstract method with args is implemented by subclass (restriction -> no restriction)" do
+    infer_type %(
+      abstract class Foo
+        abstract def foo(x, y : Int32)
+      end
+
+      class Bar < Foo
+        def foo(x, y)
+        end
+      end
+      )
+  end
+
+  it "doesn't error if abstract method with args is implemented by subclass (don't check subclasses)" do
+    infer_type %(
+      abstract class Foo
+        abstract def foo
+      end
+
+      class Bar < Foo
+        def foo
+        end
+      end
+
+      class Baz < Bar
+      end
+      )
+  end
+
+  it "errors if abstract method is not implemented by subclass of subclass" do
+    assert_error %(
+      abstract class Foo
+        abstract def foo
+      end
+
+      abstract class Bar < Foo
+      end
+
+      class Baz < Bar
+      end
+      ),
+      "abstract `def Foo#foo()` must be implemented by Baz"
+  end
+
+  it "doesn't error if abstract method is implemented by subclass via module inclusion" do
+    infer_type %(
+      abstract class Foo
+        abstract def foo
+      end
+
+      module Moo
+        def foo
+        end
+      end
+
+      class Bar < Foo
+        include Moo
+      end
+      )
+  end
+
+  it "errors if abstract method is not implemented by including class" do
+    assert_error %(
+      module Foo
+        abstract def foo
+      end
+
+      class Bar
+        include Foo
+      end
+      ),
+      "abstract `def Foo#foo()` must be implemented by Bar"
+  end
+
+  it "doesn't error if abstract method is implemented by including class" do
+    infer_type %(
+      module Foo
+        abstract def foo
+      end
+
+      class Bar
+        include Foo
+
+        def foo
+        end
+      end
+      )
+  end
+
+  it "doesn't error if abstract method is not implemented by including module" do
+    infer_type %(
+      module Foo
+        abstract def foo
+      end
+
+      module Bar
+        include Foo
+      end
+      )
+  end
+
+  it "errors if abstract method is not implemented by subclass (nested in module)" do
+    assert_error %(
+      module Moo
+        abstract class Foo
+          abstract def foo
+        end
+      end
+
+      class Bar < Moo::Foo
+      end
+      ),
+      "abstract `def Moo::Foo#foo()` must be implemented by Bar"
+  end
+
+  it "doesn't error if abstract method with args is implemented by subclass (with one default arg)" do
+    infer_type %(
+      abstract class Foo
+        abstract def foo(x)
+      end
+
+      class Bar < Foo
+        def foo(x, y = 1)
+        end
+      end
+      )
+  end
 end

@@ -797,6 +797,10 @@ module Crystal
       end
     end
 
+    def raw_including_types
+      @including_types
+    end
+
     def add_to_including_types(type : GenericType, all_types)
       type.generic_types.each_value do |generic_type|
         all_types << generic_type unless all_types.includes?(generic_type)

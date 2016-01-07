@@ -35,6 +35,10 @@ struct Proc
     call(other)
   end
 
+  def hash
+    object_id.hash
+  end
+
   def to_s(io)
     io << "#<"
     io << {{@type.name.stringify}}

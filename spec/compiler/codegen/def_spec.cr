@@ -210,9 +210,7 @@ describe "Code gen: def" do
 
   it "use target def type as return type" do
     run("
-      require \"nil\"
-      require \"value\"
-      require \"object\"
+      require \"prelude\"
 
       def foo
         if false

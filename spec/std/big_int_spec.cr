@@ -197,4 +197,8 @@ describe "BigInt" do
     "123456789123456789".to_big_i.should eq(BigInt.new("123456789123456789"))
     "abcabcabcabcabcabc".to_big_i(base: 16).should eq(BigInt.new("3169001976782853491388"))
   end
+
+  it "does popcount" do
+    5.to_big_i.popcount.should eq(2)
+  end
 end
