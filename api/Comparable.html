@@ -2174,11 +2174,11 @@
 
   <p>The Comparable mixin is used by classes whose objects may be ordered.</p>
 
-<p>Including types must provide an <code><=></code> method, which compares the receiver against
+<p>Including types must provide an <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, which compares the receiver against
 another object, returning -1, 0, or +1 depending on whether the receiver is less than,
 equal to, or greater than the other object.</p>
 
-<p>Comparable uses <code><=></code> to implement the conventional comparison operators (<code><a href="Comparable.html#%3C%28other%3AT%29-instance-method">#<</a></code>, <code><a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method">#<=</a></code>, <code><a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method">#==</a></code>, <code><a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method">#>=</a></code>, and <code><a href="Comparable.html#%3E%28other%3AT%29-instance-method">#></a></code>)
+<p>Comparable uses <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> to implement the conventional comparison operators (<code><a href="Comparable.html#%3C%28other%3AT%29-instance-method">#<</a></code>, <code><a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method">#<=</a></code>, <code><a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method">#==</a></code>, <code><a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method">#>=</a></code>, and <code><a href="Comparable.html#%3E%28other%3AT%29-instance-method">#></a></code>)
 and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance-method">#between?</a></code>.</p>
 
 
@@ -2201,6 +2201,8 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
     <li class="other-type"><a href="Deque.html">Deque(T)</a></li>
   
     <li class="other-type"><a href="Enum.html">Enum</a></li>
+  
+    <li class="other-type"><a href="Float.html">Float</a></li>
   
     <li class="other-type"><a href="Int.html">Int</a></li>
   
@@ -2226,7 +2228,7 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/comparable.cr" target="_blank">comparable.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/comparable.cr" target="_blank">comparable.cr</a>
     
     <br/>
   
@@ -2243,35 +2245,42 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
       <li class="entry-summary">
         <a href="#%3C%28other%3AT%29-instance-method" class="signature"><strong>#<</strong>(other : T)</a>
         
-          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>-1</code>.</p></div>
+          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, returning <code>true</code> if it returns <code>-1</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3C%3D%28other%3AT%29-instance-method" class="signature"><strong>#<=</strong>(other : T)</a>
         
-          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>-1</code> or <code>0</code>.</p></div>
+          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, returning <code>true</code> if it returns <code>-1</code> or <code>0</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%3AT%29-instance-method" class="signature"><strong>#<=></strong>(other : T)</a>
+        
+          <div class="summary"><p>Comparison operator.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%3AT%29-instance-method" class="signature"><strong>#==</strong>(other : T)</a>
         
-          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>0</code>.</p></div>
+          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, returning <code>true</code> if it returns <code>0</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3E%28other%3AT%29-instance-method" class="signature"><strong>#></strong>(other : T)</a>
         
-          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>1</code>.</p></div>
+          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, returning <code>true</code> if it returns <code>1</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3E%3D%28other%3AT%29-instance-method" class="signature"><strong>#>=</strong>(other : T)</a>
         
-          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>1</code> or <code>0</code>.</p></div>
+          <div class="summary"><p>Compares this object to <em>other</em> based on the receiver’s <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, returning <code>true</code> if it returns <code>1</code> or <code>0</code>.</p></div>
         
       </li>
     
@@ -2305,12 +2314,12 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
         <a class="method-permalink" href="#%3C%28other%3AT%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>-1</code>.</p></div>
+        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, returning <code>true</code> if it returns <code>-1</code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/comparable.cr#L11" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/comparable.cr#L11" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2323,12 +2332,37 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
         <a class="method-permalink" href="#%3C%3D%28other%3AT%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>-1</code> or <code>0</code>.</p></div>
+        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, returning <code>true</code> if it returns <code>-1</code> or <code>0</code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/comparable.cr#L16" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/comparable.cr#L16" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="&lt;=&gt;(other:T)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong><=></strong>(other : T)
+
+        <a class="method-permalink" href="#%3C%3D%3E%28other%3AT%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Comparison operator. Returns 0 if the two objects are equal,
+a negative number if this object is considered less than <em>other</em>,
+or a positive number otherwise.</p>
+
+<p>Subclasses define this method to provide class-specific ordering.</p>
+
+<pre><code><span class="c"># Sort in a descending way</span>
+[<span class="n">4</span>, <span class="n">7</span>, <span class="n">2</span>].sort { <span class="o">|</span>x, y<span class="o">|</span> x <span class="o"><=></span> y } <span class="c"># =&gt; [7, 4, 2]</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/comparable.cr#L55" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2341,13 +2375,13 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
         <a class="method-permalink" href="#%3D%3D%28other%3AT%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>0</code>.
+        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, returning <code>true</code> if it returns <code>0</code>.
 Also returns <code>true</code> if this and <code>other</code> are the same object.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/comparable.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/comparable.cr#L22" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2360,12 +2394,12 @@ Also returns <code>true</code> if this and <code>other</code> are the same objec
         <a class="method-permalink" href="#%3E%28other%3AT%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>1</code>.</p></div>
+        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, returning <code>true</code> if it returns <code>1</code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/comparable.cr#L31" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/comparable.cr#L31" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2378,12 +2412,12 @@ Also returns <code>true</code> if this and <code>other</code> are the same objec
         <a class="method-permalink" href="#%3E%3D%28other%3AT%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><=></code> method, returning <code>true</code> if it returns <code>1</code> or <code>0</code>.</p></div>
+        <div class="doc"><p>Compares this object to <em>other</em> based on the receiver’s <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> method, returning <code>true</code> if it returns <code>1</code> or <code>0</code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/comparable.cr#L36" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/comparable.cr#L36" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2401,7 +2435,7 @@ Also returns <code>true</code> if this and <code>other</code> are the same objec
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/comparable.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/comparable.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>

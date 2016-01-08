@@ -2258,22 +2258,22 @@ io.print <span class="s">&quot;xyz&quot;</span>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr" target="_blank">io.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr" target="_blank">io.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/console.cr" target="_blank">io/console.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/console.cr" target="_blank">io/console.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/error.cr" target="_blank">io/error.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/error.cr" target="_blank">io/error.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -2333,6 +2333,13 @@ io.print <span class="s">&quot;xyz&quot;</span>
       </li>
     
       <li class="entry-summary">
+        <a href="#close-instance-method" class="signature"><strong>#close</strong></a>
+        
+          <div class="summary"><p>Closes this IO.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#cooked%28%26block%29-instance-method" class="signature"><strong>#cooked</strong>(&block)</a>
         
       </li>
@@ -2343,16 +2350,16 @@ io.print <span class="s">&quot;xyz&quot;</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#each_byte%28%26block%29-instance-method" class="signature"><strong>#each_byte</strong>(&block)</a>
+        <a href="#each_byte-instance-method" class="signature"><strong>#each_byte</strong></a>
         
-          <div class="summary"><p>Inovkes the given block with each byte (<code><a href="UInt8.html">UInt8</a></code>) in this IO.</p></div>
+          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the bytes in this IO.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#each_byte-instance-method" class="signature"><strong>#each_byte</strong></a>
+        <a href="#each_byte%28%26block%29-instance-method" class="signature"><strong>#each_byte</strong>(&block)</a>
         
-          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the bytes in this IO.</p></div>
+          <div class="summary"><p>Inovkes the given block with each byte (<code><a href="UInt8.html">UInt8</a></code>) in this IO.</p></div>
         
       </li>
     
@@ -2643,7 +2650,7 @@ io2.to_s <span class="c"># =&gt; &quot;hello&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L784" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L790" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2669,7 +2676,7 @@ to the given block. Both endpoints are closed after the block.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L262" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L268" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2694,7 +2701,7 @@ reader.gets <span class="c"># =&gt; &quot;world&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L237" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L243" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2720,7 +2727,7 @@ are supported.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L145" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L145" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2736,7 +2743,7 @@ are supported.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L131" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L131" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2766,7 +2773,27 @@ io.to_s <span class="c"># =&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L283" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L289" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="close-instance-method">
+      <div class="signature">
+        
+        def <strong>close</strong>
+
+        <a class="method-permalink" href="#close-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Closes this IO.</p>
+
+<p>IO defines this is a no-op method, but including types may override.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L224" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2782,7 +2809,7 @@ io.to_s <span class="c"># =&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/console.cr#L175" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/console.cr#L175" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2798,7 +2825,32 @@ io.to_s <span class="c"># =&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/console.cr#L182" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/console.cr#L182" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_byte-instance-method">
+      <div class="signature">
+        
+        def <strong>each_byte</strong>
+
+        <a class="method-permalink" href="#each_byte-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the bytes in this IO.</p>
+
+<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">&quot;aあ&quot;</span>)
+iter <span class="o">=</span> io.each_byte
+iter.<span class="k">next</span> <span class="c"># =&gt; 97</span>
+iter.<span class="k">next</span> <span class="c"># =&gt; 227</span>
+iter.<span class="k">next</span> <span class="c"># =&gt; 129</span>
+iter.<span class="k">next</span> <span class="c"># =&gt; 130</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L776" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2828,32 +2880,7 @@ io.each_byte <span class="k">do</span> <span class="o">|</span>byte<span class="
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L754" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="each_byte-instance-method">
-      <div class="signature">
-        
-        def <strong>each_byte</strong>
-
-        <a class="method-permalink" href="#each_byte-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the bytes in this IO.</p>
-
-<pre><code>io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>(<span class="s">&quot;aあ&quot;</span>)
-iter <span class="o">=</span> io.each_byte
-iter.<span class="k">next</span> <span class="c"># =&gt; 97</span>
-iter.<span class="k">next</span> <span class="c"># =&gt; 227</span>
-iter.<span class="k">next</span> <span class="c"># =&gt; 129</span>
-iter.<span class="k">next</span> <span class="c"># =&gt; 130</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L770" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L760" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2881,7 +2908,7 @@ io.each_char <span class="k">do</span> <span class="o">|</span>char<span class="
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L719" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L725" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2904,7 +2931,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; &apos;め&apos;</span><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L733" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L739" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2934,7 +2961,7 @@ dlrow</code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L684" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L690" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2959,7 +2986,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; &quot;world&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L700" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L706" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2979,7 +3006,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; &quot;world&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L224" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L230" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3005,7 +3032,7 @@ io.gets(<span class="n">3</span>) <span class="c"># =&gt; nil</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L495" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L501" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3030,7 +3057,7 @@ io.gets(<span class="s">'w'</span>, <span class="n">10</span>) <span class="c">#
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L523" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L529" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3055,7 +3082,7 @@ io.gets(<span class="s">'w'</span>) <span class="c"># =&gt; nil</span></code></p
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L509" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L515" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3079,7 +3106,7 @@ io.gets <span class="c"># =&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L480" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L486" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3103,7 +3130,7 @@ io.gets(<span class="s">&quot;wo&quot;</span>) <span class="c"># =&gt; nil</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L554" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L560" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3125,7 +3152,7 @@ io.read <span class="c"># =&gt; &quot;&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L462" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L468" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3148,7 +3175,7 @@ io.to_s <span class="c"># =&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L310" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L316" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3172,7 +3199,7 @@ io.to_s <span class="c"># =&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L297" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L303" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3188,7 +3215,7 @@ io.to_s <span class="c"># =&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L376" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L382" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3204,7 +3231,7 @@ io.to_s <span class="c"># =&gt; &quot;1-Crystal&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L371" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L377" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3226,7 +3253,7 @@ io.to_s <span class="c"># =&gt; &quot;\n&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L352" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L358" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3248,7 +3275,7 @@ io.to_s <span class="c"># =&gt; &quot;1\n-\nCrystal\n&quot;</span></code></pre><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L364" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L370" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3272,7 +3299,7 @@ io.to_s <span class="c"># =&gt; &quot;hello\nworld\n&quot;</span></code></pre></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L326" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L332" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3295,7 +3322,7 @@ io.to_s <span class="c"># =&gt; &quot;1\nCrystal\n&quot;</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L340" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L346" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3311,7 +3338,7 @@ io.to_s <span class="c"># =&gt; &quot;1\nCrystal\n&quot;</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/console.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/console.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3327,7 +3354,7 @@ io.to_s <span class="c"># =&gt; &quot;1\nCrystal\n&quot;</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/console.cr#L212" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/console.cr#L212" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3352,7 +3379,7 @@ slice          <span class="c"># =&gt; [111, 101, 108, 108]</span></code></pre><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L210" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L210" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3375,7 +3402,7 @@ io.read_byte <span class="c"># =&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L389" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L395" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3402,7 +3429,7 @@ io.read_bytes(<span class="t">Int32</span>, <span class="t">IO</span><span class
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L651" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L657" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3425,7 +3452,7 @@ io.read_char <span class="c"># =&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L406" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L412" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3450,7 +3477,7 @@ io.read_fully <span class="c"># =&gt; EOFError</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L445" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L451" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3468,7 +3495,7 @@ io.read_fully <span class="c"># =&gt; EOFError</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L591" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L597" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3484,7 +3511,7 @@ io.read_fully <span class="c"># =&gt; EOFError</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/console.cr#L237" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/console.cr#L237" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3506,7 +3533,7 @@ io.gets <span class="c"># =&gt; &quot;world&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L602" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L608" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3529,7 +3556,7 @@ io.gets <span class="c"># =&gt; &quot;world&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L663" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L669" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3552,7 +3579,7 @@ io.to_s <span class="c">#=&gt; &quot;abcd&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L219" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3574,7 +3601,7 @@ io.to_s <span class="c"># =&gt; &quot;a&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L618" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L624" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3601,7 +3628,7 @@ io.gets(<span class="n">4</span>) <span class="c"># =&gt; &quot;\u{4}\u{3}\u{2}\
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io.cr#L635" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io.cr#L641" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3622,7 +3649,7 @@ io.gets(<span class="n">4</span>) <span class="c"># =&gt; &quot;\u{4}\u{3}\u{2}\
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/console.cr#L189" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/console.cr#L189" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3638,7 +3665,7 @@ io.gets(<span class="n">4</span>) <span class="c"># =&gt; &quot;\u{4}\u{3}\u{2}\
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/console.cr#L220" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/console.cr#L220" target="_blank">View source</a>]
         
       </div>
     </div>

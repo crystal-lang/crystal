@@ -2181,6 +2181,8 @@
   
     <li class="other-type"><a href="Comparable.html">Comparable(BigInt)</a></li>
   
+    <li class="other-type"><a href="Comparable.html">Comparable(Float)</a></li>
+  
     <li class="other-type"><a href="Comparable.html">Comparable(Int::Signed)</a></li>
   
     <li class="other-type"><a href="Comparable.html">Comparable(Int::Unsigned)</a></li>
@@ -2199,7 +2201,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
     
     <br/>
   
@@ -2289,12 +2291,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%2B%28other%3ABigInt%29-instance-method" class="signature"><strong>#+</strong>(other : BigInt)</a>
+        <a href="#%2B%28other%3AInt%29-instance-method" class="signature"><strong>#+</strong>(other : Int)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%2B%28other%3AInt%29-instance-method" class="signature"><strong>#+</strong>(other : Int)</a>
+        <a href="#%2B%28other%3ABigInt%29-instance-method" class="signature"><strong>#+</strong>(other : BigInt)</a>
         
       </li>
     
@@ -2304,12 +2306,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#--instance-method" class="signature"><strong>#-</strong></a>
+        <a href="#-%28other%3AInt%29-instance-method" class="signature"><strong>#-</strong>(other : Int)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#-%28other%3AInt%29-instance-method" class="signature"><strong>#-</strong>(other : Int)</a>
+        <a href="#--instance-method" class="signature"><strong>#-</strong></a>
         
       </li>
     
@@ -2329,12 +2331,17 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%3ABigInt%29-instance-method" class="signature"><strong>#<=></strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#%3C%3D%3E%28other%3AInt%3A%3ASigned%29-instance-method" class="signature"><strong>#<=></strong>(other : Int::Signed)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%3C%3D%3E%28other%3ABigInt%29-instance-method" class="signature"><strong>#<=></strong>(other : BigInt)</a>
+        <a href="#%3C%3D%3E%28other%3AFloat%29-instance-method" class="signature"><strong>#<=></strong>(other : Float)</a>
         
       </li>
     
@@ -2370,6 +2377,11 @@
     
       <li class="entry-summary">
         <a href="#inspect%28io%29-instance-method" class="signature"><strong>#inspect</strong>(io)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#popcount-instance-method" class="signature"><strong>#popcount</strong></a>
         
       </li>
     
@@ -2493,39 +2505,9 @@
       <span><=(other : T)</span>
     <=</a>, 
   
-    <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
-      <span>==(other : T)</span>
-    ==</a>, 
-  
-    <a href="Comparable.html#%3E%28other%3AT%29-instance-method" class="tooltip">
-      <span>>(other : T)</span>
-    ></a>, 
-  
-    <a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method" class="tooltip">
-      <span>>=(other : T)</span>
-    >=</a>, 
-  
-    <a href="Comparable.html#between%3F%28min%2Cmax%29-instance-method" class="tooltip">
-      <span>between?(min, max)</span>
-    between?</a>
-  
-
-
-    
-
-
-  
-    
-
-  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
-  
-    <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
-      <span><(other : T)</span>
-    <</a>, 
-  
-    <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
-      <span><=(other : T)</span>
-    <=</a>, 
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
   
     <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
       <span>==(other : T)</span>
@@ -2560,6 +2542,86 @@
     <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
       <span><=(other : T)</span>
     <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
+  
+    <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>==(other : T)</span>
+    ==</a>, 
+  
+    <a href="Comparable.html#%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span>>(other : T)</span>
+    ></a>, 
+  
+    <a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>>=(other : T)</span>
+    >=</a>, 
+  
+    <a href="Comparable.html#between%3F%28min%2Cmax%29-instance-method" class="tooltip">
+      <span>between?(min, max)</span>
+    between?</a>
+  
+
+
+    
+
+
+  
+    
+
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  
+    <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
+      <span><(other : T)</span>
+    <</a>, 
+  
+    <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span><=(other : T)</span>
+    <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
+  
+    <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>==(other : T)</span>
+    ==</a>, 
+  
+    <a href="Comparable.html#%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span>>(other : T)</span>
+    ></a>, 
+  
+    <a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>>=(other : T)</span>
+    >=</a>, 
+  
+    <a href="Comparable.html#between%3F%28min%2Cmax%29-instance-method" class="tooltip">
+      <span>between?(min, max)</span>
+    between?</a>
+  
+
+
+    
+
+
+  
+    
+
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  
+    <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
+      <span><(other : T)</span>
+    <</a>, 
+  
+    <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span><=(other : T)</span>
+    <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
   
     <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
       <span>==(other : T)</span>
@@ -2591,16 +2653,16 @@
       <span>%(other : Int)<br/>%(other : BigInt)</span>
     %</a>, 
   
-    <a href="Int.html#%26%28other%3AUInt32%29-instance-method" class="tooltip">
-      <span>&(other : UInt32)<br/>&(other : UInt64)<br/>&(other : Int64)<br/>&(other : Int32)<br/>&(other : UInt16)<br/>&(other : UInt8)<br/>&(other : Int16)<br/>&(other : Int8)</span>
+    <a href="Int.html#%26%28other%3AUInt16%29-instance-method" class="tooltip">
+      <span>&(other : UInt16)<br/>&(other : UInt8)<br/>&(other : UInt64)<br/>&(other : UInt32)<br/>&(other : Int32)<br/>&(other : Int64)<br/>&(other : Int8)<br/>&(other : Int16)</span>
     &</a>, 
   
     <a href="Int.html#%2A%28other%3ABigInt%29-instance-method" class="tooltip">
       <span>*(other : BigInt)</span>
     *</a>, 
   
-    <a href="Int.html#%2A%2A%28other%29-instance-method" class="tooltip">
-      <span>**(other)<br/>**(other : Int)</span>
+    <a href="Int.html#%2A%2A%28other%3AInt%29-instance-method" class="tooltip">
+      <span>**(other : Int)<br/>**(other)</span>
     **</a>, 
   
     <a href="Int.html#%2B%28other%3ABigInt%29-instance-method" class="tooltip">
@@ -2611,8 +2673,8 @@
       <span>-(other : BigInt)</span>
     -</a>, 
   
-    <a href="Int.html#%2F%28x%3AInt%29-instance-method" class="tooltip">
-      <span>/(x : Int)<br/>/(other : BigInt)</span>
+    <a href="Int.html#%2F%28other%3ABigInt%29-instance-method" class="tooltip">
+      <span>/(other : BigInt)<br/>/(x : Int)</span>
     /</a>, 
   
     <a href="Int.html#%3C%3C%28count%3AInt%29-instance-method" class="tooltip">
@@ -2631,8 +2693,8 @@
       <span>>>(count : Int)</span>
     >></a>, 
   
-    <a href="Int.html#%5E%28other%3AUInt64%29-instance-method" class="tooltip">
-      <span>^(other : UInt64)<br/>^(other : Int8)<br/>^(other : Int16)<br/>^(other : Int32)<br/>^(other : Int64)<br/>^(other : UInt16)<br/>^(other : UInt8)<br/>^(other : UInt32)</span>
+    <a href="Int.html#%5E%28other%3AUInt32%29-instance-method" class="tooltip">
+      <span>^(other : UInt32)<br/>^(other : UInt16)<br/>^(other : UInt8)<br/>^(other : Int32)<br/>^(other : Int16)<br/>^(other : Int64)<br/>^(other : Int8)<br/>^(other : UInt64)</span>
     ^</a>, 
   
     <a href="Int.html#abs-instance-method" class="tooltip">
@@ -2663,8 +2725,8 @@
       <span>divisible_by?(num)</span>
     divisible_by?</a>, 
   
-    <a href="Int.html#downto%28n%2C%26block%3Aself-%3E%29-instance-method" class="tooltip">
-      <span>downto(n, &block : self -> )<br/>downto(n)</span>
+    <a href="Int.html#downto%28n%29-instance-method" class="tooltip">
+      <span>downto(n)<br/>downto(n, &block : self -> )</span>
     downto</a>, 
   
     <a href="Int.html#even%3F-instance-method" class="tooltip">
@@ -2731,6 +2793,10 @@
       <span>odd?</span>
     odd?</a>, 
   
+    <a href="Int.html#popcount-instance-method" class="tooltip">
+      <span>popcount</span>
+    popcount</a>, 
+  
     <a href="Int.html#pred-instance-method" class="tooltip">
       <span>pred</span>
     pred</a>, 
@@ -2775,28 +2841,28 @@
       <span>to_json(io)</span>
     to_json</a>, 
   
-    <a href="Int.html#to_s-instance-method" class="tooltip">
-      <span>to_s<br/>to_s(io : IO)<br/>to_s(base : Int, upcase = <span class="n">false</span> : Bool)<br/>to_s(base : Int, io : IO, upcase = <span class="n">false</span> : Bool)</span>
+    <a href="Int.html#to_s%28base%3AInt%2Cio%3AIO%2Cupcase%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%3ABool%29-instance-method" class="tooltip">
+      <span>to_s(base : Int, io : IO, upcase = <span class="n">false</span> : Bool)<br/>to_s(base : Int, upcase = <span class="n">false</span> : Bool)<br/>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
   
     <a href="Int.html#trunc-instance-method" class="tooltip">
       <span>trunc</span>
     trunc</a>, 
   
-    <a href="Int.html#unsafe_div%28other%3AInt32%29-instance-method" class="tooltip">
-      <span>unsafe_div(other : Int32)<br/>unsafe_div(other : Int16)<br/>unsafe_div(other : Int8)<br/>unsafe_div(other : UInt32)<br/>unsafe_div(other : UInt64)<br/>unsafe_div(other : UInt16)<br/>unsafe_div(other : Int64)<br/>unsafe_div(other : UInt8)</span>
+    <a href="Int.html#unsafe_div%28other%3AInt8%29-instance-method" class="tooltip">
+      <span>unsafe_div(other : Int8)<br/>unsafe_div(other : UInt8)<br/>unsafe_div(other : UInt16)<br/>unsafe_div(other : UInt64)<br/>unsafe_div(other : UInt32)<br/>unsafe_div(other : Int64)<br/>unsafe_div(other : Int16)<br/>unsafe_div(other : Int32)</span>
     unsafe_div</a>, 
   
-    <a href="Int.html#unsafe_mod%28other%3AInt64%29-instance-method" class="tooltip">
-      <span>unsafe_mod(other : Int64)<br/>unsafe_mod(other : Int32)<br/>unsafe_mod(other : UInt16)<br/>unsafe_mod(other : Int8)<br/>unsafe_mod(other : Int16)<br/>unsafe_mod(other : UInt8)<br/>unsafe_mod(other : UInt32)<br/>unsafe_mod(other : UInt64)</span>
+    <a href="Int.html#unsafe_mod%28other%3AInt32%29-instance-method" class="tooltip">
+      <span>unsafe_mod(other : Int32)<br/>unsafe_mod(other : UInt16)<br/>unsafe_mod(other : UInt32)<br/>unsafe_mod(other : UInt8)<br/>unsafe_mod(other : Int64)<br/>unsafe_mod(other : Int16)<br/>unsafe_mod(other : Int8)<br/>unsafe_mod(other : UInt64)</span>
     unsafe_mod</a>, 
   
-    <a href="Int.html#unsafe_shl%28other%3AInt8%29-instance-method" class="tooltip">
-      <span>unsafe_shl(other : Int8)<br/>unsafe_shl(other : UInt64)<br/>unsafe_shl(other : UInt8)<br/>unsafe_shl(other : Int64)<br/>unsafe_shl(other : UInt16)<br/>unsafe_shl(other : UInt32)<br/>unsafe_shl(other : Int16)<br/>unsafe_shl(other : Int32)</span>
+    <a href="Int.html#unsafe_shl%28other%3AUInt8%29-instance-method" class="tooltip">
+      <span>unsafe_shl(other : UInt8)<br/>unsafe_shl(other : Int16)<br/>unsafe_shl(other : Int8)<br/>unsafe_shl(other : UInt16)<br/>unsafe_shl(other : UInt32)<br/>unsafe_shl(other : UInt64)<br/>unsafe_shl(other : Int32)<br/>unsafe_shl(other : Int64)</span>
     unsafe_shl</a>, 
   
-    <a href="Int.html#unsafe_shr%28other%3AInt8%29-instance-method" class="tooltip">
-      <span>unsafe_shr(other : Int8)<br/>unsafe_shr(other : UInt64)<br/>unsafe_shr(other : Int64)<br/>unsafe_shr(other : UInt8)<br/>unsafe_shr(other : UInt32)<br/>unsafe_shr(other : UInt16)<br/>unsafe_shr(other : Int32)<br/>unsafe_shr(other : Int16)</span>
+    <a href="Int.html#unsafe_shr%28other%3AUInt64%29-instance-method" class="tooltip">
+      <span>unsafe_shr(other : UInt64)<br/>unsafe_shr(other : UInt16)<br/>unsafe_shr(other : UInt8)<br/>unsafe_shr(other : Int64)<br/>unsafe_shr(other : Int32)<br/>unsafe_shr(other : Int8)<br/>unsafe_shr(other : Int16)<br/>unsafe_shr(other : UInt32)</span>
     unsafe_shr</a>, 
   
     <a href="Int.html#upto%28n%2C%26block%3Aself-%3E%29-instance-method" class="tooltip">
@@ -2819,8 +2885,8 @@
       <span>years</span>
     years</a>, 
   
-    <a href="Int.html#%7C%28other%3AUInt8%29-instance-method" class="tooltip">
-      <span>|(other : UInt8)<br/>|(other : UInt64)<br/>|(other : Int8)<br/>|(other : UInt16)<br/>|(other : UInt32)<br/>|(other : Int32)<br/>|(other : Int16)<br/>|(other : Int64)</span>
+    <a href="Int.html#%7C%28other%3AInt8%29-instance-method" class="tooltip">
+      <span>|(other : Int8)<br/>|(other : UInt32)<br/>|(other : Int32)<br/>|(other : Int64)<br/>|(other : UInt16)<br/>|(other : UInt8)<br/>|(other : UInt64)<br/>|(other : Int16)</span>
     |</a>, 
   
     <a href="Int.html#%7E-instance-method" class="tooltip">
@@ -2851,6 +2917,10 @@
     <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
       <span><=(other : T)</span>
     <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
   
     <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
       <span>==(other : T)</span>
@@ -2979,6 +3049,10 @@
       <span><=(other : T)</span>
     <=</a>, 
   
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
+  
     <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
       <span>==(other : T)</span>
     ==</a>, 
@@ -3038,10 +3112,6 @@
     <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
       <span>!~(other)</span>
     !~</a>, 
-  
-    <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
-      <span><=>(other)</span>
-    <=></a>, 
   
     <a href="Object.html#%3D%3D%28other%29-instance-method" class="tooltip">
       <span>==(other)</span>
@@ -3172,7 +3242,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L39" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L40" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3188,7 +3258,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L12" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L13" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3204,7 +3274,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L16" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L17" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3220,7 +3290,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L24" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L25" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3236,7 +3306,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L32" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L33" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3252,7 +3322,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L36" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L37" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3268,7 +3338,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L8" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L9" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3289,7 +3359,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L131" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L136" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3305,7 +3375,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L125" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L130" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3321,7 +3391,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L141" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L146" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3337,7 +3407,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L101" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L106" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3353,7 +3423,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L97" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L102" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3369,7 +3439,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L105" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L110" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3385,23 +3455,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L161" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="+(other:BigInt)-instance-method">
-      <div class="signature">
-        
-        def <strong>+</strong>(other : <a href="BigInt.html">BigInt</a>)
-
-        <a class="method-permalink" href="#%2B%28other%3ABigInt%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L65" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L166" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3417,7 +3471,23 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L69" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L74" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="+(other:BigInt)-instance-method">
+      <div class="signature">
+        
+        def <strong>+</strong>(other : <a href="BigInt.html">BigInt</a>)
+
+        <a class="method-permalink" href="#%2B%28other%3ABigInt%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L70" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3433,23 +3503,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L77" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="--instance-method">
-      <div class="signature">
-        
-        def <strong>-</strong>
-
-        <a class="method-permalink" href="#--instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L89" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3465,7 +3519,23 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L81" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L86" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="--instance-method">
+      <div class="signature">
+        
+        def <strong>-</strong>
+
+        <a class="method-permalink" href="#--instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L94" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3481,7 +3551,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L115" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L120" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3497,7 +3567,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L109" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L114" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3513,23 +3583,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L157" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="&lt;=&gt;(other:Int::Signed)-instance-method">
-      <div class="signature">
-        
-        def <strong><=></strong>(other : <a href="Int/Signed.html">Int::Signed</a>)
-
-        <a class="method-permalink" href="#%3C%3D%3E%28other%3AInt%3A%3ASigned%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L49" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L162" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3545,7 +3599,39 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L46" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="&lt;=&gt;(other:Int::Signed)-instance-method">
+      <div class="signature">
+        
+        def <strong><=></strong>(other : <a href="Int/Signed.html">Int::Signed</a>)
+
+        <a class="method-permalink" href="#%3C%3D%3E%28other%3AInt%3A%3ASigned%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L50" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="&lt;=&gt;(other:Float)-instance-method">
+      <div class="signature">
+        
+        def <strong><=></strong>(other : <a href="Float.html">Float</a>)
+
+        <a class="method-permalink" href="#%3C%3D%3E%28other%3AFloat%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3561,7 +3647,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L57" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3577,7 +3663,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L153" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L158" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3593,7 +3679,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L149" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L154" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3609,7 +3695,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L93" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L98" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3625,7 +3711,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L191" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L196" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3641,7 +3727,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L168" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L173" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3657,7 +3743,23 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L172" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L177" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="popcount-instance-method">
+      <div class="signature">
+        
+        def <strong>popcount</strong>
+
+        <a class="method-permalink" href="#popcount-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L202" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3673,7 +3775,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L249" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L258" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3689,7 +3791,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L237" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L246" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3705,7 +3807,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L241" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L250" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3721,7 +3823,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L245" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L254" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3737,7 +3839,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L197" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L206" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3753,7 +3855,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L214" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3769,7 +3871,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L209" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L218" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3785,7 +3887,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L213" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L222" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3801,7 +3903,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L201" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L210" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3817,7 +3919,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L185" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L190" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3833,7 +3935,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L180" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L185" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3849,7 +3951,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L176" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L181" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3865,7 +3967,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L217" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L226" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3881,7 +3983,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L225" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L234" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3897,7 +3999,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L229" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L238" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3913,7 +4015,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L233" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L242" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3929,7 +4031,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L221" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L230" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3945,7 +4047,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L267" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L276" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3961,7 +4063,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L145" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L150" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3977,7 +4079,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/big_int/big_int.cr#L137" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/big_int/big_int.cr#L142" target="_blank">View source</a>]
         
       </div>
     </div>

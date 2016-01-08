@@ -2190,7 +2190,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/byte_format.cr" target="_blank">io/byte_format.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr" target="_blank">io/byte_format.cr</a>
     
     <br/>
   
@@ -2205,7 +2205,27 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#decode%28type%3AFloat%3A%3APrimitive.class%2Cio%3AIO%29-instance-method" class="signature"><strong>#decode</strong>(type : Float::Primitive.class, io : IO)</a>
+        <a href="#decode%28int%3AUInt16.class%2Cio%3AIO%29-instance-method" class="signature"><strong>#decode</strong>(int : UInt16.class, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#decode%28int%3AInt32.class%2Cio%3AIO%29-instance-method" class="signature"><strong>#decode</strong>(int : Int32.class, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#decode%28int%3AInt16.class%2Cio%3AIO%29-instance-method" class="signature"><strong>#decode</strong>(int : Int16.class, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#decode%28int%3AInt8.class%2Cio%3AIO%29-instance-method" class="signature"><strong>#decode</strong>(int : Int8.class, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#decode%28int%3AUInt8.class%2Cio%3AIO%29-instance-method" class="signature"><strong>#decode</strong>(int : UInt8.class, io : IO)</a>
         
       </li>
     
@@ -2220,12 +2240,42 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#decode%28type%3AInt%3A%3APrimitive.class%2Cio%3AIO%29-instance-method" class="signature"><strong>#decode</strong>(type : Int::Primitive.class, io : IO)</a>
+        <a href="#decode%28int%3AUInt64.class%2Cio%3AIO%29-instance-method" class="signature"><strong>#decode</strong>(int : UInt64.class, io : IO)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#encode%28int%3AInt%3A%3APrimitive%2Cio%3AIO%29-instance-method" class="signature"><strong>#encode</strong>(int : Int::Primitive, io : IO)</a>
+        <a href="#decode%28int%3AUInt32.class%2Cio%3AIO%29-instance-method" class="signature"><strong>#decode</strong>(int : UInt32.class, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#decode%28int%3AInt64.class%2Cio%3AIO%29-instance-method" class="signature"><strong>#decode</strong>(int : Int64.class, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode%28int%3AUInt16%2Cio%3AIO%29-instance-method" class="signature"><strong>#encode</strong>(int : UInt16, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode%28int%3AInt32%2Cio%3AIO%29-instance-method" class="signature"><strong>#encode</strong>(int : Int32, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode%28int%3AInt16%2Cio%3AIO%29-instance-method" class="signature"><strong>#encode</strong>(int : Int16, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode%28int%3AInt8%2Cio%3AIO%29-instance-method" class="signature"><strong>#encode</strong>(int : Int8, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode%28int%3AUInt8%2Cio%3AIO%29-instance-method" class="signature"><strong>#encode</strong>(int : UInt8, io : IO)</a>
         
       </li>
     
@@ -2236,6 +2286,21 @@
     
       <li class="entry-summary">
         <a href="#encode%28float%3AFloat64%2Cio%3AIO%29-instance-method" class="signature"><strong>#encode</strong>(float : Float64, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode%28int%3AUInt64%2Cio%3AIO%29-instance-method" class="signature"><strong>#encode</strong>(int : UInt64, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode%28int%3AUInt32%2Cio%3AIO%29-instance-method" class="signature"><strong>#encode</strong>(int : UInt32, io : IO)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode%28int%3AInt64%2Cio%3AIO%29-instance-method" class="signature"><strong>#encode</strong>(int : Int64, io : IO)</a>
         
       </li>
     
@@ -2254,18 +2319,82 @@
 
   <h2>Instance Method Detail</h2>
   
-    <div class="entry-detail" id="decode(type:Float::Primitive.class,io:IO)-instance-method">
+    <div class="entry-detail" id="decode(int:UInt16.class,io:IO)-instance-method">
       <div class="signature">
         abstract 
-        def <strong>decode</strong>(type : Float::Primitive.class, io : <a href="../IO.html">IO</a>)
+        def <strong>decode</strong>(int : UInt16.class, io : <a href="../IO.html">IO</a>)
 
-        <a class="method-permalink" href="#decode%28type%3AFloat%3A%3APrimitive.class%2Cio%3AIO%29-instance-method">#</a>
+        <a class="method-permalink" href="#decode%28int%3AUInt16.class%2Cio%3AIO%29-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/byte_format.cr#L7" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L17" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="decode(int:Int32.class,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>decode</strong>(int : Int32.class, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#decode%28int%3AInt32.class%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L18" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="decode(int:Int16.class,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>decode</strong>(int : Int16.class, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#decode%28int%3AInt16.class%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L16" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="decode(int:Int8.class,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>decode</strong>(int : Int8.class, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#decode%28int%3AInt8.class%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L14" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="decode(int:UInt8.class,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>decode</strong>(int : UInt8.class, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#decode%28int%3AUInt8.class%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L15" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2281,7 +2410,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/byte_format.cr#L13" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L29" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2297,39 +2426,135 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/byte_format.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="decode(type:Int::Primitive.class,io:IO)-instance-method">
+    <div class="entry-detail" id="decode(int:UInt64.class,io:IO)-instance-method">
       <div class="signature">
         abstract 
-        def <strong>decode</strong>(type : Int::Primitive.class, io : <a href="../IO.html">IO</a>)
+        def <strong>decode</strong>(int : UInt64.class, io : <a href="../IO.html">IO</a>)
 
-        <a class="method-permalink" href="#decode%28type%3AInt%3A%3APrimitive.class%2Cio%3AIO%29-instance-method">#</a>
+        <a class="method-permalink" href="#decode%28int%3AUInt64.class%2Cio%3AIO%29-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/byte_format.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="encode(int:Int::Primitive,io:IO)-instance-method">
+    <div class="entry-detail" id="decode(int:UInt32.class,io:IO)-instance-method">
       <div class="signature">
         abstract 
-        def <strong>encode</strong>(int : <a href="../Int/Primitive.html">Int::Primitive</a>, io : <a href="../IO.html">IO</a>)
+        def <strong>decode</strong>(int : UInt32.class, io : <a href="../IO.html">IO</a>)
 
-        <a class="method-permalink" href="#encode%28int%3AInt%3A%3APrimitive%2Cio%3AIO%29-instance-method">#</a>
+        <a class="method-permalink" href="#decode%28int%3AUInt32.class%2Cio%3AIO%29-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/byte_format.cr#L3" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L19" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="decode(int:Int64.class,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>decode</strong>(int : Int64.class, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#decode%28int%3AInt64.class%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L20" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode(int:UInt16,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>encode</strong>(int : <a href="../UInt16.html">UInt16</a>, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#encode%28int%3AUInt16%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L6" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode(int:Int32,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>encode</strong>(int : <a href="../Int32.html">Int32</a>, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#encode%28int%3AInt32%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L7" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode(int:Int16,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>encode</strong>(int : <a href="../Int16.html">Int16</a>, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#encode%28int%3AInt16%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L5" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode(int:Int8,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>encode</strong>(int : <a href="../Int8.html">Int8</a>, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#encode%28int%3AInt8%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L3" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode(int:UInt8,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>encode</strong>(int : <a href="../UInt8.html">UInt8</a>, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#encode%28int%3AUInt8%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L4" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2345,7 +2570,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/byte_format.cr#L9" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L25" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2361,7 +2586,55 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/byte_format.cr#L18" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L34" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode(int:UInt64,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>encode</strong>(int : <a href="../UInt64.html">UInt64</a>, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#encode%28int%3AUInt64%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L10" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode(int:UInt32,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>encode</strong>(int : <a href="../UInt32.html">UInt32</a>, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#encode%28int%3AUInt32%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L8" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode(int:Int64,io:IO)-instance-method">
+      <div class="signature">
+        abstract 
+        def <strong>encode</strong>(int : <a href="../Int64.html">Int64</a>, io : <a href="../IO.html">IO</a>)
+
+        <a class="method-permalink" href="#encode%28int%3AInt64%2Cio%3AIO%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/byte_format.cr#L9" target="_blank">View source</a>]
         
       </div>
     </div>

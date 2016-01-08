@@ -2202,7 +2202,7 @@ on how a MemoryIO is constructed.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr" target="_blank">io/memory_io.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr" target="_blank">io/memory_io.cr</a>
     
     <br/>
   
@@ -2377,6 +2377,10 @@ on how a MemoryIO is constructed.</p>
       <span><<(obj) : self</span>
     <<</a>, 
   
+    <a href="IO.html#close-instance-method" class="tooltip">
+      <span>close</span>
+    close</a>, 
+  
     <a href="IO.html#cooked%28%26block%29-instance-method" class="tooltip">
       <span>cooked(&block)</span>
     cooked</a>, 
@@ -2385,8 +2389,8 @@ on how a MemoryIO is constructed.</p>
       <span>cooked!</span>
     cooked!</a>, 
   
-    <a href="IO.html#each_byte%28%26block%29-instance-method" class="tooltip">
-      <span>each_byte(&block)<br/>each_byte</span>
+    <a href="IO.html#each_byte-instance-method" class="tooltip">
+      <span>each_byte<br/>each_byte(&block)</span>
     each_byte</a>, 
   
     <a href="IO.html#each_char%28%26block%29-instance-method" class="tooltip">
@@ -2574,10 +2578,6 @@ on how a MemoryIO is constructed.</p>
       <span>!~(other)</span>
     !~</a>, 
   
-    <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
-      <span><=>(other)</span>
-    <=></a>, 
-  
     <a href="Object.html#%3D%3D%28other%29-instance-method" class="tooltip">
       <span>==(other)</span>
     ==</a>, 
@@ -2717,7 +2717,7 @@ io.print <span class="s">&quot;hi&quot;</span> <span class="c"># raises</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L65" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2740,7 +2740,7 @@ io.read <span class="c"># =&gt; &quot;&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L22" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2766,7 +2766,7 @@ io.read <span class="c"># =&gt; &quot;abcdef&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L45" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2789,7 +2789,7 @@ io.read <span class="c"># =&gt; &quot;abcdef&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L9" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L9" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2807,7 +2807,7 @@ io.read <span class="c"># =&gt; &quot;abcdef&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L12" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L12" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2832,7 +2832,7 @@ io.gets_to_end <span class="c"># =&gt; &quot;&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L175" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L175" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2854,7 +2854,7 @@ io.gets_to_end <span class="c"># =&gt; IO::Error: closed stream</span></code></p
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L278" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L278" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2877,7 +2877,7 @@ io.closed? <span class="c"># =&gt; true</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L290" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L290" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2900,7 +2900,7 @@ io.empty? <span class="c"># =&gt; false</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L189" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L189" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2923,7 +2923,7 @@ io.pos     <span class="c"># =&gt; 2</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L254" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L254" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2945,7 +2945,7 @@ io.gets <span class="c"># =&gt; &quot;lo&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L265" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L265" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2963,7 +2963,7 @@ io.gets <span class="c"># =&gt; &quot;lo&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L70" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L70" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2986,7 +2986,7 @@ io.gets(<span class="n">2</span>) <span class="c">#=&gt; &quot;he&quot;</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L201" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L201" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3011,7 +3011,7 @@ io.gets(<span class="n">1</span>) <span class="c"># =&gt; &quot;c&quot;</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L231" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L231" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3032,7 +3032,7 @@ io.size <span class="c"># =&gt; 5</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L212" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L212" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3050,7 +3050,7 @@ io.size <span class="c"># =&gt; 5</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L217" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L217" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3072,7 +3072,7 @@ io.to_s <span class="c"># =&gt; &quot;123&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L301" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L301" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3090,7 +3090,7 @@ io.to_s <span class="c"># =&gt; &quot;123&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L319" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L319" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3114,7 +3114,7 @@ io.gets_to_end <span class="c"># =&gt; &quot;aello&quot;</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L314" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L314" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3133,7 +3133,7 @@ or if it's non-resizeable and a resize is needed.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/io/memory_io.cr#L80" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/io/memory_io.cr#L80" target="_blank">View source</a>]
         
       </div>
     </div>

@@ -2254,17 +2254,17 @@ tuple <span class="c"># =&gt; {1, &quot;hello&quot;, &apos;x&apos;} (Tuple(Int32
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr" target="_blank">tuple.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr" target="_blank">tuple.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
     
     <br/>
   
@@ -2504,6 +2504,10 @@ tuple <span class="c"># =&gt; {1, &quot;hello&quot;, &apos;x&apos;} (Tuple(Int32
     <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
       <span><=(other : T)</span>
     <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
   
     <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
       <span>==(other : T)</span>
@@ -2833,10 +2837,6 @@ tuple <span class="c"># =&gt; {1, &quot;hello&quot;, &apos;x&apos;} (Tuple(Int32
       <span>!~(other)</span>
     !~</a>, 
   
-    <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
-      <span><=>(other)</span>
-    <=></a>, 
-  
     <a href="Object.html#%3D%3D%28other%29-instance-method" class="tooltip">
       <span>==(other)</span>
     ==</a>, 
@@ -2976,7 +2976,7 @@ creates empty tuples, something that you can't do with a tuple literal.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L77" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L77" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2992,7 +2992,7 @@ creates empty tuples, something that you can't do with a tuple literal.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/from_yaml.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/yaml/from_yaml.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3008,7 +3008,7 @@ creates empty tuples, something that you can't do with a tuple literal.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/from_json.cr#L89" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/json/from_json.cr#L89" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3043,12 +3043,12 @@ and the value of each element is equal to the value of the corresponding element
 {<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">6</span>} <span class="o"><=></span> {<span class="n">1</span>, <span class="n">2</span>}       <span class="c"># =&gt; +1</span>
 {<span class="n">1</span>, <span class="n">2</span>} <span class="o"><=></span> {<span class="n">1</span>, <span class="n">2.0</span>}                 <span class="c"># =&gt; 0</span></code></pre>
 
-<p>See <code><a href="Object.html#%3C%3D%3E%28other%29-instance-method">Object#<=></a></code>.</p></div>
+<p>See <code>Object#<=></code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L236" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L236" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3078,12 +3078,12 @@ and the value of each element is equal to the value of the corresponding element
 {<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">6</span>} <span class="o"><=></span> {<span class="n">1</span>, <span class="n">2</span>}       <span class="c"># =&gt; +1</span>
 {<span class="n">1</span>, <span class="n">2</span>} <span class="o"><=></span> {<span class="n">1</span>, <span class="n">2.0</span>}                 <span class="c"># =&gt; 0</span></code></pre>
 
-<p>See <code><a href="Object.html#%3C%3D%3E%28other%29-instance-method">Object#<=></a></code>.</p></div>
+<p>See <code>Object#<=></code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L227" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L227" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3109,7 +3109,7 @@ t1 <span class="o">==</span> t3 <span class="c"># =&gt; false</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L197" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L197" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3135,7 +3135,7 @@ t1 <span class="o">==</span> t3 <span class="c"># =&gt; false</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L189" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L189" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3164,7 +3164,7 @@ tuple[i] <span class="c"># =&gt; runtime error: IndexError</span></code></pre></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L95" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3186,7 +3186,7 @@ tuple[<span class="n">3</span>] <span class="c"># =&gt; nil</span></code></pre><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L106" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L106" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3209,7 +3209,7 @@ tuple.at(<span class="n">3</span>) { <span class="n">10</span> } <span class="c"
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L129" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L129" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3231,7 +3231,7 @@ tuple[<span class="n">3</span>] <span class="c"># =&gt; raises IndexError</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L117" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L117" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3249,7 +3249,7 @@ tuple[<span class="n">3</span>] <span class="c"># =&gt; raises IndexError</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L262" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L262" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3267,7 +3267,7 @@ tuple[<span class="n">3</span>] <span class="c"># =&gt; raises IndexError</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L257" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L257" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3296,7 +3296,7 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L162" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L162" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3316,7 +3316,7 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L174" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L174" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3337,7 +3337,7 @@ tuple.each <span class="k">do</span> <span class="o">|</span>value<span class="o
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L278" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L278" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3359,7 +3359,7 @@ tuple.first <span class="c"># =&gt; 1</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L357" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L357" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3384,7 +3384,7 @@ empty.first? <span class="c"># =&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L370" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L370" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3404,7 +3404,7 @@ empty.first? <span class="c"># =&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L248" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L248" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3422,7 +3422,7 @@ empty.first? <span class="c"># =&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L302" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L302" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3444,7 +3444,7 @@ tuple.last <span class="c"># =&gt; 2.5</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L385" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L385" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3469,7 +3469,7 @@ empty.last? <span class="c"># =&gt; nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L401" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L401" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3490,7 +3490,7 @@ tuple.map <span class="o">&</span>.to_s <span class="c"># =&gt; {&quot;1&quot;, 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L324" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L324" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3511,7 +3511,7 @@ tuple.reverse <span class="c"># =&gt; {&quot;a&quot;, 2.5, 1}</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L340" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L340" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3531,7 +3531,7 @@ tuple.reverse <span class="c"># =&gt; {&quot;a&quot;, 2.5, 1}</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L287" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L287" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3547,7 +3547,7 @@ tuple.reverse <span class="c"># =&gt; {&quot;a&quot;, 2.5, 1}</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/json/to_json.cr#L257" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/json/to_json.cr#L257" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3568,7 +3568,7 @@ tuple.to_s <span class="c"># =&gt; &quot;{1, \&quot;hello\&quot;}&quot;</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L312" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L312" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3584,7 +3584,7 @@ tuple.to_s <span class="c"># =&gt; &quot;{1, \&quot;hello\&quot;}&quot;</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/yaml/to_yaml.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/yaml/to_yaml.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3605,7 +3605,7 @@ tuple.types <span class="c"># =&gt; {Int32, String, Char}</span></code></pre></d
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L297" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L297" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3626,7 +3626,7 @@ Raises if any index is invalid.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/tuple.cr#L142" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/tuple.cr#L142" target="_blank">View source</a>]
         
       </div>
     </div>

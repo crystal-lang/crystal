@@ -2188,7 +2188,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/int.cr" target="_blank">int.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/int.cr" target="_blank">int.cr</a>
     
     <br/>
   
@@ -2835,6 +2835,11 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#popcount-instance-method" class="signature"><strong>#popcount</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#to_f-instance-method" class="signature"><strong>#to_f</strong></a>
         
       </li>
@@ -2915,16 +2920,16 @@
       <span>%(other : Int)<br/>%(other : BigInt)</span>
     %</a>, 
   
-    <a href="Int.html#%26%28other%3AUInt32%29-instance-method" class="tooltip">
-      <span>&(other : UInt32)<br/>&(other : UInt64)<br/>&(other : Int64)<br/>&(other : Int32)<br/>&(other : UInt16)<br/>&(other : UInt8)<br/>&(other : Int16)<br/>&(other : Int8)</span>
+    <a href="Int.html#%26%28other%3AUInt16%29-instance-method" class="tooltip">
+      <span>&(other : UInt16)<br/>&(other : UInt8)<br/>&(other : UInt64)<br/>&(other : UInt32)<br/>&(other : Int32)<br/>&(other : Int64)<br/>&(other : Int8)<br/>&(other : Int16)</span>
     &</a>, 
   
     <a href="Int.html#%2A%28other%3ABigInt%29-instance-method" class="tooltip">
       <span>*(other : BigInt)</span>
     *</a>, 
   
-    <a href="Int.html#%2A%2A%28other%29-instance-method" class="tooltip">
-      <span>**(other)<br/>**(other : Int)</span>
+    <a href="Int.html#%2A%2A%28other%3AInt%29-instance-method" class="tooltip">
+      <span>**(other : Int)<br/>**(other)</span>
     **</a>, 
   
     <a href="Int.html#%2B%28other%3ABigInt%29-instance-method" class="tooltip">
@@ -2935,8 +2940,8 @@
       <span>-(other : BigInt)</span>
     -</a>, 
   
-    <a href="Int.html#%2F%28x%3AInt%29-instance-method" class="tooltip">
-      <span>/(x : Int)<br/>/(other : BigInt)</span>
+    <a href="Int.html#%2F%28other%3ABigInt%29-instance-method" class="tooltip">
+      <span>/(other : BigInt)<br/>/(x : Int)</span>
     /</a>, 
   
     <a href="Int.html#%3C%3C%28count%3AInt%29-instance-method" class="tooltip">
@@ -2955,8 +2960,8 @@
       <span>>>(count : Int)</span>
     >></a>, 
   
-    <a href="Int.html#%5E%28other%3AUInt64%29-instance-method" class="tooltip">
-      <span>^(other : UInt64)<br/>^(other : Int8)<br/>^(other : Int16)<br/>^(other : Int32)<br/>^(other : Int64)<br/>^(other : UInt16)<br/>^(other : UInt8)<br/>^(other : UInt32)</span>
+    <a href="Int.html#%5E%28other%3AUInt32%29-instance-method" class="tooltip">
+      <span>^(other : UInt32)<br/>^(other : UInt16)<br/>^(other : UInt8)<br/>^(other : Int32)<br/>^(other : Int16)<br/>^(other : Int64)<br/>^(other : Int8)<br/>^(other : UInt64)</span>
     ^</a>, 
   
     <a href="Int.html#abs-instance-method" class="tooltip">
@@ -2987,8 +2992,8 @@
       <span>divisible_by?(num)</span>
     divisible_by?</a>, 
   
-    <a href="Int.html#downto%28n%2C%26block%3Aself-%3E%29-instance-method" class="tooltip">
-      <span>downto(n, &block : self -> )<br/>downto(n)</span>
+    <a href="Int.html#downto%28n%29-instance-method" class="tooltip">
+      <span>downto(n)<br/>downto(n, &block : self -> )</span>
     downto</a>, 
   
     <a href="Int.html#even%3F-instance-method" class="tooltip">
@@ -3055,6 +3060,10 @@
       <span>odd?</span>
     odd?</a>, 
   
+    <a href="Int.html#popcount-instance-method" class="tooltip">
+      <span>popcount</span>
+    popcount</a>, 
+  
     <a href="Int.html#pred-instance-method" class="tooltip">
       <span>pred</span>
     pred</a>, 
@@ -3099,28 +3108,28 @@
       <span>to_json(io)</span>
     to_json</a>, 
   
-    <a href="Int.html#to_s-instance-method" class="tooltip">
-      <span>to_s<br/>to_s(io : IO)<br/>to_s(base : Int, upcase = <span class="n">false</span> : Bool)<br/>to_s(base : Int, io : IO, upcase = <span class="n">false</span> : Bool)</span>
+    <a href="Int.html#to_s%28base%3AInt%2Cio%3AIO%2Cupcase%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%3ABool%29-instance-method" class="tooltip">
+      <span>to_s(base : Int, io : IO, upcase = <span class="n">false</span> : Bool)<br/>to_s(base : Int, upcase = <span class="n">false</span> : Bool)<br/>to_s<br/>to_s(io : IO)</span>
     to_s</a>, 
   
     <a href="Int.html#trunc-instance-method" class="tooltip">
       <span>trunc</span>
     trunc</a>, 
   
-    <a href="Int.html#unsafe_div%28other%3AInt32%29-instance-method" class="tooltip">
-      <span>unsafe_div(other : Int32)<br/>unsafe_div(other : Int16)<br/>unsafe_div(other : Int8)<br/>unsafe_div(other : UInt32)<br/>unsafe_div(other : UInt64)<br/>unsafe_div(other : UInt16)<br/>unsafe_div(other : Int64)<br/>unsafe_div(other : UInt8)</span>
+    <a href="Int.html#unsafe_div%28other%3AInt8%29-instance-method" class="tooltip">
+      <span>unsafe_div(other : Int8)<br/>unsafe_div(other : UInt8)<br/>unsafe_div(other : UInt16)<br/>unsafe_div(other : UInt64)<br/>unsafe_div(other : UInt32)<br/>unsafe_div(other : Int64)<br/>unsafe_div(other : Int16)<br/>unsafe_div(other : Int32)</span>
     unsafe_div</a>, 
   
-    <a href="Int.html#unsafe_mod%28other%3AInt64%29-instance-method" class="tooltip">
-      <span>unsafe_mod(other : Int64)<br/>unsafe_mod(other : Int32)<br/>unsafe_mod(other : UInt16)<br/>unsafe_mod(other : Int8)<br/>unsafe_mod(other : Int16)<br/>unsafe_mod(other : UInt8)<br/>unsafe_mod(other : UInt32)<br/>unsafe_mod(other : UInt64)</span>
+    <a href="Int.html#unsafe_mod%28other%3AInt32%29-instance-method" class="tooltip">
+      <span>unsafe_mod(other : Int32)<br/>unsafe_mod(other : UInt16)<br/>unsafe_mod(other : UInt32)<br/>unsafe_mod(other : UInt8)<br/>unsafe_mod(other : Int64)<br/>unsafe_mod(other : Int16)<br/>unsafe_mod(other : Int8)<br/>unsafe_mod(other : UInt64)</span>
     unsafe_mod</a>, 
   
-    <a href="Int.html#unsafe_shl%28other%3AInt8%29-instance-method" class="tooltip">
-      <span>unsafe_shl(other : Int8)<br/>unsafe_shl(other : UInt64)<br/>unsafe_shl(other : UInt8)<br/>unsafe_shl(other : Int64)<br/>unsafe_shl(other : UInt16)<br/>unsafe_shl(other : UInt32)<br/>unsafe_shl(other : Int16)<br/>unsafe_shl(other : Int32)</span>
+    <a href="Int.html#unsafe_shl%28other%3AUInt8%29-instance-method" class="tooltip">
+      <span>unsafe_shl(other : UInt8)<br/>unsafe_shl(other : Int16)<br/>unsafe_shl(other : Int8)<br/>unsafe_shl(other : UInt16)<br/>unsafe_shl(other : UInt32)<br/>unsafe_shl(other : UInt64)<br/>unsafe_shl(other : Int32)<br/>unsafe_shl(other : Int64)</span>
     unsafe_shl</a>, 
   
-    <a href="Int.html#unsafe_shr%28other%3AInt8%29-instance-method" class="tooltip">
-      <span>unsafe_shr(other : Int8)<br/>unsafe_shr(other : UInt64)<br/>unsafe_shr(other : Int64)<br/>unsafe_shr(other : UInt8)<br/>unsafe_shr(other : UInt32)<br/>unsafe_shr(other : UInt16)<br/>unsafe_shr(other : Int32)<br/>unsafe_shr(other : Int16)</span>
+    <a href="Int.html#unsafe_shr%28other%3AUInt64%29-instance-method" class="tooltip">
+      <span>unsafe_shr(other : UInt64)<br/>unsafe_shr(other : UInt16)<br/>unsafe_shr(other : UInt8)<br/>unsafe_shr(other : Int64)<br/>unsafe_shr(other : Int32)<br/>unsafe_shr(other : Int8)<br/>unsafe_shr(other : Int16)<br/>unsafe_shr(other : UInt32)</span>
     unsafe_shr</a>, 
   
     <a href="Int.html#upto%28n%2C%26block%3Aself-%3E%29-instance-method" class="tooltip">
@@ -3143,8 +3152,8 @@
       <span>years</span>
     years</a>, 
   
-    <a href="Int.html#%7C%28other%3AUInt8%29-instance-method" class="tooltip">
-      <span>|(other : UInt8)<br/>|(other : UInt64)<br/>|(other : Int8)<br/>|(other : UInt16)<br/>|(other : UInt32)<br/>|(other : Int32)<br/>|(other : Int16)<br/>|(other : Int64)</span>
+    <a href="Int.html#%7C%28other%3AInt8%29-instance-method" class="tooltip">
+      <span>|(other : Int8)<br/>|(other : UInt32)<br/>|(other : Int32)<br/>|(other : Int64)<br/>|(other : UInt16)<br/>|(other : UInt8)<br/>|(other : UInt64)<br/>|(other : Int16)</span>
     |</a>, 
   
     <a href="Int.html#%7E-instance-method" class="tooltip">
@@ -3175,6 +3184,10 @@
     <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
       <span><=(other : T)</span>
     <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
   
     <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
       <span>==(other : T)</span>
@@ -3303,6 +3316,10 @@
       <span><=(other : T)</span>
     <=</a>, 
   
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
+  
     <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
       <span>==(other : T)</span>
     ==</a>, 
@@ -3362,10 +3379,6 @@
     <a href="Object.html#%21%7E%28other%29-instance-method" class="tooltip">
       <span>!~(other)</span>
     !~</a>, 
-  
-    <a href="Object.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
-      <span><=>(other)</span>
-    <=></a>, 
   
     <a href="Object.html#%3D%3D%28other%29-instance-method" class="tooltip">
       <span>==(other)</span>
@@ -3496,7 +3509,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/libc.cr#L93" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/libc.cr#L93" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4045,7 +4058,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/9d59a3455de7efd01ffe5a3669b16bf729e7882d/src/int.cr#L451" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/int.cr#L463" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4990,6 +5003,22 @@
       
       <br/>
       <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="popcount-instance-method">
+      <div class="signature">
+        
+        def <strong>popcount</strong>
+
+        <a class="method-permalink" href="#popcount-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/f364e3ec252a7384e401b1d3b4b04e21d469a91f/src/int.cr#L467" target="_blank">View source</a>]
         
       </div>
     </div>
