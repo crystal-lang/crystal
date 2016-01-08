@@ -22,13 +22,14 @@ module HTTP
         @version = "HTTP/1.1"
         @status_code = 200
         @status_message = "OK"
-        @output = @original_output = output = Output.new(@io)
+        @wrote_headers = false
+        @output = output = Output.new(@io)
         output.response = self
       end
 
       def write_body(string)
         headers["Content-Length"] = string.bytesize.to_s
-        @original_output.write_headers
+        write_headers
         @output.print(string)
       end
 
@@ -48,6 +49,21 @@ module HTTP
         @output.close
       end
 
+      protected def write_headers
+        @io << @version << " " << @status_code << " " << @status_message << "\r\n"
+        headers.each do |name, values|
+          values.each do |value|
+            @io << name << ": " << value << "\r\n"
+          end
+        end
+        @io << "\r\n"
+        @wrote_headers = true
+      end
+
+      protected def wrote_headers?
+        @wrote_headers
+      end
+
       class Output
         include IO::Buffered
 
@@ -61,30 +77,17 @@ module HTTP
           @chunked = false
         end
 
-        delegate headers, response
-
-        def write_headers
-          @io << response.version << " " << response.status_code << " " << response.status_message << "\r\n"
-          headers.each do |name, values|
-            values.each do |value|
-              @io << name << ": " << value << "\r\n"
-            end
-          end
-          @io << "\r\n"
-          @wrote_headers = true
-        end
-
         private def unbuffered_read(slice : Slice(UInt8))
           raise "can't read from HTTP::Server::Response"
         end
 
         private def unbuffered_write(slice : Slice(UInt8))
-          unless @wrote_headers
-            unless headers.has_key?("Content-Length")
-              headers["Transfer-Encoding"] = "chunked"
+          unless response.wrote_headers?
+            unless response.headers.has_key?("Content-Length")
+              response.headers["Transfer-Encoding"] = "chunked"
               @chunked = true
             end
-            write_headers
+            response.write_headers
           end
 
           if @chunked
@@ -98,9 +101,9 @@ module HTTP
         end
 
         def close
-          unless @wrote_headers
-            headers["Content-Length"] = @out_count.to_s
-            write_headers
+          unless response.wrote_headers?
+            response.headers["Content-Length"] = @out_count.to_s
+            response.write_headers
           end
           super
         end
