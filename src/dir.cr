@@ -182,6 +182,7 @@ class Dir
     entries
   end
 
+  # Returns true if the given path exists and is a directory
   def self.exists?(path)
     if LibC.stat(path, out stat) != 0
       if LibC.errno == Errno::ENOENT
@@ -193,6 +194,8 @@ class Dir
     File::Stat.new(stat).directory?
   end
 
+  # Creates a new directory at the given path. The linux-style permission mode
+  # can be specified, with a default of 777 (0o777).
   def self.mkdir(path, mode = 0o777)
     if LibC.mkdir(path, mode) == -1
       raise Errno.new("Unable to create directory '#{path}'")
@@ -200,6 +203,9 @@ class Dir
     0
   end
 
+  # Creates a new directory at the given path, including any non-existing
+  # intermediate directories. The linux-style permission mode can be specified,
+  # with a default of 777 (0o777).
   def self.mkdir_p(path, mode = 0o777)
     return 0 if Dir.exists?(path)
 
@@ -219,6 +225,7 @@ class Dir
     0
   end
 
+  # Removes the directory at the given path.
   def self.rmdir(path)
     if LibC.rmdir(path) == -1
       raise Errno.new("Unable to remove directory '#{path}'")
