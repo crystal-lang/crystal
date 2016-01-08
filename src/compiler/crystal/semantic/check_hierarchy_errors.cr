@@ -139,7 +139,7 @@ class Crystal::Program
                  end
 
       subtypes.try &.each do |subtype|
-        next if implements?(subtype, method, base)
+        next if implements_with_parents?(subtype, method, base)
 
         if subtype.abstract || subtype.module?
           check_implemented_in_subtypes(base, subtype, method)
@@ -149,28 +149,28 @@ class Crystal::Program
       end
     end
 
-    def implements?(type : Type, method : Def, base)
-      return true if implements?(type, method)
+    def implements_with_parents?(type : Type, method : Def, base)
+      return true if implements?(type, method, base)
 
       type.parents.try &.each do |parent|
         break if parent == base
-        return true if implements?(parent, method)
+        return true if implements?(parent, method, base)
       end
 
       return false
     end
 
-    def implements?(type : Type, method : Def)
+    def implements?(type : Type, method : Def, base)
       type.defs.try &.each_value do |defs_with_metadata|
         defs_with_metadata.each do |def_with_metadata|
           a_def = def_with_metadata.def
-          return true if implements?(a_def, method)
+          return true if implements?(type, a_def, base, method)
         end
       end
       false
     end
 
-    def implements?(m1 : Def, m2 : Def)
+    def implements?(t1 : Type, m1 : Def, t2 : Type, m2 : Def)
       return false if m1.abstract
       return false unless m1.name == m2.name
       return false unless m1.yields == m2.yields
@@ -181,8 +181,18 @@ class Crystal::Program
       return false if m1.args.size < m2.args.size
 
       m2.args.zip(m1.args) do |a2, a1|
-        if a2.restriction && a1.restriction && a1.restriction != a2.restriction
-          return false
+        r1 = a1.restriction
+        r2 = a2.restriction
+        if r2 && r1 && r1 != r2
+          # Check if a1.restriction is contravariant with a2.restriction
+          begin
+            rt1 = TypeLookup.lookup(t1, r1)
+            rt2 = TypeLookup.lookup(t2, r2)
+            return false unless rt2.covariant?(rt1)
+          rescue Crystal::TypeException
+            # Ignore if we can't find a type (assume the method is implemented)
+            next
+          end
         end
       end
 

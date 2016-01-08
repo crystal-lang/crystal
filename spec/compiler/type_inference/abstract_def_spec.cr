@@ -353,4 +353,44 @@ describe "Type inference: abstract def" do
       end
       )
   end
+
+  it "doesn't error if implements with parent class" do
+    infer_type %(
+      class Parent; end
+      class Child < Parent; end
+
+      abstract class Foo
+        abstract def foo(x : Child)
+      end
+
+      class Bar < Foo
+        def foo(x : Parent)
+        end
+      end
+      )
+  end
+
+  it "doesn't error if implements with parent module" do
+    infer_type %(
+      module Moo
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      class Child
+        include Moo2
+      end
+
+      abstract class Foo
+        abstract def foo(x : Child)
+      end
+
+      class Bar < Foo
+        def foo(x : Moo)
+        end
+      end
+      )
+  end
 end
