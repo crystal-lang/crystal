@@ -4,15 +4,20 @@ class HTTP::StaticFileHandler < HTTP::Handler
   def initialize(@publicdir)
   end
 
-  def call(request)
-    request_path = request.path.not_nil!
+  def call(context)
+    request_path = context.request.path.not_nil!
     file_path = @publicdir + request_path
     if Dir.exists?(file_path)
-      HTTP::Response.new(200, directory_listing(request_path, file_path), HTTP::Headers{"Content-Type": "text/html"})
+      context.response.content_type = "text/html"
+      directory_listing(context.response, request_path, file_path)
     elsif File.exists?(file_path)
-      HTTP::Response.new(200, File.read(file_path), HTTP::Headers{"Content-Type": mime_type(file_path)})
+      context.response.content_type = mime_type(file_path)
+      context.response.content_length = File.size(file_path)
+      File.open(file_path) do |file|
+        IO.copy(file, context.response)
+      end
     else
-      call_next(request)
+      call_next(context)
     end
   end
 
@@ -30,7 +35,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
     ecr_file "#{__DIR__}/static_file_handler.html"
   end
 
-  private def directory_listing(request_path, path)
-    DirectoryListing.new(request_path, path).to_s
+  private def directory_listing(io, request_path, path)
+    DirectoryListing.new(request_path, path).to_s(io)
   end
 end

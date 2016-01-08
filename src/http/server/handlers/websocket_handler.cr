@@ -6,24 +6,24 @@ class HTTP::WebSocketHandler < HTTP::Handler
   def initialize(&@proc : WebSocketSession ->)
   end
 
-  def call(request)
-    if request.headers["Upgrade"]? == "websocket" && request.headers["Connection"]? == "Upgrade"
-      key = request.headers["Sec-websocket-key"]
+  def call(context)
+    if context.request.headers["Upgrade"]? == "websocket" && context.request.headers["Connection"]? == "Upgrade"
+      key = context.request.headers["Sec-Websocket-Key"]
       accept_code = Base64.strict_encode(OpenSSL::SHA1.hash("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
-      response_headers = HTTP::Headers{
-        "Upgrade"              => "websocket",
-        "Connection"           => "Upgrade",
-        "Sec-websocket-accept" => accept_code,
-      }
-      response = Response.new(101, headers: response_headers)
-      response.upgrade_handler = ->(io : IO) do
+
+      response = context.response
+      response.status_code = 101
+      response.headers["Upgrade"] = "websocket"
+      response.headers["Connection"] = "Upgrade"
+      response.headers["Sec-Websocket-Accept"] = accept_code
+      response.upgrade do |io|
         ws_session = WebSocketSession.new(io)
         @proc.call(ws_session)
         ws_session.run
+        io.close
       end
-      response
     else
-      call_next(request)
+      call_next(context)
     end
   end
 end

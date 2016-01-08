@@ -83,6 +83,16 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\n1234567890")
       end
 
+      it "prints with content length (method)" do
+        io = MemoryIO.new
+        response = Response.new(io)
+        response.content_length = 10
+        response.print("1234")
+        response.print("567890")
+        response.close
+        io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\n1234567890")
+      end
+
       it "adds header" do
         io = MemoryIO.new
         response = Response.new(io)
@@ -92,11 +102,19 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
       end
 
+      it "sets content type" do
+        io = MemoryIO.new
+        response = Response.new(io)
+        response.content_type = "text/plain"
+        response.print("Hello")
+        response.close
+        io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
+      end
+
       it "changes status and others" do
         io = MemoryIO.new
         response = Response.new(io)
         response.status_code = 404
-        response.status_message = "Not Found"
         response.version = "HTTP/1.0"
         response.close
         io.to_s.should eq("HTTP/1.0 404 Not Found\r\nContent-Length: 0\r\n\r\n")
@@ -161,6 +179,5 @@ module HTTP
   #   server = Server.new(0, [StaticFileHandler.new(".")]) { |ctx| }
   #   server.listen
   #   server.close
-
   # end)
 end

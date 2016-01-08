@@ -1,32 +1,9 @@
 require "openssl"
 require "socket"
+require "./context"
+require "./handler"
 require "./response"
 require "../common"
-
-# A handler is a class which inherits from HTTP::Handler and implements the `call`method.
-# You can use a handler to intercept any incoming request and can modify the response. These can be used for request throttling,
-# ip-based whitelisting, adding custom headers e.g.
-#
-# ### A custom handler
-#
-# ```
-# class CustomHandler < HTTP::Handler
-#   def call(request)
-#     puts "Doing some stuff"
-#     call_next(request)
-#   end
-# end
-# ```
-
-abstract class HTTP::Handler
-  property :next
-
-  def call_next(context)
-    @next.try &.call(context)
-  end
-end
-
-require "./handlers/*"
 
 # An HTTP::Server
 #
@@ -134,6 +111,7 @@ class HTTP::Server
     sock.sync = false
     io = sock
     io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, @ssl.not_nil!) if @ssl
+    must_close = true
 
     begin
       until @wants_close
@@ -149,18 +127,22 @@ class HTTP::Server
         context = Context.new(request, response)
 
         @handler.call(context)
+
+        if response.upgraded?
+          must_close = false
+          return
+        end
+
         response.output.close
         sock.flush
-
-        # if upgrade_handler = response.upgrade_handler
-        #   return upgrade_handler.call(io)
-        # end
 
         break unless request.keep_alive?
       end
     ensure
-      ssl_sock.try &.close if @ssl
-      sock.close
+      if must_close
+        ssl_sock.try &.close if @ssl
+        sock.close
+      end
     end
   end
 

@@ -1,9 +1,11 @@
 class HTTP::ErrorHandler < HTTP::Handler
-  def call(request)
+  def call(context)
     begin
-      call_next(request)
+      call_next(context)
     rescue ex : Exception
-      Response.error("text/plain", "ERROR: #{ex.inspect_with_backtrace}\n")
+      context.response.status_code = 500
+      context.response.content_type = "text/plain"
+      context.response.write_body("ERROR: #{ex.inspect_with_backtrace}\n")
     end
   end
 end

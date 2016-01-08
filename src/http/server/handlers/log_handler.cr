@@ -1,12 +1,14 @@
 class HTTP::LogHandler < HTTP::Handler
-  def call(request)
+  def initialize(@io = STDOUT)
+  end
+
+  def call(context)
     time = Time.now
-    response = call_next(request)
+    call_next(context)
     elapsed = Time.now - time
     elapsed_text = elapsed_text(elapsed)
 
-    puts "#{request.method} #{request.resource} - #{response.status_code} (#{elapsed_text})"
-    response
+    @io.puts "#{context.request.method} #{context.request.resource} - #{context.response.status_code} (#{elapsed_text})"
   end
 
   private def elapsed_text(elapsed)
