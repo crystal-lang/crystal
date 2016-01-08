@@ -22,12 +22,14 @@ module HTTP
         @version = "HTTP/1.1"
         @status_code = 200
         @status_message = "OK"
-        @output = Output.new(@io)
-        @output.response = self
+        @output = @original_output = output = Output.new(@io)
+        output.response = self
       end
 
       def write_body(string)
-        @output.write_body(string)
+        headers["Content-Length"] = string.bytesize.to_s
+        @original_output.write_headers
+        @output.print(string)
       end
 
       def write(slice : Slice(UInt8))
@@ -61,13 +63,7 @@ module HTTP
 
         delegate headers, response
 
-        def write_body(string)
-          headers["Content-Length"] = string.bytesize.to_s
-          write_headers
-          @io.print(string)
-        end
-
-        private def write_headers
+        def write_headers
           @io << response.version << " " << response.status_code << " " << response.status_message << "\r\n"
           headers.each do |name, values|
             values.each do |value|
