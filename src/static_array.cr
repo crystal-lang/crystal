@@ -107,6 +107,12 @@ struct StaticArray(T, N)
     Slice.new(to_unsafe, size)
   end
 
+  def hash
+    inject(31 * size) do |memo, elem|
+      31 * memo + elem.hash
+    end
+  end
+
   # Returns a pointer to this static array's data.
   #
   # ```

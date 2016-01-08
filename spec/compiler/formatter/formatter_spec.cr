@@ -561,8 +561,9 @@ describe Crystal::Formatter do
 
   assert_format %(asm("nop"))
   assert_format %(asm(\n"nop"\n)), %(asm(\n  "nop"\n))
-  assert_format %(asm("nop" : : )), %(asm("nop" : : ))
-  assert_format %(asm("nop" :: )), %(asm("nop" : : ))
+  assert_format %(asm("nop" : : )), %(asm("nop" ::))
+  assert_format %(asm("nop" :: )), %(asm("nop" ::))
+  assert_format %(asm("nop" :: "r"(0))), %(asm("nop" :: "r"(0)))
   assert_format %(asm("nop" : "a"(0) )), %(asm("nop" : "a"(0)))
   assert_format %(asm("nop" : "a"(0) : "b"(1) )), %(asm("nop" : "a"(0) : "b"(1)))
   assert_format %(asm("nop" : "a"(0) : "b"(1), "c"(2) )), %(asm("nop" : "a"(0) : "b"(1), "c"(2)))
@@ -570,6 +571,11 @@ describe Crystal::Formatter do
   assert_format %(asm("nop" : "a"(0)\n: "b"(1),\n"c"(2) )), %(asm("nop" : "a"(0)\n          : "b"(1),\n            "c"(2)))
   assert_format %(asm(\n"nop" : "a"(0) )), %(asm(\n  "nop" : "a"(0)\n))
   assert_format %(asm("nop"\n: "a"(0) )), %(asm("nop"\n        : "a"(0)))
+  assert_format %(asm("nop" ::: "eax" )), %(asm("nop" ::: "eax"))
+  assert_format %(asm("nop" ::: "eax" ,  "ebx" )), %(asm("nop" ::: "eax", "ebx"))
+  assert_format %(asm("nop" :::: "volatile" )), %(asm("nop" :::: "volatile"))
+  assert_format %(asm("nop" :::: "volatile"  , "alignstack"  ,  "intel"   )), %(asm("nop" :::: "volatile", "alignstack", "intel"))
+  assert_format %(asm("nop" ::: "eax" ,  "ebx" :   "volatile"  ,  "alignstack" )), %(asm("nop" ::: "eax", "ebx" : "volatile", "alignstack"))
 
   assert_format "1 # foo\n1234 # bar", "1    # foo\n1234 # bar"
   assert_format "1234 # foo\n1 # bar", "1234 # foo\n1    # bar"

@@ -46,6 +46,10 @@ module Zlib
       raise IO::Error.new "Can't write to DeflateIO"
     end
 
+    def close
+      @input.close
+    end
+
     private def check_error(err)
       msg = @stream.msg ? String.new(@stream.msg) : nil
       ZlibError.check_error(err, msg)

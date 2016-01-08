@@ -66,6 +66,10 @@ lib LibGMP
   fun fdiv_q_2exp = __gmpz_fdiv_q_2exp(q : MPZ*, n : MPZ*, b : BitcntT)
   fun mul_2exp = __gmpz_mul_2exp(rop : MPZ*, op1 : MPZ*, op2 : BitcntT)
 
+  # # Logic
+
+  fun popcount = __gmpz_popcount(op : MPZ*) : BitcntT
+
   # # Comparison
 
   fun cmp = __gmpz_cmp(op1 : MPZ*, op2 : MPZ*) : Int

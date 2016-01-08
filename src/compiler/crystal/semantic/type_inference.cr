@@ -637,6 +637,15 @@ module Crystal
 
       node.raises = true if node.has_attribute?("Raises")
 
+      if node.abstract
+        if (target_type.class? || target_type.struct?) && !target_type.abstract
+          node.raise "can't define abstract def on non-abstract #{target_type.type_desc}"
+        end
+        if target_type.metaclass?
+          node.raise "can't define abstract def on metaclass"
+        end
+      end
+
       target_type.add_def node
       node.set_type @mod.nil
 

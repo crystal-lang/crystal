@@ -3087,26 +3087,27 @@ module Crystal
       skip_space_or_newline
 
       if @token.type == :"::"
-        write " : : "
+        write " ::"
         next_token_skip_space_or_newline
       elsif @token.type == :":"
         dot_column = @column + 1
-        space_after_output = false
+        space_after_output = true
 
-        write " : "
+        write " :"
         next_token
 
         skip_space_or_newline
 
         output = node.output
         if output
+          write " "
           accept output
           skip_space
           if @token.type == :NEWLINE
             if node.inputs
               consume_newlines
               write_indent(dot_column)
-              space_after_output = true
+              space_after_output = false
             else
               skip_space_or_newline
             end
@@ -3114,31 +3115,61 @@ module Crystal
         end
 
         if @token.type == :":"
-          write " " if output && !space_after_output
-          write ": "
+          write " " if output && space_after_output
+          write ":"
           next_token_skip_space_or_newline
+        end
+      end
 
-          if inputs = node.inputs
-            input_column = @column
-            inputs.each_with_index do |input, i|
-              accept input
-              skip_space
+      if inputs = node.inputs
+        write " "
+        input_column = @column
+        inputs.each_with_index do |input, i|
+          accept input
+          skip_space
 
-              if @token.type == :","
-                write "," unless last?(i, inputs)
-                next_token_skip_space
+          if @token.type == :","
+            write "," unless last?(i, inputs)
+            next_token_skip_space
 
-                unless last?(i, inputs)
-                  if @token.type == :NEWLINE
-                    consume_newlines
-                    write_indent(input_column)
-                  else
-                    write " " unless last?(i, inputs)
-                  end
-                  skip_space_or_newline
-                end
+            unless last?(i, inputs)
+              if @token.type == :NEWLINE
+                consume_newlines
+                write_indent(input_column)
+              else
+                write " " unless last?(i, inputs)
               end
+              skip_space_or_newline
             end
+          end
+        end
+      end
+
+      if clobbers = node.clobbers
+        write_token :":"
+        write " "
+        skip_space_or_newline
+        clobbers.each_with_index do |clobber, i|
+          accept StringLiteral.new(clobber)
+          skip_space_or_newline
+          if @token.type == :","
+            write ", " unless last?(i, clobbers)
+            next_token_skip_space_or_newline
+          end
+        end
+      end
+
+      if @token.type == :"::" || @token.type == :":"
+        write " " if @token.type == :":"
+        write @token.type
+        write " "
+        next_token_skip_space_or_newline
+        while @token.type == :DELIMITER_START
+          accept StringLiteral.new("")
+          skip_space_or_newline
+          if @token.type == :","
+            write ", "
+            next_token_skip_space_or_newline
           end
         end
       end

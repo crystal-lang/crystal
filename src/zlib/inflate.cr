@@ -32,6 +32,10 @@ module Zlib
       slice.size - @stream.avail_out
     end
 
+    def close
+      @input.close
+    end
+
     private def prepare_input_data
       return if @stream.avail_in > 0
       @stream.next_in = @buf.to_unsafe

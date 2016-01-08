@@ -218,6 +218,12 @@ module IO
   # io.to_s #=> "abcd"
   abstract def write(slice : Slice(UInt8)) : Nil
 
+  # Closes this IO.
+  #
+  # IO defines this is a no-op method, but including types may override.
+  def close
+  end
+
   # Flushes buffered data, if any.
   #
   # IO defines this is a no-op method, but including types may override.
