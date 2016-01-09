@@ -25,12 +25,6 @@ class HTTP::Server
       headers["Content-Length"] = content_length.to_s
     end
 
-    def write_body(string)
-      self.content_length = string.bytesize
-      write_headers
-      @output.print(string)
-    end
-
     def write(slice : Slice(UInt8))
       @output.write(slice)
     end

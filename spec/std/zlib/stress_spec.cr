@@ -7,14 +7,30 @@ module Zlib
       expected = String.build do |io|
         1_000_000.times { rand(2000).to_i.to_s(32, io) }
       end
-      actual = Inflate.new(Deflate.new(MemoryIO.new(expected))).gets_to_end
-      expected.should eq(actual)
+
+      io = MemoryIO.new
+
+      deflate = Deflate.new(io)
+      deflate.print expected
+      deflate.close
+
+      io.rewind
+      inflate = Inflate.new(io)
+      inflate.gets_to_end.should eq(expected)
     end
 
     it "inflate deflate should be inverse (utf-8)" do
       expected = "日本さん語日本さん語"
-      actual = Inflate.new(Deflate.new(MemoryIO.new(expected))).gets_to_end
-      expected.should eq(actual)
+
+      io = MemoryIO.new
+
+      deflate = Deflate.new(io)
+      deflate.print expected
+      deflate.close
+
+      io.rewind
+      inflate = Inflate.new(io)
+      inflate.gets_to_end.should eq(expected)
     end
   end
 end

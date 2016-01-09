@@ -18,6 +18,8 @@ abstract class HTTP::Handler
   def call_next(context : HTTP::Server::Context)
     @next.try &.call(context)
   end
+
+  alias Proc = HTTP::Server::Context ->
 end
 
 require "./handlers/*"

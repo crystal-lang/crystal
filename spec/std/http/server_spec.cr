@@ -36,14 +36,6 @@ module HTTP
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")
       end
 
-      it "writes body" do
-        io = MemoryIO.new
-        response = Response.new(io)
-        response.write_body("Hello")
-        response.close
-        io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello")
-      end
-
       it "prints less then buffer's size" do
         io = MemoryIO.new
         response = Response.new(io)
@@ -141,43 +133,43 @@ module HTTP
     end
   end
 
-  # typeof(begin
-  #   # Initialize with custom host
-  #   server = Server.new("0.0.0.0", 0) { |ctx| }
-  #   server.listen
-  #   server.close
+  typeof(begin
+    # Initialize with custom host
+    server = Server.new("0.0.0.0", 0) { |ctx| }
+    server.listen
+    server.close
 
-  #   server = Server.new("0.0.0.0", 0, [
-  #     ErrorHandler.new,
-  #     LogHandler.new,
-  #     DeflateHandler.new,
-  #     StaticFileHandler.new("."),
-  #   ]
-  #   )
-  #   server.listen
-  #   server.close
+    server = Server.new("0.0.0.0", 0, [
+      ErrorHandler.new,
+      LogHandler.new,
+      DeflateHandler.new,
+      StaticFileHandler.new("."),
+    ]
+    )
+    server.listen
+    server.close
 
-  #   server = Server.new("0.0.0.0", 0, [StaticFileHandler.new(".")]) { |ctx| }
-  #   server.listen
-  #   server.close
+    server = Server.new("0.0.0.0", 0, [StaticFileHandler.new(".")]) { |ctx| }
+    server.listen
+    server.close
 
-  #   # Initialize with default host
-  #   server = Server.new(0) { |ctx| }
-  #   server.listen
-  #   server.close
+    # Initialize with default host
+    server = Server.new(0) { |ctx| }
+    server.listen
+    server.close
 
-  #   server = Server.new(0, [
-  #     ErrorHandler.new,
-  #     LogHandler.new,
-  #     DeflateHandler.new,
-  #     StaticFileHandler.new("."),
-  #   ]
-  #   )
-  #   server.listen
-  #   server.close
+    server = Server.new(0, [
+      ErrorHandler.new,
+      LogHandler.new,
+      DeflateHandler.new,
+      StaticFileHandler.new("."),
+    ]
+    )
+    server.listen
+    server.close
 
-  #   server = Server.new(0, [StaticFileHandler.new(".")]) { |ctx| }
-  #   server.listen
-  #   server.close
-  # end)
+    server = Server.new(0, [StaticFileHandler.new(".")]) { |ctx| }
+    server.listen
+    server.close
+  end)
 end

@@ -5,7 +5,8 @@ class HTTP::ErrorHandler < HTTP::Handler
     rescue ex : Exception
       context.response.status_code = 500
       context.response.content_type = "text/plain"
-      context.response.write_body("ERROR: #{ex.inspect_with_backtrace}\n")
+      context.response.print("ERROR: ")
+      ex.inspect_with_backtrace(context.response)
     end
   end
 end
