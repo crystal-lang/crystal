@@ -240,7 +240,7 @@ class File < IO::FileDescriptor
     File::Stat.new(stat).file?
   end
 
-  # Returns true if given path exists and is a directory
+  # Returns true if the given path exists and is a directory
   #
   # ```crystal
   # # touch foo
