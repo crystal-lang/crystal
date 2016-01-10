@@ -65,6 +65,34 @@ describe "ECR::Lexer" do
     token.type.should eq(:EOF)
   end
 
+  it "lexes with <%# %>" do
+    lexer = ECR::Lexer.new("hello <%# foo %> bar")
+
+    token = lexer.next_token
+    token.type.should eq(:STRING)
+    token.value.should eq("hello ")
+    token.column_number.should eq(1)
+    token.line_number.should eq(1)
+    token.is_comment.should eq(false)
+
+    token = lexer.next_token
+    token.type.should eq(:CONTROL)
+    token.value.should eq("# foo ")
+    token.line_number.should eq(1)
+    token.column_number.should eq(9)
+    token.is_comment.should eq(true)
+
+    token = lexer.next_token
+    token.type.should eq(:STRING)
+    token.value.should eq(" bar")
+    token.line_number.should eq(1)
+    token.column_number.should eq(17)
+    token.is_comment.should eq(false)
+
+    token = lexer.next_token
+    token.type.should eq(:EOF)
+  end
+
   it "lexes with <% %> and correct location info" do
     lexer = ECR::Lexer.new("hi\nthere <% foo\nbar %> baz")
 
