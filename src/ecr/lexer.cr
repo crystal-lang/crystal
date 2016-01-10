@@ -5,12 +5,14 @@ class ECR::Lexer
     property :value
     property :line_number
     property :column_number
+    property :is_comment
 
     def initialize
       @type = :EOF
       @value = ""
       @line_number = 0
       @column_number = 0
+      @is_comment = false
     end
   end
 
@@ -22,6 +24,7 @@ class ECR::Lexer
   end
 
   def next_token
+    @token = Token.new
     copy_location_info_to_token
 
     case current_char
@@ -37,6 +40,7 @@ class ECR::Lexer
           copy_location_info_to_token
           is_output = true
         else
+          @token.is_comment = current_char == '#'
           copy_location_info_to_token
           is_output = false
         end
