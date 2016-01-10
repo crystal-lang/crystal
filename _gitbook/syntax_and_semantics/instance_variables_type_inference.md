@@ -80,7 +80,7 @@ john = Person.new "John"
 one = Person.new 1
 
 # Error: undefined method 'size' for Int32
-john.name.size
+one.name.size
 
 # Error: no overload matches 'String#+' with types Int32
 john.name + 3
