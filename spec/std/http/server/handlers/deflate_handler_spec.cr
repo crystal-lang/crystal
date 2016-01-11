@@ -35,7 +35,7 @@ describe HTTP::DeflateHandler do
     response.close
 
     io.rewind
-    response2 = HTTP::Response.from_io(io)
+    response2 = HTTP::Client::Response.from_io(io)
     body = response2.body
 
     io2 = MemoryIO.new

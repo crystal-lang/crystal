@@ -15,7 +15,7 @@ describe HTTP::ErrorHandler do
     response.close
 
     io.rewind
-    response2 = HTTP::Response.from_io(io)
+    response2 = HTTP::Client::Response.from_io(io)
     response2.status_code.should eq(500)
     response2.status_message.should eq("Internal Server Error")
     (response2.body =~ /ERROR: OH NO!/).should be_truthy

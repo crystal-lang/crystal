@@ -12,8 +12,9 @@ require "../common"
 # ```
 # require "http/server"
 #
-# server = HTTP::Server.new(8080) do |request|
-#   HTTP::Response.ok "text/plain", "Hello world!"
+# server = HTTP::Server.new(8080) do |context|
+#   context.response.content_type = "text/plain"
+#   context.response.print "Hello world!"
 # end
 #
 # puts "Listening on http://127.0.0.1:8080"
@@ -25,8 +26,9 @@ require "../common"
 # ```
 # require "http/server"
 #
-# server = HTTP::Server.new("0.0.0.0", 8080) do |request|
-#   HTTP::Response.ok "text/plain", "Hello world!"
+# server = HTTP::Server.new("0.0.0.0", 8080) do |context|
+#   context.response.content_type = "text/plain"
+#   context.response.print "Hello world!"
 # end
 #
 # puts "Listening on http://0.0.0.0:8080"
@@ -55,8 +57,9 @@ require "../common"
 #   [
 #     ErrorHandler.new,
 #     LogHandler.new,
-#   ]) do |request|
-#   HTTP::Response.ok "text/plain", "Hello world!"
+#   ]) do |context|
+#   context.response.content_type = "text/plain"
+#   context.response.print "Hello world!"
 # end
 #
 # server.listen
