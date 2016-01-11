@@ -24,7 +24,7 @@
 # ```
 #
 # An Array is implemented using an internal buffer of some capacity
-# that is reallocated when elements are pushed to it and more capacity
+# and is reallocated when elements are pushed to it when more capacity
 # is needed. This is normally known as a [dynamic array](http://en.wikipedia.org/wiki/Dynamic_array).
 #
 # You can use a special array literal syntax with other types too, as long as they define an argless
@@ -67,11 +67,10 @@ class Array(T)
   # Creates a new empty Array backed by a buffer that is initially
   # `initial_capacity` big.
   #
-  # The `initial_capacity` is useful to avoid unnecessary reallocations
+  # The *initial_capacity* is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If you have an estimate
-  # of the maxinum number of elements an array will hold, you should
-  # initialize it with that capacity for improved execution performance.
-  #
+  # of the maxinum number of elements an array will hold, the array should
+  # be initialized with that capacity for improved performance.
   #
   # ```
   # ary = Array(Int32).new(5)
@@ -91,8 +90,7 @@ class Array(T)
     end
   end
 
-  # Creates a new Array of the given size filled with the
-  # same value in each position.
+  # Creates a new Array of the given *size* filled with the same *value* in each position.
   #
   # ```
   # Array.new(3, 'a') # => ['a', 'a', 'a']
@@ -117,9 +115,8 @@ class Array(T)
     end
   end
 
-  # Creates a new Array of the given size and invokes the
-  # block once for each index of the array, assigning the
-  # block's value in that index.
+  # Creates a new Array of the given *size* and invokes the given block once for each index of `self`,
+  # assigning the block's value in that index.
   #
   # ```
   # Array.new(3) { |i| (i + 1) ** 2 } # => [1, 4, 9]
@@ -139,7 +136,7 @@ class Array(T)
   end
 
   # Creates a new Array, allocating an internal buffer with the given capacity,
-  # and yielding that buffer. The block must return the desired size of the array.
+  # and yielding that buffer. The given block must return the desired size of the array.
   #
   # This method is **unsafe**, but is usually used to initialize the buffer
   # by passing it to a C function.
@@ -155,8 +152,8 @@ class Array(T)
     ary
   end
 
-  # Equality. Returns true if it is passed an Array and `equals?`
-  # returns true for both arrays, the caller and the argument.
+  # Equality. Returns *true* if each element in `self` is equal to each
+  # corresponding element in *other*.
   #
   # ```
   # ary = [1, 2, 3]
@@ -172,13 +169,12 @@ class Array(T)
     false
   end
 
-  # Combined comparison operator. Returns 0 if the first array equals the second, 1
-  # if the first is greater than the second and -1 if the first is smaller than
-  # the second.
+  # Combined comparison operator. Returns *0* if `self` equals *other*, *1* if
+  # `self` is greater than *other* and *-1* if `self` is smaller than *other*.
   #
   # It compares the elements of both arrays in the same position using the
-  # `<=>` operator, as soon as one of such comparisons returns a non zero
-  # value, that result is the return value of the whole comparison.
+  # `<=>` operator.  As soon as one of such comparisons returns a non-zero
+  # value, that result is the return value of the comparison.
   #
   # If all elements are equal, the comparison is based on the size of the arrays.
   #
@@ -196,9 +192,8 @@ class Array(T)
     size <=> other.size
   end
 
-  # Set intersection: returns a new array containing elements common to the two
-  # arrays, excluding any duplicates. The order is preserved from the original
-  # array.
+  # Set intersection: returns a new Array containing elements common to `self`
+  # and *other*, excluding any duplicates. The order is preserved from `self`.
   #
   # ```
   # [1, 1, 3, 5] & [1, 2, 3]               # => [ 1, 3 ]
@@ -226,16 +221,16 @@ class Array(T)
     end
   end
 
-  # Set union: returns a new array by joining ary with `other_ary`, excluding
-  # any duplicates and preserving the order from the original array.
+  # Set union: returns a new Array by joining `self` with *other*, excluding
+  # any duplicates, and preserving the order from `self`.
   #
   # ```
   # ["a", "b", "c"] | ["c", "d", "a"] # => [ "a", "b", "c", "d" ]
   # ```
   #
   # See also: `#uniq`.
-  def |(other_ary : Array(U))
-    Array(T | U).build(size + other_ary.size) do |buffer|
+  def |(other : Array(U))
+    Array(T | U).build(size + other.size) do |buffer|
       hash = Hash(T, Bool).new
       i = 0
       each do |obj|
@@ -245,7 +240,7 @@ class Array(T)
           i += 1
         end
       end
-      other_ary.each do |obj|
+      other.each do |obj|
         unless hash.has_key?(obj)
           buffer[i] = obj
           hash[obj] = true
@@ -256,9 +251,8 @@ class Array(T)
     end
   end
 
-  # Concatenation. Returns a new array built by concatenating two arrays
-  # together to create a third. The type of the new array is the union of the
-  # types of both the other arrays.
+  # Concatenation. Returns a new Array built by concatenating `self` and *other*.
+  # The type of the new array is the union of the types of both the original arrays.
   #
   # ```
   # [1, 2] + ["a"]  # => [1,2,"a"] of (Int32 | String)
@@ -273,9 +267,8 @@ class Array(T)
     end
   end
 
-  # Difference. Returns a new array that is a copy of the original, removing
-  # any items that appear in `other`. The order of the original array is
-  # preserved.
+  # Difference. Returns a new Array that is a copy of `self`, removing any items
+  # that appear in *other*. The order of `self` is preserved.
   #
   # ```
   # [1, 2, 3] - [2, 1] # => [3]
@@ -289,7 +282,7 @@ class Array(T)
     ary
   end
 
-  # Repetition: Returns a new array built by concatenating `times` copies of `ary`.
+  # Repetition: Returns a new Array built by concatenating *times* copies of `self`.
   #
   # ```
   # ["a", "b", "c"] * 2 # => [ "a", "b", "c", "a", "b", "c" ]
@@ -575,7 +568,7 @@ class Array(T)
   end
 
   # Returns a tuple populated with the elements at the given indexes.
-  # Raises if any index is invalid.
+  # Raises `IndexError` if any index is invalid.
   #
   # ```
   # ["a", "b", "c", "d"].values_at(0, 2) # => {"a", "c"}
@@ -596,8 +589,8 @@ class Array(T)
     self
   end
 
-  # Returns a new Array that has this array's elements cloned.
-  # That is, it returns a deep copy of this array.
+  # Returns a new Array that has `self`'s elements cloned.
+  # That is, it returns a deep copy of `self`.
   #
   # Use `#dup` if you want a shallow copy.
   #
@@ -616,7 +609,7 @@ class Array(T)
     Array(T).new(size) { |i| @buffer[i].clone as T }
   end
 
-  # Returns a copy of self with all nil elements removed.
+  # Returns a copy of self with all ` elements removed.
   #
   # ```
   # ["a", nil, "b", nil, "c", nil].compact # => ["a", "b", "c"]
@@ -625,7 +618,7 @@ class Array(T)
     compact_map &.itself
   end
 
-  # Removes nil elements from this array.
+  # Removes all ` elements from `self`.
   #
   # ```
   # ary = ["a", nil, "b", nil, "c"]
@@ -678,7 +671,7 @@ class Array(T)
     self
   end
 
-  # Deletes all items from `self` that are equal to `obj`.
+  # Removes all items from `self` that are equal to *obj*.
   #
   # ```
   # a = ["a", "b", "b", "b", "c"]
@@ -689,8 +682,8 @@ class Array(T)
     reject! { |e| e == obj } != nil
   end
 
-  # Deletes the element at the given index, returning that element.
-  # Raises `IndexError` if the index is out of range.
+  # Removes the element at *index*, returning that element.
+  # Raises `IndexError` if *index* is out of range.
   #
   # ```
   # a = ["ant", "bat", "cat", "dog"]
@@ -708,8 +701,8 @@ class Array(T)
     elem
   end
 
-  # Deletes all elements that are within the given range,
-  # returning that elements.
+  # Removes all elements within the given *range*.
+  # Returns an array of the removed elements with the original order of `self` preserved.
   # Raises `IndexError` if the index is out of range.
   #
   # ```
@@ -723,9 +716,10 @@ class Array(T)
     delete_at(from, size)
   end
 
-  # Deletes count or less (if there aren't enough) elements at the given start index,
-  # returning that elements.
-  # Raises `IndexError` if the index is out of range.
+  # Removes *count* elements from `self` starting at *index*.
+  # If the size of `self` is less than *count*, removes values to the end of the array without error.
+  # Returns an array of the removed elements with the original order of `self` preserved.
+  # Raises `IndexError` if *index* is out of range.
   #
   # ```
   # a = ["ant", "bat", "cat", "dog"]
@@ -742,8 +736,8 @@ class Array(T)
     val
   end
 
-  # Returns a new Array that has exactly this array's elements.
-  # That is, it returns a shallow copy of this array.
+  # Returns a new Array that has exactly `self`'s elements.
+  # That is, it returns a shallow copy of `self`.
   #
   # Use `#clone` if you want a deep copy.
   #
@@ -765,7 +759,7 @@ class Array(T)
     end
   end
 
-  # Calls the given block once for each element in this array, passing that
+  # Calls the given block once for each element in `self`, passing that
   # element as a parameter.
   #
   # ```
@@ -784,7 +778,7 @@ class Array(T)
     end
   end
 
-  # Returns an `Iterator` for the elements of this array.
+  # Returns an `Iterator` for the elements of `self`.
   #
   # ```
   # a = ["a", "b", "c"]
@@ -793,13 +787,13 @@ class Array(T)
   # iter.next # => "b"
   # ```
   #
-  # The returned iterator keeps a reference to this array: if the array
+  # The returned iterator keeps a reference to `self`: if the array
   # changes, the returned values of the iterator change as well.
   def each
     ItemIterator.new(self)
   end
 
-  # Calls the given block once for each index in this array, passing that
+  # Calls the given block once for each index in `self`, passing that
   # index as a parameter.
   #
   # ```
@@ -821,7 +815,7 @@ class Array(T)
     self
   end
 
-  # Returns an `Iterator` for each index in this this array.
+  # Returns an `Iterator` for each index in `self`.
   #
   # ```
   # a = ["a", "b", "c"]
@@ -830,13 +824,13 @@ class Array(T)
   # iter.next # => 1
   # ```
   #
-  # The returned iterator keeps a reference to this array: if the array
-  # changes, the returned values of the iterator change as well.
+  # The returned iterator keeps a reference to `self`. If the array
+  # changes, the returned values of the iterator will change as well.
   def each_index
     IndexIterator.new(self)
   end
 
-  # Returns `true` if this array is empty, `false` otherwise.
+  # Returns *true* if `self` is empty, *false* otherwise.
   #
   # ```
   # ([] of Int32).empty? # => true
@@ -846,12 +840,12 @@ class Array(T)
     @size == 0
   end
 
-  # Determines if this array equals *other* according to a comparison
+  # Determines if `self` equals *other* according to a comparison
   # done by the given block.
   #
-  # If this array's size is the same as *other*'s size, this method yields
-  # elements from this array and *other* in tandem: if the block returns true
-  # for all of them, this method returns `true`. Otherwise it returns `false`.
+  # If `self`'s size is the same as *other*'s size, this method yields
+  # elements from `self` and *other* in tandem: if the block returns true
+  # for all of them, this method returns *true*. Otherwise it returns *false*.
   #
   # ```
   # a = [1, 2, 3]
@@ -867,7 +861,7 @@ class Array(T)
     true
   end
 
-  # Yields each index of this array to the given block and then assigns
+  # Yields each index of `self` to the given block and then assigns
   # the block's value in that position. Returns `self`.
   #
   # ```
@@ -880,7 +874,7 @@ class Array(T)
     self
   end
 
-  # Yields each index of this array, starting from *from*, to the given block and then assigns
+  # Yields each index of `self`, starting at *from*, to the given block and then assigns
   # the block's value in that position. Returns `self`.
   #
   # Negative values of *from* count from the end of the array.
@@ -899,7 +893,7 @@ class Array(T)
     self
   end
 
-  # Yields each index of this array, starting from *from* and just *count* times,
+  # Yields each index of `self`, starting at *from* and just *count* times,
   # to the given block and then assigns the block's value in that position. Returns `self`.
   #
   # Negative values of *from* count from the end of the array.
@@ -923,8 +917,8 @@ class Array(T)
     self
   end
 
-  # Yields each index of this array, in the given *range*,
-  # to the given block and then assigns the block's value in that position. Returns `self`.
+  # Yields each index of `self`, in the given *range*, to the given block and then assigns
+  # the block's value in that position. Returns `self`.
   #
   # ```
   # a = [1, 2, 3, 4, 5, 6]
@@ -936,7 +930,7 @@ class Array(T)
     end
   end
 
-  # Replaces every element in this array with the given *value*. Returns `self`.
+  # Replaces every element in `self` with the given *value*. Returns `self`.
   #
   # ```
   # a = [1, 2, 3]
@@ -946,8 +940,7 @@ class Array(T)
     fill { value }
   end
 
-  # Replaces every element starting from the given index *from* in this array with
-  # the given *value*. Returns `self`.
+  # Replaces every element in `self`, starting at *from*, with the given *value*. Returns `self`.
   #
   # Negative values of *from* count from the end of the array.
   #
@@ -959,8 +952,8 @@ class Array(T)
     fill(from) { value }
   end
 
-  # Replaces every element starting from the given index *from* and only *count* times,
-  # in this array with the given *value*. Returns `self`.
+  # Replaces every element in `self`, starting at *from* and only *count* times,
+  # with the given *value*. Returns `self`.
   #
   # Negative values of *from* count from the end of the array.
   #
@@ -972,7 +965,7 @@ class Array(T)
     fill(from, count) { value }
   end
 
-  # Replaces every element in the given *range* with the given *value*. Returns `self`.
+  # Replaces every element in *range* with *value*. Returns `self`.
   #
   # Negative values of *from* count from the end of the array.
   #
@@ -984,8 +977,7 @@ class Array(T)
     fill(range) { value }
   end
 
-  # Returns the first element of this array, if it's not empty,
-  # else raises `IndexError`.
+  # Returns the first element of `self` if it's not empty, or raises `IndexError`.
   #
   # ```
   # ([1, 2, 3]).first   # => 1
@@ -995,8 +987,7 @@ class Array(T)
     first { raise IndexError.new }
   end
 
-  # Returns the first element of this array, if it's not empty,
-  # or the block's value.
+  # Returns the first element of `self` if it's not empty, or the given block's value.
   #
   # ```
   # ([1, 2, 3]).first { 4 }   # => 1
@@ -1006,8 +997,7 @@ class Array(T)
     @size == 0 ? yield : @buffer[0]
   end
 
-  # Returns the first element of this array, if it's not empty,
-  # or `nil`.
+  # Returns the first element of `self` if it's not empty, or `.
   #
   # ```
   # ([1, 2, 3]).first?   # => 1
@@ -1017,7 +1007,7 @@ class Array(T)
     first { nil }
   end
 
-  # Returns a hash code based on this array's size and elements.
+  # Returns a hash code based on `self`'s size and elements.
   #
   # See `Object#hash`.
   def hash
@@ -1026,10 +1016,10 @@ class Array(T)
     end
   end
 
-  # Insert the given *object* before the element with the given *index*, shifting successive elements if any.
+  # Insert *object* before the element at *index* and shifting successive elements, if any.
   # Returns `self`.
   #
-  # Negative indices count from the end of the array.
+  # Negative values of *index* count from the end of the array.
   #
   # ```
   # a = ["a", "b", "c"]
@@ -1059,8 +1049,7 @@ class Array(T)
     to_s io
   end
 
-  # Returns the last element of this array, if it's not empty,
-  # else raises `IndexError`.
+  # Returns the last element of `self` if it's not empty, or raises `IndexError`.
   #
   # ```
   # ([1, 2, 3]).last   # => 3
@@ -1070,8 +1059,7 @@ class Array(T)
     last { raise IndexError.new }
   end
 
-  # Returns the last element of this array, if it's not empty,
-  # or the block's value.
+  # Returns the last element of `self` if it's not empty, or the given block's value.
   #
   # ```
   # ([1, 2, 3]).last { 4 }   # => 3
@@ -1081,8 +1069,7 @@ class Array(T)
     @size == 0 ? yield : @buffer[@size - 1]
   end
 
-  # Returns the last element of this array, if it's not empty,
-  # or `nil`.
+  # Returns the last element of `self` if it's not empty, or `.
   #
   # ```
   # ([1, 2, 3]).last?   # => 1
@@ -1102,8 +1089,8 @@ class Array(T)
     Array(U).new(size) { |i| yield @buffer[i] }
   end
 
-  # Invokes the given block once for each element of this array, replacing the element with the value returned
-  # by the block. Returns `self`.
+  # Invokes the given block for each element of `self`, replacing the element
+  # with the value returned by the block. Returns `self`.
   #
   # ```
   # a = [1, 2, 3]
@@ -1115,12 +1102,18 @@ class Array(T)
     self
   end
 
-  # Equivalent to `Array#select` but makes modification on the current object rather that returning a new one. Returns nil if no changes were made
+  # Modifies `self`, keeping only the elements in the collection for which the
+  # passed block returns *true*. Returns ` if no changes were made.
+  #
+  # See also `Array#select`
   def select!
     reject! { |elem| !yield(elem) }
   end
 
-  # Equivalent to `Array#reject`, but makes modification on the current object rather that returning a new one. Returns nil if no changes were made.
+  # Modifies `self`, deleting the elements in the collection for which the
+  # passed block returns *true*. Returns ` if no changes were made.
+  #
+  # See also `Array#reject`
   def reject!
     i1 = 0
     i2 = 0
@@ -1151,7 +1144,7 @@ class Array(T)
     Array(U).new(size) { |i| yield @buffer[i], i }
   end
 
-  # Returns an `Array` with all possible permutations of the given *size*.
+  # Returns an Array with all possible permutations of *size*.
   #
   #     a = [1, 2, 3]
   #     a.permutations    #=> [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]
@@ -1169,7 +1162,7 @@ class Array(T)
     ary
   end
 
-  # Yields each possible permutation of size `size` of this array.
+  # Yields each possible permutation of *size* of `self`.
   #
   #     a = [1, 2, 3]
   #     sums = [] of Int32
@@ -1209,7 +1202,7 @@ class Array(T)
     end
   end
 
-  # Returns an `Iterator` over each possible permutation of size `size` of this array.
+  # Returns an `Iterator` over each possible permutation of *size* of `self`.
   #
   # ```
   # iter = [1, 2, 3].each_permutation
@@ -1277,7 +1270,7 @@ class Array(T)
     CombinationIterator.new(self, size.to_i)
   end
 
-  # Returns a new array that is a one-dimensional flattening of self (recursively).
+  # Returns a new Array that is a one-dimensional flattening of self (recursively).
   #
   # That is, for every element that is an array, extract its elements into the new array
   #
@@ -1402,6 +1395,15 @@ class Array(T)
     self
   end
 
+  # Removes the last value from `self`, at index *size - 1*.
+  # This method returns the removed value.
+  # Raises `IndexError` if array is of 0 size.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # a.pop # => "c"
+  # a     # => ["a", "b"]
+  # ```
   def pop
     pop { raise IndexError.new }
   end
@@ -1417,6 +1419,21 @@ class Array(T)
     end
   end
 
+  # Removes the last *n* values from `self`, at index *size - 1*.
+  # This method returns an array of the removed values, with the original order preserved.
+  #
+  # If *n* is greater than the size of `self`, all values will be removed from `self`
+  # without raising an error.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # a.pop(2) # => ["b", "c"]
+  # a        # => ["a"]
+  #
+  # a = ["a", "b", "c"]
+  # a.pop(4) # => ["a", "b", "c"]
+  # a        # => []
+  # ```
   def pop(n : Int)
     if n < 0
       raise ArgumentError.new("can't pop negative count")
@@ -1447,10 +1464,9 @@ class Array(T)
     self.each { |a| ary.each { |b| yield a, b } }
   end
 
-  # Append. Pushes one value to the end of the array, given that the type of
-  # the value is T (which might be a type or a union of types). This expression
-  # returns the array iself, so several of them can be chained. See `pop` for
-  # the opposite effect.
+  # Append. Pushes one value to the end of `self`, given that the type of the value is *T*
+  # (which might be a single type or a union of types).
+  # This method returns `self`, so several calls can be chained. See `pop` for the opposite effect.
   #
   # ```
   # a = ["a", "b"]
@@ -1469,7 +1485,12 @@ class Array(T)
   end
 
   # Append multiple values. The same as `push`, but takes an arbitrary number
-  # of values to push into the array. Returns `self`.
+  # of values to push into `self`. Returns `self`.
+  #
+  # ```
+  # a = ["a"]
+  # a.push(["b", "c"]) # => ["a", "b", "c"]
+  # ```
   def push(*values : T)
     new_size = @size + values.size
     resize_to_capacity(Math.pw2ceil(new_size)) if @size > @capacity
@@ -1487,10 +1508,17 @@ class Array(T)
     self
   end
 
+  # Returns an array with all the elements in the collection reversed.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.reverse # => [3, 2, 1]
+  # ```
   def reverse
     Array(T).new(size) { |i| @buffer[size - i - 1] }
   end
 
+  # Reverses in-place all the elements of `self`.
   def reverse!
     i = 0
     j = size - 1
@@ -1502,6 +1530,19 @@ class Array(T)
     self
   end
 
+  # Calls the given block once for each element in `self` in reverse order,
+  # passing that element as a parameter.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # a.reverse_each { |x| print x, " -- " }
+  # ```
+  #
+  # produces:
+  #
+  # ```text
+  # c -- b -- a --
+  # ```
   def reverse_each
     (size - 1).downto(0) do |i|
       yield @buffer[i]
@@ -1555,8 +1596,8 @@ class Array(T)
     res
   end
 
-  # Returns a random element from this array, using the given *random* number generator.
-  # Raises if this array is empty.
+  # Returns a random element from `self`, using the given *random* number generator.
+  # Raises IndexError if `self` is empty.
   #
   # ```
   # a = [1, 2, 3]
@@ -1569,6 +1610,14 @@ class Array(T)
     @buffer[random.rand(@size)]
   end
 
+  # Returns *n* number of random elements from `self`, using the given *random* number generator.
+  # Raises IndexError if `self` is empty.
+  #
+  # ```
+  # a = [1, 2, 3]
+  # a.sample(2)                # => [2, 1]
+  # a.sample(2, Random.new(1)) # => [1, 3]
+  # ```
   def sample(n : Int, random = Random::DEFAULT)
     if n < 0
       raise ArgumentError.new("can't get negative count sample")
@@ -1599,6 +1648,14 @@ class Array(T)
     end
   end
 
+  # Removes the first value of `self`, at index 0. This method returns the removed value.
+  # Raises `IndexError` if array is of 0 size.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # a.shift # => "a"
+  # a       # => ["b", "c"]
+  # ```
   def shift
     shift { raise IndexError.new }
   end
@@ -1615,6 +1672,21 @@ class Array(T)
     end
   end
 
+  # Removes the first *n* values of `self`, starting at index 0.
+  # This method returns an array of the removed values.
+  #
+  # If *n* is greater than the size of `self`, all values will be removed from `self`
+  # without raising an error.
+  #
+  # ```
+  # a = ["a", "b", "c"]
+  # a.shift # => "a"
+  # a       # => ["b", "c"]
+  #
+  # a = ["a", "b", "c"]
+  # a.shift(4) # => ["a", "b", "c"]
+  # a          # => []
+  # ```
   def shift(n : Int)
     if n < 0
       raise ArgumentError.new("can't shift negative count")
@@ -1634,15 +1706,29 @@ class Array(T)
     shift { nil }
   end
 
+  # Returns an array with all the elements in the collection randomized
+  # using the given *random* number generator.
   def shuffle(random = Random::DEFAULT)
     dup.shuffle!(random)
   end
 
+  # Modifies `self` by randomizing the order of elements in the collection
+  # using the given *random* number generator.  Returns `self`.
   def shuffle!(random = Random::DEFAULT)
     @buffer.shuffle!(size, random)
     self
   end
 
+  # Returns an array with all elements in the collection sorted.
+  #
+  # ```
+  # a = [3, 1, 2]
+  # a.sort # => [1, 2, 3]
+  # a      # => [3, 1, 2]
+  # ```
+  #
+  # Optionally, a block may be given that must implement a comparison, either with the comparison operator `<=>`
+  # or a comparison between *a* and *b*, where a < b yields -1, a == b yields 0, and a > b yields 1.
   def sort
     dup.sort!
   end
@@ -1651,6 +1737,16 @@ class Array(T)
     dup.sort! &block
   end
 
+  # Modifies `self` by sorting the elements in the collection.
+  #
+  # ```
+  # a = [3, 1, 2]
+  # a.sort!
+  # a # => [1, 2, 3]
+  # ```
+  #
+  # Optionally, a block may be given that must implement a comparison, either with the comparison operator `<=>`
+  # or a comparison between *a* and *b*, where a < b yields -1, a == b yields 0, and a > b yields 1.
   def sort!
     Array.quicksort!(@buffer, @size)
     self
@@ -1699,10 +1795,10 @@ class Array(T)
     io << "[...]" unless executed
   end
 
-  # Returns a pointer to the internal buffer where this array's elements are stored.
+  # Returns a pointer to the internal buffer where `self`'s elements are stored.
   #
-  # This method is unsafe because it returns a pointer, and the pointed data might eventually
-  # not be that of this array if the array grows and its internal buffer is realloced.
+  # This method is **unsafe** because it returns a pointer, and the pointed might eventually
+  # not be that of `self` if the array grows and its internal buffer is reallocated.
   #
   # ```
   # ary = [1, 2, 3]
@@ -1712,7 +1808,7 @@ class Array(T)
     @buffer
   end
 
-  # Assumes that `self` is an array of array and transposes the rows and columns.
+  # Assumes that `self` is an array of arrays and transposes the rows and columns.
   #
   # ```
   # a = [[:a, :b], [:c, :d], [:e, :f]]
@@ -1735,7 +1831,7 @@ class Array(T)
     end
   end
 
-  # Returns a new array by removing duplicate values in `self`.
+  # Returns a new Array by removing duplicate values in `self`.
   #
   # ```
   # a = ["a", "a", "b", "b", "c"]
@@ -1746,7 +1842,7 @@ class Array(T)
     uniq &.itself
   end
 
-  # Returns a new array by removing duplicate values in `self`, using the block's
+  # Returns a new Array by removing duplicate values in `self`, using the block's
   # value for comparison.
   #
   # ```
@@ -1807,6 +1903,19 @@ class Array(T)
     self
   end
 
+  # Prepend. Adds *obj* to the beginning of `self`, given that the type of the value is *T*
+  # (which might be a single type or a union of types).
+  # This method returns `self`, so several calls can be chained. See `shift` for the opposite effect.
+  #
+  # ```
+  # a = ["a", "b"]
+  # a.unshift("c") # => ["c", a", "b"]
+  # a.unshift(1)   # => Errors, because the array only accepts String
+  #
+  # a = ["a", "b"] of (Int32 | String)
+  # a.unshift("c") # => ["c", "a", "b"]
+  # a.unshift(1)   # => [1, "a", "b", "c"]
+  # ```
   def unshift(obj : T)
     insert 0, obj
   end
