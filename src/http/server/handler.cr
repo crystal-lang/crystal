@@ -16,7 +16,13 @@ abstract class HTTP::Handler
   property :next
 
   def call_next(context : HTTP::Server::Context)
-    @next.try &.call(context)
+    if next_handler = @next
+      next_handler.call(context)
+    else
+      context.response.status_code = 404
+      context.response.headers["Content-Type"] = "text/plain"
+      context.response.puts "Not Found"
+    end
   end
 
   alias Proc = HTTP::Server::Context ->
