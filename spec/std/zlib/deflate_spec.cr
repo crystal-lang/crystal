@@ -4,12 +4,15 @@ require "zlib"
 module Zlib
   describe Deflate do
     it "should be able to deflate" do
+      message = "this is a test string !!!!\n"
       io = MemoryIO.new
       deflate = Deflate.new(io)
-      deflate.print "this is a test string !!!!\n"
+      deflate.print message
       deflate.close
 
-      io.to_slice.hexstring.should eq("789c2bc9c82c5600a2448592d4e21285e292a2ccbc74054520e00200854f087b")
+      io.rewind
+      inflate = Inflate.new(io)
+      inflate.gets_to_end.should eq(message)
     end
 
     it "can be closed" do
@@ -32,12 +35,14 @@ module Zlib
       io.to_slice.hexstring.should eq("789c")
 
       deflate.flush
-      io.to_slice.hexstring.should eq("789c2ac9c82c06000000ffff")
+      (io.to_slice.hexstring.size > 4).should be_true
 
       deflate.print " is a test string !!!!\n"
       deflate.close
 
-      io.to_slice.hexstring.should eq("789c2ac9c82c06000000ffff53c82c56485428492d2e51282e29cacc4b575004022e00854f087b")
+      io.rewind
+      inflate = Inflate.new(io)
+      inflate.gets_to_end.should eq("this is a test string !!!!\n")
     end
   end
 end
