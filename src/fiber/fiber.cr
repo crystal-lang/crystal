@@ -31,16 +31,16 @@ class Fiber
       # In x86-64, the context switch push/pop 7 registers
       @stack_top = (stack_ptr - 7) as Void*
 
-      stack_ptr[0] = fiber_main.pointer  # Initial `resume` will `ret` to this address
-      stack_ptr[-1] = self as Void*      # This will be `pop` into %rdi (first argument)
+      stack_ptr[0] = fiber_main.pointer # Initial `resume` will `ret` to this address
+      stack_ptr[-1] = self as Void*     # This will be `pop` into %rdi (first argument)
     elsif i686
       # In IA32, the context switch push/pops 4 registers.
       # Add two more to store the argument of `fiber_main`
       @stack_top = (stack_ptr - 6) as Void*
 
-      stack_ptr[0] = self as Void*        # First argument passed on the stack
-      stack_ptr[-1] = Pointer(Void).null  # Empty space to keep the stack alignment (16 bytes)
-      stack_ptr[-2] = fiber_main.pointer  # Initial `resume` will `ret` to this address
+      stack_ptr[0] = self as Void*       # First argument passed on the stack
+      stack_ptr[-1] = Pointer(Void).null # Empty space to keep the stack alignment (16 bytes)
+      stack_ptr[-2] = fiber_main.pointer # Initial `resume` will `ret` to this address
     else
       {{ raise "Unsupported platform, only x86_64 and i686 are supported." }}
     end
@@ -69,6 +69,9 @@ class Fiber
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
       -1, LibC::SSizeT.new(0)).tap do |pointer|
       raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
+      ifdef linux
+        LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
+      end
     end
   end
 
@@ -111,7 +114,7 @@ class Fiber
   @[Naked]
   protected def self.switch_stacks(current, to)
     ifdef x86_64
-      asm (%(
+      asm(%(
         pushq %rdi
         pushq %rbx
         pushq %rbp
@@ -128,9 +131,9 @@ class Fiber
         popq %rbp
         popq %rbx
         popq %rdi)
-      :: "r"(current), "r"(to))
+              :: "r"(current), "r"(to))
     elsif i686
-      asm (%(
+      asm(%(
         pushl %edi
         pushl %ebx
         pushl %ebp
@@ -141,7 +144,7 @@ class Fiber
         popl %ebp
         popl %ebx
         popl %edi)
-      :: "r"(current), "r"(to))
+              :: "r"(current), "r"(to))
     end
   end
 
@@ -190,7 +193,7 @@ class Fiber
   @@prev_push_other_roots = LibGC.get_push_other_roots
 
   # This will push all fibers stacks whenever the GC wants to collect some memory
-  LibGC.set_push_other_roots -> do
+  LibGC.set_push_other_roots ->do
     @@prev_push_other_roots.call
 
     fiber = @@first_fiber

@@ -69,6 +69,18 @@ lib LibC
 
   fun mmap(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : SSizeT) : Void*
   fun munmap(addr : Void*, len : SizeT)
+  fun madvise(addr : Void*, len : SizeT, advise : Int) : Int
+
+  MADV_NORMAL     = 0
+  MADV_RANDOM     = 1
+  MADV_SEQUENTIAL = 2
+  MADV_WILLNEED   = 3
+  MADV_DONTNEED   = 4
+
+  ifdef linux
+    MADV_HUGEPAGE   = 14
+    MADV_NOHUGEPAGE = 15
+  end
 
   # used by [event, io, time]
   struct TimeSpec
