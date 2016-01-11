@@ -91,9 +91,11 @@ class HTTP::Response
   def self.from_io(io, ignore_body = false, &block)
     line = io.gets
     if line
-      http_version, status_code, status_message = line.split(3)
-      status_code = status_code.to_i
-      status_message = status_message.chomp
+      pieces = line.split(3)
+      http_version = pieces[0]
+      status_code = pieces[1].to_i
+      status_message = pieces[2]? ? pieces[2].chomp : ""
+
       body_type = HTTP::BodyType::OnDemand
       body_type = HTTP::BodyType::Mandatory if mandatory_body?(status_code)
       body_type = HTTP::BodyType::Prohibited if ignore_body
