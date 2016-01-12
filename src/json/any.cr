@@ -188,9 +188,14 @@ struct JSON::Any
     @raw.to_s(io)
   end
 
-  # :nodoc:
+  # Returns true if both `self` and *other*'s raw object are equal.
   def ==(other : JSON::Any)
     raw == other.raw
+  end
+
+  # Returns true if the raw object is equal to *other*.
+  def ==(other)
+    raw == other
   end
 
   # :nodoc:

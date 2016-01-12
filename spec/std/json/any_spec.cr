@@ -89,4 +89,10 @@ describe JSON::Any do
     obj = JSON.parse(%({"foo": [1, {"bar": [2, 3]}]}))
     obj["foo"][1]["bar"][1].as_i.should eq(3)
   end
+
+  it "compares to other objects" do
+    obj = JSON.parse(%([1, 2]))
+    obj.should eq([1, 2])
+    obj[0].should eq(1)
+  end
 end
