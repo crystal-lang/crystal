@@ -7,6 +7,11 @@ _crystal_compgen_files(){
     compgen -f -o plusdirs  -X '!*.cr' -- $pattern
 }
 
+# compopt is not available in ancient bash versions
+_crystal_compopt_filenames(){
+    type compopt &>/dev/null && compopt -o filenames
+}
+
 _crystal()
 {
     local program=${COMP_WORDS[0]}
@@ -21,7 +26,7 @@ _crystal()
             if [[ "${prev}" == "init" ]] ; then
                 COMPREPLY=( $(compgen -W "app lib" -- ${cur}) )
             else
-                compopt -o filenames
+                _crystal_compopt_filenames
                 COMPREPLY=( $(compgen -f ${cur}) )
             fi
             ;;
@@ -30,7 +35,7 @@ _crystal()
                 local opts="--cross-compile --debug --emit --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --single-module --threads --target --verbose --help"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             else
-                compopt -o filenames
+                _crystal_compopt_filenames
                 COMPREPLY=($(_crystal_compgen_files $cur))
             fi
             ;;
@@ -43,7 +48,7 @@ _crystal()
                     local subcommands="check install list update"
                     COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
                 else
-                    compopt -o filenames
+                    _crystal_compopt_filenames
                     COMPREPLY=($(_crystal_compgen_files $cur))
                 fi
             fi
@@ -53,7 +58,7 @@ _crystal()
                 local opts="--debug --define --emit --format --help --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --stats --single-module --threads --verbose"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             else
-                compopt -o filenames
+                _crystal_compopt_filenames
                 COMPREPLY=($(_crystal_compgen_files $cur))
             fi
             ;;
@@ -66,14 +71,14 @@ _crystal()
                     local subcommands="browser context format hierarchy implementations types"
                     COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
                 else
-                    compopt -o filenames
+                    _crystal_compopt_filenames
                     COMPREPLY=($(_crystal_compgen_files $cur))
                 fi
             fi
             ;;
         docs|eval|spec|version|help)
             # These commands do not accept any options nor subcommands
-            compopt -o filenames
+            _crystal_compopt_filenames
             COMPREPLY=( $(compgen -f ${cur}) )
             ;;
         *)
@@ -81,7 +86,7 @@ _crystal()
             if [[ "${prev}" == "${program}" && $(compgen -W "${commands}" -- ${cur})  ]] ; then
                 COMPREPLY=( $(compgen -W "${commands}" -- ${cur}) )
             else
-                compopt -o filenames
+                _crystal_compopt_filenames
                 COMPREPLY=($(_crystal_compgen_files $cur))
             fi
     esac
