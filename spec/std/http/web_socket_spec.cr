@@ -173,8 +173,8 @@ describe HTTP::WebSocket do
       sent_bytes :: UInt8[4]
 
       io = MemoryIO.new
-      ws = HTTP::WebSocket.new(io)
-      ws.send(sent_bytes.to_slice, true)
+      ws = HTTP::WebSocket.new(io, masked: true)
+      ws.send(sent_bytes.to_slice)
       bytes = io.to_slice
       (bytes[0] & 0x0f).should eq(0x02)
     end
@@ -226,8 +226,8 @@ describe HTTP::WebSocket do
     it "sends the data with a bitmask" do
       sent_string = "hello"
       io = MemoryIO.new
-      ws = HTTP::WebSocket.new(io)
-      ws.send(sent_string, true)
+      ws = HTTP::WebSocket.new(io, masked: true)
+      ws.send(sent_string)
       bytes = io.to_slice
       bytes.size.should eq(11)     # 2 bytes header, 4 bytes mask, 5 bytes content
       bytes[1].bit(7).should eq(1) # For mask bit
@@ -243,8 +243,8 @@ describe HTTP::WebSocket do
       size = UInt16::MAX.to_u64 + 1
       big_string = "a" * size
       io = MemoryIO.new
-      ws = HTTP::WebSocket.new(io)
-      ws.send(big_string, true)
+      ws = HTTP::WebSocket.new(io, masked: true)
+      ws.send(big_string)
       bytes = io.to_slice
       bytes.size.should eq(size + 14) # 2 bytes header, 8 bytes size, 4 bytes mask, UInt16::MAX + 1 bytes content
       bytes[1].bit(7).should eq(1)    # For mask bit
@@ -258,7 +258,7 @@ describe HTTP::WebSocket do
     end
   end
 
-  typeof(HTTP::WebSocket.open(URI.parse("ws://localhost")))
-  typeof(HTTP::WebSocket.open("localhost", "/"))
-  typeof(HTTP::WebSocket.open("ws://localhost"))
+  typeof(HTTP::WebSocket.new(URI.parse("ws://localhost")))
+  typeof(HTTP::WebSocket.new("localhost", "/"))
+  typeof(HTTP::WebSocket.new("ws://localhost"))
 end

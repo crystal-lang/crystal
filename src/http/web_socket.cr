@@ -27,7 +27,7 @@ class HTTP::WebSocket
 
   record PacketInfo, opcode, size, final
 
-  def initialize(@io)
+  def initialize(@io : IO, @masked = false)
     @header :: UInt8[2]
     @mask :: UInt8[4]
     @mask_offset = 0
@@ -38,7 +38,7 @@ class HTTP::WebSocket
   class StreamIO
     include IO
 
-    def initialize(@websocket, binary, @masked, frame_size)
+    def initialize(@websocket, binary, frame_size)
       @opcode = binary ? Opcode::BINARY : Opcode::TEXT
       @buffer = Slice(UInt8).new(frame_size)
       @pos = 0
@@ -68,7 +68,6 @@ class HTTP::WebSocket
       @websocket.send(
         @buffer + (@pos % @buffer.size),
         @opcode,
-        @masked,
         flags: final ? Flags::FINAL : Flags::None,
         flush: final
       )
@@ -77,23 +76,23 @@ class HTTP::WebSocket
     end
   end
 
-  def send(data : String, masked = false)
-    send(data.to_slice, Opcode::TEXT, masked)
+  def send(data : String)
+    send(data.to_slice, Opcode::TEXT)
   end
 
-  def send(data : Slice(UInt8), masked = false)
-    send(data, Opcode::BINARY, masked)
+  def send(data : Slice(UInt8))
+    send(data, Opcode::BINARY)
   end
 
-  def stream(masked = false, binary = true, frame_size = 1024)
-    stream_io = StreamIO.new(self, binary, masked, frame_size)
+  def stream(binary = true, frame_size = 1024)
+    stream_io = StreamIO.new(self, binary, frame_size)
     yield(stream_io)
     stream_io.flush
   end
 
-  def send(data : Slice(UInt8), opcode : Opcode, masked = false, flags = Flags::FINAL, flush = true)
-    write_header(data.size, opcode, masked, flags)
-    write_payload(data, masked)
+  def send(data : Slice(UInt8), opcode : Opcode, flags = Flags::FINAL, flush = true)
+    write_header(data.size, opcode, flags)
+    write_payload(data)
     @io.flush if flush
   end
 
@@ -109,10 +108,10 @@ class HTTP::WebSocket
     PacketInfo.new(opcode, read.to_i, final? && @remaining == 0)
   end
 
-  private def write_header(size, opcode, masked, flags)
+  private def write_header(size, opcode, flags)
     @io.write_byte(flags.value | opcode.value)
 
-    mask = masked ? MASK_BIT : 0_u8
+    mask = @masked ? MASK_BIT : 0_u8
     if size <= 125
       @io.write_byte(size.to_u8 | mask)
     elsif size <= UInt16::MAX
@@ -124,8 +123,8 @@ class HTTP::WebSocket
     end
   end
 
-  private def write_payload(data, masked = false)
-    return @io.write(data) unless masked
+  private def write_payload(data)
+    return @io.write(data) unless @masked
 
     key = Random::DEFAULT.next_int
     mask_array = (pointerof(key) as Pointer(UInt8[4])).value
@@ -214,10 +213,10 @@ class HTTP::WebSocket
   # and will raise an exception if the handshake did not complete successfully.
   #
   # ```
-  # WebSocket.open("websocket.example.com", "/chat")             # Creates a new WebSocket to `websocket.example.com`
-  # WebSocket.open("websocket.example.com", "/chat", ssl = true) # Creates a new WebSocket with SSL to `ẁebsocket.example.com`
+  # WebSocket.new("websocket.example.com", "/chat")             # Creates a new WebSocket to `websocket.example.com`
+  # WebSocket.new("websocket.example.com", "/chat", ssl = true) # Creates a new WebSocket with SSL to `ẁebsocket.example.com`
   # ```
-  def self.open(host, path, port = nil, ssl = false)
+  def self.new(host : String, path : String, port = nil, ssl = false)
     port = port || (ssl ? 443 : 80)
     socket = TCPSocket.new(host, port)
     socket = OpenSSL::SSL::Socket.new(socket) if ssl
@@ -227,7 +226,7 @@ class HTTP::WebSocket
     headers["Connection"] = "Upgrade"
     headers["Upgrade"] = "websocket"
     headers["Sec-WebSocket-Version"] = VERSION.to_s
-    headers["Sec-WebSocket-Key"] = Base64.encode(StaticArray(UInt8, 16).new { rand(256).to_u8 })
+    headers["Sec-WebSocket-Key"] = Base64.strict_encode(StaticArray(UInt8, 16).new { rand(256).to_u8 })
 
     path = "/" if path.empty?
     handshake = HTTP::Request.new("GET", path, headers)
@@ -237,7 +236,7 @@ class HTTP::WebSocket
       raise Socket::Error.new("Handshake got denied. Status code was #{handshake_response.status_code}")
     end
 
-    new(socket)
+    new(socket, masked: true)
   end
 
   # Opens a new websocket using the information provided by the URI. This will also handle the handshake
@@ -248,18 +247,16 @@ class HTTP::WebSocket
   # apart from `wss` and `https` will be treated as the default which is `ws`.
   #
   # ```
-  # WebSocket.open(URI.parse("ws://websocket.example.com/chat"))        # Creates a new WebSocket to `websocket.example.com`
-  # WebSocket.open(URI.parse("wss://websocket.example.com/chat"))       # Creates a new WebSocket with SSL to `websocket.example.com`
-  # WebSocket.open(URI.parse("http://websocket.example.com:8080/chat")) # Creates a new WebSocket to `websocket.example.com` on port `8080`
+  # WebSocket.new(URI.parse("ws://websocket.example.com/chat"))        # Creates a new WebSocket to `websocket.example.com`
+  # WebSocket.new(URI.parse("wss://websocket.example.com/chat"))       # Creates a new WebSocket with SSL to `websocket.example.com`
+  # WebSocket.new(URI.parse("http://websocket.example.com:8080/chat")) # Creates a new WebSocket to `websocket.example.com` on port `8080`
   # ```
-  def self.open(uri : URI | String)
+  def self.new(uri : URI | String)
     uri = URI.parse(uri) if uri.is_a?(String)
 
-    if host = uri.host
-      if path = uri.path
-        ssl = uri.scheme == "https" || uri.scheme == "wss"
-        return open(host, path, uri.port, ssl)
-      end
+    if (host = uri.host) && (path = uri.path)
+      ssl = uri.scheme == "https" || uri.scheme == "wss"
+      return new(host, path, uri.port, ssl)
     end
 
     raise ArgumentError.new("No host or path specified which are required.")
