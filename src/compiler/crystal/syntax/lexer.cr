@@ -136,29 +136,24 @@ module Crystal
           when '-'
             here = MemoryIO.new(20)
 
+            unless ident_start?(next_char)
+              raise "heredoc identifier starts with invalid character"
+            end
+
+            here << current_char
             while true
-              case char = next_char
-              when '\n'
+              char = next_char
+              case
+              when char == '\n'
                 @line_number += 1
                 @column_number = 0
                 break
-              when '\\'
-                if peek_next_char == 'n'
-                  next_char
-                  raise "invalid heredoc identifier"
-                end
-              when ' '
-                case peek_next_char
-                when ' '
-                  next_char
-                when '\n'
-                  next_char
-                  break
-                else
-                  raise "invalid heredoc identifier"
-                end
-              else
+              when ident_part?(char)
                 here << char
+              when char == '\0'
+                raise "unexpected EOF on heredoc identifier"
+              else
+                raise "invalid character #{char.inspect} for heredoc identifier"
               end
             end
 
