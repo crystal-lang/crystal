@@ -260,6 +260,14 @@ describe "Lexer string" do
     end
   end
 
+  it "raises on unexpected EOF while lexing heredoc" do
+    lexer = Lexer.new("<<-aaa")
+
+    expect_raises Crystal::SyntaxException, /unexpected EOF on heredoc identifier/ do
+      lexer.next_token
+    end
+  end
+
   it "lexes string with unicode codepoint" do
     lexer = Lexer.new "\"\\uFEDA\""
     tester = LexerObjects::Strings.new(lexer)
