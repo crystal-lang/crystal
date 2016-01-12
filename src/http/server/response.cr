@@ -7,9 +7,8 @@ class HTTP::Server
     property version
     property status_code
 
-    def initialize(@io)
+    def initialize(@io, @version = "HTTP/1.1")
       @headers = Headers.new
-      @version = "HTTP/1.1"
       @status_code = 200
       @wrote_headers = false
       @upgraded = false
@@ -87,7 +86,7 @@ class HTTP::Server
 
       private def unbuffered_write(slice : Slice(UInt8))
         unless response.wrote_headers?
-          unless response.headers.has_key?("Content-Length")
+          if response.version != "HTTP/1.0" && !response.headers.has_key?("Content-Length")
             response.headers["Transfer-Encoding"] = "chunked"
             @chunked = true
           end

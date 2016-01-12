@@ -130,6 +130,14 @@ module HTTP
         response.close
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 4\r\n\r\n4321")
       end
+
+      it "writes and flushes with HTTP 1.0" do
+        io = MemoryIO.new
+        response = Response.new(io, "HTTP/1.0")
+        response.print("1234")
+        response.flush
+        io.to_s.should eq("HTTP/1.0 200 OK\r\n\r\n1234")
+      end
     end
   end
 

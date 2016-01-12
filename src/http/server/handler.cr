@@ -15,6 +15,8 @@
 abstract class HTTP::Handler
   property :next
 
+  abstract def call(context : HTTP::Server::Context)
+
   def call_next(context : HTTP::Server::Context)
     if next_handler = @next
       next_handler.call(context)

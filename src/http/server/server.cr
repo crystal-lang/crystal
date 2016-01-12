@@ -125,7 +125,7 @@ class HTTP::Server
         end
         break unless request
 
-        response = Response.new(io)
+        response = Response.new(io, request.version)
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
         context = Context.new(request, response)
 
