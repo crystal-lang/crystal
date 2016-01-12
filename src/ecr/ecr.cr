@@ -83,6 +83,7 @@ module ECR
           str << "\n"
         when :CONTROL
           append_loc(str, filename, token)
+          str << " " unless token.value.starts_with?(' ')
           str << token.value
           str << "\n"
         when :EOF
