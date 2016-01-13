@@ -87,6 +87,9 @@ USAGE
       else
         if File.file?(command)
           run_command
+        elsif File.file?("#{command}.cr")
+          options[0] = "#{options[0]}.cr"
+          run_command
         else
           error "unknown command: #{command}"
         end
