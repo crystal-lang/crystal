@@ -335,16 +335,14 @@ class File < IO::FileDescriptor
     end
 
     parts = path.split(SEPARATOR)
-    was_letter = false
-    first_slash = true
     items = [] of String
     parts.each do |part|
-      if part.empty? && !was_letter
-        items << part if !first_slash
-      elsif part == ".."
-        items.pop if items.size > 0
-      elsif !part.empty? && part != "."
-        was_letter = true
+      case part
+      when "", "."
+        # Nothing
+      when ".."
+        items.pop?
+      else
         items << part
       end
     end

@@ -1,12 +1,15 @@
 require "ecr/macros"
+require "uri"
 
 class HTTP::StaticFileHandler < HTTP::Handler
-  def initialize(@publicdir)
+  def initialize(publicdir)
+    @publicdir = File.expand_path publicdir
   end
 
   def call(request)
-    request_path = request.path.not_nil!
-    file_path = @publicdir + request_path
+    request_path = URI.unescape(request.path.not_nil!)
+    expanded_path = File.expand_path(request_path, "/")
+    file_path = File.join(@publicdir, expanded_path)
     if Dir.exists?(file_path)
       HTTP::Response.new(200, directory_listing(request_path, file_path), HTTP::Headers{"Content-Type": "text/html"})
     elsif File.exists?(file_path)
