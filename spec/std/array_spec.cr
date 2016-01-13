@@ -717,26 +717,16 @@ describe "Array" do
   end
 
   describe "push" do
-    it "adds one element to the end of the array" do
+    it "pushes one element" do
       a = [1, 2]
-      a.push(3)
+      a.push(3).should be(a)
       a.should eq [1, 2, 3]
     end
 
-    it "returns the array when adding one element" do
+    it "pushes multiple elements" do
       a = [1, 2]
-      a.push(3).should eq [1, 2, 3]
-    end
-
-    it "adds mutliple elements to the end of the array" do
-      a = [1, 2]
-      a.push(3, 4)
+      a.push(3, 4).should be(a)
       a.should eq [1, 2, 3, 4]
-    end
-
-    it "returns the array when adding multiple elements" do
-      a = [1, 2]
-      a.push(3, 4).should eq [1, 2, 3, 4]
     end
 
     it "has the << alias" do
@@ -1060,11 +1050,18 @@ describe "Array" do
     end
   end
 
-  it "does unshift" do
-    a = [2, 3]
-    expected = [1, 2, 3]
-    a.unshift(1).should eq(expected)
-    a.should eq(expected)
+  describe "unshift" do
+    it "unshifts one element" do
+      a = [1, 2]
+      a.unshift(3).should be(a)
+      a.should eq [3, 1, 2]
+    end
+
+    it "unshifts multiple elements" do
+      a = [1, 2]
+      a.unshift(3, 4).should be(a)
+      a.should eq [3, 4, 1, 2]
+    end
   end
 
   it "does update" do
