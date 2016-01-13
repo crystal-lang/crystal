@@ -552,6 +552,10 @@ USAGE
         end
       end
 
+      opts.on("-P PATH", "--path PATH", "Add path to find required files") do |path|
+        compiler.crystal_path.add_path path
+      end
+
       opts.on("--prelude ", "Use given file as prelude") do |prelude|
         compiler.prelude = prelude
       end

@@ -5,7 +5,15 @@ module Crystal
     DEFAULT_PATH = ENV["CRYSTAL_PATH"]? || Crystal::Config::PATH
 
     def initialize(path = DEFAULT_PATH)
-      @crystal_path = path.split(':').reject &.empty?
+      @crystal_path = split_path path
+    end
+
+    def add_path(path)
+      @crystal_path.concat(split_path path)
+    end
+
+    private def split_path(path)
+      path.split(':').reject &.empty?
     end
 
     def find(filename, relative_to = nil)
