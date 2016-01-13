@@ -1469,11 +1469,12 @@ class Array(T)
   end
 
   # Append multiple values. The same as `push`, but takes an arbitrary number
-  # of values to push into the array.
+  # of values to push into the array. Returns `self`.
   def push(*values : T)
     values.each do |value|
       self << value
     end
+    self
   end
 
   def replace(other : Array)

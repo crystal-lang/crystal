@@ -717,21 +717,32 @@ describe "Array" do
   end
 
   describe "push" do
-    it "adds one element to the array" do
-      a = ["a", "b"]
-      a.push("c")
-      a.should eq ["a", "b", "c"]
+    it "adds one element to the end of the array" do
+      a = [1, 2]
+      a.push(3)
+      a.should eq [1, 2, 3]
     end
 
-    it "returns the array" do
-      a = ["a", "b"]
-      a.push("c").should eq ["a", "b", "c"]
+    it "returns the array when adding one element" do
+      a = [1, 2]
+      a.push(3).should eq [1, 2, 3]
+    end
+
+    it "adds mutliple elements to the end of the array" do
+      a = [1, 2]
+      a.push(3, 4)
+      a.should eq [1, 2, 3, 4]
+    end
+
+    it "returns the array when adding multiple elements" do
+      a = [1, 2]
+      a.push(3, 4).should eq [1, 2, 3, 4]
     end
 
     it "has the << alias" do
-      a = ["a", "b"]
-      a << "c"
-      a.should eq ["a", "b", "c"]
+      a = [1, 2]
+      a << 3
+      a.should eq [1, 2, 3]
     end
   end
 
