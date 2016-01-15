@@ -1,12 +1,15 @@
 require "ecr/macros"
+require "uri"
 
 class HTTP::StaticFileHandler < HTTP::Handler
-  def initialize(@publicdir)
+  def initialize(publicdir)
+    @publicdir = File.expand_path publicdir
   end
 
   def call(context)
-    request_path = context.request.path.not_nil!
-    file_path = @publicdir + request_path
+    request_path = URI.unescape(context.request.path.not_nil!)
+    expanded_path = File.expand_path(request_path, "/")
+    file_path = File.join(@publicdir, expanded_path)
     if Dir.exists?(file_path)
       context.response.content_type = "text/html"
       directory_listing(context.response, request_path, file_path)

@@ -11,7 +11,7 @@ end
 
 describe "ECR" do
   it "builds a crystal program from a source" do
-    program = ECR.process_string "hello <%= 1 %> wor\nld <% while true %> 2 <% end %>", "foo.cr"
+    program = ECR.process_string "hello <%= 1 %> wor\nld <% while true %> 2 <% end %>\n<%# skip %> <%% \"string\" %>", "foo.cr"
 
     pieces = [
       %(__str__ << "hello "),
@@ -20,6 +20,10 @@ describe "ECR" do
       %(#<loc:"foo.cr",2,6> while true ),
       %(__str__ << " 2 "),
       %(#<loc:"foo.cr",2,25> end ),
+      %(__str__ << "\\n"),
+      %(#<loc:\"foo.cr\",3,3> # skip ),
+      %(__str__ << " "),
+      %(__str__ << "<% \\"string\\" %>"),
     ]
     program.should eq(pieces.join("\n") + "\n")
   end

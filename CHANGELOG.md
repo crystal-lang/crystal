@@ -1,3 +1,7 @@
+## 0.10.2 (2016-01-13)
+
+* Fixed Directory Traversal Vulnerability in HTTP::StaticFileHandler (thanks @MakeNowJust)
+
 ## 0.10.1 (2016-01-08)
 
 * Added `Int#popcount` (thanks @rmosolgo)
