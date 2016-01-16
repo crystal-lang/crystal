@@ -36,7 +36,7 @@ lib LibGC
 
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
-  fun set_stackbottom = GC_set_stackbottom(Void*)
+  fun set_stackbottom = GC_set_stackbottom(Void*, Void*)
   fun get_stackbottom = GC_get_stackbottom : Void*
 
   fun set_on_collection_event = GC_set_on_collection_event(cb : ->)

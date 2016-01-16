@@ -20,6 +20,10 @@ $(error Could not locate llvm-config, make sure it is installed and in your PATH
 endif
 
 .PHONY: all
+CK_EXT_DIR = src/ck/ext
+CK_EXT_SOURCES = $(shell find $(CK_EXT_DIR) -name '*.c')
+CK_EXT_OBJ = $(CK_EXT_DIR)/ck_ext.o
+
 all: crystal
 
 .PHONY: help
@@ -56,7 +60,8 @@ all_compiler_spec: $(O)/compiler_spec
 .PHONY: llvm_ext libcrystal deps
 llvm_ext: $(LLVM_EXT_OBJ)
 libcrystal: $(LIB_CRYSTAL_TARGET)
-deps: llvm_ext libcrystal
+ck_ext: $(CK_EXT_OBJ)
+deps: llvm_ext ck_ext libcrystal
 
 $(O)/all_spec: deps $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
@@ -80,9 +85,12 @@ $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 $(LIB_CRYSTAL_TARGET): $(LIB_CRYSTAL_OBJS)
 	ar -rcs $@ $^
 
+$(CK_EXT_OBJ): $(CK_EXT_SOURCES)
+	$(CC) -c -o $@ $< -O3
+
 .PHONY: clean
 clean: ## Clean up built directories and files
 	rm -rf $(O)
 	rm -rf ./doc
 	rm -rf $(LLVM_EXT_OBJ)
-	rm -rf $(LIB_CRYSTAL_OBJS) $(LIB_CRYSTAL_TARGET)
+	rm -rf $(LIB_CRYSTAL_OBJS) $(CK_EXT_OBJ) $(LIB_CRYSTAL_TARGET)
