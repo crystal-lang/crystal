@@ -308,6 +308,7 @@ describe "Parser" do
   it_parses "def foo(@@var); end", Def.new("foo", [Arg.new("var")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
   it_parses "def foo(@@var); 1; end", Def.new("foo", [Arg.new("var")], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
   it_parses "def foo(@@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
+  it_parses "def foo(var = x : Int); end", Def.new("foo", [Arg.new("var", default_value: "x".call, restriction: "Int".path)])
 
   it_parses "def foo(&@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: Arg.new("block"), yields: 0)
 
@@ -871,6 +872,11 @@ describe "Parser" do
   it_parses "a :: Foo", TypeDeclaration.new("a".var, "Foo".path)
   it_parses "a :: Foo | Int32", TypeDeclaration.new("a".var, Union.new(["Foo".path, "Int32".path] of ASTNode))
   it_parses "@a :: Foo | Int32", TypeDeclaration.new("@a".instance_var, Union.new(["Foo".path, "Int32".path] of ASTNode))
+  it_parses "a : Foo", TypeDeclaration.new("a".var, "Foo".path)
+  it_parses "@a : Foo", TypeDeclaration.new("@a".instance_var, "Foo".path)
+
+  it_parses "a = uninitialized Foo; a", [UninitializedVar.new("a".var, "Foo".path), "a".var]
+  it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)
 
   it_parses "()", NilLiteral.new
   it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32] of ASTNode
@@ -1107,7 +1113,7 @@ describe "Parser" do
   end
 
   it "keeps instance variables declared in def with declare var" do
-    node = Parser.parse("def foo; @x :: Int32; end") as Def
+    node = Parser.parse("def foo; @x = uninitialized Int32; end") as Def
     node.instance_vars.should eq(Set.new(["@x"]))
   end
 

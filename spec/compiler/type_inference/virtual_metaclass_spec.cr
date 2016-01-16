@@ -115,7 +115,7 @@ describe "Type inference: virtual metaclass" do
       class Bar < Foo
       end
 
-      a :: Foo.class
+      a = uninitialized Foo.class
       a
       ") { types["Foo"].virtual_type.metaclass }
   end

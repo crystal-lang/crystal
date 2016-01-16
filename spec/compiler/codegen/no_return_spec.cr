@@ -40,7 +40,7 @@ describe "Code gen: no return" do
 
   it "codegens no return variable declaration (#1508)" do
     run(%(
-      foo :: NoReturn
+      foo = uninitialized NoReturn
       1
       )).to_i.should eq(1)
   end
@@ -49,7 +49,7 @@ describe "Code gen: no return" do
     run(%(
       class Foo
         def initialize
-          @foo :: NoReturn
+          @foo = uninitialized NoReturn
           @x = 1
         end
 

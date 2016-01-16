@@ -54,6 +54,7 @@ module Crystal
       @def_indent = 0
       @last_write = ""
       @exp_needs_indent = true
+      @inside_def = 0
 
       # This stores the column number (if any) of each comment in every line
       @when_infos = [] of AlignInfo
@@ -1019,6 +1020,7 @@ module Crystal
 
     def visit(node : Def)
       @def_indent = @indent
+      @inside_def += 1
 
       if node.abstract
         write_keyword :abstract, " "
@@ -1060,27 +1062,27 @@ module Crystal
 
       if node.macro_def?
         format_macro_body node
-
-        return false
-      end
-
-      body = node.body
-
-      if to_skip > 0
+      else
         body = node.body
-        if body.is_a?(Expressions)
-          body.expressions = body.expressions[to_skip..-1]
-          if body.expressions.empty?
+
+        if to_skip > 0
+          body = node.body
+          if body.is_a?(Expressions)
+            body.expressions = body.expressions[to_skip..-1]
+            if body.expressions.empty?
+              body = Nop.new
+            end
+          else
             body = Nop.new
           end
-        else
-          body = Nop.new
+        end
+
+        unless node.abstract
+          format_nested_with_end body
         end
       end
 
-      unless node.abstract
-        format_nested_with_end body
-      end
+      @inside_def -= 1
 
       false
     end
@@ -2487,10 +2489,31 @@ module Crystal
     def visit(node : TypeDeclaration)
       accept node.var
       skip_space_or_newline
-      write_token " ", :"::", " "
-      skip_space_or_newline
+      case @token.type
+      when :"::", :":"
+        # OK
+      else
+        raise "expecting `::` or `:`, not `#{@token.type}, #{@token.value}`, at #{@token.location}"
+      end
+      next_token_skip_space_or_newline
+      if node.var.is_a?(Var) || @inside_def > 0
+        write " = uninitialized "
+      else
+        write " : "
+      end
       accept node.declared_type
 
+      false
+    end
+
+    def visit(node : UninitializedVar)
+      accept node.var
+      skip_space_or_newline
+      write_token " ", :"=", " "
+      skip_space_or_newline
+      write_keyword :"uninitialized", " "
+      skip_space_or_newline
+      accept node.declared_type
       false
     end
 

@@ -50,6 +50,13 @@ module Crystal
       end
     end
 
+    def visit(node : UninitializedVar)
+      var = node.var
+      if var.is_a?(Var)
+        output_name var
+      end
+    end
+
     def output_name(node)
       if !node.name.starts_with?('#') && !@vars.includes?(node.name)
         puts "#{node.name} : #{node.type?}"

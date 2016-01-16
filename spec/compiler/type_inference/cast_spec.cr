@@ -123,7 +123,7 @@ describe "Type inference: cast" do
 
   it "disallows casting pointer to fun" do
     assert_error %(
-      a :: Void*
+      a = uninitialized Void*
       a as -> Int32
       ),
       "can't cast Pointer(Void) to ( -> Int32)"

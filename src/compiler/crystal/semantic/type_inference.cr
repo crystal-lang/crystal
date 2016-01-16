@@ -253,6 +253,66 @@ module Crystal
       false
     end
 
+    def visit(node : UninitializedVar)
+      case var = node.var
+      when Var
+        if @vars[var.name]?
+          var.raise "variable '#{var.name}' already declared"
+        end
+
+        node.declared_type.accept self
+
+        var_type = check_declare_var_type node
+        var.type = var_type
+
+        meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
+        if (existing_type = meta_var.type?) && existing_type != var_type
+          node.raise "variable '#{var.name}' already declared with type #{existing_type}"
+        end
+
+        meta_var.bind_to(var)
+        meta_var.freeze_type = var_type
+
+        @vars[var.name] = meta_var
+
+        check_exception_handler_vars(var.name, node)
+      when InstanceVar
+        type = scope? || current_type
+        if @untyped_def
+          node.declared_type.accept self
+
+          var_type = check_declare_var_type node
+
+          ivar = lookup_instance_var var
+          ivar.type = var_type
+          var.type = var_type
+
+          if @is_initialize
+            @vars[var.name] = MetaVar.new(var.name, var_type)
+          end
+        else
+          node.raise "can't uninitialize instance variable outside method"
+        end
+
+        case type
+        when NonGenericClassType
+          node.declared_type.accept self
+          var_type = check_declare_var_type node
+          type.declare_instance_var(var.name, var_type)
+        when GenericClassType
+          type.declare_instance_var(var.name, node.declared_type)
+        when GenericClassInstanceType
+          # OK
+        else
+          node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
+        end
+      end
+
+      node.type = @mod.nil
+
+      false
+    end
+
     def check_exception_handler_vars(var_name, node)
       # If inside a begin part of an exception handler, bind this type to
       # the variable that will be used in the rescue/else blocks.

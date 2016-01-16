@@ -1,18 +1,10 @@
 require "../../spec_helper"
 
-describe "Type inference: declare var" do
-  it "types declare var" do
-    assert_type("a :: Int32") { |mod| mod.nil }
-  end
-
-  it "types declare var and reads it" do
-    assert_type("a :: Int32; a") { int32 }
-  end
-
+describe "Type inference: type declaration" do
   it "declares instance var which appears in initialize" do
     result = assert_type("
       class Foo
-        @x :: Int32
+        @x : Int32
       end
 
       Foo.new") { types["Foo"] }
@@ -26,7 +18,7 @@ describe "Type inference: declare var" do
   it "declares instance var of generic class" do
     result = assert_type("
       class Foo(T)
-        @x :: T
+        @x : T
       end
 
       Foo(Int32).new") do
@@ -45,7 +37,7 @@ describe "Type inference: declare var" do
       f = Foo(Int32).new
 
       class Foo(T)
-        @x :: T
+        @x : T
       end
 
       f") do
@@ -54,22 +46,6 @@ describe "Type inference: declare var" do
       foo_i32.lookup_instance_var("@x").type.should eq(int32)
       foo_i32
     end
-  end
-
-  it "declares an instance variable in initialize" do
-    assert_type("
-      class Foo
-        def initialize
-          @x :: Int32
-        end
-
-        def x
-          @x
-        end
-      end
-
-      Foo.new.x
-      ") { int32 }
   end
 
   it "declares instance var with initial value" do
@@ -111,9 +87,35 @@ describe "Type inference: declare var" do
       class Foo(T)
       end
 
-      x :: Foo
+      x : Foo
       ),
       "can't declare variable of generic non-instantiated type Foo"
+  end
+
+  # TODO: remove these after 0.11
+
+  it "declares as uninitialized" do
+    assert_type("a :: Int32") { |mod| mod.nil }
+  end
+
+  it "declares as uninitialized and reads it" do
+    assert_type("a :: Int32; a") { int32 }
+  end
+
+  it "declares an instance variable in initialize as uninitialized" do
+    assert_type("
+      class Foo
+        def initialize
+          @x :: Int32
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      ") { int32 }
   end
 
   it "errors if declaring generic type without type vars (with instance var)" do

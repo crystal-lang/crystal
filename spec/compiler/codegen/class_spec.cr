@@ -259,7 +259,7 @@ describe "Code gen: class" do
   it "allows fixing an instance variable's type" do
     run(%(
       class Foo
-        @x :: Bool
+        @x : Bool
 
         def initialize(@x)
         end
@@ -553,7 +553,7 @@ describe "Code gen: class" do
 
       class Bar
         def initialize
-          @foo :: LibC::Foo
+          @foo = uninitialized LibC::Foo
         end
       end
 

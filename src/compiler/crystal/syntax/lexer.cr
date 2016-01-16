@@ -879,8 +879,15 @@ module Crystal
         if next_char == 'n'
           case next_char
           when 'i'
-            if next_char == 'o' && next_char == 'n'
-              return check_ident_or_keyword(:union, start)
+            case next_char
+            when 'o'
+              if next_char == 'n'
+                return check_ident_or_keyword(:union, start)
+              end
+            when 'n'
+              if next_char == 'i' && next_char == 't' && next_char == 'i' && next_char == 'a' && next_char == 'l' && next_char == 'i' && next_char == 'z' && next_char == 'e' && next_char == 'd'
+                return check_ident_or_keyword(:uninitialized, start)
+              end
             end
           when 'l'
             if next_char == 'e' && next_char == 's' && next_char == 's'

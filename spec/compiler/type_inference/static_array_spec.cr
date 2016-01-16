@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Type inference: static array" do
   it "types static array with var declaration" do
-    assert_type("x :: Char[3]") { |mod| mod.nil }
+    assert_type("x = uninitialized Char[3]") { |mod| mod.nil }
   end
 
   it "types static array new" do
@@ -13,7 +13,7 @@ describe "Type inference: static array" do
     assert_type("
       class Foo(N)
         def self.foo
-          x :: Char[N]
+          x = uninitialized Char[N]
           x
         end
       end
@@ -24,7 +24,7 @@ describe "Type inference: static array" do
 
   it "errors if trying to instantiate static array with N not an integer" do
     assert_error %(
-      x :: Char[Int32]
+      x = uninitialized Char[Int32]
       ),
       "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
   end
@@ -33,7 +33,7 @@ describe "Type inference: static array" do
     assert_type("
       class Foo(N)
         def initialize
-          @x :: Char[N]
+          @x = uninitialized Char[N]
         end
 
         def x
@@ -47,7 +47,7 @@ describe "Type inference: static array" do
 
   it "errors on negative static array size" do
     assert_error %(
-      x :: Int32[-1]
+      x = uninitialized Int32[-1]
       ),
       "can't instantiate StaticArray(T, N) with N = -1 (N must be positive)"
   end
@@ -78,7 +78,7 @@ describe "Type inference: static array" do
       end
 
       SIZE = 1 * 2
-      x :: UInt8[SIZE]
+      x = uninitialized UInt8[SIZE]
       x.size
       a = 1
       )) { int32 }

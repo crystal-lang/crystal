@@ -888,7 +888,14 @@ module Crystal
 
     def visit(node : TypeDeclaration)
       node.var.accept self
-      @str << " :: "
+      @str << " : "
+      node.declared_type.accept self
+      false
+    end
+
+    def visit(node : UninitializedVar)
+      node.var.accept self
+      @str << " = uninitialized "
       node.declared_type.accept self
       false
     end

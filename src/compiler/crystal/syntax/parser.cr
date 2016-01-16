@@ -31,6 +31,7 @@ module Crystal
       @stop_on_yield = 0
       @inside_c_struct = false
       @wants_doc = false
+      @no_type_declaration = 0
     end
 
     def wants_doc=(@wants_doc)
@@ -305,7 +306,17 @@ module Crystal
             end
 
             push_def if needs_new_scope
-            value = parse_op_assign_no_control
+
+            if @token.keyword?(:uninitialized) && (atomic.is_a?(Var) || atomic.is_a?(InstanceVar))
+              push_var atomic
+              next_token_skip_space
+              type = parse_single_type
+              atomic = UninitializedVar.new(atomic, type).at(location)
+              return atomic
+            else
+              value = parse_op_assign_no_control
+            end
+
             pop_def if needs_new_scope
 
             push_var atomic
@@ -410,16 +421,20 @@ module Crystal
 
         next_token_skip_space_or_newline
         next_token_skip_space_or_newline if @token.type == :":"
-        true_val = parse_question_colon
 
+        @no_type_declaration += 1
+        true_val = parse_question_colon
         check ColonOrNewline
 
         next_token_skip_space_or_newline
         next_token_skip_space_or_newline if @token.type == :":"
+
         false_val = parse_question_colon
+        @no_type_declaration -= 1
 
         cond = If.new(cond, true_val, false_val)
       end
+
       cond
     end
 
@@ -1008,7 +1023,7 @@ module Crystal
         @wants_regex = false
         next_token_skip_space
 
-        if @token.type == :"::"
+        if (@token.type == :"::") || (@no_type_declaration == 0 && @token.type == :":")
           next_token_skip_space
           ivar_type = parse_single_type
           TypeDeclaration.new(ivar, ivar_type).at(ivar.location)
@@ -2744,7 +2759,9 @@ module Crystal
             default_value = MagicConstant.new(@token.type).at(@token.location)
             next_token
           else
+            @no_type_declaration += 1
             default_value = parse_op_assign
+            @no_type_declaration -= 1
           end
 
           skip_space
@@ -3055,7 +3072,7 @@ module Crystal
               Call.new(nil, name, args, nil, block_arg, named_args, global, name_column_number, last_call_has_parenthesis)
             end
           else
-            if @token.type == :"::"
+            if (@token.type == :"::") || (@no_type_declaration == 0 && @token.type == :":")
               next_token_skip_space_or_newline
               declared_type = parse_single_type
               declare_var = TypeDeclaration.new(Var.new(name).at(location), declared_type).at(location)

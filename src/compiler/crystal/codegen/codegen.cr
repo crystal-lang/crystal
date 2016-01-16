@@ -793,6 +793,17 @@ module Crystal
       false
     end
 
+    def visit(node : UninitializedVar)
+      var = node.var
+      if var.is_a?(Var)
+        declare_var var
+      end
+
+      @last = llvm_nil
+
+      false
+    end
+
     def visit(node : Var)
       var = context.vars[node.name]?
       if var

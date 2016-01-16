@@ -162,7 +162,7 @@ describe "Restrictions" do
         'a'
       end
 
-      x :: UInt8[2]
+      x = uninitialized UInt8[2]
       foo(x)
       )) { char }
   end
@@ -173,7 +173,7 @@ describe "Restrictions" do
         'a'
       end
 
-      x :: UInt8[2]
+      x = uninitialized UInt8[2]
       foo(x)
       )) { char }
   end

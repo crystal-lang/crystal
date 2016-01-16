@@ -506,6 +506,12 @@ module Crystal
       node
     end
 
+    def transform(node : UninitializedVar)
+      node.var = node.var.transform(self)
+      node.declared_type = node.declared_type.transform(self)
+      node
+    end
+
     def transform(node : Alias)
       node.value = node.value.transform(self)
       node

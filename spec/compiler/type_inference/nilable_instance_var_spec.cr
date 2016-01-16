@@ -49,7 +49,7 @@ describe "Type inference: nilable instance var" do
   it "says instance var was not initialized in all of the initialize methods, with var declaration" do
     assert_error %(
       class Foo
-        @foo :: Int32
+        @foo : Int32
 
         def foo
           @foo

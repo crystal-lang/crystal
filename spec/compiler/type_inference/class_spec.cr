@@ -713,7 +713,7 @@ describe "Type inference: class" do
     assert_type(%(
       class Foo
         def initialize
-          @x :: Int32
+          @x = uninitialized Int32
           @x + 1
         end
 

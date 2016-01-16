@@ -79,7 +79,7 @@ describe "Code gen: generic class type" do
 
       class Generic(T)
         def initialize
-          @value :: T
+          @value = uninitialized T
         end
 
         def value=(@value)
