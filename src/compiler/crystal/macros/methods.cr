@@ -663,7 +663,7 @@ module Crystal
     end
   end
 
-  class DeclareVar
+  class TypeDeclaration
     def interpret(method, args, block, interpreter)
       case method
       when "var"

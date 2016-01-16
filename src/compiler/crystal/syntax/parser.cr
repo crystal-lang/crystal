@@ -1011,7 +1011,7 @@ module Crystal
         if @token.type == :"::"
           next_token_skip_space
           ivar_type = parse_single_type
-          DeclareVar.new(ivar, ivar_type).at(ivar.location)
+          TypeDeclaration.new(ivar, ivar_type).at(ivar.location)
         else
           ivar
         end
@@ -3058,7 +3058,7 @@ module Crystal
             if @token.type == :"::"
               next_token_skip_space_or_newline
               declared_type = parse_single_type
-              declare_var = DeclareVar.new(Var.new(name).at(location), declared_type).at(location)
+              declare_var = TypeDeclaration.new(Var.new(name).at(location), declared_type).at(location)
               push_var declare_var
               declare_var
             elsif (!force_call && is_var)
@@ -4409,7 +4409,7 @@ module Crystal
       push_var_name var.name.to_s
     end
 
-    def push_var(var : DeclareVar)
+    def push_var(var : TypeDeclaration)
       var_var = var.var
       case var_var
       when Var

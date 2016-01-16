@@ -43,7 +43,7 @@ module Crystal
       output_name node
     end
 
-    def visit(node : DeclareVar)
+    def visit(node : TypeDeclaration)
       var = node.var
       if var.is_a?(Var)
         output_name var

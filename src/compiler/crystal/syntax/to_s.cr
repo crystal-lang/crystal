@@ -886,7 +886,7 @@ module Crystal
       false
     end
 
-    def visit(node : DeclareVar)
+    def visit(node : TypeDeclaration)
       node.var.accept self
       @str << " :: "
       node.declared_type.accept self

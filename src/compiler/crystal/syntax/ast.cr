@@ -1331,7 +1331,7 @@ module Crystal
     def_equals_and_hash @name, @type_vars
   end
 
-  class DeclareVar < ASTNode
+  class TypeDeclaration < ASTNode
     property :var
     property :declared_type
 
@@ -1356,7 +1356,7 @@ module Crystal
     end
 
     def clone_without_location
-      DeclareVar.new(@var.clone, @declared_type.clone)
+      TypeDeclaration.new(@var.clone, @declared_type.clone)
     end
 
     def_equals_and_hash @var, @declared_type

@@ -651,15 +651,15 @@ describe "macro methods" do
 
   describe "declare var methods" do
     it "executes var" do
-      assert_macro "x", %({{x.var}}), [DeclareVar.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "some_name"
+      assert_macro "x", %({{x.var}}), [TypeDeclaration.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "some_name"
     end
 
     it "executes var when instance var" do
-      assert_macro "x", %({{x.var}}), [DeclareVar.new(InstanceVar.new("@some_name"), Path.new("SomeType"))] of ASTNode, "@some_name"
+      assert_macro "x", %({{x.var}}), [TypeDeclaration.new(InstanceVar.new("@some_name"), Path.new("SomeType"))] of ASTNode, "@some_name"
     end
 
     it "executes type" do
-      assert_macro "x", %({{x.type}}), [DeclareVar.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "SomeType"
+      assert_macro "x", %({{x.type}}), [TypeDeclaration.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "SomeType"
     end
   end
 

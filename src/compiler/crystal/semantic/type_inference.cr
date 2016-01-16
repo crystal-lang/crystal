@@ -195,7 +195,7 @@ module Crystal
       end
     end
 
-    def visit(node : DeclareVar)
+    def visit(node : TypeDeclaration)
       case var = node.var
       when Var
         if @vars[var.name]?

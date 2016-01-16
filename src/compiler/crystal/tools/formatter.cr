@@ -2484,7 +2484,7 @@ module Crystal
       false
     end
 
-    def visit(node : DeclareVar)
+    def visit(node : TypeDeclaration)
       accept node.var
       skip_space_or_newline
       write_token " ", :"::", " "

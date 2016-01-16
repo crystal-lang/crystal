@@ -782,7 +782,7 @@ module Crystal
       "#{node.owner}#{node.var.name.gsub('@', ':')}"
     end
 
-    def visit(node : DeclareVar)
+    def visit(node : TypeDeclaration)
       var = node.var
       if var.is_a?(Var)
         declare_var var
