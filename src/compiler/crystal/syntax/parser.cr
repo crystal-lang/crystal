@@ -3743,10 +3743,15 @@ module Crystal
 
     def parse_visibility_modifier(modifier)
       doc = @token.doc
-
       next_token_skip_space
-      exp = parse_op_assign
 
+      if @token.type == :NEWLINE
+        modifier =  VisibilityModifier.new(modifier, Nop.new, true)
+        modifier.doc = doc
+        return modifier
+      end
+
+      exp = parse_op_assign
       modifier = VisibilityModifier.new(modifier, exp)
       modifier.doc = doc
       exp.doc = doc

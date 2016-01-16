@@ -999,8 +999,30 @@ describe "Parser" do
   it_parses "foo[*baz]", Call.new("foo".call, "[]", "baz".call.splat)
   it_parses "foo[*baz] = 1", Call.new("foo".call, "[]=", ["baz".call.splat, 1.int32] of ASTNode)
 
-  it_parses "private def foo; end", VisibilityModifier.new(:private, Def.new("foo"))
-  it_parses "protected def foo; end", VisibilityModifier.new(:protected, Def.new("foo"))
+  context "visibility modifier" do
+    context "without trailing newline" do
+      it_parses "private def foo; end", VisibilityModifier.new(:private, Def.new("foo"))
+      it_parses "protected def foo; end", VisibilityModifier.new(:protected, Def.new("foo"))
+    end
+
+    context "with trailing newline" do
+      it "parses as an empty private modifier" do
+        exp = parse("private\n def foo; end\n def bar; end") as Expressions
+        mod = exp[0] as VisibilityModifier
+        mod.trailing_newline.should be_true
+        mod.exp.should be_a(Nop)
+        mod.modifier.should eq(:private)
+      end
+
+      it "parses as an empty protected modifier" do
+        exp = parse("protected\n def foo; end\n def bar; end") as Expressions
+        mod = exp[0] as VisibilityModifier
+        mod.trailing_newline.should be_true
+        mod.exp.should be_a(Nop)
+        mod.modifier.should eq(:protected)
+      end
+    end
+  end
 
   it_parses "`foo`", Call.new(nil, "`", "foo".string)
   it_parses "`foo\#{1}bar`", Call.new(nil, "`", StringInterpolation.new(["foo".string, 1.int32, "bar".string] of ASTNode))

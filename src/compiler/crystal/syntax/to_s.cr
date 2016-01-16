@@ -951,8 +951,12 @@ module Crystal
 
     def visit(node : VisibilityModifier)
       @str << node.modifier
-      @str << ' '
-      node.exp.accept self
+
+      unless node.trailing_newline
+        @str << ' '
+        node.exp.accept self
+      end
+
       false
     end
 
