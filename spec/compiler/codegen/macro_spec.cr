@@ -593,11 +593,11 @@ describe "Code gen: macro" do
           @x = 1; @x = 1.1
         end
         def foo
-          {{ @type.instance_vars.first.type.union_types.map &.name }}.join("-")
+          {{ @type.instance_vars.first.type.union_types.map(&.name).sort }}.join("-")
         end
       end
       Foo.new.foo
-    )).to_string.should eq("Int32-Float64")
+    )).to_string.should eq("Float64-Int32")
   end
 
   it "can access type variables" do

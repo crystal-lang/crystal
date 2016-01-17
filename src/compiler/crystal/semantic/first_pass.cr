@@ -239,17 +239,9 @@ module Crystal
         end
       end
 
-      alias_type = AliasType.new(@mod, current_type, node.name)
-
+      alias_type = AliasType.new(@mod, current_type, node.name, node.value)
       attach_doc alias_type, node
-
       current_type.types[node.name] = alias_type
-
-      processing_types do
-        node.value.accept self
-      end
-
-      alias_type.aliased_type = node.value.type.instance_type
 
       node.type = @mod.nil
 

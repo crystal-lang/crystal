@@ -40,7 +40,11 @@ module Crystal
         type.used = true
       when Type
         if type.is_a?(AliasType) && @in_type_args == 0 && !type.aliased_type?
-          node.raise "infinite recursive definition of alias #{type}"
+          if type.value_processed?
+            node.raise "infinite recursive definition of alias #{type}"
+          else
+            type.process_value
+          end
         end
 
         node.type = check_type_in_type_args(type.remove_alias_if_simple)

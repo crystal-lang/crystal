@@ -2144,11 +2144,12 @@ module Crystal
   end
 
   class AliasType < NamedType
-    property! :aliased_type
+    getter? value_processed
 
-    def initialize(program, container, name)
+    def initialize(program, container, name, @value)
       super(program, container, name)
       @simple = true
+      @value_processed = false
     end
 
     delegate lookup_defs, aliased_type
@@ -2163,7 +2164,17 @@ module Crystal
     delegate cover_size, aliased_type
     delegate passed_by_value?, aliased_type
 
+    def aliased_type
+      aliased_type?.not_nil!
+    end
+
+    def aliased_type?
+      process_value
+      @aliased_type
+    end
+
     def remove_alias
+      process_value
       if aliased_type = @aliased_type
         aliased_type.remove_alias
       else
@@ -2173,6 +2184,7 @@ module Crystal
     end
 
     def remove_alias_if_simple
+      process_value
       if @simple
         remove_alias
       else
@@ -2181,11 +2193,25 @@ module Crystal
     end
 
     def allowed_in_generics?
+      process_value
       if aliased_type = @aliased_type
         aliased_type.remove_alias.allowed_in_generics?
       else
         true
       end
+    end
+
+    def process_value
+      return if @value_processed
+      @value_processed = true
+
+      visitor = FirstPassVisitor.new(@program)
+      visitor.types.push(container)
+      visitor.processing_types do
+        @value.accept visitor
+      end
+
+      @aliased_type = @value.type.instance_type
     end
 
     def type_desc
