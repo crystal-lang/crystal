@@ -9,7 +9,7 @@
 # ### Parsing with `JSON#parse`
 #
 # `JSON#parse` will return an `Any`, which is a convenient wrapper around all possible JSON types,
-# making it easy to traverse a complex JSON structure but requires some casts from time time,
+# making it easy to traverse a complex JSON structure but requires some casts from time to time,
 # mostly via some method invocations.
 #
 # ```
