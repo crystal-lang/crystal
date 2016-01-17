@@ -438,11 +438,14 @@ describe "Code gen: macro" do
       class Foo
         def initialize(@x, @y)
         end
+
+        macro def foo : String
+          {{ Foo.instance_vars.last.name.stringify }}
+        end
+
       end
 
-      Foo.new(1, 2)
-
-      {{ Foo.instance_vars.last.name.stringify }}
+      Foo.new(1, 2).foo
       )).to_string.should eq("y")
   end
 

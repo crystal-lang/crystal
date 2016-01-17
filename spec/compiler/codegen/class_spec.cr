@@ -712,4 +712,26 @@ describe "Code gen: class" do
       Main.foo
       )).to_i.should eq(1)
   end
+
+  it "codegens singleton (#718)" do
+    run(%(
+      class Singleton
+        @@instance = new
+
+        def initialize
+          @msg = "Hello"
+        end
+
+        def msg
+          @msg
+        end
+
+        def self.get_instance
+          @@instance
+        end
+      end
+
+      Singleton.get_instance.msg
+      )).to_string.should eq("Hello")
+  end
 end

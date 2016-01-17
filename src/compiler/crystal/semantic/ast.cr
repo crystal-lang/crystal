@@ -131,7 +131,7 @@ module Crystal
       node.remove_observer self
     end
 
-    def unbind_from(nodes : Array(ASTNode))
+    def unbind_from(nodes : Array)
       nodes.each do |node|
         unbind_from node
       end
@@ -628,14 +628,30 @@ module Crystal
 
   class ClassDef
     include RuntimeInitializable
+
+    property! resolved_type
+    property created_new_type
+    @created_new_type = false
+  end
+
+  class ModuleDef
+    property! resolved_type
+  end
+
+  class LibDef
+    property! resolved_type
   end
 
   class Include
     include RuntimeInitializable
+
+    property! resolved_type
   end
 
   class Extend
     include RuntimeInitializable
+
+    property! resolved_type
   end
 
   class Def
@@ -654,6 +670,7 @@ module Crystal
 
   class EnumDef
     property enum_type
+    property! resolved_type
   end
 
   class Yield

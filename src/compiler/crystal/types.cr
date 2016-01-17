@@ -1388,6 +1388,17 @@ module Crystal
       end
     end
 
+    def add_instance_var_initializer(name, value, meta_vars)
+      initializer = super
+
+      # Make sure to type the initializer for existing instantiations
+      generic_types.each_value do |instance|
+        run_instance_var_initializer(initializer, instance)
+      end
+
+      initializer
+    end
+
     def run_instance_vars_initializers(real_type, type : GenericClassType | ClassType, instance)
       if superclass = type.superclass
         run_instance_vars_initializers(real_type, superclass, instance)

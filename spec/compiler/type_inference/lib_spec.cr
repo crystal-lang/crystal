@@ -588,4 +588,18 @@ describe "Type inference: lib" do
       ),
       "invoked 'to_i32' to convert from Foo to Int32, but got Char"
   end
+
+  it "defines lib funs before funs with body" do
+    assert_type(%(
+      fun foo : Int32
+        LibX.x
+      end
+
+      lib LibX
+        fun x : Int32
+      end
+
+      foo
+      )) { int32 }
+  end
 end
