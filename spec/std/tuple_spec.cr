@@ -197,4 +197,20 @@ describe "Tuple" do
 
     Tuple.new.last?.should be_nil
   end
+
+  it "does sample" do
+    {1, 2, 3}.sample.should be_a(Int32)
+    {1, 2, 3}.sample(2).size.should eq(2)
+    shuffled = {1, 2, 3}.sample(3)
+    shuffled.includes?(1).should be_true
+    shuffled.includes?(2).should be_true
+    shuffled.includes?(3).should be_true
+  end
+
+  it "does shuffle" do
+    shuffled = {1, 2, 3}.shuffle
+    shuffled.includes?(1).should be_true
+    shuffled.includes?(2).should be_true
+    shuffled.includes?(3).should be_true
+  end
 end

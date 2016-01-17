@@ -406,6 +406,26 @@ struct Tuple
     {% end %}
   end
 
+  # Returns a random element from this tuple. Doesn't compile if the tuple
+  # is empty.
+  def sample(random = Random::DEFAULT)
+    {% if @type.size == 0 %}
+      {{raise "Can't sample empty tuple"}}
+    {% else %}
+      self[random.rand({{@type.size}})]
+    {% end %}
+  end
+
+  # Returns a new array of *n* distinct elements of this tuple.
+  def sample(n : Int, random = Random::DEFAULT)
+    to_a.sample(n, random)
+  end
+
+  # Returns a new array with the elements of this tuple in random order.
+  def shuffle(random = Random::DEFAULT)
+    to_a.shuffle!(random)
+  end
+
   class ItemIterator(T)
     include Iterator(T)
 
