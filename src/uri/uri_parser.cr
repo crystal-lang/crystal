@@ -18,8 +18,6 @@ class URIParser
     @uri = URI.new
     @input = input.strip.to_unsafe
     @state = :scheme_start
-    @at_flag = false
-    @bracket_flag = false
     @ptr = 0
   end
 
@@ -29,10 +27,6 @@ class URIParser
 
   def run
     parse_scheme_start
-  end
-
-  def reset_buffer
-    @buffer = String::Builder.new
   end
 
   def special_scheme?
@@ -47,15 +41,10 @@ class URIParser
     end
   end
 
-  def alpha?
-    ('a'.ord <= c && c <= 'z'.ord) ||
-      ('A'.ord <= c && c <= 'Z'.ord)
-  end
-
   def parse_scheme
     start = @ptr
     loop do
-      if alpha? || c === '-' || c === '.' || c === '+'
+      if alpha? || numeric? || c === '-' || c === '.' || c === '+'
         @ptr += 1
       elsif c === ':'
         @uri.scheme = String.new(@input + start, @ptr - start)
@@ -93,10 +82,9 @@ class URIParser
     loop do
       if c === '@'
         # todo
-      elsif c === '\0' || c === '/' || c === '?' || c === '#' || (special_scheme? && c === '\\')
+      elsif end_of_host?
         @ptr = start
-        parse_host
-        break
+        cor parse_host
       else
         @ptr += 1
       end
@@ -105,23 +93,66 @@ class URIParser
 
   def parse_host
     start = @ptr
+    bracket_flag = false
     loop do
-      if c === ':' && @bracket_flag == false
+      if c === ':' && !bracket_flag
         # todo if url is special and buffer empty fail
         @uri.host = String.new(@input + start, @ptr - start)
-        break
-        # @state = :port
-      elsif c === '\0' || c === '/' || c === '?' || c === '#' || (special_scheme? && c === '\\')
+        cor parse_port
+      elsif end_of_host?
         # todo if url is special and buffer empty fail
         # todo host parsing buffer
         @uri.host = String.new(@input + start, @ptr - start)
-        break
-        # parse_path
+        cor parse_path
       else
-        @bracket_flag = true if c === '['
-        @bracket_flag = false if c === ']'
+        bracket_flag = true if c === '['
+        bracket_flag = false if c === ']'
         @ptr += 1
       end
     end
+  end
+
+  def parse_port
+    start = @ptr
+    loop do
+      if numeric?
+        @ptr += 1
+      elsif end_of_host?
+        @uri.port = (start...@ptr).inject(0) do |memo, i|
+          (memo * 10) + (@input[i] - '0'.ord)
+        end
+        # todo speical scheme ports
+        cor parse_path
+      else
+        # todo failure
+        break
+      end
+    end
+  end
+
+  def parse_path
+    start = @ptr
+    loop do
+      if c === '\0' || c === '?' || c === '#' # || (c === '\\' && speical_scheme?)
+        #
+        @uri.path = String.new(@input + start, @ptr - start)
+        cor nil
+      else
+        @ptr += 1
+      end
+    end
+  end
+
+  private def alpha?
+    ('a'.ord <= c && c <= 'z'.ord) ||
+      ('A'.ord <= c && c <= 'Z'.ord)
+  end
+
+  private def numeric?
+    '0'.ord <= c && c <= '9'.ord
+  end
+
+  private def end_of_host?
+    c === '\0' || c === '/' || c === '?' || c === '#' || (special_scheme? && c === '\\')
   end
 end
