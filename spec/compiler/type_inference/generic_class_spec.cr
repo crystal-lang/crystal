@@ -567,4 +567,25 @@ describe "Type inference: generic class" do
       fooA.c.pos
       )) { int64 }
   end
+
+  it "class doesn't conflict with generic type arg" do
+    assert_type(%(
+      class Foo(X)
+        def initialize(b : X)
+        end
+
+        def x
+          1
+        end
+      end
+
+      class Bar(Y)
+      end
+
+      class X
+      end
+
+      Foo.new(Bar(Int32).new).x
+      )) { int32 }
+  end
 end

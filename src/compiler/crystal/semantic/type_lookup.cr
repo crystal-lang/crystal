@@ -190,6 +190,17 @@ module Crystal
     end
   end
 
+  module GenericType
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+      # If we are Foo(T) and somebody looks up the type T, we return `nil` because we don't
+      # know what type T is, and we don't want to continue search in the container
+      if !names.empty? && type_vars.includes?(names[0])
+        return nil
+      end
+      super
+    end
+  end
+
   class GenericClassInstanceType
     def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       if !names.empty? && (type_var = type_vars[names[0]]?)
