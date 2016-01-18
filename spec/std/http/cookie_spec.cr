@@ -164,5 +164,17 @@ module HTTP
       cookie = cookies.each.next
       cookie.should eq Cookie.new("a", "b")
     end
+
+    it "allows transform to hash" do
+      cookies = Cookies.new
+      cookies << Cookie.new("a", "b")
+      cookies["c"] = Cookie.new("c", "d")
+      cookies["d"] = "e"
+      cookies_hash = cookies.to_h
+      compare_hash = { "a" => Cookie.new("a", "b"), "c" => Cookie.new("c", "d"), "d" => Cookie.new("d", "e") }
+      cookies_hash.should eq(compare_hash)
+      cookies["x"] = "y"
+      cookies.to_h.should_not eq(cookies_hash)
+    end
   end
 end
