@@ -181,7 +181,7 @@ class URI
   # # => "crystal-lang.org"
   # ```
   def self.parse(raw_url : String)
-    URIParser.new(raw_url).run.uri
+    URI::Parser.new(raw_url).run.uri
   end
 
   # URL-decode a string.

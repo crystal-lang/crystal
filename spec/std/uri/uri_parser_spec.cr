@@ -1,7 +1,7 @@
 require "spec"
 require "uri"
 
-class TestURIParser < URIParser
+class URI::TestParser < URI::Parser
   property ptr
 
   macro step(method)
@@ -9,7 +9,7 @@ class TestURIParser < URIParser
   end
 end
 
-class VerboseURIParser < URIParser
+class URI::VerboseParser < URI::Parser
   macro step(method)
     puts "moving to {{method}} at #{@ptr}: #{c.chr}"
     return {{method}}
@@ -17,7 +17,7 @@ class VerboseURIParser < URIParser
 end
 
 def test_parser(url = "", ptr = 0)
-  par = TestURIParser.new(url)
+  par = URI::TestParser.new(url)
   par.ptr = ptr
   par
 end
@@ -33,7 +33,7 @@ private macro test(parser_meth, url, start_ptr, end_ptr, next_meth, uri_meth = n
   end
 end
 
-describe URIParser, "steps" do
+describe URI::Parser, "steps" do
   test parse_scheme_start,
     "aurl", 0, 0,
     :parse_scheme
@@ -205,9 +205,9 @@ describe URIParser, "steps" do
     fragment, "frag"
 end
 
-describe URIParser, "#run" do
+describe URI::Parser, "#run" do
   it "runs for normal urls" do
-    uri = URIParser.new("http://user:pass@bitfission.com:8080/path?a=b#frag").run.uri
+    uri = URI::Parser.new("http://user:pass@bitfission.com:8080/path?a=b#frag").run.uri
     uri.scheme.should eq("http")
     uri.user.should eq("user")
     uri.password.should eq("pass")
@@ -219,7 +219,7 @@ describe URIParser, "#run" do
   end
 
   it "runs for schemelss urls" do
-    uri = URIParser.new("//user:pass@bitfission.com:8080/path?a=b#frag").run.uri
+    uri = URI::Parser.new("//user:pass@bitfission.com:8080/path?a=b#frag").run.uri
     uri.scheme.should eq(nil)
     uri.user.should eq("user")
     uri.password.should eq("pass")
@@ -231,7 +231,7 @@ describe URIParser, "#run" do
   end
 
   it "runs for path relative urls" do
-    uri = URIParser.new("/path?a=b#frag").run.uri
+    uri = URI::Parser.new("/path?a=b#frag").run.uri
     uri.scheme.should eq(nil)
     uri.host.should eq(nil)
     uri.path.should eq("/path")
@@ -240,30 +240,30 @@ describe URIParser, "#run" do
   end
 
   it "runs for path mailto" do
-    uri = URIParser.new("mailto:user@example.com").run.uri
+    uri = URI::Parser.new("mailto:user@example.com").run.uri
     uri.scheme.should eq("mailto")
     uri.opaque.should eq("user@example.com")
   end
 
   it "runs for file wth and without host" do
-    uri = URIParser.new("file://localhost/etc/fstab").run.uri
+    uri = URI::Parser.new("file://localhost/etc/fstab").run.uri
     uri.scheme.should eq("file")
     uri.host.should eq("localhost")
     uri.path.should eq("/etc/fstab")
 
-    uri = URIParser.new("file:///etc/fstab").run.uri
+    uri = URI::Parser.new("file:///etc/fstab").run.uri
     uri.scheme.should eq("file")
     uri.host.should eq(nil)
     uri.path.should eq("/etc/fstab")
   end
 
   it "runs for scheme and path only urls" do
-    uri = URIParser.new("test:/test").run.uri
+    uri = URI::Parser.new("test:/test").run.uri
     uri.scheme.should eq("test")
     uri.path.should eq("/test")
   end
 
   context "bad urls" do
-    assert { expect_raises(URI::Error) { URIParser.new("http://some.com:8f80/path").run } }
+    assert { expect_raises(URI::Error) { URI::Parser.new("http://some.com:8f80/path").run } }
   end
 end
