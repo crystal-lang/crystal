@@ -437,7 +437,13 @@ USAGE
 
   private def execute(output_filename, run_args)
     begin
-      status = Process.run(output_filename, args: run_args, input: true, output: true, error: true)
+      Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
+        Signal::INT.trap do
+          process.kill
+          exit
+        end
+      end
+      status = $?
     ensure
       File.delete output_filename
     end
