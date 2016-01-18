@@ -4,13 +4,13 @@ require "uri"
 class TestURIParser < URIParser
   property ptr
 
-  macro cor(method)
+  macro step(method)
     return :{{method}}
   end
 end
 
 class VerboseURIParser < URIParser
-  macro cor(method)
+  macro step(method)
     puts "moving to {{method}} at #{@ptr}: #{c.chr}"
     return {{method}}
   end
@@ -63,8 +63,12 @@ describe URIParser, "steps" do
     scheme, nil
 
   test parse_path_or_authority,
-    "http://bitfission.com", 5, 5,
+    "http://bitfission.com", 6, 6,
     :parse_authority
+
+  test parse_path_or_authority,
+    "test:/path", 6, 5,
+    :parse_path
 
   test parse_no_scheme,
     "#justfragment", 0, 0,
@@ -251,5 +255,15 @@ describe URIParser, "#run" do
     uri.scheme.should eq("file")
     uri.host.should eq(nil)
     uri.path.should eq("/etc/fstab")
+  end
+
+  it "runs for scheme and path only urls" do
+    uri = URIParser.new("test:/test").run.uri
+    uri.scheme.should eq("test")
+    uri.path.should eq("/test")
+  end
+
+  context "bad urls" do
+    assert { expect_raises(URI::Error) { URIParser.new("http://some.com:8f80/path").run } }
   end
 end

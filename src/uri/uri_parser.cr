@@ -1,8 +1,16 @@
-# Parser based on https://url.spec.whatwg.org/
+# :nodoc:
 class URIParser
+  # Parser is based on https://url.spec.whatwg.org/ .
+  # Step nmes and variables are roughly the same as that document.
+  # notable deviations from the spec
+  #   does not parse windows slashes
+  #   does not validate port < 2**16-1
+  #   does not validate IPv4 or v6 hosts are valid
+  #   ports greater than 2^16-1 are not errors
   property uri
 
-  macro cor(method)
+  # overridden in specs to test step transitions
+  macro step(method)
     return {{method}}
   end
 
@@ -23,9 +31,9 @@ class URIParser
 
   def parse_scheme_start
     if alpha?
-      cor parse_scheme
+      step parse_scheme
     else
-      cor parse_no_scheme
+      step parse_no_scheme
     end
   end
 
@@ -38,37 +46,34 @@ class URIParser
         @uri.scheme = from_input(start)
         if @input[@ptr + 1] === '/'
           @ptr += 2
-          cor parse_path_or_authority
+          step parse_path_or_authority
         else
           # greatly deviates from spec as described, but is correct behavior
           @uri.opaque = String.new(@input + @ptr + 1)
-          cor nil
+          step nil
         end
       else
         @ptr = 0
-        cor parse_no_scheme
+        step parse_no_scheme
       end
     end
   end
 
   def parse_path_or_authority
     if c === '/'
-      cor parse_authority
+      step parse_authority
     else
-      # The spec parser says to do
-      #   @ptr -= 1
-      #   cor parse_path
-      # but I cannot find an example URL that ends here
-      cor nil
+      @ptr -= 1
+      step parse_path
     end
   end
 
   def parse_no_scheme
     case c
     when '#'
-      cor parse_fragment
+      step parse_fragment
     else
-      cor parse_relative
+      step parse_relative
     end
   end
 
@@ -78,10 +83,10 @@ class URIParser
     loop do
       if c === '@'
         @ptr = start
-        cor parse_userinfo
+        step parse_userinfo
       elsif end_of_host?
         @ptr = start
-        cor parse_host
+        step parse_host
       else
         @ptr += 1
       end
@@ -99,7 +104,7 @@ class URIParser
           @uri.user = URI.unescape(from_input(start))
         end
         @ptr += 1
-        cor parse_host
+        step parse_host
       elsif c === ':'
         @uri.user = URI.unescape(from_input(start))
         password_flag = true
@@ -114,15 +119,15 @@ class URIParser
   def parse_host
     start = @ptr
     bracket_flag = false
-    cor parse_path if c === '/'
+    step parse_path if c === '/'
     loop do
       if c === ':' && !bracket_flag
         @uri.host = from_input(start)
         @ptr += 1
-        cor parse_port
+        step parse_port
       elsif end_of_host?
         @uri.host = from_input(start)
-        cor parse_path
+        step parse_path
       else
         bracket_flag = true if c === '['
         bracket_flag = false if c === ']'
@@ -140,10 +145,9 @@ class URIParser
         @uri.port = (start...@ptr).inject(0) do |memo, i|
           (memo * 10) + (@input[i] - '0'.ord)
         end
-        cor parse_path
+        step parse_path
       else
-        # todo failure
-        break
+        raise URI::Error.new("Invalid URI: bad port at character #{@ptr}")
       end
     end
   end
@@ -151,24 +155,24 @@ class URIParser
   def parse_relative
     case c
     when '\0'
-      cor nil
+      step nil
     when '/'
-      cor parse_relative_slash
+      step parse_relative_slash
     when '?'
-      cor parse_query
+      step parse_query
     when '#'
-      cor parse_fragment
+      step parse_fragment
     else
-      cor parse_path
+      step parse_path
     end
   end
 
   def parse_relative_slash
     if @input[@ptr + 1] === '/'
       @ptr += 1
-      cor parse_authority
+      step parse_authority
     else
-      cor parse_path
+      step parse_path
     end
   end
 
@@ -178,13 +182,13 @@ class URIParser
       case c
       when '\0'
         @uri.path = from_input(start)
-        cor nil
+        step nil
       when '?'
         @uri.path = from_input(start)
-        cor parse_query
+        step parse_query
       when '#'
         @uri.path = from_input(start)
-        cor parse_fragment
+        step parse_fragment
       else
         @ptr += 1
       end
@@ -198,10 +202,10 @@ class URIParser
       case c
       when '\0'
         @uri.query = from_input(start)
-        cor nil
+        step nil
       when '#'
         @uri.query = from_input(start)
-        cor parse_fragment
+        step parse_fragment
       else
         @ptr += 1
       end
@@ -215,7 +219,7 @@ class URIParser
       case c
       when '\0'
         @uri.fragment = from_input(start)
-        cor nil
+        step nil
       else
         @ptr += 1
       end
