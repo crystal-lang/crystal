@@ -63,6 +63,26 @@ macro assert_responds_to(var, method)
   end
 end
 
+# Remove extra indentation from multi-line string literals and string interpolations.
+#
+# ```
+# def usage
+#   undent <<-USAGE
+#     Usage: #       blah [options...] {file}
+#
+#     Options:
+#       -h --help     Show this screen.
+#       --version     Show version.
+#       --foo={value} Description of foo.
+#   USAGE
+# end
+#
+# puts usage
+# ```
+#
+# `undent` removes heading 5 white spaces of each lines.  With this macro, you can add indent
+# to your here document in order to keep your code clean.
+# This macro is heavily inspired by Homebrew's `String#undent` method.
 macro undent(str)
   {% if str.is_a? StringLiteral %}
     {% unless str.lines.all?{|l| l =~ /^ *$/ } %}
