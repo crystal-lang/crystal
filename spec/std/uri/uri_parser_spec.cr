@@ -33,16 +33,29 @@ describe URIParser, "steps" do
 
   test parse_scheme_start,
     "1", 0, 0,
-    :nil
+    :parse_no_scheme
 
   test parse_scheme,
     "my-thing+yes.2://", 0, 15,
     :parse_path_or_authority,
     scheme, "my-thing+yes.2"
 
+  test parse_scheme,
+    "/path/absolute/url", 0, 0,
+    :parse_no_scheme,
+    scheme, nil
+
   test parse_path_or_authority,
     "http://bitfission.com", 5, 6,
     :parse_authority
+
+  test parse_no_scheme,
+    "#justfragment", 0, 0,
+    :parse_fragment
+
+  test parse_no_scheme,
+    "/justpath", 0, 0,
+    :parse_relative
 
   test parse_authority,
     "http://bitfission.com", 6, 7,
@@ -51,6 +64,16 @@ describe URIParser, "steps" do
   test parse_host,
     "http://bitfission.com", 7, 21,
     :parse_path,
+    host, "bitfission.com"
+
+  test parse_host,
+    "http://bitfission.com/", 7, 21,
+    :parse_path,
+    host, "bitfission.com"
+
+  test parse_host,
+    "http://bitfission.com:8080/", 7, 22,
+    :parse_port,
     host, "bitfission.com"
 
   test parse_host,
@@ -77,6 +100,30 @@ describe URIParser, "steps" do
     "http://a.com:8080", 13, 17,
     :parse_path,
     port, 8080
+
+  test parse_relative,
+    "", 0, 0,
+    :nil
+
+  test parse_relative,
+    "/path", 0, 0,
+    :parse_relative_slash
+
+  test parse_relative,
+    "?query", 0, 0,
+    :parse_query
+
+  test parse_relative,
+    "?query", 0, 0,
+    :parse_query
+
+  test parse_relative_slash,
+    "//bitfission.com", 0, 1,
+    :parse_authority
+
+  test parse_relative_slash,
+    "/a/path", 0, 0,
+    :parse_path
 
   test parse_path,
     "/somepath", 0, 9,
@@ -110,11 +157,33 @@ describe URIParser, "steps" do
 end
 
 describe URIParser, "#run" do
-  it "runs all appropriate steps" do
-    par = URIParser.new("http://bitfission.com/path?a=b#frag")
+  it "runs for normal urls" do
+    par = URIParser.new("http://bitfission.com:8080/path?a=b#frag")
     par.run
     par.uri.scheme.should eq("http")
     par.uri.host.should eq("bitfission.com")
+    par.uri.port.should eq(8080)
+    par.uri.path.should eq("/path")
+    par.uri.query.should eq("?a=b")
+    par.uri.fragment.should eq("#frag")
+  end
+
+  it "runs for schemelss urls" do
+    par = URIParser.new("//bitfission.com:8080/path?a=b#frag")
+    par.run
+    par.uri.scheme.should eq(nil)
+    par.uri.host.should eq("bitfission.com")
+    par.uri.port.should eq(8080)
+    par.uri.path.should eq("/path")
+    par.uri.query.should eq("?a=b")
+    par.uri.fragment.should eq("#frag")
+  end
+
+  it "runs for path relative urls" do
+    par = URIParser.new("/path?a=b#frag")
+    par.run
+    par.uri.scheme.should eq(nil)
+    par.uri.host.should eq(nil)
     par.uri.path.should eq("/path")
     par.uri.query.should eq("?a=b")
     par.uri.fragment.should eq("#frag")

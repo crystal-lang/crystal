@@ -37,8 +37,7 @@ class URIParser
     if alpha?
       cor parse_scheme
     else
-      # #parse_no_scheme
-      cor nil
+      cor parse_no_scheme
     end
   end
 
@@ -61,9 +60,8 @@ class URIParser
 
         break
       else
-        # parse_no_scheme
         @ptr = 0
-        break
+        cor parse_no_scheme
       end
     end
   end
@@ -73,7 +71,16 @@ class URIParser
       @ptr += 1
       cor parse_authority
     else
-      # parse_path
+      cor nil # parse_path
+    end
+  end
+
+  def parse_no_scheme
+    case c
+    when '#'
+      cor parse_fragment
+    else
+      cor parse_relative
     end
   end
 
@@ -99,6 +106,7 @@ class URIParser
       if c === ':' && !bracket_flag
         # todo if url is special and buffer empty fail
         @uri.host = String.new(@input + start, @ptr - start)
+        @ptr += 1
         cor parse_port
       elsif end_of_host?
         # todo if url is special and buffer empty fail
@@ -128,6 +136,30 @@ class URIParser
         # todo failure
         break
       end
+    end
+  end
+
+  def parse_relative
+    case c
+    when '\0'
+      cor nil
+    when '/'
+      cor parse_relative_slash
+    when '?'
+      cor parse_query
+    when '#'
+      cor parse_fragment
+    else
+      cor parse_path
+    end
+  end
+
+  def parse_relative_slash
+    if @input[@ptr + 1] === '/'
+      @ptr += 1
+      cor parse_authority
+    else
+      cor parse_path
     end
   end
 
