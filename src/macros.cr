@@ -62,3 +62,54 @@ macro assert_responds_to(var, method)
     raise "expected {{var}} to respond to :{{method}}, not #{ {{var}} }"
   end
 end
+
+macro undent(str)
+  {% if str.is_a? StringLiteral %}
+    {% unless str.lines.all?{|l| l =~ /^ *$/ } %}
+      {%
+        min_indent =
+          str.lines
+            .reject{|l| l =~ /^ *\n?$/ }
+            .map{|l| l.gsub(/[^ ].*\n?$/, "").size }
+            .sort
+            .first
+      %}
+
+      {% if min_indent == 0 %}
+        {{str}}
+      {% else %}
+        String::Builder.build do |builder|
+          {% for l in str.lines %}
+            builder << (
+              if {{l}}.size >= {{min_indent}}
+                {{l}}[{{min_indent}}..-1]
+              else
+              {{l}}
+              end
+            )
+          {% end %}
+        end
+      {% end %}
+    {% else %}
+      {% raise "undent() can't detect indent from string which includes only empty lines" %}
+    {% end %}
+  {% elsif str.is_a? StringInterpolation %}
+    {%
+      min_indent =
+        str.stringify[1..-2].lines   # [1..-2] omits '"' at start and end of string
+          .reject{|l| l =~ /^ *\n?$/ }
+          .map{|l| l.gsub(/[^ ].*\n?$/, "").size }
+          .sort
+          .first
+    %}
+
+    {% if min_indent == 0 %}
+      {{str}}
+    {% else %}
+      {{str}}.gsub(/^ {#{ {{min_indent}} }}/m, "")
+    {% end %}
+  {% else %}
+    {% raise "1st argument of undent() must be string literals but actually #{str.class_name}" %}
+  {% end %}
+end
+
