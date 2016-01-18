@@ -37,10 +37,10 @@ class URIParser
       elsif c === ':'
         @uri.scheme = from_input(start)
         if @input[@ptr + 1] === '/'
-          @ptr += 1
+          @ptr += 2
           cor parse_path_or_authority
         else
-          # greatly deviates from spec
+          # greatly deviates from spec as described, but is correct behavior
           @uri.opaque = String.new(@input + @ptr + 1)
           cor nil
         end
@@ -53,10 +53,13 @@ class URIParser
 
   def parse_path_or_authority
     if c === '/'
-      @ptr += 1
       cor parse_authority
     else
-      cor nil # parse_path
+      # The spec parser says to do
+      #   @ptr -= 1
+      #   cor parse_path
+      # but I cannot find an example URL that ends here
+      cor nil
     end
   end
 
@@ -111,6 +114,7 @@ class URIParser
   def parse_host
     start = @ptr
     bracket_flag = false
+    cor parse_path if c === '/'
     loop do
       if c === ':' && !bracket_flag
         @uri.host = from_input(start)
@@ -136,7 +140,6 @@ class URIParser
         @uri.port = (start...@ptr).inject(0) do |memo, i|
           (memo * 10) + (@input[i] - '0'.ord)
         end
-        # todo speical scheme ports
         cor parse_path
       else
         # todo failure

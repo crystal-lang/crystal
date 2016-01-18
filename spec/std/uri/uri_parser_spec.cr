@@ -1,7 +1,7 @@
 require "spec"
 require "uri"
 
-class TestParser < URIParser
+class TestURIParser < URIParser
   property ptr
 
   macro cor(method)
@@ -9,8 +9,15 @@ class TestParser < URIParser
   end
 end
 
+class VerboseURIParser < URIParser
+  macro cor(method)
+    puts "moving to {{method}} at #{@ptr}: #{c.chr}"
+    return {{method}}
+  end
+end
+
 def test_parser(url = "", ptr = 0)
-  par = TestParser.new(url)
+  par = TestURIParser.new(url)
   par.ptr = ptr
   par
 end
@@ -36,7 +43,7 @@ describe URIParser, "steps" do
     :parse_no_scheme
 
   test parse_scheme,
-    "my-thing+yes.2://", 0, 15,
+    "my-thing+yes.2://", 0, 16,
     :parse_path_or_authority,
     scheme, "my-thing+yes.2"
 
@@ -56,7 +63,7 @@ describe URIParser, "steps" do
     scheme, nil
 
   test parse_path_or_authority,
-    "http://bitfission.com", 5, 6,
+    "http://bitfission.com", 5, 5,
     :parse_authority
 
   test parse_no_scheme,
@@ -81,6 +88,11 @@ describe URIParser, "steps" do
 
   test parse_userinfo,
     "http://%3Auser@bitfission.com", 7, 15,
+    :parse_host,
+    user, ":user"
+
+  test parse_userinfo,
+    "http://%3Auser:pass@bitfission.com", 7, 20,
     :parse_host,
     user, ":user"
 
@@ -123,6 +135,11 @@ describe URIParser, "steps" do
     "http://[::1]", 7, 12,
     :parse_path,
     host, "[::1]"
+
+  test parse_host,
+    "file:///no/host", 7, 7,
+    :parse_path,
+    host, nil
 
   test parse_port,
     "http://a.com:8080", 13, 17,
@@ -218,9 +235,21 @@ describe URIParser, "#run" do
     uri.fragment.should eq("frag")
   end
 
-  it "runs for path mailto " do
+  it "runs for path mailto" do
     uri = URIParser.new("mailto:user@example.com").run.uri
     uri.scheme.should eq("mailto")
     uri.opaque.should eq("user@example.com")
+  end
+
+  it "runs for file wth and without host" do
+    uri = URIParser.new("file://localhost/etc/fstab").run.uri
+    uri.scheme.should eq("file")
+    uri.host.should eq("localhost")
+    uri.path.should eq("/etc/fstab")
+
+    uri = URIParser.new("file:///etc/fstab").run.uri
+    uri.scheme.should eq("file")
+    uri.host.should eq(nil)
+    uri.path.should eq("/etc/fstab")
   end
 end
