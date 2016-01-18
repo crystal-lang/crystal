@@ -1,9 +1,5 @@
 require "../uri"
 
-class URI
-  property non_relative_flag
-end
-
 # Parser based on https://url.spec.whatwg.org/
 class URIParser
   property uri
@@ -17,7 +13,6 @@ class URIParser
   def initialize(input)
     @uri = URI.new
     @input = input.strip.to_unsafe
-    @state = :scheme_start
     @ptr = 0
   end
 
@@ -47,18 +42,15 @@ class URIParser
       if alpha? || numeric? || c === '-' || c === '.' || c === '+'
         @ptr += 1
       elsif c === ':'
-        @uri.scheme = String.new(@input + start, @ptr - start)
-        # todo file and other special cases
+        @uri.scheme = from_input(start)
         if @input[@ptr + 1] === '/'
           @ptr += 1
           cor parse_path_or_authority
         else
-          @uri.non_relative_flag = true
-          @uri.path = ""
-          # parse_non_relative_path
+          # greatly deviates from spec
+          @uri.opaque = String.new(@input + @ptr + 1)
+          cor nil
         end
-
-        break
       else
         @ptr = 0
         cor parse_no_scheme
@@ -89,10 +81,34 @@ class URIParser
     start = @ptr
     loop do
       if c === '@'
-        # todo
+        @ptr = start
+        cor parse_userinfo
       elsif end_of_host?
         @ptr = start
         cor parse_host
+      else
+        @ptr += 1
+      end
+    end
+  end
+
+  def parse_userinfo
+    start = @ptr
+    password_flag = false
+    loop do
+      if c === '@'
+        if password_flag
+          @uri.password = from_input(start)
+        else
+          @uri.user = from_input(start)
+        end
+        @ptr += 1
+        cor parse_host
+      elsif c === ':'
+        @uri.user = from_input(start)
+        password_flag = true
+        @ptr += 1
+        start = @ptr
       else
         @ptr += 1
       end
@@ -104,14 +120,11 @@ class URIParser
     bracket_flag = false
     loop do
       if c === ':' && !bracket_flag
-        # todo if url is special and buffer empty fail
-        @uri.host = String.new(@input + start, @ptr - start)
+        @uri.host = from_input(start)
         @ptr += 1
         cor parse_port
       elsif end_of_host?
-        # todo if url is special and buffer empty fail
-        # todo host parsing buffer
-        @uri.host = String.new(@input + start, @ptr - start)
+        @uri.host = from_input(start)
         cor parse_path
       else
         bracket_flag = true if c === '['
@@ -168,13 +181,13 @@ class URIParser
     loop do
       case c
       when '\0'
-        @uri.path = String.new(@input + start, @ptr - start)
+        @uri.path = from_input(start)
         cor nil
       when '?'
-        @uri.path = String.new(@input + start, @ptr - start)
+        @uri.path = from_input(start)
         cor parse_query
       when '#'
-        @uri.path = String.new(@input + start, @ptr - start)
+        @uri.path = from_input(start)
         cor parse_fragment
       else
         @ptr += 1
@@ -187,10 +200,10 @@ class URIParser
     loop do
       case c
       when '\0'
-        @uri.query = String.new(@input + start, @ptr - start)
+        @uri.query = from_input(start)
         cor nil
       when '#'
-        @uri.query = String.new(@input + start, @ptr - start)
+        @uri.query = from_input(start)
         cor parse_fragment
       else
         @ptr += 1
@@ -203,12 +216,16 @@ class URIParser
     loop do
       case c
       when '\0'
-        @uri.fragment = String.new(@input + start, @ptr - start)
+        @uri.fragment = from_input(start)
         cor nil
       else
         @ptr += 1
       end
     end
+  end
+
+  private def from_input(start)
+    String.new(@input + start, @ptr - start)
   end
 
   private def alpha?

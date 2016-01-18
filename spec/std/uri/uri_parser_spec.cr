@@ -41,6 +41,16 @@ describe URIParser, "steps" do
     scheme, "my-thing+yes.2"
 
   test parse_scheme,
+    "mailto:foo", 0, 6,
+    :nil,
+    scheme, "mailto"
+
+  test parse_scheme,
+    "mailto:foo", 0, 6,
+    :nil,
+    opaque, "foo"
+
+  test parse_scheme,
     "/path/absolute/url", 0, 0,
     :parse_no_scheme,
     scheme, nil
@@ -60,6 +70,24 @@ describe URIParser, "steps" do
   test parse_authority,
     "http://bitfission.com", 6, 7,
     :parse_host
+
+  test parse_authority,
+    "http://user@bitfission.com", 6, 7,
+    :parse_userinfo
+
+  test parse_authority,
+    "http://user:pass@bitfission.com", 6, 7,
+    :parse_userinfo
+
+  test parse_userinfo,
+    "http://user@bitfission.com", 7, 12,
+    :parse_host,
+    user, "user"
+
+  test parse_userinfo,
+    "http://user:pass@bitfission.com", 7, 17,
+    :parse_host,
+    password, "pass"
 
   test parse_host,
     "http://bitfission.com", 7, 21,
@@ -158,9 +186,11 @@ end
 
 describe URIParser, "#run" do
   it "runs for normal urls" do
-    par = URIParser.new("http://bitfission.com:8080/path?a=b#frag")
+    par = URIParser.new("http://user:pass@bitfission.com:8080/path?a=b#frag")
     par.run
     par.uri.scheme.should eq("http")
+    par.uri.user.should eq("user")
+    par.uri.password.should eq("pass")
     par.uri.host.should eq("bitfission.com")
     par.uri.port.should eq(8080)
     par.uri.path.should eq("/path")
@@ -169,9 +199,11 @@ describe URIParser, "#run" do
   end
 
   it "runs for schemelss urls" do
-    par = URIParser.new("//bitfission.com:8080/path?a=b#frag")
+    par = URIParser.new("//user:pass@bitfission.com:8080/path?a=b#frag")
     par.run
     par.uri.scheme.should eq(nil)
+    par.uri.user.should eq("user")
+    par.uri.password.should eq("pass")
     par.uri.host.should eq("bitfission.com")
     par.uri.port.should eq(8080)
     par.uri.path.should eq("/path")
@@ -187,5 +219,12 @@ describe URIParser, "#run" do
     par.uri.path.should eq("/path")
     par.uri.query.should eq("?a=b")
     par.uri.fragment.should eq("#frag")
+  end
+
+  it "runs for path mailto " do
+    par = URIParser.new("mailto:user@example.com")
+    par.run
+    par.uri.scheme.should eq("mailto")
+    par.uri.opaque.should eq("user@example.com")
   end
 end
