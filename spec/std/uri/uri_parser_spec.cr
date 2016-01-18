@@ -1,5 +1,5 @@
 require "spec"
-require "../../../src/uri/uri_parser"
+require "uri"
 
 class TestParser < URIParser
   property ptr
@@ -80,14 +80,14 @@ describe URIParser, "steps" do
     :parse_userinfo
 
   test parse_userinfo,
-    "http://user@bitfission.com", 7, 12,
+    "http://%3Auser@bitfission.com", 7, 15,
     :parse_host,
-    user, "user"
+    user, ":user"
 
   test parse_userinfo,
-    "http://user:pass@bitfission.com", 7, 17,
+    "http://user:%3Apass@bitfission.com", 7, 20,
     :parse_host,
-    password, "pass"
+    password, ":pass"
 
   test parse_host,
     "http://bitfission.com", 7, 21,
@@ -171,60 +171,56 @@ describe URIParser, "steps" do
   test parse_query,
     "?a=b&c=d", 0, 8,
     :nil,
-    query, "?a=b&c=d"
+    query, "a=b&c=d"
 
   test parse_query,
     "?a=b&c=d#frag", 0, 8,
     :parse_fragment,
-    query, "?a=b&c=d"
+    query, "a=b&c=d"
 
   test parse_fragment,
     "#frag", 0, 5,
     :nil,
-    fragment, "#frag"
+    fragment, "frag"
 end
 
 describe URIParser, "#run" do
   it "runs for normal urls" do
-    par = URIParser.new("http://user:pass@bitfission.com:8080/path?a=b#frag")
-    par.run
-    par.uri.scheme.should eq("http")
-    par.uri.user.should eq("user")
-    par.uri.password.should eq("pass")
-    par.uri.host.should eq("bitfission.com")
-    par.uri.port.should eq(8080)
-    par.uri.path.should eq("/path")
-    par.uri.query.should eq("?a=b")
-    par.uri.fragment.should eq("#frag")
+    uri = URIParser.new("http://user:pass@bitfission.com:8080/path?a=b#frag").run.uri
+    uri.scheme.should eq("http")
+    uri.user.should eq("user")
+    uri.password.should eq("pass")
+    uri.host.should eq("bitfission.com")
+    uri.port.should eq(8080)
+    uri.path.should eq("/path")
+    uri.query.should eq("a=b")
+    uri.fragment.should eq("frag")
   end
 
   it "runs for schemelss urls" do
-    par = URIParser.new("//user:pass@bitfission.com:8080/path?a=b#frag")
-    par.run
-    par.uri.scheme.should eq(nil)
-    par.uri.user.should eq("user")
-    par.uri.password.should eq("pass")
-    par.uri.host.should eq("bitfission.com")
-    par.uri.port.should eq(8080)
-    par.uri.path.should eq("/path")
-    par.uri.query.should eq("?a=b")
-    par.uri.fragment.should eq("#frag")
+    uri = URIParser.new("//user:pass@bitfission.com:8080/path?a=b#frag").run.uri
+    uri.scheme.should eq(nil)
+    uri.user.should eq("user")
+    uri.password.should eq("pass")
+    uri.host.should eq("bitfission.com")
+    uri.port.should eq(8080)
+    uri.path.should eq("/path")
+    uri.query.should eq("a=b")
+    uri.fragment.should eq("frag")
   end
 
   it "runs for path relative urls" do
-    par = URIParser.new("/path?a=b#frag")
-    par.run
-    par.uri.scheme.should eq(nil)
-    par.uri.host.should eq(nil)
-    par.uri.path.should eq("/path")
-    par.uri.query.should eq("?a=b")
-    par.uri.fragment.should eq("#frag")
+    uri = URIParser.new("/path?a=b#frag").run.uri
+    uri.scheme.should eq(nil)
+    uri.host.should eq(nil)
+    uri.path.should eq("/path")
+    uri.query.should eq("a=b")
+    uri.fragment.should eq("frag")
   end
 
   it "runs for path mailto " do
-    par = URIParser.new("mailto:user@example.com")
-    par.run
-    par.uri.scheme.should eq("mailto")
-    par.uri.opaque.should eq("user@example.com")
+    uri = URIParser.new("mailto:user@example.com").run.uri
+    uri.scheme.should eq("mailto")
+    uri.opaque.should eq("user@example.com")
   end
 end

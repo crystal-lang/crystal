@@ -1,3 +1,5 @@
+require "./uri/uri_parser"
+
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
 #
@@ -180,6 +182,10 @@ class URI
   # # => "crystal-lang.org"
   # ```
   def self.parse(raw_url : String)
+    URIParser.new(raw_url).run.uri
+  end
+
+  def self.old_parse(raw_url : String)
     if m = RFC3986_URI.match(raw_url)
       query = m["query"]?
       scheme = m["scheme"]?

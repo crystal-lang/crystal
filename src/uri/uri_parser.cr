@@ -1,10 +1,6 @@
-require "../uri"
-
 # Parser based on https://url.spec.whatwg.org/
 class URIParser
   property uri
-
-  SPECIAL_SCHEME = Set{"ftp", "file", "gopher", "http", "https", "ws", "wss"}
 
   macro cor(method)
     return {{method}}
@@ -22,10 +18,7 @@ class URIParser
 
   def run
     parse_scheme_start
-  end
-
-  def special_scheme?
-    SPECIAL_SCHEME.includes? @uri.scheme
+    self
   end
 
   def parse_scheme_start
@@ -98,14 +91,14 @@ class URIParser
     loop do
       if c === '@'
         if password_flag
-          @uri.password = from_input(start)
+          @uri.password = URI.unescape(from_input(start))
         else
-          @uri.user = from_input(start)
+          @uri.user = URI.unescape(from_input(start))
         end
         @ptr += 1
         cor parse_host
       elsif c === ':'
-        @uri.user = from_input(start)
+        @uri.user = URI.unescape(from_input(start))
         password_flag = true
         @ptr += 1
         start = @ptr
@@ -196,6 +189,7 @@ class URIParser
   end
 
   def parse_query
+    @ptr += 1
     start = @ptr
     loop do
       case c
@@ -212,6 +206,7 @@ class URIParser
   end
 
   def parse_fragment
+    @ptr += 1
     start = @ptr
     loop do
       case c
@@ -238,6 +233,6 @@ class URIParser
   end
 
   private def end_of_host?
-    c === '\0' || c === '/' || c === '?' || c === '#' || (special_scheme? && c === '\\')
+    c === '\0' || c === '/' || c === '?' || c === '#'
   end
 end
