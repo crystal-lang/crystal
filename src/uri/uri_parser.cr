@@ -38,6 +38,7 @@ class URIParser
       cor parse_scheme
     else
       # #parse_no_scheme
+      cor nil
     end
   end
 
@@ -133,9 +134,44 @@ class URIParser
   def parse_path
     start = @ptr
     loop do
-      if c === '\0' || c === '?' || c === '#' # || (c === '\\' && speical_scheme?)
-        #
+      case c
+      when '\0'
         @uri.path = String.new(@input + start, @ptr - start)
+        cor nil
+      when '?'
+        @uri.path = String.new(@input + start, @ptr - start)
+        cor parse_query
+      when '#'
+        @uri.path = String.new(@input + start, @ptr - start)
+        cor parse_fragment
+      else
+        @ptr += 1
+      end
+    end
+  end
+
+  def parse_query
+    start = @ptr
+    loop do
+      case c
+      when '\0'
+        @uri.query = String.new(@input + start, @ptr - start)
+        cor nil
+      when '#'
+        @uri.query = String.new(@input + start, @ptr - start)
+        cor parse_fragment
+      else
+        @ptr += 1
+      end
+    end
+  end
+
+  def parse_fragment
+    start = @ptr
+    loop do
+      case c
+      when '\0'
+        @uri.fragment = String.new(@input + start, @ptr - start)
         cor nil
       else
         @ptr += 1

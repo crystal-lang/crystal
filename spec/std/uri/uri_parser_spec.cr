@@ -15,89 +15,108 @@ def test_parser(url = "", ptr = 0)
   par
 end
 
-describe URIParser, "parse_scheme_start" do
-  it "goes to parse_scheme if first char is alpha" do
-    par = TestParser.new("h")
-    par.parse_scheme_start.should eq(:parse_scheme)
-
-    par = TestParser.new("1")
-    par.parse_scheme_start.should_not eq(:parse_scheme)
+private macro test(parser_meth, url, start_ptr, end_ptr, next_meth, uri_meth = nil, expected = nil, file = __FILE__, line = __LINE__)
+  it "{{parser_meth}} on \"#{{{url}}}\"", {{file}}, {{line}} do
+    par = test_parser(url: {{url}}, ptr: {{start_ptr}})
+    par.{{parser_meth}}.should eq({{next_meth}})
+    par.ptr.should eq({{end_ptr}})
+    {% if uri_meth %}
+      par.uri.{{uri_meth}}.should eq({{expected}})
+    {% end %}
   end
 end
 
-describe URIParser, "parse_scheme" do
-  it "puts (alpha - + .) up to : into uri's scheme" do
-    par = TestParser.new("my-thing+yes.2://")
-    par.parse_scheme.should eq(:parse_path_or_authority)
-    par.uri.scheme.should eq("my-thing+yes.2")
-    par.ptr.should eq(15)
-  end
-end
+describe URIParser, "steps" do
+  test parse_scheme_start,
+    "aurl", 0, 0,
+    :parse_scheme
 
-describe URIParser, "parse_path_or_authority" do
-  it "advances the pointer 1 and goes to authority if at /" do
-    par = test_parser(url: "http://bitfission.com", ptr: 5)
-    par.parse_path_or_authority.should eq(:parse_authority)
-    par.ptr.should eq(6)
-  end
-end
+  test parse_scheme_start,
+    "1", 0, 0,
+    :nil
 
-describe URIParser, "parse_authority" do
-  it "advances the pointer 1 and goes to host" do
-    par = test_parser(url: "http://bitfission.com", ptr: 6)
-    par.parse_authority.should eq(:parse_host)
-    par.ptr.should eq(7)
-  end
-end
+  test parse_scheme,
+    "my-thing+yes.2://", 0, 15,
+    :parse_path_or_authority,
+    scheme, "my-thing+yes.2"
 
-describe URIParser, "parse_host" do
-  it "puts the host into uri" do
-    par = test_parser(url: "http://bitfission.com", ptr: 7)
-    par.parse_host.should eq(:parse_path)
-    par.ptr.should eq(21)
-    par.uri.host.should eq("bitfission.com")
-  end
+  test parse_path_or_authority,
+    "http://bitfission.com", 5, 6,
+    :parse_authority
 
-  it "can handle different endings" do
-    %w(/ ? \ #).each do |ending|
-      par = test_parser(url: "http://bitfission.com#{ending}", ptr: 7)
-      par.uri.scheme = "http"
-      par.parse_host
-      par.uri.host.should eq("bitfission.com")
-    end
-  end
+  test parse_authority,
+    "http://bitfission.com", 6, 7,
+    :parse_host
 
-  it "allows : inside [] for ipv6" do
-    par = test_parser(url: "http://[::1]/", ptr: 7)
-    par.parse_host
-    par.uri.host.should eq("[::1]")
-  end
-end
+  test parse_host,
+    "http://bitfission.com", 7, 21,
+    :parse_path,
+    host, "bitfission.com"
 
-describe URIParser, "parse_port" do
-  it "puts the port into the uri" do
-    par = test_parser(url: "http://a.com:8080", ptr: 13)
-    par.parse_port.should eq(:parse_path)
-    par.ptr.should eq(17)
-    par.uri.port.should eq(8080)
-  end
-end
+  test parse_host,
+    "http://bitfission.com/something", 7, 21,
+    :parse_path,
+    host, "bitfission.com"
 
-describe URIParser, "parse_path" do
-  it "puts the port into the uri" do
-    par = test_parser(url: "/somepath?foo=yes", ptr: 0)
-    par.parse_path.should eq(:nil)
-    par.ptr.should eq(9)
-    par.uri.path.should eq("/somepath")
-  end
+  test parse_host,
+    "http://bitfission.com?foo=bar", 7, 21,
+    :parse_path,
+    host, "bitfission.com"
+
+  test parse_host,
+    "http://bitfission.com#anchor", 7, 21,
+    :parse_path,
+    host, "bitfission.com"
+
+  test parse_host,
+    "http://[::1]", 7, 12,
+    :parse_path,
+    host, "[::1]"
+
+  test parse_port,
+    "http://a.com:8080", 13, 17,
+    :parse_path,
+    port, 8080
+
+  test parse_path,
+    "/somepath", 0, 9,
+    :nil,
+    path, "/somepath"
+
+  test parse_path,
+    "/somepath?foo=yes", 0, 9,
+    :parse_query,
+    path, "/somepath"
+
+  test parse_path,
+    "/somepath#foo", 0, 9,
+    :parse_fragment,
+    path, "/somepath"
+
+  test parse_query,
+    "?a=b&c=d", 0, 8,
+    :nil,
+    query, "?a=b&c=d"
+
+  test parse_query,
+    "?a=b&c=d#frag", 0, 8,
+    :parse_fragment,
+    query, "?a=b&c=d"
+
+  test parse_fragment,
+    "#frag", 0, 5,
+    :nil,
+    fragment, "#frag"
 end
 
 describe URIParser, "#run" do
   it "runs all appropriate steps" do
-    par = URIParser.new("http://bitfission.com/path")
+    par = URIParser.new("http://bitfission.com/path?a=b#frag")
     par.run
     par.uri.scheme.should eq("http")
     par.uri.host.should eq("bitfission.com")
     par.uri.path.should eq("/path")
+    par.uri.query.should eq("?a=b")
+    par.uri.fragment.should eq("#frag")
   end
 end
