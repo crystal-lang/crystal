@@ -1,6 +1,6 @@
 class URI
   # :nodoc:
-  class Parser
+  struct Parser
     # Parser is based on https://url.spec.whatwg.org/ .
     # Step nmes and variables are roughly the same as that document.
     # notable deviations from the spec
@@ -12,8 +12,8 @@ class URI
 
     # overridden in specs to test step transitions
     macro step(method)
-    return {{method}}
-  end
+      return {{method}}
+    end
 
     def initialize(input)
       @uri = URI.new

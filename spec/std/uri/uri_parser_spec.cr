@@ -1,7 +1,7 @@
 require "spec"
 require "uri"
 
-class URI::TestParser < URI::Parser
+struct URI::TestParser < URI::Parser
   property ptr
 
   macro step(method)
@@ -9,7 +9,7 @@ class URI::TestParser < URI::Parser
   end
 end
 
-class URI::VerboseParser < URI::Parser
+struct URI::VerboseParser < URI::Parser
   macro step(method)
     puts "moving to {{method}} at #{@ptr}: #{c.chr}"
     return {{method}}
