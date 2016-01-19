@@ -30,6 +30,14 @@ class HTTP::StaticFileHandler < HTTP::Handler
   end
 
   record DirectoryListing, request_path, path do
+    def escaped_request_path
+      @escaped_request_path ||= begin
+        esc_path = request_path.split('/').map{|path| URI.escape path}.join('/')
+        esc_path = esc_path[0..-2] if !esc_path.empty? && esc_path[-1] == '/'
+        esc_path
+      end
+    end
+
     ecr_file "#{__DIR__}/static_file_handler.html"
   end
 
