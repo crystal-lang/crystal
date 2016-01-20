@@ -1,4 +1,5 @@
 require "ecr/macros"
+require "html"
 require "uri"
 
 class HTTP::StaticFileHandler < HTTP::Handler
