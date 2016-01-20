@@ -185,11 +185,11 @@ describe "Lexer string" do
 
     tester.string_should_start_correctly
     tester.next_string_token_should_be("Hello, mom! I am HERE.")
-    tester.token_should_be_at(line: 1)
+    tester.token_should_be_at(line: 2)
     tester.next_string_token_should_be("\nHER dress is beautiful.")
-    tester.token_should_be_at(line: 1)
+    tester.token_should_be_at(line: 3)
     tester.next_string_token_should_be("\nHE is OK.")
-    tester.token_should_be_at(line: 1)
+    tester.token_should_be_at(line: 4)
     tester.string_should_end_correctly(false)
     tester.next_token_should_be(:NEWLINE)
     tester.token_should_be_at(line: 5, column: 5)
