@@ -5,6 +5,14 @@ private def assert_dir_glob(*patterns, expected_result)
   result.sort.should eq(expected_result.sort)
 end
 
+private def it_raises_on_null_byte(operation, &block)
+  it "errors on #{operation}" do
+    expect_raises(ArgumentError, "string contains null byte") do
+      block.call
+    end
+  end
+end
+
 describe "Dir" do
   it "tests exists? on existing directory" do
     Dir.exists?(File.join([__DIR__, "../"])).should be_true
@@ -259,6 +267,32 @@ describe "Dir" do
     dir = Dir.open(__DIR__) do |dir|
       dir.close
       dir.close
+    end
+  end
+
+  describe "raises on null byte" do
+    it_raises_on_null_byte "new" do
+      Dir.new("foo\0bar")
+    end
+
+    it_raises_on_null_byte "cd" do
+      Dir.cd("foo\0bar")
+    end
+
+    it_raises_on_null_byte "exists?" do
+      Dir.exists?("foo\0bar")
+    end
+
+    it_raises_on_null_byte "mkdir" do
+      Dir.mkdir("foo\0bar")
+    end
+
+    it_raises_on_null_byte "mkdir_p" do
+      Dir.mkdir_p("foo\0bar")
+    end
+
+    it_raises_on_null_byte "rmdir" do
+      Dir.rmdir("foo\0bar")
     end
   end
 end

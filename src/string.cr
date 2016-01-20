@@ -2728,6 +2728,14 @@ class String
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset)
   end
 
+  # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.
+  #
+  # This method should sometimes be called before passing a String to a C function.
+  def check_no_null_byte
+    raise ArgumentError.new("string contains null byte") if byte_index(0)
+    self
+  end
+
   # :nodoc:
   def self.check_capacity_in_bounds(capacity)
     if capacity < 0

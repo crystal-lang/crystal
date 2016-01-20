@@ -9,11 +9,12 @@ class HTTP::StaticFileHandler < HTTP::Handler
 
   def call(request)
     request_path = URI.unescape(request.path.not_nil!)
-    expanded_path = File.expand_path(request_path, "/")
 
     # File path cannot contains '\0' (NUL) because all filesystem I know
     # don't accept '\0' character as file name.
-    return HTTP::Response.new(400) if expanded_path.includes? '\0'
+    return HTTP::Response.new(400) if request_path.includes? '\0'
+
+    expanded_path = File.expand_path(request_path, "/")
 
     file_path = File.join(@publicdir, expanded_path)
     if Dir.exists?(file_path)
@@ -38,7 +39,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
   record DirectoryListing, request_path, path do
     def escaped_request_path
       @escaped_request_path ||= begin
-        esc_path = request_path.split('/').map{|path| URI.escape path}.join('/')
+        esc_path = request_path.split('/').map { |path| URI.escape path }.join('/')
         esc_path = esc_path[0..-2] if !esc_path.empty? && esc_path[-1] == '/'
         esc_path
       end

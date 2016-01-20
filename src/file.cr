@@ -33,7 +33,7 @@ class File < IO::FileDescriptor
   def initialize(filename, mode = "r", perm = DEFAULT_CREATE_MODE)
     oflag = open_flag(mode) | LibC::O_CLOEXEC
 
-    fd = LibC.open(filename, oflag, perm)
+    fd = LibC.open(filename.check_no_null_byte, oflag, perm)
     if fd < 0
       raise Errno.new("Error opening file '#{filename}' with mode '#{mode}'")
     end
@@ -152,7 +152,7 @@ class File < IO::FileDescriptor
   # File.stat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.stat(path)
-    if LibC.stat(path, out stat) != 0
+    if LibC.stat(path.check_no_null_byte, out stat) != 0
       raise Errno.new("Unable to get stat for '#{path}'")
     end
     Stat.new(stat)
@@ -168,7 +168,7 @@ class File < IO::FileDescriptor
   # File.lstat("foo").mtime # => 2015-09-23 06:24:19 UTC
   # ```
   def self.lstat(path)
-    if LibC.lstat(path, out stat) != 0
+    if LibC.lstat(path.check_no_null_byte, out stat) != 0
       raise Errno.new("Unable to get lstat for '#{path}'")
     end
     Stat.new(stat)
@@ -217,7 +217,7 @@ class File < IO::FileDescriptor
 
   # Convenience method to avoid code on LibC.access calls. Not meant to be called by users of this class.
   private def self.accessible?(filename, flag)
-    LibC.access(filename, flag) == 0
+    LibC.access(filename.check_no_null_byte, flag) == 0
   end
 
   # Returns true if given path exists and is a file
@@ -230,7 +230,7 @@ class File < IO::FileDescriptor
   # File.file?("foobar") # => false
   # ```
   def self.file?(path)
-    if LibC.stat(path, out stat) != 0
+    if LibC.stat(path.check_no_null_byte, out stat) != 0
       if LibC.errno == Errno::ENOENT
         return false
       else
@@ -254,6 +254,7 @@ class File < IO::FileDescriptor
   end
 
   def self.dirname(filename)
+    filename.check_no_null_byte
     index = filename.rindex SEPARATOR
     if index
       if index == 0
@@ -270,6 +271,8 @@ class File < IO::FileDescriptor
     return "" if filename.bytesize == 0
     return SEPARATOR_STRING if filename == SEPARATOR_STRING
 
+    filename.check_no_null_byte
+
     last = filename.size - 1
     last -= 1 if filename[last] == SEPARATOR
 
@@ -282,6 +285,7 @@ class File < IO::FileDescriptor
   end
 
   def self.basename(filename, suffix)
+    suffix.check_no_null_byte
     basename = basename(filename)
     basename = basename[0, basename.size - suffix.size] if basename.ends_with?(suffix)
     basename
@@ -297,7 +301,7 @@ class File < IO::FileDescriptor
   # # => Error deleting file './bar': No such file or directory (Errno)
   # ```
   def self.delete(filename)
-    err = LibC.unlink(filename)
+    err = LibC.unlink(filename.check_no_null_byte)
     if err == -1
       raise Errno.new("Error deleting file '#{filename}'")
     end
@@ -310,6 +314,8 @@ class File < IO::FileDescriptor
   # # => .cr
   # ```
   def self.extname(filename)
+    filename.check_no_null_byte
+
     dot_index = filename.rindex('.')
 
     if dot_index && dot_index != filename.size - 1 && filename[dot_index - 1] != SEPARATOR
@@ -320,6 +326,8 @@ class File < IO::FileDescriptor
   end
 
   def self.expand_path(path, dir = nil)
+    path.check_no_null_byte
+
     if path.starts_with?('~')
       home = ENV["HOME"]
       if path.size >= 2 && path[1] == SEPARATOR
@@ -357,21 +365,21 @@ class File < IO::FileDescriptor
 
   # Creates a new link (also known as a hard link) to an existing file.
   def self.link(old_path, new_path)
-    ret = LibC.symlink(old_path, new_path)
+    ret = LibC.symlink(old_path.check_no_null_byte, new_path.check_no_null_byte)
     raise Errno.new("Error creating link from #{old_path} to #{new_path}") if ret != 0
     ret
   end
 
   # Creates a symbolic link to an existing file.
   def self.symlink(old_path, new_path)
-    ret = LibC.symlink(old_path, new_path)
+    ret = LibC.symlink(old_path.check_no_null_byte, new_path.check_no_null_byte)
     raise Errno.new("Error creating symlink from #{old_path} to #{new_path}") if ret != 0
     ret
   end
 
   # Returns true if the pointed file is a symlink.
   def self.symlink?(filename)
-    if LibC.lstat(filename, out stat) != 0
+    if LibC.lstat(filename.check_no_null_byte, out stat) != 0
       if LibC.errno == Errno::ENOENT
         return false
       else
@@ -475,6 +483,8 @@ class File < IO::FileDescriptor
   def self.join(parts : Array | Tuple)
     String.build do |str|
       parts.each_with_index do |part, index|
+        part.check_no_null_byte
+
         str << SEPARATOR if index > 0
 
         byte_start = 0
@@ -496,11 +506,11 @@ class File < IO::FileDescriptor
 
   # Returns the size of the given file in bytes.
   def self.size(filename)
-    stat(filename).size
+    stat(filename.check_no_null_byte).size
   end
 
   def self.rename(old_filename, new_filename)
-    code = LibC.rename(old_filename, new_filename)
+    code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0
       raise Errno.new("Error renaming file '#{old_filename}' to '#{new_filename}'")
     end
