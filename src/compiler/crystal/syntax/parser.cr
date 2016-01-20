@@ -1623,6 +1623,10 @@ module Crystal
       FunPointer.new(obj, name, types)
     end
 
+    record Piece, value, line_number do
+      @value :: String | ASTNode
+    end
+
     def parse_delimiter
       if @token.type == :STRING
         return node_and_next_token StringLiteral.new(@token.value.to_s)
@@ -1636,7 +1640,7 @@ module Crystal
       next_string_token(delimiter_state)
       delimiter_state = @token.delimiter_state
 
-      pieces = [] of ASTNode | String
+      pieces = [] of Piece
       has_interpolation = false
 
       delimiter_state, has_interpolation, options, token_end_location = consume_delimiter pieces, delimiter_state, has_interpolation
@@ -1657,12 +1661,23 @@ module Crystal
       end
 
       if has_interpolation
-        pieces = pieces.map do |piece|
-          piece.is_a?(String) ? StringLiteral.new(piece) : piece
+        if needs_heredoc_indent_removed?(delimiter_state)
+          pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
+        else
+          pieces = pieces.map do |piece|
+            value = piece.value
+            value.is_a?(String) ? StringLiteral.new(value) : value
+          end
         end
         result = StringInterpolation.new(pieces)
       else
-        result = StringLiteral.new pieces.join
+        if needs_heredoc_indent_removed?(delimiter_state)
+          pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
+          string = pieces.join { |piece| (piece as StringLiteral).value }
+        else
+          string = pieces.map(&.value).join
+        end
+        result = StringLiteral.new string
       end
 
       case delimiter_state.kind
@@ -1687,7 +1702,7 @@ module Crystal
       while true
         case @token.type
         when :STRING
-          pieces << @token.value.to_s
+          pieces << Piece.new(@token.value.to_s, @token.line_number)
 
           next_string_token(delimiter_state)
           delimiter_state = @token.delimiter_state
@@ -1710,14 +1725,15 @@ module Crystal
             raise "Unterminated string literal"
           end
         else
+          line_number = @token.line_number
           delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
           exp = parse_expression
 
           if exp.is_a?(StringLiteral)
-            pieces << exp.value
+            pieces << Piece.new(exp.value, line_number)
           else
-            pieces << exp
+            pieces << Piece.new(exp, line_number)
             has_interpolation = true
           end
 
@@ -1755,6 +1771,65 @@ module Crystal
         end
       end
       options
+    end
+
+    def needs_heredoc_indent_removed?(delimiter_state)
+      delimiter_state.kind == :heredoc && delimiter_state.heredoc_indent > 0
+    end
+
+    def remove_heredoc_indent(pieces : Array, indent)
+      current_line = MemoryIO.new
+      remove_indent = true
+      new_pieces = [] of ASTNode
+      pieces.each do |piece|
+        value = piece.value
+        if value.is_a?(String)
+          # A single '\n' always ends a line in heredoc, according to the lexer
+          if value == "\n"
+            current_line << value
+            line = current_line.to_s
+            line = remove_heredoc_from_line(line, indent, piece.line_number - 1) if remove_indent
+            new_pieces << StringLiteral.new(line)
+            current_line.clear
+            remove_indent = true
+          else
+            current_line << value
+          end
+        else
+          if remove_indent
+            line = current_line.to_s
+            if (line.size < indent) || !line.each_char.take(indent).all?(&.whitespace?)
+              raise "heredoc line must have an indent greater or equal than #{indent}", piece.line_number, 1
+            else
+              line = line[indent..-1]
+            end
+            new_pieces << StringLiteral.new(line) unless line.empty?
+            new_pieces << value
+            remove_indent = false
+            current_line.clear
+          else
+            new_pieces << value
+          end
+        end
+      end
+      unless current_line.empty?
+        line = current_line.to_s
+        line = remove_heredoc_from_line(line, indent, pieces.last.line_number) if remove_indent
+        new_pieces << StringLiteral.new(line)
+      end
+      new_pieces
+    end
+
+    def remove_heredoc_from_line(line, indent, line_number)
+      if line.each_char.take(indent).all? &.whitespace?
+        if line.size - 1 < indent
+          "\n"
+        else
+          line[indent..-1]
+        end
+      else
+        raise "heredoc line must have an indent greater or equal than #{indent}", line_number, 1
+      end
     end
 
     def parse_string_without_interpolation
