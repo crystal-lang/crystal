@@ -854,8 +854,7 @@ module Crystal
       when :SYMBOL
         node_and_next_token SymbolLiteral.new(@token.value.to_s)
       when :GLOBAL
-        @wants_regex = false
-        node_and_next_token Global.new(@token.value.to_s)
+        new_node_check_type_declaration Global
       when :"$~", :"$?"
         location = @token.location
         var = Var.new(@token.to_s).at(location)
@@ -1016,27 +1015,36 @@ module Crystal
       when :CONST
         parse_ident_or_literal
       when :INSTANCE_VAR
-        name = @token.value.to_s
-        add_instance_var name
-        ivar = InstanceVar.new(name).at(@token.location)
-        ivar.end_location = token_end_location
-        @wants_regex = false
-        next_token_skip_space
-
-        if (@token.type == :"::") || (@no_type_declaration == 0 && @token.type == :":")
-          next_token_skip_space
-          ivar_type = parse_single_type
-          TypeDeclaration.new(ivar, ivar_type).at(ivar.location)
-        else
-          ivar
+        new_node_check_type_declaration(InstanceVar) do |name|
+          add_instance_var(name)
         end
       when :CLASS_VAR
-        @wants_regex = false
-        node_and_next_token ClassVar.new(@token.value.to_s)
+        new_node_check_type_declaration ClassVar
       when :UNDERSCORE
         node_and_next_token Underscore.new
       else
         unexpected_token_in_atomic
+      end
+    end
+
+    def new_node_check_type_declaration(klass)
+      new_node_check_type_declaration(klass) { }
+    end
+
+    def new_node_check_type_declaration(klass)
+      name = @token.value.to_s
+      yield name
+      var = klass.new(name).at(@token.location)
+      var.end_location = token_end_location
+      @wants_regex = false
+      next_token_skip_space
+
+      if (@token.type == :"::") || (@no_type_declaration == 0 && @token.type == :":")
+        next_token_skip_space
+        var_type = parse_single_type
+        TypeDeclaration.new(var, var_type).at(var.location)
+      else
+        var
       end
     end
 

@@ -157,6 +157,24 @@ module Crystal
         else
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end
+      when ClassVar
+        class_var = lookup_class_var(var, bind_to_nil_if_non_existent: false)
+
+        node.declared_type.accept self
+        var_type = check_declare_var_type node
+
+        class_var.freeze_type = var_type
+      when Global
+        global_var = mod.global_vars[var.name]?
+        unless global_var
+          global_var = Var.new(var.name)
+          mod.global_vars[var.name] = global_var
+        end
+
+        node.declared_type.accept self
+        var_type = check_declare_var_type node
+
+        global_var.freeze_type = var_type
       end
 
       node.type = @mod.nil
@@ -282,9 +300,9 @@ module Crystal
       var = mod.global_vars[node.name]?
       unless var
         var = Var.new(node.name)
-        var.bind_to mod.nil_var
         mod.global_vars[node.name] = var
       end
+      var.bind_to mod.nil_var unless var.dependencies?
       node.bind_to var
       var
     end
@@ -371,10 +389,8 @@ module Crystal
 
       class_var_owner = scope as ClassVarContainer
 
-      bind_to_nil = bind_to_nil_if_non_existent && !class_var_owner.has_class_var?(node.name)
-
       var = class_var_owner.lookup_class_var node.name
-      var.bind_to mod.nil_var if bind_to_nil
+      var.bind_to mod.nil_var if bind_to_nil_if_non_existent && !var.dependencies?
 
       node.owner = class_var_owner
       node.var = var
@@ -541,7 +557,7 @@ module Crystal
     end
 
     def type_assign(target : ClassVar, value, node)
-      var = lookup_class_var target, !!@typed_def
+      var = lookup_class_var target, bind_to_nil_if_non_existent: false
       check_valid_attributes var, ValidClassVarAttributes, "class variable"
 
       value.accept self

@@ -874,6 +874,8 @@ describe "Parser" do
   it_parses "@a :: Foo | Int32", TypeDeclaration.new("@a".instance_var, Union.new(["Foo".path, "Int32".path] of ASTNode))
   it_parses "a : Foo", TypeDeclaration.new("a".var, "Foo".path)
   it_parses "@a : Foo", TypeDeclaration.new("@a".instance_var, "Foo".path)
+  it_parses "@@a : Foo", TypeDeclaration.new("@@a".class_var, "Foo".path)
+  it_parses "$x : Foo", TypeDeclaration.new(Global.new("$x"), "Foo".path)
 
   it_parses "a = uninitialized Foo; a", [UninitializedVar.new("a".var, "Foo".path), "a".var]
   it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)

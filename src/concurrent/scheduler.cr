@@ -8,7 +8,7 @@ class Scheduler
     if runnable = @@runnables.pop?
       runnable.resume
     else
-      @@loop_fiber.resume
+      @@loop_fiber.not_nil!.resume
     end
     nil
   end

@@ -41,19 +41,6 @@ describe "Type inference: class var" do
       ") { int32 }
   end
 
-  it "types class var as nil if assigned for the first time inside method" do
-    assert_type("
-      class Foo
-        def self.foo
-          @@foo = 1
-          @@foo
-        end
-      end
-
-      Foo.foo
-      ") { |mod| union_of(mod.nil, int32) }
-  end
-
   it "types class var of program" do
     assert_type("
       @@foo = 1
