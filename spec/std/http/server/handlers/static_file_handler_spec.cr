@@ -49,4 +49,12 @@ describe HTTP::StaticFileHandler do
       response.body.should eq(File.read("#{__DIR__}/static/test.txt"))
     end
   end
+
+  it "should return 400" do
+    handler = HTTP::StaticFileHandler.new "#{__DIR__}/static"
+    %w(%00 test.txt%00).each do |path|
+      response = handler.call HTTP::Request.new("GET", "/#{path}")
+      response.status_code.should eq(400)
+    end
+  end
 end

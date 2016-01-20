@@ -9,6 +9,11 @@ class HTTP::StaticFileHandler < HTTP::Handler
   def call(request)
     request_path = URI.unescape(request.path.not_nil!)
     expanded_path = File.expand_path(request_path, "/")
+
+    # File path cannot contains '\0' (NUL) because all filesystem I know
+    # don't accept '\0' character as file name.
+    return HTTP::Response.new(400) if expanded_path.includes? '\0'
+
     file_path = File.join(@publicdir, expanded_path)
     if Dir.exists?(file_path)
       HTTP::Response.new(200, directory_listing(request_path, file_path), HTTP::Headers{"Content-Type": "text/html"})
