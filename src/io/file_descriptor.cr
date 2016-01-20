@@ -118,6 +118,65 @@ class IO::FileDescriptor
     File::Stat.new(stat)
   end
 
+  # Seeks to a given *offset* (in bytes) according to the *whence* argument.
+  # Returns `self`.
+  #
+  # ```
+  # file = File.new("testfile")
+  # file.gets(3) # => "abc"
+  # file.seek(1, IO::Seek::Set)
+  # file.gets(2) # => "bc"
+  # file.seek(-1, IO::Seek::Current)
+  # file.gets(1) # => "c"
+  # ```
+  def seek(offset, whence = Seek::Set : Seek)
+    check_open
+
+    flush
+    seek_value = LibC.lseek(@fd, offset, whence)
+    if seek_value == -1
+      raise Errno.new "Unable to seek"
+    end
+
+    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+
+    self
+  end
+
+  # Same as `pos`.
+  def tell
+    pos
+  end
+
+  # Returns the current position (in bytes) in this IO.
+  #
+  # ```
+  # io = MemoryIO.new "hello"
+  # io.pos     # => 0
+  # io.gets(2) # => "he"
+  # io.pos     # => 2
+  # ```
+  def pos
+    check_open
+
+    seek_value = LibC.lseek(@fd, 0, Seek::Current)
+    raise Errno.new "Unable to tell" if seek_value == -1
+
+    seek_value - @in_buffer_rem.size
+  end
+
+  # Sets the current position (in bytes) in this IO.
+  #
+  # ```
+  # io = MemoryIO.new "hello"
+  # io.pos = 3
+  # io.gets_to_end # => "lo"
+  # ```
+  def pos=(value)
+    seek value
+    value
+  end
+
   def fd
     @fd
   end
