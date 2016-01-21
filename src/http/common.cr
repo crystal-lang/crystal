@@ -15,9 +15,9 @@ module HTTP
         body = nil
         if body_type.prohibited?
           body = nil
-        elsif content_length = headers["Content-length"]?
-          body = FixedLengthContent.new(io, content_length.to_i)
-        elsif headers["Transfer-encoding"]? == "chunked"
+        elsif content_length = headers["Content-Length"]?
+          body = FixedLengthContent.new(io, content_length.to_u64)
+        elsif headers["Transfer-Encoding"]? == "chunked"
           body = ChunkedContent.new(io)
         elsif body_type.mandatory?
           body = UnknownLengthContent.new(io)

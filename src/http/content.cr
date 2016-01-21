@@ -12,12 +12,12 @@ module HTTP
 
   # :nodoc:
   class FixedLengthContent < Content
-    def initialize(@io, size)
+    def initialize(@io, size : UInt64)
       @remaining = size
     end
 
     def read(slice : Slice(UInt8))
-      count = Math.min(slice.size, @remaining)
+      count = Math.min(slice.size.to_u64, @remaining)
       bytes_read = @io.read slice[0, count]
       @remaining -= bytes_read
       bytes_read
