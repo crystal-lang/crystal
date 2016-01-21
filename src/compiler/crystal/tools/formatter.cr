@@ -700,7 +700,7 @@ module Crystal
         last_info = @hash_infos.last?
         if last_info && last_info.line == @line
           found_in_same_line = true
-        else
+        elsif hash
           number = key.is_a?(NumberLiteral)
           @hash_infos << AlignInfo.new(hash.object_id, @line, start_column, middle_column, end_column, number)
         end
