@@ -902,7 +902,7 @@ class Crystal::Call
     # named arguments, we create another def that sets ups everything for the real call.
     if arg_types.size != untyped_def.args.size || untyped_def.splat_index || named_args
       named_args_names = named_args.try &.map &.name
-      untyped_def = untyped_def.expand_default_arguments(arg_types.size, named_args_names)
+      untyped_def = untyped_def.expand_default_arguments(mod, arg_types.size, named_args_names)
     end
 
     args_start_index = 0

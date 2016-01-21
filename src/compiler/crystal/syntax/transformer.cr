@@ -237,7 +237,7 @@ module Crystal
     end
 
     def transform(node : Generic)
-      node.name = node.name.transform(self)
+      node.name = node.name.transform(self) as Path
       transform_many node.type_vars
       node
     end

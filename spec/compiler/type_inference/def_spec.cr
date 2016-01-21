@@ -354,4 +354,14 @@ describe "Type inference: def" do
       ),
       "can't declare def dynamically"
   end
+
+  it "accesses free var of default argument (#1101)" do
+    assert_type(%(
+      def foo(x, y = nil : U)
+        U
+      end
+
+      foo 1
+      )) { |mod| mod.nil.metaclass }
+  end
 end

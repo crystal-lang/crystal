@@ -1,7 +1,7 @@
 require "../syntax/ast"
 
 class Crystal::Def
-  def expand_default_arguments(args_size, named_args = nil)
+  def expand_default_arguments(program, args_size, named_args = nil)
     # If the named arguments cover all arguments with a default value and
     # they come in the same order, we can safely return this def without
     # needing a useless indirection.
@@ -54,10 +54,13 @@ class Crystal::Def
     if splat_index == -1
       splat_size = 0
     else
+      splat_names = [] of String
       splat_size = args_size - (args.size - 1)
       splat_size = 0 if splat_size < 0
       splat_size.times do |index|
-        new_args << Arg.new("_arg#{index}")
+        splat_name = program.new_temp_var_name
+        splat_names << splat_name
+        new_args << Arg.new(splat_name)
       end
     end
 
@@ -92,6 +95,7 @@ class Crystal::Def
 
     if retain_body
       new_body = [] of ASTNode
+      body = self.body.clone
 
       # Default values
       if splat_index == -1
@@ -114,15 +118,25 @@ class Crystal::Def
             expansion.args.push arg.clone
           else
             new_body << Assign.new(Var.new(arg.name), default_value)
+
+            # If the restriction is a free var it will be lost in the replacement, so we save the default value in
+            # a temporary variable (tmp_var) and then replace all ocurrences of that free var with typeof(tmp_var)
+            # to acheive the same effect, since we can't define a type alias inside a method.
+            restriction = arg.restriction
+            if restriction.is_a?(Path) && restriction.names.size == 1 && Parser.free_var_name?(restriction.names.first)
+              restriction_name = program.new_temp_var_name
+              new_body << Assign.new(Var.new(restriction_name), Var.new(arg.name))
+              body = body.transform(ReplaceFreeVarTransformer.new(restriction.names.first, restriction_name))
+            end
           end
         end
       end
 
       # Splat argument
-      if splat_index != -1
+      if splat_names
         tuple_args = [] of ASTNode
-        splat_size.times do |index|
-          tuple_args << Var.new("_arg#{index}")
+        splat_size.times do |i|
+          tuple_args << Var.new(splat_names[i])
         end
         tuple = TupleLiteral.new(tuple_args)
         new_body << Assign.new(Var.new(args[splat_index].name), tuple)
@@ -139,7 +153,7 @@ class Crystal::Def
         new_literal = MacroLiteral.new(literal_body)
         expansion.body = Expressions.from([new_literal, body.clone])
       else
-        new_body.push body.clone
+        new_body.push body
         expansion.body = Expressions.new(new_body)
       end
     else
@@ -182,5 +196,24 @@ class Crystal::Def
     end
 
     expansion
+  end
+
+  class ReplaceFreeVarTransformer < Transformer
+    def initialize(@free_var_name, @replacement_name)
+    end
+
+    def transform(node : Generic)
+      # Don't transform the name, because it must always be a Path
+      transform_many node.type_vars
+      node
+    end
+
+    def transform(node : Path)
+      if !node.global && node.names.size == 1 && node.names.first == @free_var_name
+        TypeOf.new([Var.new(@replacement_name)] of ASTNode)
+      else
+        node
+      end
+    end
   end
 end
