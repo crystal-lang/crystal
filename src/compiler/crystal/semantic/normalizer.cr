@@ -311,7 +311,7 @@ module Crystal
             parser = Parser.new File.read(filename)
             parser.filename = filename
             parser.wants_doc = @program.wants_doc?
-            nodes << parser.parse.transform(self)
+            nodes << FileNode.new(parser.parse.transform(self), filename)
           end
         end
         Expressions.from(nodes)

@@ -71,6 +71,25 @@ module Crystal
       super
     end
 
+    def visit(node : FileNode)
+      old_vars = @vars
+      old_meta_vars = @meta_vars
+      old_file_module = @file_module
+
+      @vars = MetaVars.new
+      @file_module = file_module = @mod.file_module(node.filename)
+      @meta_vars = file_module.vars
+
+      node.node.accept self
+      node.bind_to node.node
+
+      @vars = old_vars
+      @meta_vars = old_meta_vars
+      @file_module = old_file_module
+
+      false
+    end
+
     def visit(node : Var)
       var = @vars[node.name]?
       if var
@@ -2451,7 +2470,7 @@ module Crystal
     end
 
     def current_non_block_context
-      @typed_def || @mod
+      @typed_def || @file_module || @mod
     end
 
     def closure_context

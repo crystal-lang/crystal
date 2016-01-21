@@ -2191,6 +2191,25 @@ module Crystal
 
     def_equals_and_hash type
   end
+
+  # Fictitious node that means "all these nodes come from this file"
+  class FileNode < ASTNode
+    property node
+    property filename
+
+    def initialize(@node, @filename)
+    end
+
+    def accept_children(visitor)
+      @node.accept visitor
+    end
+
+    def clone_without_location
+      self
+    end
+
+    def_equals_and_hash node, filename
+  end
 end
 
 require "./to_s"

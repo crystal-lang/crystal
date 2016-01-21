@@ -65,6 +65,10 @@ module Crystal
       @hash_in_same_line = Set(typeof(object_id)).new
     end
 
+    def visit(node : FileNode)
+      true
+    end
+
     def visit(node : Expressions)
       if node.expressions.size == 1 && @token.type == :"("
         # If it's (...) with a single expression, we treat it

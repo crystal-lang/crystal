@@ -263,6 +263,21 @@ module Crystal
       false
     end
 
+    def visit(node : FileNode)
+      old_vars = context.vars
+      context.vars = LLVMVars.new
+
+      file_module = @mod.file_module(node.filename)
+      if vars = file_module.vars?
+        alloca_vars vars, file_module
+      end
+      node.node.accept self
+
+      context.vars = old_vars
+
+      false
+    end
+
     def visit(node : Nop)
       @last = llvm_nil
     end

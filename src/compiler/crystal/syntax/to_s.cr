@@ -1338,6 +1338,14 @@ module Crystal
       false
     end
 
+    def visit(node : FileNode)
+      @str.puts
+      @str << "# " << node.filename
+      @str.puts
+      node.node.accept self
+      false
+    end
+
     def newline
       @str << "\n"
     end

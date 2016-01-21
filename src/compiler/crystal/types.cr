@@ -847,6 +847,14 @@ module Crystal
 
   # A module that is related to a file and contains its private defs.
   class FileModule < NonGenericModuleType
+    def vars
+      @vars ||= MetaVars.new
+    end
+
+    def vars?
+      @vars
+    end
+
     def passed_as_self?
       false
     end

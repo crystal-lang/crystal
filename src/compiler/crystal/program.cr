@@ -14,6 +14,7 @@ module Crystal
     getter target_machine
     getter splat_expansions
     getter after_inference_types
+    getter file_modules
     property vars
     property literal_expander
     property initialized_global_vars
@@ -156,11 +157,15 @@ module Crystal
     end
 
     def lookup_private_matches(filename, signature)
-      @file_modules[filename]?.try &.lookup_matches(signature)
+      file_module?(filename).try &.lookup_matches(signature)
+    end
+
+    def file_module?(filename)
+      @file_modules[filename]?
     end
 
     def file_module(filename)
-      @file_modules[filename]?
+      @file_modules[filename] ||= FileModule.new(self, self, filename)
     end
 
     def check_private(node)
@@ -172,7 +177,7 @@ module Crystal
       filename = location.filename
       return nil unless filename.is_a?(String)
 
-      @file_modules[filename] ||= FileModule.new(self, self, filename)
+      file_module(filename)
     end
 
     setter target_machine
