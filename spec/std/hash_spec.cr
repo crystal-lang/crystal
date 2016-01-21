@@ -673,10 +673,10 @@ describe "Hash" do
     end
   end
 
-  describe "inject" do
+  describe "reduce" do
     it "passes memo, key and value into block" do
       hash = {a: 'b'}
-      hash.inject(:memo) do |memo, k, v|
+      hash.reduce(:memo) do |memo, k, v|
         memo.should eq(:memo)
         k.should eq(:a)
         v.should eq('b')
@@ -685,7 +685,7 @@ describe "Hash" do
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {a: 'b', c: 'd', e: 'f'}
-      result = hash.inject("") do |memo, k, v|
+      result = hash.reduce("") do |memo, k, v|
         memo + v
       end
       result.should eq("bdf")

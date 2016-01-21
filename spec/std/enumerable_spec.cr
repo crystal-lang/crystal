@@ -319,18 +319,18 @@ describe "Enumerable" do
     end
   end
 
-  describe "inject" do
-    assert { [1, 2, 3].inject { |memo, i| memo + i }.should eq(6) }
-    assert { [1, 2, 3].inject(10) { |memo, i| memo + i }.should eq(16) }
+  describe "reduce" do
+    assert { [1, 2, 3].reduce { |memo, i| memo + i }.should eq(6) }
+    assert { [1, 2, 3].reduce(10) { |memo, i| memo + i }.should eq(16) }
 
     it "raises if empty" do
       expect_raises Enumerable::EmptyError do
-        ([] of Int32).inject { |memo, i| memo + i }
+        ([] of Int32).reduce { |memo, i| memo + i }
       end
     end
 
     it "does not raise if empty if there is a memo argument" do
-      result = ([] of Int32).inject(10) { |memo, i| memo + i }
+      result = ([] of Int32).reduce(10) { |memo, i| memo + i }
       result.should eq 10
     end
   end

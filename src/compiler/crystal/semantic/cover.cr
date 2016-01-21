@@ -58,14 +58,14 @@ module Crystal
     end
 
     private def cover_size
-      arg_types.inject(1) do |num, type|
+      arg_types.reduce(1) do |num, type|
         num * type.cover_size
       end
     end
 
     private def cover_size(indices)
       i = 0
-      arg_types.inject(1) do |num, type|
+      arg_types.reduce(1) do |num, type|
         if indices[i]
           val = num * type.cover_size
         else

@@ -31,7 +31,7 @@ class Neuron
   end
 
   def calculate_output
-    activation = synapses_in.inject(0.0) do |sum, synapse|
+    activation = synapses_in.reduce(0.0) do |sum, synapse|
       sum + synapse.weight * synapse.source_neuron.output
     end
     activation -= threshold
@@ -49,7 +49,7 @@ class Neuron
   end
 
   def hidden_train(rate)
-    @error = synapses_out.inject(0.0) do |sum, synapse|
+    @error = synapses_out.reduce(0.0) do |sum, synapse|
       sum + synapse.prev_weight * synapse.dest_neuron.error
     end * derivative
     update_weights(rate)

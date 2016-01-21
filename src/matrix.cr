@@ -221,7 +221,7 @@ class Matrix(T)
     pos = -1
     @rows.times do |i|
       other.column_count.times do |j|
-        matrix[pos += 1] = typeof(self[0] * other[0]).new((0...@columns).inject(0) do |memo, k|
+        matrix[pos += 1] = typeof(self[0] * other[0]).new((0...@columns).reduce(0) do |memo, k|
           memo + at(i, k) * other[k, j]
         end)
       end
@@ -690,7 +690,7 @@ class Matrix(T)
   # Returns the sum of the diagonal elements. Only useful for numeric matrices.
   def trace
     raise DimensionMismatch.new unless square?
-    (0...@columns).inject(0) do |memo, i|
+    (0...@columns).reduce(0) do |memo, i|
       memo + at(i, i)
     end
   end
@@ -806,7 +806,7 @@ class Matrix(T)
   end
 
   def hash
-    inject(31 * @rows * @columns) do |memo, e|
+    reduce(31 * @rows * @columns) do |memo, e|
       31 * memo + e.hash
     end
   end

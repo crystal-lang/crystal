@@ -901,7 +901,7 @@ class Hash(K, V)
   #   "orange": 4,
   # }
   #
-  # prices.inject("apple") do |highest, item, price|
+  # prices.reduce("apple") do |highest, item, price|
   #   if price > prices[highest]
   #     item
   #   else
@@ -910,7 +910,7 @@ class Hash(K, V)
   # end
   # # => "papaya"
   # ```
-  def inject(memo)
+  def reduce(memo)
     each do |k, v|
       memo = yield(memo, k, v)
     end

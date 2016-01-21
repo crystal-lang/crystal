@@ -366,20 +366,21 @@ module Enumerable(T)
     hash
   end
 
-  # Combines all elements in the collection by applying a binary operation, specified by a block.
+  # Combines all elements in the collection by applying a binary operation, specified by a block, so as
+  # to reduce them to a single value.
   #
   # For each element in the collection the block is passed an accumulator value (*memo*) and the element. The
   # result becomes the new value for *memo*. At the end of the iteration, the final value of *memo* is
   # the return value for the method. The initial value for the accumulator is the first element in the collection.
   #
-  #     [1, 2, 3, 4, 5].inject { |acc, i| acc + i }  #=> 15
+  #     [1, 2, 3, 4, 5].reduce { |acc, i| acc + i }  #=> 15
   #
-  def inject
+  def reduce
     memo :: T
     found = false
 
-    each_with_index do |elem, i|
-      memo = i == 0 ? elem : yield memo, elem
+    each do |elem|
+      memo = found ? (yield memo, elem) : elem
       found = true
     end
 
@@ -388,9 +389,9 @@ module Enumerable(T)
 
   # Just like the other variant, but you can set the initial value of the accumulator.
   #
-  #     [1, 2, 3, 4, 5].inject(10) { |acc, i| acc + i }  #=> 25
+  #     [1, 2, 3, 4, 5].reduce(10) { |acc, i| acc + i }  #=> 25
   #
-  def inject(memo)
+  def reduce(memo)
     each do |elem|
       memo = yield memo, elem
     end
@@ -880,7 +881,7 @@ module Enumerable(T)
   #
   #     ([] of String).sum(1) { |name| name.size } #=> 1
   def sum(initial, &block)
-    inject(initial) { |memo, e| memo + (yield e) }
+    reduce(initial) { |memo, e| memo + (yield e) }
   end
 
   # Returns an array with the first *count* elements in the collection.

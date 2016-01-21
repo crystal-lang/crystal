@@ -1021,7 +1021,7 @@ class Array(T)
   #
   # See `Object#hash`.
   def hash
-    inject(31 * @size) do |memo, elem|
+    reduce(31 * @size) do |memo, elem|
       31 * memo + elem.hash
     end
   end
