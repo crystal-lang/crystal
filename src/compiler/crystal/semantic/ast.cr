@@ -251,6 +251,9 @@ module Crystal
     property :block_nest
     @block_nest = 0
 
+    property? :captured_block
+    @captured_block = false
+
     def macro_owner=(@macro_owner)
     end
 

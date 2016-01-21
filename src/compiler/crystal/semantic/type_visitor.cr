@@ -1232,13 +1232,16 @@ module Crystal
     end
 
     def visit(node : Return)
-      node.raise "can't return from top level" unless @typed_def
+      typed_def = @typed_def || node.raise("can't return from top level")
+
+      if typed_def.captured_block?
+        node.raise "can't return from captured block, use next"
+      end
 
       node.exp.try &.accept self
 
-      node.target = @typed_def
+      node.target = typed_def
 
-      typed_def = @typed_def.not_nil!
       typed_def.bind_to(node.exp || mod.nil_var)
       @unreachable = true
 
@@ -1723,6 +1726,10 @@ module Crystal
         break_vars = (target_while.break_vars ||= [] of MetaVars)
         break_vars.push @vars.dup
       else
+        if @typed_def.try &.captured_block?
+          node.raise "can't break from captured block"
+        end
+
         node.raise "Invalid break"
       end
 
@@ -1742,7 +1749,13 @@ module Crystal
 
         bind_vars @vars, @while_vars
       else
-        node.raise "Invalid next"
+        typed_def = @typed_def
+        if typed_def && typed_def.captured_block?
+          node.target = typed_def
+          typed_def.bind_to(node.exp || mod.nil_var)
+        else
+          node.raise "Invalid next"
+        end
       end
 
       @unreachable = true

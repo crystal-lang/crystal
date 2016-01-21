@@ -702,7 +702,10 @@ class Crystal::Call
             raise "wrong number of block arguments (#{block.args.size} for #{fun_args.size})"
           end
 
-          fun_literal = FunLiteral.new(Def.new("->", fun_args, block.body))
+          a_def = Def.new("->", fun_args, block.body)
+          a_def.captured_block = true
+
+          fun_literal = FunLiteral.new(a_def)
           fun_literal.force_void = true unless block_arg_restriction_output
           fun_literal.accept parent_visitor
         end

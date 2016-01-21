@@ -429,6 +429,12 @@ module Crystal
     def visit(node : Return)
       node_type = accept_control_expression(node)
 
+      codegen_return_node(node, node_type)
+
+      false
+    end
+
+    def codegen_return_node(node, node_type)
       old_last = @last
 
       execute_ensures_until(node.target as Def)
@@ -440,8 +446,6 @@ module Crystal
       else
         codegen_return node_type
       end
-
-      false
     end
 
     def codegen_return(type : NoReturnType | Nil)
@@ -655,7 +659,9 @@ module Crystal
         execute_ensures_until(node.target as While)
         br while_block
       else
-        node.raise "Bug: unknown exit for next"
+        # The only possibility is that we are in a captured block,
+        # so this is the same as a return
+        codegen_return_node(node, node_type)
       end
 
       false
