@@ -5,10 +5,12 @@ class HTTP::Response
   getter status_code
   getter status_message
   getter headers
+  getter addr
+  getter peeraddr
   getter! body_io
   property upgrade_handler
 
-  def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
+  def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1", @body_io = nil, @addr = nil, @peeraddr = nil)
     @status_message = status_message || self.class.default_status_message_for(@status_code)
 
     if Response.mandatory_body?(@status_code)
@@ -89,7 +91,9 @@ class HTTP::Response
   end
 
   def self.from_io(io, ignore_body = false, &block)
-    line = io.gets
+    addr     = io.addr
+    peeraddr = io.peeraddr
+    line     = io.gets
     if line
       pieces = line.split(3)
       http_version = pieces[0]
@@ -101,7 +105,7 @@ class HTTP::Response
       body_type = HTTP::BodyType::Prohibited if ignore_body
 
       HTTP.parse_headers_and_body(io, body_type) do |headers, body|
-        return yield new status_code, nil, headers, status_message, http_version, body
+        return yield new status_code, nil, headers, status_message, http_version, body, addr, peeraddr
       end
     end
 

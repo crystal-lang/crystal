@@ -1,9 +1,13 @@
 class OpenSSL::SSL::Socket
   include IO
+  getter addr
+  getter peeraddr
 
   def initialize(io, mode = :client, context = Context.default)
-    @ssl = LibSSL.ssl_new(context)
-    @bio = BIO.new(io)
+    @ssl      = LibSSL.ssl_new(context)
+    @bio      = BIO.new(io)
+    @addr     = io.addr
+    @peeraddr = io.peeraddr
     LibSSL.ssl_set_bio(@ssl, @bio, @bio)
 
     if mode == :client
