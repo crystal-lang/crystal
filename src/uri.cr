@@ -1,3 +1,5 @@
+require "./uri/uri_parser"
+
 # This class represents a URI reference as defined by [RFC 3986: Uniform Resource Identifier
 # (URI): Generic Syntax](https://www.ietf.org/rfc/rfc3986.txt).
 #
@@ -22,9 +24,8 @@
 # # => "http://foo.com/posts?id=30&limit=5#time=1305298413"
 # ```
 class URI
-  # URI defined in RFC3986
-  RFC3986_URI          = /\A(?<URI>(?<scheme>[A-Za-z][+\-.0-9A-Za-z]*):(?<hier_part>\/\/(?<authority>(?:(?<userinfo>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?:(?<IPv6address>(?:[0-9a-fA-F]{1,4}:){6}(?<ls32>[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:[0-9a-fA-F]{1,4}:){5}\g<ls32>|[0-9a-fA-F]{1,4}?::(?:[0-9a-fA-F]{1,4}:){4}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){3}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,2}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){2}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,3}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}:\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,4}[0-9a-fA-F]{1,4})?::\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,5}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}|(?:(?:[0-9a-fA-F]{1,4}:){,6}[0-9a-fA-F]{1,4})?::)|(?<IPvFuture>v[0-9a-fA-F]+\.[!$&-.0-;=A-Z_a-z~]+))\])|\g<IPv4address>|(?<reg_name>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_rootless>\g<segment_nz>(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/
-  RFC3986_relative_ref = /\A(?<relative_ref>(?<relative_part>\/\/(?<authority>(?:(?<userinfo>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=A-Z_a-z~])*)@)?(?<host>(?<IP_literal>\[(?<IPv6address>(?:[0-9a-fA-F]{1,4}:){6}(?<ls32>[0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}|(?<IPv4address>(?<dec_octet>[1-9]\d|1\d{2}|2[0-4]\d|25[0-5]|\d)\.\g<dec_octet>\.\g<dec_octet>\.\g<dec_octet>))|::(?:[0-9a-fA-F]{1,4}:){5}\g<ls32>|[0-9a-fA-F]{1,4}?::(?:[0-9a-fA-F]{1,4}:){4}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,1}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){3}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,2}[0-9a-fA-F]{1,4})?::(?:[0-9a-fA-F]{1,4}:){2}\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,3}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}:\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,4}[0-9a-fA-F]{1,4})?::\g<ls32>|(?:(?:[0-9a-fA-F]{1,4}:){,5}[0-9a-fA-F]{1,4})?::[0-9a-fA-F]{1,4}|(?:(?:[0-9a-fA-F]{1,4}:){,6}[0-9a-fA-F]{1,4})?::)|(?<IPvFuture>v[0-9a-fA-F]+\.[!$&-.0-;=A-Z_a-z~]+)\])|\g<IPv4address>|(?<reg_name>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-9;=A-Z_a-z~])+))?(?::(?<port>\d*))?)(?<path_abempty>(?:\/(?<segment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])*))*)|(?<path_absolute>\/(?:(?<segment_nz>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~])+)(?:\/\g<segment>)*)?)|(?<path_noscheme>(?<segment_nz_nc>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-9;=@-Z_a-z~])+)(?:\/\g<segment>)*)|(?<path_empty>))(?:\?(?<query>[^#]*))?(?:\#(?<fragment>(?:%[0-9a-fA-F][0-9a-fA-F]|[!$&-.0-;=@-Z_a-z~\/?])*))?)\z/
+  class Error < Exception
+  end
 
   # Returns the scheme component of the URI.
   #
@@ -180,41 +181,7 @@ class URI
   # # => "crystal-lang.org"
   # ```
   def self.parse(raw_url : String)
-    if m = RFC3986_URI.match(raw_url)
-      query = m["query"]?
-      scheme = m["scheme"]?
-      opaque = m["path_rootless"]?
-      if opaque
-        opaque = opaque + "?#{query}" if query
-      else
-        userinfo = m["userinfo"]?
-        host = m["host"]?
-        port = m["port"]?.try(&.to_i)
-        path = m["path_abempty"]? || m["path_absolute"]? || m["path_empty"]?
-        fragment = m["fragment"]?
-      end
-    elsif m = RFC3986_relative_ref.match(raw_url)
-      userinfo = m["userinfo"]?
-      host = m["host"]?
-      port = m["port"]?.try(&.to_i)
-      path = m["path_abempty"]? || m["path_absolute"]? || m["path_noscheme"]? || m["path_empty"]?
-      query = m["query"]?
-      fragment = m["fragment"]?
-    else
-      raise "bad URI(is not URI?): #{raw_url}"
-    end
-
-    if userinfo
-      split = userinfo.split(":")
-      user = URI.unescape split[0]
-      if password = split[1]?
-        password = URI.unescape split[1]
-      end
-    else
-      user = password = nil
-    end
-
-    new scheme: scheme, host: host, port: port, path: path, query: query, user: user, password: password, fragment: fragment, opaque: opaque
+    URI::Parser.new(raw_url).run.uri
   end
 
   # URL-decode a string.
