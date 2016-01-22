@@ -370,6 +370,16 @@ describe "Array" do
       a.concat((4..1000))
       a.should eq((1..1000).to_a)
     end
+
+    it "concats enumerable to empty array (#2047)" do
+      a = [] of Int32
+      a.concat(1..1)
+      a.@capacity.should eq(3)
+
+      a = [] of Int32
+      a.concat(1..4)
+      a.@capacity.should eq(6)
+    end
   end
 
   describe "delete" do

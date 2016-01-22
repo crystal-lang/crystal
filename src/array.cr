@@ -663,8 +663,8 @@ class Array(T)
     buf = @buffer + len
     other.each do |elem|
       if left_before_resize == 0
-        left_before_resize = @capacity
-        resize_to_capacity(@capacity * 2)
+        double_capacity
+        left_before_resize = @capacity - len
         buf = @buffer + len
       end
       buf.value = elem
@@ -1838,7 +1838,11 @@ class Array(T)
   end
 
   private def check_needs_resize
-    resize_to_capacity(@capacity == 0 ? 3 : (@capacity * 2)) if @size == @capacity
+    double_capacity if @size == @capacity
+  end
+
+  private def double_capacity
+    resize_to_capacity(@capacity == 0 ? 3 : (@capacity * 2))
   end
 
   private def resize_to_capacity(capacity)
