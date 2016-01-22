@@ -16,10 +16,19 @@ module Crystal
   class Program
     def infer_type(node)
       result = first_pass(node)
+      check_abstract_defs
       result = infer_type_intermediate(node)
       finish_types
-      check_hierarchy_errors
+      check_recursive_structs
       result
+    end
+
+    def check_abstract_defs
+      AbstractDefChecker.new(self).run
+    end
+
+    def check_recursive_structs
+      RecursiveStructChecker.new(self).run
     end
 
     def infer_type_intermediate(node)

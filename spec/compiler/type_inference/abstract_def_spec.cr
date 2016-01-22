@@ -77,25 +77,7 @@ describe "Type inference: abstract def" do
 
       class Baz < Bar
       end
-
-      p = Pointer(Foo).malloc(1_u64)
-      p.value = Baz.new
-      p.value.foo
-      ), "abstract `def Bar#foo()` must be implemented by Baz"
-  end
-
-  it "says wrong number of arguments even if method is abstract" do
-    assert_error %(
-      abstract class Foo
-        abstract def foo
-      end
-
-      class Bar < Foo
-      end
-
-      Bar.new.foo(1)
-      ),
-      "wrong number of arguments"
+      ), "abstract `def Foo#foo()` must be implemented by Baz"
   end
 
   it "gives correct error when no overload matches, when an abstract method is implemented (#1406)" do
