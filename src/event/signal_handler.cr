@@ -53,7 +53,7 @@ class Event::SignalHandler
   end
 
   def close
-    @pipes[0].close
+    # Close writer only: reader will give EOF
     @pipes[1].close
   end
 
