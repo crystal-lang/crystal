@@ -1,3 +1,5 @@
+require "zlib"
+
 module HTTP
   DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
 
@@ -7,7 +9,7 @@ module HTTP
     Mandatory
   end
 
-  def self.parse_headers_and_body(io, body_type = BodyType::OnDemand : BodyType)
+  def self.parse_headers_and_body(io, body_type = BodyType::OnDemand : BodyType, decompress = true)
     headers = Headers.new
 
     while line = io.gets
@@ -21,6 +23,16 @@ module HTTP
           body = ChunkedContent.new(io)
         elsif body_type.mandatory?
           body = UnknownLengthContent.new(io)
+        end
+
+        if decompress && body
+          encoding = headers["Content-Encoding"]?
+          case encoding
+          when "gzip"
+            body = Zlib::Inflate.gzip(body)
+          when "deflate"
+            body = Zlib::Inflate.new(body)
+          end
         end
 
         yield headers, body

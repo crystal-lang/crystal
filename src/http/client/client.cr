@@ -38,6 +38,12 @@
 # response.body.lines.first # => "<!doctype html>"
 # client.close
 # ```
+#
+# ### Compression
+#
+# If `compress` isn't set to false, and no `Accept-Encoding` header is explicitly specified,
+# an HTTP::Client will add an `"Accept-Encoding": "gzip, deflate"` header, and automatically decompress
+# the response body/body_io.
 class HTTP::Client
   # Returns the target host.
   #
@@ -63,12 +69,16 @@ class HTTP::Client
   # ```
   getter? ssl
 
+  # Whether automatic compression/decompression is enabled.
+  property? compress :: Bool
+
   # Creates a new HTTP client with the given *host*, *port* and *ssl*
   # configurations. If no port is given, the default one will
   # be used depending on the *ssl* arguments: 80 for if *ssl* is `false`,
   # 443 if *ssl* is `true`.
   def initialize(@host, port = nil, @ssl = false)
     @port = port || (ssl ? 443 : 80)
+    @compress = true
   end
 
   # Creates a new HTTP client, yields it to the block, and closes
@@ -284,10 +294,10 @@ class HTTP::Client
   end
 
   private def exec_internal(request)
-    request.headers["User-agent"] ||= "Crystal"
+    decompress = set_defaults request
     request.to_io(socket)
     socket.flush
-    HTTP::Client::Response.from_io(socket, request.ignore_body?).tap do |response|
+    HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress).tap do |response|
       close unless response.keep_alive?
     end
   end
@@ -309,14 +319,24 @@ class HTTP::Client
   end
 
   private def exec_internal(request, &block)
-    request.headers["User-agent"] ||= "Crystal"
+    decompress = set_defaults request
     request.to_io(socket)
     socket.flush
-    HTTP::Client::Response.from_io(socket, request.ignore_body?) do |response|
+    HTTP::Client::Response.from_io(socket, ignore_body: request.ignore_body?, decompress: decompress) do |response|
       value = yield response
       response.body_io.try &.close
       close unless response.keep_alive?
       value
+    end
+  end
+
+  private def set_defaults(request)
+    request.headers["User-agent"] ||= "Crystal"
+    if compress? && !request.headers.has_key?("Accept-Encoding")
+      request.headers["Accept-Encoding"] = "gzip, deflate"
+      true
+    else
+      false
     end
   end
 

@@ -66,14 +66,14 @@ class HTTP::Client::Response
     version == "HTTP/1.1"
   end
 
-  def self.from_io(io, ignore_body = false)
-    from_io(io, ignore_body) do |response|
+  def self.from_io(io, ignore_body = false, decompress = true)
+    from_io(io, ignore_body: ignore_body, decompress: decompress) do |response|
       response.consume_body_io
       return response
     end
   end
 
-  def self.from_io(io, ignore_body = false, &block)
+  def self.from_io(io, ignore_body = false, decompress = true, &block)
     line = io.gets
     if line
       pieces = line.split(3)
@@ -85,7 +85,7 @@ class HTTP::Client::Response
       body_type = HTTP::BodyType::Mandatory if mandatory_body?(status_code)
       body_type = HTTP::BodyType::Prohibited if ignore_body
 
-      HTTP.parse_headers_and_body(io, body_type) do |headers, body|
+      HTTP.parse_headers_and_body(io, body_type: body_type, decompress: decompress) do |headers, body|
         return yield new status_code, nil, headers, status_message, http_version, body
       end
     end
