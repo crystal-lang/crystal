@@ -457,6 +457,14 @@ module Crystal
       0
     end
 
+    def has_finalizer?
+      return false if struct?
+
+      signature = CallSignature.new "finalize", ([] of Type), nil, nil
+      matches = lookup_matches(signature)
+      !matches.empty?
+    end
+
     def inspect(io)
       to_s(io)
     end
