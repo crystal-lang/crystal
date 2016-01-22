@@ -12,8 +12,16 @@ class HTTP::Server
       @status_code = 200
       @wrote_headers = false
       @upgraded = false
-      @output = output = Output.new(@io)
+      @output = @original_output = output = Output.new(@io)
       output.response = self
+    end
+
+    def reset
+      @status_code = 200
+      @wrote_headers = false
+      @upgraded = false
+      @output = @original_output
+      @original_output.reset
     end
 
     def content_type=(content_type : String)
@@ -73,6 +81,14 @@ class HTTP::Server
       property! response
 
       def initialize(@io)
+        @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+        @out_count = 0
+        @sync = false
+        @flush_on_newline = false
+        @chunked = false
+      end
+
+      def reset
         @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
         @out_count = 0
         @sync = false

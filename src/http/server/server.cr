@@ -115,6 +115,7 @@ class HTTP::Server
     io = sock
     io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, @ssl.not_nil!) if @ssl
     must_close = true
+    response = Response.new(io)
 
     begin
       until @wants_close
@@ -125,7 +126,8 @@ class HTTP::Server
         end
         break unless request
 
-        response = Response.new(io, request.version)
+        response.version = request.version
+        response.reset
         response.headers["Connection"] = "keep-alive" if request.keep_alive?
         context = Context.new(request, response)
 
