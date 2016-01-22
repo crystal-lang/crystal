@@ -9,7 +9,7 @@ class TestServer < TCPServer
       spawn do
         io = server.accept
         sleep read_time
-        response = HTTP::Response.ok("text/plain", "OK")
+        response = HTTP::Client::Response.new(200, headers: HTTP::Headers{"Content-Type": "text/plain"}, body: "OK")
         response.to_io(io)
         io.flush
       end
@@ -35,7 +35,7 @@ module HTTP
 
     typeof(Client.post_form "url", {"a": "b"})
     typeof(Client.new("host").basic_auth("username", "password"))
-    typeof(Client.new("host").before_request { |req| HTTP::Response.ok("text/plain", "OK") })
+    typeof(Client.new("host").before_request { |req| })
     typeof(Client.new("host").close)
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get(URI.parse("http://www.example.com")))

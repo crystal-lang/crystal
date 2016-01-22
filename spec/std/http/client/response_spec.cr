@@ -1,7 +1,7 @@
 require "spec"
-require "http/response"
+require "http/client/response"
 
-module HTTP
+class HTTP::Client
   describe Response do
     it "parses response with body" do
       response = Response.from_io(MemoryIO.new("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nhelloworld"))
@@ -185,32 +185,6 @@ module HTTP
       io = MemoryIO.new
       response.to_io(io)
       io.to_s.should eq("HTTP/1.0 200 OK\r\nContent-Length: 5\r\n\r\nhello")
-    end
-
-    it "builds default not found" do
-      response = Response.not_found
-      io = MemoryIO.new
-      response.to_io(io)
-      io.to_s.should eq("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found")
-    end
-
-    it "builds default ok response" do
-      response = Response.ok("text/plain", "Hello")
-      io = MemoryIO.new
-      response.to_io(io)
-      io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 5\r\n\r\nHello")
-    end
-
-    it "builds default error response" do
-      response = Response.error("text/plain", "Error!")
-      io = MemoryIO.new
-      response.to_io(io)
-      io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: 6\r\n\r\nError!")
-    end
-
-    it "builds main content_type from header" do
-      response = Response.ok("text/html; charset=ISO-8859-4", "<html></html>")
-      response.content_type.should eq("text/html")
     end
 
     it "returns no content_type when header is missing" do

@@ -3,25 +3,43 @@ require "http/server"
 
 describe HTTP::WebSocketHandler do
   it "returns not found if the request is not an websocket upgrade" do
-    handler = HTTP::WebSocketHandler.new { }
-    response = handler.call HTTP::Request.new("GET", "/")
-    response.status_code.should eq(404)
-    response.upgrade_handler.should be_nil
+    io = MemoryIO.new
+    request = HTTP::Request.new("GET", "/")
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    invoked = false
+    handler = HTTP::WebSocketHandler.new { invoked = true }
+    handler.next = HTTP::Handler::Proc.new &.response.print("Hello")
+    handler.call context
+
+    response.close
+
+    io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello")
   end
 
   it "gives upgrade response for websocket upgrade request" do
-    handler = HTTP::WebSocketHandler.new { }
+    io = MemoryIO.new
     headers = HTTP::Headers{
       "Upgrade":           "websocket",
       "Connection":        "Upgrade",
       "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
     }
-    request = HTTP::Request.new("GET", "/", headers)
-    response = handler.call request
-    response.status_code.should eq(101)
-    response.headers["Upgrade"].should eq("websocket")
-    response.headers["Connection"].should eq("Upgrade")
-    response.headers["Sec-WebSocket-Accept"].should eq("s3pPLMBiTxaQ9kYGzzhZRbK+xOo=")
-    response.upgrade_handler.should_not be_nil
+    request = HTTP::Request.new("GET", "/", headers: headers)
+    response = HTTP::Server::Response.new(io)
+    context = HTTP::Server::Context.new(request, response)
+
+    handler = HTTP::WebSocketHandler.new { }
+    handler.next = HTTP::Handler::Proc.new &.response.print("Hello")
+
+    begin
+      handler.call context
+    rescue IO::Error
+      # Raises because the MemoryIO is empty
+    end
+
+    response.close
+
+    io.to_s.should eq("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-Websocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n\r\n")
   end
 end

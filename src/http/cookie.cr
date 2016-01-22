@@ -115,7 +115,7 @@ module HTTP
     # Create a new instance by parsing the `Cookie` and `Set-Cookie`
     # headers in the given `HTTP::Headers`.
     #
-    # See `HTTP::Request#cookies` and `HTTP::Response#cookies`.
+    # See `HTTP::Request#cookies` and `HTTP::Client::Response#cookies`.
     def self.from_headers(headers)
       new.tap do |cookies|
         if values = headers.get?("Cookie")
