@@ -14,6 +14,10 @@ module Zlib
       check_error(ret)
     end
 
+    def self.gzip(output)
+      new output, wbits: GZIP
+    end
+
     def read(slice : Slice(UInt8))
       raise "can't read from Zlib::Deflate"
     end

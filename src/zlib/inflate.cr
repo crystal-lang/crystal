@@ -11,6 +11,10 @@ module Zlib
       check_error(ret)
     end
 
+    def self.gzip(input)
+      new input, wbits: GZIP
+    end
+
     def write(slice : Slice(UInt8))
       raise IO::Error.new "Can't write to InflateIO"
     end

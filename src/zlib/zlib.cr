@@ -3,6 +3,8 @@ require "./deflate"
 require "./inflate"
 
 module Zlib
+  GZIP = LibZ::MAX_BITS + 16
+
   def self.version
     String.new LibZ.zlibVersion
   end
