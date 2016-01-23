@@ -1,3 +1,20 @@
+## Next
+
+* **(breaking change)** Syntax for type declarations changed from `var :: Type` to `var : Type`. The old syntax is still allowed but will be deprecated in the next version (run `crystal tool format` to automatically fix this)
+* **(breaking change)** Syntax for uninitialized variables, which used to be `var :: Type`, is now `var = uninitialized Type`. The old syntax is still allowed but will be deprecated in the next version (run `crystal tool format` to automatically fix this)
+* **(breaking change)** `HTTP::Server` refactor to support streaming. Check the [docs](http://crystal-lang.org/api/HTTP/Server.html) of `HTTP::Server` for upgrade instructions
+* **(breaking change)** Renamed `HTTP::WebSocketSession` to `HTTP::WebSocket`.
+* **(breaking change)** Heredocs now remove indentations according to the indentation of the closing identifier (thanks @rhysd)
+* **(breaking change)** Renamed `Enumerable#inject` to `Enumerable#reduce`
+* **(breaking change)** `next` and `return` semantic inside captured block has been swapped (#420)
+* Fibers context switch is now faster, done with inline assembly. `libpcl` is no longer used
+* Allow annotating the type of class and global variables
+* Support comments in ECR (thanks @ysbaddaden)
+* Security improvements to `HTTP::StaticFileHandler` (thanks @MakeNowJust)
+* Moved `seek`, `tell`, `pos` and `pos=` from `File` to `IO::FileDescriptor` (affects `Tempfile`)
+# `URI.parse` is now faster (thanks @will)
+# Many bug fixes, some really old ones involving issues with order of declaration
+
 ## 0.10.2 (2016-01-13)
 
 * Fixed Directory Traversal Vulnerability in HTTP::StaticFileHandler (thanks @MakeNowJust)
