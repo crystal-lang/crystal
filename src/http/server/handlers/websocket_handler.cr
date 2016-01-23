@@ -3,7 +3,7 @@ require "openssl/sha1"
 require "../../web_socket"
 
 class HTTP::WebSocketHandler < HTTP::Handler
-  def initialize(&@proc : WebSocketSession ->)
+  def initialize(&@proc : WebSocket ->)
   end
 
   def call(context)
@@ -17,7 +17,7 @@ class HTTP::WebSocketHandler < HTTP::Handler
       response.headers["Connection"] = "Upgrade"
       response.headers["Sec-Websocket-Accept"] = accept_code
       response.upgrade do |io|
-        ws_session = WebSocketSession.new(io)
+        ws_session = WebSocket.new(io)
         @proc.call(ws_session)
         ws_session.run
         io.close
