@@ -34,7 +34,7 @@ module Crystal
       @def_macros = [] of Def
       @splat_expansions = {} of Def => Type
       @initialized_global_vars = Set(String).new
-      @file_modules = {} of String       => FileModule
+      @file_modules = {} of String => FileModule
       @unions = {} of Array(Int32) => Type
       @wants_doc = false
       @color = true

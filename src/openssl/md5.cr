@@ -6,7 +6,7 @@ class OpenSSL::MD5
   end
 
   def self.hash(data : UInt8*, bytesize : Int)
-    buffer :: UInt8[16]
+    buffer = uninitialized UInt8[16]
     LibCrypto.md5(data, bytesize, buffer)
     buffer
   end

@@ -15,7 +15,7 @@ module Benchmark
     class Job
       # List of all entries in the benchmark.
       # After #execute, these are populated with the resulting statistics.
-      property items :: Array(Entry)
+      property items : Array(Entry)
 
       def initialize(calculation = 5, warmup = 2, @interactive = STDOUT.tty?)
         @warmup_time = warmup.seconds
@@ -114,32 +114,32 @@ module Benchmark
 
     class Entry
       # Label of the benchmark
-      property label :: String
+      property label : String
 
       # Code to be benchmarked
-      property action :: ->
+      property action : ->
 
       # Number of cycles needed to run for approx 100ms
       # Calculated during the warmup stage
-      property! cycles :: Int
+      property! cycles : Int
 
       # Number of 100ms runs during the calculation stage
-      property! size :: Int
+      property! size : Int
 
       # Statistcal mean from calculation stage
-      property! mean :: Float
+      property! mean : Float
 
       # Statistcal variance from calculation stage
-      property! variance :: Float
+      property! variance : Float
 
       # Statistcal standard deviation from calculation stage
-      property! stddev :: Float
+      property! stddev : Float
 
       # Relative standard deviation as a percentage
-      property! relative_stddev :: Float
+      property! relative_stddev : Float
 
       # Multiple slower than the fastest entry
-      property! slower :: Float
+      property! slower : Float
 
       @ran = false
 

@@ -1584,7 +1584,7 @@ class String
 
   # ditto
   def +(char : Char)
-    bytes :: UInt8[4]
+    bytes = uninitialized UInt8[4]
 
     count = 0
     char.each_byte do |byte|
@@ -2182,7 +2182,7 @@ class String
   private def just(len, char, left)
     return self if size >= len
 
-    bytes :: UInt8[4]
+    bytes = uninitialized UInt8[4]
 
     if char.ord < 0x80
       count = 1
@@ -2622,7 +2622,7 @@ class String
       return to_unsafe[bytesize - 1] == char.ord
     end
 
-    bytes :: UInt8[4]
+    bytes = uninitialized UInt8[4]
 
     count = 0
     char.each_byte do |byte|

@@ -16,11 +16,11 @@ class Crypto::MD5
       @buf[2] = 0x98BADCFE_u32
       @buf[3] = 0x10325476_u32
       @in = StaticArray(UInt8, 64).new(0_u8)
-      @digest :: UInt8[16]
+      @digest = uninitialized UInt8[16]
     end
 
     def update(inBuf, inLen)
-      in :: UInt32[16]
+      in = uninitialized UInt32[16]
 
       # compute number of bytes mod 64
       mdi = (@i[0] >> 3) & 0x3F
@@ -204,7 +204,7 @@ class Crypto::MD5
     end
 
     def final
-      in :: UInt32[16]
+      in = uninitialized UInt32[16]
 
       # save number of bits
       in[14] = @i[0]

@@ -325,7 +325,7 @@ struct Int
   end
 
   private def internal_to_s(base, upcase = false)
-    chars :: UInt8[65]
+    chars = uninitialized UInt8[65]
     ptr_end = chars.to_unsafe + 64
     ptr = ptr_end
     num = self
@@ -366,8 +366,8 @@ struct Int
   # Counts `1`-bits in the binary representation of this integer.
   #
   # ```
-  # 5.popcount    #=> 2
-  # -15.popcount  #=> 5
+  # 5.popcount   # => 2
+  # -15.popcount # => 5
   # ```
   abstract def popcount
 

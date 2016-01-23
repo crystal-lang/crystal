@@ -29,8 +29,8 @@ class HTTP::WebSocket::Protocol
   record PacketInfo, opcode, size, final
 
   def initialize(@io : IO, @masked = false)
-    @header :: UInt8[2]
-    @mask :: UInt8[4]
+    @header = uninitialized UInt8[2]
+    @mask = uninitialized UInt8[4]
     @mask_offset = 0
     @opcode = Opcode::CONTINUATION
     @remaining = 0

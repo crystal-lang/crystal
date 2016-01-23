@@ -132,7 +132,7 @@ module Crystal
 
       @in_lib = false
       @strings = {} of StringKey => LLVM::Value
-      @symbols = {} of String    => Int32
+      @symbols = {} of String => Int32
       @symbol_table_values = [] of LLVM::Value
       mod.symbols.each_with_index do |sym, index|
         @symbols[sym] = index

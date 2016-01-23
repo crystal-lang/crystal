@@ -4,7 +4,7 @@ module Zlib
 
     def initialize(@output : IO, level = LibZ::DEFAULT_COMPRESSION, wbits = LibZ::MAX_BITS,
                    mem_level = LibZ::DEF_MEM_LEVEL, strategy = LibZ::Strategy::DEFAULT_STRATEGY)
-      @buf :: UInt8[8192] # output buffer used by zlib
+      @buf = uninitialized UInt8[8192] # output buffer used by zlib
       @stream = LibZ::ZStream.new
       @stream.zalloc = LibZ::AllocFunc.new { |opaque, items, size| GC.malloc(items * size) }
       @stream.zfree = LibZ::FreeFunc.new { |opaque, address| GC.free(address) }

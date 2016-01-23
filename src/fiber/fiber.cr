@@ -1,6 +1,6 @@
 @[NoInline]
 fun get_stack_top : Void*
-  dummy :: Int32
+  dummy = uninitialized Int32
   pointerof(dummy) as Void*
 end
 

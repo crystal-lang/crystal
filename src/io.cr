@@ -393,7 +393,7 @@ module IO
   # io.read_byte # => nil
   # ```
   def read_byte : UInt8?
-    byte :: UInt8
+    byte = uninitialized UInt8
     if read(Slice.new(pointerof(byte), 1)) == 1
       byte
     else
@@ -466,7 +466,7 @@ module IO
   # io.read # => ""
   # ```
   def gets_to_end : String
-    buffer :: UInt8[2048]
+    buffer = uninitialized UInt8[2048]
     String.build do |str|
       while (read_bytes = read(buffer.to_slice)) > 0
         str.write buffer.to_slice[0, read_bytes]
@@ -606,7 +606,7 @@ module IO
   # io.gets # => "world"
   # ```
   def skip(bytes_count : Int) : Nil
-    buffer :: UInt8[1024]
+    buffer = uninitialized UInt8[1024]
     while bytes_count > 0
       read_count = read(buffer.to_slice[0, bytes_count])
       bytes_count -= read_count
@@ -788,7 +788,7 @@ module IO
   # io2.to_s # => "hello"
   # ```
   def self.copy(src, dst)
-    buffer :: UInt8[1024]
+    buffer = uninitialized UInt8[1024]
     count = 0
     while (len = src.read(buffer.to_slice).to_i32) > 0
       dst.write buffer.to_slice[0, len]

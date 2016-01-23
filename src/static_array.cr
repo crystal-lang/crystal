@@ -10,7 +10,7 @@ struct StaticArray(T, N)
   # StaticArray(Int32, 3).new { |i| i * 2 } # => [0, 2, 4]
   # ```
   def self.new(&block : Int32 -> T)
-    array :: self
+    array = uninitialized self
     N.times do |i|
       array.to_unsafe[i] = yield i
     end

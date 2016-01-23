@@ -262,7 +262,7 @@ module HTTP
 
     # :nodoc:
     class Builder
-      @io :: IO
+      @io : IO
 
       def initialize(@io = MemoryIO.new)
         @first = true

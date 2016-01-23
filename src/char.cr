@@ -543,7 +543,7 @@ struct Char
     if ord <= 0x7f
       io.write_byte ord.to_u8
     else
-      chars :: UInt8[4]
+      chars = uninitialized UInt8[4]
       i = 0
       each_byte do |byte|
         chars[i] = byte

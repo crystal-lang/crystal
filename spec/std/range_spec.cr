@@ -91,8 +91,8 @@ describe "Range" do
     end
 
     it "is equivalent to Enumerable#sum" do
-      (1..3).sum{ |x| x * 2 }.should eq 12
-      (1..3).step(2).sum{ |x| x * 2 }.should eq 8
+      (1..3).sum { |x| x * 2 }.should eq 12
+      (1..3).step(2).sum { |x| x * 2 }.should eq 8
       (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(3)).sum.should eq RangeSpecIntWrapper.new(6)
       (RangeSpecIntWrapper.new(1)..RangeSpecIntWrapper.new(3)).step(2).sum.should eq RangeSpecIntWrapper.new(4)
     end

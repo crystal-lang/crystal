@@ -54,8 +54,8 @@ class Array(T)
   # [:foo, :bar].size # => 2
   # ```
   getter size
-  @size :: Int32
-  @capacity :: Int32
+  @size : Int32
+  @capacity : Int32
 
   # Creates a new empty Array.
   def initialize

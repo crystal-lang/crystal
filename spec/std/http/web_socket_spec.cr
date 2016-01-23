@@ -170,7 +170,7 @@ describe HTTP::WebSocket do
     end
 
     it "sets binary opcode if used with slice" do
-      sent_bytes :: UInt8[4]
+      sent_bytes = uninitialized UInt8[4]
 
       io = MemoryIO.new
       ws = HTTP::WebSocket::Protocol.new(io, masked: true)

@@ -194,5 +194,4 @@ describe "JSON mapping" do
     json = JsonWithSet.from_json(%({"set": ["a", "a", "b"]}))
     json.set.should eq(Set(String){"a", "b"})
   end
-
 end

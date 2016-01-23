@@ -96,7 +96,7 @@ describe "TCPServer" do
   it "fails when port is in use" do
     expect_raises Errno, /already in use/ do
       TCPServer.open("::", 0) do |server|
-        TCPServer.open("::", server.addr.ip_port) {}
+        TCPServer.open("::", server.addr.ip_port) { }
       end
     end
   end

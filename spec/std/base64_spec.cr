@@ -25,7 +25,7 @@ describe "Base64" do
   end
 
   it "encodes static array" do
-    array :: StaticArray(UInt8, 5)
+    array = uninitialized StaticArray(UInt8, 5)
     (0...5).each { |i| array[i] = 1_u8 }
     Base64.encode(array).should eq("AQEBAQE=\n")
     Base64.strict_encode(array).should eq("AQEBAQE=")

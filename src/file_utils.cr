@@ -12,8 +12,8 @@ module FileUtils
   end
 
   def cmp(stream1 : IO, stream2 : IO)
-    buf1 :: UInt8[1024]
-    buf2 :: UInt8[1024]
+    buf1 = uninitialized UInt8[1024]
+    buf2 = uninitialized UInt8[1024]
 
     while true
       read1 = stream1.read buf1.to_slice

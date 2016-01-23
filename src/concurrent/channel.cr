@@ -198,7 +198,7 @@ end
 class Channel::Unbuffered(T) < Channel(T)
   def initialize
     @has_value = false
-    @value :: T
+    @value = uninitialized T
     super
   end
 

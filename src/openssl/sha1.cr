@@ -6,7 +6,7 @@ class OpenSSL::SHA1
   end
 
   def self.hash(data : UInt8*, bytesize : LibC::SizeT)
-    buffer :: UInt8[20]
+    buffer = uninitialized UInt8[20]
     LibCrypto.sha1(data, bytesize, buffer)
     buffer
   end

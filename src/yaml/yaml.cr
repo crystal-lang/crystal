@@ -10,7 +10,7 @@ require "./*"
 #
 # ```crystal
 # require "yaml"
-# 
+#
 # data = YAML.load("foo: bar")
 # (data as Hash)["foo"] # => "bar"
 # ```

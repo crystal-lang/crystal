@@ -114,7 +114,7 @@ module HTTP
 
     if body
       if body.is_a?(IO)
-        buf :: UInt8[8192]
+        buf = uninitialized UInt8[8192]
         while (buf_length = body.read(buf.to_slice)) > 0
           buf_length.to_s(16, io)
           io << "\r\n"

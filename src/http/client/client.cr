@@ -70,7 +70,7 @@ class HTTP::Client
   getter? ssl
 
   # Whether automatic compression/decompression is enabled.
-  property? compress :: Bool
+  property? compress : Bool
 
   # Creates a new HTTP client with the given *host*, *port* and *ssl*
   # configurations. If no port is given, the default one will

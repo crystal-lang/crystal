@@ -53,7 +53,7 @@ struct Time::Span
   Zero     = new 0
 
   # 1 tick is a tenth of a millisecond
-  @ticks :: Int64
+  @ticks : Int64
 
   getter ticks
 

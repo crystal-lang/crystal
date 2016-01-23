@@ -50,7 +50,7 @@ class TCPServer < TCPSocket
 
   def accept
     loop do
-      client_addr :: LibC::SockAddrIn6
+      client_addr = uninitialized LibC::SockAddrIn6
       client_addr_len = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
       client_fd = LibC.accept(fd, pointerof(client_addr) as LibC::SockAddr*, pointerof(client_addr_len))
       if client_fd == -1

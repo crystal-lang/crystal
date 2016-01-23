@@ -116,16 +116,16 @@ describe "YAML serialization" do
 
     it "does a full document" do
       data = {
-               hello:   "World",
-               integer: 2,
-               float:   3.5,
-               hash:    {
-                 a: 1,
-                 b: 2,
-               },
-               array: [1, 2, 3],
-               null:  nil,
-             }
+        hello:   "World",
+        integer: 2,
+        float:   3.5,
+        hash:    {
+          a: 1,
+          b: 2,
+        },
+        array: [1, 2, 3],
+        null:  nil,
+      }
 
       expected = "--- \nhello: World\ninteger: 2\nfloat: 3.5\nhash: \n  a: 1\n  b: 2\narray: \n  - 1\n  - 2\n  - 3\nnull: "
 
@@ -134,8 +134,8 @@ describe "YAML serialization" do
 
     it "writes to a stream" do
       string = String.build do |str|
-                 %w(a b c).to_yaml(str)
-               end
+        %w(a b c).to_yaml(str)
+      end
       string.should eq("--- \n- a\n- b\n- c")
     end
   end

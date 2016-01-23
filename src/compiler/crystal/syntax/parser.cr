@@ -1632,7 +1632,7 @@ module Crystal
     end
 
     record Piece, value, line_number do
-      @value :: String | ASTNode
+      @value : String | ASTNode
     end
 
     def parse_delimiter

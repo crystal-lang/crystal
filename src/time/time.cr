@@ -119,7 +119,7 @@ struct Time
 
   # 1 tick is a tenth of a millisecond
   # The 2 higher bits are reserved for the kind of time.
-  @encoded :: Int64
+  @encoded : Int64
   protected property encoded
 
   def initialize

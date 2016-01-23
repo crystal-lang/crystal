@@ -4,7 +4,7 @@ module HTTP
     include IO
 
     def close
-      buffer :: UInt8[1024]
+      buffer = uninitialized UInt8[1024]
       while read(buffer.to_slice) > 0
       end
     end
@@ -66,7 +66,7 @@ module HTTP
 
     private def read_chunk_end
       # Read "\r\n"
-      buf :: UInt8[2]
+      buf = uninitialized UInt8[2]
       @io.read_fully(buf.to_slice)
     end
 

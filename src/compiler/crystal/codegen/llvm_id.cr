@@ -5,7 +5,7 @@ module Crystal
     getter id_to_metaclass
 
     def initialize(program)
-      @ids = {} of Type  => {Int32, Int32}
+      @ids = {} of Type => {Int32, Int32}
       @id_to_metaclass = {} of Int32 => Int32
       @next_id = 0
       assign_id(program.object)
@@ -65,7 +65,7 @@ module Crystal
         put_id type, id, id
         id
       else
-        min_id :: Int32
+        min_id = uninitialized Int32
         first = true
         subtypes.each do |subtype|
           sub_id = assign_id(subtype)

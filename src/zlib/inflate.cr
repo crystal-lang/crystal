@@ -3,7 +3,7 @@ module Zlib
     include IO
 
     def initialize(@input : IO, wbits = LibZ::MAX_BITS)
-      @buf :: UInt8[8192] # input buffer used by zlib
+      @buf = uninitialized UInt8[8192] # input buffer used by zlib
       @stream = LibZ::ZStream.new
       @stream.zalloc = LibZ::AllocFunc.new { |opaque, items, size| GC.malloc(items * size) }
       @stream.zfree = LibZ::FreeFunc.new { |opaque, address| GC.free(address) }
