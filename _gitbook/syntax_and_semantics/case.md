@@ -32,10 +32,10 @@ If a `when`'s expression is a type, `is_a?` is used. Additionally, if the case e
 ```crystal
 case var
 when String
-  # var :: String
+  # var : String
   do_something
 when Int32
-  # var :: Int32
+  # var : Int32
   do_something_else
 else
   # here var is neither a String nor an Int32

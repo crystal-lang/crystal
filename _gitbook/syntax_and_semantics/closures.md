@@ -38,7 +38,7 @@ x = 1
 foo do
   x = "hello"
 end
-x # :: Int32 | String
+x # : Int32 | String
 ```
 
 The compiler knows that after the block, `x` can be Int32 or String (it could know that it will always be String because the method always yields, this will maybe improve in the future).
@@ -50,10 +50,10 @@ x = 1
 foo do
   x = "hello"
 end
-x # :: Int32 | String
+x # : Int32 | String
 
 x = 'a'
-x # :: Char
+x # : Char
 ```
 
 However, if `x` is closured by a proc, the type is always the mixed type of all assignments to it:
@@ -67,7 +67,7 @@ x = 1
 capture { x = "hello" }
 
 x = 'a'
-x # :: Int32 | String | Char
+x # : Int32 | String | Char
 ```
 
 This is because the captured block could have been potentially stored in a global, class or instance variable and invoked in a separate thread in between the instructions. The compiler doesn't do an exhaustive analysis of this: it just assumes that if a variable is captured by a proc, the time of that proc invocation is unknown.
@@ -83,7 +83,7 @@ x = 1
 ->{ x = "hello" }
 
 x = 'a'
-x # :: Int32 | String | Char
+x # : Int32 | String | Char
 ```
 
 

@@ -87,6 +87,36 @@ characters, you can use alternative literals:
 %<hello <"world">> # same as "hello <\"world\">"
 ```
 
+## Heredoc
+
+You can also use a "heredoc" for creating string:
+
+```crystal
+<<-XML
+<parent>
+  <child />
+</parent>
+XML
+```
+
+A "heredoc" is written with `<<-IDENT`, where `IDENT` is an identifier, a sequence of letters and numbers that must start with a letter. The "heredoc" finishes in the line that starts with `IDENT`, ignoring leading whitespace.
+
+Leading whitespace is removing from the heredoc contents according to the number of whitespace that this last `IDENT` has. For example:
+
+```crystal
+# Same as "Hello\n  world"
+<<-STRING
+  Hello
+    world
+  STRING
+
+# Same as "  Hello\n    world"
+<<-STRING
+    Hello
+      world
+  STRING
+```
+
 ## Interpolation
 
 To create a String with embedded expressions, you can use string interpolation:

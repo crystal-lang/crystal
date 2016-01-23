@@ -9,7 +9,7 @@ else
   a = "hello"
 end
 
-# a :: Int32 | String
+# a : Int32 | String
 ```
 
 In the above code, `a` is a union of `Int32 | String`. If for some reason we are sure `a` is an `Int32` after the `if`, we can force the compiler to treat it like one:

@@ -5,7 +5,7 @@ With `alias` you can give a type a different name:
 ```crystal
 alias PInt32 = Pointer(Int32)
 
-ptr = PInt32.malloc(1) # :: Pointer(Int32)
+ptr = PInt32.malloc(1) # : Pointer(Int32)
 ```
 
 Every time you use an alias the compiler replaces it with the type it refers to.

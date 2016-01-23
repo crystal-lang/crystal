@@ -12,7 +12,7 @@ Additionally, in the `else` branch the type of the variable is guaranteed to be 
 
 ```crystal
 a = some_condition ? 1 : "hello"
-# a :: Int32 | String
+# a : Int32 | String
 
 if a.responds_to?(:abs)
   # here a will be Int32, since Int32#abs exists but String#abs doesn't

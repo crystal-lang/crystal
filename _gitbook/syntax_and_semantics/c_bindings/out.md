@@ -20,9 +20,9 @@ We can use this function like this:
 ```crystal
 pid = ...
 options = ...
-status_ptr :: Int32
+status_ptr = uninitialized Int32
 
-C.waitpid pid, pointerof(status_ptr), options
+C.waitpid(pid, pointerof(status_ptr), options)
 ```
 
 In this way we pass a pointer of `status_ptr` to the function for it to fill its value.
@@ -33,7 +33,7 @@ There's a simpler way to write the above by using an `out` parameter:
 pid = ...
 options = ...
 
-C.waitpid pid, out status_ptr, options
+C.waitpid(pid, out status_ptr, options)
 ```
 
 The compiler will automatically declare a `status_ptr` variable of type `Int32`, because the argument is an `Int32*`.

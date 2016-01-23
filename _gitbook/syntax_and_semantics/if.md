@@ -39,25 +39,25 @@ if some_condition
 else
   a = true
 end
-# a :: String | Bool
+# a : String | Bool
 
 b = 1
 if some_condition
   b = "hello"
 end
-# b :: Int32 | String
+# b : Int32 | String
 
 if some_condition
   c = 1
 else
   c = "hello"
 end
-# c :: Int32 | String
+# c : Int32 | String
 
 if some_condition
   d = 1
 end
-# d :: Int32 | Nil
+# d : Int32 | Nil
 ```
 
 Note that if a variable is declared inside one of the branches but not in the other one, at the end of the `if` it will also contain the `Nil` type.
@@ -68,10 +68,10 @@ Inside an `if`'s branch the type of a variable is the one it got assigned in tha
 a = 1
 if some_condition
   a = "hello"
-  # a :: String
+  # a : String
   a.size
 end
-# a :: String | Int32
+# a : String | Int32
 ```
 
 That is, a variable’s type is the type of the last expression(s) assigned to it.
@@ -83,8 +83,8 @@ if some_condition
   e = 1
 else
   e = "hello"
-  # e :: String
+  # e : String
   return
 end
-# e :: Int32
+# e : Int32
 ```

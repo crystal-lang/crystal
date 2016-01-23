@@ -16,12 +16,12 @@ Additionally, in the `else` branch the type of the variable is guaranteed to not
 
 ```crystal
 a = some_condition ? 1 : "hello"
-# a :: Int32 | String
+# a : Int32 | String
 
 if a.is_a?(Number)
-  # a :: Int32
+  # a : Int32
 else
-  # a :: String
+  # a : String
 end
 ```
 

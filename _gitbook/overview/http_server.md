@@ -5,8 +5,9 @@ A slightly more interesting example is an HTTP Server:
 ```crystal
 require "http/server"
 
-server = HTTP::Server.new(8080) do |request|
-  HTTP::Response.ok "text/plain", "Hello world! The time is #{Time.now}"
+server = HTTP::Server.new(8080) do |context|
+  context.response.content_type = "text/plain"
+  context.response.print "Hello world! The time is #{Time.now}"
 end
 
 puts "Listening on http://0.0.0.0:8080"
@@ -41,7 +42,7 @@ The above code will make sense once you read the whole documentation, but we can
 * You can use code blocks, or simply [blocks](../syntax_and_semantics/blocks_and_procs.html), which are a very convenient way to reuse code and get some features from the functional world:
 
     ```ruby
-    HTTP::Server.new(8080) do |request|
+    HTTP::Server.new(8080) do |context|
       ...
     end
     ```

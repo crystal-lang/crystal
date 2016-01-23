@@ -27,10 +27,10 @@ This allocates the union on the stack.
 
 A C union starts with all its fields set to "zero": integers and floats start at zero, pointers start with an address of zero, etc.
 
-To avoid this initialization you can use `::`:
+To avoid this initialization you can use `uninitialized`:
 
 ```crystal
-value :: U::IntOrFlaot
+value = uninitialized U::IntOrFlaot
 value.some_int #=> some garbage value
 ```
 

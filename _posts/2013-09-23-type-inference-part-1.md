@@ -19,8 +19,8 @@ The whole program AST is traversed while the type inference binds AST nodes in o
 These are easy. Booleans, numbers, chars and values that are explicitly written have the type determined directly by syntax.
 
 {% highlight ruby %}
-true # :: Boolean
-1    # :: Int32
+true # : Boolean
+1    # : Int32
 {% endhighlight ruby %}
 
 **Variables**

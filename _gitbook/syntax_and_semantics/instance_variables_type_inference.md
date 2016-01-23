@@ -177,11 +177,11 @@ This will initialize `@age` to zero in every constructor. This is useful to avoi
 
 ## Specifying the types of instance variables
 
-In certain cases you want to tell the compiler to fix the type of an instance variable. You can do this with `::`:
+In certain cases you want to tell the compiler to fix the type of an instance variable. You can do this with `:`:
 
 ```crystal
 class Person
-  @age :: Int32
+  @age : Int32
 
   def initialize(@name)
     @age = 0

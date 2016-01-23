@@ -195,7 +195,7 @@ The prelude includes safe ways to create them, but since we are using a bare-bon
 to data containing garbage) way to create them is this:
 
 {% highlight ruby %}
-x :: Int32[8]
+x = uninitialized Int32[8]
 {% endhighlight ruby %}
 
 Its LLVM representation:

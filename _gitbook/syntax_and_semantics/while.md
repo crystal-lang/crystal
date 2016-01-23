@@ -19,12 +19,12 @@ The type of a variable after a `while` depends on the type it had before the `wh
 ```crystal
 a = 1
 while some_condition
-  # a :: Int32 | String
+  # a : Int32 | String
   a = "hello"
-  # a :: String
+  # a : String
   a.size
 end
-# a :: Int32 | String
+# a : Int32 | String
 ```
 
 ## Checking the condition at the end of a loop

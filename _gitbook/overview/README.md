@@ -9,11 +9,11 @@ a = 1 + 2
 a #=> 3
 ```
 
-A comment using `::` is used for showing the type of a variable.
+A comment using `:` is used for showing the type of a variable.
 
 ```crystal
 s = "hello"
-# s :: String
+# s : String
 ```
 
 Let's start with two examples to familiarize ourselves with the language.
