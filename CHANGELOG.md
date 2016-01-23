@@ -12,8 +12,8 @@
 * Support comments in ECR (thanks @ysbaddaden)
 * Security improvements to `HTTP::StaticFileHandler` (thanks @MakeNowJust)
 * Moved `seek`, `tell`, `pos` and `pos=` from `File` to `IO::FileDescriptor` (affects `Tempfile`)
-# `URI.parse` is now faster (thanks @will)
-# Many bug fixes, some really old ones involving issues with order of declaration
+* `URI.parse` is now faster (thanks @will)
+* Many bug fixes, some really old ones involving issues with order of declaration
 
 ## 0.10.2 (2016-01-13)
 
