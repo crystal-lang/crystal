@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.10" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.7.10" data-basepath=".." data-revision="Sat Jan 23 2016 19:14:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1999,7 +1999,7 @@
 <p>With <code>alias</code> you can give a type a different name:</p>
 <pre><code class="lang-crystal"><span class="hljs-keyword">alias</span> <span class="hljs-constant">PInt32</span> = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>)
 
-ptr = <span class="hljs-constant">PInt32</span>.malloc(<span class="hljs-number">1</span>) <span class="hljs-comment"># :: Pointer(Int32)</span>
+ptr = <span class="hljs-constant">PInt32</span>.malloc(<span class="hljs-number">1</span>) <span class="hljs-comment"># : Pointer(Int32)</span>
 </code></pre>
 <p>Every time you use an alias the compiler replaces it with the type it refers to.</p>
 <p>Aliases are useful to avoid writing long type names, but also to be able to talk about recursive types:</p>

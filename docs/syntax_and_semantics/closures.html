@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.9.4" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.7.9.4" data-basepath=".." data-revision="Sat Jan 23 2016 19:14:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2024,7 +2024,7 @@ x = <span class="hljs-number">1</span>
 foo <span class="hljs-keyword">do</span>
   x = <span class="hljs-string">&quot;hello&quot;</span>
 <span class="hljs-keyword">end</span>
-x <span class="hljs-comment"># :: Int32 | String</span>
+x <span class="hljs-comment"># : Int32 | String</span>
 </code></pre>
 <p>The compiler knows that after the block, <code>x</code> can be Int32 or String (it could know that it will always be String because the method always yields, this will maybe improve in the future).</p>
 <p>If <code>x</code> is assigned something else after the block, the compiler knows the type changed:</p>
@@ -2032,10 +2032,10 @@ x <span class="hljs-comment"># :: Int32 | String</span>
 foo <span class="hljs-keyword">do</span>
   x = <span class="hljs-string">&quot;hello&quot;</span>
 <span class="hljs-keyword">end</span>
-x <span class="hljs-comment"># :: Int32 | String</span>
+x <span class="hljs-comment"># : Int32 | String</span>
 
 x = <span class="hljs-string">&apos;a&apos;</span>
-x <span class="hljs-comment"># :: Char</span>
+x <span class="hljs-comment"># : Char</span>
 </code></pre>
 <p>However, if <code>x</code> is closured by a proc, the type is always the mixed type of all assignments to it:</p>
 <pre><code class="lang-crystal"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">capture</span></span>(&amp;block)
@@ -2046,7 +2046,7 @@ x = <span class="hljs-number">1</span>
 capture { x = <span class="hljs-string">&quot;hello&quot;</span> }
 
 x = <span class="hljs-string">&apos;a&apos;</span>
-x <span class="hljs-comment"># :: Int32 | String | Char</span>
+x <span class="hljs-comment"># : Int32 | String | Char</span>
 </code></pre>
 <p>This is because the captured block could have been potentially stored in a global, class or instance variable and invoked in a separate thread in between the instructions. The compiler doesn&apos;t do an exhaustive analysis of this: it just assumes that if a variable is captured by a proc, the time of that proc invocation is unknown.</p>
 <p>This also happens with regular proc literals, even if it&apos;s evident that the proc wasn&apos;t invoked or stored:</p>
@@ -2058,7 +2058,7 @@ x = <span class="hljs-number">1</span>
 -&gt;{ x = <span class="hljs-string">&quot;hello&quot;</span> }
 
 x = <span class="hljs-string">&apos;a&apos;</span>
-x <span class="hljs-comment"># :: Int32 | String | Char</span>
+x <span class="hljs-comment"># : Int32 | String | Char</span>
 </code></pre>
 
                     

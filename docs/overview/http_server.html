@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="3.2" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="3.2" data-basepath=".." data-revision="Sat Jan 23 2016 19:14:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1999,8 +1999,9 @@
 <p>A slightly more interesting example is an HTTP Server:</p>
 <pre><code class="lang-crystal"><span class="hljs-keyword">require</span> <span class="hljs-string">&quot;http/server&quot;</span>
 
-server = <span class="hljs-constant">HTTP::Server</span>.new(<span class="hljs-number">8080</span>) <span class="hljs-keyword">do</span> |request|
-  <span class="hljs-constant">HTTP::Response</span>.ok <span class="hljs-string">&quot;text/plain&quot;</span>, <span class="hljs-string">&quot;Hello world! The time is <span class="hljs-subst">#{<span class="hljs-constant">Time</span>.now}</span>&quot;</span>
+server = <span class="hljs-constant">HTTP::Server</span>.new(<span class="hljs-number">8080</span>) <span class="hljs-keyword">do</span> |context|
+  context.response.content_type = <span class="hljs-string">&quot;text/plain&quot;</span>
+  context.response.print <span class="hljs-string">&quot;Hello world! The time is <span class="hljs-subst">#{<span class="hljs-constant">Time</span>.now}</span>&quot;</span>
 <span class="hljs-keyword">end</span>
 
 puts <span class="hljs-string">&quot;Listening on http://0.0.0.0:8080&quot;</span>
@@ -2027,7 +2028,7 @@ server.listen
 </code></pre>
 </li>
 <li><p>You can use code blocks, or simply <a href="../syntax_and_semantics/blocks_and_procs.html">blocks</a>, which are a very convenient way to reuse code and get some features from the functional world:</p>
-<pre><code class="lang-ruby">  <span class="hljs-constant">HTTP::Server</span>.new(<span class="hljs-number">8080</span>) <span class="hljs-keyword">do</span> |request|
+<pre><code class="lang-ruby">  <span class="hljs-constant">HTTP::Server</span>.new(<span class="hljs-number">8080</span>) <span class="hljs-keyword">do</span> |context|
     ...
   <span class="hljs-keyword">end</span>
 </code></pre>

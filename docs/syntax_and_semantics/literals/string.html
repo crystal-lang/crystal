@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.2.6" data-basepath="../.." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.2.6" data-basepath="../.." data-revision="Sat Jan 23 2016 19:14:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2053,6 +2053,28 @@ characters, you can use alternative literals:</p>
 
 <span class="hljs-comment"># Supports double quotes and nested angles</span>
 <span class="hljs-string">%&lt;hello &lt;&quot;world&quot;&gt;</span>&gt; <span class="hljs-comment"># same as &quot;hello &lt;\&quot;world\&quot;&gt;&quot;</span>
+</code></pre>
+<h2 id="heredoc">Heredoc</h2>
+<p>You can also use a &quot;heredoc&quot; for creating string:</p>
+<pre><code class="lang-crystal">&lt;&lt;-<span class="hljs-constant">XML</span>
+&lt;parent&gt;
+  &lt;child /&gt;
+&lt;<span class="hljs-regexp">/parent&gt;
+XML
+</span></code></pre>
+<p>A &quot;heredoc&quot; is written with <code>&lt;&lt;-IDENT</code>, where <code>IDENT</code> is an identifier, a sequence of letters and numbers that must start with a letter. The &quot;heredoc&quot; finishes in the line that starts with <code>IDENT</code>, ignoring leading whitespace.</p>
+<p>Leading whitespace is removing from the heredoc contents according to the number of whitespace that this last <code>IDENT</code> has. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># Same as &quot;Hello\n  world&quot;</span>
+&lt;&lt;-<span class="hljs-constant">STRING</span>
+  <span class="hljs-constant">Hello</span>
+    world
+  <span class="hljs-constant">STRING</span>
+
+<span class="hljs-comment"># Same as &quot;  Hello\n    world&quot;</span>
+&lt;&lt;-<span class="hljs-constant">STRING</span>
+    <span class="hljs-constant">Hello</span>
+      world
+  <span class="hljs-constant">STRING</span>
 </code></pre>
 <h2 id="interpolation">Interpolation</h2>
 <p>To create a String with embedded expressions, you can use string interpolation:</p>

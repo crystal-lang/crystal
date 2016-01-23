@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.15.4" data-basepath="../.." data-revision="Wed Oct 28 2015 12:47:44 GMT+0000 (UTC)">
+    <div class="book" data-level="4.15.4" data-basepath="../.." data-revision="Sat Jan 23 2016 19:14:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2015,8 +2015,8 @@
 </code></pre>
 <p>This allocates the union on the stack.</p>
 <p>A C union starts with all its fields set to &quot;zero&quot;: integers and floats start at zero, pointers start with an address of zero, etc.</p>
-<p>To avoid this initialization you can use <code>::</code>:</p>
-<pre><code class="lang-crystal">value <span class="hljs-symbol">:</span><span class="hljs-symbol">:</span> <span class="hljs-constant">U::IntOrFlaot</span>
+<p>To avoid this initialization you can use <code>uninitialized</code>:</p>
+<pre><code class="lang-crystal">value = uninitialized <span class="hljs-constant">U::IntOrFlaot</span>
 value.some_int <span class="hljs-comment">#=&gt; some garbage value</span>
 </code></pre>
 <p>You can set and get its properties:</p>

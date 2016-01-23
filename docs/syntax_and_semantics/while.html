@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.6.5" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.6.5" data-basepath=".." data-revision="Sat Jan 23 2016 19:14:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2007,12 +2007,12 @@
 <p>The type of a variable after a <code>while</code> depends on the type it had before the <code>while</code> and the type it had before leaving the <code>while</code>&apos;s body:</p>
 <pre><code class="lang-crystal">a = <span class="hljs-number">1</span>
 <span class="hljs-keyword">while</span> some_condition
-  <span class="hljs-comment"># a :: Int32 | String</span>
+  <span class="hljs-comment"># a : Int32 | String</span>
   a = <span class="hljs-string">&quot;hello&quot;</span>
-  <span class="hljs-comment"># a :: String</span>
+  <span class="hljs-comment"># a : String</span>
   a.size
 <span class="hljs-keyword">end</span>
-<span class="hljs-comment"># a :: Int32 | String</span>
+<span class="hljs-comment"># a : Int32 | String</span>
 </code></pre>
 <h2 id="checking-the-condition-at-the-end-of-a-loop">Checking the condition at the end of a loop</h2>
 <p>If you need to execute the body at least once and then check for a breaking condition, you can do this:</p>

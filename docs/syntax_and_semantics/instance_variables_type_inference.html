@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.3.3" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.7.3.3" data-basepath=".." data-revision="Sat Jan 23 2016 19:14:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2119,9 +2119,9 @@ john.address.size
 </code></pre>
 <p>This will initialize <code>@age</code> to zero in every constructor. This is useful to avoid duplication, but also to avoid the <code>Nil</code> type when reopening a class and adding instance variables to it.</p>
 <h2 id="specifying-the-types-of-instance-variables">Specifying the types of instance variables</h2>
-<p>In certain cases you want to tell the compiler to fix the type of an instance variable. You can do this with <code>::</code>:</p>
+<p>In certain cases you want to tell the compiler to fix the type of an instance variable. You can do this with <code>:</code>:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-variable">@age</span> <span class="hljs-symbol">:</span><span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
+  <span class="hljs-variable">@age</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
 
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
     <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>

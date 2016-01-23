@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.6.2.5" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.6.2.5" data-basepath=".." data-revision="Sat Jan 23 2016 19:14:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2007,12 +2007,12 @@
 </code></pre>
 <p>Additionally, in the <code>else</code> branch the type of the variable is guaranteed to not be restricted by that type:</p>
 <pre><code class="lang-crystal">a = some_condition ? <span class="hljs-number">1</span> <span class="hljs-symbol">:</span> <span class="hljs-string">&quot;hello&quot;</span>
-<span class="hljs-comment"># a :: Int32 | String</span>
+<span class="hljs-comment"># a : Int32 | String</span>
 
 <span class="hljs-keyword">if</span> a.is_a?(<span class="hljs-constant">Number</span>)
-  <span class="hljs-comment"># a :: Int32</span>
+  <span class="hljs-comment"># a : Int32</span>
 <span class="hljs-keyword">else</span>
-  <span class="hljs-comment"># a :: String</span>
+  <span class="hljs-comment"># a : String</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
 <p>Note that you can use any type as an <code>is_a?</code> test, like abstract classes and modules.</p>

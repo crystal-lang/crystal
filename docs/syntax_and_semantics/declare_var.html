@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.11.4" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.11.4" data-basepath=".." data-revision="Sat Jan 23 2016 19:14:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1997,14 +1997,14 @@
                     
                         <h1 id="uninitialized-variable-declaration">Uninitialized variable declaration</h1>
 <p>Crystal allows declaring uninitialized variables:</p>
-<pre><code class="lang-crystal">x <span class="hljs-symbol">:</span><span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
+<pre><code class="lang-crystal">x = uninitialized <span class="hljs-constant">Int32</span>
 x <span class="hljs-comment">#=&gt; some random value, garbage, unreliable</span>
 </code></pre>
 <p>This is <a href="unsafe.html">unsafe</a> code and is almost always used in low-level code for declaring uninitialized <a href="http://crystal-lang.org/api/StaticArray.html" target="_blank">StaticArray</a> buffers without a peformance penalty:</p>
-<pre><code class="lang-crystal">buffer <span class="hljs-symbol">:</span><span class="hljs-symbol">:</span> <span class="hljs-constant">UInt8</span>[<span class="hljs-number">256</span>]
+<pre><code class="lang-crystal">buffer = uninitialized <span class="hljs-constant">UInt8</span>[<span class="hljs-number">256</span>]
 </code></pre>
 <p>The buffer is allocated on the stack, avoiding a heap allocation.</p>
-<p>The type after the two colons (<code>::</code>) follows the <a href="type_grammar.html">type grammar</a>.</p>
+<p>The type after the <code>uninitialized</code> keyword follows the <a href="type_grammar.html">type grammar</a>.</p>
 
                     
                     </section>

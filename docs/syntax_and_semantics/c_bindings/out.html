@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.15.2.1" data-basepath="../.." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.15.2.1" data-basepath="../.." data-revision="Sat Jan 23 2016 19:14:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2007,16 +2007,16 @@ that status_ptr points to, unless status_ptr is a null pointer.
 </code></pre><p>We can use this function like this:</p>
 <pre><code class="lang-crystal">pid = ...
 options = ...
-status_ptr <span class="hljs-symbol">:</span><span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
+status_ptr = uninitialized <span class="hljs-constant">Int32</span>
 
-<span class="hljs-constant">C</span>.waitpid pid, <span class="hljs-keyword">pointerof</span>(status_ptr), options
+<span class="hljs-constant">C</span>.waitpid(pid, <span class="hljs-keyword">pointerof</span>(status_ptr), options)
 </code></pre>
 <p>In this way we pass a pointer of <code>status_ptr</code> to the function for it to fill its value.</p>
 <p>There&apos;s a simpler way to write the above by using an <code>out</code> parameter:</p>
 <pre><code class="lang-crystal">pid = ...
 options = ...
 
-<span class="hljs-constant">C</span>.waitpid pid, <span class="hljs-keyword">out</span> status_ptr, options
+<span class="hljs-constant">C</span>.waitpid(pid, <span class="hljs-keyword">out</span> status_ptr, options)
 </code></pre>
 <p>The compiler will automatically declare a <code>status_ptr</code> variable of type <code>Int32</code>, because the argument is an <code>Int32*</code>.</p>
 <p>This will work for any type, as long as the argument is a pointer of that type (and, of course, as long as the function does fill the value the pointer is pointing to).</p>
