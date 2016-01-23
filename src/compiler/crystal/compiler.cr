@@ -1,7 +1,6 @@
 require "option_parser"
 require "file_utils"
 require "socket"
-require "http/common"
 require "colorize"
 require "crypto/md5"
 
