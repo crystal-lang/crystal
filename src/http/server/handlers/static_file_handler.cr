@@ -2,9 +2,12 @@ require "ecr/macros"
 require "html"
 require "uri"
 
+# A simple handler that lists directories and serves files under a given public directory.
 class HTTP::StaticFileHandler < HTTP::Handler
-  def initialize(publicdir)
-    @publicdir = File.expand_path publicdir
+  # Creates a handler that will serve files in the given *public_dir*, after
+  # expanding it (using `File#expand_path`).
+  def initialize(public_dir)
+    @public_dir = File.expand_path public_dir
   end
 
   def call(context)
@@ -19,7 +22,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
 
     expanded_path = File.expand_path(request_path, "/")
 
-    file_path = File.join(@publicdir, expanded_path)
+    file_path = File.join(@public_dir, expanded_path)
     if Dir.exists?(file_path)
       context.response.content_type = "text/html"
       directory_listing(context.response, request_path, file_path)

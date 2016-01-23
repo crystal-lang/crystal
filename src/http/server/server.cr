@@ -5,9 +5,28 @@ require "./handler"
 require "./response"
 require "../common"
 
-# An HTTP::Server
+# An HTTP server.
+#
+# A server is given a handler that receives an `HTTP::Server::Context` that holds
+# the `HTTP::Request` to process and must in turn configure and write to an `HTTP::Server::Response`.
+#
+# The `HTTP::Server::Response` object has `status` and `headers` properties that can be
+# configured before writing the response body. Once response output is written,
+# changing the `status` and `headers` properties has no effect.
+#
+# The `HTTP::Server::Response` is also a write-only `IO`, so all `IO` methods are available
+# in it.
+#
+# The handler given to a server can simply be a block that receives an `HTTP::Server::Context`,
+# or it can be an `HTTP::Handler`. An `HTTP::Handler` has an optional `next` handler,
+# so handlers can be chained. For example, an initial handler may handle exceptions
+# in a subsequent handler and return a 500 staus code (see `HTTP::ErrorHandler`),
+# the next handler might log the incoming request (see `HTTP::LogHandler`), and
+# the final handler deals with routing and application logic.
 #
 # ### Simple Setup
+#
+# A handler is given with a block.
 #
 # ```
 # require "http/server"
@@ -37,6 +56,8 @@ require "../common"
 #
 # ### Add handlers
 #
+# A series of handlers are chained.
+#
 # ```
 # require "http/server"
 #
@@ -49,6 +70,8 @@ require "../common"
 # ```
 #
 # ### Add handlers and block
+#
+# A series of handlers is chained, the last one being the given block.
 #
 # ```
 # require "http/server"

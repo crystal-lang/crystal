@@ -1,12 +1,38 @@
 class HTTP::Server
+  # The response to configure and write to in an `HTTP::Server` handler.
+  #
+  # The response `status_code` and `headers` must be configured before writing
+  # the response body. Once response output is written, changing the `status`
+  # and `headers` properties has no effect.
+  #
+  # The `HTTP::Server::Response` is a write-only `IO`, so all `IO` methods are available
+  # in it.
+  #
+  # A response can be upgraded with the `upgrade` method. Once invoked, headers
+  # are written and the connection `IO` (a socket) is yielded to the given block.
+  # The block must invoke `close` afterwards, the server won't do it in this case.
+  # This is useful to implement protocol upgrades, such as websockets.
   class Response
     include IO
 
+    # The response headers (`HTTP::Headers`). These must be set before writing to the response.
     getter headers
+
+    # The version of the HTTP::Request that created this response.
+    getter version
+
+    # The `IO` to which output is written. This can be changed/wrapped to filter
+    # the response body (for example to compress the output).
     property output
-    property version
+
+    # :nodoc:
+    setter version
+
+    # The status code of this response, which must be set before writing the response
+    # body. If not set, the default value is 200 (OK).
     property status_code
 
+    # :nodoc:
     def initialize(@io, @version = "HTTP/1.1")
       @headers = Headers.new
       @status_code = 200
@@ -16,6 +42,7 @@ class HTTP::Server
       output.response = self
     end
 
+    # :nodoc:
     def reset
       @status_code = 200
       @wrote_headers = false
@@ -24,22 +51,29 @@ class HTTP::Server
       @original_output.reset
     end
 
+    # Convenience method to set the `Content-Type` header.
     def content_type=(content_type : String)
       headers["Content-Type"] = content_type
     end
 
+    # Convenience method to set the `Content-Length` header.
     def content_length=(content_length : Int)
       headers["Content-Length"] = content_length.to_s
     end
 
+    # See `IO#write(slice)`.
     def write(slice : Slice(UInt8))
       @output.write(slice)
     end
 
+    # :nodoc:
     def read(slice : Slice(UInt8))
       raise "can't read from HTTP::Server::Response"
     end
 
+    # Upgrades this response, writing headers and yieling the connection `IO` (a socket) to the given block.
+    # The block must invoke `close` afterwards, the server won't do it in this case.
+    # This is useful to implement protocol upgrades, such as websockets.
     def upgrade
       @upgraded = true
       write_headers
@@ -47,14 +81,18 @@ class HTTP::Server
       yield @io
     end
 
+    # :nodoc:
     def upgraded?
       @upgraded
     end
 
+    # Flushes the output. This method must be implemented if wrapping the response output.
     def flush
       @output.flush
     end
 
+    # Closes this response, writing headers and body if not done yet.
+    # This method must be implemented if wrapping the response output.
     def close
       @output.close
     end
@@ -75,6 +113,7 @@ class HTTP::Server
       @wrote_headers
     end
 
+    # :nodoc:
     class Output
       include IO::Buffered
 

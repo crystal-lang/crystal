@@ -1,14 +1,17 @@
 require "zlib"
 
 module HTTP
+  # :nodoc:
   DATE_PATTERNS = {"%a, %d %b %Y %H:%M:%S %z", "%A, %d-%b-%y %H:%M:%S %z", "%a %b %e %H:%M:%S %Y"}
 
+  # :nodoc:
   enum BodyType
     OnDemand
     Prohibited
     Mandatory
   end
 
+  # :nodoc:
   def self.parse_headers_and_body(io, body_type = BodyType::OnDemand : BodyType, decompress = true)
     headers = Headers.new
 
@@ -44,6 +47,7 @@ module HTTP
     end
   end
 
+  # :nodoc:
   def self.parse_header(line)
     # This is basically
     #
@@ -82,6 +86,7 @@ module HTTP
     {name, value}
   end
 
+  # :nodoc:
   def self.serialize_headers_and_body(io, headers, body, version)
     # prepare either chunked response headers if protocol supports it
     # or consume the io to get the Content-Length header
@@ -123,6 +128,7 @@ module HTTP
     end
   end
 
+  # :nodoc:
   def self.keep_alive?(message)
     case message.headers["Connection"]?.try &.downcase
     when "keep-alive"
@@ -139,6 +145,7 @@ module HTTP
     end
   end
 
+  # :nodoc:
   def self.content_type(message)
     message.headers["Content-Type"]?.try &.[/[^;]*/]
   end
@@ -159,7 +166,8 @@ module HTTP
     time.to_s("%a, %d %b %Y %H:%M:%S GMT")
   end
 
-  def self.default_status_message_for(status_code)
+  # Returns the default status message of the given HTTP status code.
+  def self.default_status_message_for(status_code : Int)
     case status_code
     when 100 then "Continue"
     when 101 then "Switching Protocols"

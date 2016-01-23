@@ -1,4 +1,9 @@
+# A `Hash`-like object that holds HTTP headers.
+#
+# Two headers are considered the same if their downcase representation is the same
+# (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
+  # :nodoc:
   record Key, name do
     forward_missing_to @name
 

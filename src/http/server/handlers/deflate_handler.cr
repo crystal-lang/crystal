@@ -1,5 +1,7 @@
 require "zlib"
 
+# A handler that configures an `HTTP::Server::Response` to compress the response
+# output, either using gzip or deflate, depending on the `Accept-Encoding` request header.
 class HTTP::DeflateHandler < HTTP::Handler
   def call(context)
     encoding = context.request.headers["Accept-Encoding"]?
