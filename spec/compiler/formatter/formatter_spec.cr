@@ -777,4 +777,8 @@ describe Crystal::Formatter do
   assert_format "case 1\nwhen 2 # a\n  # b\nend"
 
   assert_format "{} of A => B\n{} of Foo => Bar"
+
+  assert_format "<<-HTML\n  \#{1}x\n  HTML"
+  assert_format "<<-HTML\n  \#{1}x\n  y\n  HTML"
+  assert_format "<<-HTML\n  \#{1}x\n  y\n  z\n  HTML"
 end
