@@ -199,7 +199,7 @@ class Object
   # ```
   macro getter(*names)
     {% for name in names %}
-      {% name = name.var if name.class_name == "DeclareVar" || name.class_name == "TypeDeclaration" %}
+      {% name = name.var if name.is_a?(TypeDeclaration) %}
 
       def {{name.id}}
         @{{name.id}}
@@ -240,7 +240,7 @@ class Object
   # ```
   macro getter!(*names)
     {% for name in names %}
-      {% name = name.var if name.class_name == "DeclareVar" || name.class_name == "TypeDeclaration" %}
+      {% name = name.var if name.is_a?(TypeDeclaration) %}
 
       def {{name.id}}?
         @{{name.id}}
@@ -281,7 +281,7 @@ class Object
   # ```
   macro getter?(*names)
     {% for name in names %}
-      {% name = name.var if name.class_name == "DeclareVar" || name.class_name == "TypeDeclaration" %}
+      {% name = name.var if name.is_a?(TypeDeclaration) %}
 
       def {{name.id}}?
         @{{name.id}}
@@ -317,7 +317,7 @@ class Object
   # ```
   macro setter(*names)
     {% for name in names %}
-      {% if name.class_name == "DeclareVar" || name.class_name == "TypeDeclaration" %}
+      {% if name.is_a?(TypeDeclaration) %}
         def {{name.var.id}}=(@{{name.var.id}} : {{name.type}})
         end
       {% else %}
