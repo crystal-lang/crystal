@@ -179,6 +179,10 @@ module Crystal
       def initialize(@codegen)
       end
 
+      def visit(node : FileNode)
+        true
+      end
+
       def visit(node : Expressions)
         true
       end
@@ -264,16 +268,13 @@ module Crystal
     end
 
     def visit(node : FileNode)
-      old_vars = context.vars
-      context.vars = LLVMVars.new
-
-      file_module = @mod.file_module(node.filename)
-      if vars = file_module.vars?
-        alloca_vars vars, file_module
+      with_context(Context.new(context.fun, context.type)) do
+        file_module = @mod.file_module(node.filename)
+        if vars = file_module.vars?
+          alloca_vars vars, file_module
+        end
+        node.node.accept self
       end
-      node.node.accept self
-
-      context.vars = old_vars
 
       false
     end
