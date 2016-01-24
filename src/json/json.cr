@@ -15,7 +15,7 @@
 # ```
 # require "json"
 #
-# value = JSON.parse("[1, 2, 3]") # :: JSON::Any
+# value = JSON.parse("[1, 2, 3]") # : JSON::Any
 #
 # value[0]              # => 1
 # typeof(value[0])      # => JSON::Any

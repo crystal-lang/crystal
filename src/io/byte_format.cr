@@ -61,7 +61,7 @@ module IO::ByteFormat
         end
 
         def self.decode(type : {{type.id}}.class, io : IO)
-          buffer :: UInt8[{{2 ** (i / 2)}}]
+          buffer = uninitialized UInt8[{{2 ** (i / 2)}}]
           io.read_fully(buffer.to_slice)
           buffer.reverse! unless SystemEndian == self
           (buffer.to_unsafe as Pointer({{type.id}})).value

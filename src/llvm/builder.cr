@@ -84,7 +84,7 @@ class LLVM::Builder
     end
 
     def {{method_name.id}}(value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
-      indices :: LLVM::Value[2]
+      indices = uninitialized LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
       Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.to_unsafe as LibLLVM::ValueRef*), 2, name)

@@ -60,7 +60,7 @@ macro parallel(*jobs)
   %channel = Channel(Bool).new
 
   {% for job, i in jobs %}
-    %ret{i} :: typeof({{job}})
+    %ret{i} = uninitialized typeof({{job}})
     spawn do
       %ret{i} = {{job}}
       %channel.send true
