@@ -79,7 +79,7 @@ module Crystal
         unless instance_type.allowed_in_generics?
           subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
         end
-        instance_type
+        instance_type.virtual_type
       end
 
       @in_is_a = old_in_is_a
