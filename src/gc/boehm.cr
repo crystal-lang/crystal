@@ -88,16 +88,10 @@ module GC
   end
 
   def self.add_finalizer(object : T)
-    if object.responds_to?(:finalize)
-      LibGC.register_finalizer_ignore_self(object as Void*,
-        ->(obj, data) {
-          same_object = obj as T
-          if same_object.responds_to?(:finalize)
-            same_object.finalize
-          end
-        }, nil, nil, nil)
-      nil
-    end
+    LibGC.register_finalizer_ignore_self(object as Void*,
+      ->(obj, data) { (obj as T).finalize },
+      nil, nil, nil)
+    nil
   end
 
   def self.add_root(object : Reference)
