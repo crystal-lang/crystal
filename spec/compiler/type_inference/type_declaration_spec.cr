@@ -207,4 +207,20 @@ describe "Type inference: type declaration" do
         "use a more specific type"
     end
   end
+
+  it "declares instance var with union type with a virtual member" do
+    assert_type("
+      class Parent; end
+      class Child < Parent; end
+
+      class Foo
+        @x : Parent?
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x") { |mod| mod.union_of(mod.types["Parent"].virtual_type!, mod.nil) }
+  end
 end
