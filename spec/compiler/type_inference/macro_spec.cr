@@ -602,4 +602,20 @@ describe "Type inference: macro" do
       end
       )) { |mod| mod.nil }
   end
+
+  it "can access variable inside macro expansion (#2057)" do
+    assert_type(%(
+      macro foo
+        x
+      end
+
+      def method
+        yield 1
+      end
+
+      method do |x|
+        foo
+      end
+      )) { int32 }
+  end
 end
