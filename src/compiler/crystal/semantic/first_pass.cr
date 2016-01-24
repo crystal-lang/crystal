@@ -606,11 +606,26 @@ module Crystal
 
     def visit(node : Block)
       @inside_block += 1
-      true
-    end
 
-    def end_visit(node : Block)
+      old_vars_keys = @vars.keys
+
+      # When accepting a block, declare variables for block arguments.
+      # These are needed for macro expansions to parser identifiers
+      # as variables and not calls.
+      node.args.each do |arg|
+        @vars[arg.name] = MetaVar.new(arg.name)
+      end
+
+      node.body.accept self
+
+      # Now remove these vars, but only if they weren't vars before
+      node.args.each do |arg|
+        @vars.delete(arg.name) unless old_vars_keys.includes?(arg.name)
+      end
+
       @inside_block -= 1
+
+      false
     end
 
     def inside_block?
