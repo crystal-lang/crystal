@@ -869,11 +869,10 @@ describe "Parser" do
   it_parses "a = 1\nfoo - a", [Assign.new("a".var, 1.int32), Call.new("foo".call, "-", "a".var)]
   it_parses "a = 1\nfoo -a", [Assign.new("a".var, 1.int32), Call.new(nil, "foo", Call.new("a".var, "-"))]
 
-  it_parses "a :: Foo", TypeDeclaration.new("a".var, "Foo".path)
-  it_parses "a :: Foo | Int32", TypeDeclaration.new("a".var, Union.new(["Foo".path, "Int32".path] of ASTNode))
-  it_parses "@a :: Foo | Int32", TypeDeclaration.new("@a".instance_var, Union.new(["Foo".path, "Int32".path] of ASTNode))
   it_parses "a : Foo", TypeDeclaration.new("a".var, "Foo".path)
+  it_parses "a : Foo | Int32", TypeDeclaration.new("a".var, Union.new(["Foo".path, "Int32".path] of ASTNode))
   it_parses "@a : Foo", TypeDeclaration.new("@a".instance_var, "Foo".path)
+  it_parses "@a : Foo | Int32", TypeDeclaration.new("@a".instance_var, Union.new(["Foo".path, "Int32".path] of ASTNode))
   it_parses "@@a : Foo", TypeDeclaration.new("@@a".class_var, "Foo".path)
   it_parses "$x : Foo", TypeDeclaration.new(Global.new("$x"), "Foo".path)
 
@@ -1276,6 +1275,11 @@ describe "Parser" do
   assert_syntax_error "def foo() :String\nend", "a space is mandatory between ':' and return type"
 
   assert_syntax_error "foo.responds_to?"
+
+  assert_syntax_error "foo :: Foo"
+  assert_syntax_error "@foo :: Foo"
+  assert_syntax_error "@@foo :: Foo"
+  assert_syntax_error "$foo :: Foo"
 
   describe "end locations" do
     assert_end_location "nil"

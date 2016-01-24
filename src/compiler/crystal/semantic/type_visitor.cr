@@ -128,42 +128,13 @@ module Crystal
     def visit(node : TypeDeclaration)
       case var = node.var
       when Var
-        if @vars[var.name]?
-          var.raise "variable '#{var.name}' already declared"
-        end
-
-        node.declared_type.accept self
-
-        var_type = check_declare_var_type node
-        var.type = var_type
-
-        meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
-        if (existing_type = meta_var.type?) && existing_type != var_type
-          node.raise "variable '#{var.name}' already declared with type #{existing_type}"
-        end
-
-        meta_var.bind_to(var)
-        meta_var.freeze_type = var_type
-
-        @vars[var.name] = meta_var
-
-        check_exception_handler_vars(var.name, node)
+        node.raise "declaring the type of a local variable is not yet supported"
       when InstanceVar
-        type = scope? || current_type
         if @untyped_def
-          node.declared_type.accept self
-
-          var_type = check_declare_var_type node
-
-          ivar = lookup_instance_var var
-          ivar.type = var_type
-          var.type = var_type
-
-          if @is_initialize
-            @vars[var.name] = MetaVar.new(var.name, var_type)
-          end
+          node.raise "declaring the type of an instance variable must be done at the class level"
         end
 
+        type = scope? || current_type
         case type
         when NonGenericClassType
           node.declared_type.accept self
@@ -177,6 +148,10 @@ module Crystal
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end
       when ClassVar
+        if @untyped_def
+          node.raise "declaring the type of a class variable must be done at the class level"
+        end
+
         class_var = lookup_class_var(var, bind_to_nil_if_non_existent: false)
 
         node.declared_type.accept self
@@ -184,6 +159,10 @@ module Crystal
 
         class_var.freeze_type = var_type
       when Global
+        if @untyped_def
+          node.raise "declaring the type of a global variable must be done at the class level"
+        end
+
         global_var = mod.global_vars[var.name]?
         unless global_var
           global_var = Var.new(var.name)

@@ -518,7 +518,7 @@ module Crystal
     def inspect(io)
       io << name
       if type = type?
-        io << " :: "
+        io << " : "
         type.to_s(io)
       end
       io << " (nil-if-read)" if nil_if_read

@@ -87,7 +87,9 @@ describe "Type inference: type declaration" do
       class Foo(T)
       end
 
-      x : Foo
+      class Baz
+        @x : Foo
+      end
       ),
       "can't declare variable of generic non-instantiated type Foo"
   end
@@ -138,73 +140,43 @@ describe "Type inference: type declaration" do
       "type must be Int32, not Nil"
   end
 
-  # TODO: remove these after 0.11
-
-  it "declares as uninitialized" do
-    assert_type("a :: Int32") { |mod| mod.nil }
-  end
-
-  it "declares as uninitialized and reads it" do
-    assert_type("a :: Int32; a") { int32 }
-  end
-
-  it "declares an instance variable in initialize as uninitialized" do
-    assert_type("
-      class Foo
-        def initialize
-          @x :: Int32
-        end
-
-        def x
-          @x
-        end
-      end
-
-      Foo.new.x
-      ") { int32 }
-  end
-
-  it "errors if declaring generic type without type vars (with instance var)" do
+  it "errors (for now) when typing a local variable" do
     assert_error %(
-      class Foo(T)
-      end
-
-      class Bar
-        def initialize
-          @x :: Foo
-        end
-      end
-
-      Bar.new
+      x : Int32
       ),
-      "can't declare variable of generic non-instantiated type Foo"
+      "declaring the type of a local variable is not yet supported"
   end
 
-  it "errors if declares var and then assigns other type" do
+  it "errors when typing an instance variable inside a method" do
     assert_error %(
-      x :: Int32
-      x = 1_i64
-      ),
-      "type must be Int32, not (Int32 | Int64)"
-  end
-
-  it "errors if declaring variable multiple times with different types (#917)" do
-    assert_error %(
-      if 1 == 0
-        buf :: Int32
-      else
-        buf :: Float64
+      def foo
+        @x : Int32
       end
+
+      foo
       ),
-      "variable 'buf' already declared with type Int32"
+      "declaring the type of an instance variable must be done at the class level"
   end
 
-  %w(Object Value Reference Number Int Float Struct Class Enum).each do |type|
-    it "disallows declaring var of type #{type}" do
-      assert_error %(
-        x :: #{type}
-        ),
-        "use a more specific type"
-    end
+  it "errors when typing a class variable inside a method" do
+    assert_error %(
+      def foo
+        @@x : Int32
+      end
+
+      foo
+      ),
+      "declaring the type of a class variable must be done at the class level"
+  end
+
+  it "errors when typing a global variable inside a method" do
+    assert_error %(
+      def foo
+        $x : Int32
+      end
+
+      foo
+      ),
+      "declaring the type of a global variable must be done at the class level"
   end
 end

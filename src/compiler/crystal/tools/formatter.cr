@@ -2493,18 +2493,9 @@ module Crystal
     def visit(node : TypeDeclaration)
       accept node.var
       skip_space_or_newline
-      case @token.type
-      when :"::", :":"
-        # OK
-      else
-        raise "expecting `::` or `:`, not `#{@token.type}, #{@token.value}`, at #{@token.location}"
-      end
+      check :":"
       next_token_skip_space_or_newline
-      if node.var.is_a?(Var) || @inside_def > 0
-        write " = uninitialized "
-      else
-        write " : "
-      end
+      write " : "
       accept node.declared_type
 
       false

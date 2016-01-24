@@ -807,7 +807,7 @@ module Macros
   # class Generic < ASTNode
   # end
 
-  # A type declaration like `x :: Int32`
+  # A type declaration like `x : Int32`
   class TypeDeclaration < ASTNode
     # Returns the variable part of the declaration.
     def var : MacroId

@@ -1039,7 +1039,7 @@ module Crystal
       @wants_regex = false
       next_token_skip_space
 
-      if (@token.type == :"::") || (@no_type_declaration == 0 && @token.type == :":")
+      if @no_type_declaration == 0 && @token.type == :":"
         next_token_skip_space
         var_type = parse_single_type
         TypeDeclaration.new(var, var_type).at(var.location)
@@ -3155,7 +3155,7 @@ module Crystal
               Call.new(nil, name, args, nil, block_arg, named_args, global, name_column_number, last_call_has_parenthesis)
             end
           else
-            if (@token.type == :"::") || (@no_type_declaration == 0 && @token.type == :":")
+            if @no_type_declaration == 0 && @token.type == :":"
               next_token_skip_space_or_newline
               declared_type = parse_single_type
               declare_var = TypeDeclaration.new(Var.new(name).at(location), declared_type).at(location)
