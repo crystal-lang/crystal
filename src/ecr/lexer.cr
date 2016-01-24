@@ -95,7 +95,7 @@ class ECR::Lexer
           @token.value = if is_escape
                            "<%#{string_range(start_pos, current_pos + 2)}"
                          else
-                           @token.value = string_range(start_pos)
+                           string_range(start_pos)
                          end
           next_char
           next_char
