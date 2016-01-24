@@ -562,9 +562,11 @@ module Crystal
       var = mod.global_vars[target.name]?
       unless var
         var = Var.new(target.name)
-        if @typed_def
-          var.bind_to mod.nil_var
-        end
+
+        # If we are assigning to a global inside a method, make it nilable
+        # if this is the first time we are assigning to it, because
+        # the method might be called conditionally
+        var.bind_to mod.nil_var if @typed_def
         mod.global_vars[target.name] = var
       end
       var.add_attributes(target.attributes)
@@ -576,7 +578,10 @@ module Crystal
     end
 
     def type_assign(target : ClassVar, value, node)
-      var = lookup_class_var target, bind_to_nil_if_non_existent: false
+      # If we are assigning to a class variable inside a method, make it nilable
+      # if this is the first time we are assigning to it, because
+      # the method might be called conditionally
+      var = lookup_class_var target, bind_to_nil_if_non_existent: !!@typed_def
       check_valid_attributes var, ValidClassVarAttributes, "class variable"
 
       value.accept self

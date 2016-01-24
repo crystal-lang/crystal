@@ -169,4 +169,17 @@ describe "Type inference: class var" do
       ),
       "can't use class variable with generic types, only with generic types instances"
   end
+
+  it "types class var as nil if assigned for the first time inside method (#2059)" do
+    assert_type("
+      class Foo
+        def self.foo
+          @@foo = 1
+          @@foo
+        end
+      end
+
+      Foo.foo
+      ") { nilable int32 }
+  end
 end

@@ -120,7 +120,7 @@ describe "Type inference: type declaration" do
 
       Foo.x = true
       ),
-      "type must be Int32, not Bool"
+      "type must be Int32, not Nil"
   end
 
   it "declares class variable (2)" do
