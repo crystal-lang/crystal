@@ -392,6 +392,9 @@ describe Crystal::Formatter do
   assert_format "class Foo\nx = 1\nend", "class Foo\n  x = 1\nend"
   assert_format "x  =   uninitialized   Int32", "x = uninitialized Int32"
 
+  assert_format "property  x  ::  Int32", "property x : Int32"
+  assert_format "foo { x  ::  Int32 }", "foo { x = uninitialized Int32 }"
+
   assert_format "def foo\n@x  ::  Int32\nend", "def foo\n  @x = uninitialized Int32\nend"
   assert_format "def foo\n@x   =  uninitialized   Int32\nend", "def foo\n  @x = uninitialized Int32\nend"
 

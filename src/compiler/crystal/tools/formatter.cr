@@ -55,6 +55,7 @@ module Crystal
       @last_write = ""
       @exp_needs_indent = true
       @inside_def = 0
+      @inside_call_arg = 0
 
       # This stores the column number (if any) of each comment in every line
       @when_infos = [] of AlignInfo
@@ -1681,7 +1682,7 @@ module Crystal
     def visit(node : Call)
       # This is the case of `...`
       if node.name == "`"
-        accept node.args.first
+        accept_call_arg node.args.first
         return false
       end
 
@@ -1784,13 +1785,17 @@ module Crystal
                 # This is the case of `x[y] op= value`
                 write_token " ", @token.type
                 skip_space
-                accept_assign_value_after_equals (last_arg as Call).args.last
+                inside_call_arg do
+                  accept_assign_value_after_equals (last_arg as Call).args.last
+                end
                 return false
               end
 
               write " ="
               next_token_skip_space
-              accept_assign_value_after_equals last_arg
+              inside_call_arg do
+                accept_assign_value_after_equals last_arg
+              end
             end
 
             return false
@@ -1802,7 +1807,7 @@ module Crystal
               skip_space_or_newline
               write_token " ", :"=", " "
               skip_space_or_newline
-              accept node.args.last
+              accept_call_arg node.args.last
             end
 
             return false
@@ -1826,7 +1831,7 @@ module Crystal
             write_indent(@indent + 2, node.args.last)
           else
             write " " if needs_space
-            accept node.args.last
+            accept_call_arg node.args.last
           end
           return false
         end
@@ -1876,7 +1881,9 @@ module Crystal
           next_token_skip_space
 
           assign_arg = (node.args.last as Call).args.last
-          accept_assign_value_after_equals assign_arg
+          inside_call_arg do
+            accept_assign_value_after_equals assign_arg
+          end
           @dot_column = current_dot_column
           return false
         end
@@ -1893,7 +1900,9 @@ module Crystal
         else
           write " ="
           skip_space
-          accept_assign_value_after_equals node.args.last
+          inside_call_arg do
+            accept_assign_value_after_equals node.args.last
+          end
         end
 
         @dot_column = current_dot_column
@@ -1957,6 +1966,19 @@ module Crystal
       false
     end
 
+    def accept_call_arg(node)
+      inside_call_arg do
+        node.accept self
+      end
+    end
+
+    def inside_call_arg
+      @inside_call_arg += 1
+      value = yield
+      @inside_call_arg -= 1
+      value
+    end
+
     def format_call_args(node : ASTNode, has_parentheses)
       format_args node.args, has_parentheses, node.named_args, node.block_arg
     end
@@ -1999,10 +2021,12 @@ module Crystal
 
       skip_space_or_newline
       args.each_with_index do |arg, i|
-        if next_needs_indent
-          write_indent(needed_indent, arg)
-        else
-          indent(@indent, arg)
+        inside_call_arg do
+          if next_needs_indent
+            write_indent(needed_indent, arg)
+          else
+            indent(@indent, arg)
+          end
         end
         next_needs_indent = false
         unless last?(i, args)
@@ -2513,7 +2537,7 @@ module Crystal
         raise "expecting `::` or `:`, not `#{@token.type}, #{@token.value}`, at #{@token.location}"
       end
       next_token_skip_space_or_newline
-      if node.var.is_a?(Var) || @inside_def > 0
+      if @inside_call_arg == 0 && (node.var.is_a?(Var) || @inside_def > 0)
         write " = uninitialized "
       else
         write " : "
