@@ -602,4 +602,15 @@ describe "Type inference: lib" do
       foo
       )) { int32 }
   end
+
+  it "errors if using out with varargs" do
+    assert_error %(
+      lib LibX
+        fun x(...)
+      end
+
+      LibX.x(out z)
+      ),
+      "can't use out at varargs position: declare the variable with `z = uninitialized ...` and pass it with `pointerof(z)`"
+  end
 end
