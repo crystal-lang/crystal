@@ -44,6 +44,7 @@ class HTTP::Server
 
     # :nodoc:
     def reset
+      @headers.clear
       @status_code = 200
       @wrote_headers = false
       @upgraded = false

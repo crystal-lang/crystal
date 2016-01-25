@@ -138,6 +138,14 @@ module HTTP
         response.flush
         io.to_s.should eq("HTTP/1.0 200 OK\r\n\r\n1234")
       end
+
+      it "resets and clears headers" do
+        io = MemoryIO.new
+        response = Response.new(io)
+        response.headers["Foo"] = "Bar"
+        response.reset
+        response.headers.empty?.should be_true
+      end
     end
   end
 
