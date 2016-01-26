@@ -358,7 +358,7 @@ describe "File" do
     it "can write to a file" do
       filename = "#{__DIR__}/data/temp_write.txt"
       File.write(filename, "hello")
-      File.read(filename).strip.should eq("hello")
+      File.read(filename).should eq("hello")
       File.delete(filename)
     end
 
@@ -401,7 +401,7 @@ describe "File" do
     end
   end
 
-  describe "open with perm" do
+  it "opens with perm" do
     filename = "#{__DIR__}/data/temp_write.txt"
     perm = 0o600
     File.open(filename, "w", perm) do |file|
@@ -649,6 +649,47 @@ describe "File" do
 
     it_raises_on_null_byte "symlink?" do
       File.symlink?("foo\0bar")
+    end
+  end
+
+  describe "encoding" do
+    it "writes with encoding" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello", encoding: "UCS-2LE")
+      File.read(filename).to_slice.should eq("hello".encode("UCS-2LE"))
+      File.delete(filename)
+    end
+
+    it "reads with encoding" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello", encoding: "UCS-2LE")
+      File.read(filename, encoding: "UCS-2LE").should eq("hello")
+      File.delete(filename)
+    end
+
+    it "opens with encoding" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello", encoding: "UCS-2LE")
+      File.open(filename, encoding: "UCS-2LE") do |file|
+        file.gets_to_end.should eq("hello")
+      end
+      File.delete filename
+    end
+
+    it "does each line with encoding" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello", encoding: "UCS-2LE")
+      File.each_line(filename, encoding: "UCS-2LE") do |line|
+        line.should eq("hello")
+      end
+      File.delete filename
+    end
+
+    it "reads lines with encoding" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello", encoding: "UCS-2LE")
+      File.read_lines(filename, encoding: "UCS-2LE").should eq(["hello"])
+      File.delete filename
     end
   end
 end

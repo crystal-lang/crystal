@@ -38,12 +38,22 @@ module HTTP
           end
         end
 
+        check_content_type_charset(body, headers)
+
         yield headers, body
         break
       end
 
       name, value = parse_header(line)
       headers.add(name, value)
+    end
+  end
+
+  private def self.check_content_type_charset(body, headers)
+    return unless body
+
+    if charset = content_type_and_charset(headers).charset
+      body.set_encoding(charset, invalid: :skip)
     end
   end
 
@@ -145,9 +155,30 @@ module HTTP
     end
   end
 
+  record ComputedContentTypeHeader, content_type, charset
+
   # :nodoc:
-  def self.content_type(message)
-    message.headers["Content-Type"]?.try &.[/[^;]*/]
+  def self.content_type_and_charset(headers)
+    content_type = headers["Content-Type"]?
+    return ComputedContentTypeHeader.new(nil, nil) unless content_type
+
+    # Avoid allocating an array for the split if there's no ';'
+    if content_type.index(';')
+      pieces = content_type.split(';')
+      (1...pieces.size).each do |i|
+        piece = pieces[i]
+        eq_index = piece.index('=')
+        if eq_index
+          key = piece[0...eq_index].strip
+          if key
+            value = piece[eq_index + 1..-1].strip
+            return ComputedContentTypeHeader.new(pieces[0].strip, value)
+          end
+        end
+      end
+    end
+
+    ComputedContentTypeHeader.new(content_type.strip, nil)
   end
 
   def self.parse_time(time_str : String)

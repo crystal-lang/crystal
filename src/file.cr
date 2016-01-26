@@ -30,7 +30,7 @@ class File < IO::FileDescriptor
   # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
 
-  def initialize(filename, mode = "r", perm = DEFAULT_CREATE_MODE)
+  def initialize(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
     oflag = open_flag(mode) | LibC::O_CLOEXEC
 
     fd = LibC.open(filename.check_no_null_byte, oflag, perm)
@@ -39,6 +39,7 @@ class File < IO::FileDescriptor
     end
 
     @path = filename
+    self.set_encoding(encoding, invalid: invalid) if encoding
     super(fd, blocking: true)
   end
 
@@ -330,12 +331,12 @@ class File < IO::FileDescriptor
     (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
   end
 
-  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE)
-    new filename, mode, perm
+  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
+    new filename, mode, perm, encoding, invalid
   end
 
-  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE)
-    file = File.new filename, mode, perm
+  def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
+    file = File.new filename, mode, perm, encoding, invalid
     begin
       yield file
     ensure
@@ -350,12 +351,17 @@ class File < IO::FileDescriptor
   # File.read("./bar")
   # # => foo
   # ```
-  def self.read(filename)
+  def self.read(filename, encoding = nil, invalid = nil)
     File.open(filename, "r") do |file|
-      size = file.size.to_i
-      String.new(size) do |buffer|
-        file.read Slice.new(buffer, size)
-        {size.to_i, 0}
+      if encoding
+        file.set_encoding(encoding, invalid: invalid)
+        file.gets_to_end
+      else
+        size = file.size.to_i
+        String.new(size) do |buffer|
+          file.read Slice.new(buffer, size)
+          {size.to_i, 0}
+        end
       end
     end
   end
@@ -367,8 +373,8 @@ class File < IO::FileDescriptor
   #   # loop
   # end
   # ```
-  def self.each_line(filename)
-    File.open(filename, "r") do |file|
+  def self.each_line(filename, encoding = nil, invalid = nil)
+    File.open(filename, "r", encoding: encoding, invalid: invalid) do |file|
       file.each_line do |line|
         yield line
       end
@@ -383,9 +389,9 @@ class File < IO::FileDescriptor
   # File.read_lines("./foobar")
   # # => ["foo\n","bar\n"]
   # ```
-  def self.read_lines(filename)
+  def self.read_lines(filename, encoding = nil, invalid = nil)
     lines = [] of String
-    each_line(filename) do |line|
+    each_line(filename, encoding: encoding, invalid: invalid) do |line|
       lines << line
     end
     lines
@@ -397,8 +403,8 @@ class File < IO::FileDescriptor
   # ```crystal
   # File.write("./foo", "bar")
   # ```
-  def self.write(filename, content, perm = DEFAULT_CREATE_MODE)
-    File.open(filename, "w", perm) do |file|
+  def self.write(filename, content, perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
+    File.open(filename, "w", perm, encoding: encoding, invalid: invalid) do |file|
       file.print(content)
     end
   end

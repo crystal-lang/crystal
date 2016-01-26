@@ -225,7 +225,7 @@ struct String::Formatter
       temp_buf = temp_buf(len)
       count = LibC.snprintf(temp_buf, len, format_buf, float)
 
-      @io.write Slice.new(temp_buf, count)
+      @io.write_utf8 Slice.new(temp_buf, count)
     else
       raise ArgumentError.new("expected a float, not #{arg.inspect}")
     end

@@ -312,15 +312,15 @@ struct Int
 
     case self
     when 0
-      io.write_byte '0'.ord.to_u8
+      io << '0'
       return
     when 1
-      io.write_byte '1'.ord.to_u8
+      io << '1'
       return
     end
 
     internal_to_s(base, upcase) do |ptr, count|
-      io.write Slice.new(ptr, count)
+      io.write_utf8 Slice.new(ptr, count)
     end
   end
 

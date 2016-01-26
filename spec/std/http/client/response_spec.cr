@@ -190,6 +190,19 @@ class HTTP::Client
     it "returns no content_type when header is missing" do
       response = Response.new(200, "")
       response.content_type.should be_nil
+      response.charset.should be_nil
+    end
+
+    it "returns content type and no charset" do
+      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type": "text/plain"})
+      response.content_type.should eq("text/plain")
+      response.charset.should be_nil
+    end
+
+    it "returns content type and charset, removes semicolon" do
+      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type": "text/plain ; charset=UTF-8"})
+      response.content_type.should eq("text/plain")
+      response.charset.should eq("UTF-8")
     end
   end
 end

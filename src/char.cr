@@ -541,7 +541,8 @@ struct Char
   # by UTF-8 to the given IO.
   def to_s(io : IO)
     if ord <= 0x7f
-      io.write_byte ord.to_u8
+      byte = ord.to_u8
+      io.write_utf8 Slice.new(pointerof(byte), 1)
     else
       chars = uninitialized UInt8[4]
       i = 0
@@ -549,7 +550,7 @@ struct Char
         chars[i] = byte
         i += 1
       end
-      io.write chars.to_slice[0, i]
+      io.write_utf8 chars.to_slice[0, i]
     end
   end
 
