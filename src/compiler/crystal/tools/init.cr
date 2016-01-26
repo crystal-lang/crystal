@@ -9,19 +9,21 @@ module Crystal
       config = Config.new
 
       OptionParser.parse(args) do |opts|
-        opts.banner = %{USAGE: crystal init TYPE NAME [DIR]
+        opts.banner = <<-USAGE
+          Usage: crystal init TYPE NAME [DIR]
 
-TYPE is one of:
-    lib                      creates library skeleton
-    app                      creates application skeleton
+          TYPE is one of:
+              lib                      creates library skeleton
+              app                      creates application skeleton
 
-NAME - name of project to be generated,
-       eg: example
-DIR  - directory where project will be generated,
-       default: NAME, eg: ./custom/path/example
-}
+          NAME - name of project to be generated,
+                 eg: example
+          DIR  - directory where project will be generated,
+                 default: NAME, eg: ./custom/path/example
 
-        opts.on("--help", "Shows this message") do
+          USAGE
+
+        opts.on("--help", "show this help") do
           puts opts
           exit
         end
