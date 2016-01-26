@@ -29,7 +29,7 @@ class UNIXServer < UNIXSocket
     loop do
       client_fd = LibC.accept(@fd, out client_addr, out client_addrlen)
       if client_fd == -1
-        if LibC.errno == Errno::EAGAIN
+        if Errno.value == Errno::EAGAIN
           wait_readable
         else
           raise Errno.new("Error accepting socket at #{path}")

@@ -26,7 +26,7 @@ class Event::SignalChildHandler
       when 0
         return nil
       when -1
-        raise Errno.new("waitpid") unless LibC.errno == Errno::ECHILD
+        raise Errno.new("waitpid") unless Errno.value == Errno::ECHILD
         return nil
       else
         status = Process::Status.new exit_code

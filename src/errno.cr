@@ -2,8 +2,8 @@ lib LibC
   ifdef linux
     @[ThreadLocal]
     $errno : Int
-  else
-    $errno : Int
+  elsif darwin
+    fun __error : Int*
   end
 
   fun strerror(errnum : Int) : Char*
@@ -191,8 +191,24 @@ class Errno < Exception
   getter errno
 
   def initialize(message)
-    errno = LibC.errno
+    errno = Errno.value
     @errno = errno
     super "#{message}: #{String.new(LibC.strerror(errno))}"
+  end
+
+  def self.value
+    ifdef linux
+      LibC.errno
+    elsif darwin
+      LibC.__error.value
+    end
+  end
+
+  def self.value=(value)
+    ifdef linux
+      LibC.errno = value
+    elsif darwin
+      LibC.__error.value = value
+    end
   end
 end

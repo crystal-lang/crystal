@@ -243,7 +243,7 @@ module IO
         read_size = read Slice.new(buffer, size)
         if read_size == 0
           raise EOFError.new "read_nonblock: read nothing"
-        elsif LibC.errno == LibC::EWOULDBLOCK
+        elsif Errno.value == LibC::EWOULDBLOCK
           raise Errno.new "exception in read_nonblock"
         else
           {read_size.to_i, 0}

@@ -218,7 +218,7 @@ class IO::FileDescriptor
         return bytes_read
       end
 
-      if LibC.errno == Errno::EAGAIN
+      if Errno.value == Errno::EAGAIN
         wait_readable
       else
         raise Errno.new "Error reading file"
@@ -238,10 +238,10 @@ class IO::FileDescriptor
         return total if count == 0
         slice += bytes_written
       else
-        if LibC.errno == Errno::EAGAIN
+        if Errno.value == Errno::EAGAIN
           wait_writable
           next
-        elsif LibC.errno == Errno::EBADF
+        elsif Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing"
         else
           raise Errno.new "Error writing file"
@@ -311,7 +311,7 @@ class IO::FileDescriptor
 
     err = nil
     if LibC.close(@fd) != 0
-      case LibC.errno
+      case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else

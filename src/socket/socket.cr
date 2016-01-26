@@ -193,7 +193,7 @@ class Socket < IO::FileDescriptor
       ret = LibC.connect(@fd, ai.addr, ai.addrlen)
       return nil if ret == 0 # success
 
-      case LibC.errno
+      case Errno.value
       when Errno::EISCONN
         return nil # success
       when Errno::EINPROGRESS, Errno::EALREADY

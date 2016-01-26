@@ -172,7 +172,7 @@ class File < IO::FileDescriptor
   # ```
   def self.file?(path)
     if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if LibC.errno == Errno::ENOENT
+      if Errno.value == Errno::ENOENT
         return false
       else
         raise Errno.new("stat")
@@ -321,7 +321,7 @@ class File < IO::FileDescriptor
   # Returns true if the pointed file is a symlink.
   def self.symlink?(filename)
     if LibC.lstat(filename.check_no_null_byte, out stat) != 0
-      if LibC.errno == Errno::ENOENT
+      if Errno.value == Errno::ENOENT
         return false
       else
         raise Errno.new("stat")

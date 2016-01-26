@@ -108,11 +108,11 @@ class Dir
   # ```
   def read
     # readdir() returns NULL for failure and sets errno or returns NULL for EOF but leaves errno as is.  wtf.
-    LibC.errno = 0
+    Errno.value = 0
     ent = LibC.readdir(@dir)
     if ent
       String.new(ent.value.name.to_unsafe)
-    elsif LibC.errno != 0
+    elsif Errno.value != 0
       raise Errno.new("readdir")
     else
       nil
@@ -185,7 +185,7 @@ class Dir
   # Returns true if the given path exists and is a directory
   def self.exists?(path)
     if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if LibC.errno == Errno::ENOENT
+      if Errno.value == Errno::ENOENT
         return false
       else
         raise Errno.new("stat")
