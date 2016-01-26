@@ -144,6 +144,12 @@ module Crystal
             while true
               char = next_char
               case
+              when char == '\r'
+                if peek_next_char == '\n'
+                  next
+                else
+                  raise "exepcting '\\n' after '\\r'"
+                end
               when char == '\n'
                 @line_number += 1
                 @column_number = 0
@@ -1676,7 +1682,14 @@ module Crystal
           @token.type = :STRING
           @token.value = "#"
         end
-      when '\n'
+      when '\r', '\n'
+        is_slash_r = current_char == '\r'
+        if is_slash_r
+          if next_char != '\n'
+            raise "expecting '\\n' after '\\r'"
+          end
+        end
+
         next_char
         @column_number = 1
         @token.column_number = @column_number
@@ -1707,7 +1720,8 @@ module Crystal
             end
 
             if reached_end &&
-               (current_char == '\n' || current_char == '\0')
+               (current_char == '\n' || current_char == '\0' ||
+               (current_char == '\r' && peek_next_char == '\n' && next_char))
               @token.type = :DELIMITER_END
               @token.delimiter_state = @token.delimiter_state.with_heredoc_indent(indent)
             else
@@ -1715,18 +1729,18 @@ module Crystal
               @column_number = old_column
               @token.column_number = @column_number
               next_string_token delimiter_state
-              @token.value = '\n' + @token.value.to_s
+              @token.value = (is_slash_r ? "\r\n" : '\n') + @token.value.to_s
             end
           else
             @reader.pos = old_pos
             @column_number = old_column
             @token.column_number = @column_number
             @token.type = :STRING
-            @token.value = "\n"
+            @token.value = is_slash_r ? "\r\n" : "\n"
           end
         else
           @token.type = :STRING
-          @token.value = "\n"
+          @token.value = is_slash_r ? "\r\n" : "\n"
         end
       else
         while current_char != string_end &&
@@ -1734,6 +1748,7 @@ module Crystal
               current_char != '\0' &&
               current_char != '\\' &&
               current_char != '#' &&
+              current_char != '\r' &&
               current_char != '\n'
           next_char
         end

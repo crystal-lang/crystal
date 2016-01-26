@@ -1792,8 +1792,9 @@ module Crystal
       pieces.each do |piece|
         value = piece.value
         if value.is_a?(String)
-          # A single '\n' always ends a line in heredoc, according to the lexer
-          if value == "\n"
+          # A single "\n" or "\r\n" always ends a line in heredoc, according to the lexer
+          case value
+          when "\n", "\r\n"
             current_line << value
             line = current_line.to_s
             line = remove_heredoc_from_line(line, indent, piece.line_number - 1) if remove_indent

@@ -169,6 +169,16 @@ describe "Lexer string" do
     tester.string_should_end_correctly
   end
 
+  it "lexes heredoc with \\r\\n" do
+    lexer = Lexer.new("<<-XML\r\nfoo\r\n\nXML")
+    tester = LexerObjects::Strings.new(lexer)
+
+    tester.string_should_start_correctly
+    tester.next_string_token_should_be("foo")
+    tester.next_string_token_should_be("\r\n")
+    tester.string_should_end_correctly
+  end
+
   it "lexes heredoc with spaces before close tag" do
     lexer = Lexer.new("<<-XML\nfoo\n   XML")
     tester = LexerObjects::Strings.new(lexer)
