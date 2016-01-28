@@ -54,5 +54,16 @@ describe DummyDriver do
       result_set.read(UInt64).should eq(1)
       result_set.read(UInt64).should eq(2)
     end
+
+    it "should enumerate records using each" do
+      nums = [] of UInt64
+      result_set = get_dummy.prepare("3,4 1,2").exec
+      result_set.each do
+        nums << result_set.read(UInt64)
+        nums << result_set.read(UInt64)
+      end
+
+      nums.should eq([3, 4, 1, 2])
+    end
   end
 end

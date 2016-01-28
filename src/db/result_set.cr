@@ -5,6 +5,12 @@ module DB
     def initialize(@statement : Statement)
     end
 
+    def each
+      while has_next
+        yield
+      end
+    end
+
     abstract def has_next : Bool
 
     # def read(t : T.class) : T
