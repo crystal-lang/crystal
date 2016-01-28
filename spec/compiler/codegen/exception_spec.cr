@@ -1022,4 +1022,46 @@ describe "Code gen: exception" do
       $a
       )).to_i.should eq(123)
   end
+
+  it "propagates raise status (#2074)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def method1
+          method2
+        end
+
+        def method2
+          if var = @var
+            var.method3
+          end
+        end
+
+        def var=(@var)
+        end
+      end
+
+      class Var
+        def method3
+          raise "OH NO"
+        end
+      end
+
+      # method1 isn't marked as raise because @var's type isn't known yet
+      Foo.new.method1
+
+      foo = Foo.new
+      # This causes method2 to recompute, but method1 doesn't get notified
+      # that it might now raise
+      foo.var = Var.new
+      a = 1
+      begin
+        foo.method1
+      rescue ex
+        a = 2
+      end
+      a
+      )).to_i.should eq(2)
+  end
 end

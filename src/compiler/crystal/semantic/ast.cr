@@ -235,7 +235,9 @@ module Crystal
     property! :original_owner
     property :vars
     property :yield_vars
+
     property :raises
+    @raises = false
 
     property closure
     @closure = false
@@ -264,6 +266,17 @@ module Crystal
     def add_special_var(name)
       special_vars = @special_vars ||= Set(String).new
       special_vars << name
+    end
+
+    def raises=(value)
+      if value != @raises
+        @raises = value
+        @observers.try &.each do |obs|
+          if obs.is_a?(Call)
+            obs.raises = value
+          end
+        end
+      end
     end
   end
 

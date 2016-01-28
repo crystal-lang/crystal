@@ -17,6 +17,9 @@ class Crystal::Call
   getter? uses_with_scope
   @uses_with_scope = false
 
+  property? raises
+  @raises = false
+
   def mod
     scope.program
   end
@@ -86,6 +89,7 @@ class Crystal::Call
 
     if (parent_visitor = @parent_visitor) && matches
       if parent_visitor.typed_def? && matches.any?(&.raises)
+        @raises = true
         parent_visitor.typed_def.raises = true
       end
 
@@ -990,5 +994,15 @@ class Crystal::Call
 
   def detach_subclass_observer
     @subclass_notifier.try &.remove_subclass_observer(self)
+  end
+
+  def raises=(value)
+    if @raises != value
+      @raises = value
+      typed_def = parent_visitor.typed_def?
+      if typed_def
+        typed_def.raises = value
+      end
+    end
   end
 end
