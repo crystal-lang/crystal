@@ -85,7 +85,7 @@ class IPSocket < Socket
     dns_req = DnsRequestCbArg.new
 
     # may fire immediately or on the next event loop
-    req = Scheduler.create_dns_request(host, port.to_s, pointerof(hints), dns_req) do |err, addr, data|
+    req = EventLoop.create_dns_request(host, port.to_s, pointerof(hints), dns_req) do |err, addr, data|
       dreq = data.as(DnsRequestCbArg)
 
       if err == 0
@@ -107,7 +107,7 @@ class IPSocket < Socket
     value = dns_req.value
     # BUG: not thread safe.  change when threads are implemented
     unless value
-      Scheduler.reschedule
+      EventLoop.wait
       value = dns_req.value
     end
 

@@ -23,8 +23,8 @@ class IO::FileDescriptor
     unless blocking
       self.blocking = false
       if @edge_triggerable
-        @read_event = Scheduler.create_fd_read_event(self, @edge_triggerable)
-        @write_event = Scheduler.create_fd_write_event(self, @edge_triggerable)
+        @read_event = EventLoop.create_fd_read_event(self, @edge_triggerable)
+        @write_event = EventLoop.create_fd_write_event(self, @edge_triggerable)
       end
     end
   end
@@ -267,7 +267,7 @@ class IO::FileDescriptor
     readers = (@readers ||= Deque(Fiber).new)
     readers << Fiber.current
     add_read_event
-    Scheduler.reschedule
+    EventLoop.wait
 
     if @read_timed_out
       @read_timed_out = false
@@ -279,7 +279,7 @@ class IO::FileDescriptor
 
   private def add_read_event
     return if @edge_triggerable
-    event = @read_event ||= Scheduler.create_fd_read_event(self)
+    event = @read_event ||= EventLoop.create_fd_read_event(self)
     event.add @read_timeout
     nil
   end
@@ -293,7 +293,7 @@ class IO::FileDescriptor
     writers = (@writers ||= Deque(Fiber).new)
     writers << Fiber.current
     add_write_event timeout
-    Scheduler.reschedule
+    EventLoop.wait
 
     if @write_timed_out
       @write_timed_out = false
@@ -305,7 +305,7 @@ class IO::FileDescriptor
 
   private def add_write_event(timeout = @write_timeout)
     return if @edge_triggerable
-    event = @write_event ||= Scheduler.create_fd_write_event(self)
+    event = @write_event ||= EventLoop.create_fd_write_event(self)
     event.add timeout
     nil
   end
@@ -335,12 +335,12 @@ class IO::FileDescriptor
     @write_event.try &.free
     @write_event = nil
     if readers = @readers
-      Scheduler.enqueue readers
+      Scheduler.current.enqueue readers
       readers.clear
     end
 
     if writers = @writers
-      Scheduler.enqueue writers
+      Scheduler.current.enqueue writers
       writers.clear
     end
 

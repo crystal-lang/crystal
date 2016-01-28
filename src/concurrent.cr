@@ -25,7 +25,7 @@ end
 #
 # Meanwhile, other ready-to-execute fibers might start their execution.
 def sleep
-  Scheduler.reschedule
+  Scheduler.current.reschedule
 end
 
 # Spawns a new fiber.
@@ -57,7 +57,7 @@ end
 # ```
 def spawn(*, name : String? = nil, &block)
   fiber = Fiber.new(name, &block)
-  Scheduler.enqueue fiber
+  Scheduler.current.enqueue fiber
   fiber
 end
 

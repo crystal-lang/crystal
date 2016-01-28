@@ -156,7 +156,7 @@ class Process
   # hooks defined here due to load order problems
   def self.after_fork_child_callbacks
     @@after_fork_child_callbacks ||= [
-      ->{ Scheduler.after_fork; nil },
+      ->{ EventLoop.after_fork; nil },
       ->{ Event::SignalHandler.after_fork; nil },
       ->{ Event::SignalChildHandler.instance.after_fork; nil },
       ->{ Random::DEFAULT.new_seed; nil },
