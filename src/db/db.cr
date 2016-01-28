@@ -14,3 +14,5 @@ module DB
 end
 
 require "./driver"
+require "./statement"
+require "./result_set"

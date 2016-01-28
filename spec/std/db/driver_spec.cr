@@ -1,10 +1,6 @@
 require "spec"
 require "db"
-
-class DummyDriver < DB::Driver
-end
-
-DB.register_driver "dummy", DummyDriver
+require "./dummy_driver"
 
 describe DB::Driver do
   it "should get driver class by name" do

@@ -4,5 +4,7 @@ module DB
 
     def initialize(@options)
     end
+
+    abstract def prepare(query) : Statement
   end
 end
