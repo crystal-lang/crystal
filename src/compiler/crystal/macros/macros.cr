@@ -622,11 +622,7 @@ module Crystal
         original_filanme = filename
 
         begin
-          relative_to = @location.try &.filename
-          if relative_to.is_a?(VirtualFile)
-            relative_to = relative_to.expanded_location.try(&.filename)
-          end
-
+          relative_to = @location.try &.original_filename
           found_filenames = @mod.find_in_path(filename, relative_to)
         rescue ex
           node.raise "error executing macro run: #{ex.message}"

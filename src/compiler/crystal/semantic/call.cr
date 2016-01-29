@@ -312,7 +312,7 @@ class Crystal::Call
 
   def lookup_matches_with_signature(owner : Program, signature, search_in_parents)
     location = self.location
-    if location && (filename = location.filename).is_a?(String)
+    if location && (filename = location.original_filename)
       matches = owner.lookup_private_matches filename, signature
     end
 

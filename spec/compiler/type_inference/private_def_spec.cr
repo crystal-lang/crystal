@@ -124,4 +124,16 @@ describe "Type inference: private def" do
     compiler.prelude = "empty"
     compiler.compile sources, "output"
   end
+
+  it "finds private def when invoking from inside macro (#2082)" do
+    assert_type(%(
+      private def foo
+        42
+      end
+
+      {% begin %}
+        foo
+      {% end %}
+      )) { int32 }
+  end
 end
