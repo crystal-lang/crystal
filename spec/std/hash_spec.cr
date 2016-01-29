@@ -734,6 +734,18 @@ describe "Hash" do
     end
   end
 
+  describe "dig" do
+    it "search for a value recursively" do
+      h = { foo: {bar: {baz: 5}}}
+      h.dig(:foo, :bar, :baz).should eq(5)
+    end
+    
+    it "returns nil when there is no value" do
+      h = { foo: {bar: {baz: 5}}}
+      h.dig(:foo, :blah).should be_nil
+    end
+  end
+
   # Check that Hash can be created with an initial capacity
   typeof(Hash(Int32, Int32).new(initial_capacity: 1234))
   typeof(Hash(Int32, Int32).new(0, initial_capacity: 1234))
