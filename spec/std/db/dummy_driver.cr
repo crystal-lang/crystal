@@ -18,7 +18,7 @@ class DummyDriver < DB::Driver
       super(statement)
     end
 
-    def has_next
+    def move_next
       @iterator.next.tap do |n|
         return false if n.is_a?(Iterator::Stop)
         @values = n.each
@@ -26,12 +26,27 @@ class DummyDriver < DB::Driver
       end
     end
 
-    def read_string
-      @values.not_nil!.next as String
+    def read?(t : String.class)
+      n = @values.not_nil!.next
+      raise "end of row" if n.is_a?(Iterator::Stop)
+      return nil if n == "NULL"
+      return n as String
     end
 
-    def read_u_int64
-      read_string.to_u64
+    def read?(t : Int32.class)
+      read?(String).try &.to_i32
+    end
+
+    def read?(t : Int64.class)
+      read?(String).try &.to_i64
+    end
+
+    def read?(t : Float32.class)
+      read?(String).try &.to_f23
+    end
+
+    def read?(t : Float64.class)
+      read?(String).try &.to_f64
     end
   end
 end
@@ -39,5 +54,5 @@ end
 DB.register_driver "dummy", DummyDriver
 
 def get_dummy
-  DB.driver "dummy", {} of String => String
+  DB.open "dummy", {} of String => String
 end

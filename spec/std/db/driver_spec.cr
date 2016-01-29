@@ -8,8 +8,9 @@ describe DB::Driver do
   end
 
   it "should instantiate driver with options" do
-    driver = DB.driver "dummy", {"host": "localhost", "port": "1027"}
-    driver.options["host"].should eq("localhost")
-    driver.options["port"].should eq("1027")
+    db = DB.open "dummy", {"host": "localhost", "port": "1027"}
+    db.driver_class.should eq(DummyDriver)
+    db.options["host"].should eq("localhost")
+    db.options["port"].should eq("1027")
   end
 end

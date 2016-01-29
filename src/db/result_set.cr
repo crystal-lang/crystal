@@ -6,32 +6,21 @@ module DB
     end
 
     def each
-      while has_next
+      while move_next
         yield
       end
     end
 
-    abstract def has_next : Bool
-
-    # def read(t : T.class) : T
-    # end
+    abstract def move_next : Bool
 
     # list datatypes that must be supported form the driver
-    # implementors will override read_string
-    # users will call read(String) due to overloads read(T) will be a T
-    # TODO: unable to write unions (nillables)
-    {% for t in [String, UInt64] %}
+    # users will call read(String) or read?(String) for nillables
+    {% for t in DB::TYPES %}
+      abstract def read?(t : {{t}}.class) : {{t}}?
+
       def read(t : {{t}}.class) : {{t}}
-        read_{{t.name.underscore}}
+        read?({{t}}).not_nil!
       end
-
-      protected abstract def read_{{t.name.underscore}} : {{t}}
     {% end %}
-
-    # def read(t : String.class) : String
-    #   read_string
-    # end
-    #
-    # protected abstract def read_string : String
   end
 end
