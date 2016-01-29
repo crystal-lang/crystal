@@ -1,4 +1,4 @@
-Crystal [![Build Status](https://travis-ci.org/manastech/crystal.svg)](https://travis-ci.org/manastech/crystal) [![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language)
+Crystal [![Build Status](https://travis-ci.org/manastech/crystal.svg)](https://travis-ci.org/manastech/crystal) [![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language) [![Changelog #192](https://img.shields.io/badge/changelog-%23192-lightgrey.svg)](https://changelog.com/192)
 =======
 
 Crystal is a programming language with the following goals:
