@@ -928,7 +928,7 @@ class Hash(K, V)
   # ```
   def dig(*keys)
     keys.reduce(self) do |hash, key|
-      hash[key] if hash.is_a?(Hash)
+      hash[key]? if hash.is_a?(Hash)
     end
   end
 
