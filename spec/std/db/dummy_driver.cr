@@ -8,7 +8,15 @@ class DummyDriver < DB::Driver
       super(driver)
     end
 
-    def exec(*args)
+    protected def add_parameter(index : Int32, value)
+      raise "not implemented"
+    end
+
+    protected def add_parameter(name : String, value)
+      raise "not implemented"
+    end
+
+    protected def execute
       DummyResultSet.new self, @items.each
     end
   end
