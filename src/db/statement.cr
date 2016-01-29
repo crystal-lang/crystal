@@ -9,6 +9,12 @@ module DB
       exec args
     end
 
+    def exec(arg : Slice(UInt8))
+      before_execute
+      add_parameter 1, arg
+      execute
+    end
+
     def exec(args : Enumerable)
       before_execute
       args.each_with_index(1) do |arg, index|

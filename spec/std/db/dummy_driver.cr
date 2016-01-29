@@ -4,16 +4,22 @@ class DummyDriver < DB::Driver
   end
 
   class DummyStatement < DB::Statement
+    property! params
+
     def initialize(driver, @items)
       super(driver)
     end
 
     protected def add_parameter(index : Int32, value)
-      raise "not implemented"
+      params[index] = value
     end
 
     protected def add_parameter(name : String, value)
-      raise "not implemented"
+      params[":#{name}"] = value
+    end
+
+    protected def before_execute
+      @params = Hash(Int32 | String, DB::Any).new
     end
 
     protected def execute
@@ -34,11 +40,24 @@ class DummyDriver < DB::Driver
       end
     end
 
-    def read?(t : String.class)
+    private def read? : DB::Any?
       n = @values.not_nil!.next
       raise "end of row" if n.is_a?(Iterator::Stop)
       return nil if n == "NULL"
-      return n as String
+
+      if n == "?"
+        return @statement.params[1]
+      end
+
+      if n.starts_with?(":")
+        return @statement.params[n]
+      end
+
+      return n
+    end
+
+    def read?(t : String.class)
+      read?.try &.to_s
     end
 
     def read?(t : Int32.class)
@@ -50,11 +69,23 @@ class DummyDriver < DB::Driver
     end
 
     def read?(t : Float32.class)
-      read?(String).try &.to_f23
+      read?(String).try &.to_f32
     end
 
     def read?(t : Float64.class)
       read?(String).try &.to_f64
+    end
+
+    def read?(t : Slice(UInt8).class)
+      value = read?
+      if value.is_a?(Nil)
+        value
+      elsif value.is_a?(String)
+        ary = value.bytes
+        Slice.new(ary.to_unsafe, ary.size)
+      else
+        value as Slice(UInt8)
+      end
     end
   end
 end

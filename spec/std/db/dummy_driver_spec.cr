@@ -65,6 +65,15 @@ describe DummyDriver do
       result_set.read(Int64).should eq(2i64)
     end
 
+    it "should enumerate blob fields" do
+      result_set = get_dummy.prepare("az,AZ").exec
+      result_set.move_next
+      ary = [97u8, 122u8]
+      result_set.read(Slice(UInt8)).should eq(Slice.new(ary.to_unsafe, ary.size))
+      ary = [65u8, 90u8]
+      result_set.read(Slice(UInt8)).should eq(Slice.new(ary.to_unsafe, ary.size))
+    end
+
     it "should enumerate records using each" do
       nums = [] of Int32
       result_set = get_dummy.prepare("3,4 1,2").exec
@@ -74,6 +83,38 @@ describe DummyDriver do
       end
 
       nums.should eq([3, 4, 1, 2])
+    end
+
+    {% for value in [1, 1_i64, "hello", 1.5, 1.5_f32] %}
+      it "should set arguments for {{value.id}}" do
+        result_set = get_dummy.exec "?", {{value}}
+        result_set.move_next.should be_true
+        result_set.read(typeof({{value}})).should eq({{value}})
+      end
+
+      it "should set arguments by symbol for {{value.id}}" do
+        result_set = get_dummy.exec ":once :twice", {once: {{value}}, twice: {{value + value}} }
+        result_set.move_next.should be_true
+        result_set.read(typeof({{value}})).should eq({{value}})
+        result_set.move_next.should be_true
+        result_set.read(typeof({{value}})).should eq({{value + value}})
+      end
+
+      it "should set arguments by string for {{value.id}}" do
+        result_set = get_dummy.exec ":once :twice", {"once": {{value}}, "twice": {{value + value}} }
+        result_set.move_next.should be_true
+        result_set.read(typeof({{value}})).should eq({{value}})
+        result_set.move_next.should be_true
+        result_set.read(typeof({{value}})).should eq({{value + value}})
+      end
+    {% end %}
+
+    it "executes and selects blob" do
+      ary = UInt8[0x53, 0x51, 0x4C]
+      slice = Slice.new(ary.to_unsafe, ary.size)
+      result_set = get_dummy.exec "?", slice
+      result_set.move_next
+      result_set.read(Slice(UInt8)).to_a.should eq(ary)
     end
   end
 end

@@ -1,5 +1,6 @@
 module DB
-  TYPES = [String, Int32, Int64, Float32, Float64]
+  TYPES = [String, Int32, Int64, Float32, Float64, Slice(UInt8)]
+  alias Any = String | Int32 | Int64 | Float32 | Float64 | Slice(UInt8)
 
   def self.driver_class(name) # : Driver.class
     @@drivers.not_nil![name]
