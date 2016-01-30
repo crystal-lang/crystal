@@ -8,7 +8,9 @@ module Zlib
       @stream.zalloc = LibZ::AllocFunc.new { |opaque, items, size| GC.malloc(items * size) }
       @stream.zfree = LibZ::FreeFunc.new { |opaque, address| GC.free(address) }
       ret = LibZ.inflateInit2(pointerof(@stream), wbits, LibZ.zlibVersion, sizeof(LibZ::ZStream))
-      check_error(ret)
+      if ret != LibZ::Error::OK
+        raise Zlib::Error.new(ret, @stream)
+      end
     end
 
     def self.gzip(input)
@@ -22,14 +24,20 @@ module Zlib
     def read(slice : Slice(UInt8))
       raise IO::Error.new "closed stream" if closed?
 
-      prepare_input_data
+      if @stream.avail_in == 0
+        @stream.next_in = @buf.to_unsafe
+        @stream.avail_in = @input.read(@buf.to_slice).to_u32
+      end
 
       @stream.avail_out = slice.size.to_u32
       @stream.next_out = slice.to_unsafe
 
-      # if no data was read, and the stream is not finished keep inflating
-      while perform_inflate != LibZ::STREAM_END && @stream.avail_out == slice.size.to_u32
-        prepare_input_data
+      ret = LibZ.inflate(pointerof(@stream), LibZ::Flush::NO_FLUSH)
+      case ret
+      when LibZ::Error::NEED_DICT
+      when LibZ::Error::DATA_ERROR
+      when LibZ::Error::MEM_ERROR
+        raise Zlib::Error.new(ret, @stream)
       end
 
       slice.size - @stream.avail_out
@@ -39,6 +47,7 @@ module Zlib
       return if @closed
       @closed = true
 
+      LibZ.inflateEnd(pointerof(@stream))
       @input.close
     end
 
@@ -48,24 +57,6 @@ module Zlib
 
     def inspect(io)
       to_s(io)
-    end
-
-    private def prepare_input_data
-      return if @stream.avail_in > 0
-      @stream.next_in = @buf.to_unsafe
-      @stream.avail_in = @input.read(@buf.to_slice).to_u32
-    end
-
-    private def perform_inflate
-      flush = @stream.avail_in == 0 ? LibZ::Flush::FINISH : LibZ::Flush::NO_FLUSH
-      ret = LibZ.inflate(pointerof(@stream), flush)
-      check_error(ret)
-      ret
-    end
-
-    private def check_error(err)
-      msg = @stream.msg ? String.new(@stream.msg) : nil
-      ZlibError.check_error(err, msg)
     end
   end
 end

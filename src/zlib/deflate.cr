@@ -11,7 +11,9 @@ module Zlib
       @closed = false
       ret = LibZ.deflateInit2(pointerof(@stream), level, LibZ::Z_DEFLATED, wbits, mem_level,
         strategy, LibZ.zlibVersion, sizeof(LibZ::ZStream))
-      check_error(ret)
+      if ret != LibZ::Error::OK
+        raise Zlib::Error.new(ret, @stream)
+      end
     end
 
     def self.gzip(output)
@@ -59,16 +61,10 @@ module Zlib
       loop do
         @stream.next_out = @buf.to_unsafe
         @stream.avail_out = @buf.size.to_u32
-        ret = LibZ.deflate(pointerof(@stream), flush)
-        check_error(ret)
+        LibZ.deflate(pointerof(@stream), flush) # no bad return value
         @output.write(@buf.to_slice[0, @buf.size - @stream.avail_out])
         break if @stream.avail_out != 0
       end
-    end
-
-    private def check_error(err)
-      msg = @stream.msg ? String.new(@stream.msg) : nil
-      ZlibError.check_error(err, msg)
     end
   end
 end
