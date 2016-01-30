@@ -1,6 +1,19 @@
+require "spec"
+
 class DummyDriver < DB::Driver
-  def prepare(query)
-    DummyStatement.new(self, query.split.map { |r| r.split ',' })
+  def build_connection
+    DummyConnection.new(options)
+  end
+
+  class DummyConnection < DB::Connection
+    getter! last_statement
+
+    def prepare(query)
+      @last_statement = DummyStatement.new(self, query.split.map { |r| r.split ',' })
+    end
+
+    def perform_close
+    end
   end
 
   class DummyStatement < DB::Statement
@@ -8,6 +21,10 @@ class DummyDriver < DB::Driver
 
     def initialize(driver, @items)
       super(driver)
+    end
+
+    protected def begin_parameters
+      @params = Hash(Int32 | String, DB::Any?).new
     end
 
     protected def add_parameter(index : Int32, value)
@@ -18,11 +35,7 @@ class DummyDriver < DB::Driver
       params[":#{name}"] = value
     end
 
-    protected def before_execute
-      @params = Hash(Int32 | String, DB::Any).new
-    end
-
-    protected def execute
+    protected def perform
       DummyResultSet.new self, @items.each
     end
   end
@@ -46,6 +59,10 @@ class DummyDriver < DB::Driver
 
     def column_name(index)
       "c#{index}"
+    end
+
+    def column_type(index : Int32)
+      String
     end
 
     private def read? : DB::Any?
@@ -91,8 +108,10 @@ class DummyDriver < DB::Driver
       elsif value.is_a?(String)
         ary = value.bytes
         Slice.new(ary.to_unsafe, ary.size)
+      elsif value.is_a?(Slice(UInt8))
+        value
       else
-        value as Slice(UInt8)
+        raise "#{value} is not convertible to Slice(UInt8)"
       end
     end
   end
@@ -100,6 +119,25 @@ end
 
 DB.register_driver "dummy", DummyDriver
 
-def get_dummy
-  DB.open "dummy", {} of String => String
+class Witness
+  getter count
+
+  def initialize(@count)
+  end
+
+  def check
+    @count -= 1
+  end
+end
+
+def with_witness(count = 1)
+  w = Witness.new(count)
+  yield w
+  w.count.should eq(0), "The expected coverage was unmet"
+end
+
+def with_dummy
+  DB.open "dummy", {} of String => String do |db|
+    yield db
+  end
 end

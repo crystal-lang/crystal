@@ -1,43 +1,69 @@
 module DB
   # Acts as an entry point for database access.
-  # Offers a com
+  # Currently it creates a single connection to the database.
+  # Eventually a connection pool will be handled.
+  #
+  # It should be created from DB module. See `DB.open`.
   class Database
     getter driver_class
     getter options
 
     def initialize(@driver_class, @options)
       @driver = @driver_class.new(@options)
+      @connection = @driver.build_connection
     end
 
-    # :nodoc:
+    # Closes all connection to the database
+    def close
+      @connection.close
+    end
+
+    # Returns a `Connection` to the database
+    def connection
+      @connection
+    end
+
+    # Prepares a `Statement`. The Statement must be closed explicitly
+    # after is not longer in use.
+    #
+    # Usually `#exec`, `#query` or `#scalar` should be used.
     def prepare(query)
-      @driver.prepare(query)
+      connection.prepare(query)
     end
 
-    # :nodoc:
+    def query(query, *args)
+      prepare(query).query(*args)
+    end
+
+    def query(query, *args)
+      # CHECK prepare(query).query(*args, &block)
+      query(query, *args).tap do |rs|
+        begin
+          yield rs
+        ensure
+          rs.close
+        end
+      end
+    end
+
     def exec(query, *args)
       prepare(query).exec(*args)
     end
 
-    def exec_non_query(query, *args)
-      exec_query(query) do |result_set|
-        result_set.move_next
-      end
+    def scalar(query, *args)
+      prepare(query).scalar(*args)
     end
 
-    # :nodoc:
-    def exec_query(query, *args)
-      result_set = exec(query, *args)
-      yield result_set
-      result_set.close
+    def scalar(t, query, *args)
+      prepare(query).scalar(t, *args)
     end
 
-    def exec_query_each(query, *args)
-      exec_query(query) do |result_set|
-        result_set.each do
-          yield result_set
-        end
-      end
+    def scalar?(query, *args)
+      prepare(query).scalar?(*args)
+    end
+
+    def scalar?(t, query, *args)
+      prepare(query).scalar?(t, *args)
     end
   end
 end

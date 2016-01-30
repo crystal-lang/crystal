@@ -2,6 +2,7 @@ module DB
   TYPES = [String, Int32, Int64, Float32, Float64, Slice(UInt8)]
   alias Any = String | Int32 | Int64 | Float32 | Float64 | Slice(UInt8)
 
+  # :nodoc:
   def self.driver_class(name) # : Driver.class
     @@drivers.not_nil![name]
   end
@@ -14,9 +15,17 @@ module DB
   def self.open(name, options)
     Database.new(driver_class(name), options)
   end
+
+  def self.open(name, options, &block)
+    open(name, options).tap do |db|
+      yield db
+      db.close
+    end
+  end
 end
 
 require "./database"
 require "./driver"
+require "./connection"
 require "./statement"
 require "./result_set"

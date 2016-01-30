@@ -5,6 +5,6 @@ module DB
     def initialize(@options)
     end
 
-    abstract def prepare(query) : Statement
+    abstract def build_connection : Connection
   end
 end
