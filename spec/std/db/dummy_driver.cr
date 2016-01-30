@@ -40,6 +40,14 @@ class DummyDriver < DB::Driver
       end
     end
 
+    def column_count
+      2
+    end
+
+    def column_name(index)
+      "c#{index}"
+    end
+
     private def read? : DB::Any?
       n = @values.not_nil!.next
       raise "end of row" if n.is_a?(Iterator::Stop)

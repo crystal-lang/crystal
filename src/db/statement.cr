@@ -3,6 +3,7 @@ module DB
     getter driver
 
     def initialize(@driver)
+      @closed = false
     end
 
     def exec(*args) : ResultSet
@@ -32,9 +33,24 @@ module DB
     protected def before_execute
     end
 
+    # Closes this statement.
+    def close
+      raise "Statement already closed" if @closed
+      @closed = true
+      on_close
+    end
+
+    # Returns `true` if this statement is closed. See `#close`.
+    def closed?
+      @closed
+    end
+
     # 1-based positional arguments
     protected abstract def add_parameter(index : Int32, value)
     protected abstract def add_parameter(name : String, value)
+
     protected abstract def execute : ResultSet
+    protected def on_close
+    end
   end
 end
