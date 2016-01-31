@@ -1,8 +1,8 @@
 module DB
   abstract class Connection
-    getter options
+    getter connection_string
 
-    def initialize(@options)
+    def initialize(@connection_string)
       @closed = false
     end
 

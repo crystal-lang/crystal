@@ -1,8 +1,8 @@
 module DB
   abstract class Driver
-    getter options
+    getter connection_string
 
-    def initialize(@options)
+    def initialize(@connection_string : String)
     end
 
     abstract def build_connection : Connection

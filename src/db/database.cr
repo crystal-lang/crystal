@@ -6,10 +6,10 @@ module DB
   # It should be created from DB module. See `DB.open`.
   class Database
     getter driver_class
-    getter options
+    getter connection_string
 
-    def initialize(@driver_class, @options)
-      @driver = @driver_class.new(@options)
+    def initialize(@driver_class, @connection_string)
+      @driver = @driver_class.new(@connection_string)
       @connection = @driver.build_connection
     end
 

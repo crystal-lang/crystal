@@ -2,7 +2,7 @@ require "spec"
 
 class DummyDriver < DB::Driver
   def build_connection
-    DummyConnection.new(options)
+    DummyConnection.new(connection_string)
   end
 
   class DummyConnection < DB::Connection
@@ -152,7 +152,7 @@ def with_witness(count = 1)
 end
 
 def with_dummy
-  DB.open "dummy", {} of String => String do |db|
+  DB.open "dummy", "" do |db|
     yield db
   end
 end

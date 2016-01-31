@@ -12,12 +12,12 @@ module DB
     @@drivers.not_nil![name] = klass
   end
 
-  def self.open(name, options)
-    Database.new(driver_class(name), options)
+  def self.open(name, connection_string)
+    Database.new(driver_class(name), connection_string)
   end
 
-  def self.open(name, options, &block)
-    open(name, options).tap do |db|
+  def self.open(name, connection_string, &block)
+    open(name, connection_string).tap do |db|
       yield db
       db.close
     end
