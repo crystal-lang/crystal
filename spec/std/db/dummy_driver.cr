@@ -43,9 +43,20 @@ class DummyDriver < DB::Driver
   class DummyResultSet < DB::ResultSet
     def initialize(statement, @iterator)
       super(statement)
+      @executed = false
+      @@last_result_set = self
+    end
+
+    def self.last_result_set
+      @@last_result_set.not_nil!
+    end
+
+    def executed?
+      @executed
     end
 
     def move_next
+      @executed = true
       @iterator.next.tap do |n|
         return false if n.is_a?(Iterator::Stop)
         @values = n.each

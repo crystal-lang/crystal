@@ -50,4 +50,12 @@ describe DB do
       db.connection.last_statement.closed?.should be_true
     end
   end
+
+  it "exec should perform statement" do
+    with_dummy do |db|
+      db.exec ""
+      DummyDriver::DummyResultSet.last_result_set.executed?.should be_true
+      db.connection.last_statement.closed?.should be_true
+    end
+  end
 end

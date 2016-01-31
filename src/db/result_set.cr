@@ -15,6 +15,12 @@ module DB
       @statement.close
     end
 
+    # :nodoc:
+    # Ensures it executes the query
+    def exec
+      move_next
+    end
+
     abstract def move_next : Bool
 
     # TODO def empty? : Bool, handle internally with move_next (?)

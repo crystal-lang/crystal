@@ -7,7 +7,9 @@ module DB
     end
 
     def exec(*args)
-      execute(*args).close
+      query(*args) do |rs|
+        rs.exec
+      end
     end
 
     def scalar(*args)
