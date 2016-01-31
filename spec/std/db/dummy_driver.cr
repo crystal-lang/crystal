@@ -86,7 +86,7 @@ class DummyDriver < DB::Driver
       return nil if n == "NULL"
 
       if n == "?"
-        return @statement.params[1]
+        return @statement.params[0]
       end
 
       if n.starts_with?(":")

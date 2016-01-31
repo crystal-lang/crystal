@@ -1,4 +1,15 @@
 module DB
+  # Represents a prepared query in a `Connection`.
+  # It should be created by `QueryMethods`.
+  #
+  # ### Note to implementors
+  #
+  # 1. Subclass `Statements`
+  # 2. `Statements` are created from a custom driver `Connection#prepare` method.
+  # 3. `#begin_parameters` is called before the parameters are set.
+  # 4. `#add_parameter` methods helps to support 0-based positional arguments and named arguments
+  # 5. After parameters are set `#perform` is called to return a `ResultSet`
+  # 6. `#on_close` is called to release the statement resources.
   abstract class Statement
     getter connection
 
@@ -6,17 +17,19 @@ module DB
       @closed = false
     end
 
+    # See `QueryMethods#exec`
     def exec(*args)
       query(*args) do |rs|
         rs.exec
       end
     end
 
+    # See `QueryMethods#scalar`
     def scalar(*args)
       scalar(Int32, *args)
     end
 
-    # t in DB::TYPES
+    # See `QueryMethods#scalar`. `t` must be in DB::TYPES
     def scalar(t, *args)
       query(*args) do |rs|
         rs.each do
@@ -27,11 +40,12 @@ module DB
       raise "no results"
     end
 
+    # See `QueryMethods#scalar?`
     def scalar?(*args)
       scalar?(Int32, *args)
     end
 
-    # t in DB::TYPES
+    # See `QueryMethods#scalar?`. `t` must be in DB::TYPES
     def scalar?(t, *args)
       query(*args) do |rs|
         rs.each do
@@ -42,10 +56,12 @@ module DB
       raise "no results"
     end
 
+    # See `QueryMethods#query`
     def query(*args)
       execute *args
     end
 
+    # See `QueryMethods#query`
     def query(*args)
       execute(*args).tap do |rs|
         begin
@@ -62,13 +78,13 @@ module DB
 
     private def execute(arg : Slice(UInt8))
       begin_parameters
-      add_parameter 1, arg
+      add_parameter 0, arg
       perform
     end
 
     private def execute(args : Enumerable)
       begin_parameters
-      args.each_with_index(1) do |arg, index|
+      args.each_with_index do |arg, index|
         if arg.is_a?(Hash)
           arg.each do |key, value|
             add_parameter key.to_s, value
@@ -97,7 +113,7 @@ module DB
     #   close unless closed?
     # end
 
-    # 1-based positional arguments
+    # 0-based positional arguments
     protected def begin_parameters
     end
     protected abstract def add_parameter(index : Int32, value)

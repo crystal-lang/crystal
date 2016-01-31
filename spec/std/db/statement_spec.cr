@@ -13,9 +13,9 @@ describe DB::Statement do
     with_dummy do |db|
       stmt = db.prepare("the query")
       stmt.query "a", 1, nil
-      stmt.params[1].should eq("a")
-      stmt.params[2].should eq(1)
-      stmt.params[3].should eq(nil)
+      stmt.params[0].should eq("a")
+      stmt.params[1].should eq(1)
+      stmt.params[2].should eq(nil)
     end
   end
 
@@ -43,9 +43,9 @@ describe DB::Statement do
     with_dummy do |db|
       stmt = db.prepare("the query")
       stmt.exec "a", 1, nil
-      stmt.params[1].should eq("a")
-      stmt.params[2].should eq(1)
-      stmt.params[3].should eq(nil)
+      stmt.params[0].should eq("a")
+      stmt.params[1].should eq(1)
+      stmt.params[2].should eq(nil)
     end
   end
 
@@ -73,9 +73,9 @@ describe DB::Statement do
     with_dummy do |db|
       stmt = db.prepare("the query")
       stmt.scalar String, "a", 1, nil
-      stmt.params[1].should eq("a")
-      stmt.params[2].should eq(1)
-      stmt.params[3].should eq(nil)
+      stmt.params[0].should eq("a")
+      stmt.params[1].should eq(1)
+      stmt.params[2].should eq(nil)
     end
   end
 
@@ -103,9 +103,9 @@ describe DB::Statement do
     with_dummy do |db|
       stmt = db.prepare("the query")
       stmt.scalar? String, "a", 1, nil
-      stmt.params[1].should eq("a")
-      stmt.params[2].should eq(1)
-      stmt.params[3].should eq(nil)
+      stmt.params[0].should eq("a")
+      stmt.params[1].should eq(1)
+      stmt.params[2].should eq(nil)
     end
   end
 
