@@ -12,6 +12,10 @@ class DummyDriver < DB::Driver
       @last_statement = DummyStatement.new(self, query.split.map { |r| r.split ',' })
     end
 
+    def last_insert_id : Int64
+      0
+    end
+
     def perform_close
     end
   end

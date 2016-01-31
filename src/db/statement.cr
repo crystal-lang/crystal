@@ -24,7 +24,7 @@ module DB
         end
       end
 
-      raise "unreachable"
+      raise "no results"
     end
 
     def scalar?(*args)
@@ -39,7 +39,7 @@ module DB
         end
       end
 
-      raise "unreachable"
+      raise "no results"
     end
 
     def query(*args)
@@ -91,6 +91,11 @@ module DB
     def closed?
       @closed
     end
+
+    # # :nodoc:
+    # def finalize
+    #   close unless closed?
+    # end
 
     # 1-based positional arguments
     protected def begin_parameters

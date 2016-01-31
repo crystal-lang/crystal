@@ -24,6 +24,7 @@ module DB
   end
 end
 
+require "./query_methods"
 require "./database"
 require "./driver"
 require "./connection"

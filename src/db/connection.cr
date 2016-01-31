@@ -18,7 +18,16 @@ module DB
       @closed
     end
 
+    # # :nodoc:
+    # def finalize
+    #   close unless closed?
+    # end
+
     abstract def prepare(query) : Statement
+
+    include QueryMethods
+
+    abstract def last_insert_id : Int64
 
     protected abstract def perform_close
   end
