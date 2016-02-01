@@ -285,6 +285,43 @@ describe Iterator do
     end
   end
 
+  describe "step" do
+    it "returns every element" do
+      iter = (1..3).each.step(1)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "returns every other element" do
+      iter = (1..5).each.step(2)
+      iter.next.should eq(1)
+      iter.next.should eq(3)
+      iter.next.should eq(5)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "returns every third element" do
+      iter = (1..12).each.step(3)
+      iter.next.should eq(1)
+      iter.next.should eq(4)
+      iter.next.should eq(7)
+      iter.next.should eq(10)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "raises with nonsensical steps" do
+      expect_raises(ArgumentError) do
+        (1..2).each.step(0)
+      end
+
+      expect_raises(ArgumentError) do
+        (1..2).each.step(-1)
+      end
+    end
+  end
+
   describe "take" do
     it "does take with Range iterator" do
       iter = (1..3).each.take(2)
