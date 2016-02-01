@@ -38,6 +38,7 @@ module JSON
   # * type: (required) the single type described above (you can use `JSON::Any` too)
   # * key: the property name in the JSON document (as opposed to the property name in the Crystal code)
   # * nilable: if true, the property can be `Nil`
+  # * default: value by default, when no value from json
   # * emit_null: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
   # * converter: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods.
   #
@@ -78,7 +79,7 @@ module JSON
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
             %var{key.id} =
-            {% if value[:nilable] == true %} %pull.read_null_or { {% end %}
+            {% if value[:nilable] == true || value[:default] != nil %} %pull.read_null_or { {% end %}
 
             {% if value[:converter] %}
               {{value[:converter]}}.from_json(%pull)
@@ -86,7 +87,7 @@ module JSON
               {{value[:type]}}.new(%pull)
             {% end %}
 
-            {% if value[:nilable] == true %} } {% end %}
+            {% if value[:nilable] == true || value[:default] != nil %} } {% end %}
         {% end %}
         else
           {% if strict %}
@@ -98,7 +99,7 @@ module JSON
       end
 
       {% for key, value in properties %}
-        {% unless value[:nilable] %}
+        {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.is_a?(Nil)
             raise JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
           end
@@ -106,7 +107,7 @@ module JSON
       {% end %}
 
       {% for key, value in properties %}
-        @{{key.id}} = %var{key.id}
+        @{{key.id}} = {% if value[:nilable] %} (1 == 1) ? {% end %} %var{key.id} {% if value[:default] != nil %} || {{ value[:default] }} {% end %} {% if value[:nilable] %} : nil {% end %}
       {% end %}
     end
 

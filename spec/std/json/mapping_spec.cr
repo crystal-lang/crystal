@@ -80,6 +80,19 @@ class JsonWithSet
   JSON.mapping({set: Set(String)})
 end
 
+class JsonWithDefaults
+  JSON.mapping({
+    a: {type: Int32, default: 11},
+    b: {type: String, default: "Haha"},
+    c: {type: Bool, default: true},
+    d: {type: Bool, default: false},
+    e: {type: Bool, nilable: true, default: false},
+    f: {type: Int32, nilable: true, default: 1},
+    g: {type: Int32, nilable: true, default: nil},
+    h: {type: Array(Int32), default: [1, 2, 3]},
+  })
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -193,5 +206,60 @@ describe "JSON mapping" do
   it "parses json array as set" do
     json = JsonWithSet.from_json(%({"set": ["a", "a", "b"]}))
     json.set.should eq(Set(String){"a", "b"})
+  end
+
+  describe "parses json with defaults" do
+    it "mixed" do
+      json = JsonWithDefaults.from_json(%({"a":1,"b":"bla"}))
+      json.a.should eq 1
+      json.b.should eq "bla"
+
+      json = JsonWithDefaults.from_json(%({"a":1}))
+      json.a.should eq 1
+      json.b.should eq "Haha"
+
+      json = JsonWithDefaults.from_json(%({"b":"bla"}))
+      json.a.should eq 11
+      json.b.should eq "bla"
+
+      json = JsonWithDefaults.from_json(%({}))
+      json.a.should eq 11
+      json.b.should eq "Haha"
+
+      json = JsonWithDefaults.from_json(%({"a":null,"b":null}))
+      json.a.should eq 11
+      json.b.should eq "Haha"
+    end
+
+    it "bool" do
+      json = JsonWithDefaults.from_json(%({}))
+      json.c.should eq true
+      typeof(json.c).should eq Bool
+      json.d.should eq false
+      typeof(json.d).should eq Bool
+    end
+
+    it "with nilable" do
+      json = JsonWithDefaults.from_json(%({}))
+
+      json.e.should eq false
+      typeof(json.e).should eq typeof(rand > 0 ? true : nil)
+
+      json.f.should eq 1
+      typeof(json.f).should eq typeof(rand > 0 ? 1 : nil)
+
+      json.g.should eq nil
+      typeof(json.g).should eq typeof(rand > 0 ? 1 : nil)
+    end
+
+    it "create new array every time" do
+      json = JsonWithDefaults.from_json(%({}))
+      json.h.should eq [1, 2, 3]
+      json.h << 4
+      json.h.should eq [1, 2, 3, 4]
+
+      json = JsonWithDefaults.from_json(%({}))
+      json.h.should eq [1, 2, 3]
+    end
   end
 end
