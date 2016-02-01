@@ -698,6 +698,39 @@ module Iterator(T)
     end
   end
 
+  # Returns an iterator that only returns every *n*th element, starting with the
+  # first.
+  #
+  #     iter = (1..6).each.step(2)
+  #     iter.next # => 1
+  #     iter.next # => 3
+  #     iter.next # => 5
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def step(n)
+    Step(T).new(self, n)
+  end
+
+  struct Step(T)
+    include Iterator(T)
+    include IteratorWrapper
+
+    def initialize(@iterator : Iterator(T), @n : Int)
+      raise ArgumentError.new("n must be greater or equal 1") if @n < 1
+    end
+
+    def next
+      value = @iterator.next
+      return stop if value.is_a?(Stop)
+
+      (@n - 1).times do
+        @iterator.next
+      end
+
+      value
+    end
+  end
+
   # Returns an iterator that only returns the first n elements of the
   # initial iterator.
   #
