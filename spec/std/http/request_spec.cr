@@ -66,6 +66,14 @@ module HTTP
       io.to_s.should eq("POST / HTTP/1.1\r\nContent-Length: 13\r\n\r\nthisisthebody")
     end
 
+    it "serialize chunked POST (with IO as body)" do
+      body = MemoryIO.new "hello world"
+      request = Request.new "POST", "/", body: body
+      io = MemoryIO.new
+      request.to_io(io)
+      io.to_s.should eq("POST / HTTP/1.1\r\nTransfer-Encoding: chunked\r\n\r\nb\r\nhello world\r\n0\r\n\r\n")
+    end
+
     it "parses GET" do
       request = Request.from_io(MemoryIO.new("GET / HTTP/1.1\r\nHost: host.example.org\r\n\r\n")).not_nil!
       request.method.should eq("GET")
