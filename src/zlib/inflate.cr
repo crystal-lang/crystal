@@ -34,9 +34,9 @@ module Zlib
 
       ret = LibZ.inflate(pointerof(@stream), LibZ::Flush::NO_FLUSH)
       case ret
-      when LibZ::Error::NEED_DICT
-      when LibZ::Error::DATA_ERROR
-      when LibZ::Error::MEM_ERROR
+      when LibZ::Error::NEED_DICT,
+           LibZ::Error::DATA_ERROR,
+           LibZ::Error::MEM_ERROR
         raise Zlib::Error.new(ret, @stream)
       end
 
