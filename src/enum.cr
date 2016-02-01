@@ -320,10 +320,10 @@ struct Enum
   # if no such member exists.
   #
   # ```
-  # Color.from_value?(0) # => Color::Red
-  # Color.from_value?(1) # => Color::Green
-  # Color.from_value?(2) # => Color::Blue
-  # Color.from_value?(3) # => Exception
+  # Color.from_value(0) # => Color::Red
+  # Color.from_value(1) # => Color::Green
+  # Color.from_value(2) # => Color::Blue
+  # Color.from_value(3) # => Exception
   # ```
   macro def self.from_value(value) : self
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
