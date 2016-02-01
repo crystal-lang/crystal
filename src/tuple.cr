@@ -347,6 +347,38 @@ struct Tuple
     {% end %}
   end
 
+  # Yields each of the elements in this tuple in reverse order.
+  #
+  # ```
+  # tuple = {1, "hello", 'x'}
+  # tuple.reverse_each do |value|
+  #   puts value
+  # end
+  # ```
+  #
+  # Output:
+  #
+  # ```text
+  # 'x'
+  # "hello"
+  # 1
+  # ```
+  def reverse_each
+    {% for i in 1..@type.size %}
+      yield self[{{@type.size - i}}]
+    {% end %}
+    self
+  end
+
+  # Returns an `Iterator` for the elements in this tuple.
+  #
+  # ```
+  # {1, 'a'}.reverse_each.cycle.take(3).to_a # => [1, 'a', 1]
+  # ```
+  def reverse_each
+    ReverseIterator(typeof((i = 0; self[i]))).new(self)
+  end
+
   # Returns the first element of this tuple. Doesn't compile
   # if the tuple is empty.
   #
@@ -420,6 +452,27 @@ struct Tuple
 
     def rewind
       @index = 0
+      self
+    end
+  end
+
+  # :nodoc:
+  class ReverseIterator(T)
+    include Iterator(T)
+
+    def initialize(@tuple, @index = tuple.size - 1)
+    end
+
+    def next
+      return stop if @index < 0
+
+      value = @tuple.at(@index) { stop }
+      @index -= 1
+      value
+    end
+
+    def rewind
+      @index = @tuple.size - 1
       self
     end
   end

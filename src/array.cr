@@ -1471,9 +1471,12 @@ class Array(T)
   # Append multiple values. The same as `push`, but takes an arbitrary number
   # of values to push into the array. Returns `self`.
   def push(*values : T)
-    values.each do |value|
-      self << value
+    new_size = @size + values.size
+    resize_to_capacity(Math.pw2ceil(new_size)) if @size > @capacity
+    values.each_with_index do |value, i|
+      @buffer[@size + i] = value
     end
+    @size = new_size
     self
   end
 
@@ -1806,6 +1809,21 @@ class Array(T)
 
   def unshift(obj : T)
     insert 0, obj
+  end
+
+  # Prepend multiple values. The same as `unshift`, but takes an arbitrary number
+  # of values to add to the array. Returns `self`.
+  def unshift(*values : T)
+    new_size = @size + values.size
+    resize_to_capacity(Math.pw2ceil(new_size)) if @size > @capacity
+    move_value = values.size
+    @buffer.move_to(@buffer + move_value, @size)
+
+    values.each_with_index do |value, i|
+      @buffer[i] = value
+    end
+    @size = new_size
+    self
   end
 
   def update(index : Int)
