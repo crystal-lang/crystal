@@ -40,7 +40,17 @@ class HTTP::Client::Response
   end
 
   def content_type
-    HTTP.content_type(self)
+    process_content_type_header.content_type
+  end
+
+  def charset
+    process_content_type_header.charset
+  end
+
+  private def process_content_type_header
+    @computed_content_type_header ||= begin
+      HTTP.content_type_and_charset(headers)
+    end
   end
 
   def to_io(io)

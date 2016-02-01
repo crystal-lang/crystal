@@ -37,7 +37,7 @@ module IO::Buffered
 
   # :nodoc:
   def gets(delimiter : Char, limit : Int)
-    if delimiter.ord >= 128
+    if delimiter.ord >= 128 || @encoding
       return super
     end
 
@@ -121,7 +121,7 @@ module IO::Buffered
   end
 
   private def read_char_with_bytesize
-    return super unless @in_buffer_rem.size >= 4
+    return super if @encoding || @in_buffer_rem.size < 4
 
     first = @in_buffer_rem[0].to_u32
     if first < 0x80

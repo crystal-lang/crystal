@@ -129,6 +129,24 @@ class String
     new(slice.pointer(slice.size), slice.size)
   end
 
+  # Creates a new String from the given *bytes*, which are encoded in the given *encoding*.
+  #
+  # The *invalid* argument can be:
+  # * `nil`: an exception is raised on invalid byte sequences
+  # * `:skip`: invalid byte sequences are ignored
+  #
+  # ```
+  # slice = Slice.new(2, 0_u8)
+  # slice[0] = 186_u8
+  # slice[1] = 195_u8
+  # String.new(slice, "GB2312") # => "好"
+  # ```
+  def self.new(bytes : Slice(UInt8), encoding : String, invalid = nil : Symbol?) : String
+    String.build do |str|
+      String.encode(bytes, encoding, "UTF-8", str, invalid)
+    end
+  end
+
   # Creates a String from a pointer. Bytes will be copied from the pointer.
   #
   # This method is **unsafe**: the pointer must point to data that eventually
@@ -922,6 +940,43 @@ class String
     end
 
     self[0, size - 1]
+  end
+
+  # Returns a slice of bytes containing this string encoded in the given encoding.
+  #
+  # The *invalid* argument can be:
+  # * `nil`: an exception is raised on invalid byte sequences
+  # * `:skip`: invalid byte sequences are ignored
+  #
+  # ```
+  # "好".encode("GB2312") # => [186, 195]
+  # "好".bytes            # => [229, 165, 189]
+  # ```
+  def encode(encoding : String, invalid = nil : Symbol?) : Slice(UInt8)
+    io = MemoryIO.new
+    String.encode(to_slice, "UTF-8", encoding, io, invalid)
+    io.to_slice
+  end
+
+  # :nodoc:
+  protected def self.encode(slice, from, to, io, invalid)
+    IO::EncodingOptions.check_invalid(invalid)
+
+    inbuf_ptr = slice.to_unsafe
+    inbytesleft = LibC::SizeT.new(slice.size)
+    outbuf = uninitialized UInt8[1024]
+
+    Iconv.new(from, to, invalid) do |iconv|
+      while inbytesleft > 0
+        outbuf_ptr = outbuf.to_unsafe
+        outbytesleft = LibC::SizeT.new(outbuf.size)
+        err = iconv.convert(pointerof(inbuf_ptr), pointerof(inbytesleft), pointerof(outbuf_ptr), pointerof(outbytesleft))
+        if err == -1
+          iconv.handle_invalid(pointerof(inbuf_ptr), pointerof(inbytesleft))
+        end
+        io.write(outbuf.to_slice[0, outbuf.size - outbytesleft])
+      end
+    end
   end
 
   # Returns a new string with leading and trailing whitespace removed.
@@ -2713,7 +2768,7 @@ class String
   end
 
   def to_s(io)
-    io.write Slice.new(to_unsafe, bytesize)
+    io.write_utf8 Slice.new(to_unsafe, bytesize)
   end
 
   def to_unsafe

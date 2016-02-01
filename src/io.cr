@@ -104,6 +104,20 @@ end
 # io.print "xyz"
 # String.new(slice) # => "abcxyzghi"
 # ```
+#
+# ### Encoding
+#
+# An IO can be set an encoding with the `#set_encoding` method. When this is
+# set, all string operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
+# `printf`) will write in the given encoding, and read from the given encoding.
+# Byte operations (`read`, `write`, `read_byte`, `write_byte`) never do
+# encoding/decoding operations.
+#
+# If an encoding is not set, the default one is UTF-8.
+#
+# Mixing string and byte operations might not give correct results and should be
+# avoided, as string operations might need to read extra bytes in order to get characters
+# in the given encoding.
 module IO
   # Argument to a `seek` operation.
   enum Seek
@@ -356,7 +370,7 @@ module IO
   # io.to_s # => "\n"
   # ```
   def puts : Nil
-    write_byte '\n'.ord.to_u8
+    print '\n'
     nil
   end
 
@@ -415,7 +429,7 @@ module IO
   end
 
   private def read_char_with_bytesize
-    first = read_byte
+    first = read_utf8_byte
     return nil unless first
 
     first = first.to_u32
@@ -434,8 +448,50 @@ module IO
   end
 
   private def read_utf8_masked_byte
-    byte = read_byte || raise "Incomplete UTF-8 byte sequence"
+    byte = read_utf8_byte || raise "Incomplete UTF-8 byte sequence"
     (byte & 0x3f).to_u32
+  end
+
+  private def read_utf8_byte
+    if decoder = decoder()
+      decoder.read(self)
+      if decoder.out_slice.empty?
+        nil
+      else
+        byte = decoder.out_slice.to_unsafe.value
+        decoder.advance 1
+        byte
+      end
+    else
+      read_byte
+    end
+  end
+
+  # Writes a slice of UTF-8 encoded bytes to this IO, using the current encoding.
+  @[Raises] # TODO: there's a bug in the compiler that requires this
+  def write_utf8(slice : Slice(UInt8))
+    if encoder = encoder()
+      encoder.write(self, slice)
+    else
+      write(slice)
+    end
+    nil
+  end
+
+  private def encoder
+    if encoding = @encoding
+      @encoder ||= Encoder.new(encoding)
+    else
+      nil
+    end
+  end
+
+  private def decoder
+    if encoding = @encoding
+      @decoder ||= Decoder.new(encoding)
+    else
+      nil
+    end
   end
 
   # Tries to read exactly `slice.size` bytes from this IO into `slice`.
@@ -466,10 +522,19 @@ module IO
   # io.read # => ""
   # ```
   def gets_to_end : String
-    buffer = uninitialized UInt8[2048]
     String.build do |str|
-      while (read_bytes = read(buffer.to_slice)) > 0
-        str.write buffer.to_slice[0, read_bytes]
+      if decoder = decoder()
+        while true
+          decoder.read(self)
+          break if decoder.out_slice.empty?
+
+          decoder.write(str)
+        end
+      else
+        buffer = uninitialized UInt8[2048]
+        while (read_bytes = read(buffer.to_slice)) > 0
+          str.write buffer.to_slice[0, read_bytes]
+        end
       end
     end
   end
@@ -529,6 +594,12 @@ module IO
   def gets(delimiter : Char, limit : Int) : String?
     raise ArgumentError.new "negative limit" if limit < 0
 
+    # # If the char's representation is a single byte and we have an encoding,
+    # search the delimiter in the buffer
+    if delimiter.ord < 0x80 && (decoder = decoder())
+      return decoder.gets(self, delimiter.ord.to_u8, limit)
+    end
+
     buffer = String::Builder.new
     total = 0
     while true
@@ -580,7 +651,7 @@ module IO
 
     buffer = String::Builder.new
     while true
-      unless byte = read_byte
+      unless byte = read_utf8_byte
         return buffer.empty? ? nil : buffer.to_s
       end
       buffer.write_byte(byte)
@@ -775,6 +846,32 @@ module IO
   # ```
   def each_byte
     ByteIterator.new(self)
+  end
+
+  # Sets the encoding of this IO.
+  #
+  # The *invalid* argument can be:
+  # * `nil`: an exception is raised on invalid byte sequences
+  # * `:skip`: invalid byte sequences are ignored
+  #
+  # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
+  # `printf`) will use this encoding.
+  def set_encoding(encoding : String, invalid = nil : Symbol?)
+    if encoding == "UTF-8"
+      @encoding = nil
+    else
+      @encoding = EncodingOptions.new(encoding, invalid)
+    end
+    @encoder.try &.close
+    @decoder.try &.close
+    @encoder = nil
+    @decoder = nil
+    nil
+  end
+
+  # Returns this IO's encoding. The default is UTF-8.
+  def encoding : String
+    @encoding || "UTF-8"
   end
 
   # Copy all contents from *src* to *dst*.

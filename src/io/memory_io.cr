@@ -105,9 +105,7 @@ class MemoryIO
 
   # :nodoc:
   def gets(delimiter : Char, limit : Int32)
-    if delimiter.ord >= 128
-      return super
-    end
+    return super if @encoding || delimiter.ord >= 128
 
     check_open
 
@@ -151,6 +149,8 @@ class MemoryIO
 
   # :nodoc:
   def gets_to_end
+    return super if @encoding
+
     check_open
 
     pos = Math.min(@pos, @bytesize)

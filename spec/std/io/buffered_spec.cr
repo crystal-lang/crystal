@@ -267,4 +267,60 @@ describe "IO::Buffered" do
     io.read(Slice(UInt8).new(0))
     io.called_unbuffered_read.should be_false
   end
+
+  describe "encoding" do
+    describe "decode" do
+      it "gets_to_end" do
+        str = "Hello world" * 200
+        base_io = MemoryIO.new(str.encode("UCS-2LE"))
+        io = IO::BufferedWrapper.new(base_io)
+        io.set_encoding("UCS-2LE")
+        io.gets_to_end.should eq(str)
+      end
+
+      it "gets" do
+        str = "Hello world\nFoo\nBar\n" + ("1234567890" * 1000)
+        base_io = MemoryIO.new(str.encode("UCS-2LE"))
+        io = IO::BufferedWrapper.new(base_io)
+        io.set_encoding("UCS-2LE")
+        io.gets.should eq("Hello world\n")
+        io.gets.should eq("Foo\n")
+        io.gets.should eq("Bar\n")
+      end
+
+      it "gets big string" do
+        str = "Hello\nWorld\n" * 10_000
+        base_io = MemoryIO.new(str.encode("UCS-2LE"))
+        io = IO::BufferedWrapper.new(base_io)
+        io.set_encoding("UCS-2LE")
+        10_000.times do |i|
+          io.gets.should eq("Hello\n")
+          io.gets.should eq("World\n")
+        end
+      end
+
+      it "gets big GB2312 string" do
+        str = ("你好我是人\n" * 1000).encode("GB2312")
+        base_io = MemoryIO.new(str)
+        io = IO::BufferedWrapper.new(base_io)
+        io.set_encoding("GB2312")
+        1000.times do
+          io.gets.should eq("你好我是人\n")
+        end
+      end
+
+      it "reads char" do
+        str = "x\nHello world" + ("1234567890" * 1000)
+        base_io = MemoryIO.new(str.encode("UCS-2LE"))
+        io = IO::BufferedWrapper.new(base_io)
+        io.set_encoding("UCS-2LE")
+        io.gets.should eq("x\n")
+        str = str[2..-1]
+        str.each_char do |char|
+          io.read_char.should eq(char)
+        end
+        io.read_char.should be_nil
+      end
+    end
+  end
 end
