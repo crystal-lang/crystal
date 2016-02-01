@@ -193,7 +193,7 @@ class HTTP::Client
     # response = client.{{method.id}}("/", headers: HTTP::Headers{"User-agent": "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
-    def {{method.id}}(path, headers = nil : HTTP::Headers?, body = nil : String?) : HTTP::Client::Response
+    def {{method.id}}(path, headers = nil : HTTP::Headers?, body = nil : String | IO | Nil) : HTTP::Client::Response
       exec {{method.upcase}}, path, headers, body
     end
 
@@ -206,7 +206,7 @@ class HTTP::Client
     #   response.body_io.gets #=> "..."
     # end
     # ```
-    def {{method.id}}(path, headers = nil : HTTP::Headers?, body = nil : String?)
+    def {{method.id}}(path, headers = nil : HTTP::Headers?, body = nil : String | IO | Nil)
       exec {{method.upcase}}, path, headers, body do |response|
         yield response
       end
@@ -219,7 +219,7 @@ class HTTP::Client
     # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-agent": "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
-    def self.{{method.id}}(url : String | URI, headers = nil : HTTP::Headers?, body = nil : String?) : HTTP::Client::Response
+    def self.{{method.id}}(url : String | URI, headers = nil : HTTP::Headers?, body = nil : String | IO | Nil) : HTTP::Client::Response
       exec {{method.upcase}}, url, headers, body
     end
 
@@ -231,7 +231,7 @@ class HTTP::Client
     #   response.body_io.gets #=> "..."
     # end
     # ```
-    def self.{{method.id}}(url : String | URI, headers = nil : HTTP::Headers?, body = nil : String?)
+    def self.{{method.id}}(url : String | URI, headers = nil : HTTP::Headers?, body = nil : String | IO | Nil)
       exec {{method.upcase}}, url, headers, body do |response|
         yield response
       end
@@ -348,7 +348,7 @@ class HTTP::Client
   # response = client.exec "GET", "/"
   # response.body # => "..."
   # ```
-  def exec(method : String, path, headers = nil : HTTP::Headers?, body = nil : String?) : HTTP::Client::Response
+  def exec(method : String, path, headers = nil : HTTP::Headers?, body = nil : String | IO | Nil) : HTTP::Client::Response
     exec new_request method, path, headers, body
   end
 
@@ -361,7 +361,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def exec(method : String, path, headers = nil : HTTP::Headers?, body = nil : String?)
+  def exec(method : String, path, headers = nil : HTTP::Headers?, body = nil : String | IO | Nil)
     exec(new_request(method, path, headers, body)) do |response|
       yield response
     end
@@ -374,7 +374,7 @@ class HTTP::Client
   # response = HTTP::Client.exec "GET", "http://www.example.com"
   # response.body # => "..."
   # ```
-  def self.exec(method, url : String | URI, headers = nil : HTTP::Headers?, body = nil : String?) : HTTP::Client::Response
+  def self.exec(method, url : String | URI, headers = nil : HTTP::Headers?, body = nil : String | IO | Nil) : HTTP::Client::Response
     exec(url) do |client, path|
       client.exec method, path, headers, body
     end
@@ -388,7 +388,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def self.exec(method, url : String | URI, headers = nil : HTTP::Headers?, body = nil : String?)
+  def self.exec(method, url : String | URI, headers = nil : HTTP::Headers?, body = nil : String | IO | Nil)
     exec(url) do |client, path|
       client.exec(method, path, headers, body) do |response|
         yield response

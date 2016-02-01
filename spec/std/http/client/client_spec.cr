@@ -87,5 +87,13 @@ module HTTP
         client.get("/")
       end
     end
+
+    it "accepts IO objects as body" do
+      body = MemoryIO.new("hello world")
+
+      TestServer.open("localhost", 0, 0) do |server|
+        Client.exec("POST", "http://localhost:#{server.addr.ip_port}/", nil, body)
+      end
+    end
   end
 end
