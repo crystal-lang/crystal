@@ -26,30 +26,27 @@ module DB
 
     # See `QueryMethods#scalar`
     def scalar(*args)
-      scalar(Int32, *args)
-    end
-
-    # See `QueryMethods#scalar`. `t` must be in DB::TYPES
-    def scalar(t, *args)
       query(*args) do |rs|
         rs.each do
-          return rs.read(t)
-        end
-      end
-
-      raise "no results"
-    end
-
-    # See `QueryMethods#scalar?`
-    def scalar?(*args)
-      scalar?(Int32, *args)
-    end
-
-    # See `QueryMethods#scalar?`. `t` must be in DB::TYPES
-    def scalar?(t, *args)
-      query(*args) do |rs|
-        rs.each do
-          return rs.read?(t)
+          # return case rs.read?(rs.column_type(0)) # :-( Some day...
+          t = rs.column_type(0)
+          if t == String
+            return rs.read?(String)
+          elsif t == Int32
+            return rs.read?(Int32)
+          elsif t == Int64
+            return rs.read?(Int64)
+          elsif t == Float32
+            return rs.read?(Float32)
+          elsif t == Float64
+            return rs.read?(Float64)
+          elsif t == Slice(UInt8)
+            return rs.read?(Slice(UInt8))
+          elsif t == Nil
+            return rs.read?(Int32)
+          else
+            raise "not implemented for #{t} type"
+          end
         end
       end
 

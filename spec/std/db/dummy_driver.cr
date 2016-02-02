@@ -36,6 +36,8 @@ class DummyDriver < DB::Driver
   end
 
   class DummyResultSet < DB::ResultSet
+    @@next_column_type = String
+
     def initialize(statement, query)
       super(statement)
       @iterator = query.split.map { |r| r.split(',') }.to_a.each
@@ -70,7 +72,11 @@ class DummyDriver < DB::Driver
     end
 
     def column_type(index : Int32)
-      String
+      @@next_column_type
+    end
+
+    def self.next_column_type=(value)
+      @@next_column_type = value
     end
 
     private def read? : DB::Any?

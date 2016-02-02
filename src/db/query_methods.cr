@@ -40,36 +40,12 @@ module DB
       prepare(query).exec(*args)
     end
 
-    # Performs the `query` and returns a single scalar `Int32` value
+    # Performs the `query` and returns a single scalar `DB::Any` value
+    # puts db.scalar("SELECT MAX(name)") as String # => (a String)
     def scalar(query, *args)
       prepare(query).scalar(*args)
     end
 
-    # TODO remove scalar?  make it always nillable. raise if 0-rows   raise +1-rows
-
-    # Performs the `query` and returns a single scalar value of type `t`.
-    # `t` must be any of the allowed `DB::Any` types.
-    #
-    # ```
-    # puts db.scalar(String, "SELECT MAX(name)") # => (a String)
-    # ```
-    def scalar(t, query, *args)
-      prepare(query).scalar(t, *args)
-    end
-
-    # Performs the `query` and returns a single scalar `Int32 | Nil` value
-    def scalar?(query, *args)
-      prepare(query).scalar?(*args)
-    end
-
-    # Performs the `query` and returns a single scalar value of type `t` or `Nil`.
-    # `t` must be any of the allowed `DB::Any` types.
-    #
-    # ```
-    # puts db.scalar?(String, "SELECT MAX(name)") # => (a String | Nil)
-    # ```
-    def scalar?(t, query, *args)
-      prepare(query).scalar?(t, *args)
-    end
+    # TODO add query_row
   end
 end

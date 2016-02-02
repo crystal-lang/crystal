@@ -110,32 +110,25 @@ describe DummyDriver do
       end
     end
 
-    it "should get Int32 scalars by default" do
+    it "should get Nil scalars" do
       with_dummy do |db|
-        db.scalar("1").should be_a(Int32)
-        db.scalar?("1").should be_a(Int32)
-        db.scalar?("NULL").should be_nil
-      end
-    end
-
-    it "should get String scalars" do
-      with_dummy do |db|
-        db.scalar(String, "foo").should eq("foo")
+        DummyDriver::DummyResultSet.next_column_type = Nil
+        db.scalar("NULL").should be_nil
       end
     end
 
     {% for value in [1, 1_i64, "hello", 1.5, 1.5_f32] %}
       it "numeric scalars of type of {{value.id}} should return value or nil" do
         with_dummy do |db|
-          db.scalar(typeof({{value}}), "#{{{value}}}").should eq({{value}})
-          db.scalar?(typeof({{value}}), "#{{{value}}}").should eq({{value}})
-          db.scalar?(typeof({{value}}), "NULL").should be_nil
+          DummyDriver::DummyResultSet.next_column_type = typeof({{value}})
+          db.scalar("#{{{value}}}").should eq({{value}})
         end
       end
 
       it "should set positional arguments for {{value.id}}" do
         with_dummy do |db|
-          db.scalar(typeof({{value}}), "?", {{value}}).should eq({{value}})
+          DummyDriver::DummyResultSet.next_column_type = typeof({{value}})
+          db.scalar("?", {{value}}).should eq({{value}})
         end
       end
     {% end %}
@@ -144,7 +137,8 @@ describe DummyDriver do
       with_dummy do |db|
         ary = UInt8[0x53, 0x51, 0x4C]
         slice = Slice.new(ary.to_unsafe, ary.size)
-        db.scalar(Slice(UInt8), "?", slice).to_a.should eq(ary)
+        DummyDriver::DummyResultSet.next_column_type = typeof(slice)
+        (db.scalar("?", slice) as Slice(UInt8)).to_a.should eq(ary)
       end
     end
   end

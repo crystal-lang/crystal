@@ -32,17 +32,7 @@ describe DB::Statement do
   it "should initialize positional params in scalar" do
     with_dummy do |db|
       stmt = db.prepare("the query")
-      stmt.scalar String, "a", 1, nil
-      stmt.params[0].should eq("a")
-      stmt.params[1].should eq(1)
-      stmt.params[2].should eq(nil)
-    end
-  end
-
-  it "should initialize positional params in scalar?" do
-    with_dummy do |db|
-      stmt = db.prepare("the query")
-      stmt.scalar? String, "a", 1, nil
+      stmt.scalar "a", 1, nil
       stmt.params[0].should eq("a")
       stmt.params[1].should eq(1)
       stmt.params[2].should eq(nil)
@@ -79,14 +69,6 @@ describe DB::Statement do
     with_dummy do |db|
       stmt = db.prepare "3,4 1,2"
       stmt.scalar
-      stmt.closed?.should be_false
-    end
-  end
-
-  it "scalar should not close statement" do
-    with_dummy do |db|
-      stmt = db.prepare "3,4 1,2"
-      stmt.scalar?
       stmt.closed?.should be_false
     end
   end
