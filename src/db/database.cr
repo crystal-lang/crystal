@@ -24,8 +24,7 @@ module DB
       @connection.close
     end
 
-    # Returns a `Connection` to the database.
-    # Useful if you need to ensure the statements are executed in the connection.
+    # :nodoc:
     def connection
       @connection
     end

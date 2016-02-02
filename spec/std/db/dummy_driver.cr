@@ -6,10 +6,8 @@ class DummyDriver < DB::Driver
   end
 
   class DummyConnection < DB::Connection
-    getter! last_statement
-
     def prepare(query)
-      @last_statement = DummyStatement.new(self, query.split.map { |r| r.split ',' })
+      DummyStatement.new(self, query)
     end
 
     def last_insert_id : Int64
@@ -21,32 +19,27 @@ class DummyDriver < DB::Driver
   end
 
   class DummyStatement < DB::Statement
-    property! params
+    property params
 
-    def initialize(driver, @items)
+    def initialize(driver, @query)
+      @params = Hash(Int32 | String, DB::Any).new
       super(driver)
     end
 
-    protected def begin_parameters
-      @params = Hash(Int32 | String, DB::Any?).new
-    end
-
-    protected def add_parameter(index : Int32, value)
-      params[index] = value
-    end
-
-    protected def add_parameter(name : String, value)
-      params[":#{name}"] = value
-    end
-
-    protected def perform
-      DummyResultSet.new self, @items.each
+    protected def perform(args : Slice(DB::Any))
+      @params.clear
+      args.each_with_index do |arg, index|
+        @params[index] = arg
+      end
+      DummyResultSet.new self, @query
     end
   end
 
   class DummyResultSet < DB::ResultSet
-    def initialize(statement, @iterator)
+    def initialize(statement, query)
       super(statement)
+      @iterator = query.split.map { |r| r.split(',') }.to_a.each
+
       @executed = false
       @@last_result_set = self
     end
@@ -87,10 +80,6 @@ class DummyDriver < DB::Driver
 
       if n == "?"
         return @statement.params[0]
-      end
-
-      if n.starts_with?(":")
-        return @statement.params[n]
       end
 
       return n

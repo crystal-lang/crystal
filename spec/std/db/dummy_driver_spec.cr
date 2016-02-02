@@ -39,7 +39,7 @@ describe DummyDriver do
       end
     end
 
-    it "should query with block shuold executes always" do
+    it "should query with block should executes always" do
       with_witness do |w|
         with_dummy do |db|
           db.query "" do |rs|
@@ -47,7 +47,9 @@ describe DummyDriver do
           end
         end
       end
+    end
 
+    it "should query with block should executes always" do
       with_witness do |w|
         with_dummy do |db|
           db.query "lorem ipsum" do |rs|
@@ -134,28 +136,6 @@ describe DummyDriver do
       it "should set positional arguments for {{value.id}}" do
         with_dummy do |db|
           db.scalar(typeof({{value}}), "?", {{value}}).should eq({{value}})
-        end
-      end
-
-      it "should set arguments by symbol for {{value.id}}" do
-        with_dummy do |db|
-          db.query ":once :twice", {once: {{value}}, twice: {{value + value}} } do |rs|
-            rs.move_next.should be_true
-            rs.read(typeof({{value}})).should eq({{value}})
-            rs.move_next.should be_true
-            rs.read(typeof({{value}})).should eq({{value + value}})
-          end
-        end
-      end
-
-      it "should set arguments by string for {{value.id}}" do
-        with_dummy do |db|
-          db.query ":once :twice", {"once": {{value}}, "twice": {{value + value}} } do |rs|
-            rs.move_next.should be_true
-            rs.read(typeof({{value}})).should eq({{value}})
-            rs.move_next.should be_true
-            rs.read(typeof({{value}})).should eq({{value + value}})
-          end
         end
       end
     {% end %}

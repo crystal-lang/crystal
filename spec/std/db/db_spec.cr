@@ -23,7 +23,7 @@ describe DB do
     cnn.not_nil!.closed?.should be_true
   end
 
-  it "query should close statement" do
+  it "query should close result_set" do
     with_witness do |w|
       with_dummy do |db|
         db.query "1,2" do
@@ -31,7 +31,7 @@ describe DB do
         end
 
         w.check
-        db.connection.last_statement.closed?.should be_true
+        DummyDriver::DummyResultSet.last_result_set.closed?.should be_true
       end
     end
   end
@@ -39,14 +39,14 @@ describe DB do
   it "exec should close statement" do
     with_dummy do |db|
       db.exec ""
-      db.connection.last_statement.closed?.should be_true
+      DummyDriver::DummyResultSet.last_result_set.closed?.should be_true
     end
   end
 
   it "scalar should close statement" do
     with_dummy do |db|
       db.scalar "1"
-      db.connection.last_statement.closed?.should be_true
+      DummyDriver::DummyResultSet.last_result_set.closed?.should be_true
     end
   end
 
@@ -54,7 +54,6 @@ describe DB do
     with_dummy do |db|
       db.exec ""
       DummyDriver::DummyResultSet.last_result_set.executed?.should be_true
-      db.connection.last_statement.closed?.should be_true
     end
   end
 end

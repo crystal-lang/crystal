@@ -45,6 +45,8 @@ module DB
       prepare(query).scalar(*args)
     end
 
+    # TODO remove scalar?  make it always nillable. raise if 0-rows   raise +1-rows
+
     # Performs the `query` and returns a single scalar value of type `t`.
     # `t` must be any of the allowed `DB::Any` types.
     #

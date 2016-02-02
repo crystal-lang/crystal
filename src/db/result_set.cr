@@ -13,11 +13,12 @@ module DB
   # 4. Override `#column_count`, `#column_name`.
   # 5. Override `#column_type`. It must return a type in `DB::TYPES`.
   abstract class ResultSet
-    # :nodoc:
     getter statement
 
     def initialize(@statement : Statement)
     end
+
+    # TODO add_next_result_set : Bool
 
     # Iterates over all the rows
     def each
@@ -26,9 +27,24 @@ module DB
       end
     end
 
-    # Closes the result set.
+    # Closes this result set.
     def close
-      @statement.close
+      return if @closed
+      @closed = true
+      do_close
+    end
+
+    # Returns `true` if this result set is closed. See `#close`.
+    def closed?
+      @closed
+    end
+
+    # :nodoc:
+    def finalize
+      close
+    end
+
+    protected def do_close
     end
 
     # Ensures it executes the query
@@ -65,5 +81,13 @@ module DB
         read?({{t}}).not_nil!
       end
     {% end %}
+
+    # def read_blob
+    #   yield ... io ....
+    # end
+
+    # def read_text
+    #   yield ... io ....
+    # end
   end
 end

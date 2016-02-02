@@ -64,10 +64,11 @@ module DB
   # method to be used as query parameters
   TYPES = [String, Int32, Int64, Float32, Float64, Slice(UInt8)]
 
-  # See `DB::TYPES` in `DB`
-  alias Any = String | Int32 | Int64 | Float32 | Float64 | Slice(UInt8)
+  # See `DB::TYPES` in `DB`. `Any` is a nillable version of the union of all types in `DB::TYPES`
+  alias Any = Nil | String | Int32 | Int64 | Float32 | Float64 | Slice(UInt8)
 
   # :nodoc:
+
   def self.driver_class(driver_name) # : Driver.class
     @@drivers.not_nil![driver_name]
   end

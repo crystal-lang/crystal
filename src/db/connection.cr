@@ -15,15 +15,17 @@ module DB
   # Also override `#last_insert_id` to allow safe access to the last inserted id through this connection.
   #
   abstract class Connection
-    getter connection_string
+    # TODO add IDLE status, for connection ppool management.
 
-    def initialize(@connection_string)
-      @closed = false
+    getter connection_string # TODO Remove
+    @closed = false
+
+    def initialize(@connection_string) # TODO Remove
     end
 
     # Closes this connection.
     def close
-      raise "Connection already closed" if @closed
+      raise "Connection already closed" if @closed # TODO make it no fail if closed
       @closed = true
       perform_close
     end
@@ -44,8 +46,9 @@ module DB
     include QueryMethods
 
     # Returns the last inserted id through this connection.
-    abstract def last_insert_id : Int64
+    abstract def last_insert_id : Int64 # TODO move to ExecResult record. plano. with last_rows. eagerly askit.
 
-    protected abstract def perform_close
+
+    protected abstract def perform_close # TODO do_close
   end
 end

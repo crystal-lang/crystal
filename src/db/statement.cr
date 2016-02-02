@@ -72,35 +72,20 @@ module DB
       end
     end
 
+    private def execute : ResultSet
+      perform(Slice(Any).new(0))
+    end
+
     private def execute(*args) : ResultSet
-      execute args
-    end
-
-    private def execute(arg : Slice(UInt8))
-      begin_parameters
-      add_parameter 0, arg
-      perform
-    end
-
-    private def execute(args : Enumerable)
-      begin_parameters
-      args.each_with_index do |arg, index|
-        if arg.is_a?(Hash)
-          arg.each do |key, value|
-            add_parameter key.to_s, value
-          end
-        else
-          add_parameter index, arg
-        end
-      end
-      perform
+      # TODO better way to do it
+      perform(args.to_a.to_unsafe.to_slice(args.size))
     end
 
     # Closes this statement.
     def close
-      raise "Statement already closed" if @closed
+      return if @closed # make it work if closed
       @closed = true
-      on_close
+      do_close
     end
 
     # Returns `true` if this statement is closed. See `#close`.
@@ -108,19 +93,14 @@ module DB
       @closed
     end
 
-    # # :nodoc:
-    # def finalize
-    #   close unless closed?
-    # end
-
-    # 0-based positional arguments
-    protected def begin_parameters
+    # :nodoc:
+    def finalize
+      close
     end
-    protected abstract def add_parameter(index : Int32, value)
-    protected abstract def add_parameter(name : String, value)
 
-    protected abstract def perform : ResultSet
-    protected def on_close
+    protected abstract def perform(args : Slice(Any)) : ResultSet
+
+    protected def do_close
     end
   end
 end
