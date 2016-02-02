@@ -29,7 +29,7 @@ describe "Type inference: enum" do
       end
 
       foo 1
-      ), "no overload matches 'foo' with types Int32"
+      ), "no overload matches 'foo' with type Int32"
   end
 
   it "finds method in enum type" do

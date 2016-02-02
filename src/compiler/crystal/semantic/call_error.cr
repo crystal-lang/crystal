@@ -180,20 +180,22 @@ class Crystal::Call
     message = String.build do |msg|
       msg << "no overload matches '#{full_name(owner, def_name)}'"
       unless args.empty?
-        msg << " with types "
-        args.each_with_index do |arg, index|
-          msg << ", " if index > 0
+        types = [] of Type
+        args.each_with_index do |arg|
           arg_type = arg.type
 
           if arg.is_a?(Splat) && arg_type.is_a?(TupleInstanceType)
             arg_type.tuple_types.each_with_index do |tuple_type, sub_index|
-              msg << ", " if sub_index > 0
-              msg << tuple_type
+              types << tuple_type
             end
           else
-            msg << arg_type
+            types << arg_type
           end
         end
+        msg << " with type"
+        msg << "s" if types.size > 1
+        msg << " "
+        types.join(", ", msg)
       end
       msg << "\n"
 
