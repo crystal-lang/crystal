@@ -331,6 +331,10 @@ module Crystal
       restrict_type_or_fun_or_generic other, context
     end
 
+    def restrict(other : Metaclass, context)
+      restrict_type_or_fun_or_generic other, context
+    end
+
     def restrict_type_or_fun_or_generic(other, context)
       types = union_types.compact_map do |type|
         type.restrict(other, context) as Type?
