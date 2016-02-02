@@ -215,6 +215,8 @@ module Crystal
         other_type.union_types.any? do |union_type|
           implements?(union_type)
         end
+      when VirtualMetaclassType
+        implements?(other_type.base_type.metaclass)
       else
         self == other_type
       end

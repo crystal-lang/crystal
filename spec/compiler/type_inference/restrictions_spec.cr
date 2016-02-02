@@ -313,4 +313,18 @@ describe "Restrictions" do
       foo(a.class)
       )) { union_of([uint8, uint16] of Type) }
   end
+
+  it "makes metaclass subclass pass parent metaclass restriction (#2079)" do
+    assert_type(%(
+      class A; end
+
+      class B < A; end
+
+      def foo : A.class # offending return type restriction
+        B
+      end
+
+      foo
+      )) { types["B"].metaclass }
+  end
 end
