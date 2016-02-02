@@ -63,6 +63,7 @@ module Crystal
       @doc_comments = [] of CommentInfo
       @current_doc_comment = nil
       @hash_in_same_line = Set(typeof(object_id)).new
+      @shebang = @token.type == :COMMENT && @token.value.to_s.starts_with?("#!")
     end
 
     def visit(node : FileNode)
@@ -3563,6 +3564,9 @@ module Crystal
       lines.map!(&.rstrip)
       result = lines.join("\n") + '\n'
       result = "" if result == "\n"
+      if @shebang
+        result = result[0] + result[2..-1]
+      end
       result
     end
 
