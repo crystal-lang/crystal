@@ -6,6 +6,11 @@ class DummyDriver < DB::Driver
   end
 
   class DummyConnection < DB::Connection
+    getter connection_string
+
+    def initialize(@connection_string)
+    end
+
     def prepare(query)
       DummyStatement.new(self, query)
     end
@@ -26,12 +31,21 @@ class DummyDriver < DB::Driver
       super(driver)
     end
 
-    protected def perform(args : Slice(DB::Any))
+    protected def perform_query(args : Slice(DB::Any))
+      set_params args
+      DummyResultSet.new self, @query
+    end
+
+    protected def perform_exec(args : Slice(DB::Any))
+      set_params args
+      DB::ExecResult.new 0, 0
+    end
+
+    private def set_params(args)
       @params.clear
       args.each_with_index do |arg, index|
         @params[index] = arg
       end
-      DummyResultSet.new self, @query
     end
   end
 
@@ -42,7 +56,6 @@ class DummyDriver < DB::Driver
       super(statement)
       @iterator = query.split.map { |r| r.split(',') }.to_a.each
 
-      @executed = false
       @@last_result_set = self
     end
 
@@ -50,12 +63,7 @@ class DummyDriver < DB::Driver
       @@last_result_set.not_nil!
     end
 
-    def executed?
-      @executed
-    end
-
     def move_next
-      @executed = true
       @iterator.next.tap do |n|
         return false if n.is_a?(Iterator::Stop)
         @values = n.each

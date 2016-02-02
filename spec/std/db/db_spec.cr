@@ -36,24 +36,10 @@ describe DB do
     end
   end
 
-  it "exec should close statement" do
-    with_dummy do |db|
-      db.exec ""
-      DummyDriver::DummyResultSet.last_result_set.closed?.should be_true
-    end
-  end
-
   it "scalar should close statement" do
     with_dummy do |db|
       db.scalar "1"
       DummyDriver::DummyResultSet.last_result_set.closed?.should be_true
-    end
-  end
-
-  it "exec should perform statement" do
-    with_dummy do |db|
-      db.exec ""
-      DummyDriver::DummyResultSet.last_result_set.executed?.should be_true
     end
   end
 end

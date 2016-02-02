@@ -6,10 +6,9 @@ module DB
   #
   # 1. Subclass `Statements`
   # 2. `Statements` are created from a custom driver `Connection#prepare` method.
-  # 3. `#begin_parameters` is called before the parameters are set.
-  # 4. `#add_parameter` methods helps to support 0-based positional arguments and named arguments
-  # 5. After parameters are set `#perform` is called to return a `ResultSet`
-  # 6. `#on_close` is called to release the statement resources.
+  # 3. `#perform_query` executes a query that is expected to return a `ResultSet`
+  # 4. `#perform_exec` executes a query that is expected to return an `ExecResult`
+  # 6. `#do_close` is called to release the statement resources.
   abstract class Statement
     getter connection
 
@@ -18,10 +17,14 @@ module DB
     end
 
     # See `QueryMethods#exec`
+    def exec
+      perform_exec(Slice(Any).new(0)) # no overload matches ... with types Slice(NoReturn)
+    end
+
+    # See `QueryMethods#exec`
     def exec(*args)
-      query(*args) do |rs|
-        rs.exec
-      end
+      # TODO better way to do it
+      perform_exec(args.to_a.to_unsafe.to_slice(args.size))
     end
 
     # See `QueryMethods#scalar`
@@ -55,12 +58,12 @@ module DB
 
     # See `QueryMethods#query`
     def query(*args)
-      execute *args
+      perform_query *args
     end
 
     # See `QueryMethods#query`
     def query(*args)
-      execute(*args).tap do |rs|
+      perform_query(*args).tap do |rs|
         begin
           yield rs
         ensure
@@ -69,13 +72,13 @@ module DB
       end
     end
 
-    private def execute : ResultSet
-      perform(Slice(Any).new(0))
+    private def perform_query : ResultSet
+      perform_query(Slice(Any).new(0)) # no overload matches ... with types Slice(NoReturn)
     end
 
-    private def execute(*args) : ResultSet
+    private def perform_query(*args) : ResultSet
       # TODO better way to do it
-      perform(args.to_a.to_unsafe.to_slice(args.size))
+      perform_query(args.to_a.to_unsafe.to_slice(args.size))
     end
 
     # Closes this statement.
@@ -95,7 +98,8 @@ module DB
       close
     end
 
-    protected abstract def perform(args : Slice(Any)) : ResultSet
+    protected abstract def perform_query(args : Slice(Any)) : ResultSet
+    protected abstract def perform_exec(args : Slice(Any)) : ExecResult
 
     protected def do_close
     end

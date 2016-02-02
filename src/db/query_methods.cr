@@ -3,19 +3,22 @@ module DB
   # All methods accepts a `query : String` and a set arguments.
   #
   # Three kind of statements can be performed:
-  #  1. `#exec` waits no response from the database.
-  #  2. `#scalar` reads a single value of the response. Use `#scalar?` if the response is nillable.
-  #  3. `#query` returns a ResultSet that allows iteration over the rows in the response and column information.
+  #  1. `#exec` waits no record response from the database. An `ExecResult` is returned.
+  #  2. `#scalar` reads a single value of the response. A `DB::Any` is returned.
+  #  3. `#query` returns a `ResultSet` that allows iteration over the rows in the response and column information.
   #
-  # Arguments can be passed:
-  #  * by position: `db.query("SELECT name FROM ... WHERE age > ?", age)`
-  #  * by symbol: `db.query("SELECT name FROM ... WHERE age > :age", {age: age})`
-  #  * by string: `db.query("SELECT name FROM ... WHERE age > :age", {"age": age})`
+  # Arguments can be passed by position
+  #
+  # ```
+  # db.query("SELECT name FROM ... WHERE age > ?", age)
+  # ```
   #
   # Convention of mapping how arguments are mapped to the query depends on each driver.
   #
   # Including `QueryMethods` requires a `prepare(query) : Statement` method.
   module QueryMethods
+    abstract def prepare(query) : Statement
+
     # Returns a `ResultSet` for the `query`.
     # The `ResultSet` must be closed manually.
     def query(query, *args)

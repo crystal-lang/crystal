@@ -67,8 +67,10 @@ module DB
   # See `DB::TYPES` in `DB`. `Any` is a nillable version of the union of all types in `DB::TYPES`
   alias Any = Nil | String | Int32 | Int64 | Float32 | Float64 | Slice(UInt8)
 
-  # :nodoc:
+  # Result of a `#exec` statement.
+  record ExecResult, rows_affected, last_insert_id
 
+  # :nodoc:
   def self.driver_class(driver_name) # : Driver.class
     @@drivers.not_nil![driver_name]
   end

@@ -17,11 +17,7 @@ module DB
   abstract class Connection
     # TODO add IDLE status, for connection ppool management.
 
-    getter connection_string # TODO Remove
     @closed = false
-
-    def initialize(@connection_string) # TODO Remove
-    end
 
     # Closes this connection.
     def close
@@ -44,10 +40,6 @@ module DB
     abstract def prepare(query) : Statement
 
     include QueryMethods
-
-    # Returns the last inserted id through this connection.
-    abstract def last_insert_id : Int64 # TODO move to ExecResult record. plano. with last_rows. eagerly askit.
-
 
     protected abstract def perform_close # TODO do_close
   end

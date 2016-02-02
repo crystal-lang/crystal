@@ -47,11 +47,6 @@ module DB
     protected def do_close
     end
 
-    # Ensures it executes the query
-    def exec
-      move_next
-    end
-
     # Move the next row in the result.
     # Return `false` if no more rows are available.
     # See `#each`
