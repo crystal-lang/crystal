@@ -153,7 +153,7 @@ class Crystal::Call
         end
         str << ")\n"
         str << "Overloads are:"
-        append_matches(owner, defs, str)
+        append_matches(defs, str)
       end)
     end
 
@@ -204,7 +204,7 @@ class Crystal::Call
       end
 
       msg << "Overloads are:"
-      append_matches(owner, defs, msg)
+      append_matches(defs, msg)
 
       if matches
         cover = matches.cover
@@ -255,10 +255,10 @@ class Crystal::Call
     end
   end
 
-  def append_matches(owner, defs, str, matched_def = nil, argument_name = nil)
+  def append_matches(defs, str, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
       str << "\n - "
-      append_def_full_name owner, a_def, str
+      append_def_full_name a_def.owner, a_def, str
       if defs.size > 1 && a_def.same?(matched_def)
         str << colorize(" (trying this one)").blue
       end
@@ -375,7 +375,7 @@ class Crystal::Call
 
           str << "\n"
           str << "Matches are:"
-          append_matches owner, defs, str, matched_def: a_def, argument_name: named_arg.name
+          append_matches defs, str, matched_def: a_def, argument_name: named_arg.name
         end
         named_arg.raise msg
       end
