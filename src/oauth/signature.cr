@@ -80,7 +80,7 @@ struct OAuth::Signature
     body = request.body
     content_type = request.headers["Content-type"]?
     if body && content_type == "application/x-www-form-urlencoded"
-      params.add_query body
+      params.add_query body.to_s
     end
 
     params
