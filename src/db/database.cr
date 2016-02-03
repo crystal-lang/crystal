@@ -29,10 +29,7 @@ module DB
       @connection
     end
 
-    # Prepares a `Statement`. The Statement must be closed explicitly
-    # after is not longer in use.
-    #
-    # Usually `#exec`, `#query` or `#scalar` should be used.
+    # :nodoc:
     def prepare(query)
       connection.prepare(query)
     end

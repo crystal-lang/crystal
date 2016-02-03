@@ -15,8 +15,6 @@ module DB
   # Also override `#last_insert_id` to allow safe access to the last inserted id through this connection.
   #
   abstract class Connection
-    # TODO add IDLE status, for connection ppool management.
-
     @closed = false
 
     # Closes this connection.
@@ -36,7 +34,7 @@ module DB
       close unless closed?
     end
 
-    # Returns an `Statement` with the prepared `query`
+    # :nodoc:
     abstract def prepare(query) : Statement
 
     include QueryMethods
