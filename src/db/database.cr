@@ -11,11 +11,11 @@ module DB
     getter driver_class
 
     # Connection configuration to the database.
-    getter connection_string
+    getter uri
 
     # :nodoc:
-    def initialize(@driver_class, @connection_string)
-      @driver = @driver_class.new(@connection_string)
+    def initialize(@driver_class, @uri)
+      @driver = @driver_class.new(@uri)
       @connection = @driver.build_connection
     end
 

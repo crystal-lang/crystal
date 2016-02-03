@@ -1,3 +1,5 @@
+require "uri"
+
 # The DB module is a unified interface to database access.
 # Database dialects is supported by custom database driver shards.
 # Check [manastech/crystal-sqlite3](https://github.com/manastech/crystal-sqlite3) for example.
@@ -12,14 +14,14 @@
 # Assuming `crystal-sqlite3` is included a sqlite3 database can be opened with `#open`.
 #
 # ```
-# db = DB.open "sqlite3", ":memory:" # or the sqlite3 file path
+# db = DB.open "sqlite3://%3Amemory%3A" # or sqlite3:///path/to/db/file.db
 # db.close
 # ```
 #
 # If a block is given to `#open` the database is closed automatically
 #
 # ```
-# DB.open "sqlite3", ":memory:" do |db|
+# DB.open "sqlite3://%3Amemory%3A" do |db|
 #   # work with db
 # end # db is closed
 # ```
@@ -37,7 +39,7 @@
 # require "db"
 # require "sqlite3"
 #
-# DB.open "sqlite3", ":memory:" do |db|
+# DB.open "sqlite3://%3Amemory%3A" do |db|
 #   db.exec "create table contacts (name string, age integer)"
 #   db.exec "insert into contacts values (?, ?)", "John Doe", 30
 #   db.exec "insert into contacts values (:name, :age)", {name: "Sarah", age: 33}
@@ -75,26 +77,35 @@ module DB
     @@drivers.not_nil![driver_name]
   end
 
-  # Registers a driver class for a given `driver_name`.
+  # Registers a driver class for a given *driver_name*.
   # Should be called by drivers implementors only.
   def self.register_driver(driver_name, driver_class : Driver.class)
     @@drivers ||= {} of String => Driver.class
     @@drivers.not_nil![driver_name] = driver_class
   end
 
-  # Opens a database using the `driver_name` registered driver.
-  # Uses `connection_string` for connection configuration.
+  # Opens a database using the specified *uri*.
+  # The scheme of the *uri* determines the driver to use.
   # Returned database must be closed by `Database#close`.
-  def self.open(driver_name, connection_string)
-    Database.new(driver_class(driver_name), connection_string)
+  # If a block is used the database is yielded and closed automatically.
+  def self.open(uri : URI | String)
+    build_database(uri)
   end
 
   # Same as `#open` but the database is yielded and closed automatically.
-  def self.open(driver_name, connection_string, &block)
-    open(driver_name, connection_string).tap do |db|
+  def self.open(uri : URI | String, &block)
+    build_database(uri).tap do |db|
       yield db
       db.close
     end
+  end
+
+  private def self.build_database(connection_string : String)
+    build_database(URI.parse(connection_string))
+  end
+
+  private def self.build_database(uri : URI)
+    Database.new(driver_class(uri.scheme), uri)
   end
 end
 

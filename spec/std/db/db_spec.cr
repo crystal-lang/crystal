@@ -11,15 +11,17 @@ describe DB do
     DB.driver_class("dummy").should eq(DummyDriver)
   end
 
-  it "should instantiate driver with connection_string" do
-    db = DB.open "dummy", "localhost:1027"
+  it "should instantiate driver with connection uri" do
+    db = DB.open "dummy://localhost:1027"
     db.driver_class.should eq(DummyDriver)
-    db.connection_string.should eq("localhost:1027")
+    db.uri.scheme.should eq("dummy")
+    db.uri.host.should eq("localhost")
+    db.uri.port.should eq(1027)
   end
 
   it "should create a connection and close it" do
     cnn = nil
-    DB.open "dummy", "localhost" do |db|
+    DB.open "dummy://localhost" do |db|
       cnn = db.connection
     end
 

@@ -8,7 +8,7 @@ module DB
   #
   # class FakeDriver < Driver
   #   def build_connection
-  #     FakeConnection.new connection_string
+  #     FakeConnection.new uri
   #   end
   # end
   #
@@ -26,9 +26,9 @@ module DB
   # Refer to `Connection`, `Statement` and `ResultSet` for further
   # driver implementation instructions.
   abstract class Driver
-    getter connection_string
+    getter uri
 
-    def initialize(@connection_string : String)
+    def initialize(@uri : URI)
     end
 
     abstract def build_connection : Connection

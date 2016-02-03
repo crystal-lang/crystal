@@ -2,13 +2,13 @@ require "spec"
 
 class DummyDriver < DB::Driver
   def build_connection
-    DummyConnection.new(connection_string)
+    DummyConnection.new(uri)
   end
 
   class DummyConnection < DB::Connection
-    getter connection_string
+    getter uri
 
-    def initialize(@connection_string)
+    def initialize(@uri)
       @@connections ||= [] of DummyConnection
       @@connections.not_nil! << self
     end
@@ -173,7 +173,7 @@ end
 def with_dummy
   DummyDriver::DummyConnection.clear_connections
 
-  DB.open "dummy", "" do |db|
+  DB.open "dummy://host" do |db|
     yield db
   end
 end
