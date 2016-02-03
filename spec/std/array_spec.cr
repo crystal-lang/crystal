@@ -739,6 +739,12 @@ describe "Array" do
       a.should eq [1, 2, 3, 4]
     end
 
+    it "pushes multiple elements to an empty array" do
+      a = [] of Int32
+      a.push(1, 2, 3).should be(a)
+      a.should eq([1, 2, 3])
+    end
+
     it "has the << alias" do
       a = [1, 2]
       a << 3
@@ -1071,6 +1077,12 @@ describe "Array" do
       a = [1, 2]
       a.unshift(3, 4).should be(a)
       a.should eq [3, 4, 1, 2]
+    end
+
+    it "unshifts multiple elements to an empty array" do
+      a = [] of Int32
+      a.unshift(1, 2, 3).should be(a)
+      a.should eq([1, 2, 3])
     end
   end
 

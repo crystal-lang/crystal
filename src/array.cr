@@ -1493,7 +1493,7 @@ class Array(T)
   # ```
   def push(*values : T)
     new_size = @size + values.size
-    resize_to_capacity(Math.pw2ceil(new_size)) if @size > @capacity
+    resize_to_capacity(Math.pw2ceil(new_size)) if new_size > @capacity
     values.each_with_index do |value, i|
       @buffer[@size + i] = value
     end
@@ -1924,7 +1924,7 @@ class Array(T)
   # of values to add to the array. Returns `self`.
   def unshift(*values : T)
     new_size = @size + values.size
-    resize_to_capacity(Math.pw2ceil(new_size)) if @size > @capacity
+    resize_to_capacity(Math.pw2ceil(new_size)) if new_size > @capacity
     move_value = values.size
     @buffer.move_to(@buffer + move_value, @size)
 
