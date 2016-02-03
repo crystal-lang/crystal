@@ -187,7 +187,8 @@ module Crystal
     def transform(node : Path)
       if target_const = node.target_const
         if target_const.used && !target_const.initialized?
-          if const_node = @const_being_initialized
+          value = target_const.value
+          if (const_node = @const_being_initialized) && !simple_constant?(value)
             const_being_initialized = const_node.target_const.not_nil!
             const_node.raise "constant #{const_being_initialized} requires initialization of #{target_const}, \
                                         which is initialized later. Initialize #{target_const} before #{const_being_initialized}"
@@ -802,6 +803,42 @@ module Crystal
         true_literal.set_type(@program.bool)
         true_literal
       end
+    end
+
+    def simple_constant?(node)
+      simple_constant?(node, [] of Const)
+    end
+
+    def simple_constant?(node, consts)
+      case node
+      when NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral
+        return true
+      when Call
+        obj = node.obj
+        return false unless obj
+
+        case node.args.size
+        when 0
+          case node.name
+          when "+", "-", "~"
+            return simple_constant?(obj, consts)
+          end
+        when 1
+          case node.name
+          when "+", "-", "*", "/", "&", "|"
+            return simple_constant?(obj, consts) && simple_constant?(node.args.first, consts)
+          end
+        end
+      when Path
+        if target_const = node.target_const
+          return false if consts.includes?(target_const)
+
+          consts << target_const
+          return simple_constant?(target_const.value, consts)
+        end
+      end
+
+      false
     end
   end
 end
