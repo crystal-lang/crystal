@@ -101,4 +101,30 @@ describe "Code gen: case" do
       end
       )).to_i.should eq(2)
   end
+
+  it "does case when with metaclass" do
+    run(%(
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar
+        def self.bar
+          2
+        end
+      end
+
+      foobar = Bar || Foo
+      case foobar
+      when Foo.class
+        foobar.foo
+      when Bar.class
+        foobar.bar
+      else
+        3
+      end
+      )).to_i.should eq(2)
+  end
 end

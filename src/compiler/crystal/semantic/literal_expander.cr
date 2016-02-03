@@ -365,24 +365,7 @@ module Crystal
       node.whens.each do |wh|
         final_comp = nil
         wh.conds.each do |cond|
-          if temp_var
-            right_side = temp_var.clone
-            if cond.is_a?(NilLiteral)
-              comp = IsA.new(right_side, Path.global("Nil"))
-            elsif cond.is_a?(Path) || cond.is_a?(Generic)
-              comp = IsA.new(right_side, cond)
-            elsif cond.is_a?(Call) && cond.obj.is_a?(ImplicitObj)
-              implicit_call = cond.clone as Call
-              implicit_call.obj = temp_var.clone
-              comp = implicit_call
-            else
-              comp = Call.new(cond, "===", right_side)
-            end
-          else
-            comp = cond
-          end
-
-          comp.location = cond.location
+          comp = case_when_comparison(temp_var, cond).at(cond)
 
           if final_comp
             final_comp = Or.new(final_comp, comp)
@@ -412,6 +395,37 @@ module Crystal
                   end
       final_exp.location = node.location
       final_exp
+    end
+
+    private def case_when_comparison(temp_var, cond)
+      return cond unless temp_var
+
+      right_side = temp_var.clone
+
+      case cond
+      when NilLiteral
+        return IsA.new(right_side, Path.global("Nil"))
+      when Path, Generic
+        return IsA.new(right_side, cond)
+      when Call
+        obj = cond.obj
+        case obj
+        when ImplicitObj
+          implicit_call = cond.clone as Call
+          implicit_call.obj = temp_var.clone
+          return implicit_call
+        when Path
+          if cond.name == "class"
+            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+          end
+        when Generic
+          if cond.name == "class"
+            return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
+          end
+        end
+      end
+
+      Call.new(cond, "===", right_side)
     end
 
     private def regex_new_call(node, value)

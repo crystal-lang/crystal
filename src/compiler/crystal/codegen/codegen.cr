@@ -928,7 +928,7 @@ module Crystal
     end
 
     def visit(node : IsA)
-      codegen_type_filter node, &.filter_by(node.const.type.instance_type)
+      codegen_type_filter node, &.filter_by(node.const.type)
     end
 
     def visit(node : RespondsTo)

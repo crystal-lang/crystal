@@ -17,6 +17,14 @@ describe "Normalize: case" do
     assert_expand_second "x = 1; case x; when Foo(T); 'b'; end", "if x.is_a?(Foo(T))\n  'b'\nend"
   end
 
+  it "normalizes case with Path.class to is_a?" do
+    assert_expand_second "x = 1; case x; when Foo.class; 'b'; end", "if x.is_a?(Foo.class)\n  'b'\nend"
+  end
+
+  it "normalizes case with Generic.class to is_a?" do
+    assert_expand_second "x = 1; case x; when Foo(T).class; 'b'; end", "if x.is_a?(Foo(T).class)\n  'b'\nend"
+  end
+
   it "normalizes case with many expressions in when" do
     assert_expand_second "x = 1; case x; when 1, 2; 'b'; end", "if 1 === x || 2 === x\n  'b'\nend"
   end
