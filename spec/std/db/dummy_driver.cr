@@ -1,14 +1,13 @@
 require "spec"
 
 class DummyDriver < DB::Driver
-  def build_connection
-    DummyConnection.new(uri)
+  def build_connection(db : DB::Database) : DB::Connection
+    DummyConnection.new(db)
   end
 
   class DummyConnection < DB::Connection
-    getter uri
-
-    def initialize(@uri)
+    def initialize(db)
+      super(db)
       @@connections ||= [] of DummyConnection
       @@connections.not_nil! << self
     end
@@ -60,6 +59,7 @@ class DummyDriver < DB::Driver
     end
 
     protected def do_close
+      super
     end
   end
 
@@ -74,6 +74,7 @@ class DummyDriver < DB::Driver
     end
 
     protected def do_close
+      super
     end
 
     def self.last_result_set

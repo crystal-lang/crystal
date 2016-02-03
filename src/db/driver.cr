@@ -7,8 +7,8 @@ module DB
   # require "db"
   #
   # class FakeDriver < Driver
-  #   def build_connection
-  #     FakeConnection.new uri
+  #   def build_connection(db)
+  #     FakeConnection.new db
   #   end
   # end
   #
@@ -18,7 +18,7 @@ module DB
   # Access to this fake datbase will be available with
   #
   # ```
-  # DB.open "fake", "..." do |db|
+  # DB.open "fake://..." do |db|
   #   # ... use db ...
   # end
   # ```
@@ -26,11 +26,9 @@ module DB
   # Refer to `Connection`, `Statement` and `ResultSet` for further
   # driver implementation instructions.
   abstract class Driver
-    getter uri
-
-    def initialize(@uri : URI)
+    def initialize
     end
 
-    abstract def build_connection : Connection
+    abstract def build_connection(db : Database) : Connection
   end
 end

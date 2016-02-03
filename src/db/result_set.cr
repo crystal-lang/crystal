@@ -21,6 +21,11 @@ module DB
     def initialize(@statement : Statement)
     end
 
+    protected def do_close
+      cnn = statement.connection
+      cnn.database.return_to_pool(cnn)
+    end
+
     # TODO add_next_result_set : Bool
 
     # Iterates over all the rows

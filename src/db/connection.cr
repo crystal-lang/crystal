@@ -17,7 +17,13 @@ module DB
   abstract class Connection
     include Disposable
     include QueryMethods
+
+    # :nodoc:
+    getter database
     @statements_cache = {} of String => Statement
+
+    def initialize(@database : Database)
+    end
 
     # :nodoc:
     def prepare(query) : Statement

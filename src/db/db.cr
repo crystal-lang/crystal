@@ -105,7 +105,7 @@ module DB
   end
 
   private def self.build_database(uri : URI)
-    Database.new(driver_class(uri.scheme), uri)
+    Database.new(driver_class(uri.scheme).new, uri)
   end
 end
 

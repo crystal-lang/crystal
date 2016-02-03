@@ -13,20 +13,18 @@ describe DB do
 
   it "should instantiate driver with connection uri" do
     db = DB.open "dummy://localhost:1027"
-    db.driver_class.should eq(DummyDriver)
+    db.driver.should be_a(DummyDriver)
     db.uri.scheme.should eq("dummy")
     db.uri.host.should eq("localhost")
     db.uri.port.should eq(1027)
   end
 
   it "should create a connection and close it" do
-    cnn = nil
+    DummyDriver::DummyConnection.clear_connections
     DB.open "dummy://localhost" do |db|
-      cnn = db.connection
     end
-
-    cnn.should be_a(DummyDriver::DummyConnection)
-    cnn.not_nil!.closed?.should be_true
+    connections.size.should eq(1)
+    connections.first.closed?.should be_true
   end
 
   it "query should close result_set" do
@@ -60,5 +58,15 @@ describe DB do
       connections.first.closed?.should be_false
     end
     connections.first.closed?.should be_true
+  end
+
+  it "should raise if the sole connection is been used" do
+    with_dummy do |db|
+      db.query "1" do |rs|
+        expect_raises Exception, /DB Pool Exhausted/ do
+          db.scalar "2"
+        end
+      end
+    end
   end
 end

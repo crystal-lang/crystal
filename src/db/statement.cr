@@ -18,6 +18,9 @@ module DB
     def initialize(@connection)
     end
 
+    protected def do_close
+    end
+
     # See `QueryMethods#exec`
     def exec
       perform_exec(Slice(Any).new(0)) # no overload matches ... with types Slice(NoReturn)

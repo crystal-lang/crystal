@@ -8,30 +8,37 @@ module DB
   # Refer to `QueryMethods` for documentation about querying the database.
   class Database
     # :nodoc:
-    getter driver_class
+    getter driver
 
-    # Connection configuration to the database.
+    # Returns the uri with the connection settings to the database
     getter uri
 
     # :nodoc:
-    def initialize(@driver_class, @uri)
-      @driver = @driver_class.new(@uri)
-      @connection = @driver.build_connection
+    def initialize(@driver, @uri)
+      @in_pool = true
+      @connection = @driver.build_connection(self)
     end
 
     # Closes all connection to the database.
     def close
-      @connection.close
-    end
-
-    # :nodoc:
-    def connection
-      @connection
+      @connection.try &.close
     end
 
     # :nodoc:
     def prepare(query)
-      connection.prepare(query)
+      get_from_pool.prepare(query)
+    end
+
+    # :nodoc:
+    def get_from_pool
+      raise "DB Pool Exhausted" unless @in_pool
+      @in_pool = false
+      @connection.not_nil!
+    end
+
+    # :nodoc:
+    def return_to_pool(connection)
+      @in_pool = true
     end
 
     include QueryMethods
