@@ -99,6 +99,7 @@ module DB
 end
 
 require "./query_methods"
+require "./disposable"
 require "./database"
 require "./driver"
 require "./connection"

@@ -10,12 +10,12 @@ module DB
   # 4. `#perform_exec` executes a query that is expected to return an `ExecResult`
   # 6. `#do_close` is called to release the statement resources.
   abstract class Statement
+    include Disposable
+
     getter connection
 
     def initialize(@connection)
-      @closed = false
     end
-
 
     # See `QueryMethods#exec`
     def exec
@@ -82,27 +82,7 @@ module DB
       perform_query(args.to_a.to_unsafe.to_slice(args.size))
     end
 
-    # Closes this statement.
-    def close
-      return if @closed
-      @closed = true
-      do_close
-    end
-
-    # Returns `true` if this statement is closed. See `#close`.
-    def closed?
-      @closed
-    end
-
-    # :nodoc:
-    def finalize
-      close
-    end
-
     protected abstract def perform_query(args : Slice(Any)) : ResultSet
     protected abstract def perform_exec(args : Slice(Any)) : ExecResult
-
-    protected def do_close
-    end
   end
 end

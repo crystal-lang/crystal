@@ -29,7 +29,7 @@ class DummyDriver < DB::Driver
       0
     end
 
-    def perform_close
+    protected def do_close
     end
   end
 
@@ -57,6 +57,9 @@ class DummyDriver < DB::Driver
         @params[index] = arg
       end
     end
+
+    protected def do_close
+    end
   end
 
   class DummyResultSet < DB::ResultSet
@@ -67,6 +70,9 @@ class DummyDriver < DB::Driver
       @iterator = query.split.map { |r| r.split(',') }.to_a.each
 
       @@last_result_set = self
+    end
+
+    protected def do_close
     end
 
     def self.last_result_set

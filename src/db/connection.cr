@@ -15,30 +15,11 @@ module DB
   # Also override `#last_insert_id` to allow safe access to the last inserted id through this connection.
   #
   abstract class Connection
-    @closed = false
-
-    # Closes this connection.
-    def close
-      return if @closed
-      @closed = true
-      perform_close
-    end
-
-    # Returns `true` if this connection is closed. See `#close`.
-    def closed?
-      @closed
-    end
-
-    # :nodoc:
-    def finalize
-      close unless closed?
-    end
+    include Disposable
 
     # :nodoc:
     abstract def prepare(query) : Statement
 
     include QueryMethods
-
-    protected abstract def perform_close # TODO do_close
   end
 end

@@ -13,6 +13,8 @@ module DB
   # 4. Override `#column_count`, `#column_name`.
   # 5. Override `#column_type`. It must return a type in `DB::TYPES`.
   abstract class ResultSet
+    include Disposable
+
     getter statement
 
     def initialize(@statement : Statement)
@@ -25,26 +27,6 @@ module DB
       while move_next
         yield
       end
-    end
-
-    # Closes this result set.
-    def close
-      return if @closed
-      @closed = true
-      do_close
-    end
-
-    # Returns `true` if this result set is closed. See `#close`.
-    def closed?
-      @closed
-    end
-
-    # :nodoc:
-    def finalize
-      close
-    end
-
-    protected def do_close
     end
 
     # Move the next row in the result.
