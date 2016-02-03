@@ -15,6 +15,7 @@ module DB
   abstract class ResultSet
     include Disposable
 
+    # :nodoc:
     getter statement
 
     def initialize(@statement : Statement)

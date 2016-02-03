@@ -80,4 +80,15 @@ describe DB::Statement do
       stmt.closed?.should be_false
     end
   end
+
+  it "connection should cache statements by query" do
+    with_dummy do |db|
+      rs = db.query "1, ?", 2
+      stmt = rs.statement
+      rs.close
+
+      rs = db.query "1, ?", 4
+      rs.statement.should be(stmt)
+    end
+  end
 end

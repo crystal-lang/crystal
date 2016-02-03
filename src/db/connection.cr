@@ -9,17 +9,31 @@ module DB
   #
   # ### Note to implementors
   #
-  # The connection must be initialized in `#initialize` and closed in `#perform_close`.
+  # The connection must be initialized in `#initialize` and closed in `#do_close`.
   #
-  # To allow quering override `#prepare` method in order to return a prepared `Statement`.
-  # Also override `#last_insert_id` to allow safe access to the last inserted id through this connection.
+  # Override `#build_statement` method in order to return a prepared `Statement` to allow querying.
+  # See also `Statement` to define how the statements are executed.
   #
   abstract class Connection
     include Disposable
+    include QueryMethods
+    @statements_cache = {} of String => Statement
 
     # :nodoc:
-    abstract def prepare(query) : Statement
+    def prepare(query) : Statement
+      stmt = @statements_cache.fetch(query, nil)
+      if stmt.is_a?(Nil)
+        stmt = build_statement(query)
+        @statements_cache[query] = stmt
+      end
 
-    include QueryMethods
+      stmt
+    end
+
+    abstract def build_statement(query) : Statement
+
+    protected def do_close
+      @statements_cache.clear
+    end
   end
 end

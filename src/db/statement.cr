@@ -12,6 +12,7 @@ module DB
   abstract class Statement
     include Disposable
 
+    # :nodoc:
     getter connection
 
     def initialize(@connection)

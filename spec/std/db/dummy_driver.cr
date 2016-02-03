@@ -21,7 +21,7 @@ class DummyDriver < DB::Driver
       @@connections.try &.clear
     end
 
-    def prepare(query)
+    def build_statement(query)
       DummyStatement.new(self, query)
     end
 
@@ -30,6 +30,7 @@ class DummyDriver < DB::Driver
     end
 
     protected def do_close
+      super
     end
   end
 
