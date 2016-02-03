@@ -1,5 +1,13 @@
 # Ported from Go sample from this page: http://dancallahan.info/journal/go-concurrency/#How+do+channels+and+goroutines+work+together?
 
+Thread.new do
+  Scheduler.start
+end
+
+Thread.new do
+  Scheduler.start
+end
+
 def generate(chan)
   i = 2
   loop do
@@ -20,7 +28,7 @@ end
 ch = Channel(Int32).new
 spawn generate(ch)
 
-100.times do
+1000.times do
   prime = ch.receive
   puts prime
   ch1 = Channel(Int32).new

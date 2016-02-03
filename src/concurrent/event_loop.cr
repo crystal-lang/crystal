@@ -11,7 +11,16 @@ class EventLoop
   @@loop_fiber : Fiber?
   # @@loop_fiber = Fiber.new { @@eb.run_loop }
   @@loop_fiber = spawn do
-    @@eb.run_loop
+    Fiber.current.name = "loop-fiber"
+    # inf_event = @@eb.new_event(-1, LibEvent2::EventFlags::Persist, nil) { log(".") }
+    # inf_event.add(1)
+
+    loop { @@eb.run_loop }
+    log "END!???"
+  end
+
+  def self.resume
+    @@loop_fiber.not_nil!.resume
   end
 
   def self.after_fork
@@ -20,12 +29,14 @@ class EventLoop
 
   def self.wait
     Scheduler.current.reschedule
-    Scheduler.current.enqueue @@loop_fiber.not_nil!
+    # Scheduler.current.enqueue @@loop_fiber.not_nil!
   end
 
   def self.create_resume_event(fiber)
     @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      data.as(Fiber).resume
+      log "Resume event raised for '%s'", data.as(Fiber).name
+      Scheduler.current.enqueue data.as(Fiber), force: true
+      # (data as Fiber).resume
     end
   end
 

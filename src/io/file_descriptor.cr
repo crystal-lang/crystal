@@ -96,14 +96,16 @@ class IO::FileDescriptor
   # :nodoc:
   def resume_read
     if reader = @readers.try &.shift?
-      reader.resume
+      Scheduler.current.enqueue reader, force: true
+      # reader.resume
     end
   end
 
   # :nodoc:
   def resume_write
     if writer = @writers.try &.shift?
-      writer.resume
+      Scheduler.current.enqueue writer, force: true
+      # writer.resume
     end
   end
 
@@ -280,7 +282,9 @@ class IO::FileDescriptor
   private def add_read_event
     return if @edge_triggerable
     event = @read_event ||= EventLoop.create_fd_read_event(self)
-    event.add @read_timeout
+    Fiber.current.callback = ->{
+      event.add @read_timeout
+    }
     nil
   end
 
@@ -306,7 +310,9 @@ class IO::FileDescriptor
   private def add_write_event(timeout = @write_timeout)
     return if @edge_triggerable
     event = @write_event ||= EventLoop.create_fd_write_event(self)
-    event.add timeout
+    Fiber.current.callback = ->{
+      event.add timeout
+    }
     nil
   end
 

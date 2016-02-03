@@ -17,6 +17,7 @@ class Fiber
   @@stack_pool = [] of Void*
   @@fiber_list_mutex = Mutex.new
   @thread : Void*
+  property name
 
   # @@gc_lock = LibCK.rwlock_init
   @@gc_lock = LibCK.brlock_init
@@ -74,6 +75,7 @@ class Fiber
 
   def initialize
     @proc = Proc(Void).new { }
+    @name = "main #{LibC.pthread_self.address}"
     @thread = LibC.pthread_self.as(Void*)
     @stack = Pointer(Void).null
     @stack_top = _fiber_get_stack_top
@@ -116,6 +118,8 @@ class Fiber
 
   def run
     Fiber.gc_read_unlock
+    log "Start with callback %ld", @callback
+    flush_callback
     @proc.call
   rescue ex
     if name = @name
@@ -153,24 +157,36 @@ class Fiber
     LibCK.brlock_read_register pointerof(@@gc_lock), pointerof(@@gc_lock_reader)
   end
 
+  @[NoInline]
   protected def self.gc_read_lock
+    # log2 "gc_read_lock begin"
     # LibCK.rwlock_read_lock pointerof(@@gc_lock)
     LibCK.brlock_read_lock pointerof(@@gc_lock), pointerof(@@gc_lock_reader)
+    # log2 "gc_read_lock end"
   end
 
+  @[NoInline]
   protected def self.gc_read_unlock
+    # log2 "gc_read_unlock begin"
     # LibCK.rwlock_read_unlock pointerof(@@gc_lock)
     LibCK.brlock_read_unlock pointerof(@@gc_lock_reader)
+    # log2 "gc_read_unlock end"
   end
 
+  @[NoInline]
   protected def self.gc_write_lock
+    # log2 "gc_write_lock begin"
     # LibCK.rwlock_write_lock pointerof(@@gc_lock)
     LibCK.brlock_write_lock pointerof(@@gc_lock)
+    # log2 "gc_write_lock end"
   end
 
+  @[NoInline]
   protected def self.gc_write_unlock
+    # log2 "gc_write_unlock begin"
     # LibCK.rwlock_write_unlock pointerof(@@gc_lock)
     LibCK.brlock_write_unlock pointerof(@@gc_lock)
+    # log2 "gc_write_unlock end"
   end
 
   @[NoInline]
@@ -217,8 +233,10 @@ class Fiber
   end
 
   def resume
+    log "Resume '%s' -> '%s'", @@current.@name, self.@name
     Fiber.gc_read_lock
     current, Thread.current.current_fiber = Thread.current.current_fiber, self
+    @callback = current.transfer_callback
 
     # LibGC.set_stackbottom LibPThread.self as Void*, @stack_bottom
     current.thread = Pointer(Void).null
@@ -226,12 +244,33 @@ class Fiber
     Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
 
     Fiber.gc_read_unlock
+    current.flush_callback
+  end
+
+  property callback
+
+  protected def flush_callback
+    if callback = @callback
+      callback.call
+      @callback = nil
+    end
+  end
+
+  protected def transfer_callback
+    @callback.tap do
+      @callback = nil
+    end
   end
 
   def sleep(time)
+    # LibC.printf "a %ld\n", LibPThread.self
     event = @resume_event ||= EventLoop.create_resume_event(self)
-    event.add(time)
+    @callback = ->{
+      log "Register sleep timer for '%s'", @name
+      event.add(time)
+    }
     EventLoop.wait
+    log "Resumed '%s' from sleep", @name
   end
 
   def yield
