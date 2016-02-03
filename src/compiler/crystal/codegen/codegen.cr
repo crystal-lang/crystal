@@ -8,10 +8,12 @@ require "./llvm_builder_helper"
 LLVM.init_x86
 
 module Crystal
-  MAIN_NAME    = "__crystal_main"
-  RAISE_NAME   = "__crystal_raise"
-  MALLOC_NAME  = "__crystal_malloc"
-  REALLOC_NAME = "__crystal_realloc"
+  MAIN_NAME          = "__crystal_main"
+  RAISE_NAME         = "__crystal_raise"
+  MALLOC_NAME        = "__crystal_malloc"
+  REALLOC_NAME       = "__crystal_realloc"
+  PERSONALITY_NAME   = "__crystal_personality"
+  GET_EXCEPTION_NAME = "__crystal_get_exception"
 
   class Program
     def run(code, filename = nil)
@@ -58,9 +60,7 @@ module Crystal
   end
 
   class CodeGenVisitor < Visitor
-    PERSONALITY_NAME   = "__crystal_personality"
-    GET_EXCEPTION_NAME = "__crystal_get_exception"
-    SYMBOL_TABLE_NAME  = ":symbol_table"
+    SYMBOL_TABLE_NAME = ":symbol_table"
 
     include LLVMBuilderHelper
 
@@ -189,7 +189,7 @@ module Crystal
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, REALLOC_NAME, RAISE_NAME
+        when MALLOC_NAME, REALLOC_NAME, RAISE_NAME, PERSONALITY_NAME, GET_EXCEPTION_NAME
           @codegen.accept node
         end
         false
