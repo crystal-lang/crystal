@@ -53,6 +53,7 @@ module YAML
   #
   # * *type* (required) defines its type. In the example above, *title: String* is a shortcut to *title: {type: String}*.
   # * *nilable* defines if a property can be a `Nil`.
+  # * *default*: value by default, when no value from yaml
   # * *key* defines whick key to read from a YAML document. It defaults to the name of the property.
   # * *converter* takes an alternate type for parsing. It requires a `#from_yaml` method in that class, and returns an instance of the given type.
   macro mapping(properties, strict = false)
@@ -82,7 +83,7 @@ module YAML
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
             %var{key.id} =
-            {% if value[:nilable] == true %} %pull.read_null_or { {% end %}
+            {% if value[:nilable] == true || value[:default] != nil %} %pull.read_null_or { {% end %}
 
             {% if value[:converter] %}
               {{value[:converter]}}.from_yaml(%pull)
@@ -90,7 +91,7 @@ module YAML
               {{value[:type]}}.new(%pull)
             {% end %}
 
-            {% if value[:nilable] == true %} } {% end %}
+            {% if value[:nilable] == true || value[:default] != nil %} } {% end %}
         {% end %}
         else
           {% if strict %}
@@ -103,7 +104,7 @@ module YAML
       %pull.read_next
 
       {% for key, value in properties %}
-        {% unless value[:nilable] %}
+        {% unless value[:nilable] || value[:default] != nil %}
           if %var{key.id}.is_a?(Nil)
             raise YAML::ParseException.new("missing yaml attribute: {{(value[:key] || key).id}}", 0, 0)
           end
@@ -111,7 +112,7 @@ module YAML
       {% end %}
 
       {% for key, value in properties %}
-        @{{key.id}} = %var{key.id}
+        @{{key.id}} = {% if value[:nilable] %} (1 == 1) ? {% end %} %var{key.id} {% if value[:default] != nil %} || {{ value[:default] }} {% end %} {% if value[:nilable] %} : nil {% end %}
       {% end %}
     end
   end
