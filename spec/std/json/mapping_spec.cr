@@ -243,13 +243,13 @@ describe "JSON mapping" do
       json = JsonWithDefaults.from_json(%({}))
 
       json.e.should eq false
-      typeof(json.e).should eq typeof(rand > 0 ? true : nil)
+      typeof(json.e).should eq(Bool | Nil)
 
       json.f.should eq 1
-      typeof(json.f).should eq typeof(rand > 0 ? 1 : nil)
+      typeof(json.f).should eq(Int32 | Nil)
 
       json.g.should eq nil
-      typeof(json.g).should eq typeof(rand > 0 ? 1 : nil)
+      typeof(json.g).should eq(Int32 | Nil)
     end
 
     it "create new array every time" do

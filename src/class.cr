@@ -40,6 +40,17 @@ class Class
     other as self
   end
 
+  # Return the union type of `self` and `other`.
+  #
+  # ```
+  # Int32 | Char # => (Int32 | Char)
+  # ```
+  def self.|(other : U.class)
+    t = uninitialized self
+    u = uninitialized U
+    typeof(t, u)
+  end
+
   def to_s(io)
     io << name
   end
