@@ -2,6 +2,10 @@ require "spec"
 require "db"
 require "./dummy_driver"
 
+private def connections
+  DummyDriver::DummyConnection.connections
+end
+
 describe DB do
   it "should get driver class by name" do
     DB.driver_class("dummy").should eq(DummyDriver)
@@ -41,5 +45,18 @@ describe DB do
       db.scalar "1"
       DummyDriver::DummyResultSet.last_result_set.closed?.should be_true
     end
+  end
+
+  it "initially a single connection should be created" do
+    with_dummy do |db|
+      connections.size.should eq(1)
+    end
+  end
+
+  it "the connection should be closed after db usage" do
+    with_dummy do |db|
+      connections.first.closed?.should be_false
+    end
+    connections.first.closed?.should be_true
   end
 end

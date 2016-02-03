@@ -9,6 +9,16 @@ class DummyDriver < DB::Driver
     getter connection_string
 
     def initialize(@connection_string)
+      @@connections ||= [] of DummyConnection
+      @@connections.not_nil! << self
+    end
+
+    def self.connections
+      @@connections.not_nil!
+    end
+
+    def self.clear_connections
+      @@connections.try &.clear
     end
 
     def prepare(query)
@@ -26,9 +36,9 @@ class DummyDriver < DB::Driver
   class DummyStatement < DB::Statement
     property params
 
-    def initialize(driver, @query)
+    def initialize(connection, @query)
       @params = Hash(Int32 | String, DB::Any).new
-      super(driver)
+      super(connection)
     end
 
     protected def perform_query(args : Slice(DB::Any))
@@ -155,6 +165,8 @@ def with_witness(count = 1)
 end
 
 def with_dummy
+  DummyDriver::DummyConnection.clear_connections
+
   DB.open "dummy", "" do |db|
     yield db
   end

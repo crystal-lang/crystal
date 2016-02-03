@@ -21,20 +21,20 @@ module DB
 
     # Closes this connection.
     def close
-      raise "Connection already closed" if @closed # TODO make it no fail if closed
+      return if @closed
       @closed = true
       perform_close
     end
 
-    # Returns `true` if this statement is closed. See `#close`.
+    # Returns `true` if this connection is closed. See `#close`.
     def closed?
       @closed
     end
 
-    # # :nodoc:
-    # def finalize
-    #   close unless closed?
-    # end
+    # :nodoc:
+    def finalize
+      close unless closed?
+    end
 
     # Returns an `Statement` with the prepared `query`
     abstract def prepare(query) : Statement

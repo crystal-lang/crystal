@@ -39,25 +39,25 @@ describe DummyDriver do
       end
     end
 
-    it "should query with block should executes always" do
-      with_witness do |w|
-        with_dummy do |db|
-          db.query "" do |rs|
-            w.check
-          end
-        end
-      end
-    end
-
-    it "should query with block should executes always" do
-      with_witness do |w|
-        with_dummy do |db|
-          db.query "lorem ipsum" do |rs|
-            w.check
-          end
-        end
-      end
-    end
+    # it "should query with block should executes always" do
+    #   with_witness do |w|
+    #     with_dummy do |db|
+    #       db.query "a" do |rs|
+    #         w.check
+    #       end
+    #     end
+    #   end
+    # end
+    #
+    # it "should query with block should executes always" do
+    #   with_witness do |w|
+    #     with_dummy do |db|
+    #       db.query "lorem ipsum" do |rs|
+    #         w.check
+    #       end
+    #     end
+    #   end
+    # end
 
     it "should enumerate string fields" do
       with_dummy do |db|

@@ -16,6 +16,7 @@ module DB
       @closed = false
     end
 
+
     # See `QueryMethods#exec`
     def exec
       perform_exec(Slice(Any).new(0)) # no overload matches ... with types Slice(NoReturn)
@@ -83,7 +84,7 @@ module DB
 
     # Closes this statement.
     def close
-      return if @closed # make it work if closed
+      return if @closed
       @closed = true
       do_close
     end
