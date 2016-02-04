@@ -14,14 +14,14 @@ require "uri"
 # Assuming `crystal-sqlite3` is included a sqlite3 database can be opened with `#open`.
 #
 # ```
-# db = DB.open "sqlite3://%3Amemory%3A" # or sqlite3:///path/to/db/file.db
+# db = DB.open "sqlite3:%3Amemory%3A" # or sqlite3:./path/to/db/file.db
 # db.close
 # ```
 #
 # If a block is given to `#open` the database is closed automatically
 #
 # ```
-# DB.open "sqlite3://%3Amemory%3A" do |db|
+# DB.open "sqlite3:%3Amemory%3A" do |db|
 #   # work with db
 # end # db is closed
 # ```
@@ -42,7 +42,11 @@ require "uri"
 # DB.open "sqlite3://%3Amemory%3A" do |db|
 #   db.exec "create table contacts (name string, age integer)"
 #   db.exec "insert into contacts values (?, ?)", "John Doe", 30
-#   db.exec "insert into contacts values (:name, :age)", {name: "Sarah", age: 33}
+#
+#   args = [] of DB::Any
+#   args << "Sarah"
+#   args << 33
+#   db.exec "insert into contacts values (?, ?)", args
 #
 #   puts "max age:"
 #   puts db.scalar "select max(age) from contacts" # => 33

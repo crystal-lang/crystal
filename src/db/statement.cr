@@ -21,15 +21,24 @@ module DB
     protected def do_close
     end
 
+    def release_connection
+      @connection.database.return_to_pool(@connection)
+    end
+
     # See `QueryMethods#exec`
     def exec
-      perform_exec(Slice(Any).new(0)) # no overload matches ... with types Slice(NoReturn)
+      perform_exec_and_release(Slice(Any).new(0)) # no overload matches ... with types Slice(NoReturn)
+    end
+
+    # See `QueryMethods#exec`
+    def exec(args : Enumerable(Any))
+      perform_exec_and_release(args.to_a.to_unsafe.to_slice(args.size))
     end
 
     # See `QueryMethods#exec`
     def exec(*args)
       # TODO better way to do it
-      perform_exec(args.to_a.to_unsafe.to_slice(args.size))
+      perform_exec_and_release(args.to_a.to_unsafe.to_slice(args.size))
     end
 
     # See `QueryMethods#scalar`
@@ -81,9 +90,20 @@ module DB
       perform_query(Slice(Any).new(0)) # no overload matches ... with types Slice(NoReturn)
     end
 
+    private def perform_query(args : Enumerable(Any)) : ResultSet
+      # TODO better way to do it
+      perform_query(args.to_a.to_unsafe.to_slice(args.size))
+    end
+
     private def perform_query(*args) : ResultSet
       # TODO better way to do it
       perform_query(args.to_a.to_unsafe.to_slice(args.size))
+    end
+
+    private def perform_exec_and_release(args : Slice(Any)) : ExecResult
+      perform_exec(args).tap do
+        release_connection
+      end
     end
 
     protected abstract def perform_query(args : Slice(Any)) : ResultSet

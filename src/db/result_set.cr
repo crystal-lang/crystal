@@ -22,8 +22,7 @@ module DB
     end
 
     protected def do_close
-      cnn = statement.connection
-      cnn.database.return_to_pool(cnn)
+      statement.release_connection
     end
 
     # TODO add_next_result_set : Bool

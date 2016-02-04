@@ -69,4 +69,18 @@ describe DB do
       end
     end
   end
+
+  it "exec should return to pool" do
+    with_dummy do |db|
+      db.exec "foo"
+      db.exec "bar"
+    end
+  end
+
+  it "scalar should return to pool" do
+    with_dummy do |db|
+      db.scalar "foo"
+      db.scalar "bar"
+    end
+  end
 end
