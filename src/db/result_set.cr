@@ -18,7 +18,7 @@ module DB
     # :nodoc:
     getter statement
 
-    def initialize(@statement : Statement)
+    def initialize(@statement : DB::Statement)
     end
 
     protected def do_close
