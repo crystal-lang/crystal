@@ -99,8 +99,8 @@ module JSON
       end
 
       {% for key, value in properties %}
-        %temp = if !%var{key.id}.is_a?(Nil)
-          %var{key.id}.not_nil!
+        @{{key.id}} = if !%var{key.id}.is_a?(Nil)
+          %var{key.id}{% if !value[:nilable] %}.not_nil! {% end %}
         else
           {% if value[:default] != nil %}
             {{ value[:default] }}
@@ -108,8 +108,6 @@ module JSON
             raise JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
           {% end %}
         end
-
-        @{{key.id}} = {% if value[:nilable] %} (1 == 1) ? {% end %} %temp {% if value[:nilable] %} : nil {% end %}
       {% end %}
     end
 
