@@ -3,8 +3,8 @@
 # Instances of this class wrap another IO object. When you write to this
 # instance, it compresses the data and writes it to the underlying IO.
 #
-# **Note**: for correct behavior, `close` must be invoked after all data
-# has been written to a Zlib::Deflate instance.
+# **Note**: unless created with a block, `close` must be invoked after all
+# data has been written to a Zlib::Deflate instance.
 #
 # ### Example: compress a file
 #
