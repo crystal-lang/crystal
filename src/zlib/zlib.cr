@@ -2,9 +2,15 @@ require "./lib_zlib"
 require "./deflate"
 require "./inflate"
 
+# The Zlib module provides access to the [zlib library](http://zlib.net/) for
+# loseless data compression and decompression in zlib and gzip format:
+#
+# * `Zlib::Deflate` for compression
+# * `Zlib::Inflate` for decompression
 module Zlib
   GZIP = LibZ::MAX_BITS + 16
 
+  # Returns the linked zlib version.
   def self.version
     String.new LibZ.zlibVersion
   end
