@@ -99,15 +99,17 @@ module JSON
       end
 
       {% for key, value in properties %}
-        {% unless value[:nilable] || value[:default] != nil %}
-          if %var{key.id}.is_a?(Nil)
+        %temp = if !%var{key.id}.is_a?(Nil)
+          %var{key.id}.not_nil!
+        else
+          {% if value[:default] != nil %}
+            {{ value[:default] }}
+          {% elsif !value[:nilable] %}
             raise JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
-          end
-        {% end %}
-      {% end %}
+          {% end %}
+        end
 
-      {% for key, value in properties %}
-        @{{key.id}} = {% if value[:nilable] %} (1 == 1) ? {% end %} %var{key.id} {% if value[:default] != nil %} || {{ value[:default] }} {% end %} {% if value[:nilable] %} : nil {% end %}
+        @{{key.id}} = {% if value[:nilable] %} (1 == 1) ? {% end %} %temp {% if value[:nilable] %} : nil {% end %}
       {% end %}
     end
 
