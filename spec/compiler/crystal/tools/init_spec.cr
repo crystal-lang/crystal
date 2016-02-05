@@ -85,16 +85,15 @@ dependencies:
     end
 
     describe_file "example/shard.yml" do |shard_yml|
-      parsed = YAML.load(shard_yml) as Hash
+      parsed = YAML.parse(shard_yml)
       parsed["name"].should eq("example")
       parsed["version"].should eq("0.1.0")
-      authors = (parsed["authors"] as Array)
-      authors.should eq(["John Smith <john@smith.com>"])
+      parsed["authors"].should eq(["John Smith <john@smith.com>"])
       parsed["license"].should eq("MIT")
     end
 
     describe_file "example/.travis.yml" do |travis|
-      parsed = YAML.load(travis) as Hash
+      parsed = YAML.parse(travis)
 
       parsed["language"].should eq("crystal")
     end
