@@ -1312,4 +1312,23 @@ describe "Code gen: block" do
       f.call
       )).to_i.should eq(10)
   end
+
+  it "codegens captured block with next inside yielded block (#2097)" do
+    run(%(
+      def foo
+        yield
+      end
+
+      def bar(&block : -> Int32)
+        block
+      end
+
+      foo do
+        block = bar do
+          next 123
+        end
+        block.call
+      end
+      )).to_i.should eq(123)
+  end
 end

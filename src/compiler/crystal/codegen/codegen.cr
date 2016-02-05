@@ -650,22 +650,30 @@ module Crystal
       set_current_debug_location(node) if @debug
       node_type = accept_control_expression(node)
 
-      if next_phi = context.next_phi
-        old_last = @last
-        execute_ensures_until(node.target as Block)
-        @last = old_last
+      case target = node.target
+      when Block
+        if next_phi = context.next_phi
+          old_last = @last
+          execute_ensures_until(target as Block)
+          @last = old_last
 
-        next_phi.add @last, node_type
-      elsif while_block = context.while_block
-        execute_ensures_until(node.target as While)
-        br while_block
+          next_phi.add @last, node_type
+          return false
+        end
+      when While
+        if while_block = context.while_block
+          execute_ensures_until(target as While)
+          br while_block
+          return false
+        end
       else
         # The only possibility is that we are in a captured block,
         # so this is the same as a return
         codegen_return_node(node, node_type)
+        return false
       end
 
-      false
+      node.raise "Bug: unknown exit for next"
     end
 
     def accept_control_expression(node)
