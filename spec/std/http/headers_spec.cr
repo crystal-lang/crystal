@@ -121,4 +121,9 @@ describe HTTP::Headers do
     headers = HTTP::Headers{"Foo_quux": "bar", "Baz-Quux": ["a", "b"]}
     headers.to_s.should eq(%(HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}))
   end
+
+  it "merges and return self" do
+    headers = HTTP::Headers.new
+    headers.should be headers.merge!({"foo": "bar"})
+  end
 end
