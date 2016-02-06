@@ -2167,7 +2167,7 @@ class String
   # Converts underscores to camelcase boundaries.
   #
   # ```
-  # "eiffel_tower".underscore # => "EiffelTower"
+  # "eiffel_tower".camelcase # => "EiffelTower"
   # ```
   def camelcase
     first = true
