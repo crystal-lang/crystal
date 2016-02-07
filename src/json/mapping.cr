@@ -35,12 +35,12 @@ module JSON
   # that accepts a `JSON::PullParser` and returns an object from it.
   #
   # The value can also be another hash literal with the following options:
-  # * type: (required) the single type described above (you can use `JSON::Any` too)
-  # * key: the property name in the JSON document (as opposed to the property name in the Crystal code)
-  # * nilable: if true, the property can be `Nil`
-  # * default: value by default, when no value from json
-  # * emit_null: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
-  # * converter: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods.
+  # * **type**: (required) the single type described above (you can use `JSON::Any` too)
+  # * **key**: the property name in the JSON document (as opposed to the property name in the Crystal code)
+  # * **nilable**: if true, the property can be `Nil`
+  # * **default**: value to use if the property is missing in the JSON document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a JSON document is parsed.
+  # * **emit_null**: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
+  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods.
   #
   # The mapping also automatically defines Crystal properties (getters and setters) for each
   # of the keys. It doesn't define a constructor accepting those arguments, but you can provide
@@ -72,22 +72,24 @@ module JSON
     def initialize(%pull : JSON::PullParser)
       {% for key, value in properties %}
         %var{key.id} = nil
+        %found{key.id} = false
       {% end %}
 
       %pull.read_object do |key|
         case key
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
+            %found{key.id} = true
             %var{key.id} =
-            {% if value[:nilable] == true || value[:default] != nil %} %pull.read_null_or { {% end %}
+              {% if value[:nilable] || value[:default] != nil %} %pull.read_null_or { {% end %}
 
-            {% if value[:converter] %}
-              {{value[:converter]}}.from_json(%pull)
-            {% else %}
-              {{value[:type]}}.new(%pull)
-            {% end %}
+              {% if value[:converter] %}
+                {{value[:converter]}}.from_json(%pull)
+              {% else %}
+                {{value[:type]}}.new(%pull)
+              {% end %}
 
-            {% if value[:nilable] == true || value[:default] != nil %} } {% end %}
+            {% if value[:nilable] || value[:default] != nil %} } {% end %}
         {% end %}
         else
           {% if strict %}
@@ -100,14 +102,24 @@ module JSON
 
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
-          if %var{key.id}.is_a?(Nil)
+          if %var{key.id}.is_a?(Nil) && !%found{key.id}
             raise JSON::ParseException.new("missing json attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
       {% end %}
 
       {% for key, value in properties %}
-        @{{key.id}} = {% if value[:nilable] %} (1 == 1) ? {% end %} %var{key.id} {% if value[:default] != nil %} || {{ value[:default] }} {% end %} {% if value[:nilable] %} : nil {% end %}
+        {% if value[:nilable] %}
+          {% if value[:default] != nil %}
+            @{{key.id}} = %found{key.id} ? %var{key.id} : {{value[:default]}}
+          {% else %}
+            @{{key.id}} = %var{key.id}
+          {% end %}
+        {% elsif value[:default] != nil %}
+          @{{key.id}} = %var{key.id}.is_a?(Nil) ? {{value[:default]}} : %var{key.id}
+        {% else %}
+          @{{key.id}} = %var{key.id}.not_nil!
+        {% end %}
       {% end %}
     end
 
