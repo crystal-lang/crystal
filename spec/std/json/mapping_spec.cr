@@ -237,6 +237,16 @@ describe "JSON mapping" do
       typeof(json.c).should eq Bool
       json.d.should eq false
       typeof(json.d).should eq Bool
+
+      json = JsonWithDefaults.from_json(%({"c":false}))
+      json.c.should eq false
+      json = JsonWithDefaults.from_json(%({"c":true}))
+      json.c.should eq true
+
+      json = JsonWithDefaults.from_json(%({"d":false}))
+      json.d.should eq false
+      json = JsonWithDefaults.from_json(%({"d":true}))
+      json.d.should eq true
     end
 
     it "with nilable" do
@@ -250,6 +260,11 @@ describe "JSON mapping" do
 
       json.g.should eq nil
       typeof(json.g).should eq(Int32 | Nil)
+
+      json = JsonWithDefaults.from_json(%({"e":false}))
+      json.e.should eq false
+      json = JsonWithDefaults.from_json(%({"e":true}))
+      json.e.should eq true
     end
 
     it "create new array every time" do
