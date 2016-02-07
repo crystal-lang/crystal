@@ -711,6 +711,7 @@ module Iterator(T)
     Step(T).new(self, n)
   end
 
+  # :nodoc:
   struct Step(T)
     include Iterator(T)
     include IteratorWrapper
