@@ -97,6 +97,7 @@
        * [Macro methods](syntax_and_semantics/macros/macro_methods.md)
        * [Hooks](syntax_and_semantics/macros/hooks.md)
        * [Fresh variables](syntax_and_semantics/macros/fresh_variables.md)
+   * [Concurrency](syntax_and_semantics/concurrency.md)
    * [C bindings](syntax_and_semantics/c_bindings/README.md)
        * [lib](syntax_and_semantics/c_bindings/lib.md)
        * [fun](syntax_and_semantics/c_bindings/fun.md)
