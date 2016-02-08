@@ -94,7 +94,7 @@ end
 
 describe "TCPServer" do
   it "fails when port is in use" do
-    expect_raises Errno, /already in use/ do
+    expect_raises Errno, /(already|Address) in use/ do
       TCPServer.open("::", 0) do |server|
         TCPServer.open("::", server.addr.ip_port) { }
       end
@@ -183,7 +183,7 @@ describe "TCPSocket" do
   end
 
   it "fails when host doesn't exist" do
-    expect_raises(Socket::Error, /^getaddrinfo: (.+ not known|no address .+|Non-recoverable failure in name resolution)$/i) do
+    expect_raises(Socket::Error, /^getaddrinfo: (.+ not known|no address .+|Non-recoverable failure in name resolution|Name does not resolve)$/i) do
       TCPSocket.new("localhostttttt", 12345)
     end
   end
