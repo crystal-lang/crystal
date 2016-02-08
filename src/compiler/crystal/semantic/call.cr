@@ -709,7 +709,7 @@ class Crystal::Call
           a_def = Def.new("->", fun_args, block.body)
           a_def.captured_block = true
 
-          fun_literal = FunLiteral.new(a_def)
+          fun_literal = FunLiteral.new(a_def).at(self)
           fun_literal.force_void = true unless block_arg_restriction_output
           fun_literal.accept parent_visitor
         end

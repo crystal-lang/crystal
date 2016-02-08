@@ -156,6 +156,7 @@ module Crystal
 
       @empty_md_list = metadata([] of Int32)
       @unused_fun_defs = [] of FunDef
+      @proc_counts = Hash(String, Int32).new(0)
 
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
       # to avoid some memory being allocated with plain malloc.
@@ -364,9 +365,7 @@ module Crystal
     end
 
     def visit(node : FunLiteral)
-      @fun_literal_count += 1
-
-      fun_literal_name = "~fun_literal_#{@fun_literal_count}"
+      fun_literal_name = fun_literal_name(node)
       is_closure = node.def.closure
 
       # If we don't care about a fun literal's return type then we mark the associated
@@ -388,6 +387,31 @@ module Crystal
       @last = make_fun node.type, fun_ptr, ctx_ptr
 
       false
+    end
+
+    def fun_literal_name(node : FunLiteral)
+      location = node.location.try &.original_location
+      if location && (type = node.type?)
+        proc_name = true
+        filename = location.filename as String
+        fun_literal_name = Crystal.safe_mangling("~proc#{type}@#{Crystal.relative_filename(filename)}:#{location.line_number}")
+      else
+        proc_name = false
+        fun_literal_name = "~fun_literal"
+      end
+      proc_count = @proc_counts[fun_literal_name]
+      proc_count += 1
+      @proc_counts[fun_literal_name] = proc_count
+
+      if proc_count > 1
+        if proc_name
+          fun_literal_name = "#{fun_literal_name[0...5]}#{proc_count}#{fun_literal_name[5..-1]}"
+        else
+          fun_literal_name = "#{fun_literal_name}#{proc_count}"
+        end
+      end
+
+      fun_literal_name
     end
 
     def visit(node : FunPointer)
@@ -1729,6 +1753,23 @@ module Crystal
 
     def visit(node : ASTNode)
       true
+    end
+  end
+
+  def self.safe_mangling(name)
+    ifdef windows
+      name.gsub do |char|
+        case char
+        when '<', '>', '(', ')', '*', ':', ',', '#', '@', ' '
+          "."
+        when '+'
+          ".."
+        else
+          char
+        end
+      end
+    else
+      name
     end
   end
 end
