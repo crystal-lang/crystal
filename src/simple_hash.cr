@@ -1,6 +1,8 @@
 struct SimpleHash(K, V)
+  record Entry(K, V), key : K, value : V
+
   def initialize
-    @values = [] of {K, V}
+    @values = [] of Entry(K, V)
   end
 
   def initialize(@values)
@@ -17,33 +19,33 @@ struct SimpleHash(K, V)
   end
 
   def fetch(key)
-    @values.each do |tuple|
-      if tuple[0] == key
-        return tuple[1]
+    @values.each do |entry|
+      if entry.key == key
+        return entry.value
       end
     end
     yield key
   end
 
   def []=(key : K, value : V)
-    @values.each_with_index do |tuple, i|
-      if tuple[0] == key
-        @values[i] = {key, value}
+    @values.each_with_index do |entry, i|
+      if entry.key == key
+        @values[i] = Entry.new(key, value)
         return value
       end
     end
 
-    @values.push({key, value})
+    @values.push(Entry.new(key, value))
     value
   end
 
   def has_key?(key)
-    @values.any? { |tuple| tuple[0] == key }
+    @values.any? { |entry| entry.key == key }
   end
 
   def delete(key)
-    @values.each_with_index do |tuple, index|
-      if tuple[0] == key
+    @values.each_with_index do |entry, index|
+      if entry.key == key
         return @values.delete_at(index)
       end
     end
@@ -55,8 +57,8 @@ struct SimpleHash(K, V)
   end
 
   def each
-    @values.each do |tuple|
-      yield tuple[0], tuple[1]
+    @values.each do |entry|
+      yield entry.key, entry.value
     end
   end
 
@@ -85,11 +87,11 @@ struct SimpleHash(K, V)
   end
 
   def keys
-    @values.map { |tuple| tuple[0] }
+    @values.map { |entry| entry.key }
   end
 
   def values
-    @values.map { |tuple| tuple[1] }
+    @values.map { |entry| entry.value }
   end
 
   # Returns a new hash consisting of entries for which the block returns false.
@@ -142,8 +144,10 @@ struct SimpleHash(K, V)
 
   def to_s(io : IO)
     io << '{'
-    @values.each_with_index do |pair, index|
-      pair.join(" => ", io) { |value, io| value.inspect(io) }
+    @values.each_with_index do |entry, index|
+      entry.key.inspect(io)
+      io << " => "
+      entry.value.inspect(io)
       io << ", " if index < @values.size - 1
     end
     io << '}'
