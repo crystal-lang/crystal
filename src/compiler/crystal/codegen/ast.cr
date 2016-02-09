@@ -104,22 +104,7 @@ module Crystal
         end
       end
 
-      # Windows only allows alphanumeric, dot, dollar and underscore
-      # for mangled names.
-      ifdef windows
-        name = name.gsub do |char|
-          case char
-          when '<', '>', '(', ')', '*', ':', ',', '#', ' '
-            "."
-          when '+'
-            ".."
-          else
-            char
-          end
-        end
-      end
-
-      name
+      Crystal.safe_mangling(name)
     end
 
     def varargs

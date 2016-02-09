@@ -24,15 +24,19 @@ module Crystal
       to_s(io)
     end
 
-    def original_filename
+    def original_location
       case filename = @filename
       when String
-        filename
+        self
       when VirtualFile
-        filename.expanded_location.try &.original_filename
+        filename.expanded_location.try &.original_location
       else
         nil
       end
+    end
+
+    def original_filename
+      original_location.try &.filename
     end
 
     def inspect
