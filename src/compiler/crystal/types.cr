@@ -1437,7 +1437,7 @@ module Crystal
 
     def run_instance_var_initializer(initializer, instance)
       meta_vars = MetaVars.new
-      visitor = TypeVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
+      visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
       visitor.scope = instance
       value = initializer.value.clone
       value.accept visitor
@@ -2223,7 +2223,7 @@ module Crystal
       return if @value_processed
       @value_processed = true
 
-      visitor = FirstPassVisitor.new(@program)
+      visitor = TopLevelVisitor.new(@program)
       visitor.types.push(container)
       visitor.processing_types do
         @value.accept visitor

@@ -111,7 +111,7 @@ module Crystal
 
     def visit(node : TypeOf)
       meta_vars = MetaVars{"self": MetaVar.new("self", @self_type)}
-      visitor = TypeVisitor.new(program, meta_vars)
+      visitor = MainVisitor.new(program, meta_vars)
       node.expressions.each &.accept visitor
       @type = program.type_merge node.expressions
       false

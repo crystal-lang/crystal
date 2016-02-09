@@ -27,7 +27,7 @@ module Crystal
 
           meta_vars = MetaVars.new
           const_def = Def.new("const", [] of Arg)
-          type_visitor = TypeVisitor.new(@mod, meta_vars, const_def)
+          type_visitor = MainVisitor.new(@mod, meta_vars, const_def)
           type_visitor.types = type.scope_types
           type_visitor.scope = type.scope
 
@@ -181,7 +181,7 @@ module Crystal
         end
         external.set_type(nil)
 
-        visitor = TypeVisitor.new(@mod, vars, external)
+        visitor = MainVisitor.new(@mod, vars, external)
         visitor.untyped_def = external
         visitor.scope = @mod
         visitor.block_nest = @block_nest
@@ -684,6 +684,36 @@ module Crystal
       end
 
       call_convention
+    end
+
+    def check_declare_var_type(node)
+      type = node.declared_type.type.instance_type
+
+      if type.is_a?(GenericClassType)
+        node.raise "can't declare variable of generic non-instantiated type #{type}"
+      end
+
+      Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as a Proc argument type")
+
+      type
+    end
+
+    def lookup_class_var(node, bind_to_nil_if_non_existent = true)
+      scope = (@scope || current_type).class_var_owner
+      if scope.is_a?(GenericClassType) || scope.is_a?(GenericModuleType)
+        node.raise "can't use class variable with generic types, only with generic types instances"
+      end
+
+      class_var_owner = scope as ClassVarContainer
+
+      var = class_var_owner.lookup_class_var node.name
+      var.bind_to mod.nil_var if bind_to_nil_if_non_existent && !var.dependencies?
+
+      node.owner = class_var_owner
+      node.var = var
+      node.class_scope = !@typed_def
+
+      var
     end
 
     def inside_exp?

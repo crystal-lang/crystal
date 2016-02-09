@@ -52,7 +52,7 @@ module Crystal
 
       expected_type = target_def.type
 
-      type_visitor = TypeVisitor.new(@program, vars, target_def)
+      type_visitor = MainVisitor.new(@program, vars, target_def)
       type_visitor.scope = owner
       type_visitor.types << owner
       generated_nodes.accept type_visitor

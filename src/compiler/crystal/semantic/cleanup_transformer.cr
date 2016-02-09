@@ -4,40 +4,47 @@ require "../types"
 
 module Crystal
   class Program
-    def after_type_inference(node)
-      node = node.transform(AfterTypeInferenceTransformer.new(self))
+    def cleanup(node)
+      node = node.transform(CleanupTransformer.new(self))
       puts node if ENV["AFTER"]? == "1"
       node
     end
 
-    def finish_types
-      transformer = AfterTypeInferenceTransformer.new(self)
+    def cleanup_types
+      transformer = CleanupTransformer.new(self)
       after_inference_types.each do |type|
-        finish_type type, transformer
+        cleanup_type type, transformer
       end
     end
 
-    def finish_type(type, transformer)
+    def cleanup_type(type, transformer)
       case type
       when GenericClassInstanceType
-        finish_single_type(type, transformer)
+        cleanup_single_type(type, transformer)
       when GenericClassType
         type.generic_types.each_value do |instance|
-          finish_type instance, transformer
+          cleanup_type instance, transformer
         end
       when ClassType
-        finish_single_type(type, transformer)
+        cleanup_single_type(type, transformer)
       end
     end
 
-    def finish_single_type(type, transformer)
+    def cleanup_single_type(type, transformer)
       type.instance_vars_initializers.try &.each do |initializer|
         initializer.value = initializer.value.transform(transformer)
       end
     end
   end
 
-  class AfterTypeInferenceTransformer < Transformer
+  # This visitor runs at the end and does some simplifications to the resulting AST node.
+  #
+  # For example, it rewrites and `if true; 1; else; 2; end` to a single `1`. It does
+  # so for other "always true conditions", such as `x.is_a?(Foo)` where `x` can only
+  # be of type `Foo`. These simplications are needed because the codegen would have no
+  # idea on how to generate code for unreachable branches, because they have no type,
+  # and for now the codegen only deals with typed nodes.
+  class CleanupTransformer < Transformer
     def initialize(@program)
       @transformed = Set(typeof(object_id)).new
       @def_nest_count = 0
@@ -490,7 +497,7 @@ module Crystal
 
     def build_raise(msg)
       call = Call.global("raise", StringLiteral.new(msg))
-      call.accept TypeVisitor.new(@program)
+      call.accept MainVisitor.new(@program)
       call
     end
 

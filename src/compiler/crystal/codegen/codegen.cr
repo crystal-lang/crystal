@@ -923,14 +923,14 @@ module Crystal
       ex = Call.new(Path.global("TypeCastError"), "new", StringLiteral.new("cast to #{to_type} failed"))
       call = Call.global("raise", ex)
 
-      @mod.infer_type_intermediate call
+      @mod.visit_main call
       call
     end
 
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
         call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed"))
-        @mod.infer_type_intermediate call
+        @mod.visit_main call
         call
       end
     end

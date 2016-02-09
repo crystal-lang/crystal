@@ -1,7 +1,37 @@
 require "./base_type_visitor"
 
 module Crystal
-  class TypeVisitor < BaseTypeVisitor
+  class Program
+    def visit_main(node)
+      node.accept MainVisitor.new(self)
+
+      loop do
+        expand_macro_defs
+        fix_empty_types node
+        node = cleanup node
+
+        # The above might have produced more macro def expansions,
+        # so we need to take care of these too
+        break if @def_macros.empty?
+      end
+
+      node
+    end
+  end
+
+  # This is the main visitor of the program, ran after types have been declared
+  # and their type declarations (like `@x : Int32`) have been processed.
+  #
+  # This visits the "main" code of the program and resolves calls, instantiates
+  # methods and visits them, recursively, with other MainVisitors.
+  #
+  # The visitor keeps track of a method's variables (or the main program, split into
+  # several files, in case of top-level code). It keeps track both of the type of a
+  # variable at a single point (stored in @vars) and the combined type of all assignments
+  # to it (in @meta_vars).
+  #
+  # Call resolution logic is in `Call#recalculate`, where method lookup is done.
+  class MainVisitor < BaseTypeVisitor
     property! scope
     getter! typed_def
     property! untyped_def
@@ -133,49 +163,15 @@ module Crystal
         if @untyped_def
           node.raise "declaring the type of an instance variable must be done at the class level"
         end
-
-        type = scope? || current_type
-        case type
-        when NonGenericClassType
-          node.declared_type.accept self
-          var_type = check_declare_var_type node
-          type.declare_instance_var(var.name, var_type)
-        when GenericClassType
-          type.declare_instance_var(var.name, node.declared_type)
-        when GenericClassInstanceType
-          # OK
-        else
-          node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
-        end
       when ClassVar
         if @untyped_def
           node.raise "declaring the type of a class variable must be done at the class level"
         end
-
-        class_var = lookup_class_var(var, bind_to_nil_if_non_existent: false)
-
-        node.declared_type.accept self
-        var_type = check_declare_var_type node
-
-        class_var.freeze_type = var_type
       when Global
         if @untyped_def
           node.raise "declaring the type of a global variable must be done at the class level"
         end
-
-        global_var = mod.global_vars[var.name]?
-        unless global_var
-          global_var = Var.new(var.name)
-          mod.global_vars[var.name] = global_var
-        end
-
-        node.declared_type.accept self
-        var_type = check_declare_var_type node
-
-        global_var.freeze_type = var_type
       end
-
-      node.type = @mod.nil
 
       false
     end
@@ -277,18 +273,6 @@ module Crystal
       false
     end
 
-    def check_declare_var_type(node)
-      type = node.declared_type.type.instance_type
-
-      if type.is_a?(GenericClassType)
-        node.raise "can't declare variable of generic non-instantiated type #{type}"
-      end
-
-      Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as a Proc argument type")
-
-      type
-    end
-
     def visit(node : Global)
       visit_global node
       false
@@ -379,24 +363,6 @@ module Crystal
       end
     end
 
-    def lookup_class_var(node, bind_to_nil_if_non_existent = true)
-      scope = (@scope || current_type).class_var_owner
-      if scope.is_a?(GenericClassType) || scope.is_a?(GenericModuleType)
-        node.raise "can't use class variable with generic types, only with generic types instances"
-      end
-
-      class_var_owner = scope as ClassVarContainer
-
-      var = class_var_owner.lookup_class_var node.name
-      var.bind_to mod.nil_var if bind_to_nil_if_non_existent && !var.dependencies?
-
-      node.owner = class_var_owner
-      node.var = var
-      node.class_scope = !@typed_def
-
-      var
-    end
-
     def end_visit(node : Expressions)
       node.bind_to node.last unless node.empty?
     end
@@ -471,7 +437,7 @@ module Crystal
         if current_type.is_a?(ClassType)
           @mod.after_inference_types << current_type
 
-          ivar_visitor = TypeVisitor.new(mod)
+          ivar_visitor = MainVisitor.new(mod)
           ivar_visitor.scope = current_type
 
           unless current_type.is_a?(GenericType)
@@ -697,7 +663,7 @@ module Crystal
 
       @block_nest += 1
 
-      block_visitor = TypeVisitor.new(mod, before_block_vars, @typed_def, meta_vars)
+      block_visitor = MainVisitor.new(mod, before_block_vars, @typed_def, meta_vars)
       block_visitor.yield_vars = @yield_vars
       block_visitor.free_vars = @free_vars
       block_visitor.untyped_def = @untyped_def
@@ -764,7 +730,7 @@ module Crystal
         if restriction = arg.restriction
           restriction.accept self
           arg_type = restriction.type.instance_type
-          TypeVisitor.check_type_allowed_as_proc_argument(node, arg_type)
+          MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           arg.type = arg_type.virtual_type
         elsif !arg.type?
           arg.raise "function argument '#{arg.name}' must have a type"
@@ -782,7 +748,7 @@ module Crystal
       node.def.bind_to node.def.body
       node.def.vars = meta_vars
 
-      block_visitor = TypeVisitor.new(mod, fun_vars, node.def, meta_vars)
+      block_visitor = MainVisitor.new(mod, fun_vars, node.def, meta_vars)
       block_visitor.types = @types
       block_visitor.yield_vars = @yield_vars
       block_visitor.free_vars = @free_vars
@@ -828,7 +794,7 @@ module Crystal
         call.args = node.args.map_with_index do |arg, i|
           arg.accept self
           arg_type = arg.type.instance_type
-          TypeVisitor.check_type_allowed_as_proc_argument(node, arg_type)
+          MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
           Var.new("arg#{i}", arg_type.virtual_type) as ASTNode
         end
       end

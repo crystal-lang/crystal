@@ -83,7 +83,7 @@ def assert_expand_second(from : String, to)
   assert_expand node, to
 end
 
-def assert_after_type_inference(before, after)
+def assert_after_cleanup(before, after)
   node = Parser.parse(before)
   result = infer_type node
   result.node.to_s.strip.should eq(after.strip)

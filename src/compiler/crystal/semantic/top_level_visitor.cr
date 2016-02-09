@@ -2,13 +2,42 @@ require "./base_type_visitor"
 
 module Crystal
   class Program
-    def first_pass(node)
-      node.accept FirstPassVisitor.new(self)
+    def visit_top_level(node)
+      node.accept TopLevelVisitor.new(self)
       node
     end
   end
 
-  class FirstPassVisitor < BaseTypeVisitor
+  # In this pass we traverse the AST nodes to declare and process:
+  # - class
+  # - struct
+  # - module
+  # - include
+  # - extend
+  # - enum (checking their value, since these need to be numbers or simple math operations)
+  # - macro
+  # - def (without going inside them)
+  # - alias (without resolution)
+  # - constants (without checking their value)
+  # - macro calls (only surface macros, because we don't go inside defs)
+  # - lib and everything inside them
+  # - fun with body (without going inside them)
+  #
+  # Macro calls are expanded, but only the first pass is done to them. This
+  # allows macros to define new classes and methods.
+  #
+  # We also process @[Link] attributes.
+  #
+  # After this pass we have completely defined the whole class hierarchy,
+  # including methods. After this point no new classes or methods can be introduced
+  # since in next passes we only go inside methods and top-level code, but we already
+  # analyzed top-level (surface) macros that could have expanded to class/method
+  # definitions.
+  #
+  # Now that we know the whole hierarchy, when someone types Foo, we know whether Foo has
+  # subclasses or not and we can tag it as "virtual" (having subclasses), but that concept
+  # might disappear in the future and we'll make consider everything as "maybe virtual".
+  class TopLevelVisitor < BaseTypeVisitor
     def initialize(mod)
       super(mod)
 
@@ -24,19 +53,23 @@ module Crystal
     end
 
     def visit(node : Path)
-      if @process_types > 0
-        super
-      else
-        false
-      end
+      @process_types > 0 ? super : false
     end
 
     def visit(node : Generic)
-      if @process_types > 0
-        super
-      else
-        false
-      end
+      @process_types > 0 ? super : false
+    end
+
+    def visit(node : Fun)
+      @process_types > 0 ? super : false
+    end
+
+    def visit(node : Union)
+      @process_types > 0 ? super : false
+    end
+
+    def visit(node : Metaclass)
+      @process_types > 0 ? super : false
     end
 
     def visit(node : Assign)
@@ -579,6 +612,14 @@ module Crystal
     end
 
     def visit(node : SizeOf)
+      false
+    end
+
+    def visit(node : TypeOf)
+      false
+    end
+
+    def visit(node : PointerOf)
       false
     end
 

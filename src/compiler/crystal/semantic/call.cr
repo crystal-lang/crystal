@@ -390,7 +390,7 @@ class Crystal::Call
 
           check_recursive_splat_call match.def, typed_def_args do
             bubbling_exception do
-              visitor = TypeVisitor.new(mod, typed_def_args, typed_def)
+              visitor = MainVisitor.new(mod, typed_def_args, typed_def)
               visitor.yield_vars = yield_vars
               visitor.free_vars = match.context.free_vars
               visitor.untyped_def = match.def
@@ -654,7 +654,7 @@ class Crystal::Call
       if inputs = block_arg_restriction.inputs
         yield_vars = inputs.map_with_index do |input, i|
           arg_type = ident_lookup.lookup_node_type(input)
-          TypeVisitor.check_type_allowed_as_proc_argument(input, arg_type)
+          MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
 
           Var.new("var#{i}", arg_type.virtual_type)
         end

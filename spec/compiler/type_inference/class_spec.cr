@@ -898,4 +898,19 @@ describe "Type inference: class" do
       ),
       "private method 'new' called for Foo"
   end
+
+  it "errors if creating instance before typing instance variable" do
+    assert_error %(
+      class Foo
+        Foo.new
+
+        @x : Int32
+
+        def initialize
+          @x = false
+        end
+      end
+      ),
+      "type must be Int32"
+  end
 end
