@@ -13,6 +13,8 @@
 # response.body.lines.first # => "<!doctype html>"
 # ```
 #
+# ### Streaming
+#
 # With a block, an `HTTP::Client::Response` body is returned and the response's body
 # is available as an `IO` by invoking `HTTP::Client::Response#body_io`.
 #
@@ -41,9 +43,15 @@
 #
 # ### Compression
 #
-# If `compress` isn't set to false, and no `Accept-Encoding` header is explicitly specified,
+# If `compress` isn't set to `false`, and no `Accept-Encoding` header is explicitly specified,
 # an HTTP::Client will add an `"Accept-Encoding": "gzip, deflate"` header, and automatically decompress
 # the response body/body_io.
+#
+# ### Encoding
+#
+# If a response has a `Content-Type` header with a charset, that charset is set as the encoding
+# of the returned IO (or used for creating a String for the body). Invalid bytes in the given encoding
+# are silently ignored when reading text content.
 class HTTP::Client
   # Returns the target host.
   #
