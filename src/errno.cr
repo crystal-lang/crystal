@@ -9,6 +9,10 @@ lib LibC
   fun strerror(errnum : Int) : Char*
 end
 
+# Errno wraps and gives access to libc's errno. This is mostly useful when
+# dealing with C libraries.
+#
+# This class is the exception thrown when errno errors are encountered.
 class Errno < Exception
   ifdef darwin
     EPERM           =  1     # Operation not permitted
@@ -188,14 +192,27 @@ class Errno < Exception
     ENOTRECOVERABLE = 131    # State not recoverable
   end
 
+  # Returns the numeric value of errno.
   getter errno
 
+  # Creates a new Errno with the given message. The message will
+  # have concatenated the message denoted by `Errno#value`.
+  #
+  # Typical usage:
+  #
+  # ```
+  # err = LibC.some_call
+  # if err == -1
+  #   raise Errno.new("some_call")
+  # end
+  # ```
   def initialize(message)
     errno = Errno.value
     @errno = errno
     super "#{message}: #{String.new(LibC.strerror(errno))}"
   end
 
+  # Returns the value of libc's errno.
   def self.value
     ifdef linux
       LibC.errno
@@ -204,6 +221,7 @@ class Errno < Exception
     end
   end
 
+  # Sets the value of libc's errno.
   def self.value=(value)
     ifdef linux
       LibC.errno = value
