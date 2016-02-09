@@ -11,7 +11,10 @@ struct BigInt < Int
   end
 
   def initialize(str : String, base = 10)
-    LibGMP.init_set_str(out @mpz, str, base)
+    err = LibGMP.init_set_str(out @mpz, str, base)
+    if err == -1
+      raise ArgumentError.new("invalid BigInt: #{str}")
+    end
   end
 
   def initialize(num : Int::Signed)

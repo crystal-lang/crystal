@@ -20,7 +20,7 @@ lib LibGMP
   fun init_set_ui = __gmpz_init_set_ui(rop : MPZ*, op : ULong)
   fun init_set_si = __gmpz_init_set_si(rop : MPZ*, op : Long)
   fun init_set_d = __gmpz_init_set_d(rop : MPZ*, op : Double)
-  fun init_set_str = __gmpz_init_set_str(rop : MPZ*, str : UInt8*, base : Int)
+  fun init_set_str = __gmpz_init_set_str(rop : MPZ*, str : UInt8*, base : Int) : Int
 
   # # I/O
 
