@@ -153,7 +153,7 @@ module Crystal
     end
 
     def add_input_observer(observer)
-      ::raise "Bug: already had input observer" if @input_observer
+      raise "Bug: already had input observer" if @input_observer
       @input_observer = observer
     end
 
