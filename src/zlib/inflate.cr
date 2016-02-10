@@ -68,23 +68,35 @@ class Zlib::Inflate
   def read(slice : Slice(UInt8))
     raise IO::Error.new "closed stream" if closed?
 
-    if @stream.avail_in == 0
-      @stream.next_in = @buf.to_unsafe
-      @stream.avail_in = @input.read(@buf.to_slice).to_u32
+    while true
+      if @stream.avail_in == 0
+        @stream.next_in = @buf.to_unsafe
+        @stream.avail_in = @input.read(@buf.to_slice).to_u32
+      end
+
+      @stream.avail_out = slice.size.to_u32
+      @stream.next_out = slice.to_unsafe
+
+      ret = LibZ.inflate(pointerof(@stream), LibZ::Flush::NO_FLUSH)
+      read_bytes = slice.size - @stream.avail_out
+      case ret
+      when LibZ::Error::NEED_DICT,
+           LibZ::Error::DATA_ERROR,
+           LibZ::Error::MEM_ERROR
+        raise Zlib::Error.new(ret, @stream)
+      when LibZ::Error::STREAM_END
+        return read_bytes
+      else
+        # LibZ.inflate might not write any data to the output slice because
+        # it might need more input. We can know this happened because `ret`
+        # is not STREAM_END.
+        if read_bytes == 0
+          next
+        else
+          return read_bytes
+        end
+      end
     end
-
-    @stream.avail_out = slice.size.to_u32
-    @stream.next_out = slice.to_unsafe
-
-    ret = LibZ.inflate(pointerof(@stream), LibZ::Flush::NO_FLUSH)
-    case ret
-    when LibZ::Error::NEED_DICT,
-         LibZ::Error::DATA_ERROR,
-         LibZ::Error::MEM_ERROR
-      raise Zlib::Error.new(ret, @stream)
-    end
-
-    slice.size - @stream.avail_out
   end
 
   # Closes this IO.
