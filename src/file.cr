@@ -5,6 +5,7 @@ lib LibC
   fun symlink(oldpath : Char*, newpath : Char*) : Int
   fun unlink(filename : Char*) : Int
   fun ftruncate(fd : Int, size : OffT) : Int
+  fun realpath(filename : Char*, realpath : Char*) : Char*
 
   F_OK = 0
   X_OK = 1 << 0
@@ -303,6 +304,13 @@ class File < IO::FileDescriptor
       end
       items.join SEPARATOR_STRING, str
     end
+  end
+
+  # Resolves the real path of the file by following symbolic links
+  def self.real_path(path)
+    real_path_ptr = LibC.realpath(path, nil)
+    raise Errno.new("Error resolving real path of #{path}") unless real_path_ptr
+    String.new(real_path_ptr).tap { LibC.free(real_path_ptr as Void*) }
   end
 
   # Creates a new link (also known as a hard link) to an existing file.

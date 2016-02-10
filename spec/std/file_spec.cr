@@ -354,6 +354,32 @@ describe "File" do
     end
   end
 
+  describe "real_path" do
+    it "expands paths for normal files" do
+      File.real_path("/usr/share").should eq("/usr/share")
+      File.real_path("/usr/share/..").should eq("/usr")
+    end
+
+    it "raises Errno if file doesn't exist" do
+      expect_raises Errno do
+        File.real_path("/usr/share/foo/bar")
+      end
+    end
+
+    it "expands paths of symlinks" do
+      symlink_path = "/tmp/test_file_symlink.txt"
+      file_path = "#{ __DIR__ }/data/test_file.txt"
+      begin
+        File.symlink(file_path, symlink_path)
+        real_symlink_path = File.real_path(symlink_path)
+        real_file_path = File.real_path(file_path)
+        real_symlink_path.should eq(real_file_path)
+      ensure
+        File.delete(symlink_path) if File.exists?(symlink_path)
+      end
+    end
+  end
+
   describe "write" do
     it "can write to a file" do
       filename = "#{__DIR__}/data/temp_write.txt"
