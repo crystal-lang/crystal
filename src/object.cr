@@ -197,9 +197,33 @@ class Object
   #   getter :name, "age"
   # end
   # ```
+  #
+  # If a type declaration is given, an instance variable with that name
+  # is declared with that type.
+  #
+  # ```
+  # class Person
+  #   getter name : String
+  # end
+  # ```
+  #
+  # Is the same as writing:
+  #
+  # ```
+  # class Person
+  #   @name : String
+  #
+  #   def name
+  #     @name
+  #   end
+  # end
+  # ```
   macro getter(*names)
     {% for name in names %}
-      {% name = name.var if name.is_a?(TypeDeclaration) %}
+      {% if name.is_a?(TypeDeclaration) %}
+        @{{name.id}}
+        {% name = name.var %}
+      {% end %}
 
       def {{name.id}}
         @{{name.id}}
@@ -238,9 +262,37 @@ class Object
   #   getter! :name, "age"
   # end
   # ```
+  #
+  # If a type declaration is given, an instance variable with that name
+  # is declared with that type, as nilable.
+  #
+  # ```
+  # class Person
+  #   getter! name : String
+  # end
+  # ```
+  #
+  # is the same as writing:
+  #
+  # ```
+  # class Person
+  #   @name : String?
+  #
+  #   def name?
+  #     @name
+  #   end
+  #
+  #   def name
+  #     @name.not_nil!
+  #   end
+  # end
+  # ```
   macro getter!(*names)
     {% for name in names %}
-      {% name = name.var if name.is_a?(TypeDeclaration) %}
+      {% if name.is_a?(TypeDeclaration) %}
+        @{{name}}?
+        {% name = name.var %}
+      {% end %}
 
       def {{name.id}}?
         @{{name.id}}
@@ -258,7 +310,7 @@ class Object
   #
   # ```
   # class Person
-  #   getter? name
+  #   getter? happy
   # end
   # ```
   #
@@ -266,8 +318,8 @@ class Object
   #
   # ```
   # class Person
-  #   def name?
-  #     @name
+  #   def happy?
+  #     @happy
   #   end
   # end
   # ```
@@ -276,12 +328,36 @@ class Object
   #
   # ```
   # class Person
-  #   getter? :name, "age"
+  #   getter? :happy, "famous"
+  # end
+  # ```
+  #
+  # If a type declaration is given, an instance variable with that name
+  # is declared with that type.
+  #
+  # ```
+  # class Person
+  #   getter? happy : Bool
+  # end
+  # ```
+  #
+  # is the same as writing:
+  #
+  # ```
+  # class Person
+  #   @happy : Bool
+  #
+  #   def happy?
+  #     @happy
+  #   end
   # end
   # ```
   macro getter?(*names)
     {% for name in names %}
-      {% name = name.var if name.is_a?(TypeDeclaration) %}
+      {% if name.is_a?(TypeDeclaration) %}
+        @{{name}}?
+        {% name = name.var %}
+      {% end %}
 
       def {{name.id}}?
         @{{name.id}}
@@ -315,9 +391,30 @@ class Object
   #   setter :name, "age"
   # end
   # ```
+  #
+  # If a type declaration is given, an instance variable with that name
+  # is declared with that type.
+  #
+  # ```
+  # class Person
+  #   setter name : String
+  # end
+  # ```
+  #
+  # is the same as writing:
+  #
+  # ```
+  # class Person
+  #   @name : String
+  #
+  #   def name=(@name)
+  #   end
+  # end
+  # ```
   macro setter(*names)
     {% for name in names %}
       {% if name.is_a?(TypeDeclaration) %}
+        @{{name}}
         def {{name.var.id}}=(@{{name.var.id}} : {{name.type}})
         end
       {% else %}
@@ -355,6 +452,30 @@ class Object
   # ```
   # class Person
   #   property :name, "age"
+  # end
+  # ```
+  #
+  # If a type declaration is given, an instance variable with that name
+  # is declared with that type.
+  #
+  # ```
+  # class Person
+  #   property name : String
+  # end
+  # ```
+  #
+  # Is the same as writing:
+  #
+  # ```
+  # class Person
+  #   @name : String
+  #
+  #   def name=(@name)
+  #   end
+  #
+  #   def name
+  #     @name
+  #   end
   # end
   # ```
   macro property(*names)
@@ -396,9 +517,46 @@ class Object
   #   property! :name, "age"
   # end
   # ```
+  #
+  # If a type declaration is given, an instance variable with that name
+  # is declared with that type, as nilable.
+  #
+  # ```
+  # class Person
+  #   property! name : String
+  # end
+  # ```
+  #
+  # Is the same as writing:
+  #
+  # ```
+  # class Person
+  #   @name : String?
+  #
+  #   def name=(@name)
+  #   end
+  #
+  #   def name?
+  #     @name
+  #   end
+  #
+  #   def name
+  #     @name.not_nil!
+  #   end
+  # end
+  # ```
   macro property!(*names)
     getter! {{*names}}
-    setter {{*names}}
+
+    {% for name in names %}
+      {% if name.is_a?(TypeDeclaration) %}
+        def {{name.var.id}}=(@{{name.var.id}} : {{name.type}})
+        end
+      {% else %}
+        def {{name.id}}=(@{{name.id}})
+        end
+      {% end %}
+    {% end %}
   end
 
   # Defines query property methods for each of the given arguments.
@@ -407,7 +565,7 @@ class Object
   #
   # ```
   # class Person
-  #   property? name
+  #   property? happy
   # end
   # ```
   #
@@ -415,11 +573,11 @@ class Object
   #
   # ```
   # class Person
-  #   def name=(@name)
+  #   def happy=(@happy)
   #   end
   #
-  #   def name?
-  #     @name
+  #   def happy?
+  #     @happy
   #   end
   # end
   # ```
@@ -428,7 +586,35 @@ class Object
   #
   # ```
   # class Person
-  #   property? :name, "age"
+  #   property? :happy, "famous"
+  # end
+  # ```
+  #
+  # If a type declaration is given, an instance variable with that name
+  # is declared with that type.
+  #
+  # ```
+  # class Person
+  #   property? happy : Bool
+  # end
+  # ```
+  #
+  # Is the same as writing:
+  #
+  # ```
+  # class Person
+  #   @happy : Bool
+  #
+  #   def happy=(@happy)
+  #   end
+  #
+  #   def happy?
+  #     @happy
+  #   end
+  #
+  #   def happy
+  #     @happy.not_nil!
+  #   end
   # end
   # ```
   macro property?(*names)
