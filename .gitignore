@@ -13,4 +13,4 @@ all_spec
 /doc/
 /src/llvm/ext/llvm_ext.o
 /src/ext/*.o
-/src/ext/libext.a
+/src/ext/libcrystal.a
