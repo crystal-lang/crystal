@@ -245,4 +245,14 @@ describe "Type inference: cast" do
       Gen(Bar).new as Gen(Foo)
       ), "can't cast Gen(Bar) to Gen(Foo+)"
   end
+
+  it "allows casting NoReturn to any type (#2132)" do
+    assert_type(%(
+      def foo
+        foo
+      end
+
+      foo as Int32
+      )) { no_return }
+  end
 end

@@ -684,6 +684,8 @@ module Crystal
         unless to_type.pointer? || to_type.reference_like?
           node.raise "can't cast #{obj_type} to #{to_type}"
         end
+      elsif obj_type.no_return?
+        node.type = @program.no_return
       else
         resulting_type = obj_type.filter_by(to_type)
         unless resulting_type
