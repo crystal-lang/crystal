@@ -70,6 +70,7 @@ lib LibC
   fun mmap(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : SSizeT) : Void*
   fun munmap(addr : Void*, len : SizeT)
   fun madvise(addr : Void*, len : SizeT, advise : Int) : Int
+  fun mprotect(addr : Void*, len : SizeT, prot : Int) : Int
 
   MADV_NORMAL     = 0
   MADV_RANDOM     = 1

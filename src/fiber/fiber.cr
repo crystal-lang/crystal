@@ -72,6 +72,7 @@ class Fiber
       ifdef linux
         LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
       end
+      LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
     end
   end
 

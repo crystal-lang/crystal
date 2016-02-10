@@ -54,13 +54,61 @@ struct CallStack
     callstack
   end
 
+  struct RepeatedFrame
+    getter ip, count
+
+    def initialize(@ip)
+      @count = 0
+    end
+
+    def incr
+      @count += 1
+    end
+  end
+
+  def self.print_backtrace
+    backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
+      last_frame = data as RepeatedFrame*
+      ip = Pointer(Void).new(LibUnwind.get_ip(context))
+      if last_frame.value.ip == ip
+        last_frame.value.incr
+      else
+        print_frame(last_frame.value) unless last_frame.value.ip.address == 0
+        last_frame.value = RepeatedFrame.new ip
+      end
+      LibUnwind::ReasonCode::NO_REASON
+    end
+
+    rf = RepeatedFrame.new(Pointer(Void).null)
+    LibUnwind.backtrace(backtrace_fn, pointerof(rf) as Void*)
+    print_frame(rf)
+  end
+
+  private def self.print_frame(repeated_frame)
+    frame = decode_frame(repeated_frame.ip)
+    if frame
+      offset, sname = frame
+      if repeated_frame.count == 0
+        LibC.printf "[%ld] %s +%ld\n", repeated_frame.ip, sname, offset
+      else
+        LibC.printf "[%ld] %s +%ld (%ld times)\n", repeated_frame.ip, sname, offset, repeated_frame.count + 1
+      end
+    else
+      if repeated_frame.count == 0
+        LibC.printf "[%ld] ???\n", repeated_frame.ip
+      else
+        LibC.printf "[%ld] ??? (%ld times)\n", repeated_frame.ip, repeated_frame.count + 1
+      end
+    end
+  end
+
   private def decode_backtrace
     backtrace = Array(String).new(@callstack.size)
     @callstack.each do |ip|
       frame = CallStack.decode_frame(ip)
       if frame
         offset, sname = frame
-        backtrace << "[#{ip.address}] #{sname} +#{offset}"
+        backtrace << "[#{ip.address}] #{String.new(sname)} +#{offset}"
       else
         backtrace << "[#{ip.address}] ???"
       end
@@ -77,7 +125,7 @@ struct CallStack
       end
 
       unless info.sname.nil?
-        {offset, String.new(info.sname)}
+        {offset, info.sname}
       end
     end
   end
