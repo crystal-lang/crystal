@@ -442,27 +442,43 @@ class HTTP::Client
     end
   end
 
-  private def self.exec(uri)
-    uri = URI.parse(uri) if uri.is_a?(String)
+  private def self.exec(string : String)
+    uri = URI.parse(string)
 
-    unless uri.scheme
-      raise ArgumentError.new %(Request URI must have schema. Possibly add "http://" to the request URI?)
+    unless uri.scheme && uri.host
+      # Assume http if no scheme and host are specified
+      uri = URI.parse("http://#{string}")
     end
 
-    host = uri.host.not_nil!
+    exec(uri) do |client, path|
+      yield client, path
+    end
+  end
+
+  private def self.exec(uri : URI)
+    scheme = uri.scheme
+    unless scheme
+      raise ArgumentError.new %(Request URI must have scheme. Possibly add "http://" to the request URI? (URI is: #{uri}))
+    end
+
+    host = uri.host
+    unless host
+      raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))
+    end
+
     port = uri.port
     path = uri.full_path
     user = uri.user
     password = uri.password
     ssl = false
 
-    case uri.scheme
+    case scheme
     when "http"
       # Nothing
     when "https"
       ssl = true
     else
-      raise "Unsuported scheme: #{uri.scheme}"
+      raise "Unsuported scheme: #{scheme}"
     end
 
     HTTP::Client.new(host, port, ssl) do |client|

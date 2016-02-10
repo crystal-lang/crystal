@@ -59,8 +59,14 @@ module HTTP
     end
 
     it "raises if URI is missing scheme" do
-      expect_raises(ArgumentError) do
-        HTTP::Client.get "www.example.com"
+      expect_raises(ArgumentError, "must have scheme") do
+        HTTP::Client.get URI.parse("www.example.com")
+      end
+    end
+
+    it "raises if URI is missing host" do
+      expect_raises(ArgumentError, "must have host") do
+        HTTP::Client.get URI.parse("localhost:3000")
       end
     end
 
