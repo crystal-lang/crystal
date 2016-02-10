@@ -68,7 +68,7 @@ module Crystal
       exps = Array(ASTNode).new(node.elements.size + 2)
       exps << Assign.new(temp_var.clone, constructor).at(node)
       node.elements.each do |elem|
-        exps << Call.new(temp_var.clone, "<<", elem).at(node)
+        exps << Call.new(temp_var.clone, "<<", elem.clone).at(node)
       end
       exps << temp_var.clone
 

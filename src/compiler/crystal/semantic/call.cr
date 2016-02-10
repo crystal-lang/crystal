@@ -507,7 +507,7 @@ class Crystal::Call
         vars << arg
         args << arg
       end
-      block = Block.new(vars, Call.new(block_arg, "call", args))
+      block = Block.new(vars, Call.new(block_arg.clone, "call", args))
       block.vars = self.before_vars
       self.block = block
     else

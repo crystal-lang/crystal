@@ -144,7 +144,7 @@ module Crystal
   #
   class NilLiteral < ASTNode
     def clone_without_location
-      self
+      NilLiteral.new
     end
 
     def_equals_and_hash

@@ -21,7 +21,7 @@ module Crystal
     property! dependencies
     property freeze_type
     property observers
-    property input_observers
+    property input_observer
 
     @dirty = false
 
@@ -144,8 +144,8 @@ module Crystal
     end
 
     def add_observer(observer)
-      observers = (@observers ||= [] of ASTNode)
-      observers << observer
+      observers = (@observers ||= Dependencies.new)
+      observers.push observer
     end
 
     def remove_observer(observer)
@@ -153,19 +153,19 @@ module Crystal
     end
 
     def add_input_observer(observer)
-      input_observers = (@input_observers ||= [] of Call)
-      input_observers << observer
+      ::raise "Bug: already had input observer" if @input_observer
+      @input_observer = observer
     end
 
     def remove_input_observer(observer)
-      @input_observers.try &.reject! &.same?(observer)
+      @input_observer = nil if @input_observer.same?(observer)
     end
 
     def notify_observers
       @observers.try &.each &.update self
-      @input_observers.try &.each &.update_input self
+      @input_observer.try &.update_input self
       @observers.try &.each &.propagate
-      @input_observers.try &.each &.propagate
+      @input_observer.try &.propagate
     end
 
     def update(from)
