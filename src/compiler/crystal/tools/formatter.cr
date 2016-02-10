@@ -1323,6 +1323,8 @@ module Crystal
     end
 
     def visit(node : MacroExpression)
+      old_column = @column
+
       if node.output
         if inside_macro?
           check :MACRO_EXPRESSION_START
@@ -1331,30 +1333,60 @@ module Crystal
         end
         write "{{"
       else
-        check :MACRO_CONTROL_START
-        write "{% "
+        case @token.type
+        when :MACRO_CONTROL_START, :"{%"
+          # OK
+        else
+          check :MACRO_CONTROL_START
+        end
+        write "{%"
       end
       macro_state = @macro_state
       next_token
 
-      has_space = @token.type == :SPACE || @token.type == :NEWLINE
+      has_space = @token.type == :SPACE
+      skip_space
+      has_newline = @token.type == :NEWLINE
       skip_space_or_newline
 
-      write " " if node.output && has_space
+      if (has_space || !node.output) && !has_newline
+        write " "
+      end
+
+      old_indent = @indent
+      @indent = @column
+      if has_newline
+        write_line
+        write_indent
+      end
 
       indent(@column, node.exp)
+
+      @indent = old_indent
+
       skip_space_or_newline
       @macro_state = macro_state
 
       if node.output
-        write " " if has_space
+        if has_space && !has_newline
+          write " "
+        elsif has_newline
+          write_line
+          write_indent(old_column)
+        end
         check :"}"
         next_token
         check :"}"
         write "}}"
       else
         check :"%}"
-        write " %}"
+        if has_newline
+          write_line
+          write_indent(old_column)
+        else
+          write " "
+        end
+        write "%}"
       end
 
       if inside_macro?
@@ -3511,7 +3543,12 @@ module Crystal
     def write(string : String)
       @output << string
       @line_output << string
-      @column += string.size
+      last_newline = string.rindex('\n')
+      if last_newline
+        @column = string.size - last_newline - 1
+      else
+        @column += string.size
+      end
       @wrote_newline = false
       @last_write = string
     end

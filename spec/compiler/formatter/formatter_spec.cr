@@ -783,4 +783,12 @@ describe Crystal::Formatter do
   assert_format "<<-HTML\n  \#{1}x\n  y\n  z\n  HTML"
 
   assert_format "#!shebang\n1 + 2"
+
+  assert_format "   {{\n1 + 2 }}", "{{\n  1 + 2\n}}"
+  assert_format "   {{\n1 + 2\n   }}", "{{\n  1 + 2\n}}"
+  assert_format "   {%\na = 1 %}", "{%\n  a = 1\n%}"
+  assert_format "   {%\na = 1\n   %}", "{%\n  a = 1\n%}"
+
+  assert_format "macro foo\n  {{\n1 + 2 }}\nend", "macro foo\n  {{\n    1 + 2\n  }}\nend"
+  assert_format "macro foo\n  def bar\n    {{\n      1 + 2\n    }}\n  end\nend"
 end
