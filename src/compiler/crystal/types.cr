@@ -1530,7 +1530,7 @@ module Crystal
 
         ivar = MetaInstanceVar.new(name, visitor.type)
         ivar.bind_to ivar
-        ivar.freeze_type = visitor.type
+        ivar.freeze_type = visitor.type.virtual_type
         instance.instance_vars[name] = ivar
       end
     end

@@ -121,7 +121,7 @@ module Crystal
             node.declared_type.accept self
           end
           var_type = check_declare_var_type node
-          type.declare_instance_var(var.name, var_type)
+          type.declare_instance_var(var.name, var_type.virtual_type)
         when GenericClassType
           type.declare_instance_var(var.name, node.declared_type)
         when GenericClassInstanceType
@@ -137,7 +137,7 @@ module Crystal
         end
         var_type = check_declare_var_type node
 
-        class_var.freeze_type = var_type
+        class_var.freeze_type = var_type.virtual_type
       when Global
         if @untyped_def
           node.raise "declaring the type of a global variable must be done at the class level"
@@ -155,7 +155,7 @@ module Crystal
 
         var_type = check_declare_var_type node
 
-        global_var.freeze_type = var_type
+        global_var.freeze_type = var_type.virtual_type
       end
 
       node.type = @mod.nil

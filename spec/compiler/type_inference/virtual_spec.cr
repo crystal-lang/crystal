@@ -650,4 +650,25 @@ describe "Type inference: virtual" do
       Pointer(Foo).malloc(1_u64)
       ") { pointer_of(types["Foo"].virtual_type) }
   end
+
+  it "types instance var as virtual when using type declaration and has subclasses" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+        @foo : Foo
+
+        def initialize
+          @foo = Foo.new
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Bar.new.foo
+      )) { types["Foo"].virtual_type! }
+  end
 end
