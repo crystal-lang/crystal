@@ -1,5 +1,6 @@
 require "event"
 
+# :nodoc:
 class Scheduler
   @@runnables = [] of Fiber
   @@eb = Event::Base.new
