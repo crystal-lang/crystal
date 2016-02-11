@@ -149,6 +149,28 @@ module HTTP
         delta.should be < 1.seconds
       end
     end
+
+    describe "expired?" do
+      it "by max-age=0" do
+        parse_set_cookie("bla=1; max-age=0").expired?.should eq true
+      end
+
+      it "by old date" do
+        parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000").expired?.should eq true
+      end
+
+      it "not expired" do
+        parse_set_cookie("bla=1; max-age=1").expired?.should eq false
+      end
+
+      it "not expired" do
+        parse_set_cookie("bla=1; expires=Thu, 01 Jan 2020 00:00:00 -0000").expired?.should eq false
+      end
+
+      it "not expired" do
+        parse_set_cookie("bla=1").expired?.should eq false
+      end
+    end
   end
 
   describe Cookies do

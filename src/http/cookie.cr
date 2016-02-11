@@ -41,6 +41,14 @@ module HTTP
       "#{@name}=#{URI.escape value}"
     end
 
+    def expired?
+      if e = expires
+        e < Time.now
+      else
+        false
+      end
+    end
+
     # :nodoc:
     module Parser
       module Regex
