@@ -85,7 +85,7 @@ module HTTP
         cookie.name.should eq("key")
         cookie.value.should eq("value")
         cookie.domain.should eq("www.example.com")
-        cookie.to_set_cookie_header.should eq("key=value; path=/; domain=www.example.com")
+        cookie.to_set_cookie_header.should eq("key=value; domain=www.example.com; path=/")
       end
 
       it "parses expires rfc1123" do

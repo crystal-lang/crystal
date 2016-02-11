@@ -28,9 +28,9 @@ module HTTP
       domain = @domain
       String.build do |header|
         header << "#{URI.escape @name}=#{URI.escape value}"
+        header << "; domain=#{domain}" if domain
         header << "; path=#{path}" if path
         header << "; expires=#{HTTP.rfc1123_date(expires)}" if expires
-        header << "; domain=#{domain}" if domain
         header << "; Secure" if @secure
         header << "; HttpOnly" if @http_only
         header << "; #{@extension}" if @extension
