@@ -49,12 +49,13 @@ module HTTP
         CookieValue    = /(?:"#{CookieOctet}*"|#{CookieOctet}*)/
         CookiePair     = /(?<name>#{CookieName})=(?<value>#{CookieValue})/
         DomainLabel    = /[A-Za-z0-9\-]+/
+        DomainIp       = /(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/
         Time           = /(?:\d{2}:\d{2}:\d{2})/
         Month          = /(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/
         Weekday        = /(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/
         Wkday          = /(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)/
         PathValue      = /[^\x00-\x1f\x7f;]+/
-        DomainValue    = /(?:#{DomainLabel}(?:\.#{DomainLabel})?)+/
+        DomainValue    = /(?:#{DomainLabel}(?:\.#{DomainLabel})?|#{DomainIp})+/
         RFC1036Date    = /#{Weekday}, \d{2}-#{Month}-\d{2} #{Time} GMT/
         RFC1123Date    = /#{Wkday}, \d{2} #{Month} \d{4} #{Time} GMT/
         ANSICDate      = /#{Wkday} #{Month} (?:\d{2}| \d) #{Time} \d{4}/

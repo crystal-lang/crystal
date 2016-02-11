@@ -127,6 +127,10 @@ module HTTP
         cookie.secure.should eq(true)
         cookie.expires.should eq(time)
       end
+
+      it "parse domain as IP" do
+        parse_set_cookie("a=1; domain=127.0.0.1; path=/; HttpOnly").domain.should eq "127.0.0.1"
+      end
     end
   end
 
