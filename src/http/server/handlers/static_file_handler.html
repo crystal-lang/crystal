@@ -10,7 +10,7 @@
       <% Dir.foreach(path) do |entry| %>
         <% next if entry == "." || entry == ".." %>
         <li>
-          <a href="<%= request_path == "/" ? "" : escaped_request_path %>/<%= URI.escape entry %>"><%= entry %></a>
+          <a href="<%= request_path == "/" ? "" : escaped_request_path %>/<%= URI.escape entry %>"><%= HTML.escape entry %></a>
         </li>
       <% end %>
     </ul>
