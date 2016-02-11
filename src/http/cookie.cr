@@ -65,7 +65,7 @@ module HTTP
         SecureAV       = /(?<secure>Secure)/i
         PathAV         = /Path=(?<path>#{PathValue})/i
         DomainAV       = /Domain=(?<domain>#{DomainValue})/i
-        MaxAgeAV       = /Max-Age=(?<max_age>[1-9]*)/i
+        MaxAgeAV       = /Max-Age=(?<max_age>[0-9]*)/i
         ExpiresAV      = /Expires=(?<expires>#{SaneCookieDate})/i
         CookieAV       = /(?:#{ExpiresAV}|#{MaxAgeAV}|#{DomainAV}|#{PathAV}|#{SecureAV}|#{HttpOnlyAV}|#{ExtensionAV})/
       end
@@ -88,10 +88,17 @@ module HTTP
       def parse_set_cookie(header)
         match = header.match(SetCookieString)
         return unless match
+
+        expires = if max_age = match["max_age"]?
+                    Time.now + max_age.to_i.seconds
+                  else
+                    parse_time(match["expires"]?)
+                  end
+
         Cookie.new(
           match["name"], match["value"],
           path: match["path"]? || "/",
-          expires: parse_time(match["expires"]?),
+          expires: expires,
           domain: match["domain"]?,
           secure: match["secure"]? != nil,
           http_only: match["http_only"]? != nil,
