@@ -115,6 +115,11 @@ module HTTP
         cookie.expires.should eq(time)
       end
 
+      it "parses expires ansi c, variant with zone" do
+        cookie = parse_set_cookie("bla=; expires=Thu, 01 Jan 1970 00:00:00 -0000")
+        cookie.expires.should eq(Time.new(1970, 1, 1, 0, 0, 0))
+      end
+
       it "parses full" do
         cookie = parse_set_cookie("key=value; path=/test; domain=www.example.com; HttpOnly; Secure; expires=Sun, 06 Nov 1994 08:49:37 GMT")
         time = Time.new(1994, 11, 6, 8, 49, 37)
