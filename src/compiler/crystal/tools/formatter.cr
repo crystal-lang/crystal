@@ -2195,23 +2195,53 @@ module Crystal
           clear_obj call
 
           if !call.obj && (call.name == "[]" || call.name == "[]?")
-            write_token :"["
-            skip_space_or_newline
-            format_call_args(call, false)
-            skip_space_or_newline
-            write_token :"]"
-            write_token :"?" if call.name == "[]?"
+            case @token.type
+            when :"["
+              write_token :"["
+              skip_space_or_newline
+              format_call_args(call, false)
+              skip_space_or_newline
+              write_token :"]"
+              write_token :"?" if call.name == "[]?"
+            when :"[]", :"[]?"
+              write_token @token.type
+              skip_space_or_newline
+              if @token.type == :"("
+                write "("
+                next_token_skip_space_or_newline
+                format_call_args(call, true)
+                skip_space_or_newline
+                write_token :")"
+              end
+            else
+              raise "Bug: expected `[`, `[]` or `[]?`"
+            end
           elsif !call.obj && call.name == "[]="
-            last_arg = call.args.pop
-            write_token :"["
-            skip_space_or_newline
-            format_call_args(call, false)
-            skip_space_or_newline
-            write_token :"]"
-            skip_space
-            write_token " ", :"=", " "
-            skip_space_or_newline
-            accept last_arg
+            case @token.type
+            when :"["
+              last_arg = call.args.pop
+              write_token :"["
+              skip_space_or_newline
+              format_call_args(call, false)
+              skip_space_or_newline
+              write_token :"]"
+              skip_space
+              write_token " ", :"=", " "
+              skip_space_or_newline
+              accept last_arg
+            when :"[]="
+              write_token @token.type
+              skip_space_or_newline
+              if @token.type == :"("
+                write "("
+                next_token_skip_space_or_newline
+                format_call_args(call, true)
+                skip_space_or_newline
+                write_token :")"
+              end
+            else
+              raise "Bug: expected `[` or `[]=`"
+            end
           else
             indent(@indent, call)
           end

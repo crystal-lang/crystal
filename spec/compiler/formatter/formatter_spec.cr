@@ -791,4 +791,12 @@ describe Crystal::Formatter do
 
   assert_format "macro foo\n  {{\n1 + 2 }}\nend", "macro foo\n  {{\n    1 + 2\n  }}\nend"
   assert_format "macro foo\n  def bar\n    {{\n      1 + 2\n    }}\n  end\nend"
+  assert_format "foo &.[]"
+  assert_format "foo &.[](1, 2)"
+  assert_format "foo &.[](  1, 2  )", "foo &.[](1, 2)"
+  assert_format "foo &.[]?"
+  assert_format "foo &.[]?(1, 2)"
+  assert_format "foo &.[]?(  1, 2  )", "foo &.[]?(1, 2)"
+  assert_format "foo &.[]=(1, 2)"
+  assert_format "foo &.[]=(  1, 2  )", "foo &.[]=(1, 2)"
 end
