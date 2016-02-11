@@ -1025,6 +1025,11 @@ describe "String" do
     ("%-s" % 'a').should eq("a")
     ("%20s" % 'a').should eq("                   a")
     ("%-20s" % 'a').should eq("a                   ")
+    ("%*s" % [10, 123]).should eq("       123")
+    ("%.5s" % "foo bar baz").should eq("foo b")
+    ("%.*s" % [5, "foo bar baz"]).should eq("foo b")
+    ("%*.*s" % [20, 5, "foo bar baz"]).should eq("               foo b")
+    ("%-*.*s" % [20, 5, "foo bar baz"]).should eq("foo b               ")
 
     ("%%%d" % 1).should eq("%1")
     ("foo %d bar %s baz %d goo" % [1, "hello", 2]).should eq("foo 1 bar hello baz 2 goo")
@@ -1071,6 +1076,8 @@ describe "String" do
     ("%.f" % 1234.56).should eq("1235")
     ("%.2f" % 1234.5678).should eq("1234.57")
     ("%10.2f" % 1234.5678).should eq("   1234.57")
+    ("%*.2f" % [10, 1234.5678]).should eq("   1234.57")
+    ("%0*.2f" % [10, 1234.5678]).should eq("0001234.57")
     ("%e" % 123.45).should eq("1.234500e+02")
     ("%E" % 123.45).should eq("1.234500E+02")
     ("%G" % 12345678.45).should eq("1.23457E+07")
@@ -1078,10 +1085,14 @@ describe "String" do
     ("%A" % 12345678.45).should eq("0X1.78C29CE666666P+23")
     ("%100.50g" % 123.45).should eq("                                                  123.4500000000000028421709430404007434844970703125")
 
-    ("%.2f" % 2.536_f32).should eq("2.54")
-
     span = 1.second
     ("%s" % span).should eq(span.to_s)
+
+    ("%.2f" % 2.536_f32).should eq("2.54")
+    ("%0*.*f" % [10, 2, 2.536_f32]).should eq("0000002.54")
+    expect_raises(ArgumentError, "expected dynamic value '*' to be an Int - \"not a number\" (String)") do
+      "%*f" % ["not a number", 2.536_f32]
+    end
   end
 
   it "escapes chars" do
