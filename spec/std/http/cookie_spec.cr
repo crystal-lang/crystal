@@ -23,6 +23,13 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; path=/")
       end
 
+      it "parses key=" do
+        cookie = parse_first_cookie("key=")
+        cookie.name.should eq("key")
+        cookie.value.should eq("")
+        cookie.to_set_cookie_header.should eq("key=; path=/")
+      end
+
       it "parses key=key=value" do
         cookie = parse_first_cookie("key=key=value")
         cookie.name.should eq("key")
