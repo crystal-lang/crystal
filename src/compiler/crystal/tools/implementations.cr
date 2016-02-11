@@ -43,15 +43,15 @@ module Crystal
     def initialize(loc : Location)
       f = loc.filename
       if f.is_a?(String)
-        self.line = loc.line_number
-        self.column = loc.column_number
-        self.filename = f
+        @line = loc.line_number
+        @column = loc.column_number
+        @filename = f
       elsif f.is_a?(VirtualFile)
         macro_location = f.macro.location.not_nil!
-        self.macro = f.macro.name
-        self.filename = macro_location.filename.to_s
-        self.line = macro_location.line_number + loc.line_number
-        self.column = loc.column_number
+        @macro = f.macro.name
+        @filename = macro_location.filename.to_s
+        @line = macro_location.line_number + loc.line_number
+        @column = loc.column_number
       else
         raise "not implemented"
       end

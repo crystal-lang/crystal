@@ -41,7 +41,7 @@ end
 
 class JSONWithNilableTime
   JSON.mapping({
-    value: {type: Time, converter: Time::Format.new("%F")},
+    value: {type: Time, nilable: true, converter: Time::Format.new("%F")},
   })
 
   def initialize
@@ -50,7 +50,7 @@ end
 
 class JSONWithNilableTimeEmittingNull
   JSON.mapping({
-    value: {type: Time, converter: Time::Format.new("%F"), emit_null: true},
+    value: {type: Time, nilable: true, converter: Time::Format.new("%F"), emit_null: true},
   })
 
   def initialize

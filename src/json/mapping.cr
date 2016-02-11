@@ -51,6 +51,8 @@ module JSON
   # by invoking `to_json(IO)` on each of the properties (unless a converter is specified, in
   # which case `to_json(value, IO)` is invoked).
   #
+  # This macro also declares instance variables of the types given in the mapping.
+  #
   # If `strict` is true, unknown properties in the JSON
   # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
@@ -60,6 +62,8 @@ module JSON
     {% end %}
 
     {% for key, value in properties %}
+      @{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
+
       def {{key.id}}=(_{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
         @{{key.id}} = _{{key.id}}
       end

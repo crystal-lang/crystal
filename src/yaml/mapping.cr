@@ -56,12 +56,23 @@ module YAML
   # * **default**: value to use if the property is missing in the YAML document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a YAML document is parsed.
   # * *key* defines whick key to read from a YAML document. It defaults to the name of the property.
   # * *converter* takes an alternate type for parsing. It requires a `#from_yaml` method in that class, and returns an instance of the given type.
+  #
+  # The mapping also automatically defines Crystal properties (getters and setters) for each
+  # of the keys. It doesn't define a constructor accepting those arguments, but you can provide
+  # an overload.
+  #
+  # The macro basically defines a constructor accepting a `YAML::PullParser` that reads from
+  # it and initializes this type's instance variables.
+  #
+  # This macro also declares instance variables of the types given in the mapping.
   macro mapping(properties, strict = false)
     {% for key, value in properties %}
       {% properties[key] = {type: value} unless value.is_a?(HashLiteral) %}
     {% end %}
 
     {% for key, value in properties %}
+      @{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }}
+
       def {{key.id}}=(_{{key.id}} : {{value[:type]}} {{ (value[:nilable] ? "?" : "").id }})
         @{{key.id}} = _{{key.id}}
       end
