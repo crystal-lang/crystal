@@ -58,6 +58,14 @@ class Markdown::HTMLRenderer
     @io << "</code></pre>"
   end
 
+  def begin_quote
+    @io << "<blockquote>"
+  end
+
+  def end_quote
+    @io << "</blockquote>"
+  end
+
   def begin_unordered_list
     @io << "<ul>"
   end

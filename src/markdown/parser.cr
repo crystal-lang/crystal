@@ -59,6 +59,10 @@ class Markdown::Parser
       return render_ordered_list
     end
 
+    if line.starts_with? ">"
+      return render_quote
+    end
+
     render_paragraph
   end
 
@@ -172,6 +176,29 @@ class Markdown::Parser
     end
 
     @renderer.end_code
+
+    append_double_newline_if_has_more
+  end
+
+  def render_quote
+    @renderer.begin_quote
+
+    while true
+      line = @lines[@line]
+
+      break unless line.starts_with? ">"
+
+      @renderer.text line.byte_slice(Math.min(line.bytesize, 2))
+      @line += 1
+
+      if @line == @lines.size
+        break
+      end
+
+      newline
+    end
+
+    @renderer.end_quote
 
     append_double_newline_if_has_more
   end
