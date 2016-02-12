@@ -83,12 +83,24 @@ struct BitArray
     end
   end
 
+  # Calls the given block once for each element in self, passing that element as a parameter.
+  #
+  #     ba = BitArray.new(5)
+  #     ba[2] = true; ba[3] = true
+  #     ba # => BitArray[00110]
+  #     ba.each do |i|
+  #         print i, ", "
+  #     end # => false, false, true, true, false
   def each
     @size.times do |i|
       yield self[i]
     end
   end
 
+  # Creates a string representation of self.
+  #
+  #     ba = BitArray.new(5)
+  #     puts ba.to_s #=> "BitArray[00000]"
   def to_s(io : IO)
     io << "BitArray["
     each do |value|
