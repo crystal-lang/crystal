@@ -104,27 +104,45 @@ struct String::Formatter
   end
 
   private def consume_width(flags)
-    if '1' <= current_char <= '9'
+    case current_char
+    when '1'..'9'
       num, size = consume_number
       flags.width = num
-      flags.width_size = size
+      flags.width_size
+    when '*'
+      flags.width = consume_dynamic_value
+      flags.width_size = 1
     end
     flags
   end
 
   private def consume_precision(flags)
     if current_char == '.'
-      next_char
-      if '1' <= current_char <= '9'
+      case next_char
+      when '1'..'9'
         num, size = consume_number
         flags.precision = num
-        flags.precision_size = size + 1
+        flags.precision_size = size
+      when '*'
+        flags.precision = consume_dynamic_value
+        flags.precision_size = 1
       else
         flags.precision = 0
         flags.precision_size = 1
       end
     end
     flags
+  end
+
+  private def consume_dynamic_value
+    value = current_arg
+    if value.is_a?(Int)
+      next_char
+      next_arg
+      value.to_i
+    else
+      raise ArgumentError.new("expected dynamic value '*' to be an Int - #{value.inspect} (#{value.class.inspect})")
+    end
   end
 
   private def consume_number
@@ -174,6 +192,8 @@ struct String::Formatter
 
   def string(flags, arg, arg_specified)
     arg = next_arg unless arg_specified
+
+    arg = arg.to_s[0...(flags.precision || arg.to_s.size)]
 
     pad arg.to_s.size, flags if flags.left_padding?
     @io << arg
