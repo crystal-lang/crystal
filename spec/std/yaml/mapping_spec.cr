@@ -53,6 +53,15 @@ class YAMLWithDefaults
   })
 end
 
+class YAMLWithAny
+  YAML.mapping({
+    obj: YAML::Any,
+  })
+
+  def initialize(@obj)
+  end
+end
+
 describe "YAML mapping" do
   it "parses person" do
     person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
@@ -120,7 +129,7 @@ describe "YAML mapping" do
     yaml.pull.should eq(2)
   end
 
-  describe "parses json with defaults" do
+  describe "parses YAML with defaults" do
     it "mixed" do
       json = YAMLWithDefaults.from_yaml(%({"a":1,"b":"bla"}))
       json.a.should eq 1
@@ -189,5 +198,16 @@ describe "YAML mapping" do
       json = YAMLWithDefaults.from_yaml(%({}))
       json.h.should eq [1, 2, 3]
     end
+  end
+
+  it "parses YAML with any" do
+    yaml = YAMLWithAny.from_yaml("obj: hello")
+    yaml.obj.as_s.should eq("hello")
+
+    yaml = YAMLWithAny.from_yaml({obj: %w(foo bar)}.to_yaml)
+    yaml.obj[1].as_s.should eq("bar")
+
+    yaml = YAMLWithAny.from_yaml({obj: {foo: :bar}}.to_yaml)
+    yaml.obj["foo"].as_s.should eq("bar")
   end
 end

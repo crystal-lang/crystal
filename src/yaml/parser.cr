@@ -9,13 +9,13 @@ class YAML::Parser
   end
 
   def parse_all
-    documents = [] of YAML::Type
+    documents = [] of YAML::Any
     loop do
       case @pull_parser.read_next
       when EventKind::STREAM_END
         return documents
       when EventKind::DOCUMENT_START
-        documents << parse_document
+        documents << YAML::Any.new(parse_document)
       else
         unexpected_event
       end
@@ -23,14 +23,15 @@ class YAML::Parser
   end
 
   def parse
-    case @pull_parser.read_next
-    when EventKind::STREAM_END
-      nil
-    when EventKind::DOCUMENT_START
-      parse_document
-    else
-      unexpected_event
-    end
+    value = case @pull_parser.read_next
+            when EventKind::STREAM_END
+              nil
+            when EventKind::DOCUMENT_START
+              parse_document
+            else
+              unexpected_event
+            end
+    YAML::Any.new(value)
   end
 
   def parse_document
