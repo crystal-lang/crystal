@@ -22,6 +22,10 @@ class Crystal::Doc::Generator
     generate_docs program_type, types
   end
 
+  def program_type
+    type(@program)
+  end
+
   def generate_docs(program_type, types)
     copy_files
     generate_types_docs types, @dir, types

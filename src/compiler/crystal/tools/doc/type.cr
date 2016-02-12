@@ -10,6 +10,8 @@ class Crystal::Doc::Type
 
   def kind
     case @type
+    when Const
+      :const
     when .struct?
       :struct
     when .class?, .metaclass?
@@ -22,6 +24,10 @@ class Crystal::Doc::Type
       :enum
     when NoReturnType, VoidType
       :struct
+    when InheritedGenericClass
+      :class
+    when IncludedGenericModule
+      :module
     else
       raise "Unhandled type in `kind`: #{@type}"
     end
@@ -41,6 +47,8 @@ class Crystal::Doc::Type
       type.extended_class.name
     when IncludedGenericModule
       type.module.name
+    when Const
+      type.name
     else
       raise "Unhandled type in `name`: #{@type}"
     end
@@ -141,6 +149,10 @@ class Crystal::Doc::Type
 
   def alias?
     kind == :alias
+  end
+
+  def const?
+    kind == :const
   end
 
   def alias_definition
@@ -397,7 +409,12 @@ class Crystal::Doc::Type
   end
 
   def path_to(type : Type)
-    path_to(type.path)
+    if type.const?
+      container = type.container || @generator.program_type
+      "#{path_to(container)}##{type.name}"
+    else
+      path_to(type.path)
+    end
   end
 
   def link_from(type : Type)

@@ -71,7 +71,7 @@
   <% end %>
   <dl>
     <% type.constants.each do |const| %>
-      <dt class="entry-const">
+      <dt class="entry-const" id="<%= const.name %>">
         <strong><%= const.name %></strong> = <code><%= const.formatted_value %></code>
       </dt>
       <% if doc = const.formatted_doc %>
