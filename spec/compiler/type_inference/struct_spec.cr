@@ -135,4 +135,17 @@ describe "Type inference: struct" do
       ),
       "recursive struct Foo detected: `@bar : (Nil | Bar)` -> `@foo : (Nil | Foo)`"
   end
+
+  it "errors on recursive struct through inheritance (#2136)" do
+    assert_error %(
+      struct A
+        struct B < A end
+
+        def initialize(@x) end
+      end
+
+      a = A.new A::B.new nil
+      ),
+      "recursive struct A::B detected: `@x : (Nil | A::B)`"
+  end
 end
