@@ -1397,5 +1397,13 @@ describe "Parser" do
       loc.line_number.should eq(4)
       loc.column_number.should eq(1)
     end
+
+    it "sets location of enum method" do
+      parser = Parser.new("enum Foo; A; def bar; end; end")
+      node = (parser.parse as EnumDef).members[1] as Def
+      loc = node.location.not_nil!
+      loc.line_number.should eq(1)
+      loc.column_number.should eq(14)
+    end
   end
 end

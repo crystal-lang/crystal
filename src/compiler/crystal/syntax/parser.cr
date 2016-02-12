@@ -4421,8 +4421,10 @@ module Crystal
             next_token_skip_space
           end
 
+          def_location = @token.location
+
           if @token.value == :def
-            member = parse_def
+            member = parse_def.at(def_location)
             member = VisibilityModifier.new(visibility, member) if visibility
             members << member
           else
