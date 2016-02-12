@@ -175,6 +175,36 @@ class HTTP::Client
     self.connect_timeout = connect_timeout.total_seconds
   end
 
+  # Set the number of seconds to wait when resolving name, before raising an `IO::Timeout`.
+  #
+  # ```
+  # client = HTTP::Client.new("example.org")
+  # client.dns_timeout = 1.5
+  # begin
+  #   response = client.get("/")
+  # rescue IO::Timeout
+  #   puts "Timeout!"
+  # end
+  # ```
+  def dns_timeout=(dns_timeout : Number)
+    @dns_timeout = dns_timeout.to_f
+  end
+
+  # Set the timeout with a `Time::Span` to wait when resolving name, before raising an `IO::Timeout`.
+  #
+  # ```
+  # client = HTTP::Client.new("example.org")
+  # client.dns_timeout = 1.5.second
+  # begin
+  #   response = client.get("/")
+  # rescue IO::Timeout
+  #   puts "Timeout!"
+  # end
+  # ```
+  def dns_timeout=(dns_timeout : Time::Span)
+    self.dns_timeout = dns_timeout.total_seconds
+  end
+
   # Adds a callback to execute before each request. This is usually
   # used to set an authorization header. Any number of callbacks
   # can be added.
@@ -424,7 +454,7 @@ class HTTP::Client
   end
 
   private def socket
-    socket = @socket ||= TCPSocket.new @host, @port, nil, @connect_timeout
+    socket = @socket ||= TCPSocket.new @host, @port, @dns_timeout, @connect_timeout
     socket.read_timeout = @read_timeout if @read_timeout
     socket.sync = false
     if @ssl
