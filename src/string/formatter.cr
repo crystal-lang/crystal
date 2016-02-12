@@ -216,7 +216,7 @@ struct String::Formatter
   def float(flags, arg, arg_specified)
     arg = next_arg unless arg_specified
 
-    if arg.responds_to?(:to_f)
+    if arg.responds_to?(:to_f64)
       float = arg.is_a?(Float64) ? arg : arg.to_f64
 
       format_buf = recreate_float_format_string(flags)

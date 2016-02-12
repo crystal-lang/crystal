@@ -1079,6 +1079,9 @@ describe "String" do
     ("%100.50g" % 123.45).should eq("                                                  123.4500000000000028421709430404007434844970703125")
 
     ("%.2f" % 2.536_f32).should eq("2.54")
+
+    span = 1.second
+    ("%s" % span).should eq(span.to_s)
   end
 
   it "escapes chars" do
