@@ -115,9 +115,7 @@ module Crystal
     end
 
     private def infer_type(program, node)
-      timing("Type inference") do
-        program.infer_type node
-      end
+      program.infer_type node, @stats
     end
 
     private def check_bc_flags_changed(output_dir)
@@ -308,12 +306,7 @@ module Crystal
     end
 
     private def timing(label)
-      if @stats
-        time = Time.now
-        value = yield
-        puts "%-18s %s" % {"#{label}:", Time.now - time}
-        value
-      else
+      Crystal.timing(label, @stats) do
         yield
       end
     end
@@ -440,5 +433,16 @@ module Crystal
 
   def self.relative_filename(filename)
     filename
+  end
+
+  def self.timing(label, stats)
+    if stats
+      time = Time.now
+      value = yield
+      puts "%-34s %s" % {"#{label}:", Time.now - time}
+      value
+    else
+      yield
+    end
   end
 end
