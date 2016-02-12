@@ -829,6 +829,39 @@ module Crystal
           end
         end
       end
+
+      # If it's thread local, we use a NoInline function to access it
+      # because of http://lists.llvm.org/pipermail/llvm-dev/2016-February/094736.html
+      #
+      # So, we basically make a function like this (assuming the global is a i32):
+      #
+      # define void @"*$foo"(i32**) noinline {
+      #   store i32* @"$foo", i32** %0
+      #   ret void
+      # }
+      #
+      # And then in the caller we alloca an i32*, pass it, and then load the pointer,
+      # which is the same as the global, but through a non-inlined function.
+      #
+      # Making a function that just returns the pointer doesn't work: LLVM inlines it.
+      if ptr.thread_local?
+        fun_name = "*#{name}"
+        thread_local_fun = @main_mod.functions[fun_name]?
+        unless thread_local_fun
+          thread_local_fun = @main_mod.functions.add(fun_name, ([llvm_type(type).pointer.pointer]), LLVM::Void) do |func|
+            func.basic_blocks.append do |builder|
+              builder.store ptr, func.params[0]
+              builder.ret
+            end
+          end
+          thread_local_fun.add_attribute LLVM::Attribute::NoInline
+        end
+        thread_local_fun = check_main_fun(fun_name, thread_local_fun)
+        indirection_ptr = alloca llvm_type(type).pointer
+        call thread_local_fun, indirection_ptr
+        ptr = load indirection_ptr
+      end
+
       ptr
     end
 
