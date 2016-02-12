@@ -196,6 +196,11 @@ class File < IO::FileDescriptor
     Dir.exists?(path)
   end
 
+  # Returns all components of the given filename except the last one
+  #
+  # ```
+  # File.dirname("/foo/bar/file.cr")  # => "/foo/bar"
+  # ```
   def self.dirname(filename)
     filename.check_no_null_byte
     index = filename.rindex SEPARATOR
@@ -210,6 +215,11 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Returns the last component of the given filename
+  #
+  # ```
+  # File.basename("/foo/bar/file.cr") # => "file.cr"
+  # ```
   def self.basename(filename)
     return "" if filename.bytesize == 0
     return SEPARATOR_STRING if filename == SEPARATOR_STRING
@@ -227,6 +237,12 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Returns the last component of the given filename
+  # If the given suffix is present at the end of filename, it is removed
+  #
+  # ```
+  # File.basename("/foo/bar/file.cr", ".cr")  # => "file"
+  # ```
   def self.basename(filename, suffix)
     suffix.check_no_null_byte
     basename = basename(filename)
