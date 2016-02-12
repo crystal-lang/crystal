@@ -191,7 +191,7 @@ module Crystal
 
       # First write bitcodes: it breaks if we paralellize it
       unless multithreaded
-        timing("Codegen (bitcode)") do
+        timing("Codegen (cyrstal)") do
           units.each &.write_bitcode
         end
       end
@@ -218,7 +218,7 @@ module Crystal
         error "can't use `#{output_filename}` as output filename because it's a directory"
       end
 
-      timing("Codegen (clang)") do
+      timing("Codegen (linking)") do
         system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
       end
     end
@@ -311,7 +311,7 @@ module Crystal
       if @stats
         time = Time.now
         value = yield
-        puts "#{label}: #{Time.now - time}"
+        puts "%-18s %s" % {"#{label}:", Time.now - time}
         value
       else
         yield
