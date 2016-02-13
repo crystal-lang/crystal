@@ -209,7 +209,7 @@ module HTTP
 
   def self.rfc1123_date(time : Time) : String
     # TODO: GMT should come from the Time classes instead
-    time.to_s("%a, %d %b %Y %H:%M:%S GMT")
+    time.to_utc.to_s("%a, %d %b %Y %H:%M:%S GMT")
   end
 
   # Returns the default status message of the given HTTP status code.
