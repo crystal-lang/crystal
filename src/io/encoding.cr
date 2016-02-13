@@ -113,6 +113,32 @@ module IO
       end
     end
 
+    def read_byte(io)
+      read(io)
+      if out_slice.empty?
+        nil
+      else
+        byte = out_slice.to_unsafe.value
+        advance 1
+        byte
+      end
+    end
+
+    def read_utf8(io, slice)
+      count = 0
+      until slice.empty?
+        read(io)
+        break if out_slice.empty?
+
+        available = Math.min(out_slice.size, slice.size)
+        out_slice[0, available].copy_to(slice.to_unsafe, available)
+        advance(available)
+        count += available
+        slice += available
+      end
+      count
+    end
+
     def gets(io, delimiter : UInt8, limit : Int)
       read(io)
       return nil if @out_slice.empty?

@@ -468,6 +468,26 @@ describe IO do
         io.read_char.should be_nil
       end
 
+      it "reads utf8 byte" do
+        str = "Hello world"
+        io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        str.each_byte do |byte|
+          io.read_utf8_byte.should eq(byte)
+        end
+        io.read_utf8_byte.should be_nil
+      end
+
+      it "reads utf8" do
+        io = MemoryIO.new("你".encode("GB2312"))
+        io.set_encoding("GB2312")
+
+        buffer = uninitialized UInt8[1024]
+        bytes_read = io.read_utf8(buffer.to_slice) # => 3
+        bytes_read.should eq(3)
+        buffer.to_slice[0, bytes_read].to_a.should eq("你".bytes)
+      end
+
       it "raises on incomplete byte sequence" do
         io = SimpleMemoryIO.new("好".byte_slice(0, 1))
         io.set_encoding("GB2312")

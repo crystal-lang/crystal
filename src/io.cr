@@ -452,18 +452,52 @@ module IO
     (byte & 0x3f).to_u32
   end
 
-  private def read_utf8_byte
+  # Reads a single decoded UTF-8 byte from this IO. Returns `nil` if there is no more
+  # data to read.
+  #
+  # If no encoding is set, this is the same as `#read_byte`.
+  #
+  # ```
+  # bytes = "你".encode("GB2312") # => [196, 227]
+  #
+  # io = MemoryIO.new(bytes)
+  # io.set_encoding("GB2312")
+  # io.read_utf8_byte # => 228
+  # io.read_utf8_byte # => 189
+  # io.read_utf8_byte # => 160
+  # io.read_utf8_byte # => nil
+  #
+  # "你".bytes # => [228, 189, 160]
+  # ```
+  def read_utf8_byte
     if decoder = decoder()
-      decoder.read(self)
-      if decoder.out_slice.empty?
-        nil
-      else
-        byte = decoder.out_slice.to_unsafe.value
-        decoder.advance 1
-        byte
-      end
+      decoder.read_byte(self)
     else
       read_byte
+    end
+  end
+
+  # Reads UTF-8 decoded bytes into the given *slice*. Returns the number of UTF-8 bytes read.
+  #
+  # If no encoding is set, this is the same as `#read(slice)`.
+  #
+  # ```
+  # bytes = "你".encode("GB2312") # => [196, 227]
+  #
+  # io = MemoryIO.new(bytes)
+  # io.set_encoding("GB2312")
+  #
+  # buffer = uninitialized UInt8[1024]
+  # bytes_read = io.read_utf8(buffer.to_slice) # => 3
+  # buffer.to_slice[0, bytes_read]             # => [228, 189, 160]
+  #
+  # "你".bytes # => [228, 189, 160]
+  # ```
+  def read_utf8(slice : Slice(UInt8))
+    if decoder = decoder()
+      decoder.read_utf8(self, slice)
+    else
+      read(slice)
     end
   end
 
