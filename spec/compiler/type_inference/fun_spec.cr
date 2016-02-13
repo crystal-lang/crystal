@@ -179,7 +179,7 @@ describe "Type inference: fun" do
   it "disallows casting a fun type to one accepting more arguments" do
     assert_error("
       f = ->(x : Int32) { x.to_f }
-      f as Int32, Int32 -> Float64
+      f as (Int32, Int32 -> Float64)
       ",
       "can't cast")
   end

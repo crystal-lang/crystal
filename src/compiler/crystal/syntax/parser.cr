@@ -568,7 +568,7 @@ module Crystal
             check_void_value atomic, location
 
             next_token_skip_space
-            to = parse_single_type
+            to = parse_single_type(allow_commas: false)
             atomic = Cast.new(atomic, to).at(location)
           else
             break
@@ -3559,9 +3559,9 @@ module Crystal
       end
     end
 
-    def parse_single_type(allow_primitives = false)
+    def parse_single_type(allow_primitives = false, allow_commas = true)
       location = @token.location
-      type = parse_type(allow_primitives)
+      type = parse_type(allow_primitives, allow_commas: allow_commas)
       case type
       when Array
         raise "unexpected ',' in type (use parenthesis to disambiguate)", location
@@ -3572,7 +3572,7 @@ module Crystal
       end
     end
 
-    def parse_type(allow_primitives)
+    def parse_type(allow_primitives, allow_commas = true)
       location = @token.location
 
       if @token.type == :"->"
@@ -3580,7 +3580,7 @@ module Crystal
       else
         input_types = parse_type_union(allow_primitives)
         input_types = [input_types] unless input_types.is_a?(Array)
-        while @token.type == :"," && ((allow_primitives && next_comes_type_or_int) || (!allow_primitives && next_comes_type))
+        while allow_commas && @token.type == :"," && ((allow_primitives && next_comes_type_or_int) || (!allow_primitives && next_comes_type))
           next_token_skip_space_or_newline
           if @token.type == :"->"
             next_types = parse_type(false)
