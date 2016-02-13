@@ -209,7 +209,7 @@ OptionParser.parse! do |opts|
     exit
   end
   opts.on("-v", "--verbose", "verbose output") do
-    Spec.formatter = Spec::VerboseFormatter.new
+    Spec.formatters.replace([Spec::VerboseFormatter.new])
   end
   opts.on("--no-color", "Disable colored output") do
     Spec.use_colors = false

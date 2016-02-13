@@ -62,14 +62,11 @@ module Spec
     end
   end
 
-  @@formatter = DotFormatter.new
+  @@formatters = [] of Spec::Formatter
+  @@formatters << Spec::DotFormatter.new
 
   # :nodoc:
-  def self.formatter=(@@formatter)
-  end
-
-  # :nodoc:
-  def self.formatter
-    @@formatter
+  def self.formatters
+    @@formatters
   end
 end
