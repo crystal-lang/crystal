@@ -645,6 +645,14 @@ module Crystal
       end
     end
 
+    def visit(node : Out)
+      exp = node.exp
+      if exp.is_a?(Var)
+        @vars[exp.name] = MetaVar.new(exp.name)
+      end
+      true
+    end
+
     def visit(node : Block)
       @inside_block += 1
 

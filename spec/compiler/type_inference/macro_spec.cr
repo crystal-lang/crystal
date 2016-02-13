@@ -618,4 +618,19 @@ describe "Type inference: macro" do
       end
       )) { int32 }
   end
+
+  it "declares variable for macro with out" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Int32*)
+      end
+
+      macro some_macro
+        z
+      end
+
+      LibFoo.foo(out z)
+      some_macro
+      )) { int32 }
+  end
 end
