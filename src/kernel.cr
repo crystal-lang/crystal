@@ -69,12 +69,14 @@ def puts(*objects)
   STDOUT.puts *objects
 end
 
-# Prints *obj* to STDOUT by invoking `inspect(io)` on it, and followed
+# Prints each object in *objects* to STDOUT by invoking `inspect(io)` on it, followed
 # by a newline.
-def p(obj)
-  obj.inspect(STDOUT)
-  puts
-  obj
+def p(*objects)
+  objects.each do |obj|
+    obj.inspect(STDOUT)
+    puts
+  end
+  nil
 end
 
 # :nodoc:
