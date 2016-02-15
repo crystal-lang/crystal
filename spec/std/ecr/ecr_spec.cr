@@ -6,7 +6,7 @@ class ECRSpecHelloView
   def initialize(@msg)
   end
 
-  ecr_file "#{__DIR__}/../data/test_template.ecr"
+  ECR.def_to_s "#{__DIR__}/../data/test_template.ecr"
 end
 
 describe "ECR" do
@@ -28,7 +28,7 @@ describe "ECR" do
     program.should eq(pieces.join("\n") + "\n")
   end
 
-  it "does ecr_file" do
+  it "does ECR.def_to_s" do
     view = ECRSpecHelloView.new("world!")
     view.to_s.strip.should eq("Hello world! 012")
   end
