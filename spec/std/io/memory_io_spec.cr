@@ -251,6 +251,20 @@ describe "MemoryIO" do
     end
   end
 
+  it "writes past end" do
+    io = MemoryIO.new
+    io.pos = 1000
+    io.print 'a'
+    io.to_slice.to_a.should eq([0] * 1000 + [97])
+  end
+
+  it "writes past end with write_byte" do
+    io = MemoryIO.new
+    io.pos = 1000
+    io.write_byte 'a'.ord.to_u8
+    io.to_slice.to_a.should eq([0] * 1000 + [97])
+  end
+
   describe "encoding" do
     describe "decode" do
       it "gets_to_end" do

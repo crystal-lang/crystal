@@ -103,6 +103,30 @@ class MemoryIO
     nil
   end
 
+  # See `IO#write_byte`. Raises if this MemoryIO is non-writeable,
+  # or if it's non-resizeable and a resize is needed.
+  def write_byte(byte : UInt8)
+    check_writeable
+    check_open
+
+    new_bytesize = @pos + 1
+    if new_bytesize > @capacity
+      check_resizeable
+      resize_to_capacity(Math.pw2ceil(new_bytesize))
+    end
+
+    (@buffer + @pos).value = byte
+
+    if @pos > @bytesize
+      Intrinsics.memset((@buffer + @bytesize) as Void*, 0_u8, (@pos - @bytesize).to_u32, 0_u32, false)
+    end
+
+    @pos += 1
+    @bytesize = @pos if @pos > @bytesize
+
+    nil
+  end
+
   # :nodoc:
   def gets(delimiter : Char, limit : Int32)
     return super if @encoding || delimiter.ord >= 128
