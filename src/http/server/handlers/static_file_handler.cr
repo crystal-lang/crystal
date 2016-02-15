@@ -70,7 +70,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
       end
     end
 
-    ecr_file "#{__DIR__}/static_file_handler.html"
+    ECR.def_to_s "#{__DIR__}/static_file_handler.html"
   end
 
   private def directory_listing(io, request_path, path)

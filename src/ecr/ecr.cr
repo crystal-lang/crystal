@@ -7,18 +7,19 @@
 #
 # Quick Example:
 #
-#     require "ecr"
+#     require "ecr/macros"
 #
 #     class Greeting
 #       def initialize(@name)
 #       end
-#       ecr_file "greeting.ecr"
+#
+#       ECR.def_to_s "greeting.ecr"
 #     end
 #
 #     # greeting.ecr
 #     Greeting, <%= @name %>!
 #
-#     Greeting.new("John")
+#     Greeting.new("John").to_s
 #     #=> Greeting, John!
 #
 # Using logical statements:
@@ -30,16 +31,19 @@
 #       Greeting!
 #     <% end %>
 #
-#     Greeting.new(nil)
+#     Greeting.new(nil).to_s
 #     #=> Greeting!
 #
 # Using loops:
+#
+#     require "ecr/macros"
 #
 #     class Greeting
 #       def initialize(*names)
 #        @names = names
 #       end
-#       ecr_file "greeting.ecr"
+#
+#       ECR.def_to_s "greeting.ecr"
 #     end
 #
 #     # greeting.ecr
@@ -47,7 +51,7 @@
 #       Hi, <%= name %>!
 #     <% end %>
 #
-#     Greeting.new("John","Zoe","Ben")
+#     Greeting.new("John", "Zoe", "Ben").to_s
 #     #=> Hi, John!
 #     #=> Hi, Zoe!
 #     #=> Hi, Ben!
@@ -58,10 +62,12 @@ module ECR
 
   DefaultBufferName = "__str__"
 
+  # :nodoc:
   def process_file(filename, buffer_name = DefaultBufferName)
     process_string File.read(filename), filename, buffer_name
   end
 
+  # :nodoc:
   def process_string(string, filename, buffer_name = DefaultBufferName)
     lexer = Lexer.new string
 
