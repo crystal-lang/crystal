@@ -1,6 +1,11 @@
 ## Next
 
+* **(breaking change)** When used with a type declaration, the macros `property`, `getter`, `setter`, etc., declare instance variables with those types.
+* **(breaking change)** `JSON.mapping` and `YAML.mapping` declare instance variables with the given types.
+* **(breaking change)** `YAML.load` was renamed to `YAML.parse`, and it now returns a `YAML::Any`.
+* **(breaking change)** `embed_ecr` and `ecr_file` were renamed to `ECR.embed` and `ECR.def_to_s` (the old methods now produce a warning and will be removed in the next release).
 * Added encoding support: `IO#set_encoding`, `String#encode`, and `HTTP::Client` charset check.
+* Segmentation faults are now trapped and shown in a more friendlier way.
 * The `record` macro can now accept type declarations (for example `record Point, x : Int32, y : Int32`)
 * Added `Iterator#step` (thanks @jhass)
 * `Array#push` and `Array#unshift` can now accept multiple values and add the elements in an efficient way (thanks @arktisklada)
@@ -8,7 +13,12 @@
 * Added `default` option to `YAML.mapping` (thanks @jreinert)
 * Allow doing `case foo; when Foo.class` (and `Foo(T)` and `Foo(T).class`) in case expressions.
 * Added `Class#|` so a union type can be expresses as `Int32 | Char` in regular code.
-* Many bug fixes
+* Added `File.real_path` (thanks @jreinert)
+* Added `dns_timeout` for `HTTP::Client` (thanks @kostya)
+* Added dynamic width precision to `sprintf` (thanks @gtramontina)
+* `Markdown` now supports blockquotes and 1 level of list nesting (thanks @SebastianSzturo)
+* `p` now accepts multiple arguments
+* Many bug fixes and some optimizations
 
 ## 0.11.1 (2016-01-25)
 * Fixed #2050, #2054, #2057, #2059, #2064
