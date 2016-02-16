@@ -109,6 +109,7 @@ describe "URI" do
       {"hello%252%2Bworld", "hello%2+world"},
       {"%E3%81%AA%E3%81%AA", "なな"},
       {"%27Stop%21%27%20said%20Fred", "'Stop!' said Fred"},
+      {"%FF", String.new(1) { |buf| buf.value = 255_u8; {1, 0} }},
       {"%0A", "\n"},
     ].each do |tuple|
       from, to = tuple

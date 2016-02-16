@@ -212,15 +212,14 @@ class URI
 
   # URL-encode a string and write the result to an `IO`.
   def self.escape(string : String, io : IO)
-    string.each_char do |char|
-      if char.alphanumeric? || char == '_' || char == '.' || char == '-'
-        io.write_byte char.ord.to_u8
+    string.each_byte do |byte|
+      case byte.chr
+      when 'a'..'z', 'A'..'Z', '0'..'9', '_', '.', '-'
+        io.write_byte byte
       else
-        char.each_byte do |byte|
-          io.write_byte '%'.ord.to_u8
-          io.write_byte '0'.ord.to_u8 if byte < 16
-          byte.to_s(16, io, upcase: true)
-        end
+        io.write_byte '%'.ord.to_u8
+        io.write_byte '0'.ord.to_u8 if byte < 16
+        byte.to_s(16, io, upcase: true)
       end
     end
     io
