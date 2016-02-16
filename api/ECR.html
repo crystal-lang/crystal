@@ -500,6 +500,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/ComputedContentTypeHeader" data-name="http::computedcontenttypeheader">
+      <a href="HTTP/ComputedContentTypeHeader.html">ComputedContentTypeHeader</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/HTTP/Cookie" data-name="http::cookie">
       <a href="HTTP/Cookie.html">Cookie</a>
       
@@ -702,6 +707,11 @@
   
 </ul>
 
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/IO/EncodingOptions" data-name="io::encodingoptions">
+      <a href="IO/EncodingOptions.html">EncodingOptions</a>
       
     </li>
   
@@ -1675,11 +1685,6 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Reflect" data-name="reflect(x)">
-      <a href="Reflect.html">Reflect</a>
-      
-    </li>
-  
   <li class="parent " data-id="github.com/manastech/crystal/Regex" data-name="regex">
       <a href="Regex.html">Regex</a>
       
@@ -1700,11 +1705,6 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Scheduler" data-name="scheduler">
-      <a href="Scheduler.html">Scheduler</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/manastech/crystal/SecureRandom" data-name="securerandom">
       <a href="SecureRandom.html">SecureRandom</a>
       
@@ -1720,8 +1720,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/SimpleHash" data-name="simplehash(k, v)">
+  <li class="parent " data-id="github.com/manastech/crystal/SimpleHash" data-name="simplehash(k, v)">
       <a href="SimpleHash.html">SimpleHash</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/SimpleHash/Entry" data-name="simplehash::entry(k, v)">
+      <a href="SimpleHash/Entry.html">Entry</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2050,6 +2060,11 @@
       
         <ul>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Any" data-name="yaml::any">
+      <a href="YAML/Any.html">Any</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/EventKind" data-name="yaml::eventkind">
       <a href="YAML/EventKind.html">EventKind</a>
       
@@ -2090,53 +2105,18 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/BufError" data-name="zlib::buferror">
-      <a href="Zlib/BufError.html">BufError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/DataError" data-name="zlib::dataerror">
-      <a href="Zlib/DataError.html">DataError</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/manastech/crystal/Zlib/Deflate" data-name="zlib::deflate">
       <a href="Zlib/Deflate.html">Deflate</a>
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/Zlib/Error" data-name="zlib::error">
+      <a href="Zlib/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/Zlib/Inflate" data-name="zlib::inflate">
       <a href="Zlib/Inflate.html">Inflate</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/MemError" data-name="zlib::memerror">
-      <a href="Zlib/MemError.html">MemError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/NeedDictError" data-name="zlib::needdicterror">
-      <a href="Zlib/NeedDictError.html">NeedDictError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/StreamError" data-name="zlib::streamerror">
-      <a href="Zlib/StreamError.html">StreamError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/VersionError" data-name="zlib::versionerror">
-      <a href="Zlib/VersionError.html">VersionError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/ZlibError" data-name="zlib::zliberror">
-      <a href="Zlib/ZlibError.html">ZlibError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/ZStreamError" data-name="zlib::zstreamerror">
-      <a href="Zlib/ZStreamError.html">ZStreamError</a>
       
     </li>
   
@@ -2171,18 +2151,19 @@ The latter will not, but instead serve to control the structure as we do in norm
 
 <p>Quick Example:</p>
 
-<pre><code><span class="k">require</span> <span class="s">&quot;ecr&quot;</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;ecr/macros&quot;</span>
 
 <span class="k">class</span> <span class="t">Greeting</span>
   <span class="k">def</span> <span class="m">initialize</span>(@name)
   <span class="k">end</span>
-  ecr_file <span class="s">&quot;greeting.ecr&quot;</span>
+
+  <span class="t">ECR</span>.def_to_s <span class="s">&quot;greeting.ecr&quot;</span>
 <span class="k">end</span>
 
 <span class="c"># greeting.ecr</span>
 <span class="t">Greeting</span>, <span class="o"><</span>%= @name <span class="o">%</span><span class="o">></span><span class="o">!</span>
 
-<span class="t">Greeting</span>.<span class="k">new</span>(<span class="s">&quot;John&quot;</span>)
+<span class="t">Greeting</span>.<span class="k">new</span>(<span class="s">&quot;John&quot;</span>).to_s
 <span class="c">#=&gt; Greeting, John!</span></code></pre>
 
 <p>Using logical statements:</p>
@@ -2194,16 +2175,19 @@ The latter will not, but instead serve to control the structure as we do in norm
   <span class="t">Greeting</span><span class="o">!</span>
 <span class="o"><</span><span class="o">%</span> <span class="k">end</span> <span class="o">%</span><span class="o">></span>
 
-<span class="t">Greeting</span>.<span class="k">new</span>(<span class="n">nil</span>)
+<span class="t">Greeting</span>.<span class="k">new</span>(<span class="n">nil</span>).to_s
 <span class="c">#=&gt; Greeting!</span></code></pre>
 
 <p>Using loops:</p>
 
-<pre><code><span class="k">class</span> <span class="t">Greeting</span>
+<pre><code><span class="k">require</span> <span class="s">&quot;ecr/macros&quot;</span>
+
+<span class="k">class</span> <span class="t">Greeting</span>
   <span class="k">def</span> <span class="m">initialize</span>(<span class="o">*</span>names)
    @names <span class="o">=</span> names
   <span class="k">end</span>
-  ecr_file <span class="s">&quot;greeting.ecr&quot;</span>
+
+  <span class="t">ECR</span>.def_to_s <span class="s">&quot;greeting.ecr&quot;</span>
 <span class="k">end</span>
 
 <span class="c"># greeting.ecr</span>
@@ -2211,7 +2195,7 @@ The latter will not, but instead serve to control the structure as we do in norm
   <span class="t">Hi</span>, <span class="o"><</span>%= name <span class="o">%</span><span class="o">></span><span class="o">!</span>
 <span class="o"><</span><span class="o">%</span> <span class="k">end</span> <span class="o">%</span><span class="o">></span>
 
-<span class="t">Greeting</span>.<span class="k">new</span>(<span class="s">&quot;John&quot;</span>,<span class="s">&quot;Zoe&quot;</span>,<span class="s">&quot;Ben&quot;</span>)
+<span class="t">Greeting</span>.<span class="k">new</span>(<span class="s">&quot;John&quot;</span>, <span class="s">&quot;Zoe&quot;</span>, <span class="s">&quot;Ben&quot;</span>).to_s
 <span class="c">#=&gt; Hi, John!</span>
 <span class="c">#=&gt; Hi, Zoe!</span>
 <span class="c">#=&gt; Hi, Ben!</span></code></pre>
@@ -2241,7 +2225,12 @@ The latter will not, but instead serve to control the structure as we do in norm
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/ecr/ecr.cr" target="_blank">ecr/ecr.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/ecr/ecr.cr" target="_blank">ecr/ecr.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/ecr/macros.cr" target="_blank">ecr/macros.cr</a>
     
     <br/>
   
@@ -2253,7 +2242,7 @@ The latter will not, but instead serve to control the structure as we do in norm
   
   <dl>
     
-      <dt class="entry-const">
+      <dt class="entry-const" id="DefaultBufferName">
         <strong>DefaultBufferName</strong> = <code><span class="s">&quot;__str__&quot;</span></code>
       </dt>
       
@@ -2264,22 +2253,26 @@ The latter will not, but instead serve to control the structure as we do in norm
 
 
 
-  <h2>Instance Method Summary</h2>
+
+
+  <h2>Macro Summary</h2>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#process_file%28filename%2Cbuffer_name%3D%3Cspanclass%3D%22t%22%3EDefaultBufferName%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#process_file</strong>(filename, buffer_name = <span class="t">DefaultBufferName</span>)</a>
+        <a href="#def_to_s%28filename%29-macro" class="signature"><strong>def_to_s</strong>(filename)</a>
+        
+          <div class="summary"><p>Defines a <code>to_s(io)</code> method whose body is the ECR contained in <em>filename</em>, translated to Crystal code.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#process_string%28string%2Cfilename%2Cbuffer_name%3D%3Cspanclass%3D%22t%22%3EDefaultBufferName%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#process_string</strong>(string, filename, buffer_name = <span class="t">DefaultBufferName</span>)</a>
+        <a href="#embed%28filename%2Cio_name%29-macro" class="signature"><strong>embed</strong>(filename, io_name)</a>
+        
+          <div class="summary"><p>Embeds an ECR file contained in <em>filename</em> into the program.</p></div>
         
       </li>
     
   </ul>
-
-
 
 
 
@@ -2290,42 +2283,93 @@ The latter will not, but instead serve to control the structure as we do in norm
 
 
 
-  <h2>Instance Method Detail</h2>
+
+
+  <h2>Macro Detail</h2>
   
-    <div class="entry-detail" id="process_file(filename,buffer_name=&lt;spanclass=&quot;t&quot;&gt;DefaultBufferName&lt;/span&gt;)-instance-method">
+    <div class="entry-detail" id="def_to_s(filename)-macro">
       <div class="signature">
         
-        def <strong>process_file</strong>(filename, buffer_name = <span class="t">DefaultBufferName</span>)
+        macro <strong>def_to_s</strong>(filename)
 
-        <a class="method-permalink" href="#process_file%28filename%2Cbuffer_name%3D%3Cspanclass%3D%22t%22%3EDefaultBufferName%3C%2Fspan%3E%29-instance-method">#</a>
+        <a class="method-permalink" href="#def_to_s%28filename%29-macro">#</a>
       </div>
+      
+        <div class="doc"><p>Defines a <code>to_s(io)</code> method whose body is the ECR contained
+in <em>filename</em>, translated to Crystal code.</p>
+
+<pre><code class='language-text'># greeting.ecr
+Hello &lt;%= @name %>!</code></pre>
+
+<pre><code><span class="k">require</span> <span class="s">&quot;ecr/macros&quot;</span>
+
+<span class="k">class</span> <span class="t">Greeting</span>
+  <span class="k">def</span> <span class="m">initialize</span>(@name)
+  <span class="k">end</span>
+
+  <span class="t">ECR</span>.def_to_s <span class="s">&quot;greeting.ecr&quot;</span>
+<span class="k">end</span>
+
+<span class="t">Greeting</span>.<span class="k">new</span>(<span class="s">&quot;World&quot;</span>).to_s <span class="c"># =&gt; &quot;Hello World!&quot;</span></code></pre>
+
+<p>The macro basically translates the text inside the given file
+to Crystal code that appends to the IO:</p>
+
+<pre><code><span class="k">class</span> <span class="t">Greeting</span>
+  <span class="k">def</span> <span class="m">to_s</span>(io)
+    io <span class="o"><<</span> <span class="s">&quot;Hello &quot;</span>
+    io <span class="o"><<</span> @name
+    io <span class="o"><<</span> <span class="s">&quot;!&quot;</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/ecr/ecr.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/ecr/macros.cr#L47" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="process_string(string,filename,buffer_name=&lt;spanclass=&quot;t&quot;&gt;DefaultBufferName&lt;/span&gt;)-instance-method">
+    <div class="entry-detail" id="embed(filename,io_name)-macro">
       <div class="signature">
         
-        def <strong>process_string</strong>(string, filename, buffer_name = <span class="t">DefaultBufferName</span>)
+        macro <strong>embed</strong>(filename, io_name)
 
-        <a class="method-permalink" href="#process_string%28string%2Cfilename%2Cbuffer_name%3D%3Cspanclass%3D%22t%22%3EDefaultBufferName%3C%2Fspan%3E%29-instance-method">#</a>
+        <a class="method-permalink" href="#embed%28filename%2Cio_name%29-macro">#</a>
       </div>
+      
+        <div class="doc"><p>Embeds an ECR file contained in <em>filename</em> into the program.</p>
+
+<p>The generated code is the result of translating the contents of
+the ECR file to Crystal, a program that appends to the IO
+with the given <em>io_name</em>.</p>
+
+<pre><code class='language-text'># greeting.ecr
+Hello &lt;%= name %>!</code></pre>
+
+<pre><code><span class="k">require</span> <span class="s">&quot;ecr/macros&quot;</span>
+
+name <span class="o">=</span> <span class="s">&quot;World&quot;</span>
+
+io <span class="o">=</span> <span class="t">MemoryIO</span>.<span class="k">new</span>
+<span class="t">ECR</span>.embed <span class="s">&quot;greeting.ecr&quot;</span>, io
+io.to_s <span class="c"># =&gt; &quot;Hello World!&quot;</span></code></pre>
+
+<p>The <code><a href="ECR.html#embed%28filename%2Cio_name%29-macro">ECR.embed</a></code> line basically generates this:</p>
+
+<pre><code>io <span class="o"><<</span> <span class="s">&quot;Hello &quot;</span>
+io <span class="o"><<</span> name
+io <span class="o"><<</span> <span class="s">&quot;!&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/ecr/ecr.cr#L65" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/ecr/macros.cr#L81" target="_blank">View source</a>]
         
       </div>
     </div>
   
-
-
 
 
 </div>

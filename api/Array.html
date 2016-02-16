@@ -500,6 +500,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/ComputedContentTypeHeader" data-name="http::computedcontenttypeheader">
+      <a href="HTTP/ComputedContentTypeHeader.html">ComputedContentTypeHeader</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/HTTP/Cookie" data-name="http::cookie">
       <a href="HTTP/Cookie.html">Cookie</a>
       
@@ -702,6 +707,11 @@
   
 </ul>
 
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/IO/EncodingOptions" data-name="io::encodingoptions">
+      <a href="IO/EncodingOptions.html">EncodingOptions</a>
       
     </li>
   
@@ -1675,11 +1685,6 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Reflect" data-name="reflect(x)">
-      <a href="Reflect.html">Reflect</a>
-      
-    </li>
-  
   <li class="parent " data-id="github.com/manastech/crystal/Regex" data-name="regex">
       <a href="Regex.html">Regex</a>
       
@@ -1700,11 +1705,6 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Scheduler" data-name="scheduler">
-      <a href="Scheduler.html">Scheduler</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/manastech/crystal/SecureRandom" data-name="securerandom">
       <a href="SecureRandom.html">SecureRandom</a>
       
@@ -1720,8 +1720,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/SimpleHash" data-name="simplehash(k, v)">
+  <li class="parent " data-id="github.com/manastech/crystal/SimpleHash" data-name="simplehash(k, v)">
       <a href="SimpleHash.html">SimpleHash</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/SimpleHash/Entry" data-name="simplehash::entry(k, v)">
+      <a href="SimpleHash/Entry.html">Entry</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2050,6 +2060,11 @@
       
         <ul>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Any" data-name="yaml::any">
+      <a href="YAML/Any.html">Any</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/EventKind" data-name="yaml::eventkind">
       <a href="YAML/EventKind.html">EventKind</a>
       
@@ -2090,53 +2105,18 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/BufError" data-name="zlib::buferror">
-      <a href="Zlib/BufError.html">BufError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/DataError" data-name="zlib::dataerror">
-      <a href="Zlib/DataError.html">DataError</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/manastech/crystal/Zlib/Deflate" data-name="zlib::deflate">
       <a href="Zlib/Deflate.html">Deflate</a>
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/Zlib/Error" data-name="zlib::error">
+      <a href="Zlib/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/Zlib/Inflate" data-name="zlib::inflate">
       <a href="Zlib/Inflate.html">Inflate</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/MemError" data-name="zlib::memerror">
-      <a href="Zlib/MemError.html">MemError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/NeedDictError" data-name="zlib::needdicterror">
-      <a href="Zlib/NeedDictError.html">NeedDictError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/StreamError" data-name="zlib::streamerror">
-      <a href="Zlib/StreamError.html">StreamError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/VersionError" data-name="zlib::versionerror">
-      <a href="Zlib/VersionError.html">VersionError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/ZlibError" data-name="zlib::zliberror">
-      <a href="Zlib/ZlibError.html">ZlibError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/ZStreamError" data-name="zlib::zstreamerror">
-      <a href="Zlib/ZStreamError.html">ZStreamError</a>
       
     </li>
   
@@ -2186,7 +2166,7 @@ case, T will be set to the union of the array literal elements' types.</p>
 <span class="o">[]</span>          <span class="c"># syntax error</span></code></pre>
 
 <p>An Array is implemented using an internal buffer of some capacity
-that is reallocated when elements are pushed to it and more capacity
+and is reallocated when elements are pushed to it when more capacity
 is needed. This is normally known as a <a href="http://en.wikipedia.org/wiki/Dynamic_array" target="_blank">dynamic array</a>.</p>
 
 <p>You can use a special array literal syntax with other types too, as long as they define an argless
@@ -2229,17 +2209,17 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr" target="_blank">array.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr" target="_blank">array.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
     
     <br/>
   
@@ -2281,7 +2261,7 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#new%28size%3AInt%2C%26block%3AInt32-%3ET%29-class-method" class="signature"><strong>.new</strong>(size : Int, &block : Int32 -> T)</a>
         
-          <div class="summary"><p>Creates a new Array of the given size and invokes the block once for each index of the array, assigning the block's value in that index.</p></div>
+          <div class="summary"><p>Creates a new Array of the given <em>size</em> and invokes the given block once for each index of <code>self</code>, assigning the block's value in that index.</p></div>
         
       </li>
     
@@ -2318,7 +2298,7 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#new%28size%3AInt%2Cvalue%3AT%29-class-method" class="signature"><strong>.new</strong>(size : Int, value : T)</a>
         
-          <div class="summary"><p>Creates a new Array of the given size filled with the same value in each position.</p></div>
+          <div class="summary"><p>Creates a new Array of the given <em>size</em> filled with the same <em>value</em> in each position.</p></div>
         
       </li>
     
@@ -2346,14 +2326,14 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#%26%28other%3AArray%28U%29%29-instance-method" class="signature"><strong>#&</strong>(other : Array(U))</a>
         
-          <div class="summary"><p>Set intersection: returns a new array containing elements common to the two arrays, excluding any duplicates.</p></div>
+          <div class="summary"><p>Set intersection: returns a new Array containing elements common to <code>self</code> and <em>other</em>, excluding any duplicates.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%2A%28times%3AInt%29-instance-method" class="signature"><strong>#*</strong>(times : Int)</a>
         
-          <div class="summary"><p>Repetition: Returns a new array built by concatenating <code>times</code> copies of <code>ary</code>.</p></div>
+          <div class="summary"><p>Repetition: Returns a new Array built by concatenating <em>times</em> copies of <code>self</code>.</p></div>
         
       </li>
     
@@ -2393,16 +2373,16 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#%5B%5D%28index%3AInt%29-instance-method" class="signature"><strong>#[]</strong>(index : Int)</a>
+        <a href="#%5B%5D%28range%3ARange%28Int%2CInt%29%29-instance-method" class="signature"><strong>#[]</strong>(range : Range(Int, Int))</a>
         
-          <div class="summary"><p>Returns the element at the given index.</p></div>
+          <div class="summary"><p>Returns all elements that are within the given range</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%5B%5D%28range%3ARange%28Int%2CInt%29%29-instance-method" class="signature"><strong>#[]</strong>(range : Range(Int, Int))</a>
+        <a href="#%5B%5D%28index%3AInt%29-instance-method" class="signature"><strong>#[]</strong>(index : Int)</a>
         
-          <div class="summary"><p>Returns all elements that are within the given range</p></div>
+          <div class="summary"><p>Returns the element at the given index.</p></div>
         
       </li>
     
@@ -2479,7 +2459,7 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#clone-instance-method" class="signature"><strong>#clone</strong></a>
         
-          <div class="summary"><p>Returns a new Array that has this array's elements cloned.</p></div>
+          <div class="summary"><p>Returns a new Array that has <code>self</code>'s elements cloned.</p></div>
         
       </li>
     
@@ -2491,21 +2471,14 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#compact-instance-method" class="signature"><strong>#compact</strong></a>
         
-          <div class="summary"><p>Returns a copy of self with all nil elements removed.</p></div>
+          <div class="summary"><p>Returns a copy of self with all ` elements removed.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#compact%21-instance-method" class="signature"><strong>#compact!</strong></a>
         
-          <div class="summary"><p>Removes nil elements from this array.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#concat%28other%3AEnumerable%29-instance-method" class="signature"><strong>#concat</strong>(other : Enumerable)</a>
-        
-          <div class="summary"><p>Appends the elements of <em>other</em> to <code>self</code>, and returns <code>self</code>.</p></div>
+          <div class="summary"><p>Removes all ` elements from <code>self</code>.</p></div>
         
       </li>
     
@@ -2517,56 +2490,58 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#delete%28obj%29-instance-method" class="signature"><strong>#delete</strong>(obj)</a>
+        <a href="#concat%28other%3AEnumerable%29-instance-method" class="signature"><strong>#concat</strong>(other : Enumerable)</a>
         
-          <div class="summary"><p>Deletes all items from <code>self</code> that are equal to <code>obj</code>.</p></div>
+          <div class="summary"><p>Appends the elements of <em>other</em> to <code>self</code>, and returns <code>self</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#delete_at%28index%3AInt%2Ccount%3AInt%29-instance-method" class="signature"><strong>#delete_at</strong>(index : Int, count : Int)</a>
+        <a href="#delete%28obj%29-instance-method" class="signature"><strong>#delete</strong>(obj)</a>
         
-          <div class="summary"><p>Deletes count or less (if there aren't enough) elements at the given start index, returning that elements.</p></div>
+          <div class="summary"><p>Removes all items from <code>self</code> that are equal to <em>obj</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#delete_at%28index%3AInt%29-instance-method" class="signature"><strong>#delete_at</strong>(index : Int)</a>
         
-          <div class="summary"><p>Deletes the element at the given index, returning that element.</p></div>
+          <div class="summary"><p>Removes the element at <em>index</em>, returning that element.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#delete_at%28range%3ARange%28Int%2CInt%29%29-instance-method" class="signature"><strong>#delete_at</strong>(range : Range(Int, Int))</a>
         
-          <div class="summary"><p>Deletes all elements that are within the given range, returning that elements.</p></div>
+          <div class="summary"><p>Removes all elements within the given <em>range</em>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#delete_at%28index%3AInt%2Ccount%3AInt%29-instance-method" class="signature"><strong>#delete_at</strong>(index : Int, count : Int)</a>
+        
+          <div class="summary"><p>Removes <em>count</em> elements from <code>self</code> starting at <em>index</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#dup-instance-method" class="signature"><strong>#dup</strong></a>
         
-          <div class="summary"><p>Returns a new Array that has exactly this array's elements.</p></div>
+          <div class="summary"><p>Returns a new Array that has exactly <code>self</code>'s elements.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
         
-          <div class="summary"><p>Calls the given block once for each element in this array, passing that element as a parameter.</p></div>
+          <div class="summary"><p>Calls the given block once for each element in <code>self</code>, passing that element as a parameter.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#each-instance-method" class="signature"><strong>#each</strong></a>
         
-          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the elements of this array.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#each_combination%28size%3D%3Cspanclass%3D%22k%22%3Eself%3C%2Fspan%3E.size%3AInt%2C%26block%29-instance-method" class="signature"><strong>#each_combination</strong>(size = <span class="k">self</span>.size : Int, &block)</a>
+          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the elements of <code>self</code>.</p></div>
         
       </li>
     
@@ -2576,30 +2551,35 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       </li>
     
       <li class="entry-summary">
+        <a href="#each_combination%28size%3D%3Cspanclass%3D%22k%22%3Eself%3C%2Fspan%3E.size%3AInt%2C%26block%29-instance-method" class="signature"><strong>#each_combination</strong>(size = <span class="k">self</span>.size : Int, &block)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#each_index-instance-method" class="signature"><strong>#each_index</strong></a>
         
-          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for each index in this this array.</p></div>
+          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for each index in <code>self</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#each_index%28%26block%29-instance-method" class="signature"><strong>#each_index</strong>(&block)</a>
         
-          <div class="summary"><p>Calls the given block once for each index in this array, passing that index as a parameter.</p></div>
+          <div class="summary"><p>Calls the given block once for each index in <code>self</code>, passing that index as a parameter.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#each_permutation%28size%3D%3Cspanclass%3D%22k%22%3Eself%3C%2Fspan%3E.size%3AInt%2C%26block%29-instance-method" class="signature"><strong>#each_permutation</strong>(size = <span class="k">self</span>.size : Int, &block)</a>
         
-          <div class="summary"><p>Yields each possible permutation of size <code><a href="Array.html#size-instance-method">#size</a></code> of this array.</p></div>
+          <div class="summary"><p>Yields each possible permutation of <em>size</em> of <code>self</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#each_permutation%28size%3D%3Cspanclass%3D%22k%22%3Eself%3C%2Fspan%3E.size%3AInt%29-instance-method" class="signature"><strong>#each_permutation</strong>(size = <span class="k">self</span>.size : Int)</a>
         
-          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> over each possible permutation of size <code><a href="Array.html#size-instance-method">#size</a></code> of this array.</p></div>
+          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> over each possible permutation of <em>size</em> of <code>self</code>.</p></div>
         
       </li>
     
@@ -2621,133 +2601,133 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#empty%3F-instance-method" class="signature"><strong>#empty?</strong></a>
         
-          <div class="summary"><p>Returns <code>true</code> if this array is empty, <code>false</code> otherwise.</p></div>
+          <div class="summary"><p>Returns <em>true</em> if <code>self</code> is empty, <em>false</em> otherwise.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#equals%3F%28other%3AArray%2C%26block%29-instance-method" class="signature"><strong>#equals?</strong>(other : Array, &block)</a>
         
-          <div class="summary"><p>Determines if this array equals <em>other</em> according to a comparison done by the given block.</p></div>
+          <div class="summary"><p>Determines if <code>self</code> equals <em>other</em> according to a comparison done by the given block.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#fill%28value%3AT%29-instance-method" class="signature"><strong>#fill</strong>(value : T)</a>
         
-          <div class="summary"><p>Replaces every element in this array with the given <em>value</em>.</p></div>
+          <div class="summary"><p>Replaces every element in <code>self</code> with the given <em>value</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#fill%28value%3AT%2Crange%3ARange%28Int%2CInt%29%29-instance-method" class="signature"><strong>#fill</strong>(value : T, range : Range(Int, Int))</a>
         
-          <div class="summary"><p>Replaces every element in the given <em>range</em> with the given <em>value</em>.</p></div>
+          <div class="summary"><p>Replaces every element in <em>range</em> with <em>value</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#fill%28range%3ARange%28Int%2CInt%29%2C%26block%29-instance-method" class="signature"><strong>#fill</strong>(range : Range(Int, Int), &block)</a>
         
-          <div class="summary"><p>Yields each index of this array, in the given <em>range</em>, to the given block and then assigns the block's value in that position.</p></div>
+          <div class="summary"><p>Yields each index of <code>self</code>, in the given <em>range</em>, to the given block and then assigns the block's value in that position.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#fill%28from%3AInt%2C%26block%29-instance-method" class="signature"><strong>#fill</strong>(from : Int, &block)</a>
         
-          <div class="summary"><p>Yields each index of this array, starting from <em>from</em>, to the given block and then assigns the block's value in that position.</p></div>
+          <div class="summary"><p>Yields each index of <code>self</code>, starting at <em>from</em>, to the given block and then assigns the block's value in that position.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#fill%28from%3AInt%2Ccount%3AInt%2C%26block%29-instance-method" class="signature"><strong>#fill</strong>(from : Int, count : Int, &block)</a>
         
-          <div class="summary"><p>Yields each index of this array, starting from <em>from</em> and just <em>count</em> times, to the given block and then assigns the block's value in that position.</p></div>
+          <div class="summary"><p>Yields each index of <code>self</code>, starting at <em>from</em> and just <em>count</em> times, to the given block and then assigns the block's value in that position.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#fill%28value%3AT%2Cfrom%3AInt%29-instance-method" class="signature"><strong>#fill</strong>(value : T, from : Int)</a>
         
-          <div class="summary"><p>Replaces every element starting from the given index <em>from</em> in this array with the given <em>value</em>.</p></div>
+          <div class="summary"><p>Replaces every element in <code>self</code>, starting at <em>from</em>, with the given <em>value</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#fill%28value%3AT%2Cfrom%3AInt%2Ccount%3AInt%29-instance-method" class="signature"><strong>#fill</strong>(value : T, from : Int, count : Int)</a>
         
-          <div class="summary"><p>Replaces every element starting from the given index <em>from</em> and only <em>count</em> times, in this array with the given <em>value</em>.</p></div>
+          <div class="summary"><p>Replaces every element in <code>self</code>, starting at <em>from</em> and only <em>count</em> times, with the given <em>value</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#fill%28%26block%29-instance-method" class="signature"><strong>#fill</strong>(&block)</a>
         
-          <div class="summary"><p>Yields each index of this array to the given block and then assigns the block's value in that position.</p></div>
+          <div class="summary"><p>Yields each index of <code>self</code> to the given block and then assigns the block's value in that position.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#first%28%26block%29-instance-method" class="signature"><strong>#first</strong>(&block)</a>
         
-          <div class="summary"><p>Returns the first element of this array, if it's not empty, or the block's value.</p></div>
+          <div class="summary"><p>Returns the first element of <code>self</code> if it's not empty, or the given block's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#first-instance-method" class="signature"><strong>#first</strong></a>
         
-          <div class="summary"><p>Returns the first element of this array, if it's not empty, else raises <code><a href="IndexError.html">IndexError</a></code>.</p></div>
+          <div class="summary"><p>Returns the first element of <code>self</code> if it's not empty, or raises <code><a href="IndexError.html">IndexError</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#first%3F-instance-method" class="signature"><strong>#first?</strong></a>
         
-          <div class="summary"><p>Returns the first element of this array, if it's not empty, or <code>nil</code>.</p></div>
+          <div class="summary"><p>Returns the first element of <code>self</code> if it's not empty, or `.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#flatten-instance-method" class="signature"><strong>#flatten</strong></a>
         
-          <div class="summary"><p>Returns a new array that is a one-dimensional flattening of self (recursively).</p></div>
+          <div class="summary"><p>Returns a new Array that is a one-dimensional flattening of self (recursively).</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
         
-          <div class="summary"><p>Returns a hash code based on this array's size and elements.</p></div>
+          <div class="summary"><p>Returns a hash code based on <code>self</code>'s size and elements.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#insert%28index%3AInt%2Cobject%3AT%29-instance-method" class="signature"><strong>#insert</strong>(index : Int, object : T)</a>
         
-          <div class="summary"><p>Insert the given <em>object</em> before the element with the given <em>index</em>, shifting successive elements if any.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#last%28%26block%29-instance-method" class="signature"><strong>#last</strong>(&block)</a>
-        
-          <div class="summary"><p>Returns the last element of this array, if it's not empty, or the block's value.</p></div>
+          <div class="summary"><p>Insert <em>object</em> before the element at <em>index</em> and shifting successive elements, if any.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#last-instance-method" class="signature"><strong>#last</strong></a>
         
-          <div class="summary"><p>Returns the last element of this array, if it's not empty, else raises <code><a href="IndexError.html">IndexError</a></code>.</p></div>
+          <div class="summary"><p>Returns the last element of <code>self</code> if it's not empty, or raises <code><a href="IndexError.html">IndexError</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#last%28%26block%29-instance-method" class="signature"><strong>#last</strong>(&block)</a>
+        
+          <div class="summary"><p>Returns the last element of <code>self</code> if it's not empty, or the given block's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#last%3F-instance-method" class="signature"><strong>#last?</strong></a>
         
-          <div class="summary"><p>Returns the last element of this array, if it's not empty, or <code>nil</code>.</p></div>
+          <div class="summary"><p>Returns the last element of <code>self</code> if it's not empty, or `.</p></div>
         
       </li>
     
@@ -2761,7 +2741,7 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#map%21%28%26block%29-instance-method" class="signature"><strong>#map!</strong>(&block)</a>
         
-          <div class="summary"><p>Invokes the given block once for each element of this array, replacing the element with the value returned by the block.</p></div>
+          <div class="summary"><p>Invokes the given block for each element of <code>self</code>, replacing the element with the value returned by the block.</p></div>
         
       </li>
     
@@ -2775,22 +2755,26 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#permutations%28size%3D%3Cspanclass%3D%22k%22%3Eself%3C%2Fspan%3E.size%3AInt%29-instance-method" class="signature"><strong>#permutations</strong>(size = <span class="k">self</span>.size : Int)</a>
         
-          <div class="summary"><p>Returns an <code><a href="Array.html">Array</a></code> with all possible permutations of the given <em>size</em>.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#pop%28%26block%29-instance-method" class="signature"><strong>#pop</strong>(&block)</a>
+          <div class="summary"><p>Returns an Array with all possible permutations of <em>size</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#pop-instance-method" class="signature"><strong>#pop</strong></a>
         
+          <div class="summary"><p>Removes the last value from <code>self</code>, at index <em>size - 1</em>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#pop%28n%3AInt%29-instance-method" class="signature"><strong>#pop</strong>(n : Int)</a>
+        
+          <div class="summary"><p>Removes the last <em>n</em> values from <code>self</code>, at index <em>size - 1</em>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#pop%28%26block%29-instance-method" class="signature"><strong>#pop</strong>(&block)</a>
         
       </li>
     
@@ -2826,7 +2810,7 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#reject%21%28%26block%29-instance-method" class="signature"><strong>#reject!</strong>(&block)</a>
         
-          <div class="summary"><p>Equivalent to <code>Array#reject</code>, but makes modification on the current object rather that returning a new one.</p></div>
+          <div class="summary"><p>Modifies <code>self</code>, deleting the elements in the collection for which the passed block returns <em>true</em>.</p></div>
         
       </li>
     
@@ -2848,15 +2832,21 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#reverse-instance-method" class="signature"><strong>#reverse</strong></a>
         
+          <div class="summary"><p>Returns an array with all the elements in the collection reversed.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#reverse%21-instance-method" class="signature"><strong>#reverse!</strong></a>
         
+          <div class="summary"><p>Reverses in-place all the elements of <code>self</code>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#reverse_each%28%26block%29-instance-method" class="signature"><strong>#reverse_each</strong>(&block)</a>
+        
+          <div class="summary"><p>Calls the given block once for each element in <code>self</code> in reverse order, passing that element as a parameter.</p></div>
         
       </li>
     
@@ -2866,12 +2856,12 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#rindex%28value%29-instance-method" class="signature"><strong>#rindex</strong>(value)</a>
+        <a href="#rindex%28%26block%29-instance-method" class="signature"><strong>#rindex</strong>(&block)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#rindex%28%26block%29-instance-method" class="signature"><strong>#rindex</strong>(&block)</a>
+        <a href="#rindex%28value%29-instance-method" class="signature"><strong>#rindex</strong>(value)</a>
         
       </li>
     
@@ -2888,19 +2878,28 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#sample%28n%3AInt%2Crandom%3D%3Cspanclass%3D%22t%22%3ERandom%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EDEFAULT%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#sample</strong>(n : Int, random = <span class="t">Random</span><span class="t">::</span><span class="t">DEFAULT</span>)</a>
         
+          <div class="summary"><p>Returns <em>n</em> number of random elements from <code>self</code>, using the given <em>random</em> number generator.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#sample%28random%3D%3Cspanclass%3D%22t%22%3ERandom%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EDEFAULT%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#sample</strong>(random = <span class="t">Random</span><span class="t">::</span><span class="t">DEFAULT</span>)</a>
         
-          <div class="summary"><p>Returns a random element from this array, using the given <em>random</em> number generator.</p></div>
+          <div class="summary"><p>Returns a random element from <code>self</code>, using the given <em>random</em> number generator.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#select%21%28%26block%29-instance-method" class="signature"><strong>#select!</strong>(&block)</a>
         
-          <div class="summary"><p>Equivalent to <code>Array#select</code> but makes modification on the current object rather that returning a new one.</p></div>
+          <div class="summary"><p>Modifies <code>self</code>, keeping only the elements in the collection for which the passed block returns <em>true</em>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#shift%28n%3AInt%29-instance-method" class="signature"><strong>#shift</strong>(n : Int)</a>
+        
+          <div class="summary"><p>Removes the first <em>n</em> values of <code>self</code>, starting at index 0.</p></div>
         
       </li>
     
@@ -2912,10 +2911,7 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#shift-instance-method" class="signature"><strong>#shift</strong></a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#shift%28n%3AInt%29-instance-method" class="signature"><strong>#shift</strong>(n : Int)</a>
+          <div class="summary"><p>Removes the first value of <code>self</code>, at index 0.</p></div>
         
       </li>
     
@@ -2927,10 +2923,14 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#shuffle%28random%3D%3Cspanclass%3D%22t%22%3ERandom%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EDEFAULT%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#shuffle</strong>(random = <span class="t">Random</span><span class="t">::</span><span class="t">DEFAULT</span>)</a>
         
+          <div class="summary"><p>Returns an array with all the elements in the collection randomized using the given <em>random</em> number generator.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#shuffle%21%28random%3D%3Cspanclass%3D%22t%22%3ERandom%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EDEFAULT%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#shuffle!</strong>(random = <span class="t">Random</span><span class="t">::</span><span class="t">DEFAULT</span>)</a>
+        
+          <div class="summary"><p>Modifies <code>self</code> by randomizing the order of elements in the collection using the given <em>random</em> number generator.</p></div>
         
       </li>
     
@@ -2942,22 +2942,26 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       </li>
     
       <li class="entry-summary">
+        <a href="#sort-instance-method" class="signature"><strong>#sort</strong></a>
+        
+          <div class="summary"><p>Returns an array with all elements in the collection sorted.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#sort%28%26block%3AT%2CT-%3EInt32%29-instance-method" class="signature"><strong>#sort</strong>(&block : T, T -> Int32)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#sort-instance-method" class="signature"><strong>#sort</strong></a>
+        <a href="#sort%21%28%26block%3AT%2CT-%3EInt32%29-instance-method" class="signature"><strong>#sort!</strong>(&block : T, T -> Int32)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#sort%21-instance-method" class="signature"><strong>#sort!</strong></a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#sort%21%28%26block%3AT%2CT-%3EInt32%29-instance-method" class="signature"><strong>#sort!</strong>(&block : T, T -> Int32)</a>
+          <div class="summary"><p>Modifies <code>self</code> by sorting the elements in the collection.</p></div>
         
       </li>
     
@@ -2994,7 +2998,7 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#to_unsafe%3APointer%28T%29-instance-method" class="signature"><strong>#to_unsafe</strong> : Pointer(T)</a>
         
-          <div class="summary"><p>Returns a pointer to the internal buffer where this array's elements are stored.</p></div>
+          <div class="summary"><p>Returns a pointer to the internal buffer where <code>self</code>'s elements are stored.</p></div>
         
       </li>
     
@@ -3006,21 +3010,21 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <li class="entry-summary">
         <a href="#transpose-instance-method" class="signature"><strong>#transpose</strong></a>
         
-          <div class="summary"><p>Assumes that <code>self</code> is an array of array and transposes the rows and columns.</p></div>
+          <div class="summary"><p>Assumes that <code>self</code> is an array of arrays and transposes the rows and columns.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#uniq%28%26block%3AT-%3E_%29-instance-method" class="signature"><strong>#uniq</strong>(&block : T -> _)</a>
         
-          <div class="summary"><p>Returns a new array by removing duplicate values in <code>self</code>, using the block's value for comparison.</p></div>
+          <div class="summary"><p>Returns a new Array by removing duplicate values in <code>self</code>, using the block's value for comparison.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#uniq-instance-method" class="signature"><strong>#uniq</strong></a>
         
-          <div class="summary"><p>Returns a new array by removing duplicate values in <code>self</code>.</p></div>
+          <div class="summary"><p>Returns a new Array by removing duplicate values in <code>self</code>.</p></div>
         
       </li>
     
@@ -3039,7 +3043,16 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       </li>
     
       <li class="entry-summary">
+        <a href="#unshift%28%2Avalues%3AT%29-instance-method" class="signature"><strong>#unshift</strong>(*values : T)</a>
+        
+          <div class="summary"><p>Prepend multiple values.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#unshift%28obj%3AT%29-instance-method" class="signature"><strong>#unshift</strong>(obj : T)</a>
+        
+          <div class="summary"><p>Prepend.</p></div>
         
       </li>
     
@@ -3076,9 +3089,9 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#%7C%28other_ary%3AArray%28U%29%29-instance-method" class="signature"><strong>#|</strong>(other_ary : Array(U))</a>
+        <a href="#%7C%28other%3AArray%28U%29%29-instance-method" class="signature"><strong>#|</strong>(other : Array(U))</a>
         
-          <div class="summary"><p>Set union: returns a new array by joining ary with <code>other_ary</code>, excluding any duplicates and preserving the order from the original array.</p></div>
+          <div class="summary"><p>Set union: returns a new Array by joining <code>self</code> with <em>other</em>, excluding any duplicates, and preserving the order from <code>self</code>.</p></div>
         
       </li>
     
@@ -3230,8 +3243,8 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       <span>group_by(&block : T -> U)</span>
     group_by</a>, 
   
-    <a href="Enumerable.html#in_groups_of%28size%3AInt%2Cfilled_up_with%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%2C%26block%29-instance-method" class="tooltip">
-      <span>in_groups_of(size : Int, filled_up_with = <span class="n">nil</span>, &block)<br/>in_groups_of(size : Int, filled_up_with = <span class="n">nil</span>)</span>
+    <a href="Enumerable.html#in_groups_of%28size%3AInt%2Cfilled_up_with%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AU%2C%26block%29-instance-method" class="tooltip">
+      <span>in_groups_of(size : Int, filled_up_with = <span class="n">nil</span> : U, &block)<br/>in_groups_of(size : Int, filled_up_with = <span class="n">nil</span> : U)</span>
     in_groups_of</a>, 
   
     <a href="Enumerable.html#includes%3F%28obj%29-instance-method" class="tooltip">
@@ -3562,7 +3575,11 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
   
     <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
       <span>to_s(io)</span>
-    to_s</a>
+    to_s</a>, 
+  
+    <a href="Object.html#%7C%28other%3AU.class%29-class-method" class="tooltip">
+      <span>|(other : U.class)</span>
+    |</a>
   
 
 
@@ -3581,7 +3598,7 @@ set <span class="o"><<</span> <span class="n">3</span></code></pre>
       </div>
       
         <div class="doc"><p>Creates a new Array, allocating an internal buffer with the given capacity,
-and yielding that buffer. The block must return the desired size of the array.</p>
+and yielding that buffer. The given block must return the desired size of the array.</p>
 
 <p>This method is <strong>unsafe</strong>, but is usually used to initialize the buffer
 by passing it to a C function.</p>
@@ -3593,7 +3610,7 @@ by passing it to a C function.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L152" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L149" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3609,7 +3626,7 @@ by passing it to a C function.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1353" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1346" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3625,7 +3642,7 @@ by passing it to a C function.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1377" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1370" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3641,7 +3658,7 @@ by passing it to a C function.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/from_json.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/from_json.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3657,7 +3674,7 @@ by passing it to a C function.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/yaml/from_yaml.cr#L10" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/yaml/from_yaml.cr#L10" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3670,9 +3687,8 @@ by passing it to a C function.</p>
         <a class="method-permalink" href="#new%28size%3AInt%2C%26block%3AInt32-%3ET%29-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Creates a new Array of the given size and invokes the
-block once for each index of the array, assigning the
-block's value in that index.</p>
+        <div class="doc"><p>Creates a new Array of the given <em>size</em> and invokes the given block once for each index of <code>self</code>,
+assigning the block's value in that index.</p>
 
 <pre><code><span class="t">Array</span>.<span class="k">new</span>(<span class="n">3</span>) { <span class="o">|</span>i<span class="o">|</span> (i <span class="o">+</span> <span class="n">1</span>) <span class="o">**</span> <span class="n">2</span> } <span class="c"># =&gt; [1, 4, 9]</span>
 
@@ -3684,7 +3700,7 @@ puts ary <span class="c"># =&gt; [[2], [1], [1]]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L132" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L129" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3700,7 +3716,7 @@ puts ary <span class="c"># =&gt; [[2], [1], [1]]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/from_json.cr#L63" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/from_json.cr#L63" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3716,7 +3732,7 @@ puts ary <span class="c"># =&gt; [[2], [1], [1]]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/from_json.cr#L55" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/from_json.cr#L55" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3732,7 +3748,7 @@ puts ary <span class="c"># =&gt; [[2], [1], [1]]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/yaml/from_yaml.cr#L58" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/yaml/from_yaml.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3748,7 +3764,7 @@ puts ary <span class="c"># =&gt; [[2], [1], [1]]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/yaml/from_yaml.cr#L50" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/yaml/from_yaml.cr#L50" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3764,7 +3780,7 @@ puts ary <span class="c"># =&gt; [[2], [1], [1]]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1341" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1334" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3780,7 +3796,7 @@ puts ary <span class="c"># =&gt; [[2], [1], [1]]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1349" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1342" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3793,8 +3809,7 @@ puts ary <span class="c"># =&gt; [[2], [1], [1]]</span></code></pre></div>
         <a class="method-permalink" href="#new%28size%3AInt%2Cvalue%3AT%29-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Creates a new Array of the given size filled with the
-same value in each position.</p>
+        <div class="doc"><p>Creates a new Array of the given <em>size</em> filled with the same <em>value</em> in each position.</p>
 
 <pre><code><span class="t">Array</span>.<span class="k">new</span>(<span class="n">3</span>, <span class="s">'a'</span>) <span class="c"># =&gt; [&apos;a&apos;, &apos;a&apos;, &apos;a&apos;]</span>
 
@@ -3806,7 +3821,7 @@ puts ary <span class="c"># =&gt; [[2], [2], [2]]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L105" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L103" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3822,10 +3837,10 @@ puts ary <span class="c"># =&gt; [[2], [2], [2]]</span></code></pre></div>
         <div class="doc"><p>Creates a new empty Array backed by a buffer that is initially
 <code>initial_capacity</code> big.</p>
 
-<p>The <code>initial_capacity</code> is useful to avoid unnecessary reallocations
+<p>The <em>initial_capacity</em> is useful to avoid unnecessary reallocations
 of the internal buffer in case of growth. If you have an estimate
-of the maxinum number of elements an array will hold, you should
-initialize it with that capacity for improved execution performance.</p>
+of the maxinum number of elements an array will hold, the array should
+be initialized with that capacity for improved performance.</p>
 
 <pre><code>ary <span class="o">=</span> <span class="t">Array</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">5</span>)
 ary.size <span class="c"># =&gt; 0</span></code></pre></div>
@@ -3833,7 +3848,7 @@ ary.size <span class="c"># =&gt; 0</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L80" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3851,7 +3866,7 @@ ary.size <span class="c"># =&gt; 0</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L61" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3869,9 +3884,8 @@ ary.size <span class="c"># =&gt; 0</span></code></pre></div>
         <a class="method-permalink" href="#%26%28other%3AArray%28U%29%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Set intersection: returns a new array containing elements common to the two
-arrays, excluding any duplicates. The order is preserved from the original
-array.</p>
+        <div class="doc"><p>Set intersection: returns a new Array containing elements common to <code>self</code>
+and <em>other</em>, excluding any duplicates. The order is preserved from <code>self</code>.</p>
 
 <pre><code>[<span class="n">1</span>, <span class="n">1</span>, <span class="n">3</span>, <span class="n">5</span>] <span class="o">&</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]               <span class="c"># =&gt; [ 1, 3 ]</span>
 [<span class="s">'a'</span>, <span class="s">'b'</span>, <span class="s">'b'</span>, <span class="s">'z'</span>] <span class="o">&</span> [<span class="s">'a'</span>, <span class="s">'b'</span>, <span class="s">'c'</span>] <span class="c"># =&gt; [ &apos;a&apos;, &apos;b&apos; ]</span></code></pre>
@@ -3881,7 +3895,7 @@ array.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L209" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L204" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3894,14 +3908,14 @@ array.</p>
         <a class="method-permalink" href="#%2A%28times%3AInt%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Repetition: Returns a new array built by concatenating <code>times</code> copies of <code>ary</code>.</p>
+        <div class="doc"><p>Repetition: Returns a new Array built by concatenating <em>times</em> copies of <code>self</code>.</p>
 
 <pre><code>[<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>] <span class="o">*</span> <span class="n">2</span> <span class="c"># =&gt; [ &quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;a&quot;, &quot;b&quot;, &quot;c&quot; ]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L297" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L290" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3914,9 +3928,8 @@ array.</p>
         <a class="method-permalink" href="#%2B%28other%3AArray%28U%29%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Concatenation. Returns a new array built by concatenating two arrays
-together to create a third. The type of the new array is the union of the
-types of both the other arrays.</p>
+        <div class="doc"><p>Concatenation. Returns a new Array built by concatenating <code>self</code> and <em>other</em>.
+The type of the new array is the union of the types of both the original arrays.</p>
 
 <pre><code>[<span class="n">1</span>, <span class="n">2</span>] <span class="o">+</span> [<span class="s">&quot;a&quot;</span>]  <span class="c"># =&gt; [1,2,&quot;a&quot;] of (Int32 | String)</span>
 [<span class="n">1</span>, <span class="n">2</span>] <span class="o">+</span> [<span class="n">2</span>, <span class="n">3</span>] <span class="c"># =&gt; [1,2,2,3]</span></code></pre></div>
@@ -3924,7 +3937,7 @@ types of both the other arrays.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L267" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L261" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3937,16 +3950,15 @@ types of both the other arrays.</p>
         <a class="method-permalink" href="#-%28other%3AArray%28U%29%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Difference. Returns a new array that is a copy of the original, removing
-any items that appear in <code>other</code>. The order of the original array is
-preserved.</p>
+        <div class="doc"><p>Difference. Returns a new Array that is a copy of <code>self</code>, removing any items
+that appear in <em>other</em>. The order of <code>self</code> is preserved.</p>
 
 <pre><code>[<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>] <span class="o">-</span> [<span class="n">2</span>, <span class="n">1</span>] <span class="c"># =&gt; [3]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L283" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L276" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3967,7 +3979,7 @@ a <span class="o"><<</span> <span class="n">3</span> <span class="c"># =&gt; [1,
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L311" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L304" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3980,13 +3992,12 @@ a <span class="o"><<</span> <span class="n">3</span> <span class="c"># =&gt; [1,
         <a class="method-permalink" href="#%3C%3D%3E%28other%3AArray%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Combined comparison operator. Returns 0 if the first array equals the second, 1
-if the first is greater than the second and -1 if the first is smaller than
-the second.</p>
+        <div class="doc"><p>Combined comparison operator. Returns <em>0</em> if <code>self</code> equals <em>other</em>, <em>1</em> if
+<code>self</code> is greater than <em>other</em> and <em>-1</em> if <code>self</code> is smaller than <em>other</em>.</p>
 
 <p>It compares the elements of both arrays in the same position using the
-<code><a href="Array.html#%3C%3D%3E%28other%3AArray%29-instance-method">#<=></a></code> operator, as soon as one of such comparisons returns a non zero
-value, that result is the return value of the whole comparison.</p>
+<code><a href="Array.html#%3C%3D%3E%28other%3AArray%29-instance-method">#<=></a></code> operator.  As soon as one of such comparisons returns a non-zero
+value, that result is the return value of the comparison.</p>
 
 <p>If all elements are equal, the comparison is based on the size of the arrays.</p>
 
@@ -3997,7 +4008,7 @@ value, that result is the return value of the whole comparison.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L190" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L186" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4010,8 +4021,8 @@ value, that result is the return value of the whole comparison.</p>
         <a class="method-permalink" href="#%3D%3D%28other%3AArray%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Equality. Returns true if it is passed an Array and <code><a href="Array.html#equals%3F%28other%3AArray%2C%26block%29-instance-method">#equals?</a></code>
-returns true for both arrays, the caller and the argument.</p>
+        <div class="doc"><p>Equality. Returns <em>true</em> if each element in <code>self</code> is equal to each
+corresponding element in <em>other</em>.</p>
 
 <pre><code>ary <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
 ary <span class="o">==</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>] <span class="c"># =&gt; true</span>
@@ -4020,37 +4031,7 @@ ary <span class="o">==</span> [<span class="n">2</span>, <span class="n">3</span
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L166" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="[](index:Int)-instance-method">
-      <div class="signature">
-        
-        def <strong>[]</strong>(index : <a href="Int.html">Int</a>)
-
-        <a class="method-permalink" href="#%5B%5D%28index%3AInt%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns the element at the given index.</p>
-
-<p>Negative indices can be used to start counting from the end of the array.
-Raises <code><a href="IndexError.html">IndexError</a></code> if trying to access an element outside the array's range.</p>
-
-<pre><code>ary <span class="o">=</span> [<span class="s">'a'</span>, <span class="s">'b'</span>, <span class="s">'c'</span>]
-ary[<span class="n">0</span>]  <span class="c"># =&gt; &apos;a&apos;</span>
-ary[<span class="n">2</span>]  <span class="c"># =&gt; &apos;c&apos;</span>
-ary[<span class="n">-1</span>] <span class="c"># =&gt; &apos;c&apos;</span>
-ary[<span class="n">-2</span>] <span class="c"># =&gt; &apos;b&apos;</span>
-
-ary[<span class="n">3</span>]  <span class="c"># raises IndexError</span>
-ary[<span class="n">-4</span>] <span class="c"># raises IndexError</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L331" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L163" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4081,7 +4062,37 @@ a[<span class="n">-2</span>...<span class="n">-1</span>] <span class="c"># =&gt;
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L505" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L498" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="[](index:Int)-instance-method">
+      <div class="signature">
+        
+        def <strong>[]</strong>(index : <a href="Int.html">Int</a>)
+
+        <a class="method-permalink" href="#%5B%5D%28index%3AInt%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the element at the given index.</p>
+
+<p>Negative indices can be used to start counting from the end of the array.
+Raises <code><a href="IndexError.html">IndexError</a></code> if trying to access an element outside the array's range.</p>
+
+<pre><code>ary <span class="o">=</span> [<span class="s">'a'</span>, <span class="s">'b'</span>, <span class="s">'c'</span>]
+ary[<span class="n">0</span>]  <span class="c"># =&gt; &apos;a&apos;</span>
+ary[<span class="n">2</span>]  <span class="c"># =&gt; &apos;c&apos;</span>
+ary[<span class="n">-1</span>] <span class="c"># =&gt; &apos;c&apos;</span>
+ary[<span class="n">-2</span>] <span class="c"># =&gt; &apos;b&apos;</span>
+
+ary[<span class="n">3</span>]  <span class="c"># raises IndexError</span>
+ary[<span class="n">-4</span>] <span class="c"># raises IndexError</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L324" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4112,7 +4123,7 @@ a[<span class="n">5</span>, <span class="n">1</span>]  <span class="c"># =&gt; [
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L525" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L518" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4139,7 +4150,7 @@ ary[<span class="n">3</span>] <span class="o">=</span> <span class="n">5</span> 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L368" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L361" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4169,7 +4180,7 @@ a <span class="c"># =&gt; [1, 6, 7, 8, 9, 10, 5]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L442" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L435" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4199,7 +4210,7 @@ a <span class="c"># =&gt; [1, 6, 7, 8, 9, 10, 5]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L485" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L478" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4225,7 +4236,7 @@ a <span class="c"># =&gt; [1, 6, 2, 3, 4, 5]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L423" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L416" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4257,7 +4268,7 @@ a <span class="c"># =&gt; [1, 6, 2, 3, 4, 5]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L390" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L383" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4287,7 +4298,7 @@ ary[<span class="n">-4</span>]? <span class="c"># nil</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L351" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L344" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4310,7 +4321,7 @@ a.at(<span class="n">2</span>) <span class="c"># =&gt; IndexError</span></code><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L556" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L549" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4333,7 +4344,7 @@ a.at(<span class="n">2</span>) { <span class="n">:baz</span> } <span class="c">#
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L568" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L561" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4354,7 +4365,7 @@ a.clear <span class="c"># =&gt; []</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L593" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L586" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4367,8 +4378,8 @@ a.clear <span class="c"># =&gt; []</span></code></pre></div>
         <a class="method-permalink" href="#clone-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a new Array that has this array's elements cloned.
-That is, it returns a deep copy of this array.</p>
+        <div class="doc"><p>Returns a new Array that has <code>self</code>'s elements cloned.
+That is, it returns a deep copy of <code>self</code>.</p>
 
 <p>Use <code><a href="Array.html#dup-instance-method">#dup</a></code> if you want a shallow copy.</p>
 
@@ -4385,7 +4396,7 @@ puts ary2 <span class="c"># =&gt; [[1, 2], [3, 4], [7, 8]]</span></code></pre></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L615" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L608" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4401,7 +4412,7 @@ puts ary2 <span class="c"># =&gt; [[1, 2], [3, 4], [7, 8]]</span></code></pre></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1230" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1223" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4414,14 +4425,14 @@ puts ary2 <span class="c"># =&gt; [[1, 2], [3, 4], [7, 8]]</span></code></pre></
         <a class="method-permalink" href="#compact-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a copy of self with all nil elements removed.</p>
+        <div class="doc"><p>Returns a copy of self with all ` elements removed.</p>
 
 <pre><code>[<span class="s">&quot;a&quot;</span>, <span class="n">nil</span>, <span class="s">&quot;b&quot;</span>, <span class="n">nil</span>, <span class="s">&quot;c&quot;</span>, <span class="n">nil</span>].compact <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L624" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L617" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4434,7 +4445,7 @@ puts ary2 <span class="c"># =&gt; [[1, 2], [3, 4], [7, 8]]</span></code></pre></
         <a class="method-permalink" href="#compact%21-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Removes nil elements from this array.</p>
+        <div class="doc"><p>Removes all ` elements from <code>self</code>.</p>
 
 <pre><code>ary <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="n">nil</span>, <span class="s">&quot;b&quot;</span>, <span class="n">nil</span>, <span class="s">&quot;c&quot;</span>]
 ary.compact!
@@ -4443,29 +4454,7 @@ ary <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L635" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="concat(other:Enumerable)-instance-method">
-      <div class="signature">
-        
-        def <strong>concat</strong>(other : <a href="Enumerable.html">Enumerable</a>)
-
-        <a class="method-permalink" href="#concat%28other%3AEnumerable%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Appends the elements of <em>other</em> to <code>self</code>, and returns <code>self</code>.</p>
-
-<pre><code>ary <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>]
-ary.concat([<span class="s">&quot;c&quot;</span>, <span class="s">&quot;d&quot;</span>])
-ary <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;]</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L660" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L628" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4487,7 +4476,29 @@ ary <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L646" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L639" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="concat(other:Enumerable)-instance-method">
+      <div class="signature">
+        
+        def <strong>concat</strong>(other : <a href="Enumerable.html">Enumerable</a>)
+
+        <a class="method-permalink" href="#concat%28other%3AEnumerable%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Appends the elements of <em>other</em> to <code>self</code>, and returns <code>self</code>.</p>
+
+<pre><code>ary <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>]
+ary.concat([<span class="s">&quot;c&quot;</span>, <span class="s">&quot;d&quot;</span>])
+ary <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;]</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L653" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4500,7 +4511,7 @@ ary <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;
         <a class="method-permalink" href="#delete%28obj%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Deletes all items from <code>self</code> that are equal to <code>obj</code>.</p>
+        <div class="doc"><p>Removes all items from <code>self</code> that are equal to <em>obj</em>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
 a.delete(<span class="s">&quot;b&quot;</span>)
@@ -4509,32 +4520,7 @@ a <span class="c"># =&gt; [&quot;a&quot;, &quot;c&quot;]</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L688" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="delete_at(index:Int,count:Int)-instance-method">
-      <div class="signature">
-        
-        def <strong>delete_at</strong>(index : <a href="Int.html">Int</a>, count : <a href="Int.html">Int</a>)
-
-        <a class="method-permalink" href="#delete_at%28index%3AInt%2Ccount%3AInt%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Deletes count or less (if there aren't enough) elements at the given start index,
-returning that elements.
-Raises <code><a href="IndexError.html">IndexError</a></code> if the index is out of range.</p>
-
-<pre><code>a <span class="o">=</span> [<span class="s">&quot;ant&quot;</span>, <span class="s">&quot;bat&quot;</span>, <span class="s">&quot;cat&quot;</span>, <span class="s">&quot;dog&quot;</span>]
-a.delete_at(<span class="n">1</span>, <span class="n">2</span>)  <span class="c"># =&gt; [&quot;bat&quot;, &quot;cat&quot;]</span>
-a                  <span class="c"># =&gt; [&quot;ant&quot;, &quot;dog&quot;]</span>
-a.delete_at(<span class="n">99</span>, <span class="n">1</span>) <span class="c"># =&gt; IndexError</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L736" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L681" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4547,8 +4533,8 @@ a.delete_at(<span class="n">99</span>, <span class="n">1</span>) <span class="c"
         <a class="method-permalink" href="#delete_at%28index%3AInt%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Deletes the element at the given index, returning that element.
-Raises <code><a href="IndexError.html">IndexError</a></code> if the index is out of range.</p>
+        <div class="doc"><p>Removes the element at <em>index</em>, returning that element.
+Raises <code><a href="IndexError.html">IndexError</a></code> if <em>index</em> is out of range.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="s">&quot;ant&quot;</span>, <span class="s">&quot;bat&quot;</span>, <span class="s">&quot;cat&quot;</span>, <span class="s">&quot;dog&quot;</span>]
 a.delete_at(<span class="n">2</span>)  <span class="c"># =&gt; &quot;cat&quot;</span>
@@ -4558,7 +4544,7 @@ a.delete_at(<span class="n">99</span>) <span class="c"># =&gt; IndexError</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L701" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L694" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4571,8 +4557,8 @@ a.delete_at(<span class="n">99</span>) <span class="c"># =&gt; IndexError</span>
         <a class="method-permalink" href="#delete_at%28range%3ARange%28Int%2CInt%29%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Deletes all elements that are within the given range,
-returning that elements.
+        <div class="doc"><p>Removes all elements within the given <em>range</em>.
+Returns an array of the removed elements with the original order of <code>self</code> preserved.
 Raises <code><a href="IndexError.html">IndexError</a></code> if the index is out of range.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="s">&quot;ant&quot;</span>, <span class="s">&quot;bat&quot;</span>, <span class="s">&quot;cat&quot;</span>, <span class="s">&quot;dog&quot;</span>]
@@ -4583,7 +4569,33 @@ a.delete_at(<span class="n">99</span>..<span class="n">100</span>) <span class="
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L721" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L714" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="delete_at(index:Int,count:Int)-instance-method">
+      <div class="signature">
+        
+        def <strong>delete_at</strong>(index : <a href="Int.html">Int</a>, count : <a href="Int.html">Int</a>)
+
+        <a class="method-permalink" href="#delete_at%28index%3AInt%2Ccount%3AInt%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Removes <em>count</em> elements from <code>self</code> starting at <em>index</em>.
+If the size of <code>self</code> is less than <em>count</em>, removes values to the end of the array without error.
+Returns an array of the removed elements with the original order of <code>self</code> preserved.
+Raises <code><a href="IndexError.html">IndexError</a></code> if <em>index</em> is out of range.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="s">&quot;ant&quot;</span>, <span class="s">&quot;bat&quot;</span>, <span class="s">&quot;cat&quot;</span>, <span class="s">&quot;dog&quot;</span>]
+a.delete_at(<span class="n">1</span>, <span class="n">2</span>)  <span class="c"># =&gt; [&quot;bat&quot;, &quot;cat&quot;]</span>
+a                  <span class="c"># =&gt; [&quot;ant&quot;, &quot;dog&quot;]</span>
+a.delete_at(<span class="n">99</span>, <span class="n">1</span>) <span class="c"># =&gt; IndexError</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L730" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4596,8 +4608,8 @@ a.delete_at(<span class="n">99</span>..<span class="n">100</span>) <span class="
         <a class="method-permalink" href="#dup-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a new Array that has exactly this array's elements.
-That is, it returns a shallow copy of this array.</p>
+        <div class="doc"><p>Returns a new Array that has exactly <code>self</code>'s elements.
+That is, it returns a shallow copy of <code>self</code>.</p>
 
 <p>Use <code><a href="Array.html#clone-instance-method">#clone</a></code> if you want a deep copy.</p>
 
@@ -4614,7 +4626,7 @@ puts ary2 <span class="c"># =&gt; [[5, 2], [3, 4], [7, 8]]</span></code></pre></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L761" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L755" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4627,7 +4639,7 @@ puts ary2 <span class="c"># =&gt; [[5, 2], [3, 4], [7, 8]]</span></code></pre></
         <a class="method-permalink" href="#each%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Calls the given block once for each element in this array, passing that
+        <div class="doc"><p>Calls the given block once for each element in <code>self</code>, passing that
 element as a parameter.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
@@ -4640,7 +4652,7 @@ a.each { <span class="o">|</span>x<span class="o">|</span> print x, <span class=
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L781" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L775" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4653,36 +4665,20 @@ a.each { <span class="o">|</span>x<span class="o">|</span> print x, <span class=
         <a class="method-permalink" href="#each-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the elements of this array.</p>
+        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for the elements of <code>self</code>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
 iter <span class="o">=</span> a.each
 iter.<span class="k">next</span> <span class="c"># =&gt; &quot;a&quot;</span>
 iter.<span class="k">next</span> <span class="c"># =&gt; &quot;b&quot;</span></code></pre>
 
-<p>The returned iterator keeps a reference to this array: if the array
+<p>The returned iterator keeps a reference to <code>self</code>: if the array
 changes, the returned values of the iterator change as well.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L798" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="each_combination(size=&lt;spanclass=&quot;k&quot;&gt;self&lt;/span&gt;.size:Int,&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>each_combination</strong>(size = <span class="k">self</span>.size : <a href="Int.html">Int</a>, &block)
-
-        <a class="method-permalink" href="#each_combination%28size%3D%3Cspanclass%3D%22k%22%3Eself%3C%2Fspan%3E.size%3AInt%2C%26block%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1238" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L792" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4698,7 +4694,23 @@ changes, the returned values of the iterator change as well.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1274" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1267" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_combination(size=&lt;spanclass=&quot;k&quot;&gt;self&lt;/span&gt;.size:Int,&amp;block)-instance-method">
+      <div class="signature">
+        
+        def <strong>each_combination</strong>(size = <span class="k">self</span>.size : <a href="Int.html">Int</a>, &block)
+
+        <a class="method-permalink" href="#each_combination%28size%3D%3Cspanclass%3D%22k%22%3Eself%3C%2Fspan%3E.size%3AInt%2C%26block%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1231" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4711,20 +4723,20 @@ changes, the returned values of the iterator change as well.</p></div>
         <a class="method-permalink" href="#each_index-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for each index in this this array.</p>
+        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> for each index in <code>self</code>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
 iter <span class="o">=</span> a.each_index
 iter.<span class="k">next</span> <span class="c"># =&gt; 0</span>
 iter.<span class="k">next</span> <span class="c"># =&gt; 1</span></code></pre>
 
-<p>The returned iterator keeps a reference to this array: if the array
-changes, the returned values of the iterator change as well.</p></div>
+<p>The returned iterator keeps a reference to <code>self</code>. If the array
+changes, the returned values of the iterator will change as well.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L835" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L829" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4737,7 +4749,7 @@ changes, the returned values of the iterator change as well.</p></div>
         <a class="method-permalink" href="#each_index%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Calls the given block once for each index in this array, passing that
+        <div class="doc"><p>Calls the given block once for each index in <code>self</code>, passing that
 index as a parameter.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
@@ -4750,7 +4762,7 @@ a.each_index { <span class="o">|</span>x<span class="o">|</span> print x, <span 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L815" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L809" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4763,7 +4775,7 @@ a.each_index { <span class="o">|</span>x<span class="o">|</span> print x, <span 
         <a class="method-permalink" href="#each_permutation%28size%3D%3Cspanclass%3D%22k%22%3Eself%3C%2Fspan%3E.size%3AInt%2C%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Yields each possible permutation of size <code><a href="Array.html#size-instance-method">#size</a></code> of this array.</p>
+        <div class="doc"><p>Yields each possible permutation of <em>size</em> of <code>self</code>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
 sums <span class="o">=</span> <span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>
@@ -4773,7 +4785,7 @@ sums <span class="c">#=&gt; [3, 4, 3, 5, 4, 5]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1179" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1172" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4786,7 +4798,7 @@ sums <span class="c">#=&gt; [3, 4, 3, 5, 4, 5]</span></code></pre></div>
         <a class="method-permalink" href="#each_permutation%28size%3D%3Cspanclass%3D%22k%22%3Eself%3C%2Fspan%3E.size%3AInt%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> over each possible permutation of size <code><a href="Array.html#size-instance-method">#size</a></code> of this array.</p>
+        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> over each possible permutation of <em>size</em> of <code>self</code>.</p>
 
 <pre><code>iter <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>].each_permutation
 iter.<span class="k">next</span> <span class="c"># =&gt; [1, 2, 3]</span>
@@ -4800,7 +4812,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1224" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1217" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4816,7 +4828,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1302" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1295" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4832,7 +4844,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1335" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1328" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4848,7 +4860,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1391" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1384" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4861,7 +4873,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop</span></
         <a class="method-permalink" href="#empty%3F-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns <code>true</code> if this array is empty, <code>false</code> otherwise.</p>
+        <div class="doc"><p>Returns <em>true</em> if <code>self</code> is empty, <em>false</em> otherwise.</p>
 
 <pre><code>(<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>).empty? <span class="c"># =&gt; true</span>
 ([<span class="n">1</span>]).empty?         <span class="c"># =&gt; false</span></code></pre></div>
@@ -4869,7 +4881,7 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L845" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L839" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4882,12 +4894,12 @@ iter.<span class="k">next</span> <span class="c"># =&gt; Iterator::Stop</span></
         <a class="method-permalink" href="#equals%3F%28other%3AArray%2C%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Determines if this array equals <em>other</em> according to a comparison
+        <div class="doc"><p>Determines if <code>self</code> equals <em>other</em> according to a comparison
 done by the given block.</p>
 
-<p>If this array's size is the same as <em>other</em>'s size, this method yields
-elements from this array and <em>other</em> in tandem: if the block returns true
-for all of them, this method returns <code>true</code>. Otherwise it returns <code>false</code>.</p>
+<p>If <code>self</code>'s size is the same as <em>other</em>'s size, this method yields
+elements from <code>self</code> and <em>other</em> in tandem: if the block returns true
+for all of them, this method returns <em>true</em>. Otherwise it returns <em>false</em>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
 b <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;ab&quot;</span>, <span class="s">&quot;abc&quot;</span>]
@@ -4897,7 +4909,7 @@ a.equals?(b) { <span class="o">|</span>x, y<span class="o">|</span> x <span clas
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L862" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L856" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4910,7 +4922,7 @@ a.equals?(b) { <span class="o">|</span>x, y<span class="o">|</span> x <span clas
         <a class="method-permalink" href="#fill%28value%3AT%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Replaces every element in this array with the given <em>value</em>. Returns <code>self</code>.</p>
+        <div class="doc"><p>Replaces every element in <code>self</code> with the given <em>value</em>. Returns <code>self</code>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
 a.fill(<span class="n">9</span>) <span class="c"># =&gt; [9, 9, 9]</span></code></pre></div>
@@ -4918,7 +4930,7 @@ a.fill(<span class="n">9</span>) <span class="c"># =&gt; [9, 9, 9]</span></code>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L945" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L939" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4931,7 +4943,7 @@ a.fill(<span class="n">9</span>) <span class="c"># =&gt; [9, 9, 9]</span></code>
         <a class="method-permalink" href="#fill%28value%3AT%2Crange%3ARange%28Int%2CInt%29%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Replaces every element in the given <em>range</em> with the given <em>value</em>. Returns <code>self</code>.</p>
+        <div class="doc"><p>Replaces every element in <em>range</em> with <em>value</em>. Returns <code>self</code>.</p>
 
 <p>Negative values of <em>from</em> count from the end of the array.</p>
 
@@ -4941,7 +4953,7 @@ a.fill(<span class="n">9</span>, <span class="n">2</span>..<span class="n">3</sp
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L983" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L976" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4954,8 +4966,8 @@ a.fill(<span class="n">9</span>, <span class="n">2</span>..<span class="n">3</sp
         <a class="method-permalink" href="#fill%28range%3ARange%28Int%2CInt%29%2C%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Yields each index of this array, in the given <em>range</em>,
-to the given block and then assigns the block's value in that position. Returns <code>self</code>.</p>
+        <div class="doc"><p>Yields each index of <code>self</code>, in the given <em>range</em>, to the given block and then assigns
+the block's value in that position. Returns <code>self</code>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">6</span>]
 a.fill(<span class="n">2</span>..<span class="n">3</span>) { <span class="o">|</span>i<span class="o">|</span> i <span class="o">*</span> i } <span class="c"># =&gt; [1, 2, 4, 9, 5, 6]</span></code></pre></div>
@@ -4963,7 +4975,7 @@ a.fill(<span class="n">2</span>..<span class="n">3</span>) { <span class="o">|</
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L933" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L927" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4976,7 +4988,7 @@ a.fill(<span class="n">2</span>..<span class="n">3</span>) { <span class="o">|</
         <a class="method-permalink" href="#fill%28from%3AInt%2C%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Yields each index of this array, starting from <em>from</em>, to the given block and then assigns
+        <div class="doc"><p>Yields each index of <code>self</code>, starting at <em>from</em>, to the given block and then assigns
 the block's value in that position. Returns <code>self</code>.</p>
 
 <p>Negative values of <em>from</em> count from the end of the array.</p>
@@ -4987,7 +4999,7 @@ a.fill(<span class="n">2</span>) { <span class="o">|</span>i<span class="o">|</s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L892" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L886" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5000,7 +5012,7 @@ a.fill(<span class="n">2</span>) { <span class="o">|</span>i<span class="o">|</s
         <a class="method-permalink" href="#fill%28from%3AInt%2Ccount%3AInt%2C%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Yields each index of this array, starting from <em>from</em> and just <em>count</em> times,
+        <div class="doc"><p>Yields each index of <code>self</code>, starting at <em>from</em> and just <em>count</em> times,
 to the given block and then assigns the block's value in that position. Returns <code>self</code>.</p>
 
 <p>Negative values of <em>from</em> count from the end of the array.</p>
@@ -5011,7 +5023,7 @@ a.fill(<span class="n">2</span>, <span class="n">2</span>) { <span class="o">|</
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L911" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L905" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5024,8 +5036,7 @@ a.fill(<span class="n">2</span>, <span class="n">2</span>) { <span class="o">|</
         <a class="method-permalink" href="#fill%28value%3AT%2Cfrom%3AInt%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Replaces every element starting from the given index <em>from</em> in this array with
-the given <em>value</em>. Returns <code>self</code>.</p>
+        <div class="doc"><p>Replaces every element in <code>self</code>, starting at <em>from</em>, with the given <em>value</em>. Returns <code>self</code>.</p>
 
 <p>Negative values of <em>from</em> count from the end of the array.</p>
 
@@ -5035,7 +5046,7 @@ a.fill(<span class="n">9</span>, <span class="n">2</span>) <span class="c"># =&g
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L958" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L951" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5048,8 +5059,8 @@ a.fill(<span class="n">9</span>, <span class="n">2</span>) <span class="c"># =&g
         <a class="method-permalink" href="#fill%28value%3AT%2Cfrom%3AInt%2Ccount%3AInt%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Replaces every element starting from the given index <em>from</em> and only <em>count</em> times,
-in this array with the given <em>value</em>. Returns <code>self</code>.</p>
+        <div class="doc"><p>Replaces every element in <code>self</code>, starting at <em>from</em> and only <em>count</em> times,
+with the given <em>value</em>. Returns <code>self</code>.</p>
 
 <p>Negative values of <em>from</em> count from the end of the array.</p>
 
@@ -5059,7 +5070,7 @@ a.fill(<span class="n">9</span>, <span class="n">2</span>, <span class="n">2</sp
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L971" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L964" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5072,7 +5083,7 @@ a.fill(<span class="n">9</span>, <span class="n">2</span>, <span class="n">2</sp
         <a class="method-permalink" href="#fill%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Yields each index of this array to the given block and then assigns
+        <div class="doc"><p>Yields each index of <code>self</code> to the given block and then assigns
 the block's value in that position. Returns <code>self</code>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>]
@@ -5081,7 +5092,7 @@ a.fill { <span class="o">|</span>i<span class="o">|</span> i <span class="o">*</
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L877" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L871" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5094,8 +5105,7 @@ a.fill { <span class="o">|</span>i<span class="o">|</span> i <span class="o">*</
         <a class="method-permalink" href="#first%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the first element of this array, if it's not empty,
-or the block's value.</p>
+        <div class="doc"><p>Returns the first element of <code>self</code> if it's not empty, or the given block's value.</p>
 
 <pre><code>([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]).first { <span class="n">4</span> }   <span class="c"># =&gt; 1</span>
 (<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>).first { <span class="n">4</span> } <span class="c"># =&gt; 4</span></code></pre></div>
@@ -5103,7 +5113,7 @@ or the block's value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1005" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L996" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5116,8 +5126,7 @@ or the block's value.</p>
         <a class="method-permalink" href="#first-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the first element of this array, if it's not empty,
-else raises <code><a href="IndexError.html">IndexError</a></code>.</p>
+        <div class="doc"><p>Returns the first element of <code>self</code> if it's not empty, or raises <code><a href="IndexError.html">IndexError</a></code>.</p>
 
 <pre><code>([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]).first   <span class="c"># =&gt; 1</span>
 (<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>).first <span class="c"># =&gt; raises IndexError</span></code></pre></div>
@@ -5125,7 +5134,7 @@ else raises <code><a href="IndexError.html">IndexError</a></code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L994" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L986" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5138,8 +5147,7 @@ else raises <code><a href="IndexError.html">IndexError</a></code>.</p>
         <a class="method-permalink" href="#first%3F-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the first element of this array, if it's not empty,
-or <code>nil</code>.</p>
+        <div class="doc"><p>Returns the first element of <code>self</code> if it's not empty, or `.</p>
 
 <pre><code>([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]).first?   <span class="c"># =&gt; 1</span>
 (<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>).first? <span class="c"># =&gt; nil</span></code></pre></div>
@@ -5147,7 +5155,7 @@ or <code>nil</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1016" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1006" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5160,7 +5168,7 @@ or <code>nil</code>.</p>
         <a class="method-permalink" href="#flatten-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a new array that is a one-dimensional flattening of self (recursively).</p>
+        <div class="doc"><p>Returns a new Array that is a one-dimensional flattening of self (recursively).</p>
 
 <p>That is, for every element that is an array, extract its elements into the new array</p>
 
@@ -5172,7 +5180,7 @@ a.flatten             <span class="c"># =&gt; [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]</s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1290" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1283" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5185,14 +5193,14 @@ a.flatten             <span class="c"># =&gt; [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]</s
         <a class="method-permalink" href="#hash-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a hash code based on this array's size and elements.</p>
+        <div class="doc"><p>Returns a hash code based on <code>self</code>'s size and elements.</p>
 
 <p>See <code><a href="Object.html#hash-instance-method">Object#hash</a></code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1023" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1013" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5205,10 +5213,10 @@ a.flatten             <span class="c"># =&gt; [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]</s
         <a class="method-permalink" href="#insert%28index%3AInt%2Cobject%3AT%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Insert the given <em>object</em> before the element with the given <em>index</em>, shifting successive elements if any.
+        <div class="doc"><p>Insert <em>object</em> before the element at <em>index</em> and shifting successive elements, if any.
 Returns <code>self</code>.</p>
 
-<p>Negative indices count from the end of the array.</p>
+<p>Negative values of <em>index</em> count from the end of the array.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
 a.insert(<span class="n">0</span>, <span class="s">&quot;x&quot;</span>)  <span class="c"># =&gt; [&quot;x&quot;, &quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span>
@@ -5218,29 +5226,7 @@ a.insert(<span class="n">-1</span>, <span class="s">&quot;z&quot;</span>) <span 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1040" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="last(&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>last</strong>(&block)
-
-        <a class="method-permalink" href="#last%28%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns the last element of this array, if it's not empty,
-or the block's value.</p>
-
-<pre><code>([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]).last { <span class="n">4</span> }   <span class="c"># =&gt; 3</span>
-(<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>).last { <span class="n">4</span> } <span class="c"># =&gt; 4</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1080" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1030" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5253,8 +5239,7 @@ or the block's value.</p>
         <a class="method-permalink" href="#last-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the last element of this array, if it's not empty,
-else raises <code><a href="IndexError.html">IndexError</a></code>.</p>
+        <div class="doc"><p>Returns the last element of <code>self</code> if it's not empty, or raises <code><a href="IndexError.html">IndexError</a></code>.</p>
 
 <pre><code>([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]).last   <span class="c"># =&gt; 3</span>
 (<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>).last <span class="c"># =&gt; raises IndexError</span></code></pre></div>
@@ -5262,7 +5247,28 @@ else raises <code><a href="IndexError.html">IndexError</a></code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1069" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1058" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="last(&amp;block)-instance-method">
+      <div class="signature">
+        
+        def <strong>last</strong>(&block)
+
+        <a class="method-permalink" href="#last%28%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the last element of <code>self</code> if it's not empty, or the given block's value.</p>
+
+<pre><code>([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]).last { <span class="n">4</span> }   <span class="c"># =&gt; 3</span>
+(<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>).last { <span class="n">4</span> } <span class="c"># =&gt; 4</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1068" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5275,8 +5281,7 @@ else raises <code><a href="IndexError.html">IndexError</a></code>.</p>
         <a class="method-permalink" href="#last%3F-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the last element of this array, if it's not empty,
-or <code>nil</code>.</p>
+        <div class="doc"><p>Returns the last element of <code>self</code> if it's not empty, or `.</p>
 
 <pre><code>([<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]).last?   <span class="c"># =&gt; 1</span>
 (<span class="o">[]</span> <span class="k">of</span> <span class="t">Int32</span>).last? <span class="c"># =&gt; nil</span></code></pre></div>
@@ -5284,7 +5289,7 @@ or <code>nil</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1091" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1078" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5302,7 +5307,7 @@ or <code>nil</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1101" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1088" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5315,8 +5320,8 @@ or <code>nil</code>.</p>
         <a class="method-permalink" href="#map%21%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Invokes the given block once for each element of this array, replacing the element with the value returned
-by the block. Returns <code>self</code>.</p>
+        <div class="doc"><p>Invokes the given block for each element of <code>self</code>, replacing the element
+with the value returned by the block. Returns <code>self</code>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
 a.map! { <span class="o">|</span>x<span class="o">|</span> x <span class="o">*</span> x }
@@ -5325,7 +5330,7 @@ a <span class="c"># =&gt; [1, 4, 9]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1113" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1100" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5343,7 +5348,7 @@ a <span class="c"># =&gt; [1, 4, 9]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1150" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1143" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5356,7 +5361,7 @@ a <span class="c"># =&gt; [1, 4, 9]</span></code></pre></div>
         <a class="method-permalink" href="#permutations%28size%3D%3Cspanclass%3D%22k%22%3Eself%3C%2Fspan%3E.size%3AInt%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns an <code><a href="Array.html">Array</a></code> with all possible permutations of the given <em>size</em>.</p>
+        <div class="doc"><p>Returns an Array with all possible permutations of <em>size</em>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
 a.permutations    <span class="c">#=&gt; [[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]</span>
@@ -5369,7 +5374,61 @@ a.permutations(<span class="n">4</span>) <span class="c">#=&gt; []</span></code>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1164" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1157" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="pop-instance-method">
+      <div class="signature">
+        
+        def <strong>pop</strong>
+
+        <a class="method-permalink" href="#pop-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Removes the last value from <code>self</code>, at index <em>size - 1</em>.
+This method returns the removed value.
+Raises <code><a href="IndexError.html">IndexError</a></code> if array is of 0 size.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
+a.pop <span class="c"># =&gt; &quot;c&quot;</span>
+a     <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;]</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1407" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="pop(n:Int)-instance-method">
+      <div class="signature">
+        
+        def <strong>pop</strong>(n : <a href="Int.html">Int</a>)
+
+        <a class="method-permalink" href="#pop%28n%3AInt%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Removes the last <em>n</em> values from <code>self</code>, at index <em>size - 1</em>.
+This method returns an array of the removed values, with the original order preserved.</p>
+
+<p>If <em>n</em> is greater than the size of <code>self</code>, all values will be removed from <code>self</code>
+without raising an error.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
+a.pop(<span class="n">2</span>) <span class="c"># =&gt; [&quot;b&quot;, &quot;c&quot;]</span>
+a        <span class="c"># =&gt; [&quot;a&quot;]</span>
+
+a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
+a.pop(<span class="n">4</span>) <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span>
+a        <span class="c"># =&gt; []</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1437" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5385,39 +5444,7 @@ a.permutations(<span class="n">4</span>) <span class="c">#=&gt; []</span></code>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1409" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="pop-instance-method">
-      <div class="signature">
-        
-        def <strong>pop</strong>
-
-        <a class="method-permalink" href="#pop-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1405" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="pop(n:Int)-instance-method">
-      <div class="signature">
-        
-        def <strong>pop</strong>(n : <a href="Int.html">Int</a>)
-
-        <a class="method-permalink" href="#pop%28n%3AInt%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1420" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1411" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5433,7 +5460,7 @@ a.permutations(<span class="n">4</span>) <span class="c">#=&gt; []</span></code>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1434" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1451" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5449,7 +5476,7 @@ a.permutations(<span class="n">4</span>) <span class="c">#=&gt; []</span></code>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1446" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1463" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5465,7 +5492,7 @@ a.permutations(<span class="n">4</span>) <span class="c">#=&gt; []</span></code>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1438" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1455" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5479,12 +5506,15 @@ a.permutations(<span class="n">4</span>) <span class="c">#=&gt; []</span></code>
       </div>
       
         <div class="doc"><p>Append multiple values. The same as <code><a href="Array.html#push%28%2Avalues%3AT%29-instance-method">#push</a></code>, but takes an arbitrary number
-of values to push into the array. Returns <code>self</code>.</p></div>
+of values to push into <code>self</code>. Returns <code>self</code>.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>]
+a.push([<span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]) <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1473" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1494" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5497,10 +5527,9 @@ of values to push into the array. Returns <code>self</code>.</p></div>
         <a class="method-permalink" href="#push%28value%3AT%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Append. Pushes one value to the end of the array, given that the type of
-the value is T (which might be a type or a union of types). This expression
-returns the array iself, so several of them can be chained. See <code><a href="Array.html#pop%28%26block%29-instance-method">#pop</a></code> for
-the opposite effect.</p>
+        <div class="doc"><p>Append. Pushes one value to the end of <code>self</code>, given that the type of the value is <em>T</em>
+(which might be a single type or a union of types).
+This method returns <code>self</code>, so several calls can be chained. See <code><a href="Array.html#pop-instance-method">#pop</a></code> for the opposite effect.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>]
 a.push(<span class="s">&quot;c&quot;</span>) <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span>
@@ -5513,7 +5542,7 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1464" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1480" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5526,12 +5555,15 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
         <a class="method-permalink" href="#reject%21%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Equivalent to <code>Array#reject</code>, but makes modification on the current object rather that returning a new one. Returns nil if no changes were made.</p></div>
+        <div class="doc"><p>Modifies <code>self</code>, deleting the elements in the collection for which the
+passed block returns <em>true</em>. Returns ` if no changes were made.</p>
+
+<p>See also <code>Array#reject</code></p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1124" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1117" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5547,7 +5579,7 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1294" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1287" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5563,7 +5595,7 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1383" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1376" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5579,7 +5611,7 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1480" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1504" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5592,10 +5624,15 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
         <a class="method-permalink" href="#reverse-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns an array with all the elements in the collection reversed.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
+a.reverse <span class="c"># =&gt; [3, 2, 1]</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1487" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1517" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5608,10 +5645,12 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
         <a class="method-permalink" href="#reverse%21-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Reverses in-place all the elements of <code>self</code>.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1491" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1522" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5624,10 +5663,20 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
         <a class="method-permalink" href="#reverse_each%28%26block%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Calls the given block once for each element in <code>self</code> in reverse order,
+passing that element as a parameter.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
+a.reverse_each { <span class="o">|</span>x<span class="o">|</span> print x, <span class="s">&quot; -- &quot;</span> }</code></pre>
+
+<p>produces:</p>
+
+<pre><code class='language-text'>c -- b -- a --</code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1502" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1546" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5643,23 +5692,7 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1509" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="rindex(value)-instance-method">
-      <div class="signature">
-        
-        def <strong>rindex</strong>(value)
-
-        <a class="method-permalink" href="#rindex%28value%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1513" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1553" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5675,7 +5708,23 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1517" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1561" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="rindex(value)-instance-method">
+      <div class="signature">
+        
+        def <strong>rindex</strong>(value)
+
+        <a class="method-permalink" href="#rindex%28value%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1557" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5691,7 +5740,7 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1543" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1587" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5707,7 +5756,7 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1526" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1570" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5720,10 +5769,17 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
         <a class="method-permalink" href="#sample%28n%3AInt%2Crandom%3D%3Cspanclass%3D%22t%22%3ERandom%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EDEFAULT%3C%2Fspan%3E%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns <em>n</em> number of random elements from <code>self</code>, using the given <em>random</em> number generator.
+Raises IndexError if <code>self</code> is empty.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
+a.sample(<span class="n">2</span>)                <span class="c"># =&gt; [2, 1]</span>
+a.sample(<span class="n">2</span>, <span class="t">Random</span>.<span class="k">new</span>(<span class="n">1</span>)) <span class="c"># =&gt; [1, 3]</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1569" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1621" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5736,8 +5792,8 @@ a.push(<span class="n">1</span>)   <span class="c"># =&gt; [&quot;a&quot;, &quot
         <a class="method-permalink" href="#sample%28random%3D%3Cspanclass%3D%22t%22%3ERandom%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EDEFAULT%3C%2Fspan%3E%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a random element from this array, using the given <em>random</em> number generator.
-Raises if this array is empty.</p>
+        <div class="doc"><p>Returns a random element from <code>self</code>, using the given <em>random</em> number generator.
+Raises IndexError if <code>self</code> is empty.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
 a.sample                <span class="c"># =&gt; 2</span>
@@ -5747,7 +5803,7 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1564" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1608" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5760,12 +5816,45 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
         <a class="method-permalink" href="#select%21%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Equivalent to <code>Array#select</code> but makes modification on the current object rather that returning a new one. Returns nil if no changes were made</p></div>
+        <div class="doc"><p>Modifies <code>self</code>, keeping only the elements in the collection for which the
+passed block returns <em>true</em>. Returns ` if no changes were made.</p>
+
+<p>See also <code>Array#select</code></p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1119" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1109" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="shift(n:Int)-instance-method">
+      <div class="signature">
+        
+        def <strong>shift</strong>(n : <a href="Int.html">Int</a>)
+
+        <a class="method-permalink" href="#shift%28n%3AInt%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Removes the first <em>n</em> values of <code>self</code>, starting at index 0.
+This method returns an array of the removed values.</p>
+
+<p>If <em>n</em> is greater than the size of <code>self</code>, all values will be removed from <code>self</code>
+without raising an error.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
+a.shift <span class="c"># =&gt; &quot;a&quot;</span>
+a       <span class="c"># =&gt; [&quot;b&quot;, &quot;c&quot;]</span>
+
+a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
+a.shift(<span class="n">4</span>) <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span>
+a          <span class="c"># =&gt; []</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1690" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5781,7 +5870,7 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1603" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1663" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5794,26 +5883,17 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
         <a class="method-permalink" href="#shift-instance-method">#</a>
       </div>
       
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1599" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="shift(n:Int)-instance-method">
-      <div class="signature">
-        
-        def <strong>shift</strong>(n : <a href="Int.html">Int</a>)
+        <div class="doc"><p>Removes the first value of <code>self</code>, at index 0. This method returns the removed value.
+Raises <code><a href="IndexError.html">IndexError</a></code> if array is of 0 size.</p>
 
-        <a class="method-permalink" href="#shift%28n%3AInt%29-instance-method">#</a>
-      </div>
+<pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
+a.shift <span class="c"># =&gt; &quot;a&quot;</span>
+a       <span class="c"># =&gt; [&quot;b&quot;, &quot;c&quot;]</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1615" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1659" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5829,7 +5909,7 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1630" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1705" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5842,10 +5922,13 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
         <a class="method-permalink" href="#shuffle%28random%3D%3Cspanclass%3D%22t%22%3ERandom%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EDEFAULT%3C%2Fspan%3E%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns an array with all the elements in the collection randomized
+using the given <em>random</em> number generator.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1634" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1711" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5858,10 +5941,13 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
         <a class="method-permalink" href="#shuffle%21%28random%3D%3Cspanclass%3D%22t%22%3ERandom%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EDEFAULT%3C%2Fspan%3E%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Modifies <code>self</code> by randomizing the order of elements in the collection
+using the given <em>random</em> number generator.  Returns <code>self</code>.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1638" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1717" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5881,7 +5967,32 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L56" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sort-instance-method">
+      <div class="signature">
+        
+        def <strong>sort</strong>
+
+        <a class="method-permalink" href="#sort-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns an array with all elements in the collection sorted.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="n">3</span>, <span class="n">1</span>, <span class="n">2</span>]
+a.sort <span class="c"># =&gt; [1, 2, 3]</span>
+a      <span class="c"># =&gt; [3, 1, 2]</span></code></pre>
+
+<p>Optionally, a block may be given that must implement a comparison, either with the comparison operator <code><a href="Array.html#%3C%3D%3E%28other%3AArray%29-instance-method">#<=></a></code>
+or a comparison between <em>a</em> and <em>b</em>, where a &lt; b yields -1, a == b yields 0, and a > b yields 1.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1732" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5897,39 +6008,7 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1647" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="sort-instance-method">
-      <div class="signature">
-        
-        def <strong>sort</strong>
-
-        <a class="method-permalink" href="#sort-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1643" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="sort!-instance-method">
-      <div class="signature">
-        
-        def <strong>sort!</strong>
-
-        <a class="method-permalink" href="#sort%21-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1651" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1736" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5945,7 +6024,32 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1656" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1755" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sort!-instance-method">
+      <div class="signature">
+        
+        def <strong>sort!</strong>
+
+        <a class="method-permalink" href="#sort%21-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Modifies <code>self</code> by sorting the elements in the collection.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="n">3</span>, <span class="n">1</span>, <span class="n">2</span>]
+a.sort!
+a <span class="c"># =&gt; [1, 2, 3]</span></code></pre>
+
+<p>Optionally, a block may be given that must implement a comparison, either with the comparison operator <code><a href="Array.html#%3C%3D%3E%28other%3AArray%29-instance-method">#<=></a></code>
+or a comparison between <em>a</em> and <em>b</em>, where a &lt; b yields -1, a == b yields 0, and a > b yields 1.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1750" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5961,7 +6065,7 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1661" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1760" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5977,7 +6081,7 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1665" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1764" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5993,7 +6097,7 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1673" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1772" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6009,7 +6113,7 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1686" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1785" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6025,7 +6129,7 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/to_json.cr#L212" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/to_json.cr#L212" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6041,7 +6145,7 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1690" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1789" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6054,10 +6158,10 @@ a.sample(<span class="t">Random</span>.<span class="k">new</span>(<span class="n
         <a class="method-permalink" href="#to_unsafe%3APointer%28T%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a pointer to the internal buffer where this array's elements are stored.</p>
+        <div class="doc"><p>Returns a pointer to the internal buffer where <code>self</code>'s elements are stored.</p>
 
-<p>This method is unsafe because it returns a pointer, and the pointed data might eventually
-not be that of this array if the array grows and its internal buffer is realloced.</p>
+<p>This method is <strong>unsafe</strong> because it returns a pointer, and the pointed might eventually
+not be that of <code>self</code> if the array grows and its internal buffer is reallocated.</p>
 
 <pre><code>ary <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>]
 ary.to_unsafe[<span class="n">0</span>] <span class="c"># =&gt; 1</span></code></pre></div>
@@ -6065,7 +6169,7 @@ ary.to_unsafe[<span class="n">0</span>] <span class="c"># =&gt; 1</span></code><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1708" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1807" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6081,7 +6185,7 @@ ary.to_unsafe[<span class="n">0</span>] <span class="c"># =&gt; 1</span></code><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/yaml/to_yaml.cr#L55" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/yaml/to_yaml.cr#L55" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6094,7 +6198,7 @@ ary.to_unsafe[<span class="n">0</span>] <span class="c"># =&gt; 1</span></code><
         <a class="method-permalink" href="#transpose-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Assumes that <code>self</code> is an array of array and transposes the rows and columns.</p>
+        <div class="doc"><p>Assumes that <code>self</code> is an array of arrays and transposes the rows and columns.</p>
 
 <pre><code>a <span class="o">=</span> [[<span class="n">:a</span>, <span class="n">:b</span>], [<span class="n">:c</span>, <span class="n">:d</span>], [<span class="n">:e</span>, <span class="n">:f</span>]]
 a.transpose <span class="c"># =&gt; [[:a, :c, :e], [:b, :d, :f]]</span>
@@ -6103,7 +6207,7 @@ a           <span class="c"># =&gt; [[:a, :b], [:c, :d], [:e, :f]]</span></code>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1719" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1818" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6116,7 +6220,7 @@ a           <span class="c"># =&gt; [[:a, :b], [:c, :d], [:e, :f]]</span></code>
         <a class="method-permalink" href="#uniq%28%26block%3AT-%3E_%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a new array by removing duplicate values in <code>self</code>, using the block's
+        <div class="doc"><p>Returns a new Array by removing duplicate values in <code>self</code>, using the block's
 value for comparison.</p>
 
 <pre><code>a <span class="o">=</span> [{<span class="s">&quot;student&quot;</span>, <span class="s">&quot;sam&quot;</span>}, {<span class="s">&quot;student&quot;</span>, <span class="s">&quot;george&quot;</span>}, {<span class="s">&quot;teacher&quot;</span>, <span class="s">&quot;matz&quot;</span>}]
@@ -6126,7 +6230,7 @@ a                   <span class="c"># =&gt; [{&quot;student&quot;, &quot;sam&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1754" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1853" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6139,7 +6243,7 @@ a                   <span class="c"># =&gt; [{&quot;student&quot;, &quot;sam&quo
         <a class="method-permalink" href="#uniq-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a new array by removing duplicate values in <code>self</code>.</p>
+        <div class="doc"><p>Returns a new Array by removing duplicate values in <code>self</code>.</p>
 
 <pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>]
 a.uniq <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span>
@@ -6148,7 +6252,7 @@ a      <span class="c"># =&gt; [ &quot;a&quot;, &quot;a&quot;, &quot;b&quot;, &q
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1742" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1841" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6170,7 +6274,7 @@ a                    <span class="c"># =&gt; [{&quot;student&quot;, &quot;sam&qu
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1781" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1880" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6192,7 +6296,26 @@ a       <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1770" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1869" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="unshift(*values:T)-instance-method">
+      <div class="signature">
+        
+        def <strong>unshift</strong>(*values : T)
+
+        <a class="method-permalink" href="#unshift%28%2Avalues%3AT%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Prepend multiple values. The same as <code><a href="Array.html#unshift%28%2Avalues%3AT%29-instance-method">#unshift</a></code>, but takes an arbitrary number
+of values to add to the array. Returns <code>self</code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1925" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6205,10 +6328,22 @@ a       <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</s
         <a class="method-permalink" href="#unshift%28obj%3AT%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Prepend. Adds <em>obj</em> to the beginning of <code>self</code>, given that the type of the value is <em>T</em>
+(which might be a single type or a union of types).
+This method returns <code>self</code>, so several calls can be chained. See <code><a href="Array.html#shift%28%26block%29-instance-method">#shift</a></code> for the opposite effect.</p>
+
+<pre><code>a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>]
+a.unshift(<span class="s">&quot;c&quot;</span>) <span class="c"># =&gt; [&quot;c&quot;, a&quot;, &quot;b&quot;]</span>
+a.unshift(<span class="n">1</span>)   <span class="c"># =&gt; Errors, because the array only accepts String</span>
+
+a <span class="o">=</span> [<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>] <span class="k">of</span> (<span class="t">Int32</span> <span class="o">|</span> <span class="t">String</span>)
+a.unshift(<span class="s">&quot;c&quot;</span>) <span class="c"># =&gt; [&quot;c&quot;, &quot;a&quot;, &quot;b&quot;]</span>
+a.unshift(<span class="n">1</span>)   <span class="c"># =&gt; [1, &quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1807" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1919" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6224,7 +6359,7 @@ a       <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1811" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1938" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6238,14 +6373,14 @@ a       <span class="c"># =&gt; [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]</s
       </div>
       
         <div class="doc"><p>Returns a tuple populated with the elements at the given indexes.
-Raises if any index is invalid.</p>
+Raises <code><a href="IndexError.html">IndexError</a></code> if any index is invalid.</p>
 
 <pre><code>[<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>, <span class="s">&quot;d&quot;</span>].values_at(<span class="n">0</span>, <span class="n">2</span>) <span class="c"># =&gt; {&quot;a&quot;, &quot;c&quot;}</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L583" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L576" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6261,7 +6396,7 @@ Raises if any index is invalid.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1822" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1949" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6277,7 +6412,7 @@ Raises if any index is invalid.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1816" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1943" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6293,7 +6428,7 @@ Raises if any index is invalid.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1834" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1961" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6309,21 +6444,21 @@ Raises if any index is invalid.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L1828" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L1955" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="|(other_ary:Array(U))-instance-method">
+    <div class="entry-detail" id="|(other:Array(U))-instance-method">
       <div class="signature">
         
-        def <strong>|</strong>(other_ary : <a href="Array.html">Array</a>(U))
+        def <strong>|</strong>(other : <a href="Array.html">Array</a>(U))
 
-        <a class="method-permalink" href="#%7C%28other_ary%3AArray%28U%29%29-instance-method">#</a>
+        <a class="method-permalink" href="#%7C%28other%3AArray%28U%29%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Set union: returns a new array by joining ary with <code>other_ary</code>, excluding
-any duplicates and preserving the order from the original array.</p>
+        <div class="doc"><p>Set union: returns a new Array by joining <code>self</code> with <em>other</em>, excluding
+any duplicates, and preserving the order from <code>self</code>.</p>
 
 <pre><code>[<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>] <span class="o">|</span> [<span class="s">&quot;c&quot;</span>, <span class="s">&quot;d&quot;</span>, <span class="s">&quot;a&quot;</span>] <span class="c"># =&gt; [ &quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot; ]</span></code></pre>
 
@@ -6332,7 +6467,7 @@ any duplicates and preserving the order from the original array.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/array.cr#L237" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/array.cr#L232" target="_blank">View source</a>]
         
       </div>
     </div>

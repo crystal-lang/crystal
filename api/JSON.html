@@ -500,6 +500,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/ComputedContentTypeHeader" data-name="http::computedcontenttypeheader">
+      <a href="HTTP/ComputedContentTypeHeader.html">ComputedContentTypeHeader</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/HTTP/Cookie" data-name="http::cookie">
       <a href="HTTP/Cookie.html">Cookie</a>
       
@@ -702,6 +707,11 @@
   
 </ul>
 
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/IO/EncodingOptions" data-name="io::encodingoptions">
+      <a href="IO/EncodingOptions.html">EncodingOptions</a>
       
     </li>
   
@@ -1675,11 +1685,6 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Reflect" data-name="reflect(x)">
-      <a href="Reflect.html">Reflect</a>
-      
-    </li>
-  
   <li class="parent " data-id="github.com/manastech/crystal/Regex" data-name="regex">
       <a href="Regex.html">Regex</a>
       
@@ -1700,11 +1705,6 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Scheduler" data-name="scheduler">
-      <a href="Scheduler.html">Scheduler</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/manastech/crystal/SecureRandom" data-name="securerandom">
       <a href="SecureRandom.html">SecureRandom</a>
       
@@ -1720,8 +1720,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/SimpleHash" data-name="simplehash(k, v)">
+  <li class="parent " data-id="github.com/manastech/crystal/SimpleHash" data-name="simplehash(k, v)">
       <a href="SimpleHash.html">SimpleHash</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/SimpleHash/Entry" data-name="simplehash::entry(k, v)">
+      <a href="SimpleHash/Entry.html">Entry</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2050,6 +2060,11 @@
       
         <ul>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Any" data-name="yaml::any">
+      <a href="YAML/Any.html">Any</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/EventKind" data-name="yaml::eventkind">
       <a href="YAML/EventKind.html">EventKind</a>
       
@@ -2090,53 +2105,18 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/BufError" data-name="zlib::buferror">
-      <a href="Zlib/BufError.html">BufError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/DataError" data-name="zlib::dataerror">
-      <a href="Zlib/DataError.html">DataError</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/manastech/crystal/Zlib/Deflate" data-name="zlib::deflate">
       <a href="Zlib/Deflate.html">Deflate</a>
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/Zlib/Error" data-name="zlib::error">
+      <a href="Zlib/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/Zlib/Inflate" data-name="zlib::inflate">
       <a href="Zlib/Inflate.html">Inflate</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/MemError" data-name="zlib::memerror">
-      <a href="Zlib/MemError.html">MemError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/NeedDictError" data-name="zlib::needdicterror">
-      <a href="Zlib/NeedDictError.html">NeedDictError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/StreamError" data-name="zlib::streamerror">
-      <a href="Zlib/StreamError.html">StreamError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/VersionError" data-name="zlib::versionerror">
-      <a href="Zlib/VersionError.html">VersionError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/ZlibError" data-name="zlib::zliberror">
-      <a href="Zlib/ZlibError.html">ZlibError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/ZStreamError" data-name="zlib::zstreamerror">
-      <a href="Zlib/ZStreamError.html">ZStreamError</a>
       
     </li>
   
@@ -2178,7 +2158,7 @@ mostly via some method invocations.</p>
 
 <pre><code><span class="k">require</span> <span class="s">&quot;json&quot;</span>
 
-value <span class="o">=</span> <span class="t">JSON</span>.parse(<span class="s">&quot;[1, 2, 3]&quot;</span>) <span class="c"># :: JSON::Any</span>
+value <span class="o">=</span> <span class="t">JSON</span>.parse(<span class="s">&quot;[1, 2, 3]&quot;</span>) <span class="c"># : JSON::Any</span>
 
 value[<span class="n">0</span>]              <span class="c"># =&gt; 1</span>
 <span class="k">typeof</span>(value[<span class="n">0</span>])      <span class="c"># =&gt; JSON::Any</span>
@@ -2217,17 +2197,17 @@ need to define <code>to_json(<a href="IO.html">IO</a>)</code> for custom objects
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/any.cr" target="_blank">json/any.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/any.cr" target="_blank">json/any.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/json.cr" target="_blank">json/json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/json.cr" target="_blank">json/json.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/mapping.cr" target="_blank">json/mapping.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/mapping.cr" target="_blank">json/mapping.cr</a>
     
     <br/>
   
@@ -2258,7 +2238,7 @@ need to define <code>to_json(<a href="IO.html">IO</a>)</code> for custom objects
       <li class="entry-summary">
         <a href="#mapping%28properties%2Cstrict%3Dfalse%29-macro" class="signature"><strong>mapping</strong>(properties, strict = false)</a>
         
-          <div class="summary"><p>The <code><a href="JSON.html">JSON</a>.mapping</code> macro defines how an object is mapped to JSON.</p></div>
+          <div class="summary"><p>The <code><a href="JSON.html#mapping%28properties%2Cstrict%3Dfalse%29-macro">JSON.mapping</a></code> macro defines how an object is mapped to JSON.</p></div>
         
       </li>
     
@@ -2286,7 +2266,7 @@ need to define <code>to_json(<a href="IO.html">IO</a>)</code> for custom objects
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/json.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/json.cr#L56" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2306,7 +2286,7 @@ need to define <code>to_json(<a href="IO.html">IO</a>)</code> for custom objects
         <a class="method-permalink" href="#mapping%28properties%2Cstrict%3Dfalse%29-macro">#</a>
       </div>
       
-        <div class="doc"><p>The <code><a href="JSON.html">JSON</a>.mapping</code> macro defines how an object is mapped to JSON.</p>
+        <div class="doc"><p>The <code><a href="JSON.html#mapping%28properties%2Cstrict%3Dfalse%29-macro">JSON.mapping</a></code> macro defines how an object is mapped to JSON.</p>
 
 <h3>Example</h3>
 
@@ -2333,15 +2313,15 @@ house.to_json  <span class="c"># =&gt; %({&quot;address&quot;:&quot;Crystal Road
 
 <h3>Usage</h3>
 
-<p><code><a href="JSON.html">JSON</a>.mapping</code> must receive a hash literal whose keys will define Crystal properties.</p>
+<p><code><a href="JSON.html#mapping%28properties%2Cstrict%3Dfalse%29-macro">JSON.mapping</a></code> must receive a hash literal whose keys will define Crystal properties.</p>
 
 <p>The value of each key can be a single type (not a union type). Primitive types (numbers, string, boolean and nil)
-are supported, as well as custom objects which use <code><a href="JSON.html">JSON</a>.mapping</code> or define a <code>new</code> method
+are supported, as well as custom objects which use <code><a href="JSON.html#mapping%28properties%2Cstrict%3Dfalse%29-macro">JSON.mapping</a></code> or define a <code>new</code> method
 that accepts a <code><a href="JSON/PullParser.html">JSON::PullParser</a></code> and returns an object from it.</p>
 
 <p>The value can also be another hash literal with the following options:</p>
 
-<ul><li>type: (required) the single type described above (you can use <code><a href="JSON/Any.html">JSON::Any</a></code> too)</li><li>key: the property name in the JSON document (as opposed to the property name in the Crystal code)</li><li>nilable: if true, the property can be <code><a href="Nil.html">Nil</a></code></li><li>emit_null: if true, emits a <code>null</code> value for nilable properties (by default nulls are not emitted)</li><li>converter: specify an alternate type for parsing and generation. The converter must define <code>from_json(<a href="JSON/PullParser.html">JSON::PullParser</a>)</code> and <code>to_json(value, <a href="IO.html">IO</a>)</code> as class methods.</li></ul>
+<ul><li><strong>type</strong>: (required) the single type described above (you can use <code><a href="JSON/Any.html">JSON::Any</a></code> too)</li><li><strong>key</strong>: the property name in the JSON document (as opposed to the property name in the Crystal code)</li><li><strong>nilable</strong>: if true, the property can be <code><a href="Nil.html">Nil</a></code></li><li><strong>default</strong>: value to use if the property is missing in the JSON document, or if it's <code>null</code> and <code>nilable</code> was not set to <code>true</code>. If the default value creates a new instance of an object (for example <code>[1, 2, 3]</code> or <code>SomeObject.new</code>), a different instance will be used each time a JSON document is parsed.</li><li><strong>emit_null</strong>: if true, emits a <code>null</code> value for nilable properties (by default nulls are not emitted)</li><li><strong>converter</strong>: specify an alternate type for parsing and generation. The converter must define <code>from_json(<a href="JSON/PullParser.html">JSON::PullParser</a>)</code> and <code>to_json(value, <a href="IO.html">IO</a>)</code> as class methods.</li></ul>
 
 <p>The mapping also automatically defines Crystal properties (getters and setters) for each
 of the keys. It doesn't define a constructor accepting those arguments, but you can provide
@@ -2352,6 +2332,8 @@ it and initializes this type's instance variables. It also defines a <code>to_js
 by invoking <code>to_json(<a href="IO.html">IO</a>)</code> on each of the properties (unless a converter is specified, in
 which case <code>to_json(value, <a href="IO.html">IO</a>)</code> is invoked).</p>
 
+<p>This macro also declares instance variables of the types given in the mapping.</p>
+
 <p>If <code>strict</code> is true, unknown properties in the JSON
 document will raise a parse exception. The default is <code>false</code>, so unknown properties
 are silently ignored.</p></div>
@@ -2359,7 +2341,7 @@ are silently ignored.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/mapping.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/mapping.cr#L59" target="_blank">View source</a>]
         
       </div>
     </div>

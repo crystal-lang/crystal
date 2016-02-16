@@ -500,6 +500,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/ComputedContentTypeHeader" data-name="http::computedcontenttypeheader">
+      <a href="HTTP/ComputedContentTypeHeader.html">ComputedContentTypeHeader</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/HTTP/Cookie" data-name="http::cookie">
       <a href="HTTP/Cookie.html">Cookie</a>
       
@@ -702,6 +707,11 @@
   
 </ul>
 
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/IO/EncodingOptions" data-name="io::encodingoptions">
+      <a href="IO/EncodingOptions.html">EncodingOptions</a>
       
     </li>
   
@@ -1675,11 +1685,6 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Reflect" data-name="reflect(x)">
-      <a href="Reflect.html">Reflect</a>
-      
-    </li>
-  
   <li class="parent " data-id="github.com/manastech/crystal/Regex" data-name="regex">
       <a href="Regex.html">Regex</a>
       
@@ -1700,11 +1705,6 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Scheduler" data-name="scheduler">
-      <a href="Scheduler.html">Scheduler</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/manastech/crystal/SecureRandom" data-name="securerandom">
       <a href="SecureRandom.html">SecureRandom</a>
       
@@ -1720,8 +1720,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/SimpleHash" data-name="simplehash(k, v)">
+  <li class="parent " data-id="github.com/manastech/crystal/SimpleHash" data-name="simplehash(k, v)">
       <a href="SimpleHash.html">SimpleHash</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/SimpleHash/Entry" data-name="simplehash::entry(k, v)">
+      <a href="SimpleHash/Entry.html">Entry</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2050,6 +2060,11 @@
       
         <ul>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Any" data-name="yaml::any">
+      <a href="YAML/Any.html">Any</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/EventKind" data-name="yaml::eventkind">
       <a href="YAML/EventKind.html">EventKind</a>
       
@@ -2090,53 +2105,18 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/BufError" data-name="zlib::buferror">
-      <a href="Zlib/BufError.html">BufError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/DataError" data-name="zlib::dataerror">
-      <a href="Zlib/DataError.html">DataError</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/manastech/crystal/Zlib/Deflate" data-name="zlib::deflate">
       <a href="Zlib/Deflate.html">Deflate</a>
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/Zlib/Error" data-name="zlib::error">
+      <a href="Zlib/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/Zlib/Inflate" data-name="zlib::inflate">
       <a href="Zlib/Inflate.html">Inflate</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/MemError" data-name="zlib::memerror">
-      <a href="Zlib/MemError.html">MemError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/NeedDictError" data-name="zlib::needdicterror">
-      <a href="Zlib/NeedDictError.html">NeedDictError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/StreamError" data-name="zlib::streamerror">
-      <a href="Zlib/StreamError.html">StreamError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/VersionError" data-name="zlib::versionerror">
-      <a href="Zlib/VersionError.html">VersionError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/ZlibError" data-name="zlib::zliberror">
-      <a href="Zlib/ZlibError.html">ZlibError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/ZStreamError" data-name="zlib::zstreamerror">
-      <a href="Zlib/ZStreamError.html">ZStreamError</a>
       
     </li>
   
@@ -2186,7 +2166,7 @@ puts x <span class="c"># =&gt; 2</span></code></pre>
 <p>Note that a pointer is <em>falsey</em> if it's null (if it's address is zero).</p>
 
 <p>When calling a C function that expects a pointer you can also pass <code>nil</code> instead of using
-<code><a href="Pointer.html">Pointer</a>.null</code> to construct a null pointer.</p>
+<code><a href="Pointer.html#null-class-method">Pointer.null</a></code> to construct a null pointer.</p>
 
 <p>For a safe alternative, see <code><a href="Slice.html">Slice</a></code>, which is a pointer with a size and with bounds checking.</p>
 
@@ -2213,7 +2193,7 @@ puts x <span class="c"># =&gt; 2</span></code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr" target="_blank">pointer.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr" target="_blank">pointer.cr</a>
     
     <br/>
   
@@ -2634,7 +2614,11 @@ puts x <span class="c"># =&gt; 2</span></code></pre>
   
     <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
       <span>to_s(io)</span>
-    to_s</a>
+    to_s</a>, 
+  
+    <a href="Object.html#%7C%28other%3AU.class%29-class-method" class="tooltip">
+      <span>|(other : U.class)</span>
+    |</a>
   
 
 
@@ -2669,7 +2653,7 @@ ptr[<span class="n">3</span>] <span class="c"># =&gt; 13</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L441" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L441" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2701,7 +2685,7 @@ ptr[<span class="n">9</span>] <span class="c">#=&gt; 0</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L400" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L400" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2728,7 +2712,7 @@ ptr[<span class="n">1</span>] <span class="c"># =&gt; 42</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L420" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L420" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2749,7 +2733,7 @@ ptr.address <span class="c"># =&gt; 5678</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L379" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L379" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2773,7 +2757,7 @@ ptr.address <span class="c"># =&gt; 0</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L369" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L369" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2803,7 +2787,7 @@ ptr2.address <span class="c"># =&gt; 1238</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L81" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L81" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2817,7 +2801,7 @@ ptr2.address <span class="c"># =&gt; 1238</span></code></pre></div>
       </div>
       
         <div class="doc"><p>Returns how many T elements are there between this pointer and <em>other</em>.
-That is, this is <code>(self.address - other.address) / sizeof(T)</code>.</p>
+That is, this is <code>(self<a href="Pointer.html#address-instance-method">.address</a> - other<a href="Pointer.html#address-instance-method">.address</a>) / sizeof(T)</code>.</p>
 
 <pre><code>ptr1 <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).malloc(<span class="n">4</span>)
 ptr2 <span class="o">=</span> ptr1 <span class="o">+</span> <span class="n">2</span>
@@ -2849,7 +2833,7 @@ ptr2.address <span class="c"># =&gt; 1230</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L95" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2870,7 +2854,7 @@ respectively.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L103" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L103" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2894,7 +2878,7 @@ ptr[<span class="n">3</span>] <span class="c"># =&gt; 13</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L116" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L116" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2918,7 +2902,7 @@ ptr2.value <span class="c"># =&gt; 42</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L129" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L129" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2955,7 +2939,7 @@ ptr.address <span class="c">#=&gt; 1234</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L448" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L448" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2977,7 +2961,7 @@ ptr <span class="c">#   [0, 0, 0, 13, 14, 15]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L470" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L470" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3010,7 +2994,7 @@ ptr1[<span class="n">3</span>] <span class="c"># =&gt; 4</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L151" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L151" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3043,7 +3027,7 @@ ptr2[<span class="n">3</span>] <span class="c"># =&gt; 14</span></code></pre></d
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L187" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L187" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3064,7 +3048,7 @@ ptr.hash <span class="c"># =&gt; 1234</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L288" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L288" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3087,7 +3071,7 @@ ptr <span class="c"># [2, 4, 6, 8]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L354" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L354" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3115,7 +3099,7 @@ ptr1.memcmp(ptr1, <span class="n">4</span>) <span class="c"># =&gt; 0</span></co
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L264" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L264" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3147,7 +3131,7 @@ ptr1[<span class="n">3</span>] <span class="c"># =&gt; 3</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L208" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L208" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3179,7 +3163,7 @@ ptr1[<span class="n">3</span>] <span class="c"># =&gt; 3</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L247" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L247" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3203,7 +3187,7 @@ b.nil? <span class="c"># =&gt; true</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L62" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L62" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3221,7 +3205,7 @@ b.nil? <span class="c"># =&gt; true</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L67" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L67" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3251,7 +3235,7 @@ ptr <span class="c"># [1, 2, 3, 4, 0, 0, 0, 0]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L327" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L327" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3273,7 +3257,7 @@ ptr <span class="c"># [3, 4, 1, 2]</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L338" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L338" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3298,7 +3282,7 @@ ptr[<span class="n">3</span>] <span class="c"># =&gt; 3</span></code></pre></div
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L278" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L278" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3323,7 +3307,7 @@ ptr2.to_s <span class="c"># =&gt; Pointer(Int32).null</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L300" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L300" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3345,7 +3329,7 @@ slice.<span class="k">class</span>                            <span class="c"># 
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/pointer.cr#L459" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/pointer.cr#L459" target="_blank">View source</a>]
         
       </div>
     </div>

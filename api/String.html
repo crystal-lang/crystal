@@ -500,6 +500,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/HTTP/ComputedContentTypeHeader" data-name="http::computedcontenttypeheader">
+      <a href="HTTP/ComputedContentTypeHeader.html">ComputedContentTypeHeader</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/HTTP/Cookie" data-name="http::cookie">
       <a href="HTTP/Cookie.html">Cookie</a>
       
@@ -702,6 +707,11 @@
   
 </ul>
 
+      
+    </li>
+  
+  <li class=" " data-id="github.com/manastech/crystal/IO/EncodingOptions" data-name="io::encodingoptions">
+      <a href="IO/EncodingOptions.html">EncodingOptions</a>
       
     </li>
   
@@ -1675,11 +1685,6 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Reflect" data-name="reflect(x)">
-      <a href="Reflect.html">Reflect</a>
-      
-    </li>
-  
   <li class="parent " data-id="github.com/manastech/crystal/Regex" data-name="regex">
       <a href="Regex.html">Regex</a>
       
@@ -1700,11 +1705,6 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/Scheduler" data-name="scheduler">
-      <a href="Scheduler.html">Scheduler</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/manastech/crystal/SecureRandom" data-name="securerandom">
       <a href="SecureRandom.html">SecureRandom</a>
       
@@ -1720,8 +1720,18 @@
       
     </li>
   
-  <li class=" " data-id="github.com/manastech/crystal/SimpleHash" data-name="simplehash(k, v)">
+  <li class="parent " data-id="github.com/manastech/crystal/SimpleHash" data-name="simplehash(k, v)">
       <a href="SimpleHash.html">SimpleHash</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/manastech/crystal/SimpleHash/Entry" data-name="simplehash::entry(k, v)">
+      <a href="SimpleHash/Entry.html">Entry</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -2050,6 +2060,11 @@
       
         <ul>
   
+  <li class=" " data-id="github.com/manastech/crystal/YAML/Any" data-name="yaml::any">
+      <a href="YAML/Any.html">Any</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/YAML/EventKind" data-name="yaml::eventkind">
       <a href="YAML/EventKind.html">EventKind</a>
       
@@ -2090,53 +2105,18 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/BufError" data-name="zlib::buferror">
-      <a href="Zlib/BufError.html">BufError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/DataError" data-name="zlib::dataerror">
-      <a href="Zlib/DataError.html">DataError</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/manastech/crystal/Zlib/Deflate" data-name="zlib::deflate">
       <a href="Zlib/Deflate.html">Deflate</a>
       
     </li>
   
+  <li class=" " data-id="github.com/manastech/crystal/Zlib/Error" data-name="zlib::error">
+      <a href="Zlib/Error.html">Error</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/manastech/crystal/Zlib/Inflate" data-name="zlib::inflate">
       <a href="Zlib/Inflate.html">Inflate</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/MemError" data-name="zlib::memerror">
-      <a href="Zlib/MemError.html">MemError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/NeedDictError" data-name="zlib::needdicterror">
-      <a href="Zlib/NeedDictError.html">NeedDictError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/StreamError" data-name="zlib::streamerror">
-      <a href="Zlib/StreamError.html">StreamError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/VersionError" data-name="zlib::versionerror">
-      <a href="Zlib/VersionError.html">VersionError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/ZlibError" data-name="zlib::zliberror">
-      <a href="Zlib/ZlibError.html">ZlibError</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/manastech/crystal/Zlib/ZStreamError" data-name="zlib::zstreamerror">
-      <a href="Zlib/ZStreamError.html">ZStreamError</a>
       
     </li>
   
@@ -2210,7 +2190,7 @@ by joining multiple literals with a backslash:</p>
 <span class="s">&quot;world, &quot;</span> \
 <span class="s">&quot;no newlines&quot;</span> <span class="c"># same as &quot;hello world, no newlines&quot;</span></code></pre>
 
-<p>Alterantively, a backlash followed by a newline can be inserted inside the string literal:</p>
+<p>Alternatively, a backslash followed by a newline can be inserted inside the string literal:</p>
 
 <pre><code><span class="s">&quot;hello \
      world, \
@@ -2266,22 +2246,22 @@ b <span class="o">=</span> <span class="n">2</span>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr" target="_blank">string.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr" target="_blank">string.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
+      <a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
     
     <br/>
   
@@ -2301,19 +2281,19 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
+        <a href="#new%28capacity%3AInt%2C%26block%29-class-method" class="signature"><strong>.new</strong>(capacity : Int, &block)</a>
+        
+          <div class="summary"><p>Creates a new String by allocating a buffer (<code><a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>)</code>) with the given capacity, then yielding that buffer.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#new%28pull%3AJSON%3A%3APullParser%29-class-method" class="signature"><strong>.new</strong>(pull : JSON::PullParser)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#new%28pull%3AYAML%3A%3APullParser%29-class-method" class="signature"><strong>.new</strong>(pull : YAML::PullParser)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#new%28capacity%3AInt%2C%26block%29-class-method" class="signature"><strong>.new</strong>(capacity : Int, &block)</a>
-        
-          <div class="summary"><p>Creates a new String by allocating a buffer (<code><a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>)</code>) with the given capacity, then yielding that buffer.</p></div>
         
       </li>
     
@@ -2325,9 +2305,9 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28slice%3ASlice%28UInt8%29%29-class-method" class="signature"><strong>.new</strong>(slice : Slice(UInt8))</a>
+        <a href="#new%28bytes%3ASlice%28UInt8%29%2Cencoding%3AString%2Cinvalid%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3ASymbol%7CNil%29%3AString-class-method" class="signature"><strong>.new</strong>(bytes : Slice(UInt8), encoding : String, invalid = <span class="n">nil</span> : Symbol | Nil) : String</a>
         
-          <div class="summary"><p>Creates a String from the given <em>slice</em>.</p></div>
+          <div class="summary"><p>Creates a new String from the given <em>bytes</em>, which are encoded in the given <em>encoding</em>.</p></div>
         
       </li>
     
@@ -2335,6 +2315,13 @@ b <span class="o">=</span> <span class="n">2</span>
         <a href="#new%28chars%3APointer%28UInt8%29%29-class-method" class="signature"><strong>.new</strong>(chars : Pointer(UInt8))</a>
         
           <div class="summary"><p>Creates a String from a pointer.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#new%28slice%3ASlice%28UInt8%29%29-class-method" class="signature"><strong>.new</strong>(slice : Slice(UInt8))</a>
+        
+          <div class="summary"><p>Creates a String from the given <em>slice</em>.</p></div>
         
       </li>
     
@@ -2690,16 +2677,16 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#each_char-instance-method" class="signature"><strong>#each_char</strong></a>
+        <a href="#each_char%28%26block%29-instance-method" class="signature"><strong>#each_char</strong>(&block)</a>
         
-          <div class="summary"><p>Returns an iterator over each character in the string.</p></div>
+          <div class="summary"><p>Yields each character in the string to the block.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#each_char%28%26block%29-instance-method" class="signature"><strong>#each_char</strong>(&block)</a>
+        <a href="#each_char-instance-method" class="signature"><strong>#each_char</strong></a>
         
-          <div class="summary"><p>Yields each character in the string to the block.</p></div>
+          <div class="summary"><p>Returns an iterator over each character in the string.</p></div>
         
       </li>
     
@@ -2742,6 +2729,13 @@ b <span class="o">=</span> <span class="n">2</span>
         <a href="#empty%3F-instance-method" class="signature"><strong>#empty?</strong></a>
         
           <div class="summary"><p>Returns true if this is the empty string, <code>""</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encode%28encoding%3AString%2Cinvalid%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3ASymbol%7CNil%29%3ASlice%28UInt8%29-instance-method" class="signature"><strong>#encode</strong>(encoding : String, invalid = <span class="n">nil</span> : Symbol | Nil) : Slice(UInt8)</a>
+        
+          <div class="summary"><p>Returns a slice of bytes containing this string encoded in the given encoding.</p></div>
         
       </li>
     
@@ -3094,7 +3088,9 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_big_i%28base%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#to_big_i</strong>(base = <span class="n">10</span>)</a>
+        <a href="#to_big_i%28base%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%29%3ABigInt-instance-method" class="signature"><strong>#to_big_i</strong>(base = <span class="n">10</span>) : BigInt</a>
+        
+          <div class="summary"><p>Returns a BigInt from this string, in the given <em>base</em>.</p></div>
         
       </li>
     
@@ -3598,7 +3594,11 @@ b <span class="o">=</span> <span class="n">2</span>
   
     <a href="Object.html#to_s%28io%29-class-method" class="tooltip">
       <span>to_s(io)</span>
-    to_s</a>
+    to_s</a>, 
+  
+    <a href="Object.html#%7C%28other%3AU.class%29-class-method" class="tooltip">
+      <span>|(other : U.class)</span>
+    |</a>
   
 
 
@@ -3629,39 +3629,7 @@ str <span class="c"># =&gt; &quot;hello 1&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L219" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="new(pull:JSON::PullParser)-class-method">
-      <div class="signature">
-        
-        def self.<strong>new</strong>(pull : <a href="JSON/PullParser.html">JSON::PullParser</a>)
-
-        <a class="method-permalink" href="#new%28pull%3AJSON%3A%3APullParser%29-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/from_json.cr#L51" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="new(pull:YAML::PullParser)-class-method">
-      <div class="signature">
-        
-        def self.<strong>new</strong>(pull : <a href="YAML/PullParser.html">YAML::PullParser</a>)
-
-        <a class="method-permalink" href="#new%28pull%3AYAML%3A%3APullParser%29-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/yaml/from_yaml.cr#L38" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L237" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3698,7 +3666,39 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L196" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L214" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="new(pull:JSON::PullParser)-class-method">
+      <div class="signature">
+        
+        def self.<strong>new</strong>(pull : <a href="JSON/PullParser.html">JSON::PullParser</a>)
+
+        <a class="method-permalink" href="#new%28pull%3AJSON%3A%3APullParser%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/from_json.cr#L51" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="new(pull:YAML::PullParser)-class-method">
+      <div class="signature">
+        
+        def self.<strong>new</strong>(pull : <a href="YAML/PullParser.html">YAML::PullParser</a>)
+
+        <a class="method-permalink" href="#new%28pull%3AYAML%3A%3APullParser%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/yaml/from_yaml.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3727,34 +3727,34 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L167" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L185" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="new(slice:Slice(UInt8))-class-method">
+    <div class="entry-detail" id="new(bytes:Slice(UInt8),encoding:String,invalid=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Symbol|Nil):String-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>))
+        def self.<strong>new</strong>(bytes : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>), encoding : <a href="String.html">String</a>, invalid = <span class="n">nil</span> : <a href="Symbol.html">Symbol</a> | <a href="Nil.html">Nil</a>) : <a href="String.html">String</a>
 
-        <a class="method-permalink" href="#new%28slice%3ASlice%28UInt8%29%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28bytes%3ASlice%28UInt8%29%2Cencoding%3AString%2Cinvalid%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3ASymbol%7CNil%29%3AString-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Creates a String from the given <em>slice</em>. Bytes will be copied from the slice.</p>
+        <div class="doc"><p>Creates a new String from the given <em>bytes</em>, which are encoded in the given <em>encoding</em>.</p>
 
-<p>This method is always safe to call, and the resulting string will have
-the contents and size of the slice.</p>
+<p>The <em>invalid</em> argument can be:</p>
 
-<pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> (<span class="s">'a'</span>.ord <span class="o">+</span> i).to_u8 }
-<span class="t">String</span>.<span class="k">new</span>(slice) <span class="c"># =&gt; &quot;abcd&quot;</span></code></pre>
+<ul><li><code>nil</code>: an exception is raised on invalid byte sequences</li><li><code>:skip</code>: invalid byte sequences are ignored</li></ul>
 
-<p>Note: if the slice doesn't denote a valid UTF-8 sequence, this method still succeeds.
-However, when iterating it or indexing it, an <code><a href="InvalidByteSequenceError.html">InvalidByteSequenceError</a></code> will be raised.</p></div>
+<pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">2</span>, <span class="n">0_u8</span>)
+slice[<span class="n">0</span>] <span class="o">=</span> <span class="n">186_u8</span>
+slice[<span class="n">1</span>] <span class="o">=</span> <span class="n">195_u8</span>
+<span class="t">String</span>.<span class="k">new</span>(slice, <span class="s">&quot;GB2312&quot;</span>) <span class="c"># =&gt; &quot;好&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L128" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L144" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3786,7 +3786,34 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L149" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L167" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="new(slice:Slice(UInt8))-class-method">
+      <div class="signature">
+        
+        def self.<strong>new</strong>(slice : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>))
+
+        <a class="method-permalink" href="#new%28slice%3ASlice%28UInt8%29%29-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Creates a String from the given <em>slice</em>. Bytes will be copied from the slice.</p>
+
+<p>This method is always safe to call, and the resulting string will have
+the contents and size of the slice.</p>
+
+<pre><code>slice <span class="o">=</span> <span class="t">Slice</span>.<span class="k">new</span>(<span class="n">4</span>) { <span class="o">|</span>i<span class="o">|</span> (<span class="s">'a'</span>.ord <span class="o">+</span> i).to_u8 }
+<span class="t">String</span>.<span class="k">new</span>(slice) <span class="c"># =&gt; &quot;abcd&quot;</span></code></pre>
+
+<p>Note: if the slice doesn't denote a valid UTF-8 sequence, this method still succeeds.
+However, when iterating it or indexing it, an <code><a href="InvalidByteSequenceError.html">InvalidByteSequenceError</a></code> will be raised.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L128" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3811,7 +3838,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2647" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2702" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3832,7 +3859,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1614" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1669" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3853,7 +3880,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1586" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1641" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3874,7 +3901,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1571" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1626" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3905,7 +3932,7 @@ the shorter one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1492" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1547" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3921,7 +3948,7 @@ the shorter one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1470" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1525" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3948,7 +3975,7 @@ If unsuccessful, it returns <code>nil</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1561" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1616" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3975,7 +4002,7 @@ If unsuccessful, it returns <code>nil</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1554" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1609" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4001,7 +4028,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L640" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L658" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4017,7 +4044,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L707" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L725" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4033,7 +4060,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L703" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L721" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4060,7 +4087,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L618" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L636" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4076,7 +4103,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L711" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L729" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4102,7 +4129,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L602" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L620" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4118,7 +4145,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L694" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L712" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4134,7 +4161,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L690" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L708" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4150,7 +4177,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L698" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L716" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4166,7 +4193,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L686" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L704" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4182,7 +4209,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2695" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2750" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4198,7 +4225,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L715" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L733" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4214,7 +4241,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L719" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L737" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4230,7 +4257,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L782" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L800" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4246,7 +4273,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L774" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L792" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4262,7 +4289,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L778" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L796" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4278,7 +4305,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1728" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1783" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4294,7 +4321,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1737" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1792" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4310,7 +4337,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L736" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L754" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4326,7 +4353,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L762" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L780" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4347,7 +4374,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2495" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2550" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4368,7 +4395,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L231" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L249" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4383,12 +4410,12 @@ counting from the end of the string.</p>
       
         <div class="doc"><p>Converts underscores to camelcase boundaries.</p>
 
-<pre><code><span class="s">&quot;eiffel_tower&quot;</span>.underscore <span class="c"># =&gt; &quot;EiffelTower&quot;</span></code></pre></div>
+<pre><code><span class="s">&quot;eiffel_tower&quot;</span>.camelcase <span class="c"># =&gt; &quot;EiffelTower&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2117" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2172" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4409,7 +4436,7 @@ subsequent letter converted to lowercase.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L829" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L847" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4425,7 +4452,7 @@ subsequent letter converted to lowercase.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L770" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L788" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4450,7 +4477,7 @@ will be the bytesize of this string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1762" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1817" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4470,7 +4497,7 @@ will be the bytesize of this string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2415" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2470" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4490,7 +4517,7 @@ will be the bytesize of this string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2734" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2789" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4517,7 +4544,7 @@ will remove \n, \r, and \r\n).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L855" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L873" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4538,7 +4565,7 @@ will remove \n, \r, and \r\n).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L892" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L910" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4559,7 +4586,7 @@ will remove \n, \r, and \r\n).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L878" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L896" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4587,7 +4614,7 @@ Applying chop to an empty string returns an empty string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L913" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L931" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4603,7 +4630,7 @@ Applying chop to an empty string returns an empty string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L766" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L784" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4623,7 +4650,7 @@ Applying chop to an empty string returns an empty string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2453" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2508" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4655,7 +4682,7 @@ case-insensitive way.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1517" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1572" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4676,7 +4703,7 @@ returns the number of times the block returned a truthy value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1353" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1408" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4696,7 +4723,7 @@ returns the number of times the block returned a truthy value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1366" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1421" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4716,7 +4743,7 @@ in this string that match the given set.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1373" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1428" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4738,7 +4765,7 @@ all characters that match the given set removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1408" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1463" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4758,7 +4785,7 @@ all characters that match the given set removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1397" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1452" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4780,7 +4807,7 @@ block returned a truthy value removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1384" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1439" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4801,7 +4828,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L801" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L819" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4817,7 +4844,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2517" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2572" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4833,7 +4860,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2523" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2578" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4849,7 +4876,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2529" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2584" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4865,7 +4892,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2535" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2590" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4887,7 +4914,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2468" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2523" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4912,7 +4939,29 @@ bytes.<span class="k">next</span> <span class="c"># =&gt; 131</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2485" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2540" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_char(&amp;block)-instance-method">
+      <div class="signature">
+        
+        def <strong>each_char</strong>(&block)
+
+        <a class="method-permalink" href="#each_char%28%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Yields each character in the string to the block.</p>
+
+<pre><code><span class="s">&quot;ab☃&quot;</span>.each_char <span class="k">do</span> <span class="o">|</span>char<span class="o">|</span>
+  char <span class="c"># =&gt; &apos;a&apos;, &apos;b&apos;, &apos;☃&apos;</span>
+<span class="k">end</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2423" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4935,29 +4984,7 @@ chars.<span class="k">next</span> <span class="c"># =&gt; &apos;☃&apos;</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2389" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="each_char(&amp;block)-instance-method">
-      <div class="signature">
-        
-        def <strong>each_char</strong>(&block)
-
-        <a class="method-permalink" href="#each_char%28%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Yields each character in the string to the block.</p>
-
-<pre><code><span class="s">&quot;ab☃&quot;</span>.each_char <span class="k">do</span> <span class="o">|</span>char<span class="o">|</span>
-  char <span class="c"># =&gt; &apos;a&apos;, &apos;b&apos;, &apos;☃&apos;</span>
-<span class="k">end</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2368" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2444" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4980,7 +5007,7 @@ chars.<span class="k">next</span> <span class="c"># =&gt; &apos;☃&apos;</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2401" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2456" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5003,7 +5030,7 @@ codepoints.<span class="k">next</span> <span class="c"># =&gt; 9731</span></code
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2444" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2499" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5025,7 +5052,7 @@ codepoints.<span class="k">next</span> <span class="c"># =&gt; 9731</span></code
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2430" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2485" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5053,7 +5080,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2033" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2088" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5071,7 +5098,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2047" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2102" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5089,7 +5116,32 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1466" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1521" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encode(encoding:String,invalid=&lt;spanclass=&quot;n&quot;&gt;nil&lt;/span&gt;:Symbol|Nil):Slice(UInt8)-instance-method">
+      <div class="signature">
+        
+        def <strong>encode</strong>(encoding : <a href="String.html">String</a>, invalid = <span class="n">nil</span> : <a href="Symbol.html">Symbol</a> | <a href="Nil.html">Nil</a>) : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>)
+
+        <a class="method-permalink" href="#encode%28encoding%3AString%2Cinvalid%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3ASymbol%7CNil%29%3ASlice%28UInt8%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a slice of bytes containing this string encoded in the given encoding.</p>
+
+<p>The <em>invalid</em> argument can be:</p>
+
+<ul><li><code>nil</code>: an exception is raised on invalid byte sequences</li><li><code>:skip</code>: invalid byte sequences are ignored</li></ul>
+
+<pre><code><span class="s">&quot;好&quot;</span>.encode(<span class="s">&quot;GB2312&quot;</span>) <span class="c"># =&gt; [186, 195]</span>
+<span class="s">&quot;好&quot;</span>.bytes            <span class="c"># =&gt; [229, 165, 189]</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L955" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5105,7 +5157,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2613" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2668" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5121,7 +5173,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2618" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2673" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5146,7 +5198,7 @@ not included in the returned string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1284" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1339" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5168,7 +5220,7 @@ replaced with the given <em>replacement</em>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1217" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1272" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5190,7 +5242,7 @@ is replaced by the block's return value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1202" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1257" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5211,7 +5263,7 @@ with the given <em>replacement</em>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1296" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1351" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5232,7 +5284,7 @@ with the given <em>replacement</em>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1270" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1325" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5253,7 +5305,7 @@ by the corresponding <em>hash</em> values.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1341" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1396" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5274,7 +5326,7 @@ with the block's value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1306" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1361" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5295,7 +5347,7 @@ by the block value's value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1231" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1286" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5315,7 +5367,7 @@ by the block value's value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2654" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2709" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5336,7 +5388,7 @@ by the block value's value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1779" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1834" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5360,7 +5412,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1664" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1719" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5384,7 +5436,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1650" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1705" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5400,7 +5452,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2499" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2554" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5416,7 +5468,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2505" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2560" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5432,7 +5484,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2511" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2566" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5448,7 +5500,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2012" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2067" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5470,7 +5522,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2167" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2222" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5491,7 +5543,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L970" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1025" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5519,7 +5571,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2306" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2361" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5537,7 +5589,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2287" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2342" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5558,7 +5610,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2144" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2199" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5583,7 +5635,7 @@ If <code>offset</code> is present, it defines the position to <em>end</em> the s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1694" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1749" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5608,7 +5660,7 @@ If <code>offset</code> is present, it defines the position to <em>end</em> the s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1710" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1765" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5630,7 +5682,7 @@ If <code>offset</code> is present, it defines the position to <em>end</em> the s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2178" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2233" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5651,7 +5703,7 @@ If <code>offset</code> is present, it defines the position to <em>end</em> the s
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L954" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1009" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5670,7 +5722,7 @@ returning an array of the matched string for each match.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2353" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2408" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5689,7 +5741,7 @@ yielding the matched string for each match.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2341" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2396" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5707,7 +5759,7 @@ yielding the matched string for each match.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2314" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2369" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5726,7 +5778,7 @@ returning an array of <code><a href="Regex/MatchData.html">Regex::MatchData</a><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2331" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2386" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5747,7 +5799,7 @@ returning an array of <code><a href="Regex/MatchData.html">Regex::MatchData</a><
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2668" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2723" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5775,7 +5827,7 @@ long_river_name.split(<span class="s">&quot;&quot;</span>)   <span class="c"># =
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1898" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1953" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5799,7 +5851,7 @@ with the entire remainder added to the last string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1857" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1912" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5828,7 +5880,7 @@ old_pond.split(<span class="n">3</span>) <span class="c"># =&gt; [&quot;Old&quot
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1797" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1852" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5855,7 +5907,7 @@ long_river_name.split(<span class="s">//</span>)   <span class="c"># =&gt; [&quo
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1946" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2001" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5879,7 +5931,7 @@ block returned a truthy value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1421" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1476" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5899,7 +5951,7 @@ block returned a truthy value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1436" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1491" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5920,7 +5972,7 @@ that were the same as the previous one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1461" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1516" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5946,7 +5998,7 @@ they match the given set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1451" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1506" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5962,7 +6014,7 @@ they match the given set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2605" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2660" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5978,7 +6030,7 @@ they match the given set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2600" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2655" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5999,7 +6051,7 @@ they match the given set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L933" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L988" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6020,7 +6072,7 @@ given <em>hash</em> is replaced by the corresponding hash value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1170" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1225" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6041,7 +6093,7 @@ given <em>hash</em> is replaced by the corresponding hash value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1115" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1170" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6062,7 +6114,7 @@ with the given <em>replacement</em>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1143" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1198" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6083,7 +6135,7 @@ with the block's value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1153" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1208" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6104,7 +6156,7 @@ the block's return value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1096" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1151" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6126,7 +6178,7 @@ block and replaced by its return value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1051" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1106" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6149,7 +6201,7 @@ is not included in the <em>hash</em>, nothing is replaced.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1127" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1182" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6171,7 +6223,7 @@ is not included in the <em>hash</em>, nothing is replaced.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1069" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1124" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6201,23 +6253,27 @@ there is no carry, adding an additional character if necessary.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2239" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2294" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="to_big_i(base=&lt;spanclass=&quot;n&quot;&gt;10&lt;/span&gt;)-instance-method">
+    <div class="entry-detail" id="to_big_i(base=&lt;spanclass=&quot;n&quot;&gt;10&lt;/span&gt;):BigInt-instance-method">
       <div class="signature">
         
-        def <strong>to_big_i</strong>(base = <span class="n">10</span>)
+        def <strong>to_big_i</strong>(base = <span class="n">10</span>) : <a href="BigInt.html">BigInt</a>
 
-        <a class="method-permalink" href="#to_big_i%28base%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%29-instance-method">#</a>
+        <a class="method-permalink" href="#to_big_i%28base%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%29%3ABigInt-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns a BigInt from this string, in the given <em>base</em>.</p>
+
+<p>Raises <code><a href="ArgumentError.html">ArgumentError</a></code> if this string doesn't denote a valid integer.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/big_int/big_int.cr#L335" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/big_int/big_int.cr#L364" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6242,7 +6298,7 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L573" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L591" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6265,7 +6321,7 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L582" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L600" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6283,7 +6339,7 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L587" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L605" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6330,7 +6386,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L269" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L287" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6352,7 +6408,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L293" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L311" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6370,7 +6426,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L328" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L346" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6388,7 +6444,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L338" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L356" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6406,7 +6462,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L333" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L351" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6424,7 +6480,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L358" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L376" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6442,7 +6498,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L368" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L386" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6460,7 +6516,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L363" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L381" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6478,7 +6534,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L398" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L416" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6496,7 +6552,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L388" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L406" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6514,7 +6570,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L393" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L411" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6532,7 +6588,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L298" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L316" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6550,7 +6606,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L308" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L326" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6568,7 +6624,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L303" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L321" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6592,7 +6648,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L282" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L300" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6608,7 +6664,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/json/to_json.cr#L172" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/json/to_json.cr#L172" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6624,7 +6680,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2711" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2766" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6640,7 +6696,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2715" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2770" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6656,7 +6712,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2707" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2762" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6674,7 +6730,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L353" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L371" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6692,7 +6748,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L343" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L361" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6710,7 +6766,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L348" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L366" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6728,7 +6784,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L383" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L401" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6746,7 +6802,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L373" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L391" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6764,7 +6820,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L378" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L396" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6782,7 +6838,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L403" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L421" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6800,7 +6856,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L413" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L431" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6818,7 +6874,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L408" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L426" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6836,7 +6892,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L323" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L341" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6854,7 +6910,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L313" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L331" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6872,7 +6928,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L318" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L336" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6888,7 +6944,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2719" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2774" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6904,7 +6960,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/yaml/to_yaml.cr#L77" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/yaml/to_yaml.cr#L77" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6928,7 +6984,7 @@ the rest.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L1005" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L1060" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6950,7 +7006,7 @@ the rest.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2058" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2113" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6966,7 +7022,7 @@ the rest.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L791" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L809" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6982,7 +7038,7 @@ the rest.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2723" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2778" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6998,7 +7054,7 @@ the rest.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L2727" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L2782" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7019,7 +7075,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L815" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L833" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7042,7 +7098,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/manastech/crystal/blob/ed88d5fd842500a6c9742478c2e7fb4edde1b4f7/src/string.cr#L443" target="_blank">View source</a>]
+          [<a href="https://github.com/manastech/crystal/blob/90eaec10cef83941628409cf4e064acaba140fdb/src/string.cr#L461" target="_blank">View source</a>]
         
       </div>
     </div>
