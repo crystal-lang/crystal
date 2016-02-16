@@ -550,7 +550,7 @@ module Crystal
 
     parse_operator :pow, :atomic_with_method, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", ":\"**\""
 
-    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"===", :"[]", :"[]=", :"[]?", :"!"]
+    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"===", :"[]", :"[]=", :"[]?", :"[", :"!"]
 
     def parse_atomic_with_method
       location = @token.location
@@ -620,6 +620,8 @@ module Crystal
             atomic = parse_is_a(atomic).at(location)
           elsif @token.value == :responds_to?
             atomic = parse_responds_to(atomic).at(location)
+          elsif @token.type == :"["
+            return parse_atomic_method_suffix(atomic, location)
           else
             name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
             end_location = token_end_location
@@ -1289,6 +1291,8 @@ module Crystal
         next_token_skip_space
 
         location = @token.location
+
+        check AtomicWithMethodCheck
 
         if @token.value == :is_a?
           call = parse_is_a(obj).at(location)
