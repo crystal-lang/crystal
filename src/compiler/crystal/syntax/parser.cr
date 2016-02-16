@@ -550,7 +550,7 @@ module Crystal
 
     parse_operator :pow, :atomic_with_method, "Call.new left, method, [right] of ASTNode, name_column_number: method_column_number", ":\"**\""
 
-    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"===", :"[]", :"[]=", :"[]?", :"!"]
+    AtomicWithMethodCheck = [:IDENT, :"+", :"-", :"*", :"/", :"%", :"|", :"&", :"^", :"**", :"<<", :"<", :"<=", :"==", :"!=", :"=~", :"!~", :">>", :">", :">=", :"<=>", :"||", :"&&", :"===", :"[]", :"[]=", :"[]?", :"!", :"("]
 
     def parse_atomic_with_method
       location = @token.location
@@ -621,72 +621,88 @@ module Crystal
           elsif @token.value == :responds_to?
             atomic = parse_responds_to(atomic).at(location)
           else
-            name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
-            end_location = token_end_location
-
-            @wants_regex = false
-            next_token
-
-            space_consumed = false
-            if @token.type == :SPACE
-              @wants_regex = true
-              next_token
-              space_consumed = true
-            end
-
-            case @token.type
-            when :"="
-              # Rewrite 'f.x = arg' as f.x=(arg)
-              next_token
-
-              if @token.type == :"("
-                next_token_skip_space
-                arg = parse_single_arg
-                check :")"
-                next_token
-              else
-                skip_space_or_newline
-                arg = parse_single_arg
-              end
-
-              atomic = Call.new(atomic, "#{name}=", [arg] of ASTNode, name_column_number: name_column_number).at(location)
-              next
-            when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
-              # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
-              method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
-              next_token_skip_space_or_newline
-              value = parse_op_assign
-              atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, name_column_number: name_column_number), method, [value] of ASTNode, name_column_number: name_column_number)] of ASTNode, name_column_number: name_column_number).at(location)
-              next
-            when :"||="
-              # Rewrite 'f.x ||= value' as 'f.x || f.x=(value)'
-              next_token_skip_space_or_newline
-              value = parse_op_assign
-
-              atomic = Or.new(
-                Call.new(atomic, name).at(location),
-                Call.new(atomic.clone, "#{name}=", value).at(location)
-              ).at(location)
-              next
-            when :"&&="
-              # Rewrite 'f.x &&= value' as 'f.x && f.x=(value)'
-              next_token_skip_space
-              value = parse_op_assign
-
-              atomic = And.new(
-                Call.new(atomic, name).at(location),
-                Call.new(atomic.clone, "#{name}=", value).at(location)
-              ).at(location)
-              next
-            else
-              call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis { space_consumed ? parse_call_args_space_consumed : parse_call_args }
+            if @token.type == :"("
+              # f.(...) => f.call(...)
+              name = "call"
+              end_location = token_end_location
+              space_consumed = false
+              call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis { parse_call_args }
               if call_args
                 args = call_args.args
                 block = call_args.block
                 block_arg = call_args.block_arg
                 named_args = call_args.named_args
               else
-                args = block = block_arg = nil
+                raise "Bug: f.() should be a call"
+              end
+            else
+              name = @token.type == :IDENT ? @token.value.to_s : @token.type.to_s
+              end_location = token_end_location
+
+              @wants_regex = false
+              next_token
+
+              space_consumed = false
+              if @token.type == :SPACE
+                @wants_regex = true
+                next_token
+                space_consumed = true
+              end
+
+              case @token.type
+              when :"="
+                # Rewrite 'f.x = arg' as f.x=(arg)
+                next_token
+
+                if @token.type == :"("
+                  next_token_skip_space
+                  arg = parse_single_arg
+                  check :")"
+                  next_token
+                else
+                  skip_space_or_newline
+                  arg = parse_single_arg
+                end
+
+                atomic = Call.new(atomic, "#{name}=", [arg] of ASTNode, name_column_number: name_column_number).at(location)
+                next
+              when :"+=", :"-=", :"*=", :"/=", :"%=", :"|=", :"&=", :"^=", :"**=", :"<<=", :">>="
+                # Rewrite 'f.x += value' as 'f.x=(f.x + value)'
+                method = @token.type.to_s.byte_slice(0, @token.type.to_s.size - 1)
+                next_token_skip_space_or_newline
+                value = parse_op_assign
+                atomic = Call.new(atomic, "#{name}=", [Call.new(Call.new(atomic.clone, name, name_column_number: name_column_number), method, [value] of ASTNode, name_column_number: name_column_number)] of ASTNode, name_column_number: name_column_number).at(location)
+                next
+              when :"||="
+                # Rewrite 'f.x ||= value' as 'f.x || f.x=(value)'
+                next_token_skip_space_or_newline
+                value = parse_op_assign
+
+                atomic = Or.new(
+                  Call.new(atomic, name).at(location),
+                  Call.new(atomic.clone, "#{name}=", value).at(location)
+                ).at(location)
+                next
+              when :"&&="
+                # Rewrite 'f.x &&= value' as 'f.x && f.x=(value)'
+                next_token_skip_space
+                value = parse_op_assign
+
+                atomic = And.new(
+                  Call.new(atomic, name).at(location),
+                  Call.new(atomic.clone, "#{name}=", value).at(location)
+                ).at(location)
+                next
+              else
+                call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis { space_consumed ? parse_call_args_space_consumed : parse_call_args }
+                if call_args
+                  args = call_args.args
+                  block = call_args.block
+                  block_arg = call_args.block_arg
+                  named_args = call_args.named_args
+                else
+                  args = block = block_arg = nil
+                end
               end
             end
 
@@ -3097,31 +3113,37 @@ module Crystal
         return parse_responds_to(obj)
       end
 
-      name = @token.value.to_s
-      name_column_number = @token.column_number
+      if @token.type == :"("
+        name = "call"
+        name_column_number = @token.column_number
+        @wants_regex = true
+      else
+        name = @token.value.to_s
+        name_column_number = @token.column_number
 
-      if force_call && !@token.value
-        name = @token.type.to_s
-      end
+        if force_call && !@token.value
+          name = @token.type.to_s
+        end
 
-      is_var = is_var?(name)
+        is_var = is_var?(name)
 
-      @wants_regex = false
-      next_token
+        @wants_regex = false
+        next_token
 
-      if @token.type == :SPACE
-        # We don't want the next token to be a regex literal if the call's name is
-        # a variable in the current scope (it's unlikely that there will be a method
-        # with that name that accepts a regex as a first argument).
-        # This allows us to write: a = 1; b = 2; a /b
-        @wants_regex = !is_var
-      end
+        if @token.type == :SPACE
+          # We don't want the next token to be a regex literal if the call's name is
+          # a variable in the current scope (it's unlikely that there will be a method
+          # with that name that accepts a regex as a first argument).
+          # This allows us to write: a = 1; b = 2; a /b
+          @wants_regex = !is_var
+        end
 
-      case name
-      when "super"
-        @calls_super = true
-      when "initialize"
-        @calls_initialize = true
+        case name
+        when "super"
+          @calls_super = true
+        when "initialize"
+          @calls_initialize = true
+        end
       end
 
       call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis do

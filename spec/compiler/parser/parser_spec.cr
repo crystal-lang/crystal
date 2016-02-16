@@ -350,6 +350,17 @@ describe "Parser" do
   it_parses "a.foo &block", Call.new("a".call, "foo", block_arg: "block".call)
   it_parses "a.foo(&block)", Call.new("a".call, "foo", block_arg: "block".call)
 
+  it_parses "f.(1)", Call.new("f".call, "call", 1.int32)
+  it_parses "f.(\n1)", Call.new("f".call, "call", 1.int32)
+  it_parses "f.(){ }", Call.new("f".call, "call", block: Block.new)
+  it_parses "f.()do\nend", Call.new("f".call, "call", block: Block.new)
+  it_parses "f.(1){ }", Call.new("f".call, "call", [1.int32] of ASTNode, block: Block.new)
+  it_parses "f.(1) do\nend", Call.new("f".call, "call", [1.int32] of ASTNode, block: Block.new)
+  it_parses "f.(&.())", Call.new("f".call, "call", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "call")))
+  it_parses "f.(&.().())", Call.new("f".call, "call", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "call"), "call")))
+  it_parses "f.(&.(){})", Call.new("f".call, "call", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "call", block: Block.new)))
+  it_parses "f.(&.().a = 1)", Call.new("f".call, "call", block: Block.new([Var.new("__arg0")], Call.new(Call.new(Var.new("__arg0"), "call"), "a=", 1.int32)))
+
   it_parses "foo(&.block)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
   it_parses "foo &.block", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
   it_parses "foo &./(1)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "/", 1.int32)))
