@@ -15,8 +15,10 @@ module DB
   #
   # Convention of mapping how arguments are mapped to the query depends on each driver.
   #
-  # Including `QueryMethods` requires a `prepare(query) : Statement` method.
+  # Including `QueryMethods` requires a `prepare(query) : Statement` method that is not expected
+  # to be called directly.
   module QueryMethods
+    # :nodoc:
     abstract def prepare(query) : Statement
 
     # Returns a `ResultSet` for the `query`.

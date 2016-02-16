@@ -14,17 +14,19 @@ require "uri"
 # Assuming `crystal-sqlite3` is included a sqlite3 database can be opened with `#open`.
 #
 # ```
-# db = DB.open "sqlite3:%3Amemory%3A" # or sqlite3:./path/to/db/file.db
+# db = DB.open "sqlite3:./path/to/db/file.db"
 # db.close
 # ```
 #
 # If a block is given to `#open` the database is closed automatically
 #
 # ```
-# DB.open "sqlite3:%3Amemory%3A" do |db|
+# DB.open "sqlite3:./file.db" do |db|
 #   # work with db
 # end # db is closed
 # ```
+#
+# In the code above `db` is a `Database`. Methods available for querying it are described in `QueryMethods`.
 #
 # Three kind of statements can be performed:
 # 1. `Database#exec` waits no response from the database.
@@ -39,7 +41,7 @@ require "uri"
 # require "db"
 # require "sqlite3"
 #
-# DB.open "sqlite3://%3Amemory%3A" do |db|
+# DB.open "sqlite3:./file.db" do |db|
 #   db.exec "create table contacts (name string, age integer)"
 #   db.exec "insert into contacts values (?, ?)", "John Doe", 30
 #
