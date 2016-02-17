@@ -14,7 +14,7 @@ class Crystal::Call
   property? is_expansion
   @is_expansion = false
 
-  getter? uses_with_scope
+  property? uses_with_scope
   @uses_with_scope = false
 
   property? raises

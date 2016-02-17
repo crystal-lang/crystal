@@ -64,7 +64,7 @@ class Crystal::CodeGenVisitor
       call_args << downcast(@last, target_def.owner, obj.type, true)
     elsif owner.passed_as_self?
       if node.uses_with_scope? && (yield_scope = context.vars["%scope"]?)
-        call_args << yield_scope.pointer
+        call_args << downcast(yield_scope.pointer, target_def.owner, node.with_scope.not_nil!, true)
       else
         call_args << llvm_self(owner)
       end
@@ -269,6 +269,9 @@ class Crystal::CodeGenVisitor
       @needs_value = true
       accept node_obj
       obj_type_id = @last
+    elsif node.uses_with_scope? && (with_scope = node.with_scope)
+      owner = with_scope
+      obj_type_id = context.vars["%scope"].pointer
     else
       owner = node.scope
       obj_type_id = llvm_self
@@ -290,7 +293,9 @@ class Crystal::CodeGenVisitor
 
     # Reuse this call for each dispatch branch
     call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}") as ASTNode }, node.block).at(node)
-    call.scope = node.scope
+    call.scope = with_scope || node.scope
+    call.with_scope = with_scope
+    call.uses_with_scope = node.uses_with_scope?
 
     with_cloned_context do
       context.vars = new_vars
