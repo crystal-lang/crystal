@@ -421,6 +421,10 @@ describe "macro methods" do
       assert_macro "", %({{[1, 2, 3].select { |e| e == 1 }}}), [] of ASTNode, "[1]"
     end
 
+    it "executes reject" do
+      assert_macro "", %({{[1, 2, 3].reject { |e| e == 1 }}}), [] of ASTNode, "[2, 3]"
+    end
+
     it "executes find (finds)" do
       assert_macro "", %({{[1, 2, 3].find { |e| e == 2 }}}), [] of ASTNode, "2"
     end
@@ -637,19 +641,25 @@ describe "macro methods" do
         [TypeNode.new(program.tuple_of([program.int32, program.string] of TypeVar).metaclass)] of ASTNode
       end
     end
+
+    it "executes type_vars" do
+      assert_macro("x", "{{x.type_vars.map &.stringify}}", %(["A", "B"])) do |program|
+        [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
+      end
+    end
   end
 
   describe "declare var methods" do
     it "executes var" do
-      assert_macro "x", %({{x.var}}), [DeclareVar.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "some_name"
+      assert_macro "x", %({{x.var}}), [TypeDeclaration.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "some_name"
     end
 
     it "executes var when instance var" do
-      assert_macro "x", %({{x.var}}), [DeclareVar.new(InstanceVar.new("@some_name"), Path.new("SomeType"))] of ASTNode, "@some_name"
+      assert_macro "x", %({{x.var}}), [TypeDeclaration.new(InstanceVar.new("@some_name"), Path.new("SomeType"))] of ASTNode, "@some_name"
     end
 
     it "executes type" do
-      assert_macro "x", %({{x.type}}), [DeclareVar.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "SomeType"
+      assert_macro "x", %({{x.type}}), [TypeDeclaration.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "SomeType"
     end
   end
 

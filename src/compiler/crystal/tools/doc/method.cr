@@ -124,14 +124,6 @@ class Crystal::Doc::Method
     end
   end
 
-  def arg_to_html(arg : BlockArg, io, links = true)
-    io << arg.name
-    if arg_fun = arg.fun
-      io << " : "
-      node_to_html arg_fun, io, links: links
-    end
-  end
-
   def node_to_html(node, io, links = true)
     @type.node_to_html node, io, links: links
   end

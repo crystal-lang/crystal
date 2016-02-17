@@ -153,13 +153,13 @@ describe "Type inference: exception" do
   end
 
   assert_syntax_error "begin; rescue ex; rescue ex : Foo; end; ex",
-                      "specific rescue must come before catch-all rescue"
+    "specific rescue must come before catch-all rescue"
 
   assert_syntax_error "begin; rescue ex; rescue; end; ex",
-                      "catch-all rescue can only be specified once"
+    "catch-all rescue can only be specified once"
 
   assert_syntax_error "begin; else; 1; end",
-                      "'else' is useless without 'rescue'"
+    "'else' is useless without 'rescue'"
 
   it "types code with abstract exception that delegates method" do
     assert_type(%(
@@ -310,6 +310,93 @@ describe "Type inference: exception" do
         x = a
       end
       x
+      )) { int32 }
+  end
+
+  it "types instance variable as nilable if assigned inside an exception handler (#1845)" do
+    assert_type(%(
+      class Foo
+        def initialize
+          begin
+            @bar = 1
+          rescue
+          end
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      foo = Foo.new
+      foo.bar
+      )) { nilable int32 }
+  end
+
+  it "doesn't type instance variable as nilable if assigned inside an exception handler after being assigned" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @bar = 1
+          begin
+            @bar = 1
+          rescue
+          end
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      foo = Foo.new
+      foo.bar
+      )) { int32 }
+  end
+
+  it "doesn't type instance variable if initialized inside begin and rescue raises" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        def initialize
+          begin
+            @bar = 1
+          rescue
+            raise "OH NO"
+          end
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      foo = Foo.new
+      foo.bar
+      )) { int32 }
+  end
+
+  it "doesn't type instance variable if initialized inside begin and in rescue" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        def initialize
+          begin
+            @bar = 1
+          rescue
+            @bar = 2
+          end
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      foo = Foo.new
+      foo.bar
       )) { int32 }
   end
 end

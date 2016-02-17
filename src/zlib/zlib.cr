@@ -2,9 +2,17 @@ require "./lib_zlib"
 require "./deflate"
 require "./inflate"
 
+# The Zlib module provides access to the [zlib library](http://zlib.net/) for
+# loseless data compression and decompression in zlib and gzip format:
+#
+# * `Zlib::Deflate` for compression
+# * `Zlib::Inflate` for decompression
 module Zlib
+  GZIP = LibZ::MAX_BITS + 16
+
+  # Returns the linked zlib version.
   def self.version
-    String.new LibZ.zlibVersion()
+    String.new LibZ.zlibVersion
   end
 
   def self.adler32(data, adler)
@@ -35,37 +43,14 @@ module Zlib
     LibZ.crc32_combine(crc1, crc2, len)
   end
 
-  class ZlibError < Exception
-    def self.check_error(err, msg)
-      case err
-      when LibZ::OK, LibZ::STREAM_END
-      when LibZ::NEED_DICT
-        raise NeedDictError.new(err, msg)
-      when LibZ::ERRNO
-        raise Errno.new msg
-      when LibZ::STREAM_ERROR
-        raise StreamError.new(err, msg)
-      when LibZ::DATA_ERROR
-        raise DataError.new(err, msg)
-      when LibZ::BUF_ERROR
-        raise BufError.new(err, msg)
-      when LibZ::VERSION_ERROR
-        raise VersionError.new(err, msg)
+  class Error < Exception
+    def initialize(ret, stream)
+      if msg = stream.msg
+        error_msg = String.new(msg)
+        super("inflate: #{error_msg} #{ret}")
       else
-        raise ZStreamError.new(err, msg)
+        super("inflate: #{ret}")
       end
     end
   end
-
-  class ZStreamError < ZlibError
-    def initialize(@code, @msg)
-      super("#{@code}: #{@msg}")
-    end
-  end
-  class NeedDictError < ZStreamError; end
-  class StreamError < ZStreamError; end
-  class DataError < ZStreamError; end
-  class MemError < ZStreamError; end
-  class BufError < ZStreamError; end
-  class VersionError < ZStreamError; end
 end

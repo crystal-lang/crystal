@@ -42,16 +42,16 @@ ifdef darwin
   end
 else
   enum Signal
-    HUP    = 1
-    INT    = 2
-    QUIT   = 3
-    ILL    = 4
-    TRAP   = 5
-    ABRT   = 6
-    IOT    = 6
-    BUS    = 7
-    FPE    = 8
-    KILL   = 9
+    HUP    =  1
+    INT    =  2
+    QUIT   =  3
+    ILL    =  4
+    TRAP   =  5
+    ABRT   =  6
+    IOT    =  6
+    BUS    =  7
+    FPE    =  8
+    KILL   =  9
     USR1   = 10
     SEGV   = 11
     USR2   = 12
@@ -109,9 +109,18 @@ enum Signal
     del_handler Proc(Int32, Void).new(Pointer(Void).new(1_u64), Pointer(Void).null)
   end
 
-  private def del_handler block
+  private def del_handler(block)
     Event::SignalHandler.del_handler self
     LibC.signal value, block
   end
 end
 
+# Capture fault signals (SEGV, BUS) and finish the process printing a backtrace first
+
+fun __crystal_sigfault_handler(sig : LibC::Int, addr : Void*)
+  LibC.printf "Invalid memory access (signal %d) at address 0x%lx\n", sig, addr
+  CallStack.print_backtrace
+  LibC._exit sig
+end
+
+LibExt.setup_sigfault_handler

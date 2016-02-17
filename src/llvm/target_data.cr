@@ -21,4 +21,8 @@ struct LLVM::TargetData
   def to_unsafe
     @unwrap
   end
+
+  def offset_of_element(struct_type, element)
+    LibLLVM.offset_of_element(self, struct_type, element)
+  end
 end

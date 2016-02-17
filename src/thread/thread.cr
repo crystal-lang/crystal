@@ -14,8 +14,8 @@ class Thread(T, R)
     @arg = arg
     @detached = false
     ret = LibPThread.create(out @th, nil, ->(data) {
-        (data as Thread(T, R)).start
-      }, self as Void*)
+      (data as Thread(T, R)).start
+    }, self as Void*)
 
     if ret != 0
       raise Errno.new("pthread_create")

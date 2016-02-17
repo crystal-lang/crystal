@@ -87,6 +87,7 @@ module Crystal
   # A container for one or many expressions.
   class Expressions < ASTNode
     property :expressions
+    property :keyword
 
     def self.from(obj : Nil)
       Nop.new
@@ -143,7 +144,7 @@ module Crystal
   #
   class NilLiteral < ASTNode
     def clone_without_location
-      self
+      NilLiteral.new
     end
 
     def_equals_and_hash
@@ -848,28 +849,6 @@ module Crystal
     def_equals_and_hash inputs, output
   end
 
-  class BlockArg < ASTNode
-    property :name
-    property :fun
-
-    def initialize(@name, @fun = Fun.new)
-    end
-
-    def accept_children(visitor)
-      @fun.try &.accept visitor
-    end
-
-    def name_size
-      name.size
-    end
-
-    def clone_without_location
-      BlockArg.new(@name, @fun.clone)
-    end
-
-    def_equals_and_hash @name, @fun
-  end
-
   # A method definition.
   #
   #     'def' [ receiver '.' ] name
@@ -1352,7 +1331,42 @@ module Crystal
     def_equals_and_hash @name, @type_vars
   end
 
-  class DeclareVar < ASTNode
+  class TypeDeclaration < ASTNode
+    property :var
+    property :declared_type
+
+    def initialize(@var, @declared_type)
+    end
+
+    def accept_children(visitor)
+      var.accept visitor
+      declared_type.accept visitor
+    end
+
+    def name_size
+      var = @var
+      case var
+      when Var
+        var.name.size
+      when InstanceVar
+        var.name.size
+      when ClassVar
+        var.name.size
+      when Global
+        var.name.size
+      else
+        raise "can't happen"
+      end
+    end
+
+    def clone_without_location
+      TypeDeclaration.new(@var.clone, @declared_type.clone)
+    end
+
+    def_equals_and_hash @var, @declared_type
+  end
+
+  class UninitializedVar < ASTNode
     property :var
     property :declared_type
 
@@ -1377,7 +1391,7 @@ module Crystal
     end
 
     def clone_without_location
-      DeclareVar.new(@var.clone, @declared_type.clone)
+      UninitializedVar.new(@var.clone, @declared_type.clone)
     end
 
     def_equals_and_hash @var, @declared_type
@@ -1409,6 +1423,8 @@ module Crystal
     property :rescues
     property :else
     property :ensure
+    property :implicit
+    property :suffix
 
     def initialize(body = nil, @rescues = nil, @else = nil, @ensure = nil)
       @body = Expressions.from body
@@ -1422,7 +1438,10 @@ module Crystal
     end
 
     def clone_without_location
-      ExceptionHandler.new(@body.clone, @rescues.clone, @else.clone, @ensure.clone)
+      ex = ExceptionHandler.new(@body.clone, @rescues.clone, @else.clone, @ensure.clone)
+      ex.implicit = implicit
+      ex.suffix = suffix
+      ex
     end
 
     def_equals_and_hash @body, @rescues, @else, @ensure
@@ -2114,7 +2133,7 @@ module Crystal
     def_equals_and_hash constraint, exp
   end
 
-  # Ficticious node to represent primitives
+  # Fictitious node to represent primitives
   class Primitive < ASTNode
     getter name
 
@@ -2128,7 +2147,7 @@ module Crystal
     def_equals_and_hash name
   end
 
-  # Ficticious node to represent a tuple indexer
+  # Fictitious node to represent a tuple indexer
   class TupleIndexer < Primitive
     getter index
 
@@ -2143,7 +2162,7 @@ module Crystal
     def_equals_and_hash index
   end
 
-  # Ficticious node to represent an id inside a macro
+  # Fictitious node to represent an id inside a macro
   class MacroId < ASTNode
     property value
 
@@ -2161,7 +2180,7 @@ module Crystal
     def_equals_and_hash value
   end
 
-  # Ficticious node to represent a type
+  # Fictitious node to represent a type
   class TypeNode < ASTNode
     def initialize(@type)
     end
@@ -2175,6 +2194,25 @@ module Crystal
     end
 
     def_equals_and_hash type
+  end
+
+  # Fictitious node that means "all these nodes come from this file"
+  class FileNode < ASTNode
+    property node
+    property filename
+
+    def initialize(@node, @filename)
+    end
+
+    def accept_children(visitor)
+      @node.accept visitor
+    end
+
+    def clone_without_location
+      self
+    end
+
+    def_equals_and_hash node, filename
   end
 end
 

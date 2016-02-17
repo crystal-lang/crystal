@@ -40,7 +40,7 @@ struct LLVM::Type
     llvm_struct = LibLLVM.struct_create_named(Context.global, name)
     the_struct = new llvm_struct
     element_types = (yield the_struct) as Array(LLVM::Type)
-    LibLLVM.struct_set_body(llvm_struct, (element_types.buffer as LibLLVM::TypeRef*), element_types.size, packed ? 1 : 0)
+    LibLLVM.struct_set_body(llvm_struct, (element_types.to_unsafe as LibLLVM::TypeRef*), element_types.size, packed ? 1 : 0)
     the_struct
   end
 
@@ -48,12 +48,12 @@ struct LLVM::Type
     if name
       self.struct(name, packed) { element_types }
     else
-      new LibLLVM.struct_type((element_types.buffer as LibLLVM::TypeRef*), element_types.size, packed ? 1 : 0)
+      new LibLLVM.struct_type((element_types.to_unsafe as LibLLVM::TypeRef*), element_types.size, packed ? 1 : 0)
     end
   end
 
   def self.function(arg_types : Array(LLVM::Type), return_type, varargs = false)
-    new LibLLVM.function_type(return_type, (arg_types.buffer as LibLLVM::TypeRef*), arg_types.size, varargs ? 1 : 0)
+    new LibLLVM.function_type(return_type, (arg_types.to_unsafe as LibLLVM::TypeRef*), arg_types.size, varargs ? 1 : 0)
   end
 
   def size

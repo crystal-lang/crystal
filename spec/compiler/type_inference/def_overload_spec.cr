@@ -757,4 +757,26 @@ describe "Type inference: def overload" do
       Foo.new.foo
       )) { char }
   end
+
+  it "reports no overload matches with correct method owner (#2083)" do
+    assert_error %(
+      class Foo
+        def foo(x : Int32)
+          x + 1
+        end
+      end
+
+      class Bar < Foo
+        def foo(x : Int32)
+          x + 2
+        end
+      end
+
+      Bar.new.foo("hello")
+      ),
+      <<-MSG
+       - Bar#foo(x : Int32)
+       - Foo#foo(x : Int32)
+      MSG
+  end
 end

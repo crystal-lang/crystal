@@ -13,7 +13,7 @@ module XML
       nil,
       nil,
       options,
-      )
+    )
   end
 
   def self.parse_html(string : String, options = HTMLParserOptions.default : HTMLParserOptions)
@@ -30,7 +30,7 @@ module XML
       nil,
       nil,
       options,
-      )
+    )
   end
 
   protected def self.from_ptr(doc : LibXML::DocPtr)
@@ -43,4 +43,3 @@ module XML
 end
 
 require "./*"
-

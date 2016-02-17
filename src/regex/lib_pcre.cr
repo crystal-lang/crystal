@@ -7,7 +7,7 @@ lib LibPCRE
   fun compile = pcre_compile(pattern : UInt8*, options : Int, errptr : UInt8**, erroffset : Int*, tableptr : Void*) : Pcre
   fun study = pcre_study(code : Pcre, options : Int, errptr : UInt8**) : PcreExtra
   fun exec = pcre_exec(code : Pcre, extra : PcreExtra, subject : UInt8*, length : Int, offset : Int, options : Int,
-                ovector : Int*, ovecsize : Int) : Int32
+                       ovector : Int*, ovecsize : Int) : Int32
   fun full_info = pcre_fullinfo(code : Pcre, extra : PcreExtra, what : Int, where : Int32*) : Int
   fun get_stringnumber = pcre_get_stringnumber(code : Pcre, string_name : UInt8*) : Int
 

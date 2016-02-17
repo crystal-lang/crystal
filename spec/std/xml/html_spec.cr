@@ -40,7 +40,7 @@ describe XML do
   end
 
   it "parses HTML from IO" do
-    io = StringIO.new(%(\
+    io = MemoryIO.new(%(\
       <!doctype html>
       <html>
       <head>

@@ -6,11 +6,15 @@ def sleep(seconds : Number)
     raise ArgumentError.new "sleep seconds must be positive"
   end
 
-  Scheduler.sleep(seconds)
+  Fiber.sleep(seconds)
 end
 
 def sleep(time : Time::Span)
   sleep(time.total_seconds)
+end
+
+def sleep
+  Scheduler.reschedule
 end
 
 macro spawn
@@ -25,6 +29,8 @@ macro spawn
   end
 
   Scheduler.enqueue %fiber
+
+  %fiber
 end
 
 # TODO: this doesn't work if a Call has a block or named arguments... yet
@@ -54,7 +60,7 @@ macro parallel(*jobs)
   %channel = Channel(Bool).new
 
   {% for job, i in jobs %}
-    %ret{i} = nil
+    %ret{i} = uninitialized typeof({{job}})
     spawn do
       %ret{i} = {{job}}
       %channel.send true
@@ -65,7 +71,7 @@ macro parallel(*jobs)
 
   {
     {% for job, i in jobs %}
-      %ret{i}.not_nil!,
+      %ret{i},
     {% end %}
   }
 end

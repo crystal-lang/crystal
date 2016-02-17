@@ -7,7 +7,7 @@ struct XML::Attributes
   def empty?
     return true unless @node.element?
 
-    props = self.props()
+    props = self.props
     props.nil?
   end
 
@@ -38,7 +38,7 @@ struct XML::Attributes
   def each
     return unless @node.element?
 
-    props = self.props()
+    props = self.props
     until props.nil?
       yield Node.new(props)
       props = props.value.next

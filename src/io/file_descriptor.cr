@@ -8,6 +8,7 @@ class IO::FileDescriptor
   # :nodoc:
   property read_timed_out, write_timed_out # only used in event callbacks
 
+
   def initialize(fd, blocking = false, edge_triggerable = false)
     @edge_triggerable = !!edge_triggerable
     @flush_on_newline = false
@@ -86,13 +87,13 @@ class IO::FileDescriptor
     arg
   end
 
-  def self.fcntl fd, cmd, arg = 0
+  def self.fcntl(fd, cmd, arg = 0)
     r = LibC.fcntl fd, cmd, arg
     raise Errno.new("fcntl() failed") if r == -1
     r
   end
 
-  def fcntl cmd, arg = 0
+  def fcntl(cmd, arg = 0)
     self.class.fcntl @fd, cmd, arg
   end
 
@@ -115,6 +116,65 @@ class IO::FileDescriptor
       raise Errno.new("Unable to get stat")
     end
     File::Stat.new(stat)
+  end
+
+  # Seeks to a given *offset* (in bytes) according to the *whence* argument.
+  # Returns `self`.
+  #
+  # ```
+  # file = File.new("testfile")
+  # file.gets(3) # => "abc"
+  # file.seek(1, IO::Seek::Set)
+  # file.gets(2) # => "bc"
+  # file.seek(-1, IO::Seek::Current)
+  # file.gets(1) # => "c"
+  # ```
+  def seek(offset, whence = Seek::Set : Seek)
+    check_open
+
+    flush
+    seek_value = LibC.lseek(@fd, offset, whence)
+    if seek_value == -1
+      raise Errno.new "Unable to seek"
+    end
+
+    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+
+    self
+  end
+
+  # Same as `pos`.
+  def tell
+    pos
+  end
+
+  # Returns the current position (in bytes) in this IO.
+  #
+  # ```
+  # io = MemoryIO.new "hello"
+  # io.pos     # => 0
+  # io.gets(2) # => "he"
+  # io.pos     # => 2
+  # ```
+  def pos
+    check_open
+
+    seek_value = LibC.lseek(@fd, 0, Seek::Current)
+    raise Errno.new "Unable to tell" if seek_value == -1
+
+    seek_value - @in_buffer_rem.size
+  end
+
+  # Sets the current position (in bytes) in this IO.
+  #
+  # ```
+  # io = MemoryIO.new "hello"
+  # io.pos = 3
+  # io.gets_to_end # => "lo"
+  # ```
+  def pos=(value)
+    seek value
+    value
   end
 
   def fd
@@ -158,7 +218,7 @@ class IO::FileDescriptor
         return bytes_read
       end
 
-      if LibC.errno == Errno::EAGAIN
+      if Errno.value == Errno::EAGAIN
         wait_readable
       else
         raise Errno.new "Error reading file"
@@ -178,10 +238,10 @@ class IO::FileDescriptor
         return total if count == 0
         slice += bytes_written
       else
-        if LibC.errno == Errno::EAGAIN
+        if Errno.value == Errno::EAGAIN
           wait_writable
           next
-        elsif LibC.errno == Errno::EBADF
+        elsif Errno.value == Errno::EBADF
           raise IO::Error.new "File not open for writing"
         else
           raise Errno.new "Error writing file"
@@ -216,12 +276,12 @@ class IO::FileDescriptor
     nil
   end
 
-  private def wait_writable timeout = @write_timeout
+  private def wait_writable(timeout = @write_timeout)
     wait_writable(timeout: timeout) { |err| raise err }
   end
 
   # msg/timeout are overridden in nonblock_connect
-  private def wait_writable msg = "write timed out", timeout = @write_timeout
+  private def wait_writable(msg = "write timed out", timeout = @write_timeout)
     writers << Fiber.current
     add_write_event timeout
     Scheduler.reschedule
@@ -234,7 +294,7 @@ class IO::FileDescriptor
     nil
   end
 
-  private def add_write_event timeout = @write_timeout
+  private def add_write_event(timeout = @write_timeout)
     return if @edge_triggerable
     event = @write_event ||= Scheduler.create_fd_write_event(self)
     event.add timeout
@@ -251,7 +311,7 @@ class IO::FileDescriptor
 
     err = nil
     if LibC.close(@fd) != 0
-      case LibC.errno
+      case Errno.value
       when Errno::EINTR, Errno::EINPROGRESS
         # ignore
       else

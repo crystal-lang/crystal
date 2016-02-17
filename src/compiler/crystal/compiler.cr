@@ -1,7 +1,6 @@
 require "option_parser"
 require "file_utils"
 require "socket"
-require "http/common"
 require "colorize"
 require "crypto/md5"
 
@@ -15,20 +14,20 @@ module Crystal
     record Source, filename, code
     record Result, program, node, original_node
 
-    property  cross_compile_flags
-    property  flags
+    property cross_compile_flags
+    property flags
     property? debug
     property? dump_ll
-    property  link_flags
-    property  mcpu
+    property link_flags
+    property mcpu
     property? color
     property? no_codegen
-    property  n_threads
-    property  prelude
+    property n_threads
+    property prelude
     property? release
     property? single_module
     property? stats
-    property  target_triple
+    property target_triple
     property? verbose
     property? wants_doc
     property emit
@@ -116,9 +115,7 @@ module Crystal
     end
 
     private def infer_type(program, node)
-      timing("Type inference") do
-        program.infer_type node
-      end
+      program.infer_type node, @stats
     end
 
     private def check_bc_flags_changed(output_dir)
@@ -173,12 +170,12 @@ module Crystal
         llvm_mod.data_layout = DataLayout32
       end
 
-      if dump_ll?
-        llvm_mod.print_to_file o_name.gsub(/\.o/, ".ll")
-      end
-
       if @release
         optimize llvm_mod
+      end
+
+      if dump_ll?
+        llvm_mod.print_to_file o_name.gsub(/\.o/, ".ll")
       end
 
       target_machine.emit_obj_to_file llvm_mod, o_name
@@ -192,7 +189,7 @@ module Crystal
 
       # First write bitcodes: it breaks if we paralellize it
       unless multithreaded
-        timing("Codegen (bitcode)") do
+        timing("Codegen (cyrstal)") do
           units.each &.write_bitcode
         end
       end
@@ -219,7 +216,7 @@ module Crystal
         error "can't use `#{output_filename}` as output filename because it's a directory"
       end
 
-      timing("Codegen (clang)") do
+      timing("Codegen (linking)") do
         system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
       end
     end
@@ -293,12 +290,12 @@ module Crystal
       end
     end
 
-    private def system(command, args=nil)
+    private def system(command, args = nil)
       puts command if verbose?
 
       ::system(command, args)
       unless $?.success?
-        msg  = $?.normal_exit? ? "code: #{$?.exit_code}" : "signal: #{$?.exit_signal} (#{$?.exit_signal.value})"
+        msg = $?.normal_exit? ? "code: #{$?.exit_code}" : "signal: #{$?.exit_signal} (#{$?.exit_signal.value})"
         code = $?.normal_exit? ? $?.exit_code : 1
         error "execution of command failed with #{msg}: `#{command}`", exit_code: code
       end
@@ -309,12 +306,7 @@ module Crystal
     end
 
     private def timing(label)
-      if @stats
-        time = Time.now
-        value = yield
-        puts "#{label}: #{Time.now - time}"
-        value
-      else
+      Crystal.timing(label, @stats) do
         yield
       end
     end
@@ -328,7 +320,7 @@ module Crystal
       getter llvm_mod
 
       def initialize(@compiler, type_name, @llvm_mod, @output_dir, @bc_flags_changed)
-        type_name = "main" if type_name == ""
+        type_name = "_main" if type_name == ""
         @name = type_name.gsub do |char|
           case char
           when 'a'..'z', 'A'..'Z', '0'..'9', '_'
@@ -426,9 +418,9 @@ module Crystal
   end
 
   def self.relative_filename(filename : String)
-    dir = Dir.working_directory
+    dir = Dir.current
     if filename.starts_with?(dir)
-      filename = filename[dir.size .. -1]
+      filename = filename[dir.size..-1]
       if filename.starts_with? "/"
         ".#{filename}"
       else
@@ -441,5 +433,16 @@ module Crystal
 
   def self.relative_filename(filename)
     filename
+  end
+
+  def self.timing(label, stats)
+    if stats
+      time = Time.now
+      value = yield
+      puts "%-34s %s" % {"#{label}:", Time.now - time}
+      value
+    else
+      yield
+    end
   end
 end

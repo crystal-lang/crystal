@@ -1,6 +1,6 @@
-<% method_groups = ancestor.instance_methods.group_by { |method| method.name } %>
+<% method_groups = methods.group_by { |method| method.name } %>
 <% unless method_groups.empty? %>
-  <h3>Methods inherited from <%= ancestor.kind %> <code><a href="<%= type.path_to(ancestor) %>"><%= ancestor.full_name %></a></code></h3>
+  <h3><%= label %> methods inherited from <%= ancestor.kind %> <code><a href="<%= type.path_to(ancestor) %>"><%= ancestor.full_name %></a></code></h3>
   <% method_groups.each_with_index do |method_name, methods, i| %>
     <a href="<%= type.path_to(ancestor) %><%= methods[0].anchor %>" class="tooltip">
       <span><%= methods.map { |method| method.name + method.args_to_s } .join("<br/>") %></span>

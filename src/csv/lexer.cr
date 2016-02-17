@@ -3,11 +3,11 @@
 #
 # ```
 # lexer = CSV::Lexer.new "one,two\nthree"
-# lexer.next_token #=> CSV::Token(@kind=Cell, @value="one")
-# lexer.next_token #=> CSV::Token(@kind=Cell, @value="two")
-# lexer.next_token #=> CSV::Token(@kind=Newline, @value="two")
-# lexer.next_token #=> CSV::Token(@kind=Cell, @value="three")
-# lexer.next_token #=> CSV::Token(@kind=Eof, @value="three")
+# lexer.next_token # => CSV::Token(@kind=Cell, @value="one")
+# lexer.next_token # => CSV::Token(@kind=Cell, @value="two")
+# lexer.next_token # => CSV::Token(@kind=Newline, @value="two")
+# lexer.next_token # => CSV::Token(@kind=Cell, @value="three")
+# lexer.next_token # => CSV::Token(@kind=Eof, @value="three")
 # ```
 abstract class CSV::Lexer
   # Creates a CSV lexer from a string.
@@ -26,7 +26,7 @@ abstract class CSV::Lexer
   # :nodoc:
   def initialize
     @token = Token.new
-    @buffer = StringIO.new
+    @buffer = MemoryIO.new
     @column_number = 1
     @line_number = 1
     @last_empty_column = false

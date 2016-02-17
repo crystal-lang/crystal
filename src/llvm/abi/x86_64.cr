@@ -197,7 +197,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
       when RegClass::Int
         types << LLVM::Int64
       when RegClass::SSEFv
-        vec_len = llvec_len(reg_classes[i + 1 .. -1])
+        vec_len = llvec_len(reg_classes[i + 1..-1])
         vec_type = Type.vector(LLVM::Float, vec_len * 2)
         types << vec_type
         i += vec_len
@@ -237,7 +237,7 @@ class LLVM::ABI::X86_64 < LLVM::ABI
       if type.packed_struct?
         1
       else
-        type.struct_element_types.inject(1) do |memo, elem|
+        type.struct_element_types.reduce(1) do |memo, elem|
           Math.max(memo, align(elem))
         end
       end
@@ -260,11 +260,11 @@ class LLVM::ABI::X86_64 < LLVM::ABI
       8
     when Type::Kind::Struct
       if type.packed_struct?
-        type.struct_element_types.inject(0) do |memo, elem|
+        type.struct_element_types.reduce(0) do |memo, elem|
           memo + size(elem)
         end
       else
-        size = type.struct_element_types.inject(0) do |memo, elem|
+        size = type.struct_element_types.reduce(0) do |memo, elem|
           align(memo, elem) + size(elem)
         end
         align(size, type)

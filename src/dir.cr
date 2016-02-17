@@ -18,61 +18,13 @@ lib LibC
       name : UInt8[256]
     end
   elsif linux
-   struct DirEntry
+    struct DirEntry
       d_ino : UInt64
       d_off : Int64
       reclen : UInt16
       type : UInt8
       name : UInt8[256]
     end
-  end
-
-  ifdef linux
-    struct Glob
-      pathc : LibC::SizeT
-      pathv : UInt8**
-      offs : LibC::SizeT
-      flags : Int32
-      dummy : UInt8[40]
-    end
-  elsif freebsd
-    struct Glob
-      pathc : LibC::SizeT
-      matchc : LibC::SizeT
-      offs : LibC::SizeT
-      flags : Int32
-      pathv : UInt8**
-      dummy : UInt8[48]
-    end
-  elsif darwin
-    struct Glob
-      pathc : LibC::SizeT
-      matchc : Int32
-      offs : LibC::SizeT
-      flags : Int32
-      pathv : UInt8**
-      dummy : UInt8[48]
-    end
-  end
-
-  ifdef linux
-    enum GlobFlags
-      APPEND = 1 << 5
-      BRACE  = 1 << 10
-      TILDE  = 1 << 12
-    end
-  elsif darwin || freebsd
-    enum GlobFlags
-      APPEND = 0x0001
-      BRACE  = 0x0080
-      TILDE  = 0x0800
-    end
-  end
-
-  enum GlobErrors
-    NOSPACE = 1
-    ABORTED = 2
-    NOMATCH = 3
   end
 
   fun getcwd(buffer : UInt8*, size : Int32) : UInt8*
@@ -90,9 +42,6 @@ lib LibC
   end
 
   fun rewinddir(dir : Dir*)
-
-  fun glob(pattern : UInt8*, flags : GlobFlags, errfunc : (UInt8*, Int32) -> Int32, result : Glob*) : Int32
-  fun globfree(result : Glob*)
 end
 
 # Objects of class Dir are directory streams representing directories in the underlying file system.
@@ -108,7 +57,7 @@ class Dir
 
   # Returns a new directory object for the named directory.
   def initialize(@path)
-    @dir = LibC.opendir(@path)
+    @dir = LibC.opendir(@path.check_no_null_byte)
     unless @dir
       raise Errno.new("Error opening directory '#{@path}'")
     end
@@ -136,7 +85,7 @@ class Dir
   #
   # ```
   # d = Dir.new("testdir")
-  # d.each  {|x| puts "Got #{x}" }
+  # d.each { |x| puts "Got #{x}" }
   # ```
   #
   # produces:
@@ -161,17 +110,17 @@ class Dir
   #
   # ```
   # d = Dir.new("testdir")
-  # d.read   #=> "."
-  # d.read   #=> ".."
-  # d.read   #=> "config.h"
+  # d.read # => "."
+  # d.read # => ".."
+  # d.read # => "config.h"
   # ```
   def read
     # readdir() returns NULL for failure and sets errno or returns NULL for EOF but leaves errno as is.  wtf.
-    LibC.errno = 0
+    Errno.value = 0
     ent = LibC.readdir(@dir)
     if ent
-      String.new(ent.value.name.buffer)
-    elsif LibC.errno != 0
+      String.new(ent.value.name.to_unsafe)
+    elsif Errno.value != 0
       raise Errno.new("readdir")
     else
       nil
@@ -193,7 +142,8 @@ class Dir
     @closed = true
   end
 
-  def self.working_directory
+  # Returns the current working directory.
+  def self.current
     if dir = LibC.getcwd(nil, 0)
       String.new(dir).tap { LibC.free(dir as Void*) }
     else
@@ -202,28 +152,23 @@ class Dir
   end
 
   # Changes the current working directory of the process to the given string.
-  def self.chdir path
-    if LibC.chdir(path) != 0
+  def self.cd(path)
+    if LibC.chdir(path.check_no_null_byte) != 0
       raise Errno.new("Error while changing directory to #{path.inspect}")
     end
   end
 
   # Changes the current working directory of the process to the given string
   # and invokes the block, restoring the original working directory
-  # when the block exists.
-  def self.chdir(path)
-    old = working_directory
+  # when the block exits.
+  def self.cd(path)
+    old = current
     begin
-      chdir(path)
+      cd(path)
       yield
     ensure
-      chdir(old)
+      cd(old)
     end
-  end
-
-  # Alias for `chdir`.
-  def self.cd path
-    chdir(path)
   end
 
   # Calls the block once for each entry in the named directory,
@@ -245,221 +190,10 @@ class Dir
     entries
   end
 
-  def self.[](*patterns)
-    glob(patterns)
-  end
-
-  def self.[](patterns : Enumerable(String))
-    glob(patterns)
-  end
-
-  def self.glob(*patterns)
-    glob(patterns)
-  end
-
-  def self.glob(*patterns)
-    glob(patterns) do |pattern|
-      yield pattern
-    end
-  end
-
-  def self.glob(patterns : Enumerable(String))
-    paths = [] of String
-    glob(patterns) do |path|
-      paths << path
-    end
-    paths
-  end
-
-  def self.glob(patterns : Enumerable(String))
-    special = {'*', '?', '{', '}'}
-    cwd = self.working_directory
-    root = "/"  # assuming Linux or OS X
-    patterns.each do |ptrn|
-      next if ptrn.empty?
-      recursion_depth = ptrn.count(File::SEPARATOR)
-      if ptrn[0] == File::SEPARATOR
-        dir = root
-      else
-        dir = cwd
-      end
-      if ptrn.includes? "**"
-        recursion_depth = Int32::MAX
-      end
-
-      # optimize the glob by starting with the directory
-      # which is as nested as possible:
-      lastidx = 0
-      depth = 0
-      escaped = false
-      ptrn.each_char_with_index do |c, i|
-        if c == '\\'
-          escaped = true
-          next
-        elsif c == File::SEPARATOR
-          depth += 1
-          lastidx = i
-        elsif !escaped && special.includes? c
-          break
-        end
-        escaped = false
-      end
-
-      recursion_depth -= depth if recursion_depth != Int32::MAX
-      nested_path = ptrn[0...lastidx]
-      dir = File.join(dir, nested_path)
-      if !nested_path.empty? && nested_path[0] == File::SEPARATOR
-        nested_path = nested_path[1..-1]
-      end
-
-      regex = glob2regex(ptrn)
-
-      scandir(dir, nested_path, regex, 0, recursion_depth) do |path|
-        if ptrn[0] == File::SEPARATOR
-          yield "#{File::SEPARATOR}#{path}"
-        else
-          yield path
-        end
-      end
-    end
-  end
-
-  private def self.glob2regex(pattern)
-    if pattern.size == 0 || pattern == File::SEPARATOR
-      raise ArgumentError.new "Empty glob pattern"
-    end
-
-    # characters which are escapable by a backslash in a glob pattern;
-    # Windows paths must have double backslashes:
-    escapable = {'?', '{', '}', '*', ',', '\\'}
-    # characters which must be escaped in a PCRE regex:
-    escaped = {'$', '(', ')', '+', '.', '[', '^', '|', '/'}
-
-    regex_pattern = String.build do |str|
-      idx = 0
-      nest = 0
-
-      idx = 1 if pattern[0] == File::SEPARATOR
-
-      while idx < pattern.size
-        if pattern[idx] == '\\'
-          if idx + 1 < pattern.size && escapable.includes? pattern[idx + 1]
-            str << '\\'
-            str << pattern[idx + 1]
-            idx += 2
-            next
-          end
-        elsif pattern[idx] == '*'
-          if idx + 2 < pattern.size &&
-                       pattern[idx + 1] == '*' &&
-                       pattern[idx + 2] == File::SEPARATOR
-            str << "(?:.*\\#{File::SEPARATOR})?"
-            idx += 3
-            next
-          elsif idx + 1 < pattern.size && pattern[idx + 1] == '*'
-            str << ".*"
-            idx += 2
-            next
-          else
-            str << "[^\\#{File::SEPARATOR}]*"
-          end
-        elsif escaped.includes? pattern[idx]
-          str << "\\"
-          str << pattern[idx]
-        elsif pattern[idx] == '?'
-          str << "[^\\#{File::SEPARATOR}]"
-        elsif pattern[idx] == '{'
-          str << "(?:"
-          nest += 1
-        elsif pattern[idx] == '}'
-          str << ")"
-          nest -= 1
-        elsif pattern[idx] == ',' && nest > 0
-          str << "|"
-        else
-          str << pattern[idx]
-        end
-        idx += 1
-      end
-    end
-    return Regex.new("\\A#{regex_pattern}\\z")
-  end
-
-  private def self.scandir(dir_path, rel_path, regex, level, max_level)
-    dir_path_stack = [dir_path]
-    rel_path_stack = [rel_path]
-    level_stack = [level]
-    dir_stack = [] of Dir
-    recurse = true
-    until dir_path_stack.empty?
-      if recurse
-        begin
-          dir = Dir.new(dir_path)
-        rescue e
-          dir_path_stack.pop
-          rel_path_stack.pop
-          level_stack.pop
-          break if dir_path_stack.empty?
-          dir_path = dir_path_stack.last
-          rel_path = rel_path_stack.last
-          level = level_stack.last
-          next
-        ensure
-          recurse = false
-        end
-        dir_stack.push dir
-      end
-      begin
-        f = dir.read if dir
-      rescue e
-        f = nil
-      end
-      if f
-        fullpath = File.join dir_path, f
-        if rel_path.empty?
-          relpath = f
-        else
-          relpath = File.join rel_path, f
-        end
-        begin
-          isdir = Dir.exists?(fullpath) && !File.symlink?(fullpath)
-        rescue e
-          isdir = false
-        end
-        if isdir
-          if f != "." && f != ".." && level < max_level
-            dir_path_stack.push fullpath
-            rel_path_stack.push relpath
-            level_stack.push level + 1
-            dir_path = dir_path_stack.last
-            rel_path = rel_path_stack.last
-            level = level_stack.last
-            recurse = true
-            next
-          end
-        else
-          if level <= max_level || max_level == Int32::MAX
-            yield relpath if relpath =~ regex
-          end
-        end
-      else
-        dir.close if dir
-        dir_path_stack.pop
-        rel_path_stack.pop
-        level_stack.pop
-        dir_stack.pop
-        break if dir_path_stack.empty?
-        dir_path = dir_path_stack.last
-        rel_path = rel_path_stack.last
-        level = level_stack.last
-        dir = dir_stack.last
-      end
-    end
-  end
-
+  # Returns true if the given path exists and is a directory
   def self.exists?(path)
-    if LibC.stat(path, out stat) != 0
-      if LibC.errno == Errno::ENOENT
+    if LibC.stat(path.check_no_null_byte, out stat) != 0
+      if Errno.value == Errno::ENOENT
         return false
       else
         raise Errno.new("stat")
@@ -468,14 +202,19 @@ class Dir
     File::Stat.new(stat).directory?
   end
 
-  def self.mkdir(path, mode=0o777)
-    if LibC.mkdir(path, mode) == -1
+  # Creates a new directory at the given path. The linux-style permission mode
+  # can be specified, with a default of 777 (0o777).
+  def self.mkdir(path, mode = 0o777)
+    if LibC.mkdir(path.check_no_null_byte, mode) == -1
       raise Errno.new("Unable to create directory '#{path}'")
     end
     0
   end
 
-  def self.mkdir_p(path, mode=0o777)
+  # Creates a new directory at the given path, including any non-existing
+  # intermediate directories. The linux-style permission mode can be specified,
+  # with a default of 777 (0o777).
+  def self.mkdir_p(path, mode = 0o777)
     return 0 if Dir.exists?(path)
 
     components = path.split(File::SEPARATOR)
@@ -494,8 +233,9 @@ class Dir
     0
   end
 
+  # Removes the directory at the given path.
   def self.rmdir(path)
-    if LibC.rmdir(path) == -1
+    if LibC.rmdir(path.check_no_null_byte) == -1
       raise Errno.new("Unable to remove directory '#{path}'")
     end
     0
@@ -523,5 +263,4 @@ class Dir
   end
 end
 
-class GlobError < Exception
-end
+require "./dir/*"

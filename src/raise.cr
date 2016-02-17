@@ -24,7 +24,7 @@ struct LEBReader
     shift = 0
     while true
       byte = read_uint8
-      result |= ((0x7f_u64 & byte) << shift);
+      result |= ((0x7f_u64 & byte) << shift)
       break if (byte & 0x80_u8) == 0
       shift += 7
     end
@@ -41,11 +41,11 @@ fun __crystal_personality(version : Int32, actions : LibUnwind::Action, exceptio
   # puts "Personality - actions : #{actions}, start: #{start}, ip: #{ip}, throw_offset: #{throw_offset}"
 
   leb = LEBReader.new(lsd)
-  leb.read_uint8 # @LPStart encoding
+  leb.read_uint8               # @LPStart encoding
   if leb.read_uint8 != 0xff_u8 # @TType encoding
-    leb.read_uleb128 # @TType base offset
+    leb.read_uleb128           # @TType base offset
   end
-  leb.read_uint8 # CS Encoding
+  leb.read_uint8                     # CS Encoding
   cs_table_length = leb.read_uleb128 # CS table length
   cs_table_end = leb.data + cs_table_length
 
@@ -84,7 +84,7 @@ fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
   ret = LibUnwind.raise_exception(unwind_ex)
   LibC.printf "Could not raise"
   # caller.each do |point|
-    # puts point
+  # puts point
   # end
   LibC.exit(ret)
 end

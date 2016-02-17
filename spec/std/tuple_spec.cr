@@ -81,7 +81,7 @@ describe "Tuple" do
     a.should_not eq(d)
   end
 
-  it "does == with differnt types but same size" do
+  it "does == with different types but same size" do
     {1, 2}.should eq({1.0, 2.0})
   end
 
@@ -170,6 +170,28 @@ describe "Tuple" do
 
   it "does reverse" do
     {1, 2.5, "a", 'c'}.reverse.should eq({'c', "a", 2.5, 1})
+  end
+
+  it "does reverse_each" do
+    str = ""
+    {"a", "b", "c"}.reverse_each do |i|
+      str += i
+    end
+    str.should eq("cba")
+  end
+
+  describe "reverse_each iterator" do
+    it "does next" do
+      a = {1, 2, 3}
+      iter = a.reverse_each
+      iter.next.should eq(3)
+      iter.next.should eq(2)
+      iter.next.should eq(1)
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(3)
+    end
   end
 
   it "gets first element" do

@@ -24,12 +24,33 @@ describe "BigInt" do
     BigInt.new("12345678").to_s.should eq("12345678")
   end
 
+  it "raises if creates from string but invalid" do
+    expect_raises ArgumentError, "invalid BigInt: 123 hello 456" do
+      BigInt.new("123 hello 456")
+    end
+  end
+
+  it "creates from float" do
+    BigInt.new(12.3).to_s.should eq("12")
+  end
+
   it "compares" do
     1.to_big_i.should eq(1.to_big_i)
     1.to_big_i.should eq(1)
     1.to_big_i.should eq(1_u8)
 
     [3.to_big_i, 2.to_big_i, 10.to_big_i, 4, 8_u8].sort.should eq([2, 3, 4, 8, 10])
+  end
+
+  it "compares against float" do
+    1.to_big_i.should eq(1.0)
+    1.to_big_i.should eq(1.0_f32)
+    1.to_big_i.should_not eq(1.1)
+    1.0.should eq(1.to_big_i)
+    1.0_f32.should eq(1.to_big_i)
+    1.1.should_not eq(1.to_big_i)
+
+    [1.1, 1.to_big_i, 3.to_big_i, 2.2].sort.should eq([1, 1.1, 2.2, 3])
   end
 
   it "adds" do
@@ -142,6 +163,12 @@ describe "BigInt" do
     end
   end
 
+  it "exponentiates" do
+    result = (2.to_big_i ** 1000)
+    result.should be_a(BigInt)
+    result.to_s.should eq("10715086071862673209484250490600018105614048117055336074437503883703510511249361224931983788156958581275946729175531468251871452856923140435984577574698574803934567774824230985421074605062371141877954182153046474983581941267398767559165543946077062914571196477686542167660429831652624386837205668069376")
+  end
+
   it "does to_s in the given base" do
     a = BigInt.new("1234567890123456789")
     b = "1000100100010000100001111010001111101111010011000000100010101"
@@ -176,5 +203,8 @@ describe "BigInt" do
     "123456789123456789".to_big_i.should eq(BigInt.new("123456789123456789"))
     "abcabcabcabcabcabc".to_big_i(base: 16).should eq(BigInt.new("3169001976782853491388"))
   end
-end
 
+  it "does popcount" do
+    5.to_big_i.popcount.should eq(2)
+  end
+end

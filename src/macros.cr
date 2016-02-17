@@ -4,6 +4,9 @@
 # in the same order as declared. The struct only provides getters,
 # not setters, making it immutable by default.
 #
+# The properties can be type declarations, making the generated
+# struct only accept the given types.
+#
 # You can pass a block to this macro, that will be inserted inside
 # the struct definition.
 #
@@ -11,7 +14,7 @@
 # record Point, x, y
 #
 # point = Point.new 1, 2
-# point.to_s #=> "Point(@x=1, @y=2)"
+# point.to_s # => "Point(@x=1, @y=2)"
 # ```
 #
 # An example with the block version:
@@ -24,7 +27,18 @@
 # end
 #
 # person = Person.new "John", "Doe"
-# person.full_name #=> "John Doe"
+# person.full_name # => "John Doe"
+# ```
+#
+# An example with type declarations:
+#
+# ```
+# record Point,
+#   x : Int32,
+#   y : Int32
+#
+# Point.new 1, 2         # OK
+# Point.new "foo", "bar" # Error
 # ```
 macro record(name, *properties)
   struct {{name.id}}
@@ -36,7 +50,7 @@ macro record(name, *properties)
     {{yield}}
 
     def clone
-      {{name.id}}.new({{ *properties.map { |field| "@#{field.id}.clone".id } }})
+      {{name.id}}.new({{ *properties.map { |field| (field = field.var if field.is_a?(TypeDeclaration)); "@#{field.id}.clone".id } }})
     end
   end
 end

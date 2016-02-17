@@ -13,7 +13,7 @@ end
 
 class Neuron
   LEARNING_RATE = 1.0
-  MOMENTUM = 0.3
+  MOMENTUM      = 0.3
 
   property :synapses_in
   property :synapses_out
@@ -31,7 +31,7 @@ class Neuron
   end
 
   def calculate_output
-    activation = synapses_in.inject(0.0) do |sum, synapse|
+    activation = synapses_in.reduce(0.0) do |sum, synapse|
       sum + synapse.weight * synapse.source_neuron.output
     end
     activation -= threshold
@@ -49,7 +49,7 @@ class Neuron
   end
 
   def hidden_train(rate)
-    @error = synapses_out.inject(0.0) do |sum, synapse|
+    @error = synapses_out.reduce(0.0) do |sum, synapse|
       sum + synapse.prev_weight * synapse.dest_neuron.error
     end * derivative
     update_weights(rate)
@@ -58,7 +58,7 @@ class Neuron
   def update_weights(rate)
     synapses_in.each do |synapse|
       temp_weight = synapse.weight
-      synapse.weight += (rate * LEARNING_RATE * error * synapse.source_neuron.output) + (MOMENTUM * ( synapse.weight - synapse.prev_weight))
+      synapse.weight += (rate * LEARNING_RATE * error * synapse.source_neuron.output) + (MOMENTUM * (synapse.weight - synapse.prev_weight))
       synapse.prev_weight = temp_weight
     end
     temp_threshold = threshold
@@ -114,7 +114,6 @@ class NeuralNetwork
     end
   end
 end
-
 
 (ARGV[0]? || 5).to_i.times do
   xor = NeuralNetwork.new(2, 10, 1)

@@ -126,6 +126,18 @@ describe "Type inference: lib" do
       ") { int32 }
   end
 
+  it "types lib var get with forward declaration" do
+    assert_type("
+      lib LibC
+        $errno : A
+
+        alias A = Int32
+      end
+
+      LibC.errno
+      ") { int32 }
+  end
+
   it "defined fun with aliased type" do
     assert_type("
       lib LibC
@@ -293,13 +305,13 @@ describe "Type inference: lib" do
       "wrong number of link arguments (5 for 1..4)"
   end
 
-it "errors if unknown named arg" do
+  it "errors if unknown named arg" do
     assert_error %(
       @[Link(boo: "bar")]
       lib LibFoo
       end
       ),
-      "unkonwn link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
   end
 
   it "errors if lib already specified with positional argument" do
@@ -343,7 +355,7 @@ it "errors if unknown named arg" do
   end
 
   it "errors if lib fun call is part of dispatch" do
-    assert_error  %(
+    assert_error %(
       lib LibFoo
         fun foo : Int32
       end
@@ -575,5 +587,30 @@ it "errors if unknown named arg" do
       LibFoo.foo Foo.new
       ),
       "invoked 'to_i32' to convert from Foo to Int32, but got Char"
+  end
+
+  it "defines lib funs before funs with body" do
+    assert_type(%(
+      fun foo : Int32
+        LibX.x
+      end
+
+      lib LibX
+        fun x : Int32
+      end
+
+      foo
+      )) { int32 }
+  end
+
+  it "errors if using out with varargs" do
+    assert_error %(
+      lib LibX
+        fun x(...)
+      end
+
+      LibX.x(out z)
+      ),
+      "can't use out at varargs position: declare the variable with `z = uninitialized ...` and pass it with `pointerof(z)`"
   end
 end

@@ -71,7 +71,7 @@
   <% end %>
   <dl>
     <% type.constants.each do |const| %>
-      <dt class="entry-const">
+      <dt class="entry-const" id="<%= const.name %>">
         <strong><%= const.name %></strong> = <code><%= const.formatted_value %></code>
       </dt>
       <% if doc = const.formatted_doc %>
@@ -89,7 +89,8 @@
 
 <div class="methods-inherited">
   <% type.ancestors.each do |ancestor| %>
-    <%= MethodsInheritedTemplate.new(type, ancestor) %>
+    <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.instance_methods, "Instance") %>
+    <%= MethodsInheritedTemplate.new(type, ancestor, ancestor.class_methods, "Class") %>
   <% end %>
 </div>
 

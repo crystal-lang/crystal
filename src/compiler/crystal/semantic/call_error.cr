@@ -9,7 +9,7 @@ class Crystal::Call
 
   def raise_struct_or_union_field_not_found(owner, def_name)
     if def_name.ends_with?('=')
-    def_name = def_name[0 .. -2]
+      def_name = def_name[0..-2]
     end
 
     var = owner.vars[def_name]?
@@ -87,7 +87,7 @@ class Crystal::Call
         if similar_name
           if similar_name == def_name
             # This check is for the case `a if a = 1`
-            msg << colorize(" (if you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work)").yellow.bold
+            msg << colorize(" (If you declared '#{def_name}' in a suffix if, declare it in a regular if for this to work. If the variable was declared in a macro it's not visible outside it)").yellow.bold
           else
             msg << colorize(" (did you mean '#{similar_name}'?)").yellow.bold
           end
@@ -141,7 +141,7 @@ class Crystal::Call
       end
       all_arguments_sizes.uniq!.sort!
 
-      raise String.build do |str|
+      raise(String.build do |str|
         str << "wrong number of arguments for '"
         str << full_name(owner, def_name)
         str << "' ("
@@ -153,8 +153,8 @@ class Crystal::Call
         end
         str << ")\n"
         str << "Overloads are:"
-        append_matches(owner, defs, str)
-      end
+        append_matches(defs, str)
+      end)
     end
 
     if defs_matchin_args_size.size > 0
@@ -180,20 +180,22 @@ class Crystal::Call
     message = String.build do |msg|
       msg << "no overload matches '#{full_name(owner, def_name)}'"
       unless args.empty?
-        msg << " with types "
-        args.each_with_index do |arg, index|
-          msg << ", " if index > 0
+        types = [] of Type
+        args.each_with_index do |arg|
           arg_type = arg.type
 
           if arg.is_a?(Splat) && arg_type.is_a?(TupleInstanceType)
             arg_type.tuple_types.each_with_index do |tuple_type, sub_index|
-              msg << ", " if sub_index > 0
-              msg << tuple_type
+              types << tuple_type
             end
           else
-            msg << arg_type
+            types << arg_type
           end
         end
+        msg << " with type"
+        msg << "s" if types.size > 1
+        msg << " "
+        types.join(", ", msg)
       end
       msg << "\n"
 
@@ -202,7 +204,7 @@ class Crystal::Call
       end
 
       msg << "Overloads are:"
-      append_matches(owner, defs, msg)
+      append_matches(defs, msg)
 
       if matches
         cover = matches.cover
@@ -253,10 +255,10 @@ class Crystal::Call
     end
   end
 
-  def append_matches(owner, defs, str, matched_def = nil, argument_name = nil)
+  def append_matches(defs, str, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
       str << "\n - "
-      append_def_full_name owner, a_def, str
+      append_def_full_name a_def.owner, a_def, str
       if defs.size > 1 && a_def.same?(matched_def)
         str << colorize(" (trying this one)").blue
       end
@@ -267,10 +269,18 @@ class Crystal::Call
   end
 
   def def_full_name(owner, a_def)
+    Call.def_full_name(owner, a_def)
+  end
+
+  def self.def_full_name(owner, a_def)
     String.build { |io| append_def_full_name(owner, a_def, io) }
   end
 
   def append_def_full_name(owner, a_def, str)
+    Call.append_def_full_name(owner, a_def, str)
+  end
+
+  def self.append_def_full_name(owner, a_def, str)
     str << full_name(owner, a_def.name)
     str << '('
     a_def.args.each_with_index do |arg, i|
@@ -365,7 +375,7 @@ class Crystal::Call
 
           str << "\n"
           str << "Matches are:"
-          append_matches owner, defs, str, matched_def: a_def, argument_name: named_arg.name
+          append_matches defs, str, matched_def: a_def, argument_name: named_arg.name
         end
         named_arg.raise msg
       end
@@ -389,9 +399,36 @@ class Crystal::Call
         raise "private method '#{match.def.name}' called for #{match.def.owner}"
       end
     when :protected
-      unless scope.instance_type.implements?(match.def.owner.instance_type)
-        raise "protected method '#{match.def.name}' called for #{match.def.owner}"
-      end
+      scope_type = scope.instance_type
+      owner_type = match.def.owner.instance_type
+
+      # OK if in the same hierarchy
+      return if scope_type.implements?(owner_type)
+
+      # OK if both types are in the same namespace
+      return if in_same_namespace?(scope_type, owner_type)
+
+      raise "protected method '#{match.def.name}' called for #{match.def.owner}"
+    end
+  end
+
+  def in_same_namespace?(scope : ContainedType, target : ContainedType)
+    top_container(scope) == top_container(target) ||
+      scope.parents.try &.any? { |parent| in_same_namespace?(parent, target) }
+  end
+
+  def in_same_namespace?(scope, target)
+    false
+  end
+
+  def top_container(type)
+    case container = type.container
+    when Program
+      type
+    when ContainedType
+      top_container(container)
+    else
+      type
     end
   end
 
@@ -412,6 +449,10 @@ class Crystal::Call
   end
 
   def full_name(owner, def_name = name)
+    Call.full_name(owner, def_name)
+  end
+
+  def self.full_name(owner, def_name = name)
     owner.to_s_with_method_name(def_name)
   end
 

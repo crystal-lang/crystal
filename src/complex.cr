@@ -47,7 +47,7 @@ struct Complex
   end
 
   def conj
-    Complex.new(@real, - @imag)
+    Complex.new(@real, -@imag)
   end
 
   def inv
@@ -60,21 +60,21 @@ struct Complex
     r = abs
 
     re = if @real >= 0
-      0.5 * Math.sqrt(2.0 * (r + @real))
-    else
-      @imag.abs / Math.sqrt(2 * (r - @real))
-    end
+           0.5 * Math.sqrt(2.0 * (r + @real))
+         else
+           @imag.abs / Math.sqrt(2 * (r - @real))
+         end
 
     im = if @real <= 0
-      0.5 * Math.sqrt(2.0 * (r - @real))
-    else
-      @imag.abs / Math.sqrt(2 * (r + @real))
-    end
+           0.5 * Math.sqrt(2.0 * (r - @real))
+         else
+           @imag.abs / Math.sqrt(2 * (r + @real))
+         end
 
     if @imag >= 0
       Complex.new(re, im)
     else
-      Complex.new(re, - im)
+      Complex.new(re, -im)
     end
   end
 
@@ -104,7 +104,7 @@ struct Complex
   end
 
   def -
-    Complex.new(- @real, - @imag)
+    Complex.new(-@real, -@imag)
   end
 
   def -(other : Complex)
@@ -166,7 +166,7 @@ struct Number
   end
 
   def -(other : Complex)
-    Complex.new(self - other.real, - other.imag)
+    Complex.new(self - other.real, -other.imag)
   end
 
   def *(other : Complex)

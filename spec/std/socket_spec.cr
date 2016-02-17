@@ -23,12 +23,11 @@ describe "UNIXSocket" do
           sock.peeraddr.path.should eq("")
 
           client << "ping"
-          sock.read(4).should eq("ping")
+          sock.gets(4).should eq("ping")
           sock << "pong"
-          client.read(4).should eq("pong")
+          client.gets(4).should eq("pong")
         end
       end
-
 
       # test sync flag propagation after accept
       server.sync = !server.sync?
@@ -47,15 +46,15 @@ describe "UNIXSocket" do
       left.addr.path.should eq("")
 
       left << "ping"
-      right.read(4).should eq("ping")
+      right.gets(4).should eq("ping")
       right << "pong"
-      left.read(4).should eq("pong")
+      left.gets(4).should eq("pong")
     end
   end
 
   it "tests read and write timeouts" do
     UNIXSocket.pair do |left, right|
-# BUG: shrink the socket buffers first
+      # BUG: shrink the socket buffers first
       left.write_timeout = 0.0001
       right.read_timeout = 0.0001
       buf = ("a" * 4096).to_slice
@@ -93,11 +92,20 @@ describe "UNIXSocket" do
   end
 end
 
+describe "TCPServer" do
+  it "fails when port is in use" do
+    expect_raises Errno, /already in use/ do
+      TCPServer.open("::", 0) do |server|
+        TCPServer.open("::", server.addr.ip_port) { }
+      end
+    end
+  end
+end
+
 describe "TCPSocket" do
   it "sends and receives messages" do
-    TCPServer.open("::", 12345) do |server|
+    TCPServer.open("::", 0) do |server|
       server.addr.family.should eq("AF_INET6")
-      server.addr.ip_port.should eq(12345)
       server.addr.ip_address.should eq("::")
 
       # test protocol specific socket options
@@ -117,8 +125,8 @@ describe "TCPSocket" do
       (server.linger = 42).should eq 42
       server.linger.should eq 42
 
-      TCPSocket.open("localhost", 12345) do |client|
-        # The commented lines are actually dependant on the system configuration,
+      TCPSocket.open("::", server.addr.ip_port) do |client|
+        # The commented lines are actually dependent on the system configuration,
         # so for now we keep it commented. Once we can force the family
         # we can uncomment them.
 
@@ -129,7 +137,6 @@ describe "TCPSocket" do
         sock.sync?.should eq(server.sync?)
 
         # sock.addr.family.should eq("AF_INET6")
-        # sock.addr.ip_port.should eq(12345)
         # sock.addr.ip_address.should eq("::ffff:127.0.0.1")
 
         # sock.peeraddr.family.should eq("AF_INET6")
@@ -149,16 +156,15 @@ describe "TCPSocket" do
         client.tcp_keepalive_count.should eq 42
 
         client << "ping"
-        sock.read(4).should eq("ping")
+        sock.gets(4).should eq("ping")
         sock << "pong"
-        client.read(4).should eq("pong")
+        client.gets(4).should eq("pong")
       end
-
 
       # test sync flag propagation after accept
       server.sync = !server.sync?
 
-      TCPSocket.open("localhost", 12345) do |client|
+      TCPSocket.open("localhost", server.addr.ip_port) do |client|
         sock = server.accept
         sock.sync?.should eq(server.sync?)
       end
@@ -166,8 +172,13 @@ describe "TCPSocket" do
   end
 
   it "fails when connection is refused" do
-    expect_raises(Errno, "Error connecting to 'localhost:12345': Connection refused") do
-      TCPSocket.new("localhost", 12345)
+    port = 0
+    TCPServer.open("localhost", port) do |server|
+      port = server.addr.ip_port
+    end
+
+    expect_raises(Errno, "Error connecting to 'localhost:#{port}': Connection refused") do
+      TCPSocket.new("localhost", port)
     end
   end
 
@@ -181,23 +192,22 @@ end
 describe "UDPSocket" do
   it "sends and receives messages" do
     server = UDPSocket.new(Socket::Family::INET6)
-    server.bind("::", 12346)
+    server.bind("::", 0)
 
     server.addr.family.should eq("AF_INET6")
-    server.addr.ip_port.should eq(12346)
     server.addr.ip_address.should eq("::")
 
     client = UDPSocket.new(Socket::Family::INET)
-    client.connect("localhost", 12346)
+    client.connect("localhost", server.addr.ip_port)
 
     client.addr.family.should eq("AF_INET")
     client.addr.ip_address.should eq("127.0.0.1")
     client.peeraddr.family.should eq("AF_INET")
-    client.peeraddr.ip_port.should eq(12346)
+    client.peeraddr.ip_port.should eq(server.addr.ip_port)
     client.peeraddr.ip_address.should eq("127.0.0.1")
 
     client << "message"
-    server.read(7).should eq("message")
+    server.gets(7).should eq("message")
 
     client.close
     server.close

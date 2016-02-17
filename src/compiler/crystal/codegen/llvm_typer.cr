@@ -4,9 +4,9 @@ require "llvm"
 module Crystal
   class LLVMTyper
     TYPE_ID_POINTER = LLVM::Int32.pointer
-    FUN_TYPE = LLVM::Type.struct [LLVM::VoidPointer, LLVM::VoidPointer], "->"
-    NIL_TYPE = LLVM::Type.struct([] of LLVM::Type, "Nil")
-    NIL_VALUE = NIL_TYPE.null
+    FUN_TYPE        = LLVM::Type.struct [LLVM::VoidPointer, LLVM::VoidPointer], "->"
+    NIL_TYPE        = LLVM::Type.struct([] of LLVM::Type, "Nil")
+    NIL_VALUE       = NIL_TYPE.null
 
     getter landing_pad_type
 
@@ -24,10 +24,10 @@ module Crystal
 
     def llvm_string_type(bytesize)
       LLVM::Type.struct [
-        LLVM::Int32,                              # type_id
-        LLVM::Int32,                              # @bytesize
-        LLVM::Int32,                              # @length
-        LLVM::Int8.array(bytesize + 1) # @c
+        LLVM::Int32,                    # type_id
+        LLVM::Int32,                    # @bytesize
+        LLVM::Int32,                    # @length
+        LLVM::Int8.array(bytesize + 1), # @c
       ]
     end
 
@@ -223,20 +223,36 @@ module Crystal
         @struct_cache[type] = a_struct
 
         max_size = 0
-        max_type = nil
+        max_align = 0
+        max_align_type = nil
+        max_align_type_size = 0
+
         type.vars.each do |name, var|
           var_type = var.type
           unless var_type.void?
             llvm_type = llvm_embedded_c_type(var_type)
             size = size_of(llvm_type)
+            align = align_of(llvm_type)
+
             if size > max_size
               max_size = size
-              max_type = llvm_type
+            end
+
+            if align > max_align
+              max_align = align
+              max_align_type = llvm_type
+              max_align_type_size = size
             end
           end
         end
 
-        [max_type.not_nil!] of LLVM::Type
+        max_align_type = max_align_type.not_nil!
+        union_fill = [max_align_type] of LLVM::Type
+        if max_align_type_size < max_size
+          union_fill << LLVM::Int8.array(max_size - max_align_type_size)
+        end
+
+        union_fill
       end
     end
 
@@ -387,6 +403,10 @@ module Crystal
       else
         @layout.size_in_bytes type
       end
+    end
+
+    def align_of(type)
+      @layout.abi_alignment(type)
     end
 
     def pointer_size

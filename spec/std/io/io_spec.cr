@@ -1,30 +1,40 @@
 require "spec"
+require "big_int"
 
-# This is a non-optimized version of StringIO so we can test
+# This is a non-optimized version of MemoryIO so we can test
 # raw IO. Optimizations for specific IOs are tested separately
 # (for example in buffered_io_spec)
-class SimpleStringIO
+class SimpleMemoryIO
   include IO
 
   getter buffer
   getter bytesize
 
-  def initialize(capacity = 64)
+  def initialize(capacity = 64, @max_read = nil)
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
     @bytesize = 0
     @capacity = capacity
     @pos = 0
   end
 
-  def self.new(string : String)
-    io = new(string.bytesize)
+  def self.new(string : String, max_read = nil)
+    io = new(string.bytesize, max_read: max_read)
     io << string
+    io
+  end
+
+  def self.new(bytes : Slice(UInt8), max_read = nil)
+    io = new(bytes.size, max_read: max_read)
+    io.write(bytes)
     io
   end
 
   def read(slice : Slice(UInt8))
     count = slice.size
     count = Math.min(count, @bytesize - @pos)
+    if max_read = @max_read
+      count = Math.min(count, max_read)
+    end
     slice.copy_from(@buffer + @pos, count)
     @pos += count
     count
@@ -40,7 +50,11 @@ class SimpleStringIO
     slice.copy_to(@buffer + @bytesize, count)
     @bytesize += count
 
-    count
+    nil
+  end
+
+  def to_slice
+    Slice.new(@buffer, @bytesize)
   end
 
   private def check_needs_resize
@@ -80,13 +94,13 @@ describe IO do
     it "doesn't block on first read.  blocks on 2nd read" do
       IO.pipe do |read, write|
         write.puts "hello"
-	slice = Slice(UInt8).new 1024
+        slice = Slice(UInt8).new 1024
 
         read.read_timeout = 1
         read.read(slice).should eq(6)
 
         expect_raises(IO::Timeout) do
-          read.read_timeout = 0.0001
+          read.read_timeout = 0.0000001
           read.read(slice)
         end
       end
@@ -95,7 +109,7 @@ describe IO do
 
   describe "IO iterators" do
     it "iterates by line" do
-      io = StringIO.new("hello\nbye\n")
+      io = MemoryIO.new("hello\nbye\n")
       lines = io.each_line
       lines.next.should eq("hello\n")
       lines.next.should eq("bye\n")
@@ -106,7 +120,7 @@ describe IO do
     end
 
     it "iterates by char" do
-      io = StringIO.new("abあぼ")
+      io = MemoryIO.new("abあぼ")
       chars = io.each_char
       chars.next.should eq('a')
       chars.next.should eq('b')
@@ -119,7 +133,7 @@ describe IO do
     end
 
     it "iterates by byte" do
-      io = StringIO.new("ab")
+      io = MemoryIO.new("ab")
       bytes = io.each_byte
       bytes.next.should eq('a'.ord)
       bytes.next.should eq('b'.ord)
@@ -132,8 +146,8 @@ describe IO do
 
   it "copies" do
     string = "abあぼ"
-    src = StringIO.new(string)
-    dst = StringIO.new
+    src = MemoryIO.new(string)
+    dst = MemoryIO.new
     IO.copy(src, dst).should eq(string.bytesize)
     dst.to_s.should eq(string)
   end
@@ -149,7 +163,7 @@ describe IO do
 
   describe "read operations" do
     it "does gets" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.gets.should eq("hello\n")
       io.gets.should eq("world\n")
       io.gets.should be_nil
@@ -157,12 +171,12 @@ describe IO do
 
     it "does gets with big line" do
       big_line = "a" * 20_000
-      io = SimpleStringIO.new("#{big_line}\nworld\n")
+      io = SimpleMemoryIO.new("#{big_line}\nworld\n")
       io.gets.should eq("#{big_line}\n")
     end
 
     it "does gets with char delimiter" do
-      io = SimpleStringIO.new("hello world")
+      io = SimpleMemoryIO.new("hello world")
       io.gets('w').should eq("hello w")
       io.gets('r').should eq("or")
       io.gets('r').should eq("ld")
@@ -170,33 +184,33 @@ describe IO do
     end
 
     it "does gets with unicode char delimiter" do
-      io = SimpleStringIO.new("こんにちは")
+      io = SimpleMemoryIO.new("こんにちは")
       io.gets('ち').should eq("こんにち")
       io.gets('ち').should eq("は")
       io.gets('ち').should be_nil
     end
 
     it "gets with string as delimiter" do
-      io = SimpleStringIO.new("hello world")
+      io = SimpleMemoryIO.new("hello world")
       io.gets("lo").should eq("hello")
       io.gets("rl").should eq(" worl")
       io.gets("foo").should eq("d")
     end
 
     it "gets with empty string as delimiter" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.gets("").should eq("hello\nworld\n")
     end
 
     it "gets with single byte string as delimiter" do
-      io = SimpleStringIO.new("hello\nworld\nbye")
+      io = SimpleMemoryIO.new("hello\nworld\nbye")
       io.gets("\n").should eq("hello\n")
       io.gets("\n").should eq("world\n")
       io.gets("\n").should eq("bye")
     end
 
     it "does gets with limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.gets(3).should eq("hel")
       io.gets(10_000).should eq("lo\n")
       io.gets(10_000).should eq("world\n")
@@ -204,7 +218,7 @@ describe IO do
     end
 
     it "does gets with char and limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.gets('o', 2).should eq("he")
       io.gets('w', 10_000).should eq("llo\nw")
       io.gets('z', 10_000).should eq("orld\n")
@@ -212,14 +226,14 @@ describe IO do
     end
 
     it "raises if invoking gets with negative limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       expect_raises ArgumentError, "negative limit" do
         io.gets(-1)
       end
     end
 
     it "does read_line with limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.read_line(3).should eq("hel")
       io.read_line(10_000).should eq("lo\n")
       io.read_line(10_000).should eq("world\n")
@@ -227,7 +241,7 @@ describe IO do
     end
 
     it "does read_line with char and limit" do
-      io = SimpleStringIO.new("hello\nworld\n")
+      io = SimpleMemoryIO.new("hello\nworld\n")
       io.read_line('o', 2).should eq("he")
       io.read_line('w', 10_000).should eq("llo\nw")
       io.read_line('z', 10_000).should eq("orld\n")
@@ -235,27 +249,13 @@ describe IO do
     end
 
     it "reads all remaining content" do
-      io = SimpleStringIO.new("foo\nbar\nbaz\n")
+      io = SimpleMemoryIO.new("foo\nbar\nbaz\n")
       io.gets.should eq("foo\n")
-      io.read.should eq("bar\nbaz\n")
-    end
-
-    it "does read with limit" do
-      io = SimpleStringIO.new("hello world")
-      io.read(5).should eq("hello")
-      io.read(10).should eq(" world")
-      io.read(5).should eq("")
-    end
-
-    it "raises argument error if reads negative count" do
-      io = SimpleStringIO.new("hello world")
-      expect_raises(ArgumentError, "negative count") do
-        io.read(-1)
-      end
+      io.gets_to_end.should eq("bar\nbaz\n")
     end
 
     it "reads char" do
-      io = SimpleStringIO.new("hi 世界")
+      io = SimpleMemoryIO.new("hi 世界")
       io.read_char.should eq('h')
       io.read_char.should eq('i')
       io.read_char.should eq(' ')
@@ -265,7 +265,7 @@ describe IO do
     end
 
     it "reads byte" do
-      io = SimpleStringIO.new("hello")
+      io = SimpleMemoryIO.new("hello")
       io.read_byte.should eq('h'.ord)
       io.read_byte.should eq('e'.ord)
       io.read_byte.should eq('l'.ord)
@@ -275,7 +275,7 @@ describe IO do
     end
 
     it "does each_line" do
-      io = SimpleStringIO.new("a\nbb\ncc")
+      io = SimpleMemoryIO.new("a\nbb\ncc")
       counter = 0
       io.each_line do |line|
         case counter
@@ -292,7 +292,7 @@ describe IO do
     end
 
     it "raises on EOF with read_line" do
-      str = SimpleStringIO.new("hello")
+      str = SimpleMemoryIO.new("hello")
       str.read_line.should eq("hello")
 
       expect_raises IO::EOFError, "end of file reached" do
@@ -301,7 +301,7 @@ describe IO do
     end
 
     it "raises on EOF with readline and delimiter" do
-      str = SimpleStringIO.new("hello")
+      str = SimpleMemoryIO.new("hello")
       str.read_line('e').should eq("he")
       str.read_line('e').should eq("llo")
 
@@ -311,7 +311,7 @@ describe IO do
     end
 
     it "does read_fully" do
-      str = SimpleStringIO.new("hello")
+      str = SimpleMemoryIO.new("hello")
       slice = Slice(UInt8).new(4)
       str.read_fully(slice)
       String.new(slice).should eq("hell")
@@ -324,65 +324,323 @@ describe IO do
 
   describe "write operations" do
     it "does puts" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.puts "Hello"
-      io.read.should eq("Hello\n")
+      io.gets_to_end.should eq("Hello\n")
     end
 
     it "does puts with big string" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       s = "*" * 20_000
       io << "hello"
       io << s
-      io.read.should eq("hello#{s}")
+      io.gets_to_end.should eq("hello#{s}")
     end
 
     it "does puts many times" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       10_000.times { io << "hello" }
-      io.read.should eq("hello" * 10_000)
+      io.gets_to_end.should eq("hello" * 10_000)
     end
 
     it "puts several arguments" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.puts(1, "aaa", "\n")
-      io.read.should eq("1\naaa\n\n")
+      io.gets_to_end.should eq("1\naaa\n\n")
     end
 
     it "prints" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.print "foo"
-      io.read.should eq("foo")
+      io.gets_to_end.should eq("foo")
     end
 
     it "prints several arguments" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.print "foo", "bar", "baz"
-      io.read.should eq("foobarbaz")
+      io.gets_to_end.should eq("foobarbaz")
     end
 
     it "writes bytes" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       10_000.times { io.write_byte 'a'.ord.to_u8 }
-      io.read.should eq("a" * 10_000)
-    end
-
-    it "writes an array of bytes" do
-      io = SimpleStringIO.new
-      io.write ['a'.ord.to_u8, 'b'.ord.to_u8]
-      io.read.should eq("ab")
+      io.gets_to_end.should eq("a" * 10_000)
     end
 
     it "writes with printf" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.printf "Hello %d", 123
-      io.read.should eq("Hello 123")
+      io.gets_to_end.should eq("Hello 123")
     end
 
     it "writes with printf as an array" do
-      io = SimpleStringIO.new
+      io = SimpleMemoryIO.new
       io.printf "Hello %d", [123]
-      io.read.should eq("Hello 123")
+      io.gets_to_end.should eq("Hello 123")
+    end
+
+    it "skips a few bytes" do
+      io = SimpleMemoryIO.new
+      io << "hello world"
+      io.skip(6)
+      io.gets_to_end.should eq("world")
+    end
+  end
+
+  describe "encoding" do
+    describe "decode" do
+      it "gets_to_end" do
+        str = "Hello world" * 200
+        io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets_to_end.should eq(str)
+      end
+
+      it "gets" do
+        str = "Hello world\nFoo\nBar"
+        io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets.should eq("Hello world\n")
+        io.gets.should eq("Foo\n")
+        io.gets.should eq("Bar")
+        io.gets.should be_nil
+      end
+
+      it "gets big string" do
+        str = "Hello\nWorld\n" * 10_000
+        io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        10_000.times do |i|
+          io.gets.should eq("Hello\n")
+          io.gets.should eq("World\n")
+        end
+      end
+
+      it "gets big GB2312 string" do
+        2.times do
+          str = ("你好我是人\n" * 1000).encode("GB2312")
+          io = SimpleMemoryIO.new(str)
+          io.set_encoding("GB2312")
+          1000.times do
+            io.gets.should eq("你好我是人\n")
+          end
+        end
+      end
+
+      it "gets with limit" do
+        str = "Hello\nWorld\n"
+        io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets(3).should eq("Hel")
+      end
+
+      it "gets with limit (small, no newline)" do
+        str = "Hello world" * 10_000
+        io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets(3).should eq("Hel")
+      end
+
+      it "gets with limit (big)" do
+        str = "Hello world" * 10_000
+        io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets(20_000).should eq(str[0, 20_000])
+      end
+
+      it "gets with string delimiter" do
+        str = "Hello world\nFoo\nBar"
+        io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        io.gets("wo").should eq("Hello wo")
+        io.gets("oo").should eq("rld\nFoo")
+        io.gets("xx").should eq("\nBar")
+        io.gets("zz").should be_nil
+      end
+
+      it "reads char" do
+        str = "Hello world"
+        io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        str.each_char do |char|
+          io.read_char.should eq(char)
+        end
+        io.read_char.should be_nil
+      end
+
+      it "reads utf8 byte" do
+        str = "Hello world"
+        io = SimpleMemoryIO.new(str.encode("UCS-2LE"))
+        io.set_encoding("UCS-2LE")
+        str.each_byte do |byte|
+          io.read_utf8_byte.should eq(byte)
+        end
+        io.read_utf8_byte.should be_nil
+      end
+
+      it "reads utf8" do
+        io = MemoryIO.new("你".encode("GB2312"))
+        io.set_encoding("GB2312")
+
+        buffer = uninitialized UInt8[1024]
+        bytes_read = io.read_utf8(buffer.to_slice) # => 3
+        bytes_read.should eq(3)
+        buffer.to_slice[0, bytes_read].to_a.should eq("你".bytes)
+      end
+
+      it "raises on incomplete byte sequence" do
+        io = SimpleMemoryIO.new("好".byte_slice(0, 1))
+        io.set_encoding("GB2312")
+        expect_raises ArgumentError, "incomplete multibyte sequence" do
+          io.read_char
+        end
+      end
+
+      it "says invalid byte sequence" do
+        io = SimpleMemoryIO.new(Slice.new(1, 140_u8))
+        io.set_encoding("GB2312")
+        expect_raises ArgumentError, "invalid multibyte sequence" do
+          io.read_char
+        end
+      end
+
+      it "skips invalid byte sequences" do
+        string = String.build do |str|
+          str.write "好".encode("GB2312")
+          str.write_byte 140_u8
+          str.write "是".encode("GB2312")
+        end
+        io = SimpleMemoryIO.new(string)
+        io.set_encoding("GB2312", invalid: :skip)
+        io.read_char.should eq('好')
+        io.read_char.should eq('是')
+        io.read_char.should be_nil
+      end
+
+      it "says invalid 'invalid' option" do
+        io = SimpleMemoryIO.new
+        expect_raises ArgumentError, "valid values for `invalid` option are `nil` and `:skip`, not :foo" do
+          io.set_encoding("GB2312", invalid: :foo)
+        end
+      end
+
+      it "says invalid encoding" do
+        io = SimpleMemoryIO.new("foo")
+        io.set_encoding("FOO")
+        expect_raises ArgumentError, "invalid encoding: FOO" do
+          io.gets_to_end
+        end
+      end
+    end
+
+    describe "encode" do
+      it "prints a string" do
+        str = "Hello world"
+        io = SimpleMemoryIO.new
+        io.set_encoding("UCS-2LE")
+        io.print str
+        slice = io.to_slice
+        slice.should eq(str.encode("UCS-2LE"))
+      end
+
+      it "prints numbers" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("UCS-2LE")
+        io.print 0
+        io.print 1_u8
+        io.print 2_u16
+        io.print 3_u32
+        io.print 4_u64
+        io.print 5_i8
+        io.print 6_i16
+        io.print 7_i32
+        io.print 8_i64
+        io.print 9.1_f32
+        io.print 10.11_f64
+        slice = io.to_slice
+        slice.should eq("0123456789.110.11".encode("UCS-2LE"))
+      end
+
+      it "prints bool" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("UCS-2LE")
+        io.print true
+        io.print false
+        slice = io.to_slice
+        slice.should eq("truefalse".encode("UCS-2LE"))
+      end
+
+      it "prints char" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("UCS-2LE")
+        io.print 'a'
+        slice = io.to_slice
+        slice.should eq("a".encode("UCS-2LE"))
+      end
+
+      it "prints symbol" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("UCS-2LE")
+        io.print :foo
+        slice = io.to_slice
+        slice.should eq("foo".encode("UCS-2LE"))
+      end
+
+      it "prints big int" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("UCS-2LE")
+        io.print 123_456.to_big_i
+        slice = io.to_slice
+        slice.should eq("123456".encode("UCS-2LE"))
+      end
+
+      it "puts" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("UCS-2LE")
+        io.puts 1
+        io.puts
+        slice = io.to_slice
+        slice.should eq("1\n\n".encode("UCS-2LE"))
+      end
+
+      it "printf" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("UCS-2LE")
+        io.printf "%s-%d-%.2f", "hi", 123, 45.67
+        slice = io.to_slice
+        slice.should eq("hi-123-45.67".encode("UCS-2LE"))
+      end
+
+      it "raises on invalid byte sequence" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("GB2312")
+        expect_raises ArgumentError, "invalid multibyte sequence" do
+          io.print "ñ"
+        end
+      end
+
+      it "skips on invalid byte sequence" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("GB2312", invalid: :skip)
+        io.print "ñ"
+        io.print "foo"
+      end
+
+      it "raises on incomplete byte sequence" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("GB2312")
+        expect_raises ArgumentError, "incomplete multibyte sequence" do
+          io.print "好".byte_slice(0, 1)
+        end
+      end
+
+      it "says invalid encoding" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("FOO")
+        expect_raises ArgumentError, "invalid encoding: FOO" do
+          io.puts "a"
+        end
+      end
     end
   end
 end

@@ -10,27 +10,29 @@
 # followed by numbers or underscores, followed by an optional exponent suffix,
 # followed by an optional type suffix. If no suffix is present, the literal's type is `Float64`.
 #
-# ```text
-# 1.0      # Float64
-# 1.0_f32  # Float32
-# 1_f32    # Float32
+# ```
+# 1.0     # Float64
+# 1.0_f32 # Float32
+# 1_f32   # Float32
 #
-# 1e10     # Float64
-# 1.5e10   # Float64
-# 1.5e-7   # Float64
+# 1e10   # Float64
+# 1.5e10 # Float64
+# 1.5e-7 # Float64
 #
-# +1.3     # Float64
-# -0.5     # Float64
+# +1.3 # Float64
+# -0.5 # Float64
 # ```
 #
 # The underscore `_` before the suffix is optional.
 #
 # Underscores can be used to make some numbers more readable:
 #
-# ```text
+# ```
 # 1_000_000.111_111 # better than 1000000.111111
 # ```
 struct Float
+  alias Primitive = Float32 | Float64
+
   def %(other)
     modulo(other)
   end
@@ -75,13 +77,25 @@ struct Float
       mod - other
     end
   end
+
+  # Writes this float to the given *io* in the given *format*.
+  # See `IO#write_bytes`.
+  def to_io(io : IO, format : IO::ByteFormat)
+    format.encode(self, io)
+  end
+
+  # Reads a float from the given *io* in the given *format*.
+  # See `IO#read_bytes`.
+  def self.from_io(io : IO, format : IO::ByteFormat)
+    format.decode(self, io)
+  end
 end
 
 struct Float32
-  NAN = 0_f32 / 0_f32
+  NAN      = 0_f32 / 0_f32
   INFINITY = 1_f32 / 0_f32
-  MIN = -INFINITY
-  MAX =  INFINITY
+  MIN      = -INFINITY
+  MAX      = INFINITY
 
   def -
     0.0_f32 - self
@@ -130,10 +144,10 @@ struct Float32
 end
 
 struct Float64
-  NAN = 0_f64 / 0_f64
+  NAN      = 0_f64 / 0_f64
   INFINITY = 1_f64 / 0_f64
-  MIN = -INFINITY
-  MAX =  INFINITY
+  MIN      = -INFINITY
+  MAX      = INFINITY
 
   def -
     0.0 - self
@@ -178,7 +192,7 @@ struct Float64
   def to_s(io : IO)
     chars = StaticArray(UInt8, 22).new(0_u8)
     LibC.snprintf(chars, 22, "%g", self)
-    io.write chars.to_slice[0, LibC.strlen(chars.buffer)]
+    io.write_utf8 chars.to_slice[0, LibC.strlen(chars)]
   end
 
   def hash

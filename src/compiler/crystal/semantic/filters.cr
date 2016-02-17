@@ -70,6 +70,7 @@ module Crystal
     def to_s(io)
       io << "F("
       @type.to_s(io)
+      io << ")"
     end
   end
 

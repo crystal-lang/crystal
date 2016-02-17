@@ -20,4 +20,3 @@ struct CSV::Token
     @value = ""
   end
 end
-

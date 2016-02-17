@@ -1,56 +1,132 @@
 require "openssl"
 require "socket"
+require "./context"
+require "./handler"
+require "./response"
 require "../common"
 
-abstract class HTTP::Handler
-  property :next
-
-  def call_next(request)
-    if next_handler = @next
-      next_handler.call(request)
-    else
-      HTTP::Response.not_found
-    end
-  end
-end
-
-require "./handlers/*"
-
+# An HTTP server.
+#
+# A server is given a handler that receives an `HTTP::Server::Context` that holds
+# the `HTTP::Request` to process and must in turn configure and write to an `HTTP::Server::Response`.
+#
+# The `HTTP::Server::Response` object has `status` and `headers` properties that can be
+# configured before writing the response body. Once response output is written,
+# changing the `status` and `headers` properties has no effect.
+#
+# The `HTTP::Server::Response` is also a write-only `IO`, so all `IO` methods are available
+# in it.
+#
+# The handler given to a server can simply be a block that receives an `HTTP::Server::Context`,
+# or it can be an `HTTP::Handler`. An `HTTP::Handler` has an optional `next` handler,
+# so handlers can be chained. For example, an initial handler may handle exceptions
+# in a subsequent handler and return a 500 staus code (see `HTTP::ErrorHandler`),
+# the next handler might log the incoming request (see `HTTP::LogHandler`), and
+# the final handler deals with routing and application logic.
+#
+# ### Simple Setup
+#
+# A handler is given with a block.
+#
+# ```
+# require "http/server"
+#
+# server = HTTP::Server.new(8080) do |context|
+#   context.response.content_type = "text/plain"
+#   context.response.print "Hello world!"
+# end
+#
+# puts "Listening on http://127.0.0.1:8080"
+# server.listen
+# ```
+#
+# ### With non-localhost bind address
+#
+# ```
+# require "http/server"
+#
+# server = HTTP::Server.new("0.0.0.0", 8080) do |context|
+#   context.response.content_type = "text/plain"
+#   context.response.print "Hello world!"
+# end
+#
+# puts "Listening on http://0.0.0.0:8080"
+# server.listen
+# ```
+#
+# ### Add handlers
+#
+# A series of handlers are chained.
+#
+# ```
+# require "http/server"
+#
+# Server.new("127.0.0.1", 8080, [
+#   ErrorHandler.new,
+#   LogHandler.new,
+#   DeflateHandler.new,
+#   StaticFileHandler.new("."),
+# ]).listen
+# ```
+#
+# ### Add handlers and block
+#
+# A series of handlers is chained, the last one being the given block.
+#
+# ```
+# require "http/server"
+#
+# server = HTTP::Server.new("0.0.0.0", 8080,
+#   [
+#     ErrorHandler.new,
+#     LogHandler.new,
+#   ]) do |context|
+#   context.response.content_type = "text/plain"
+#   context.response.print "Hello world!"
+# end
+#
+# server.listen
+# ```
 class HTTP::Server
   property ssl
 
   @wants_close = false
 
-  def initialize(@port, &@handler : Request -> Response)
+  def self.new(port, &handler : Context ->)
+    new("127.0.0.1", port, &handler)
   end
 
-  def initialize(@port, handlers : Array(HTTP::Handler), &block : Request -> Response)
-    @handler = HTTP::Server.build_middleware handlers, block
+  def self.new(port, handlers : Array(HTTP::Handler), &handler : Context ->)
+    new("127.0.0.1", port, handlers, &handler)
   end
 
-  def initialize(@port, handlers : Array(HTTP::Handler))
+  def self.new(port, handlers : Array(HTTP::Handler))
+    new("127.0.0.1", port, handlers)
+  end
+
+  def self.new(port, handler)
+    new("127.0.0.1", port, handler)
+  end
+
+  def initialize(@host, @port, &@handler : Context ->)
+  end
+
+  def initialize(@host, @port, handlers : Array(HTTP::Handler), &handler : Context ->)
+    @handler = HTTP::Server.build_middleware handlers, handler
+  end
+
+  def initialize(@host, @port, handlers : Array(HTTP::Handler))
     @handler = HTTP::Server.build_middleware handlers
   end
 
-  def initialize(@port, @handler)
+  def initialize(@host, @port, @handler)
   end
 
   def listen
-    server = TCPServer.new(@port)
+    server = TCPServer.new(@host, @port)
     until @wants_close
       spawn handle_client(server.accept)
     end
-  end
-
-  def listen_fork(workers = 8)
-    server = TCPServer.new(@port)
-    workers.times do
-      fork do
-        loop { spawn handle_client(server.accept) }
-      end
-    end
-
-    gets
   end
 
   def close
@@ -61,6 +137,8 @@ class HTTP::Server
     sock.sync = false
     io = sock
     io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, @ssl.not_nil!) if @ssl
+    must_close = true
+    response = Response.new(io)
 
     begin
       until @wants_close
@@ -70,37 +148,37 @@ class HTTP::Server
           return
         end
         break unless request
-        response = @handler.call(request)
-        response.headers["Connection"] = "keep-alive" if request.keep_alive?
-        response.to_io io
-        sock.flush
 
-        if upgrade_handler = response.upgrade_handler
-          return upgrade_handler.call(io)
+        response.version = request.version
+        response.reset
+        response.headers["Connection"] = "keep-alive" if request.keep_alive?
+        context = Context.new(request, response)
+
+        @handler.call(context)
+
+        if response.upgraded?
+          must_close = false
+          return
         end
+
+        response.output.close
+        sock.flush
 
         break unless request.keep_alive?
       end
     ensure
-      ssl_sock.try &.close if @ssl
-      sock.close
+      if must_close
+        ssl_sock.try &.close if @ssl
+        sock.close
+      end
     end
   end
 
-  def self.build_middleware(handlers, last_handler = nil : Request -> Response)
-    if handlers.empty?
-      raise ArgumentError.new "no handlers specified"
-    end
-
-    0.upto(handlers.size - 2) do |i|
-      handlers[i].next = handlers[i + 1]
-    end
-
-    if last_handler
-      handlers.last.next = last_handler
-    end
-
+  # Builds all handlers as the middleware for HTTP::Server.
+  def self.build_middleware(handlers, last_handler = nil : Context ->)
+    raise ArgumentError.new "You must specify at least one HTTP Handler." if handlers.empty?
+    0.upto(handlers.size - 2) { |i| handlers[i].next = handlers[i + 1] }
+    handlers.last.next = last_handler if last_handler
     handlers.first
   end
 end
-

@@ -1,4 +1,4 @@
-# # :nodoc:
+# :nodoc:
 struct Reflect(X)
   # Note: This type might be removed.
   #

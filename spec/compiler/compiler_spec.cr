@@ -14,7 +14,7 @@ describe "Compiler" do
   end
 
   it "runs subcommand in preference to a filename " do
-    Dir.chdir "#{__DIR__}/data/" do
+    Dir.cd "#{__DIR__}/data/" do
       tempfile = Tempfile.new "compiler_spec_output"
       tempfile.close
 

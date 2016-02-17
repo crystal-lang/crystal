@@ -623,4 +623,20 @@ describe "Code gen: closure" do
       Foo.foo
       )).to_b.should be_false
   end
+
+  it "captures block and accesses local variable (#2050)" do
+    run(%(
+      require "prelude"
+
+      def capture(&block)
+        block
+      end
+
+      coco = 1
+      capture do
+        coco
+      end
+      coco
+      )).to_i.should eq(1)
+  end
 end

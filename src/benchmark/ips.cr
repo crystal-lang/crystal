@@ -15,7 +15,7 @@ module Benchmark
     class Job
       # List of all entries in the benchmark.
       # After #execute, these are populated with the resulting statistics.
-      property items :: Array(Entry)
+      property items : Array(Entry)
 
       def initialize(calculation = 5, warmup = 2, @interactive = STDOUT.tty?)
         @warmup_time = warmup.seconds
@@ -66,7 +66,7 @@ module Benchmark
 
           after = Time.now
 
-          item.set_cycles(after-before, count)
+          item.set_cycles(after - before, count)
         end
       end
 
@@ -82,7 +82,7 @@ module Benchmark
             item.call_for_100ms
             after = Time.now
 
-            measurements << after-before
+            measurements << after - before
 
             break if Time.now >= target
           end
@@ -114,36 +114,37 @@ module Benchmark
 
     class Entry
       # Label of the benchmark
-      property label :: String
+      property label : String
 
       # Code to be benchmarked
-      property action :: ->
+      property action : ->
 
       # Number of cycles needed to run for approx 100ms
       # Calculated during the warmup stage
-      property! cycles :: Int
+      property! cycles : Int32
 
       # Number of 100ms runs during the calculation stage
-      property! size :: Int
+      property! size : Int32
 
       # Statistcal mean from calculation stage
-      property! mean :: Float
+      property! mean : Float64
 
       # Statistcal variance from calculation stage
-      property! variance :: Float
+      property! variance : Float64
 
       # Statistcal standard deviation from calculation stage
-      property! stddev :: Float
+      property! stddev : Float64
 
       # Relative standard deviation as a percentage
-      property! relative_stddev :: Float
+      property! relative_stddev : Float64
 
       # Multiple slower than the fastest entry
-      property! slower :: Float
+      property! slower : Float64
 
       @ran = false
 
-      def initialize(@label, @action) end
+      def initialize(@label, @action : ->)
+      end
 
       def ran?
         @ran
@@ -166,7 +167,7 @@ module Benchmark
         @ran = true
         @size = samples.size
         @mean = samples.sum.to_f / size.to_f
-        @variance = (samples.inject(0) { |acc, i| acc + ((i - mean) ** 2) }).to_f / size.to_f
+        @variance = (samples.reduce(0) { |acc, i| acc + ((i - mean) ** 2) }).to_f / size.to_f
         @stddev = Math.sqrt(variance)
         @relative_stddev = 100.0 * (stddev / mean)
       end

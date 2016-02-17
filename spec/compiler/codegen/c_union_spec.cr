@@ -149,4 +149,48 @@ describe "Code gen: c union" do
       foo.x
       )).to_i.should eq(123)
   end
+
+  it "aligns to the member with biggest align requirements" do
+    run(%(
+      lib LibFoo
+        union Foo
+          bytes : UInt8[4]
+          short : UInt16
+        end
+
+        struct Bar
+          a : Int8
+          b : Foo
+        end
+      end
+
+      class String
+        def to_unsafe
+          pointerof(@c)
+        end
+      end
+
+      str = "00XX0"
+      foo = str.to_unsafe as LibFoo::Bar*
+      foo.value.b.short.to_i
+      )).to_i.should eq(0x5858)
+  end
+
+  it "fills union type to the max size" do
+    run(%(
+      lib LibFoo
+        union Foo
+          bytes : UInt8[4]
+          short : UInt16
+        end
+
+        struct Bar
+          a : Int8
+          b : Foo
+        end
+      end
+
+      sizeof(LibFoo::Bar)
+      )).to_i.should eq(6)
+  end
 end

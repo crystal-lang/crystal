@@ -9,32 +9,32 @@ end
 
 class Crystal::Command
   USAGE = <<-USAGE
-Usage: crystal [command] [switches] [program file] [--] [arguments]
+    Usage: crystal [command] [switches] [program file] [--] [arguments]
 
-Command:
-    init                     generate new crystal project
-    build                    compile program file
-    deps                     install project dependencies
-    docs                     generate documentation
-    eval                     eval code from args or standard input
-    run (default)            compile and run program file
-    spec                     compile and run specs (in spec directory)
-    tool                     run a tool
-    --help, -h               show this help
-    --version, -v            show version
-USAGE
+    Command:
+        init                     generate a new project
+        build                    compile program
+        deps                     install project dependencies
+        docs                     generate documentation
+        eval                     eval code from args or standard input
+        run (default)            compile and run program
+        spec                     compile and run specs (in spec directory)
+        tool                     run a tool
+        help, --help, -h         show this help
+        version, --version, -v   show version
+    USAGE
 
   COMMANDS_USAGE = <<-USAGE
-Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
+    Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
 
-Tool:
-    browser                  open an http server to browse program file
-    context                  show context for given location
-    hierarchy                show type hierarchy
-    implementations          show implementations for given call in location
-    types                    show type of main variables
-    --help, -h               show this help
-USAGE
+    Tool:
+        context                  show context for given location
+        format                   format project, directories and/or files
+        hierarchy                show type hierarchy
+        implementations          show implementations for given call in location
+        types                    show type of main variables
+        --help, -h               show this help
+    USAGE
 
   VALID_EMIT_VALUES = %w(asm llvm-bc llvm-ir obj)
 
@@ -77,10 +77,10 @@ USAGE
       when "tool".starts_with?(command)
         options.shift
         tool
-      when "--help" == command, "-h" == command
+      when "help".starts_with?(command), "--help" == command, "-h" == command
         puts USAGE
         exit
-      when "--version" == command, "-v" == command
+      when "version".starts_with?(command), "--version" == command, "-v" == command
         puts "Crystal #{Crystal.version_string}"
         exit
       else
@@ -115,12 +115,12 @@ USAGE
     tool = options.first?
     if tool
       case
-      when "browser".starts_with?(tool)
-        options.shift
-        browser
       when "context".starts_with?(tool)
         options.shift
         context
+      when "format".starts_with?(tool)
+        options.shift
+        format
       when "hierarchy".starts_with?(tool)
         options.shift
         hierarchy
@@ -151,20 +151,15 @@ USAGE
     config.compile
   end
 
-  private def browser
-    config, result = compile_no_codegen "tool browser"
-    Browser.open result.original_node
-  end
-
   private def eval
     if options.empty?
-      program_source = STDIN.read
+      program_source = STDIN.gets_to_end
       program_args = [] of String
     else
       double_dash_index = options.index("--")
       if double_dash_index
-        program_source = options[0 ... double_dash_index].join " "
-        program_args = options[double_dash_index + 1 .. -1]
+        program_source = options[0...double_dash_index].join " "
+        program_args = options[double_dash_index + 1..-1]
       else
         program_source = options.join " "
         program_args = [] of String
@@ -178,6 +173,122 @@ USAGE
 
     result = compiler.compile sources, output_filename
     execute output_filename, program_args
+  end
+
+  private def format
+    @format = "text"
+
+    option_parser =
+      OptionParser.parse(options) do |opts|
+        opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
+
+        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+          @format = f
+        end
+
+        opts.on("-h", "--help", "Show this message") do
+          puts opts
+          exit 1
+        end
+
+        opts.on("--no-color", "Disable colored output") do
+          @color = false
+        end
+      end
+
+    files = options
+
+    if files.size == 1
+      file = files.first
+      if file == "-"
+        return format_stdin
+      elsif File.file?(file)
+        return format_single(file)
+      end
+    end
+
+    files = Dir["./**/*.cr"] if files.empty?
+    format_many files
+  end
+
+  private def format_stdin
+    source = STDIN.gets_to_end
+
+    begin
+      print Crystal::Formatter.format(source)
+      STDOUT.flush
+    rescue ex : Crystal::SyntaxException
+      if @format == "json"
+        puts ex.to_json
+      else
+        puts ex
+      end
+      exit 1
+    rescue ex
+      STDERR << "Error:".colorize(:red).toggle(@color) << ", " <<
+        "couldn't format STDIN, please report a bug including the contents of it: https://github.com/manastech/crystal/issues"
+      STDERR.puts
+      STDERR.flush
+      exit 1
+    end
+  end
+
+  private def format_single(filename)
+    source = File.read(filename)
+
+    begin
+      File.write(filename, Crystal::Formatter.format(source, filename: filename))
+    rescue ex : Crystal::SyntaxException
+      if @format == "json"
+        puts ex.to_json
+      else
+        puts ex
+      end
+      exit 1
+    rescue ex
+      STDERR << "Error:".colorize(:red).toggle(@color) <<
+        "couldn't format '#{filename}', please report a bug including the contents of the file: https://github.com/manastech/crystal/issues"
+      STDERR.puts
+      STDERR.flush
+      exit 1
+    end
+  end
+
+  private def format_many(files)
+    files.each do |filename|
+      format_file_or_directory filename
+    end
+  end
+
+  private def format_file_or_directory(filename)
+    if File.file?(filename)
+      format_file filename
+    elsif Dir.exists?(filename)
+      filename = filename[0...-1] if filename.ends_with?('/')
+      filenames = Dir["#{filename}/**/*.cr"]
+      format_many filenames
+    else
+      error "file or directory does not exist: #{filename}"
+    end
+  end
+
+  private def format_file(filename)
+    source = File.read(filename)
+
+    begin
+      result = Crystal::Formatter.format(source, filename: filename)
+      return if result == source
+
+      File.write(filename, result)
+      STDOUT << "Format".colorize(:green).toggle(@color) << " " << filename << "\n"
+    rescue ex : Crystal::SyntaxException
+      STDOUT << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
+    rescue ex
+      STDERR << "Error:".colorize(:red).toggle(@color) <<
+        " couldn't format '#{filename}', please report a bug including the contents of the file: https://github.com/manastech/crystal/issues"
+      STDERR.puts
+      STDERR.flush
+    end
   end
 
   private def hierarchy
@@ -237,30 +348,34 @@ USAGE
   end
 
   private def run_specs
-    target_filename_and_line_number = options.first?
-    if target_filename_and_line_number
+    target_index = options.index { |o| !o.starts_with? '-' }
+    if target_index
+      target_filename_and_line_number = options[target_index]
       splitted = target_filename_and_line_number.split ':', 2
       target_filename = splitted[0]
       if File.file?(target_filename)
-        options.shift
-        cwd = Dir.working_directory
+        options.delete_at target_index
+        cwd = Dir.current
         if target_filename.starts_with?(cwd)
-          target_filename = "#{target_filename[cwd.size .. -1]}"
+          target_filenames = [target_filename[cwd.size..-1]]
+        else
+          target_filenames = [target_filename]
         end
         if splitted.size == 2
           target_line = splitted[1]
           options << "-l" << target_line
         end
       elsif File.directory?(target_filename)
-        target_filename = "#{target_filename}/**"
+        target_filenames = Dir["#{target_filename}/**/*_spec.cr"]
       else
         error "'#{target_filename}' is not a file"
       end
     else
-      target_filename = "spec/**"
+      target_filenames = Dir["spec/**/*_spec.cr"]
     end
 
-    sources = [Compiler::Source.new("spec", %(require "./#{target_filename}"))]
+    source = target_filenames.map { |filename| %(require "./#{filename}") }.join("\n")
+    sources = [Compiler::Source.new("spec", source)]
 
     output_filename = tempfile "spec"
 
@@ -275,7 +390,8 @@ USAGE
       error "`shards` executable is missing. Please install shards: https://github.com/ysbaddaden/shards"
     end
 
-    Process.run(path_to_shards, args: options, output: true, error: true)
+    status = Process.run(path_to_shards, args: options, output: true, error: true)
+    exit status.exit_code unless status.success?
   end
 
   private def docs
@@ -312,7 +428,13 @@ USAGE
 
   private def execute(output_filename, run_args)
     begin
-      status = Process.run(output_filename, args: run_args, input: true, output: true, error: true)
+      Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
+        Signal::INT.trap do
+          process.kill
+          exit
+        end
+      end
+      status = $?
     ensure
       File.delete output_filename
     end
@@ -472,11 +594,19 @@ USAGE
     end
 
     sources = gather_sources(filenames)
-    original_output_filename = output_filename_from_sources(sources)
+    first_filename = sources.first.filename
+    first_file_ext = File.extname(first_filename)
+    original_output_filename = File.basename(first_filename, first_file_ext)
+
+    # Check if we'll overwrite the main source file
+    if first_file_ext.empty? && !output_filename && !no_codegen && !run && first_filename == File.expand_path(original_output_filename)
+      error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+    end
+
     output_filename ||= original_output_filename
     output_format ||= "text"
 
-    if !no_codegen && Dir.exists?(output_filename)
+    if !no_codegen && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"
     end
 
@@ -493,11 +623,6 @@ USAGE
       filename = File.expand_path(filename)
       Compiler::Source.new(filename, File.read(filename))
     end
-  end
-
-  private def output_filename_from_sources(sources)
-    first_filename = sources.first.filename
-    File.basename(first_filename, File.extname(first_filename))
   end
 
   private def validate_emit_values(values)

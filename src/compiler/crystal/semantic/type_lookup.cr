@@ -110,8 +110,8 @@ module Crystal
     end
 
     def visit(node : TypeOf)
-      meta_vars = MetaVars { "self": MetaVar.new("self", @self_type) }
-      visitor = TypeVisitor.new(program, meta_vars)
+      meta_vars = MetaVars{"self": MetaVar.new("self", @self_type)}
+      visitor = MainVisitor.new(program, meta_vars)
       node.expressions.each &.accept visitor
       @type = program.type_merge node.expressions
       false
@@ -161,7 +161,7 @@ module Crystal
       names.each_with_index do |name, i|
         next_type = type.types[name]?
         if !next_type && i != 0
-          next_type = type.lookup_type_in_parents(names[i .. -1])
+          next_type = type.lookup_type_in_parents(names[i..-1])
           if next_type
             type = next_type
             break
@@ -190,6 +190,17 @@ module Crystal
     end
   end
 
+  module GenericType
+    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+      # If we are Foo(T) and somebody looks up the type T, we return `nil` because we don't
+      # know what type T is, and we don't want to continue search in the container
+      if !names.empty? && type_vars.includes?(names[0])
+        return nil
+      end
+      super
+    end
+  end
+
   class GenericClassInstanceType
     def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
       if !names.empty? && (type_var = type_vars[names[0]]?)
@@ -202,7 +213,7 @@ module Crystal
 
         if names.size > 1
           if type_var_type.is_a?(Type)
-            type_var_type.lookup_type(names[1 .. -1], already_looked_up, lookup_in_container)
+            type_var_type.lookup_type(names[1..-1], already_looked_up, lookup_in_container)
           else
             raise "#{names[0]} is not a type, it's #{type_var_type}"
           end

@@ -124,7 +124,7 @@ describe "Type inference: doc" do
 
   it "stores doc for abstract def" do
     result = infer_type %(
-      class Foo
+      abstract class Foo
         # Hello
         abstract def bar
       end

@@ -275,4 +275,94 @@ describe "Code gen: module" do
       foo { |x| x.coco }
       )).to_i.should eq(456)
   end
+
+  it "expands modules to its including types (#1916)" do
+    run(%(
+      class Reference
+        def method(other : Reference)
+          1
+        end
+
+        def method(other)
+          2
+        end
+      end
+
+      module Moo
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar
+        include Moo
+      end
+
+      x = Foo.new
+      y = x as Moo
+
+      x.method(y)
+      )).to_i.should eq(1)
+  end
+
+  it "expands modules to its including types (2) (#1916)" do
+    run(%(
+      class Reference
+        def method(other : Reference)
+          1
+        end
+
+        def method(other)
+          2
+        end
+      end
+
+      module IO2
+      end
+
+      module IO2::Sub
+        include IO2
+      end
+
+      class File2
+        include IO2::Sub
+      end
+
+      file = File2.new
+      file2 = file as IO2
+
+      file.method(file2)
+      )).to_i.should eq(1)
+  end
+
+  it "expands modules to its including types (3) (#1916)" do
+    run(%(
+      class Object
+        def method(other : Reference)
+          1
+        end
+
+        def method(other)
+          2
+        end
+      end
+
+      module Moo
+      end
+
+      class Foo
+        include Moo
+      end
+
+      struct Bar
+        include Moo
+      end
+
+      x = Bar.new
+      y = x as Moo
+
+      x.method(y)
+      )).to_i.should eq(2)
+  end
 end

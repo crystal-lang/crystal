@@ -16,10 +16,10 @@ struct Number
   #
   # ```
   # floats = Float64[1, 2, 3, 4]
-  # floats.class                 #=> Array(Float64)
+  # floats.class # => Array(Float64)
   #
   # ints = Int64[1, 2, 3]
-  # ints.class                   #=> Array(Int64)
+  # ints.class # => Array(Int64)
   # ```
   def self.[](*nums)
     Array(self).build(nums.size) do |buffer|
@@ -79,8 +79,8 @@ struct Number
   # Returns the absolute value of this number.
   #
   # ```
-  # 123.abs  #=> 123
-  # -123.abs #=> 123
+  # 123.abs  # => 123
+  # -123.abs # => 123
   # ```
   def abs
     self < 0 ? -self : self
@@ -89,8 +89,8 @@ struct Number
   # Returns the square of self (`self * self`).
   #
   # ```
-  # 4.abs2   #=> 16
-  # 1.5.abs2 #=> 2.25
+  # 4.abs2   # => 16
+  # 1.5.abs2 # => 2.25
   # ```
   def abs2
     self * self
@@ -102,20 +102,20 @@ struct Number
   # * 1 if this number is positive
   #
   # ```
-  # 123.sign #=> 1
-  # 0.sign   #=> 0
-  # -42.sign #=> -1
+  # 123.sign # => 1
+  # 0.sign   # => 0
+  # -42.sign # => -1
   # ```
   def sign
     self < 0 ? -1 : (self == 0 ? 0 : 1)
   end
 
-  # Return a tuple of two elements containing the quotient
-  # and modulus obtained by dividing self by `number`.
+  # Returns a `Tuple` of two elements containing the quotient
+  # and modulus obtained by dividing self by *number*.
   #
   # ```
-  # 11.divmod(3)  #=> {3, 2}
-  # 11.divmod(-3) #=> {-3, 2}
+  # 11.divmod(3)  # => {3, 2}
+  # 11.divmod(-3) # => {-3, 2}
   # ```
   def divmod(number)
     {self / number, self % number}
@@ -128,19 +128,19 @@ struct Number
     self > other ? 1 : (self < other ? -1 : 0)
   end
 
-  # Keeps `digits` significants digits of this number in the given `base`.
+  # Keeps *digits* significants digits of this number in the given *base*.
   #
   # ```
-  # 1234.567.significant(1)         #=> 1000
-  # 1234.567.significant(2)         #=> 1200
-  # 1234.567.significant(3)         #=> 1230
-  # 1234.567.significant(4)         #=> 1235
-  # 1234.567.significant(5)         #=> 1234.6
-  # 1234.567.significant(6)         #=> 1234.57
-  # 1234.567.significant(7)         #=> 1234.567
-  # 1234.567.significant(8)         #=> 1234.567
+  # 1234.567.significant(1) # => 1000
+  # 1234.567.significant(2) # => 1200
+  # 1234.567.significant(3) # => 1230
+  # 1234.567.significant(4) # => 1235
+  # 1234.567.significant(5) # => 1234.6
+  # 1234.567.significant(6) # => 1234.57
+  # 1234.567.significant(7) # => 1234.567
+  # 1234.567.significant(8) # => 1234.567
   #
-  # 15.159.significant(1, base = 2) #=> 16
+  # 15.159.significant(1, base = 2) # => 16
   # ```
   def significant(digits, base = 10)
     if digits < 0
@@ -154,20 +154,20 @@ struct Number
     end
 
     y = if base == 10
-      10 ** ((Math.log10(self.abs) - digits + 1).floor)
-    elsif base == 2
-      2 ** ((Math.log2(self.abs) - digits + 1).floor)
-    else
-      base ** (((Math.log2(self.abs)) / (Math.log2(base)) - digits + 1).floor)
-    end
+          10 ** ((Math.log10(self.abs) - digits + 1).floor)
+        elsif base == 2
+          2 ** ((Math.log2(self.abs) - digits + 1).floor)
+        else
+          base ** (((Math.log2(self.abs)) / (Math.log2(base)) - digits + 1).floor)
+        end
 
     self.class.new((x / y).round * y)
   end
 
-  # Rounds this number to a given precision in decimal digits.
+  # Rounds this number to a given precision in decimal *digits*.
   #
   # ```
-  # -1763.116.round(2) #=> -1763.12
+  # -1763.116.round(2) # => -1763.12
   # ```
   def round(digits, base = 10)
     x = self.to_f
@@ -177,27 +177,26 @@ struct Number
 
   # Clamps a value within `range`.
   # ```
-  # 5.clamp(10..100) #=> 10
-  # 50.clamp(10..100) #=> 50
-  # 500.clamp(10..100) #=> 100
+  # 5.clamp(10..100)   # => 10
+  # 50.clamp(10..100)  # => 50
+  # 500.clamp(10..100) # => 100
   # ```
   def clamp(range : Range)
     raise ArgumentError.new("can't clamp an exclusive range") if range.exclusive?
     clamp range.begin, range.end
   end
 
-  # Clamps a value between `min` and `max`.
+  # Clamps a value between *min* and *max*.
   # ```
-  # 5.clamp(10, 100) #=> 10
-  # 50.clamp(10, 100) #=> 50
-  # 500.clamp(10, 100) #=> 100
+  # 5.clamp(10, 100)   # => 10
+  # 50.clamp(10, 100)  # => 50
+  # 500.clamp(10, 100) # => 100
   # ```
   def clamp(min, max)
     return max if self > max
     return min if self < min
     self
   end
-
 
   # :nodoc:
   class StepIterator(T, L, B)

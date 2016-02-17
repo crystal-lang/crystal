@@ -17,6 +17,9 @@ class Crystal::Call
   getter? uses_with_scope
   @uses_with_scope = false
 
+  property? raises
+  @raises = false
+
   def mod
     scope.program
   end
@@ -32,7 +35,6 @@ class Crystal::Call
 
     ::raise "Zero target defs for #{self}"
   end
-
 
   def update_input(from)
     recalculate
@@ -87,6 +89,7 @@ class Crystal::Call
 
     if (parent_visitor = @parent_visitor) && matches
       if parent_visitor.typed_def? && matches.any?(&.raises)
+        @raises = true
         parent_visitor.typed_def.raises = true
       end
 
@@ -309,7 +312,7 @@ class Crystal::Call
 
   def lookup_matches_with_signature(owner : Program, signature, search_in_parents)
     location = self.location
-    if location && (filename = location.filename).is_a?(String)
+    if location && (filename = location.original_filename)
       matches = owner.lookup_private_matches filename, signature
     end
 
@@ -387,7 +390,7 @@ class Crystal::Call
 
           check_recursive_splat_call match.def, typed_def_args do
             bubbling_exception do
-              visitor = TypeVisitor.new(mod, typed_def_args, typed_def)
+              visitor = MainVisitor.new(mod, typed_def_args, typed_def)
               visitor.yield_vars = yield_vars
               visitor.free_vars = match.context.free_vars
               visitor.untyped_def = match.def
@@ -435,7 +438,7 @@ class Crystal::Call
   def check_return_type(typed_def, typed_def_return_type, match, match_owner)
     self_type = match_owner.instance_type
     root_type = self_type.ancestors.find(&.instance_of?(match.def.owner.instance_type)) || self_type
-    return_type = TypeLookup.lookup(root_type, typed_def_return_type, match_owner.instance_type)
+    return_type = TypeLookup.lookup(root_type, typed_def_return_type, match_owner.instance_type).virtual_type
     typed_def.freeze_type = return_type
   end
 
@@ -504,7 +507,7 @@ class Crystal::Call
         vars << arg
         args << arg
       end
-      block = Block.new(vars, Call.new(block_arg, "call", args))
+      block = Block.new(vars, Call.new(block_arg.clone, "call", args))
       block.vars = self.before_vars
       self.block = block
     else
@@ -527,16 +530,16 @@ class Crystal::Call
     when NonGenericModuleType
       ancestors = parent_visitor.scope.ancestors
       index_of_ancestor = ancestors.index(lookup).not_nil!
-      parents = ancestors[index_of_ancestor + 1 .. -1]
+      parents = ancestors[index_of_ancestor + 1..-1]
     when GenericModuleType
       ancestors = parent_visitor.scope.ancestors
       index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(IncludedGenericModule) && ancestor.module == lookup }.not_nil!
-      parents = ancestors[index_of_ancestor + 1 .. -1]
+      parents = ancestors[index_of_ancestor + 1..-1]
     when GenericType
       ancestors = parent_visitor.scope.ancestors
       index_of_ancestor = ancestors.index { |ancestor| ancestor.is_a?(InheritedGenericClass) && ancestor.extended_class == lookup }
       if index_of_ancestor
-        parents = ancestors[index_of_ancestor + 1 .. -1]
+        parents = ancestors[index_of_ancestor + 1..-1]
       else
         parents = ancestors
       end
@@ -624,7 +627,7 @@ class Crystal::Call
 
     macros ||= yield mod
 
-    if !macros && (location = self.location) && (filename = location.original_filename).is_a?(String) && (file_module = mod.file_module(filename))
+    if !macros && (location = self.location) && (filename = location.original_filename).is_a?(String) && (file_module = mod.file_module?(filename))
       macros ||= yield file_module
     end
 
@@ -635,7 +638,7 @@ class Crystal::Call
   def match_block_arg(match)
     block_arg = match.def.block_arg
     return nil, nil unless block_arg
-    return nil, nil  unless ((yields = match.def.yields) && yields > 0) || match.def.uses_block_arg
+    return nil, nil unless match.def.yields || match.def.uses_block_arg
 
     yield_vars = nil
     block_arg_type = nil
@@ -643,33 +646,33 @@ class Crystal::Call
     block = @block.not_nil!
     ident_lookup = MatchTypeLookup.new(self, match.context)
 
-    block_arg_fun = block_arg.fun
+    block_arg_restriction = block_arg.restriction
 
     # If the block spec is &block : A, B, C -> D, we solve the argument types
-    if block_arg_fun.is_a?(Fun)
+    if block_arg_restriction.is_a?(Fun)
       # If there are input types, solve them and creating the yield vars
-      if inputs = block_arg_fun.inputs
+      if inputs = block_arg_restriction.inputs
         yield_vars = inputs.map_with_index do |input, i|
           arg_type = ident_lookup.lookup_node_type(input)
-          TypeVisitor.check_type_allowed_as_proc_argument(input, arg_type)
+          MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
 
           Var.new("var#{i}", arg_type.virtual_type)
         end
       end
-      block_arg_fun_output = block_arg_fun.output
-    else
+      block_arg_restriction_output = block_arg_restriction.output
+    elsif block_arg_restriction
       # Otherwise, the block spec could be something like &block : Foo, and that
       # is valid too only if Foo is an alias/typedef that referes to a FunctionType
-      block_arg_type = ident_lookup.lookup_node_type(block_arg_fun).remove_typedef
+      block_arg_type = ident_lookup.lookup_node_type(block_arg_restriction).remove_typedef
       unless block_arg_type.is_a?(FunInstanceType)
-        block_arg_fun.raise "expected block type to be a function type, not #{block_arg_type}"
+        block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_type}"
         return nil, nil
       end
 
       yield_vars = block_arg_type.arg_types.map_with_index do |input, i|
         Var.new("var#{i}", input)
       end
-      block_arg_fun_output = block_arg_type.return_type
+      block_arg_restriction_output = block_arg_type.return_type
     end
 
     # Bind block arguments to the yield vars, if any, or to nil otherwise
@@ -703,8 +706,11 @@ class Crystal::Call
             raise "wrong number of block arguments (#{block.args.size} for #{fun_args.size})"
           end
 
-          fun_literal = FunLiteral.new(Def.new("->", fun_args, block.body))
-          fun_literal.force_void = true unless block_arg_fun_output
+          a_def = Def.new("->", fun_args, block.body)
+          a_def.captured_block = true
+
+          fun_literal = FunLiteral.new(a_def).at(self)
+          fun_literal.force_void = true unless block_arg_restriction_output
           fun_literal.accept parent_visitor
         end
         block.fun_literal = fun_literal
@@ -716,13 +722,13 @@ class Crystal::Call
       if fun_literal_type
         block_arg_type = fun_literal_type
         block_type = (fun_literal_type as FunInstanceType).return_type
-        if output = block_arg_fun_output
+        if output = block_arg_restriction_output
           matched = MatchesLookup.match_arg(block_type, output, match.context)
           if !matched && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
               block_type = ident_lookup.lookup_node_type(output).virtual_type
-              block.body.type = block_type
-              block.body.freeze_type = block_type
+              block.type = block_type
+              block.freeze_type = block_type
               block_arg_type = mod.fun_of(fun_args, block_type)
             else
               raise "expected block to return #{output}, not #{block_type}"
@@ -730,23 +736,25 @@ class Crystal::Call
           end
         end
       else
-        if block_arg_fun_output
-          if block_arg_fun_output.is_a?(ASTNode) && !block_arg_fun_output.is_a?(Underscore)
-            output_type = ident_lookup.lookup_node_type(block_arg_fun_output).virtual_type
-            block.body.freeze_type = output_type
+        if block_arg_restriction_output
+          if block_arg_restriction_output.is_a?(ASTNode) && !block_arg_restriction_output.is_a?(Underscore)
+            output_type = ident_lookup.lookup_node_type(block_arg_restriction_output).virtual_type
+            block.type = output_type
+            block.freeze_type = output_type
             block_arg_type = mod.fun_of(fun_args, output_type)
           else
             cant_infer_block_return_type
           end
         else
           block.body.type = mod.void
+          block.type = mod.void
           block_arg_type = mod.fun_of(fun_args, mod.void)
         end
       end
 
       # Because the block's type might be used as a free variable, we bind
       # ourself to the block so when its type changes we recalculate ourself.
-      if block_arg_fun_output
+      if block_arg_restriction_output
         block.try &.remove_input_observer(self)
         block.try &.add_input_observer(self)
       end
@@ -755,8 +763,8 @@ class Crystal::Call
 
       # Similar to above: we check that the block's type matches the block arg specification,
       # and we delay it if possible.
-      if output = block_arg_fun_output
-        if !block.body.type?
+      if output = block_arg_restriction_output
+        if !block.type?
           if output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
               block_type = ident_lookup.lookup_node_type(output).virtual_type
@@ -767,7 +775,7 @@ class Crystal::Call
             cant_infer_block_return_type
           end
         else
-          block_type = block.body.type
+          block_type = block.type
           matched = MatchesLookup.match_arg(block_type, output, match.context)
           if !matched && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore)
@@ -789,7 +797,7 @@ class Crystal::Call
             end
           end
         end
-        block.body.freeze_type = block_type
+        block.freeze_type = block_type
       end
     end
 
@@ -901,7 +909,7 @@ class Crystal::Call
     # named arguments, we create another def that sets ups everything for the real call.
     if arg_types.size != untyped_def.args.size || untyped_def.splat_index || named_args
       named_args_names = named_args.try &.map &.name
-      untyped_def = untyped_def.expand_default_arguments(arg_types.size, named_args_names)
+      untyped_def = untyped_def.expand_default_arguments(mod, arg_types.size, named_args_names)
     end
 
     args_start_index = 0
@@ -916,7 +924,7 @@ class Crystal::Call
 
     args = MetaVars.new
 
-    if self_type#.is_a?(Type)
+    if self_type # .is_a?(Type)
       args["self"] = MetaVar.new("self", self_type)
     end
 
@@ -986,5 +994,15 @@ class Crystal::Call
 
   def detach_subclass_observer
     @subclass_notifier.try &.remove_subclass_observer(self)
+  end
+
+  def raises=(value)
+    if @raises != value
+      @raises = value
+      typed_def = parent_visitor.typed_def?
+      if typed_def
+        typed_def.raises = value
+      end
+    end
   end
 end

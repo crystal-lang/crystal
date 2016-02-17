@@ -8,8 +8,8 @@ require "./*"
 # forward slashes (`/`):
 #
 # ```
-# /hay/ =~ "haystack"   #=> 0
-# /y/.match("haystack") #=> #<Regex::MatchData "y">
+# /hay/ =~ "haystack"   # => 0
+# /y/.match("haystack") # => #<Regex::MatchData "y">
 # ```
 #
 # Interpolation works in regular expression literals just as it does in string
@@ -19,9 +19,9 @@ require "./*"
 #
 # ```
 # x = "a"
-# /#{x}/.match("asdf") #=> #<Regex::MatchData "a">
+# /#{x}/.match("asdf") # => #<Regex::MatchData "a">
 # x = "("
-# /#{x}/ #=> ArgumentError
+# /#{x}/ # => ArgumentError
 # ```
 #
 # When we check to see if a particular regular expression describes a string,
@@ -33,13 +33,13 @@ require "./*"
 # Here `"haystack"` does not contain the pattern `/needle/`, so it doesn't match:
 #
 # ```
-# /needle/.match("haystack") #=> nil
+# /needle/.match("haystack") # => nil
 # ```
 #
 # Here `"haystack"` contains the pattern `/hay/`, so it matches:
 #
 # ```
-# /hay/.match("haystack")    #=> #<Regex::MatchData "hay">
+# /hay/.match("haystack") # => #<Regex::MatchData "hay">
 # ```
 #
 # Regex methods that perform a match usually return a truthy value if there was
@@ -52,12 +52,12 @@ require "./*"
 # string if the expression matched, `nil` otherwise.
 #
 # ```
-# /stack/ =~ "haystack"  #=> 3
-# "haystack" =~ /stack/  #=> 3
-# $~                     #=> #<Regex::MatchData "stack">
-# /needle/ =~ "haystack" #=> nil
-# "haystack" =~ /needle/ #=> nil
-# $~                     #=> nil
+# /stack/ =~ "haystack"  # => 3
+# "haystack" =~ /stack/  # => 3
+# $~                     # => #<Regex::MatchData "stack">
+# /needle/ =~ "haystack" # => nil
+# "haystack" =~ /needle/ # => nil
+# $~                     # => nil
 # ```
 #
 # When matching a regular expression using `#match` (either `String#match` or
@@ -65,12 +65,12 @@ require "./*"
 # matched, `nil` otherwise.
 #
 # ```
-# /hay/.match("haystack")    #=> #<Regex::MatchData "hay">
-# "haystack".match(/hay/)    #=> #<Regex::MatchData "hay">
-# $~                         #=> #<Regex::MatchData "hay">
-# /needle/.match("haystack") #=> nil
-# "haystack".match(/needle/) #=> nil
-# $~                         #=> nil
+# /hay/.match("haystack")    # => #<Regex::MatchData "hay">
+# "haystack".match(/hay/)    # => #<Regex::MatchData "hay">
+# $~                         # => #<Regex::MatchData "hay">
+# /needle/.match("haystack") # => nil
+# "haystack".match(/needle/) # => nil
+# $~                         # => nil
 # ```
 #
 # [Regular expressions](https://en.wikipedia.org/wiki/Regular_expression)
@@ -101,10 +101,10 @@ require "./*"
 # each capture group can be extracted on a successful match:
 #
 # ```
-# /a(sd)f/.match("_asdf_")  #=> #<Regex::MatchData "asdf" 1:"sd">
-# /a(sd)f/.match("_asdf_") { |md| md[1] } } #=> "sd"
-# /a(?<grp>sd)f/.match("_asdf_") #=> #<Regex::MatchData "asdf" grp:"sd">
-# /a(?<grp>sd)f/.match("_asdf_") { |md| md["grp"] } } #=> "sd"
+# /a(sd)f/.match("_asdf_")                          # => #<Regex::MatchData "asdf" 1:"sd">
+# /a(sd)f/.match("_asdf_") { |md| md[1] }           # => "sd"
+# /a(?<grp>sd)f/.match("_asdf_")                    # => #<Regex::MatchData "asdf" grp:"sd">
+# /a(?<grp>sd)f/.match("_asdf_") { |md| md["grp"] } # => "sd"
 # ```
 #
 # Capture groups are indexed starting from 1. Methods that accept a capture
@@ -120,17 +120,17 @@ require "./*"
 # (`?`) (zero or one).
 #
 # ```
-# /fo*/.match("_f_")         #=> #<Regex::MatchData "f">
-# /fo+/.match("_f_")         #=> nil
-# /fo*/.match("_foo_")       #=> #<Regex::MatchData "foo">
-# /fo{3,}/.match("_foo_")    #=> nil
-# /fo{1,3}/.match("_foo_")   #=> #<Regex::MatchData "foo">
-# /fo*/.match("_foo_")       #=> #<Regex::MatchData "foo">
-# /fo*/.match("_foooooooo_") #=> #<Regex::MatchData "foooooooo">
-# /fo{,3}/.match("_foooo_")  #=> nil
-# /f(op)*/.match("fopopo")   #=> #<Regex::MatchData "fopop" 1: "op">
-# /foo?bar/.match("foobar")  #=> #<Regex::MatchData "foobar">
-# /foo?bar/.match("fobar")   #=> #<Regex::MatchData "fobar">
+# /fo*/.match("_f_")         # => #<Regex::MatchData "f">
+# /fo+/.match("_f_")         # => nil
+# /fo*/.match("_foo_")       # => #<Regex::MatchData "foo">
+# /fo{3,}/.match("_foo_")    # => nil
+# /fo{1,3}/.match("_foo_")   # => #<Regex::MatchData "foo">
+# /fo*/.match("_foo_")       # => #<Regex::MatchData "foo">
+# /fo*/.match("_foooooooo_") # => #<Regex::MatchData "foooooooo">
+# /fo{,3}/.match("_foooo_")  # => nil
+# /f(op)*/.match("fopopo")   # => #<Regex::MatchData "fopop" 1: "op">
+# /foo?bar/.match("foobar")  # => #<Regex::MatchData "foobar">
+# /foo?bar/.match("fobar")   # => #<Regex::MatchData "fobar">
 # ```
 #
 # Alternatives can be separated using a
@@ -143,17 +143,17 @@ require "./*"
 # enclosed in square brackets (`[]`):
 #
 # ```
-# /foo|bar/.match("foo")     #=> #<Regex::MatchData "foo">
-# /foo|bar/.match("bar")     #=> #<Regex::MatchData "bar">
-# /_(x|y)_/.match("_x_")     #=> #<Regex::MatchData "_x_" 1: "x">
-# /_(x|y)_/.match("_y_")     #=> #<Regex::MatchData "_y_" 1: "y">
-# /_(x|y)_/.match("_(x|y)_") #=> nil
-# /_(x|y)_/.match("_(x|y)_") #=> nil
-# /_._/.match("_x_")         #=> #<Regex::MatchData "_x_">
-# /_[xyz]_/.match("_x_")     #=> #<Regex::MatchData "_x_">
-# /_[a-z]_/.match("_x_")     #=> #<Regex::MatchData "_x_">
-# /_[^a-z]_/.match("_x_")    #=> nil
-# /_[^a-wy-z]_/.match("_x_") #=> #<Regex::MatchData "_x_">
+# /foo|bar/.match("foo")     # => #<Regex::MatchData "foo">
+# /foo|bar/.match("bar")     # => #<Regex::MatchData "bar">
+# /_(x|y)_/.match("_x_")     # => #<Regex::MatchData "_x_" 1: "x">
+# /_(x|y)_/.match("_y_")     # => #<Regex::MatchData "_y_" 1: "y">
+# /_(x|y)_/.match("_(x|y)_") # => nil
+# /_(x|y)_/.match("_(x|y)_") # => nil
+# /_._/.match("_x_")         # => #<Regex::MatchData "_x_">
+# /_[xyz]_/.match("_x_")     # => #<Regex::MatchData "_x_">
+# /_[a-z]_/.match("_x_")     # => #<Regex::MatchData "_x_">
+# /_[^a-z]_/.match("_x_")    # => nil
+# /_[^a-wy-z]_/.match("_x_") # => #<Regex::MatchData "_x_">
 # ```
 #
 # Regular expressions can be defined with these 3
@@ -164,10 +164,10 @@ require "./*"
 # * `x`: extended (PCRE_EXTENDED)
 #
 # ```
-# /asdf/ =~ "ASDF"         #=> nil
-# /asdf/i =~ "ASDF"        #=> 0
-# /asdf\nz/i =~ "ASDF\nZ"  #=> nil
-# /asdf\nz/im =~ "ASDF\nZ" #=> 0
+# /asdf/ =~ "ASDF"         # => nil
+# /asdf/i =~ "ASDF"        # => 0
+# /asdf\nz/i =~ "ASDF\nZ"  # => nil
+# /asdf\nz/im =~ "ASDF\nZ" # => 0
 # ```
 #
 # PCRE supports other encodings, but Crystal strings are UTF-8 only, so Crystal
@@ -188,11 +188,11 @@ class Regex
     # flag that activates both behviours, so here we do the same by
     # mapping MULTILINE to PCRE_MULTILINE | PCRE_DOTALL
     MULTILINE = 6
-    EXTENDED = 8
+    EXTENDED  = 8
     # :nodoc:
-    ANCHORED      = 16
+    ANCHORED = 16
     # :nodoc:
-    UTF_8         = 0x00000800
+    UTF_8 = 0x00000800
     # :nodoc:
     NO_UTF8_CHECK = 0x00002000
   end
@@ -200,24 +200,24 @@ class Regex
   # Return a `Regex::Options` representing the optional flags applied to this Regex.
   #
   # ```
-  # /ab+c/ix.options #=> IGNORE_CASE, EXTENDED
+  # /ab+c/ix.options # => IGNORE_CASE, EXTENDED
   # ```
   getter options
 
   # Return the original String representation of the Regex pattern.
   #
   # ```
-  # /ab+c/x.source #=> "ab+c"
+  # /ab+c/x.source # => "ab+c"
   # ```
   getter source
 
   # Creates a new Regex out of the given source String.
   #
   # ```
-  # Regexp.new("^a-z+:\s+\w+") #=> /^a-z+:\s+\w+/
-  # Regexp.new("cat", Regex::Options::IGNORE_CASE) #=> /cat/i
+  # Regexp.new("^a-z+:\s+\w+")                     # => /^a-z+:\s+\w+/
+  # Regexp.new("cat", Regex::Options::IGNORE_CASE) # => /cat/i
   # options = Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
-  # Regexp.new("dog", options) #=> /dog/ix
+  # Regexp.new("dog", options) # => /dog/ix
   # ```
   def initialize(source, @options = Options::None : Options)
     # PCRE's pattern must have their null characters escaped
@@ -235,8 +235,8 @@ class Regex
   # If it's not, a String containing the error message is returned.
   #
   # ```
-  # Regex.error?("(foo|bar)") #=> nil
-  # Regex.error?("(foo|bar") #=> "missing ) at 8"
+  # Regex.error?("(foo|bar)") # => nil
+  # Regex.error?("(foo|bar")  # => "missing ) at 8"
   # ```
   def self.error?(source)
     re = LibPCRE.compile(source, (Options::UTF_8 | Options::NO_UTF8_CHECK), out errptr, out erroffset, nil)
@@ -250,8 +250,8 @@ class Regex
   # Returns a String constructed by escaping any metacharacters in `str`.
   #
   # ```
-  # string = Regex.escape("\*?{}.") #=> "\\*\\?\\{\\}\\."
-  # /#{string}/ #=> /\*\?\{\}\./
+  # string = Regex.escape("\*?{}.") # => "\\*\\?\\{\\}\\."
+  # /#{string}/                     # => /\*\?\{\}\./
   # ```
   def self.escape(str)
     String.build do |result|
@@ -277,11 +277,11 @@ class Regex
   #
   # ```
   # re = Regex.union([/skiing/i, "sledding"])
-  # re.match("Skiing")   #=> #<Regex::MatchData "Skiing">
-  # re.match("sledding") #=> #<Regex::MatchData "sledding">
+  # re.match("Skiing")   # => #<Regex::MatchData "Skiing">
+  # re.match("sledding") # => #<Regex::MatchData "sledding">
   # re = Regex.union({/skiing/i, "sledding"})
-  # re.match("Skiing")   #=> #<Regex::MatchData "Skiing">
-  # re.match("sledding") #=> #<Regex::MatchData "sledding">
+  # re.match("Skiing")   # => #<Regex::MatchData "Skiing">
+  # re.match("sledding") # => #<Regex::MatchData "sledding">
   # ```
   def self.union(patterns : Enumerable(Regex | String))
     new patterns.map { |pattern| union_part pattern }.join("|")
@@ -295,8 +295,8 @@ class Regex
   #
   # ```
   # re = Regex.union(/skiing/i, "sledding")
-  # re.match("Skiing")   #=> #<Regex::MatchData "Skiing">
-  # re.match("sledding") #=> #<Regex::MatchData "sledding">
+  # re.match("Skiing")   # => #<Regex::MatchData "Skiing">
+  # re.match("sledding") # => #<Regex::MatchData "sledding">
   # ```
   def self.union(*patterns : Regex | String)
     union patterns
@@ -318,8 +318,8 @@ class Regex
   #
   # ```
   # re = /skiing/i + /sledding/
-  # re.match("Skiing")   #=> #<Regex::MatchData "Skiing">
-  # re.match("sledding") #=> #<Regex::MatchData "sledding">
+  # re.match("Skiing")   # => #<Regex::MatchData "Skiing">
+  # re.match("sledding") # => #<Regex::MatchData "sledding">
   # ```
   def +(other)
     Regex.union(self, other)
@@ -328,9 +328,9 @@ class Regex
   # Equality. Two regexes are equal if their sources and options are the same.
   #
   # ```
-  # /abc/ == /abc/i  #=> false
-  # /abc/i == /ABC/i #=> false
-  # /abc/i == /abc/i #=> true
+  # /abc/ == /abc/i  # => false
+  # /abc/i == /ABC/i # => false
+  # /abc/i == /abc/i # => true
   # ```
   def ==(other : Regex)
     source == other.source && options == other.options
@@ -350,7 +350,7 @@ class Regex
   #     else
   #       "Mixed case"
   #     end
-  # b #=> "Upper case"
+  # b # => "Upper case"
   # ```
   def ===(other : String)
     match = match(other)
@@ -364,8 +364,8 @@ class Regex
   # `nil` otherwise.
   #
   # ```
-  # /at/ =~ "input data"   #=> 7
-  # /ax/ =~ "input data"   #=> nil
+  # /at/ =~ "input data" # => 7
+  # /ax/ =~ "input data" # => nil
   # ```
   def =~(other : String)
     match = self.match(other)
@@ -376,8 +376,8 @@ class Regex
   # Match. When the argument is not a String, always returns `nil`.
   #
   # ```
-  # /at/ =~ "input data"   #=> 7
-  # /ax/ =~ "input data"   #=> nil
+  # /at/ =~ "input data" # => 7
+  # /ax/ =~ "input data" # => nil
   # ```
   def =~(other)
     nil
@@ -388,7 +388,7 @@ class Regex
   # optional flags included.
   #
   # ```
-  # /ab+c/ix.inspect #=> "/ab+c/ix"
+  # /ab+c/ix.inspect # => "/ab+c/ix"
   # ```
   def inspect(io : IO)
     io << "/"
@@ -405,9 +405,9 @@ class Regex
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```
-  # /(.)(.)(.)/.match("abc").not_nil![2] #=> "b"
-  # /(.)(.)/.match("abc", 1).not_nil![2] #=> "c"
-  # /(.)(.)/.match("クリスタル", 3).not_nil![2] #=> "ル"
+  # /(.)(.)(.)/.match("abc").not_nil![2]   # => "b"
+  # /(.)(.)/.match("abc", 1).not_nil![2]   # => "c"
+  # /(.)(.)/.match("クリスタル", 3).not_nil![2] # => "ル"
   # ```
   def match(str, pos = 0, options = Regex::Options::None)
     if byte_index = str.char_index_to_byte_index(pos)
@@ -425,9 +425,9 @@ class Regex
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```
-  # /(.)(.)(.)/.match_at_byte_index("abc").not_nil![2] #=> "b"
-  # /(.)(.)/.match_at_byte_index("abc", 1).not_nil![2] #=> "c"
-  # /(.)(.)/.match_at_byte_index("クリスタル", 3).not_nil![2] #=> "ス"
+  # /(.)(.)(.)/.match_at_byte_index("abc").not_nil![2]   # => "b"
+  # /(.)(.)/.match_at_byte_index("abc", 1).not_nil![2]   # => "c"
+  # /(.)(.)/.match_at_byte_index("クリスタル", 3).not_nil![2] # => "ス"
   # ```
   def match_at_byte_index(str, byte_index = 0, options = Regex::Options::None)
     return ($~ = nil) if byte_index > str.bytesize
@@ -449,26 +449,26 @@ class Regex
   # the Hash. Capture groups are indexed starting from 1.
   #
   # ```
-  # /(.)/.name_table                         #=> {}
-  # /(?<foo>.)/.name_table                   #=> {1 => "foo"}
-  # /(?<foo>.)(?<bar>.)/.name_table          #=> {2 => "bar", 1 => "foo"}
-  # /(.)(?<foo>.)(.)(?<bar>.)(.)/.name_table #=> {4 => "bar", 2 => "foo"}
+  # /(.)/.name_table                         # => {}
+  # /(?<foo>.)/.name_table                   # => {1 => "foo"}
+  # /(?<foo>.)(?<bar>.)/.name_table          # => {2 => "bar", 1 => "foo"}
+  # /(.)(?<foo>.)(.)(?<bar>.)(.)/.name_table # => {4 => "bar", 2 => "foo"}
   # ```
   def name_table
-    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT,     out name_count)
+    LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT, out name_count)
     LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
     table_pointer = Pointer(UInt8).null
     LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMETABLE, pointerof(table_pointer) as Pointer(Int32))
     name_table = table_pointer.to_slice(name_entry_size*name_count)
 
-    lookup = Hash(UInt16,String).new
+    lookup = Hash(UInt16, String).new
 
     name_count.times do |i|
       capture_offset = i * name_entry_size
-      capture_number = (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset+1].to_u16
+      capture_number = (name_table[capture_offset].to_u16 << 8) | name_table[capture_offset + 1].to_u16
 
       name_offset = capture_offset + 2
-      name = String.new( (name_table + name_offset).pointer(name_entry_size-3) )
+      name = String.new((name_table + name_offset).pointer(name_entry_size - 3))
 
       lookup[capture_number] = name
     end
@@ -481,11 +481,11 @@ class Regex
   # as a non-capturing subexpression in another regular expression.
   #
   # ```
-  # re = /A*/i                 #=> /A*/i
-  # re.to_s                    #=> "(?i-msx:A*)"
-  # "Crystal".match(/t#{re}l/) #=> #<Regex::MatchData "tal">
-  # re = /A*/                  #=> "(?-imsx:A*)"
-  # "Crystal".match(/t#{re}l/) #=> nil
+  # re = /A*/i                 # => /A*/i
+  # re.to_s                    # => "(?i-msx:A*)"
+  # "Crystal".match(/t#{re}l/) # => #<Regex::MatchData "tal">
+  # re = /A*/                  # => "(?-imsx:A*)"
+  # "Crystal".match(/t#{re}l/) # => nil
   # ```
   def to_s(io : IO)
     io << "(?"

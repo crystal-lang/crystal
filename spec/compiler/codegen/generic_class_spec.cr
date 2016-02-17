@@ -65,4 +65,49 @@ describe "Code gen: generic class type" do
       Bar(Char).new.x
       )).to_i.should eq(1)
   end
+
+  it "declares instance var with virtual T (#1675)" do
+    run(%(
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      class Generic(T)
+        def initialize
+          @value = uninitialized T
+        end
+
+        def value=(@value)
+        end
+
+        def value
+          @value
+        end
+      end
+
+      generic = Generic(Foo).new
+      generic.value = Foo.new
+      generic.value.foo
+      )).to_i.should eq(1)
+  end
+
+  it "codegens statis array size after instantiating" do
+    run(%(
+      struct StaticArray(T, N)
+        def size
+          N
+        end
+      end
+
+      alias Foo = Int32[3]
+
+      x = uninitialized Int32[3]
+      x.size
+      )).to_i.should eq(3)
+  end
 end

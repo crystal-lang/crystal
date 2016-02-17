@@ -540,4 +540,52 @@ describe "Type inference: generic class" do
       ),
       "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
   end
+
+  it "can define instance var forward declared (#962)" do
+    assert_type(%(
+      class ClsA
+        @c : ClsB(Int32)
+
+        def initialize
+          @c = ClsB(Int32).new
+        end
+
+        def c
+          @c
+        end
+      end
+
+      class ClsB(T)
+        @pos = 0i64
+
+        def pos
+          @pos
+        end
+      end
+
+      fooA = ClsA.new
+      fooA.c.pos
+      )) { int64 }
+  end
+
+  it "class doesn't conflict with generic type arg" do
+    assert_type(%(
+      class Foo(X)
+        def initialize(b : X)
+        end
+
+        def x
+          1
+        end
+      end
+
+      class Bar(Y)
+      end
+
+      class X
+      end
+
+      Foo.new(Bar(Int32).new).x
+      )) { int32 }
+  end
 end

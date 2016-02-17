@@ -60,7 +60,7 @@ describe "Type inference: var" do
   it "errors if declaring var that is already declared" do
     assert_error %(
       a = 1
-      a :: Float64
+      a = uninitialized Float64
       ),
       "variable 'a' already declared"
   end

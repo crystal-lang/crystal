@@ -37,7 +37,7 @@ module IO::Buffered
 
   # :nodoc:
   def gets(delimiter : Char, limit : Int)
-    if delimiter.ord >= 128
+    if delimiter.ord >= 128 || @encoding
       return super
     end
 
@@ -50,7 +50,7 @@ module IO::Buffered
     # We first check, after filling the buffer, if the delimiter
     # is already in the buffer. In that case it's much faster to create
     # a String from a slice of the buffer instead of appending to a
-    # StringIO, which happens in the other case.
+    # MemoryIO, which happens in the other case.
     fill_buffer if @in_buffer_rem.empty?
     if @in_buffer_rem.empty?
       return nil
@@ -70,7 +70,7 @@ module IO::Buffered
       return string
     end
 
-    # We didn't find the delimiter, so we append to a StringIO until we find it,
+    # We didn't find the delimiter, so we append to a MemoryIO until we find it,
     # or we reach the limit
     String.build do |buffer|
       loop do
@@ -121,7 +121,7 @@ module IO::Buffered
   end
 
   private def read_char_with_bytesize
-    return super unless @in_buffer_rem.size >= 4
+    return super if @encoding || @in_buffer_rem.size < 4
 
     first = @in_buffer_rem[0].to_u32
     if first < 0x80
@@ -172,28 +172,12 @@ module IO::Buffered
     to_read
   end
 
-  # :nodoc:
-  def read(count : Int)
-    raise ArgumentError.new "negative count" if count < 0
-
-    fill_buffer if @in_buffer_rem.empty?
-
-    # If we have enough content in the buffer, use it
-    if count <= @in_buffer_rem.size
-      string = String.new(@in_buffer_rem[0, count])
-      @in_buffer_rem += count
-      return string
-    end
-
-    super
-  end
-
   # Buffered implementation of `IO#write(slice)`.
   def write(slice : Slice(UInt8))
     count = slice.size
 
     if sync?
-      return unbuffered_write(slice).to_i
+      return unbuffered_write(slice)
     end
 
     if flush_on_newline?
@@ -209,8 +193,7 @@ module IO::Buffered
 
     if count >= BUFFER_SIZE
       flush
-      unbuffered_write slice[0, count]
-      return
+      return unbuffered_write slice[0, count]
     end
 
     if count > BUFFER_SIZE - @out_count
@@ -219,6 +202,7 @@ module IO::Buffered
 
     slice.copy_to(out_buffer + @out_count, count)
     @out_count += count
+    nil
   end
 
   # :nodoc:
@@ -263,23 +247,26 @@ module IO::Buffered
     @sync
   end
 
-  # Flushes any buffered data and the underlying IO.
+  # Flushes any buffered data and the underlying IO. Returns `self`.
   def flush
     unbuffered_write(Slice.new(out_buffer, @out_count)) if @out_count > 0
     unbuffered_flush
     @out_count = 0
+    self
   end
 
   # Flushes and closes the underlying IO.
   def close
     flush if @out_count > 0
     unbuffered_close
+    nil
   end
 
-  # Rewinds the underlying IO.
+  # Rewinds the underlying IO. Returns `self`.
   def rewind
     unbuffered_rewind
     @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+    self
   end
 
   private def fill_buffer

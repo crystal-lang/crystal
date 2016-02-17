@@ -9,17 +9,18 @@ class TCPServer < TCPSocket
       self.reuse_address = true
 
       if LibC.bind(sock, ai.addr as LibC::SockAddr*, ai.addrlen) != 0
+        errno = Errno.new("Error binding TCP server at #{host}:#{port}")
         LibC.close(sock)
         next false if ai.next
-        raise Errno.new("Error binding TCP server at #{host}#{port}")
+        raise errno
       end
 
       if LibC.listen(sock, backlog) != 0
+        errno = Errno.new("Error listening TCP server at #{host}:#{port}")
         LibC.close(sock)
         next false if ai.next
-        raise Errno.new("Error listening TCP server at #{host}#{port}")
+        raise errno
       end
-
 
       true
     end
@@ -49,11 +50,11 @@ class TCPServer < TCPSocket
 
   def accept
     loop do
-      client_addr :: LibC::SockAddrIn6
+      client_addr = uninitialized LibC::SockAddrIn6
       client_addr_len = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
       client_fd = LibC.accept(fd, pointerof(client_addr) as LibC::SockAddr*, pointerof(client_addr_len))
       if client_fd == -1
-        if LibC.errno == Errno::EAGAIN
+        if Errno.value == Errno::EAGAIN
           wait_readable
         else
           raise Errno.new "Error accepting socket"

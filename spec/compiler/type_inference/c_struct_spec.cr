@@ -377,7 +377,7 @@ describe "Type inference: struct" do
       foo = LibFoo::Foo.new
       foo.x = Foo.new
       ),
-      "no overload matches 'Int32#+' with types Char"
+      "no overload matches 'Int32#+' with type Char"
   end
 
   it "errors if invoking to_unsafe and got different type" do

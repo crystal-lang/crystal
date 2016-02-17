@@ -203,11 +203,11 @@ module Crystal
 
     def to_number
       case @kind
-      when :i8 then @value.to_i8
+      when :i8  then @value.to_i8
       when :i16 then @value.to_i16
       when :i32 then @value.to_i32
       when :i64 then @value.to_i64
-      when :u8 then @value.to_u8
+      when :u8  then @value.to_u8
       when :u16 then @value.to_u16
       when :u32 then @value.to_u32
       when :u64 then @value.to_u64
@@ -459,13 +459,12 @@ module Crystal
       when "select"
         interpret_argless_method(method, args) do
           raise "select expects a block" unless block
-
-          block_arg = block.args.first?
-
-          ArrayLiteral.new(elements.select do |elem|
-            interpreter.define_var(block_arg.name, elem) if block_arg
-            interpreter.accept(block.body).truthy?
-          end)
+          filter(block, interpreter)
+        end
+      when "reject"
+        interpret_argless_method(method, args) do
+          raise "reject expects a block" unless block
+          filter(block, interpreter, keep: false)
         end
       when "shuffle"
         ArrayLiteral.new(elements.shuffle)
@@ -510,6 +509,16 @@ module Crystal
       else
         super
       end
+    end
+
+    def filter(block, interpreter, keep = true)
+      block_arg = block.args.first?
+
+      ArrayLiteral.new(elements.select { |elem|
+        interpreter.define_var(block_arg.name, elem) if block_arg
+        block_result = interpreter.accept(block.body).truthy?
+        keep ? block_result : !block_result
+      })
     end
   end
 
@@ -654,7 +663,7 @@ module Crystal
     end
   end
 
-  class DeclareVar
+  class TypeDeclaration
     def interpret(method, args, block, interpreter)
       case method
       when "var"
@@ -750,8 +759,8 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.union_types(type) }
       when "name"
         interpret_argless_method(method, args) { MacroId.new(type.to_s) }
-      when "type_params"
-        interpret_argless_method(method, args) { TypeNode.type_params(type) }
+      when "type_vars"
+        interpret_argless_method(method, args) { TypeNode.type_vars(type) }
       when "instance_vars"
         interpret_argless_method(method, args) { TypeNode.instance_vars(type) }
       when "superclass"
@@ -762,6 +771,18 @@ module Crystal
         interpret_argless_method(method, args) { TypeNode.all_subclasses(type) }
       when "constants"
         interpret_argless_method(method, args) { TypeNode.constants(type) }
+      when "has_constant?"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when StringLiteral
+            value = arg.value
+          when SymbolLiteral
+            value = arg.value.to_s
+          else
+            raise "argument to has_constant? must be a StringLiteral or SymbolLiteral, not #{arg.class_desc}"
+          end
+          TypeNode.has_constant?(type, value)
+        end
       when "methods"
         interpret_argless_method(method, args) { TypeNode.methods(type) }
       when "has_attribute?"
@@ -790,7 +811,7 @@ module Crystal
       end
     end
 
-    def self.type_params(type)
+    def self.type_vars(type)
       if type.is_a?(GenericClassInstanceType)
         if type.is_a?(TupleInstanceType)
           ArrayLiteral.map(type.tuple_types) do |tuple_type|
@@ -804,6 +825,10 @@ module Crystal
               type_var
             end
           end
+        end
+      elsif type.is_a?(GenericType)
+        ArrayLiteral.map((type as GenericType).type_vars) do |type_var|
+          MacroId.new(type_var)
         end
       else
         ArrayLiteral.new
@@ -827,7 +852,7 @@ module Crystal
       all_ivars.each do |name, ivar|
         # An instance var might not have a type, so we skip it
         if ivar_type = ivar.type?
-          ivars.push MetaVar.new((is_struct ? name : name[1 .. -1]), ivar_type)
+          ivars.push MetaVar.new((is_struct ? name : name[1..-1]), ivar_type)
         end
       end
 
@@ -857,6 +882,10 @@ module Crystal
     def self.constants(type)
       names = type.types.map { |name, member_type| MacroId.new(name) as ASTNode }
       ArrayLiteral.new names
+    end
+
+    def self.has_constant?(type, name)
+      BoolLiteral.new(type.types.has_key?(name))
     end
 
     def self.methods(type)

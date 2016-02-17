@@ -1,50 +1,70 @@
 require "spec"
 require "crypto/bcrypt"
 
-describe "Bcrypt" do
-  it "raises if cost is to low" do
-    expect_raises ArgumentError, /Invalid cost size/ do
-      Crypto::Bcrypt.digest("secret", 3)
+describe "Crypto::Bcrypt" do
+  latin1_pound_sign = String.new(Slice(UInt8).new(1, 0xa3_u8))
+  utf8_pound_sign = String.new(Slice(UInt8).new(2) { |i| i == 0 ? 0xc2_u8 : 0xa3_u8 })
+  bit8_unicode_pound_sign = "\u00A3"
+
+  vectors = [
+    {6, "a", "m0CrhHm10qJ3lXRY.5zDGO", "3rS2KdeeWLuGmsfGlMfOxih58VYVfxe"},
+    {6, "abc", "If6bvum7DFjUnE9p2uDeDu", "0YHzrHM6tf.iqN8.yx.jNN1ILEf7h0i"},
+    {6, "abcdefghijklmnopqrstuvwxyz", ".rCVZVOThsIa97pEDOxvGu", "RRgzG64bvtJ0938xuqzv18d3ZpQhstC"},
+    {6, "~!@#$%^&*()      ~!@#$%^&*()PNBFRD", "fPIsBO8qRqkjj273rfaOI.", "HtSV9jLDpTbZn782DC6/t7qT67P6FfO"},
+    {8, "~!@#$%^&*()      ~!@#$%^&*()PNBFRD", "Eq2r4G/76Wv39MzSX262hu", "zPz612MZiYHVUJe/OcOql2jo4.9UxTW"},
+    {10, "~!@#$%^&*()      ~!@#$%^&*()PNBFRD", "LgfYWkbzEvQ4JakH7rOvHe", "0y8pHKF9OaFgwUZ2q7W2FFZmZzJYlfS"},
+    {5, latin1_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "BvtRGGx3p8o0C5C36uS442Qqnrwofrq"},
+    {5, utf8_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "CAzSxlf0FLW7g1A5q7W/ZCj1xsN6A.e"},
+    {5, bit8_unicode_pound_sign, "CCCCCCCCCCCCCCCCCCCCC.", "CAzSxlf0FLW7g1A5q7W/ZCj1xsN6A.e"},
+  ]
+
+  it "computes digest vectors" do
+    vectors.each_with_index do |vector, index|
+      cost, password, salt, digest = vector
+      bc = Crypto::Bcrypt.new(password, salt, cost)
+      Crypto::Bcrypt::Base64.encode(bc.digest, 23).should eq(digest)
     end
   end
 
-  it "raises if cost is to high" do
-    expect_raises ArgumentError, /Invalid cost size/ do
-      Crypto::Bcrypt.digest("secret", 64)
+  it "validates salt size" do
+    expect_raises(Crypto::Bcrypt::Error, /Invalid salt size/) do
+      Crypto::Bcrypt.new("abcd", SecureRandom.hex(7))
+    end
+
+    expect_raises(Crypto::Bcrypt::Error, /Invalid salt size/) do
+      Crypto::Bcrypt.new("abcd", SecureRandom.hex(9))
     end
   end
 
-  it "raises if hashedSecret is to short" do
-    expect_raises ArgumentError, /Invalid hashedSecret size/ do
-      Crypto::Bcrypt.verify("secret", "$2a$05$KxPkLhOwKE")
+  it "validates cost" do
+    salt = SecureRandom.hex(8)
+
+    expect_raises(Crypto::Bcrypt::Error, /Invalid cost/) do
+      Crypto::Bcrypt.new("abcd", salt, 3)
+    end
+
+    expect_raises(Crypto::Bcrypt::Error, /Invalid cost/) do
+      Crypto::Bcrypt.new("abcd", salt, 32)
     end
   end
 
-  it "raises if hash prefix is not $" do
-    expect_raises ArgumentError, /Invalid hash prefix/ do
-      Crypto::Bcrypt.verify("secret", "%2a$05$KxPkLhOwKEKzLkKuLBW0XOgTBBg7MxnhsvVqSWceIMDijE.scATDPN")
+  it "validates password size" do
+    salt = SecureRandom.random_bytes(16)
+
+    expect_raises(Crypto::Bcrypt::Error, /Invalid password size/) do
+      Crypto::Bcrypt.new("".to_slice, salt)
+    end
+
+    expect_raises(Crypto::Bcrypt::Error, /Invalid password size/) do
+      Crypto::Bcrypt.new("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 invalid".to_slice, salt)
     end
   end
 
-  it "raises if hash version is incorrect" do
-    expect_raises ArgumentError, /Invalid hash version/ do
-      Crypto::Bcrypt.verify("secret", "$3a$05$KxPkLhOwKEKzLkKuLBW0XOgTBBg7MxnhsvVqSWceIMDijE.scATDPN")
-    end
-  end
-
-  it "raises if hash cost is incorrect" do
-    expect_raises ArgumentError, /Invalid cost size/ do
-      Crypto::Bcrypt.verify("secret", "$2a$03$KxPkLhOwKEKzLkKuLBW0XOgTBBg7MxnhsvVqSWceIMDijE.scATDPN")
-    end
-  end
-
-  it "verifies whether the password is correct" do
-    hash = Crypto::Bcrypt.digest("secret", 5)
-    Crypto::Bcrypt.verify("secret", hash).should be_true
-  end
-
-  it "verifies whether the password is incorrect" do
-    hash = Crypto::Bcrypt.digest("secret", 5)
-    Crypto::Bcrypt.verify("Secret", hash).should be_false
+  # Read http://lwn.net/Articles/448699/
+  it "doesn't have the sign expansion (high 8bit) security flaw" do
+    salt = "OK.fbVrR/bpIqNJ5ianF.C"
+    hash1 = Crypto::Bcrypt.new("ab#{latin1_pound_sign}", salt, 5)
+    hash2 = Crypto::Bcrypt.new(latin1_pound_sign, salt, 5)
+    hash2.should_not eq(hash1)
   end
 end

@@ -176,7 +176,7 @@ describe "Code gen: union type" do
   end
 
   it "codegens union to_s" do
-    run(%(
+    str = run(%(
       require "prelude"
 
       def foo(x : T)
@@ -185,6 +185,7 @@ describe "Code gen: union type" do
 
       a = 1 || 1.5
       foo(a)
-      )).to_string.should eq("(Int32 | Float64)")
+      )).to_string
+    (str == "(Int32 | Float64)" || str == "(Float64 | Int32)").should be_true
   end
 end

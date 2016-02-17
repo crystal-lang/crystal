@@ -1,10 +1,10 @@
 class OAuth::Consumer
   def initialize(@host, @consumer_key, @consumer_secret,
-    @port = 443,
-    @scheme = "https",
-    @request_token_uri = "/oauth/request_token",
-    @authorize_uri = "/oauth/authorize",
-    @access_token_uri = "/oauth/access_token")
+                 @port = 443,
+                 @scheme = "https",
+                 @request_token_uri = "/oauth/request_token",
+                 @authorize_uri = "/oauth/authorize",
+                 @access_token_uri = "/oauth/access_token")
     @ssl = @scheme == "https"
   end
 

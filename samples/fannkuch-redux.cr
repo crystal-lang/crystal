@@ -7,15 +7,15 @@ def fannkuch(n)
   q = w.dup
   s = w.dup
 
-  while(true)
+  while (true)
     # Copy and flip.
-    q1 = w[1]				# Cache 1st element.
+    q1 = w[1] # Cache 1st element.
     if q1 != 1
       q = w.dup
       flips = 1
-      while(true)
+      while (true)
         qq = q[q1]
-        if qq == 1				# ... until 1st element is 1.
+        if qq == 1 # ... until 1st element is 1.
           sum = sum + sign * flips
           maxflips = flips if flips > maxflips # New maximum?
           break
@@ -30,7 +30,6 @@ def fannkuch(n)
             j = j - 1
             break if !(i < j)
           end
-
         end
         q1 = qq
         flips = flips + 1
@@ -52,15 +51,15 @@ def fannkuch(n)
           break
         end
 
-        return [sum, maxflips] if ki == n 	# Out of permutations.
+        return [sum, maxflips] if ki == n # Out of permutations.
 
         s[ki] = ki
         # Rotate 1<-...<-i+1.
         t = w[1]
         1.upto(ki) do |kj|
-          w[kj] = w[kj+1]
+          w[kj] = w[kj + 1]
         end
-        w[ki+1] = t
+        w[ki + 1] = t
       end
     end
   end

@@ -24,4 +24,3 @@ struct Value
     false
   end
 end
-

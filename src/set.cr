@@ -25,7 +25,7 @@ struct Set(T)
   include Enumerable(T)
   include Iterable
 
-  # Create a new, empty `Set`
+  # Creates a new, empty `Set`
   #
   #     s = Set(Int32).new
   #     set.empty? # => true
@@ -60,7 +60,7 @@ struct Set(T)
     self
   end
 
-  # Adds `#each` element of `elems` to the set and returns `self`
+  # Adds `#each` element of *elems* to the set and returns `self`.
   #
   #     s = Set.new [1,5]
   #     s.merge [5,5,8,9]
@@ -70,7 +70,7 @@ struct Set(T)
     self
   end
 
-  # Returns `true` if `object` exists in the set
+  # Returns `true` if *object* exists in the set.
   #
   #     s = Set.new [1,5]
   #     s.includes? 5  # => true
@@ -79,7 +79,7 @@ struct Set(T)
     @hash.has_key?(object)
   end
 
-  # Removes the `object` from the set and returns `self`
+  # Removes the *object* from the set and returns `self`.
   #
   #     s = Set.new [1,5]
   #     s.includes? 5  # => true
@@ -90,7 +90,7 @@ struct Set(T)
     self
   end
 
-  # Returns the number of elements in the set
+  # Returns the number of elements in the set.
   #
   #     s = Set.new [1,5]
   #     s.size  # => 2
@@ -98,7 +98,7 @@ struct Set(T)
     @hash.size
   end
 
-  # Removes all elements in the set, and returns `self`
+  # Removes all elements in the set, and returns `self`.
   #
   #     s = Set.new [1,5]
   #     s.size  # => 2
@@ -109,7 +109,7 @@ struct Set(T)
     self
   end
 
-  # Returns `true` if the set is empty
+  # Returns `true` if the set is empty.
   #
   #     s = Set(Int32).new
   #     s.empty? # => true
@@ -119,7 +119,7 @@ struct Set(T)
     @hash.empty?
   end
 
-  # Yeilds each element of the set, and returns `self`
+  # Yeilds each element of the set, and returns `self`.
   def each
     @hash.each_key do |key|
       yield key
@@ -127,7 +127,7 @@ struct Set(T)
     self
   end
 
-  # Returns an iterator for each element of the set
+  # Returns an iterator for each element of the set.
   def each
     @hash.each_key
   end

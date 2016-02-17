@@ -61,6 +61,16 @@ class Crystal::Call
         end
       end
     end
+
+    # Check that there are no out args more then the number of arguments in the fun
+    if untyped_def.varargs
+      untyped_def.args.size.upto(self.args.size - 1) do |i|
+        self_arg = self.args[i]
+        if self_arg.is_a?(Out)
+          self_arg.raise "can't use out at varargs position: declare the variable with `#{self_arg.exp} = uninitialized ...` and pass it with `pointerof(#{self_arg.exp})`"
+        end
+      end
+    end
   end
 
   def check_fun_args_types_match(obj_type, typed_def)
@@ -156,7 +166,7 @@ class Crystal::Call
       # If converting from a float to integer, we need to remove the dot
       # so that later the codegen finds a correct value
       if unaliased_type.is_a?(IntegerType) && (dot_index = self_arg.value.index('.'))
-        self_arg.value = self_arg.value[0 ... dot_index]
+        self_arg.value = self_arg.value[0...dot_index]
       end
 
       self_arg.kind = unaliased_type.kind

@@ -179,7 +179,7 @@ describe "Type inference: fun" do
   it "disallows casting a fun type to one accepting more arguments" do
     assert_error("
       f = ->(x : Int32) { x.to_f }
-      f as Int32, Int32 -> Float64
+      f as (Int32, Int32 -> Float64)
       ",
       "can't cast")
   end
@@ -611,7 +611,7 @@ describe "Type inference: fun" do
       )) { fun_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
   end
 
-  it "uses array argument of fun arg(3)" do
+  it "uses array argument of fun arg (3)" do
     assert_type(%(
       require "prelude"
 
@@ -632,7 +632,7 @@ describe "Type inference: fun" do
       block = foo { |elems| Bar.new((elems[0] as Bar).value) }
       elems = [Foo.new, Bar.new(1)]
       block
-      )) { fun_of(array_of(types["Foo"].virtual_type), types["Bar"]) }
+      )) { fun_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
   end
 
   it "uses array argument of fun arg (4)" do

@@ -751,4 +751,39 @@ describe "Type inference: initialize" do
       p.value.foo
       )) { int32 }
   end
+
+  it "types initializer of recursive generic type" do
+    assert_type(%(
+      class Foo(T)
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      alias Rec = Foo(Rec)
+
+      Foo(Rec).new.x + 1
+      )) { int32 }
+  end
+
+  it "types initializer of generic type after instantiated" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      alias X = Foo(Int32)
+
+      class Foo(T)
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new.x + 1
+      )) { int32 }
+  end
 end

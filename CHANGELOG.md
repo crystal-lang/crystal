@@ -1,3 +1,138 @@
+## 0.12.0 (2016-02-16)
+
+* **(breaking change)** When used with a type declaration, the macros `property`, `getter`, `setter`, etc., declare instance variables with those types.
+* **(breaking change)** `JSON.mapping` and `YAML.mapping` declare instance variables with the given types.
+* **(breaking change)** `YAML.load` was renamed to `YAML.parse`, and it now returns a `YAML::Any`.
+* **(breaking change)** `embed_ecr` and `ecr_file` were renamed to `ECR.embed` and `ECR.def_to_s` (the old methods now produce a warning and will be removed in the next release).
+* Added encoding support: `IO#set_encoding`, `String#encode`, and `HTTP::Client` charset check.
+* Segmentation faults are now trapped and shown in a more friendlier way.
+* The `record` macro can now accept type declarations (for example `record Point, x : Int32, y : Int32`)
+* Added `Iterator#step` (thanks @jhass)
+* `Array#push` and `Array#unshift` can now accept multiple values and add the elements in an efficient way (thanks @arktisklada)
+* Added `default` option to `JSON.mapping` (thanks @kostya)
+* Added `default` option to `YAML.mapping` (thanks @jreinert)
+* Allow doing `case foo; when Foo.class` (and `Foo(T)` and `Foo(T).class`) in case expressions.
+* Added `Class#|` so a union type can be expresses as `Int32 | Char` in regular code.
+* Added `File.real_path` (thanks @jreinert)
+* Added `dns_timeout` for `HTTP::Client` (thanks @kostya)
+* Added dynamic width precision to `sprintf` (thanks @gtramontina)
+* `Markdown` now supports blockquotes and 1 level of list nesting (thanks @SebastianSzturo)
+* `p` now accepts multiple arguments
+* Many bug fixes and some optimizations
+
+## 0.11.1 (2016-01-25)
+* Fixed #2050, #2054, #2057, #2059, #2064
+* Fixed bug: HTTP::Server::Response headers weren't cleared after each request
+* Formatter would incorrectly change `property x :: Int32` to `property x = uninitialized Int32`
+
+## 0.11.0 (2016-01-23)
+
+* **(breaking change)** Syntax for type declarations changed from `var :: Type` to `var : Type`. The old syntax is still allowed but will be deprecated in the next version (run `crystal tool format` to automatically fix this)
+* **(breaking change)** Syntax for uninitialized variables, which used to be `var :: Type`, is now `var = uninitialized Type`. The old syntax is still allowed but will be deprecated in the next version (run `crystal tool format` to automatically fix this)
+* **(breaking change)** `HTTP::Server` refactor to support streaming. Check the [docs](http://crystal-lang.org/api/HTTP/Server.html) of `HTTP::Server` for upgrade instructions
+* **(breaking change)** Renamed `HTTP::WebSocketSession` to `HTTP::WebSocket`.
+* **(breaking change)** Heredocs now remove indentations according to the indentation of the closing identifier (thanks @rhysd)
+* **(breaking change)** Renamed `Enumerable#inject` to `Enumerable#reduce`
+* **(breaking change)** `next` and `return` semantic inside captured block has been swapped (#420)
+* Fibers context switch is now faster, done with inline assembly. `libpcl` is no longer used
+* Allow annotating the type of class and global variables
+* Support comments in ECR (thanks @ysbaddaden)
+* Security improvements to `HTTP::StaticFileHandler` (thanks @MakeNowJust)
+* Moved `seek`, `tell`, `pos` and `pos=` from `File` to `IO::FileDescriptor` (affects `Tempfile`)
+* `URI.parse` is now faster (thanks @will)
+* Many bug fixes, some really old ones involving issues with order of declaration
+
+## 0.10.2 (2016-01-13)
+
+* Fixed Directory Traversal Vulnerability in HTTP::StaticFileHandler (thanks @MakeNowJust)
+
+## 0.10.1 (2016-01-08)
+
+* Added `Int#popcount` (thanks @rmosolgo)
+* Added `@[Naked]` attribute for ommiting a method's prelude
+* Check that abstract methods are implemented by subtypes
+* Some bug fixes
+
+## 0.10.0 (2015-12-23)
+
+* **(breaking change)** `def` arguments must always be enclosed in parentheses
+* **(breaking change)** A space is now required before and after def return type restriction
+* **(breaking change)** Renamed `Dir.working_dir` to `Dir.current`
+* **(breaking change)** Moved `HTML::Builder` to [its own shard](https://github.com/crystal-lang/html_builder)
+* **(breaking change)** `String#split` now always keeps all results (never drops trailing empty strings)
+* **(breaking change)** Removed `Array#buffer`, `StaticArray#buffer` and `Slice#buffer`. Use `to_unsafe` instead (so unsafe usages are easier to spot)
+* **(breaking change)** Removed `String#cstr`. Use `to_unsafe` instead (so unsafe usages are easier to spot)
+* Optimized Range#sum (thanks @MakeNowJust)
+* Allow forward declarations for lib external vars
+* Added `Int#to_s(base)` for `base = 62` (thanks @jhass)
+* `JSON.parse` now returns `JSON::Any`, which allows traversal of JSON objects with less casts
+* Added `OpenSSL::PKCS5` (thanks @benoist)
+* MemoryIO can now be created to read/write from a Slice(UInt8). In this mode MemoryIO can't be exapnded, and can optionally be written. And when creating a MemoryIO from a String, it's non-resizeable and read-only.
+* Added `Object#!~` (the opposite of `=~`)
+* `at_exit` now receives that exit status code in the block (thanks @MakeNowJust)
+* Allow using `Set` in JSON mappings (thanks @benoist)
+* Added `File.executable?`, `File.readable?` and `File.writeable?` (thanks @mverzilli)
+* `Array#sort_by` and `Array#sort_by!` now use a [Schwartzian transform](https://en.wikipedia.org/wiki/Schwartzian_transform) (thanks @radarek)
+* Added `Array#each_permutation`, `Array#each_combination` and `Array#each_repeated_combination` iterators
+* Added optional *random* argument to `Array#sample` and `Array#shuffle`
+* The `delegate` macro can now delegate multiple methods to an object (thanks @elthariel)
+* Added basic YAML generation (thanks @porras)
+
+## 0.9.1 (2015-10-30)
+
+* Docs search now finds nested entries (thanks @adlerhsieh)
+* Many corrections and changes to the formatter, for better consistency and less obtrusion.
+* Added `OpenSSL::Cipher` and `OpenSSL::Digest` (thanks @benoist)
+* Added `Char#+(String)` (thanks @hangyas)
+* Added `Hash#key` and `Hash#key?` (thanks @adlerhsieh)
+* Added `Time::Span#*` and `Time::Span#/` (thanks @jbaum98)
+* Added `Slice#reverse_each` (thanks @omninonsense)
+* Added docs for `Random` and `Tempfile` (thanks @adlerhsieh)
+* Fixed some bugs.
+
+## 0.9.0 (2015-10-16)
+
+* **(breaking change)** The `CGI` module's funcionality has been moved to `URI` and `HTTP::Params`
+* **(breaking change)** `IO#read()` is now `IO#gets_to_end`. Removed `IO#read(count)`, added `IO#skip(count)`
+* **(breaking change)** `json_mapping` is now `JSON.mapping`. `yaml_mapping` is now `YAML.mapping`
+* **(breaking change)** `StringIO` is now `MemoryIO`
+* Added `crystal tool format` that automatically formats your code
+* `protected` methods can now be invoked between types inside a same namespace
+* Removed `curses`, you can use `https://github.com/jreinert/ncurses-crystal`
+* `to_unsafe` and numeric conversions are now also automatically performed in C struct and union fields
+* Added `{% begin %} ... {% end %}` as an alternative to `{% if true %} ... {% end %}`
+* Added `~!` operator
+* Added debug metadata for char, float, bool and enums. Also for classes and structs (experimental)
+* `Dir.glob` now works well with recursive patterns like `**` (thanks @pgkos)
+* Added `read_timeout` and `connect_timeout` to `HTTP::Client` (thanks @benoist)
+* Added `Zlib` (thanks @datanoise and @bcardiff)
+* Added `HTTP::DeflateHandler` (thanks @bcardiff)
+* Added `ENV#fetch` (thanks @tristil)
+* `Hash#new` now accepts an initialize capacity argument
+* `HTTP::Request` provides access and mutation of `query`, `path` and `query_params` (thanks @waterlink)
+* Added `XML::Node#content=` and `#name=`
+* Allow passing handlers and a block to an `HTTP::Server` (thanks @RX14)
+* `crystal init` now tries to use your github username if available (thanks @jreinert)
+* Added `Hash#select`, `Hash#reject` and their bang variant, and `Hash#each_with_object` (thanks @devdazed)
+* Added `Hash#select(*keys)` and `Hash#reject(*keys)` and their bang variant (thanks @sdogruyol)
+* Added `Set#-`, `Set#^`, and `Set#subtract` (thanks @js-ojus)
+* Allow running specs without colors (thanks @rhysd)
+* Added `TypeNode#has_constant?` and `TypeNode#type_vars` in macros (thanks @jreinert)
+* Added `String#compare` that allows case insensitive comparisons
+* Added `File#truncate` (thanks @porras)
+* `CSV` is now a class for iterating rows, optionally with headers access
+* Allow setting multiple `before_request` callbacks to an `HTTP::Client`
+* Added `Dir.cd(&block)` (thanks @rhysd)
+* Added `Class#cast` (thanks @will)
+* Fixes and additions to WebSocket, like the possibility of streaming data (thanks @jreinert)
+* Added `SemanticVersion` class (thanks @technorama)
+* `loop` now yields a counter
+* Added `Array#[]=(index, count, value)` and `Array#[]=(range, value)`
+* Added argless `sleep`
+* `IO#write(slice)` now writes the full slice or raises on error
+* Added some docs for ECR, Markdown, Hash, File, Time, Time::Span, Colorize, String, SecureRandom, YAML (thanks @adlerhsieh, @chdorner, @vjdhama, @rmosolgo)
+* Many bug fixes
+
 ## 0.8.0 (2015-09-19)
 
 * **(breaking change)** Renamed a couple of types: `ChannelClosed` -> `Channel::ClosedError`,

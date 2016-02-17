@@ -88,9 +88,9 @@ describe "Type inference: primitives" do
 
       {"foo" => ->{ true }}
       )) do
-        (types["Hash"] as GenericClassType).
-             instantiate([string, fun_of(bool)] of TypeVar)
-      end
+      (types["Hash"] as GenericClassType)
+        .instantiate([string, fun_of(bool)] of TypeVar)
+    end
   end
 
   it "extends from Number and doesn't find + method" do

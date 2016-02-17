@@ -21,7 +21,7 @@ describe Benchmark::IPS::Job do
 end
 
 private def create_entry
-  Benchmark::IPS::Entry.new("label", -> { 1+1 })
+  Benchmark::IPS::Entry.new("label", ->{ 1 + 1 })
 end
 
 describe Benchmark::IPS::Entry, "#set_cycles" do
@@ -46,15 +46,15 @@ describe Benchmark::IPS::Entry, "#calculate_stats" do
     e = create_entry
     e.calculate_stats([2, 4, 4, 4, 5, 5, 7, 9])
 
-    e.size.should     eq(8)
-    e.mean.should     eq(5.0)
+    e.size.should eq(8)
+    e.mean.should eq(5.0)
     e.variance.should eq(4.0)
-    e.stddev.should   eq(2.0)
+    e.stddev.should eq(2.0)
   end
 end
 
 private def h_mean(mean)
-  create_entry.tap {|e| e.mean = mean }.human_mean
+  create_entry.tap { |e| e.mean = mean }.human_mean
 end
 
 describe Benchmark::IPS::Entry, "#human_mean" do

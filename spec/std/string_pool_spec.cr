@@ -21,7 +21,7 @@ describe StringPool do
 
   it "gets string IO" do
     pool = StringPool.new
-    io = StringIO.new "foo"
+    io = MemoryIO.new "foo"
 
     s1 = pool.get io
     s2 = pool.get "foo"

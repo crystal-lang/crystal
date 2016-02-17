@@ -47,14 +47,19 @@
 class Random::MT19937
   include Random
 
-  N = 624
-  M = 397
-  MATRIX_A = 0x9908b0dfu32
+  N          =           624
+  M          =           397
+  MATRIX_A   = 0x9908b0dfu32
   UPPER_MASK = 0x80000000u32
   LOWER_MASK = 0x7fffffffu32
 
   def initialize(seeds = StaticArray(UInt32, 4).new { Random.new_seed })
     @mt = StaticArray(UInt32, 624).new(0u32)
+    @mti = N + 1
+    init_by_array(seeds)
+  end
+
+  def new_seed(seeds = StaticArray(UInt32, 4).new { Random.new_seed })
     @mti = N + 1
     init_by_array(seeds)
   end
@@ -69,7 +74,7 @@ class Random::MT19937
     @mt[0] = seed & 0xffffffffu32
     @mti = 1
     while @mti < N
-      @mt[@mti] = (1812433253u32 * (@mt[@mti-1] ^ (@mt[@mti-1] >> 30)) + @mti) & 0xffffffffu32
+      @mt[@mti] = (1812433253u32 * (@mt[@mti - 1] ^ (@mt[@mti - 1] >> 30)) + @mti) & 0xffffffffu32
       @mti += 1
     end
   end
@@ -87,13 +92,13 @@ class Random::MT19937
         end
 
     while k > 0
-      @mt[i] = (@mt[i] ^ ((@mt[i-1] ^ (@mt[i-1] >> 30)) * 1664525u32)) + init_keys[j] + j
+      @mt[i] = (@mt[i] ^ ((@mt[i - 1] ^ (@mt[i - 1] >> 30)) * 1664525u32)) + init_keys[j] + j
 
       i += 1
       j += 1
 
       if i >= N
-        @mt[0] = @mt[N-1]
+        @mt[0] = @mt[N - 1]
         i = 1
       end
 
@@ -107,11 +112,11 @@ class Random::MT19937
     k = N - 1
 
     while k > 0
-      @mt[i] = (@mt[i] ^ ((@mt[i-1] ^ (@mt[i-1] >> 30)) * 1566083941u32)) - i
+      @mt[i] = (@mt[i] ^ ((@mt[i - 1] ^ (@mt[i - 1] >> 30)) * 1566083941u32)) - i
       i += 1
 
       if i >= N
-        @mt[0] = @mt[N-1]
+        @mt[0] = @mt[N - 1]
         i = 1
       end
 
@@ -131,20 +136,19 @@ class Random::MT19937
       kk = 0u32
 
       while kk < N - M
-        y = (@mt[kk] & UPPER_MASK) | (@mt[kk+1] & LOWER_MASK)
-        @mt[kk] = @mt[kk+M] ^ (y >> 1) ^ (y % 2 == 0 ? 0 : MATRIX_A)
+        y = (@mt[kk] & UPPER_MASK) | (@mt[kk + 1] & LOWER_MASK)
+        @mt[kk] = @mt[kk + M] ^ (y >> 1) ^ (y % 2 == 0 ? 0 : MATRIX_A)
         kk += 1
       end
 
       while kk < N - 1
-        y = (@mt[kk] & UPPER_MASK) | (@mt[kk+1] & LOWER_MASK)
-        @mt[kk] = @mt[kk+M-N] ^ (y >> 1) ^ (y % 2 == 0 ? 0 : MATRIX_A)
+        y = (@mt[kk] & UPPER_MASK) | (@mt[kk + 1] & LOWER_MASK)
+        @mt[kk] = @mt[kk + M - N] ^ (y >> 1) ^ (y % 2 == 0 ? 0 : MATRIX_A)
         kk += 1
       end
 
-      y = (@mt[N-1] & UPPER_MASK) | (@mt[0] & LOWER_MASK)
-      @mt[N-1] = @mt[M-1] ^ (y >> 1) ^ (y % 2 == 0 ? 0 : MATRIX_A)
-
+      y = (@mt[N - 1] & UPPER_MASK) | (@mt[0] & LOWER_MASK)
+      @mt[N - 1] = @mt[M - 1] ^ (y >> 1) ^ (y % 2 == 0 ? 0 : MATRIX_A)
 
       @mti = 0
     end

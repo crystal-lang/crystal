@@ -259,7 +259,7 @@ describe "Code gen: class" do
   it "allows fixing an instance variable's type" do
     run(%(
       class Foo
-        @x :: Bool
+        @x : Bool
 
         def initialize(@x)
         end
@@ -553,7 +553,7 @@ describe "Code gen: class" do
 
       class Bar
         def initialize
-          @foo :: LibC::Foo
+          @foo = uninitialized LibC::Foo
         end
       end
 
@@ -697,5 +697,41 @@ describe "Code gen: class" do
       x = Int || Int32
       x.foo
       )).to_i.should eq(1)
+  end
+
+  it "can use a Main class (#1628)" do
+    run(%(
+      require "prelude"
+
+      class Main
+        def self.foo
+          1
+        end
+      end
+
+      Main.foo
+      )).to_i.should eq(1)
+  end
+
+  it "codegens singleton (#718)" do
+    run(%(
+      class Singleton
+        @@instance = new
+
+        def initialize
+          @msg = "Hello"
+        end
+
+        def msg
+          @msg
+        end
+
+        def self.get_instance
+          @@instance
+        end
+      end
+
+      Singleton.get_instance.msg
+      )).to_string.should eq("Hello")
   end
 end

@@ -3,7 +3,7 @@ require "json"
 
 private def it_parses(string, expected_value, file = __FILE__, line = __LINE__)
   it "parses #{string}", file, line do
-    JSON.parse(string).should eq(expected_value)
+    JSON.parse(string).raw.should eq(expected_value)
   end
 end
 
@@ -15,7 +15,7 @@ private def it_raises_on_parse(string, file = __FILE__, line = __LINE__)
   end
 end
 
-describe "JSON::Parser" do
+describe JSON::Parser do
   it_parses "1", 1
   it_parses "2.5", 2.5
   it_parses %("hello"), "hello"

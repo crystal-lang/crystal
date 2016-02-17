@@ -8,10 +8,12 @@ require "./llvm_builder_helper"
 LLVM.init_x86
 
 module Crystal
-  MAIN_NAME = "__crystal_main"
-  RAISE_NAME = "__crystal_raise"
-  MALLOC_NAME = "__crystal_malloc"
-  REALLOC_NAME = "__crystal_realloc"
+  MAIN_NAME          = "__crystal_main"
+  RAISE_NAME         = "__crystal_raise"
+  MALLOC_NAME        = "__crystal_malloc"
+  REALLOC_NAME       = "__crystal_realloc"
+  PERSONALITY_NAME   = "__crystal_personality"
+  GET_EXCEPTION_NAME = "__crystal_get_exception"
 
   class Program
     def run(code, filename = nil)
@@ -34,7 +36,7 @@ module Crystal
       main_return_type = LLVM::Void if node.type.nil_type?
 
       wrapper = llvm_mod.functions.add("__evaluate_wrapper", [] of LLVM::Type, main_return_type) do |func|
-        func.basic_blocks.append "entry"  do |builder|
+        func.basic_blocks.append "entry" do |builder|
           argc = LLVM.int(LLVM::Int32, 0)
           argv = LLVM::VoidPointer.pointer.null
           ret = builder.call(main, [argc, argv])
@@ -58,8 +60,6 @@ module Crystal
   end
 
   class CodeGenVisitor < Visitor
-    PERSONALITY_NAME = "__crystal_personality"
-    GET_EXCEPTION_NAME = "__crystal_get_exception"
     SYMBOL_TABLE_NAME = ":symbol_table"
 
     include LLVMBuilderHelper
@@ -139,8 +139,10 @@ module Crystal
         @symbol_table_values << build_string_constant(sym, sym)
       end
 
-      symbol_table = define_symbol_table @llvm_mod
-      symbol_table.initializer = LLVM.array(llvm_type(@mod.string), @symbol_table_values)
+      unless mod.symbols.empty?
+        symbol_table = define_symbol_table @llvm_mod
+        symbol_table.initializer = LLVM.array(llvm_type(@mod.string), @symbol_table_values)
+      end
 
       @last = llvm_nil
       @fun_literal_count = 0
@@ -154,6 +156,7 @@ module Crystal
 
       @empty_md_list = metadata([] of Int32)
       @unused_fun_defs = [] of FunDef
+      @proc_counts = Hash(String, Int32).new(0)
 
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
       # to avoid some memory being allocated with plain malloc.
@@ -177,13 +180,17 @@ module Crystal
       def initialize(@codegen)
       end
 
+      def visit(node : FileNode)
+        true
+      end
+
       def visit(node : Expressions)
         true
       end
 
       def visit(node : FunDef)
         case node.name
-        when MALLOC_NAME, REALLOC_NAME, RAISE_NAME
+        when MALLOC_NAME, REALLOC_NAME, RAISE_NAME, PERSONALITY_NAME, GET_EXCEPTION_NAME
           @codegen.accept node
         end
         false
@@ -256,6 +263,18 @@ module Crystal
           codegen_fun node.real_name, node.external, @mod, is_exported_fun: false
           @unused_fun_defs << node
         end
+      end
+
+      false
+    end
+
+    def visit(node : FileNode)
+      with_context(Context.new(context.fun, context.type)) do
+        file_module = @mod.file_module(node.filename)
+        if vars = file_module.vars?
+          alloca_vars vars, file_module
+        end
+        node.node.accept self
       end
 
       false
@@ -346,9 +365,7 @@ module Crystal
     end
 
     def visit(node : FunLiteral)
-      @fun_literal_count += 1
-
-      fun_literal_name = "~fun_literal_#{@fun_literal_count}"
+      fun_literal_name = fun_literal_name(node)
       is_closure = node.def.closure
 
       # If we don't care about a fun literal's return type then we mark the associated
@@ -370,6 +387,31 @@ module Crystal
       @last = make_fun node.type, fun_ptr, ctx_ptr
 
       false
+    end
+
+    def fun_literal_name(node : FunLiteral)
+      location = node.location.try &.original_location
+      if location && (type = node.type?)
+        proc_name = true
+        filename = location.filename as String
+        fun_literal_name = Crystal.safe_mangling("~proc#{type}@#{Crystal.relative_filename(filename)}:#{location.line_number}")
+      else
+        proc_name = false
+        fun_literal_name = "~fun_literal"
+      end
+      proc_count = @proc_counts[fun_literal_name]
+      proc_count += 1
+      @proc_counts[fun_literal_name] = proc_count
+
+      if proc_count > 1
+        if proc_name
+          fun_literal_name = "#{fun_literal_name[0...5]}#{proc_count}#{fun_literal_name[5..-1]}"
+        else
+          fun_literal_name = "#{fun_literal_name}#{proc_count}"
+        end
+      end
+
+      fun_literal_name
     end
 
     def visit(node : FunPointer)
@@ -412,6 +454,12 @@ module Crystal
     def visit(node : Return)
       node_type = accept_control_expression(node)
 
+      codegen_return_node(node, node_type)
+
+      false
+    end
+
+    def codegen_return_node(node, node_type)
       old_last = @last
 
       execute_ensures_until(node.target as Def)
@@ -423,8 +471,6 @@ module Crystal
       else
         codegen_return node_type
       end
-
-      false
     end
 
     def codegen_return(type : NoReturnType | Nil)
@@ -628,20 +674,30 @@ module Crystal
       set_current_debug_location(node) if @debug
       node_type = accept_control_expression(node)
 
-      if next_phi = context.next_phi
-        old_last = @last
-        execute_ensures_until(node.target as Block)
-        @last = old_last
+      case target = node.target
+      when Block
+        if next_phi = context.next_phi
+          old_last = @last
+          execute_ensures_until(target as Block)
+          @last = old_last
 
-        next_phi.add @last, node_type
-      elsif while_block = context.while_block
-        execute_ensures_until(node.target as While)
-        br while_block
+          next_phi.add @last, node_type
+          return false
+        end
+      when While
+        if while_block = context.while_block
+          execute_ensures_until(target as While)
+          br while_block
+          return false
+        end
       else
-        node.raise "Bug: unknown exit for next"
+        # The only possibility is that we are in a captured block,
+        # so this is the same as a return
+        codegen_return_node(node, node_type)
+        return false
       end
 
-      false
+      node.raise "Bug: unknown exit for next"
     end
 
     def accept_control_expression(node)
@@ -680,7 +736,7 @@ module Crystal
 
       case target
       when Underscore
-        request_value(false) { accept value }
+        accept value
         return false
       when Path
         # Initialize constants if they are used
@@ -773,6 +829,39 @@ module Crystal
           end
         end
       end
+
+      # If it's thread local, we use a NoInline function to access it
+      # because of http://lists.llvm.org/pipermail/llvm-dev/2016-February/094736.html
+      #
+      # So, we basically make a function like this (assuming the global is a i32):
+      #
+      # define void @"*$foo"(i32**) noinline {
+      #   store i32* @"$foo", i32** %0
+      #   ret void
+      # }
+      #
+      # And then in the caller we alloca an i32*, pass it, and then load the pointer,
+      # which is the same as the global, but through a non-inlined function.
+      #
+      # Making a function that just returns the pointer doesn't work: LLVM inlines it.
+      if ptr.thread_local?
+        fun_name = "*#{name}"
+        thread_local_fun = @main_mod.functions[fun_name]?
+        unless thread_local_fun
+          thread_local_fun = @main_mod.functions.add(fun_name, ([llvm_type(type).pointer.pointer]), LLVM::Void) do |func|
+            func.basic_blocks.append do |builder|
+              builder.store ptr, func.params[0]
+              builder.ret
+            end
+          end
+          thread_local_fun.add_attribute LLVM::Attribute::NoInline
+        end
+        thread_local_fun = check_main_fun(fun_name, thread_local_fun)
+        indirection_ptr = alloca llvm_type(type).pointer
+        call thread_local_fun, indirection_ptr
+        ptr = load indirection_ptr
+      end
+
       ptr
     end
 
@@ -780,15 +869,21 @@ module Crystal
       "#{node.owner}#{node.var.name.gsub('@', ':')}"
     end
 
-    def visit(node : DeclareVar)
+    def visit(node : TypeDeclaration)
       var = node.var
-      case var
-      when Var
+      if var.is_a?(Var)
         declare_var var
-      when InstanceVar
-        if context.type.is_a?(InstanceVarContainer)
-          var.accept self
-        end
+      end
+
+      @last = llvm_nil
+
+      false
+    end
+
+    def visit(node : UninitializedVar)
+      var = node.var
+      if var.is_a?(Var)
+        declare_var var
       end
 
       @last = llvm_nil
@@ -885,20 +980,20 @@ module Crystal
       ex = Call.new(Path.global("TypeCastError"), "new", StringLiteral.new("cast to #{to_type} failed"))
       call = Call.global("raise", ex)
 
-      @mod.infer_type_intermediate call
+      @mod.visit_main call
       call
     end
 
     def cant_pass_closure_to_c_exception_call
       @cant_pass_closure_to_c_exception_call ||= begin
         call = Call.global("raise", StringLiteral.new("passing a closure to C is not allowed"))
-        @mod.infer_type_intermediate call
+        @mod.visit_main call
         call
       end
     end
 
     def visit(node : IsA)
-      codegen_type_filter node, &.filter_by(node.const.type.instance_type)
+      codegen_type_filter node, &.filter_by(node.const.type)
     end
 
     def visit(node : RespondsTo)
@@ -1309,7 +1404,7 @@ module Crystal
       end
     end
 
-    def br_block_chain *blocks
+    def br_block_chain(*blocks)
       old_block = insert_block
 
       0.upto(blocks.size - 2) do |i|
@@ -1653,7 +1748,7 @@ module Crystal
     end
 
     def build_string_constant(str, name = "str")
-      name = "#{name[0 .. 18]}..." if name.bytesize > 18
+      name = "#{name[0..18]}..." if name.bytesize > 18
       name = name.gsub '@', '.'
       name = "'#{name}'"
       key = StringKey.new(@llvm_mod, str)
@@ -1662,11 +1757,11 @@ module Crystal
         global.linkage = LLVM::Linkage::Private
         global.global_constant = true
         global.initializer = LLVM.struct [
-                               type_id(@mod.string),
-                               int32(str.bytesize),
-                               int32(str.size),
-                               LLVM.string(str),
-                             ]
+          type_id(@mod.string),
+          int32(str.bytesize),
+          int32(str.size),
+          LLVM.string(str),
+        ]
         cast_to global, @mod.string
       end
     end
@@ -1691,6 +1786,23 @@ module Crystal
 
     def visit(node : ASTNode)
       true
+    end
+  end
+
+  def self.safe_mangling(name)
+    ifdef windows
+      name.gsub do |char|
+        case char
+        when '<', '>', '(', ')', '*', ':', ',', '#', '@', ' '
+          "."
+        when '+'
+          ".."
+        else
+          char
+        end
+      end
+    else
+      name
     end
   end
 end

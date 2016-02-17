@@ -1,5 +1,6 @@
 class A
   property lorem
+
   def foo
     1
   end

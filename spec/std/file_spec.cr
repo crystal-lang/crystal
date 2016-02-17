@@ -2,7 +2,7 @@ require "spec"
 require "tempfile"
 
 private def base
-  Dir.working_directory
+  Dir.current
 end
 
 private def tmpdir
@@ -15,6 +15,14 @@ end
 
 private def home
   ENV["HOME"]
+end
+
+private def it_raises_on_null_byte(operation, &block)
+  it "errors on #{operation}" do
+    expect_raises(ArgumentError, "string contains null byte") do
+      block.call
+    end
+  end
 end
 
 describe "File" do
@@ -56,6 +64,24 @@ describe "File" do
     end
   end
 
+  describe "executable?" do
+    it "gives false" do
+      File.executable?("#{__DIR__}/data/test_file.txt").should be_false
+    end
+  end
+
+  describe "readable?" do
+    it "gives true" do
+      File.readable?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+  end
+
+  describe "writable?" do
+    it "gives true" do
+      File.writable?("#{__DIR__}/data/test_file.txt").should be_true
+    end
+  end
+
   describe "file?" do
     it "gives true" do
       File.file?("#{__DIR__}/data/test_file.txt").should be_true
@@ -78,9 +104,9 @@ describe "File" do
 
   describe "link" do
     it "creates a hard link" do
-      out_path = "#{ __DIR__ }/data/test_file_link.txt"
+      out_path = "#{__DIR__}/data/test_file_link.txt"
       begin
-        File.link("#{ __DIR__ }/data/test_file.txt", out_path)
+        File.link("#{__DIR__}/data/test_file.txt", out_path)
         File.exists?(out_path).should be_true
       ensure
         File.delete(out_path) if File.exists?(out_path)
@@ -90,9 +116,9 @@ describe "File" do
 
   describe "symlink" do
     it "creates a symbolic link" do
-      out_path = "#{ __DIR__ }/data/test_file_symlink.txt"
+      out_path = "#{__DIR__}/data/test_file_symlink.txt"
       begin
-        File.symlink("#{ __DIR__ }/data/test_file.txt", out_path)
+        File.symlink("#{__DIR__}/data/test_file.txt", out_path)
         File.symlink?(out_path).should be_true
       ensure
         File.delete(out_path) if File.exists?(out_path)
@@ -102,12 +128,12 @@ describe "File" do
 
   describe "symlink?" do
     it "gives true" do
-      File.symlink?("#{ __DIR__ }/data/symlink.txt").should be_true
+      File.symlink?("#{__DIR__}/data/symlink.txt").should be_true
     end
 
     it "gives false" do
-      File.symlink?("#{ __DIR__ }/data/test_file.txt").should be_false
-      File.symlink?("#{ __DIR__ }/data/unknown_file.txt").should be_false
+      File.symlink?("#{__DIR__}/data/test_file.txt").should be_false
+      File.symlink?("#{__DIR__}/data/unknown_file.txt").should be_false
     end
   end
 
@@ -122,6 +148,7 @@ describe "File" do
     File.basename("/foo/").should eq("foo")
     File.basename("foo").should eq("foo")
     File.basename("").should eq("")
+    File.basename("/").should eq("/")
   end
 
   it "gets basename removing suffix" do
@@ -227,7 +254,7 @@ describe "File" do
   describe "delete" do
     it "deletes a file" do
       filename = "#{__DIR__}/data/temp1.txt"
-      File.open(filename, "w") {}
+      File.open(filename, "w") { }
       File.exists?(filename).should be_true
       File.delete(filename)
       File.exists?(filename).should be_false
@@ -296,7 +323,7 @@ describe "File" do
 
     it "replaces multiple / with a single /" do
       File.expand_path("////some/path").should eq("/some/path")
-      File.expand_path("/some////path").should eq( "/some/path")
+      File.expand_path("/some////path").should eq("/some/path")
     end
 
     it "expand path with" do
@@ -320,10 +347,36 @@ describe "File" do
       File.expand_path("~/").should eq(home)
       File.expand_path("~/..badfilename").should eq(File.join(home, "..badfilename"))
       File.expand_path("..").should eq("/#{base.split("/")[0...-1].join("/")}".gsub(%r{\A//}, "/"))
-      File.expand_path("~/a","~/b").should eq(File.join(home, "a"))
+      File.expand_path("~/a", "~/b").should eq(File.join(home, "a"))
       File.expand_path("~").should eq(home)
       File.expand_path("~", "/tmp/gumby/ddd").should eq(home)
       File.expand_path("~/a", "/tmp/gumby/ddd").should eq(File.join([home, "a"]))
+    end
+  end
+
+  describe "real_path" do
+    it "expands paths for normal files" do
+      File.real_path("/usr/share").should eq("/usr/share")
+      File.real_path("/usr/share/..").should eq("/usr")
+    end
+
+    it "raises Errno if file doesn't exist" do
+      expect_raises Errno do
+        File.real_path("/usr/share/foo/bar")
+      end
+    end
+
+    it "expands paths of symlinks" do
+      symlink_path = "/tmp/test_file_symlink.txt"
+      file_path = "#{ __DIR__ }/data/test_file.txt"
+      begin
+        File.symlink(file_path, symlink_path)
+        real_symlink_path = File.real_path(symlink_path)
+        real_file_path = File.real_path(file_path)
+        real_symlink_path.should eq(real_file_path)
+      ensure
+        File.delete(symlink_path) if File.exists?(symlink_path)
+      end
     end
   end
 
@@ -331,7 +384,7 @@ describe "File" do
     it "can write to a file" do
       filename = "#{__DIR__}/data/temp_write.txt"
       File.write(filename, "hello")
-      File.read(filename).strip.should eq("hello")
+      File.read(filename).should eq("hello")
       File.delete(filename)
     end
 
@@ -374,7 +427,7 @@ describe "File" do
     end
   end
 
-  describe "open with perm" do
+  it "opens with perm" do
     filename = "#{__DIR__}/data/temp_write.txt"
     perm = 0o600
     File.open(filename, "w", perm) do |file|
@@ -385,9 +438,9 @@ describe "File" do
 
   it "clears the read buffer after a seek" do
     file = File.new("#{__DIR__}/data/test_file.txt")
-    file.read(5).should eq("Hello")
+    file.gets(5).should eq("Hello")
     file.seek(1)
-    file.read(4).should eq("ello")
+    file.gets(4).should eq("ello")
   end
 
   it "raises if invoking seek with a closed file" do
@@ -398,19 +451,19 @@ describe "File" do
 
   it "returns the current read position with tell" do
     file = File.new("#{__DIR__}/data/test_file.txt")
-    file.tell().should eq(0)
-    file.read(5).should eq("Hello")
-    file.tell().should eq(5)
+    file.tell.should eq(0)
+    file.gets(5).should eq("Hello")
+    file.tell.should eq(5)
     file.sync = true
-    file.tell().should eq(5)
+    file.tell.should eq(5)
   end
 
   it "can navigate with pos" do
     file = File.new("#{__DIR__}/data/test_file.txt")
     file.pos = 3
-    file.read(2).should eq("lo")
+    file.gets(2).should eq("lo")
     file.pos -= 4
-    file.read(4).should eq("ello")
+    file.gets(4).should eq("ello")
   end
 
   it "raises if invoking tell with a closed file" do
@@ -449,10 +502,49 @@ describe "File" do
 
   it "rewinds" do
     file = File.new("#{__DIR__}/data/test_file.txt")
-    content = file.read
+    content = file.gets_to_end
     content.size.should_not eq(0)
     file.rewind
-    file.read.should eq(content)
+    file.gets_to_end.should eq(content)
+  end
+
+  describe "truncate" do
+    it "truncates" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "0123456789")
+      File.open(filename, "r+") do |f|
+        f.gets_to_end.should eq("0123456789")
+        f.rewind
+        f.puts("333")
+        f.truncate(4)
+      end
+
+      File.read(filename).should eq("333\n")
+      File.delete filename
+    end
+
+    it "truncates completely when no size is passed" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "0123456789")
+      File.open(filename, "r+") do |f|
+        f.puts("333")
+        f.truncate
+      end
+
+      File.read(filename).should eq("")
+      File.delete filename
+    end
+
+    it "requires a file opened for writing" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "0123456789")
+      File.open(filename, "r") do |f|
+        expect_raises(Errno) do
+          f.truncate(4)
+        end
+      end
+      File.delete filename
+    end
   end
 
   describe "flock" do
@@ -460,7 +552,7 @@ describe "File" do
       File.open(__FILE__) do |file1|
         File.open(__FILE__) do |file2|
           file1.flock_exclusive do
-# BUG: check for EWOULDBLOCK when exception filters are implemented
+            # BUG: check for EWOULDBLOCK when exception filters are implemented
             expect_raises(Errno) do
               file2.flock_exclusive(blocking: false) { }
             end
@@ -477,6 +569,153 @@ describe "File" do
           end
         end
       end
+    end
+  end
+
+  describe "raises on null byte" do
+    it_raises_on_null_byte "new" do
+      File.new("foo\0bar")
+    end
+
+    it_raises_on_null_byte "join" do
+      File.join("foo", "\0bar")
+    end
+
+    it_raises_on_null_byte "size" do
+      File.size("foo\0bar")
+    end
+
+    it_raises_on_null_byte "rename (first arg)" do
+      File.rename("foo\0bar", "baz")
+    end
+
+    it_raises_on_null_byte "rename (second arg)" do
+      File.rename("baz", "foo\0bar")
+    end
+
+    it_raises_on_null_byte "stat" do
+      File.stat("foo\0bar")
+    end
+
+    it_raises_on_null_byte "lstat" do
+      File.lstat("foo\0bar")
+    end
+
+    it_raises_on_null_byte "exists?" do
+      File.exists?("foo\0bar")
+    end
+
+    it_raises_on_null_byte "readable?" do
+      File.readable?("foo\0bar")
+    end
+
+    it_raises_on_null_byte "writable?" do
+      File.writable?("foo\0bar")
+    end
+
+    it_raises_on_null_byte "executable?" do
+      File.executable?("foo\0bar")
+    end
+
+    it_raises_on_null_byte "file?" do
+      File.file?("foo\0bar")
+    end
+
+    it_raises_on_null_byte "directory?" do
+      File.directory?("foo\0bar")
+    end
+
+    it_raises_on_null_byte "dirname" do
+      File.dirname("foo\0bar")
+    end
+
+    it_raises_on_null_byte "basename" do
+      File.basename("foo\0bar")
+    end
+
+    it_raises_on_null_byte "basename 2, first arg" do
+      File.basename("foo\0bar", "baz")
+    end
+
+    it_raises_on_null_byte "basename 2, second arg" do
+      File.basename("foobar", "baz\0")
+    end
+
+    it_raises_on_null_byte "delete" do
+      File.delete("foo\0bar")
+    end
+
+    it_raises_on_null_byte "extname" do
+      File.extname("foo\0bar")
+    end
+
+    it_raises_on_null_byte "expand_path, first arg" do
+      File.expand_path("foo\0bar")
+    end
+
+    it_raises_on_null_byte "expand_path, second arg" do
+      File.expand_path("baz", "foo\0bar")
+    end
+
+    it_raises_on_null_byte "link, first arg" do
+      File.link("foo\0bar", "baz")
+    end
+
+    it_raises_on_null_byte "link, second arg" do
+      File.link("baz", "foo\0bar")
+    end
+
+    it_raises_on_null_byte "symlink, first arg" do
+      File.symlink("foo\0bar", "baz")
+    end
+
+    it_raises_on_null_byte "symlink, second arg" do
+      File.symlink("baz", "foo\0bar")
+    end
+
+    it_raises_on_null_byte "symlink?" do
+      File.symlink?("foo\0bar")
+    end
+  end
+
+  describe "encoding" do
+    it "writes with encoding" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello", encoding: "UCS-2LE")
+      File.read(filename).to_slice.should eq("hello".encode("UCS-2LE"))
+      File.delete(filename)
+    end
+
+    it "reads with encoding" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello", encoding: "UCS-2LE")
+      File.read(filename, encoding: "UCS-2LE").should eq("hello")
+      File.delete(filename)
+    end
+
+    it "opens with encoding" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello", encoding: "UCS-2LE")
+      File.open(filename, encoding: "UCS-2LE") do |file|
+        file.gets_to_end.should eq("hello")
+      end
+      File.delete filename
+    end
+
+    it "does each line with encoding" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello", encoding: "UCS-2LE")
+      File.each_line(filename, encoding: "UCS-2LE") do |line|
+        line.should eq("hello")
+      end
+      File.delete filename
+    end
+
+    it "reads lines with encoding" do
+      filename = "#{__DIR__}/data/temp_write.txt"
+      File.write(filename, "hello", encoding: "UCS-2LE")
+      File.read_lines(filename, encoding: "UCS-2LE").should eq(["hello"])
+      File.delete filename
     end
   end
 end

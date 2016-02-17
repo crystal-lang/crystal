@@ -51,4 +51,14 @@ describe "Code gen: return" do
       bar.is_a?(Nil)
       )).to_b.should be_true
   end
+
+  it "codegens assign with if with two returns" do
+    run(%(
+      def test
+        a = 1 ? return 2 : return 3
+      end
+
+      test
+      )).to_i.should eq(2)
+  end
 end

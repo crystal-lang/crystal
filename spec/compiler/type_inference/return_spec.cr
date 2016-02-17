@@ -132,4 +132,40 @@ describe "Type inference: return" do
       foo.bar
       )) { no_return }
   end
+
+  it "types bug (#1823)" do
+    assert_type(%(
+      def test
+        b = nil
+
+        begin
+        rescue
+          b ? return 1 : return 2
+        end
+
+        b
+      end
+
+      test)) { nilable int32 }
+  end
+
+  it "allows nilable return type to match subclasses (#1735)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def test : Foo?
+        if true
+          Bar.new
+        else
+          nil
+        end
+      end
+
+      test
+      )) { types["Bar"] }
+  end
 end

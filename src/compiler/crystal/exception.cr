@@ -16,7 +16,7 @@ module Crystal
       io.json_array { |ar| json_obj(ar, io) }
     end
 
-    def true_filename(filename=@filename) : String
+    def true_filename(filename = @filename) : String
       if filename.is_a? VirtualFile
         loc = filename.expanded_location
         if loc
@@ -172,8 +172,12 @@ module Crystal
       super(message)
     end
 
-    def self.new(message)
+    def self.new(message : String)
       new message, nil, 0, nil, 0
+    end
+
+    def self.new(message : String, location : Location)
+      new message, location.line_number, location.column_number, location.filename, 0
     end
 
     def json_obj(ar, io)
@@ -383,7 +387,7 @@ module Crystal
       filtered = defs.select do |a_def|
         if a_def.calls_super
           false
-        elsif(instance_vars = a_def.instance_vars)
+        elsif (instance_vars = a_def.instance_vars)
           !instance_vars.includes?(var_name)
         else
           true

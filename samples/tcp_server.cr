@@ -10,10 +10,8 @@ def process(client)
     puts "#{client_addr} msg '#{msg.chop}'"
     client << msg
   end
-
 rescue IO::EOFError
   puts "#{client_addr} dissconnected"
-
 ensure
   client.close
 end

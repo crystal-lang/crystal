@@ -2,11 +2,11 @@ class OAuth2::Client
   property scope
 
   def initialize(@host, @client_id, @client_secret,
-    @port = 443,
-    @scheme = "https",
-    @authorize_uri = "/oauth2/authorize",
-    @token_uri = "/oauth2/token",
-    @redirect_uri = nil)
+                 @port = 443,
+                 @scheme = "https",
+                 @authorize_uri = "/oauth2/authorize",
+                 @token_uri = "/oauth2/token",
+                 @redirect_uri = nil)
   end
 
   def get_authorize_uri(scope = nil, state = nil)

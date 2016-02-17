@@ -1,6 +1,6 @@
 module Crystal
   class TablePrint
-    COL_SEP = '|'
+    COL_SEP     = '|'
     CELL_MARGIN = ' '
 
     struct Separator
@@ -104,7 +104,7 @@ module Crystal
     end
 
     protected def column_for_last_cell
-      col = @columns[last_string_row.size-1]?
+      col = @columns[last_string_row.size - 1]?
       unless col
         col = Column.new
         @columns << col

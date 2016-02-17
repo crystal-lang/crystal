@@ -1,18 +1,39 @@
 require "./lib_gmp"
 
+# A BigInt can represent arbitrarily large integers.
+#
+# It is implemented under the hood with [GMP](https://gmplib.org/).
 struct BigInt < Int
   include Comparable(Int::Signed)
   include Comparable(Int::Unsigned)
   include Comparable(BigInt)
+  include Comparable(Float)
 
+  # Creates a BigInt with the value zero.
+  #
+  # ```
+  # BigInt.new # => 0
+  # ```
   def initialize
     LibGMP.init(out @mpz)
   end
 
+  # Creates a BigInt with the value denoted by *str* in the given *base*.
+  #
+  # Raises `ArgumentError` if the string doesn't denote a valid integer.
+  #
+  # ```
+  # BigInt.new("123456789123456789123456789123456789") # => 123456789123456789123456789123456789
+  # BigInt.new("1234567890ABCDEF", base: 16)           # => 1311768467294899695
+  # ```
   def initialize(str : String, base = 10)
-    LibGMP.init_set_str(out @mpz, str, base)
+    err = LibGMP.init_set_str(out @mpz, str, base)
+    if err == -1
+      raise ArgumentError.new("invalid BigInt: #{str}")
+    end
   end
 
+  # Creates a BigInt from the given *num*.
   def initialize(num : Int::Signed)
     if LibC::Long::MIN <= num <= LibC::Long::MAX
       LibGMP.init_set_si(out @mpz, num)
@@ -21,6 +42,7 @@ struct BigInt < Int
     end
   end
 
+  # ditto
   def initialize(num : Int::Unsigned)
     if num <= LibC::ULong::MAX
       LibGMP.init_set_ui(out @mpz, num)
@@ -29,9 +51,16 @@ struct BigInt < Int
     end
   end
 
+  # ditto
+  def initialize(num : Float)
+    LibGMP.init_set_d(out @mpz, num)
+  end
+
+  # :nodoc:
   def initialize(@mpz : LibGMP::MPZ)
   end
 
+  # :nodoc:
   def self.new
     LibGMP.init(out mpz)
     yield pointerof(mpz)
@@ -58,11 +87,15 @@ struct BigInt < Int
     end
   end
 
-  def +(other : BigInt)
+  def <=>(other : Float)
+    LibGMP.cmp_d(mpz, other)
+  end
+
+  def +(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.add(mpz, self, other) }
   end
 
-  def +(other : Int)
+  def +(other : Int) : BigInt
     if other < 0
       self - other.abs
     else
@@ -70,11 +103,11 @@ struct BigInt < Int
     end
   end
 
-  def -(other : BigInt)
+  def -(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.sub(mpz, self, other) }
   end
 
-  def -(other : Int)
+  def -(other : Int) : BigInt
     if other < 0
       self + other.abs
     else
@@ -82,33 +115,33 @@ struct BigInt < Int
     end
   end
 
-  def -
+  def - : BigInt
     BigInt.new { |mpz| LibGMP.neg(mpz, self) }
   end
 
-  def abs
+  def abs : BigInt
     BigInt.new { |mpz| LibGMP.abs(mpz, self) }
   end
 
-  def *(other : BigInt)
+  def *(other : BigInt) : BigInt
     BigInt.new { |mpz| LibGMP.mul(mpz, self, other) }
   end
 
-  def *(other : Int::Signed)
+  def *(other : Int::Signed) : BigInt
     BigInt.new { |mpz| LibGMP.mul_si(mpz, self, other) }
   end
 
-  def *(other : Int::Unsigned)
+  def *(other : Int::Unsigned) : BigInt
     BigInt.new { |mpz| LibGMP.mul_ui(mpz, self, other) }
   end
 
-  def /(other : BigInt)
+  def /(other : BigInt) : BigInt
     check_division_by_zero other
 
     BigInt.new { |mpz| LibGMP.fdiv_q(mpz, self, other) }
   end
 
-  def /(other : Int)
+  def /(other : Int) : BigInt
     check_division_by_zero other
 
     if other < 0
@@ -118,40 +151,47 @@ struct BigInt < Int
     end
   end
 
-  def %(other : BigInt)
+  def %(other : BigInt) : BigInt
     check_division_by_zero other
 
     BigInt.new { |mpz| LibGMP.fdiv_r(mpz, self, other) }
   end
 
-  def %(other : Int)
+  def %(other : Int) : BigInt
     check_division_by_zero other
 
     BigInt.new { |mpz| LibGMP.fdiv_r_ui(mpz, self, other.abs) }
   end
 
-  def ~
+  def ~ : BigInt
     BigInt.new { |mpz| LibGMP.com(mpz, self) }
   end
 
-  def &(other : Int)
+  def &(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.and(mpz, self, other.to_big_i) }
   end
 
-  def |(other : Int)
+  def |(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.ior(mpz, self, other.to_big_i) }
   end
 
-  def ^(other : Int)
+  def ^(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.xor(mpz, self, other.to_big_i) }
   end
 
-  def >>(other : Int)
+  def >>(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.fdiv_q_2exp(mpz, self, other) }
   end
 
-  def <<(other : Int)
+  def <<(other : Int) : BigInt
     BigInt.new { |mpz| LibGMP.mul_2exp(mpz, self, other) }
+  end
+
+  def **(other : Int) : BigInt
+    if other < 0
+      raise ArgumentError.new("negative exponent isn't supported")
+    end
+    BigInt.new { |mpz| LibGMP.pow_ui(mpz, self, other) }
   end
 
   def inspect
@@ -168,7 +208,7 @@ struct BigInt < Int
 
   def to_s(io)
     str = to_cstr
-    io.write Slice.new(str, LibC.strlen(str))
+    io.write_utf8 Slice.new(str, LibC.strlen(str))
   end
 
   def to_s(base : Int)
@@ -177,10 +217,14 @@ struct BigInt < Int
     String.new(cstr)
   end
 
-  def digits
+  def digits : Array(Int32)
     ary = [] of Int32
     self.to_s.each_char { |c| ary << c - '0' }
     ary
+  end
+
+  def popcount
+    LibGMP.popcount(self)
   end
 
   def to_i
@@ -265,11 +309,11 @@ struct Int
     -(other <=> self)
   end
 
-  def +(other : BigInt)
+  def +(other : BigInt) : BigInt
     other + self
   end
 
-  def -(other : BigInt)
+  def -(other : BigInt) : BigInt
     if self < 0
       -(abs + other)
     else
@@ -282,25 +326,42 @@ struct Int
     end
   end
 
-  def *(other : BigInt)
+  def *(other : BigInt) : BigInt
     other * self
   end
 
-  def /(other : BigInt)
+  def /(other : BigInt) : BigInt
     to_big_i / other
   end
 
-  def %(other : BigInt)
+  def %(other : BigInt) : BigInt
     to_big_i % other
   end
 
-  def to_big_i
+  # Returns a BigInt representing this integer.
+  def to_big_i : BigInt
+    BigInt.new(self)
+  end
+end
+
+struct Float
+  include Comparable(BigInt)
+
+  def <=>(other : BigInt)
+    -(other <=> self)
+  end
+
+  # Returns a BigInt representing this float (rounded using `floor`).
+  def to_big_i : BigInt
     BigInt.new(self)
   end
 end
 
 class String
-  def to_big_i(base = 10)
+  # Returns a BigInt from this string, in the given *base*.
+  #
+  # Raises `ArgumentError` if this string doesn't denote a valid integer.
+  def to_big_i(base = 10) : BigInt
     BigInt.new(self, base)
   end
 end

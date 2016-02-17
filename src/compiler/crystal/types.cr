@@ -215,6 +215,8 @@ module Crystal
         other_type.union_types.any? do |union_type|
           implements?(union_type)
         end
+      when VirtualMetaclassType
+        implements?(other_type.base_type.metaclass)
       else
         self == other_type
       end
@@ -397,6 +399,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement has_instance_var_in_initialize?"
     end
 
+    def has_instance_var_initializer?(name)
+      false
+    end
+
     def has_def?(name)
       raise "Bug: #{self} doesn't implement has_def?"
     end
@@ -451,6 +457,14 @@ module Crystal
 
     def generic_nest
       0
+    end
+
+    def has_finalizer?
+      return false if struct?
+
+      signature = CallSignature.new "finalize", ([] of Type), nil, nil
+      matches = lookup_matches(signature)
+      !matches.empty?
     end
 
     def inspect(io)
@@ -671,7 +685,7 @@ module Crystal
     end
 
     def has_def_without_parents?(name)
-      self.defs().try &.has_key?(name)
+      self.defs.try &.has_key?(name)
     end
   end
 
@@ -793,6 +807,10 @@ module Crystal
       end
     end
 
+    def raw_including_types
+      @including_types
+    end
+
     def add_to_including_types(type : GenericType, all_types)
       type.generic_types.each_value do |generic_type|
         all_types << generic_type unless all_types.includes?(generic_type)
@@ -809,6 +827,14 @@ module Crystal
 
     def raw_including_types
       @including_types
+    end
+
+    def cover
+      including_types.try(&.cover) || self
+    end
+
+    def cover_size
+      including_types.try(&.cover_size) || 1
     end
 
     def filter_by_responds_to(name)
@@ -831,6 +857,14 @@ module Crystal
 
   # A module that is related to a file and contains its private defs.
   class FileModule < NonGenericModuleType
+    def vars
+      @vars ||= MetaVars.new
+    end
+
+    def vars?
+      @vars
+    end
+
     def passed_as_self?
       false
     end
@@ -853,6 +887,10 @@ module Crystal
       initializer = InstanceVarInitializer.new(name, value, meta_vars)
       initializers << initializer
       initializer
+    end
+
+    def has_instance_var_initializer?(name)
+      @instance_vars_initializers.try(&.any? { |init| init.name == name })
     end
   end
 
@@ -1368,6 +1406,17 @@ module Crystal
       end
     end
 
+    def add_instance_var_initializer(name, value, meta_vars)
+      initializer = super
+
+      # Make sure to type the initializer for existing instantiations
+      generic_types.each_value do |instance|
+        run_instance_var_initializer(initializer, instance)
+      end
+
+      initializer
+    end
+
     def run_instance_vars_initializers(real_type, type : GenericClassType | ClassType, instance)
       if superclass = type.superclass
         run_instance_vars_initializers(real_type, superclass, instance)
@@ -1388,7 +1437,7 @@ module Crystal
 
     def run_instance_var_initializer(initializer, instance)
       meta_vars = MetaVars.new
-      visitor = TypeVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
+      visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
       visitor.scope = instance
       value = initializer.value.clone
       value.accept visitor
@@ -1481,7 +1530,7 @@ module Crystal
 
         ivar = MetaInstanceVar.new(name, visitor.type)
         ivar.bind_to ivar
-        ivar.freeze_type = visitor.type
+        ivar.freeze_type = visitor.type.virtual_type
         instance.instance_vars[name] = ivar
       end
     end
@@ -2113,11 +2162,12 @@ module Crystal
   end
 
   class AliasType < NamedType
-    property! :aliased_type
+    getter? value_processed
 
-    def initialize(program, container, name)
+    def initialize(program, container, name, @value)
       super(program, container, name)
       @simple = true
+      @value_processed = false
     end
 
     delegate lookup_defs, aliased_type
@@ -2132,7 +2182,17 @@ module Crystal
     delegate cover_size, aliased_type
     delegate passed_by_value?, aliased_type
 
+    def aliased_type
+      aliased_type?.not_nil!
+    end
+
+    def aliased_type?
+      process_value
+      @aliased_type
+    end
+
     def remove_alias
+      process_value
       if aliased_type = @aliased_type
         aliased_type.remove_alias
       else
@@ -2142,6 +2202,7 @@ module Crystal
     end
 
     def remove_alias_if_simple
+      process_value
       if @simple
         remove_alias
       else
@@ -2150,11 +2211,25 @@ module Crystal
     end
 
     def allowed_in_generics?
+      process_value
       if aliased_type = @aliased_type
         aliased_type.remove_alias.allowed_in_generics?
       else
         true
       end
+    end
+
+    def process_value
+      return if @value_processed
+      @value_processed = true
+
+      visitor = TopLevelVisitor.new(@program)
+      visitor.types.push(container)
+      visitor.processing_types do
+        @value.accept visitor
+      end
+
+      @aliased_type = @value.type.instance_type
     end
 
     def type_desc
@@ -2212,7 +2287,7 @@ module Crystal
     end
 
     private def remove_at_from_var_name(name)
-      name.starts_with?('@') ? name[1 .. -1] : name
+      name.starts_with?('@') ? name[1..-1] : name
     end
   end
 
@@ -2597,7 +2672,6 @@ module Crystal
     end
   end
 
-
   # A union type that doesn't match any of the previous definitions,
   # so it can contain Nil with primitive types, or Reference types with
   # primitives types.
@@ -2637,6 +2711,29 @@ module Crystal
       type
     end
 
+    def filter_by_responds_to(name)
+      filtered = virtual_lookup(base_type).filter_by_responds_to(name)
+      return filtered.virtual_type if filtered
+
+      result = [] of Type
+      collect_filtered_by_responds_to(name, base_type, result)
+      program.type_merge_union_of(result)
+    end
+
+    def collect_filtered_by_responds_to(name, type, result)
+      type.subclasses.each do |subclass|
+        unless subclass.is_a?(GenericClassType)
+          filtered = virtual_lookup(subclass).filter_by_responds_to(name)
+          if filtered
+            result << virtual_lookup(subclass).virtual_type
+            next
+          end
+        end
+
+        collect_filtered_by_responds_to(name, subclass, result)
+      end
+    end
+
     def devirtualize
       base_type
     end
@@ -2673,29 +2770,6 @@ module Crystal
     delegate implements?, base_type
     delegate covariant?, base_type
     delegate ancestors, base_type
-
-    def filter_by_responds_to(name)
-      filtered = base_type.filter_by_responds_to(name)
-      return filtered.virtual_type if filtered
-
-      result = [] of Type
-      collect_filtered_by_responds_to(name, base_type, result)
-      program.type_merge_union_of(result)
-    end
-
-    def collect_filtered_by_responds_to(name, type, result)
-      type.subclasses.each do |subclass|
-        unless subclass.is_a?(GenericClassType)
-          filtered = subclass.filter_by_responds_to(name)
-          if filtered
-            result << subclass.virtual_type
-            next
-          end
-        end
-
-        collect_filtered_by_responds_to(name, subclass, result)
-      end
-    end
 
     def has_instance_var_in_initialize?(name)
       if base_type.abstract
@@ -2917,7 +2991,7 @@ module Crystal
     end
 
     def arg_types
-      fun_types[0 .. -2]
+      fun_types[0..-2]
     end
 
     def return_type

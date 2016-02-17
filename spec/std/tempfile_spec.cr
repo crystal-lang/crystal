@@ -41,4 +41,16 @@ describe Tempfile do
       ENV["TMPDIR"] = old_tmpdir if old_tmpdir
     end
   end
+
+  it "is seekable" do
+    tempfile = Tempfile.new "foo"
+    tempfile.puts "Hello!"
+    tempfile.seek(0, IO::Seek::Set)
+    tempfile.tell.should eq(0)
+    tempfile.pos.should eq(0)
+    tempfile.gets.should eq("Hello!\n")
+    tempfile.pos = 0
+    tempfile.gets.should eq("Hello!\n")
+    tempfile.close
+  end
 end

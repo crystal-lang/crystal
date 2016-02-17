@@ -35,6 +35,8 @@ lib LibPThread
 
   fun cond_init = pthread_cond_init(cond : Cond*, cond_attr : CondAttr) : Int
   fun cond_signal = pthread_cond_signal(cond : Cond*) : Int
+  fun cond_broadcast = pthread_cond_broadcast(cond : Cond*) : Int
   fun cond_wait = pthread_cond_wait(cond : Cond*, mutext : Mutex*) : Int
+  fun cond_timed_wait = pthread_cond_wait(cond : Cond*, mutext : Mutex*, abstime : LibC::TimeSpec) : Int
   fun cond_destroy = pthread_cond_destroy(cond : Cond*) : Int
 end

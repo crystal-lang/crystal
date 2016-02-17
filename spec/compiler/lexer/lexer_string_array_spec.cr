@@ -77,5 +77,4 @@ describe "Lexer string array" do
       it_should_be_valid_string_array_lexer(lexer)
     end
   end
-
 end

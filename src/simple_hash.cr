@@ -1,6 +1,8 @@
 struct SimpleHash(K, V)
+  record Entry(K, V), key : K, value : V
+
   def initialize
-    @values = [] of {K, V}
+    @values = [] of Entry(K, V)
   end
 
   def initialize(@values)
@@ -17,33 +19,33 @@ struct SimpleHash(K, V)
   end
 
   def fetch(key)
-    @values.each do |tuple|
-      if tuple[0] == key
-        return tuple[1]
+    @values.each do |entry|
+      if entry.key == key
+        return entry.value
       end
     end
     yield key
   end
 
   def []=(key : K, value : V)
-    @values.each_with_index do |tuple, i|
-      if tuple[0] == key
-        @values[i] = {key, value}
+    @values.each_with_index do |entry, i|
+      if entry.key == key
+        @values[i] = Entry.new(key, value)
         return value
       end
     end
 
-    @values.push({key, value})
+    @values.push(Entry.new(key, value))
     value
   end
 
   def has_key?(key)
-    @values.any? { |tuple| tuple[0] == key }
+    @values.any? { |entry| entry.key == key }
   end
 
   def delete(key)
-    @values.each_with_index do |tuple, index|
-      if tuple[0] == key
+    @values.each_with_index do |entry, index|
+      if entry.key == key
         return @values.delete_at(index)
       end
     end
@@ -55,8 +57,8 @@ struct SimpleHash(K, V)
   end
 
   def each
-    @values.each do |tuple|
-      yield tuple[0], tuple[1]
+    @values.each do |entry|
+      yield entry.key, entry.value
     end
   end
 
@@ -75,7 +77,7 @@ struct SimpleHash(K, V)
   # Iterates the given block for each element with an arbitrary object given, and returns the initially given object.
   # ```
   # evens = (1..10).each_with_object([] of Int32) { |i, a| a << i*2 }
-  # #=> [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+  # # => [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
   # ```
   def each_with_object(memo)
     each do |k, v|
@@ -85,19 +87,19 @@ struct SimpleHash(K, V)
   end
 
   def keys
-    @values.map { |tuple| tuple[0] }
+    @values.map { |entry| entry.key }
   end
 
   def values
-    @values.map { |tuple| tuple[1] }
+    @values.map { |entry| entry.value }
   end
 
   # Returns a new hash consisting of entries for which the block returns false.
   # ```
-  # h = { "a" => 100, "b" => 200, "c" => 300 }
-  # h.reject {|k,v| k > "a"}  #=> {"a" => 100}
-  # h.reject {|k,v| v < 200}  #=> {"b" => 200, "c" => 300}
-  # ``` 
+  # h = {"a" => 100, "b" => 200, "c" => 300}
+  # h.reject { |k, v| k > "a" } # => {"a" => 100}
+  # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
+  # ```
   def reject(&block : K, V -> U)
     each_with_object(SimpleHash(K, V).new) do |memo, k, v|
       memo[k] = v unless yield k, v
@@ -115,17 +117,17 @@ struct SimpleHash(K, V)
 
   # Returns a new hash consisting of entries for which the block returns true.
   # ```
-  # h = { "a" => 100, "b" => 200, "c" => 300 }
-  # h.select {|k,v| k > "a"}  #=> {"b" => 200, "c" => 300}
-  # h.select {|k,v| v < 200}  #=> {"a" => 100}
+  # h = {"a" => 100, "b" => 200, "c" => 300}
+  # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
+  # h.select { |k, v| v < 200 } # => {"a" => 100}
   # ```
   def select(&block : K, V -> U)
-    reject{ |k, v| !yield(k, v) }
+    reject { |k, v| !yield(k, v) }
   end
 
   # Equivalent to `Hash#select` but makes modification on the current object rather that returning a new one. Returns nil if no changes were made
   def select!(&block : K, V -> U)
-    reject!{ |k, v| !yield(k, v) }
+    reject! { |k, v| !yield(k, v) }
   end
 
   def size
@@ -142,8 +144,10 @@ struct SimpleHash(K, V)
 
   def to_s(io : IO)
     io << '{'
-    @values.each_with_index do |pair, index|
-      pair.join(" => ", io) { |value, io| value.inspect(io) }
+    @values.each_with_index do |entry, index|
+      entry.key.inspect(io)
+      io << " => "
+      entry.value.inspect(io)
       io << ", " if index < @values.size - 1
     end
     io << '}'

@@ -1,9 +1,8 @@
 require "fiber"
 
-
 abstract class Channel(T)
   class ClosedError < Exception
-    def initialize msg = "Channel is closed"
+    def initialize(msg = "Channel is closed")
       super(msg)
     end
   end
@@ -26,6 +25,7 @@ abstract class Channel(T)
     @closed = true
     Scheduler.enqueue @receivers
     @receivers.clear
+    nil
   end
 
   def closed?
@@ -169,6 +169,8 @@ class Channel::Buffered(T) < Channel(T)
     @queue << value
     Scheduler.enqueue @receivers
     @receivers.clear
+
+    self
   end
 
   private def receive_impl
@@ -196,7 +198,7 @@ end
 class Channel::Unbuffered(T) < Channel(T)
   def initialize
     @has_value = false
-    @value :: T
+    @value = uninitialized T
     super
   end
 

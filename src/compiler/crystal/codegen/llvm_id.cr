@@ -65,7 +65,7 @@ module Crystal
         put_id type, id, id
         id
       else
-        min_id :: Int32
+        min_id = uninitialized Int32
         first = true
         subtypes.each do |subtype|
           sub_id = assign_id(subtype)

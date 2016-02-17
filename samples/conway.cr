@@ -20,7 +20,7 @@ module IO
 end
 
 struct ConwayMap
-  WIDTH = 40
+  WIDTH  = 40
   HEIGHT = 30
 
   include Math
@@ -49,8 +49,8 @@ struct ConwayMap
       WIDTH.times do |j|
         nlive = 0
 
-        max(i-1, 0).upto(min(i+1, HEIGHT-1)) do |i2|
-          max(j-1, 0).upto(min(j+1, WIDTH-1)) do |j2|
+        max(i - 1, 0).upto(min(i + 1, HEIGHT - 1)) do |i2|
+          max(j - 1, 0).upto(min(j + 1, WIDTH - 1)) do |j2|
             nlive += 1 if old_map[i2][j2] && (i2 != i || j2 != j)
           end
         end
@@ -76,19 +76,19 @@ struct ConwayMap
   end
 end
 
-PAUSE_MILLIS = 20
+PAUSE_MILLIS  =  20
 DEFAULT_COUNT = 300
-INITIAL_MAP = [
-    "                        1           ",
-    "                      1 1           ",
-    "            11      11            11",
-    "           1   1    11            11",
-    "11        1     1   11              ",
-    "11        1   1 11    1 1           ",
-    "          1     1       1           ",
-    "           1   1                    ",
-    "            11                      ",
-  ]
+INITIAL_MAP   = [
+  "                        1           ",
+  "                      1 1           ",
+  "            11      11            11",
+  "           1   1    11            11",
+  "11        1     1   11              ",
+  "11        1   1 11    1 1           ",
+  "          1     1       1           ",
+  "           1   1                    ",
+  "            11                      ",
+]
 
 map = ConwayMap.new INITIAL_MAP
 

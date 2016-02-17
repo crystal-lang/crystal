@@ -11,8 +11,8 @@ module Spec
     def initialize
       @results = {
         success: [] of Result,
-        fail: [] of Result,
-        error: [] of Result,
+        fail:    [] of Result,
+        error:   [] of Result,
         pending: [] of Result,
       }
     end
@@ -100,8 +100,8 @@ module Spec
 
       final_status = case
                      when (failures.size + errors.size) > 0 then :fail
-                     when pendings.size > 0                   then :pending
-                     else                                            :success
+                     when pendings.size > 0                 then :pending
+                     else                                        :success
                      end
 
       total_seconds = elapsed_time.total_seconds

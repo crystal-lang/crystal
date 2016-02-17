@@ -1,4 +1,9 @@
+# A `Hash`-like object that holds HTTP headers.
+#
+# Two headers are considered the same if their downcase representation is the same
+# (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
+  # :nodoc:
   record Key, name do
     forward_missing_to @name
 
@@ -115,6 +120,7 @@ struct HTTP::Headers
     other.each do |key, value|
       self[wrap(key)] = value
     end
+    self
   end
 
   def ==(other : self)
@@ -167,6 +173,10 @@ struct HTTP::Headers
 
   def clone
     dup
+  end
+
+  def same?(other : HTTP::Headers)
+    object_id == other.object_id
   end
 
   def to_s(io : IO)

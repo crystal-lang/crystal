@@ -104,4 +104,13 @@ describe "Type inference: pointer" do
       ),
       "recursive pointerof expansion"
   end
+
+  it "detects recursive pointerof expansion (2) (#1654)" do
+    assert_error %(
+      x = 1
+      pointer = pointerof(x)
+      x = pointerof(pointer)
+      ),
+      "recursive pointerof expansion"
+  end
 end

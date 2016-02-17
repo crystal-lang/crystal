@@ -83,7 +83,7 @@ module Crystal
 
     def self.match_def(signature, def_metadata, context)
       unless (def_metadata.min_size <= signature.arg_types.size <= def_metadata.max_size) &&
-        (def_metadata.yields == !!signature.block)
+             (def_metadata.yields == !!signature.block)
         return nil
       end
 

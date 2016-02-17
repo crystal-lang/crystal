@@ -154,7 +154,6 @@ module Crystal
       end
 
       assign = Assign.new(var, alloc)
-      call_gc = Call.new(Path.global("GC"), "add_finalizer", var)
       init = Call.new(var, "initialize", new_vars)
 
       # If the initialize yields, call it with a block
@@ -168,7 +167,7 @@ module Crystal
       exps = Array(ASTNode).new(4)
       exps << assign
       exps << init
-      exps << call_gc unless instance_type.struct?
+      exps << Call.new(Path.global("GC"), "add_finalizer", var) if instance_type.has_finalizer?
       exps << var
 
       def_args = args.clone
@@ -198,11 +197,10 @@ module Crystal
       var = Var.new("x")
       alloc = Call.new(nil, "allocate")
       assign = Assign.new(var, alloc)
-      call_gc = Call.new(Path.global("GC"), "add_finalizer", var)
 
       exps = Array(ASTNode).new(3)
       exps << assign
-      exps << call_gc unless instance_type.struct?
+      exps << Call.new(Path.global("GC"), "add_finalizer", var) if instance_type.has_finalizer?
       exps << var
 
       Def.new("new", body: exps)

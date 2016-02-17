@@ -197,6 +197,57 @@ LLVMMetadataRef LLVMDIBuilderCreateEnumerator(LLVMDIBuilderRef dref, const char*
   return wrap(e);
 }
 
+LLVMMetadataRef LLVMDIBuilderCreateStructType(
+    LLVMDIBuilderRef Dref, LLVMMetadataRef Scope, const char *Name,
+    LLVMMetadataRef File, unsigned Line, uint64_t SizeInBits,
+    uint64_t AlignInBits, unsigned Flags, LLVMMetadataRef DerivedFrom,
+    LLVMMetadataRef ElementTypes) {
+  DIBuilder *D = unwrap(Dref);
+  DICompositeType CT = D->createStructType(
+      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
+      SizeInBits, AlignInBits, Flags, unwrapDI<DIType>(DerivedFrom),
+      unwrapDI<DIArray>(ElementTypes));
+  return wrap(CT);
+}
+
+LLVMMetadataRef
+LLVMDIBuilderCreateMemberType(LLVMDIBuilderRef Dref, LLVMMetadataRef Scope,
+                              const char *Name, LLVMMetadataRef File,
+                              unsigned Line, uint64_t SizeInBits,
+                              uint64_t AlignInBits, uint64_t OffsetInBits,
+                              unsigned Flags, LLVMMetadataRef Ty) {
+  DIBuilder *D = unwrap(Dref);
+  DIDerivedType DT = D->createMemberType(
+      unwrapDI<DIDescriptor>(Scope), Name, unwrapDI<DIFile>(File), Line,
+      SizeInBits, AlignInBits, OffsetInBits, Flags, unwrapDI<DIType>(Ty));
+  return wrap(DT);
+}
+
+LLVMMetadataRef LLVMDIBuilderCreatePointerType(LLVMDIBuilderRef Dref,
+                                               LLVMMetadataRef PointeeType,
+                                               uint64_t SizeInBits,
+                                               uint64_t AlignInBits,
+                                               const char *Name) {
+  DIBuilder *D = unwrap(Dref);
+  DIDerivedType T = D->createPointerType(unwrapDI<DIType>(PointeeType),
+                                         SizeInBits, AlignInBits, Name);
+  return wrap(T);
+}
+
+LLVMMetadataRef LLVMTemporaryMDNode(LLVMContextRef C, LLVMMetadataRef *MDs, unsigned Count) {
+  return wrap(MDNode::getTemporary(*unwrap(C), ArrayRef<Metadata *>(unwrap(MDs), Count)));
+}
+
+void LLVMMetadataReplaceAllUsesWith(LLVMMetadataRef MD, LLVMMetadataRef New) {
+#ifdef HAVE_LLVM_35
+  auto *Node = unwrap<MDNode>(MD);
+#else
+  auto *Node = unwrap<MDNodeFwdDecl>(MD);
+#endif
+  Node->replaceAllUsesWith(unwrap<MDNode>(New));
+  MDNode::deleteTemporary(Node);
+}
+
 void LLVMSetCurrentDebugLocation2(LLVMBuilderRef Bref, unsigned Line,
                                   unsigned Col, LLVMMetadataRef Scope,
                                   LLVMMetadataRef InlinedAt) {

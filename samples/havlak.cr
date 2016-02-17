@@ -11,7 +11,7 @@
 
 class BasicBlock
   def initialize(@name)
-    @inEdges  = [] of BasicBlock
+    @inEdges = [] of BasicBlock
     @outEdges = [] of BasicBlock
   end
 
@@ -27,7 +27,7 @@ end
 struct BasicBlockEdge
   def initialize(cfg, fromName, toName)
     @from = cfg.createNode(fromName)
-    @to   = cfg.createNode(toName)
+    @to = cfg.createNode(toName)
     @from.outEdges << @to
     @to.inEdges << @from
   end
@@ -41,7 +41,7 @@ end
 class CFG
   def initialize
     @basicBlockMap = {} of Int32 => BasicBlock
-    @edgeList      = [] of BasicBlockEdge
+    @edgeList = [] of BasicBlockEdge
   end
 
   property :startNode
@@ -64,16 +64,16 @@ end
 
 class SimpleLoop
   def initialize
-    @basicBlocks  = Set(BasicBlock).new
-    @children     = Set(SimpleLoop).new
-    @parent       = nil
-    @header       = nil
+    @basicBlocks = Set(BasicBlock).new
+    @children = Set(SimpleLoop).new
+    @parent = nil
+    @header = nil
 
-    @isRoot       = false
-    @isReducible  = true
-    @counter      = 0
+    @isRoot = false
+    @isReducible = true
+    @counter = 0
     @nestingLevel = 0
-    @depthLevel   = 0
+    @depthLevel = 0
   end
 
   property :counter
@@ -113,7 +113,7 @@ $loopCounter = 0
 class LSG
   def initialize
     @loops = [] of SimpleLoop
-    @root  = createNewLoop
+    @root = createNewLoop
     @root.setNestingLevel(0)
     addLoop(@root)
   end
@@ -151,16 +151,16 @@ end
 
 class UnionFindNode
   def initialize
-    @parent    = nil
-    @bb        = nil
-    @l         = nil
+    @parent = nil
+    @bb = nil
+    @l = nil
     @dfsNumber = 0
   end
 
   def initNode(bb, dfsNumber)
-    @parent     = self
-    @bb         = bb
-    @dfsNumber  = dfsNumber
+    @parent = self
+    @bb = bb
+    @dfsNumber = dfsNumber
   end
 
   property :bb
@@ -189,13 +189,13 @@ class UnionFindNode
 end
 
 class HavlakLoopFinder
-  BB_TOP          = 0 # uninitialized
-  BB_NONHEADER    = 1 # a regular BB
-  BB_REDUCIBLE    = 2 # reducible loop
-  BB_SELF         = 3 # single BB loop
-  BB_IRREDUCIBLE  = 4 # irreducible loop
-  BB_DEAD         = 5 # a dead BB
-  BB_LAST         = 6 # Sentinel
+  BB_TOP         = 0 # uninitialized
+  BB_NONHEADER   = 1 # a regular BB
+  BB_REDUCIBLE   = 2 # reducible loop
+  BB_SELF        = 3 # single BB loop
+  BB_IRREDUCIBLE = 4 # irreducible loop
+  BB_DEAD        = 5 # a dead BB
+  BB_LAST        = 6 # Sentinel
 
   # Marker for uninitialized nodes.
   UNVISITED = -1
@@ -230,13 +230,13 @@ class HavlakLoopFinder
     return 0 unless startNode
     size = @cfg.getNumNodes
 
-    nonBackPreds    = Array.new(size) { Set(Int32).new }
-    backPreds       = Array.new(size) { Array(Int32).new }
-    number          = {} of BasicBlock => Int32
-    header          = Array.new(size, 0)
-    types           = Array.new(size, 0)
-    last            = Array.new(size, 0)
-    nodes           = Array.new(size) { UnionFindNode.new }
+    nonBackPreds = Array.new(size) { Set(Int32).new }
+    backPreds = Array.new(size) { Array(Int32).new }
+    number = {} of BasicBlock => Int32
+    header = Array.new(size, 0)
+    types = Array.new(size, 0)
+    last = Array.new(size, 0)
+    nodes = Array.new(size) { UnionFindNode.new }
 
     # Step a:
     #   - initialize all nodes as unvisited.
@@ -258,7 +258,7 @@ class HavlakLoopFinder
     #
     size.times do |w|
       header[w] = 0
-      types[w]  = BB_NONHEADER
+      types[w] = BB_NONHEADER
 
       nodeW = nodes[w].bb
       if nodeW
@@ -416,11 +416,11 @@ def buildStraight(start, n)
 end
 
 def buildBaseLoop(from)
-  header   = buildStraight(from, 1)
+  header = buildStraight(from, 1)
   diamond1 = buildDiamond(header)
-  d11      = buildStraight(diamond1, 1)
+  d11 = buildStraight(diamond1, 1)
   diamond2 = buildDiamond(d11)
-  footer   = buildStraight(diamond2, 1)
+  footer = buildStraight(diamond2, 1)
   buildConnect(diamond2, d11)
   buildConnect(diamond1, header)
 
@@ -428,16 +428,15 @@ def buildBaseLoop(from)
   buildStraight(footer, 1)
 end
 
-
 $cfg = CFG.new
 
 puts "Welcome to LoopTesterApp, Crystal edition"
 
 puts "Constructing Simple CFG..."
 
-$cfg.createNode(0)  # top
+$cfg.createNode(0) # top
 buildBaseLoop(0)
-$cfg.createNode(1)  # bottom
+$cfg.createNode(1) # bottom
 buildConnect(0, 2)
 
 # execute loop recognition 15000 times to force compilation
@@ -473,9 +472,8 @@ puts "Another 50 iterations..."
 
 sum = 0
 50.times do |i|
-  print! "."
+  print "."
   sum += HavlakLoopFinder.new($cfg, LSG.new).findLoops
 end
 
 puts "\nFound #{loops} loops (including artificial root node) (#{sum})\n"
-

@@ -438,11 +438,14 @@ describe "Code gen: macro" do
       class Foo
         def initialize(@x, @y)
         end
+
+        macro def foo : String
+          {{ Foo.instance_vars.last.name.stringify }}
+        end
+
       end
 
-      Foo.new(1, 2)
-
-      {{ Foo.instance_vars.last.name.stringify }}
+      Foo.new(1, 2).foo
       )).to_string.should eq("y")
   end
 
@@ -590,44 +593,56 @@ describe "Code gen: macro" do
           @x = 1; @x = 1.1
         end
         def foo
-          {{ @type.instance_vars.first.type.union_types.map &.name }}.join("-")
+          {{ @type.instance_vars.first.type.union_types.map(&.name).sort }}.join("-")
         end
       end
       Foo.new.foo
-    )).to_string.should eq("Int32-Float64")
+    )).to_string.should eq("Float64-Int32")
   end
 
-  it "can access type parameters" do
+  it "can access type variables" do
     run(%(
       class Foo(T)
         def foo
-          {{ @type.type_params.first.name.stringify }}
+          {{ @type.type_vars.first.name.stringify }}
         end
       end
       Foo(Int32).new.foo
     )).to_string.should eq("Int32")
   end
 
-  it "can acccess type parameters that are not types" do
+  it "can acccess type variables that are not types" do
     run(%(
       class Foo(T)
         def foo
-          {{ @type.type_params.first.is_a?(NumberLiteral) }}
+          {{ @type.type_vars.first.is_a?(NumberLiteral) }}
         end
       end
       Foo(1).new.foo
     )).to_b.should eq(true)
   end
 
-  it "can acccess type parameters of a tuple" do
+  it "can acccess type variables of a tuple" do
     run(%(
       struct Tuple
         def foo
-          {{ @type.type_params.first.name.stringify }}
+          {{ @type.type_vars.first.name.stringify }}
         end
       end
       {1, 2, 3}.foo
     )).to_string.should eq("Int32")
+  end
+
+  it "can access type variables of a generic type" do
+    run(%(
+      require "prelude"
+      class Foo(T, K)
+        macro def self.foo : String
+          {{ @type.type_vars.map(&.stringify) }}.join("-")
+        end
+      end
+      Foo.foo
+    )).to_string.should eq("T-K")
   end
 
   it "receives &block" do
@@ -1001,7 +1016,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(6)
   end
 
-  it "codegens macro def with default arg (similar to #496)"  do
+  it "codegens macro def with default arg (similar to #496)" do
     run(%(
       class Foo
         macro def bar(foo = 1) : Int32
@@ -1225,5 +1240,21 @@ describe "Code gen: macro" do
 
       foo(1)
       )).to_string.should eq("Int32")
+  end
+
+  it "types macro expansion bug (#1734)" do
+    run(%(
+      class Foo
+        macro def foo : Int32
+          1 || 2
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      x = true ? Foo.new : Bar.new
+      x.foo
+      )).to_i.should eq(1)
   end
 end

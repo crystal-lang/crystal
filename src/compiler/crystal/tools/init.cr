@@ -9,26 +9,28 @@ module Crystal
       config = Config.new
 
       OptionParser.parse(args) do |opts|
-        opts.banner = %{USAGE: crystal init TYPE NAME [DIR]
+        opts.banner = <<-USAGE
+          Usage: crystal init TYPE NAME [DIR]
 
-TYPE is one of:
-    lib                      creates library skeleton
-    app                      creates application skeleton
+          TYPE is one of:
+              lib                      creates library skeleton
+              app                      creates application skeleton
 
-NAME - name of project to be generated,
-       eg: example
-DIR  - directory where project will be generated,
-       default: NAME, eg: ./custom/path/example
-}
+          NAME - name of project to be generated,
+                 eg: example
+          DIR  - directory where project will be generated,
+                 default: NAME, eg: ./custom/path/example
 
-        opts.on("--help", "Shows this message") do
+          USAGE
+
+        opts.on("--help", "show this help") do
           puts opts
           exit
         end
 
         opts.unknown_args do |args, after_dash|
           config.skeleton_type = fetch_skeleton_type(opts, args)
-          config.name = fetch_required_parameter(opts, args, "NAME")
+          config.name = fetch_name(opts, args)
           config.dir = args.empty? ? config.name : args.shift
         end
       end
@@ -54,6 +56,15 @@ DIR  - directory where project will be generated,
       return default unless system(WHICH_GIT_COMMAND)
       github_user = `git config --get github.user`.strip
       github_user.empty? ? default : github_user
+    end
+
+    def self.fetch_name(opts, args)
+      name = fetch_required_parameter(opts, args, "NAME")
+      if Dir.exists?(name) || File.exists?(name)
+        puts "file or directory #{name} already exists"
+        exit 1
+      end
+      name
     end
 
     def self.fetch_skeleton_type(opts, args)
@@ -91,8 +102,7 @@ DIR  - directory where project will be generated,
                      @author = "none",
                      @email = "none",
                      @github_name = "none",
-                     @silent = false
-                    )
+                     @silent = false)
       end
     end
 
@@ -166,7 +176,7 @@ DIR  - directory where project will be generated,
 
     macro template(name, template_path, full_path)
       class {{name.id}} < View
-        ecr_file "{{TEMPLATE_DIR.id}}/{{template_path.id}}"
+        ECR.def_to_s "{{TEMPLATE_DIR.id}}/{{template_path.id}}"
         def full_path
           "#{config.dir}/#{{{full_path}}}"
         end

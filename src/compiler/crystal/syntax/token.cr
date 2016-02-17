@@ -12,22 +12,38 @@ module Crystal
     property macro_state
     property passed_backslash_newline
     property doc_buffer
+    property raw
+    property start
 
     record(MacroState, whitespace, nest, delimiter_state, beginning_of_line, yields, comment) do
       def self.default
         MacroState.new(true, 0, nil, true, false, false)
       end
+
+      property whitespace
     end
 
-    record DelimiterState, kind, nest, :end, open_count
+    record DelimiterState, kind, nest, :end, open_count, heredoc_indent
 
     struct DelimiterState
       def self.default
-        DelimiterState.new(:string, '\0', '\0', 0)
+        DelimiterState.new(:string, '\0', '\0', 0, 0)
+      end
+
+      def self.new(kind, nest, the_end)
+        new kind, nest, the_end, 0, 0
+      end
+
+      def self.new(kind, nest, the_end, open_count)
+        new kind, nest, the_end, open_count, 0
       end
 
       def with_open_count_delta(delta)
-        DelimiterState.new(@kind, @nest, @end, @open_count + delta)
+        DelimiterState.new(@kind, @nest, @end, @open_count + delta, @heredoc_indent)
+      end
+
+      def with_heredoc_indent(indent)
+        DelimiterState.new(@kind, @nest, @end, @open_count, indent)
       end
     end
 
@@ -39,6 +55,8 @@ module Crystal
       @delimiter_state = DelimiterState.default
       @macro_state = MacroState.default
       @passed_backslash_newline = false
+      @raw = ""
+      @start = 0
     end
 
     def doc

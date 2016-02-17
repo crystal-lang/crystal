@@ -39,8 +39,16 @@ class Markdown::Parser
       return render_horizontal_rule
     end
 
-    if starts_with_star? line
-      return render_unordered_list
+    if starts_with_bullet_list_marker?(line, '*')
+      return render_unordered_list('*')
+    end
+
+    if starts_with_bullet_list_marker?(line, '+')
+      return render_unordered_list('+')
+    end
+
+    if starts_with_bullet_list_marker?(line, '-')
+      return render_unordered_list('-')
     end
 
     if starts_with_backticks? line
@@ -49,6 +57,10 @@ class Markdown::Parser
 
     if starts_with_digits_dot? line
       return render_ordered_list
+    end
+
+    if line.starts_with? ">"
+      return render_quote
     end
 
     render_paragraph
@@ -92,7 +104,7 @@ class Markdown::Parser
         break
       end
 
-      if starts_with_star?(line) || starts_with_backticks?(line) || starts_with_digits_dot?(line)
+      if (starts_with_bullet_list_marker?(line) || starts_with_backticks?(line) || starts_with_digits_dot?(line))
         break
       end
 
@@ -133,7 +145,7 @@ class Markdown::Parser
 
   def render_fenced_code
     line = @lines[@line]
-    language = line[3 .. -1].strip
+    language = line[3..-1].strip
 
     if language.empty?
       @renderer.begin_code
@@ -168,7 +180,30 @@ class Markdown::Parser
     append_double_newline_if_has_more
   end
 
-  def render_unordered_list
+  def render_quote
+    @renderer.begin_quote
+
+    while true
+      line = @lines[@line]
+
+      break unless line.starts_with? ">"
+
+      @renderer.text line.byte_slice(Math.min(line.bytesize, 2))
+      @line += 1
+
+      if @line == @lines.size
+        break
+      end
+
+      newline
+    end
+
+    @renderer.end_quote
+
+    append_double_newline_if_has_more
+  end
+
+  def render_unordered_list(prefix = '*')
     @renderer.begin_unordered_list
 
     while true
@@ -184,11 +219,20 @@ class Markdown::Parser
         next
       end
 
-      break unless starts_with_star? line
+      break unless starts_with_bullet_list_marker?(line, prefix)
+
+      if line.starts_with?("  ") && previous_line_is_not_intended_and_starts_with_bullt_list_marker?(prefix)
+        @renderer.begin_unordered_list
+      end
 
       @renderer.begin_list_item
-      process_line line.byte_slice(line.index('*').not_nil! + 1)
+      process_line line.byte_slice(line.index(prefix).not_nil! + 1)
       @renderer.end_list_item
+
+      if line.starts_with?("  ") && previous_line_is_not_intended_and_starts_with_bullt_list_marker?(prefix)
+        @renderer.end_unordered_list
+      end
+
       @line += 1
 
       if @line == @lines.size
@@ -452,7 +496,7 @@ class Markdown::Parser
     end
   end
 
-  def starts_with_star?(line)
+  def starts_with_bullet_list_marker?(line, prefix = nil)
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
@@ -461,12 +505,17 @@ class Markdown::Parser
     end
 
     return false unless pos < bytesize
-    return false unless str[pos].chr == '*'
+    return false unless prefix ? str[pos].chr == prefix : (str[pos].chr == '*' || str[pos].chr == '-' || str[pos].chr == '+')
 
     pos += 1
 
     return false unless pos < bytesize
     str[pos].chr.whitespace?
+  end
+
+  def previous_line_is_not_intended_and_starts_with_bullt_list_marker?(prefix)
+    previous_line = @lines[@line - 1]
+    !previous_line.starts_with?("  ") && starts_with_bullet_list_marker?(previous_line, prefix)
   end
 
   def starts_with_backticks?(line)

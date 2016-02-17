@@ -21,7 +21,7 @@ module Crystal
     property! dependencies
     property freeze_type
     property observers
-    property input_observers
+    property input_observer
 
     @dirty = false
 
@@ -70,7 +70,7 @@ module Crystal
     end
 
     def type=(type)
-      return if type.nil? || @type.same?(type)
+      return if @type.same?(type) || (!type && !@type)
 
       set_type(type)
       notify_observers
@@ -131,7 +131,7 @@ module Crystal
       node.remove_observer self
     end
 
-    def unbind_from(nodes : Array(ASTNode))
+    def unbind_from(nodes : Array)
       nodes.each do |node|
         unbind_from node
       end
@@ -144,8 +144,8 @@ module Crystal
     end
 
     def add_observer(observer)
-      observers = (@observers ||= [] of ASTNode)
-      observers << observer
+      observers = (@observers ||= Dependencies.new)
+      observers.push observer
     end
 
     def remove_observer(observer)
@@ -153,23 +153,23 @@ module Crystal
     end
 
     def add_input_observer(observer)
-      input_observers = (@input_observers ||= [] of Call)
-      input_observers << observer
+      raise "Bug: already had input observer" if @input_observer
+      @input_observer = observer
     end
 
     def remove_input_observer(observer)
-      @input_observers.try &.reject! &.same?(observer)
+      @input_observer = nil if @input_observer.same?(observer)
     end
 
     def notify_observers
       @observers.try &.each &.update self
-      @input_observers.try &.each &.update_input self
+      @input_observer.try &.update_input self
       @observers.try &.each &.propagate
-      @input_observers.try &.each &.propagate
+      @input_observer.try &.propagate
     end
 
     def update(from)
-      return if @type.same? from.type
+      return if @type.same? from.type?
 
       if dependencies.size == 1 || !@type
         new_type = from.type?
@@ -178,9 +178,15 @@ module Crystal
       end
 
       return if @type.same? new_type
-      return unless new_type
 
-      set_type_from(map_type(new_type), from)
+      if new_type
+        set_type_from(map_type(new_type), from)
+      else
+        return unless @type
+
+        set_type(nil)
+      end
+
       @dirty = true
     end
 
@@ -229,7 +235,9 @@ module Crystal
     property! :original_owner
     property :vars
     property :yield_vars
+
     property :raises
+    @raises = false
 
     property closure
     @closure = false
@@ -245,6 +253,9 @@ module Crystal
     property :block_nest
     @block_nest = 0
 
+    property? :captured_block
+    @captured_block = false
+
     def macro_owner=(@macro_owner)
     end
 
@@ -256,23 +267,25 @@ module Crystal
       special_vars = @special_vars ||= Set(String).new
       special_vars << name
     end
+
+    def raises=(value)
+      if value != @raises
+        @raises = value
+        @observers.try &.each do |obs|
+          if obs.is_a?(Call)
+            obs.raises = value
+          end
+        end
+      end
+    end
   end
 
   class PointerOf
-    # This is to detect cases like `x = pointerof(x)`, where
-    # the type keeps growing indefinitely
-    @growth = 0
-
     def map_type(type)
       old_type = self.type?
       new_type = type.try &.program.pointer_of(type)
       if old_type && grew?(old_type, new_type)
-        @growth += 1
-        if @growth > 4
-          raise "recursive pointerof expansion: #{old_type}, #{new_type}, ..."
-        end
-      else
-        @growth = 0
+        raise "recursive pointerof expansion: #{old_type}, #{new_type}, ..."
       end
 
       new_type
@@ -281,7 +294,20 @@ module Crystal
     def grew?(old_type, new_type)
       new_type = new_type as PointerInstanceType
       element_type = new_type.element_type
-      element_type.is_a?(UnionType) && element_type.includes_type?(old_type)
+      type_includes?(element_type, old_type)
+    end
+
+    def type_includes?(haystack, needle)
+      return true if haystack == needle
+
+      case haystack
+      when UnionType
+        haystack.union_types.any? { |sub| type_includes?(sub, needle) }
+      when GenericClassInstanceType
+        haystack.type_vars.any? { |key, sub| sub.is_a?(Var) && type_includes?(sub.type, needle) }
+      else
+        false
+      end
     end
   end
 
@@ -505,7 +531,7 @@ module Crystal
     def inspect(io)
       io << name
       if type = type?
-        io << " :: "
+        io << " : "
         type.to_s(io)
       end
       io << " (nil-if-read)" if nil_if_read
@@ -599,9 +625,9 @@ module Crystal
   end
 
   {% for name in %w(And Or
-                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
-                    Case StringInterpolation
-                    MacroExpression MacroIf MacroFor) %}
+                   ArrayLiteral HashLiteral RegexLiteral RangeLiteral
+                   Case StringInterpolation
+                   MacroExpression MacroIf MacroFor) %}
     class {{name.id}}
       include ExpandableNode
     end
@@ -618,14 +644,30 @@ module Crystal
 
   class ClassDef
     include RuntimeInitializable
+
+    property! resolved_type
+    property created_new_type
+    @created_new_type = false
+  end
+
+  class ModuleDef
+    property! resolved_type
+  end
+
+  class LibDef
+    property! resolved_type
   end
 
   class Include
     include RuntimeInitializable
+
+    property! resolved_type
   end
 
   class Extend
     include RuntimeInitializable
+
+    property! resolved_type
   end
 
   class Def
@@ -644,6 +686,7 @@ module Crystal
 
   class EnumDef
     property enum_type
+    property! resolved_type
   end
 
   class Yield

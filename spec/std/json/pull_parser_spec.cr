@@ -70,7 +70,7 @@ class JSON::PullParser
   end
 
   def assert_array
-    assert_array {}
+    assert_array { }
   end
 
   def assert_object
@@ -82,7 +82,7 @@ class JSON::PullParser
   end
 
   def assert_object
-    assert_object {}
+    assert_object { }
   end
 
   def assert_error
@@ -95,7 +95,7 @@ end
 private def assert_pull_parse(string)
   it "parses #{string}" do
     parser = JSON::PullParser.new string
-    parser.assert JSON.parse(string)
+    parser.assert JSON.parse(string).raw
     parser.kind.should eq(:EOF)
   end
 end
@@ -111,7 +111,7 @@ private def assert_pull_parse_error(string)
   end
 end
 
-describe "JSON::PullParser" do
+describe JSON::PullParser do
   assert_pull_parse "null"
   assert_pull_parse "false"
   assert_pull_parse "true"
