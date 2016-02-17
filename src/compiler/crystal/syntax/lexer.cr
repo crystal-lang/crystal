@@ -1466,7 +1466,7 @@ module Crystal
 
     def finish_scan_prefixed_number(num, negative, start)
       if negative
-        string_value = (-1 * num.to_i64).to_s
+        string_value = (num.to_i64 * -1).to_s
       else
         string_value = num.to_s
       end

@@ -185,6 +185,11 @@ describe "Lexer" do
   it_lexes_number :i32, ["+0xFFFF", "+65535"]
   it_lexes_number :i32, ["-0xFFFF", "-65535"]
 
+  it_lexes_number :i64, ["0x80000001", "2147483649"]
+  it_lexes_number :i64, ["-0x80000001", "-2147483649"]
+  it_lexes_number :i64, ["0xFFFFFFFF", "4294967295"]
+  it_lexes_number :i64, ["-0xFFFFFFFF", "-4294967295"]
+
   it_lexes_number :u64, ["0xFFFF_u64", "65535"]
 
   it_lexes_i32 [["0o123", "83"], ["-0o123", "-83"], ["+0o123", "+83"]]
