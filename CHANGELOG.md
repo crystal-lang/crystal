@@ -1,4 +1,4 @@
-## Next
+## 0.12.0 (2016-02-16)
 
 * **(breaking change)** When used with a type declaration, the macros `property`, `getter`, `setter`, etc., declare instance variables with those types.
 * **(breaking change)** `JSON.mapping` and `YAML.mapping` declare instance variables with the given types.
