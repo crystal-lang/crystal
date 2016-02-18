@@ -38,6 +38,8 @@ like the use of the third person.
 1. Fork it ( https://github.com/manastech/crystal/fork )
 2. Clone it
 
+Be sure to execute `make libcrystal` inside the cloned repository.
+
 Once in the cloned directory, and once you [installed Crystal](http://crystal-lang.org/docs/installation/index.html),
 you can execute `bin/crystal` instead of `crystal`. This is a wrapper that will use the cloned repository
 as the standard library. Otherwise the barebones `crystal` executable uses the standard library that comes in
