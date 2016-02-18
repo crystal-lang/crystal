@@ -16,8 +16,8 @@
 .Sh DESCRIPTION
 Once you install the compiler you will have a crystal binary at your disposal.
 
-.Bl -tag -offset indent -compact
-.It Compiling
+.Bl -tag -width "12345678" -compact
+.It Compiling 
 .Pp
 To compile and run a program in a single shot you can invoke crystal with a single filename:
 
@@ -51,7 +51,7 @@ The reason for this is that performance without full optimizations is still pret
 .Sh OPTIONS
 The crystal command line accepts the following options 
 
-.Bl -tag -offset indent -compact
+.Bl -tag -width "12345678" -compact
 .Pp
 .It 
 .Cm init
@@ -62,7 +62,7 @@ The crystal command line accepts the following options
 Generate a new project.
 .Pp
 TYPE is one of:
-.Bl -tag -offset indent -compact
+.Bl -tag -width "12345678" -compact
 .Pp
 .It Sy lib
 creates library skeleton
@@ -88,7 +88,7 @@ default: NAME, eg: ./custom/path/example
 Compile program.
 .Pp
 Options:
-.Bl -tag -offset indent
+.Bl -tag -width "12345678" -compact
 .Pp
 .It Fl -cross-compile flags
 cross-compile
@@ -137,7 +137,8 @@ Display executed commands
 Install project dependencies.
 .Pp
 Commands:
-.Bl -tag -offset indent
+
+.Bl -tag -width "12345678" -compact
 .It Cm init
 Creates a shard.yml file with an initial template, this is already done when crystal init command is executed.
 .It Cm check
@@ -180,7 +181,7 @@ Eval code from args or standard input.
 Compile and run program.
 .Pp
 Options:
-.Bl -tag -offset indent
+.Bl -tag -width "12345678" -compact
 .Pp
 .It Fl d, -debug                      
 Add symbolic debug info
