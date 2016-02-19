@@ -11,7 +11,7 @@ module Spec::DSL
     return if Spec.aborted?
     return unless Spec.matches?(description, file, line)
 
-    Spec.formatter.before_example description
+    Spec.formatters.each(&.before_example(description))
 
     begin
       Spec.run_before_each_hooks
@@ -32,7 +32,7 @@ module Spec::DSL
     return if Spec.aborted?
     return unless Spec.matches?(description, file, line)
 
-    Spec.formatter.before_example description
+    Spec.formatters.each(&.before_example(description))
 
     Spec::RootContext.report(:pending, description, file, line)
   end

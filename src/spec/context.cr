@@ -31,7 +31,8 @@ module Spec
     end
 
     def report(result)
-      Spec.formatter.report(result)
+      Spec.formatters.each(&.report(result))
+
       @results[result.kind] << result
     end
 
@@ -44,7 +45,7 @@ module Spec
     end
 
     def print_results(elapsed_time)
-      Spec.formatter.finish
+      Spec.formatters.each(&.finish)
 
       pendings = @results[:pending]
       unless pendings.empty?
@@ -133,9 +134,9 @@ module Spec
     def self.describe(description, file, line, &block)
       describe = Spec::NestedContext.new(description, file, line, @@contexts_stack.last)
       @@contexts_stack.push describe
-      Spec.formatter.push describe
+      Spec.formatters.each(&.push(describe))
       block.call
-      Spec.formatter.pop
+      Spec.formatters.each(&.pop)
       @@contexts_stack.pop
     end
 
