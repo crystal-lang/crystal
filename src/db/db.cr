@@ -101,8 +101,11 @@ module DB
   # Same as `#open` but the database is yielded and closed automatically.
   def self.open(uri : URI | String, &block)
     build_database(uri).tap do |db|
-      yield db
-      db.close
+      begin
+        yield db
+      ensure
+        db.close
+      end
     end
   end
 

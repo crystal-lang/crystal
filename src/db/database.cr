@@ -22,6 +22,8 @@ module DB
     # Closes all connection to the database.
     def close
       @connection.try &.close
+      # prevent GC Warning: Finalization cycle involving discovered by mysql implementation
+      @connection = nil
     end
 
     # :nodoc:
