@@ -46,23 +46,23 @@ module DB
       query(*args) do |rs|
         rs.each do
           # return case rs.read?(rs.column_type(0)) # :-( Some day...
-          t = rs.column_type(0)
-          if t == String
+          case rs.column_type(0)
+          when String.class
             return rs.read?(String)
-          elsif t == Int32
+          when Int32.class
             return rs.read?(Int32)
-          elsif t == Int64
+          when Int64.class
             return rs.read?(Int64)
-          elsif t == Float32
+          when Float32.class
             return rs.read?(Float32)
-          elsif t == Float64
+          when Float64.class
             return rs.read?(Float64)
-          elsif t == Slice(UInt8)
+          when Slice(UInt8).class
             return rs.read?(Slice(UInt8))
-          elsif t == Nil
+          when Nil.class
             return rs.read?(Int32)
           else
-            raise "not implemented for #{t} type"
+            raise "not implemented for #{rs.column_type(0)} type"
           end
         end
       end

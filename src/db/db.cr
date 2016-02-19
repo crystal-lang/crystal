@@ -79,7 +79,7 @@ module DB
   record ExecResult, rows_affected, last_insert_id
 
   # :nodoc:
-  def self.driver_class(driver_name) # : Driver.class
+  def self.driver_class(driver_name) : Driver.class
     @@drivers.not_nil![driver_name]
   end
 

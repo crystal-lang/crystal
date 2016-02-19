@@ -4,6 +4,14 @@ module DB
   # See `DB` for a complete sample.
   #
   # Each `#read` call consumes the result and moves to the next column.
+  # Each column must be read in order.
+  # At any moment a `#move_next` can be invoked, meaning to skip the
+  # remaining, or even all the columns, in the current row.
+  # Also it is not mandatory to consume the whole `ResultSet`, hence an iteration
+  # through `#each` or `#move_next` can be stopped.
+  #
+  # **Note:** depending on how the `ResultSet` was obtained it might be mandatory an
+  # explicit call to `#close`. Check `QueryMethods#query`.
   #
   # ### Note to implementors
   #

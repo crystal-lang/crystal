@@ -28,10 +28,7 @@ module DB
     # :nodoc:
     def prepare(query) : Statement
       stmt = @statements_cache.fetch(query, nil)
-      if stmt.is_a?(Nil)
-        stmt = build_statement(query)
-        @statements_cache[query] = stmt
-      end
+      stmt = @statements_cache[query] = build_statement(query) unless stmt
 
       stmt
     end
