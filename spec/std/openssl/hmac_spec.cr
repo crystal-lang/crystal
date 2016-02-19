@@ -2,10 +2,6 @@ require "spec"
 require "openssl"
 require "openssl/hmac"
 
-# Note: hacking the `DSS` test to use DSS1 because of an error when attempting
-# to instantiate `OpenSSL::Digest::DSS.new`. Problem exists within Ruby's standard
-# library as well.
-
 describe OpenSSL::HMAC do
   [
     {:dss, "46b4ec586117154dacd49d664e5d63fdc88efb51"},
