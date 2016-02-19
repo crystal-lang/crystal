@@ -2,6 +2,14 @@ require "base64"
 
 module OpenSSL
   module DigestBase
+    def self.hexdump(digest)
+      String.build do |buffer|
+        digest.each do |i|
+          buffer.printf("%02x", i)
+        end
+      end
+    end
+
     def file(file_name)
       File.open(file_name) do |io|
         self << io

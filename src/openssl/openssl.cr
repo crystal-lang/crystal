@@ -20,7 +20,9 @@ module OpenSSL
   LibCrypto.err_load_crypto_strings
 end
 
-require "./bio"
+require "./bio/*"
 require "./ssl/*"
 require "./digest/*"
 require "./md5"
+require "./pkey/*"
+require "./x509/*"

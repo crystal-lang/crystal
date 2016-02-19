@@ -65,8 +65,8 @@ lib LibCrypto
   fun bio_new = BIO_new(type : BIO_METHOD) : BIO
   fun bio_free = BIO_free(bio : BIO) : Int
   fun bio_free_all = BIO_free_all(bio : BIO)
-  fun bio_read = BIO_read(bio : BIO, data : UInt*, len : Int) : Int
-  fun bio_write = BIO_write(bio : BIO, data : UInt*, len : Int) : Int
+  fun bio_read = BIO_read(bio : BIO, data : UInt8*, len : Int32) : Int32
+  fun bio_write = BIO_write(bio : BIO, data : UInt8*, len : Int32) : Int32
 
   fun bio_ctrl = BIO_ctrl(bio : BIO, cmd : Int, larg : Long, parg : Void*) : Long
 
