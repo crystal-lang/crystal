@@ -173,6 +173,20 @@ describe "Type inference: doc" do
     foo.locations.size.should eq(1)
   end
 
+  it "stores doc for flags enum with base type" do
+    result = infer_type %(
+      # Hello
+      @[Flags]
+      enum Foo : UInt8
+      end
+    ), wants_doc: true
+    program = result.program
+    foo = program.types["Foo"]
+    foo.has_attribute?("Flags").should be_true
+    foo.doc.should eq("Hello")
+    foo.locations.size.should eq(1)
+  end
+
   it "stores doc for enum and doesn't mix with value" do
     result = infer_type %(
       # Hello

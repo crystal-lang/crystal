@@ -439,6 +439,7 @@ module Crystal
       check_outside_block_or_exp node, "declare enum"
 
       check_valid_attributes node, ValidEnumDefAttributes, "enum"
+      attributes_doc = attributes_doc()
 
       scope, name = process_type_name(node.name)
 
@@ -469,8 +470,8 @@ module Crystal
       node.resolved_type = enum_type
       attach_doc enum_type, node
 
-      enum_type.doc ||= attributes_doc()
-      enum_type.add_attributes(@attributes)
+      enum_type.doc ||= attributes_doc
+      enum_type.add_attributes(node.attributes)
       @attributes = nil
 
       pushing_type(enum_type) do

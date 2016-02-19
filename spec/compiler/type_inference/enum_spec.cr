@@ -253,4 +253,19 @@ describe "Type inference: enum" do
       ),
       "can't use instance variables inside enums (at enum X)"
   end
+
+  it "marks as flags with base type (#2185)" do
+    result = infer_type(%(
+      @[Flags]
+      enum SomeFacts : UInt8
+        AppleLover
+        PearLover
+        CoolDude
+      end
+
+      SomeFacts::AppleLover
+      ))
+    enum_type = result.program.types["SomeFacts"] as EnumType
+    enum_type.has_attribute?("Flags").should be_true
+  end
 end
