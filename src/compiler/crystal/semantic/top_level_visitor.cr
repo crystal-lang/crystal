@@ -865,7 +865,9 @@ module Crystal
         if @struct_or_union.has_var?(field.name)
           field.raise "#{@struct_or_union.type_desc} #{@struct_or_union} already defines a field named '#{field.name}'"
         end
-        @struct_or_union.add_var MetaInstanceVar.new(field.name, field_type)
+        ivar = MetaInstanceVar.new(field.name, field_type)
+        ivar.owner = @struct_or_union
+        @struct_or_union.add_var ivar
       end
 
       def visit(node : Include)

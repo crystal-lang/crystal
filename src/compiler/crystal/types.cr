@@ -1080,7 +1080,7 @@ module Crystal
       end
 
       if create || owned_instance_vars.includes?(name)
-        instance_vars[name] ||= MetaInstanceVar.new(name)
+        instance_vars[name] ||= MetaInstanceVar.new(name).tap { |v| v.owner = self }
       else
         instance_vars[name]?
       end
@@ -1529,6 +1529,7 @@ module Crystal
         node.accept visitor
 
         ivar = MetaInstanceVar.new(name, visitor.type)
+        ivar.owner = instance
         ivar.bind_to ivar
         ivar.freeze_type = visitor.type.virtual_type
         instance.instance_vars[name] = ivar
@@ -1542,6 +1543,7 @@ module Crystal
           node.accept visitor
 
           ivar = MetaInstanceVar.new(name, visitor.type)
+          ivar.owner = instance
           ivar.bind_to ivar
           ivar.freeze_type = visitor.type
           instance.instance_vars[name] = ivar

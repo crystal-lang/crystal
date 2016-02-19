@@ -43,7 +43,11 @@ module Crystal
           end
         end
 
-        raise "type must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
+        if self.is_a?(MetaInstanceVar)
+          raise "instance variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
+        else
+          raise "type must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
+        end
       end
       @type = type
     end
@@ -544,6 +548,7 @@ module Crystal
 
   class MetaInstanceVar < Var
     property :nil_reason
+    property! :owner
   end
 
   class ClassVar

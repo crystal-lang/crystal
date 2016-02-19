@@ -911,6 +911,6 @@ describe "Type inference: class" do
         end
       end
       ),
-      "type must be Int32"
+      "instance variable '@x' of Foo must be Int32"
   end
 end
