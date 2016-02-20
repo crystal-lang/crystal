@@ -55,6 +55,8 @@ struct HTTP::Headers
   end
 
   def []=(key, value : Array(String))
+    value.each { |val| check_invalid_header_content val }
+
     @hash[wrap(key)] = value
   end
 
@@ -68,6 +70,8 @@ struct HTTP::Headers
   end
 
   def add(key, value : String)
+    check_invalid_header_content value
+
     key = wrap(key)
     existing = @hash[key]?
     if existing
@@ -79,6 +83,8 @@ struct HTTP::Headers
   end
 
   def add(key, value : Array(String))
+    value.each { |val| check_invalid_header_content val }
+
     key = wrap(key)
     existing = @hash[key]?
     if existing
@@ -220,6 +226,19 @@ struct HTTP::Headers
       values.first
     else
       values.join ","
+    end
+  end
+
+  private def check_invalid_header_content(value)
+    # According to RFC 7230, characters accepted as HTTP header
+    # are '\t', ' ', all US-ASCII printable characters and
+    # range from '\x80' to '\xff' (but the last is obsoleted.)
+    value.each_byte do |byte|
+      char = byte.chr
+      next if char == '\t'
+      if char < ' ' || char > '\u{ff}' || char == '\u{7e}'
+        raise ArgumentError.new("header content contains invalid character #{char.inspect}")
+      end
     end
   end
 end
