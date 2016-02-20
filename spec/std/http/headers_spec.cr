@@ -18,6 +18,12 @@ describe HTTP::Headers do
     headers["foobar_foo"].should eq("baz")
   end
 
+  it "raises an error if header value contains invalid character" do
+    expect_raises ArgumentError do
+      headers = HTTP::Headers{"invalid-header": "\r\nLocation: http://example.com"}
+    end
+  end
+
   it "should retain the input casing" do
     headers = HTTP::Headers{"FOO_BAR": "bar", "Foobar-foo": "baz"}
     serialized = String.build do |io|
