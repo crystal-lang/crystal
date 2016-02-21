@@ -61,7 +61,7 @@ class Regex
     # "クリスタル".match(/リ(ス)/) { |md| md.begin(0) }    # => 1
     # ```
     def begin(n = 0)
-      byte_index_to_char_index byte_begin(n)
+      @string.byte_index_to_char_index byte_begin(n)
     end
 
     # Return the position of the next character after the match.
@@ -75,7 +75,7 @@ class Regex
     # "クリスタル".match(/リ(ス)/) { |md| md.end(0) }    # => 3
     # ```
     def end(n = 0)
-      byte_index_to_char_index byte_end(n)
+      @string.byte_index_to_char_index byte_end(n)
     end
 
     # Return the position of the first byte of the `n`th match.
@@ -207,16 +207,6 @@ class Regex
         end
       end
       io << ">"
-    end
-
-    private def byte_index_to_char_index(index)
-      reader = Char::Reader.new(@string)
-      i = 0
-      reader.each do |char|
-        break if reader.pos == index
-        i += 1
-      end
-      i
     end
 
     private def check_index_out_of_bounds(index)

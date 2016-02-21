@@ -1805,6 +1805,7 @@ class String
   end
 
   # Returns the byte index of a char index, or nil if out of bounds.
+  #
   # It is valid to pass `size` to *index*, and in this case the answer
   # will be the bytesize of this string.
   #
@@ -1815,13 +1816,22 @@ class String
   # "こんにちは".char_index_to_byte_index(5) # => 15
   # ```
   def char_index_to_byte_index(index)
-    reader = Char::Reader.new(self)
-    i = 0
-    reader.each do |char|
-      return reader.pos if i == index
-      i += 1
+    size = each_byte_index_and_char_index do |byte_index, char_index|
+      return byte_index if index == char_index
     end
-    return reader.pos if i == index
+    return @bytesize if index == size
+    nil
+  end
+
+  # Returns the char index of a byte index, or nil if out of bounds.
+  #
+  # It is valid to pass `bytesize` to *index*, and in this case the answer
+  # will be the size of this string.
+  def byte_index_to_char_index(index)
+    size = each_byte_index_and_char_index do |byte_index, char_index|
+      return char_index if index == byte_index
+    end
+    return size if index == @bytesize
     nil
   end
 
@@ -2725,26 +2735,7 @@ class String
       return @length
     end
 
-    i = 0
-    count = 0
-
-    while i < bytesize
-      c = to_unsafe[i]
-
-      if c < 0x80
-        i += 1
-      elsif c < 0xe0
-        i += 2
-      elsif c < 0xf0
-        i += 3
-      else
-        i += 4
-      end
-
-      count += 1
-    end
-
-    @length = count
+    @length = each_byte_index_and_char_index { }
   end
 
   def ascii_only?
@@ -2757,6 +2748,31 @@ class String
 
   protected def size_known?
     @bytesize == 0 || @length > 0
+  end
+
+  protected def each_byte_index_and_char_index
+    byte_index = 0
+    char_index = 0
+
+    while byte_index < bytesize
+      yield byte_index, char_index
+
+      c = to_unsafe[byte_index]
+
+      if c < 0x80
+        byte_index += 1
+      elsif c < 0xe0
+        byte_index += 2
+      elsif c < 0xf0
+        byte_index += 3
+      else
+        byte_index += 4
+      end
+
+      char_index += 1
+    end
+
+    char_index
   end
 
   def to_slice

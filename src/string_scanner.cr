@@ -56,18 +56,22 @@
 # * `#inspect`
 # * `#string`
 class StringScanner
-  def initialize(@str)
-    @offset = 0
-    @size = @str.size
-  end
+  @str : String
+  @byte_offset : Int32
 
-  # Returns the current position of the scan offset.
-  getter offset
+  def initialize(@str : String)
+    @byte_offset = 0
+  end
 
   # Sets the position of the scan offset.
   def offset=(position : Int)
     raise IndexError.new unless position >= 0
-    @offset = position
+    @byte_offset = @str.char_index_to_byte_index(position) || @str.bytesize
+  end
+
+  # Returns the current position of the scan offset.
+  def offset
+    @str.byte_index_to_char_index(@byte_offset).not_nil!
   end
 
   # Tries to match with `pattern` at the current position. If there's a match,
@@ -96,14 +100,14 @@ class StringScanner
   end
 
   private def match(pattern, advance = true, options = Regex::Options::ANCHORED)
-    match = pattern.match(@str, @offset, options)
+    match = pattern.match_at_byte_index(@str, @byte_offset, options)
     @last_match = match
     if match
-      start = @offset
-      new_offset = match.end(0).to_i
-      @offset = new_offset if advance
+      start = @byte_offset
+      new_byte_offset = match.byte_end(0).to_i
+      @byte_offset = new_byte_offset if advance
 
-      @str[start, new_offset - start]
+      @str.byte_slice(start, new_byte_offset - start)
     else
       nil
     end
@@ -208,19 +212,19 @@ class StringScanner
   #     s.scan(/(\w+\s?){4}/)  # => "this is a string"
   #     s.eos?                 # => true
   def eos?
-    @offset >= @size
+    @byte_offset >= @str.bytesize
   end
 
   # Resets the scan offset to the beginning and clears the last match.
   def reset
     @last_match = nil
-    @offset = 0
+    @byte_offset = 0
   end
 
   # Moves the scan offset to the end of the string and clears the last match.
   def terminate
     @last_match = nil
-    @offset = @size
+    @byte_offset = @str.bytesize
   end
 
   # Returns the string being scanned.
@@ -231,7 +235,7 @@ class StringScanner
   # Extracts a string corresponding to string[offset,`len`], without advancing
   # the scan offset.
   def peek(len)
-    @str[@offset, len]
+    @str[offset, len]
   end
 
   # Returns the remainder of the string after the scan offset.
@@ -240,7 +244,7 @@ class StringScanner
   #     s.scan(/(\w+\s?){2}/)  # => "this is "
   #     s.rest                 # => "a string"
   def rest
-    @str[@offset, @size - @offset]
+    @str.byte_slice(@byte_offset, @str.bytesize - @byte_offset)
   end
 
   # Writes a representation of the scanner.
@@ -249,8 +253,9 @@ class StringScanner
   # and five characters near the current position.
   def inspect(io : IO)
     io << "#<StringScanner "
-    io << @offset.to_s << "/" << @size.to_s
-    start = Math.min(Math.max(@offset - 2, 0), @size - 5)
+    offset = offset()
+    io << offset << "/" << @str.size
+    start = Math.min(Math.max(offset - 2, 0), @str.size - 5)
     io << " \"" << @str[start, 5] << "\" >"
   end
 end
