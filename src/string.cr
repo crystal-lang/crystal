@@ -1164,6 +1164,9 @@ class String
   # Returns a string where the first occurrence of *pattern* is replaced by
   # *replacement*
   #
+  # Within *replacement*, the special match variable `$~` will not refer to the
+  # current match.
+  #
   # ```
   # "hello".sub(/[aeiou]/, '*') # => "h*llo"
   # ```
@@ -1247,6 +1250,39 @@ class String
     end
   end
 
+  # Returns a string where all occurrences of the given *pattern* are replaced
+  # with the given *replacement*, using back-references.
+  #
+  # Within *replacement*, the special match variable `$~` will not refer to the
+  # current match. *replacement* can include back-references.
+  #
+  # ```
+  # "hello".grsub(/[aeiou]/, '(\\0)') # => "h(e)ll(o)"
+  # ```
+  #
+  # When substitution is performed, any back-references found in *replacement*
+  # will be replaced with the contents of the corresponding capture group in
+  # *pattern*. Back-references to capture groups that were not present in
+  # *pattern* or that did not match will be skipped. See `Regex` for information
+  # about capture groups.
+  #
+  # Back-references are expressed in the form `"\\d"`, where *d* is a group
+  # number, or `"\\k&lt;name>"` where *name* is the name of a named capture group.
+  # A sequence of literal characters resembling a back-reference can be
+  # expressed by placing `"\\"` before the sequence.
+  #
+  # ```
+  # "foo".gsub(/o/, "x\\0x")               # => "fxoxxox"
+  # "foo".gsub(/(?<bar>oo)/, "|\\k<bar>|") # => "f|oo|"
+  # "foo".gsub(/o/, "\\\\0")               # => "f\\0\\0"
+  # ```
+  #
+  # Raises `ArgumentError` if an incomplete named back-reference is present in
+  # *replacement*.
+  def grsub(pattern : Regex, replacement)
+    gsub(pattern) { |_, md| back_reference_scan(replacement, md) }
+  end
+
   # Returns a string where each character yielded to the given block
   # is replaced by the block's return value.
   #
@@ -1319,11 +1355,52 @@ class String
   # Returns a string where all occurrences of the given *pattern* are replaced
   # with the given *replacement*.
   #
+  # Within *replacement*, the special match variable `$~` will not refer to the
+  # current match.
+  #
   # ```
   # "hello".gsub(/[aeiou]/, '*') # => "h*ll*"
   # ```
-  def gsub(pattern : Regex, replacement)
+  def gsub(pattern : Regex, replacement, back_reference = false)
     gsub(pattern) { replacement }
+  end
+
+  private def back_reference_scan(replacement, md)
+    String.build(replacement.size) do |string|
+      pos = 0
+      while pos < replacement.size
+        case replacement[pos]
+        when '\\'
+          pos += 1
+          unless pos < replacement.size
+            string << '\\'
+            break
+          end
+
+          case char = replacement[pos]
+          when '\\'
+            string << char
+          when '0'..'9'
+            string << md[char.to_i]?
+          when 'k'
+            if pos + 3 < replacement.size &&
+               replacement[pos + 1] == '<' &&
+               (group_end = replacement.index('>', pos)) &&
+               pos + 2 < group_end
+              string << md[replacement[(pos + 2)...group_end]]?
+              pos = group_end
+            else
+              raise ArgumentError.new("Unterminated back-reference")
+            end
+          else
+            string << '\\' << char
+          end
+        else
+          string << replacement[pos]
+        end
+        pos += 1
+      end
+    end
   end
 
   # Returns a string where all occurrences of the given *pattern* are replaced
@@ -1778,6 +1855,23 @@ class String
     end
 
     last_index
+  end
+
+  # Returns a string where the first occurrence of *pattern* is replaced by
+  # *replacement*, using back-references.
+  #
+  # Within *replacement*, the special match variable `$~` will not refer to the
+  # current match. *replacement* can include back-references. See `String#grsub`
+  # for more information.
+  #
+  # Raises `ArgumentError` if an incomplete named back-reference is present in
+  # *replacement*.
+  #
+  # ```
+  # "hello".rsub(/[aeiou]/, '(\\0)') # => "h(e)llo"
+  # ```
+  def rsub(pattern : Regex, replacement)
+    sub(pattern) { |_, md| back_reference_scan(replacement, md) }
   end
 
   def byte_index(byte : Int, offset = 0)
