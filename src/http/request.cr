@@ -84,7 +84,7 @@ class HTTP::Request
     value
   end
 
-  private def uri
+  def uri
     (@uri ||= URI.parse(@resource)).not_nil!
   end
 
