@@ -420,7 +420,7 @@ module Crystal
             char = next_char
             case char
             when '\\'
-              if peek_next_char == '"'
+              if peek_next_char == '"' || peek_next_char == '\\'
                 next_char
                 count += 1
               end
