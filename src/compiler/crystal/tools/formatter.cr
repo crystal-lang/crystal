@@ -1878,8 +1878,8 @@ module Crystal
         skip_space_or_newline
       end
 
-      # This is for foo &.[bar] and &.[bar]?
-      if !obj && (node.name == "[]" || node.name == "[]?") && @token.type == :"["
+      # This is for foo &.[bar] and &.[bar]?, or foo.[bar] and foo.[bar]?
+      if (node.name == "[]" || node.name == "[]?") && @token.type == :"["
         write "["
         next_token_skip_space_or_newline
         format_call_args(node, false)
