@@ -244,7 +244,6 @@ describe "Lexer" do
   it_lexes_symbols [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/",
     ":==", ":<", ":<=", ":>", ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|",
     ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?", ":[]=", ":<=>", ":===",
-    ":\"\\\\\"" #2187
   ]
   it_lexes_global_match_data_index ["$1", "$10", "$1?", "$23?"]
 
@@ -423,6 +422,20 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(:NUMBER)
     token.number_kind.should eq(:i32)
+  end
+
+  it "lexes symbol with quote" do
+    lexer = Lexer.new %(:"\\"")
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq("\"")
+  end
+
+  it "lexes symbol with backslash (#2187)" do
+    lexer = Lexer.new %(:"\\\\")
+    token = lexer.next_token
+    token.type.should eq(:SYMBOL)
+    token.value.should eq("\\")
   end
 
   assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"

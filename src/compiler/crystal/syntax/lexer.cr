@@ -414,27 +414,25 @@ module Crystal
           line = @line_number
           column = @column_number
           start = current_pos + 1
-          count = 0
-
+          io = MemoryIO.new
           while true
             char = next_char
             case char
             when '\\'
               if peek_next_char == '"' || peek_next_char == '\\'
-                next_char
-                count += 1
+                io << next_char
               end
             when '"'
               break
             when '\0'
               raise "unterminated quoted symbol", line, column
             else
-              count += 1
+              io << char
             end
           end
 
           @token.type = :SYMBOL
-          @token.value = string_range(start)
+          @token.value = io.to_s
           next_char
           set_token_raw_from_start(start - 2)
         else
