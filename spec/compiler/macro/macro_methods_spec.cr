@@ -682,7 +682,7 @@ describe "macro methods" do
 
     it "executes visibility" do
       assert_macro "x", %({{x.visibility}}), [Def.new("some_def")] of ASTNode, ":public"
-      assert_macro "x", %({{x.visibility}}), [Def.new("some_def").tap { |d| d.visibility = :private }] of ASTNode, ":private"
+      assert_macro "x", %({{x.visibility}}), [Def.new("some_def").tap { |d| d.visibility = Visibility::Private }] of ASTNode, ":private"
     end
   end
 

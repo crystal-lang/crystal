@@ -25,7 +25,7 @@ module Crystal
       super(self, self, "main")
 
       @symbols = Set(String).new
-      @global_vars = {} of String => Var
+      @global_vars = {} of String => Global
       @requires = Set(String).new
       @temp_var_counter = 0
       @type_id_counter = 1
@@ -169,7 +169,7 @@ module Crystal
     end
 
     def check_private(node)
-      return nil unless node.visibility == :private
+      return nil unless node.visibility.private?
 
       location = node.location
       return nil unless location

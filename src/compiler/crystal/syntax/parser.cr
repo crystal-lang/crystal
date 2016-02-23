@@ -6,7 +6,7 @@ module Crystal
   class Parser < Lexer
     record Unclosed, name, location
 
-    property visibility
+    property visibility : Visibility?
     property def_nest
     property type_nest
     getter? wants_doc
@@ -1006,9 +1006,9 @@ module Crystal
         when :typeof
           parse_typeof
         when :private
-          parse_visibility_modifier :private
+          parse_visibility_modifier Visibility::Private
         when :protected
-          parse_visibility_modifier :protected
+          parse_visibility_modifier Visibility::Protected
         when :asm
           parse_asm
         else
@@ -2786,7 +2786,7 @@ module Crystal
 
       node = Def.new name, args, body, receiver, block_arg, return_type, is_macro_def, @yields, is_abstract, splat_index
       node.name_column_number = name_column_number
-      node.visibility = @visibility
+      set_visibility node
       node.end_location = end_location
       node
     end
@@ -4418,10 +4418,10 @@ module Crystal
 
           case @token.value
           when :private
-            visibility = :private
+            visibility = Visibility::Private
             next_token_skip_space
           when :protected
-            visibility = :protected
+            visibility = Visibility::Protected
             next_token_skip_space
           end
 

@@ -5,6 +5,7 @@ require "colorize"
 module Crystal
   abstract class Exception < ::Exception
     property? color
+    @color = false
 
     def to_s(io)
       to_s_with_source(nil, io)

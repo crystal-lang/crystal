@@ -384,7 +384,7 @@ class Crystal::Call
 
   def check_visibility(match)
     case match.def.visibility
-    when :private
+    when .private?
       if obj = @obj
         if obj.is_a?(Var) && obj.name == "self" && match.def.name.ends_with?('=')
           # Special case: private setter can be called with self
@@ -398,7 +398,7 @@ class Crystal::Call
 
         raise "private method '#{match.def.name}' called for #{match.def.owner}"
       end
-    when :protected
+    when .protected?
       scope_type = scope.instance_type
       owner_type = match.def.owner.instance_type
 

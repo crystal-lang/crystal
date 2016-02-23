@@ -692,7 +692,16 @@ module Crystal
       when "receiver"
         receiver || Nop.new
       when "visibility"
-        SymbolLiteral.new(visibility ? visibility.to_s : "public")
+        visibility_name =
+          case visibility
+          when .private?
+            "private"
+          when .protected?
+            "protected"
+          else
+            "public"
+          end
+        SymbolLiteral.new(visibility_name)
       else
         super
       end
@@ -795,7 +804,7 @@ module Crystal
           else
             raise "argument to has_attribtue? must be a StringLiteral or SymbolLiteral, not #{arg.class_desc}"
           end
-          BoolLiteral.new(type.has_attribute?(value))
+          BoolLiteral.new(!!type.has_attribute?(value))
         end
       when "size"
         interpret_argless_method(method, args) do

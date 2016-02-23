@@ -281,7 +281,7 @@ module Crystal
     def visit_global(node)
       var = mod.global_vars[node.name]?
       unless var
-        var = Var.new(node.name)
+        var = Global.new(node.name)
         mod.global_vars[node.name] = var
       end
       var.bind_to mod.nil_var unless var.dependencies?
@@ -506,7 +506,7 @@ module Crystal
 
       var = mod.global_vars[target.name]?
       unless var
-        var = Var.new(target.name)
+        var = Global.new(target.name)
 
         # If we are assigning to a global inside a method, make it nilable
         # if this is the first time we are assigning to it, because

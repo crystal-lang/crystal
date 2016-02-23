@@ -158,6 +158,8 @@ module Crystal
       @unused_fun_defs = [] of FunDef
       @proc_counts = Hash(String, Int32).new(0)
 
+      @node_ensure_exception_handlers = {} of typeof(object_id) => Handler
+
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
       # to avoid some memory being allocated with plain malloc.
       codgen_well_known_functions @node
@@ -602,7 +604,7 @@ module Crystal
     end
 
     def visit(node : While)
-      node.ensure_exception_handler = current_ensure_exception_handler
+      set_ensure_exception_handler(node)
 
       with_cloned_context do
         while_block, body_block, exit_block = new_blocks "while", "body", "exit"
@@ -713,7 +715,7 @@ module Crystal
     end
 
     def execute_ensures_until(node)
-      stop_exception_handler = node.ensure_exception_handler.try &.node
+      stop_exception_handler = @node_ensure_exception_handlers[node.object_id]?.try &.node
 
       @ensure_exception_handlers.try &.reverse_each do |exception_handler|
         break if exception_handler.node.same?(stop_exception_handler)
@@ -727,8 +729,10 @@ module Crystal
       end
     end
 
-    def current_ensure_exception_handler
-      @ensure_exception_handlers.try &.last?
+    def set_ensure_exception_handler(node)
+      if eh = @ensure_exception_handlers.try &.last?
+        @node_ensure_exception_handlers[node.object_id] = eh
+      end
     end
 
     def visit(node : Assign)
@@ -1171,7 +1175,7 @@ module Crystal
           context.closure_parent_context = block_context.closure_parent_context
 
           @needs_value = true
-          block.ensure_exception_handler = current_ensure_exception_handler
+          set_ensure_exception_handler(block)
 
           accept block.body
         end

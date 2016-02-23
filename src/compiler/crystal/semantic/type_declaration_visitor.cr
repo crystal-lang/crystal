@@ -145,7 +145,7 @@ module Crystal
 
         global_var = mod.global_vars[var.name]?
         unless global_var
-          global_var = Var.new(var.name)
+          global_var = Global.new(var.name)
           mod.global_vars[var.name] = global_var
         end
 

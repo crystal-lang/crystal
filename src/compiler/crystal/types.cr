@@ -609,8 +609,8 @@ module Crystal
     def add_def(a_def)
       a_def.owner = self
 
-      if !a_def.visibility && a_def.name == "initialize"
-        a_def.visibility = :protected
+      if a_def.visibility.public? && a_def.name == "initialize"
+        a_def.visibility = Visibility::Protected
       end
 
       item = DefWithMetadata.new(a_def)

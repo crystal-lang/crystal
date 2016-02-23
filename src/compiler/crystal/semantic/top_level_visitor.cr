@@ -568,7 +568,7 @@ module Crystal
         return false
       when Macro
         if current_type != @mod.program
-          node.raise "#{node.modifier} macros can only be declared at the top-level"
+          node.raise "#{node.modifier.to_s.downcase} macros can only be declared at the top-level"
         end
 
         return false

@@ -2437,7 +2437,12 @@ module Crystal
     end
 
     def visit(node : VisibilityModifier)
-      write_keyword node.modifier, " "
+      case node.modifier
+      when .private?
+        write_keyword :private, " "
+      when .protected?
+        write_keyword :protected, " "
+      end
       accept node.exp
 
       false

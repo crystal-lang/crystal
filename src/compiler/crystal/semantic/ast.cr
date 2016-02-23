@@ -205,11 +205,11 @@ module Crystal
       ::raise exception_type.for_node(self, message, inner)
     end
 
-    def visibility=(visibility)
+    def visibility=(visibility : Visibility)
     end
 
     def visibility
-      nil
+      Visibility::Public
     end
 
     def find_owner_trace(owner)
@@ -251,7 +251,9 @@ module Crystal
 
     property :previous
     property :next
-    property :visibility
+    property visibility : Visibility
+    @visibility = Visibility::Public
+
     getter :special_vars
 
     property :block_nest
@@ -544,7 +546,7 @@ module Crystal
     end
   end
 
-  alias MetaVars = SimpleHash(String, MetaVar)
+  alias MetaVars = Hash(String, MetaVar)
 
   class MetaInstanceVar < Var
     property :nil_reason
@@ -566,11 +568,13 @@ module Crystal
 
   class Call
     property :before_vars
-    property :visibility
+    property visibility : Visibility
+    @visibility = Visibility::Public
   end
 
   class Macro
-    property :visibility
+    property visibility : Visibility
+    @visibility = Visibility::Public
   end
 
   class Block
