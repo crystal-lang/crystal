@@ -89,6 +89,31 @@ class HTTP::Client
     @compress = true
   end
 
+  # Creates a new HTTP client from a URI. Parses the *host*, *port*,
+  # and *ssl* configuration from the url provided. Port defaults to
+  # 80 if not specified unless using the https protocol, which defaults
+  # to port 443 and sets ssl to `true`.
+  #
+  # ```
+  # uri = URI.parse("https://secure.example.com")
+  # client = HTTP::Client.new(uri)
+  #
+  # client.ssl? # => true
+  # client.get("/")
+  # ```
+  # This constructor will *ignore* any path or query segments in the URI
+  # as those will need to be passed to the client when a request is made.
+  #
+  # This constructor will raise an exception if any scheme but HTTP or HTTPS
+  # is used.
+  def self.new(uri : URI)
+    ssl = ssl_flag(uri)
+
+    port = uri.port || (ssl ? 443 : 80)
+
+    new(uri.host.to_s, port.to_i, ssl)
+  end
+
   # Creates a new HTTP client, yields it to the block, and closes
   # the client afterwards.
   #
@@ -485,14 +510,36 @@ class HTTP::Client
     end
   end
 
-  private def self.exec(uri : URI)
+  private def self.valid_scheme?(uri : URI)
     scheme = uri.scheme
-    unless scheme
-      raise ArgumentError.new %(Request URI must have scheme. Possibly add "http://" to the request URI? (URI is: #{uri}))
-    end
+    raise ArgumentError.new %(Request URI must have scheme. Possibly add "http://" to the request URI? (URI is: #{uri})) unless scheme
 
-    host = uri.host
-    unless host
+    scheme == "http" || scheme == "https"
+  end
+
+  private def self.ssl?(uri : URI)
+    uri.scheme == "https"
+  end
+
+  protected def self.ssl_flag(uri)
+    scheme = uri.scheme
+    case scheme
+    when nil
+      raise ArgumentError.new("missing scheme: #{uri}")
+    when "http"
+      false
+    when "https"
+      true
+    else
+      raise "Unsupported scheme: #{scheme}"
+    end
+  end
+
+  private def self.exec(uri : URI)
+    ssl = ssl_flag(uri)
+
+    host = uri.host.not_nil!
+    if host.empty?
       raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))
     end
 
@@ -500,16 +547,6 @@ class HTTP::Client
     path = uri.full_path
     user = uri.user
     password = uri.password
-    ssl = false
-
-    case scheme
-    when "http"
-      # Nothing
-    when "https"
-      ssl = true
-    else
-      raise "Unsuported scheme: #{scheme}"
-    end
 
     HTTP::Client.new(host, port, ssl) do |client|
       if user && password
