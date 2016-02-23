@@ -70,6 +70,14 @@ describe CSV do
     it "parses from IO" do
       CSV.parse(MemoryIO.new(%("hel""lo",world))).should eq([[%(hel"lo), %(world)]])
     end
+
+    it "takes an optional separator argument" do
+      CSV.parse("foo;bar", separator: ';').should eq([["foo", "bar"]])
+    end
+
+    it "takes an optional quote char argument" do
+      CSV.parse("'foo,bar'", quote_char: '\'').should eq([["foo,bar"]])
+    end
   end
 
   it "parses row by row" do

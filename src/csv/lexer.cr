@@ -11,20 +11,20 @@
 # ```
 abstract class CSV::Lexer
   # Creates a CSV lexer from a string.
-  def self.new(string : String)
-    StringBased.new(string)
+  def self.new(string : String, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
+    StringBased.new(string, separator, quote_char)
   end
 
   # Creates a CSV lexer from an IO.
-  def self.new(io : IO)
-    IOBased.new(io)
+  def self.new(io : IO, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
+    IOBased.new(io, separator, quote_char)
   end
 
   # Returns the current `Token`.
   getter token
 
   # :nodoc:
-  def initialize
+  def initialize(@separator = DEFAULT_SEPARATOR, @quote_char = DEFAULT_QUOTE_CHAR)
     @token = Token.new
     @buffer = MemoryIO.new
     @column_number = 1
@@ -51,7 +51,7 @@ abstract class CSV::Lexer
     case current_char
     when '\0'
       @token.kind = Token::Kind::Eof
-    when ','
+    when @separator
       @token.kind = Token::Kind::Cell
       @token.value = ""
       check_last_empty_column
@@ -72,7 +72,7 @@ abstract class CSV::Lexer
         end
     when '\n'
       @token.kind = next_char == '\0' ? Token::Kind::Eof : Token::Kind::Newline
-    when '"'
+    when @quote_char
       @token.kind = Token::Kind::Cell
       @token.value = consume_quoted_cell
     else
@@ -89,15 +89,15 @@ abstract class CSV::Lexer
       when '\0'
         raise "unclosed quote"
         break
-      when '"'
+      when @quote_char
         case next_char
-        when ','
+        when @separator
           check_last_empty_column
           break
         when '\r', '\n', '\0'
           break
-        when '"'
-          @buffer << '"'
+        when @quote_char
+          @buffer << @quote_char
         else
           raise "expecting comma, newline or end, not #{current_char.inspect}"
         end

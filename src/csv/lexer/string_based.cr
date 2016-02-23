@@ -1,7 +1,7 @@
 # :nodoc:
 class CSV::Lexer::StringBased < CSV::Lexer
-  def initialize(string)
-    super()
+  def initialize(string, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
+    super(separator, quote_char)
     @reader = Char::Reader.new(string)
     if @reader.current_char == '\n'
       @line_number += 1
@@ -18,14 +18,14 @@ class CSV::Lexer::StringBased < CSV::Lexer
     end_pos = start_pos
     while true
       case next_char
-      when ','
+      when @separator
         end_pos = @reader.pos
         check_last_empty_column
         break
       when '\r', '\n', '\0'
         end_pos = @reader.pos
         break
-      when '"'
+      when @quote_char
         raise "unexpected quote"
       end
     end

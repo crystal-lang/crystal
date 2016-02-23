@@ -1,4 +1,7 @@
-class CSV; end
+class CSV
+  DEFAULT_SEPARATOR = ','
+  DEFAULT_QUOTE_CHAR = '"'
+end
 
 require "./**"
 
@@ -61,15 +64,21 @@ require "./**"
 # To create CSV data, check `CSV#build` and the `CSV::Builder` class.
 class CSV
   # Parses a CSV or IO into an array.
+  # takes optional *separator* and *quote_char* arguments for defining
+  # non-standard csv cell separators and quote characters
   #
   # ```
-  # CSV.parse("one,two\nthree") # => [["one", "two"], ["three"]]
+  # CSV.parse("one,two\nthree")
+  # # => [["one", "two"], ["three"]]
+  # CSV.parse("one;two\n'three;'", separator: ';', quote_char: '\'')
+  # # => [["one", "two"], ["three;"]]
   # ```
-  def self.parse(string_or_io : String | IO) : Array(Array(String))
-    Parser.new(string_or_io).parse
+  def self.parse(string_or_io : String | IO, separator = DEFAULT_SEPARATOR : Char, quote_char = DEFAULT_QUOTE_CHAR : Char) : Array(Array(String))
+    Parser.new(string_or_io, separator, quote_char).parse
   end
 
   # Yields each of a CSV's rows as an `Array(String)`.
+  # see `CSV.parse` about the *separator* and *quote_char* arguments
   #
   # ```
   # CSV.each_row("one,two\nthree") do |row|
@@ -83,20 +92,21 @@ class CSV
   # ["one", "two"]
   # ["three"]
   # ```
-  def self.each_row(string_or_io : String | IO)
+  def self.each_row(string_or_io : String | IO, separator = DEFAULT_SEPARATOR : Char, quote_char = DEFAULT_QUOTE_CHAR : Char)
     Parser.new(string_or_io).each_row do |row|
       yield row
     end
   end
 
   # Returns an `Iterator` of `Array(String)` over a CSV's rows.
+  # see `CSV.parse` about the *separator* and *quote_char* arguments
   #
   # ```
   # rows = CSV.each_row("one,two\nthree")
   # rows.next # => ["one", "two"]
   # rows.next # => ["three"]
   # ```
-  def self.each_row(string_or_io : String | IO)
+  def self.each_row(string_or_io : String | IO, separator = DEFAULT_SEPARATOR : Char, quote_char = DEFAULT_QUOTE_CHAR : Char)
     Parser.new(string_or_io).each_row
   end
 
@@ -139,8 +149,10 @@ class CSV
   #
   # If *headers* is true, row values can be accesed with header names or patterns.
   # Headers are always stripped.
-  def initialize(string_or_io : String | IO, headers = false, @strip = false)
-    @parser = Parser.new(string_or_io)
+  #
+  # see `CSV.parse` about the *separator* and *quote_char* arguments
+  def initialize(string_or_io : String | IO, headers = false, @strip = false, separator = DEFAULT_SEPARATOR : Char, quote_char = DEFAULT_QUOTE_CHAR : Char)
+    @parser = Parser.new(string_or_io, separator, quote_char)
     if headers
       headers = @parser.next_row || ([] of String)
       headers = @headers = headers.map &.strip
@@ -160,8 +172,10 @@ class CSV
   #
   # If *headers* is true, row values can be accesed with header names or patterns.
   # Headers are always stripped.
-  def self.new(string_or_io : String | IO, headers = false, strip = false)
-    csv = new(string_or_io, headers, strip)
+  #
+  # see `CSV.parse` about the *separator* and *quote_char* arguments
+  def self.new(string_or_io : String | IO, headers = false, strip = false, separator = DEFAULT_SEPARATOR : Char, quote_char = DEFAULT_QUOTE_CHAR : Char)
+    csv = new(string_or_io, headers, strip, separator, quote_char)
     csv.each do
       yield csv
     end
