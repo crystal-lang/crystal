@@ -83,7 +83,7 @@ Command:
     --version, -v            show version
 ```
 
-To see the available options for a particuar command, use `--help` after a command:
+To see the available options for a particular command, use `--help` after a command:
 
 ```
 $ crystal build --help
