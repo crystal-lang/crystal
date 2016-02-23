@@ -108,6 +108,19 @@ describe CSV do
       lexer.expect_eof
     end
 
+    it "lexes with a given separator" do
+      lexer = CSV::Lexer.new("hello;world\n", separator: ';')
+      lexer.expect_cell "hello"
+      lexer.expect_cell "world"
+      lexer.expect_eof
+    end
+
+    it "lexes with a given quote char" do
+      lexer = CSV::Lexer.new("'hello,world'\n", quote_char: '\'')
+      lexer.expect_cell "hello,world"
+      lexer.expect_eof
+    end
+
     it "raises if single quote in the middle" do
       expect_raises CSV::MalformedCSVError, "unexpected quote at 1:4" do
         lexer = CSV::Lexer.new %(hel"lo)
