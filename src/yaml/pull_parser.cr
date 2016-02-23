@@ -14,6 +14,11 @@ class YAML::PullParser
     @event.type
   end
 
+  def tag
+    ptr = @event.data.scalar.tag
+    ptr ? String.new(ptr) : nil
+  end
+
   def value
     ptr = @event.data.scalar.value
     ptr ? String.new(ptr) : nil

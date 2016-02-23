@@ -82,9 +82,14 @@ class YAML::Parser
         return mapping
       else
         key = parse_node
+        tag = @pull_parser.tag
         @pull_parser.read_next
         value = parse_node
-        mapping[key] = value
+        if key == "<<" && value.is_a?(Hash) && tag != "tag:yaml.org,2002:str"
+          mapping.merge!(value)
+        else
+          mapping[key] = value
+        end
       end
     end
   end
