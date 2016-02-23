@@ -84,6 +84,9 @@ describe Markdown do
 
   assert_render "* Hello\n+ World\n- Crystal", "<ul><li>Hello</li></ul>\n\n<ul><li>World</li></ul>\n\n<ul><li>Crystal</li></ul>"
 
+  assert_render "- [ ] Todo",  %(<ul><li><input type="checkbox" disabled> Todo</li></ul>)
+  assert_render "- [x] Done",  %(<ul><li><input type="checkbox" disabled checked> Done</li></ul>)
+
   assert_render "1. Hello", "<ol><li>Hello</li></ol>"
   assert_render "2. Hello", "<ol><li>Hello</li></ol>"
   assert_render "01. Hello\n02. World", "<ol><li>Hello</li><li>World</li></ol>"
