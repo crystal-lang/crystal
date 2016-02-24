@@ -121,7 +121,7 @@ class Crystal::Def
 
             # If the restriction is a free var it will be lost in the replacement, so we save the default value in
             # a temporary variable (tmp_var) and then replace all ocurrences of that free var with typeof(tmp_var)
-            # to acheive the same effect, since we can't define a type alias inside a method.
+            # to achieve the same effect, since we can't define a type alias inside a method.
             restriction = arg.restriction
             if restriction.is_a?(Path) && restriction.names.size == 1 && Parser.free_var_name?(restriction.names.first)
               restriction_name = program.new_temp_var_name
