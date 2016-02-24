@@ -155,7 +155,7 @@ module Crystal
         end
         @dot_column = nil
 
-        skip_space
+        found_comment = skip_space
 
         if @token.type == :";"
           if needs_two_lines
@@ -185,9 +185,11 @@ module Crystal
           skip_space_or_newline last: true
         else
           if needs_two_lines
-            skip_space_write_line
-            found_comment = skip_space_or_newline last: true, at_least_one: true
-            write_line unless found_comment
+            unless found_comment
+              skip_space_write_line
+              found_comment = skip_space_or_newline last: true, at_least_one: true
+              write_line unless found_comment
+            end
           else
             consume_newlines
           end
