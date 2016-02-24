@@ -226,10 +226,20 @@ class Markdown::Parser
       end
 
       @renderer.begin_list_item
-      process_line line.byte_slice(line.index(prefix).not_nil! + 1)
+
+      cursor = 2
+      line_slice = line.byte_slice(line.index(prefix).not_nil! + cursor)
+
+      if starts_with_checkbox?(line_slice)
+        @renderer.checkbox(is_checkbox_checked?(line_slice))
+        cursor += 3
+      end
+
+      process_line(line.byte_slice(line.index(prefix).not_nil! + cursor))
+
       @renderer.end_list_item
 
-      if line.starts_with?("  ") && next_line_is_not_intended? 
+      if line.starts_with?("  ") && next_line_is_not_intended?
         @renderer.end_unordered_list
       end
 
@@ -500,6 +510,7 @@ class Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
+
     while pos < bytesize && str[pos].chr.whitespace?
       pos += 1
     end
@@ -511,6 +522,20 @@ class Markdown::Parser
 
     return false unless pos < bytesize
     str[pos].chr.whitespace?
+  end
+
+  def starts_with_checkbox?(line)
+    str = line.to_unsafe
+    pos = 0
+
+    (str[pos].chr == '[' && ( str[pos + 1].chr== ' ' || str[pos + 1].chr == 'x'))
+  end
+
+  def is_checkbox_checked?(line)
+    str = line.to_unsafe
+    pos = 1
+
+    str[pos].chr == 'x'
   end
 
   def previous_line_is_not_intended_and_starts_with_bullet_list_marker?(prefix)
