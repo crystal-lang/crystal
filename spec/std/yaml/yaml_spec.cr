@@ -31,17 +31,17 @@ describe "YAML" do
 
     describe "merging with << key" do
       it "merges other mapping" do
-        doc = YAML.load(%(---
+        doc = YAML.parse(%(---
           foo: bar
           <<:
             baz: foobar
-          )) as Hash
+          ))
         doc["baz"]?.should eq("foobar")
       end
 
       it "raises if merging with missing alias" do
         expect_raises do
-          YAML.load(%(---
+          YAML.parse(%(---
             foo:
               <<: *bar
           ))
@@ -49,7 +49,7 @@ describe "YAML" do
       end
 
       it "doesn't merge explicit string key <<" do
-        doc = YAML.load(%(---
+        doc = YAML.parse(%(---
           foo: &foo
             hello: world
           bar:
@@ -59,21 +59,21 @@ describe "YAML" do
       end
 
       it "doesn't merge empty mapping" do
-        doc = YAML.load(%(---
+        doc = YAML.parse(%(---
           foo: &foo
           bar:
             <<: *foo
-        )) as Hash
+        ))
         doc["bar"].should eq({"<<": ""})
       end
 
       it "doesn't merge arrays" do
-        doc = YAML.load(%(---
+        doc = YAML.parse(%(---
           foo: &foo
             - 1
           bar:
             <<: *foo
-        )) as Hash
+        ))
         doc["bar"].should eq({"<<": ["1"]})
       end
     end
