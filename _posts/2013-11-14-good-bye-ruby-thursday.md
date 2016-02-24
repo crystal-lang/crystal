@@ -81,7 +81,7 @@ It was a long path, but also a very interesting and enlightening one:
 helps you have more robust and correct code.</li>
 </ul>
 
-And today, Thursday, [we finally did it](https://github.com/manastech/crystal/commit/ad2e815e271aaa7f478cababd478b14e5b789789). We managed to write a compiler for Crystal written in Crystal itself. Yay! The new compiler can compile itself successfully, and this new compiler can compile itself, and the resulting binary is exactly the same as the old one. It can also compile its specs, and they all pass.
+And today, Thursday, [we finally did it](https://github.com/crystal-lang/crystal/commit/ad2e815e271aaa7f478cababd478b14e5b789789). We managed to write a compiler for Crystal written in Crystal itself. Yay! The new compiler can compile itself successfully, and this new compiler can compile itself, and the resulting binary is exactly the same as the old one. It can also compile its specs, and they all pass.
 
 The future for Crystal looks bright:
 

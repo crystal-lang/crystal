@@ -98,7 +98,7 @@ and easier to understand and optimize code. It will also make it possible to int
 like Ruby's `retry` with minimal effort, because the flow graph allows for cycles and "goto"-like
 jumps.
 
-If you'd like to know more about this change, there's a [tracking issue](https://github.com/manastech/crystal/issues/1824)
+If you'd like to know more about this change, there's a [tracking issue](https://github.com/crystal-lang/crystal/issues/1824)
 about it.
 
 ## Questions and Answers

@@ -35,7 +35,7 @@ nil.foo
     ^~~
 </pre>
 
-`nil`, the only instance of the [Nil](https://github.com/manastech/crystal/blob/master/src/nil.cr) class, behaves just like any other class in Crystal.
+`nil`, the only instance of the [Nil](https://github.com/crystal-lang/crystal/blob/master/src/nil.cr) class, behaves just like any other class in Crystal.
 And since it doesn't have a method named "foo", an error is issued **at compile time**.
 
 Let's try with a slightly more complex, but made up, example:
@@ -117,7 +117,7 @@ puts socket.gets.capitalize
 {% endhighlight %}
 
 Can you spot the bug now? It turns out that TCPSocket#gets
-([IO#gets](https://github.com/manastech/crystal/blob/master/src/io.cr#L52), actually),
+([IO#gets](https://github.com/crystal-lang/crystal/blob/master/src/io.cr#L52), actually),
 returns `nil` at the end of the file or, in this case, when the connection is closed.
 So `capitalize` might be called on `nil`.
 
@@ -171,5 +171,5 @@ This is both expressive and executes faster, because it's not needed to check fo
 
 To conclude this post, one last thing left to say is that while porting the Crystal parser from
 Ruby to
-[Crystal](https://github.com/manastech/crystal/blob/master/src/compiler/crystal/parser.cr), Crystal refused to compile
+[Crystal](https://github.com/crystal-lang/crystal/blob/master/src/compiler/crystal/parser.cr), Crystal refused to compile
 because of a possible null pointer exception. And it was correct. So in a way, Crystal found a bug in itself :-)

@@ -2,7 +2,7 @@
 
 If for any reason you can't or don't want to use one of the previous installation methods, you can still download Crystal in a standalone .tar.gz file with everything you need to get started.
 
-The latest files can be found on the Releases page at GitHub: https://github.com/manastech/crystal/releases
+The latest files can be found on the Releases page at GitHub: https://github.com/crystal-lang/crystal/releases
 
 Download the file for your platform and uncompress it. Inside it you will have a `bin/crystal` executable.
 

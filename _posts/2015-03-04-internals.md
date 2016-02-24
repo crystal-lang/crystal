@@ -36,8 +36,8 @@ crystal build test.cr --emit llvm-ir --prelude=empty
 
 The `--emit llvm-ir` flag tells the compiler to dump the resulting LLVM IR code to a test.ll file.
 The `--prelude=empty` tells the compiler to not use
-the [default prelude file](https://github.com/manastech/crystal/blob/master/src/prelude.cr), which, for example,
-[initializes the GC](https://github.com/manastech/crystal/blob/965d6959163717d72cd3703159d60004ebf7f266/src/main.cr#L42).
+the [default prelude file](https://github.com/crystal-lang/crystal/blob/master/src/prelude.cr), which, for example,
+[initializes the GC](https://github.com/crystal-lang/crystal/blob/965d6959163717d72cd3703159d60004ebf7f266/src/main.cr#L42).
 
 In this way we can get a very simple and clean LLVM IR code file with just the code we write:
 
@@ -239,7 +239,7 @@ The nice thing about enums is that you can print them and you get their name, no
 puts Color::Green #=> Green
 {% endhighlight ruby %}
 
-This is done in a different way than with Symbol, [using compile-time reflection and macros](https://github.com/manastech/crystal/blob/965d6959163717d72cd3703159d60004ebf7f266/src/enum.cr#L4).
+This is done in a different way than with Symbol, [using compile-time reflection and macros](https://github.com/crystal-lang/crystal/blob/965d6959163717d72cd3703159d60004ebf7f266/src/enum.cr#L4).
 But, basically, an enum's `to_s` method is generated only when needed. But it's nice that an enum is memory and speed efficient
 and also comfortable to use and to debug with (like, you get names instead of numbers when printing them).
 

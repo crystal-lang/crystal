@@ -41,7 +41,7 @@ print '\n'
 Each alternative might have a different performance, but luckily all of them are pretty expressive.
 
 Ok, but what's the purpose of learning a language if we cannot run the damn thing? Let's see how we do this with Crystal
-(and let's assume you already have it [installed](https://github.com/manastech/crystal/wiki/Introduction#installation)).
+(and let's assume you already have it [installed](https://github.com/crystal-lang/crystal/wiki/Introduction#installation)).
 
 First create a file `hello.cr` containing your preferred choice of the previous examples.
 Then type in the console:

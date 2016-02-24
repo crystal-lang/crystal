@@ -64,9 +64,7 @@ proc.call(1) # "1"
 
 ## break and next
 
-`break` and `next` can't be used inside a captured block. `return` can be used and will exit from the block (not the surrounding method).
-
-The semantic for `next` and `return` inside captured blocks [might swap in the future](https://github.com/manastech/crystal/issues/420).
+`return` and `break` can't be used inside a captured block. `next` can be used and will exit and give the value of the captured block.
 
 ## with ... yield
 
