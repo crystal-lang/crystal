@@ -3,7 +3,7 @@
 # at compile time and then embedded into the binary.
 #
 # There are `<%= %>` and `<% %>` syntax. The former will render returned values.
-# The latter will not, but instead serve to control the structure as we do in normal Crystal.
+# The latter will not, but instead serve to control the structure as we do in Crystal.
 #
 # Quick Example:
 #
@@ -24,7 +24,7 @@
 #
 # Using logical statements:
 #
-#     # greeing.ecr
+#     # greeting.ecr
 #     <% if @name %>
 #       Greeting, <%= @name %>!
 #     <% else %>
