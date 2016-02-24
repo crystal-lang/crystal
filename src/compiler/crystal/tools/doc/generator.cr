@@ -252,7 +252,7 @@ class Crystal::Doc::Generator
     @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
     @repo_name = "github.com/#{user}/#{repo}"
 
-    @is_crystal_repository ||= (user == "manastech" && repo == "crystal")
+    @is_crystal_repository ||= (user == "crystal-lang" && repo == "crystal")
   end
 
   def source_link(node)

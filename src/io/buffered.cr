@@ -9,7 +9,7 @@ module IO::Buffered
 
   BUFFER_SIZE = 8192
 
-  # Due to https://github.com/manastech/crystal/issues/456 this
+  # Due to https://github.com/crystal-lang/crystal/issues/456 this
   # initialization logic must be copied in the included type's
   # initialize method:
   #

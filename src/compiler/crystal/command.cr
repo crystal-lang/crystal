@@ -108,7 +108,7 @@ class Crystal::Command
       puts frame
     end
     puts
-    error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/manastech/crystal/issues"
+    error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues"
   end
 
   private def tool
@@ -225,8 +225,7 @@ class Crystal::Command
       end
       exit 1
     rescue ex
-      STDERR << "Error:".colorize(:red).toggle(@color) << ", " <<
-        "couldn't format STDIN, please report a bug including the contents of it: https://github.com/manastech/crystal/issues"
+      couldnt_format "STDIN"
       STDERR.puts
       STDERR.flush
       exit 1
@@ -246,8 +245,7 @@ class Crystal::Command
       end
       exit 1
     rescue ex
-      STDERR << "Error:".colorize(:red).toggle(@color) <<
-        "couldn't format '#{filename}', please report a bug including the contents of the file: https://github.com/manastech/crystal/issues"
+      couldnt_format "'#{filename}'"
       STDERR.puts
       STDERR.flush
       exit 1
@@ -284,11 +282,15 @@ class Crystal::Command
     rescue ex : Crystal::SyntaxException
       STDOUT << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
     rescue ex
-      STDERR << "Error:".colorize(:red).toggle(@color) <<
-        " couldn't format '#{filename}', please report a bug including the contents of the file: https://github.com/manastech/crystal/issues"
+      couldnt_format "'#{filename}'"
       STDERR.puts
       STDERR.flush
     end
+  end
+
+  private def couldnt_format(file)
+    STDERR << "Error:".colorize(:red).toggle(@color) << ", " <<
+      "couldn't format " << file << ", please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
   end
 
   private def hierarchy
