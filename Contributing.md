@@ -35,7 +35,7 @@ like the use of the third person.
 
 ## Contributing to the standard library
 
-1. Fork it ( https://github.com/manastech/crystal/fork )
+1. Fork it ( https://github.com/crystal-lang/crystal/fork )
 2. Clone it
 
 Be sure to execute `make libcrystal` inside the cloned repository.
@@ -49,7 +49,7 @@ Next, make changes to the standard library, making sure you also provide corresp
 you can do `make spec` or `bin/crystal spec/all_spec.cr`. To run a particular spec: `bin/crystal spec/std/array_spec.cr`.
 
 Note: at this point you might get long compile error that include "library not found for: ...". This means
-you are [missing some libraries](https://github.com/manastech/crystal/wiki/All-required-libraries).
+you are [missing some libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).
 
 Then push your changes and create a pull request.
 
@@ -60,7 +60,7 @@ the first thing you will need to do is to [install the compiler](http://crystal-
 
 Once you have a compiler up and running, and that executing `crystal` on the command line prints its usage,
 it's time to setup your environment to compile Crystal itself, which is written in Crystal. Check out
-the `install` and `before_install` sections found in [.travis.yml](https://github.com/manastech/crystal/blob/master/.travis.yml).
+the `install` and `before_install` sections found in [.travis.yml](https://github.com/crystal-lang/crystal/blob/master/.travis.yml).
 These set-up LLVM and its required libraries.
 
 **Note**: if you are on a Mac make sure to install the LLVM that is used in that travis script, the LLVM that you download
@@ -77,14 +77,14 @@ a new isolated class that is later used in the same pull request. It should not 
 "More work on X", "Finish X") nor review history ("Fix comment A", "Fix comment B"). Review fixes should be squashed into the commits
 that introduced them. If your change fits well into a single commit, simply keep editing it with `git commit --amend`. Partial staging and
 committing with `git add -p` and `git commit -p` respectively are also very useful. Another good tool is `git stash` to put changes aside while
-switching to another commit. But Git's most useful tool towards this goal is the interactive rebase. 
+switching to another commit. But Git's most useful tool towards this goal is the interactive rebase.
 
 ### Doing an interactive rebase
 
 First let's make sure we have a clean reference to rebase upon:
 
 ```sh
-git remote add upstream https://github.com/manastech/crystal.git
+git remote add upstream https://github.com/crystal-lang/crystal.git
 ```
 
 That only needs to be done once per clone. Next, let's fetch the latest state and start the rebase
@@ -132,4 +132,4 @@ If this guide is not clear and it needs improvements, please send pull requests 
 Please note that this project is released with a [Contributor Code of Conduct][ccoc].
 By participating in this project you agree to abide by its terms.
 
-[ccoc]: https://github.com/manastech/crystal/blob/master/CODE_OF_CONDUCT.md
+[ccoc]: https://github.com/crystal-lang/crystal/blob/master/CODE_OF_CONDUCT.md

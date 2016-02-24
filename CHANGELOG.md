@@ -226,7 +226,7 @@
 
 ## 0.7.6 (2015-08-13)
 
-* **(breaking change)** removed support for trailing `while`/`until` ([read this](https://github.com/manastech/crystal/wiki/FAQ#why-trailing-whileuntil-is-not-supported-unlike-ruby))
+* **(breaking change)** removed support for trailing `while`/`until` ([read this](https://github.com/crystal-lang/crystal/wiki/FAQ#why-trailing-whileuntil-is-not-supported-unlike-ruby))
 * **(breaking change)** Renamed `Enumerable#drop` to `Enumerable#skip`
 * **(breaking change)** Renamed `Time.at` to `Time.epoch`, and `Time#to_i` and `Time#to_f` to `Time#epoch` and `Time#epoch_f`
 * **(breaking change)** `inherited` macro now runs before a class' body
@@ -358,8 +358,8 @@
 
 ## 0.7.1 (2015-04-30)
 
-* Fixed [#597](https://github.com/manastech/crystal/issues/597).
-* Fixed [#599](https://github.com/manastech/crystal/issues/599).
+* Fixed [#597](https://github.com/crystal-lang/crystal/issues/597).
+* Fixed [#599](https://github.com/crystal-lang/crystal/issues/599).
 
 ## 0.7.0 (2015-04-30)
 
@@ -369,7 +369,7 @@
 * Added `--emit` flag to the compiler. Now you can easily see the generated LLVM IR, LLVM bitcode, assembly and object files.
 * Added `--no-color` flag to supress color output, useful for editor tools.
 * Added macro vars: `%var` and `%var{x, y}` create uniqely named variables inside macros.
-* Added [typed splats](https://github.com/manastech/crystal/issues/291).
+* Added [typed splats](https://github.com/crystal-lang/crystal/issues/291).
 * Added `Iterator` and many methods that return iterators, like `Array#each`, `Hash#each`, `Int#times`, `Int#step`, `String#each_char`, etc.
 * Added `sprintf` and improved `String#%` to support floats and float formatting.
 * Added more variants of `String#gsub`.
@@ -455,7 +455,7 @@
 
 * Added `Random` and `Random::MT19937` (Mersenne Twister) classes (thanks @rhysd).
 * Docs: removed automatic linking. To link to classes and methods surround with backticks.
-* Fixed [#328](https://github.com/manastech/crystal/issues/328): `!=` bug.
+* Fixed [#328](https://github.com/crystal-lang/crystal/issues/328): `!=` bug.
 
 ## 0.5.7 (2015-01-02)
 
@@ -466,10 +466,10 @@
 
 * Added a `crystal doc` command to automatically generate documentation for a project using [Markdown](http://daringfireball.net/projects/markdown/) syntax. The style is still ugly but it's quite functional. Now we only need to start documenting things :-)
 * Removed the old `@:` attribute syntax.
-* Fixed [#311](https://github.com/manastech/crystal/issues/311): Issues with invoking lib functions in other ways (thanks @scidom).
-* Fixed [#314](https://github.com/manastech/crystal/issues/314): NoReturn information is not lazy.
-* Fixed [#317](https://github.com/manastech/crystal/issues/317): Fixes in UTF-8 encoding/decoding (thanks @yous).
-* Fixed [#319](https://github.com/manastech/crystal/issues/319): Unexpected EOF (thanks @Exilor).
+* Fixed [#311](https://github.com/crystal-lang/crystal/issues/311): Issues with invoking lib functions in other ways (thanks @scidom).
+* Fixed [#314](https://github.com/crystal-lang/crystal/issues/314): NoReturn information is not lazy.
+* Fixed [#317](https://github.com/crystal-lang/crystal/issues/317): Fixes in UTF-8 encoding/decoding (thanks @yous).
+* Fixed [#319](https://github.com/crystal-lang/crystal/issues/319): Unexpected EOF (thanks @Exilor).
 * `{{yield}}` inside macros now preserve the yielded node location, leading to much better error messages.
 * Added `Float#nan?`, `Float#infinite?` and `Float#finite?`.
 * Many other bug fixes and improvements.
@@ -482,7 +482,7 @@
 ## 0.5.4 (2014-12-04)
 
 * **(breaking change)** `require "foo"` always looks up in `CRYSTAL_PATH`. `require "./foo"` looks up relative to the requiring file.
-* **(breaking change)** Renamed `Json` to `JSON`, `Xml` to `XML` and `Yaml` to `YAML` to follow [a convention](https://github.com/manastech/crystal/issues/279).
+* **(breaking change)** Renamed `Json` to `JSON`, `Xml` to `XML` and `Yaml` to `YAML` to follow [a convention](https://github.com/crystal-lang/crystal/issues/279).
 * **(breaking change)** To use HTTP types do, for example, `require "http/client"` instead of the old `require "net/http"`.
 * Added `alias_method` macro (thanks @Exilor and @jtomschroeder).
 * Added some `Complex` number methods and many math methods, refactors and specs (thanks @scidom).
@@ -517,7 +517,7 @@
 * Added preliminar `crystal deps` command.
 * `__FILE__`, `__DIR__` and `__LINE__`, when used as def default arguments, resolve to the caller location (similar to [D](http://dlang.org/traits.html#specialkeywords) and [Swift](https://developer.apple.com/swift/blog/?id=15))
 * Allow `as` to determine a type even if the casted value doesn't have a type yet.
-* Added `is_a?` in macros. The check is against an [AST node](https://github.com/manastech/crystal/blob/master/src/compiler/crystal/syntax/ast.cr) name. For example `node.is_a?(HashLiteral)`.
+* Added `is_a?` in macros. The check is against an [AST node](https://github.com/crystal-lang/crystal/blob/master/src/compiler/crystal/syntax/ast.cr) name. For example `node.is_a?(HashLiteral)`.
 * Added `emit_null` property to `json_mapping`.
 * Added `converter` property to `json_mapping`.
 * Added `pp` in macros.
@@ -544,28 +544,28 @@
 
 ## 0.5.1 (2014-10-16)
 
-* Added [json_mapping](https://github.com/manastech/crystal/blob/master/spec/std/json/mapping_spec.cr) macro.
-* Added [Signal](https://github.com/manastech/crystal/blob/master/src/signal.cr) module.
-* Added [Tempfile](https://github.com/manastech/crystal/blob/master/src/tempfile.cr) class.
-* Enhanced [HTTP::Client](https://github.com/manastech/crystal/blob/master/src/net/http/client/client.cr).
-* Added [OAuth::Consumer](https://github.com/manastech/crystal/blob/master/libs/oauth/consumer.cr).
-* Added [OAuth2::Client](https://github.com/manastech/crystal/blob/master/libs/oauth2/client.cr).
-* Added [OpenSSL::HMAC](https://github.com/manastech/crystal/blob/master/libs/openssl/hmac.cr).
-* Added [SecureRandom](https://github.com/manastech/crystal/blob/master/src/secure_random.cr).
+* Added [json_mapping](https://github.com/crystal-lang/crystal/blob/master/spec/std/json/mapping_spec.cr) macro.
+* Added [Signal](https://github.com/crystal-lang/crystal/blob/master/src/signal.cr) module.
+* Added [Tempfile](https://github.com/crystal-lang/crystal/blob/master/src/tempfile.cr) class.
+* Enhanced [HTTP::Client](https://github.com/crystal-lang/crystal/blob/master/src/net/http/client/client.cr).
+* Added [OAuth::Consumer](https://github.com/crystal-lang/crystal/blob/master/libs/oauth/consumer.cr).
+* Added [OAuth2::Client](https://github.com/crystal-lang/crystal/blob/master/libs/oauth2/client.cr).
+* Added [OpenSSL::HMAC](https://github.com/crystal-lang/crystal/blob/master/libs/openssl/hmac.cr).
+* Added [SecureRandom](https://github.com/crystal-lang/crystal/blob/master/src/secure_random.cr).
 * New syntax for array/hash-like classes. For example: `Set {1, 2, 3}` and `HTTP::Headers {"content-type": "text/plain"}`. These just create the type and use `<<` or `[]=`.
 * Optimized Json parsing performance.
-* Added a [CSV builder](https://github.com/manastech/crystal/blob/master/src/csv.cr#L13).
-* XML reader can [parse from an IO](https://github.com/manastech/crystal/blob/master/src/xml/reader.cr#L10).
+* Added a [CSV builder](https://github.com/crystal-lang/crystal/blob/master/src/csv.cr#L13).
+* XML reader can [parse from an IO](https://github.com/crystal-lang/crystal/blob/master/src/xml/reader.cr#L10).
 * Added `Dir::glob` and `Dir::Entries` (thanks @jhass)
 * Allow `ensure` as an expression suffix.
-* Fixed [#219](https://github.com/manastech/crystal/issues/219): Proc type is not inferred when passing to library fun and the return type doesn't match.
-* Fixed [#224](https://github.com/manastech/crystal/issues/224): Class#new doesn't pass a block.
-* Fixed [#225](https://github.com/manastech/crystal/issues/225): ICE when comparing void to something.
-* Fixed [#227](https://github.com/manastech/crystal/issues/227): Nested captured block looses scope and crashes compiler.
-* Fixed [#228](https://github.com/manastech/crystal/issues/228): Macro expansion doesn't retain symbol escaping as needed.
-* Fixed [#229](https://github.com/manastech/crystal/issues/229): Can't change block context if defined within module context.
-* Fixed [#230](https://github.com/manastech/crystal/issues/230): Type interference breaks equality operator.
-* Fixed [#233](https://github.com/manastech/crystal/issues/233): Incorrect `no block given` message with new.
+* Fixed [#219](https://github.com/crystal-lang/crystal/issues/219): Proc type is not inferred when passing to library fun and the return type doesn't match.
+* Fixed [#224](https://github.com/crystal-lang/crystal/issues/224): Class#new doesn't pass a block.
+* Fixed [#225](https://github.com/crystal-lang/crystal/issues/225): ICE when comparing void to something.
+* Fixed [#227](https://github.com/crystal-lang/crystal/issues/227): Nested captured block looses scope and crashes compiler.
+* Fixed [#228](https://github.com/crystal-lang/crystal/issues/228): Macro expansion doesn't retain symbol escaping as needed.
+* Fixed [#229](https://github.com/crystal-lang/crystal/issues/229): Can't change block context if defined within module context.
+* Fixed [#230](https://github.com/crystal-lang/crystal/issues/230): Type interference breaks equality operator.
+* Fixed [#233](https://github.com/crystal-lang/crystal/issues/233): Incorrect `no block given` message with new.
 * Other bug fixes.
 
 ## 0.5.0 (2014-09-24)
@@ -587,7 +587,7 @@
 
 ## 0.4.4 (2014-09-17)
 
-* Fixed [#193](https://github.com/manastech/crystal/issues/193): allow initializing an enum value with another's one.
+* Fixed [#193](https://github.com/crystal-lang/crystal/issues/193): allow initializing an enum value with another's one.
 * The `record` macro is now variadic, so instead of `record Vec3, [x, y, z]` write `record Vec3, x, y, z`.
 * The `def_equals`, `def_hash` and `def_equals_and_hash` macros are now variadic.
 * The `property`, `getter` and `setter` macros are now variadic.
@@ -620,7 +620,7 @@
 
 ## 0.4.2 (2014-08-13)
 
-* Fixed [#187](https://github.com/manastech/crystal/issues/185): mixing `yield` and `block.call` crashes the compiler.
+* Fixed [#187](https://github.com/crystal-lang/crystal/issues/185): mixing `yield` and `block.call` crashes the compiler.
 * Added `\u` unicode escape sequences inside strings and chars (similar to Ruby). `\x` will be deprecated as it can generate strings with invalid UTF-8 byte sequences.
 * Added `String#chars`.
 * Fixed: splats weren't working in `initialize`.
@@ -629,7 +629,7 @@
 
 ## 0.4.1 (2014-08-09)
 
-* Fixed [#185](https://github.com/manastech/crystal/issues/185): `-e` flag stopped working.
+* Fixed [#185](https://github.com/crystal-lang/crystal/issues/185): `-e` flag stopped working.
 * Added a `@length` compile-time variable available inside tuples that allows to do loop unrolling.
 * Some bug fixes.
 
@@ -653,11 +653,11 @@
 * Allow iterating a range in macros with `for`.
 * Use cpu cycle counter to initialize random.
 * `method_missing` now works in generic types.
-* Fixed [#154](https://github.com/manastech/crystal/issues/154): bug, constants are initialized before global variables.
-* Fixed [#168](https://github.com/manastech/crystal/issues/168): incorrect type inference of instance variables if not assigned in superclass.
-* Fixed [#169](https://github.com/manastech/crystal/issues/169): `responds_to?` wasn't working with generic types.
-* Fixed [#171](https://github.com/manastech/crystal/issues/171): ensure blocks are not executed if the rescue block returns from a def.
-* Fixed [#175](https://github.com/manastech/crystal/issues/175): invalid code generated when using with/yield with structs.
+* Fixed [#154](https://github.com/crystal-lang/crystal/issues/154): bug, constants are initialized before global variables.
+* Fixed [#168](https://github.com/crystal-lang/crystal/issues/168): incorrect type inference of instance variables if not assigned in superclass.
+* Fixed [#169](https://github.com/crystal-lang/crystal/issues/169): `responds_to?` wasn't working with generic types.
+* Fixed [#171](https://github.com/crystal-lang/crystal/issues/171): ensure blocks are not executed if the rescue block returns from a def.
+* Fixed [#175](https://github.com/crystal-lang/crystal/issues/175): invalid code generated when using with/yield with structs.
 * Fixed some parser issues and other small issues.
 * Allow forward struct/union declarations in libs.
 * Added `String#replace(Regex, String)`
@@ -665,7 +665,7 @@
 
 ## 0.3.4 (2014-07-21)
 
-* Fixed [#165](https://github.com/manastech/crystal/issues/165): restrictions with generic types didn't work for hierarchy types.
+* Fixed [#165](https://github.com/crystal-lang/crystal/issues/165): restrictions with generic types didn't work for hierarchy types.
 * Allow using a single underscore in restrictions, useful for matching against an n-tuple or an n-function where you don't care about the types (e.g.: `def foo(x : {_, _})`.
 * Added a `generate_hash` macro that generates a `hash` methods based on some AST nodes.
 * Added very basic `previous_def`: similar to `super`, but uses the previous definition of a method. Useful to decorate existing methods (similar to `alias_method_chain`). For now the method's type restrictions must match for a previous definition to be found.
@@ -679,7 +679,7 @@
 ## 0.3.3 (2014-07-14)
 
 * Allow implicit conversion to C types by defining a `to_unsafe` method. This removed the hardcoded rule for converting a `String` to `UInt8*` and also allows passing an `Array(T)` to an argument expecting `Pointer(T)`.
-* Fixed `.is_a?(Class)` not working ([#162](https://github.com/manastech/crystal/issues/162))
+* Fixed `.is_a?(Class)` not working ([#162](https://github.com/crystal-lang/crystal/issues/162))
 * Attributes are now associated to AST nodes in the semantic pass, not during parsing. This allows macros to generate attributes that will be attached to subsequent expressions.
 * **(breaking change)** Make ENV#[] raise on missing key, and added ENV#[]?
 * **(breaking change)** Macro defs are now written like `macro def name(args) : ReturnType` instead of `def name(args) : ReturnType`, which was a bit confusing.

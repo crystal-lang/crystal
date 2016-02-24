@@ -1,4 +1,4 @@
-Crystal [![Build Status](https://travis-ci.org/manastech/crystal.svg)](https://travis-ci.org/manastech/crystal) [![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language)
+Crystal [![Build Status](https://travis-ci.org/crystal-lang/crystal.svg)](https://travis-ci.org/crystal-lang/crystal) [![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language)
 =======
 
 ![born-and-raised](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)
