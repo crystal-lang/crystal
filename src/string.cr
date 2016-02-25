@@ -106,7 +106,7 @@ end
 # If you need to dynamically build a string, use `String#build` or `MemoryIO`.
 class String
   # :nodoc:
-  TYPE_ID = 1
+  TYPE_ID = "".crystal_type_id
 
   # :nodoc:
   HEADER_SIZE = sizeof({Int32, Int32, Int32})

@@ -28,14 +28,13 @@ module Crystal
       @global_vars = {} of String => Global
       @requires = Set(String).new
       @temp_var_counter = 0
-      @type_id_counter = 1
       @crystal_path = CrystalPath.new
       @vars = MetaVars.new
       @def_macros = [] of Def
       @splat_expansions = {} of Def => Type
       @initialized_global_vars = Set(String).new
       @file_modules = {} of String => FileModule
-      @unions = {} of Array(Int32) => Type
+      @unions = {} of Array(UInt64) => Type
       @wants_doc = false
       @color = true
       @after_inference_types = Set(Type).new
@@ -95,7 +94,6 @@ module Crystal
       @types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
       string.instance_vars_in_initialize = Set.new(["@bytesize", "@length", "@c"])
       string.allocated = true
-      string.type_id = String::TYPE_ID
 
       string.lookup_instance_var("@bytesize").set_type(@int32)
       string.lookup_instance_var("@length").set_type(@int32)
@@ -198,10 +196,6 @@ module Crystal
       false
     end
 
-    def next_type_id
-      @type_id_counter += 1
-    end
-
     def array_of(type)
       array.instantiate [type] of TypeVar
     end
@@ -217,8 +211,8 @@ module Crystal
       when 1
         types.first
       else
-        types = types.sort_by! &.type_id
-        types_ids = types.map(&.type_id)
+        types = types.sort_by! &.opaque_id
+        types_ids = types.map(&.opaque_id)
         @unions[types_ids] ||= make_union_type(types, types_ids)
       end
     end

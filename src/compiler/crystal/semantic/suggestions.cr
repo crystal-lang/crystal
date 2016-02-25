@@ -6,7 +6,7 @@ module Crystal
       (node.global ? program : self).lookup_similar_type_name(node.names)
     end
 
-    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+    def lookup_similar_type_name(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       nil
     end
 
@@ -46,11 +46,11 @@ module Crystal
   end
 
   class ModuleType
-    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      return nil if already_looked_up.includes?(type_id)
+    def lookup_similar_type_name(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
+      return nil if already_looked_up.includes?(object_id)
 
       if lookup_in_container
-        already_looked_up.add(type_id)
+        already_looked_up.add(object_id)
       end
 
       type = self

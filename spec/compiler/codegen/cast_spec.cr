@@ -72,7 +72,7 @@ describe "Code gen: cast" do
         a as Float64 | Char
         false
       rescue ex
-        (ex.message == "cast to (Float64 | Char) failed") && (ex.class == TypeCastError)
+        (ex.message == "cast to (Char | Float64) failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end

@@ -131,7 +131,7 @@ module Crystal
     end
   end
 
-  alias TypeIdSet = Set(Int32)
+  alias ObjectIdSet = Set(UInt64)
 
   class Type
     def lookup_type(node : Path)
@@ -140,21 +140,21 @@ module Crystal
       node.raise ex.message
     end
 
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       raise "Bug: #{self} doesn't implement lookup_type"
     end
 
-    def lookup_type_in_parents(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = false)
+    def lookup_type_in_parents(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = false)
       raise "Bug: #{self} doesn't implement lookup_type_in_parents"
     end
   end
 
   class ContainedType
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      return nil if already_looked_up.includes?(type_id)
+    def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
+      return nil if already_looked_up.includes?(object_id)
 
       if lookup_in_container
-        already_looked_up.add(type_id)
+        already_looked_up.add(object_id)
       end
 
       type = self
@@ -179,7 +179,7 @@ module Crystal
       lookup_in_container && container ? container.lookup_type(names, already_looked_up) : nil
     end
 
-    def lookup_type_in_parents(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = false)
+    def lookup_type_in_parents(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = false)
       parents.try &.each do |parent|
         match = parent.lookup_type(names, already_looked_up, lookup_in_container)
         if match.is_a?(Type)
@@ -191,7 +191,7 @@ module Crystal
   end
 
   module GenericType
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       # If we are Foo(T) and somebody looks up the type T, we return `nil` because we don't
       # know what type T is, and we don't want to continue search in the container
       if !names.empty? && type_vars.includes?(names[0])
@@ -202,7 +202,7 @@ module Crystal
   end
 
   class GenericClassInstanceType
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       if !names.empty? && (type_var = type_vars[names[0]]?)
         case type_var
         when Var
@@ -227,7 +227,7 @@ module Crystal
   end
 
   class IncludedGenericModule
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       if (names.size == 1) && (m = @mapping[names[0]]?)
         case @including_class
         when GenericClassType, GenericModuleType
@@ -242,7 +242,7 @@ module Crystal
   end
 
   class InheritedGenericClass
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       if (names.size == 1) && (m = @mapping[names[0]]?)
         case extending_class
         when GenericClassType
@@ -257,7 +257,7 @@ module Crystal
   end
 
   class UnionType
-    def lookup_type(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+    def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       raise "can't lookup type in union #{self}"
     end
   end

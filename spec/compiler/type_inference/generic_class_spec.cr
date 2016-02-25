@@ -253,7 +253,7 @@ describe "Type inference: generic class" do
 
       Foo(Char | String).bar
       ),
-      "can't lookup type in union (String | Char)"
+      "can't lookup type in union (Char | String)"
   end
 
   it "instantiates generic class with default argument in initialize (#394)" do

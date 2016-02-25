@@ -38,11 +38,10 @@ module Crystal
       @metaclass = metaclass
     end
 
-    def type_id
-      @type_id ||= program.next_type_id
-    end
-
-    def type_id=(@type_id)
+    # An opaque id of every type. 0 for Nil, non zero for others, so we can
+    # sort types by opaque_id and have Nil in the begining.
+    def opaque_id
+      self.is_a?(NilType) ? 0_u64 : object_id
     end
 
     def passed_as_self?
@@ -1279,10 +1278,6 @@ module Crystal
   end
 
   class NilType < PrimitiveType
-    def type_id
-      0
-    end
-
     def nil_type?
       true
     end
@@ -2581,10 +2576,9 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       io << "(" unless skip_union_parens
-      @union_types.each_with_index do |union_type, i|
-        io << " | " if i > 0
-        union_type.to_s(io)
-      end
+      # We generate the names of the types inside this union and sort them lexicographically
+      # so a union's name is always the same and doesn't depend on how the union was created
+      names = @union_types.map(&.to_s).sort.join(" | ", io)
       io << ")" unless skip_union_parens
     end
 

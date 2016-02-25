@@ -56,8 +56,9 @@ describe "type inference: alias" do
     foo_alias = foo.instantiate([a] of TypeVar)
 
     aliased_type = a.aliased_type as UnionType
-    aliased_type.union_types[0].should eq(mod.int32)
-    aliased_type.union_types[1].should eq(foo_alias)
+    union_types = aliased_type.union_types.sort_by &.to_s
+    union_types[0].should eq(foo_alias)
+    union_types[1].should eq(mod.int32)
   end
 
   it "allows recursive array with alias" do

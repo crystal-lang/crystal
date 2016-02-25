@@ -361,7 +361,7 @@ describe "Type inference: lib" do
       end
 
       class Bar
-        def foo
+        def self.foo
         end
       end
 

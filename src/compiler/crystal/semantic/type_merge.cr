@@ -42,7 +42,7 @@ module Crystal
       elsif first
         if second
           # first and second not nil and different
-          if first.type_id > second.type_id
+          if first.opaque_id > second.opaque_id
             first, second = second, first
           end
 
