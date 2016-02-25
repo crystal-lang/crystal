@@ -212,14 +212,14 @@ module Crystal
         types.first
       else
         types.sort_by! &.opaque_id
-        types_ids = types.map(&.opaque_id)
-        @unions[types_ids] ||= make_union_type(types, types_ids)
+        opaque_ids = types.map(&.opaque_id)
+        @unions[opaque_ids] ||= make_union_type(types, opaque_ids)
       end
     end
 
-    def make_union_type(types, types_ids)
-      # NilType has type_id == 0
-      has_nil = types_ids.first == 0
+    def make_union_type(types, opaque_ids)
+      # NilType has opaque_id == 0
+      has_nil = opaque_ids.first == 0
 
       if has_nil
         # Check if it's a Nilable type
@@ -236,13 +236,19 @@ module Crystal
             end
           end
         end
+
+        # Remove the Nil type now and later insert it at the end
+        nil_type = types.shift
       end
 
-      # Sort by name so a same union type, say Int32 | String, always is named that
-      # way, regardless of the actual order of the types.
+      # Sort by name so a same union type, say `Int32 | String`, always is named that
+      # way, regardless of the actual order of the types. However, we always put
+      # Nil at the end, inside the `nil_type` check.
       types.sort_by! &.to_s
 
-      if has_nil
+      if nil_type
+        types.push nil_type
+
         if types.all?(&.reference_like?)
           return NilableReferenceUnionType.new(self, types)
         else

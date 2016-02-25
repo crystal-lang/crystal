@@ -2575,6 +2575,13 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+      # Use T? if this is a nilable type with just two types inside it
+      if @union_types.size == 2 && @union_types.last.is_a?(NilType)
+        io << @union_types.first
+        io << "?"
+        return
+      end
+
       io << "(" unless skip_union_parens
       names = @union_types.join(" | ", io)
       io << ")" unless skip_union_parens

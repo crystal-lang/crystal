@@ -35,8 +35,20 @@ describe "types to_s of" do
     assert_type_to_s "Array(Int32)" { array_of(int32) }
   end
 
-  it "array of simple types" do
+  it "union of simple types" do
     assert_type_to_s "(Int32 | String)" { union_of(string, int32) }
+  end
+
+  it "nilable reference type" do
+    assert_type_to_s "String?" { nilable string }
+  end
+
+  it "nilable value type" do
+    assert_type_to_s "Int32?" { nilable int32 }
+  end
+
+  it "nilable type with more than two elements, Nil at the end" do
+    assert_type_to_s "(Int32 | String | Nil)" { |mod| union_of(string, int32, mod.nil) }
   end
 
   describe "union types" do
