@@ -91,8 +91,8 @@ module Crystal
     end
 
     def process_type(type)
-      if type.is_a?(ContainedType)
-        type.types.values.each do |inner_type|
+      if type.is_a?(NamedType)
+        type.types?.try &.values.each do |inner_type|
           process_type(inner_type)
         end
       end
@@ -119,7 +119,7 @@ module Crystal
         typed_def.accept(self)
       end
 
-      result.program.types.values.each do |type|
+      result.program.types?.try &.values.each do |type|
         process_type type
       end
 

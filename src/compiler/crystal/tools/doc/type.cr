@@ -349,7 +349,7 @@ class Crystal::Doc::Type
 
   def container
     case type = @type
-    when ContainedType
+    when NamedType
       container = type.container
       if container.is_a?(Program)
         nil

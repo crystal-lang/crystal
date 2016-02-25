@@ -412,7 +412,7 @@ class Crystal::Call
     end
   end
 
-  def in_same_namespace?(scope : ContainedType, target : ContainedType)
+  def in_same_namespace?(scope : NamedType, target : NamedType)
     top_container(scope) == top_container(target) ||
       scope.parents.try &.any? { |parent| in_same_namespace?(parent, target) }
   end
@@ -425,7 +425,7 @@ class Crystal::Call
     case container = type.container
     when Program
       type
-    when ContainedType
+    when NamedType
       top_container(container)
     else
       type

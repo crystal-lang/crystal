@@ -87,6 +87,7 @@ describe "type inference: alias" do
   it "errors if defining infinite recursive alias" do
     assert_error %(
       alias A = A
+      A
       ),
       "infinite recursive definition of alias A"
   end
@@ -94,6 +95,7 @@ describe "type inference: alias" do
   it "errors if defining infinite recursive alias in union" do
     assert_error %(
       alias A = Int32 | A
+      A
       ),
       "infinite recursive definition of alias A"
   end

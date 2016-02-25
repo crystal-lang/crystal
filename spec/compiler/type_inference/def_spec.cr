@@ -198,22 +198,22 @@ describe "Type inference: def" do
       abstract class Type
       end
 
-      abstract class ContainedType < Type
+      abstract class CType < Type
       end
 
-      abstract class ModuleType < ContainedType
+      abstract class MType < CType
         include DefContainer
       end
 
-      class NonGenericModuleType < ModuleType
+      class NonGenericMType < MType
       end
 
-      class GenericModuleType < ModuleType
+      class GenericMType < MType
       end
 
       b = [] of Type
-      b.push NonGenericModuleType.new
-      b.push GenericModuleType.new
+      b.push NonGenericMType.new
+      b.push GenericMType.new
       b[0].lookup_matches
       ") { int32 }
   end

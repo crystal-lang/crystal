@@ -41,7 +41,7 @@ module Crystal
     end
 
     def check_types(type)
-      type.types.each_value do |type|
+      type.types?.try &.each_value do |type|
         check_single(type)
       end
     end

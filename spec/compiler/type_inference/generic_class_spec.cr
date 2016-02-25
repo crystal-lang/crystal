@@ -346,6 +346,7 @@ describe "Type inference: generic class" do
   it "errors if using Number in alias" do
     assert_error %(
       alias T = Number | String
+      T
       ),
       "can't use Number in unions yet, use a more specific type"
   end
@@ -353,6 +354,7 @@ describe "Type inference: generic class" do
   it "errors if using Number in recursive alias" do
     assert_error %(
       alias T = Number | Pointer(T)
+      T
       ),
       "can't use Number in unions yet, use a more specific type"
   end

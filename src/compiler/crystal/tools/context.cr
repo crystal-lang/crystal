@@ -133,8 +133,8 @@ module Crystal
     end
 
     def process_type(type, &block)
-      if type.is_a?(ContainedType)
-        type.types.values.each do |inner_type|
+      if type.is_a?(NamedType)
+        type.types?.try &.values.each do |inner_type|
           process_type(inner_type)
         end
       end
@@ -161,7 +161,7 @@ module Crystal
         visit_and_append_context typed_def
       end
 
-      result.program.types.values.each do |type|
+      result.program.types?.try &.values.each do |type|
         process_type type
       end
 

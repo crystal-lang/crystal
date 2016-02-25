@@ -149,7 +149,7 @@ module Crystal
     end
   end
 
-  class ContainedType
+  class NamedType
     def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       return nil if already_looked_up.includes?(object_id)
 
@@ -159,7 +159,7 @@ module Crystal
 
       type = self
       names.each_with_index do |name, i|
-        next_type = type.types[name]?
+        next_type = type.types?.try &.[name]?
         if !next_type && i != 0
           next_type = type.lookup_type_in_parents(names[i..-1])
           if next_type
@@ -284,5 +284,6 @@ module Crystal
 
   class AliasType
     delegate types, aliased_type
+    delegate types?, aliased_type
   end
 end

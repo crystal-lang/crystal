@@ -2,6 +2,7 @@ require "levenshtein"
 require "./syntax/ast"
 
 module Crystal
+  # Abstract base class of all types
   abstract class Type
     include Enumerable(self)
 
@@ -267,7 +268,11 @@ module Crystal
     end
 
     def types
-      {} of String => Type
+      raise "Bug: #{self} has no types"
+    end
+
+    def types?
+      nil
     end
 
     def parents
@@ -477,21 +482,25 @@ module Crystal
     abstract def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
   end
 
-  abstract class ContainedType < Type
+  # A type that has a name and can be contained inside other types.
+  # For example in `Foo::Bar`, `Foo` is the container and `Bar` is the name.
+  #
+  # There are other types that have a name but it can be deduced from other(s) type(s),
+  # so they don't inherit NamedType: a union type, a metaclass, etc.
+  abstract class NamedType < Type
     getter :program
     getter :container
-    getter :types
-
-    def initialize(@program, @container)
-      @types = {} of String => Type
-    end
-  end
-
-  abstract class NamedType < ContainedType
     getter :name
 
-    def initialize(program, container, @name)
-      super(program, container)
+    def initialize(@program, @container, @name)
+    end
+
+    def types
+      @types ||= {} of String => Type
+    end
+
+    def types?
+      @types
     end
 
     def append_full_name(io)
@@ -2351,7 +2360,7 @@ module Crystal
     end
 
     def add_constant(constant)
-      @types[constant.name] = Const.new(program, self, constant.name, constant.default_value.not_nil!)
+      types[constant.name] = Const.new(program, self, constant.name, constant.default_value.not_nil!)
     end
 
     def primitive_like?

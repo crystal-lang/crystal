@@ -39,59 +39,61 @@ module Crystal
       @color = true
       @after_inference_types = Set(Type).new
 
-      @types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
+      types = @types = {} of String => Type
+
+      types["Object"] = object = @object = NonGenericClassType.new self, self, "Object", nil
       object.allowed_in_generics = false
       object.abstract = true
 
-      @types["Reference"] = reference = @reference = NonGenericClassType.new self, self, "Reference", object
+      types["Reference"] = reference = @reference = NonGenericClassType.new self, self, "Reference", object
       reference.allowed_in_generics = false
 
-      @types["Value"] = value = @value = NonGenericClassType.new self, self, "Value", object
+      types["Value"] = value = @value = NonGenericClassType.new self, self, "Value", object
       abstract_value_type(value)
 
-      @types["Number"] = number = @number = NonGenericClassType.new self, self, "Number", value
+      types["Number"] = number = @number = NonGenericClassType.new self, self, "Number", value
       abstract_value_type(number)
 
-      @types["NoReturn"] = @no_return = NoReturnType.new self
-      @types["Void"] = @void = VoidType.new self
-      @types["Nil"] = nil_t = @nil = NilType.new self, self, "Nil", value, 1
-      @types["Bool"] = @bool = BoolType.new self, self, "Bool", value, 1
-      @types["Char"] = @char = CharType.new self, self, "Char", value, 4
+      types["NoReturn"] = @no_return = NoReturnType.new self
+      types["Void"] = @void = VoidType.new self
+      types["Nil"] = nil_t = @nil = NilType.new self, self, "Nil", value, 1
+      types["Bool"] = @bool = BoolType.new self, self, "Bool", value, 1
+      types["Char"] = @char = CharType.new self, self, "Char", value, 4
 
-      @types["Int"] = int = @int = NonGenericClassType.new self, self, "Int", number
+      types["Int"] = int = @int = NonGenericClassType.new self, self, "Int", number
       abstract_value_type(int)
 
-      @types["Int8"] = @int8 = IntegerType.new self, self, "Int8", int, 1, 1, :i8
-      @types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", int, 1, 2, :u8
-      @types["Int16"] = @int16 = IntegerType.new self, self, "Int16", int, 2, 3, :i16
-      @types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", int, 2, 4, :u16
-      @types["Int32"] = @int32 = IntegerType.new self, self, "Int32", int, 4, 5, :i32
-      @types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", int, 4, 6, :u32
-      @types["Int64"] = @int64 = IntegerType.new self, self, "Int64", int, 8, 7, :i64
-      @types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", int, 8, 8, :u64
+      types["Int8"] = @int8 = IntegerType.new self, self, "Int8", int, 1, 1, :i8
+      types["UInt8"] = @uint8 = IntegerType.new self, self, "UInt8", int, 1, 2, :u8
+      types["Int16"] = @int16 = IntegerType.new self, self, "Int16", int, 2, 3, :i16
+      types["UInt16"] = @uint16 = IntegerType.new self, self, "UInt16", int, 2, 4, :u16
+      types["Int32"] = @int32 = IntegerType.new self, self, "Int32", int, 4, 5, :i32
+      types["UInt32"] = @uint32 = IntegerType.new self, self, "UInt32", int, 4, 6, :u32
+      types["Int64"] = @int64 = IntegerType.new self, self, "Int64", int, 8, 7, :i64
+      types["UInt64"] = @uint64 = IntegerType.new self, self, "UInt64", int, 8, 8, :u64
 
-      @types["Float"] = float = @float = NonGenericClassType.new self, self, "Float", number
+      types["Float"] = float = @float = NonGenericClassType.new self, self, "Float", number
       abstract_value_type(float)
 
-      @types["Float32"] = @float32 = FloatType.new self, self, "Float32", float, 4, 9
-      @types["Float64"] = @float64 = FloatType.new self, self, "Float64", float, 8, 10
+      types["Float32"] = @float32 = FloatType.new self, self, "Float32", float, 4, 9
+      types["Float64"] = @float64 = FloatType.new self, self, "Float64", float, 8, 10
 
-      @types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
-      @types["Pointer"] = pointer = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
+      types["Symbol"] = @symbol = SymbolType.new self, self, "Symbol", value, 4
+      types["Pointer"] = pointer = @pointer = PointerType.new self, self, "Pointer", value, ["T"]
       pointer.struct = true
       pointer.allowed_in_generics = false
 
-      @types["Tuple"] = tuple = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
+      types["Tuple"] = tuple = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
       tuple.allowed_in_generics = false
 
-      @types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
+      types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
       static_array.declare_instance_var("@buffer", Path.new("T"))
       static_array.instance_vars_in_initialize = Set.new(["@buffer"])
       static_array.allocated = true
       static_array.allowed_in_generics = false
 
-      @types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
+      types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
       string.instance_vars_in_initialize = Set.new(["@bytesize", "@length", "@c"])
       string.allocated = true
 
@@ -99,36 +101,36 @@ module Crystal
       string.lookup_instance_var("@length").set_type(@int32)
       string.lookup_instance_var("@c").set_type(@uint8)
 
-      @types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
+      types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
       object.force_metaclass klass
       klass.force_metaclass klass
       klass.allocated = true
       klass.allowed_in_generics = false
 
-      @types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
-      @types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
+      types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
+      types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
 
-      @types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
+      types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
       struct_t.abstract = true
       struct_t.struct = true
       struct_t.allowed_in_generics = false
 
-      @types["Enum"] = enum_t = @enum = NonGenericClassType.new self, self, "Enum", value
+      types["Enum"] = enum_t = @enum = NonGenericClassType.new self, self, "Enum", value
       enum_t.abstract = true
       enum_t.struct = true
       enum_t.allowed_in_generics = false
 
-      @types["Proc"] = proc = @proc = FunType.new self, self, "Proc", value, ["T"]
+      types["Proc"] = proc = @proc = FunType.new self, self, "Proc", value, ["T"]
       proc.variadic = true
       proc.allowed_in_generics = false
 
-      @types["ARGC_UNSAFE"] = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
-      @types["ARGV_UNSAFE"] = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
+      types["ARGC_UNSAFE"] = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
+      types["ARGV_UNSAFE"] = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
 
       argc_unsafe.initialized = true
       argv_unsafe.initialized = true
 
-      @types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
+      types["GC"] = gc = NonGenericModuleType.new self, self, "GC"
       gc.metaclass.add_def Def.new("add_finalizer", [Arg.new("object")], Nop.new)
 
       @literal_expander = LiteralExpander.new self
