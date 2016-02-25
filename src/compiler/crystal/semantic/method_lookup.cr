@@ -230,8 +230,6 @@ module Crystal
       # Traverse all subtypes
       instance_type.subtypes(base_type).each do |subtype|
         unless subtype.value?
-          subtype = subtype as NonGenericOrGenericClassInstanceType
-
           subtype_lookup = virtual_lookup(subtype)
           subtype_virtual_lookup = virtual_lookup(subtype.virtual_type)
 

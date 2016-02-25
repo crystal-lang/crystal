@@ -788,9 +788,6 @@ module Crystal
     end
   end
 
-  module NonGenericOrGenericClassInstanceType
-  end
-
   class NonGenericModuleType < ModuleType
     include DefInstanceContainer
     include ClassVarContainer
@@ -1148,7 +1145,6 @@ module Crystal
     include InstanceVarContainer
     include ClassVarContainer
     include DefInstanceContainer
-    include NonGenericOrGenericClassInstanceType
 
     def metaclass
       @metaclass ||= begin
@@ -1606,7 +1602,6 @@ module Crystal
     include ClassVarContainer
     include DefInstanceContainer
     include MatchesLookup
-    include NonGenericOrGenericClassInstanceType
 
     getter program
     getter generic_class
