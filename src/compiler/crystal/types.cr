@@ -2576,9 +2576,7 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
       io << "(" unless skip_union_parens
-      # We generate the names of the types inside this union and sort them lexicographically
-      # so a union's name is always the same and doesn't depend on how the union was created
-      names = @union_types.map(&.to_s).sort.join(" | ", io)
+      names = @union_types.join(" | ", io)
       io << ")" unless skip_union_parens
     end
 

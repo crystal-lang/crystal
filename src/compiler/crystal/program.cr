@@ -211,7 +211,7 @@ module Crystal
       when 1
         types.first
       else
-        types = types.sort_by! &.opaque_id
+        types.sort_by! &.opaque_id
         types_ids = types.map(&.opaque_id)
         @unions[types_ids] ||= make_union_type(types, types_ids)
       end
@@ -219,7 +219,9 @@ module Crystal
 
     def make_union_type(types, types_ids)
       # NilType has type_id == 0
-      if types_ids.first == 0
+      has_nil = types_ids.first == 0
+
+      if has_nil
         # Check if it's a Nilable type
         if types.size == 2
           other_type = types[1]
@@ -234,8 +236,14 @@ module Crystal
             end
           end
         end
+      end
 
-        if types.all? &.reference_like?
+      # Sort by name so a same union type, say Int32 | String, always is named that
+      # way, regardless of the actual order of the types.
+      types.sort_by! &.to_s
+
+      if has_nil
+        if types.all?(&.reference_like?)
           return NilableReferenceUnionType.new(self, types)
         else
           return MixedUnionType.new(self, types)
