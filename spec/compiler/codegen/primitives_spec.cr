@@ -145,4 +145,16 @@ describe "Code gen: primitives" do
       Test.foo + 1
       ))
   end
+
+  it "allows redefining a primitive method" do
+    run(%(
+      struct Int32
+        def *(other : Int32)
+          42
+        end
+      end
+
+      1 * 2
+      )).to_i.should eq(42)
+  end
 end

@@ -34,35 +34,35 @@ module Crystal
 
       %w(+ - *).each do |op|
         nums.product(nums) do |num1, num2|
-          num1.add_def Def.new(op, [Arg.new("other", type: num2)], binary)
+          num1.add_def Def.new(op, [Arg.new("other", restriction: Path.global(num2.to_s))], binary)
         end
       end
 
       floats.product(ints) do |num1, num2|
-        num1.add_def Def.new("/", [Arg.new("other", type: num2)], binary)
-        num2.add_def Def.new("/", [Arg.new("other", type: num1)], binary)
+        num1.add_def Def.new("/", [Arg.new("other", restriction: Path.global(num2.to_s))], binary)
+        num2.add_def Def.new("/", [Arg.new("other", restriction: Path.global(num1.to_s))], binary)
       end
 
       floats.product(floats) do |num1, num2|
-        num1.add_def Def.new("/", [Arg.new("other", type: num2)], binary)
+        num1.add_def Def.new("/", [Arg.new("other", restriction: Path.global(num2.to_s))], binary)
       end
 
       %w(== < <= > >= !=).each do |op|
         nums.product(nums) do |num1, num2|
-          num1.add_def Def.new(op, [Arg.new("other", type: num2)], binary)
+          num1.add_def Def.new(op, [Arg.new("other", restriction: Path.global(num2.to_s))], binary)
         end
-        char.add_def Def.new(op, [Arg.new("other", type: char)], binary)
+        char.add_def Def.new(op, [Arg.new("other", restriction: Path.global(char.to_s))], binary)
       end
 
       %w(unsafe_shl unsafe_shr | & ^ unsafe_div unsafe_mod).each do |op|
         ints.each do |another_int|
-          int.add_def Def.new(op, [Arg.new("other", type: another_int)], binary)
+          int.add_def Def.new(op, [Arg.new("other", restriction: Path.global(another_int.to_s))], binary)
         end
       end
 
       [bool, symbol].each do |type|
         %w(== !=).each do |op|
-          type.add_def Def.new(op, [Arg.new("other", type: type)], binary)
+          type.add_def Def.new(op, [Arg.new("other", restriction: Path.global(type.to_s))], binary)
         end
       end
 
@@ -82,13 +82,13 @@ module Crystal
     end
 
     def define_pointer_primitives
-      pointer.metaclass.add_def Def.new("malloc", [Arg.new("size", type: uint64)], Primitive.new(:pointer_malloc))
+      pointer.metaclass.add_def Def.new("malloc", [Arg.new("size", restriction: Path.global(uint64.to_s))], Primitive.new(:pointer_malloc))
       pointer.metaclass.add_def Def.new("new", [Arg.new("address", restriction: Path.global("UInt64"))], Primitive.new(:pointer_new))
       pointer.add_def Def.new("value", body: Primitive.new(:pointer_get))
       pointer.add_def Def.new("value=", [Arg.new("value", restriction: Path.new("T"))], Primitive.new(:pointer_set))
       pointer.add_def Def.new("address", body: Primitive.new(:pointer_address))
-      pointer.add_def Def.new("realloc", [Arg.new("size", type: uint64)], Primitive.new(:pointer_realloc))
-      pointer.add_def Def.new("+", [Arg.new("offset", type: int64)], Primitive.new(:pointer_add))
+      pointer.add_def Def.new("realloc", [Arg.new("size", restriction: Path.global(uint64.to_s))], Primitive.new(:pointer_realloc))
+      pointer.add_def Def.new("+", [Arg.new("offset", restriction: Path.global(int64.to_s))], Primitive.new(:pointer_add))
       pointer.add_def Def.new("-", [Arg.new("other", restriction: Self.new)], Primitive.new(:pointer_diff))
     end
 
