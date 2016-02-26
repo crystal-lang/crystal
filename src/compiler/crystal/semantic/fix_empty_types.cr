@@ -64,7 +64,7 @@ module Crystal
         unless @fixed.includes?(target_def.object_id)
           @fixed.add(target_def.object_id)
 
-          if !target_def.type? && target_def.owner.allocated
+          if !target_def.type? && target_def.owner.allocated?
             target_def.type = @mod.no_return
           end
 

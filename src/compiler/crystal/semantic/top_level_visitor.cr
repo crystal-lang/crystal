@@ -117,7 +117,7 @@ module Crystal
       if node_superclass
         superclass = lookup_path_type(node_superclass)
       else
-        superclass = node.struct ? mod.struct : mod.reference
+        superclass = node.struct? ? mod.struct : mod.reference
       end
 
       if node_superclass.is_a?(Generic)
@@ -135,8 +135,8 @@ module Crystal
       type = scope.types[name]?
 
       if !type && superclass
-        if (!!node.struct) != (!!superclass.struct?)
-          node.raise "can't make #{node.struct ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
+        if node.struct? != superclass.struct?
+          node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
         end
       end
 
@@ -146,11 +146,11 @@ module Crystal
         type = type.remove_alias
 
         unless type.is_a?(ClassType)
-          node.raise "#{name} is not a #{node.struct ? "struct" : "class"}, it's a #{type.type_desc}"
+          node.raise "#{name} is not a #{node.struct? ? "struct" : "class"}, it's a #{type.type_desc}"
         end
 
-        if (!!node.struct) != (!!type.struct?)
-          node.raise "#{name} is not a #{node.struct ? "struct" : "class"}, it's a #{type.type_desc}"
+        if node.struct? != type.struct?
+          node.raise "#{name} is not a #{node.struct? ? "struct" : "class"}, it's a #{type.type_desc}"
         end
 
         if node.superclass && type.superclass != superclass
@@ -192,8 +192,8 @@ module Crystal
         else
           type = NonGenericClassType.new @mod, scope, name, superclass, false
         end
-        type.abstract = node.abstract
-        type.struct = node.struct
+        type.abstract = node.abstract?
+        type.struct = node.struct?
 
         if superclass.is_a?(InheritedGenericClass)
           superclass.extending_class = type
@@ -320,8 +320,8 @@ module Crystal
 
       node.raises = true if node.has_attribute?("Raises")
 
-      if node.abstract
-        if (target_type.class? || target_type.struct?) && !target_type.abstract
+      if node.abstract?
+        if (target_type.class? || target_type.struct?) && !target_type.abstract?
           node.raise "can't define abstract def on non-abstract #{target_type.type_desc}"
         end
         if target_type.metaclass?

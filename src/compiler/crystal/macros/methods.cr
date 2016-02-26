@@ -761,7 +761,7 @@ module Crystal
     def interpret(method, args, block, interpreter)
       case method
       when "abstract?"
-        interpret_argless_method(method, args) { BoolLiteral.new(type.abstract) }
+        interpret_argless_method(method, args) { BoolLiteral.new(type.abstract?) }
       when "union?"
         interpret_argless_method(method, args) { BoolLiteral.new(type.is_a?(UnionType)) }
       when "union_types"

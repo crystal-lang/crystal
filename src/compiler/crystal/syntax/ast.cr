@@ -880,7 +880,9 @@ module Crystal
     property :uses_block_arg
     property :assigns_special_var
     property :name_column_number
-    property :abstract
+    property? :abstract
+    @abstract : Bool
+
     property :attributes
     property :splat_index
     property :doc
@@ -1208,8 +1210,12 @@ module Crystal
     property :body
     property :superclass
     property :type_vars
-    property :abstract
-    property :struct
+    property? :abstract
+    @abstract : Bool
+
+    property? :struct
+    @struct : Bool
+
     property :name_column_number
     property :attributes
     property :doc

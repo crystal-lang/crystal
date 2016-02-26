@@ -254,7 +254,7 @@ class Crystal::Call
 
   def check_abstract_def_error(owner, matches, defs, def_name)
     return unless !matches || (matches.try &.empty?)
-    return unless defs.all? &.abstract
+    return unless defs.all? &.abstract?
 
     signature = CallSignature.new(def_name, args.map(&.type), block, named_args)
     defs.each do |a_def|

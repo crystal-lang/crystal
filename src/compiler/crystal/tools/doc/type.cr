@@ -68,7 +68,7 @@ class Crystal::Doc::Type
   end
 
   def abstract?
-    @type.abstract
+    @type.abstract?
   end
 
   def parents_of?(type)
