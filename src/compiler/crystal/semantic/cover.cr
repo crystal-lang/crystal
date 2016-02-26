@@ -202,7 +202,7 @@ module Crystal
     end
 
     def cover
-      if base_type.abstract
+      if base_type.abstract?
         cover = [] of Type
         append_cover(cover)
         cover
@@ -212,7 +212,7 @@ module Crystal
     end
 
     def append_cover(array)
-      if base_type.abstract
+      if base_type.abstract?
         base_type.subclasses.each &.virtual_type.append_cover(array)
       else
         array << base_type
@@ -220,7 +220,7 @@ module Crystal
     end
 
     def cover_size
-      if base_type.abstract
+      if base_type.abstract?
         base_type.subclasses.sum &.virtual_type.cover_size
       else
         1

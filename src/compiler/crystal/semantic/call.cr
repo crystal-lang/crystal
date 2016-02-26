@@ -196,7 +196,7 @@ class Crystal::Call
     matches = check_tuple_indexer(owner, name, args, arg_types)
     matches ||= lookup_matches_checking_expansion(owner, signature)
 
-    if matches.empty? && owner.class? && owner.abstract
+    if matches.empty? && owner.class? && owner.abstract?
       matches = owner.virtual_type.lookup_matches(signature)
     end
 
@@ -245,7 +245,7 @@ class Crystal::Call
       end
     end
 
-    if matches.empty? && owner.class? && owner.abstract && name != "super"
+    if matches.empty? && owner.class? && owner.abstract? && name != "super"
       matches = owner.virtual_type.lookup_matches(signature)
     end
 
@@ -264,7 +264,7 @@ class Crystal::Call
         # don't give error. This is to allow small code comments without giving
         # compile errors, which will anyway appear once you add concrete
         # subclasses and instances.
-        unless owner.abstract && (owner.leaf? || owner.is_a?(GenericClassInstanceType))
+        unless owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType))
           raise_matches_not_found(matches.owner || owner, def_name, matches)
         end
       end
@@ -342,7 +342,7 @@ class Crystal::Call
 
     matches.each do |match|
       # Discard abstract defs for abstract classes
-      next if match.def.abstract && match.context.owner.abstract
+      next if match.def.abstract? && match.context.owner.abstract?
 
       check_visibility match
 

@@ -2,7 +2,7 @@ module Crystal
   class Call
     def define_new(scope, arg_types)
       instance_type = scope.instance_type
-      if instance_type.abstract && !instance_type.is_a?(VirtualType)
+      if instance_type.abstract? && !instance_type.is_a?(VirtualType)
         # If the type defines `new` methods it means that the types or arguments didn't match
         new_defs = scope.lookup_defs("new")
         if new_defs.empty?
@@ -113,7 +113,7 @@ module Crystal
     end
 
     def define_new_recursive(owner, arg_types, matches = [] of Match)
-      unless owner.abstract
+      unless owner.abstract?
         owner_matches = define_new(owner.metaclass, arg_types)
         owner_matches_matches = owner_matches.matches
         if owner_matches_matches

@@ -143,7 +143,7 @@ module Crystal
           next_exp = node.expressions[i + 1]
           needs_two_lines = !last?(i, node.expressions) && !exp.is_a?(Attribute) &&
             (!(exp.is_a?(IfDef) && next_exp.is_a?(LibDef))) &&
-            (!(exp.is_a?(Def) && exp.abstract && next_exp.is_a?(Def) && next_exp.abstract)) &&
+            (!(exp.is_a?(Def) && exp.abstract? && next_exp.is_a?(Def) && next_exp.abstract?)) &&
             (needs_two_lines?(exp) || needs_two_lines?(next_exp))
         end
 
@@ -1042,14 +1042,8 @@ module Crystal
       @def_indent = @indent
       @inside_def += 1
 
-      if node.abstract
-        write_keyword :abstract, " "
-      end
-
-      if node.macro_def?
-        write_keyword :macro, " "
-      end
-
+      write_keyword :abstract, " " if node.abstract?
+      write_keyword :macro, " " if node.macro_def?
       write_keyword :def, " ", skip_space_or_newline: false
 
       if receiver = node.receiver
@@ -1097,7 +1091,7 @@ module Crystal
           end
         end
 
-        unless node.abstract
+        unless node.abstract?
           format_nested_with_end body
         end
       end
@@ -2470,15 +2464,8 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      if node.abstract
-        write_keyword :abstract, " "
-      end
-
-      if node.struct
-        write_keyword :struct, " "
-      else
-        write_keyword :class, " "
-      end
+      write_keyword :abstract, " " if node.abstract?
+      write_keyword (node.struct? ? :struct : :class), " "
 
       accept node.name
       format_type_vars node.type_vars

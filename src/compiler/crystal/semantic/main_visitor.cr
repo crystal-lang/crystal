@@ -1821,7 +1821,7 @@ module Crystal
         node.raise "can't create instance of generic class #{instance_type} without specifying its type vars"
       end
 
-      if !instance_type.virtual? && instance_type.abstract
+      if !instance_type.virtual? && instance_type.abstract?
         node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
       end
 

@@ -50,11 +50,11 @@ module Crystal
       return if @all_checked.includes?(type)
       @all_checked << type
 
-      if type.abstract || type.module?
+      if type.abstract? || type.module?
         type.defs.try &.each_value do |defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
             a_def = def_with_metadata.def
-            if a_def.abstract
+            if a_def.abstract?
               # TODO: for now we skip methods with splats and default arguments
               next if a_def.splat_index || a_def.args.any? &.default_value
 
@@ -83,7 +83,7 @@ module Crystal
       subtypes.try &.each do |subtype|
         next if implements_with_parents?(subtype, method, base)
 
-        if subtype.abstract || subtype.module?
+        if subtype.abstract? || subtype.module?
           check_implemented_in_subtypes(base, subtype, method)
         else
           method.raise "abstract `def #{Call.def_full_name(base, method)}` must be implemented by #{subtype}"
@@ -113,7 +113,7 @@ module Crystal
     end
 
     def implements?(t1 : Type, m1 : Def, t2 : Type, m2 : Def)
-      return false if m1.abstract
+      return false if m1.abstract?
       return false unless m1.name == m2.name
       return false unless m1.yields == m2.yields
 

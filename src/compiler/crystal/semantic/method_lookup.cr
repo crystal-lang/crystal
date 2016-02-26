@@ -21,7 +21,7 @@ module Crystal
         context = MatchContext.new(owner, type_lookup)
 
         defs.each do |item|
-          next if item.def.abstract
+          next if item.def.abstract?
 
           match = MatchesLookup.match_def(signature, item, context)
 
@@ -219,7 +219,7 @@ module Crystal
       base_type_covers_all = base_type_matches.cover_all?
 
       # If the base type doesn't cover every possible type combination, it's a failure
-      if !base_type.abstract && !base_type_covers_all
+      if !base_type.abstract? && !base_type_covers_all
         return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
       end
 
@@ -286,14 +286,14 @@ module Crystal
 
           # If the subtype is non-abstract but doesn't cover all,
           # we need to check if a parent covers it
-          if !subtype.abstract && !base_type_covers_all && !subtype_matches.cover_all?
+          if !subtype.abstract? && !base_type_covers_all && !subtype_matches.cover_all?
             unless covered_by_superclass?(subtype, type_to_matches)
               return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
             end
           end
 
           if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
-            if subtype.abstract && !self.is_a?(VirtualMetaclassType) && subtype.subclasses.empty?
+            if subtype.abstract? && !self.is_a?(VirtualMetaclassType) && subtype.subclasses.empty?
               # No need to add matches if for an abstract class without subclasses
             else
               # We need to insert the matches before the previous ones

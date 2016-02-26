@@ -218,7 +218,7 @@ module Crystal
     def must_print?(type : NonGenericClassType | GenericClassInstanceType)
       return false if @exp && !@targets.includes?(type)
 
-      type.allocated && !@printed.includes?(type)
+      type.allocated? && !@printed.includes?(type)
     end
 
     def must_print?(type : GenericClassType)

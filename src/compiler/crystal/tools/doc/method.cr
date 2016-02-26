@@ -37,7 +37,7 @@ class Crystal::Doc::Method
   end
 
   def abstract?
-    @def.abstract
+    @def.abstract?
   end
 
   def kind

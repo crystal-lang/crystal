@@ -276,7 +276,7 @@ module Crystal
         return untyped_expression(node, "`#{obj}` has no type")
       end
 
-      if obj && !obj.type.allocated
+      if obj && !obj.type.allocated?
         return untyped_expression(node, "#{obj.type} in `#{obj}` was never instantiated")
       end
 
@@ -285,7 +285,7 @@ module Crystal
           return untyped_expression(node, "`#{arg}` has no type")
         end
 
-        unless arg.type.allocated
+        unless arg.type.allocated?
           return untyped_expression(node, "#{arg.type} in `#{arg}` was never instantiated")
         end
       end
@@ -329,7 +329,7 @@ module Crystal
         end
 
         target_defs.each do |target_def|
-          allocated = target_def.owner.allocated && target_def.args.all? &.type.allocated
+          allocated = target_def.owner.allocated? && target_def.args.all? &.type.allocated?
           if allocated
             allocated_defs << target_def
 
@@ -692,7 +692,7 @@ module Crystal
           node.raise "can't cast #{obj_type} to #{to_type}"
         end
 
-        unless to_type.allocated
+        unless to_type.allocated?
           return build_raise "can't cast to #{to_type} because it was never instantiated"
         end
       end
@@ -723,7 +723,7 @@ module Crystal
         new_rescues = [] of Rescue
 
         node_rescues.each do |a_rescue|
-          if !a_rescue.type? || a_rescue.type.allocated
+          if !a_rescue.type? || a_rescue.type.allocated?
             new_rescues << a_rescue
           end
         end
