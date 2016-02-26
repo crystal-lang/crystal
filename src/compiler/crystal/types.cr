@@ -4,8 +4,6 @@ require "./syntax/ast"
 module Crystal
   # Abstract base class of all types
   abstract class Type
-    include Enumerable(self)
-
     property doc
     getter locations
     getter attributes
@@ -25,10 +23,6 @@ module Crystal
 
     def locations
       @locations ||= [] of Location
-    end
-
-    def each
-      yield self
     end
 
     def metaclass
@@ -245,14 +239,6 @@ module Crystal
 
     def filter_by_responds_to(name)
       nil
-    end
-
-    def cover
-      self
-    end
-
-    def cover_size
-      1
     end
 
     def lookup_def_instance(key)
@@ -832,14 +818,6 @@ module Crystal
 
     def raw_including_types
       @including_types
-    end
-
-    def cover
-      including_types.try(&.cover) || self
-    end
-
-    def cover_size
-      including_types.try(&.cover_size) || 1
     end
 
     def filter_by_responds_to(name)
@@ -1574,7 +1552,7 @@ module Crystal
       subclasses.each do |subclass|
         if subclass.is_a?(GenericClassType)
           subtypes = subclass.including_types
-          instances.concat subtypes if subtypes
+          instances << subtypes if subtypes
         else
           instances << subclass
         end
@@ -2490,12 +2468,6 @@ module Crystal
     def initialize(@program, @union_types)
     end
 
-    def each
-      @union_types.each do |union_type|
-        yield union_type
-      end
-    end
-
     def parents
       nil
     end
@@ -2510,25 +2482,6 @@ module Crystal
 
     def covariant?(other_type)
       union_types.all? &.covariant? other_type
-    end
-
-    def cover
-      cover = [] of Type
-      union_types.each do |union_type|
-        union_type_cover = union_type.cover
-        if union_type_cover.is_a?(Array)
-          union_type_cover.each do |cover_type|
-            cover << cover_type
-          end
-        else
-          cover << union_type_cover
-        end
-      end
-      cover
-    end
-
-    def cover_size
-      union_types.sum &.cover_size
     end
 
     def filter_by_responds_to(name)
@@ -2803,37 +2756,6 @@ module Crystal
 
     def reference_like?
       true
-    end
-
-    def cover
-      if base_type.abstract
-        cover = [] of Type
-        base_type.subclasses.each do |s|
-          s_cover = s.virtual_type.cover
-          if s_cover.is_a?(Array)
-            cover.concat s_cover
-          else
-            cover.push s_cover
-          end
-        end
-        cover
-      else
-        base_type
-      end
-    end
-
-    def cover_size
-      if base_type.abstract
-        base_type.subclasses.sum &.virtual_type.cover_size
-      else
-        1
-      end
-    end
-
-    def each
-      subtypes.each do |subtype|
-        yield subtype
-      end
     end
 
     def each_concrete_type
