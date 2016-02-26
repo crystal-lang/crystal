@@ -6,6 +6,7 @@ module Crystal
   abstract class Type
     property doc
     getter locations
+    setter metaclass
 
     def has_attribute?(name)
       false
@@ -16,11 +17,15 @@ module Crystal
     end
 
     def metaclass
-      @metaclass ||= MetaclassType.new(program, self)
+      @metaclass ||= begin
+        metaclass = MetaclassType.new(program, self)
+        initialize_metaclass(metaclass)
+        metaclass
+      end
     end
 
-    def force_metaclass(metaclass)
-      @metaclass = metaclass
+    def initialize_metaclass(metaclass)
+      # Nothing
     end
 
     # An opaque id of every type. 0 for Nil, non zero for others, so we can
@@ -1114,12 +1119,8 @@ module Crystal
     include ClassVarContainer
     include DefInstanceContainer
 
-    def metaclass
-      @metaclass ||= begin
-        metaclass = MetaclassType.new(program, self)
-        metaclass.add_def Def.new("allocate", body: Primitive.new(:allocate))
-        metaclass
-      end
+    def initialize_metaclass(metaclass)
+      metaclass.add_def Def.new("allocate", body: Primitive.new(:allocate))
     end
 
     def virtual_type
@@ -1519,12 +1520,8 @@ module Crystal
       end
     end
 
-    def metaclass
-      @metaclass ||= begin
-        metaclass = MetaclassType.new(program, self)
-        metaclass.add_def Def.new("allocate", body: Primitive.new(:allocate))
-        metaclass
-      end
+    def initialize_metaclass(metaclass)
+      metaclass.add_def Def.new("allocate", body: Primitive.new(:allocate))
     end
 
     def has_instance_var_in_initialize?(name)
@@ -2270,12 +2267,8 @@ module Crystal
       add_def Def.new(var.name, body: Primitive.new(:struct_get))
     end
 
-    def metaclass
-      @metaclass ||= begin
-        metaclass = MetaclassType.new(program, self)
-        metaclass.add_def Def.new("new", body: Primitive.new(:struct_new))
-        metaclass
-      end
+    def initialize_metaclass(metaclass)
+      metaclass.add_def Def.new("new", body: Primitive.new(:struct_new))
     end
 
     def has_attribute?(name)
@@ -2295,12 +2288,8 @@ module Crystal
       add_def Def.new(var.name, body: Primitive.new(:union_get))
     end
 
-    def metaclass
-      @metaclass ||= begin
-        metaclass = MetaclassType.new(program, self)
-        metaclass.add_def Def.new("new", body: Primitive.new(:union_new))
-        metaclass
-      end
+    def initialize_metaclass(metaclass)
+      metaclass.add_def Def.new("new", body: Primitive.new(:union_new))
     end
 
     def type_desc

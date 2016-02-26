@@ -102,8 +102,8 @@ module Crystal
       string.lookup_instance_var("@c").set_type(@uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      object.force_metaclass klass
-      klass.force_metaclass klass
+      object.metaclass = klass
+      klass.metaclass = klass
       klass.allocated = true
       klass.allowed_in_generics = false
 
