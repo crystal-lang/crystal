@@ -695,6 +695,7 @@ describe "Hash" do
   describe "reject" do
     assert { {a: 2, b: 3}.reject(:b, :d).should eq({a: 2}) }
     assert { {a: 2, b: 3}.reject(:b, :a).should eq({} of Symbol => Int32) }
+    assert { {a: 2, b: 3}.reject([:b, :a]).should eq({} of Symbol => Int32) }
     it "does not change currrent hash" do
       h = {a: 3, b: 6, c: 9}
       h2 = h.reject(:b, :c)
@@ -705,6 +706,7 @@ describe "Hash" do
   describe "reject!" do
     assert { {a: 2, b: 3}.reject!(:b, :d).should eq({a: 2}) }
     assert { {a: 2, b: 3}.reject!(:b, :a).should eq({} of Symbol => Int32) }
+    assert { {a: 2, b: 3}.reject!([:b, :a]).should eq({} of Symbol => Int32) }
     it "changes currrent hash" do
       h = {a: 3, b: 6, c: 9}
       h.reject!(:b, :c)
@@ -716,6 +718,7 @@ describe "Hash" do
     assert { {a: 2, b: 3}.select(:b, :d).should eq({b: 3}) }
     assert { {a: 2, b: 3}.select.should eq({} of Symbol => Int32) }
     assert { {a: 2, b: 3}.select(:b, :a).should eq({a: 2, b: 3}) }
+    assert { {a: 2, b: 3}.select([:b, :a]).should eq({a: 2, b: 3}) }
     it "does not change currrent hash" do
       h = {a: 3, b: 6, c: 9}
       h2 = h.select(:b, :c)
@@ -727,6 +730,7 @@ describe "Hash" do
     assert { {a: 2, b: 3}.select!(:b, :d).should eq({b: 3}) }
     assert { {a: 2, b: 3}.select!.should eq({} of Symbol => Int32) }
     assert { {a: 2, b: 3}.select!(:b, :a).should eq({a: 2, b: 3}) }
+    assert { {a: 2, b: 3}.select!([:b, :a]).should eq({a: 2, b: 3}) }
     it "does change currrent hash" do
       h = {a: 3, b: 6, c: 9}
       h.select!(:b, :c)
