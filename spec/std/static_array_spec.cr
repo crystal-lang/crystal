@@ -90,6 +90,25 @@ describe "StaticArray" do
     end
   end
 
+  it "shuffles with a seed" do
+    a = StaticArray(Int32, 10).new { |i| i + 1 }
+    b = StaticArray(Int32, 10).new { |i| i + 1 }
+    a.shuffle!(Random.new(42))
+    b.shuffle!(Random.new(42))
+
+    10.times do |i|
+      a[i].should eq(b[i])
+    end
+  end
+
+  it "reverse" do
+    a = StaticArray(Int32, 3).new { |i| i + 1 }
+    a.reverse!
+    a[0].should eq(3)
+    a[1].should eq(2)
+    a[2].should eq(1)
+  end
+
   it "maps!" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.map! { |i| i + 1 }
