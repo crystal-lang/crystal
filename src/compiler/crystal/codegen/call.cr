@@ -347,17 +347,56 @@ class Crystal::CodeGenVisitor
 
   def codegen_call(node, target_def, self_type, call_args)
     body = target_def.body
-    if body.is_a?(Crystal::Primitive)
+
+    # Try to inline the call
+    if try_inline_call(target_def, body, self_type, call_args)
+      return
+    end
+
+    # We also always inline primitives
+    if body.is_a?(Primitive)
       # Change context type: faster then creating a new context
       old_type = context.type
       context.type = self_type
       codegen_primitive(body, target_def, call_args)
       context.type = old_type
-      return
+      return true
     end
 
     func = target_def_fun(target_def, self_type)
     codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
+  end
+
+  # If a method's body is just a simple literal, "self", or an instance variable,
+  # we always inline it: less code generated, easier job for LLVM to optimize, and
+  # avoid a call in non-release builds. But do this only in non-debug builds, so we can still step.
+  def try_inline_call(target_def, body, self_type, call_args)
+    return false if @debug || target_def.is_a?(External)
+
+    case body
+    when Nop, NilLiteral, BoolLiteral, CharLiteral, StringLiteral, NumberLiteral, SymbolLiteral
+      return true unless @needs_value
+
+      accept body
+      @last = upcast(@last, target_def.type, body.type)
+      return true
+    when Var
+      if body.name == "self"
+        return true unless @needs_value
+
+        @last = self_type.passed_as_self? ? call_args.first : type_id(self_type)
+        @last = upcast(@last, target_def.type, body.type)
+        return true
+      end
+    when InstanceVar
+      return true unless @needs_value
+
+      read_instance_var(body.type, self_type, body.name, call_args.first)
+      @last = upcast(@last, target_def.type, body.type)
+      return true
+    end
+
+    false
   end
 
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)

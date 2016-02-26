@@ -926,17 +926,17 @@ module Crystal
     end
 
     def visit(node : InstanceVar)
-      read_instance_var node, context.type, node.name, llvm_self_ptr
+      read_instance_var node.type, context.type, node.name, llvm_self_ptr
     end
 
     def end_visit(node : ReadInstanceVar)
-      read_instance_var node, node.obj.type, node.name, @last
+      read_instance_var node.type, node.obj.type, node.name, @last
     end
 
-    def read_instance_var(node, type, name, value)
-      ivar = type.lookup_instance_var(node.name)
-      ivar_ptr = instance_var_ptr type, node.name, value
-      @last = downcast ivar_ptr, node.type, ivar.type, false
+    def read_instance_var(node_type, type, name, value)
+      ivar = type.lookup_instance_var(name)
+      ivar_ptr = instance_var_ptr type, name, value
+      @last = downcast ivar_ptr, node_type, ivar.type, false
       false
     end
 
