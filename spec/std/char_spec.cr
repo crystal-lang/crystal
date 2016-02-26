@@ -11,6 +11,12 @@ describe "Char" do
     assert { '1'.downcase.should eq('1') }
   end
 
+  describe "swapcase" do
+    assert { 'A'.swapcase.should eq('a') }
+    assert { 'b'.swapcase.should eq('B') }
+    assert { '1'.swapcase.should eq('1') }
+  end
+
   describe "succ" do
     assert { 'a'.succ.should eq('b') }
     assert { 'あ'.succ.should eq('ぃ') }
