@@ -2921,7 +2921,7 @@ module Crystal
     end
 
     def each_concrete_type
-      instance_type.each_concrete_type do |type|
+      instance_type.subtypes.each do |type|
         yield type.metaclass
       end
     end
