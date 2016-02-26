@@ -6,19 +6,9 @@ module Crystal
   abstract class Type
     property doc
     getter locations
-    getter attributes
-
-    def add_attributes(attributes)
-      return unless attributes
-      return if attributes.empty?
-
-      my_attributes = @attributes ||= [] of Attribute
-      my_attributes.concat(attributes)
-    end
 
     def has_attribute?(name)
-      attributes = @attributes
-      attributes.try &.any? &.name.==(name)
+      false
     end
 
     def locations
@@ -2288,6 +2278,11 @@ module Crystal
       end
     end
 
+    def has_attribute?(name)
+      return true if packed && name == "Packed"
+      false
+    end
+
     def type_desc
       "struct"
     end
@@ -2334,6 +2329,11 @@ module Crystal
 
     def add_constant(constant)
       types[constant.name] = Const.new(program, self, constant.name, constant.default_value.not_nil!)
+    end
+
+    def has_attribute?(name)
+      return true if flags? && name == "Flags"
+      false
     end
 
     def primitive_like?

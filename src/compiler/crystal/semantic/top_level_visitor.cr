@@ -471,7 +471,6 @@ module Crystal
       attach_doc enum_type, node
 
       enum_type.doc ||= attributes_doc
-      enum_type.add_attributes(node.attributes)
       @attributes = nil
 
       pushing_type(enum_type) do
