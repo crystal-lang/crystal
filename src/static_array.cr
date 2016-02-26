@@ -82,8 +82,16 @@ struct StaticArray(T, N)
     end
   end
 
-  def shuffle!
-    to_unsafe.shuffle!(size)
+  # Modifies `self` by randomizing the order of elements in the array
+  # using the given *random* number generator.  Returns `self`.
+  #
+  # ```
+  # a = StaticArray(Int32, 3).new { |i| i + 1 } # => [1, 2, 3]
+  # a.shuffle!(Random.new(42))                  # => [3, 2, 1]
+  # a                                           # => [3, 2, 1]
+  # ```
+  def shuffle!(random = Random::DEFAULT)
+    to_unsafe.shuffle!(size, random)
     self
   end
 
