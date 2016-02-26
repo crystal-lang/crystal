@@ -622,4 +622,28 @@ describe "Code gen: virtual type" do
       reference.object_id == foo(reference)
       ").to_b.should be_true
   end
+
+  it "codegens virtual method of abstract metaclass" do
+    run(%(
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      abstract class Bar < Foo
+        def self.foo
+          2
+        end
+      end
+
+      class Baz < Foo
+        def self.foo
+          3
+        end
+      end
+
+      (Bar || Foo || Baz).foo
+      )).to_i.should eq(2)
+  end
 end

@@ -293,7 +293,7 @@ module Crystal
           end
 
           if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
-            if subtype.abstract && subtype.subclasses.empty?
+            if subtype.abstract && !self.is_a?(VirtualMetaclassType) && subtype.subclasses.empty?
               # No need to add matches if for an abstract class without subclasses
             else
               # We need to insert the matches before the previous ones
