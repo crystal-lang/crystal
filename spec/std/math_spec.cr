@@ -248,5 +248,12 @@ describe "Math" do
 
   # pw2ceil
 
+  describe "Rounding up to powers of 2" do
+    it "pw2ceil" do
+      Math.pw2ceil(33).should eq(64)
+      Math.pw2ceil(128).should eq(128)
+    end
+  end
+
   # ** (float and int)
 end
