@@ -297,7 +297,7 @@ describe "Type inference: splat" do
 
       bar 'a', 1
       ),
-      "wrong number of arguments for 'foo' (2 for 1)"
+      "wrong number of arguments for 'foo' (given 2, expected 1)"
   end
 
   it "gives correct error when forwarding splat (2)" do

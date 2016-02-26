@@ -98,7 +98,7 @@ describe "Type inference: module" do
         include Foo(Int)
       end
       ",
-      "wrong number of type vars for Foo(T, U) (1 for 2)"
+      "wrong number of type vars for Foo(T, U) (given 1, expected 2)"
   end
 
   it "includes generic module but wrong number of arguments 2" do

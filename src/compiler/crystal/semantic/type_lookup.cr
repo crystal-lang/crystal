@@ -62,11 +62,11 @@ module Crystal
       if instance_type.variadic
         min_needed = instance_type.type_vars.size - 1
         if node.type_vars.size < min_needed
-          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.size} for #{min_needed}..)"
+          node.wrong_number_of "type vars", instance_type, node.type_vars.size, "#{min_needed}+"
         end
       else
         if instance_type.type_vars.size != node.type_vars.size
-          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.size} for #{instance_type.type_vars.size})"
+          node.wrong_number_of "type vars", instance_type, node.type_vars.size, instance_type.type_vars.size
         end
       end
 

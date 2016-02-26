@@ -39,7 +39,7 @@ class Crystal::Call
 
     return if required_args_count <= call_args_count <= all_args_count
 
-    raise "wrong number of arguments for '#{full_name(obj_type)}' (#{args.size} for #{external.args.size})"
+    wrong_number_of_arguments "'#{full_name(obj_type)}'", args.size, external.args.size
   end
 
   def check_fun_out_args(untyped_def)

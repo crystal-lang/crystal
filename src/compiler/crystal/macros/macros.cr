@@ -561,7 +561,7 @@ module Crystal
           env_value = ENV[cmd]?
           @last = env_value ? StringLiteral.new(env_value) : NilLiteral.new
         else
-          node.raise "wrong number of arguments for macro call 'env' (#{node.args.size} for 1)"
+          node.wrong_number_of_arguments "macro call 'env'", node.args.size, 1
         end
       end
 
@@ -614,7 +614,7 @@ module Crystal
 
       def execute_run(node)
         if node.args.size == 0
-          node.raise "wrong number of arguments for macro run (0 for 1..)"
+          node.wrong_number_of_arguments "macro call 'run'", 0, "1+"
         end
 
         node.args.first.accept self

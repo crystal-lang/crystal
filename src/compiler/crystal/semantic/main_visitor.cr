@@ -1036,7 +1036,7 @@ module Crystal
       end
 
       if block.args.size > fun_type.fun_types.size - 1
-        node.raise "wrong number of block arguments for #{fun_type}#new (#{block.args.size} for #{fun_type.fun_types.size - 1})"
+        node.wrong_number_of "block arguments", "#{fun_type}#new", block.args.size, fun_type.fun_types.size - 1
       end
 
       # We create a ->(...) { } from the block
@@ -2198,7 +2198,7 @@ module Crystal
         end
 
         if attr.args.size != 1
-          attr.raise "wrong number of arguments for attribute CallConvention (#{attr.args.size} for 1)"
+          attr.wrong_number_of_arguments "attribute CallConvention", attr.args.size, 1
         end
 
         call_convention_node = attr.args.first

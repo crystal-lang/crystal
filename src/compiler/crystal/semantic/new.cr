@@ -76,7 +76,7 @@ module Crystal
       if defs.size == 0 && arg_types.size > 0
         news = scope.instance_type.metaclass.lookup_defs("new")
         if news.empty?
-          raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.size} for 0)"
+          wrong_number_of_arguments "'#{full_name(scope.instance_type)}'", self.args.size, 0
         else
           raise_matches_not_found scope.instance_type.metaclass, "new"
         end
