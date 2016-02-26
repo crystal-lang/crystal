@@ -20,7 +20,7 @@ describe "Type inference: generic class" do
       class Bar < Foo(A, B)
       end
       ),
-      "wrong number of type vars for Foo(T) (2 for 1)"
+      "wrong number of type vars for Foo(T) (given 2, expected 1)"
   end
 
   it "inhertis from generic with instantiation" do
@@ -324,7 +324,7 @@ describe "Type inference: generic class" do
       class Bar < Foo
       end
       ),
-      "wrong number of type vars for Foo(T) (0 for 1)"
+      "wrong number of type vars for Foo(T) (given 0, expected 1)"
   end
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|

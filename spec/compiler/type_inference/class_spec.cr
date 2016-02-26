@@ -580,7 +580,7 @@ describe "Type inference: class" do
 
       Bar.new(1)
       ),
-      "wrong number of arguments for 'Bar#initialize' (1 for 2)"
+      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)"
   end
 
   it "doesn't use initialize from base class with virtual type" do
@@ -598,7 +598,7 @@ describe "Type inference: class" do
       klass = 1 == 1 ? Foo : Bar
       klass.new(1)
       ),
-      "wrong number of arguments for 'Bar#initialize' (1 for 2)"
+      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)"
   end
 
   it "errors if using underscore in generic class" do
@@ -752,7 +752,7 @@ describe "Type inference: class" do
 
       Bar.new
       ),
-      "wrong number of arguments for 'Bar#initialize' (0 for 1)"
+      "wrong number of arguments for 'Bar#initialize' (given 0, expected 1)"
   end
 
   it "instantiates types inferring generic type when there a type argument has the same name as an existing type" do

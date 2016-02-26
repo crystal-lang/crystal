@@ -327,7 +327,7 @@ describe "Type inference: def" do
 
       Foo.bar
       ),
-      "wrong number of arguments for 'foo' (1 for 0)"
+      "wrong number of arguments for 'foo' (given 1, expected 0)"
   end
 
   it "gives correct error for wrong number of arguments for program call inside type (2) (#1024)" do

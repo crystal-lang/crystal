@@ -331,7 +331,7 @@ describe "Type inference: fun" do
       alias F = Int32 -> Int32
       F.new { |x, y| }
       ",
-      "wrong number of block arguments for (Int32 -> Int32)#new (2 for 1)"
+      "wrong number of block arguments for (Int32 -> Int32)#new (given 2, expected 1)"
   end
 
   it "says wrong return type in new on fun type" do
@@ -503,7 +503,7 @@ describe "Type inference: fun" do
         fun foo : Int32
       end
       ),
-      "wrong number of arguments for attribute CallConvention (2 for 1)"
+      "wrong number of arguments for attribute CallConvention (given 2, expected 1)"
   end
 
   it "errors if CallConvention argument is not a string" do

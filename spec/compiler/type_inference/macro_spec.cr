@@ -221,7 +221,7 @@ describe "Type inference: macro" do
       end
 
       foo(1)
-      ), "wrong number of arguments for macro 'foo' (1 for 0)"
+      ), "wrong number of arguments for macro 'foo' (given 1, expected 0)"
   end
 
   it "executs raise inside macro" do

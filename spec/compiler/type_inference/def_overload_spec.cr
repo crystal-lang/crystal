@@ -706,7 +706,7 @@ describe "Type inference: def overload" do
 
       foo Foo(Int32, Int32).new
       ),
-      "wrong number of type vars for Foo(A, B) (1 for 2)"
+      "wrong number of type vars for Foo(A, B) (given 1, expected 2)"
   end
 
   it "includes splat symbol in error message" do
@@ -778,5 +778,21 @@ describe "Type inference: def overload" do
        - Bar#foo(x : Int32)
        - Foo#foo(x : Int32)
       MSG
+  end
+
+  it "gives better error message with consecutive arguments sizes" do
+    assert_error %(
+      def foo
+      end
+
+      def foo(x)
+      end
+
+      def foo(x, y)
+      end
+
+      foo 1, 2, 3
+      ),
+      "wrong number of arguments for 'foo' (given 3, expected 0..2)"
   end
 end

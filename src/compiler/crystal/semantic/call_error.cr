@@ -1,3 +1,17 @@
+class Crystal::ASTNode
+  def wrong_number_of_arguments(subject, given, expected)
+    wrong_number_of "arguments", subject, given, expected
+  end
+
+  def wrong_number_of(elements, given, expected)
+    raise "wrong number of #{elements} (given #{given}, expected #{expected})"
+  end
+
+  def wrong_number_of(elements, subject, given, expected)
+    raise "wrong number of #{elements} for #{subject} (given #{given}, expected #{expected})"
+  end
+end
+
 class Crystal::Call
   def raise_matches_not_found(owner : CStructType, def_name, matches = nil)
     raise_struct_or_union_field_not_found owner, def_name
@@ -144,13 +158,20 @@ class Crystal::Call
       raise(String.build do |str|
         str << "wrong number of arguments for '"
         str << full_name(owner, def_name)
-        str << "' ("
+        str << "' (given "
         str << real_args_size
-        str << " for "
-        all_arguments_sizes.join ", ", str
-        if min_splat != Int32::MAX
-          str << "+"
+        str << ", expected "
+
+        # If we have 2, 3, 4, show it as 2..4
+        if all_arguments_sizes.size > 1 && all_arguments_sizes.last - all_arguments_sizes.first == all_arguments_sizes.size - 1
+          str << all_arguments_sizes.first
+          str << ".."
+          str << all_arguments_sizes.last
+        else
+          all_arguments_sizes.join ", ", str
         end
+
+        str << "+" if min_splat != Int32::MAX
         str << ")\n"
         str << "Overloads are:"
         append_matches(defs, str)
@@ -321,7 +342,7 @@ class Crystal::Call
       unless defs.empty?
         all_arguments_sizes = Set(Int32).new
         defs.each { |a_def| all_arguments_sizes << a_def.args.size }
-        raise "wrong number of arguments for '#{concrete_type.instance_type}#initialize' (#{args.size} for #{all_arguments_sizes.join ", "})"
+        wrong_number_of_arguments "'#{concrete_type.instance_type}#initialize'", args.size, all_arguments_sizes.join(", ")
       end
     end
   end
@@ -349,7 +370,7 @@ class Crystal::Call
       end
     end
 
-    raise "wrong number of arguments for macro '#{def_name}' (#{args.size} for #{all_arguments_sizes.join ", "})"
+    wrong_number_of_arguments "macro '#{def_name}'", args.size, all_arguments_sizes.join(", ")
   end
 
   def check_named_args_mismatch(owner, named_args, a_def)

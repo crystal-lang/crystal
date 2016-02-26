@@ -703,7 +703,7 @@ class Crystal::Call
         else
           # Otherwise, we create a FunLiteral and type it
           if block.args.size > fun_args.size
-            raise "wrong number of block arguments (#{block.args.size} for #{fun_args.size})"
+            wrong_number_of "block arguments", block.args.size, fun_args.size
           end
 
           a_def = Def.new("->", fun_args, block.body)
@@ -808,7 +808,7 @@ class Crystal::Call
     call_block_arg_types = (call_block_arg.type as FunInstanceType).arg_types
     if yield_vars
       if yield_vars.size != call_block_arg_types.size
-        raise "wrong number of block argument's arguments (#{call_block_arg_types.size} for #{yield_vars.size})"
+        wrong_number_of "block argument's arguments", call_block_arg_types.size, yield_vars.size
       end
 
       i = 1
@@ -819,7 +819,7 @@ class Crystal::Call
         i += 1
       end
     elsif call_block_arg_types.size != 0
-      raise "wrong number of block argument's arguments (#{call_block_arg_types.size} for 0)"
+      wrong_number_of "block argument's arguments", call_block_arg_types.size, 0
     end
   end
 

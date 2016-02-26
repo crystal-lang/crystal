@@ -364,7 +364,7 @@ module Crystal
       generic_class = generic_class as GenericClassType
 
       if generic_class.type_vars.size != other.type_vars.size
-        other.raise "wrong number of type vars for #{generic_class} (#{other.type_vars.size} for #{generic_class.type_vars.size})"
+        other.wrong_number_of "type vars", generic_class, other.type_vars.size, generic_class.type_vars.size
       end
 
       i = 0

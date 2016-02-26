@@ -126,7 +126,7 @@ module Crystal
         end
 
         if node_superclass.type_vars.size != superclass.type_vars.size
-          node_superclass.raise "wrong number of type vars for #{superclass} (#{node_superclass.type_vars.size} for #{superclass.type_vars.size})"
+          node_superclass.wrong_number_of "type vars", superclass, node_superclass.type_vars.size, superclass.type_vars.size
         end
       end
 
@@ -180,7 +180,7 @@ module Crystal
             mapping = Hash.zip(superclass.type_vars, node_superclass.type_vars)
             superclass = InheritedGenericClass.new(@mod, superclass, mapping)
           else
-            node_superclass.not_nil!.raise "wrong number of type vars for #{superclass} (0 for #{superclass.type_vars.size})"
+            node_superclass.not_nil!.wrong_number_of "type vars", superclass, 0, superclass.type_vars.size
           end
         else
           node_superclass.not_nil!.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
@@ -735,7 +735,7 @@ module Crystal
           end
           lib_framework = arg.value
         else
-          attr.raise "wrong number of link arguments (#{args.size} for 1..4)"
+          attr.wrong_number_of "link arguments", args.size, "1..4"
         end
 
         count += 1
@@ -799,7 +799,7 @@ module Crystal
         end
 
         if type.type_vars.size != node_name.type_vars.size
-          node_name.raise "wrong number of type vars for #{type} (#{node_name.type_vars.size} for #{type.type_vars.size})"
+          node_name.wrong_number_of "type vars", type, node_name.type_vars.size, type.type_vars.size
         end
 
         mapping = Hash.zip(type.type_vars, node_name.type_vars)

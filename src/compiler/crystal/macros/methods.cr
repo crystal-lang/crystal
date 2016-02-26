@@ -50,7 +50,7 @@ module Crystal
 
     def interpret_check_args_size(method, args, size)
       unless args.size == size
-        raise "wrong number of arguments for #{method} (#{args.size} for #{size})"
+        wrong_number_of_arguments method, args.size, size
       end
     end
 
@@ -154,7 +154,7 @@ module Crystal
             raise "undefined method '~' for float literal: #{self}"
           end
         else
-          raise "wrong number of arguments for NumberLiteral#~ (#{args.size} for 0)"
+          wrong_number_of_arguments "NumberLiteral#~", args.size, 0
         end
       else
         super
@@ -190,7 +190,7 @@ module Crystal
 
     def bin_op(op, args)
       if args.size != 1
-        raise "wrong number of arguments for NumberLiteral##{op} (#{args.size} for 1)"
+        wrong_number_of_arguments "NumberLiteral##{op}", args.size, 1
       end
 
       other = args.first
@@ -330,7 +330,7 @@ module Crystal
 
           ArrayLiteral.map(@value.split(splitter)) { |value| StringLiteral.new(value) }
         else
-          raise "wrong number of arguments for split (#{args.size} for 0, 1)"
+          wrong_number_of_arguments "StringLiteral#split", args.size, "0..1"
         end
       when "starts_with?"
         interpret_one_arg_method(method, args) do |arg|
@@ -356,7 +356,7 @@ module Crystal
 
           value = @value.to_i64?(arg.to_number)
         else
-          raise "wrong number of arguments for to_i (#{args.size} for 0, 1)"
+          wrong_number_of_arguments "StringLiteral#to_i", args.size, "0..1"
         end
 
         if value
@@ -488,7 +488,7 @@ module Crystal
             NilLiteral.new
           end
         else
-          raise "wrong number of arguments for [] (#{args.size} for 1)"
+          wrong_number_of_arguments "ArrayLiteral#[]", args.size, 1
         end
       when "unshift"
         case args.size
@@ -496,7 +496,7 @@ module Crystal
           elements.unshift(args.first)
           self
         else
-          raise "wrong number of arguments for push (#{args.size} for 1)"
+          wrong_number_of_arguments "ArrayLiteral#unshift", args.size, 1
         end
       when "push", "<<"
         case args.size
@@ -504,7 +504,7 @@ module Crystal
           elements << args.first
           self
         else
-          raise "wrong number of arguments for push (#{args.size} for 1)"
+          wrong_number_of_arguments "ArrayLiteral##{method}", args.size, 1
         end
       else
         super
@@ -544,7 +544,7 @@ module Crystal
           entry = entries.find &.key.==(key)
           entry.try(&.value) || NilLiteral.new
         else
-          raise "wrong number of arguments for [] (#{args.size} for 1)"
+          wrong_number_of_arguments "HashLiteral#[]", args.size, 1
         end
       when "[]="
         case args.size
@@ -560,7 +560,7 @@ module Crystal
 
           value
         else
-          raise "wrong number of arguments for []= (#{args.size} for 2)"
+          wrong_number_of_arguments "HashLiteral#[]=", args.size, 2
         end
       else
         super
@@ -591,7 +591,7 @@ module Crystal
             raise "tuple index out of bounds: #{index} in #{self}"
           end
         else
-          raise "wrong number of arguments for [] (#{args.size} for 1)"
+          wrong_number_of_arguments "TupleLiteral#[]", args.size, 1
         end
       else
         super
