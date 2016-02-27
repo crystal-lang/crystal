@@ -715,6 +715,9 @@ describe "Parser" do
   it_parses "$foo", Global.new("$foo")
 
   it_parses "macro foo;end", Macro.new("foo", [] of Arg, Expressions.new)
+  it_parses "macro [];end", Macro.new("[]", [] of Arg, Expressions.new)
+  it_parses "macro %();end", Macro.new("%", [] of Arg, Expressions.new)
+  it_parses "macro /();end", Macro.new("/", [] of Arg, Expressions.new)
   it_parses %(macro foo; 1 + 2; end), Macro.new("foo", [] of Arg, Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
   it_parses %(macro foo(x); 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
   it_parses %(macro foo(x)\n 1 + 2; end), Macro.new("foo", ([Arg.new("x")]), Expressions.from([" 1 + 2; ".macro_literal] of ASTNode))
