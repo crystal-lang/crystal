@@ -741,10 +741,10 @@ describe "macro methods" do
   end
 
   describe "case methods" do
-    case_node = Case.new(NumberLiteral.new(1), [When.new([NumberLiteral.new(2), NumberLiteral.new(3)] of ASTNode, NumberLiteral.new(4))], NumberLiteral.new(5))
+    case_node = Case.new([NumberLiteral.new(1)] of ASTNode, [When.new([NumberLiteral.new(2), NumberLiteral.new(3)] of ASTNode, NumberLiteral.new(4))], NumberLiteral.new(5))
 
     it "executes cond" do
-      assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
+      assert_macro "x", %({{x.conds}}), [case_node] of ASTNode, "[1]"
     end
 
     it "executes whens" do

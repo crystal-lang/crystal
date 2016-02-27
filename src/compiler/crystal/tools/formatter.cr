@@ -2648,9 +2648,18 @@ module Crystal
       write_keyword :case
       skip_space
 
-      if cond = node.cond
+      if conds = node.conds
         write " "
-        accept cond
+        conds.each_with_index do |cond, i|
+          accept cond
+          unless last?(i, conds)
+            skip_space
+            if @token.type == :","
+              write ", "
+              next_token_skip_space_or_newline
+            end
+          end
+        end
       end
 
       skip_space_write_line

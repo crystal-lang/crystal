@@ -345,18 +345,40 @@ module Crystal
     #     if temp.is_a?(Bar)
     #       1
     #     end
+    #
+    # We also take care to expand multiple conds
+    #
+    # From:
+    #
+    #     case x, y
+    #     when 1, 2
+    #       3
+    #     end
+    #
+    # To:
+    #
+    #     if 1 === x && y === 2
+    #       3
+    #     end
     def expand(node : Case)
-      node_cond = node.cond
-      if node_cond
-        case node_cond
-        when Var, InstanceVar
-          temp_var = node.cond
-        when Assign
-          temp_var = node_cond.target
-          assign = node_cond
-        else
-          temp_var = new_temp_var
-          assign = Assign.new(temp_var.clone, node_cond)
+      conds = node.conds
+      multi = false
+
+      if conds
+        multi = conds.size > 1
+        assigns = [] of ASTNode
+        temp_vars = conds.map do |node_cond|
+          case node_cond
+          when Var, InstanceVar
+            temp_var = node_cond
+          when Assign
+            temp_var = node_cond.target
+            assigns << node_cond
+          else
+            temp_var = new_temp_var
+            assigns << Assign.new(temp_var.clone, node_cond)
+          end
+          temp_var
         end
       end
 
@@ -364,17 +386,26 @@ module Crystal
       final_if = nil
       node.whens.each do |wh|
         final_comp = nil
-        wh.conds.each do |cond|
+        wh.conds.each_with_index do |cond, i|
+          next if cond.is_a?(Underscore)
+
+          temp_var = temp_vars.try &.[multi ? i : 0]
           comp = case_when_comparison(temp_var, cond).at(cond)
 
           if final_comp
-            final_comp = Or.new(final_comp, comp)
+            final_comp = if multi
+                           And.new(final_comp, comp)
+                         else
+                           Or.new(final_comp, comp)
+                         end
           else
             final_comp = comp
           end
         end
 
-        wh_if = If.new(final_comp.not_nil!, wh.body)
+        final_comp ||= BoolLiteral.new(true)
+
+        wh_if = If.new(final_comp, wh.body)
         if a_if
           a_if.else = wh_if
         else
@@ -388,8 +419,9 @@ module Crystal
       end
 
       final_if = final_if.not_nil!
-      final_exp = if assign
-                    Expressions.new([assign, final_if] of ASTNode)
+      final_exp = if assigns && !assigns.empty?
+                    assigns << final_if
+                    Expressions.new(assigns)
                   else
                     final_if
                   end

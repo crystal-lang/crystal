@@ -419,6 +419,7 @@ describe Crystal::Formatter do
   assert_format "case  1 \n when  .foo? \n 3 \n end", "case 1\nwhen .foo?\n  3\nend"
   assert_format "case 1\nwhen 1 then\n2\nwhen 3\n4\nend", "case 1\nwhen 1\n  2\nwhen 3\n  4\nend"
   assert_format "case  1 \n when 2 \n 3 \n else 4 \n end", "case 1\nwhen 2\n  3\nelse 4\nend"
+  assert_format "case  1 , 2 \n when 3 , 4 \n 5 \n end", "case 1, 2\nwhen 3, 4\n  5\nend"
 
   assert_format "foo.@bar"
 
