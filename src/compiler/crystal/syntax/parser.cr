@@ -2857,6 +2857,24 @@ module Crystal
         skip_space
       end
 
+      if @token.type == :SYMBOL
+        raise "space required after colon in type restriction", @token
+      end
+
+      found_colon = false
+
+      if allow_restrictions && @token.type == :":"
+        if !default_value && !found_space
+          raise "space required before colon in type restriction", @token
+        end
+
+        next_token_skip_space_or_newline
+
+        location = @token.location
+        restriction = parse_single_type
+        found_colon = true
+      end
+
       unless splat
         if @token.type == :"="
           if found_splat || splat
@@ -2883,19 +2901,21 @@ module Crystal
         end
       end
 
-      if @token.type == :SYMBOL
-        raise "space required after colon in type restriction", @token
-      end
-
-      if allow_restrictions && @token.type == :":"
-        if !default_value && !found_space
-          raise "space required before colon in type restriction", @token
+      unless found_colon
+        if @token.type == :SYMBOL
+          raise "space required after colon in type restriction", @token
         end
 
-        next_token_skip_space_or_newline
+        if allow_restrictions && @token.type == :":"
+          if !default_value && !found_space
+            raise "space required before colon in type restriction", @token
+          end
 
-        location = @token.location
-        restriction = parse_single_type
+          next_token_skip_space_or_newline
+
+          location = @token.location
+          restriction = parse_single_type
+        end
       end
 
       raise "Bug: arg_name is nil" unless arg_name
