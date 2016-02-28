@@ -1,4 +1,5 @@
 require "spec"
+require "big_int"
 
 private def to_s_with_io(num)
   String.build { |str| num.to_s(str) }
@@ -387,5 +388,23 @@ describe "Int" do
     assert { 5_i64.popcount.should eq(2) }
     assert { 9223372036854775807_i64.popcount.should eq(63) }
     assert { 18446744073709551615_u64.popcount.should eq(64) }
+  end
+
+  it "compares signed vs. unsigned integers" do
+    signed_ints = [Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, 0_i8, 0_i16, 0_i32, 0_i64]
+    unsigned_ints = [UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, 0_u8, 0_u16, 0_u32, 0_u64]
+
+    big_signed_ints = signed_ints.map &.to_big_i
+    big_unsigned_ints = unsigned_ints.map &.to_big_i
+
+    signed_ints.zip(big_signed_ints) do |si, bsi|
+      unsigned_ints.zip(big_unsigned_ints) do |ui, bui|
+        {% for op in %w(< <= > >=).map(&.id) %}
+          if (si {{op}} ui) != (bsi {{op}} bui)
+            fail "comparison of #{si} {{op}} #{ui} (#{si.class} {{op}} #{ui.class}) gave incorrect result"
+          end
+        {% end %}
+      end
+    end
   end
 end
