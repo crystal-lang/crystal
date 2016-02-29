@@ -29,7 +29,7 @@ module Crystal
     end
 
     def null
-      int(0)
+      int64(0)
     end
 
     def llvm_nil
@@ -53,11 +53,11 @@ module Crystal
     end
 
     def null_pointer?(value)
-      equal? builder.ptr2int(value, LLVM::Int32), null
+      equal? builder.ptr2int(value, LLVM::Int64), null
     end
 
     def not_null_pointer?(value)
-      not_equal? builder.ptr2int(value, LLVM::Int32), null
+      not_equal? builder.ptr2int(value, LLVM::Int64), null
     end
 
     def gep(ptr, index0 : Int32, name = "")
