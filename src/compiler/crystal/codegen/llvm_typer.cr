@@ -159,11 +159,7 @@ module Crystal
           end
         end
 
-        ifdef x86_64
-          max_size /= 8.0
-        else
-          max_size /= 4.0
-        end
+        max_size /= pointer_size.to_f
         max_size = max_size.ceil.to_i
 
         max_size = 1 if max_size == 0
