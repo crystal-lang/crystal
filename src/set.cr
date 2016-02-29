@@ -119,7 +119,7 @@ struct Set(T)
     @hash.empty?
   end
 
-  # Yeilds each element of the set, and returns `self`.
+  # Yields each element of the set, and returns `self`.
   def each
     @hash.each_key do |key|
       yield key
