@@ -15,7 +15,7 @@ module HTTP
   end
 end
 
-alias NumericValue = Int32 | Int64 | Float32 | Float64
+alias NumericValue = Float32 | Float64 | Int32 | Int64
 
 lib LibYAML
 end
@@ -50,7 +50,7 @@ $global_greeting = "Hello world"
 class Greeting
   @@default_greeting = "Hello world"
 
-  def initialize(@custom_greeting=nil)
+  def initialize(@custom_greeting = nil)
   end
 
   def print_greeting
@@ -63,7 +63,7 @@ end
 __Constants__ are screaming-cased. For example:
 
 ```crystal
-LUCKY_NUMBERS = [3, 7, 11]
+LUCKY_NUMBERS     = [3, 7, 11]
 DOCUMENTATION_URL = "http://crystal-lang.org/docs"
 ```
 
@@ -95,7 +95,7 @@ For example, `HTTP::WebSocket` is defined in `src/http/web_socket.cr`.
 Use __two spaces__ to indent code inside namespaces, methods, blocks or other nested contexts. For example:
 
 ```crystal
-module Scorecard  
+module Scorecard
   class Parser
     def parse(score_text)
       begin
@@ -113,7 +113,7 @@ end
 Within a class, separate method definitions, constants and inner class definitions with __one newline__. For example:
 
 ```crystal
-module Money  
+module Money
   CURRENCIES = {
     "EUR" => 1.0,
     "ARS" => 10.55,

@@ -1,6 +1,6 @@
 # Documenting code
 
-Crystal documentation comments use a subset of [Markdown](https://daringfireball.net/projects/markdown/). 
+Crystal documentation comments use a subset of [Markdown](https://daringfireball.net/projects/markdown/).
 
 * Documentation should be positioned right above definitions of classes, modules, and methods. Leave no blanks between them.
 
@@ -12,7 +12,7 @@ class Unicorn
 end
 
 # Bad: This is not attached to any class.
- 
+
 class Legendary
 end
 ```
@@ -28,7 +28,7 @@ For instance:
 # Returns the number of horns this unicorn has.
 #
 # ```
-# Unicorn.new.horns #=> 1
+# Unicorn.new.horns # => 1
 # ```
 def horns
   @horns
@@ -55,11 +55,11 @@ end
 # ```
 ``````
 
-or 
+or
 
 ```crystal
 #     unicorn = Unicorn.new
-#     unicorn.speak 
+#     unicorn.speak
 ```
 
 * Text blocks, for example to show program output, must be surrounded with triple backticks followed by the "text" keyword.
@@ -90,8 +90,8 @@ For example:
 * To show the value of an expression inside code blocks, use `#=>`.
 
 ```crystal
-1 + 2 #=> 3
-Unicorn.new.speak #=> "I'm a unicorn"
+1 + 2             # => 3
+Unicorn.new.speak # => "I'm a unicorn"
 ```
 
 * Use `ditto` to use the same comment as in the previous declaration.
@@ -113,9 +113,35 @@ class Unicorn
 end
 ```
 
+### Use Crystal's code formatter
+
+Crystal's built-in code formatter can be used not just to format your code,
+but also to format code samples included in documentation blocks.
+
+This is done automatically when `crystal tool format` is invoked, which
+will automatically format all `.cr` files in current directory.
+
+To format a single file:
+
+```
+$ crystal tool format file.cr
+```
+
+To format all `.cr` files within a directory:
+
+```
+$ crystal tool format src/
+```
+
+Use this tool to unify code styles and to submit documentation improvements to
+Crystal itself.
+
+The formatter is also fast, so very little time is lost if you format the
+entire project instead of a single file.
+
 ### A Complete Example
 
-`````crystal
+``````crystal
 # A unicorn is a **legendary animal** (see the `Legendary` module) that has been
 # described since antiquity as a beast with a large, spiraling horn projecting
 # from its forhead.
@@ -145,7 +171,7 @@ class Unicorn
   # Returns the number of horns this unicorn has
   #
   # ```
-  # Unicorn.new.horns #=> 1
+  # Unicorn.new.horns # => 1
   # ```
   def horns
     @horns
@@ -165,7 +191,7 @@ class Unicorn
   class Helper
   end
 end
-`````
+``````
 
 ### Generate Documentation
 
