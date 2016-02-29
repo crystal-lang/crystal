@@ -46,6 +46,7 @@ module HTTP
   class ChunkedContent < Content
     def initialize(@io)
       @chunk_remaining = io.gets.not_nil!.to_i(16)
+      check_last_chunk
     end
 
     def read(slice : Slice(UInt8))
@@ -59,6 +60,7 @@ module HTTP
       if @chunk_remaining == 0
         read_chunk_end
         @chunk_remaining = @io.gets.not_nil!.to_i(16)
+        check_last_chunk
       end
 
       bytes_read
@@ -66,8 +68,12 @@ module HTTP
 
     private def read_chunk_end
       # Read "\r\n"
-      buf = uninitialized UInt8[2]
-      @io.read_fully(buf.to_slice)
+      @io.skip(2)
+    end
+
+    private def check_last_chunk
+      # If we read "0\r\n", we need to read another "\r\n"
+      read_chunk_end if @chunk_remaining == 0
     end
 
     def write(slice : Slice(UInt8))
