@@ -27,8 +27,8 @@
 # For a safe alternative, see `Slice`, which is a pointer with a size and with bounds checking.
 struct Pointer(T)
   # Unsafe wrapper around a `Pointer` that allows to write values to
-  # it while advancing Athe location and keeping track of how many elements
-  # where written. See `Pointer#appender`
+  # it while advancing the location and keeping track of how many elements
+  # were written. See `Pointer#appender`
   struct Appender(T)
     def initialize(@pointer : Pointer(T))
       @start = @pointer

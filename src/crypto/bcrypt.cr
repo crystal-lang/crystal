@@ -1,7 +1,7 @@
 require "secure_random"
 require "./subtle"
 
-# Pure Crystal implementation of the Bcrypt algorythm by Niels Provos and David
+# Pure Crystal implementation of the Bcrypt algorithm by Niels Provos and David
 # Mazières, as [presented at USENIX in
 # 1999](https://www.usenix.org/legacy/events/usenix99/provos/provos_html/index.html).
 #

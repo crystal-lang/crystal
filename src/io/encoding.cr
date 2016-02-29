@@ -164,7 +164,7 @@ module IO
         return string
       end
 
-      # We need to read from the out_slice into a Srting until we find that byte,
+      # We need to read from the out_slice into a String until we find that byte,
       # or until we consumed limit bytes
       String.build do |str|
         loop do

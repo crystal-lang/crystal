@@ -2,7 +2,7 @@ class URI
   # :nodoc:
   struct Parser
     # Parser is based on https://url.spec.whatwg.org/ .
-    # Step nmes and variables are roughly the same as that document.
+    # Step names and variables are roughly the same as that document.
     # notable deviations from the spec
     #   does not parse windows slashes
     #   does not validate port < 2**16-1

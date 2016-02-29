@@ -2,7 +2,7 @@ struct Char
   # A Char::Reader allows iterating a String by Chars.
   #
   # As soon as you instantiate a Char::Reader it will decode the first
-  # char in the String, which can be accesed by invoking `current_char`.
+  # char in the String, which can be accessed by invoking `current_char`.
   # At this point `pos`, the current position in the string, will equal zero.
   # Successive calls to `next_char` return the next chars in the string,
   # advancing `pos`.

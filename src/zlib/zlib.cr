@@ -3,7 +3,7 @@ require "./deflate"
 require "./inflate"
 
 # The Zlib module provides access to the [zlib library](http://zlib.net/) for
-# loseless data compression and decompression in zlib and gzip format:
+# lossless data compression and decompression in zlib and gzip format:
 #
 # * `Zlib::Deflate` for compression
 # * `Zlib::Inflate` for decompression
