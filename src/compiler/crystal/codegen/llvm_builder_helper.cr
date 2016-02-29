@@ -24,6 +24,10 @@ module Crystal
       int32(n)
     end
 
+    def int(n, type)
+      LLVM.int llvm_type(type), n
+    end
+
     def null
       int(0)
     end
