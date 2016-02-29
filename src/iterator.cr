@@ -951,7 +951,7 @@ module Iterator(T)
   end
 
   # Returns an iterator that returns the elements of this iterator and the given
-  # one pairwise as tupels.
+  # one pairwise as tuples.
   #
   #    iter1 = [4, 5, 6].each
   #    iter2 = [7, 8, 9].each

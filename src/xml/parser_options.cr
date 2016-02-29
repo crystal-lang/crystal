@@ -30,7 +30,7 @@ enum XML::ParserOptions
   # Use the SAX1 interface internally
   SAX1 = 512
 
-  # Implement XInclude substitition
+  # Implement XInclude substitution
   XINCLUDE = 1024
 
   # Forbid network access

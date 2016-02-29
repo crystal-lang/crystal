@@ -174,7 +174,7 @@ module Enumerable(T)
   #     User #0: Alice
   #     User #1: Bob
   #
-  # Accepts an optional *offset* parameter, which tells it to start counting from there. So, a more humand
+  # Accepts an optional *offset* parameter, which tells it to start counting from there. So, a more human
   # friendly version of the previous snippet would be:
   #
   #     ["Alice", "Bob"].each_with_index(1) do |user, i|
@@ -346,7 +346,7 @@ module Enumerable(T)
     index { |e| e == obj }
   end
 
-  # Convers an Enumerable to a hash by using the value returned by the block
+  # Converts an Enumerable to a hash by using the value returned by the block
   # as the hash key.
   # Be aware, if two elements return the same value as a key one will override
   # the other. If you want to keep all values, then you should probably use

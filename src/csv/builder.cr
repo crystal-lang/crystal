@@ -23,7 +23,7 @@
 # puts result
 # ```
 #
-# Ouptut:
+# Output:
 #
 # ```text
 # Hello,1,a,"String with ""quotes"""
@@ -87,7 +87,7 @@ class CSV::Builder
     @first_cell_in_row = false
   end
 
-  # A CSV Row buing built.
+  # A CSV Row being built.
   struct Row
     # :nodoc:
     def initialize(@builder)
