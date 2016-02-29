@@ -786,4 +786,14 @@ describe "Type inference: initialize" do
       Foo(Int32).new.x + 1
       )) { int32 }
   end
+
+  it "errors on default new when using named arguments (#2245)" do
+    assert_error %(
+      class Foo
+      end
+
+      Foo.new(x: 1)
+      ),
+      "no argument named 'x'"
+  end
 end

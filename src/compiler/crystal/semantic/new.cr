@@ -87,10 +87,16 @@ module Crystal
       end
 
       new_def = Def.argless_new(scope.instance_type)
-      match = Match.new(new_def, arg_types, MatchContext.new(scope, scope))
       scope.add_def new_def
 
-      Matches.new([match], true)
+      # We only return matches if there are no args and no named args,
+      # because we just defined `def self.new; x = initialize; x; end`
+      if arg_types.empty? && !named_args
+        match = Match.new(new_def, arg_types, MatchContext.new(scope, scope))
+        Matches.new([match], true)
+      else
+        Matches.new([] of Match, false)
+      end
     end
 
     def define_new_with_initialize(scope, arg_types, matches)
