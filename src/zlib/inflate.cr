@@ -1,7 +1,7 @@
 # A read-only `IO` object to decompress data in zlib or gzip format.
 #
 # Instances of this class wrap another IO object. When you read from this instance
-# instance, it reads data from the underlying IO, descompresses it, and returns
+# instance, it reads data from the underlying IO, decompresses it, and returns
 # it to the caller.
 #
 # ### Example: decompress text a file

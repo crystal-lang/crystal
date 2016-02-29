@@ -69,7 +69,7 @@ class Array(T)
   #
   # The *initial_capacity* is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If you have an estimate
-  # of the maxinum number of elements an array will hold, the array should
+  # of the maximum number of elements an array will hold, the array should
   # be initialized with that capacity for improved performance.
   #
   # ```
@@ -482,7 +482,7 @@ class Array(T)
   # Returns all elements that are within the given range
   #
   # Negative indices count backward from the end of the array (-1 is the last
-  # element). Aditionally, an empty array is returned when the starting index
+  # element). Additionally, an empty array is returned when the starting index
   # for an element range is at the end of the array.
   #
   # Raises `IndexError` if the starting index is out of range.
@@ -503,7 +503,7 @@ class Array(T)
   # given start index.
   #
   # Negative indices count backward from the end of the array (-1 is the last
-  # element). Aditionally, an empty array is returned when the starting index
+  # element). Additionally, an empty array is returned when the starting index
   # for an element range is at the end of the array.
   #
   # Raises `IndexError` if the starting index is out of range.

@@ -126,13 +126,13 @@ module Benchmark
       # Number of 100ms runs during the calculation stage
       property! size : Int32
 
-      # Statistcal mean from calculation stage
+      # Statistical mean from calculation stage
       property! mean : Float64
 
-      # Statistcal variance from calculation stage
+      # Statistical variance from calculation stage
       property! variance : Float64
 
-      # Statistcal standard deviation from calculation stage
+      # Statistical standard deviation from calculation stage
       property! stddev : Float64
 
       # Relative standard deviation as a percentage

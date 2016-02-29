@@ -13,7 +13,7 @@ require "./**"
 # ### Parsing
 #
 # Several ways of parsing CSV are provided. The most straight-forward, but
-# slow or inneficient for some scenarios, is `CSV#parse`, which returns
+# slow or inefficient for some scenarios, is `CSV#parse`, which returns
 # an array of arrays of all data.
 #
 # Rows can be traversed in a linear fashion with `CSV#each_row`, or
@@ -147,7 +147,7 @@ class CSV
   # If *strip* is true, row values are stripped with `String#strip` before being
   # returned from methods.
   #
-  # If *headers* is true, row values can be accesed with header names or patterns.
+  # If *headers* is true, row values can be accessed with header names or patterns.
   # Headers are always stripped.
   #
   # see `CSV.parse` about the *separator* and *quote_char* arguments
@@ -170,7 +170,7 @@ class CSV
   # If *strip* is true, row values are stripped with `String#strip` before being
   # returned from methods.
   #
-  # If *headers* is true, row values can be accesed with header names or patterns.
+  # If *headers* is true, row values can be accessed with header names or patterns.
   # Headers are always stripped.
   #
   # see `CSV.parse` about the *separator* and *quote_char* arguments

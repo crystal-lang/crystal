@@ -185,7 +185,7 @@ class Regex
     # - PCRE_DOTALL changes the "." meaning,
     # - PCRE_MULTILINE changes "^" and "$" meanings)
     # Ruby modifies this meaning to have essentially one unique "m"
-    # flag that activates both behviours, so here we do the same by
+    # flag that activates both behaviours, so here we do the same by
     # mapping MULTILINE to PCRE_MULTILINE | PCRE_DOTALL
     MULTILINE = 6
     EXTENDED  = 8
@@ -384,7 +384,7 @@ class Regex
   end
 
   # Convert to String in literal format. Returns the source as a String in
-  # Regex literat format, delimited in forward slashes (`/`), with any
+  # Regex literal format, delimited in forward slashes (`/`), with any
   # optional flags included.
   #
   # ```
