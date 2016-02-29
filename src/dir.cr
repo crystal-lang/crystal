@@ -19,13 +19,13 @@ lib LibC
     end
   end
 
-  fun getcwd(buffer : UInt8*, size : Int32) : UInt8*
-  fun chdir = chdir(path : UInt8*) : Int32
+  fun getcwd(buffer : UInt8*, size : SizeT) : UInt8*
+  fun chdir = chdir(path : UInt8*) : Int
   fun opendir(name : UInt8*) : Dir*
-  fun closedir(dir : Dir*) : Int32
+  fun closedir(dir : Dir*) : Int
 
-  fun mkdir(path : UInt8*, mode : LibC::ModeT) : Int32
-  fun rmdir(path : UInt8*) : Int32
+  fun mkdir(path : UInt8*, mode : LibC::ModeT) : Int
+  fun rmdir(path : UInt8*) : Int
 
   ifdef darwin
     fun readdir(dir : Dir*) : DirEntry*
