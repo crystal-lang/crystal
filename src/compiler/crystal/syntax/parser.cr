@@ -901,116 +901,140 @@ module Crystal
       when :IDENT
         case @token.value
         when :begin
-          parse_begin
+          check_type_declaration { parse_begin }
         when :nil
-          node_and_next_token NilLiteral.new
+          check_type_declaration { node_and_next_token NilLiteral.new }
         when :true
-          node_and_next_token BoolLiteral.new(true)
+          check_type_declaration { node_and_next_token BoolLiteral.new(true) }
         when :false
-          node_and_next_token BoolLiteral.new(false)
+          check_type_declaration { node_and_next_token BoolLiteral.new(false) }
         when :yield
-          parse_yield
+          check_type_declaration { parse_yield }
         when :with
-          parse_yield_with_scope
+          check_type_declaration { parse_yield_with_scope }
         when :abstract
-          check_not_inside_def("can't use abstract inside def") do
-            doc = @token.doc
+          check_type_declaration do
+            check_not_inside_def("can't use abstract inside def") do
+              doc = @token.doc
 
-            next_token_skip_space_or_newline
-            case @token.type
-            when :IDENT
-              case @token.value
-              when :def
-                parse_def is_abstract: true, doc: doc
-              when :class
-                parse_class_def is_abstract: true, doc: doc
-              when :struct
-                parse_class_def is_abstract: true, is_struct: true, doc: doc
+              next_token_skip_space_or_newline
+              case @token.type
+              when :IDENT
+                case @token.value
+                when :def
+                  parse_def is_abstract: true, doc: doc
+                when :class
+                  parse_class_def is_abstract: true, doc: doc
+                when :struct
+                  parse_class_def is_abstract: true, is_struct: true, doc: doc
+                else
+                  unexpected_token
+                end
               else
                 unexpected_token
               end
-            else
-              unexpected_token
             end
           end
         when :def
-          check_not_inside_def("can't define def inside def") do
-            parse_def
+          check_type_declaration do
+            check_not_inside_def("can't define def inside def") do
+              parse_def
+            end
           end
         when :macro
-          check_not_inside_def("can't define macro inside def") do
-            parse_macro
+          check_type_declaration do
+            check_not_inside_def("can't define macro inside def") do
+              parse_macro
+            end
           end
         when :require
-          parse_require
+          check_type_declaration { parse_require }
         when :case
-          parse_case
+          check_type_declaration { parse_case }
         when :if
-          parse_if
+          check_type_declaration { parse_if }
         when :ifdef
-          parse_ifdef
+          check_type_declaration { parse_ifdef }
         when :unless
-          parse_unless
+          check_type_declaration { parse_unless }
         when :include
-          check_not_inside_def("can't include inside def") do
-            parse_include
+          check_type_declaration do
+            check_not_inside_def("can't include inside def") do
+              parse_include
+            end
           end
         when :extend
-          check_not_inside_def("can't extend inside def") do
-            parse_extend
+          check_type_declaration do
+            check_not_inside_def("can't extend inside def") do
+              parse_extend
+            end
           end
         when :class
-          check_not_inside_def("can't define class inside def") do
-            parse_class_def
+          check_type_declaration do
+            check_not_inside_def("can't define class inside def") do
+              parse_class_def
+            end
           end
         when :struct
-          check_not_inside_def("can't define struct inside def") do
-            parse_class_def is_struct: true
+          check_type_declaration do
+            check_not_inside_def("can't define struct inside def") do
+              parse_class_def is_struct: true
+            end
           end
         when :module
-          check_not_inside_def("can't define module inside def") do
-            parse_module_def
+          check_type_declaration do
+            check_not_inside_def("can't define module inside def") do
+              parse_module_def
+            end
           end
         when :enum
-          check_not_inside_def("can't define enum inside def") do
-            parse_enum_def
+          check_type_declaration do
+            check_not_inside_def("can't define enum inside def") do
+              parse_enum_def
+            end
           end
         when :while
-          parse_while
+          check_type_declaration { parse_while }
         when :until
-          parse_until
+          check_type_declaration { parse_until }
         when :return
-          parse_return
+          check_type_declaration { parse_return }
         when :next
-          parse_next
+          check_type_declaration { parse_next }
         when :break
-          parse_break
+          check_type_declaration { parse_break }
         when :lib
-          check_not_inside_def("can't define lib inside def") do
-            parse_lib
+          check_type_declaration do
+            check_not_inside_def("can't define lib inside def") do
+              parse_lib
+            end
           end
         when :fun
-          check_not_inside_def("can't define fun inside def") do
-            parse_fun_def require_body: true
+          check_type_declaration do
+            check_not_inside_def("can't define fun inside def") do
+              parse_fun_def require_body: true
+            end
           end
         when :alias
-          check_not_inside_def("can't define alias inside def") do
-            parse_alias
+          check_type_declaration do
+            check_not_inside_def("can't define alias inside def") do
+              parse_alias
+            end
           end
         when :pointerof
-          parse_pointerof
+          check_type_declaration { parse_pointerof }
         when :sizeof
-          parse_sizeof
+          check_type_declaration { parse_sizeof }
         when :instance_sizeof
-          parse_instance_sizeof
+          check_type_declaration { parse_instance_sizeof }
         when :typeof
-          parse_typeof
+          check_type_declaration { parse_typeof }
         when :private
-          parse_visibility_modifier Visibility::Private
+          check_type_declaration { parse_visibility_modifier Visibility::Private }
         when :protected
-          parse_visibility_modifier Visibility::Protected
+          check_type_declaration { parse_visibility_modifier Visibility::Protected }
         when :asm
-          parse_asm
+          check_type_declaration { parse_asm }
         else
           set_visibility parse_var_or_call
         end
@@ -1027,6 +1051,37 @@ module Crystal
       else
         unexpected_token_in_atomic
       end
+    end
+
+    def check_type_declaration
+      if next_comes_colon_space?
+        name = @token.value.to_s
+        var = Var.new(name).at(@token.location)
+        next_token_skip_space
+        check :":"
+        next_token_skip_space_or_newline
+        var_type = parse_single_type
+        type_declaration = TypeDeclaration.new(var, var_type).at(var.location)
+        set_visibility type_declaration
+      else
+        yield
+      end
+    end
+
+    def next_comes_colon_space?
+      return false unless @no_type_declaration == 0
+
+      pos = current_pos
+      while current_char.whitespace?
+        next_char_no_column_increment
+      end
+      comes_colon_space = current_char == ':'
+      if comes_colon_space
+        next_char_no_column_increment
+        comes_colon_space = current_char.whitespace?
+      end
+      self.current_pos = pos
+      comes_colon_space
     end
 
     def new_node_check_type_declaration(klass)
@@ -3365,7 +3420,7 @@ module Crystal
     end
 
     def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false)
-      if @token.keyword?(:as) || @token.keyword?(:end)
+      if (@token.keyword?(:as) || @token.keyword?(:end)) && !next_comes_colon_space?
         return nil
       end
 
@@ -3394,9 +3449,9 @@ module Crystal
 
       case @token.value
       when :if, :unless, :while, :until, :rescue, :ensure
-        return nil
+        return nil unless next_comes_colon_space?
       when :yield
-        return nil if @stop_on_yield > 0
+        return nil if @stop_on_yield > 0 && !next_comes_colon_space?
       end
 
       args = [] of ASTNode
@@ -4512,6 +4567,10 @@ module Crystal
       if @token.type == :IDENT
         case @token.value
         when :do, :end, :else, :elsif, :when, :rescue, :ensure
+          if next_comes_colon_space?
+            return false
+          end
+
           return true
         end
       end
@@ -4600,7 +4659,9 @@ module Crystal
       when :IDENT
         case @token.value
         when :break, :next, :return
-          raise "void value expression", @token, @token.value.to_s.size
+          unless next_comes_colon_space?
+            raise "void value expression", @token, @token.value.to_s.size
+          end
         end
       end
     end
