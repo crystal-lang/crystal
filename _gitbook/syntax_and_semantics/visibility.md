@@ -39,7 +39,7 @@ end
 A `protected` method can only be invoked on:
 
 1. instances of the same type as the current type
-2. instances in the same namespace (class, struct, module, etc.) as the current ype
+2. instances in the same namespace (class, struct, module, etc.) as the current type
 
 ```crystal
 ### Example of 1
@@ -74,7 +74,7 @@ one_more.say "hello" # Error, one_more is a Person
 
 module Namespace
   class Foo
-    protectede def foo
+    protected def foo
       puts "Hello"
     end
   end
