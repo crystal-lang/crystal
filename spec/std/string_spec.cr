@@ -800,6 +800,19 @@ describe "String" do
     end
   end
 
+  describe "rsub" do
+    it "replaces with numeric back-reference" do
+      "foo".rsub(/o/, "x\\0x").should eq("fxoxo")
+      "foo".rsub(/(o)/, "x\\1x").should eq("fxoxo")
+      "foo".rsub(/(o)/, "\\\\1").should eq("f\\1o")
+      "hello".rsub(/[aeiou]/, "(\\0)").should eq("h(e)llo")
+    end
+
+    it "replaces with named back-reference" do
+      "foo".rsub(/(?<bar>oo)/, "|\\k<bar>|").should eq("f|oo|")
+    end
+  end
+
   describe "gsub" do
     it "gsubs char with char" do
       replaced = "foobar".gsub('o', 'e')
@@ -905,6 +918,50 @@ describe "String" do
 
     it "gsubs using $~" do
       "foo".gsub(/(o)/) { "x#{$1}x" }.should eq("fxoxxox")
+    end
+  end
+
+  describe "grsub" do
+    it "replaces with numeric back-reference" do
+      "foo".grsub(/o/, "x\\0x").should eq("fxoxxox")
+      "foo".grsub(/(o)/, "x\\1x").should eq("fxoxxox")
+      "foo".grsub(/(ここ)|(oo)/, "x\\1\\2x").should eq("fxoox")
+    end
+
+    it "replaces with named back-reference" do
+      "foo".grsub(/(?<bar>oo)/, "|\\k<bar>|").should eq("f|oo|")
+      "foo".grsub(/(?<x>ここ)|(?<bar>oo)/, "|\\k<bar>|").should eq("f|oo|")
+    end
+
+    it "replaces with incomplete back-reference" do
+      "foo".grsub(/o/, "\\").should eq("f\\\\")
+      "foo".grsub(/o/, "\\\\").should eq("f\\\\")
+
+      expect_raises(ArgumentError) do
+        "foo".grsub(/(?<bar>oo)/, "|\\k<bar|")
+      end
+
+      expect_raises(ArgumentError) do
+        "foo".grsub(/o/, "\\k")
+      end
+
+      expect_raises(ArgumentError) do
+        "foo".grsub(/o/, "\\k<")
+      end
+    end
+
+    it "replaces with back-reference to missing capture group" do
+      "foo".grsub(/o/, "\\1").should eq("f")
+      "foo".grsub(/o/, "\\k<bar>").should eq("f")
+
+      expect_raises(ArgumentError) do
+        "foo".grsub(/o/, "\\k<>")
+      end
+    end
+
+    it "replaces with escaped back-reference" do
+      "foo".grsub(/o/, "\\\\0").should eq("f\\0\\0")
+      "foo".grsub(/oo/, "\\\\k<bar>").should eq("f\\k<bar>")
     end
   end
 
