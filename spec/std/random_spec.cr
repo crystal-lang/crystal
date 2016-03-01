@@ -35,6 +35,12 @@ describe "Random" do
     x.should be < 4
   end
 
+  it "does with range of Float" do
+    x = rand(-5.0..2.5)
+    x.should be >= -5.0
+    x.should be <= 2.5
+  end
+
   it "raises on invalid range" do
     expect_raises ArgumentError, "incorrect rand value: 1...1" do
       rand(1...1)
