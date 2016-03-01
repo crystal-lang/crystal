@@ -4,6 +4,8 @@ Methods are public by default: the compiler will always let you invoke them. Bec
 
 Methods can be marked as `private` or `protected`.
 
+## private
+
 A `private` method can only be invoked without a receiver, that is, without something before the dot:
 
 ```crystal
@@ -32,9 +34,16 @@ class Employee < Person
 end
 ```
 
-A `protected` method can only be invoked on instances of the same type as the current type:
+## protected
+
+A `protected` method can only be invoked on:
+
+1. instances of the same type as the current type
+2. instances in the same namespace (class, struct, module, etc.) as the current ype
 
 ```crystal
+### Example of 1
+
 class Person
   protected def say(message)
     puts message
@@ -60,6 +69,25 @@ end
 one_more = Person.new "One more"
 one_more.say "hello" # Error, one_more is a Person
                      # but current type is the Program
+
+### Example of 2
+
+module Namespace
+  class Foo
+    protectede def foo
+      puts "Hello"
+    end
+  end
+
+  class Bar
+    def bar
+      # Works, because Foo and Bar are under Namespace
+      Foo.new.foo
+    end
+  end
+end
+
+Namespace::Bar.new.bar
 ```
 
 A `protected` class method can be invoked from an instance method and the other way around:
