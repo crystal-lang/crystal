@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.3.10" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.7.3.10" data-basepath=".." data-revision="Tue Mar 01 2016 13:51:14 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1998,6 +1998,7 @@
                         <h1 id="visibility">Visibility</h1>
 <p>Methods are public by default: the compiler will always let you invoke them. Because public is the default if there is no <code>public</code> keyword.</p>
 <p>Methods can be marked as <code>private</code> or <code>protected</code>.</p>
+<h2 id="private">private</h2>
 <p>A <code>private</code> method can only be invoked without a receiver, that is, without something before the dot:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
   <span class="hljs-keyword">private</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">say</span></span>(message)
@@ -2020,8 +2021,15 @@
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
-<p>A <code>protected</code> method can only be invoked on instances of the same type as the current type:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+<h2 id="protected">protected</h2>
+<p>A <code>protected</code> method can only be invoked on:</p>
+<ol>
+<li>instances of the same type as the current type</li>
+<li>instances in the same namespace (class, struct, module, etc.) as the current ype</li>
+</ol>
+<pre><code class="lang-crystal"><span class="hljs-comment">### Example of 1</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
   <span class="hljs-keyword">protected</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">say</span></span>(message)
     puts message
   <span class="hljs-keyword">end</span>
@@ -2046,6 +2054,25 @@
 one_more = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;One more&quot;</span>
 one_more.say <span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-comment"># Error, one_more is a Person</span>
                      <span class="hljs-comment"># but current type is the Program</span>
+
+<span class="hljs-comment">### Example of 2</span>
+
+<span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Namespace</span></span>
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span></span>
+    protectede <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">foo</span></span>
+      puts <span class="hljs-string">&quot;Hello&quot;</span>
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Bar</span></span>
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">bar</span></span>
+      <span class="hljs-comment"># Works, because Foo and Bar are under Namespace</span>
+      <span class="hljs-constant">Foo</span>.new.foo
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Namespace::Bar</span>.new.bar
 </code></pre>
 <p>A <code>protected</code> class method can be invoked from an instance method and the other way around:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>

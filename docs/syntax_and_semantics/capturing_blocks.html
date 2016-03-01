@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.9.1" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="4.7.9.1" data-basepath=".." data-revision="Tue Mar 01 2016 13:51:14 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2044,8 +2044,7 @@ proc = some_proc { |x| x.to_s }
 proc.call(<span class="hljs-number">1</span>) <span class="hljs-comment"># &quot;1&quot;</span>
 </code></pre>
 <h2 id="break-and-next">break and next</h2>
-<p><code>break</code> and <code>next</code> can&apos;t be used inside a captured block. <code>return</code> can be used and will exit from the block (not the surrounding method).</p>
-<p>The semantic for <code>next</code> and <code>return</code> inside captured blocks <a href="https://github.com/manastech/crystal/issues/420" target="_blank">might swap in the future</a>.</p>
+<p><code>return</code> and <code>break</code> can&apos;t be used inside a captured block. <code>next</code> can be used and will exit and give the value of the captured block.</p>
 <h2 id="with-yield">with ... yield</h2>
 <p>The default receiver within a captured block can&apos;t be changed by using <code>with ... yield</code>.</p>
 
