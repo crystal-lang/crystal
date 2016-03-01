@@ -11,9 +11,9 @@ end
 
 describe "Int" do
   describe "**" do
-    assert { (2 ** 2).should eq(4) }
-    assert { (2 ** 2.5_f32).should eq(5.656854249492381) }
-    assert { (2 ** 2.5).should eq(5.656854249492381) }
+    assert { (2 ** 2).should be_close(4, 0.0001) }
+    assert { (2 ** 2.5_f32).should be_close(5.656854249492381, 0.0001) }
+    assert { (2 ** 2.5).should be_close(5.656854249492381, 0.0001) }
   end
 
   describe "#===(:Char)" do
