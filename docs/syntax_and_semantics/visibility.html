@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.3.10" data-basepath=".." data-revision="Tue Mar 01 2016 13:51:14 GMT+0000 (UTC)">
+    <div class="book" data-level="4.7.3.10" data-basepath=".." data-revision="Tue Mar 01 2016 14:12:38 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2025,7 +2025,7 @@
 <p>A <code>protected</code> method can only be invoked on:</p>
 <ol>
 <li>instances of the same type as the current type</li>
-<li>instances in the same namespace (class, struct, module, etc.) as the current ype</li>
+<li>instances in the same namespace (class, struct, module, etc.) as the current type</li>
 </ol>
 <pre><code class="lang-crystal"><span class="hljs-comment">### Example of 1</span>
 
@@ -2059,7 +2059,7 @@ one_more.say <span class="hljs-string">&quot;hello&quot;</span> <span class="hlj
 
 <span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Namespace</span></span>
   <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span></span>
-    protectede <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">foo</span></span>
+    <span class="hljs-keyword">protected</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">foo</span></span>
       puts <span class="hljs-string">&quot;Hello&quot;</span>
     <span class="hljs-keyword">end</span>
   <span class="hljs-keyword">end</span>
