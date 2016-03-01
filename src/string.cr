@@ -1149,15 +1149,9 @@ class String
   # "hello".sub(/./) { |s| s[0].ord.to_s + ' ' } # => "104 ello"
   # ```
   def sub(pattern : Regex)
-    match = pattern.match(self)
-    return self unless match
-
-    String.build(bytesize) do |buffer|
-      buffer.write unsafe_byte_slice(0, match.byte_begin)
-      str = match[0]
+    sub_append(pattern) do |str, match, buffer|
       $~ = match
       buffer << yield str, match
-      buffer.write unsafe_byte_slice(match.byte_begin + str.bytesize)
     end
   end
 
@@ -1165,10 +1159,46 @@ class String
   # *replacement*
   #
   # ```
-  # "hello".sub(/[aeiou]/, '*') # => "h*llo"
+  # "hello".sub(/[aeiou]/, "*") # => "h*llo"
   # ```
-  def sub(pattern : Regex, replacement)
-    sub(pattern) { replacement }
+  #
+  # Within *replacement*, the special match variable `$~` will not refer to the
+  # current match.
+  #
+  # If *backreferences* is `true` (the default value), *replacement* can include backreferences:
+  #
+  # ```
+  # "hello".sub(/[aeiou]/, "(\\0)") # => "h(e)llo"
+  # ```
+  #
+  # When substitution is performed, any backreferences found in *replacement*
+  # will be replaced with the contents of the corresponding capture group in
+  # *pattern*. Backreferences to capture groups that were not present in
+  # *pattern* or that did not match will be skipped. See `Regex` for information
+  # about capture groups.
+  #
+  # Backreferences are expressed in the form `"\\d"`, where *d* is a group
+  # number, or `"\\k&lt;name>"` where *name* is the name of a named capture group.
+  # A sequence of literal characters resembling a backreference can be
+  # expressed by placing `"\\"` before the sequence.
+  #
+  # ```
+  # "foo".sub(/o/, "x\\0x")                  # => "fxoxo"
+  # "foofoo".sub(/(?<bar>oo)/, "|\\k<bar>|") # => "f|oo|foo"
+  # "foo".sub(/o/, "\\\\0")                  # => "f\\0o"
+  # ```
+  #
+  # Raises `ArgumentError` if an incomplete named back-reference is present in
+  # *replacement*.
+  #
+  # Raises `IndexError` if a named group referenced in *replacement* is not present
+  # in *pattern*.
+  def sub(pattern : Regex, replacement, backreferences = true)
+    if backreferences && replacement.is_a?(String) && replacement.has_back_references?
+      sub_append(pattern) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
+    else
+      sub(pattern) { replacement }
+    end
   end
 
   # Returns a string where the first occurrences of the given *pattern* is replaced
@@ -1247,6 +1277,75 @@ class String
     end
   end
 
+  private def sub_append(pattern : Regex)
+    match = pattern.match(self)
+    return self unless match
+
+    String.build(bytesize) do |buffer|
+      buffer.write unsafe_byte_slice(0, match.byte_begin)
+      str = match[0]
+      $~ = match
+      yield str, match, buffer
+      buffer.write unsafe_byte_slice(match.byte_begin + str.bytesize)
+    end
+  end
+
+  # This returns true if this string has '\\' in it. It might not be a back reference,
+  # but '\\' is probably used for back references, so this check is faster than parsing
+  # the whole thing.
+  def has_back_references?
+    to_slice.index('\\'.ord.to_u8)
+  end
+
+  private def scan_backreferences(replacement, match_data, buffer)
+    # We only append to the buffer in chunks, so if we have "foo\\1", we remember that
+    # the chunk starts at index 0 (first_index) and when we find a "\\" we append
+    # from 0 to 3 in a single write. When we find a "\\0" or "\\k<...>", we append
+    # from the first_index, process the backreference, and then reset first_index
+    # to the new index.
+    first_index = 0
+    index = 0
+
+    while index = replacement.byte_index('\\'.ord.to_u8, index)
+      index += 1
+      chr = replacement.to_unsafe[index].chr
+      case chr
+      when '\\'
+        buffer.write(replacement.unsafe_byte_slice(first_index, index - first_index))
+        index += 1
+        first_index = index
+      when '0'..'9'
+        buffer.write(replacement.unsafe_byte_slice(first_index, index - 1 - first_index))
+        buffer << match_data[chr - '0']?
+        index += 1
+        first_index = index
+      when 'k'
+        index += 1
+        chr = replacement.to_unsafe[index].chr
+        next unless chr == '<'
+
+        buffer.write(replacement.unsafe_byte_slice(first_index, index - 2 - first_index))
+
+        index += 1
+        start_index = index
+        end_index = replacement.byte_index('>'.ord.to_u8, start_index)
+        raise ArgumentError.new("missing ending '>' for '\\\\k<...'") unless end_index
+
+        name = replacement.byte_slice(start_index, end_index - start_index)
+        capture = match_data[name]?
+        raise IndexError.new("undefined group name reference: #{name.inspect}") unless capture
+
+        buffer << capture
+        index = end_index + 1
+        first_index = index
+      end
+    end
+
+    if first_index != replacement.bytesize
+      buffer.write(replacement.unsafe_byte_slice(first_index))
+    end
+  end
+
   # Returns a string where each character yielded to the given block
   # is replaced by the block's return value.
   #
@@ -1284,35 +1383,9 @@ class String
   # "hello".gsub(/./) { |s| s[0].ord.to_s + ' ' } # => #=> "104 101 108 108 111 "
   # ```
   def gsub(pattern : Regex)
-    byte_offset = 0
-    match = pattern.match_at_byte_index(self, byte_offset)
-    return self unless match
-
-    last_byte_offset = 0
-
-    String.build(bytesize) do |buffer|
-      while match
-        index = match.byte_begin(0)
-
-        buffer.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
-        str = match[0]
-        $~ = match
-        buffer << yield str, match
-
-        if str.bytesize == 0
-          byte_offset = index + 1
-          last_byte_offset = index
-        else
-          byte_offset = index + str.bytesize
-          last_byte_offset = byte_offset
-        end
-
-        match = pattern.match_at_byte_index(self, byte_offset)
-      end
-
-      if last_byte_offset < bytesize
-        buffer.write unsafe_byte_slice(last_byte_offset)
-      end
+    gsub_append(pattern) do |string, match, buffer|
+      $~ = match
+      buffer << yield string, match
     end
   end
 
@@ -1322,8 +1395,44 @@ class String
   # ```
   # "hello".gsub(/[aeiou]/, '*') # => "h*ll*"
   # ```
-  def gsub(pattern : Regex, replacement)
-    gsub(pattern) { replacement }
+  #
+  # Within *replacement*, the special match variable `$~` will not refer to the
+  # current match.
+  #
+  # If *backreferences* is `true` (the default value), *replacement* can include backreferences:
+  #
+  # ```
+  # "hello".gsub(/[aeiou]/, "(\\0)") # => "h(e)ll(o)"
+  # ```
+  #
+  # When substitution is performed, any backreferences found in *replacement*
+  # will be replaced with the contents of the corresponding capture group in
+  # *pattern*. Backreferences to capture groups that were not present in
+  # *pattern* or that did not match will be skipped. See `Regex` for information
+  # about capture groups.
+  #
+  # Backreferences are expressed in the form `"\\d"`, where *d* is a group
+  # number, or `"\\k&lt;name>"` where *name* is the name of a named capture group.
+  # A sequence of literal characters resembling a backreference can be
+  # expressed by placing `"\\"` before the sequence.
+  #
+  # ```
+  # "foo".gsub(/o/, "x\\0x")                  # => "fxoxxox"
+  # "foofoo".gsub(/(?<bar>oo)/, "|\\k<bar>|") # => "f|oo|f|oo|"
+  # "foo".gsub(/o/, "\\\\0")                  # => "f\\0\\0"
+  # ```
+  #
+  # Raises `ArgumentError` if an incomplete named back-reference is present in
+  # *replacement*.
+  #
+  # Raises `IndexError` if a named group referenced in *replacement* is not present
+  # in *pattern*.
+  def gsub(pattern : Regex, replacement, backreferences = true)
+    if backreferences && replacement.is_a?(String) && replacement.has_back_references?
+      gsub_append(pattern) { |_, match, buffer| scan_backreferences(replacement, match, buffer) }
+    else
+      gsub(pattern) { replacement }
+    end
   end
 
   # Returns a string where all occurrences of the given *pattern* are replaced
@@ -1396,6 +1505,39 @@ class String
   def gsub(hash : Hash(Char, _))
     gsub do |char|
       hash[char]? || char
+    end
+  end
+
+  private def gsub_append(pattern : Regex)
+    byte_offset = 0
+    match = pattern.match_at_byte_index(self, byte_offset)
+    return self unless match
+
+    last_byte_offset = 0
+
+    String.build(bytesize) do |buffer|
+      while match
+        index = match.byte_begin(0)
+
+        buffer.write unsafe_byte_slice(last_byte_offset, index - last_byte_offset)
+        str = match[0]
+        $~ = match
+        yield str, match, buffer
+
+        if str.bytesize == 0
+          byte_offset = index + 1
+          last_byte_offset = index
+        else
+          byte_offset = index + str.bytesize
+          last_byte_offset = byte_offset
+        end
+
+        match = pattern.match_at_byte_index(self, byte_offset)
+      end
+
+      if last_byte_offset < bytesize
+        buffer.write unsafe_byte_slice(last_byte_offset)
+      end
     end
   end
 
