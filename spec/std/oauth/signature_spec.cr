@@ -38,7 +38,7 @@ describe OAuth::Signature do
         "oauth_callback": "some+callback",
       }
       base_string = signature.base_string request, ssl, ts, "nonce"
-      base_string.should eq("POST&http%3A%2F%2Fsome.host:5678%2Fsome%2Fpath&oauth_callback%3Dsome%252Bcallback%26oauth_consumer_key%3Dconsumer_key%26oauth_nonce%3Dnonce%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1234%26oauth_version%3D1.0")
+      base_string.should eq("POST&http%3A%2F%2Fsome.host%3A5678%2Fsome%2Fpath&oauth_callback%3Dsome%252Bcallback%26oauth_consumer_key%3Dconsumer_key%26oauth_nonce%3Dnonce%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1234%26oauth_version%3D1.0")
     end
 
     it "computes when ssl" do

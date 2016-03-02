@@ -49,7 +49,7 @@ struct OAuth::Signature
       str << "%3A%2F%2F"
       URI.escape host, str
       if port
-        str << ':'
+        str << "%3A"
         str << port
       end
       uri_path = request.path || "/"
