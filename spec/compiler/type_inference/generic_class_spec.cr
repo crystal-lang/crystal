@@ -507,6 +507,26 @@ describe "Type inference: generic class" do
       "generic type too nested"
   end
 
+  it "errors on generic type too nested (#2257)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Bar
+        def initialize(@value)
+        end
+
+        def value
+          @value
+        end
+      end
+
+      foo = Foo(typeof(Bar.new(nil).value))
+      Bar.new(foo)
+      ),
+      "generic type too nested"
+  end
+
   it "errors on too nested tuple instance" do
     assert_error %(
       def foo
