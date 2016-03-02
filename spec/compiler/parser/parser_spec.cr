@@ -845,20 +845,24 @@ describe "Parser" do
   it_parses "require \"foo\"", Require.new("foo")
   it_parses "require \"foo\"; [1]", [Require.new("foo"), ([1.int32] of ASTNode).array]
 
-  it_parses "case 1; when 1; 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
-  it_parses "case 1; when 0, 1; 2; else; 3; end", Case.new(1.int32, [When.new([0.int32, 1.int32] of ASTNode, 2.int32)], 3.int32)
-  it_parses "case 1\nwhen 1\n2\nelse\n3\nend", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
-  it_parses "case 1\nwhen 1\n2\nend", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)])
-  it_parses "case / /; when / /; / /; else; / /; end", Case.new(regex(" "), [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "))
-  it_parses "case / /\nwhen / /\n/ /\nelse\n/ /\nend", Case.new(regex(" "), [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "))
+  it_parses "case 1; when 1; 2; else; 3; end", Case.new([1.int32] of ASTNode, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1; when 0, 1; 2; else; 3; end", Case.new([1.int32] of ASTNode, [When.new([0.int32, 1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1\nwhen 1\n2\nelse\n3\nend", Case.new([1.int32] of ASTNode, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1\nwhen 1\n2\nend", Case.new([1.int32] of ASTNode, [When.new([1.int32] of ASTNode, 2.int32)])
+  it_parses "case / /; when / /; / /; else; / /; end", Case.new([regex(" ")] of ASTNode, [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "))
+  it_parses "case / /\nwhen / /\n/ /\nelse\n/ /\nend", Case.new([regex(" ")] of ASTNode, [When.new([regex(" ")] of ASTNode, regex(" "))], regex(" "))
 
-  it_parses "case 1; when 1 then 2; else; 3; end", Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
-  it_parses "case 1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
-  it_parses "case\n1\nwhen 1\n2\nend\nif a\nend", [Case.new(1.int32, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
+  it_parses "case 1; when 1 then 2; else; 3; end", Case.new([1.int32] of ASTNode, [When.new([1.int32] of ASTNode, 2.int32)], 3.int32)
+  it_parses "case 1\nwhen 1\n2\nend\nif a\nend", [Case.new([1.int32] of ASTNode, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
+  it_parses "case\n1\nwhen 1\n2\nend\nif a\nend", [Case.new([1.int32] of ASTNode, [When.new([1.int32] of ASTNode, 2.int32)]), If.new("a".call)]
 
-  it_parses "case 1\nwhen .foo\n2\nend", Case.new(1.int32, [When.new([Call.new(ImplicitObj.new, "foo")] of ASTNode, 2.int32)])
+  it_parses "case 1\nwhen .foo\n2\nend", Case.new([1.int32] of ASTNode, [When.new([Call.new(ImplicitObj.new, "foo")] of ASTNode, 2.int32)])
   it_parses "case when 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)])
   it_parses "case \nwhen 1\n2\nend", Case.new(nil, [When.new([1.int32] of ASTNode, 2.int32)])
+
+  it_parses "case 1, 2, 3; when 4, 5, 6; 7; else; 8; end", Case.new([1.int32, 2.int32, 3.int32] of ASTNode, [When.new([4.int32, 5.int32, 6.int32] of ASTNode, 7.int32)], 8.int32)
+  it_parses "case 1; when _; 2; end", Case.new([1.int32] of ASTNode, [When.new([Underscore.new] of ASTNode, 2.int32)])
+  assert_syntax_error "case 1, 2; when 3; 4; end", "wrong number of when expressions (given 1, expected 2)", 1, 12
 
   it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
   it_parses "def foo; / /; end", Def.new("foo", body: regex(" "))

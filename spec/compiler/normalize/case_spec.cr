@@ -48,4 +48,20 @@ describe "Normalize: case" do
   it "normalizes case with nil to is_a?" do
     assert_expand_second "x = 1; case x; when nil; 'b'; end", "if x.is_a?(::Nil)\n  'b'\nend"
   end
+
+  it "normalizes case with multiple expressions" do
+    assert_expand_second "x, y = 1, 2; case x, y; when 2, 3; 4; end", "if 2 === x && 3 === y\n  4\nend"
+  end
+
+  it "normalizes case with multiple expressions with underscore" do
+    assert_expand_second "x, y = 1, 2; case x, y; when 2, _; 4; end", "if 2 === x\n  4\nend"
+  end
+
+  it "normalizes case with multiple expressions with all underscores" do
+    assert_expand_second "x, y = 1, 2; case x, y; when _, _; 4; end", "if true\n  4\nend"
+  end
+
+  it "normalizes case with single expressions with underscore" do
+    assert_expand_second "x = 1; case x; when _; 2; end", "if true\n  2\nend"
+  end
 end

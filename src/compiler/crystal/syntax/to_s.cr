@@ -1145,9 +1145,12 @@ module Crystal
 
     def visit(node : Case)
       @str << keyword("case")
-      if cond = node.cond
+      if conds = node.conds
         @str << " "
-        cond.accept self
+        conds.each_with_index do |cond, i|
+          @str << ", " if i > 0
+          cond.accept self
+        end
       end
       newline
       node.whens.each do |wh|

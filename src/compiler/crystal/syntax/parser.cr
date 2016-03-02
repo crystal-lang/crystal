@@ -2097,8 +2097,22 @@ module Crystal
     def parse_case
       slash_is_regex!
       next_token_skip_space_or_newline
+
+      conds = nil
+
       unless @token.keyword?(:when)
-        cond = parse_op_assign_no_control
+        conds = [] of ASTNode
+
+        while true
+          conds << parse_op_assign_no_control
+          skip_space
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          else
+            break
+          end
+        end
+
         skip_statement_end
       end
 
@@ -2110,15 +2124,19 @@ module Crystal
         when :IDENT
           case @token.value
           when :when
+            when_location = @token.location
+
             slash_is_regex!
             next_token_skip_space_or_newline
             when_conds = [] of ASTNode
             while true
-              if cond && @token.type == :"."
+              if conds && @token.type == :"."
                 next_token
                 call = parse_var_or_call(force_call: true) as Call
                 call.obj = ImplicitObj.new
                 when_conds << call
+              elsif conds && @token.type == :UNDERSCORE
+                when_conds << node_and_next_token(Underscore.new)
               else
                 when_conds << parse_op_assign_no_control
               end
@@ -2141,6 +2159,10 @@ module Crystal
                   unexpected_token @token.to_s, "expecting ',', ';' or '\n'"
                 end
               end
+            end
+
+            if conds && conds.size > 1 && conds.size != when_conds.size
+              raise "wrong number of when expressions (given #{when_conds.size}, expected #{conds.size})", when_location
             end
 
             slash_is_regex!
@@ -2172,7 +2194,7 @@ module Crystal
         end
       end
 
-      Case.new(cond, whens, a_else)
+      Case.new(conds, whens, a_else)
     end
 
     def parse_include

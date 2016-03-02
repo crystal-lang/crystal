@@ -969,8 +969,14 @@ module Crystal
   class Case
     def interpret(method, args, block, interpreter)
       case method
-      when "cond"
-        interpret_argless_method(method, args) { cond || Nop.new }
+      when "conds"
+        interpret_argless_method(method, args) do
+          if conds = self.conds
+            ArrayLiteral.new(conds)
+          else
+            Nop.new
+          end
+        end
       when "whens"
         interpret_argless_method(method, args) { ArrayLiteral.map whens, &.itself }
       when "else"

@@ -1131,23 +1131,24 @@ module Crystal
   end
 
   class Case < ASTNode
-    property :cond
+    property conds : Array(ASTNode)?
     property :whens
     property :else
 
-    def initialize(@cond, @whens, @else = nil)
+    def initialize(@conds : Array(ASTNode)?, @whens, @else = nil)
     end
 
     def accept_children(visitor)
+      @conds.try &.each &.accept visitor
       @whens.each &.accept visitor
       @else.try &.accept visitor
     end
 
     def clone_without_location
-      Case.new(@cond.clone, @whens.clone, @else.clone)
+      Case.new(@conds.clone, @whens.clone, @else.clone)
     end
 
-    def_equals_and_hash @cond, @whens, @else
+    def_equals_and_hash @conds, @whens, @else
   end
 
   # Node that represents an implicit obj in:

@@ -189,7 +189,7 @@ module Crystal
     end
 
     def transform(node : Case)
-      node.cond = node.cond.try &.transform(self)
+      transform_many node.conds
       transform_many node.whens
 
       if node_else = node.else
