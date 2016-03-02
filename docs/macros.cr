@@ -1127,6 +1127,11 @@ module Macros
     # generic, an empty array is returned.
     def type_vars : ArrayLiteral(TypeNode)
     end
+
+    # Returns the class of this type. With this you can, for example, obtain class
+    # methods by invoking `type.class.methods`.
+    def class : TypeNode
+    end
   end
 
   # A binary expression like `And` and `Or`.
