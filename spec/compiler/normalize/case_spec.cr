@@ -26,7 +26,7 @@ describe "Normalize: case" do
   end
 
   it "normalizes case with many expressions in when" do
-    assert_expand_second "x = 1; case x; when 1, 2; 'b'; end", "if 1 === x || 2 === x\n  'b'\nend"
+    assert_expand_second "x = 1; case x; when 1, 2; 'b'; end", "if (1 === x) || (2 === x)\n  'b'\nend"
   end
 
   it "normalizes case with implicit call" do
@@ -47,5 +47,41 @@ describe "Normalize: case" do
 
   it "normalizes case with nil to is_a?" do
     assert_expand_second "x = 1; case x; when nil; 'b'; end", "if x.is_a?(::Nil)\n  'b'\nend"
+  end
+
+  it "normalizes case with multiple expressions" do
+    assert_expand_second "x, y = 1, 2; case {x, y}; when {2, 3}; 4; end", "if (2 === x) && (3 === y)\n  4\nend"
+  end
+
+  it "normalizes case with multiple expressions and types" do
+    assert_expand_second "x, y = 1, 2; case {x, y}; when {Int32, Float64}; 4; end", "if (x.is_a?(Int32)) && (y.is_a?(Float64))\n  4\nend"
+  end
+
+  it "normalizes case with multiple expressions and implicit obj" do
+    assert_expand_second "x, y = 1, 2; case {x, y}; when {.foo, .bar}; 4; end", "if x.foo && y.bar\n  4\nend"
+  end
+
+  it "normalizes case with multiple expressions and comma" do
+    assert_expand_second "x, y = 1, 2; case {x, y}; when {2, 3}, {4, 5}; 6; end", "if ((2 === x) && (3 === y)) || ((4 === x) && (5 === y))\n  6\nend"
+  end
+
+  it "normalizes case with multiple expressions with underscore" do
+    assert_expand_second "x, y = 1, 2; case {x, y}; when {2, _}; 4; end", "if 2 === x\n  4\nend"
+  end
+
+  it "normalizes case with multiple expressions with all underscores" do
+    assert_expand_second "x, y = 1, 2; case {x, y}; when {_, _}; 4; end", "if true\n  4\nend"
+  end
+
+  it "normalizes case with multiple expressions with all underscores twice" do
+    assert_expand_second "x, y = 1, 2; case {x, y}; when {_, _}, {_, _}; 4; end", "if true\n  4\nend"
+  end
+
+  it "normalizes case with multiple expressions and non-tuple" do
+    assert_expand_second "x, y = 1, 2; case {x, y}; when 1; 4; end", "if 1 === ({x, y})\n  4\nend"
+  end
+
+  it "normalizes case with single expressions with underscore" do
+    assert_expand_second "x = 1; case x; when _; 2; end", "if true\n  2\nend"
   end
 end
