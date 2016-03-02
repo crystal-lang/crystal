@@ -1,4 +1,5 @@
 require "spec"
+require "openssl"
 require "openssl/hmac"
 
 describe OpenSSL::HMAC do
@@ -17,6 +18,14 @@ describe OpenSSL::HMAC do
   ].each do |tuple|
     it "computes #{tuple[0]}" do
       OpenSSL::HMAC.hexdigest(tuple[0], "foo", "bar").should eq(tuple[1])
+    end
+
+    it "computes #{tuple[0]} using an instance" do
+      next if tuple[0] == :dss
+
+      hmac = OpenSSL::HMAC.new tuple[0], "foo"
+      hmac << "bar"
+      hmac.hexdigest.should eq(tuple[1])
     end
   end
 end

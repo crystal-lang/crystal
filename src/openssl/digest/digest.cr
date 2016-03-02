@@ -61,9 +61,9 @@ module OpenSSL
 
     protected def finish
       size = digest_size
-      data = Pointer(UInt8).malloc(size)
+      data = Slice(UInt8).new(size)
       LibCrypto.evp_digestfinal_ex(@ctx, data, nil)
-      data.to_slice(size)
+      data
     end
 
     def digest_size
