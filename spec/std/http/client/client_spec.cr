@@ -26,6 +26,8 @@ module HTTP
     typeof(Client.new("host"))
     typeof(Client.new("host", port: 8080))
     typeof(Client.new("host", ssl: true))
+    typeof(Client.new(URI.new))
+    typeof(Client.new(URI.parse("http://www.example.com")))
 
     {% for method in %w(get post put head delete patch) %}
       typeof(Client.{{method.id}} "url")
@@ -44,6 +46,32 @@ module HTTP
     typeof(Client.get(URI.parse("http://www.example.com")))
     typeof(Client.get("http://www.example.com"))
 
+    describe "from URI" do
+      it "has sane defaults" do
+        cl = Client.new(URI.parse("http://demo.com"))
+        cl.ssl?.should be_false
+        cl.port.should eq(80)
+      end
+
+      it "detects ssl" do
+        cl = Client.new(URI.parse("https://demo.com"))
+        cl.ssl?.should be_true
+        cl.port.should eq(443)
+      end
+
+      it "allows for specified ports" do
+        cl = Client.new(URI.parse("https://demo.com:9999"))
+        cl.ssl?.should be_true
+        cl.port.should eq(9999)
+      end
+
+      it "raises error if not http schema" do
+        expect_raises(Exception, "Unsupported scheme: ssh") do
+          Client.new(URI.parse("ssh://demo.com"))
+        end
+      end
+    end
+
     it "doesn't read the body if request was HEAD" do
       resp_get = TestServer.open("localhost", 0, 0) do |server|
         client = Client.new("localhost", server.addr.ip_port)
@@ -59,14 +87,14 @@ module HTTP
     end
 
     it "raises if URI is missing scheme" do
-      expect_raises(ArgumentError, "must have scheme") do
+      expect_raises(ArgumentError, "missing scheme") do
         HTTP::Client.get URI.parse("www.example.com")
       end
     end
 
     it "raises if URI is missing host" do
       expect_raises(ArgumentError, "must have host") do
-        HTTP::Client.get URI.parse("localhost:3000")
+        HTTP::Client.get URI.parse("http://")
       end
     end
 
