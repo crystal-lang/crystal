@@ -108,10 +108,8 @@ class HTTP::Client
   # is used.
   def self.new(uri : URI)
     ssl = ssl_flag(uri)
-
-    port = uri.port || (ssl ? 443 : 80)
-
-    new(uri.host.to_s, port.to_i, ssl)
+    host = validate_host(uri)
+    new(host, uri.port, ssl)
   end
 
   # Creates a new HTTP client, yields it to the block, and closes
@@ -510,17 +508,6 @@ class HTTP::Client
     end
   end
 
-  private def self.valid_scheme?(uri : URI)
-    scheme = uri.scheme
-    raise ArgumentError.new %(Request URI must have scheme. Possibly add "http://" to the request URI? (URI is: #{uri})) unless scheme
-
-    scheme == "http" || scheme == "https"
-  end
-
-  private def self.ssl?(uri : URI)
-    uri.scheme == "https"
-  end
-
   protected def self.ssl_flag(uri)
     scheme = uri.scheme
     case scheme
@@ -535,13 +522,16 @@ class HTTP::Client
     end
   end
 
+  protected def self.validate_host(uri)
+    host = uri.host
+    return host if host && !host.empty?
+
+    raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))
+  end
+
   private def self.exec(uri : URI)
     ssl = ssl_flag(uri)
-
-    host = uri.host.not_nil!
-    if host.empty?
-      raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))
-    end
+    host = validate_host(uri)
 
     port = uri.port
     path = uri.full_path

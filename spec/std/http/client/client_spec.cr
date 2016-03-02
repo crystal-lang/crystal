@@ -70,6 +70,12 @@ module HTTP
           Client.new(URI.parse("ssh://demo.com"))
         end
       end
+
+      it "raises error if URI is missing host" do
+        expect_raises(Exception, "must have host") do
+          Client.new(URI.parse("http:/"))
+        end
+      end
     end
 
     it "doesn't read the body if request was HEAD" do
