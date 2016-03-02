@@ -647,6 +647,12 @@ describe "macro methods" do
         [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
       end
     end
+
+    it "executes class" do
+      assert_macro("x", "{{x.class.name}}", "String:Class") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
   end
 
   describe "declare var methods" do

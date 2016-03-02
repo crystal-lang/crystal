@@ -815,6 +815,8 @@ module Crystal
             raise "undefined method 'size' for TypeNode of type #{type} (must be a tuple type)"
           end
         end
+      when "class"
+        interpret_argless_method(method, args) { TypeNode.new(type.metaclass) }
       else
         super
       end
