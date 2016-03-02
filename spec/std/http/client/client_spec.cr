@@ -66,13 +66,13 @@ module HTTP
       end
 
       it "raises error if not http schema" do
-        expect_raises(Exception, "Unsupported scheme: ssh") do
+        expect_raises(ArgumentError, "Unsupported scheme: ssh") do
           Client.new(URI.parse("ssh://demo.com"))
         end
       end
 
       it "raises error if URI is missing host" do
-        expect_raises(Exception, "must have host") do
+        expect_raises(ArgumentError, "must have host") do
           Client.new(URI.parse("http:/"))
         end
       end
