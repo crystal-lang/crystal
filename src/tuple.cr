@@ -203,6 +203,39 @@ struct Tuple
     true
   end
 
+  # Returns `true` if case equality holds for the elements in `self` and *other*.
+  #
+  # ```
+  # {1, 2} === {1, 2} # => true
+  # {1, 2} === {1, 3} # => false
+  # ```
+  #
+  # See `Object#===`
+  def ===(other : self)
+    {% for i in 0...@type.size %}
+      return false unless self[{{i}}] === other[{{i}}]
+    {% end %}
+    true
+  end
+
+  # Returns `true` if `self` and *other* have the same size and case equality holds
+  # for the elements in `self` and *other*.
+  #
+  # ```
+  # {1, 2} === {1, 2, 3}             # => false
+  # {/o+/, "bar"} === {"foo", "bar"} # => true
+  # ```
+  #
+  # See `Object#===`
+  def ===(other : Tuple)
+    return false unless size == other.size
+
+    size.times do |i|
+      return false unless self[i] === other[i]
+    end
+    true
+  end
+
   # Implements the comparison operator.
   #
   # Each object in each tuple is compared (using the <=> operator).

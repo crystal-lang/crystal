@@ -2113,33 +2113,47 @@ module Crystal
             slash_is_regex!
             next_token_skip_space_or_newline
             when_conds = [] of ASTNode
-            while true
-              if cond && @token.type == :"."
-                next_token
-                call = parse_var_or_call(force_call: true) as Call
-                call.obj = ImplicitObj.new
-                when_conds << call
-              else
-                when_conds << parse_op_assign_no_control
-              end
-              skip_space
-              if @token.keyword?(:then)
-                next_token_skip_space_or_newline
-                break
-              else
-                slash_is_regex!
-                case @token.type
-                when :","
+
+            if cond.is_a?(TupleLiteral)
+              while true
+                if @token.type == :"{"
+                  curly_location = @token.location
+
                   next_token_skip_space_or_newline
-                when :NEWLINE
-                  skip_space_or_newline
-                  break
-                when :";"
-                  skip_statement_end
-                  break
+
+                  tuple_elements = [] of ASTNode
+
+                  while true
+                    tuple_elements << parse_when_expression(cond)
+                    skip_space
+                    if @token.type == :","
+                      next_token_skip_space_or_newline
+                    else
+                      break
+                    end
+                  end
+
+                  if tuple_elements.size != cond.elements.size
+                    raise "wrong number of tuple elements (given #{tuple_elements.size}, expected #{cond.elements.size})", curly_location
+                  end
+
+                  tuple = TupleLiteral.new(tuple_elements)
+                  when_conds << tuple
+
+                  check :"}"
+                  next_token_skip_space
                 else
-                  unexpected_token @token.to_s, "expecting ',', ';' or '\n'"
+                  when_conds << parse_when_expression(cond)
+                  skip_space
                 end
+
+                break if when_expression_end
+              end
+            else
+              while true
+                when_conds << parse_when_expression(cond)
+                skip_space
+                break if when_expression_end
               end
             end
 
@@ -2173,6 +2187,39 @@ module Crystal
       end
 
       Case.new(cond, whens, a_else)
+    end
+
+    def when_expression_end
+      if @token.keyword?(:then)
+        next_token_skip_space_or_newline
+        return true
+      else
+        slash_is_regex!
+        case @token.type
+        when :","
+          next_token_skip_space_or_newline
+        when :NEWLINE
+          skip_space_or_newline
+          return true
+        when :";"
+          skip_statement_end
+          return true
+        else
+          unexpected_token @token.to_s, "expecting ',', ';' or '\n'"
+        end
+      end
+      false
+    end
+
+    def parse_when_expression(cond)
+      if cond && @token.type == :"."
+        next_token
+        call = parse_var_or_call(force_call: true) as Call
+        call.obj = ImplicitObj.new
+        call
+      else
+        parse_op_assign_no_control
+      end
     end
 
     def parse_include
