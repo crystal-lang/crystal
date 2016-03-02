@@ -957,14 +957,14 @@ module Crystal
     end
 
     def to_s_binary(node, op)
-      left_needs_parens = node.left.is_a?(Assign) || node.left.is_a?(Expressions)
+      left_needs_parens = need_parens(node.left)
       in_parenthesis(left_needs_parens, node.left)
 
       @str << " "
       @str << op
       @str << " "
 
-      right_needs_parens = node.right.is_a?(Assign) || node.right.is_a?(Expressions)
+      right_needs_parens = need_parens(node.right)
       in_parenthesis(right_needs_parens, node.right)
       false
     end
