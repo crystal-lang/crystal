@@ -518,7 +518,7 @@ class HTTP::Client
     when "https"
       true
     else
-      raise "Unsupported scheme: #{scheme}"
+      raise ArgumentError.new "Unsupported scheme: #{scheme}"
     end
   end
 
