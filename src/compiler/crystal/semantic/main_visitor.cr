@@ -434,9 +434,10 @@ module Crystal
       # Check if this is an instance variable initializer
       unless @scope
         current_type = current_type()
-        if current_type.is_a?(ClassType)
-          @mod.after_inference_types << current_type
-
+        case current_type
+        when Program, FileModule
+          node.raise "can't use instance variables at the top level"
+        when ClassType, NonGenericModuleType
           ivar_visitor = MainVisitor.new(mod)
           ivar_visitor.scope = current_type
 
@@ -445,19 +446,13 @@ module Crystal
           end
 
           current_type.add_instance_var_initializer(target.name, value, ivar_visitor.meta_vars)
-          if current_type.is_a?(GenericType)
-            node.type = @mod.nil
-            return
-          else
-            var = current_type.lookup_instance_var(target.name, true)
-          end
+          node.type = @mod.nil
+          return
         end
       end
 
-      unless var
-        value.accept self
-        var = lookup_instance_var target
-      end
+      value.accept self
+      var = lookup_instance_var target
 
       target.bind_to var
       node.bind_to value

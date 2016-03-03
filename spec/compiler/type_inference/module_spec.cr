@@ -805,4 +805,44 @@ describe "Type inference: module" do
       ),
       "instance variable '@x' of Foo must be Int32"
   end
+
+  it "initializes variable in module" do
+    assert_type(%(
+      module Moo
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "initializes variable in module, recursive" do
+    assert_type(%(
+      module Moo
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      class Foo
+        include Moo2
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
 end

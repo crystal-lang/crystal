@@ -241,6 +241,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement instance_var_owner"
     end
 
+    def add_instance_var_initializer(name, value, meta_vars)
+      raise "Bug: #{self} doesn't implement add_instance_var_initializer"
+    end
+
     def types
       raise "Bug: #{self} has no types"
     end
@@ -762,6 +766,30 @@ module Crystal
     end
   end
 
+  module InstanceVarInitializerContainer
+    class InstanceVarInitializer
+      getter name
+      property value
+      getter meta_vars
+
+      def initialize(@name, @value, @meta_vars)
+      end
+    end
+
+    getter instance_vars_initializers
+
+    def add_instance_var_initializer(name, value, meta_vars)
+      initializers = @instance_vars_initializers ||= [] of InstanceVarInitializer
+      initializer = InstanceVarInitializer.new(name, value, meta_vars)
+      initializers << initializer
+      initializer
+    end
+
+    def has_instance_var_initializer?(name)
+      @instance_vars_initializers.try(&.any? { |init| init.name == name })
+    end
+  end
+
   class NonGenericModuleType < ModuleType
     include DefInstanceContainer
     include ClassVarContainer
@@ -833,6 +861,19 @@ module Crystal
         end
       end
     end
+
+    def add_instance_var_initializer(name, value, meta_vars)
+      @including_types.try &.each do |type|
+        case type
+        when Program, FileModule
+          # skip
+        when NonGenericModuleType
+          type.add_instance_var_initializer(name, value, meta_vars)
+        when NonGenericClassType
+          type.add_instance_var_initializer(name, value, meta_vars)
+        end
+      end
+    end
   end
 
   # A module that is related to a file and contains its private defs.
@@ -847,30 +888,6 @@ module Crystal
 
     def passed_as_self?
       false
-    end
-  end
-
-  module InstanceVarInitializerContainer
-    class InstanceVarInitializer
-      getter name
-      property value
-      getter meta_vars
-
-      def initialize(@name, @value, @meta_vars)
-      end
-    end
-
-    getter instance_vars_initializers
-
-    def add_instance_var_initializer(name, value, meta_vars)
-      initializers = @instance_vars_initializers ||= [] of InstanceVarInitializer
-      initializer = InstanceVarInitializer.new(name, value, meta_vars)
-      initializers << initializer
-      initializer
-    end
-
-    def has_instance_var_initializer?(name)
-      @instance_vars_initializers.try(&.any? { |init| init.name == name })
     end
   end
 
@@ -1159,6 +1176,15 @@ module Crystal
     def covariant?(other_type)
       other_type = other_type.base_type if other_type.is_a?(VirtualType)
       is_subclass_of?(other_type) || super
+    end
+
+    def add_instance_var_initializer(name, value, meta_vars)
+      super
+
+      var = lookup_instance_var(name, true)
+      var.bind_to(value)
+
+      program.after_inference_types << self
     end
   end
 
@@ -1643,6 +1669,12 @@ module Crystal
         end
       end
       false
+    end
+
+    def add_instance_var_initializer(name, value, meta_vars)
+      super
+
+      program.after_inference_types << self
     end
 
     def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
