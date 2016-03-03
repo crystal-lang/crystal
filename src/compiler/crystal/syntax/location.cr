@@ -12,7 +12,7 @@ module Crystal
     end
 
     def dirname
-      filename = @filename
+      filename = original_filename
       if filename.is_a?(String)
         File.dirname(filename)
       else
