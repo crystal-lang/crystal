@@ -8,12 +8,14 @@ class HTTP::Request
   getter body
   getter version
 
-  def initialize(@method : String, @resource, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
-    if body = @body
+  def initialize(@method : String, @resource, @headers = Headers.new : Headers, body = nil, @version = "HTTP/1.1")
+    if body.is_a?(String)
       @headers["Content-Length"] = body.bytesize.to_s
-    elsif @method == "POST" || @method == "PUT"
+    elsif !body && (@method == "POST" || @method == "PUT")
       @headers["Content-Length"] = "0"
     end
+
+    @body = body
   end
 
   # Returns a convenience wrapper around querying and setting cookie related
