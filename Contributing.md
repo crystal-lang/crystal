@@ -51,6 +51,9 @@ you can do `make spec` or `bin/crystal spec/all_spec.cr`. To run a particular sp
 Note: at this point you might get long compile error that include "library not found for: ...". This means
 you are [missing some libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).
 
+Make sure that your changes follow the recommended [Coding Style](http://crystal-lang.org/docs/conventions/coding_style.html).
+You can run `crystal tool format` to automate this.
+
 Then push your changes and create a pull request.
 
 ## Contributing to the compiler itself
