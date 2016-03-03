@@ -733,4 +733,76 @@ describe "Type inference: module" do
       ),
       "undefined method 'new' for A:Module"
   end
+
+  it "uses type declaration inside module" do
+    assert_type(%(
+      module Moo
+        @x : Int32
+
+        def x
+          @x
+        end
+      end
+
+      class Foo
+        include Moo
+
+        def initialize
+          @x = 1
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "uses type declaration inside module and gives error" do
+    assert_error %(
+      module Moo
+        @x : Int32
+
+        def moo
+          @x = false
+        end
+      end
+
+      class Foo
+        include Moo
+
+        def initialize
+          @x = 1
+        end
+      end
+
+      Foo.new.moo
+      ),
+      "instance variable '@x' of Foo must be Int32"
+  end
+
+  it "uses type declaration inside module, recursive, and gives error" do
+    assert_error %(
+      module Moo
+        @x : Int32
+
+        def moo
+          @x = false
+        end
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      class Foo
+        include Moo2
+
+        def initialize
+          @x = 1
+        end
+      end
+
+      Foo.new.moo
+      ),
+      "instance variable '@x' of Foo must be Int32"
+  end
 end
