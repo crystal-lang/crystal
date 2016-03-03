@@ -437,12 +437,13 @@ module Crystal
 
   def self.timing(label, stats)
     if stats
+      print "%-34s" % "#{label}:"
       time = Time.now
       value = yield
       elapsed_time = Time.now - time
       LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
       mb = heap_size / 1024.0 / 1024.0
-      puts "%-34s %s (%7.2fMB)" % {"#{label}:", elapsed_time, mb}
+      puts " %s (%7.2fMB)" % {elapsed_time, mb}
       value
     else
       yield
