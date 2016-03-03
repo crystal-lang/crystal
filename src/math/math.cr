@@ -46,7 +46,7 @@ module Math
       {{name.id}}(value.to_f)
     end
   {% end %}
-  
+
   # Calculates the gamma function of *value*.
   #
   # Note that gamma(n) is same as fact(n-1) for integer n > 0. However gamma(n) returns float and can be an approximation.
@@ -63,7 +63,7 @@ module Math
   def gamma(value)
     LibM.tgamma(value)
   end
-  
+
   # Calculates the logarithmic gamma of *value*.
   #
   # lgamma(x) is the same as
@@ -121,7 +121,6 @@ module Math
   # def div(value1, value2)
   #   LibM.div(value1, value2)
   # end
-  
   # Returns the logarithm of *numeric* to the base *base*
   def log(numeric, base)
     log(numeric) / log(base)
@@ -209,8 +208,8 @@ module Math
       {{name.id}}(value1.to_f, value2.to_i32)
     end
   {% end %}
-  
-  # Multiplies *value* by 2 raised to power *exp*. 
+
+  # Multiplies *value* by 2 raised to power *exp*.
   def scalbln(value : Float32, exp : Int64)
     LibM.scalbln_f32(value, exp)
   end
@@ -228,7 +227,7 @@ module Math
   # Computes the next highest power of 2 of *v*
   #
   # ```
-  # Math.pw2ceil(33) #=> 64 
+  # Math.pw2ceil(33) #=> 64
   def pw2ceil(v)
     # Taken from http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
     v -= 1

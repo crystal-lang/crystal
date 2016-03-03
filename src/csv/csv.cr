@@ -1,5 +1,5 @@
 class CSV
-  DEFAULT_SEPARATOR = ','
+  DEFAULT_SEPARATOR  = ','
   DEFAULT_QUOTE_CHAR = '"'
 end
 
