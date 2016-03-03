@@ -804,10 +804,6 @@ module Crystal
       all_types << virtual_type unless all_types.includes?(virtual_type)
     end
 
-    def raw_including_types
-      @including_types
-    end
-
     def filter_by_responds_to(name)
       including_types.try &.filter_by_responds_to(name)
     end
@@ -823,6 +819,19 @@ module Crystal
 
     def module?
       true
+    end
+
+    def declare_instance_var(name, var_type)
+      @including_types.try &.each do |type|
+        case type
+        when Program, FileModule
+          # skip
+        when NonGenericModuleType
+          type.declare_instance_var(name, var_type)
+        when NonGenericClassType
+          type.declare_instance_var(name, var_type)
+        end
+      end
     end
   end
 

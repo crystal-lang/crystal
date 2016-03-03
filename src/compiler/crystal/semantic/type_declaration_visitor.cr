@@ -114,21 +114,7 @@ module Crystal
       when Var
         node.raise "declaring the type of a local variable is not yet supported"
       when InstanceVar
-        type = current_type
-        case type
-        when NonGenericClassType
-          processing_types do
-            node.declared_type.accept self
-          end
-          var_type = check_declare_var_type node
-          type.declare_instance_var(var.name, var_type.virtual_type)
-        when GenericClassType
-          type.declare_instance_var(var.name, node.declared_type)
-        when GenericClassInstanceType
-          # OK
-        else
-          node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
-        end
+        declare_instance_var(node, var)
       when ClassVar
         class_var = lookup_class_var(var, bind_to_nil_if_non_existent: false)
 
@@ -161,6 +147,36 @@ module Crystal
       node.type = @mod.nil
 
       false
+    end
+
+    def declare_instance_var(node, var)
+      type = current_type
+      case type
+      when NonGenericClassType
+        processing_types do
+          node.declared_type.accept self
+        end
+        var_type = check_declare_var_type node
+        type.declare_instance_var(var.name, var_type.virtual_type)
+        return
+      when GenericClassType
+        type.declare_instance_var(var.name, node.declared_type)
+        return
+      when GenericClassInstanceType
+        # OK
+        return
+      when Program, FileModule
+        # Error, continue
+      when NonGenericModuleType
+        processing_types do
+          node.declared_type.accept self
+        end
+        var_type = check_declare_var_type node
+        type.declare_instance_var(var.name, var_type.virtual_type)
+        return
+      end
+
+      node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
     end
 
     def visit(node : Def)
