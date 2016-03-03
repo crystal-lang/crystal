@@ -21,6 +21,7 @@
 * `Random`: added `Random#rand(Float64)` and `Random#rand(Range(Float, Float))` (thanks @AlexWayfer)
 * `HTML`: `HTLM.escape` includes more characters (thanks @Ryuuzakis)
 * Added `TypeNode.class` method in macros (thanks @waterlink)
+* `run` inside macros now also work with absolute paths (useful when used with `__DIR__`)
 * Added docs for `Math` and `StaticArray` (thanks @Zavydiel, @HeleneMyr)
 
 ## 0.12.0 (2016-02-16)
