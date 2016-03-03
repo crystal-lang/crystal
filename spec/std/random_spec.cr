@@ -15,6 +15,12 @@ describe "Random" do
     x.should be < 1
   end
 
+  it "limited float number" do
+    x = rand(3.5)
+    x.should be >= 0
+    x.should be < 3.5
+  end
+
   it "raises on invalid number" do
     expect_raises ArgumentError, "incorrect rand value: 0" do
       rand(0)
@@ -33,6 +39,19 @@ describe "Random" do
     x = rand(1...4)
     x.should be >= 1
     x.should be < 4
+  end
+
+  it "does with inclusive range of floats" do
+    rand(1.0..1.0).should eq(1.0)
+    x = rand(1.8..3.2)
+    x.should be >= 1.8
+    x.should be <= 3.2
+  end
+
+  it "does with exclusive range of floats" do
+    x = rand(1.8...3.3)
+    x.should be >= 1.8
+    x.should be < 3.3
   end
 
   it "raises on invalid range" do
