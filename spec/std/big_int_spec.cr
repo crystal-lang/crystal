@@ -199,6 +199,10 @@ describe "BigInt" do
     big.to_u64.should eq(1234567890)
   end
 
+  it "can cast UInt64::MAX to UInt64 (#2264)" do
+    BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
+  end
+
   it "does String#to_big_i" do
     "123456789123456789".to_big_i.should eq(BigInt.new("123456789123456789"))
     "abcabcabcabcabcabc".to_big_i(base: 16).should eq(BigInt.new("3169001976782853491388"))
