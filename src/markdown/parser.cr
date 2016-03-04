@@ -229,7 +229,7 @@ class Markdown::Parser
       process_line line.byte_slice(line.index(prefix).not_nil! + 1)
       @renderer.end_list_item
 
-      if line.starts_with?("  ") && next_line_is_not_intended? 
+      if line.starts_with?("  ") && next_line_is_not_intended?
         @renderer.end_unordered_list
       end
 

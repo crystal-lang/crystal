@@ -199,7 +199,7 @@ class File < IO::FileDescriptor
   # Returns all components of the given filename except the last one
   #
   # ```
-  # File.dirname("/foo/bar/file.cr")  # => "/foo/bar"
+  # File.dirname("/foo/bar/file.cr") # => "/foo/bar"
   # ```
   def self.dirname(filename)
     filename.check_no_null_byte
@@ -241,7 +241,7 @@ class File < IO::FileDescriptor
   # If the given suffix is present at the end of filename, it is removed
   #
   # ```
-  # File.basename("/foo/bar/file.cr", ".cr")  # => "file"
+  # File.basename("/foo/bar/file.cr", ".cr") # => "file"
   # ```
   def self.basename(filename, suffix)
     suffix.check_no_null_byte
