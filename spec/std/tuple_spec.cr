@@ -110,7 +110,8 @@ describe "Tuple" do
   end
 
   it "does to_s" do
-    {1, 2, 3}.to_s.should eq("{1, 2, 3}")
+    {1, 2, 3}.to_s.should eq("(1, 2, 3)")
+    {1}.to_s.should eq("(1,)")
   end
 
   it "does each" do

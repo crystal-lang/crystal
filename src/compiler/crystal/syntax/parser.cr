@@ -1526,14 +1526,23 @@ module Crystal
       next_token_skip_space_or_newline
 
       if @token.type == :")"
-        return node_and_next_token NilLiteral.new
+        return node_and_next_token TupleLiteral.new([] of ASTNode)
       end
 
       exps = [] of ASTNode
+      has_comma = false
 
       while true
         exps << parse_expression
         case @token.type
+        when :","
+          next_token_skip_space_or_newline
+          has_comma = true
+          if @token.type == :")"
+            @wants_regex = false
+            next_token_skip_space
+            break
+          end
         when :")"
           @wants_regex = false
           next_token_skip_space
@@ -1552,9 +1561,13 @@ module Crystal
 
       unexpected_token "(" if @token.type == :"("
 
-      node = Expressions.new exps
-      node.keyword = :"("
-      node
+      if has_comma
+        TupleLiteral.new exps
+      else
+        node = Expressions.new exps
+        node.keyword = :"("
+        node
+      end
     end
 
     def parse_fun_literal
@@ -2171,7 +2184,8 @@ module Crystal
 
             if cond.is_a?(TupleLiteral)
               while true
-                if @token.type == :"{"
+                if @token.type == :"{" || @token.type == :"("
+                  parens = @token.type == :"("
                   curly_location = @token.location
 
                   next_token_skip_space_or_newline
@@ -2195,7 +2209,11 @@ module Crystal
                   tuple = TupleLiteral.new(tuple_elements)
                   when_conds << tuple
 
-                  check :"}"
+                  if parens
+                    check :")"
+                  else
+                    check :"}"
+                  end
                   next_token_skip_space
                 else
                   when_conds << parse_when_expression(cond)
@@ -3816,14 +3834,28 @@ module Crystal
         when :"("
           next_token_skip_space_or_newline
           type = parse_type(allow_primitives)
+          has_comma = false
+          if @token.type == :","
+            has_comma = true
+            next_token_skip_space_or_newline
+          end
           check :")"
           next_token_skip_space
           case type
           when Array
-            types.concat type
-            return
+            if @token.type == :"->"
+              types.concat type
+              return
+            else
+              type = make_tuple_type(type)
+            end
           when ASTNode
-            # skip
+            if @token.type != :"->" && has_comma
+              types << make_tuple_type([type] of ASTNode)
+              return
+            else
+              # skip
+            end
           else
             raise "Bug"
           end

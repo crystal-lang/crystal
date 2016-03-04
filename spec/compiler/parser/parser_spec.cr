@@ -282,6 +282,7 @@ describe "Parser" do
   it_parses "def foo(var : Int, Float -> Double); end", Def.new("foo", [Arg.new("var", restriction: Fun.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
   it_parses "def foo(var : (Int, Float -> Double)); end", Def.new("foo", [Arg.new("var", restriction: Fun.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
   it_parses "def foo(var : (Int, Float) -> Double); end", Def.new("foo", [Arg.new("var", restriction: Fun.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
+  it_parses "def foo(var : (Int | Float) -> Double); end", Def.new("foo", [Arg.new("var", restriction: Fun.new([Union.new(["Int".path, "Float".path] of ASTNode)] of ASTNode, "Double".path))])
   it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of(256))])
   it_parses "def foo(var : Char[N]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of("N".path))])
   it_parses "def foo(var : Foo+); end", Def.new("foo", [Arg.new("var", restriction: Virtual.new("Foo".path))])
@@ -482,11 +483,13 @@ describe "Parser" do
   it_parses "Foo(typeof(1))", Generic.new("Foo".path, [TypeOf.new([1.int32] of ASTNode)] of ASTNode)
   it_parses "Foo(typeof(1), typeof(2))", Generic.new("Foo".path, [TypeOf.new([1.int32] of ASTNode), TypeOf.new([2.int32] of ASTNode)] of ASTNode)
   it_parses "Foo({X, Y})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["X".path, "Y".path] of ASTNode)] of ASTNode)
-  it_parses "Foo({X, Y})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["X".path, "Y".path] of ASTNode)] of ASTNode)
+  it_parses "Foo((X, Y))", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["X".path, "Y".path] of ASTNode)] of ASTNode)
+  it_parses "Foo((X,))", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["X".path] of ASTNode)] of ASTNode)
   it_parses "Foo({->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), [Fun.new] of ASTNode)] of ASTNode)
   it_parses "Foo({String, ->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["String".path, Fun.new] of ASTNode)] of ASTNode)
   it_parses "Foo({String, ->, ->})", Generic.new("Foo".path, [Generic.new(Path.global("Tuple"), ["String".path, Fun.new, Fun.new] of ASTNode)] of ASTNode)
   it_parses "[] of {String, ->}", ArrayLiteral.new([] of ASTNode, Generic.new(Path.global("Tuple"), ["String".path, Fun.new] of ASTNode))
+  it_parses "[] of (String, ->)", ArrayLiteral.new([] of ASTNode, Generic.new(Path.global("Tuple"), ["String".path, Fun.new] of ASTNode))
   it_parses "x([] of Foo, Bar.new)", Call.new(nil, "x", ArrayLiteral.new([] of ASTNode, "Foo".path), Call.new("Bar".path, "new"))
 
   it_parses "module Foo; end", ModuleDef.new("Foo".path)
@@ -863,8 +866,10 @@ describe "Parser" do
   it_parses "case {1, 2}\nwhen {3, 4}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode)] of ASTNode, 5.int32)])
   it_parses "case {1, 2}\nwhen {3, 4}, {5, 6}\n7\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([3.int32, 4.int32] of ASTNode), TupleLiteral.new([5.int32, 6.int32] of ASTNode)] of ASTNode, 7.int32)])
   it_parses "case {1, 2}\nwhen {.foo, .bar}\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new(ImplicitObj.new, "foo"), Call.new(ImplicitObj.new, "bar")] of ASTNode)] of ASTNode, 5.int32)])
+  it_parses "case (1, 2)\nwhen (.foo, .bar)\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new([TupleLiteral.new([Call.new(ImplicitObj.new, "foo"), Call.new(ImplicitObj.new, "bar")] of ASTNode)] of ASTNode, 5.int32)])
   it_parses "case {1, 2}\nwhen foo\n5\nend", Case.new(TupleLiteral.new([1.int32, 2.int32] of ASTNode), [When.new(["foo".call] of ASTNode, 5.int32)])
   assert_syntax_error "case {1, 2}; when {3}; 4; end", "wrong number of tuple elements (given 1, expected 2)", 1, 19
+  assert_syntax_error "case (1, 2); when (3); 4; end", "wrong number of tuple elements (given 1, expected 2)", 1, 19
 
   it_parses "def foo(x); end; x", [Def.new("foo", ["x".arg]), "x".call]
   it_parses "def foo; / /; end", Def.new("foo", body: regex(" "))
@@ -892,7 +897,7 @@ describe "Parser" do
   it_parses "a = uninitialized Foo; a", [UninitializedVar.new("a".var, "Foo".path), "a".var]
   it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)
 
-  it_parses "()", NilLiteral.new
+  it_parses "()", TupleLiteral.new([] of ASTNode)
   it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32] of ASTNode
 
   it_parses "begin; rescue; end", ExceptionHandler.new(Nop.new, [Rescue.new])
@@ -954,6 +959,7 @@ describe "Parser" do
   it_parses "foo as Bar", Cast.new("foo".call, "Bar".path)
   it_parses "foo.bar as Bar", Cast.new(Call.new("foo".call, "bar"), "Bar".path)
   it_parses "call(foo as Bar, Baz)", Call.new(nil, "call", args: [Cast.new("foo".call, "Bar".path), "Baz".path])
+  it_parses "1 as (X, Y)*", Cast.new(1.int32, Generic.new(Path.global("Pointer"), [Generic.new(Path.global("Tuple"), ["X".path, "Y".path] of ASTNode)] of ASTNode))
 
   it_parses "typeof(1)", TypeOf.new([1.int32] of ASTNode)
 
@@ -968,6 +974,11 @@ describe "Parser" do
   it_parses "{1, 2, 3}", TupleLiteral.new([1.int32, 2.int32, 3.int32] of ASTNode)
   it_parses "{A::B}", TupleLiteral.new([Path.new(["A", "B"])] of ASTNode)
   it_parses "{\n1,\n2\n}", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
+
+  it_parses "(1)", Expressions.new([1.int32] of ASTNode)
+  it_parses "(1,)", TupleLiteral.new([1.int32] of ASTNode)
+  it_parses "(1,2)", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
+  it_parses "(1,2,)", TupleLiteral.new([1.int32, 2.int32] of ASTNode)
 
   it_parses "foo { a = 1 }; a", [Call.new(nil, "foo", block: Block.new(body: Assign.new("a".var, 1.int32))), "a".call] of ASTNode
 

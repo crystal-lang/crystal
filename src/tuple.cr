@@ -343,9 +343,10 @@ struct Tuple
   # tuple.to_s # => "{1, \"hello\"}"
   # ```
   def to_s(io)
-    io << "{"
+    io << "("
     join ", ", io, &.inspect(io)
-    io << "}"
+    io << "," if size == 1
+    io << ")"
   end
 
   # Returns a new tuple where elements are mapped by the given block.

@@ -62,7 +62,11 @@ describe "types to_s of" do
       end
 
       it "in tuples" do
-        assert_type_to_s "{String, Int32 | String}" { tuple_of [string, union_of(string, int32)] }
+        assert_type_to_s "(String, Int32 | String)" { tuple_of [string, union_of(string, int32)] }
+      end
+
+      it "in tuples with 1 element" do
+        assert_type_to_s "(String,)" { tuple_of [string] of Type }
       end
     end
 

@@ -31,7 +31,7 @@ describe "Type inference: tuples" do
 
   it "gives error when indexing out of range" do
     assert_error "{1, 'a'}[2]",
-      "index out of bounds for tuple {Int32, Char}"
+      "index out of bounds for tuple (Int32, Char)"
   end
 
   it "can name a tuple type" do

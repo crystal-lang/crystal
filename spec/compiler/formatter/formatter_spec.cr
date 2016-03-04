@@ -71,10 +71,16 @@ describe Crystal::Formatter do
   assert_format "Set { 1 , 2 }", "Set{1, 2}"
   assert_format "[\n1,\n\n2]", "[\n  1,\n\n  2,\n]"
 
-  assert_format "{1, 2, 3}"
-  assert_format "{ {1, 2, 3} }"
-  assert_format "{ {1 => 2} }"
-  assert_format "{ {1, 2, 3} => 4 }"
+  assert_format "{1, 2, 3}", "(1, 2, 3)"
+  assert_format "(1, 2, 3)"
+  assert_format "()"
+  assert_format "(1,)"
+  assert_format "(1,2,)", "(1, 2)"
+
+  assert_format "((1, 2, 3))"
+  assert_format "({1 => 2})"
+  assert_format "{(1, 2, 3) => 4}"
+  assert_format "{ {1 => 2} => 3 }"
 
   assert_format "{  } of  A   =>   B", "{} of A => B"
   assert_format "{ 1   =>   2 }", "{1 => 2}"
@@ -241,7 +247,9 @@ describe Crystal::Formatter do
     assert_format "#{keyword}  1", "#{keyword} 1"
     assert_format "#{keyword}( 1 , 2 )", "#{keyword}(1, 2)"
     assert_format "#{keyword}  1 ,  2", "#{keyword} 1, 2"
-    assert_format "#{keyword} { 1 ,  2 }", "#{keyword} {1, 2}" unless keyword == "yield"
+    assert_format "#{keyword} ( 1 ,  2 )", "#{keyword} (1, 2)" unless keyword == "yield"
+    assert_format "#{keyword} (1), 2"
+    assert_format "#{keyword} (1).foo, 2"
   end
 
   assert_format "yield 1\n2", "yield 1\n2"
@@ -387,7 +395,9 @@ describe Crystal::Formatter do
   assert_format "x  :   (A | B)", "x : (A | B)"
   assert_format "x  :   (A -> B)", "x : (A -> B)"
   assert_format "x  :   (A -> B)?", "x : (A -> B)?"
-  assert_format "x  :   {A, B}", "x : {A, B}"
+  assert_format "x  :   {A, B}", "x : (A, B)"
+  assert_format "x  :   ( A, B )", "x : (A, B)"
+  assert_format "x  :   ( A,  )", "x : (A,)"
   assert_format "class Foo\n@x  : Int32\nend", "class Foo\n  @x : Int32\nend"
   assert_format "class Foo\n@x  :  Int32\nend", "class Foo\n  @x : Int32\nend"
   assert_format "class Foo\nx = 1\nend", "class Foo\n  x = 1\nend"
@@ -805,4 +815,6 @@ describe Crystal::Formatter do
   assert_format "foo.[1]"
 
   assert_format "@foo : Int32 # comment\n\ndef foo\nend"
+
+  assert_format "(1,\n  2).foo"
 end
