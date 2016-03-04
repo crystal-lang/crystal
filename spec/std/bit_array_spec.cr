@@ -92,4 +92,23 @@ describe "BitArray" do
     ary = BitArray.new(64, true)
     ary.size.times { |i| ary[i].should be_true }
   end
+
+  it "counts the number of elements with a each" do
+    ary = BitArray.new(3)
+    count = 0
+    ary.each do |i|
+      count += 1
+    end
+    count.should eq(3)
+  end
+
+  it "does a OR between each element" do
+    ary = BitArray.new(3)
+    result = false
+    ary[2] = true
+    ary.each do |i|
+      result = result | i
+    end
+    result.should eq(true)
+  end
 end
