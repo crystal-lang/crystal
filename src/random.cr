@@ -93,7 +93,7 @@ module Random
   # Returns a random `Float64` which is greater than or equal to 0 and less than *max*.
   #
   # ```
-  # Random.new.rand(3.5)   # => 2.88938
+  # Random.new.rand(3.5)    # => 2.88938
   # Random.new.rand(10.725) # => 7.70147
   # ```
   def rand(max : Float) : Float64

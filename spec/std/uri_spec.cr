@@ -105,8 +105,8 @@ describe "URI" do
     end
 
     it "dose not unescape string when block returns true" do
-      URI.unescape("hello%26world"){ |byte| URI.reserved? byte }
-        .should eq("hello%26world")
+      URI.unescape("hello%26world") { |byte| URI.reserved? byte }
+         .should eq("hello%26world")
     end
   end
 
@@ -142,8 +142,8 @@ describe "URI" do
     end
 
     it "does not escape character when block returns true" do
-      URI.unescape("hello&world"){ |byte| URI.reserved? byte }
-        .should eq("hello&world")
+      URI.unescape("hello&world") { |byte| URI.reserved? byte }
+         .should eq("hello&world")
     end
   end
 

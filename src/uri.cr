@@ -201,7 +201,7 @@ class URI
   # whose is less than `0x80`. The bytes that block returns `true`
   # are not unescaped, other characters are unescaped.
   def self.unescape(string : String, plus_to_space = false, &block)
-    String.build { |io| unescape(string, io, plus_to_space){ |byte| yield byte } }
+    String.build { |io| unescape(string, io, plus_to_space) { |byte| yield byte } }
   end
 
   # URL-decode a string and write the result to an `IO`.
@@ -218,7 +218,7 @@ class URI
     while i < bytesize
       byte = string.unsafe_byte_at(i)
       char = byte.chr
-      i = unescape_one(string, bytesize, i, byte, char, io, plus_to_space){ |byte| yield byte }
+      i = unescape_one(string, bytesize, i, byte, char, io, plus_to_space) { |byte| yield byte }
     end
     io
   end
@@ -246,7 +246,7 @@ class URI
   #     end
   #     #=> "/foo/file%3F%281%29.txt"
   def self.escape(string : String, space_to_plus = false, &block)
-    String.build { |io| escape(string, io, space_to_plus){ |byte| yield byte } }
+    String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
   end
 
   # URL-encode a string and write the result to an `IO`.
