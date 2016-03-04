@@ -27,8 +27,8 @@ require "./ip_socket"
 # client = UDPSocket.new
 # client.connect "localhost", 1234
 #
-# client << "message" # send message to server
-# server.read(7)      # => "message"
+# client.puts "message" # send message to server
+# server.gets           # => "message\n"
 #
 # # Close client and server
 # client.close
