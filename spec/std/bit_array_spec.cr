@@ -92,4 +92,14 @@ describe "BitArray" do
     ary = BitArray.new(64, true)
     ary.size.times { |i| ary[i].should be_true }
   end
+
+  it "iterates over all bits with each" do
+    ary = BitArray.new(3)
+    result = false
+    ary[2] = true
+    ary.each do |i|
+      result = result | i
+    end
+    result.should eq(true)
+  end
 end
