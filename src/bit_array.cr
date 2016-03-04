@@ -109,6 +109,13 @@ struct BitArray
     io << "]"
   end
 
+  # Returns a Slice(UInt8) able to read and write bytes from a buffer.
+  # The slice will be long enough to hold all the bits groups in bytes despite the `UInt32` internal representation.
+  # It's useful for reading and writing a bit array from a byte buffer directly.
+  def to_slice : Slice(UInt8)
+    Slice.new(@bits as Pointer(UInt8), (@size / 8.0).ceil.to_i)
+  end
+
   private def bit_index_and_sub_index(index)
     index += @size if index < 0
     raise IndexError.new if index >= @size || index < 0
