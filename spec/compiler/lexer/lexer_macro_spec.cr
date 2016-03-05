@@ -608,4 +608,15 @@ describe "Lexer macro" do
     token.value.should eq("end ")
     token.line_number.should eq(2)
   end
+
+  it "lexes macro with string interpolation and double curly brace" do
+    lexer = Lexer.new(%("\#{{{1}}}"))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%("\#{))
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_EXPRESSION_START)
+  end
 end
