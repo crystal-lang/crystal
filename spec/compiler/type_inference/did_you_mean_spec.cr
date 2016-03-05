@@ -163,4 +163,48 @@ describe "Type inference: did you mean" do
       ),
       "If the variable was declared in a macro it's not visible outside it"
   end
+
+  it "suggest that there might be a type for an initialize method" do
+    assert_error %(
+      class Foo
+        def intialize(x)
+        end
+      end
+
+      Foo.new(1)
+      ),
+      "do you maybe have a typo in this 'intialize' method?"
+  end
+
+  it "suggest that there might be a type for an initialize method in inherited class" do
+    assert_error %(
+      class Foo
+        def initialize
+        end
+      end
+
+      class Bar < Foo
+        def intialize(x)
+        end
+      end
+
+      Bar.new(1)
+      ),
+      "do you maybe have a typo in this 'intialize' method?"
+  end
+
+  it "suggest that there might be a type for an initialize method with overload" do
+    assert_error %(
+      class Foo
+        def initialize(x : Int32)
+        end
+
+        def intialize(y : Float64)
+        end
+      end
+
+      Foo.new(1.0)
+      ),
+      "do you maybe have a typo in this 'intialize' method?"
+  end
 end

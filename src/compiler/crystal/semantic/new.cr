@@ -76,7 +76,15 @@ module Crystal
       if defs.size == 0 && arg_types.size > 0
         news = scope.instance_type.metaclass.lookup_defs("new")
         if news.empty?
-          wrong_number_of_arguments "'#{full_name(scope.instance_type)}'", self.args.size, 0
+          # If there's a method with a name similar to "initialize", it's probably a typo
+          similar_def = scope.instance_type.lookup_similar_def("initialize", arg_types.size, block)
+          if similar_def
+            inner_msg = colorize("do you maybe have a typo in this '#{similar_def.name}' method?").yellow.bold.to_s
+            raise wrong_number_of_message("arguments", "'#{full_name(scope.instance_type)}'", self.args.size, 0),
+              inner: TypeException.for_node(similar_def, inner_msg)
+          else
+            wrong_number_of_arguments "'#{full_name(scope.instance_type)}'", self.args.size, 0
+          end
         else
           raise_matches_not_found scope.instance_type.metaclass, "new"
         end
