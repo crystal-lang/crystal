@@ -4,11 +4,19 @@ class Crystal::ASTNode
   end
 
   def wrong_number_of(elements, given, expected)
-    raise "wrong number of #{elements} (given #{given}, expected #{expected})"
+    raise wrong_number_of_message(elements, given, expected)
   end
 
   def wrong_number_of(elements, subject, given, expected)
-    raise "wrong number of #{elements} for #{subject} (given #{given}, expected #{expected})"
+    raise wrong_number_of_message(elements, subject, given, expected)
+  end
+
+  def wrong_number_of_message(elements, given, expected)
+    "wrong number of #{elements} (given #{given}, expected #{expected})"
+  end
+
+  def wrong_number_of_message(elements, subject, given, expected)
+    "wrong number of #{elements} for #{subject} (given #{given}, expected #{expected})"
   end
 end
 
@@ -134,6 +142,19 @@ class Crystal::Call
       end
     end
 
+    # If it's on an initialize method and there's a similar method name, it's probably a typo
+    if def_name == "initialize" && (similar_def = owner.lookup_similar_def(def_name, self.args.size, block))
+      inner_msg = colorize("do you maybe have a typo in this '#{similar_def.name}' method?").yellow.bold.to_s
+      inner_exception = TypeException.for_node(similar_def, inner_msg)
+    end
+
+    if owner_trace
+      owner_trace.inner = inner_exception
+      inner_exception = nil
+    else
+      owner_trace = inner_exception
+    end
+
     defs_matchin_args_size = defs.select do |a_def|
       min_size, max_size = a_def.min_max_args_sizes
       min_size <= real_args_size <= max_size
@@ -175,7 +196,7 @@ class Crystal::Call
         str << ")\n"
         str << "Overloads are:"
         append_matches(defs, str)
-      end)
+      end, inner: inner_exception)
     end
 
     if defs_matchin_args_size.size > 0
