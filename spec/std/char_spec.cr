@@ -21,10 +21,39 @@ describe "Char" do
     assert { 'ぃ'.pred.should eq('あ') }
   end
 
+  describe "uppercase?" do
+    assert { 'a'.uppercase?.should be_false }
+    assert { 'A'.uppercase?.should be_true }
+    assert { '1'.uppercase?.should be_false }
+    assert { ' '.uppercase?.should be_false }
+  end
+
+  describe "lowercase?" do
+    assert { 'a'.lowercase?.should be_true }
+    assert { 'A'.lowercase?.should be_false }
+    assert { '1'.lowercase?.should be_false }
+    assert { ' '.lowercase?.should be_false }
+  end
+
+  describe "alpha?" do
+    assert { 'a'.alpha?.should be_true }
+    assert { 'A'.alpha?.should be_true }
+    assert { '1'.alpha?.should be_false }
+    assert { ' '.alpha?.should be_false }
+  end
+
+  describe "alphanumeric?" do
+    assert { 'a'.alphanumeric?.should be_true }
+    assert { 'A'.alphanumeric?.should be_true }
+    assert { '1'.alphanumeric?.should be_true }
+    assert { ' '.alphanumeric?.should be_false }
+  end
+
   describe "whitespace?" do
     [' ', '\t', '\n', '\v', '\f', '\r'].each do |char|
       assert { char.whitespace?.should be_true }
     end
+    assert { 'A'.whitespace?.should be_false }
   end
 
   it "dumps" do

@@ -1,3 +1,5 @@
+require "comparable"
+
 # A Char represents a [Unicode](http://en.wikipedia.org/wiki/Unicode) [code point](http://en.wikipedia.org/wiki/Code_point).
 # It occupies 32 bits.
 #
@@ -45,6 +47,8 @@
 # '\u{41}' # == 'A'
 # ```
 struct Char
+  include Comparable(Char)
+
   # The character representing the end of a C string.
   ZERO = '\0'
 
@@ -84,8 +88,6 @@ struct Char
   # ```
   # 'a' <=> 'c' # => -2
   # ```
-  #
-  # See `Object#<=>`
   def <=>(other : Char)
     self - other
   end
@@ -97,7 +99,29 @@ struct Char
   # 'z'.digit? # => false
   # ```
   def digit?
-    '0' <= self && self <= '9'
+    '0' <= self <= '9'
+  end
+
+  # Returns true if this char is a lowercase ASCII letter.
+  #
+  # ```
+  # 'c'.lowercase? # => true
+  # 'G'.lowercase? # => false
+  # '.'.lowercase? # => false
+  # ```
+  def lowercase?
+    'a' <= self <= 'z'
+  end
+
+  # Returns true if this char is an uppercase ASCII letter.
+  #
+  # ```
+  # 'H'.uppercase? # => true
+  # 'c'.uppercase? # => false
+  # '.'.uppercase? # => false
+  # ```
+  def uppercase?
+    'A' <= self <= 'Z'
   end
 
   # Returns true if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
@@ -107,8 +131,7 @@ struct Char
   # '8'.alpha? # => false
   # ```
   def alpha?
-    ('a' <= self && self <= 'z') ||
-      ('A' <= self && self <= 'Z')
+    lowercase? || uppercase?
   end
 
   # Returns true if this char is an ASCII letter or digit ('0' to '9', 'a' to 'z', 'A' to 'Z').
@@ -220,7 +243,7 @@ struct Char
   # '.'.downcase # => '.'
   # ```
   def downcase
-    if 'A' <= self && self <= 'Z'
+    if uppercase?
       (self.ord + 32).chr
     else
       self
@@ -235,7 +258,7 @@ struct Char
   # '.'.upcase # => '.'
   # ```
   def upcase
-    if 'a' <= self && self <= 'z'
+    if lowercase?
       (self.ord - 32).chr
     else
       self
@@ -383,7 +406,7 @@ struct Char
   # 'c'.to_i { 10 } # => 10
   # ```
   def to_i
-    if '0' <= self <= '9'
+    if digit?
       self - '0'
     else
       yield
