@@ -622,7 +622,8 @@ class Hash(K, V)
   # Zips two arrays into a `Hash`, taking keys from *ary1* and values from *ary2*.
   #
   # ```
-  # Hash.zip(["foo", "bar"], ["baz", "qux"]) # => {"foo" => "baz", "baz" => "quz"}
+  # Hash.zip(["key1", "key2", "key3"], ["value1", "value2", "value3"])
+  # # => {"key1" => "value1", "key2" => "value2", "key3" => "value3"}
   # ```
   def self.zip(ary1 : Array(K), ary2 : Array(V))
     hash = {} of K => V
