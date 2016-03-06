@@ -20,6 +20,12 @@ ifeq (${LLVM_CONFIG},)
 $(error Could not locate llvm-config, make sure it is installed and in your PATH)
 endif
 
+# Darwin SEGFAULTS without a specified min version on older operating systems
+ifeq ($(UNAME_S),Darwin)
+FLAGS += -mmacosx-version-min=10.5
+endif
+
+
 all: crystal
 spec: all_spec
 	$(O)/all_spec
