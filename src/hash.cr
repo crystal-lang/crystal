@@ -638,6 +638,23 @@ class Hash(K, V)
     {first.key, first.value}
   end
 
+  # Returns the first subhash of a given size.
+  #
+  # ```
+  # {"a" => 1, "b" => 2, "c" => 3}.first(2) # => {"a" => 1, "b" => 2}
+  # ```
+  def first(n : Int)
+    hash = {} of K => V
+    each_with_index do |key, val, index|
+      if index < n
+        hash[key] = val
+      else
+        return hash
+      end
+    end
+    hash
+  end
+
   # Returns the first key in the hash.
   def first_key
     @first.not_nil!.key

@@ -444,6 +444,14 @@ describe "Hash" do
     h.first_value.should eq(2)
   end
 
+  it "gets the first subhash of a given size" do
+    h = { a: 1, b: 2 }
+    h.first(0).should eq Hash(Symbol, Int32).new
+    h.first(1).should eq({ a: 1 })
+    h.first(2).should eq({ a: 1, b: 2 })
+    h.first(3).should eq({ a: 1, b: 2 })
+  end
+
   it "shifts" do
     h = {1 => 2, 3 => 4}
     h.shift.should eq({1, 2})
