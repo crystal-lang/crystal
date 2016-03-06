@@ -38,8 +38,8 @@ struct HTTP::Headers
     private def normalize_byte(byte)
       char = byte.chr
 
-      return byte if 'a' <= char <= 'z' || char == '-' # Optimize the common case
-      return byte + 32 if 'A' <= char <= 'Z'
+      return byte if char.lowercase? || char == '-' # Optimize the common case
+      return byte + 32 if char.uppercase?
       return '-'.ord if char == '_'
 
       byte

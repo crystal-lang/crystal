@@ -4252,7 +4252,7 @@ module Crystal
         next_token_skip_space_or_newline
         type = parse_single_type
 
-        if 'A' <= name[0] <= 'Z'
+        if name[0].uppercase?
           raise "external variables must start with lowercase, use for example `$#{name.underscore} = #{name} : #{type}`", location
         end
 
