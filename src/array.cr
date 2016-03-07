@@ -997,7 +997,7 @@ class Array(T)
     @size == 0 ? yield : @buffer[0]
   end
 
-  # Returns first `n` elements of the array.
+  # Returns the first `n` elements of the array.
   #
   # ```
   # [1, 2, 3].first(2) # => [1, 2]
@@ -1079,7 +1079,7 @@ class Array(T)
     @size == 0 ? yield : @buffer[@size - 1]
   end
 
-  # Returns last `n` elements of the array.
+  # Returns the last `n` elements of the array.
   #
   # ```
   # [1, 2, 3].last(2) # => [2, 3]
