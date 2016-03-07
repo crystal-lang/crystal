@@ -376,6 +376,10 @@ module Crystal
 
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
+          # If the delimiter ends with "\n" it's something like "\n  HEREDOC",
+          # so we are done
+          break if @token.raw.starts_with?("\n")
+
           # This is for " ... " \
           #     " ... "
           write @token.raw
