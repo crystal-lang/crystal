@@ -153,8 +153,6 @@ module Crystal
               when char == '\n'
                 @line_number += 1
                 @column_number = 0
-                @token.line_number = @line_number
-                @token.column_number = @column_number
                 break
               when ident_part?(char)
                 here << char
