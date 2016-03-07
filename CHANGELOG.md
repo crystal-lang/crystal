@@ -1,4 +1,4 @@
-## Next
+## 0.13.0 (2016-03-07)
 
 * **(breaking change)** `Matrix` was moved to a separate shard: [https://github.com/Exilor/matrix](https://github.com/Exilor/Matrix)
 * The syntax of a method argument with a default value and a type restriction is now `def foo(arg : Type = default_value)`. Run `crystal tool format` to automatically upgrade exsiting code to this new syntax. The old `def foo(arg = default_value : Type)` syntax will be removed in a next release.
@@ -23,6 +23,7 @@
 * Added `TypeNode.class` method in macros (thanks @waterlink)
 * `run` inside macros now also work with absolute paths (useful when used with `__DIR__`)
 * Added docs for `Math` and `StaticArray` (thanks @Zavydiel, @HeleneMyr)
+* Many bug fixes and some micro-optimizations
 
 ## 0.12.0 (2016-02-16)
 
