@@ -8,7 +8,7 @@ class HTTP::Request
   getter body
   getter version
 
-  def initialize(@method : String, @resource, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
+  def initialize(@method : String, @resource : String, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
     if body = @body
       @headers["Content-Length"] = body.bytesize.to_s
     elsif @method == "POST" || @method == "PUT"
@@ -84,7 +84,7 @@ class HTTP::Request
     value
   end
 
-  private def uri
+  def uri
     (@uri ||= URI.parse(@resource)).not_nil!
   end
 

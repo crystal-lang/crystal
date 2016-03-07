@@ -118,6 +118,13 @@ module HTTP
       request.body.should eq("thisisthebody")
     end
 
+    describe "#uri" do
+      it "returns the URI object wrapping the given resource" do
+        request = Request.new "GET", "http://example.com"
+        request.uri.should be_a(URI)
+      end
+    end
+
     describe "keep-alive" do
       it "is false by default in HTTP/1.0" do
         request = Request.new "GET", "/", version: "HTTP/1.0"
