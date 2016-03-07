@@ -290,7 +290,7 @@ struct Int
     to_s(10, io)
   end
 
-  def to_s(base : Int, upcase = false : Bool)
+  def to_s(base : Int, upcase : Bool = false)
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 
@@ -306,7 +306,7 @@ struct Int
     end
   end
 
-  def to_s(base : Int, io : IO, upcase = false : Bool)
+  def to_s(base : Int, io : IO, upcase : Bool = false)
     raise ArgumentError.new("Invalid base #{base}") unless 2 <= base <= 36 || base == 62
     raise ArgumentError.new("upcase must be false for base 62") if upcase && base == 62
 

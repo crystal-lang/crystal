@@ -32,7 +32,7 @@ class Hash(K, V)
 
   getter size
 
-  def initialize(block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator, initial_capacity = nil)
+  def initialize(block : (Hash(K, V), K -> V)? = nil, @comp = StandardComparator, initial_capacity = nil)
     initial_capacity ||= 11
     initial_capacity = 11 if initial_capacity < 11
     initial_capacity = initial_capacity.to_i

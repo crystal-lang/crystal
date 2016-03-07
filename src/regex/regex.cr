@@ -219,7 +219,7 @@ class Regex
   # options = Regex::Options::IGNORE_CASE | Regex::Options::EXTENDED
   # Regexp.new("dog", options) # => /dog/ix
   # ```
-  def initialize(source, @options = Options::None : Options)
+  def initialize(source, @options : Options = Options::None)
     # PCRE's pattern must have their null characters escaped
     source = source.gsub('\u{0}', "\\0")
     @source = source

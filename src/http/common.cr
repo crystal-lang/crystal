@@ -12,7 +12,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type = BodyType::OnDemand : BodyType, decompress = true)
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
     headers = Headers.new
 
     while line = io.gets

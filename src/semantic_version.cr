@@ -19,7 +19,7 @@ class SemanticVersion
     end
   end
 
-  def initialize(@major : Int, @minor : Int, @patch : Int, prerelease = nil : String | Prerelease | Nil, @build = nil : String?)
+  def initialize(@major : Int, @minor : Int, @patch : Int, prerelease : String | Prerelease | Nil = nil, @build : String? = nil)
     @prerelease = case prerelease
                   when Prerelease
                     prerelease
@@ -72,7 +72,7 @@ class SemanticVersion
 
     getter identifiers
 
-    def initialize(@identifiers = [] of String | Int32 : Array(String | Int32))
+    def initialize(@identifiers : Array(String | Int32) = [] of String | Int32)
     end
 
     def to_s(io : IO)

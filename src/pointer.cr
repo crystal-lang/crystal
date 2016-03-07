@@ -397,7 +397,7 @@ struct Pointer(T)
   # ptr[9] #=> 0
   #
   # ```
-  def self.malloc(size = 1 : Int)
+  def self.malloc(size : Int = 1)
     if size < 0
       raise ArgumentError.new("negative Pointer#malloc size")
     end

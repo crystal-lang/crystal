@@ -24,7 +24,7 @@ struct BitArray
   #
   # `initial` optionally sets the starting value, true or false, for all bits
   # in the array.
-  def initialize(@size, initial = false : Bool)
+  def initialize(@size, initial : Bool = false)
     value = initial ? UInt32::MAX : UInt32::MIN
     @bits = Pointer(UInt32).malloc(malloc_size, value)
   end

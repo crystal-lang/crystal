@@ -492,7 +492,7 @@ class Deque(T)
   #
   # For positive `n`, equivalent to `n.times { push(shift) }`.
   # For negative `n`, equivalent to `(-n).times { unshift(pop) }`.
-  def rotate!(n = 1 : Int)
+  def rotate!(n : Int = 1)
     if @size == @capacity
       @start = (@start + n) % @capacity
     else

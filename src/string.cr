@@ -141,7 +141,7 @@ class String
   # slice[1] = 195_u8
   # String.new(slice, "GB2312") # => "好"
   # ```
-  def self.new(bytes : Slice(UInt8), encoding : String, invalid = nil : Symbol?) : String
+  def self.new(bytes : Slice(UInt8), encoding : String, invalid : Symbol? = nil) : String
     String.build do |str|
       String.encode(bytes, encoding, "UTF-8", str, invalid)
     end
@@ -952,7 +952,7 @@ class String
   # "好".encode("GB2312") # => [186, 195]
   # "好".bytes            # => [229, 165, 189]
   # ```
-  def encode(encoding : String, invalid = nil : Symbol?) : Slice(UInt8)
+  def encode(encoding : String, invalid : Symbol? = nil) : Slice(UInt8)
     io = MemoryIO.new
     String.encode(to_slice, "UTF-8", encoding, io, invalid)
     io.to_slice
@@ -2001,7 +2001,7 @@ class String
   # old_pond.split    # => ["Old", "pond", "a", "frog", "leaps", "in", "water's", "sound"]
   # old_pond.split(3) # => ["Old", "pond", "a frog leaps in\n  water's sound\n"]
   # ```
-  def split(limit = nil : Int32?)
+  def split(limit : Int32? = nil)
     if limit && limit <= 1
       return [self]
     end
@@ -2371,7 +2371,7 @@ class String
   # "Purple".ljust(8, '-') # => "Purple--"
   # "Aubergine".ljust(8)   # => "Aubergine"
   # ```
-  def ljust(len, char = ' ' : Char)
+  def ljust(len, char : Char = ' ')
     just len, char, true
   end
 
@@ -2382,7 +2382,7 @@ class String
   # "Purple".ljust(8, '-') # => "--Purple"
   # "Aubergine".ljust(8)   # => "Aubergine"
   # ```
-  def rjust(len, char = ' ' : Char)
+  def rjust(len, char : Char = ' ')
     just len, char, false
   end
 

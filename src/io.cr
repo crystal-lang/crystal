@@ -743,7 +743,7 @@ module IO
   # io.rewind
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
   # ```
-  def write_bytes(object, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
+  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)
     object.to_io(self, format)
   end
 
@@ -759,7 +759,7 @@ module IO
   # io.rewind
   # io.read_bytes(Int32, IO::ByteFormat::LittleEndian) # => 0x01020304
   # ```
-  def read_bytes(type, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
+  def read_bytes(type, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)
     type.from_io(self, format)
   end
 
@@ -890,7 +890,7 @@ module IO
   #
   # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
   # `printf`) will use this encoding.
-  def set_encoding(encoding : String, invalid = nil : Symbol?)
+  def set_encoding(encoding : String, invalid : Symbol? = nil)
     if encoding == "UTF-8"
       @encoding = nil
     else

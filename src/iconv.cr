@@ -11,7 +11,7 @@ end
 
 # :nodoc:
 struct Iconv
-  def initialize(from : String, to : String, invalid = nil : Symbol?)
+  def initialize(from : String, to : String, invalid : Symbol? = nil)
     original_from, original_to = from, to
 
     @skip_invalid = invalid == :skip
@@ -33,7 +33,7 @@ struct Iconv
     end
   end
 
-  def self.new(from : String, to : String, invalid = nil : Symbol?)
+  def self.new(from : String, to : String, invalid : Symbol? = nil)
     iconv = new(from, to, invalid)
     begin
       yield iconv

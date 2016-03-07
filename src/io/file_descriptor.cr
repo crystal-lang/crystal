@@ -129,7 +129,7 @@ class IO::FileDescriptor
   # file.seek(-1, IO::Seek::Current)
   # file.gets(1) # => "c"
   # ```
-  def seek(offset, whence = Seek::Set : Seek)
+  def seek(offset, whence : Seek = Seek::Set)
     check_open
 
     flush

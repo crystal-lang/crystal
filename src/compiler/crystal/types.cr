@@ -457,7 +457,7 @@ module Crystal
       to_s_with_options(io)
     end
 
-    abstract def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    abstract def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
   end
 
   # A type that has a name and can be contained inside other types.
@@ -493,7 +493,7 @@ module Crystal
       String.build { |io| append_full_name(io) }
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       append_full_name(io)
     end
   end
@@ -1308,7 +1308,7 @@ module Crystal
       true
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "NoReturn"
     end
   end
@@ -1318,7 +1318,7 @@ module Crystal
       true
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "Void"
     end
   end
@@ -1455,7 +1455,7 @@ module Crystal
       @including_types
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       super
       if generic_args
         io << "("
@@ -1554,7 +1554,7 @@ module Crystal
       program.union_of instances
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       super
       if generic_args
         io << "("
@@ -1677,7 +1677,7 @@ module Crystal
       program.after_inference_types << self
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       generic_class.append_full_name(io)
       io << "("
       i = 0
@@ -1863,7 +1863,7 @@ module Crystal
       tuple_types.any? { |tuple_type| tuple_type.includes_type?(type) || tuple_type.has_in_type_vars?(type) }
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "{"
       @tuple_types.each_with_index do |tuple_type, i|
         io << ", " if i > 0
@@ -1921,7 +1921,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       @module.to_s(io)
       io << "("
       @including_class.to_s(io)
@@ -2007,7 +2007,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       @extended_class.to_s(io)
       io << "("
       @extending_class.to_s(io)
@@ -2398,7 +2398,7 @@ module Crystal
       instance_type.virtual_type!.metaclass
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << @name
     end
   end
@@ -2438,7 +2438,7 @@ module Crystal
       instance_type
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       instance_type.to_s(io)
       io << ":Class"
     end
@@ -2525,7 +2525,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       # Use T? if this is a nilable type with just two types inside it
       if @union_types.size == 2 && @union_types.last.is_a?(NilType)
         io << @union_types.first
@@ -2559,7 +2559,7 @@ module Crystal
       true
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       not_nil_type.to_s(io)
       io << "?"
     end
@@ -2596,7 +2596,7 @@ module Crystal
       @union_types.last.remove_typedef as FunInstanceType
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "("
       @union_types.last.to_s(io)
       io << ")"
@@ -2618,7 +2618,7 @@ module Crystal
       @union_types.last.remove_typedef as PointerInstanceType
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       @union_types.last.to_s(io)
       io << "?"
     end
@@ -2770,7 +2770,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       base_type.to_s(io)
       io << "+"
     end
@@ -2825,7 +2825,7 @@ module Crystal
       end
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       instance_type.to_s(io)
       io << ":Class"
     end
@@ -2914,7 +2914,7 @@ module Crystal
       false
     end
 
-    def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "("
       size = fun_types.size
       fun_types.each_with_index do |fun_type, i|

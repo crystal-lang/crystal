@@ -135,7 +135,7 @@ class Exception
   getter message
   getter cause
 
-  def initialize(message = nil : String?, cause = nil : Exception?)
+  def initialize(message : String? = nil, cause : Exception? = nil)
     @message = message
     @cause = cause
     @callstack = CallStack.new

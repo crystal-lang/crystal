@@ -8,7 +8,7 @@ class Concurrent::Future(R)
     Canceled
   end
 
-  def initialize(run_immediately = true, delay = 0 : Number, &@block : -> R)
+  def initialize(run_immediately = true, delay : Number = 0, &@block : -> R)
     @state = State::Idle
     @value = nil
     @error = nil

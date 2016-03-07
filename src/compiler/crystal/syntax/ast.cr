@@ -1545,7 +1545,7 @@ module Crystal
   abstract class ControlExpression < ASTNode
     property :exp
 
-    def initialize(@exp = nil : ASTNode?)
+    def initialize(@exp : ASTNode? = nil)
     end
 
     def accept_children(visitor)

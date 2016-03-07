@@ -79,7 +79,7 @@ struct Range(B, E)
   # Range.new(1, 10)                  # => 1..10
   # Range.new(1, 10, exclusive: true) # => 1...10
   # ```
-  def initialize(@begin : B, @end : E, @exclusive = false : Bool)
+  def initialize(@begin : B, @end : E, @exclusive : Bool = false)
   end
 
   # Returns an `Iterator` that cycles over the values of this range.

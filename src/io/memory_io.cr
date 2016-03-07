@@ -19,7 +19,7 @@ class MemoryIO
   # io.pos  # => 0
   # io.read # => ""
   # ```
-  def initialize(capacity = 64 : Int)
+  def initialize(capacity : Int = 64)
     String.check_capacity_in_bounds(capacity)
 
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
@@ -252,7 +252,7 @@ class MemoryIO
   # io.seek(-1, IO::Seek::Current)
   # io.gets(1) # => "c"
   # ```
-  def seek(offset, whence = Seek::Set : Seek)
+  def seek(offset, whence : Seek = Seek::Set)
     check_open
 
     case whence
