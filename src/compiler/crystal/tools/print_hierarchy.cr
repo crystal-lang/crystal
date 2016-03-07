@@ -198,15 +198,25 @@ module Crystal
         else
           print "      "
         end
-        with_color.light_gray.push(STDOUT) do
+
+        color = with_color
+        color = if ivar.freeze_type
+                  with_color.bold
+                else
+                  with_color.light_gray
+                end
+
+        color.push(STDOUT) do
           print ivar.name.ljust(max_name_size)
           print " : "
           if ivar_type = ivar.type?
             print ivar_type.to_s.ljust(max_type_size)
             size = @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar_type))
-            print " ("
-            print size.to_s.rjust(max_bytes_size)
-            print " bytes)"
+            with_color.light_gray.push(STDOUT) do
+              print " ("
+              print size.to_s.rjust(max_bytes_size)
+              print " bytes)"
+            end
           else
             print "MISSING".colorize.red.bright
           end
