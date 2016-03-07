@@ -1864,12 +1864,13 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens = false : Bool, generic_args = true : Bool)
-      io << "{"
+      io << "("
       @tuple_types.each_with_index do |tuple_type, i|
         io << ", " if i > 0
         tuple_type.to_s_with_options(io, skip_union_parens: true)
       end
-      io << "}"
+      io << "," if @tuple_types.size == 1
+      io << ")"
     end
 
     def type_desc

@@ -67,7 +67,7 @@ describe "Normalize: def" do
   it "expands with splat with one arg after and just one argument (#1340)" do
     a_def = parse("def foo(*args, x); args; end") as Def
     actual = a_def.expand_default_arguments(Program.new, 1)
-    actual.to_s.should eq("def foo(x)\n  args = {}\n  args\nend")
+    actual.to_s.should eq("def foo(x)\n  args = ()\n  args\nend")
   end
 
   it "expands with splat with one arg before and after" do
@@ -80,13 +80,13 @@ describe "Normalize: def" do
   it "expands with splat and zero" do
     a_def = parse("def foo(*args); args; end") as Def
     actual = a_def.expand_default_arguments(Program.new, 0)
-    actual.to_s.should eq("def foo\n  args = {}\n  args\nend")
+    actual.to_s.should eq("def foo\n  args = ()\n  args\nend")
   end
 
   it "expands with splat and default argument" do
     a_def = parse("def foo(x = 1, *args); args; end") as Def
     actual = a_def.expand_default_arguments(Program.new, 0)
-    actual.to_s.should eq("def foo\n  x = 1\n  args = {}\n  args\nend")
+    actual.to_s.should eq("def foo\n  x = 1\n  args = ()\n  args\nend")
   end
 
   it "expands with named argument" do

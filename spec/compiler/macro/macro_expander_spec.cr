@@ -50,7 +50,7 @@ describe "MacroExpander" do
   end
 
   it "expands macro with tuple" do
-    assert_macro "", %({{{1, 2, 3}}}), [] of ASTNode, %({1, 2, 3})
+    assert_macro "", %({{{1, 2, 3}}}), [] of ASTNode, %((1, 2, 3))
   end
 
   it "expands macro with range" do

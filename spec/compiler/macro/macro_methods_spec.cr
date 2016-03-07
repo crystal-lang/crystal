@@ -551,7 +551,7 @@ describe "macro methods" do
     end
 
     it "executes to_a" do
-      assert_macro "", %({{{a: 1, b: 3}.to_a}}), [] of ASTNode, "[{:a, 1}, {:b, 3}]"
+      assert_macro "", %({{{a: 1, b: 3}.to_a}}), [] of ASTNode, "[(:a, 1), (:b, 3)]"
     end
   end
 

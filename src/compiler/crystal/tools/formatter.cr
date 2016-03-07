@@ -570,13 +570,22 @@ module Crystal
     end
 
     def visit(node : TupleLiteral)
-      format_literal_elements node.elements, :"{", :"}"
+      format_literal_elements node.elements, :"{", :"}", tuple: node
       false
     end
 
-    def format_literal_elements(elements, prefix, suffix)
+    def format_literal_elements(elements, prefix, suffix, tuple = nil)
       slash_is_regex!
-      write_token prefix
+
+      if tuple
+        unless @token.type == :"{" || @token.type == :"("
+          raise "Bug: expected `(`, `{`"
+        end
+        write "("
+        next_token
+      else
+        write_token prefix
+      end
       has_newlines = false
       wrote_newline = false
       write_space_at_end = false
@@ -607,7 +616,7 @@ module Crystal
           current_element = current_element.key
         end
 
-        if prefix == :"{" && i == 0 && !wrote_newline && (current_element.is_a?(TupleLiteral) || current_element.is_a?(HashLiteral))
+        if prefix == :"{" && i == 0 && !wrote_newline && current_element.is_a?(HashLiteral)
           write " "
           write_space_at_end = true
         end
@@ -645,7 +654,7 @@ module Crystal
         end
       end
 
-      finish_list suffix, has_newlines, found_comment, found_first_newline, write_space_at_end
+      finish_list suffix, has_newlines, found_comment, found_first_newline, write_space_at_end, tuple: tuple
     end
 
     def visit(node : HashLiteral)
@@ -711,16 +720,26 @@ module Crystal
       end
     end
 
-    def finish_list(suffix, has_newlines, found_comment, found_first_newline, write_space_at_end)
-      if @token.type == suffix && !found_first_newline
+    def finish_list(suffix, has_newlines, found_comment, found_first_newline, write_space_at_end, tuple = nil)
+      if (@token.type == suffix || (tuple && @token.type == :")")) && !found_first_newline
         if @wrote_newline
           write_indent
         else
           write " " if write_space_at_end
         end
+        if tuple && tuple.elements.size == 1
+          write ","
+        end
       else
         found_comment ||= skip_space_or_newline
-        check suffix
+
+        if tuple
+          unless @token.type == :"}" || @token.type == :")"
+            raise "Bug: expected `)`, `}`"
+          end
+        else
+          check suffix
+        end
 
         if has_newlines
           unless found_comment
@@ -729,12 +748,27 @@ module Crystal
           end
           write_indent
         elsif write_space_at_end
+          if tuple && tuple.elements.size == 1
+            write ","
+          end
           write " "
+        else
+          if tuple && tuple.elements.size == 1
+            write ","
+          end
         end
         skip_space_or_newline
       end
 
-      write_token suffix
+      if tuple
+        unless @token.type == :"}" || @token.type == :")"
+          raise "Bug: expected `)`, `}`"
+        end
+        write ")"
+        next_token
+      else
+        write_token suffix
+      end
     end
 
     def check_hash_info(hash, key, start_line, start_column, middle_column)
@@ -835,7 +869,12 @@ module Crystal
 
       # Check if it's {A, B} instead of Tuple(A, B)
       if first_name == "Tuple" && @token.value != "Tuple"
-        write_token :"{"
+        if @token.type == :"{" || @token.type == :"("
+          write "("
+          next_token
+        else
+          raise "Bug: expected `(` or `{`"
+        end
         skip_space_or_newline
         node.type_vars.each_with_index do |type_var, i|
           accept type_var
@@ -845,7 +884,15 @@ module Crystal
             next_token_skip_space_or_newline
           end
         end
-        write_token :"}"
+        if node.type_vars.size == 1
+          write ","
+        end
+        if @token.type == :"}" || @token.type == :")"
+          write ")"
+          next_token
+        else
+          raise "Bug: expected `)` or `}`"
+        end
         return false
       end
 
@@ -2667,7 +2714,10 @@ module Crystal
         write " " unless has_parentheses
         skip_space
 
-        if exp.is_a?(TupleLiteral) && @token.type != :"{"
+        if @token.type == :"(" && exp.is_a?(TupleLiteral) && (first = exp.elements.first?) && starts_with_parens?(first)
+          format_args(exp.elements, has_parentheses)
+          skip_space if has_parentheses
+        elsif exp.is_a?(TupleLiteral) && (@token.type != :"{" && @token.type != :"(")
           format_args(exp.elements, has_parentheses)
           skip_space if has_parentheses
         else
@@ -2679,6 +2729,19 @@ module Crystal
       write_token :")" if has_parentheses
 
       false
+    end
+
+    def starts_with_parens?(node)
+      case node
+      when TupleLiteral
+        true
+      when Expressions
+        node.keyword == :"("
+      when Call
+        starts_with_parens?(node.obj)
+      else
+        false
+      end
     end
 
     def visit(node : Yield)
