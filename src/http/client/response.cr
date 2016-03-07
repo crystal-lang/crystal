@@ -9,7 +9,7 @@ class HTTP::Client::Response
   getter! body_io
   property upgrade_handler
 
-  def initialize(@status_code, @body = nil, @headers = Headers.new : Headers, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
+  def initialize(@status_code, @body = nil, @headers : Headers = Headers.new, status_message = nil, @version = "HTTP/1.1", @body_io = nil)
     @status_message = status_message || HTTP.default_status_message_for(@status_code)
 
     if Response.mandatory_body?(@status_code)

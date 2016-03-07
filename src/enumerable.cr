@@ -277,7 +277,7 @@ module Enumerable(T)
   #     [1, 2, 3].in_groups_of(2, 0) #=> [[1, 2], [3, 0]]
   #     [1, 2, 3].in_groups_of(2) #=> [[1, 2], [3, nil]]
   #
-  def in_groups_of(size : Int, filled_up_with = nil : U)
+  def in_groups_of(size : Int, filled_up_with : U = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
 
     # TODO: this consumes the enumerable twice, fix
@@ -300,7 +300,7 @@ module Enumerable(T)
   #     #=> 3
   #     #=> 4
   #
-  def in_groups_of(size : Int, filled_up_with = nil : U)
+  def in_groups_of(size : Int, filled_up_with : U = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
     ary = Array(T | U).new(size, filled_up_with)
 

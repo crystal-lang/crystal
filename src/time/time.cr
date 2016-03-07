@@ -7,7 +7,7 @@ lib LibC
   fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int
 
   ifdef linux
-    fun tzset() : Void
+    fun tzset : Void
     $timezone : Int
   end
 end

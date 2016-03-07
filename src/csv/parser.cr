@@ -5,7 +5,7 @@ class CSV::Parser
   # Creates a parser from a `String` or `IO`.
   # Optionally takes the optional *separator* and *quote_char* arguments for
   # specifying non-standard cell separators and quote characters
-  def initialize(string_or_io : String | IO, separator = DEFAULT_SEPARATOR : Char, quote_char = DEFAULT_QUOTE_CHAR : Char)
+  def initialize(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
     @lexer = CSV::Lexer.new(string_or_io, separator, quote_char)
     @max_row_size = 3
   end

@@ -46,7 +46,7 @@ class File
     flock LibC::FlockOp::UN
   end
 
-  private def flock(op : LibC::FlockOp, blocking = true : Bool)
+  private def flock(op : LibC::FlockOp, blocking : Bool = true)
     op |= LibC::FlockOp::NB unless blocking
 
     if LibC.flock(@fd, op) != 0

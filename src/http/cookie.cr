@@ -14,10 +14,10 @@ module HTTP
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only
 
-    def initialize(@name : String, value : String, @path = "/" : String,
-                   @expires = nil : Time?, @domain = nil : String?,
-                   @secure = false : Bool, @http_only = false : Bool,
-                   @extension = nil : String?)
+    def initialize(@name : String, value : String, @path : String = "/",
+                   @expires : Time? = nil, @domain : String? = nil,
+                   @secure : Bool = false, @http_only : Bool = false,
+                   @extension : String? = nil)
       @name = URI.unescape name
       @value = URI.unescape value
     end

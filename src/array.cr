@@ -1178,7 +1178,7 @@ class Array(T)
   #     a.permutations(0) #=> [[]]
   #     a.permutations(4) #=> []
   #
-  def permutations(size = self.size : Int)
+  def permutations(size : Int = self.size)
     ary = [] of Array(T)
     each_permutation(size) do |a|
       ary << a
@@ -1193,7 +1193,7 @@ class Array(T)
   #     a.each_permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
   #     sums #=> [3, 4, 3, 5, 4, 5]
   #
-  def each_permutation(size = self.size : Int)
+  def each_permutation(size : Int = self.size)
     n = self.size
     return self if size > n
 
@@ -1238,13 +1238,13 @@ class Array(T)
   # iter.next # => [3, 2, 1]
   # iter.next # => Iterator::Stop
   # ```
-  def each_permutation(size = self.size : Int)
+  def each_permutation(size : Int = self.size)
     raise ArgumentError.new("size must be positive") if size < 0
 
     PermutationIterator.new(self, size.to_i)
   end
 
-  def combinations(size = self.size : Int)
+  def combinations(size : Int = self.size)
     ary = [] of Array(T)
     each_combination(size) do |a|
       ary << a
@@ -1252,7 +1252,7 @@ class Array(T)
     ary
   end
 
-  def each_combination(size = self.size : Int)
+  def each_combination(size : Int = self.size)
     n = self.size
     return self if size > n
     raise ArgumentError.new("size must be positive") if size < 0
@@ -1288,7 +1288,7 @@ class Array(T)
     end
   end
 
-  def each_combination(size = self.size : Int)
+  def each_combination(size : Int = self.size)
     raise ArgumentError.new("size must be positive") if size < 0
 
     CombinationIterator.new(self, size.to_i)
@@ -1308,7 +1308,7 @@ class Array(T)
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
   end
 
-  def repeated_combinations(size = self.size : Int)
+  def repeated_combinations(size : Int = self.size)
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
       ary << a
@@ -1316,7 +1316,7 @@ class Array(T)
     ary
   end
 
-  def each_repeated_combination(size = self.size : Int)
+  def each_repeated_combination(size : Int = self.size)
     n = self.size
     return self if size > n && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
@@ -1349,7 +1349,7 @@ class Array(T)
     end
   end
 
-  def each_repeated_combination(size = self.size : Int)
+  def each_repeated_combination(size : Int = self.size)
     raise ArgumentError.new("size must be positive") if size < 0
 
     RepeatedCombinationIterator.new(self, size.to_i)
@@ -1397,7 +1397,7 @@ class Array(T)
     end
   end
 
-  def repeated_permutations(size = self.size : Int)
+  def repeated_permutations(size : Int = self.size)
     ary = [] of Array(T)
     each_repeated_permutation(size) do |a|
       ary << a
@@ -1405,7 +1405,7 @@ class Array(T)
     ary
   end
 
-  def each_repeated_permutation(size = self.size : Int)
+  def each_repeated_permutation(size : Int = self.size)
     n = self.size
     return self if size != 0 && n == 0
     raise ArgumentError.new("size must be positive") if size < 0

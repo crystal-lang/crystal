@@ -26,7 +26,7 @@ class Scheduler
     end
   end
 
-  def self.create_fd_write_event(io : IO::FileDescriptor, edge_triggered = false : Bool)
+  def self.create_fd_write_event(io : IO::FileDescriptor, edge_triggered : Bool = false)
     flags = LibEvent2::EventFlags::Write
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
     event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|
@@ -41,7 +41,7 @@ class Scheduler
     event
   end
 
-  def self.create_fd_read_event(io : IO::FileDescriptor, edge_triggered = false : Bool)
+  def self.create_fd_read_event(io : IO::FileDescriptor, edge_triggered : Bool = false)
     flags = LibEvent2::EventFlags::Read
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
     event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|

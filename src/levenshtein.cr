@@ -57,11 +57,11 @@ module Levenshtein
     # :nodoc:
     record Entry, value, distance
 
-    def initialize(@target : String, tolerance = nil : Int?)
+    def initialize(@target : String, tolerance : Int? = nil)
       @tolerance = tolerance || (target.size / 5.0).ceil.to_i
     end
 
-    def test(name : String, value = name : String)
+    def test(name : String, value : String = name)
       distance = Levenshtein.distance(@target, name)
       if distance <= @tolerance
         if best_entry = @best_entry

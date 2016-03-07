@@ -35,7 +35,7 @@ require "./ip_socket"
 # server.close
 # ```
 class UDPSocket < IPSocket
-  def initialize(family = Socket::Family::INET : Socket::Family)
+  def initialize(family : Socket::Family = Socket::Family::INET)
     super create_socket(family.value, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP)
   end
 

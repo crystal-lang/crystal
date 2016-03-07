@@ -306,7 +306,7 @@ class HTTP::Client
   # client = HTTP::Client.new "www.example.com"
   # response = client.post_form "/", "foo=bar"
   # ```
-  def post_form(path, form : String, headers = nil : HTTP::Headers?) : HTTP::Client::Response
+  def post_form(path, form : String, headers : HTTP::Headers? = nil) : HTTP::Client::Response
     headers ||= HTTP::Headers.new
     headers["Content-type"] = "application/x-www-form-urlencoded"
     post path, headers, form
@@ -319,7 +319,7 @@ class HTTP::Client
   # client = HTTP::Client.new "www.example.com"
   # response = client.post_form "/", {"foo": "bar"}
   # ```
-  def post_form(path, form : Hash, headers = nil : HTTP::Headers?) : HTTP::Client::Response
+  def post_form(path, form : Hash, headers : HTTP::Headers? = nil) : HTTP::Client::Response
     body = HTTP::Params.build do |form_builder|
       form.each do |key, value|
         form_builder.add key, value
@@ -335,7 +335,7 @@ class HTTP::Client
   # ```
   # response = HTTP::Client.post_form "http://www.example.com", "foo=bar"
   # ```
-  def self.post_form(url, form : String | Hash, headers = nil : HTTP::Headers?) : HTTP::Client::Response
+  def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil) : HTTP::Client::Response
     exec(url) do |client, path|
       client.post_form(path, form, headers)
     end
@@ -409,7 +409,7 @@ class HTTP::Client
   # response = client.exec "GET", "/"
   # response.body # => "..."
   # ```
-  def exec(method : String, path, headers = nil : HTTP::Headers?, body = nil : String?) : HTTP::Client::Response
+  def exec(method : String, path, headers : HTTP::Headers? = nil, body : String? = nil) : HTTP::Client::Response
     exec new_request method, path, headers, body
   end
 
@@ -422,7 +422,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def exec(method : String, path, headers = nil : HTTP::Headers?, body = nil : String?)
+  def exec(method : String, path, headers : HTTP::Headers? = nil, body : String? = nil)
     exec(new_request(method, path, headers, body)) do |response|
       yield response
     end
@@ -435,7 +435,7 @@ class HTTP::Client
   # response = HTTP::Client.exec "GET", "http://www.example.com"
   # response.body # => "..."
   # ```
-  def self.exec(method, url : String | URI, headers = nil : HTTP::Headers?, body = nil : String?) : HTTP::Client::Response
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil) : HTTP::Client::Response
     exec(url) do |client, path|
       client.exec method, path, headers, body
     end
@@ -449,7 +449,7 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def self.exec(method, url : String | URI, headers = nil : HTTP::Headers?, body = nil : String?)
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil)
     exec(url) do |client, path|
       client.exec(method, path, headers, body) do |response|
         yield response
