@@ -103,7 +103,7 @@ describe "Restrictions" do
 
   it "passes #278" do
     assert_error %(
-      def bar(x : String, y = nil : String)
+      def bar(x : String, y : String = nil)
       end
 
       bar(1 || "")

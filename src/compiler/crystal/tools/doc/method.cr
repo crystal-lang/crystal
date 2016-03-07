@@ -111,16 +111,16 @@ class Crystal::Doc::Method
 
   def arg_to_html(arg : Arg, io, links = true)
     io << arg.name
-    if default_value = arg.default_value
-      io << " = "
-      io << Highlighter.highlight(default_value.to_s)
-    end
     if restriction = arg.restriction
       io << " : "
       node_to_html restriction, io, links: links
     elsif type = arg.type?
       io << " : "
       @type.type_to_html type, io, links: links
+    end
+    if default_value = arg.default_value
+      io << " = "
+      io << Highlighter.highlight(default_value.to_s)
     end
   end
 

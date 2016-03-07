@@ -41,4 +41,5 @@ describe "ASTNode#to_s" do
   expect_to_s %[(1 || 1.1) as Int32]
   expect_to_s %[1 & 2 & (3 | 4)], %[(1 & 2) & (3 | 4)]
   expect_to_s %[(1 & 2) & (3 | 4)]
+  expect_to_s "def foo(x : T = 1)\nend"
 end
