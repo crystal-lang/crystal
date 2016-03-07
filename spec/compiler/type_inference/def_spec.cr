@@ -357,7 +357,7 @@ describe "Type inference: def" do
 
   it "accesses free var of default argument (#1101)" do
     assert_type(%(
-      def foo(x, y = nil : U)
+      def foo(x, y : U = nil)
         U
       end
 

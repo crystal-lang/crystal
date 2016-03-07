@@ -1606,26 +1606,8 @@ module Crystal
       write @token.value
       next_token
 
-      old_syntax = false
-      before_equals_pos = 0
-      after_equals_pos = 0
-      before_colon_pos = 0
-      after_colon_pos = 0
-
       if restriction
         skip_space_or_newline
-
-        if default_value && @token.type == :"="
-          old_syntax = true
-          # This is the case of `x = 1 : Int32`, which we'll rewrite as
-          # `x : Int32 = 1`
-          before_equals_pos = @output.pos
-          write_token " ", :"=", " "
-          skip_space_or_newline
-          accept default_value
-          after_equals_pos = @output.pos
-          skip_space_or_newline
-        end
 
         # This is for a case like `x, y : Int32`
         if @inside_struct_or_union && @token.type == :","
@@ -1635,14 +1617,12 @@ module Crystal
           return false
         end
 
-        before_colon_pos = @output.pos
         write_token " ", :":", " "
         skip_space_or_newline
         accept restriction
-        after_colon_pos = @output.pos
       end
 
-      if default_value && !old_syntax
+      if default_value
         skip_space_or_newline
 
         check_align = check_assign_length node
@@ -1651,19 +1631,6 @@ module Crystal
         skip_space_or_newline
         accept default_value
         check_assign_align before_column, default_value if check_align
-      end
-
-      # Update old syntax to new syntax
-      if old_syntax
-        string = @output.to_s
-        before = string.byte_slice(0, before_equals_pos)
-        equals = string.byte_slice(before_equals_pos, after_equals_pos - before_equals_pos)
-        middle = string.byte_slice(after_equals_pos, before_colon_pos - after_equals_pos)
-        colon = string.byte_slice(before_colon_pos, after_colon_pos - before_colon_pos)
-        ending = string.byte_slice(after_colon_pos)
-        string = "#{before}#{colon}#{middle}#{equals}#{ending}"
-        @output = MemoryIO.new
-        @output << string
       end
 
       # This is the case of an enum member

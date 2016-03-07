@@ -3005,18 +3005,11 @@ module Crystal
 
       unless found_colon
         if @token.type == :SYMBOL
-          raise "space required after colon in type restriction", @token
+          raise "the syntax for an argument with a default value V and type T is `arg : T = V`", @token
         end
 
         if allow_restrictions && @token.type == :":"
-          if !default_value && !found_space
-            raise "space required before colon in type restriction", @token
-          end
-
-          next_token_skip_space_or_newline
-
-          location = @token.location
-          restriction = parse_single_type
+          raise "the syntax for an argument with a default value V and type T is `arg : T = V`", @token
         end
       end
 

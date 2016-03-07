@@ -706,16 +706,16 @@ module Crystal
       else
         @str << "?"
       end
-      if default_value = node.default_value
-        @str << " = "
-        default_value.accept self
-      end
       if type = node.type?
         @str << " : "
         TypeNode.new(type).accept(self)
       elsif restriction = node.restriction
         @str << " : "
         restriction.accept self
+      end
+      if default_value = node.default_value
+        @str << " = "
+        default_value.accept self
       end
       false
     end
