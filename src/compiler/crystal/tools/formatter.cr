@@ -28,6 +28,8 @@ module Crystal
       end
     end
 
+    record HeredocFix, start_line, end_line, difference
+
     def initialize(source)
       @lexer = Lexer.new(source)
       @lexer.comments_enabled = true
@@ -64,6 +66,7 @@ module Crystal
       @current_doc_comment = nil
       @hash_in_same_line = Set(typeof(object_id)).new
       @shebang = @token.type == :COMMENT && @token.value.to_s.starts_with?("#!")
+      @heredoc_fixes = [] of HeredocFix
     end
 
     def visit(node : FileNode)
@@ -327,6 +330,10 @@ module Crystal
 
       check :DELIMITER_START
       is_regex = @token.delimiter_state.kind == :regex
+      is_heredoc = @token.delimiter_state.kind == :heredoc
+
+      indent_difference = @token.column_number - (@column + 1)
+      heredoc_line = @line
 
       write @token.raw
       next_string_token
@@ -353,6 +360,10 @@ module Crystal
       write @token.raw
       format_regex_modifiers if is_regex
 
+      if is_heredoc && indent_difference != 0
+        @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
+      end
+
       if space_slash_newline?
         write " \\"
         write_line
@@ -373,6 +384,10 @@ module Crystal
       next_string_token
 
       delimiter_state = @token.delimiter_state
+      is_heredoc = @token.delimiter_state.kind == :heredoc
+
+      indent_difference = @token.column_number - (@column + 1)
+      heredoc_line = @line
 
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
@@ -425,6 +440,11 @@ module Crystal
 
       check :DELIMITER_END
       write @token.raw
+
+      if is_heredoc && indent_difference != 0
+        @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
+      end
+
       format_regex_modifiers if is_regex
       next_token
 
@@ -3656,6 +3676,7 @@ module Crystal
       skip_space_or_newline last: true
       result = to_s.strip
       lines = result.split("\n")
+      fix_heredocs(lines, @heredoc_fixes)
       align_infos(lines, @when_infos)
       align_infos(lines, @hash_infos)
       align_infos(lines, @assign_infos)
@@ -3668,6 +3689,17 @@ module Crystal
         result = result[0] + result[2..-1]
       end
       result
+    end
+
+    def fix_heredocs(lines, @heredoc_fixes)
+      @heredoc_fixes.each do |fix|
+        fix.start_line.upto(fix.end_line) do |line_number|
+          line = lines[line_number]
+          if (0...fix.difference).all? { |index| line[index]?.try &.whitespace? }
+            lines[line_number] = line[fix.difference..-1]
+          end
+        end
+      end
     end
 
     # Align series of successive inline when/else (in a case),

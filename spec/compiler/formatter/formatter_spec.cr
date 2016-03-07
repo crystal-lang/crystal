@@ -782,7 +782,11 @@ describe Crystal::Formatter do
   assert_format "<<-HTML\n  \#{1}x\n  HTML"
   assert_format "<<-HTML\n  \#{1}x\n  y\n  HTML"
   assert_format "<<-HTML\n  \#{1}x\n  y\n  z\n  HTML"
-  assert_format "  <<-HTML\n  \#{1} \#{2}\n  HTML", "<<-HTML\n  \#{1} \#{2}\n  HTML"
+
+  assert_format "  <<-HTML\n   foo\n  HTML", "<<-HTML\n foo\nHTML"
+  assert_format "  <<-HTML\n   \#{1}\n  HTML", "<<-HTML\n \#{1}\nHTML"
+  assert_format "  <<-HTML\n  \#{1} \#{2}\n  HTML", "<<-HTML\n\#{1} \#{2}\nHTML"
+  assert_format "  <<-HTML\n  foo\nHTML", "<<-HTML\nfoo\nHTML"
 
   assert_format "#!shebang\n1 + 2"
 
