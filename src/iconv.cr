@@ -11,6 +11,9 @@ end
 
 # :nodoc:
 struct Iconv
+  @iconv : LibIconv::Iconv
+  @skip_invalid : Bool
+
   def initialize(from : String, to : String, invalid : Symbol? = nil)
     original_from, original_to = from, to
 

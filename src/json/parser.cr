@@ -1,6 +1,8 @@
 require "./lexer"
 
 class JSON::Parser
+  @lexer : Lexer
+
   def initialize(string_or_io : String | IO)
     @lexer = JSON::Lexer.new(string_or_io)
     next_token

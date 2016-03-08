@@ -1,5 +1,7 @@
 # :nodoc:
 class CSV::Lexer::StringBased < CSV::Lexer
+  @reader : Char::Reader
+
   def initialize(string, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
     super(separator, quote_char)
     @reader = Char::Reader.new(string)

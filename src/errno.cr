@@ -197,7 +197,7 @@ class Errno < Exception
   end
 
   # Returns the numeric value of errno.
-  getter errno
+  getter errno : Int32
 
   # Creates a new Errno with the given message. The message will
   # have concatenated the message denoted by `Errno#value`.

@@ -1,8 +1,8 @@
 class OAuth::RequestToken
-  getter token
-  getter secret
+  getter token : String
+  getter secret : String
 
-  def initialize(@token, @secret)
+  def initialize(@token : String, @secret : String)
   end
 
   def self.from_response(response)

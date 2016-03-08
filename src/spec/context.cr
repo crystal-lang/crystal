@@ -4,10 +4,17 @@ module Spec
   end
 
   # :nodoc:
-  record Result, kind, description, file, line, exception
+  record Result,
+    kind : Symbol,
+    description : String,
+    file : String,
+    line : Int32,
+    exception : Exception?
 
   # :nodoc:
   class RootContext < Context
+    @results : Hash(Symbol, Array(Result))
+
     def initialize
       @results = {
         success: [] of Result,
@@ -151,10 +158,10 @@ module Spec
 
   # :nodoc:
   class NestedContext < Context
-    getter parent
-    getter description
-    getter file
-    getter line
+    getter parent : Context
+    getter description : String
+    getter file : String
+    getter line : Int32
 
     def initialize(@description : String, @file, @line, @parent)
     end

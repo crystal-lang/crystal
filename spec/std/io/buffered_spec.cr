@@ -1,15 +1,11 @@
 require "spec"
 
-class IO::BufferedWrapper(T)
+class IO::BufferedWrapper
   include IO::Buffered
 
   getter called_unbuffered_read
 
-  def initialize(@io : T)
-    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
-    @out_count = 0
-    @flush_on_newline = false
-    @sync = false
+  def initialize(@io)
     @called_unbuffered_read = false
   end
 

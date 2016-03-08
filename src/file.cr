@@ -83,7 +83,7 @@ class File < IO::FileDescriptor
     oflag = m | o
   end
 
-  getter path
+  getter path : String
 
   # Returns a `File::Stat` object for the named file or raises
   # `Errno` in case of an error. In case of a symbolic link

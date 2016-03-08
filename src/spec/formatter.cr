@@ -30,6 +30,9 @@ module Spec
 
   # :nodoc:
   class VerboseFormatter < Formatter
+    @ident : Int32
+    @last_description : String
+
     def initialize
       @ident = 0
       @last_description = ""

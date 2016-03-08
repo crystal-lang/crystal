@@ -121,10 +121,6 @@ class HTTP::Server
       property! response
 
       def initialize(@io)
-        @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
-        @out_count = 0
-        @sync = false
-        @flush_on_newline = false
         @chunked = false
       end
 

@@ -5,8 +5,8 @@ struct Time::Format
   struct Formatter
     include Pattern
 
-    getter io
-    getter time
+    getter io : IO
+    getter time : Time
 
     def initialize(@time, @io)
     end

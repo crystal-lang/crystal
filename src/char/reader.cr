@@ -15,7 +15,7 @@ struct Char
     include Enumerable(Char)
 
     # Returns the reader's String.
-    getter string
+    getter string : String
 
     # Returns the current character.
     #
@@ -25,7 +25,7 @@ struct Char
     # reader.next_char
     # reader.current_char # => 'b'
     # ```
-    getter current_char
+    getter current_char : Char
 
     # Returns the size of the current_char (in bytes) as if it were encoded in UTF-8.
     #
@@ -35,7 +35,7 @@ struct Char
     # reader.next_char
     # reader.current_char_width # => 2
     # ```
-    getter current_char_width
+    getter current_char_width : Int32
 
     # Returns the position of the current character.
     #
@@ -45,7 +45,9 @@ struct Char
     # reader.next_char
     # reader.current_char # => 1
     # ```
-    getter pos
+    getter pos : Int32
+
+    @end : Bool
 
     # Creates a reader with the specified *string*
     def initialize(@string)

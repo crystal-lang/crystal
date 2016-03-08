@@ -2,6 +2,14 @@
 class IO::ARGF
   include IO
 
+  @initialized : Bool
+  @argv : Array(String)
+  @read_from_stdin : Bool
+  @path : String?
+
+  # @stdin : IO
+  # @current_io : IO?
+
   def initialize(@argv, @stdin)
     @path = nil
     @current_io = nil

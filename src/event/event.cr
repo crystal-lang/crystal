@@ -10,7 +10,10 @@ module Event
 
   # :nodoc:
   struct Event
-    def initialize(@event)
+    @event : LibEvent2::Event
+    @freed : Bool
+
+    def initialize(@event : LibEvent2::Event)
       @freed = false
     end
 
@@ -57,6 +60,8 @@ module Event
 
   # :nodoc:
   struct Base
+    @base : LibEvent2::EventBase
+
     def initialize
       @base = LibEvent2.event_base_new
     end

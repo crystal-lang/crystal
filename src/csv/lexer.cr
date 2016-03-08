@@ -21,7 +21,14 @@ abstract class CSV::Lexer
   end
 
   # Returns the current `Token`.
-  getter token
+  getter token : Token
+  getter separator : Char
+  getter quote_char : Char
+
+  @buffer : MemoryIO
+  @column_number : Int32
+  @line_number : Int32
+  @last_empty_column : Bool
 
   # :nodoc:
   def initialize(@separator = DEFAULT_SEPARATOR, @quote_char = DEFAULT_QUOTE_CHAR)
@@ -59,7 +66,7 @@ abstract class CSV::Lexer
       @token.kind =
         case next_char
         when '\0'
-          :eof
+          Token::Kind::Eof
         when '\n'
           case next_char
           when '\0'

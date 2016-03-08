@@ -1792,8 +1792,7 @@ module Crystal
         unless type_var.is_a?(Type)
           type_var.raise "argument to Tuple must be a type, not #{type_var}"
         end
-        # TODO: this cast shouldn't be needed
-        type_var as Type
+        type_var
       end
       instance = TupleInstanceType.new(program, types)
       generic_types[type_vars] = instance

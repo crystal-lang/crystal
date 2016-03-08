@@ -25,6 +25,8 @@ struct Set(T)
   include Enumerable(T)
   include Iterable
 
+  @hash : Hash(T, Nil)
+
   # Creates a new, empty `Set`
   #
   #     s = Set(Int32).new

@@ -203,7 +203,8 @@ module Crystal
     end
 
     def tuple_of(types)
-      tuple.instantiate types
+      type_vars = types.map { |type| type as TypeVar }
+      tuple.instantiate(type_vars)
     end
 
     def union_of(types : Array)
@@ -266,16 +267,17 @@ module Crystal
     end
 
     def fun_of(types : Array)
-      proc.instantiate(types)
+      type_vars = types.map { |type| type as TypeVar }
+      proc.instantiate(type_vars)
     end
 
     def fun_of(nodes : Array(ASTNode), return_type : Type)
-      types = Array(Type).new(nodes.size + 1)
+      type_vars = Array(TypeVar).new(nodes.size + 1)
       nodes.each do |node|
-        types << node.type
+        type_vars << node.type
       end
-      types << return_type
-      proc.instantiate(types)
+      type_vars << return_type
+      proc.instantiate(type_vars)
     end
 
     def add_to_requires(filename)

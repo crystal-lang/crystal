@@ -882,6 +882,16 @@ module IO
     ByteIterator.new(self)
   end
 
+  # Rewinds this IO. By default this method raises, but including types
+  # mayb implement it.
+  def rewind
+    raise IO::Error.new("can't rewind")
+  end
+
+  @encoding : EncodingOptions?
+  @encoder : Encoder?
+  @decoder : Decoder?
+
   # Sets the encoding of this IO.
   #
   # The *invalid* argument can be:

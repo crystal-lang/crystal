@@ -1,5 +1,5 @@
 class UNIXSocket < Socket
-  getter :path
+  getter path : String?
 
   def initialize(@path : String, socktype : Socket::Type = Socket::Type::STREAM)
     sock = create_socket(LibC::AF_UNIX, socktype.value, 0)

@@ -102,8 +102,8 @@ module Spec
 
   # :nodoc:
   class AssertionFailed < Exception
-    getter file
-    getter line
+    getter file : String
+    getter line : Int32
 
     def initialize(message, @file, @line)
       super(message)

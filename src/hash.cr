@@ -30,7 +30,14 @@ class Hash(K, V)
     end
   end
 
-  getter size
+  getter size : Int32
+  @buckets : Pointer(Entry(K, V)?)
+  @buckets_size : Int32
+  @first : Entry(K, V)?
+  @last : Entry(K, V)?
+  @block : (Hash(K, V), K -> V)?
+
+  # TODO @comp
 
   def initialize(block : (Hash(K, V), K -> V)? = nil, @comp = StandardComparator, initial_capacity = nil)
     initial_capacity ||= 11
@@ -129,8 +136,8 @@ class Hash(K, V)
   # ```
   def fetch(key)
     fetch(key) do
-      if block = @block
-        block.call(self, key)
+      if (block = @block) && key.is_a?(K)
+        block.call(self, key as K)
       else
         raise KeyError.new "Missing hash key: #{key.inspect}"
       end
@@ -983,17 +990,17 @@ class Hash(K, V)
 
   # :nodoc:
   class Entry(K, V)
-    getter :key
-    property :value
+    getter key : K
+    property value : V
 
     # Next in the linked list of each bucket
-    property :next
+    property next : self?
 
     # Next in the ordered sense of hash
-    property :fore
+    property fore : self?
 
     # Previous in the ordered sense of hash
-    property :back
+    property back : self?
 
     def initialize(@key : K, @value : V)
     end

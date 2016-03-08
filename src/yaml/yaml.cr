@@ -42,10 +42,12 @@ require "./*"
 module YAML
   # Exception thrown on a YAML parse error.
   class ParseException < Exception
-    getter line_number
-    getter column_number
+    getter line_number : Int32
+    getter column_number : Int32
 
-    def initialize(message, @line_number, @column_number)
+    def initialize(message, line_number, column_number)
+      @line_number = line_number.to_i
+      @column_number = column_number.to_i
       super "#{message} at #{@line_number}:#{@column_number}"
     end
   end
