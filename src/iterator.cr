@@ -116,6 +116,8 @@ module Iterator(T)
   struct Singleton(T)
     include Iterator(T)
 
+    @element : T
+
     def initialize(@element : T)
     end
 
@@ -135,6 +137,8 @@ module Iterator(T)
   # :nodoc:
   struct SingletonProc(T)
     include Iterator(T)
+
+    @proc : -> T
 
     def initialize(@proc : -> T)
     end

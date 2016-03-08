@@ -1,6 +1,6 @@
 class OAuth2::Error < Exception
-  getter error
-  getter error_description
+  getter error : String
+  getter error_description : String?
 
   def initialize(@error, @error_description)
     if error_description = @error_description

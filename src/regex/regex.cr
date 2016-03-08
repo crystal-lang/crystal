@@ -202,14 +202,18 @@ class Regex
   # ```
   # /ab+c/ix.options # => IGNORE_CASE, EXTENDED
   # ```
-  getter options
+  getter options : Options
 
   # Return the original String representation of the Regex pattern.
   #
   # ```
   # /ab+c/x.source # => "ab+c"
   # ```
-  getter source
+  getter source : String
+
+  @re : LibPCRE::Pcre
+  @extra : LibPCRE::PcreExtra
+  @captures : Int32
 
   # Creates a new Regex out of the given source String.
   #

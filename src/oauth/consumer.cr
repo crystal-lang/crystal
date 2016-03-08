@@ -1,10 +1,21 @@
 class OAuth::Consumer
-  def initialize(@host, @consumer_key, @consumer_secret,
-                 @port = 443,
-                 @scheme = "https",
-                 @request_token_uri = "/oauth/request_token",
-                 @authorize_uri = "/oauth/authorize",
-                 @access_token_uri = "/oauth/access_token")
+  @host : String
+  @consumer_key : String
+  @consumer_secret : String
+  @secret : String
+  @port : Int32
+  @scheme : String
+  @request_token_uri : String
+  @authorize_uri : String
+  @access_token_uri : String
+  @ssl : Bool
+
+  def initialize(@host : String, @consumer_key : String, @consumer_secret : String,
+                 @port : Int32 = 443,
+                 @scheme : String = "https",
+                 @request_token_uri : String = "/oauth/request_token",
+                 @authorize_uri : String = "/oauth/authorize",
+                 @access_token_uri : String = "/oauth/access_token")
     @ssl = @scheme == "https"
   end
 

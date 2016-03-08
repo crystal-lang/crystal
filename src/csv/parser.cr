@@ -2,6 +2,9 @@
 #
 # Most of the time `CSV#parse` and `CSV#each_row` are more convenient.
 class CSV::Parser
+  @lexer : Lexer
+  @max_row_size : Int32
+
   # Creates a parser from a `String` or `IO`.
   # Optionally takes the optional *separator* and *quote_char* arguments for
   # specifying non-standard cell separators and quote characters
@@ -72,6 +75,8 @@ class CSV::Parser
   # :nodoc:
   struct RowIterator
     include Iterator(Array(String))
+
+    @parser : Parser
 
     def initialize(@parser)
     end

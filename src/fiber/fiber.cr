@@ -11,12 +11,15 @@ class Fiber
   @@last_fiber = nil
   @@stack_pool = [] of Void*
 
-  protected property :stack_top
-  protected property :stack_bottom
-  protected property :next_fiber
-  protected property :prev_fiber
+  @stack : Void*
+  @resume_event : Event::Event?
+  @proc : ->
+  protected property stack_top : Void*
+  protected property stack_bottom : Void*
+  protected property next_fiber : Fiber?
+  protected property prev_fiber : Fiber?
 
-  def initialize(&@proc)
+  def initialize(&@proc : ->)
     @stack = Fiber.allocate_stack
     @stack_bottom = @stack + STACK_SIZE
     fiber_main = ->(f : Fiber) { f.run }
@@ -55,7 +58,7 @@ class Fiber
   end
 
   def initialize
-    @proc = ->{}
+    @proc = Fiber.proc { }
     @stack = Pointer(Void).null
     @stack_top = get_stack_top
     @stack_bottom = LibGC.stackbottom
@@ -189,6 +192,11 @@ class Fiber
 
   def self.current
     @@current
+  end
+
+  # TODO: we could do `Proc(Void).new {}`, but that currently types it as `Proc(Nil)`
+  protected def self.proc(&block : ->)
+    block
   end
 
   @@prev_push_other_roots = LibGC.get_push_other_roots

@@ -59,7 +59,7 @@ struct Range(B, E)
   # (1..10).begin  # => 1
   # (1...10).begin # => 1
   # ```
-  getter :begin
+  getter begin : B
 
   # Returns the object that defines the end of the range.
   #
@@ -67,11 +67,11 @@ struct Range(B, E)
   # (1..10).end  # => 10
   # (1...10).end # => 10
   # ```
-  getter :end
+  getter end : E
 
   # Returns `true` if the range is exclusive.
   # Returns `false` otherwise (default).
-  getter? :exclusive
+  getter? exclusive : Bool
 
   # Constructs a range using the given beginning and end.
   #

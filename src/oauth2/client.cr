@@ -1,7 +1,14 @@
 class OAuth2::Client
-  property scope
+  @host : String
+  @client_id : String
+  @client_secret : String
+  @port : Int32
+  @scheme : String
+  @authorize_uri : String
+  @token_uri : String
+  @redirect_uri : String?
 
-  def initialize(@host, @client_id, @client_secret,
+  def initialize(@host : String, @client_id : String, @client_secret : String,
                  @port = 443,
                  @scheme = "https",
                  @authorize_uri = "/oauth2/authorize",

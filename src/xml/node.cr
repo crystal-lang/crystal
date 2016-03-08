@@ -1,6 +1,8 @@
 struct XML::Node
   LOOKS_LIKE_XPATH = /^(\.\/|\/|\.\.|\.$)/
 
+  @node : LibXML::Node*
+
   def initialize(node : LibXML::Attr*)
     initialize(node as LibXML::Node*)
   end

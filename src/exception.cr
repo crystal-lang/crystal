@@ -7,6 +7,9 @@ end
 
 # :nodoc:
 struct CallStack
+  @callstack : Array(Void*)
+  @backtrace : Array(String)?
+
   def initialize
     @callstack = CallStack.unwind
   end
@@ -55,7 +58,7 @@ struct CallStack
   end
 
   struct RepeatedFrame
-    getter ip, count
+    getter ip : Void*, count : Int32
 
     def initialize(@ip)
       @count = 0
@@ -132,8 +135,9 @@ struct CallStack
 end
 
 class Exception
-  getter message
-  getter cause
+  getter message : String?
+  getter cause : Exception?
+  @callstack : CallStack
 
   def initialize(message : String? = nil, cause : Exception? = nil)
     @message = message

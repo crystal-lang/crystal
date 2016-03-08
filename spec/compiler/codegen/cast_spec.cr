@@ -187,7 +187,7 @@ describe "Code gen: cast" do
         a as Nil
         false
       rescue ex
-        (ex.message.includes? "cast to Nil failed") && (ex.class == TypeCastError)
+        (ex.message.not_nil!.includes? "cast to Nil failed") && (ex.class == TypeCastError)
       end
       )).to_b.should be_true
   end
@@ -290,7 +290,7 @@ describe "Code gen: cast" do
       begin
         foo as Baz
       rescue ex
-        ex.message.includes?("can't cast to Baz because it was never instantiated")
+        ex.message.not_nil!.includes?("can't cast to Baz because it was never instantiated")
       end
       )).to_b.should be_true
   end

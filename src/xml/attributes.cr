@@ -1,6 +1,8 @@
 struct XML::Attributes
   include Enumerable(Node)
 
+  @node : Node
+
   def initialize(@node)
   end
 

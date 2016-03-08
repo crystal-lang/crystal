@@ -1,7 +1,7 @@
 require "./libxml2"
 
 class XML::Error < Exception
-  getter line_number
+  getter line_number : Int32
 
   def self.new(error : LibXML::Error*)
     new String.new(error.value.message).chomp, error.value.line

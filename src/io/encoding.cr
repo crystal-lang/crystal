@@ -1,8 +1,8 @@
 module IO
   # Has the name and the invalid option
   struct EncodingOptions
-    getter name
-    getter invalid
+    getter name : String
+    getter invalid : Symbol?
 
     def initialize(@name : String, @invalid : Symbol?)
       EncodingOptions.check_invalid(invalid)
@@ -17,6 +17,10 @@ module IO
 
   # :nodoc:
   class Encoder
+    @encoding_options : EncodingOptions
+    @iconv : Iconv
+    @closed : Bool
+
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Iconv.new("UTF-8", encoding_options.name, encoding_options.invalid)
       @closed = false
@@ -53,7 +57,16 @@ module IO
     BUFFER_SIZE     = 4 * 1024
     OUT_BUFFER_SIZE = 4 * 1024
 
-    property out_slice
+    @encoding_options : EncodingOptions
+    @iconv : Iconv
+    @buffer : Slice(UInt8)
+    @in_buffer : Pointer(UInt8)
+    @in_buffer_left : LibC::SizeT
+    @out_buffer : Slice(UInt8)
+    @last_errno : Int32
+    @closed : Bool
+
+    property out_slice : Slice(UInt8)
 
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)

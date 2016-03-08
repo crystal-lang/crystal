@@ -142,6 +142,13 @@ class CSV
     yield builder
   end
 
+  @parser : Parser
+  @headers : Array(String)?
+  @indices : Hash(String, Int32)?
+  @row : Array(String)?
+  @strip : Bool
+  @traversed : Bool
+
   # Creates a new instance from the given `String` or `IO`.
   #
   # If *strip* is true, row values are stripped with `String#strip` before being
@@ -289,7 +296,8 @@ class CSV
 
   # A Row of a `CSV::WithHeaders` instance.
   struct Row
-    private getter csv
+    private getter csv : CSV
+    @row : Array(String)
 
     # :nodoc:
     def initialize(@csv, @row)
