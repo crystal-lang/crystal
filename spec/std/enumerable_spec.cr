@@ -214,6 +214,16 @@ describe "Enumerable" do
       expect_raises Enumerable::EmptyError do
         (1...1).first
       end
+
+      expect_raises Enumerable::EmptyError do
+        (1...1).first 5
+      end
+    end
+
+    it "gets first n elements" do
+      (3..13).first(3).should eq([3, 4, 5])
+      (3..7).first(10).should eq([3, 4, 5, 6, 7])
+      (3...7).first(10).should eq([3, 4, 5, 6])
     end
 
     assert { [-1, -2, -3].first.should eq(-1) }
@@ -226,6 +236,64 @@ describe "Enumerable" do
 
     it "returns nil if enumerable empty" do
       (1...1).first?.should be_nil
+    end
+
+    it "returns empty array if enumerable empty" do
+      (1...1).first?(5).should eq([] of Int32)
+    end
+
+    it "gets first n elements" do
+      (3..13).first(3).should eq([3, 4, 5])
+      (3..7).first(10).should eq([3, 4, 5, 6, 7])
+      (3...7).first(10).should eq([3, 4, 5, 6])
+    end
+  end
+
+  describe "last" do
+    it "gets last" do
+      (1..3).last.should eq(3)
+      (1...3).last.should eq(2)
+    end
+
+    it "raises if enumerable empty" do
+      expect_raises Enumerable::EmptyError do
+        (1...1).last
+      end
+
+      expect_raises Enumerable::EmptyError do
+        (1...1).last 5
+      end
+
+      it "gets last n elements" do
+        (3..13).last(3).should eq([11, 12, 13])
+        (3...13).last(3).should eq([10, 11, 12])
+        (3..7).last(10).should eq([3, 4, 5, 6, 7])
+        (3...7).last(10).should eq([3, 4, 5, 6])
+      end
+    end
+
+    assert { [-1, -2, -3].last.should eq(-3) }
+  end
+
+  describe "last?" do
+    it "gets last?" do
+      (1..3).last?.should eq(3)
+      (1...3).last?.should eq(2)
+    end
+
+    it "returns nil if enumerable empty" do
+      (1...1).last?.should be_nil
+    end
+
+    it "returns empty array if enumerable empty" do
+      (1...1).last?(5).should eq([] of Int32)
+    end
+
+    it "gets last n elements" do
+      (3..13).last(3).should eq([11, 12, 13])
+      (3...13).last(3).should eq([10, 11, 12])
+      (3..7).last(10).should eq([3, 4, 5, 6, 7])
+      (3...7).last(10).should eq([3, 4, 5, 6])
     end
   end
 
