@@ -306,7 +306,7 @@ class URI
 
   # :nodoc:
   def self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space = false)
-    self.unescape_one(string, bytesize, i, byte, char, io) { false }
+    self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space) { false }
   end
 
   # :nodoc:
