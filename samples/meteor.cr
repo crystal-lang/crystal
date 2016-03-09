@@ -27,10 +27,10 @@ end
 
 def transform(piece, all)
   i = MyIterator.new piece, &.map { |yx| {yx[1] + yx[0], -yx[0]} }
-  rots = i.take(all ? 6 : 3)
+  rots = i.first(all ? 6 : 3)
   res = rots.flat_map do |cur_piece|
     i2 = MyIterator.new cur_piece, &.map { |yx| {yx[1], yx[0]} }
-    i2.take(2)
+    i2.first(2)
   end
 
   res.map do |cur_piece|

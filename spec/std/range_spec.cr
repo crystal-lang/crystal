@@ -169,7 +169,7 @@ describe "Range" do
     end
 
     it "cycles" do
-      (1..3).cycle.take(8).join.should eq("12312312")
+      (1..3).cycle.first(8).join.should eq("12312312")
     end
 
     it "is empty with .. and begin > end" do

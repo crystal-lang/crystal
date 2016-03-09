@@ -169,7 +169,7 @@ struct Tuple
   # Returns an `Iterator` for the elements in this tuple.
   #
   # ```
-  # {1, 'a'}.each.cycle.take(3).to_a # => [1, 'a', 1]
+  # {1, 'a'}.each.cycle.first(3).to_a # => [1, 'a', 1]
   # ```
   def each
     ItemIterator(typeof((i = 0; self[i]))).new(self)
@@ -406,7 +406,7 @@ struct Tuple
   # Returns an `Iterator` for the elements in this tuple.
   #
   # ```
-  # {1, 'a'}.reverse_each.cycle.take(3).to_a # => [1, 'a', 1]
+  # {1, 'a'}.reverse_each.cycle.first(3).to_a # => [1, 'a', 1]
   # ```
   def reverse_each
     ReverseIterator(typeof((i = 0; self[i]))).new(self)

@@ -5,13 +5,13 @@ describe Iterator do
   describe "Iterator.of" do
     it "creates singleton" do
       iter = Iterator.of(42)
-      iter.take(3).to_a.should eq([42, 42, 42])
+      iter.first(3).to_a.should eq([42, 42, 42])
     end
 
     it "creates singleton from block" do
       a = 0
       iter = Iterator.of { a += 1 }
-      iter.take(3).to_a.should eq([1, 2, 3])
+      iter.first(3).to_a.should eq([1, 2, 3])
     end
   end
 
@@ -322,9 +322,9 @@ describe Iterator do
     end
   end
 
-  describe "take" do
-    it "does take with Range iterator" do
-      iter = (1..3).each.take(2)
+  describe "first" do
+    it "does first with Range iterator" do
+      iter = (1..3).each.first(2)
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
@@ -333,18 +333,18 @@ describe Iterator do
       iter.next.should eq(1)
     end
 
-    it "does take with more than available" do
-      (1..3).each.take(10).to_a.should eq([1, 2, 3])
+    it "does first with more than available" do
+      (1..3).each.first(10).to_a.should eq([1, 2, 3])
     end
 
-    it "is cool to take 0 elements" do
-      iter = (1..3).each.take(0)
+    it "is cool to first 0 elements" do
+      iter = (1..3).each.first(0)
       iter.next.should be_a Iterator::Stop
     end
 
     it "raises ArgumentError if negative size is provided" do
       expect_raises(ArgumentError) do
-        (1..3).each.take(-1)
+        (1..3).each.first(-1)
       end
     end
   end
@@ -480,7 +480,7 @@ describe Iterator do
       (1..100).each
               .select { |x| 50 <= x < 60 }
               .map { |x| x * 2 }
-              .take(3)
+              .first(3)
               .to_a
               .should eq([100, 102, 104])
     end

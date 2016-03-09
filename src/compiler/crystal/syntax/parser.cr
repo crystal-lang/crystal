@@ -1872,7 +1872,7 @@ module Crystal
         else
           if remove_indent
             line = current_line.to_s
-            if (line.size < indent) || !line.each_char.take(indent).all?(&.whitespace?)
+            if (line.size < indent) || !line.each_char.first(indent).all?(&.whitespace?)
               raise "heredoc line must have an indent greater or equal than #{indent}", piece.line_number, 1
             else
               line = line[indent..-1]
@@ -1895,7 +1895,7 @@ module Crystal
     end
 
     def remove_heredoc_from_line(line, indent, line_number)
-      if line.each_char.take(indent).all? &.whitespace?
+      if line.each_char.first(indent).all? &.whitespace?
         if line.size - 1 < indent
           "\n"
         else
