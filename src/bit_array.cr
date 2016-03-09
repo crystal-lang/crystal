@@ -63,7 +63,7 @@ struct BitArray
   #     ba = BitArray.new(5)
   #     ba[3] # => false
   #     ba.toggle(3)
-  #     ba[3] # => false
+  #     ba[3] # => true
   def toggle(index)
     bit_index, sub_index = bit_index_and_sub_index(index)
     @bits[bit_index] ^= 1 << sub_index
