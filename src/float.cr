@@ -33,6 +33,8 @@
 struct Float
   alias Primitive = Float32 | Float64
 
+  EPSILON = 2.2204460492503131e-16
+
   def %(other)
     modulo(other)
   end
