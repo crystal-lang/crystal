@@ -1,0 +1,30 @@
+<% types.each do |type| %>
+<% type.class_methods.each do |method| %>
+<li data-name="<%= method.prefix + method.name %>">
+  <a href="<%= type.path_from(current_type) %><%= method.anchor %>">
+    <%= method.prefix %><%= method.name %><br />
+    <small><%= type.full_name %></small>
+  </a>
+</li>
+<% end %>
+<% type.instance_methods.each do |method| %>
+<li data-name="<%= method.prefix + method.name %>">
+  <a href="<%= type.path_from(current_type) %><%= method.anchor %>">
+    <%= method.prefix %><%= method.name %><br />
+    <small><%= type.full_name %></small>
+  </a>
+</li>
+<% end %>
+<% type.macros.each do |method| %>
+<li data-name="<%= method.prefix + method.name %>">
+  <a href="<%= type.path_from(current_type) %><%= method.anchor %>">
+    <%= method.prefix %><%= method.name %><br />
+    <small><%= type.full_name %></small>
+  </a>
+</li>
+<% end %>
+
+<% unless type.program? || type.types.empty? %>
+  <%= MethodListTemplate.new(type.types, current_type) %>
+<% end %>
+<% end %>

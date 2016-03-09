@@ -28,28 +28,40 @@ h1.type-name {
   color: #47266E;
 }
 
-#types-list, #main-content {
+#wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+#sidebar-opener {
+  display: none;
+}
+
+#side-list, #main-content {
   position: absolute;
   top: 0;
   bottom: 0;
-  overflow: auto;
 }
 
-#types-list {
+#side-list {
   left: 0;
   width: 20%;
-  background-color: #2E1052;
+  background-color: #333;
 }
 
-#types-list #search-box {
-  padding: 5px;
+#side-list #search-box {
+  padding: 10px 5px 0 5px;
 }
 
-#types-list input {
+#side-list input[type="search"] {
   display: block;
   box-sizing: border-box;
   margin: 0;
-  padding: 5px;
+  padding: 5px 10px;
   font: inherit;
   font-family: inherit;
   line-height: 1.2;
@@ -59,48 +71,113 @@ h1.type-name {
   outline: 0;
 }
 
-#types-list ul {
+#side-list label {
+  display: block;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 5px 10px;
+  font-size: 12px;
+  text-align: right;
+  color: #fff;
+}
+
+#side-list #search-box ul {
+  margin: 10px -5px 0 -5px;
+}
+
+#side-list #search-box ul:after {
+  content:"";
+  display:table;
+  clear:both;
+}
+
+#side-list #search-box li {
+  display: block;
+  width: 50%;
+  float: left;
+  text-align: center;
+}
+
+#side-list #search-box a {
+  display: block;
+  margin: 0;
+  padding: 10px 15px;
+  color: #fff;
+  font-size: 100%;
+}
+
+#side-list #search-box .current a {
+  font-weight: bold;
+  color: #8367A4;
+  background-color: #1A0435;
+}
+
+#side-list #types-list,
+#side-list #methods-list {
+  position: absolute;
+  top: 115px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+  background-color: #1A0435;
+  -webkit-overflow-scrolling: touch;
+}
+
+#side-list #types-list.current,
+#side-list #methods-list.current {
+  z-index: 10;
+}
+
+#side-list ul {
   margin: 0;
   padding: 0;
   list-style: none outside;
 }
 
-#types-list li {
+#side-list li {
   display: block;
   position: relative;
 }
 
-#types-list li.hide {
+#side-list li.hide {
   display: none;
 }
 
-#types-list a {
+#side-list a {
   display: block;
   padding: 5px 15px 5px 30px;
   text-decoration: none;
   color: #fff;
 }
 
-#types-list .current > a,
-#types-list a:hover {
-  color: #866BA6;
+#side-list #methods-list a {
+  padding: 5px 15px;
 }
 
-#types-list li ul {
+#side-list #methods-list a small {
+  margin-top: 5px;
+  font-size: 12px;
+}
+
+#side-list .current > a,
+#side-list a:hover {
+  color: #8367A4;
+}
+
+#side-list li ul {
   overflow: hidden;
   height: 0;
-  max-height: 0;
-  transition: 1s ease-in-out;
 }
 
 
-#types-list li.parent {
+#side-list li.parent {
   padding-left: 30px;
 }
 
-#types-list li.parent::before {
+#side-list li.parent::before {
   box-sizing: border-box;
-  content: "▼";
+  content: "▶";
   display: block;
   width: 30px;
   height: 30px;
@@ -109,31 +186,30 @@ h1.type-name {
   left: 0;
   text-align: center;
   color: white;
-  font-size: 8px;
+  font-size: 12px;
   line-height: 30px;
-  transform: rotateZ(-90deg);
   cursor: pointer;
-  transition: .2s linear;
 }
 
 
-#types-list li.parent > a {
+#side-list li.parent > a {
   padding-left: 0;
 }
 
-#types-list li.parent.open::before {
-  transform: rotateZ(0);
+#side-list li.parent.open::before {
+  content: "▼";
 }
 
-#types-list li.open > ul {
+#side-list li.open > ul {
   height: auto;
-  max-height: 1000em;
 }
 
 #main-content {
   padding: 0 30px 30px 30px;
   left: 20%;
   right: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .kind {
@@ -263,6 +339,51 @@ h1.type-name {
   padding: 4px 8px;
   border-radius: 3px;
   margin: -4px -8px;
+}
+
+@media screen and (max-width: 768px) {
+  #wrapper {
+    background-color: #000;
+  }
+
+  #sidebar-opener {
+    position: fixed;
+    display: block;
+    margin: 0;
+    padding: 15px 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #1A0435;
+    text-align: center;
+    text-decoration: none;
+    color: #fff;
+    z-index: 5;
+  }
+
+  #side-list {
+    z-index: 10;
+    left: -80%;
+    width: 80%;
+    box-shadow: 0 0 5px rgba(0, 0, 0, .7);
+    transition: transform .2s ease-in-out;
+    text-decoration: none;
+  }
+
+  #main-content {
+    left: 0;
+    padding-bottom: 48px;
+    background-color: #fff;
+    transition: opacity .2s ease-in-out;
+  }
+
+  #wrapper.sidebar-opened #side-list {
+    transform: translateX(100%);
+  }
+
+  #wrapper.sidebar-opened #main-content {
+    opacity: .4;
+  }
 }
 
 pre {

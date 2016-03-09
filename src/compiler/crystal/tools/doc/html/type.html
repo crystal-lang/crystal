@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta id="repository-name" content="<%= type.repository_name %>">
   <link href="<%= type.path_to "css/style.css" %>" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="<%= type.path_to "js/doc.js" %>"></script>
@@ -9,19 +10,36 @@
 </head>
 <body>
 
-<div id="types-list">
+<div id="wrapper">
+<div id="side-list">
   <div id="search-box">
     <input type="search" id="search-input" placeholder="Search...">
+    <label><input type="checkbox" id="fuzzy-search" checked> Fuzzy Search</label>
+
+    <ul>
+      <li class="current"><a href="#types-list">Types</a></li>
+      <li><a href="#methods-list">Methods</a></li>
+    </ul>
   </div>
 
-  <ul>
-    <li><a href="<%= type.path_to("index.html") %>">README</a></li>
-  </ul>
+  <div id="types-list" class="current">
+    <ul>
+      <li><a href="<%= type.path_to("index.html") %>">README</a></li>
+    </ul>
 
-  <%= ListItemsTemplate.new(types, type) %>
+    <%= ListItemsTemplate.new(types, type) %>
+  </div>
+
+  <div id="methods-list">
+    <ul>
+      <%= MethodListTemplate.new(types, type) %>
+    </ul>
+  </div>
 </div>
 
 <div id="main-content">
+  <a href="#" id="sidebar-opener">Search or Types list</a>
+
 <h1 class="type-name">
 <% if type.program? %>
   <%= type.full_name %>
@@ -97,6 +115,7 @@
 <%= MethodDetailTemplate.new(type.program? ? "Method Detail" : "Class Method Detail", type.class_methods) %>
 <%= MethodDetailTemplate.new("Instance Method Detail", type.instance_methods) %>
 <%= MethodDetailTemplate.new("Macro Detail", type.macros) %>
+</div>
 </div>
 
 </body>

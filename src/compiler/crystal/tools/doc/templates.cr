@@ -9,6 +9,10 @@ module Crystal::Doc
     ECR.def_to_s "#{__DIR__}/html/list_items.html"
   end
 
+  record MethodListTemplate, types, current_type do
+    ecr_file "#{__DIR__}/html/method_list.html"
+  end
+
   record MethodSummaryTemplate, title, methods do
     ECR.def_to_s "#{__DIR__}/html/method_summary.html"
   end
