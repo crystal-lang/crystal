@@ -24,4 +24,31 @@ module FileUtils
       return true if read1 == 0
     end
   end
+
+  # Copies the file *src_path* to the file or directory *dest*.
+  # If *dest* is a directory, a file with the same basename as *src_path* is created in *dest*
+  # Permission bits are copied too.
+  # ```
+  # FileUtils.cp("file_utils.cr", "file_utils_copy.cr")
+  # ```
+  def cp(src_path : String, dest : String)
+    File.open(src_path) do |s|
+      dest += File::SEPARATOR + File.basename(src_path) if Dir.exists?(dest)
+      File.open(dest, "wb", s.stat.mode) do |d|
+        IO.copy(s, d)
+      end
+    end
+  end
+
+  # Copies a list of files *src* to *dest*.
+  # *dest* must be an existing directory.
+  # ```
+  # FileUtils.cp({"cgi.cr", "complex.cr", "date.cr"}, "files")
+  # ```
+  def cp(srcs : Enumerable(String), dest : String)
+    raise ArgumentError.new("no such directory : #{dest}") unless Dir.exists?(dest)
+    srcs.each do |src|
+      cp(src, dest)
+    end
+  end
 end
