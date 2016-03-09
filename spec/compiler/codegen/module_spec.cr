@@ -365,4 +365,57 @@ describe "Code gen: module" do
       x.method(y)
       )).to_i.should eq(2)
   end
+
+  it "codegens cast to module with class and struct to nilable module" do
+    run(%(
+      module Moo
+        def bar
+          10
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      struct Bar
+        include Moo
+      end
+
+      def moo
+        (Foo.new || Bar.new) as Moo
+      end
+
+      moo = moo()
+      nilable = moo || nil
+      if nilable
+        nilable.bar
+      else
+        20
+      end
+      )).to_i.should eq(10)
+  end
+
+  it "codegens cast to module that includes bool" do
+    run(%(
+      module Moo
+      end
+
+      struct Bool
+        include Moo
+      end
+
+      class Foo
+        include Moo
+      end
+
+      Foo.new
+      a = false as Moo
+      if a
+        1
+      else
+        2
+      end
+      )).to_i.should eq(2)
+  end
 end

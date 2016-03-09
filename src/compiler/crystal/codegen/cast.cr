@@ -2,8 +2,8 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   def assign(target_pointer, target_type, value_type, value)
-    target_type = target_type.remove_alias
-    value_type = value_type.remove_alias
+    target_type = target_type.remove_indirection
+    value_type = value_type.remove_indirection
 
     if target_type == value_type
       if target_type.nil_type?
@@ -14,14 +14,6 @@ class Crystal::CodeGenVisitor
     else
       assign_distinct target_pointer, target_type, value_type, value
     end
-  end
-
-  def assign_distinct(target_pointer, target_type : Type, value_type : NonGenericModuleType | GenericClassType, value)
-    assign target_pointer, target_type, value_type.including_types.not_nil!, value
-  end
-
-  def assign_distinct(target_pointer, target_type : NonGenericModuleType | GenericClassType, value_type : Type, value)
-    assign target_pointer, target_type.including_types.not_nil!, value_type, value
   end
 
   def assign_distinct(target_pointer, target_type : NilableType, value_type : Type, value)
@@ -115,21 +107,9 @@ class Crystal::CodeGenVisitor
     value
   end
 
-  def downcast(value, to_type, from_type : NonGenericModuleType | GenericClassType, already_loaded)
-    from_type = from_type.remove_alias
-    to_type = to_type.remove_alias
-
-    if from_type == to_type
-      value = to_lhs(value, from_type) unless already_loaded
-    else
-      value = downcast(value, to_type, from_type.including_types.not_nil!, already_loaded)
-    end
-    value
-  end
-
   def downcast(value, to_type, from_type : Type, already_loaded)
-    from_type = from_type.remove_alias
-    to_type = to_type.remove_alias
+    from_type = from_type.remove_indirection
+    to_type = to_type.remove_indirection
 
     unless already_loaded
       value = to_lhs(value, from_type)
@@ -244,17 +224,13 @@ class Crystal::CodeGenVisitor
     value
   end
 
-  def downcast_distinct(value, to_type : NonGenericModuleType | GenericClassType, from_type : Type)
-    value
-  end
-
   def downcast_distinct(value, to_type : Type, from_type : Type)
     raise "Bug: trying to downcast #{to_type} <- #{from_type}"
   end
 
   def upcast(value, to_type, from_type)
-    from_type = from_type.remove_alias
-    to_type = to_type.remove_alias
+    from_type = from_type.remove_indirection
+    to_type = to_type.remove_indirection
 
     if to_type != from_type
       value = upcast_distinct(value, to_type, from_type)
@@ -344,10 +320,6 @@ class Crystal::CodeGenVisitor
 
   def upcast_distinct(value, to_type : EnumType, from_type : Type)
     value
-  end
-
-  def upcast_distinct(value, to_type : NonGenericModuleType | GenericClassType, from_type : Type)
-    upcast value, to_type.including_types.not_nil!, from_type
   end
 
   def upcast_distinct(value, to_type : Type, from_type : Type)

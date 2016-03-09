@@ -274,6 +274,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement superclass"
     end
 
+    def append_to_expand_union_types(types)
+      types << self
+    end
+
     def to_s_with_method_name(name)
       case self
       when Program
@@ -434,6 +438,10 @@ module Crystal
     end
 
     def remove_alias_if_simple
+      self
+    end
+
+    def remove_indirection
       self
     end
 
@@ -816,6 +824,22 @@ module Crystal
 
     def raw_including_types
       @including_types
+    end
+
+    def append_to_expand_union_types(types)
+      if including_types = @including_types
+        including_types.each &.append_to_expand_union_types(types)
+      else
+        types << self
+      end
+    end
+
+    def remove_indirection
+      if including_types = self.including_types
+        including_types.remove_indirection
+      else
+        self
+      end
     end
 
     def add_to_including_types(type : GenericType, all_types)
@@ -1554,6 +1578,14 @@ module Crystal
       program.union_of instances
     end
 
+    def remove_indirection
+      if including_types = self.including_types
+        including_types.remove_indirection
+      else
+        self
+      end
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       super
       if generic_args
@@ -2093,6 +2125,10 @@ module Crystal
       typedef.remove_typedef
     end
 
+    def remove_indirection
+      typedef.remove_indirection
+    end
+
     delegate pointer?, typedef
     delegate defs, typedef
     delegate macros, typedef
@@ -2176,6 +2212,16 @@ module Crystal
       if @simple
         remove_alias
       else
+        self
+      end
+    end
+
+    def remove_indirection
+      process_value
+      if aliased_type = @aliased_type
+        aliased_type.remove_indirection
+      else
+        @simple = false
         self
       end
     end
@@ -2521,6 +2567,16 @@ module Crystal
         program.type_merge(union_types.map(&.virtual_type)).not_nil!
       else
         self
+      end
+    end
+
+    def expand_union_types
+      if union_types.any?(&.is_a?(NonGenericModuleType))
+        types = [] of Type
+        union_types.each &.append_to_expand_union_types(types)
+        types
+      else
+        union_types
       end
     end
 
