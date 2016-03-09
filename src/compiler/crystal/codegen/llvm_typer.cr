@@ -152,7 +152,7 @@ module Crystal
         @cache[type] = a_struct
 
         max_size = 0
-        type.union_types.each do |subtype|
+        type.expand_union_types.each do |subtype|
           unless subtype.void?
             size = size_of(llvm_type(subtype))
             max_size = size if size > max_size

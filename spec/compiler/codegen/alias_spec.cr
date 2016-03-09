@@ -123,4 +123,17 @@ describe "Code gen: alias" do
       cmd.call(SmtpSession.new)
       ))
   end
+
+  it "codegens cast to alias that includes bool" do
+    run(%(
+      alias Foo = Bool | Array(Foo)
+
+      a = false as Foo
+      if a
+        1
+      else
+        2
+      end
+      )).to_i.should eq(2)
+  end
 end

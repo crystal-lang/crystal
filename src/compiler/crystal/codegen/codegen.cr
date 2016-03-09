@@ -649,7 +649,7 @@ module Crystal
 
     def codegen_cond(node : ASTNode)
       accept node
-      codegen_cond node.type
+      codegen_cond node.type.remove_indirection
     end
 
     def visit(node : Break)
