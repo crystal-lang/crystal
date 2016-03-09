@@ -997,6 +997,16 @@ class Array(T)
     @size == 0 ? yield : @buffer[0]
   end
 
+  # Returns the first `n` elements of the array.
+  #
+  # ```
+  # [1, 2, 3].first(2) # => [1, 2]
+  # [1, 2, 3].first(4) # => [1, 2, 3]
+  # ```
+  def first(n : Int)
+    self[0, n]
+  end
+
   # Returns the first element of `self` if it's not empty, or `.
   #
   # ```
@@ -1067,6 +1077,20 @@ class Array(T)
   # ```
   def last
     @size == 0 ? yield : @buffer[@size - 1]
+  end
+
+  # Returns the last `n` elements of the array.
+  #
+  # ```
+  # [1, 2, 3].last(2) # => [2, 3]
+  # [1, 2, 3].last(4) # => [1, 2, 3]
+  # ```
+  def last(n : Int)
+    if n < @size
+      self[@size - n, n]
+    else
+      dup
+    end
   end
 
   # Returns the last element of `self` if it's not empty, or `.
