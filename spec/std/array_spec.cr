@@ -1281,7 +1281,7 @@ describe "Array" do
     end
 
     it "cycles" do
-      [1, 2, 3].cycle.take(8).join.should eq("12312312")
+      [1, 2, 3].cycle.first(8).join.should eq("12312312")
     end
   end
 
@@ -1332,7 +1332,7 @@ describe "Array" do
     end
 
     it "cycles with iterator" do
-      [1, 2, 3].cycle.take(5).to_a.should eq([1, 2, 3, 1, 2])
+      [1, 2, 3].cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
     end
 
     it "cycles with N and iterator" do

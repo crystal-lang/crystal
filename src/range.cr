@@ -85,7 +85,7 @@ struct Range(B, E)
   # Returns an `Iterator` that cycles over the values of this range.
   #
   # ```
-  # (1..3).cycle.take(5).to_a # => [1, 2, 3, 1, 3]
+  # (1..3).cycle.first(5).to_a # => [1, 2, 3, 1, 3]
   # ```
   def cycle
     each.cycle

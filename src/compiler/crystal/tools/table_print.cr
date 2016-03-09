@@ -23,7 +23,7 @@ module Crystal
         if cell.colspan == 1
           available_width = width
         else
-          available_width = table.columns.skip(cell.column_index).take(cell.colspan).sum(&.width) + 3 * (cell.colspan - 1)
+          available_width = table.columns.skip(cell.column_index).first(cell.colspan).sum(&.width) + 3 * (cell.colspan - 1)
         end
 
         case cell.align

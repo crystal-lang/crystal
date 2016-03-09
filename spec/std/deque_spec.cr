@@ -543,7 +543,7 @@ describe "Deque" do
     end
 
     it "cycles" do
-      Deque{1, 2, 3}.cycle.take(8).join.should eq("12312312")
+      Deque{1, 2, 3}.cycle.first(8).join.should eq("12312312")
     end
 
     it "works while modifying deque" do
@@ -602,7 +602,7 @@ describe "Deque" do
     end
 
     it "cycles with iterator" do
-      Deque{1, 2, 3}.cycle.take(5).to_a.should eq([1, 2, 3, 1, 2])
+      Deque{1, 2, 3}.cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
     end
 
     it "cycles with N and iterator" do

@@ -573,13 +573,13 @@ describe "Enumerable" do
     end
   end
 
-  describe "take" do
-    assert { [-1, -2, -3].take(1).should eq([-1]) }
-    assert { [-1, -2, -3].take(4).should eq([-1, -2, -3]) }
+  describe "first" do
+    assert { (1..3).first(1).should eq([1]) }
+    assert { (1..3).first(4).should eq([1, 2, 3]) }
 
     it "raises if count is negative" do
       expect_raises(ArgumentError) do
-        [1, 2].take(-1)
+        (1..2).first(-1)
       end
     end
   end

@@ -1527,7 +1527,7 @@ describe "String" do
   end
 
   it "cycles chars" do
-    "abc".each_char.cycle.take(8).join.should eq("abcabcab")
+    "abc".each_char.cycle.first(8).join.should eq("abcabcab")
   end
 
   it "gets each_byte iterator" do
@@ -1542,7 +1542,7 @@ describe "String" do
   end
 
   it "cycles bytes" do
-    "abc".each_byte.cycle.take(8).join.should eq("9798999798999798")
+    "abc".each_byte.cycle.first(8).join.should eq("9798999798999798")
   end
 
   it "gets lines" do

@@ -5,7 +5,7 @@
 # multiplied by three. One way to do this is:
 #
 # ```
-# (1..10_000_000).select(&.even?).map { |x| x * 3 }.take(3) # => [6, 12, 18]
+# (1..10_000_000).select(&.even?).map { |x| x * 3 }.first(3) # => [6, 12, 18]
 # ```
 #
 # The above works, but creates many intermediate arrays: one for the *select* call,
@@ -14,7 +14,7 @@
 # lazily:
 #
 # ```
-# (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.take(3) # => #< Iterator(T)::Take...
+# (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.first(3) # => #< Iterator(T)::First...
 # ```
 #
 # Iterator redefines many of `Enumerable`'s method in a lazy way, returning iterators
@@ -24,7 +24,7 @@
 # using `each` or `Enumerable#to_a`:
 #
 # ```
-# (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.take(3).to_a # => [6, 12, 18]
+# (1..10_000_000).each.select(&.even?).map { |x| x * 3 }.first(3).to_a # => [6, 12, 18]
 # ```
 #
 # To implement an Iterator you need to define a `next` method that must return the next
@@ -63,7 +63,7 @@
 # zeros.to_a # => [0, 0, 0, 0, 0]
 #
 # zeros.rewind
-# zeros.take(3).to_a # => [0, 0, 0]
+# zeros.first(3).to_a # => [0, 0, 0]
 # ```
 #
 # The standard library provides iterators for many classes, like `Array`, `Hash`, `Range`, `String` and `IO`.
@@ -739,18 +739,18 @@ module Iterator(T)
   # Returns an iterator that only returns the first n elements of the
   # initial iterator.
   #
-  #     iter = ["a", "b", "c"].each.take 2
+  #     iter = ["a", "b", "c"].each.first 2
   #     iter.next # => "a"
   #     iter.next # => "b"
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def take(n)
+  def first(n)
     raise ArgumentError.new "Attempted to take negative size: #{n}" if n < 0
-    Take(typeof(self), T).new(self, n)
+    First(typeof(self), T).new(self, n)
   end
 
   # :nodoc:
-  class Take(I, T)
+  class First(I, T)
     include Iterator(T)
     include IteratorWrapper
 
