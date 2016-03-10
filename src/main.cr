@@ -18,6 +18,7 @@ macro redefine_main(name = main)
     AtExitHandlers.run %status
     %ex.inspect_with_backtrace STDERR if %ex
     STDOUT.flush
+    STDERR.flush
     %status
   end
 end
