@@ -54,7 +54,7 @@ module Crystal::Playground::Server
   $socket_data = [] of Hash(String, Int32 | String)
 
   def self.start
-    play_ws = ->(ws : HTTP::WebSocket) {
+    play_ws = HTTP::WebSocketHandler.new do |ws|
       $sockets << ws
 
       ws.on_message do |message|
@@ -91,11 +91,9 @@ module Crystal::Playground::Server
           $sockets[session].send(data.to_json)
         end
       end
-    }
+    end
 
-    server = HTTP::Server.new "localhost", PORT, [HTTP::WebSocketHandler.new(&play_ws)] do |context|
-      # pp context.request.method
-      # pp context.request.resource
+    server = HTTP::Server.new "localhost", PORT, [play_ws] do |context|
       case {context.request.method, context.request.resource}
       when {"GET", "/"}
         render context, IndexView.new
