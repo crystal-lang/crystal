@@ -721,6 +721,7 @@ module Crystal
     end
 
     def visit(node : Fun)
+      @str << "("
       if inputs = node.inputs
         inputs.each_with_index do |input, i|
           @str << ", " if i > 0
@@ -732,6 +733,8 @@ module Crystal
       if output = node.output
         output.accept self
       end
+      @str << ")"
+      false
     end
 
     def visit(node : Self)
