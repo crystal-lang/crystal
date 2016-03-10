@@ -99,6 +99,6 @@ module Crystal
   end
 
   class External
-    property abi_info
+    property abi_info : LLVM::ABI::FunctionType?
   end
 end

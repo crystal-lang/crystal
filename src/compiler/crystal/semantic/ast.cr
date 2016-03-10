@@ -18,13 +18,15 @@ module Crystal
   end
 
   class ASTNode
-    property! type
-    property! dependencies
-    property freeze_type
-    property observers
-    property input_observer
+    property! dependencies : Dependencies
+    property freeze_type : Type?
+    property observers : Dependencies?
+    property input_observer : Call?
 
+    @dirty : Bool
     @dirty = false
+
+    @type : Type?
 
     def type
       @type || ::raise "Bug: `#{self}` at #{self.location} has no type"
@@ -236,32 +238,34 @@ module Crystal
   end
 
   class Def
-    property! :owner
-    property! :original_owner
-    property :vars
-    property :yield_vars
+    property! owner : Type
+    property! original_owner : Type
+    property vars : MetaVars?
+    property yield_vars : Array(Var)?
 
-    property :raises
+    getter raises : Bool
     @raises = false
 
-    property closure
+    property closure : Bool
     @closure = false
 
-    property :self_closured
+    property self_closured : Bool
     @self_closured = false
 
-    property :previous
-    property :next
+    property previous : DefWithMetadata?
+    property next : Def?
     property visibility : Visibility
     @visibility = Visibility::Public
 
-    getter :special_vars
+    getter special_vars : Set(String)?
 
-    property :block_nest
+    property block_nest : Int32
     @block_nest = 0
 
-    property? :captured_block
+    property? captured_block : Bool
     @captured_block = false
+
+    @macro_owner : Type?
 
     def macro_owner=(@macro_owner)
     end
@@ -319,7 +323,7 @@ module Crystal
   end
 
   class TypeOf
-    property in_type_args
+    property in_type_args : Bool
     @in_type_args = false
 
     def map_type(type)
@@ -343,7 +347,7 @@ module Crystal
   end
 
   class Cast
-    property? upcast
+    property? upcast : Bool
     @upcast = false
 
     def self.apply(node : ASTNode, type : Type)
@@ -388,14 +392,14 @@ module Crystal
   end
 
   class FunDef
-    property! external
+    property! external : External
   end
 
   class FunLiteral
-    property :force_void
+    property force_void : Bool
     @force_void = false
 
-    property :expected_return_type
+    property expected_return_type : Type?
 
     def update(from = nil)
       return unless self.def.args.all? &.type?
@@ -416,9 +420,9 @@ module Crystal
   end
 
   class Generic
-    property! instance_type
-    property scope
-    property in_type_args
+    property! instance_type : GenericClassType
+    property scope : Type?
+    property in_type_args : Bool
     @in_type_args = false
 
     def update(from = nil)
@@ -475,7 +479,7 @@ module Crystal
   end
 
   class TupleLiteral
-    property! :mod
+    property! mod : Program
 
     def update(from = nil)
       return unless elements.all? &.type?
@@ -492,25 +496,25 @@ module Crystal
   end
 
   class MetaVar < ASTNode
-    property :name
+    property name : String
 
     # True if we need to mark this variable as nilable
     # if this variable is read.
-    property :nil_if_read
+    property nil_if_read : Bool
 
     # This is the context of the variable: who allocates it.
     # It can either be the Program (for top level variables),
     # a Def or a Block.
-    property :context
+    property context : ASTNode | NonGenericModuleType | Nil
 
     # A variable is closured if it's used in a FunLiteral context
     # where it wasn't created.
-    property :closured
+    property closured : Bool
 
     # Is this metavar assigned a value?
-    property :assigned_to
+    property assigned_to : Bool
 
-    def initialize(@name, @type = nil)
+    def initialize(@name : String, @type : Type? = nil)
       @nil_if_read = false
       @closured = false
       @assigned_to = false
@@ -550,25 +554,24 @@ module Crystal
   alias MetaVars = Hash(String, MetaVar)
 
   class MetaInstanceVar < Var
-    property :nil_reason
-    property! :owner
+    property nil_reason : NilReason?
+    property! owner : Type
   end
 
   class ClassVar
-    property! owner
-    property! var
-    property! class_scope
-
+    property! owner : Type
+    property! var : Var
+    property class_scope : Bool
     @class_scope = false
   end
 
   class Path
-    property target_const
-    property syntax_replacement
+    property target_const : Const?
+    property syntax_replacement : ASTNode?
   end
 
   class Call
-    property :before_vars
+    property before_vars : MetaVars?
     property visibility : Visibility
     @visibility = Visibility::Public
   end
@@ -579,15 +582,15 @@ module Crystal
   end
 
   class Block
-    property :visited
-    property :scope
-    property :vars
-    property :after_vars
-    property :context
-    property :fun_literal
-    property :call
+    property visited : Bool
+    property scope : Type?
+    property vars : MetaVars?
+    property after_vars : MetaVars?
+    property context : Def | NonGenericModuleType | Nil
+    property fun_literal : ASTNode?
 
     @visited = false
+    @break : Var?
 
     def break
       @break ||= Var.new("%break")
@@ -595,26 +598,26 @@ module Crystal
   end
 
   class While
-    property :has_breaks
-    property :break_vars
-
+    property has_breaks : Bool
     @has_breaks = false
+
+    property break_vars : Array(MetaVars)?
   end
 
   class Break
-    property! target
+    property! target : ASTNode
   end
 
   class Next
-    property! target
+    property! target : ASTNode
   end
 
   class Return
-    property! target
+    property! target : Def
   end
 
   class FunPointer
-    property! :call
+    property! call : Call
 
     def map_type(type)
       return nil unless call.type?
@@ -627,11 +630,11 @@ module Crystal
   end
 
   class IsA
-    property :syntax_replacement
+    property syntax_replacement : Call?
   end
 
   module ExpandableNode
-    property :expanded
+    property expanded : ASTNode?
   end
 
   {% for name in %w(And Or
@@ -644,7 +647,7 @@ module Crystal
   {% end %}
 
   module RuntimeInitializable
-    getter runtime_initializers
+    getter runtime_initializers : Array(ASTNode)?
 
     def add_runtime_initializer(node)
       initializers = @runtime_initializers ||= [] of ASTNode
@@ -655,17 +658,17 @@ module Crystal
   class ClassDef
     include RuntimeInitializable
 
-    property! resolved_type
-    property created_new_type
+    property! resolved_type : ClassType
+    property created_new_type : Bool
     @created_new_type = false
   end
 
   class ModuleDef
-    property! resolved_type
+    property! resolved_type : Type
   end
 
   class LibDef
-    property! resolved_type
+    property! resolved_type : LibType
   end
 
   class Include
@@ -685,26 +688,27 @@ module Crystal
   end
 
   class External
-    property :dead
+    property dead : Bool
     @dead = false
 
-    property :used
+    property used : Bool
     @used = false
 
-    property :call_convention
+    property call_convention : LLVM::CallConvention?
   end
 
   class EnumDef
-    property enum_type
-    property! resolved_type
+    property! resolved_type : EnumType
+    property created_new_type : Bool
+    @created_new_type = false
   end
 
   class Yield
-    property :expanded
+    property expanded : Call?
   end
 
   class Primitive
-    property :extra
+    property extra : ASTNode?
   end
 
   class NilReason
@@ -726,6 +730,6 @@ module Crystal
   {% end %}
 
   class Asm
-    property ptrof
+    property ptrof : PointerOf?
   end
 end

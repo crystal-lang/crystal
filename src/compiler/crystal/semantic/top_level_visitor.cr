@@ -525,7 +525,8 @@ module Crystal
           end
         end
 
-        node.enum_type = scope.types[name] = enum_type
+        scope.types[name] = enum_type
+        node.created_new_type = true
       end
 
       node.type = mod.nil

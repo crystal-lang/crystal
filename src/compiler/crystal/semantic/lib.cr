@@ -16,7 +16,7 @@ class Crystal::Call
     obj_type.used = true
     external.used = true
 
-    untyped_defs = [external]
+    untyped_defs = [external] of Def
     @target_defs = untyped_defs
 
     self.unbind_from old_target_defs if old_target_defs

@@ -225,8 +225,10 @@ module Crystal
     def transform(node : EnumDef)
       super
 
-      node.enum_type.try &.types.each_value do |const|
-        (const as Const).initialized = true
+      if node.created_new_type
+        node.resolved_type.types.each_value do |const|
+          (const as Const).initialized = true
+        end
       end
 
       node
