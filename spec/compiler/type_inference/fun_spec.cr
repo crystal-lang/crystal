@@ -801,4 +801,10 @@ describe "Type inference: fun" do
       1
       )) { int32 }
   end
+
+  it "sets proc type as void if explicitly told so, when using new" do
+    assert_type(%(
+      Proc(Int32, Void).new { 1 }
+      )) { fun_of(int32, void) }
+  end
 end
