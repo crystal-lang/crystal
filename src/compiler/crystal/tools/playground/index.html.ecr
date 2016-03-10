@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Crystal Playground</h1>
+
+    <textarea id="source" name="source" rows="10">
+a = 1
+b = 3
+c = a + b
+r = rand
+puts c + r
+    </textarea>
+
+    <button type="button" onclick="run();">Run</button>
+
+    <pre id="output"></pre>
+
+    <script type="text/javascript">
+      <%= file_content "application.js" %>
+    </script>
+  </body>
+</html>

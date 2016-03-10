@@ -14,6 +14,7 @@ class Crystal::Command
     Command:
         init                     generate a new project
         build                    compile program
+        play                     starts crystal playground server
         deps                     install project dependencies
         docs                     generate documentation
         eval                     eval code from args or standard input
@@ -63,6 +64,8 @@ class Crystal::Command
       when "build".starts_with?(command)
         options.shift
         build
+      when "play".starts_with?(command)
+        Playground::Server.start
       when "deps".starts_with?(command)
         options.shift
         deps
