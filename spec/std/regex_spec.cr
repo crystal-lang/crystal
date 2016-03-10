@@ -116,13 +116,13 @@ describe "Regex" do
       Regex.union(["+", "-"]).should eq /\+|\-/
     end
 
-    it "accepts a single Array(String | Regexp) argument" do
+    it "accepts a single Array(String | Regex) argument" do
       Regex.union(["skiing", "sledding"]).should eq /skiing|sledding/
       Regex.union([/dogs/, /cats/i]).should eq /(?-imsx:dogs)|(?i-msx:cats)/
       (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
     end
 
-    it "accepts a single Tuple(String | Regexp) argument" do
+    it "accepts a single Tuple(String | Regex) argument" do
       Regex.union({"skiing", "sledding"}).should eq /skiing|sledding/
       Regex.union({/dogs/, /cats/i}).should eq /(?-imsx:dogs)|(?i-msx:cats)/
       (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
