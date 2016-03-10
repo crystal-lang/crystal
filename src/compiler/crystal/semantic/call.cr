@@ -5,20 +5,22 @@ require "../primitives"
 require "./type_lookup"
 
 class Crystal::Call
-  property! scope
-  property with_scope
-  property! parent_visitor
-  property target_defs
-  property expanded
+  property! scope : Type
+  property with_scope : Type?
+  property! parent_visitor : MainVisitor?
+  property target_defs : Array(Def)?
+  property expanded : ASTNode?
 
-  property? is_expansion
+  property? is_expansion : Bool
   @is_expansion = false
 
-  property? uses_with_scope
+  property? uses_with_scope : Bool
   @uses_with_scope = false
 
-  property? raises
+  getter? raises : Bool
   @raises = false
+
+  @subclass_notifier : ModuleType?
 
   def mod
     scope.program

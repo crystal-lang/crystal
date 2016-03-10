@@ -42,11 +42,15 @@ class Crystal::Command
     new(options).run
   end
 
+  private getter options : Array(String)
+
+  @color : Bool
+  @config : CompilerConfig?
+  @format : String?
+
   def initialize(@options)
     @color = true
   end
-
-  private getter options
 
   def run
     command = options.first?
@@ -461,7 +465,16 @@ class Crystal::Command
     Crystal.tempfile(basename)
   end
 
-  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format do
+  record(CompilerConfig,
+    compiler : Compiler,
+    sources : Array(Compiler::Source),
+    output_filename : String,
+    original_output_filename : String,
+    arguments : Array(String),
+    specified_output : Bool,
+    hierarchy_exp : String?,
+    cursor_location : String?,
+    output_format : String?) do
     def compile(output_filename = self.output_filename)
       compiler.original_output_filename = original_output_filename
       compiler.compile sources, output_filename

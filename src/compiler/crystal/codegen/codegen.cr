@@ -523,8 +523,10 @@ module Crystal
     end
 
     def visit(node : EnumDef)
-      node.enum_type.try &.types.each_value do |type|
-        initialize_const(type as Const)
+      if node.created_new_type
+        node.resolved_type.types.each_value do |type|
+          initialize_const(type as Const)
+        end
       end
 
       node.members.each do |member|

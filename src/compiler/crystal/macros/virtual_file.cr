@@ -3,9 +3,9 @@
 # code so the user can debug it as if there was a file in the
 # filesystem with those contents.
 class Crystal::VirtualFile
-  getter :macro
-  getter :source
-  getter :expanded_location
+  getter macro : Macro
+  getter source : String
+  getter expanded_location : Location?
 
   def initialize(@macro, @source, @expanded_location)
   end
