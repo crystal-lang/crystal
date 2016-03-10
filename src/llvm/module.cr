@@ -1,6 +1,7 @@
 class LLVM::Module
-  getter unwrap
-  getter name
+  getter unwrap : LibLLVM::ModuleRef
+  getter name : String
+  @owned : Bool
 
   def initialize(@name)
     @unwrap = LibLLVM.module_create_with_name @name

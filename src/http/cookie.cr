@@ -4,13 +4,14 @@ module HTTP
   # Represents a cookie with all its attributes. Provides convenient
   # access and modification of them.
   class Cookie
-    property name
-    property value
-    property path
-    property expires
-    property domain
-    property secure
-    property http_only
+    property name : String
+    property value : String
+    property path : String
+    property expires : Time?
+    property domain : String?
+    property secure : Bool
+    property http_only : Bool
+    property extension : String?
 
     def_equals_and_hash name, value, path, expires, domain, secure, http_only
 
@@ -133,6 +134,8 @@ module HTTP
         end
       end
     end
+
+    @cookies : Hash(String, Cookie)
 
     # Create a new empty instance
     def initialize

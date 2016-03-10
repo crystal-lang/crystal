@@ -1031,6 +1031,9 @@ class Hash(K, V)
     include BaseIterator
     include Iterator({K, V})
 
+    @hash : Hash(K, V)
+    @current : Hash::Entry(K, V)?
+
     def next
       base_next { |entry| {entry.key, entry.value} }
     end
@@ -1041,6 +1044,9 @@ class Hash(K, V)
     include BaseIterator
     include Iterator(K)
 
+    @hash : Hash(K, V)
+    @current : Hash::Entry(K, V)?
+
     def next
       base_next &.key
     end
@@ -1050,6 +1056,9 @@ class Hash(K, V)
   class ValueIterator(K, V)
     include BaseIterator
     include Iterator(V)
+
+    @hash : Hash(K, V)
+    @current : Hash::Entry(K, V)?
 
     def next
       base_next &.value

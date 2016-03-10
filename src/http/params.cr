@@ -82,7 +82,7 @@ module HTTP
       form_builder.to_s
     end
 
-    protected getter raw_params
+    protected getter raw_params : Hash(String, Array(String))
 
     def initialize(@raw_params)
     end
@@ -263,6 +263,7 @@ module HTTP
     # :nodoc:
     class Builder
       @io : IO
+      @first : Bool
 
       def initialize(@io = MemoryIO.new)
         @first = true

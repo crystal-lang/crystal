@@ -26,7 +26,18 @@ class HTTP::WebSocket::Protocol
   MASK_BIT = 128_u8
   VERSION  =     13
 
-  record PacketInfo, opcode, size, final
+  record PacketInfo,
+    opcode : Opcode,
+    size : Int32,
+    final : Bool
+
+  @io : IO
+  @header : UInt8[2]
+  @mask : UInt8[4]
+  @remaining : Int32
+  @mask_offset : Int32
+  @opcode : Opcode
+  @masked : Bool
 
   def initialize(@io : IO, @masked = false)
     @header = uninitialized UInt8[2]
@@ -38,6 +49,11 @@ class HTTP::WebSocket::Protocol
 
   class StreamIO
     include IO
+
+    @websocket : Protocol
+    @buffer : Slice(UInt8)
+    @pos : Int32
+    @opcode : Opcode
 
     def initialize(@websocket, binary, frame_size)
       @opcode = binary ? Opcode::BINARY : Opcode::TEXT

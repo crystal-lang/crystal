@@ -1,4 +1,6 @@
 struct LLVM::ParameterCollection
+  @function : Function
+
   def initialize(@function)
   end
 

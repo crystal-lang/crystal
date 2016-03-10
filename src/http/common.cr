@@ -155,7 +155,9 @@ module HTTP
     end
   end
 
-  record ComputedContentTypeHeader, content_type, charset
+  record ComputedContentTypeHeader,
+    content_type : String?,
+    charset : String?
 
   # :nodoc:
   def self.content_type_and_charset(headers)

@@ -3,6 +3,8 @@ struct LLVM::PassRegistry
     new LibLLVM.get_global_pass_registry
   end
 
+  @unwrap : LibLLVM::PassRegistryRef
+
   def initialize(@unwrap)
   end
 

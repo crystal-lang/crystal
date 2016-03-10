@@ -302,6 +302,9 @@ struct Slice(T)
   class ItemIterator(T)
     include Iterator(T)
 
+    @slice : ::Slice(T)
+    @index : Int32
+
     def initialize(@slice : ::Slice(T), @index = 0)
     end
 
@@ -319,6 +322,9 @@ struct Slice(T)
 
   class ReverseIterator(T)
     include Iterator(T)
+
+    @slice : ::Slice(T)
+    @index : Int32
 
     def initialize(@slice : ::Slice(T), @index = slice.size)
     end

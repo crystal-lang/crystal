@@ -1,4 +1,10 @@
 class HTTP::WebSocket
+  @ws : Protocol
+  @buffer : Slice(UInt8)
+  @current_message : MemoryIO
+  @on_message : Nil | (String ->)
+  @on_close : Nil | (String ->)
+
   # :nodoc:
   def initialize(io : IO)
     initialize(Protocol.new(io))

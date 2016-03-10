@@ -2,11 +2,16 @@ require "spec"
 require "big_int"
 
 struct StructSpecTestClass
+  @x : Int32
+  @y : String
+
   def initialize(@x, @y)
   end
 end
 
 struct StructSpecBigIntWrapper
+  @value : BigInt
+
   def initialize(@value : BigInt)
   end
 end

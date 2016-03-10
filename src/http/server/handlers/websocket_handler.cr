@@ -3,6 +3,8 @@ require "openssl/sha1"
 require "../../web_socket"
 
 class HTTP::WebSocketHandler < HTTP::Handler
+  @proc : WebSocket ->
+
   def initialize(&@proc : WebSocket ->)
   end
 

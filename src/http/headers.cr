@@ -4,7 +4,7 @@
 # (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
   # :nodoc:
-  record Key, name do
+  record Key, name : String do
     forward_missing_to @name
 
     def hash
@@ -45,6 +45,8 @@ struct HTTP::Headers
       byte
     end
   end
+
+  @hash : Hash(Key, Array(String))
 
   def initialize
     @hash = Hash(Key, Array(String)).new

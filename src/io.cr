@@ -942,6 +942,9 @@ module IO
   struct LineIterator(I, A)
     include Iterator(String)
 
+    @io : I
+    @args : A
+
     def initialize(@io : I, @args : A)
     end
 
@@ -959,6 +962,8 @@ module IO
   struct CharIterator(I)
     include Iterator(Char)
 
+    @io : I
+
     def initialize(@io : I)
     end
 
@@ -975,6 +980,8 @@ module IO
   # :nodoc:
   struct ByteIterator(I)
     include Iterator(UInt8)
+
+    @io : I
 
     def initialize(@io : I)
     end

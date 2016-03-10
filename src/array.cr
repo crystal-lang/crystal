@@ -2088,6 +2088,9 @@ class Array(T)
   class ItemIterator(T)
     include Iterator(T)
 
+    @array : Array(T)
+    @index : Int32
+
     def initialize(@array : Array(T), @index = 0)
     end
 
@@ -2106,6 +2109,9 @@ class Array(T)
   # :nodoc:
   class IndexIterator(T)
     include Iterator(Int32)
+
+    @array : Array(T)
+    @index : Int32
 
     def initialize(@array : Array(T), @index = 0)
     end
@@ -2128,6 +2134,9 @@ class Array(T)
   class ReverseIterator(T)
     include Iterator(T)
 
+    @array : Array(T)
+    @index : Int32
+
     def initialize(@array : Array(T), @index = array.size - 1)
     end
 
@@ -2148,6 +2157,15 @@ class Array(T)
   # :nodoc:
   class PermutationIterator(T)
     include Iterator(Array(T))
+
+    @array : Array(T)
+    @size : Int32
+    @n : Int32
+    @cycles : Array(Int32)
+    @pool : Array(T)
+    @stop : Bool
+    @i : Int32
+    @first : Bool
 
     def initialize(@array : Array(T), @size)
       @n = @array.size
@@ -2199,6 +2217,15 @@ class Array(T)
   # :nodoc:
   class CombinationIterator(T)
     include Iterator(Array(T))
+
+    @size : Int32
+    @n : Int32
+    @copy : Array(T)
+    @pool : Array(T)
+    @indices : Array(Int32)
+    @stop : Bool
+    @i : Int32
+    @first : Bool
 
     def initialize(array : Array(T), @size)
       @n = array.size
@@ -2252,6 +2279,15 @@ class Array(T)
   # :nodoc:
   class RepeatedCombinationIterator(T)
     include Iterator(Array(T))
+
+    @size : Int32
+    @n : Int32
+    @copy : Array(T)
+    @indices : Array(Int32)
+    @pool : Array(T)
+    @stop : Bool
+    @i : Int32
+    @first : Bool
 
     def initialize(array : Array(T), @size)
       @n = array.size

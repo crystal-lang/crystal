@@ -1,4 +1,6 @@
 class LLVM::PassManagerBuilder
+  @unwrap : LibLLVM::PassManagerBuilderRef
+
   def initialize
     @unwrap = LibLLVM.pass_manager_builder_create
   end
