@@ -1040,9 +1040,12 @@ module Crystal
         Arg.new(block_arg.try(&.name) || @mod.new_temp_var_name, type: arg_type)
       end
 
+      expected_return_type = fun_type.return_type
+
       fun_def = Def.new("->", fun_args, block.body)
       fun_literal = FunLiteral.new(fun_def).at(node.location)
-      fun_literal.expected_return_type = fun_type.return_type
+      fun_literal.expected_return_type = expected_return_type
+      fun_literal.force_void = true if expected_return_type.void?
       fun_literal.accept self
 
       node.bind_to fun_literal
