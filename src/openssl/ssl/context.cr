@@ -3,6 +3,8 @@ class OpenSSL::SSL::Context
     @@default ||= new
   end
 
+  @handle : LibSSL::SSLContext
+
   def initialize
     @handle = LibSSL.ssl_ctx_new(LibSSL.sslv23_method)
   end
