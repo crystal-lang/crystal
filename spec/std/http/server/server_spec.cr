@@ -6,6 +6,8 @@ module HTTP
     class ReverseResponseOutput
       include IO
 
+      @output : IO
+
       def initialize(@output : IO)
       end
 

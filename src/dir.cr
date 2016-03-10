@@ -241,6 +241,8 @@ class Dir
   struct EntryIterator
     include Iterator(String)
 
+    @dir : Dir
+
     def initialize(@dir)
     end
 

@@ -640,6 +640,9 @@ class Deque(T)
   class ItemIterator(T)
     include Iterator(T)
 
+    @deque : Deque(T)
+    @index : Int32
+
     def initialize(@deque : Deque(T), @index = 0)
     end
 
@@ -658,6 +661,9 @@ class Deque(T)
   # :nodoc:
   class IndexIterator(T)
     include Iterator(Int32)
+
+    @deque : Deque(T)
+    @index : Int32
 
     def initialize(@deque : Deque(T), @index = 0)
     end

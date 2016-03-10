@@ -59,7 +59,7 @@ class HTTP::Client
   # client = HTTP::Client.new "www.example.com"
   # client.host # => "www.example.com"
   # ```
-  getter host
+  getter host : String
 
   # Returns the target port.
   #
@@ -67,7 +67,7 @@ class HTTP::Client
   # client = HTTP::Client.new "www.example.com"
   # client.port # => 80
   # ```
-  getter port
+  getter port : Int32
 
   # Returns whether this client is using SSL.
   #
@@ -75,17 +75,24 @@ class HTTP::Client
   # client = HTTP::Client.new "www.example.com", ssl: true
   # client.ssl? # => true
   # ```
-  getter? ssl
+  getter? ssl : Bool
 
   # Whether automatic compression/decompression is enabled.
   property? compress : Bool
+
+  @before_request : Array(Request ->)?
+  @socket : TCPSocket?
+  @dns_timeout : Float64?
+  @connect_timeout : Float64?
+  @read_timeout : Float64?
+  @ssl_socket : OpenSSL::SSL::Socket?
 
   # Creates a new HTTP client with the given *host*, *port* and *ssl*
   # configurations. If no port is given, the default one will
   # be used depending on the *ssl* arguments: 80 for if *ssl* is `false`,
   # 443 if *ssl* is `true`.
   def initialize(@host, port = nil, @ssl = false)
-    @port = port || (ssl ? 443 : 80)
+    @port = (port || (ssl ? 443 : 80)).to_i
     @compress = true
   end
 

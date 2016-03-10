@@ -375,6 +375,9 @@ struct Int
   class TimesIterator(T)
     include Iterator(T)
 
+    @n : T
+    @index : Int32
+
     def initialize(@n : T, @index = 0)
     end
 
@@ -397,6 +400,10 @@ struct Int
   # :nodoc:
   class UptoIterator(T, N)
     include Iterator(T)
+
+    @from : T
+    @to : N
+    @current : T
 
     def initialize(@from : T, @to : N)
       @current = @from
@@ -421,6 +428,10 @@ struct Int
   # :nodoc:
   class DowntoIterator(T, N)
     include Iterator(T)
+
+    @from : T
+    @to : N
+    @current : T
 
     def initialize(@from : T, @to : N)
       @current = @from

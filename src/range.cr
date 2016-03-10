@@ -172,8 +172,8 @@ struct Range(B, E)
   # ```
   # (1..10).step(3).skip(1).to_a # => [4, 7, 10]
   # ```
-  def step(n = 1)
-    StepIterator.new(self, n)
+  def step(n : Int = 1)
+    StepIterator(self, B, typeof(n)).new(self, n)
   end
 
   # Returns true if this range excludes the *end* element.
@@ -265,6 +265,10 @@ struct Range(B, E)
   class ItemIterator(B, E)
     include Iterator(B)
 
+    @range : Range(B, E)
+    @current : B
+    @reached_end : Bool
+
     def initialize(@range : Range(B, E), @current = range.begin, @reached_end = false)
     end
 
@@ -294,10 +298,15 @@ struct Range(B, E)
   end
 
   # :nodoc:
-  class StepIterator(B, E)
+  class StepIterator(R, B, N)
     include Iterator(B)
 
-    def initialize(@range : Range(B, E), @step, @current = range.begin, @reached_end = false)
+    @range : R
+    @step : N
+    @current : B
+    @reached_end : Bool
+
+    def initialize(@range, @step, @current = range.begin, @reached_end = false)
     end
 
     def next

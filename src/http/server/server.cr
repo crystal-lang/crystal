@@ -88,9 +88,12 @@ require "../common"
 # server.listen
 # ```
 class HTTP::Server
-  property ssl
+  property ssl : OpenSSL::SSL::Context?
 
+  @wants_close : Bool
   @wants_close = false
+  @host : String
+  @port : Int32
 
   def self.new(port, &handler : Context ->)
     new("127.0.0.1", port, &handler)
@@ -136,7 +139,9 @@ class HTTP::Server
   private def handle_client(sock)
     sock.sync = false
     io = sock
-    io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, @ssl.not_nil!) if @ssl
+    if ssl = @ssl
+      io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, ssl)
+    end
     must_close = true
     response = Response.new(io)
 

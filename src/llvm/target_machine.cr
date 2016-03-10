@@ -1,4 +1,6 @@
 class LLVM::TargetMachine
+  @unwrap : LibLLVM::TargetMachineRef
+
   def initialize(@unwrap)
   end
 

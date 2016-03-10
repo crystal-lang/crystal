@@ -202,6 +202,11 @@ struct Number
   class StepIterator(T, L, B)
     include Iterator(T)
 
+    @n : T
+    @limit : L
+    @by : B
+    @original : T
+
     def initialize(@n : T, @limit : L, @by : B)
       @original = @n
     end

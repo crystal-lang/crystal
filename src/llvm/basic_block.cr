@@ -1,4 +1,6 @@
 struct LLVM::BasicBlock
+  @unwrap : LibLLVM::BasicBlockRef
+
   def initialize(@unwrap)
   end
 

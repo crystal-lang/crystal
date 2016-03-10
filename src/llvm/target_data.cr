@@ -1,4 +1,6 @@
 struct LLVM::TargetData
+  @unwrap : LibLLVM::TargetDataRef
+
   def initialize(@unwrap)
   end
 

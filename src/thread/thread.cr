@@ -9,10 +9,18 @@ class Thread(T, R)
     Thread(Nil, R).new(nil) { func.call }
   end
 
+  @func : T -> R
+  @arg : T
+  @detached : Bool
+  @th : LibPThread::Thread
+  @ret : R
+  @exception : Exception?
+
   def initialize(arg : T, &func : T -> R)
     @func = func
     @arg = arg
     @detached = false
+    @ret = uninitialized R
     ret = LibPThread.create(out @th, nil, ->(data) {
       (data as Thread(T, R)).start
     }, self as Void*)
@@ -36,17 +44,7 @@ class Thread(T, R)
       raise exception
     end
 
-    # TODO: We need to cast ret to R, otherwise it'll be nilable
-    # and we don't want that. But `@ret as R` gives
-    # `can't cast Nil to NoReturn` in the case when the Thread's body is
-    # NoReturn. The following trick works, but we should find another
-    # way to do it.
-    ret = @ret
-    if ret.is_a?(R) # Always true
-      ret
-    else
-      exit # unreachable, really
-    end
+    @ret
   end
 
   protected def start

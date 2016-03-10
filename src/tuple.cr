@@ -172,7 +172,7 @@ struct Tuple
   # {1, 'a'}.each.cycle.first(3).to_a # => [1, 'a', 1]
   # ```
   def each
-    ItemIterator(typeof((i = 0; self[i]))).new(self)
+    ItemIterator(self, typeof((i = 0; self[i]))).new(self)
   end
 
   # Returns `true` if this tuple has the same size as the other tuple
@@ -409,7 +409,7 @@ struct Tuple
   # {1, 'a'}.reverse_each.cycle.first(3).to_a # => [1, 'a', 1]
   # ```
   def reverse_each
-    ReverseIterator(typeof((i = 0; self[i]))).new(self)
+    ReverseIterator(self, typeof((i = 0; self[i]))).new(self)
   end
 
   # Returns the first element of this tuple. Doesn't compile
@@ -471,8 +471,11 @@ struct Tuple
     {% end %}
   end
 
-  class ItemIterator(T)
+  class ItemIterator(I, T)
     include Iterator(T)
+
+    @tuple : I
+    @index : Int32
 
     def initialize(@tuple, @index = 0)
     end
@@ -490,8 +493,11 @@ struct Tuple
   end
 
   # :nodoc:
-  class ReverseIterator(T)
+  class ReverseIterator(I, T)
     include Iterator(T)
+
+    @tuple : I
+    @index : Int32
 
     def initialize(@tuple, @index = tuple.size - 1)
     end
