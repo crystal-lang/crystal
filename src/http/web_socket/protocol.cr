@@ -223,7 +223,12 @@ class HTTP::WebSocket::Protocol
     (@header[1] & 0x80_u8) != 0_u8
   end
 
-  def close
+  def close(message = nil)
+    if message
+      send(message.to_slice, Opcode::CLOSE)
+    else
+      send(Slice.new(Pointer(UInt8).null, 0), Opcode::CLOSE)
+    end
   end
 
   def self.new(host : String, path : String, port = nil, ssl = false)
