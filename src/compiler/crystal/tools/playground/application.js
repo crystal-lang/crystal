@@ -9,18 +9,16 @@ ws.onmessage = function(e) {
   switch (message.type) {
     case "run":
       output.innerText = message.output;
+      break;
+    case "value":
+      var lineDom = document.createElement("div");
 
-      for(var i = 0; i < message.data.length; i++) {
-        var data = message.data[i];
-        var lineDom = document.createElement("div");
+      var a = document.createAttribute("style");
+      a.value = "top: " + (message.line-1) + "em;";
+      lineDom.setAttributeNode(a);
 
-        var a = document.createAttribute("style");
-        a.value = "top: " + (data.line-1) + "em;";
-        lineDom.setAttributeNode(a);
-
-        lineDom.appendChild(document.createTextNode(data.value));
-        sidebarDom.appendChild(lineDom);
-      }
+      lineDom.appendChild(document.createTextNode(message.value));
+      sidebarDom.appendChild(lineDom);
       break;
     default:
       console.error("ws message not handled", message);

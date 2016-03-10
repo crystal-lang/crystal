@@ -55,7 +55,6 @@ module Crystal::Playground::Server
 
   def self.start
     play_ws = ->(ws : HTTP::WebSocket) {
-      puts "socket connected"
       $sockets << ws
 
       ws.on_message do |message|
@@ -69,7 +68,7 @@ module Crystal::Playground::Server
 
           prelude = <<-CR
             require "compiler/crystal/tools/playground/agent"
-            $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{PORT}", 1)
+            $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{PORT}", 0)
 
             CR
 
@@ -82,21 +81,14 @@ module Crystal::Playground::Server
           result = compiler.compile sources, output_filename
           output = execute output_filename, [] of String
 
-          sleep 0.5
-
-          res = {"type" => "run", "filename" => output_filename, "output" => output[1], "data" => $socket_data}
-          ws.send res.to_json
-          # 100.times do |i|
-          #   sleep 1
-          #   ws.send({"type" => "test", "num" => i}.to_json)
-          # end
+          data = {"type" => "run", "filename" => output_filename, "output" => output[1]}
+          ws.send(data.to_json)
         when "agent_send"
           value = json["value"].as_s
           line = json["line"].as_i
           session = json["session"].as_i
           data = {"type" => "value", "value" => value, "line" => line}
-          $socket_data << data
-          # $sockets[session].send(data.to_json)
+          $sockets[session].send(data.to_json)
         end
       end
     }
