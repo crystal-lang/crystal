@@ -5,8 +5,12 @@
 class Random::ISAAC
   include Random
 
-  getter :rsl
-  private getter :counter, :aa, :bb, :cc
+  getter rsl : UInt32[256]
+  @mm : UInt32[256]
+  private getter counter : Int32
+  private getter aa : UInt32
+  private getter bb : UInt32
+  private getter cc : UInt32
 
   def initialize(seeds = StaticArray(UInt32, 8).new { Random.new_seed })
     @rsl = StaticArray(UInt32, 256).new { 0_u32 }

@@ -101,14 +101,16 @@ abstract class Channel(T)
   end
 
   def send_op(value : T)
-    SendOp.new(self, value)
+    SendOp(self, T).new(self, value)
   end
 
   def receive_op
-    ReceiveOp.new(self)
+    ReceiveOp(self, T).new(self)
   end
 
-  struct ReceiveOp(T)
+  struct ReceiveOp(C, T)
+    @channel : C
+
     def initialize(@channel : Channel(T))
     end
 
@@ -129,7 +131,10 @@ abstract class Channel(T)
     end
   end
 
-  struct SendOp(T)
+  struct SendOp(C, T)
+    @channel : C
+    @value : T
+
     def initialize(@channel : Channel(T), @value : T)
     end
 

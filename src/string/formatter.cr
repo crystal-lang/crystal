@@ -1,6 +1,15 @@
 # :nodoc:
-struct String::Formatter
-  def initialize(string, @args, @io)
+struct String::Formatter(A)
+  @args : A
+  @io : IO
+  @reader : Char::Reader
+  @arg_index : Int32
+  @temp_buf_len : Int32
+  @format_buf_len : Int32
+  @format_buf : Pointer(UInt8)?
+  @temp_buf : Pointer(UInt8)?
+
+  def initialize(string, @args : A, @io)
     @reader = Char::Reader.new(string)
     @arg_index = 0
     @temp_buf_len = 0
@@ -343,9 +352,9 @@ struct String::Formatter
   end
 
   struct Flags
-    property space, sharp, plus, minus, zero, base
-    property width, width_size
-    property type, precision, precision_size
+    property space : Bool, sharp : Bool, plus : Bool, minus : Bool, zero : Bool, base : Int32
+    property width : Int32, width_size : Int32
+    property type : Char, precision : Int32?, precision_size : Int32
 
     def initialize
       @space = @sharp = @plus = @minus = @zero = false

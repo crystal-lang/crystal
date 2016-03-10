@@ -25,7 +25,10 @@ class Socket < IO::FileDescriptor
   end
 
   struct Addr
-    property :family, :ip_port, :ip_address, :path
+    property family : String
+    property ip_port : UInt16?
+    property ip_address : String?
+    property path : String?
 
     def initialize(@family, @ip_port, @ip_address)
     end

@@ -6,7 +6,7 @@
 # For an example usage, see `Proc`'s explanation about sending Procs to C.
 class Box(T)
   # Returns the original object
-  getter object
+  getter object : T
 
   # Creates a Box with the given object.
   #

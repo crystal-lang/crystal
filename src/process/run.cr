@@ -39,7 +39,7 @@ class Process
     end
   end
 
-  getter pid
+  getter pid : Int32
 
   # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
   getter! input
@@ -49,6 +49,8 @@ class Process
 
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
   getter! error
+
+  @wait_count : Int32
 
   # Creates a process, executes it, but doesn't wait for it to complete.
   #

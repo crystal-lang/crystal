@@ -3,6 +3,8 @@ require "ecr"
 require "ecr/macros"
 
 class ECRSpecHelloView
+  @msg : String
+
   def initialize(@msg)
   end
 

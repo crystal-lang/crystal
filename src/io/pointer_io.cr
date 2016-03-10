@@ -1,6 +1,8 @@
 struct PointerIO
   include IO
 
+  @pointer : UInt8**
+
   def initialize(@pointer : UInt8**)
   end
 

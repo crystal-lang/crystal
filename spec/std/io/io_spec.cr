@@ -7,8 +7,11 @@ require "big_int"
 class SimpleMemoryIO
   include IO
 
-  getter buffer
-  getter bytesize
+  getter buffer : UInt8*
+  getter bytesize : Int32
+  @capacity : Int32
+  @pos : Int32
+  @max_read : Int32?
 
   def initialize(capacity = 64, @max_read = nil)
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*

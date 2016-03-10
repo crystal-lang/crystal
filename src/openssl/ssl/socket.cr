@@ -1,6 +1,9 @@
 class OpenSSL::SSL::Socket
   include IO
 
+  @ssl : LibSSL::SSL
+  @bio : OpenSSL::BIO
+
   def initialize(io, mode = :client, context = Context.default)
     @ssl = LibSSL.ssl_new(context)
     @bio = BIO.new(io)

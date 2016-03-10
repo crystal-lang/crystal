@@ -95,6 +95,8 @@ module Event
   end
 
   struct DnsBase
+    @dns_base : LibEvent2::DnsBase
+
     def initialize(@dns_base)
     end
 
@@ -104,6 +106,8 @@ module Event
     end
 
     struct GetAddrInfoRequest
+      @request : LibEvent2::DnsGetAddrinfoRequest
+
       def initialize(@request)
       end
 

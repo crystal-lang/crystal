@@ -19,6 +19,10 @@
 class Zlib::Inflate
   include IO
 
+  @input : IO
+  @closed : Bool
+  @stream : LibZ::ZStream
+
   # Creates an instance of Zlib::Inflate.
   def initialize(@input : IO, wbits = LibZ::MAX_BITS)
     @buf = uninitialized UInt8[8192] # input buffer used by zlib
@@ -29,6 +33,7 @@ class Zlib::Inflate
     if ret != LibZ::Error::OK
       raise Zlib::Error.new(ret, @stream)
     end
+    @closed = false
   end
 
   # Creates an instance of Zlib::Inflate, yields it to the given block, and closes

@@ -22,6 +22,10 @@
 class Zlib::Deflate
   include IO
 
+  @output : IO
+  @stream : LibZ::ZStream
+  @closed : Bool
+
   # Creates an instance of Zlib::Deflate. `close` must be invoked after all data
   # has written.
   def initialize(@output : IO, level = LibZ::DEFAULT_COMPRESSION, wbits = LibZ::MAX_BITS,

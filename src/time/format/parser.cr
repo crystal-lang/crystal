@@ -6,6 +6,7 @@ struct Time::Format
     @reader : Char::Reader
     @year : Int32
     @month : Int32
+    @day : Int32
     @hour : Int32
     @minute : Int32
     @second : Int32

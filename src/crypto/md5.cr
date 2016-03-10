@@ -8,6 +8,11 @@ class Crypto::MD5
 
   # :nodoc:
   struct Context
+    @i : UInt32[2]
+    @buf : UInt32[4]
+    @in : UInt8[64]
+    @digest : UInt8[16]
+
     def initialize
       @i = StaticArray(UInt32, 2).new(0_u32)
       @buf = StaticArray(UInt32, 4).new(0_u32)
