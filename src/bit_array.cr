@@ -18,7 +18,9 @@ struct BitArray
   include Enumerable(Bool)
 
   # The number of bits the BitArray stores
-  getter size
+  getter size : Int32
+
+  @bits : UInt32*
 
   # Create a new BitArray of `size` bits.
   #

@@ -4,7 +4,7 @@ require "big_int"
 struct RangeSpecIntWrapper
   include Comparable(self)
 
-  getter value
+  getter value : Int32
 
   def initialize(@value)
   end

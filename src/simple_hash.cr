@@ -1,6 +1,8 @@
 struct SimpleHash(K, V)
   record Entry(K, V), key : K, value : V
 
+  @values : Array(Entry(K, V))
+
   def initialize
     @values = [] of Entry(K, V)
   end

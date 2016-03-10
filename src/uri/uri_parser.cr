@@ -8,12 +8,15 @@ class URI
     #   does not validate port < 2**16-1
     #   does not validate IPv4 or v6 hosts are valid
     #   ports greater than 2^16-1 are not errors
-    property uri
+    property uri : URI
 
     # overridden in specs to test step transitions
     macro step(method)
       return {{method}}
     end
+
+    @input : UInt8*
+    @ptr : Int32
 
     def initialize(input)
       @uri = URI.new

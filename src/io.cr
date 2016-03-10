@@ -394,7 +394,7 @@ module IO
 
   # ditto
   def printf(format_string, args : Array | Tuple) : Nil
-    String::Formatter.new(format_string, args, self).format
+    String::Formatter(typeof(args)).new(format_string, args, self).format
     nil
   end
 

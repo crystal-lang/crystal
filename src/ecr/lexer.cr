@@ -1,10 +1,10 @@
 # :nodoc:
 class ECR::Lexer
   class Token
-    property :type
-    property :value
-    property :line_number
-    property :column_number
+    property type : Symbol
+    property value : String
+    property line_number : Int32
+    property column_number : Int32
 
     def initialize
       @type = :EOF
@@ -13,6 +13,11 @@ class ECR::Lexer
       @column_number = 0
     end
   end
+
+  @reader : Char::Reader
+  @token : Token
+  @line_number : Int32
+  @column_number : Int32
 
   def initialize(string)
     @reader = Char::Reader.new(string)

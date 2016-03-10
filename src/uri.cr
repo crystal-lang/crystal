@@ -33,90 +33,90 @@ class URI
   # URI.parse("http://foo.com").scheme           # => "http"
   # URI.parse("mailto:alice@example.com").scheme # => "mailto"
   # ```
-  getter scheme
+  getter scheme : String?
 
   # Sets the scheme component of the URI.
-  setter scheme
+  setter scheme : String?
 
   # Returns the host component of the URI.
   #
   # ```
   # URI.parse("http://foo.com").host # => "foo.com"
   # ```
-  getter host
+  getter host : String?
 
   # Sets the host component of the URI.
-  setter host
+  setter host : String?
 
   # Returns the port component of the URI.
   #
   # ```
   # URI.parse("http://foo.com:5432").port # => 5432
   # ```
-  getter port
+  getter port : Int32?
 
   # Sets the port component of the URI.
-  setter port
+  setter port : Int32?
 
   # Returns the path component of the URI.
   #
   # ```
   # URI.parse("http://foo.com/bar").path # => "/bar"
   # ```
-  getter path
+  getter path : String?
 
   # Sets the path component of the URI.
-  setter path
+  setter path : String?
 
   # Returns the query component of the URI.
   #
   # ```
   # URI.parse("http://foo.com/bar?q=1").query # => "q=1"
   # ```
-  getter query
+  getter query : String?
 
   # Sets the query component of the URI.
-  setter query
+  setter query : String?
 
   # Returns the user component of the URI.
   #
   # ```
   # URI.parse("http://admin:password@foo.com").user # => "admin"
   # ```
-  getter user
+  getter user : String?
 
   # Sets the user component of the URI.
-  setter user
+  setter user : String?
 
   # Returns the password component of the URI.
   #
   # ```
   # URI.parse("http://admin:password@foo.com").password # => "password"
   # ```
-  getter password
+  getter password : String?
 
   # Sets the password component of the URI.
-  setter password
+  setter password : String?
 
   # Returns the fragment component of the URI.
   #
   # ```
   # URI.parse("http://foo.com/bar#section1").fragment # => "section1"
   # ```
-  getter fragment
+  getter fragment : String?
 
   # Sets the fragment component of the URI.
-  setter fragment
+  setter fragment : String?
 
   # Returns the opaque component of the URI.
   #
   # ```
   # URI.parse("mailto:alice@example.com").opaque # => "alice@example.com"
   # ```
-  getter opaque
+  getter opaque : String?
 
   # Sets the opaque component of the URI.
-  setter opaque
+  setter opaque : String?
 
   def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
   end

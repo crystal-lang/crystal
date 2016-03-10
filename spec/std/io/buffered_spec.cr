@@ -5,6 +5,9 @@ class IO::BufferedWrapper
 
   getter called_unbuffered_read
 
+  @io : IO
+  @called_unbuffered_read : Bool
+
   def initialize(@io)
     @called_unbuffered_read = false
   end
