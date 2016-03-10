@@ -1,115 +1,118 @@
 module Spec
   # :nodoc:
-  class EqualExpectation(T)
-    def initialize(@value : T)
+  struct EqualExpectation(T)
+    @expected_value : T
+
+    def initialize(@expected_value : T)
     end
 
-    def match(value)
-      @target = value
-      value == @value
+    def match(actual_value)
+      actual_value == @expected_value
     end
 
-    def failure_message
-      expected = @value.inspect
-      got = @target.inspect
+    def failure_message(actual_value)
+      expected = @expected_value.inspect
+      got = actual_value.inspect
       if expected == got
-        expected += " : #{@value.class}"
-        got += " : #{@target.class}"
+        expected += " : #{@expected_value.class}"
+        got += " : #{actual_value.class}"
       end
       "expected: #{expected}\n     got: #{got}"
     end
 
-    def negative_failure_message
-      "expected: value != #{@value.inspect}\n     got: #{@target.inspect}"
+    def negative_failure_message(actual_value)
+      "expected: actual_value != #{@expected_value.inspect}\n     got: #{actual_value.inspect}"
     end
   end
 
   # :nodoc:
-  class BeExpectation(T)
-    def initialize(@value : T)
+  struct BeExpectation(T)
+    @expected_value : T
+
+    def initialize(@expected_value : T)
     end
 
-    def match(value)
-      @target = value
-      value.same? @value
+    def match(actual_value)
+      actual_value.same? @expected_value
     end
 
-    def failure_message
-      "expected: #{@value.inspect} (object_id: #{@value.object_id})\n     got: #{@target.inspect} (object_id: #{@target.object_id})"
+    def failure_message(actual_value)
+      "expected: #{@expected_value.inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.inspect} (object_id: #{actual_value.object_id})"
     end
 
-    def negative_failure_message
-      "expected: value.same? #{@value.inspect} (object_id: #{@value.object_id})\n     got: #{@target.inspect} (object_id: #{@target.object_id})"
-    end
-  end
-
-  # :nodoc:
-  class BeTruthyExpectation
-    def match(@value)
-      !!@value
-    end
-
-    def failure_message
-      "expected: #{@value.inspect} to be truthy"
-    end
-
-    def negative_failure_message
-      "expected: #{@value.inspect} not to be truthy"
+    def negative_failure_message(actual_value)
+      "expected: value.same? #{@expected_value.inspect} (object_id: #{@expected_value.object_id})\n     got: #{actual_value.inspect} (object_id: #{actual_value.object_id})"
     end
   end
 
   # :nodoc:
-  class BeFalseyExpectation
-    def match(@value)
-      !@value
+  struct BeTruthyExpectation
+    def match(actual_value)
+      !!actual_value
     end
 
-    def failure_message
-      "expected: #{@value.inspect} to be falsey"
+    def failure_message(actual_value)
+      "expected: #{actual_value.inspect} to be truthy"
     end
 
-    def negative_failure_message
-      "expected: #{@value.inspect} not to be falsey"
-    end
-  end
-
-  # :nodoc:
-  class CloseExpectation
-    def initialize(@expected, @delta)
-    end
-
-    def match(value)
-      @target = value
-      (value - @expected).abs <= @delta
-    end
-
-    def failure_message
-      "expected #{@target.inspect} to be within #{@delta} of #{@expected}"
-    end
-
-    def negative_failure_message
-      "expected #{@target.inspect} not to be within #{@delta} of #{@expected}"
+    def negative_failure_message(actual_value)
+      "expected: #{actual_value.inspect} not to be truthy"
     end
   end
 
   # :nodoc:
-  class BeAExpectation(T)
-    def match(value)
-      @target = value
-      value.is_a?(T)
+  struct BeFalseyExpectation
+    def match(actual_value)
+      !actual_value
     end
 
-    def failure_message
-      "expected #{@target.inspect} (#{@target.class}) to be a #{T}"
+    def failure_message(actual_value)
+      "expected: #{actual_value.inspect} to be falsey"
     end
 
-    def negative_failure_message
-      "expected #{@target.inspect} (#{@target.class}) not to be a #{T}"
+    def negative_failure_message(actual_value)
+      "expected: #{actual_value.inspect} not to be falsey"
     end
   end
 
   # :nodoc:
-  class Be(T)
+  struct CloseExpectation(T, D)
+    @expected_value : T
+    @delta : D
+
+    def initialize(@expected_value : T, @delta : D)
+    end
+
+    def match(actual_value)
+      (actual_value - @expected_value).abs <= @delta
+    end
+
+    def failure_message(actual_value)
+      "expected #{actual_value.inspect} to be within #{@delta} of #{@expected_value}"
+    end
+
+    def negative_failure_message(actual_value)
+      "expected #{actual_value.inspect} not to be within #{@delta} of #{@expected_value}"
+    end
+  end
+
+  # :nodoc:
+  struct BeAExpectation(T)
+    def match(actual_value)
+      actual_value.is_a?(T)
+    end
+
+    def failure_message(actual_value)
+      "expected #{actual_value.inspect} (#{actual_value.class}) to be a #{T}"
+    end
+
+    def negative_failure_message(actual_value)
+      "expected #{actual_value.inspect} (#{actual_value.class}) not to be a #{T}"
+    end
+  end
+
+  # :nodoc:
+  struct Be(T)
     def self.<(other)
       Be.new(other, :"<")
     end
@@ -126,70 +129,73 @@ module Spec
       Be.new(other, :">=")
     end
 
-    def initialize(@expected : T, @op)
+    @expected_value : T
+    @op : Symbol
+
+    def initialize(@expected_value : T, @op : Symbol)
     end
 
-    def match(value)
-      @target = value
-
+    def match(actual_value)
       case @op
       when :"<"
-        value < @expected
+        actual_value < @expected_value
       when :"<="
-        value <= @expected
+        actual_value <= @expected_value
       when :">"
-        value > @expected
+        actual_value > @expected_value
       when :">="
-        value >= @expected
+        actual_value >= @expected_value
       else
         false
       end
     end
 
-    def failure_message
-      "expected #{@target.inspect} to be #{@op} #{@expected}"
+    def failure_message(actual_value)
+      "expected #{actual_value.inspect} to be #{@op} #{@expected_value}"
     end
 
-    def negative_failure_message
-      "expected #{@target.inspect} not to be #{@op} #{@expected}"
-    end
-  end
-
-  # :nodoc:
-  class MatchExpectation(T)
-    def initialize(@value : T)
-    end
-
-    def match(value)
-      @target = value
-      @target =~ @value
-    end
-
-    def failure_message
-      "expected: #{@target.inspect}\nto match: #{@value.inspect}"
-    end
-
-    def negative_failure_message
-      "expected: value #{@target.inspect}\n to not match: #{@value.inspect}"
+    def negative_failure_message(actual_value)
+      "expected #{actual_value.inspect} not to be #{@op} #{@expected_value}"
     end
   end
 
   # :nodoc:
-  class ContainExpectation(T)
-    def initialize(@expected : T)
+  struct MatchExpectation(T)
+    @expected_value : T
+
+    def initialize(@expected_value : T)
     end
 
-    def match(actual)
-      @actual = actual
-      actual.includes?(@expected)
+    def match(actual_value)
+      actual_value =~ @expected_value
     end
 
-    def failure_message
-      "expected:   #{@actual.inspect}\nto include: #{@expected.inspect}"
+    def failure_message(actual_value)
+      "expected: #{actual_value.inspect}\nto match: #{@expected_value.inspect}"
     end
 
-    def negative_failure_message
-      "expected: value #{@actual.inspect}\nto not include: #{@expected.inspect}"
+    def negative_failure_message(actual_value)
+      "expected: value #{actual_value.inspect}\n to not match: #{@expected_value.inspect}"
+    end
+  end
+
+  # :nodoc:
+  struct ContainExpectation(T)
+    @expected_value : T
+
+    def initialize(@expected_value : T)
+    end
+
+    def match(actual_value)
+      actual_value.includes?(@expected_value)
+    end
+
+    def failure_message(actual_value)
+      "expected:   #{actual_value.inspect}\nto include: #{@expected_value.inspect}"
+    end
+
+    def negative_failure_message(actual_value)
+      "expected: value #{actual_value.inspect}\nto not include: #{@expected_value.inspect}"
     end
   end
 
@@ -297,13 +303,13 @@ module Spec
   module ObjectExtensions
     def should(expectation, file = __FILE__, line = __LINE__)
       unless expectation.match self
-        fail(expectation.failure_message, file, line)
+        fail(expectation.failure_message(self), file, line)
       end
     end
 
     def should_not(expectation, file = __FILE__, line = __LINE__)
       if expectation.match self
-        fail(expectation.negative_failure_message, file, line)
+        fail(expectation.negative_failure_message(self), file, line)
       end
     end
   end
