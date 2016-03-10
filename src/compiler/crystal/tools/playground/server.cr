@@ -49,31 +49,59 @@ private def execute(output_filename, run_args)
 end
 
 module Crystal::Playground::Server
-  def self.start
-    sockets = [] of HTTP::WebSocket
+  PORT = 8080
+  $sockets = [] of HTTP::WebSocket
+  $socket_data = [] of Hash(String, Int32 | String)
 
+  def self.start
     play_ws = ->(ws : HTTP::WebSocket) {
-      sockets << ws
+      puts "socket connected"
+      $sockets << ws
 
       ws.on_message do |message|
+        pp message
         json = JSON.parse(message)
         case json["type"].as_s
         when "run"
+          $socket_data.clear
           source = json["source"].as_s
+          instrumented = source.gsub /^/m, "$p.i "
 
-          sources = [Compiler::Source.new("play", source)]
+          prelude = <<-CR
+            require "compiler/crystal/tools/playground/agent"
+            $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{PORT}", 1)
+
+            CR
+
+          sources = [
+            Compiler::Source.new("playground_prelude", prelude),
+            Compiler::Source.new("play", instrumented),
+          ]
           output_filename = tempfile "play"
           compiler = Compiler.new
           result = compiler.compile sources, output_filename
           output = execute output_filename, [] of String
 
-          res = {"type" => "run", "filename" => output_filename, "output" => output[1]}
+          sleep 0.5
+
+          res = {"type" => "run", "filename" => output_filename, "output" => output[1], "data" => $socket_data}
           ws.send res.to_json
+          # 100.times do |i|
+          #   sleep 1
+          #   ws.send({"type" => "test", "num" => i}.to_json)
+          # end
+        when "agent_send"
+          value = json["value"].as_s
+          line = json["line"].as_i
+          session = json["session"].as_i
+          data = {"type" => "value", "value" => value, "line" => line}
+          $socket_data << data
+          # $sockets[session].send(data.to_json)
         end
       end
     }
 
-    server = HTTP::Server.new "localhost", 8080, [HTTP::WebSocketHandler.new(&play_ws)] do |context|
+    server = HTTP::Server.new "localhost", PORT, [HTTP::WebSocketHandler.new(&play_ws)] do |context|
       # pp context.request.method
       # pp context.request.resource
       case {context.request.method, context.request.resource}
@@ -85,7 +113,7 @@ module Crystal::Playground::Server
       end
     end
 
-    puts "Listening on http://0.0.0.0:8080"
+    puts "Listening on http://0.0.0.0:#{PORT}"
     server.listen
   end
 

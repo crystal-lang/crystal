@@ -1,19 +1,53 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <style type="text/css">
+    #source, #sidebar {
+      line-height: 1em;
+      font-family: monospace;
+      font-size: 1em;
+    }
+
+    #sidebar {
+      position: relative;
+      top: 4px;
+    }
+
+    #sidebar div {
+      position: absolute;
+    }
+    </style>
+  </head>
   <body>
     <h1>Crystal Playground</h1>
 
-    <textarea id="source" name="source" rows="10">
+    <table>
+      <tr>
+        <td>
+          <textarea id="source" rows="10">
 a = 1
 b = 3
 c = a + b
 r = rand
 puts c + r
-    </textarea>
+          </textarea>
+        </td>
+        <td id="sidebar">
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <button type="button" onclick="run();">Run</button>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <pre id="output"></pre>
+        </td>
+      </tr>
+    </table>
 
-    <button type="button" onclick="run();">Run</button>
-
-    <pre id="output"></pre>
+    <br/>
 
     <script type="text/javascript">
       <%= file_content "application.js" %>
