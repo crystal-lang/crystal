@@ -13,6 +13,12 @@ body {
   bottom: 150px;
 }
 
+#editor, #sidebar, #output {
+  font-family: Monaco, Menlo, Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.46em;
+}
+
 #editor {
   position: absolute;
   top: 100px;
@@ -22,6 +28,10 @@ body {
 
 .CodeMirror {
   height: 100%;
+}
+
+.CodeMirror-lines {
+    padding: 0.5em 0;
 }
 
 #sidebar {
@@ -51,13 +61,12 @@ body {
   width: 1px;
 }
 
-#sidebar, #output {
-  font-family: monospace;
+#output {
   line-height: normal;
-  font-size: 13px;
 }
 
 #sidebar div {
   position: absolute;
   white-space: nowrap;
+  left: 4px;
 }

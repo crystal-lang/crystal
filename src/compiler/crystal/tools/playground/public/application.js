@@ -29,7 +29,7 @@ ws.onmessage = function(e) {
       var lineDom = document.createElement("div");
 
       var a = document.createAttribute("style");
-      a.value = "top: " + ((message.line-1) * 15 + 4)+ "px;";
+      a.value = "top: " + ((message.line-1) * 1.46 + 0.5)+ "em;";
       lineDom.setAttributeNode(a);
 
       lineDom.appendChild(document.createTextNode(message.value));
