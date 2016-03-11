@@ -50,11 +50,11 @@ class UNIXSocket < Socket
     end
   end
 
-  def addr
-    UNIXAddr.new(path.to_s)
+  def local_address
+    UNIXAddress.new(path.to_s)
   end
 
-  def peeraddr
-    UNIXAddr.new(path.to_s)
+  def remote_address
+    UNIXAddress.new(path.to_s)
   end
 end

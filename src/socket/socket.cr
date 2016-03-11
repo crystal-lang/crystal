@@ -24,7 +24,7 @@ class Socket < IO::FileDescriptor
     INET6  = LibC::AF_INET6
   end
 
-  struct IPAddr
+  struct IPAddress
     getter family : Family
     getter address : String
     getter port : UInt16
@@ -85,6 +85,10 @@ class Socket < IO::FileDescriptor
       end
     end
 
+    def to_s(io)
+      io << address << ":" << port
+    end
+
     private def inet_ntop(af : Int, src : Void*, len : LibC::SocklenT)
       dest = GC.malloc_atomic(addrlen.to_u32) as UInt8*
       if LibC.inet_ntop(af, src, dest, len).null?
@@ -94,7 +98,7 @@ class Socket < IO::FileDescriptor
     end
   end
 
-  struct UNIXAddr
+  struct UNIXAddress
     getter path
 
     def initialize(path)
@@ -103,6 +107,10 @@ class Socket < IO::FileDescriptor
 
     def family
       Family::UNIX
+    end
+
+    def to_s(io)
+      path.to_s(io)
     end
   end
 
