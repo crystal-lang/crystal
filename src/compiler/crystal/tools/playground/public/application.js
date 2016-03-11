@@ -3,6 +3,12 @@ var outputDom = document.getElementById('output');
 var sidebarDom = $('#sidebar');
 var consoleButton = $('a[href="#output-modal"]')
 
+var defaultCode = 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n';
+
+if(typeof(Storage) !== "undefined") {
+  defaultCode = sessionStorage.lastCode || localStorage.lastCode || defaultCode;
+}
+
 var editor = CodeMirror(document.getElementById('editor'), {
   mode: 'crystal',
   theme: 'neat',
@@ -10,9 +16,8 @@ var editor = CodeMirror(document.getElementById('editor'), {
   autofocus: true,
   tabSize: 2,
   viewportMargin: Infinity,
-  value: 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n'
+  value: defaultCode
 });
-
 
 // when clicking below the editor, set the cursor at the very end
 var editorDom = $('#editor').click(function(e){
@@ -30,7 +35,12 @@ var matchEditorSidebarHeight = function() {
     sidebarWrapper.height(editorWrapper.height());
   },0)
 };
-editor.on("change", matchEditorSidebarHeight);
+editor.on("change", function(){
+  if(typeof(Storage) !== "undefined") {
+    localStorage.lastCode = sessionStorage.lastCode = editor.getValue();
+  }
+  matchEditorSidebarHeight();
+});
 $(window).resize(matchEditorSidebarHeight);
 
 
