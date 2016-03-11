@@ -99,6 +99,15 @@ module Crystal
       node.type = node.name.type.virtual_type!.metaclass
     end
 
+    def visit(node : Self)
+      the_self = (@scope || current_type)
+      if the_self.is_a?(Program)
+        node.raise "there's no self in this scope"
+      end
+
+      node.type = the_self.instance_type
+    end
+
     def visit(node : Generic)
       node.in_type_args = @in_type_args > 0
       node.scope = @scope
