@@ -1,29 +1,59 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link rel="stylesheet" href="/vendor/materialize-v0.97.5/css/materialize.min.css">
     <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/lib/codemirror.css">
     <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/theme/neat.css">
     <link rel="stylesheet" type="text/css" href="/application.css">
-    <script src="/vendor/CodeMirror-5.12.0/lib/codemirror.js"></script>
-    <script src="/vendor/CodeMirror-5.12.0/mode/crystal/crystal.js"></script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   </head>
   <body>
-    <div id="top">
-      <h1>Crystal Playground</h1>
 
-      <button type="button" onclick="run();">Run</button>
-    </div>
+    <nav>
+      <div class="nav-wrapper grey darken-3">
+        <a href="#" class="brand-logo right">
+         <img src="icon.png" /> Crystal Playground
+        </a>
+        <ul class="left">
+          <li><a class="waves-effect waves-light btn" href="#" onclick="javascript:run();">Run</a></li>
+          <li><a class="waves-effect waves-light btn modal-trigger disabled yellow darken-2" href="#output-modal">Console</a></li>
+        </ul>
+      </div>
+    </nav>
 
-    <div id="editor">
-    </div>
+    <div class="container">
+      <div class="row">
+      </div>
 
-    <div id="sidebar">
-      <div id="witness">
+      <div class="row">
+        <div class="col s7">
+          <div class="card" id="editor-wrapper">
+            <div class="CodeMirror-gutters" style="position: absolute; top: 0; bottom: 0; left: 0; width: 29px;"></div>
+            <div id="editor">
+            </div>
+          </div>
+        </div>
+        <div class="col s5">
+          <div class="card" id="sidebar-wrapper">
+            <div id="sidebar">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <pre id="output"></pre>
+    <div id="output-modal" class="modal bottom-sheet">
+      <div class="modal-content">
+        <h6>Output</h6>
+        <pre id="output"></pre>
+      </div>
+    </div>
 
+    <script src="/vendor/jquery-2.2.1.min.js"></script>
+    <script src="/vendor/materialize-v0.97.5/js/materialize.min.js"></script>
+    <script src="/vendor/CodeMirror-5.12.0/lib/codemirror.js"></script>
+    <script src="/vendor/CodeMirror-5.12.0/mode/crystal/crystal.js"></script>
     <script type="text/javascript" src="/application.js"></script>
   </body>
 </html>

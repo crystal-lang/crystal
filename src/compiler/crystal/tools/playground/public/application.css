@@ -1,16 +1,14 @@
-body {
-  margin: 0;
+.brand-logo {
+  position: relative;
 }
 
-#top {
+.brand-logo img {
+  height: 48px;
+  background: white;
+  border-radius: 24px;
   position: absolute;
-  top: 0;
-  height: 100px;
-}
-
-#editor, #sidebar {
-  border-top: 1px solid #ddd;
-  bottom: 150px;
+  top: 7px;
+  left: -55px;
 }
 
 #editor, #sidebar, #output {
@@ -19,54 +17,45 @@ body {
   line-height: 1.46em;
 }
 
-#editor {
-  position: absolute;
-  top: 100px;
-  left: 0;
-  width: 60vw;
+#editor, #sidebar {
+  min-height: 80vh;
+}
+
+@media (max-height: 700px) {
+  #editor, #sidebar {
+    min-height: 75vh;
+  }
+}
+
+@media (max-height: 500px) {
+  #editor, #sidebar {
+    min-height: 70vh;
+  }
+}
+
+#editor-wrapper, #sidebar-wrapper {
+  position: relative;
 }
 
 .CodeMirror {
-  height: 100%;
+  height: auto;
 }
 
 .CodeMirror-lines {
-    padding: 0.5em 0;
+  padding: 0.5em 0;
+}
+
+#sidebar-wrapper {
+  background: #f7f7f7;
 }
 
 #sidebar {
-  position: absolute;
-  top: 100px;
-  right: 0;
-  width: 40vw;
-  background: #f7f7f7;
-  border-left: 1px solid #ddd;
-  overflow: hidden;
-}
-
-#output {
-  position: absolute;
-  margin: 0px;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 150px;
-  background: #f7f7f7;
-  border-top: 1px solid #ddd;
-  overflow: scroll;
-  z-index: 100;
-}
-
-#witness {
-  width: 1px;
-}
-
-#output {
-  line-height: normal;
+  position: relative;
 }
 
 #sidebar div {
   position: absolute;
   white-space: nowrap;
-  left: 4px;
+  left: 1ch;
+  right: 0;
 }

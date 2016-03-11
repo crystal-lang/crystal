@@ -1,7 +1,7 @@
 var ws = new WebSocket("ws://" + location.host);
 var outputDom = document.getElementById('output');
 var sidebarDom = document.getElementById('sidebar');
-var sidebarWitnessDom = document.getElementById('witness');
+var consoleButton = $('a[href="#output-modal"]')
 
 var editor = CodeMirror(document.getElementById('editor'), {
   mode: 'crystal',
@@ -9,31 +9,47 @@ var editor = CodeMirror(document.getElementById('editor'), {
   lineNumbers: true,
   autofocus: true,
   tabSize: 2,
+  viewportMargin: Infinity,
   value: 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n'
 });
 
-editor.on("scroll", function(){
-  var scrollInfo = editor.getScrollInfo()
-  sidebarWitnessDom.style.height = scrollInfo.height + 'px';
-  sidebarDom.scrollTop = scrollInfo.top;
+
+// when clicking below the editor, set the cursor at the very end
+var editorDom = $('#editor').click(function(e){
+  if (e.target == editorDom[0]) {
+    var info = editor.lineInfo(editor.lastLine())
+    editor.setCursor(info.line, info.text.length);
+    editor.focus();
+  }
 });
+
+var sidebarWrapper = $('#sidebar-wrapper');
+var editorWrapper = $('#editor-wrapper');
+var matchEditorSidebarHeight = function() {
+  window.setTimeout(function(){
+    sidebarWrapper.height(editorWrapper.height());
+  },0)
+};
+editor.on("change", matchEditorSidebarHeight);
+$(window).resize(matchEditorSidebarHeight);
+
 
 ws.onmessage = function(e) {
   var message = JSON.parse(e.data);
 
   switch (message.type) {
     case "run":
-      output.innerText = message.output;
+      outputDom.innerText = message.output;
+      if (message.output.length > 0) {
+        consoleButton.removeClass('disabled');
+      }
       break;
     case "value":
-      var lineDom = document.createElement("div");
-
-      var a = document.createAttribute("style");
-      a.value = "top: " + ((message.line-1) * 1.46 + 0.5)+ "em;";
-      lineDom.setAttributeNode(a);
-
-      lineDom.appendChild(document.createTextNode(message.value));
-      sidebarDom.appendChild(lineDom);
+      var lineDom = $("<div>")
+      lineDom.addClass("truncate")
+      lineDom.css("top", ((message.line-1) * 1.46 + 0.5)+ "em");
+      lineDom.text(message.value);
+      sidebarDom.appendChild(lineDom[0]);
       break;
     default:
       console.error("ws message not handled", message);
@@ -41,15 +57,20 @@ ws.onmessage = function(e) {
 };
 
 function run() {
-  sidebarDom.removeChild(sidebarWitnessDom);
   while (sidebarDom.hasChildNodes()) {
     sidebarDom.removeChild(sidebarDom.childNodes[0]);
   }
-  sidebarDom.appendChild(sidebarWitnessDom);
-  output.innerText = "";
+  outputDom.innerText = "";
+  consoleButton.addClass('disabled');
 
   ws.send(JSON.stringify({
     type: "run",
     source: editor.getValue()
   }));
+
+  return false;
 }
+
+$(document).ready(function(){
+  $('.modal-trigger').leanModal();
+});
