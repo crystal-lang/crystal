@@ -1,38 +1,28 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/lib/codemirror.css">
+    <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/theme/neat.css">
     <link rel="stylesheet" type="text/css" href="/application.css">
+    <script src="/vendor/CodeMirror-5.12.0/lib/codemirror.js"></script>
+    <script src="/vendor/CodeMirror-5.12.0/mode/crystal/crystal.js"></script>
   </head>
   <body>
-    <h1>Crystal Playground</h1>
+    <div id="top">
+      <h1>Crystal Playground</h1>
 
-    <table>
-      <tr>
-        <td>
-          <textarea id="source" rows="10">
-a = 1
-b = 3
-c = a + b
-r = rand
-puts c + r
-          </textarea>
-        </td>
-        <td id="sidebar">
-        </td>
-      </tr>
-      <tr>
-        <td colspan="2">
-          <button type="button" onclick="run();">Run</button>
-        </td>
-      </tr>
-      <tr>
-        <td colspan="2">
-          <pre id="output"></pre>
-        </td>
-      </tr>
-    </table>
+      <button type="button" onclick="run();">Run</button>
+    </div>
 
-    <br/>
+    <div id="editor">
+    </div>
+
+    <div id="sidebar">
+      <div id="witness">
+      </div>
+    </div>
+
+    <pre id="output"></pre>
 
     <script type="text/javascript" src="/application.js"></script>
   </body>

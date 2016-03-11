@@ -1,12 +1,60 @@
-#source, #sidebar {
-  line-height: 1em;
-  font-family: monospace;
-  font-size: 1em;
+body {
+  margin: 0;
+}
+
+#top {
+  position: absolute;
+  top: 0;
+  height: 100px;
+}
+
+#editor, #sidebar {
+  border-top: 1px solid #ddd;
+  bottom: 150px;
+}
+
+#editor {
+  position: absolute;
+  top: 100px;
+  left: 0;
+  width: 60vw;
+}
+
+.CodeMirror {
+  height: 100%;
 }
 
 #sidebar {
-  position: relative;
-  top: 4px;
+  position: absolute;
+  top: 100px;
+  right: 0;
+  width: 40vw;
+  background: #f7f7f7;
+  border-left: 1px solid #ddd;
+  overflow: hidden;
+}
+
+#output {
+  position: absolute;
+  margin: 0px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background: #f7f7f7;
+  border-top: 1px solid #ddd;
+  overflow: scroll;
+  z-index: 100;
+}
+
+#witness {
+  width: 1px;
+}
+
+#sidebar, #output {
+  font-family: monospace;
+  line-height: normal;
+  font-size: 13px;
 }
 
 #sidebar div {
