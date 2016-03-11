@@ -1910,15 +1910,6 @@ module Crystal
       node.bind_to scope.vars[untyped_def.name]
     end
 
-    def visit(node : Self)
-      the_self = (@scope || current_type)
-      if the_self.is_a?(Program)
-        node.raise "there's no self in this scope"
-      end
-
-      node.type = the_self.instance_type
-    end
-
     def visit(node : PointerOf)
       var = case node_exp = node.exp
             when Var

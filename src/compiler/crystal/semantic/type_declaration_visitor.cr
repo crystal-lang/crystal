@@ -56,6 +56,10 @@ module Crystal
       @process_types > 0 ? super : false
     end
 
+    def visit(node : Self)
+      @process_types > 0 ? super : false
+    end
+
     def visit(node : ClassDef)
       check_outside_block_or_exp node, "declare class"
 
