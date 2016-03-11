@@ -64,12 +64,13 @@ module Crystal::Playground::Server
         when "run"
           $socket_data.clear
           source = json["source"].as_s
-          instrumented = source.gsub /^/m, "$p.i "
+
+          ast = Parser.new(source).parse
+          instrumented = Playground::AgentInstrumentorVisitor.new.process(ast).to_s
 
           prelude = <<-CR
             require "compiler/crystal/tools/playground/agent"
             $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{PORT}", 0)
-
             CR
 
           sources = [
