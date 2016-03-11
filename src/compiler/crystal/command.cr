@@ -65,7 +65,7 @@ class Crystal::Command
         options.shift
         build
       when "play".starts_with?(command)
-        Playground::Server.start
+        Playground::Server.new.start
       when "deps".starts_with?(command)
         options.shift
         deps
