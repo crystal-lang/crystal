@@ -11,7 +11,7 @@
   left: -55px;
 }
 
-#editor, #sidebar, #output {
+#editor, #sidebar, #output, .inspect-values {
   font-family: Monaco, Menlo, Consolas, 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.46em;

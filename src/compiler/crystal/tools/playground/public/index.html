@@ -10,17 +10,19 @@
   </head>
   <body>
 
-    <nav>
-      <div class="nav-wrapper grey darken-3">
-        <a href="#" class="brand-logo right">
-         <img src="icon.png" /> Crystal Playground
-        </a>
-        <ul class="left">
-          <li><a class="waves-effect waves-light btn" href="#" onclick="javascript:run();">Run</a></li>
-          <li><a class="waves-effect waves-light btn modal-trigger disabled yellow darken-2" href="#output-modal">Console</a></li>
-        </ul>
-      </div>
-    </nav>
+    <div class="navbar-fixed">
+      <nav>
+        <div class="nav-wrapper grey darken-3">
+          <a href="#" class="brand-logo right">
+           <img src="icon.png" /> Crystal Playground
+          </a>
+          <ul class="left">
+            <li><a class="waves-effect waves-light btn" href="#" onclick="javascript:run();">Run</a></li>
+            <li><a class="waves-effect waves-light btn modal-trigger disabled yellow darken-2" href="#output-modal">Output</a></li>
+          </ul>
+        </div>
+      </nav>
+    </div>
 
     <div class="container">
       <div class="row">
@@ -47,6 +49,17 @@
       <div class="modal-content">
         <h6>Output</h6>
         <pre id="output"></pre>
+      </div>
+    </div>
+
+    <div id="inspect-modal" class="modal">
+      <div class="modal-content">
+        <h4>Values</h4>
+        <div class="inspect-values">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">Close</a>
       </div>
     </div>
 

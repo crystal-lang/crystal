@@ -1,6 +1,6 @@
 var ws = new WebSocket("ws://" + location.host);
 var outputDom = document.getElementById('output');
-var sidebarDom = document.getElementById('sidebar');
+var sidebarDom = $('#sidebar');
 var consoleButton = $('a[href="#output-modal"]')
 
 var editor = CodeMirror(document.getElementById('editor'), {
@@ -34,6 +34,55 @@ editor.on("change", matchEditorSidebarHeight);
 $(window).resize(matchEditorSidebarHeight);
 
 
+var inspectModal = $("#inspect-modal");
+var inspectModalValues = $(".inspect-values", inspectModal);
+var inspectors = {};
+
+function Inspector(line) {
+  this.lineDom = $("<div>")
+      .addClass("truncate")
+      .css("top", ((line-1) * 1.46 + 0.5)+ "em");
+  sidebarDom.append(this.lineDom);
+
+  this.messages = [];
+
+  this.lineDom.click(function() {
+    if (this.messages.length == 1) return;
+
+    inspectModalValues.empty();
+    for(var i = 0; i < this.messages.length; i++) {
+      var message = this.messages[i];
+      inspectModalValues.append($("<p>").text(message.value))
+    }
+    inspectModal.openModal();
+  }.bind(this));
+
+  this.addMessage = function(message) {
+    this.messages.push(message);
+    if (this.messages.length == 1) {
+      this.lineDom.text(message.value);
+    } else {
+      this.lineDom.text("(" + this.messages.length + " times)").css('cursor', 'pointer');
+    }
+  }.bind(this);
+
+  return this;
+}
+
+function clearInspectors() {
+  sidebarDom.empty();
+  inspectors = {};
+}
+
+function getInspector(line) {
+  var res = inspectors[line];
+  if (!res) {
+    res = new Inspector(line);
+    inspectors[line] = res;
+  }
+  return res;
+}
+
 ws.onmessage = function(e) {
   var message = JSON.parse(e.data);
 
@@ -45,11 +94,7 @@ ws.onmessage = function(e) {
       }
       break;
     case "value":
-      var lineDom = $("<div>")
-      lineDom.addClass("truncate")
-      lineDom.css("top", ((message.line-1) * 1.46 + 0.5)+ "em");
-      lineDom.text(message.value);
-      sidebarDom.appendChild(lineDom[0]);
+      getInspector(message.line).addMessage(message);
       break;
     default:
       console.error("ws message not handled", message);
@@ -57,9 +102,7 @@ ws.onmessage = function(e) {
 };
 
 function run() {
-  while (sidebarDom.hasChildNodes()) {
-    sidebarDom.removeChild(sidebarDom.childNodes[0]);
-  }
+  clearInspectors();
   outputDom.innerText = "";
   consoleButton.addClass('disabled');
 
