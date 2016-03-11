@@ -1,19 +1,25 @@
 class IPSocket < Socket
-  macro sockname(name, method)
-    def {{name.id}}
-      sockaddr = uninitialized LibC::SockAddrIn6
-      addrlen = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
+  def local_address
+    sockaddr = uninitialized LibC::SockAddrIn6
+    addrlen = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
 
-      if LibC.{{method.id}}(fd, pointerof(sockaddr) as LibC::SockAddr*, pointerof(addrlen)) != 0
-        raise Errno.new("{{method.id}}")
-      end
-
-      IPAddr.new(sockaddr, addrlen)
+    if LibC.getsockname(fd, pointerof(sockaddr) as LibC::SockAddr*, pointerof(addrlen)) != 0
+      raise Errno.new("getsockname")
     end
+
+    IPAddress.new(sockaddr, addrlen)
   end
 
-  sockname :addr, :getsockname
-  sockname :peeraddr, :getpeername
+  def remote_address
+    sockaddr = uninitialized LibC::SockAddrIn6
+    addrlen = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
+
+    if LibC.getpeername(fd, pointerof(sockaddr) as LibC::SockAddr*, pointerof(addrlen)) != 0
+      raise Errno.new("getpeername")
+    end
+
+    IPAddress.new(sockaddr, addrlen)
+  end
 
   class DnsRequestCbArg
     getter value
