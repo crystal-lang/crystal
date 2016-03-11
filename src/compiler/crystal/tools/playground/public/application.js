@@ -1,9 +1,10 @@
+var defaultCode = 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n';
+
 var ws = new WebSocket("ws://" + location.host);
 var outputDom = document.getElementById('output');
 var sidebarDom = $('#sidebar');
 var consoleButton = $('a[href="#output-modal"]')
-
-var defaultCode = 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n';
+var editorError = $('#editor-error');
 
 if(typeof(Storage) !== "undefined") {
   defaultCode = sessionStorage.lastCode || localStorage.lastCode || defaultCode;
@@ -39,6 +40,7 @@ editor.on("change", function(){
   if(typeof(Storage) !== "undefined") {
     localStorage.lastCode = sessionStorage.lastCode = editor.getValue();
   }
+  hideEditorError();
   matchEditorSidebarHeight();
 });
 $(window).resize(matchEditorSidebarHeight);
@@ -93,6 +95,17 @@ function getInspector(line) {
   return res;
 }
 
+function hideEditorError() {
+  editorError.hide();
+}
+
+function showEditorError(line, column, message) {
+  $("span", editorError).text(message)
+  $(".editor-error-col", editorError).css('left', (column + 3.55) + 'ch');
+  editorError.css('top', (line + 0.5) + 'em');
+  editorError.show();
+}
+
 ws.onmessage = function(e) {
   var message = JSON.parse(e.data);
 
@@ -105,6 +118,11 @@ ws.onmessage = function(e) {
       break;
     case "value":
       getInspector(message.line).addMessage(message);
+      break;
+
+    case "parser_error":
+      var ex = message.exception[0];
+      showEditorError(ex.line, ex.column, ex.message);
       break;
     default:
       console.error("ws message not handled", message);

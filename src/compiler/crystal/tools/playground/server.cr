@@ -9,7 +9,19 @@ module Crystal::Playground
     end
 
     def run(source)
-      ast = Parser.new(source).parse
+      begin
+        ast = Parser.new(source).parse
+      rescue ex : SyntaxException
+        send_with_json_builder do |json, io|
+          json.field "type", "parser_error"
+          json.field "exception" do
+            ex.to_json(io)
+          end
+        end
+
+        return
+      end
+
       instrumented = Playground::AgentInstrumentorVisitor.new.process(ast).to_s
 
       prelude = %(
@@ -32,6 +44,14 @@ module Crystal::Playground
 
     def send(message)
       @ws.send(message)
+    end
+
+    def send_with_json_builder
+      send(String.build do |io|
+        io.json_object do |json|
+          yield json, io
+        end
+      end)
     end
 
     private def tempfile(basename)
