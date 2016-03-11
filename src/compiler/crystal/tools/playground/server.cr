@@ -11,14 +11,8 @@ module Crystal::Playground
     def run(source)
       begin
         ast = Parser.new(source).parse
-      rescue ex : SyntaxException
-        send_with_json_builder do |json, io|
-          json.field "type", "parser_error"
-          json.field "exception" do
-            ex.to_json(io)
-          end
-        end
-
+      rescue ex : Crystal::Exception
+        send_exception ex
         return
       end
 
@@ -35,7 +29,12 @@ module Crystal::Playground
       ]
       output_filename = tempfile "play-#{@session_key}"
       compiler = Compiler.new
-      result = compiler.compile sources, output_filename
+      begin
+        result = compiler.compile sources, output_filename
+      rescue ex : Crystal::Exception
+        send_exception ex
+        return
+      end
       output = execute output_filename, [] of String
 
       data = {"type" => "run", "filename" => output_filename, "output" => output[1]}
@@ -52,6 +51,15 @@ module Crystal::Playground
           yield json, io
         end
       end)
+    end
+
+    def send_exception(ex)
+      send_with_json_builder do |json, io|
+        json.field "type", "exception"
+        json.field "exception" do
+          ex.to_json(io)
+        end
+      end
     end
 
     private def tempfile(basename)

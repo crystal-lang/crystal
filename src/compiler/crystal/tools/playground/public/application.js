@@ -22,6 +22,7 @@ var editor = CodeMirror(document.getElementById('editor'), {
 
 // when clicking below the editor, set the cursor at the very end
 var editorDom = $('#editor').click(function(e){
+  hideEditorError();
   if (e.target == editorDom[0]) {
     var info = editor.lineInfo(editor.lastLine())
     editor.setCursor(info.line, info.text.length);
@@ -100,7 +101,7 @@ function hideEditorError() {
 }
 
 function showEditorError(line, column, message) {
-  $("span", editorError).text(message)
+  $("pre", editorError).text(message)
   $(".editor-error-col", editorError).css('left', (column + 3.55) + 'ch');
   editorError.css('top', (line + 0.5) + 'em');
   editorError.show();
@@ -120,7 +121,7 @@ ws.onmessage = function(e) {
       getInspector(message.line).addMessage(message);
       break;
 
-    case "parser_error":
+    case "exception":
       var ex = message.exception[0];
       showEditorError(ex.line, ex.column, ex.message);
       break;
