@@ -2,77 +2,36 @@ require "http/server"
 require "tempfile"
 
 module Crystal::Playground
-  class IndexHandler < HTTP::Handler
-    def initialize(@filename)
+  class Session
+    @ws : HTTP::WebSocket
+
+    def initialize(@ws, @session_key, @port)
     end
 
-    def call(context)
-      case {context.request.method, context.request.resource}
-      when {"GET", "/"}
-        context.response.headers["Content-Type"] = "text/html"
-        context.response << File.read(@filename)
-      else
-        call_next(context)
-      end
-    end
-  end
+    def run(source)
+      ast = Parser.new(source).parse
+      instrumented = Playground::AgentInstrumentorVisitor.new.process(ast).to_s
 
-  class Server
-    PORT = 8080
-    $sockets = [] of HTTP::WebSocket
-    $socket_data = [] of Hash(String, Int32 | String)
+      prelude = %(
+        require "compiler/crystal/tools/playground/agent"
+        $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{@port}", #{@session_key})
+        )
 
-    def start
-      public_dir = File.join(File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0]), "public")
-
-      play_ws = HTTP::WebSocketHandler.new do |ws|
-        $sockets << ws
-
-        ws.on_message do |message|
-          pp message
-          json = JSON.parse(message)
-          case json["type"].as_s
-          when "run"
-            $socket_data.clear
-            source = json["source"].as_s
-
-            ast = Parser.new(source).parse
-            instrumented = Playground::AgentInstrumentorVisitor.new.process(ast).to_s
-
-            prelude = <<-CR
-            require "compiler/crystal/tools/playground/agent"
-            $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{PORT}", 0)
-            CR
-
-            sources = [
-              Compiler::Source.new("playground_prelude", prelude),
-              Compiler::Source.new("play", instrumented),
-            ]
-            output_filename = tempfile "play"
-            compiler = Compiler.new
-            result = compiler.compile sources, output_filename
-            output = execute output_filename, [] of String
-
-            data = {"type" => "run", "filename" => output_filename, "output" => output[1]}
-            ws.send(data.to_json)
-          when "agent_send"
-            value = json["value"].as_s
-            line = json["line"].as_i
-            session = json["session"].as_i
-            data = {"type" => "value", "value" => value, "line" => line}
-            $sockets[session].send(data.to_json)
-          end
-        end
-      end
-
-      server = HTTP::Server.new "localhost", PORT, [
-        play_ws,
-        IndexHandler.new(File.join(public_dir, "index.html")),
-        HTTP::StaticFileHandler.new(public_dir),
+      sources = [
+        Compiler::Source.new("playground_prelude", prelude),
+        Compiler::Source.new("play", instrumented),
       ]
+      output_filename = tempfile "play-#{@session_key}"
+      compiler = Compiler.new
+      result = compiler.compile sources, output_filename
+      output = execute output_filename, [] of String
 
-      puts "Listening on http://0.0.0.0:#{PORT}"
-      server.listen
+      data = {"type" => "run", "filename" => output_filename, "output" => output[1]}
+      send(data.to_json)
+    end
+
+    def send(message)
+      @ws.send(message)
     end
 
     private def tempfile(basename)
@@ -83,10 +42,10 @@ module Crystal::Playground
       begin
         output = MemoryIO.new
         Process.run(output_filename, args: run_args, input: true, output: output, error: output) do |process|
-          Signal::INT.trap do
-            process.kill
-            # exit
-          end
+          # Signal::INT.trap do
+          #   process.kill
+          #   # exit
+          # end
         end
         status = $?
       ensure
@@ -111,6 +70,62 @@ module Crystal::Playground
 
       #   exit 1
       # end
+    end
+  end
+
+  class IndexHandler < HTTP::Handler
+    def initialize(@filename)
+    end
+
+    def call(context)
+      case {context.request.method, context.request.resource}
+      when {"GET", "/"}
+        context.response.headers["Content-Type"] = "text/html"
+        context.response << File.read(@filename)
+      else
+        call_next(context)
+      end
+    end
+  end
+
+  class Server
+    PORT = 8080
+    $sockets = [] of HTTP::WebSocket
+    @sessions = {} of Int32 => Session
+    @sessionsKey = 0
+
+    def start
+      public_dir = File.join(File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0]), "public")
+
+      play_ws = HTTP::WebSocketHandler.new do |ws|
+        @sessionsKey += 1
+        @sessions[@sessionsKey] = session = Session.new(ws, @sessionsKey, PORT)
+
+        ws.on_message do |message|
+          pp message
+          json = JSON.parse(message)
+          case json["type"].as_s
+          when "run"
+            source = json["source"].as_s
+            session.run source
+          when "agent_send"
+            value = json["value"].as_s
+            line = json["line"].as_i
+            sessionKey = json["session"].as_i
+            data = {"type" => "value", "value" => value, "line" => line}
+            @sessions[sessionKey].send(data.to_json)
+          end
+        end
+      end
+
+      server = HTTP::Server.new "localhost", PORT, [
+        play_ws,
+        IndexHandler.new(File.join(public_dir, "index.html")),
+        HTTP::StaticFileHandler.new(public_dir),
+      ]
+
+      puts "Listening on http://0.0.0.0:#{PORT}"
+      server.listen
     end
   end
 end
