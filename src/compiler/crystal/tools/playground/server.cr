@@ -9,9 +9,19 @@ class Crystal::Playground::IndexView
   ECR.def_to_s "#{__DIR__}/index.html.ecr"
 end
 
-private def render(context, view)
-  context.response.headers["Content-Type"] = "text/html"
-  context.response << view
+class Crystal::Playground::ViewHandler < HTTP::Handler
+  def initialize(@path, @view)
+  end
+
+  def call(context)
+    case {context.request.method, context.request.resource}
+    when {"GET", @path}
+      context.response.headers["Content-Type"] = "text/html"
+      context.response << @view
+    else
+      call_next(context)
+    end
+  end
 end
 
 private def execute(output_filename, run_args)
@@ -54,6 +64,8 @@ module Crystal::Playground::Server
   $socket_data = [] of Hash(String, Int32 | String)
 
   def self.start
+    public_dir = File.join(File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0]), "public")
+
     play_ws = HTTP::WebSocketHandler.new do |ws|
       $sockets << ws
 
@@ -94,15 +106,11 @@ module Crystal::Playground::Server
       end
     end
 
-    server = HTTP::Server.new "localhost", PORT, [play_ws] do |context|
-      case {context.request.method, context.request.resource}
-      when {"GET", "/"}
-        render context, IndexView.new
-      else
-        context.response.headers["Content-Type"] = "text/plain"
-        context.response.print("What are you looking here?")
-      end
-    end
+    server = HTTP::Server.new "localhost", PORT, [
+      play_ws,
+      Crystal::Playground::ViewHandler.new("/", IndexView.new),
+      HTTP::StaticFileHandler.new(public_dir),
+    ]
 
     puts "Listening on http://0.0.0.0:#{PORT}"
     server.listen
