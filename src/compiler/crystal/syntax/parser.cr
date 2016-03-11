@@ -1882,6 +1882,12 @@ module Crystal
             remove_indent = false
             current_line.clear
           else
+            unless current_line.empty?
+              line = current_line.to_s
+              new_pieces << StringLiteral.new(line)
+              current_line.clear
+            end
+
             new_pieces << value
           end
         end
