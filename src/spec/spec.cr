@@ -180,7 +180,7 @@ module Spec
     @@after_each.try &.each &.call
   end
 
-  # :nodoc
+  # :nodoc:
   def self.run
     start_time = Time.now
     at_exit do
