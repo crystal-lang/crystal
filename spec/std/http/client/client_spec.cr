@@ -80,12 +80,12 @@ module HTTP
 
     it "doesn't read the body if request was HEAD" do
       resp_get = TestServer.open("localhost", 0, 0) do |server|
-        client = Client.new("localhost", server.addr.ip_port)
+        client = Client.new("localhost", server.local_address.port)
         break client.get("/")
       end
 
       TestServer.open("localhost", 0, 0) do |server|
-        client = Client.new("localhost", server.addr.ip_port)
+        client = Client.new("localhost", server.local_address.port)
         resp_head = client.head("/")
         resp_head.headers.should eq(resp_get.headers)
         resp_head.body.should eq("")
@@ -106,13 +106,13 @@ module HTTP
 
     it "tests read_timeout" do
       TestServer.open("localhost", 0, 0) do |server|
-        client = Client.new("localhost", server.addr.ip_port)
+        client = Client.new("localhost", server.local_address.port)
         client.read_timeout = 1.second
         client.get("/")
       end
 
       TestServer.open("localhost", 0, 0.5) do |server|
-        client = Client.new("localhost", server.addr.ip_port)
+        client = Client.new("localhost", server.local_address.port)
         expect_raises(IO::Timeout, "read timed out") do
           client.read_timeout = 0.001
           client.get("/?sleep=1")
@@ -122,7 +122,7 @@ module HTTP
 
     it "tests connect_timeout" do
       TestServer.open("localhost", 0, 0) do |server|
-        client = Client.new("localhost", server.addr.ip_port)
+        client = Client.new("localhost", server.local_address.port)
         client.connect_timeout = 0.5
         client.get("/")
       end
