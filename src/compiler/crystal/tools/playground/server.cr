@@ -1,23 +1,15 @@
 require "http/server"
 require "tempfile"
 
-class Crystal::Playground::IndexView
-  def file_content(filename)
-    File.read("#{__DIR__}/#{filename}")
-  end
-
-  ECR.def_to_s "#{__DIR__}/index.html.ecr"
-end
-
-class Crystal::Playground::ViewHandler < HTTP::Handler
-  def initialize(@path, @view)
+class Crystal::Playground::IndexHandler < HTTP::Handler
+  def initialize(@filename)
   end
 
   def call(context)
     case {context.request.method, context.request.resource}
-    when {"GET", @path}
+    when {"GET", "/"}
       context.response.headers["Content-Type"] = "text/html"
-      context.response << @view
+      context.response << File.read(@filename)
     else
       call_next(context)
     end
@@ -108,7 +100,7 @@ module Crystal::Playground::Server
 
     server = HTTP::Server.new "localhost", PORT, [
       play_ws,
-      Crystal::Playground::ViewHandler.new("/", IndexView.new),
+      IndexHandler.new(File.join(public_dir, "index.html")),
       HTTP::StaticFileHandler.new(public_dir),
     ]
 

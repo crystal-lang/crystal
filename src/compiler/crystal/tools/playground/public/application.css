@@ -1,0 +1,15 @@
+#source, #sidebar {
+  line-height: 1em;
+  font-family: monospace;
+  font-size: 1em;
+}
+
+#sidebar {
+  position: relative;
+  top: 4px;
+}
+
+#sidebar div {
+  position: absolute;
+  white-space: nowrap;
+}

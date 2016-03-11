@@ -1,23 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <style type="text/css">
-    #source, #sidebar {
-      line-height: 1em;
-      font-family: monospace;
-      font-size: 1em;
-    }
-
-    #sidebar {
-      position: relative;
-      top: 4px;
-    }
-
-    #sidebar div {
-      position: absolute;
-      white-space: nowrap;
-    }
-    </style>
+    <link rel="stylesheet" type="text/css" href="/application.css">
   </head>
   <body>
     <h1>Crystal Playground</h1>
@@ -50,8 +34,6 @@ puts c + r
 
     <br/>
 
-    <script type="text/javascript">
-      <%= file_content "application.js" %>
-    </script>
+    <script type="text/javascript" src="/application.js"></script>
   </body>
 </html>
