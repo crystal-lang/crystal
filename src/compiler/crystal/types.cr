@@ -248,6 +248,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_instance_var_initializer"
     end
 
+    def declare_instance_var(name, node_or_type)
+      raise "Bug: #{self} doesn't implement declare_instance_var"
+    end
+
     def types
       raise "Bug: #{self} has no types"
     end
@@ -877,7 +881,7 @@ module Crystal
       true
     end
 
-    def declare_instance_var(name, var_type)
+    def declare_instance_var(name, var_type : Type)
       @including_types.try &.each do |type|
         case type
         when Program, FileModule
@@ -925,7 +929,7 @@ module Crystal
     include InheritableClass
     include InstanceVarInitializerContainer
 
-    getter :superclass
+    getter superclass : Type?
     getter :subclasses
     getter depth : Int32
     property? :abstract
@@ -1196,11 +1200,21 @@ module Crystal
       !struct?
     end
 
-    def declare_instance_var(name, type)
+    def declare_instance_var(name, type : Type)
       ivar = lookup_instance_var(name)
       ivar.type = type
       ivar.bind_to ivar
       ivar.freeze_type = type
+    end
+
+    def declare_instance_var(name, node : ASTNode)
+      visitor = TypeLookup.new(self)
+      node.accept visitor
+
+      ivar = lookup_instance_var(name, create: true)
+      ivar.type = visitor.type
+      ivar.bind_to ivar
+      ivar.freeze_type = visitor.type.virtual_type
     end
 
     def covariant?(other_type)
@@ -1524,21 +1538,21 @@ module Crystal
       GenericClassInstanceType.new program, generic_type, type_vars
     end
 
-    def declare_instance_var(name, node)
+    def add_inherited(type)
+      inherited = @inherited ||= [] of Type
+      inherited << type
+    end
+
+    def declare_instance_var(name, node : ASTNode)
       declared_instance_vars = (@declared_instance_vars ||= {} of String => ASTNode)
       declared_instance_vars[name] = node
 
       generic_types.each do |key, instance|
-        instance = instance as GenericClassInstanceType
+        instance.declare_instance_var(name, node)
+      end
 
-        visitor = TypeLookup.new(instance)
-        node.accept visitor
-
-        ivar = MetaInstanceVar.new(name, visitor.type)
-        ivar.owner = instance
-        ivar.bind_to ivar
-        ivar.freeze_type = visitor.type.virtual_type
-        instance.instance_vars[name] = ivar
+      @inherited.try &.each do |inherited|
+        inherited.declare_instance_var(name, node)
       end
     end
 
@@ -1663,6 +1677,17 @@ module Crystal
     def allocated=(allocated)
       @allocated = allocated
       superclass.try { |s| s.allocated = allocated }
+    end
+
+    def declare_instance_var(name, node : ASTNode)
+      visitor = TypeLookup.new(self)
+      node.accept visitor
+
+      ivar = MetaInstanceVar.new(name, visitor.type)
+      ivar.owner = self
+      ivar.bind_to ivar
+      ivar.freeze_type = visitor.type.virtual_type
+      self.instance_vars[name] = ivar
     end
 
     def filter_by_responds_to(name)
@@ -2403,9 +2428,9 @@ module Crystal
     def initialize(@program, instance_type : Type, super_class = nil, name = nil)
       @instance_type = instance_type
       super_class ||= if instance_type.is_a?(ClassType) && instance_type.superclass
-                        instance_type.superclass.not_nil!.metaclass as ClassType
+                        instance_type.superclass.not_nil!.metaclass
                       elsif instance_type.is_a?(EnumType)
-                        @program.enum.metaclass as MetaclassType
+                        @program.enum.metaclass
                       else
                         @program.class_type
                       end

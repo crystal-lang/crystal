@@ -2312,8 +2312,8 @@ module Crystal
           type_name = type.name.split "::"
 
           path = Path.global(type_name).at(node.location)
-          type_of_keys = TypeOf.new(node.entries.map &.key).at(node.location)
-          type_of_values = TypeOf.new(node.entries.map &.value).at(node.location)
+          type_of_keys = TypeOf.new(node.entries.map { |x| x.key as ASTNode }).at(node.location)
+          type_of_values = TypeOf.new(node.entries.map { |x| x.value as ASTNode }).at(node.location)
           generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode).at(node.location)
 
           node.name = generic
