@@ -1,7 +1,7 @@
 var defaultCode = 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n';
 var runDebounce = 300;
 
-var ws = new WebSocket("ws://" + location.host);
+var ws = new WebSocket("ws://" + location.host + "/client");
 var outputDom = document.getElementById('output');
 var sidebarDom = $('#sidebar');
 var consoleButton = $('a[href="#output-modal"]');

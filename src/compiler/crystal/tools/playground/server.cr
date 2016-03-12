@@ -20,7 +20,7 @@ module Crystal::Playground
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
-        $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{@port}", #{@session_key}, #{tag})
+        $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{@port}/agent", #{@session_key}, #{tag})
         )
 
       sources = [
@@ -126,6 +126,22 @@ module Crystal::Playground
     end
   end
 
+  class PathWebSocketHandler < HTTP::WebSocketHandler
+    @path : String
+
+    def initialize(@path, &proc : HTTP::WebSocket ->)
+      super(&proc)
+    end
+
+    def call(context)
+      if context.request.path == @path
+        super
+      else
+        call_next(context)
+      end
+    end
+  end
+
   class Server
     PORT = 8080
     $sockets = [] of HTTP::WebSocket
@@ -135,31 +151,35 @@ module Crystal::Playground
     def start
       public_dir = File.join(File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0]), "public")
 
-      play_ws = HTTP::WebSocketHandler.new do |ws|
+      agent_ws = PathWebSocketHandler.new "/agent" do |ws|
+        ws.on_message do |message|
+          # forward every message to the client.
+          # removing the session key
+          json = JSON.parse(message)
+          sessionKey = json["session"].as_i
+          json.as_h.delete "session"
+          @sessions[sessionKey].send(json.to_json)
+        end
+      end
+
+      client_ws = PathWebSocketHandler.new "/client" do |ws|
         @sessionsKey += 1
         @sessions[@sessionsKey] = session = Session.new(ws, @sessionsKey, PORT)
 
         ws.on_message do |message|
-          pp message
           json = JSON.parse(message)
           case json["type"].as_s
           when "run"
             source = json["source"].as_s
             tag = json["tag"].as_i
             session.run source, tag
-          when "agent_send"
-            value = json["value"].as_s
-            line = json["line"].as_i
-            tag = json["tag"].as_i
-            sessionKey = json["session"].as_i
-            data = {"type": "value", "tag": tag, "value": value, "line": line}
-            @sessions[sessionKey].send(data.to_json)
           end
         end
       end
 
       server = HTTP::Server.new "localhost", PORT, [
-        play_ws,
+        client_ws,
+        agent_ws,
         IndexHandler.new(File.join(public_dir, "index.html")),
         HTTP::StaticFileHandler.new(public_dir),
       ]

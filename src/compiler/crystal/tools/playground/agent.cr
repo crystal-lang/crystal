@@ -11,9 +11,9 @@ class Crystal::Playground::Agent
 
   def i(value, line = __LINE__)
     @ws.send({
-      "type"    => "agent_send",
       "session" => @session,
       "tag"     => @tag,
+      "type"    => "value",
       "line"    => line,
       "value"   => value.inspect,
     }.to_json) rescue nil
