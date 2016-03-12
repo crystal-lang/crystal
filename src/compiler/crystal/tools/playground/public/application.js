@@ -133,9 +133,14 @@ ws.onmessage = function(e) {
 
   switch (message.type) {
     case "run":
-      outputDom.innerText = message.output;
-      if (message.output.length > 0) {
-        consoleButton.removeClass('disabled');
+      break;
+    case "output":
+      outputDom.innerText = message.content;
+      if (message.content.length > 0) {
+        consoleButton.addClass('disabled');
+        window.setTimeout(function(){
+          consoleButton.removeClass('disabled');
+        }, 200);
       }
       break;
     case "value":

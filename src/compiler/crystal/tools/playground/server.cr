@@ -4,11 +4,19 @@ require "tempfile"
 module Crystal::Playground
   class Session
     @ws : HTTP::WebSocket
+    @process : Process?
+    @running_process_filename : String
+    @output_w : MemoryIO
+    getter tag : Int32
 
     def initialize(@ws, @session_key, @port)
+      @running_process_filename = ""
+      @output_w = MemoryIO.new
+      @tag = 0
     end
 
     def run(source, tag)
+      @tag = tag
       begin
         ast = Parser.new(source).parse
       rescue ex : Crystal::Exception
@@ -31,7 +39,7 @@ module Crystal::Playground
         Compiler::Source.new("playground_prelude", prelude),
         Compiler::Source.new("play", instrumented),
       ]
-      output_filename = tempfile "play-#{@session_key}"
+      output_filename = tempfile "play-#{@session_key}-#{tag}"
       compiler = Compiler.new
       begin
         result = compiler.compile sources, output_filename
@@ -40,7 +48,6 @@ module Crystal::Playground
         begin
           compiler.compile Compiler::Source.new("play", source), output_filename
         rescue ex : Crystal::Exception
-          puts ex
           send_exception ex, tag
           return # if we don't exit here we've found a bug
         end
@@ -48,9 +55,10 @@ module Crystal::Playground
         send({"type": "bug", "tag": tag}.to_json)
         return
       end
-      output = execute output_filename, [] of String
 
-      data = {"type": "run", "tag": tag, "filename": output_filename, "output": output[1]}
+      execute output_filename
+
+      data = {"type": "run", "tag": tag, "filename": output_filename}
       send(data.to_json)
     end
 
@@ -76,27 +84,36 @@ module Crystal::Playground
       end
     end
 
+    def stream_output
+      content = @output_w.to_s
+
+      return if content.empty?
+
+      send_with_json_builder do |json|
+        json.field "type", "output"
+        json.field "tag", @tag
+        json.field "content", content
+      end
+    end
+
     private def tempfile(basename)
       Crystal.tempfile(basename)
     end
 
-    private def execute(output_filename, run_args)
-      begin
-        output = MemoryIO.new
-        Process.run(output_filename, args: run_args, input: true, output: output, error: output) do |process|
-          # Signal::INT.trap do
-          #   process.kill
-          #   # exit
-          # end
-        end
-        status = $?
-      ensure
-        File.delete output_filename
+    private def stop_process
+      if process = @process
+        @process = nil
+        File.delete @running_process_filename
+        process.kill rescue nil
+        @output_w = MemoryIO.new
       end
+    end
 
-      output.rewind
+    private def execute(output_filename)
+      stop_process
 
-      {$?, output.to_s}
+      @process = Process.new(output_filename, args: [] of String, input: true, output: @output_w, error: @output_w)
+      @running_process_filename = output_filename
 
       # if status.normal_exit?
       #   exit status.exit_code
@@ -161,8 +178,18 @@ module Crystal::Playground
           # removing the session key
           json = JSON.parse(message)
           sessionKey = json["session"].as_i
-          json.as_h.delete "session"
-          @sessions[sessionKey].send(json.to_json)
+          session = @sessions[sessionKey]
+          # ignore if the session is already about another execution
+          if json["tag"].as_i == session.tag
+            json.as_h.delete "session"
+            session.send(json.to_json)
+
+            # temporal solution for streamming output
+            case json["type"].as_s
+            when "value", "exit"
+              session.stream_output
+            end
+          end
         end
       end
 
