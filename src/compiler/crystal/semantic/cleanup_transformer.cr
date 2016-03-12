@@ -294,7 +294,7 @@ module Crystal
 
       # Check if the block has its type freezed and it doesn't match the current type
       if block && (freeze_type = block.freeze_type) && (block_type = block.type?)
-        unless freeze_type.is_restriction_of_all?(block_type)
+        unless block_type.implements?(freeze_type)
           freeze_type = freeze_type.base_type if freeze_type.is_a?(VirtualType)
           node.raise "expected block to return #{freeze_type}, not #{block_type}"
         end

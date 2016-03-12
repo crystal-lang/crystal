@@ -192,11 +192,14 @@ module Crystal
     end
 
     def implements?(other_type : Type)
+      other_type = other_type.remove_alias
       case other_type
       when UnionType
         other_type.union_types.any? do |union_type|
           implements?(union_type)
         end
+      when VirtualType
+        implements?(other_type.base_type)
       when VirtualMetaclassType
         implements?(other_type.base_type.metaclass)
       else
@@ -718,6 +721,7 @@ module Crystal
     end
 
     def implements?(other_type)
+      other_type = other_type.remove_alias
       super || parents.any? &.implements?(other_type)
     end
 
@@ -1682,6 +1686,7 @@ module Crystal
     end
 
     def implements?(other_type)
+      other_type = other_type.remove_alias
       super || generic_class.implements?(other_type)
     end
 
@@ -2580,6 +2585,11 @@ module Crystal
       else
         union_types
       end
+    end
+
+    def implements?(other_type : Type)
+      other_type = other_type.remove_alias
+      self == other_type || union_types.all?(&.implements?(other_type))
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
