@@ -1515,6 +1515,15 @@ module Crystal
       @including_types
     end
 
+    def declare_instance_var(name, node : ASTNode)
+      declared_instance_vars = (@declared_instance_vars ||= {} of String => ASTNode)
+      declared_instance_vars[name] = node
+
+      @inherited.try &.each do |inherited|
+        inherited.declare_instance_var(name, node)
+      end
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       super
       if generic_args

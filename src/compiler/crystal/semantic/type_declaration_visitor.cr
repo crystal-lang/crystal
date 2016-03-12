@@ -165,6 +165,9 @@ module Crystal
       when GenericClassType
         type.declare_instance_var(var.name, node.declared_type)
         return
+      when GenericModuleType
+        type.declare_instance_var(var.name, node.declared_type)
+        return
       when GenericClassInstanceType
         # OK
         return

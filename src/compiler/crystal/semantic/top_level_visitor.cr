@@ -808,6 +808,8 @@ module Crystal
 
         mapping = Hash.zip(type.type_vars, node_name.type_vars)
         module_to_include = IncludedGenericModule.new(@mod, type, current_type, mapping)
+
+        type.add_inherited(current_type)
       else
         if type.is_a?(GenericModuleType)
           node_name.raise "#{type} is a generic module"
