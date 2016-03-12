@@ -261,14 +261,14 @@ describe UDPSocket do
 
     buffer = uninitialized UInt8[256]
 
-    client.send("message equal to buffer".to_slice, server.local_address)
+    client.send("message equal to buffer", server.local_address)
     bytes_read, addr1 = server.receive(buffer.to_slice[0, 23])
     message1 = String.new(buffer.to_slice[0, bytes_read])
     message1.should eq("message equal to buffer")
     addr1.family.should eq(server.local_address.family)
     addr1.address.should eq(server.local_address.address)
 
-    client.send("message less than buffer".to_slice, server.local_address)
+    client.send("message less than buffer", server.local_address)
     bytes_read, addr2 = server.receive(buffer.to_slice)
     message2 = String.new(buffer.to_slice[0, bytes_read])
     message2.should eq("message less than buffer")
@@ -289,7 +289,7 @@ describe UDPSocket do
 
     buffer = uninitialized UInt8[1500]
 
-    client.send("message".to_slice, server.local_address)
+    client.send("message", server.local_address)
     bytes_read, addr = server.receive(buffer.to_slice)
     String.new(buffer.to_slice[0, bytes_read]).should eq("message")
     addr.family.should eq(server.local_address.family)
@@ -306,7 +306,7 @@ describe UDPSocket do
     client.broadcast = true
     client.broadcast?.should be_true
     client.connect("255.255.255.255", port)
-    client.send("broadcast".to_slice).should eq(9)
+    client.send("broadcast").should eq(9)
     client.close
   end
 end
