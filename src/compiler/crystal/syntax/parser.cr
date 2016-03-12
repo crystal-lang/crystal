@@ -4,12 +4,28 @@ require "./lexer"
 
 module Crystal
   class Parser < Lexer
-    record Unclosed, name, location
+    record Unclosed, name : String, location : Location
 
     property visibility : Visibility?
-    property def_nest
-    property type_nest
-    getter? wants_doc
+    property def_nest : Int32
+    property type_nest : Int32
+    getter? wants_doc : Bool
+    @def_vars : Array(Set(String))
+    @last_call_has_parenthesis : Bool
+    @temp_token : Token
+    @unclosed_stack : Array(Unclosed)
+    @calls_super : Bool
+    @calls_initialize : Bool
+    @uses_block_arg : Bool
+    @assigns_special_var : Bool
+    @block_arg_count : Int32
+    @in_macro_expression : Bool
+    @stop_on_yield : Int32
+    @inside_c_struct : Bool
+    @no_type_declaration : Int32
+    @yields : Int32?
+    @instance_vars : Set(String)?
+    @block_arg_name : String?
 
     def self.parse(str, def_vars = [Set(String).new])
       new(str, def_vars).parse
@@ -31,11 +47,13 @@ module Crystal
       @stop_on_yield = 0
       @inside_c_struct = false
       @wants_doc = false
+      @doc_enabled = false
       @no_type_declaration = 0
     end
 
-    def wants_doc=(@wants_doc)
-      @doc_enabled = @wants_doc
+    def wants_doc=(wants_doc)
+      @wants_doc = !!wants_doc
+      @doc_enabled = !!wants_doc
     end
 
     def parse
@@ -1690,9 +1708,9 @@ module Crystal
       FunPointer.new(obj, name, types)
     end
 
-    record Piece, value, line_number do
-      @value : String | ASTNode
-    end
+    record Piece,
+      value : String | ASTNode,
+      line_number : Int32
 
     def parse_delimiter
       if @token.type == :STRING
@@ -2906,7 +2924,7 @@ module Crystal
       end
 
       @def_nest -= 1
-      @doc_enabled = @wants_doc
+      @doc_enabled = !!@wants_doc
       pop_def
 
       node = Def.new name, args, body, receiver, block_arg, return_type, is_macro_def, @yields, is_abstract, splat_index
@@ -2925,7 +2943,10 @@ module Crystal
       end
     end
 
-    record ArgExtras, block_arg, default_value, splat
+    record ArgExtras,
+      block_arg : Arg?,
+      default_value : Bool,
+      splat : Bool
 
     def parse_arg(args, extra_assigns, parenthesis, found_default_value, found_splat, allow_restrictions = true)
       if @token.type == :"&"
@@ -3393,7 +3414,13 @@ module Crystal
       Block.new(block_args, block_body).at_end(end_location)
     end
 
-    record CallArgs, args, block, block_arg, named_args, stopped_on_do_after_space, end_location
+    record CallArgs,
+      args : Array(ASTNode)?,
+      block : Block?,
+      block_arg : ASTNode?,
+      named_args : Array(NamedArgument)?,
+      stopped_on_do_after_space : Bool,
+      end_location : Location?
 
     def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false)
       case @token.type

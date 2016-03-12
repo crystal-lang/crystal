@@ -11,16 +11,23 @@ module Crystal
       formatter.finish
     end
 
-    record AlignInfo, id, line, start_column, middle_column, end_column, number do
+    record AlignInfo,
+      id : UInt64,
+      line : Int32,
+      start_column : Int32,
+      middle_column : Int32,
+      end_column : Int32,
+      number : Bool do
       def size
         end_column - start_column
       end
     end
 
     class CommentInfo
-      property start_line
-      property end_line
-      property needs_newline
+      property start_line : Int32
+      property end_line : Int32
+      property needs_newline : Bool
+      @kind : Symbol
 
       def initialize(@start_line, @kind)
         @end_line = @start_line
@@ -28,7 +35,41 @@ module Crystal
       end
     end
 
-    record HeredocFix, start_line, end_line, difference
+    record HeredocFix,
+      start_line : Int32,
+      end_line : Int32,
+      difference : Int32
+
+    @lexer : Lexer
+    @comment_columns : Array(Int32?)
+    @indent : Int32
+    @line : Int32
+    @column : Int32
+    @token : Token
+    @output : MemoryIO
+    @line_output : MemoryIO
+    @wrote_newline : Bool
+    @wrote_comment : Bool
+    @macro_state : Token::MacroState
+    @inside_macro : Int32
+    @inside_cond : Int32
+    @inside_lib : Int32
+    @inside_struct_or_union : Int32
+    @dot_column : Int32?
+    @def_indent : Int32
+    @last_write : String
+    @exp_needs_indent : Bool
+    @inside_def : Int32
+    @when_infos : Array(AlignInfo)
+    @hash_infos : Array(AlignInfo)
+    @assign_infos : Array(AlignInfo)
+    @doc_comments : Array(CommentInfo)
+    @current_doc_comment : CommentInfo?
+    @hash_in_same_line : Set(UInt64)
+    @shebang : Bool
+    @heredoc_fixes : Array(HeredocFix)
+    @assign_length : Int32?
+    @current_hash : HashLiteral?
 
     def initialize(source)
       @lexer = Lexer.new(source)
@@ -44,7 +85,6 @@ module Crystal
 
       @output = MemoryIO.new(source.bytesize)
       @line_output = MemoryIO.new
-      @next_exp_column = nil
       @wrote_newline = false
       @wrote_comment = false
       @macro_state = Token::MacroState.default
@@ -2447,7 +2487,7 @@ module Crystal
 
     def check_assign_align(before_column, exp)
       if exp.is_a?(NumberLiteral)
-        @assign_infos << AlignInfo.new(0, @line, before_column, @column, @column, true)
+        @assign_infos << AlignInfo.new(0_u64, @line, before_column, @column, @column, true)
       end
     end
 

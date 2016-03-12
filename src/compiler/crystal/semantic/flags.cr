@@ -25,7 +25,8 @@ class Crystal::Program
   end
 
   class FlagsEvaluator < Visitor
-    getter value
+    getter value : Bool
+    @program : Program
 
     def initialize(@program)
       @value = false

@@ -3,14 +3,18 @@ require "../exception"
 
 module Crystal
   class Lexer
-    property? doc_enabled
-    property? comments_enabled
-    property? count_whitespace
-    property? wants_raw
-    property? slash_is_regex
-    getter reader
-    getter token
-    getter line_number
+    property? doc_enabled : Bool
+    property? comments_enabled : Bool
+    property? count_whitespace : Bool
+    property? wants_raw : Bool
+    property? slash_is_regex : Bool
+    getter reader : Char::Reader
+    getter token : Token
+    getter line_number : Int32
+    @column_number : Int32
+    @filename : String | VirtualFile | Nil
+    @wants_regex : Bool
+    @token_end_location : Location?
 
     def initialize(string)
       @reader = Char::Reader.new(string)

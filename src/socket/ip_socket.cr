@@ -22,7 +22,8 @@ class IPSocket < Socket
   end
 
   class DnsRequestCbArg
-    getter value
+    getter value : Int32 | Pointer(LibC::Addrinfo) | Nil
+    @fiber : Fiber
 
     def initialize
       @fiber = Fiber.current

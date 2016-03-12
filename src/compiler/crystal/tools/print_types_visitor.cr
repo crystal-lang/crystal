@@ -7,6 +7,8 @@ module Crystal
   end
 
   class PrintTypesVisitor < Visitor
+    @vars : Set(String)
+
     def initialize
       @vars = Set(String).new
     end

@@ -5,8 +5,11 @@ require "./item"
 class Crystal::Doc::Method
   include Item
 
-  getter type
-  getter :def
+  getter type : Type
+  getter def : Def
+
+  @generator : Generator
+  @class_method : Bool
 
   def initialize(@generator, @type, @def, @class_method)
   end

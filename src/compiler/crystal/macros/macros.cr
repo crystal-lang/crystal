@@ -97,7 +97,7 @@ module Crystal
     # and later must be replaced. The mapping of placeholders is the `yields` property
     # of this record. What must be replaced are argless calls whose name appear in this
     # `yields` hash.
-    record ExpandedMacro, source, yields
+    record ExpandedMacro, source : String, yields : Hash(String, ASTNode)?
 
     def initialize(@mod)
       @cache = {} of String => String
@@ -210,7 +210,7 @@ module Crystal
         new(expander, mod, scope, a_macro.location, vars, call.block)
       end
 
-      record MacroVarKey, name, exps
+      record MacroVarKey, name : String, exps : Array(ASTNode)?
 
       def initialize(@expander, @mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
         @str = MemoryIO.new(512)

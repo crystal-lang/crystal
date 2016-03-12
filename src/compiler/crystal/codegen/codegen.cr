@@ -77,8 +77,8 @@ module Crystal
     property :last
 
     class LLVMVar
-      getter pointer
-      getter type
+      getter pointer : LLVM::Value
+      getter type : Type
 
       # Normally a variable is associated with an alloca.
       # So for example, if you have a "x = Reference.new" you will have
@@ -88,7 +88,7 @@ module Crystal
       # it's accessed from the arguments list, and it a "Reference*"
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
-      getter already_loaded
+      getter already_loaded : Bool
 
       def initialize(@pointer, @type, @already_loaded = false)
       end
@@ -96,8 +96,8 @@ module Crystal
 
     alias LLVMVars = Hash(String, LLVMVar)
 
-    record Handler, node, context
-    record StringKey, mod, string
+    record Handler, node : ExceptionHandler, context : Context
+    record StringKey, mod : LLVM::Module, string : String
 
     def initialize(@mod, @node, @single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       @main_mod = @llvm_mod
@@ -179,6 +179,8 @@ module Crystal
     end
 
     class CodegenWellKnownFunctions < Visitor
+      @codegen : CodeGenVisitor
+
       def initialize(@codegen)
       end
 

@@ -401,7 +401,8 @@ module Crystal
     end
 
     class ClosuredVarsCollector < Visitor
-      getter vars
+      getter vars : Array(ASTNode)
+      @a_def : Def
 
       def self.collect(a_def)
         visitor = new a_def

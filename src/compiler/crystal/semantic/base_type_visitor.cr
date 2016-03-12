@@ -1,7 +1,20 @@
 module Crystal
   abstract class BaseTypeVisitor < Visitor
-    getter mod
-    property types
+    getter mod : Program
+    property types : Array(Type)
+
+    @exp_nest : Int32
+    @attributes : Array(Attribute)?
+    @lib_def_pass : Int32
+    @in_type_args : Int32
+    @block_nest : Int32
+    @vars : MetaVars
+    @free_vars : Hash(String, Type)?
+    @type_lookup : Type?
+    @scope : Type?
+    @typed_def : Def?
+    @in_is_a : Bool
+    @last_doc : String?
 
     def initialize(@mod, @vars = MetaVars.new)
       @types = [@mod] of Type
@@ -10,6 +23,7 @@ module Crystal
       @lib_def_pass = 0
       @in_type_args = 0
       @block_nest = 0
+      @in_is_a = false
     end
 
     def visit(node : Attribute)

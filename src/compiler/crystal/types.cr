@@ -902,6 +902,8 @@ module Crystal
 
   # A module that is related to a file and contains its private defs.
   class FileModule < NonGenericModuleType
+    @vars : MetaVars?
+
     def vars
       @vars ||= MetaVars.new
     end

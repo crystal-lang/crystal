@@ -2,28 +2,41 @@ require "./location"
 
 module Crystal
   class Token
-    property type
-    property value
-    property number_kind
-    property line_number
-    property column_number
-    property filename
-    property delimiter_state
-    property macro_state
-    property passed_backslash_newline
-    property doc_buffer
-    property raw
-    property start
+    property type : Symbol
+    property value : Char | String | Symbol | Nil
+    property number_kind : Symbol
+    property line_number : Int32
+    property column_number : Int32
+    property filename : String | VirtualFile | Nil
+    property delimiter_state : DelimiterState
+    property macro_state : MacroState
+    property passed_backslash_newline : Bool
+    property doc_buffer : MemoryIO?
+    property raw : String
+    property start : Int32
 
-    record(MacroState, whitespace, nest, delimiter_state, beginning_of_line, yields, comment) do
+    record MacroState,
+      whitespace : Bool,
+      nest : Int32,
+      delimiter_state : DelimiterState?,
+      beginning_of_line : Bool,
+      yields : Bool,
+      comment : Bool do
       def self.default
         MacroState.new(true, 0, nil, true, false, false)
       end
 
-      property whitespace
+      setter whitespace
     end
 
-    record DelimiterState, kind, nest, :end, open_count, heredoc_indent
+    record DelimiterState,
+      kind : Symbol,
+      nest : Char | String,
+      :end,
+      open_count : Int32,
+      heredoc_indent : Int32 do
+      @end : Char | String
+    end
 
     struct DelimiterState
       def self.default
@@ -62,6 +75,8 @@ module Crystal
     def doc
       @doc_buffer.try &.to_s
     end
+
+    @location : Location?
 
     def location
       @location ||= Location.new(line_number, column_number, filename)

@@ -22,6 +22,9 @@ module Crystal
   # we'll have a complete definition of the type hierarchy and
   # their instance/class variables types.
   class TypeDeclarationVisitor < BaseTypeVisitor
+    @inside_block : Int32
+    @process_types : Int32
+
     def initialize(mod)
       super(mod)
 
@@ -129,10 +132,6 @@ module Crystal
 
         class_var.freeze_type = var_type.virtual_type
       when Global
-        if @untyped_def
-          node.raise "declaring the type of a global variable must be done at the class level"
-        end
-
         global_var = mod.global_vars[var.name]?
         unless global_var
           global_var = Global.new(var.name)

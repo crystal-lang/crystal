@@ -1,4 +1,6 @@
 class Markdown::HTMLRenderer
+  @io : IO
+
   def initialize(@io)
   end
 

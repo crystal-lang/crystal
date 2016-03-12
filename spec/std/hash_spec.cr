@@ -3,7 +3,7 @@ require "spec"
 alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
 
 class HashBreaker
-  getter x
+  getter x : Int32
 
   def initialize(@x)
   end

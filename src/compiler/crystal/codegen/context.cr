@@ -2,26 +2,29 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   class Context
-    property :fun
-    property type
-    property vars
-    property return_type
-    property return_phi
-    property break_phi
-    property next_phi
-    property while_block
-    property while_exit_block
-    property! block
-    property! block_context
-    property closure_vars
-    property closure_type
-    property closure_ptr
-    property closure_skip_parent
-    property closure_parent_context
-    property closure_self
+    property fun : LLVM::Function
+    property type : Type
+    property vars : Hash(String, LLVMVar)
+    property return_type : Type?
+    property return_phi : Phi?
+    property break_phi : Phi?
+    property next_phi : Phi?
+    property while_block : LLVM::BasicBlock?
+    property while_exit_block : LLVM::BasicBlock?
+    property! block : Block
+    property! block_context : Context
+    property closure_vars : Array(MetaVar)?
+    property closure_type : LLVM::Type?
+    property closure_ptr : LLVM::Value?
+    property closure_skip_parent : Bool
+    property closure_parent_context : Context?
+    property closure_self : Type?
 
     def initialize(@fun, @type, @vars = LLVMVars.new)
       @closure_skip_parent = false
+    end
+
+    def block_context=(@block_context : Nil)
     end
 
     def reset_closure
@@ -41,7 +44,9 @@ class Crystal::CodeGenVisitor
       context.next_phi = @next_phi
       context.while_block = @while_block
       context.while_exit_block = @while_exit_block
-      context.block = @block
+      if block = @block
+        context.block = block
+      end
       context.block_context = @block_context
       context.closure_vars = @closure_vars
       context.closure_type = @closure_type

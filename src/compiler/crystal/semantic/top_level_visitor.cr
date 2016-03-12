@@ -38,6 +38,9 @@ module Crystal
   # subclasses or not and we can tag it as "virtual" (having subclasses), but that concept
   # might disappear in the future and we'll make consider everything as "maybe virtual".
   class TopLevelVisitor < BaseTypeVisitor
+    @process_types : Int32
+    @inside_block : Int32
+
     def initialize(mod)
       super(mod)
 
@@ -844,6 +847,9 @@ module Crystal
     end
 
     class StructOrUnionVisitor < Visitor
+      @type_inference : TopLevelVisitor
+      @struct_or_union : CStructOrUnionType
+
       def initialize(@type_inference, @struct_or_union)
       end
 
