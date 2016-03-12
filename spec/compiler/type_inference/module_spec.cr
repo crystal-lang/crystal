@@ -845,4 +845,62 @@ describe "Type inference: module" do
       Foo.new.x
       )) { int32 }
   end
+
+  it "inherits instance var type annotation from generic to concrete" do
+    assert_type(%(
+      module Foo(T)
+        @x : Int32?
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        include Foo(Int32)
+      end
+
+      Bar.new.x
+      )) { nilable int32 }
+  end
+
+  it "inherits instance var type annotation from generic to concrete with T" do
+    assert_type(%(
+      module Foo(T)
+        @x : T?
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        include Foo(Int32)
+      end
+
+      Bar.new.x
+      )) { nilable int32 }
+  end
+
+  it "inherits instance var type annotation from generic to generic to concrete" do
+    assert_type(%(
+      module Foo(T)
+        @x : Int32?
+
+        def x
+          @x
+        end
+      end
+
+      module Bar(T)
+        include Foo(T)
+      end
+
+      class Baz
+        include Bar(Int32)
+      end
+
+      Baz.new.x
+      )) { nilable int32 }
+  end
 end
