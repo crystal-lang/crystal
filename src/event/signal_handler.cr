@@ -1,26 +1,26 @@
+require "singleton"
+
 # :nodoc:
 # Singleton that runs Signal events (libevent2) in it's own Fiber.
 class Event::SignalHandler
+  include Singleton
+
   def self.add_handler(*args)
     instance.add_handler *args
   end
 
   def self.del_handler(signal)
-    @@instance.try &.del_handler(signal)
+    instance?.try &.del_handler(signal)
   end
 
   def self.after_fork
-    @@instance.try &.after_fork
+    instance?.try &.after_fork
   end
 
   # finish processing signals
   def self.close
-    @@instance.try &.close
+    instance?.try &.close
     @@instance = nil
-  end
-
-  private def self.instance
-    @@instance ||= new
   end
 
   def initialize
