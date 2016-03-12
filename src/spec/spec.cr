@@ -135,15 +135,33 @@ module Spec
   def self.line=(@@line)
   end
 
+  record Location, file : String, line : Int32
+
+  @@locations = nil
+
+  def self.add_location(file, line)
+    locations = @@locations ||= Hash(String, Array(Int32)).new
+    lines = locations[File.expand_path(file)] ||= [] of Int32
+    lines << line
+  end
+
   # :nodoc:
   def self.matches?(description, file, line)
     spec_pattern = @@pattern
     spec_line = @@line
+    locations = @@locations
 
     if line == spec_line
       return true
-    elsif spec_pattern || spec_line
-      Spec::RootContext.matches?(description, spec_pattern, spec_line)
+    end
+
+    if locations
+      lines = locations[file]?
+      return true if lines && lines.includes?(line)
+    end
+
+    if spec_pattern || spec_line || locations
+      Spec::RootContext.matches?(description, spec_pattern, spec_line, locations)
     else
       true
     end
@@ -203,6 +221,14 @@ OptionParser.parse! do |opts|
   end
   opts.on("--fail-fast", "abort the run on first failure") do
     Spec.fail_fast = true
+  end
+  opts.on("--location file:line", "run example at line 'line' in file 'file', multiple allowed") do |location|
+    if location =~ /\A(.+?)\:(\d+)\Z/
+      Spec.add_location $1, $2.to_i
+    else
+      puts "location #{location} must be file:line"
+      exit
+    end
   end
   opts.on("--help", "show this help") do |pattern|
     puts opts
