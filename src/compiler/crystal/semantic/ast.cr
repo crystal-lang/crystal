@@ -38,7 +38,7 @@ module Crystal
 
     def set_type(type : Type)
       type = type.remove_alias_if_simple
-      if !type.no_return? && (freeze_type = @freeze_type) && !freeze_type.is_restriction_of_all?(type)
+      if !type.no_return? && (freeze_type = @freeze_type) && !type.implements?(freeze_type)
         if !freeze_type.includes_type?(type.program.nil) && type.includes_type?(type.program.nil)
           # This means that an instance variable become nil
           if self.is_a?(MetaInstanceVar) && (nil_reason = self.nil_reason)

@@ -283,14 +283,6 @@ module Crystal
       raise "Bug: called #{self}.is_restriction_of?(#{other})"
     end
 
-    def is_restriction_of_all?(type : UnionType)
-      type.union_types.all? { |subtype| is_restriction_of? subtype, subtype }
-    end
-
-    def is_restriction_of_all?(type)
-      is_restriction_of?(type, type) || type.implements?(self)
-    end
-
     def compatible_with?(type)
       self == type
     end
