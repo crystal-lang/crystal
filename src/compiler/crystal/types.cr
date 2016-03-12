@@ -1426,12 +1426,24 @@ module Crystal
       end
     end
 
+    def add_inherited(type)
+      inherited = @inherited ||= [] of Type
+      inherited << type
+    end
+
     def add_instance_var_initializer(name, value, meta_vars)
       initializer = super
 
       # Make sure to type the initializer for existing instantiations
       generic_types.each_value do |instance|
         run_instance_var_initializer(initializer, instance)
+      end
+
+      @inherited.try &.each do |inherited|
+        run_instance_var_initializer(initializer, inherited)
+        if inherited.is_a?(GenericClassType)
+          inherited.add_instance_var_initializer(name, value, meta_vars)
+        end
       end
 
       initializer
@@ -1455,7 +1467,7 @@ module Crystal
       # Nothing
     end
 
-    def run_instance_var_initializer(initializer, instance)
+    def run_instance_var_initializer(initializer, instance : GenericClassInstanceType | NonGenericClassType)
       meta_vars = MetaVars.new
       visitor = MainVisitor.new(program, vars: meta_vars, meta_vars: meta_vars)
       visitor.scope = instance
@@ -1464,6 +1476,10 @@ module Crystal
       instance_var = instance.lookup_instance_var(initializer.name)
       instance_var.bind_to(value)
       instance.add_instance_var_initializer(initializer.name, value, meta_vars)
+    end
+
+    def run_instance_var_initializer(initializer, instance)
+      # Nothing
     end
 
     def initialize_instance(instance)
@@ -1536,11 +1552,6 @@ module Crystal
 
     def new_generic_instance(program, generic_type, type_vars)
       GenericClassInstanceType.new program, generic_type, type_vars
-    end
-
-    def add_inherited(type)
-      inherited = @inherited ||= [] of Type
-      inherited << type
     end
 
     def declare_instance_var(name, node : ASTNode)
