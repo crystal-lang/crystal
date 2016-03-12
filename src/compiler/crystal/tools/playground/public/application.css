@@ -1,3 +1,7 @@
+html {
+  font-family: GillSans, Calibri, Trebuchet, sans-serif;
+}
+
 .hexagon {
   position: relative;
   width: 36px;
