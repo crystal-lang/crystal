@@ -4,7 +4,6 @@ var ws = new WebSocket("ws://" + location.host);
 var outputDom = document.getElementById('output');
 var sidebarDom = $('#sidebar');
 var consoleButton = $('a[href="#output-modal"]')
-var editorError = $('#editor-error');
 
 if(typeof(Storage) !== "undefined") {
   defaultCode = sessionStorage.lastCode || localStorage.lastCode || defaultCode;
@@ -96,15 +95,24 @@ function getInspector(line) {
   return res;
 }
 
+var lastError = null;
+
 function hideEditorError() {
-  editorError.hide();
+  if (lastError != null) {
+    lastError.clear();
+    lastError = null;
+  }
 }
 
 function showEditorError(line, column, message) {
-  $("pre", editorError).text(message)
-  $(".editor-error-col", editorError).css('left', (column + 3.55) + 'ch');
-  editorError.css('top', (line + 0.5) + 'em');
-  editorError.show();
+  hideEditorError();
+
+  var cursor = $("<div>").addClass("red editor-error-col");
+  var dom = $("<div>")
+    .append(cursor)
+    .append($("<pre>").addClass("editor-error-msg red white-text").text(message));
+  lastError = editor.addLineWidget(line-1, dom[0]);
+  cursor.css('left', column + 'ch');
 }
 
 ws.onmessage = function(e) {

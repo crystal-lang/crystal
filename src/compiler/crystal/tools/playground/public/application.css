@@ -60,17 +60,15 @@
   right: 0;
 }
 
-#editor-error {
-  display: none;
-  position: absolute;
-  width: 100%;
-  z-index: 200;
-}
-
 .editor-error-col {
   position: absolute;
   width: 1em;
   height: 1em;
   transform: rotate(45deg);
-  top: 3px;
+  transform-origin: 65% -21%;
+}
+
+.editor-error-msg {
+  margin-top: 0.5em !important;
+  overflow: scroll;
 }

@@ -32,7 +32,16 @@ module Crystal::Playground
       begin
         result = compiler.compile sources, output_filename
       rescue ex : Crystal::Exception
-        send_exception ex
+        # due to instrumentation, we compile the original program
+        begin
+          compiler.compile Compiler::Source.new("play", source), output_filename
+        rescue ex : Crystal::Exception
+          puts ex
+          send_exception ex
+          return # if we don't exit here we've found a bug
+        end
+
+        send({"type": "bug"}.to_json)
         return
       end
       output = execute output_filename, [] of String
