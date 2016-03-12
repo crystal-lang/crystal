@@ -21,6 +21,10 @@ module Crystal::Playground
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
         $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{@port}/agent", #{@session_key}, #{tag})
+
+        at_exit do |status|
+          $p.exit(status)
+        end
         )
 
       sources = [

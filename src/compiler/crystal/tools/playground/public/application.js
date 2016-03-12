@@ -133,7 +133,6 @@ ws.onmessage = function(e) {
 
   switch (message.type) {
     case "run":
-      runProgress.hide();
       outputDom.innerText = message.output;
       if (message.output.length > 0) {
         consoleButton.removeClass('disabled');
@@ -142,7 +141,9 @@ ws.onmessage = function(e) {
     case "value":
       getInspector(message.line).addMessage(message);
       break;
-
+    case "exit":
+      runProgress.hide();
+      break;
     case "exception":
       runProgress.hide();
       var ex = message.exception[0];
