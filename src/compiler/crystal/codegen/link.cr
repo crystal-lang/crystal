@@ -1,8 +1,9 @@
 module Crystal
   struct LinkAttribute
-    getter :lib
-    getter :ldflags
-    getter :framework
+    getter lib : String?
+    getter ldflags : String?
+    getter framework : String?
+    @static : Bool
 
     def initialize(@lib = nil, @ldflags = nil, @static = false, @framework = nil)
     end

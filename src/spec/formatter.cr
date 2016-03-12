@@ -32,6 +32,7 @@ module Spec
   class VerboseFormatter < Formatter
     @indent : Int32
     @last_description : String
+    @items : Array(Item)
 
     class Item
       @indent : Int32

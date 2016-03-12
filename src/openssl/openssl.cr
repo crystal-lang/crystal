@@ -2,8 +2,8 @@ require "./lib_ssl"
 
 module OpenSSL
   class Error < Exception
-    getter err
-    getter err_msg
+    getter err : UInt64
+    getter err_msg : String?
 
     def initialize(msg = nil)
       unless (err = @err = LibCrypto.err_get_error) == 0

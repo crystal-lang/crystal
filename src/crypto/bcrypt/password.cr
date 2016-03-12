@@ -23,7 +23,11 @@ class Crypto::Bcrypt::Password
     new(Bcrypt.hash_secret(password, cost).to_s)
   end
 
-  getter :version, :cost, :salt, :digest
+  getter version : String
+  getter cost : Int32
+  getter salt : String
+  getter digest : String
+  @raw_hash : String
 
   # Loads a bcrypt hash.
   #

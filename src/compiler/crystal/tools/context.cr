@@ -69,6 +69,9 @@ module Crystal
   end
 
   class RechableVisitor < Visitor
+    @context_visitor : Crystal::ContextVisitor
+    @visited_typed_defs : Set(UInt64)
+
     def initialize(@context_visitor)
       @visited_typed_defs = Set(typeof(object_id)).new
     end
@@ -97,8 +100,10 @@ module Crystal
   end
 
   class ContextVisitor < Visitor
-    getter contexts
-    getter def_with_yield
+    getter contexts : Array(HashStringType)
+    getter def_with_yield : Def?
+    @context : HashStringType
+    @target_location : Location
 
     def initialize(@target_location)
       @contexts = Array(HashStringType).new

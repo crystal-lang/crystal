@@ -4,6 +4,11 @@ require "deque"
 class DequeTester
   # Execute the same actions on an Array and a Deque and compare them at each step.
 
+  @deque : Deque(Int32)
+  @array : Array(Int32)
+  @i : Int32
+  @c : Array(Int32) | Deque(Int32) | Nil
+
   def step
     @c = @deque
     yield

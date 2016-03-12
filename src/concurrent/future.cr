@@ -8,6 +8,14 @@ class Concurrent::Future(R)
     Canceled
   end
 
+  @block : -> R
+  @state : State
+  @value : R?
+  @error : Exception?
+  @channel : Channel::Unbuffered(Nil)
+  @delay : Float64 | Int32
+  @cancel_msg : String?
+
   def initialize(run_immediately = true, delay : Number = 0, &@block : -> R)
     @state = State::Idle
     @value = nil

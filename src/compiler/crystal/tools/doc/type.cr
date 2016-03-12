@@ -3,7 +3,8 @@ require "./item"
 class Crystal::Doc::Type
   include Item
 
-  getter type
+  getter type : Crystal::Type
+  @generator : Generator
 
   def initialize(@generator, @type : Crystal::Type)
   end
@@ -164,9 +165,13 @@ class Crystal::Doc::Type
     type_to_html alias_definition
   end
 
+  @types : Array(Type)?
+
   def types
     @types ||= @generator.collect_subtypes(@type)
   end
+
+  @instance_methods : Array(Method)?
 
   def instance_methods
     @instance_methods ||= begin
@@ -193,6 +198,8 @@ class Crystal::Doc::Type
       end
     end
   end
+
+  @class_methods : Array(Method)?
 
   def class_methods
     @class_methods ||= begin
@@ -251,6 +258,8 @@ class Crystal::Doc::Type
     end
   end
 
+  @macros : Array(Macro)?
+
   def macros
     @macros ||= begin
       case type = @type.metaclass
@@ -270,9 +279,13 @@ class Crystal::Doc::Type
     end
   end
 
+  @constants : Array(Constant)?
+
   def constants
     @constants ||= @generator.collect_constants(self)
   end
+
+  @included_modules : Array(Type)?
 
   def included_modules
     @included_modules ||= begin
@@ -287,6 +300,8 @@ class Crystal::Doc::Type
     end
   end
 
+  @extended_modules : Array(Type)?
+
   def extended_modules
     @extended_modules ||= begin
       parents = @type.metaclass.parents || [] of Crystal::Type
@@ -299,6 +314,8 @@ class Crystal::Doc::Type
       extended_modules.sort_by! &.full_name.downcase
     end
   end
+
+  @subclasses : Array(Type)?
 
   def subclasses
     @subclasses ||= begin
@@ -323,6 +340,8 @@ class Crystal::Doc::Type
       end
     end
   end
+
+  @including_types : Array(Type)?
 
   def including_types
     @including_types ||= begin

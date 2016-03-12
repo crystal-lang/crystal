@@ -34,14 +34,14 @@ module Crystal
   class MainVisitor < BaseTypeVisitor
     property! scope
     getter! typed_def
-    property! untyped_def
-    getter block
-    property call
+    property! untyped_def : Def
+    getter block : Block?
+    property call : Call?
     property type_lookup
-    property fun_literal_context
-    property parent
-    property block_nest
-    property with_scope
+    property fun_literal_context : Def | Program | Nil
+    property parent : MainVisitor?
+    property block_nest : Int32
+    property with_scope : Type?
 
     # These are the free variables that came from matches. We look up
     # here first if we find a single-element Path like `T`.
@@ -50,7 +50,7 @@ module Crystal
     # These are the variables and types that come from a block specification
     # like `&block : Int32 -> Int32`. When doing `yield 1` we need to verify
     # that the yielded expression has the type that the block specification said.
-    property yield_vars
+    property yield_vars : Array(Var)?
 
     # In vars we store the types of variables as we traverse the nodes.
     # These type are not cummulative: if you do `x = 1`, 'x' will have
@@ -58,13 +58,25 @@ module Crystal
     getter vars
 
     # Here we store the cummulative types of variables as we traverse the nodes.
-    getter meta_vars
+    getter meta_vars : MetaVars
 
-    property is_initialize
-    property block_nest
+    property is_initialize : Bool
 
+    @unreachable : Bool
     @unreachable = false
+
     @is_initialize = false
+
+    @while_stack : Array(While)
+    @type_filters : TypeFilters?
+    @needs_type_filters : Int32
+    @typeof_nest : Int32
+    @found_self_in_initialize_call : Array(ASTNode)?
+    @used_ivars_in_calls_in_initialize : Hash(String, Array(ASTNode))?
+    @block_context : Block?
+    @file_module : FileModule?
+    @exception_handler_vars : MetaVars?
+    @while_vars : MetaVars?
 
     def initialize(mod, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       super(mod, vars)
@@ -94,6 +106,9 @@ module Crystal
       end
 
       @meta_vars = meta_vars
+    end
+
+    def untyped_def=(@untyped_def : Nil)
     end
 
     def visit_any(node)
@@ -1095,8 +1110,13 @@ module Crystal
     end
 
     class InstanceVarsCollector < Visitor
-      getter ivars
-      getter found_self
+      getter ivars : Hash(String, Array(ASTNode))?
+      getter found_self : Array(ASTNode)?
+      @scope : Type
+      @in_super : Int32
+      @callstack : Array(ASTNode)
+      @visited : Set(UInt64)?
+      @vars : MetaVars
 
       def initialize(a_def, @scope, @vars)
         @found_self = nil

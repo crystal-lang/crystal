@@ -1,5 +1,13 @@
 class Crystal::Doc::Generator
-  getter program
+  getter program : Program
+
+  @included_dirs : Array(String)
+  @dir : String
+  @base_dir : String
+  @types : Hash(Crystal::Type, Doc::Type)
+  @is_crystal_repository : Bool
+  @repo_name : String
+  @repository : String?
 
   def initialize(@program, @included_dirs, @dir = "./doc")
     @base_dir = `pwd`.chomp
@@ -290,7 +298,7 @@ class Crystal::Doc::Generator
     filename[@base_dir.size..-1]
   end
 
-  record RelativeLocation, filename, url
+  record RelativeLocation, filename : String, url : String?
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)

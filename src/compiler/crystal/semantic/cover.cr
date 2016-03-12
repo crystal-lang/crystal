@@ -3,8 +3,8 @@ require "../types"
 
 module Crystal
   struct Cover
-    getter :arg_types
-    getter :matches
+    getter arg_types : Array(Type)
+    getter matches : Array(Match)
 
     def self.create(arg_types, matches)
       if matches

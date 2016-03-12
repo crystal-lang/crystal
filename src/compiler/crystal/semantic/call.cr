@@ -840,6 +840,9 @@ class Crystal::Call
   end
 
   class MatchTypeLookup < TypeLookup
+    @call : Call
+    @context : MatchContext
+
     def initialize(@call, @context)
       super(@context.type_lookup)
     end

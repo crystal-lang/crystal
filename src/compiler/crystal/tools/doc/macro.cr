@@ -5,8 +5,9 @@ require "./item"
 class Crystal::Doc::Macro
   include Item
 
-  getter type
-  getter :macro
+  getter type : Type
+  getter macro : Crystal::Macro
+  @generator : Generator
 
   def initialize(@generator, @type, @macro)
   end

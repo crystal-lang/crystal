@@ -44,6 +44,8 @@ module Crystal
   end
 
   class PropagateDocVisitor < Visitor
+    @doc : String
+
     def initialize(@doc)
     end
 

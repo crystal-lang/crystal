@@ -10,6 +10,9 @@ module Crystal
   end
 
   class FixEmptyTypesVisitor < Visitor
+    @mod : Program
+    @fixed : Set(UInt64)
+
     def initialize(mod)
       @mod = mod
       @fixed = Set(typeof(object_id)).new

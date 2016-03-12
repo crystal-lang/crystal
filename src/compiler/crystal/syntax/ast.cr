@@ -1040,8 +1040,8 @@ module Crystal
 
   class VisibilityModifier < ASTNode
     property modifier : Visibility
-    property exp
-    property doc
+    property exp : ASTNode
+    property doc : String?
 
     def initialize(@modifier : Visibility, @exp)
     end
