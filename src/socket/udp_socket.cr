@@ -75,6 +75,10 @@ class UDPSocket < IPSocket
     end
   end
 
+  def send(string : String)
+    send(string.to_slice)
+  end
+
   def send(slice : Slice(UInt8))
     bytes_sent = LibC.send(fd, (slice.to_unsafe as Void*), slice.size, 0)
     if bytes_sent != -1
@@ -86,6 +90,10 @@ class UDPSocket < IPSocket
     if (writers = @writers) && !writers.empty?
       add_write_event
     end
+  end
+
+  def send(string : String, addr : IPAddress)
+    send(string.to_slice, addr)
   end
 
   def send(slice : Slice(UInt8), addr : IPAddress)
