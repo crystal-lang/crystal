@@ -2,7 +2,7 @@ require "./lib_ssl"
 
 module OpenSSL
   class Error < Exception
-    getter err : UInt64
+    getter err : LibCrypto::ULong
     getter err_msg : String?
 
     def initialize(msg = nil)
