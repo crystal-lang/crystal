@@ -1,9 +1,11 @@
 var defaultCode = 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n';
+var runDebounce = 300;
 
 var ws = new WebSocket("ws://" + location.host);
 var outputDom = document.getElementById('output');
 var sidebarDom = $('#sidebar');
-var consoleButton = $('a[href="#output-modal"]')
+var consoleButton = $('a[href="#output-modal"]');
+var runProgress = $('#run-progress');
 
 if(typeof(Storage) !== "undefined") {
   defaultCode = sessionStorage.lastCode || localStorage.lastCode || defaultCode;
@@ -18,6 +20,15 @@ var editor = CodeMirror(document.getElementById('editor'), {
   viewportMargin: Infinity,
   value: defaultCode
 });
+
+
+var runTimeout = null;
+function scheduleRun() {
+  if (runTimeout != null) {
+    clearTimeout(runTimeout);
+  }
+  runTimeout = window.setTimeout(run, runDebounce);
+}
 
 // when clicking below the editor, set the cursor at the very end
 var editorDom = $('#editor').click(function(e){
@@ -42,6 +53,7 @@ editor.on("change", function(){
   }
   hideEditorError();
   matchEditorSidebarHeight();
+  scheduleRun();
 });
 $(window).resize(matchEditorSidebarHeight);
 
@@ -120,6 +132,7 @@ ws.onmessage = function(e) {
 
   switch (message.type) {
     case "run":
+      runProgress.hide();
       outputDom.innerText = message.output;
       if (message.output.length > 0) {
         consoleButton.removeClass('disabled');
@@ -130,6 +143,7 @@ ws.onmessage = function(e) {
       break;
 
     case "exception":
+      runProgress.hide();
       var ex = message.exception[0];
       showEditorError(ex.line, ex.column, ex.message);
       break;
@@ -139,6 +153,7 @@ ws.onmessage = function(e) {
 };
 
 function run() {
+  runProgress.show();
   clearInspectors();
   outputDom.innerText = "";
   consoleButton.addClass('disabled');
@@ -153,4 +168,6 @@ function run() {
 
 $(document).ready(function(){
   $('.modal-trigger').leanModal();
+
+  scheduleRun();
 });

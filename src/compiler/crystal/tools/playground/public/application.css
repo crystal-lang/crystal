@@ -125,3 +125,7 @@
   margin-top: 0.5em !important;
   overflow: scroll;
 }
+
+#run-progress {
+  display: none;
+}
