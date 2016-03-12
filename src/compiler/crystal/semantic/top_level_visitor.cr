@@ -200,6 +200,7 @@ module Crystal
 
         if superclass.is_a?(InheritedGenericClass)
           superclass.extending_class = type
+          (superclass.extended_class as GenericClassType).add_inherited(type)
         end
 
         scope.types[name] = type

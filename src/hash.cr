@@ -35,7 +35,7 @@ class Hash(K, V)
   @buckets_size : Int32
   @first : Entry(K, V)?
   @last : Entry(K, V)?
-  @block : (Hash(K, V), K -> V)?
+  @block : (self, K -> V)?
 
   # TODO @comp
 
