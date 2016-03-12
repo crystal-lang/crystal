@@ -66,14 +66,13 @@ var inspectors = {};
 function Inspector(line) {
   this.lineDom = $("<div>")
       .addClass("truncate")
-      .css("top", ((line-1) * 1.46 + 0.5)+ "em");
+      .css("top", ((line-1) * 1.46 + 0.5)+ "em")
+      .css("cursor", "pointer");
   sidebarDom.append(this.lineDom);
 
   this.messages = [];
 
   this.lineDom.click(function() {
-    if (this.messages.length == 1) return;
-
     inspectModalValues.empty();
     for(var i = 0; i < this.messages.length; i++) {
       var message = this.messages[i];
@@ -87,7 +86,7 @@ function Inspector(line) {
     if (this.messages.length == 1) {
       this.lineDom.text(message.value);
     } else {
-      this.lineDom.text("(" + this.messages.length + " times)").css('cursor', 'pointer');
+      this.lineDom.text("(" + this.messages.length + " times)");
     }
   }.bind(this);
 
