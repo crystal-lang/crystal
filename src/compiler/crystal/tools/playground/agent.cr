@@ -2,7 +2,7 @@ require "http"
 require "json"
 
 class Crystal::Playground::Agent
-  def initialize(url, @session)
+  def initialize(url, @session, @tag)
     @ws = HTTP::WebSocket.new(URI.parse(url))
   end
 
@@ -13,6 +13,7 @@ class Crystal::Playground::Agent
     @ws.send({
       "type"    => "agent_send",
       "session" => @session,
+      "tag"     => @tag,
       "line"    => line,
       "value"   => value.inspect,
     }.to_json) rescue nil

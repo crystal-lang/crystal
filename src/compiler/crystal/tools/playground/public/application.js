@@ -6,6 +6,7 @@ var outputDom = document.getElementById('output');
 var sidebarDom = $('#sidebar');
 var consoleButton = $('a[href="#output-modal"]');
 var runProgress = $('#run-progress');
+var runTag = 0;
 
 if(typeof(Storage) !== "undefined") {
   defaultCode = sessionStorage.lastCode || localStorage.lastCode || defaultCode;
@@ -129,6 +130,7 @@ function showEditorError(line, column, message) {
 
 ws.onmessage = function(e) {
   var message = JSON.parse(e.data);
+  if (message.tag != runTag) return; // discarding message form old execution
 
   switch (message.type) {
     case "run":
@@ -153,6 +155,8 @@ ws.onmessage = function(e) {
 };
 
 function run() {
+  runTag++;
+
   runProgress.show();
   clearInspectors();
   outputDom.innerText = "";
@@ -160,7 +164,8 @@ function run() {
 
   ws.send(JSON.stringify({
     type: "run",
-    source: editor.getValue()
+    source: editor.getValue(),
+    tag: runTag
   }));
 
   return false;

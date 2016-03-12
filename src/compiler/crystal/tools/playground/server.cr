@@ -8,11 +8,11 @@ module Crystal::Playground
     def initialize(@ws, @session_key, @port)
     end
 
-    def run(source)
+    def run(source, tag)
       begin
         ast = Parser.new(source).parse
       rescue ex : Crystal::Exception
-        send_exception ex
+        send_exception ex, tag
         return
       end
 
@@ -20,7 +20,7 @@ module Crystal::Playground
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
-        $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{@port}", #{@session_key})
+        $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{@port}", #{@session_key}, #{tag})
         )
 
       sources = [
@@ -37,16 +37,16 @@ module Crystal::Playground
           compiler.compile Compiler::Source.new("play", source), output_filename
         rescue ex : Crystal::Exception
           puts ex
-          send_exception ex
+          send_exception ex, tag
           return # if we don't exit here we've found a bug
         end
 
-        send({"type": "bug"}.to_json)
+        send({"type": "bug", "tag": tag}.to_json)
         return
       end
       output = execute output_filename, [] of String
 
-      data = {"type" => "run", "filename" => output_filename, "output" => output[1]}
+      data = {"type": "run", "tag": tag, "filename": output_filename, "output": output[1]}
       send(data.to_json)
     end
 
@@ -62,9 +62,10 @@ module Crystal::Playground
       end)
     end
 
-    def send_exception(ex)
+    def send_exception(ex, tag)
       send_with_json_builder do |json, io|
         json.field "type", "exception"
+        json.field "tag", tag
         json.field "exception" do
           ex.to_json(io)
         end
@@ -144,12 +145,14 @@ module Crystal::Playground
           case json["type"].as_s
           when "run"
             source = json["source"].as_s
-            session.run source
+            tag = json["tag"].as_i
+            session.run source, tag
           when "agent_send"
             value = json["value"].as_s
             line = json["line"].as_i
+            tag = json["tag"].as_i
             sessionKey = json["session"].as_i
-            data = {"type" => "value", "value" => value, "line" => line}
+            data = {"type": "value", "tag": tag, "value": value, "line": line}
             @sessions[sessionKey].send(data.to_json)
           end
         end
