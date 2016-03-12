@@ -329,4 +329,30 @@ describe "OptionParser" do
       args.should eq(%w(-))
     end
   end
+
+  describe "forward-match" do
+    it "distinguishes between '--lamb VALUE' and '--lambda VALUE'" do
+      args = %w(--lamb value1 --lambda value2)
+      value1 = nil
+      value2 = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("--lamb VALUE", "") { |v| value1 = v }
+        opts.on("--lambda VALUE", "") { |v| value2 = v }
+      end
+      value1.should eq("value1")
+      value2.should eq("value2")
+    end
+
+    it "distinguishes between '--lamb=VALUE' and '--lambda=VALUE'" do
+      args = %w(--lamb=value1 --lambda=value2)
+      value1 = nil
+      value2 = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("--lamb=VALUE", "") { |v| value1 = v }
+        opts.on("--lambda=VALUE", "") { |v| value2 = v }
+      end
+      value1.should eq("value1")
+      value2.should eq("value2")
+    end
+  end
 end
