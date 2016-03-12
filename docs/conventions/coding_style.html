@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="5.1" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="5.1" data-basepath=".." data-revision="Sat Mar 12 2016 14:19:08 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2007,7 +2007,7 @@
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
-<span class="hljs-keyword">alias</span> <span class="hljs-constant">NumericValue</span> = <span class="hljs-constant">Int32</span> | <span class="hljs-constant">Int64</span> | <span class="hljs-constant">Float32</span> | <span class="hljs-constant">Float64</span>
+<span class="hljs-keyword">alias</span> <span class="hljs-constant">NumericValue</span> = <span class="hljs-constant">Float32</span> | <span class="hljs-constant">Float64</span> | <span class="hljs-constant">Int32</span> | <span class="hljs-constant">Int64</span>
 
 <span class="hljs-class"><span class="hljs-keyword">lib</span> <span class="hljs-title">LibYAML</span></span>
 <span class="hljs-keyword">end</span>
@@ -2036,7 +2036,7 @@
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Greeting</span></span>
   <span class="hljs-variable">@@default_greeting</span> = <span class="hljs-string">&quot;Hello world&quot;</span>
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@custom_greeting</span>=<span class="hljs-literal">nil</span>)
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@custom_greeting</span> = <span class="hljs-literal">nil</span>)
   <span class="hljs-keyword">end</span>
 
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">print_greeting</span></span>
@@ -2046,7 +2046,7 @@
 <span class="hljs-keyword">end</span>
 </code></pre>
 <p><strong>Constants</strong> are screaming-cased. For example:</p>
-<pre><code class="lang-crystal"><span class="hljs-constant">LUCKY_NUMBERS</span> = [<span class="hljs-number">3</span>, <span class="hljs-number">7</span>, <span class="hljs-number">11</span>]
+<pre><code class="lang-crystal"><span class="hljs-constant">LUCKY_NUMBERS</span>     = [<span class="hljs-number">3</span>, <span class="hljs-number">7</span>, <span class="hljs-number">11</span>]
 <span class="hljs-constant">DOCUMENTATION_URL</span> = <span class="hljs-string">&quot;http://crystal-lang.org/docs&quot;</span>
 </code></pre>
 <h3 id="acronyms">Acronyms</h3>
@@ -2066,7 +2066,7 @@
 <p>For example, <code>HTTP::WebSocket</code> is defined in <code>src/http/web_socket.cr</code>.</p>
 <h2 id="whitespace">Whitespace</h2>
 <p>Use <strong>two spaces</strong> to indent code inside namespaces, methods, blocks or other nested contexts. For example:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Scorecard</span>  </span>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Scorecard</span></span>
   <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Parser</span></span>
     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">parse</span></span>(score_text)
       <span class="hljs-keyword">begin</span>
@@ -2081,7 +2081,7 @@
 <span class="hljs-keyword">end</span>
 </code></pre>
 <p>Within a class, separate method definitions, constants and inner class definitions with <strong>one newline</strong>. For example:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Money</span>  </span>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Money</span></span>
   <span class="hljs-constant">CURRENCIES</span> = {
     <span class="hljs-string">&quot;EUR&quot;</span> =&gt; <span class="hljs-number">1.0</span>,
     <span class="hljs-string">&quot;ARS&quot;</span> =&gt; <span class="hljs-number">10.55</span>,

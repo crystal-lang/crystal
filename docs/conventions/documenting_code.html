@@ -34,7 +34,7 @@
     <body>
         
         
-    <div class="book" data-level="5.2" data-basepath=".." data-revision="Fri Oct 02 2015 16:34:25 GMT+0000 (UTC)">
+    <div class="book" data-level="5.2" data-basepath=".." data-revision="Sat Mar 12 2016 14:19:08 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1994,7 +1994,7 @@
                     <section class="normal" id="section-">
                     
                         <h1 id="documenting-code">Documenting code</h1>
-<p>Crystal documentation comments use a subset of <a href="https://daringfireball.net/projects/markdown/" target="_blank">Markdown</a>. </p>
+<p>Crystal documentation comments use a subset of <a href="https://daringfireball.net/projects/markdown/" target="_blank">Markdown</a>.</p>
 <ul>
 <li>Documentation should be positioned right above definitions of classes, modules, and methods. Leave no blanks between them.</li>
 </ul>
@@ -2021,7 +2021,7 @@
 <pre><code class="lang-crystal"><span class="hljs-comment"># Returns the number of horns this unicorn has.</span>
 <span class="hljs-comment">#</span>
 <span class="hljs-comment"># ```</span>
-<span class="hljs-comment"># Unicorn.new.horns #=&gt; 1</span>
+<span class="hljs-comment"># Unicorn.new.horns # =&gt; 1</span>
 <span class="hljs-comment"># ```</span>
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">horns</span></span>
   <span class="hljs-variable">@horns</span>
@@ -2046,7 +2046,7 @@
 <span class="hljs-comment"># unicorn.speak</span>
 <span class="hljs-comment"># ```</span>
 </code></pre>
-<p>or </p>
+<p>or</p>
 <pre><code class="lang-crystal"><span class="hljs-comment">#     unicorn = Unicorn.new</span>
 <span class="hljs-comment">#     unicorn.speak</span>
 </code></pre>
@@ -2075,8 +2075,8 @@
 <ul>
 <li>To show the value of an expression inside code blocks, use <code>#=&gt;</code>.</li>
 </ul>
-<pre><code class="lang-crystal"><span class="hljs-number">1</span> + <span class="hljs-number">2</span> <span class="hljs-comment">#=&gt; 3</span>
-<span class="hljs-constant">Unicorn</span>.new.speak <span class="hljs-comment">#=&gt; &quot;I&apos;m a unicorn&quot;</span>
+<pre><code class="lang-crystal"><span class="hljs-number">1</span> + <span class="hljs-number">2</span>             <span class="hljs-comment"># =&gt; 3</span>
+<span class="hljs-constant">Unicorn</span>.new.speak <span class="hljs-comment"># =&gt; &quot;I&apos;m a unicorn&quot;</span>
 </code></pre>
 <ul>
 <li>Use <code>ditto</code> to use the same comment as in the previous declaration.</li>
@@ -2095,6 +2095,19 @@
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
+<h3 id="use-crystal-s-code-formatter">Use Crystal&apos;s code formatter</h3>
+<p>Crystal&apos;s built-in code formatter can be used not just to format your code,
+but also to format code samples included in documentation blocks.</p>
+<p>This is done automatically when <code>crystal tool format</code> is invoked, which
+will automatically format all <code>.cr</code> files in current directory.</p>
+<p>To format a single file:</p>
+<pre><code>$ crystal tool format file.cr
+</code></pre><p>To format all <code>.cr</code> files within a directory:</p>
+<pre><code>$ crystal tool format src/
+</code></pre><p>Use this tool to unify code styles and to submit documentation improvements to
+Crystal itself.</p>
+<p>The formatter is also fast, so very little time is lost if you format the
+entire project instead of a single file.</p>
 <h3 id="a-complete-example">A Complete Example</h3>
 <pre><code class="lang-crystal"><span class="hljs-comment"># A unicorn is a **legendary animal** (see the `Legendary` module) that has been</span>
 <span class="hljs-comment"># described since antiquity as a beast with a large, spiraling horn projecting</span>
@@ -2125,7 +2138,7 @@
   <span class="hljs-comment"># Returns the number of horns this unicorn has</span>
   <span class="hljs-comment">#</span>
   <span class="hljs-comment"># ```</span>
-  <span class="hljs-comment"># Unicorn.new.horns #=&gt; 1</span>
+  <span class="hljs-comment"># Unicorn.new.horns # =&gt; 1</span>
   <span class="hljs-comment"># ```</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">horns</span></span>
     <span class="hljs-variable">@horns</span>
