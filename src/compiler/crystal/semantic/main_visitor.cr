@@ -448,22 +448,8 @@ module Crystal
     def type_assign(target : InstanceVar, value, node)
       # Check if this is an instance variable initializer
       unless @scope
-        current_type = current_type()
-        case current_type
-        when Program, FileModule
-          node.raise "can't use instance variables at the top level"
-        when ClassType, NonGenericModuleType
-          ivar_visitor = MainVisitor.new(mod)
-          ivar_visitor.scope = current_type
-
-          unless current_type.is_a?(GenericType)
-            value.accept ivar_visitor
-          end
-
-          current_type.add_instance_var_initializer(target.name, value, ivar_visitor.meta_vars)
-          node.type = @mod.nil
-          return
-        end
+        # Already handled by InitializerVisitor
+        return
       end
 
       value.accept self

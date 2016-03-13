@@ -9,9 +9,10 @@ module Crystal
   end
 
   # In this pass we check type declarations like:
-  # - @x : Int32
-  # - @@x : Int32
-  # - $x : Int32
+  #
+  #     @x : Int32
+  #     @@x : Int32
+  #     $x : Int32
   #
   # In this way we declare their type before the "main" code.
   #
@@ -22,13 +23,11 @@ module Crystal
   # we'll have a complete definition of the type hierarchy and
   # their instance/class variables types.
   class TypeDeclarationVisitor < BaseTypeVisitor
-    @inside_block : Int32
     @process_types : Int32
 
     def initialize(mod)
       super(mod)
 
-      @inside_block = 0
       @process_types = 0
     end
 
@@ -262,7 +261,7 @@ module Crystal
     end
 
     def inside_block?
-      @inside_block > 0
+      false
     end
   end
 end

@@ -311,7 +311,7 @@ module Crystal
         change.type.add_def change.def
       end
 
-      Matches.new(matches, (matches && matches.size > 0), self)
+      Matches.new(matches, !!(matches && matches.size > 0), self)
     end
 
     def covered_by_superclass?(subtype, type_to_matches)

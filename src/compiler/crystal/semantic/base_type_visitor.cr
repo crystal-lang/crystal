@@ -189,11 +189,18 @@ module Crystal
         return_type = @mod.void
       end
 
-      external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
-      external.doc = node.doc
-      check_ditto external
-
-      external.call_convention = call_convention
+      external = node.external?
+      had_external = external
+      if external && (body = node.body)
+        # This is the case where there's a body and we already have an external
+        # because we declared it in TopLevelVisitor
+        external.body = body
+      else
+        external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
+        external.doc = node.doc
+        check_ditto external
+        external.call_convention = call_convention
+      end
 
       if node_body = node.body
         vars = MetaVars.new
@@ -224,21 +231,23 @@ module Crystal
         external.set_type(return_type)
       end
 
-      external.raises = true if node.has_attribute?("Raises")
+      unless had_external
+        external.raises = true if node.has_attribute?("Raises")
 
-      begin
-        old_external = current_type.add_def external
-      rescue ex : Crystal::Exception
-        node.raise ex.message
-      end
+        begin
+          old_external = current_type.add_def external
+        rescue ex : Crystal::Exception
+          node.raise ex.message
+        end
 
-      if old_external.is_a?(External)
-        old_external.dead = true
-      end
+        if old_external.is_a?(External)
+          old_external.dead = true
+        end
 
-      if node.body
-        key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil, nil
-        current_type.add_def_instance key, external
+        if current_type.is_a?(Program)
+          key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil, nil
+          current_type.add_def_instance key, external
+        end
       end
 
       node.type = @mod.nil

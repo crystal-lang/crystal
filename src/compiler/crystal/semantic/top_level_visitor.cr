@@ -591,9 +591,15 @@ module Crystal
 
     def visit(node : FunDef)
       return false if @lib_def_pass == 1
-      return false if node.body
 
+      # Only declare the function, but do not type it
+      # (we do that later in MainVisitor)
+      body = node.body
+      node.body = nil
       visit_fun_def(node)
+      node.body = body
+
+      false
     end
 
     def visit(node : Cast)
