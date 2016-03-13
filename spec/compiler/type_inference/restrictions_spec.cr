@@ -327,4 +327,29 @@ describe "Restrictions" do
       foo
       )) { types["B"].metaclass }
   end
+
+  it "matches virtual type against alias" do
+    assert_type(%(
+      module Moo
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Bar
+      end
+
+      alias Alias = Moo
+
+      def foo(x : Alias)
+        1
+      end
+
+      foo(Baz.new as Bar)
+      )) { int32 }
+  end
 end

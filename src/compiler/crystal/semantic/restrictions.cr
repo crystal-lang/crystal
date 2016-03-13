@@ -499,6 +499,8 @@ module Crystal
     end
 
     def restrict(other : Type, context)
+      other = other.remove_alias
+
       if self == other
         self
       elsif other.is_a?(UnionType)
