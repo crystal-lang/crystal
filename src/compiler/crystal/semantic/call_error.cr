@@ -235,10 +235,20 @@ class Crystal::Call
           end
         end
         msg << " with type"
-        msg << "s" if types.size > 1
+        msg << "s" if types.size > 1 || @named_args
         msg << " "
         types.join(", ", msg)
       end
+
+      if named_args = @named_args
+        named_args.each do |named_arg|
+          msg << ", "
+          msg << named_arg.name
+          msg << ": "
+          msg << named_arg.value.type
+        end
+      end
+
       msg << "\n"
 
       defs.each do |a_def|
