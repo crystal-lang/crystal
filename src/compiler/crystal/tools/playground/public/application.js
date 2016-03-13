@@ -12,6 +12,9 @@ if(typeof(Storage) !== "undefined") {
   defaultCode = sessionStorage.lastCode || localStorage.lastCode || defaultCode;
 }
 
+CodeMirror.keyMap.macDefault["Cmd-/"] = "toggleComment";
+CodeMirror.keyMap.pcDefault["Ctrl-/"] = "toggleComment";
+
 var editor = CodeMirror(document.getElementById('editor'), {
   mode: 'crystal',
   theme: 'neat',
