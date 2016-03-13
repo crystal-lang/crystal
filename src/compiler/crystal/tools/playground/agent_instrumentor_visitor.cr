@@ -32,7 +32,7 @@ module Crystal
       end
     end
 
-    def visit(node : NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | StringInterpolation | Var | InstanceVar | ClassVar | Global)
+    def visit(node : NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | StringInterpolation | Var | InstanceVar | ClassVar | Global | TypeOf)
       base_visit node do |node|
         instrument(node)
       end

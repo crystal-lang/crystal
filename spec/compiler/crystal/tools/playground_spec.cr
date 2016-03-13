@@ -290,4 +290,8 @@ describe Playground::AgentInstrumentorVisitor do
     end, 5)
     CR
   end
+
+  it "instrument typeof" do
+    assert_agent %(typeof(5)), %($p.i(typeof(5), 1))
+  end
 end
