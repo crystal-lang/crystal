@@ -9,7 +9,11 @@ module Crystal
 
     private def instrument(node)
       if (location = node.location) && location.line_number != ignore_line
-        Call.new(Global.new("$p"), "i", [node as ASTNode, NumberLiteral.new(location.line_number)])
+        args = [node as ASTNode, NumberLiteral.new(location.line_number)] of ASTNode
+        if node.is_a?(TupleLiteral)
+          args << ArrayLiteral.new(node.elements.map { |e| StringLiteral.new(e.to_s) as ASTNode })
+        end
+        Call.new(Global.new("$p"), "i", args)
       else
         node
       end

@@ -15,6 +15,34 @@ private def assert_agent(source, expected)
   instrumented.to_s.should contain(expected)
 end
 
+class Crystal::Playground::TestAgent < Playground::Agent
+  class FakeSocket
+    property message
+
+    def send(@message)
+    end
+  end
+
+  def initialize(url, @session, @tag)
+    @ws = FakeSocket.new
+  end
+
+  def last_message
+    @ws.message
+  end
+end
+
+describe Playground::Agent do
+  it "should send json messages and return inspected value" do
+    agent = Crystal::Playground::TestAgent.new(".", 10, 32)
+    agent.i(5, 1).should eq(5)
+    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"5"}))
+    x, y = 3, 4
+    agent.i({x, y}, 1, ["x", "y"]).should eq({3, 4})
+    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"{3, 4}","data":{"x":"3","y":"4"}}))
+  end
+end
+
 describe Playground::AgentInstrumentorVisitor do
   it "instrument literals" do
     assert_agent %(5), %($p.i(5, 1))
@@ -23,8 +51,13 @@ describe Playground::AgentInstrumentorVisitor do
     assert_agent %(true), %($p.i(true, 1))
     assert_agent %('c'), %($p.i('c', 1))
     assert_agent %(:foo), %($p.i(:foo, 1))
-    assert_agent %({1, 2}), %($p.i({1, 2}, 1))
     assert_agent %([1, 2]), %($p.i([1, 2], 1))
+  end
+
+  it "instrument literals with expression names" do
+    assert_agent %({1, 2}), %($p.i({1, 2}, 1, ["1", "2"]))
+    assert_agent %({x, x + y}), %($p.i({x, x + y}, 1, ["x", "x + y"]))
+    assert_agent %(a = {x, x + y}), %(a = $p.i({x, x + y}, 1, ["x", "x + y"]))
   end
 
   it "instrument single variables expressions" do

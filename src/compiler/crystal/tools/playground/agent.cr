@@ -9,10 +9,20 @@ class Crystal::Playground::Agent
   def i # para la lineas en blanco
   end
 
-  def i(value, line = __LINE__)
-    send "value" do |json|
+  def i(value, line, names = nil)
+    send "value" do |json, io|
       json.field "line", line
       json.field "value", value.inspect
+
+      if names && value.is_a?(Tuple)
+        json.field "data" do
+          io.json_object do |json|
+            value.to_a.zip(names) do |v, name|
+              json.field name, v.inspect
+            end
+          end
+        end
+      end
     end
 
     value
@@ -31,7 +41,7 @@ class Crystal::Playground::Agent
         json.field "tag", @tag
         json.field "type", message_type
 
-        yield json
+        yield json, io
       end
     end
 

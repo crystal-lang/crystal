@@ -52,7 +52,14 @@ module Crystal::Playground
           return # if we don't exit here we've found a bug
         end
 
-        send({"type": "bug", "tag": tag}.to_json)
+        send_with_json_builder do |json, io|
+          json.field "type", "bug"
+          json.field "tag", tag
+          json.field "exception" do
+            ex.to_json(io)
+          end
+        end
+
         return
       end
 

@@ -60,7 +60,7 @@ $(window).resize(matchEditorSidebarHeight);
 
 
 var inspectModal = $("#inspect-modal");
-var inspectModalValues = $(".inspect-values", inspectModal);
+var inspectModalTable = $(".inspect-table", inspectModal);
 var inspectors = {};
 
 function Inspector(line) {
@@ -73,10 +73,30 @@ function Inspector(line) {
   this.messages = [];
 
   this.lineDom.click(function() {
-    inspectModalValues.empty();
+    var labels = this.dataLabels();
+    inspectModalTable.empty();
+    var tableHeaderRow = $("<tr>")
+    inspectModalTable.append($("<thead>").append(tableHeaderRow));
+    tableHeaderRow.append($("<th>").text("#"));
+    for(var j = 0; j < labels.length; j++) {
+      tableHeaderRow.append($("<th>").text(labels[j]));
+    }
+    tableHeaderRow.append($("<th>").text("Value"));
+
+    var tableBody = $("<tbody>");
+    inspectModalTable.append(tableBody);
+
     for(var i = 0; i < this.messages.length; i++) {
       var message = this.messages[i];
-      inspectModalValues.append($("<p>").text(message.value))
+      var row = $("<tr>");
+      row.append($("<td>").text(i+1));
+
+      for(var j = 0; j < labels.length; j++) {
+        row.append($("<td>").text(message.data[labels[j]]));
+      }
+
+      row.append($("<td>").text(message.value));
+      tableBody.append(row);
     }
     inspectModal.openModal();
   }.bind(this));
@@ -88,6 +108,25 @@ function Inspector(line) {
     } else {
       this.lineDom.text("(" + this.messages.length + " times)");
     }
+  }.bind(this);
+
+  this.dataLabels = function() {
+    // collect all data labels, in order of apperance
+    var res = []
+    var resSet = {}
+    for(var i = 0; i < this.messages.length; i++) {
+      var message = this.messages[i];
+      if (message.data) {
+        for(var k in message.data) {
+          if (resSet[k] != true) {
+            resSet[k] = true;
+            res.push(k);
+          }
+        }
+      }
+    }
+
+    return res;
   }.bind(this);
 
   return this;
