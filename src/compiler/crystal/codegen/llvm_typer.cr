@@ -8,9 +8,15 @@ module Crystal
     NIL_TYPE        = LLVM::Type.struct([] of LLVM::Type, "Nil")
     NIL_VALUE       = NIL_TYPE.null
 
-    getter landing_pad_type
+    getter landing_pad_type : LLVM::Type
 
     alias TypeCache = Hash(Type, LLVM::Type)
+
+    @cache : Hash(Type, LLVM::Type)
+    @struct_cache : Hash(Type, LLVM::Type)
+    @union_value_cache : Hash(Type, LLVM::Type)
+    @layout : LLVM::TargetData
+    @landing_pad_type : LLVM::Type
 
     def initialize(program)
       @cache = TypeCache.new
@@ -404,6 +410,8 @@ module Crystal
     def align_of(type)
       @layout.abi_alignment(type)
     end
+
+    @pointer_size : UInt64?
 
     def pointer_size
       @pointer_size ||= size_of(LLVM::VoidPointer)

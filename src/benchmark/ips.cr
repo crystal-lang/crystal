@@ -145,6 +145,7 @@ module Benchmark
       # Multiple slower than the fastest entry
       property! slower : Float64
 
+      @ran : Bool
       @ran = false
 
       def initialize(@label, @action : ->)

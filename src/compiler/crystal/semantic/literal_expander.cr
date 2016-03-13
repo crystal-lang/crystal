@@ -1,5 +1,8 @@
 module Crystal
   class LiteralExpander
+    @program : Program
+    @regexes : Array({String, Regex::Options})
+
     def initialize(@program)
       @regexes = [] of {String, Regex::Options}
     end

@@ -45,6 +45,13 @@ module Crystal
   # idea on how to generate code for unreachable branches, because they have no type,
   # and for now the codegen only deals with typed nodes.
   class CleanupTransformer < Transformer
+    @program : Program
+    @transformed : Set(UInt64)
+    @def_nest_count : Int32
+    @last_is_truthy : Bool
+    @last_is_falsey : Bool
+    @const_being_initialized : Path?
+
     def initialize(@program)
       @transformed = Set(typeof(object_id)).new
       @def_nest_count = 0
@@ -801,6 +808,8 @@ module Crystal
       end
     end
 
+    @false_literal : BoolLiteral?
+
     def false_literal
       @false_literal ||= begin
         false_literal = BoolLiteral.new(false)
@@ -808,6 +817,8 @@ module Crystal
         false_literal
       end
     end
+
+    @true_literal : BoolLiteral?
 
     def true_literal
       @true_literal ||= begin

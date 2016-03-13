@@ -64,17 +64,15 @@ module Crystal
 
     include LLVMBuilderHelper
 
-    getter :llvm_mod
-    getter :fun
-    getter :builder
-    getter :typer
-    getter :main
-    getter :modules
-    getter :context
-    getter :llvm_typer
-    getter :alloca_block
-    getter :entry_block
-    property :last
+    getter llvm_mod : LLVM::Module
+    getter builder : CrystalLLVMBuilder
+    getter main : LLVM::Function
+    getter modules : Hash(String, LLVM::Module)
+    getter context : Context
+    getter llvm_typer : LLVMTyper
+    getter alloca_block : LLVM::BasicBlock
+    getter entry_block : LLVM::BasicBlock
+    property last : LLVM::Value
 
     class LLVMVar
       getter pointer : LLVM::Value
@@ -99,8 +97,42 @@ module Crystal
     record Handler, node : ExceptionHandler, context : Context
     record StringKey, mod : LLVM::Module, string : String
 
-    def initialize(@mod, @node, @single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
+    @mod : Program
+    @node : ASTNode
+    @single_module : Bool
+    @debug : Bool
+    @main_mod : LLVM::Module
+    @abi : LLVM::ABI
+    @llvm_id : LLVMId
+    @main_ret_type : Type
+    @di_builders : Hash(LLVM::Module, LLVM::DIBuilder)?
+    @fun_metadatas : Hash(LLVM::Function, LibLLVMExt::Metadata)?
+    @argc : LLVM::Value
+    @argv : LLVM::Value
+    @dbg_kind : UInt32
+    @types_to_modules : Hash(Type, LLVM::Module)
+    @in_lib : Bool
+    @strings : Hash(StringKey, LLVM::Value)
+    @symbols : Hash(String, Int32)
+    @symbol_table_values : Array(LLVM::Value)
+    @fun_literal_count : Int32
+    @needs_value : Bool
+    @empty_md_list : LLVM::Value
+    @unused_fun_defs : Array(FunDef)
+    @proc_counts : Hash(String, Int32)
+    @node_ensure_exception_handlers : Hash(UInt64, Handler)
+    @ensure_exception_handlers : Array(Handler)?
+    @rescue_block : LLVM::BasicBlock?
+    @main_scopes : Hash({String, String}, LibLLVMExt::Metadata)?
+    @malloc_fun : LLVM::Function?
+    @debug_types : Hash(Type, LibLLVMExt::Metadata?)?
+    @sret_value : LLVM::Value?
+    @cant_pass_closure_to_c_exception_call : Call?
+    @realloc_fun : LLVM::Function?
+
+    def initialize(@mod, @node, single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       @main_mod = @llvm_mod
+      @single_module = !!single_module
       @abi = @mod.target_machine.abi
       @llvm_typer = LLVMTyper.new(@mod)
       @llvm_id = LLVMId.new(@mod)

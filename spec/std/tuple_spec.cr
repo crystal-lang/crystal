@@ -1,7 +1,7 @@
 require "spec"
 
 class TupleSpecObj
-  getter x
+  getter x : Int32
 
   def initialize(@x)
   end

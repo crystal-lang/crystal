@@ -2,8 +2,9 @@ require "../types"
 
 module Crystal
   class TypeLookup < Visitor
-    getter! type # : Type
-
+    getter! type : Type
+    @root : Type
+    @self_type : Type
 
     def self.lookup(root_type, node, self_type = root_type)
       lookup = new root_type, self_type

@@ -4,6 +4,8 @@ module Crystal
   struct CrystalPath
     DEFAULT_PATH = ENV["CRYSTAL_PATH"]? || Crystal::Config::PATH
 
+    @crystal_path : Array(String)
+
     def initialize(path = DEFAULT_PATH)
       @crystal_path = path.split(':').reject &.empty?
     end

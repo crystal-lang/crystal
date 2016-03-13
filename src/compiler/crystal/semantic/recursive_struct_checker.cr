@@ -20,6 +20,9 @@ module Crystal
   #
   # Because the type of `Test.@test` would be: `Test | Nil`.
   class RecursiveStructChecker
+    @program : Program
+    @all_checked : Set(Type)
+
     def initialize(@program)
       @all_checked = Set(Type).new
     end
