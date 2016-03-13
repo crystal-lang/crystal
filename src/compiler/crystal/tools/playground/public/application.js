@@ -33,7 +33,7 @@ function scheduleRun() {
 
 // when clicking below the editor, set the cursor at the very end
 var editorDom = $('#editor').click(function(e){
-  hideEditorError();
+  hideEditorErrors();
   if (e.target == editorDom[0]) {
     var info = editor.lineInfo(editor.lastLine())
     editor.setCursor(info.line, info.text.length);
@@ -52,7 +52,7 @@ editor.on("change", function(){
   if(typeof(Storage) !== "undefined") {
     localStorage.lastCode = sessionStorage.lastCode = editor.getValue();
   }
-  hideEditorError();
+  hideEditorErrors();
   matchEditorSidebarHeight();
   scheduleRun();
 });
@@ -107,24 +107,29 @@ function getInspector(line) {
   return res;
 }
 
-var lastError = null;
+var currentErrors = [];
 
-function hideEditorError() {
-  if (lastError != null) {
-    lastError.clear();
-    lastError = null;
+function hideEditorErrors() {
+  if (currentErrors != null) {
+    for(var i = 0; i < currentErrors.length; i++) {
+      currentErrors[i].clear();
+    }
+    currentErrors.splice(0,currentErrors.length);
+    matchEditorSidebarHeight();
   }
 }
 
-function showEditorError(line, column, message) {
-  hideEditorError();
-
-  var cursor = $("<div>").addClass("red editor-error-col");
+function showEditorError(line, column, message, color) {
+  var colorClass = "red" + (color > 0 ? " darken-" + Math.min(color, 4) : "");
+  var cursor = $("<div>").addClass(colorClass + " editor-error-col");
   var dom = $("<div>")
     .append(cursor)
-    .append($("<pre>").addClass("editor-error-msg red white-text").text(message));
-  lastError = editor.addLineWidget(line-1, dom[0]);
+    .append($("<pre>")
+      .addClass(colorClass + " editor-error-msg white-text")
+      .text(message));
+  currentErrors.push(editor.addLineWidget(line-1, dom[0]));
   cursor.css('left', column + 'ch');
+  matchEditorSidebarHeight();
 }
 
 ws.onmessage = function(e) {
@@ -151,8 +156,12 @@ ws.onmessage = function(e) {
       break;
     case "exception":
       runProgress.hide();
-      var ex = message.exception[0];
-      showEditorError(ex.line, ex.column, ex.message);
+      for (var i = 0; i < message.exception.length; i++) {
+        var ex = message.exception[i];
+        if (ex.file == "play") {
+          showEditorError(ex.line, ex.column, ex.message, i);
+        }
+      }
       break;
     default:
       console.error("ws message not handled", message);
@@ -164,6 +173,7 @@ function run() {
 
   runProgress.show();
   clearInspectors();
+  hideEditorErrors();
   outputDom.innerText = "";
   consoleButton.addClass('disabled');
 
