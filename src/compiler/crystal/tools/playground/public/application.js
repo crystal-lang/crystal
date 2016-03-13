@@ -158,7 +158,7 @@ ws.onmessage = function(e) {
       runProgress.hide();
       for (var i = 0; i < message.exception.length; i++) {
         var ex = message.exception[i];
-        if (ex.file == "play") {
+        if (ex.file == "play" || ex.file == "") {
           showEditorError(ex.line, ex.column, ex.message, i);
         }
       }
