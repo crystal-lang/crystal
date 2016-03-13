@@ -164,10 +164,12 @@ module Crystal::Playground
   end
 
   class Server
-    PORT = 8080
     $sockets = [] of HTTP::WebSocket
     @sessions = {} of Int32 => Session
     @sessionsKey = 0
+
+    def initialize(@port : Int32)
+    end
 
     def start
       public_dir = File.join(File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0]), "public")
@@ -195,7 +197,7 @@ module Crystal::Playground
 
       client_ws = PathWebSocketHandler.new "/client" do |ws|
         @sessionsKey += 1
-        @sessions[@sessionsKey] = session = Session.new(ws, @sessionsKey, PORT)
+        @sessions[@sessionsKey] = session = Session.new(ws, @sessionsKey, @port)
 
         ws.on_message do |message|
           json = JSON.parse(message)
@@ -208,14 +210,14 @@ module Crystal::Playground
         end
       end
 
-      server = HTTP::Server.new "localhost", PORT, [
+      server = HTTP::Server.new "localhost", @port, [
         client_ws,
         agent_ws,
         IndexHandler.new(File.join(public_dir, "index.html")),
         HTTP::StaticFileHandler.new(public_dir),
       ]
 
-      puts "Listening on http://0.0.0.0:#{PORT}"
+      puts "Listening on http://0.0.0.0:#{@port}"
       server.listen
     end
   end

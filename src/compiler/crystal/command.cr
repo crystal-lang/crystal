@@ -65,7 +65,8 @@ class Crystal::Command
         options.shift
         build
       when "play".starts_with?(command)
-        Playground::Server.new.start
+        options.shift
+        playground
       when "deps".starts_with?(command)
         options.shift
         deps
@@ -442,6 +443,26 @@ class Crystal::Command
   private def types
     config, result = compile_no_codegen "tool types"
     Crystal.print_types result.original_node
+  end
+
+  private def playground
+    port = 8080
+
+    option_parser =
+      OptionParser.parse(options) do |opts|
+        opts.banner = "Usage: crystal play [options]\n\nOptions:"
+
+        opts.on("-p PORT", "--port PORT", "HTTP port to host the playground") do |p|
+          port = p.to_i
+        end
+
+        opts.on("-h", "--help", "Show this message") do
+          puts opts
+          exit 1
+        end
+      end
+
+    Playground::Server.new(port).start
   end
 
   private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false)
