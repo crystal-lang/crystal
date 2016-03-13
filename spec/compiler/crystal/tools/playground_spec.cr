@@ -6,12 +6,12 @@ include Crystal
 
 private def assert_agent(source, expected)
   ast = Parser.new(source).parse
-  instrumented = Playground::AgentInstrumentorVisitor.new.process(ast)
+  instrumented = ast.transform Playground::AgentInstrumentorTransformer.new
   instrumented.to_s.should contain(expected)
 
   # whatever case should work beforeit should work with appended lines
   ast = Parser.new("#{source}\n1\n").parse
-  instrumented = Playground::AgentInstrumentorVisitor.new.process(ast)
+  instrumented = ast.transform Playground::AgentInstrumentorTransformer.new
   instrumented.to_s.should contain(expected)
 end
 
@@ -43,8 +43,9 @@ describe Playground::Agent do
   end
 end
 
-describe Playground::AgentInstrumentorVisitor do
+describe Playground::AgentInstrumentorTransformer do
   it "instrument literals" do
+    assert_agent %(nil), %($p.i(nil, 1))
     assert_agent %(5), %($p.i(5, 1))
     assert_agent %(5.0), %($p.i(5.0, 1))
     assert_agent %("lorem"), %($p.i("lorem", 1))
@@ -52,6 +53,7 @@ describe Playground::AgentInstrumentorVisitor do
     assert_agent %('c'), %($p.i('c', 1))
     assert_agent %(:foo), %($p.i(:foo, 1))
     assert_agent %([1, 2]), %($p.i([1, 2], 1))
+    assert_agent %(/a/), %($p.i(/a/, 1))
   end
 
   it "instrument literals with expression names" do

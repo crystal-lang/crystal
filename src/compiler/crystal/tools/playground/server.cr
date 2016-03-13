@@ -24,7 +24,7 @@ module Crystal::Playground
         return
       end
 
-      instrumented = Playground::AgentInstrumentorVisitor.new.process(ast).to_s
+      instrumented = ast.transform(Playground::AgentInstrumentorTransformer.new).to_s
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
