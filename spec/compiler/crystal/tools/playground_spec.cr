@@ -23,6 +23,8 @@ describe Playground::AgentInstrumentorVisitor do
     assert_agent %(true), %($p.i(true, 1))
     assert_agent %('c'), %($p.i('c', 1))
     assert_agent %(:foo), %($p.i(:foo, 1))
+    assert_agent %({1, 2}), %($p.i({1, 2}, 1))
+    assert_agent %([1, 2]), %($p.i([1, 2], 1))
   end
 
   it "instrument single variables expressions" do
@@ -72,6 +74,17 @@ describe Playground::AgentInstrumentorVisitor do
     def foo
       $p.i(2, 3)
       $p.i(6, 4)
+    end
+    CR
+  end
+
+  it "instrument returns inside def" do
+    assert_agent %(
+    def foo
+      return 4
+    end), <<-CR
+    def foo
+      return $p.i(4, 3)
     end
     CR
   end

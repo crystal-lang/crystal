@@ -32,7 +32,7 @@ module Crystal
       end
     end
 
-    def visit(node : NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | StringInterpolation | Var | InstanceVar | ClassVar | Global)
+    def visit(node : NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | StringInterpolation | Var | InstanceVar | ClassVar | Global)
       base_visit node do |node|
         instrument(node)
       end
@@ -77,6 +77,15 @@ module Crystal
     def visit(node : While)
       base_visit node do |node|
         node.body = recursive_process(node.body)
+        node
+      end
+    end
+
+    def visit(node : Return)
+      base_visit node do |node|
+        if exp = node.exp
+          node.exp = instrument(exp)
+        end
         node
       end
     end
