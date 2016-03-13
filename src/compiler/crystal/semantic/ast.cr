@@ -712,10 +712,10 @@ module Crystal
   end
 
   class NilReason
-    getter name
-    getter reason
-    getter nodes
-    getter scope
+    getter name : String
+    getter reason : Symbol
+    getter nodes : Array(ASTNode)?
+    getter scope : Type?
 
     def initialize(@name, @reason, @nodes = nil, @scope = nil)
     end

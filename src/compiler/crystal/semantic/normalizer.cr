@@ -14,8 +14,11 @@ module Crystal
   end
 
   class Normalizer < Transformer
-    getter program
-    property exp_nest
+    getter program : Program
+    property exp_nest : Int32
+
+    @dead_code : Bool
+    @current_def : Def?
 
     def initialize(@program)
       @dead_code = false

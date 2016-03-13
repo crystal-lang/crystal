@@ -1,4 +1,8 @@
+require "./renderer"
+
 class Markdown::HTMLRenderer
+  include Renderer
+
   @io : IO
 
   def initialize(@io)
@@ -48,7 +52,7 @@ class Markdown::HTMLRenderer
     @io << "</code>"
   end
 
-  def begin_code(language = nil)
+  def begin_code(language)
     if language.nil?
       @io << "<pre><code>"
     else

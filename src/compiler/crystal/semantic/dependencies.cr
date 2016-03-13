@@ -6,6 +6,10 @@ module Crystal
   class Dependencies
     include Enumerable(ASTNode)
 
+    @first : ASTNode?
+    @second : ASTNode?
+    @all : Array(ASTNode)?
+
     def initialize
       @first = nil
       @second = nil

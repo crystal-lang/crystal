@@ -99,7 +99,7 @@ class Socket < IO::FileDescriptor
   end
 
   struct UNIXAddress
-    getter path
+    getter path : String
 
     def initialize(path)
       @path = path

@@ -315,7 +315,7 @@ module Crystal
 
     def_equals_and_hash @entries, @of, @name
 
-    record Entry, key, value
+    record Entry, key : ASTNode, value : ASTNode
   end
 
   class RangeLiteral < ASTNode

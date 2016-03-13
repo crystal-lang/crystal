@@ -99,6 +99,9 @@ module Crystal
     # `yields` hash.
     record ExpandedMacro, source : String, yields : Hash(String, ASTNode)?
 
+    @mod : Program
+    @cache : Hash(String, String)
+
     def initialize(@mod)
       @cache = {} of String => String
     end
@@ -150,9 +153,18 @@ module Crystal
     end
 
     class MacroVisitor < Visitor
-      getter last
-      getter yields
-      property free_vars
+      getter last : ASTNode
+      getter yields : Hash(String, ASTNode)?
+      property free_vars : Hash(String, Type)?
+
+      @expander : MacroExpander
+      @mod : Program
+      @scope : Type
+      @location : Location?
+      @vars : Hash(String, ASTNode)
+      @block : Block?
+      @str : MemoryIO
+      @macro_vars : Hash(MacroVarKey, String)?
 
       def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
@@ -511,6 +523,8 @@ module Crystal
       end
 
       class ReplaceBlockVarsTransformer < Transformer
+        @vars : Hash(String, ASTNode)
+
         def initialize(@vars)
         end
 
@@ -744,6 +758,8 @@ module Crystal
   end
 
   class YieldsTransformer < Transformer
+    @yields : Hash(String, Crystal::ASTNode+)
+
     def initialize(@yields)
     end
 

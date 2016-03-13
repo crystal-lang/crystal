@@ -1,8 +1,7 @@
 module Crystal
   class TypeFilteredNode < ASTNode
     @filter : TypeFilter
-
-    # @node : ASTNode
+    @node : ASTNode
 
     def initialize(@filter, @node)
       @dependencies = Dependencies.new(@node)
