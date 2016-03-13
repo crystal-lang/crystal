@@ -66,7 +66,7 @@ var inspectors = {};
 function Inspector(line) {
   this.lineDom = $("<div>")
       .addClass("truncate")
-      .css("top", ((line-1) * 1.46 + 0.5)+ "em")
+      .css("top", editor.heightAtLine(line-1, "local") + "px")
       .css("cursor", "pointer");
   sidebarDom.append(this.lineDom);
 
