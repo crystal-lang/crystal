@@ -411,11 +411,15 @@ class HTTP::Client
 
   private def set_defaults(request)
     request.headers["User-agent"] ||= "Crystal"
-    if compress? && !request.headers.has_key?("Accept-Encoding")
-      request.headers["Accept-Encoding"] = "gzip, deflate"
-      true
-    else
+    ifdef without_zlib
       false
+    else
+      if compress? && !request.headers.has_key?("Accept-Encoding")
+        request.headers["Accept-Encoding"] = "gzip, deflate"
+        true
+      else
+        false
+      end
     end
   end
 
