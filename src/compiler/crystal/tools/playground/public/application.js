@@ -228,6 +228,19 @@ function run() {
   return false;
 }
 
+function saveAsFile() {
+  var uri = "data:text/plain;charset=utf-8," + encodeURIComponent(editor.getValue());
+
+  var link = $("<a>");
+  $("body").append(link);
+  link.attr('download', 'play.cr');
+  link.attr('href', uri);
+  link[0].click();
+  link.remove();
+
+  return false;
+}
+
 $(document).ready(function(){
   $('.modal-trigger').leanModal();
 

@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="/vendor/materialize-v0.97.5/css/materialize.min.css">
     <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/lib/codemirror.css">
     <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/theme/neat.css">
+    <link rel="stylesheet" href="/vendor/octicons-3.5.0/octicons.css">
     <link rel="stylesheet" type="text/css" href="/application.css">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -53,6 +54,12 @@
 
     <div class="footer-copyright">
       <p class="center-align blue-grey-text text-lighten-4">Happy Crystalling ♥</p>
+    </div>
+
+    <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
+      <a class="btn-floating btn-large red darken-1" href="#" onclick="return saveAsFile();">
+        <span class="octicon octicon-desktop-download"></span>
+      </a>
     </div>
 
     <div id="output-modal" class="modal bottom-sheet">
