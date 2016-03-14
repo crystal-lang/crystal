@@ -56,7 +56,7 @@ module Crystal::Playground
           json.field "type", "bug"
           json.field "tag", tag
           json.field "exception" do
-            ex.to_json(io)
+            append_exception io, ex
           end
         end
 
@@ -86,8 +86,15 @@ module Crystal::Playground
         json.field "type", "exception"
         json.field "tag", tag
         json.field "exception" do
-          ex.to_json(io)
+          append_exception io, ex
         end
+      end
+    end
+
+    def append_exception(io, ex)
+      io.json_object do |json|
+        json.field "message", ex.to_s
+        json.field "payload", ex
       end
     end
 

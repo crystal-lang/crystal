@@ -208,14 +208,15 @@ ws.onmessage = function(e) {
       break;
     case "exception":
       runProgress.hide();
-      for (var i = 0; i < message.exception.length; i++) {
-        var ex = message.exception[i];
+      for (var i = 0; i < message.exception.payload.length; i++) {
+        var ex = message.exception.payload[i];
         if (ex.file == "play" || ex.file == "") {
           showEditorError(ex.line, ex.column, ex.message, i);
         }
       }
       break;
     case "bug":
+      runProgress.hide();
       showModal(
         $("<h4>").append("Bug"),
         $("<p>")
@@ -228,7 +229,7 @@ ws.onmessage = function(e) {
         $("<h5>").append("Code"),
         $("<pre>").append(editor.getValue()),
         $("<h5>").append("Exception"),
-        $("<pre>").append(JSON.stringify(message.exception, null, 2)));
+        $("<pre>").append(message.exception.message));
     default:
       console.error("ws message not handled", message);
   }
