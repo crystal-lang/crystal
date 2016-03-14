@@ -41,6 +41,14 @@ def Bool.new(pull : JSON::PullParser)
   pull.read_bool
 end
 
+def Int8.new(pull : JSON::PullParser)
+  pull.read_int.to_i8
+end
+
+def Int16.new(pull : JSON::PullParser)
+  pull.read_int.to_i16
+end
+
 def Int32.new(pull : JSON::PullParser)
   pull.read_int.to_i
 end
