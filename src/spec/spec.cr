@@ -82,6 +82,7 @@ module Spec
     pending: '*',
   }
 
+  @@use_colors : Bool
   @@use_colors = true
 
   # :nodoc:
@@ -110,6 +111,7 @@ module Spec
     end
   end
 
+  @@aborted : Bool
   @@aborted = false
 
   # :nodoc:
@@ -122,6 +124,7 @@ module Spec
     @@aborted
   end
 
+  @@pattern : Regex?
   @@pattern = nil
 
   # :nodoc:
@@ -129,14 +132,14 @@ module Spec
     @@pattern = Regex.new(Regex.escape(pattern))
   end
 
+  @@line : Int32?
   @@line = nil
 
   # :nodoc:
   def self.line=(@@line)
   end
 
-  record Location, file : String, line : Int32
-
+  @@locations : Hash(String, Array(Int32))?
   @@locations = nil
 
   def self.add_location(file, line)
@@ -167,6 +170,7 @@ module Spec
     end
   end
 
+  @@fail_fast : Bool
   @@fail_fast = false
 
   # :nodoc:
@@ -178,10 +182,14 @@ module Spec
     @@fail_fast
   end
 
+  @@before_each : Array(->)?
+
   def self.before_each(&block)
     before_each = @@before_each ||= [] of ->
     before_each << block
   end
+
+  @@after_each : Array(->)?
 
   def self.after_each(&block)
     after_each = @@after_each ||= [] of ->

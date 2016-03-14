@@ -135,7 +135,10 @@ module Spec
       end
     end
 
+    @@instance : RootContext
     @@instance = RootContext.new
+
+    @@contexts_stack : Array(Context)
     @@contexts_stack = [@@instance] of Context
 
     def self.describe(description, file, line, &block)

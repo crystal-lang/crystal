@@ -90,6 +90,7 @@ module Spec
     end
   end
 
+  @@formatters : Array(Spec::Formatter)
   @@formatters = [] of Spec::Formatter
   @@formatters << Spec::DotFormatter.new
 

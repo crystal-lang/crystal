@@ -2,7 +2,10 @@ require "event"
 
 # :nodoc:
 class Scheduler
+  @@runnables : Array(Fiber)
   @@runnables = [] of Fiber
+
+  @@eb : Event::Base
   @@eb = Event::Base.new
 
   def self.reschedule
@@ -14,6 +17,7 @@ class Scheduler
     nil
   end
 
+  @@loop_fiber : Fiber?
   @@loop_fiber = Fiber.new { @@eb.run_loop }
 
   def self.after_fork
@@ -66,6 +70,8 @@ class Scheduler
     event.add
     event
   end
+
+  @@dns_base : Event::DnsBase?
 
   private def self.dns_base
     @@dns_base ||= @@eb.new_dns_base

@@ -19,13 +19,17 @@ class Event::SignalHandler
     @@instance = nil
   end
 
+  @@instance : Event::SignalHandler?
+
   private def self.instance
     @@instance ||= new
   end
 
   @callbacks : Hash(Signal, (Signal ->))
-  @read_pipe : IO
-  @write_pipe : IO
+  @read_pipe : IO::FileDescriptor
+  @write_pipe : IO::FileDescriptor
+
+  @@write_pipe : IO::FileDescriptor?
 
   def initialize
     @callbacks = Hash(Signal, (Signal ->)).new

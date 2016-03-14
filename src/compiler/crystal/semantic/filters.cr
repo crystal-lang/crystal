@@ -104,8 +104,10 @@ module Crystal
   end
 
   class TruthyFilter < TypeFilter
+    INSTANCE = TruthyFilter.new
+
     def self.instance
-      @@instance
+      INSTANCE
     end
 
     def apply(other)
@@ -128,8 +130,6 @@ module Crystal
     def to_s(io)
       io << "not-nil"
     end
-
-    @@instance = TruthyFilter.new
   end
 
   class NotFilter < TypeFilter

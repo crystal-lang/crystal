@@ -289,9 +289,8 @@ describe "Code gen: virtual type" do
   end
 
   it "doesn't lookup in Value+ when virtual type is Object+" do
-    run("
-      require \"bool\"
-      require \"reference\"
+    run(%(
+      require "prelude"
 
       class Object
         def foo
@@ -304,7 +303,7 @@ describe "Code gen: virtual type" do
 
       a = Foo.new
       a.foo
-      ").to_b.should be_true
+      )).to_b.should be_true
   end
 
   it "correctly dispatch call with block when the obj is a virtual type" do
