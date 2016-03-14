@@ -409,11 +409,11 @@ module Crystal
       return_type = @force_void ? self.def.type.program.void : self.def.type
 
       expected_return_type = @expected_return_type
-      if expected_return_type && !expected_return_type.void? && expected_return_type != return_type
-        raise "expected new to return #{expected_return_type}, not #{return_type}"
+      if expected_return_type && !expected_return_type.void? && !return_type.implements?(expected_return_type)
+        raise "expected block to return #{expected_return_type.devirtualize}, not #{return_type}"
       end
 
-      types << return_type
+      types << (expected_return_type || return_type)
 
       self.type = self.def.type.program.fun_of(types)
     end

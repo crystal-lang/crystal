@@ -5,6 +5,7 @@ module Crystal
     getter! type : Type
     @root : Type
     @self_type : Type
+    @raise : Bool
 
     def self.lookup(root_type, node, self_type = root_type)
       lookup = new root_type, self_type
@@ -14,9 +15,11 @@ module Crystal
 
     def initialize(@root)
       @self_type = @root
+      @raise = true
     end
 
     def initialize(@root, @self_type)
+      @raise = true
     end
 
     delegate program, @root
@@ -30,15 +33,18 @@ module Crystal
       if the_type && the_type.is_a?(Type)
         @type = the_type.remove_alias_if_simple
       else
-        TypeLookup.check_cant_infer_generic_type_parameter(@root, node)
+        TypeLookup.check_cant_infer_generic_type_parameter(@root, node) if @raise
 
-        node.raise("undefined constant #{node}")
+        node.raise("undefined constant #{node}") if @raise
       end
     end
 
     def visit(node : Union)
       types = node.types.map do |ident|
+        @type = nil
         ident.accept self
+        return false if !@raise && !@type
+
         type
       end
       @type = program.type_merge(types)
@@ -73,14 +79,17 @@ module Crystal
       end
 
       type_vars = node.type_vars.map do |type_var|
+        @type = nil
         type_var.accept self
-        @type.not_nil!.virtual_type as TypeVar
+        return false if !@raise && !@type
+
+        type.virtual_type as TypeVar
       end
 
       begin
         @type = instance_type.instantiate(type_vars)
       rescue ex : Crystal::Exception
-        node.raise ex.message
+        node.raise ex.message if @raise
       end
 
       false
@@ -96,7 +105,10 @@ module Crystal
       end
 
       if output = node.output
+        @type = nil
         output.accept self
+        return false if !@raise && !@type
+
         types << type
       else
         types << program.void
@@ -120,7 +132,7 @@ module Crystal
     end
 
     def visit(node : Underscore)
-      node.raise "can't use underscore as generic type argument"
+      node.raise "can't use underscore as generic type argument" if @raise
     end
 
     def self.check_cant_infer_generic_type_parameter(scope, node : Path)
