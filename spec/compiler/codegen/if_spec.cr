@@ -197,7 +197,8 @@ describe "Code gen: if" do
   ifdef x86_64
     it "codegens if with pointer 0x100000000 pointer" do
       run(%(
-        if Pointer(Void).new(0x100000000_u64)
+        ptr = Pointer(Void).new(0x100000000_u64)
+        if ptr
           1
         else
           2
