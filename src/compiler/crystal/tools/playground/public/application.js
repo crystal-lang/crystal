@@ -62,11 +62,21 @@ editor.on("change", function(){
 $(window).resize(matchEditorSidebarHeight);
 
 
-var inspectModal = $("#inspect-modal");
-var inspectModalTable = $(".inspect-table", inspectModal);
+var fixedModal = $("#fixed-modal");
+
+function showModal() {
+  var content = $(".modal-content", fixedModal).empty();
+  for(var i = 0; i < arguments.length; i++) {
+    content.append(arguments[i]);
+  }
+  fixedModal.openModal();
+}
+
 var inspectors = {};
 
 function Inspector(line) {
+  var inspectModalTable = $("<table>").addClass("inspect-table highlight")
+
   this.lineDom = $("<div>")
       .addClass("truncate")
       .css("top", editor.heightAtLine(line-1, "local") + "px")
@@ -101,7 +111,7 @@ function Inspector(line) {
       row.append($("<td>").text(message.value));
       tableBody.append(row);
     }
-    inspectModal.openModal();
+    showModal(inspectModalTable);
   }.bind(this));
 
   this.addMessage = function(message) {
@@ -205,6 +215,20 @@ ws.onmessage = function(e) {
         }
       }
       break;
+    case "bug":
+      showModal(
+        $("<h4>").append("Bug"),
+        $("<p>")
+          .append("You've reached a bug in the playground. Please ")
+          .append($("<a>")
+            .text("let us know")
+            .attr("href", "https://github.com/crystal-lang/crystal/issues/new")
+            .attr("target", "_blank"))
+          .append(" about it."),
+        $("<h5>").append("Code"),
+        $("<pre>").append(editor.getValue()),
+        $("<h5>").append("Exception"),
+        $("<pre>").append(JSON.stringify(message.exception, null, 2)));
     default:
       console.error("ws message not handled", message);
   }
