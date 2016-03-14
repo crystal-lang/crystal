@@ -201,4 +201,28 @@ describe "Type inference: is_a?" do
       coco
       )) { |mod| mod.nil }
   end
+
+  it "restricts type inside if else when used with module type" do
+    assert_type(%(
+      module Moo
+      end
+
+      struct Int32
+        def foo
+          true
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      a = 1 == 1 ? 1 : (Foo.new as Moo)
+      unless a.is_a?(Moo)
+        a.foo
+      else
+        false
+      end
+      )) { bool }
+  end
 end
