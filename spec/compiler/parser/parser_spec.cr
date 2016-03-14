@@ -1127,6 +1127,9 @@ describe "Parser" do
     it_parses "property #{keyword} : Int32", Call.new(nil, "property", TypeDeclaration.new(keyword.var, "Int32".path))
   end
 
+  it_parses "call(foo : A, end : B)", Call.new(nil, "call", [TypeDeclaration.new("foo".var, "A".path), TypeDeclaration.new("end".var, "B".path)] of ASTNode)
+  it_parses "call foo : A, end : B", Call.new(nil, "call", [TypeDeclaration.new("foo".var, "A".path), TypeDeclaration.new("end".var, "B".path)] of ASTNode)
+
   it_parses "case :foo; when :bar; 2; end", Case.new("foo".symbol, [When.new(["bar".symbol] of ASTNode, 2.int32)])
 
   assert_syntax_error "return do\nend", "unexpected token: do"
