@@ -62,6 +62,13 @@ class YAMLWithAny
   end
 end
 
+class YAMLWithSmallIntegers
+  YAML.mapping({
+    foo: Int16,
+    bar: Int8
+  })
+end
+
 describe "YAML mapping" do
   it "parses person" do
     person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
@@ -127,6 +134,16 @@ describe "YAML mapping" do
     yaml.key.should eq("foo")
     yaml.value.should eq(1)
     yaml.pull.should eq(2)
+  end
+
+  it "allows small types of integer" do
+    yaml = YAMLWithSmallIntegers.from_yaml(%({"foo": 21, "bar": 7}))
+
+    yaml.foo.should eq(21)
+    typeof(yaml.foo).should eq(Int16)
+
+    yaml.bar.should eq(7)
+    typeof(yaml.bar).should eq(Int8)
   end
 
   describe "parses YAML with defaults" do
