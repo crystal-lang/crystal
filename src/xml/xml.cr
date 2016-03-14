@@ -33,7 +33,7 @@ module XML
     )
   end
 
-  protected def self.from_ptr(doc : LibXML::DocPtr)
+  protected def self.from_ptr(doc : LibXML::Doc*)
     raise Error.new(LibXML.xmlGetLastError) unless doc
 
     node = Node.new(doc)

@@ -7,11 +7,11 @@ struct XML::Node
     initialize(node as LibXML::Node*)
   end
 
-  def initialize(node : LibXML::DocPtr)
+  def initialize(node : LibXML::Doc*)
     initialize(node as LibXML::Node*)
   end
 
-  def initialize(node : LibXML::DocPtr)
+  def initialize(node : LibXML::Doc*)
     initialize(node as LibXML::Node*)
   end
 
