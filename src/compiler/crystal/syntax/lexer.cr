@@ -971,14 +971,14 @@ module Crystal
 
         scan_ident(start)
       else
-        if 'A' <= current_char <= 'Z'
+        if current_char.uppercase?
           start = current_pos
           while ident_part?(next_char)
             # Nothing to do
           end
           @token.type = :CONST
           @token.value = string_range(start)
-        elsif ('a' <= current_char <= 'z') || current_char == '_' || current_char.ord > 0x9F
+        elsif current_char.lowercase? || current_char == '_' || current_char.ord > 0x9F
           next_char
           scan_ident(start)
         else
