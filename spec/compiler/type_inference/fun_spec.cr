@@ -339,7 +339,7 @@ describe "Type inference: fun" do
       alias F = Int32 -> Int32
       F.new &.to_f
       ",
-      "expected new to return Int32, not Float64"
+      "expected block to return Int32, not Float64"
   end
 
   it "errors if missing argument type in fun literal" do
