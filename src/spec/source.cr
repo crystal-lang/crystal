@@ -1,4 +1,6 @@
 module Spec
+  @@lines_cache : Hash(String, Array(String))?
+
   # :nodoc:
   def self.lines_cache
     @@lines_cache ||= {} of String => Array(String)

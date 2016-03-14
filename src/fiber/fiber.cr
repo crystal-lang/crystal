@@ -7,8 +7,13 @@ end
 class Fiber
   STACK_SIZE = 8 * 1024 * 1024
 
+  @@first_fiber : Fiber?
   @@first_fiber = nil
+
+  @@last_fiber : Fiber?
   @@last_fiber = nil
+
+  @@stack_pool : Array(Void*)
   @@stack_pool = [] of Void*
 
   @stack : Void*
@@ -181,6 +186,7 @@ class Fiber
     LibGC.push_all_eager @stack_top, @stack_bottom
   end
 
+  @@root : Fiber
   @@root = new
 
   def self.root
@@ -189,6 +195,7 @@ class Fiber
 
   @[ThreadLocal]
   @@current = root
+  @@current : Fiber
 
   def self.current
     @@current
@@ -199,6 +206,7 @@ class Fiber
     block
   end
 
+  @@prev_push_other_roots : ->
   @@prev_push_other_roots = LibGC.get_push_other_roots
 
   # This will push all fibers stacks whenever the GC wants to collect some memory
