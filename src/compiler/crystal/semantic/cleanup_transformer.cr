@@ -546,6 +546,18 @@ module Crystal
     #   end
     # end
 
+    def transform(node : While)
+      super
+
+      # If the condition is a NoReturn, just replace the whole
+      # while with it, since the body will never be executed
+      if node.cond.no_returns?
+        return node.cond
+      end
+
+      node
+    end
+
     def transform(node : If)
       node.cond = node.cond.transform(self)
 
