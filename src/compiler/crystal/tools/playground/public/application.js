@@ -15,6 +15,13 @@ if(typeof(Storage) !== "undefined") {
 CodeMirror.keyMap.macDefault["Cmd-/"] = "toggleComment";
 CodeMirror.keyMap.pcDefault["Ctrl-/"] = "toggleComment";
 
+CodeMirror.keyMap.macDefault["Cmd-Enter"] = "runCode";
+CodeMirror.keyMap.pcDefault["Ctrl-Enter"] = "runCode";
+
+CodeMirror.commands.runCode = function() {
+  run();
+}
+
 var editor = CodeMirror(document.getElementById('editor'), {
   mode: 'crystal',
   theme: 'neat',
@@ -28,10 +35,12 @@ var editor = CodeMirror(document.getElementById('editor'), {
 
 
 var runTimeout = null;
+function removeScheduledRun() {
+  if (runTimeout == null) return;
+  clearTimeout(runTimeout);
+}
 function scheduleRun() {
-  if (runTimeout != null) {
-    clearTimeout(runTimeout);
-  }
+  removeScheduledRun()
   runTimeout = window.setTimeout(run, runDebounce);
 }
 
@@ -247,6 +256,7 @@ ws.onmessage = function(e) {
 };
 
 function run() {
+  removeScheduledRun();
   runTag++;
 
   runProgress.show();
@@ -281,6 +291,9 @@ $(document).ready(function(){
   $('.modal-trigger').leanModal();
 
   scheduleRun();
+
+  var mac = /Mac/.test(navigator.platform);
+  $('[data-tooltip="Runs code"]').attr('data-tooltip', mac ? '⌘ + Enter' : 'Ctrl + Enter');
 });
 
 // load file by drag and drop
