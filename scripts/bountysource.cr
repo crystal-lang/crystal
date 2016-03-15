@@ -106,7 +106,6 @@ unless token
 end
 
 team = "crystal-lang"
-token = "34290.1458054125.cedfcb21b5570a7aa5c845b243bb43316f64c932"
 bountysource = BountySource::API.new(team, token)
 
 github = GitHub::API.new
