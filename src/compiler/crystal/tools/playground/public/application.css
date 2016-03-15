@@ -79,6 +79,15 @@ h4 {
   right: 0;
 }
 
+#sidebar .type {
+  color: #64b5f6;
+  font-weight: 200;
+}
+
+#sidebar .type::before {
+  content: ' : ';
+}
+
 .editor-error-col {
   position: absolute;
   width: 1em;

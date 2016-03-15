@@ -13,6 +13,7 @@ class Crystal::Playground::Agent
     send "value" do |json, io|
       json.field "line", line
       json.field "value", to_value(value)
+      json.field "value_type", typeof(value).to_s
 
       if names && value.is_a?(Tuple)
         json.field "data" do

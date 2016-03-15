@@ -39,17 +39,17 @@ describe Playground::Agent do
   it "should send json messages and return inspected value" do
     agent = Crystal::Playground::TestAgent.new(".", 10, 32)
     agent.i(5, 1).should eq(5)
-    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"5"}))
+    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"5","value_type":"Int32"}))
     x, y = 3, 4
     agent.i({x, y}, 1, ["x", "y"]).should eq({3, 4})
-    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"{3, 4}","data":{"x":"3","y":"4"}}))
+    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"{3, 4}","value_type":"{Int32, Int32}","data":{"x":"3","y":"4"}}))
 
     agent.i(nil as Void?, 1)
-    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"nil"}))
+    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"nil","value_type":"Void?"}))
     agent.i(a_sample_void as Void?, 1)
-    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"(void)"}))
+    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"(void)","value_type":"Void?"}))
     agent.i(a_sample_void, 1)
-    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"(void)"}))
+    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"(void)","value_type":"Void"}))
   end
 end
 

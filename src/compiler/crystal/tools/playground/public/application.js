@@ -85,6 +85,7 @@ function Inspector(line) {
   sidebarDom.append(this.lineDom);
 
   this.messages = [];
+  this.value_type = null; // null if mismatch. keep value is always the same.
 
   this.lineDom.click(function() {
     var labels = this.dataLabels();
@@ -96,6 +97,7 @@ function Inspector(line) {
       tableHeaderRow.append($("<th>").text(labels[j]));
     }
     tableHeaderRow.append($("<th>").text("Value"));
+    tableHeaderRow.append($("<th>").text("Type"));
 
     var tableBody = $("<tbody>");
     inspectModalTable.append(tableBody);
@@ -110,6 +112,7 @@ function Inspector(line) {
       }
 
       row.append($("<td>").text(message.value));
+      row.append($("<td>").text(message.value_type));
       tableBody.append(row);
     }
     showModal(inspectModalTable);
@@ -119,8 +122,15 @@ function Inspector(line) {
     this.messages.push(message);
     if (this.messages.length == 1) {
       this.lineDom.text(message.value);
+      this.value_type = message.value_type;
     } else {
       this.lineDom.text("(" + this.messages.length + " times)");
+      if (this.value_type != message.value_type) {
+        this.value_type = null;
+      }
+    }
+    if (this.value_type != null) {
+      this.lineDom.append($("<span>").addClass("type").text(this.value_type));
     }
   }.bind(this);
 
