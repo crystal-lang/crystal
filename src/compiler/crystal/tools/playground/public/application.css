@@ -1,3 +1,13 @@
+body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
 html {
   font-family: GillSans, Calibri, Trebuchet, sans-serif;
 }
@@ -75,18 +85,18 @@ html {
 }
 
 #editor, #sidebar {
-  min-height: 80vh;
+  min-height: 77vh;
 }
 
 @media (max-height: 700px) {
   #editor, #sidebar {
-    min-height: 75vh;
+    min-height: 70vh;
   }
 }
 
-@media (max-height: 500px) {
+@media (max-height: 540px) {
   #editor, #sidebar {
-    min-height: 70vh;
+    min-height: 65vh;
   }
 }
 
