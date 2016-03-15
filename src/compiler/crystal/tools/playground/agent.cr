@@ -12,7 +12,7 @@ class Crystal::Playground::Agent
   def i(value, line, names = nil)
     send "value" do |json, io|
       json.field "line", line
-      json.field "value", value.inspect
+      json.field "value", to_value(value)
 
       if names && value.is_a?(Tuple)
         json.field "data" do
@@ -26,6 +26,22 @@ class Crystal::Playground::Agent
     end
 
     value
+  end
+
+  def to_value(value : Void)
+    "(void)"
+  end
+
+  def to_value(value : Void?)
+    if value
+      "(void)"
+    else
+      nil.inspect
+    end
+  end
+
+  def to_value(value)
+    value.inspect
   end
 
   def exit(status)

@@ -32,6 +32,9 @@ class Crystal::Playground::TestAgent < Playground::Agent
   end
 end
 
+fun a_sample_void : Void
+end
+
 describe Playground::Agent do
   it "should send json messages and return inspected value" do
     agent = Crystal::Playground::TestAgent.new(".", 10, 32)
@@ -40,6 +43,13 @@ describe Playground::Agent do
     x, y = 3, 4
     agent.i({x, y}, 1, ["x", "y"]).should eq({3, 4})
     agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"{3, 4}","data":{"x":"3","y":"4"}}))
+
+    agent.i(nil as Void?, 1)
+    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"nil"}))
+    agent.i(a_sample_void as Void?, 1)
+    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"(void)"}))
+    agent.i(a_sample_void, 1)
+    agent.last_message.should eq(%({"session":10,"tag":32,"type":"value","line":1,"value":"(void)"}))
   end
 end
 
