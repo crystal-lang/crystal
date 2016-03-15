@@ -1,13 +1,34 @@
 module Crystal
   class Playground::AgentInstrumentorTransformer < Transformer
+
+    class FirstBlockVisitor < Visitor
+      def initialize(@instrumentor)
+      end
+
+      def visit(node : Call)
+        if node_block = node.block
+          @instrumentor.ignoring_line_of_node node do
+            node.block = node_block.transform(@instrumentor)
+          end
+        end
+        false
+      end
+
+      def visit(node)
+        true
+      end
+    end
+
     property ignore_line
 
     def initialize
       @ignore_line = nil
+      @nested_block_visitor = FirstBlockVisitor.new(self)
     end
 
     private def instrument(node)
       if (location = node.location) && location.line_number != ignore_line
+        @nested_block_visitor.not_nil!.accept(node)
         args = [node as ASTNode, NumberLiteral.new(location.line_number)] of ASTNode
         if node.is_a?(TupleLiteral)
           args << ArrayLiteral.new(node.elements.map { |e| StringLiteral.new(e.to_s) as ASTNode })
@@ -23,14 +44,7 @@ module Crystal
       node
     end
 
-    def transform(node : NilLiteral | NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | StringInterpolation | RegexLiteral | Var | InstanceVar | ClassVar | Global | TypeOf)
-      instrument(node)
-    end
-
-    def transform(node : Call)
-      if node_block = node.block
-        node.block = node_block.transform(self)
-      end
+    def transform(node : NilLiteral | NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | StringInterpolation | RegexLiteral | Var | InstanceVar | ClassVar | Global | TypeOf | Call)
       instrument(node)
     end
 
@@ -68,11 +82,10 @@ module Crystal
     end
 
     def transform(node : Def)
-      old_ignore_line = @ignore_line
-      @ignore_line = node.location.try(&.line_number)
-      node.body = node.body.transform(self)
-      @ignore_line = old_ignore_line
-      node
+      ignoring_line_of_node node do
+        node.body = node.body.transform(self)
+        node
+      end
     end
 
     def transform(node : ClassDef | ModuleDef)
@@ -92,6 +105,14 @@ module Crystal
 
     def transform(node)
       node
+    end
+
+    def ignoring_line_of_node(node)
+      old_ignore_line = @ignore_line
+      @ignore_line = node.location.try(&.line_number)
+      res = yield
+      @ignore_line = old_ignore_line
+      res
     end
   end
 end

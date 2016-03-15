@@ -326,6 +326,28 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
+  it "instrument nested blocks unless in same line" do
+    assert_agent %(
+    a = foo do
+      'a'
+      bar do
+        'b'
+      end
+      baz { 'c' }
+    end
+    ), <<-CR
+    a = $p.i(foo do
+      $p.i('a', 3)
+      $p.i(bar do
+        $p.i('b', 5)
+      end, 4)
+      $p.i(baz do
+        'c'
+      end, 7)
+    end, 2)
+    CR
+  end
+
   it "instrument typeof" do
     assert_agent %(typeof(5)), %($p.i(typeof(5), 1))
   end
