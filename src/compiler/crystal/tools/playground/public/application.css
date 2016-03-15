@@ -8,74 +8,24 @@ main {
   flex: 1 0 auto;
 }
 
+footer > div > div {
+  margin-bottom: 1em;
+}
+
 html {
-  font-family: GillSans, Calibri, Trebuchet, sans-serif;
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+  font-weight: 200;
 }
 
-.hexagon {
-  position: relative;
-  width: 36px;
-  height: 20.78px;
-  background-color: #ffffff;
-  margin: 10.39px 0;
-  box-shadow: 0 0 20px rgba(0,0,0,0.6);
-}
-
-.hexagon:before,
-.hexagon:after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  width: 25.46px;
-  height: 25.46px;
-  -webkit-transform: scaleY(0.5774) rotate(-45deg);
-  -ms-transform: scaleY(0.5774) rotate(-45deg);
-  transform: scaleY(0.5774) rotate(-45deg);
-  background-color: inherit;
-  left: 5.2721px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.6);
-}
-
-.hexagon:before {
-  top: -12.7279px;
-}
-
-.hexagon:after {
-  bottom: -12.7279px;
-}
-
-/*cover up extra shadows*/
-.hexagon span {
-  display: block;
-  position: absolute;
-  top:0px;
-  left: 0;
-  width:36px;
-  height:20.7846px;
-  z-index: 2;
-  background: inherit;
-}
-
-.brand-logo {
-  position: relative;
-}
-
-.brand-logo img {
-  height: 48px;
-  z-index: 100;
+h4 {
+  margin-top: 3.14rem;
 }
 
 .brand-logo img {
   position: absolute;
   top: 7px;
-  left: -55px;
-}
-
-.hexagon {
-  position: absolute;
-  top: 10.5px;
-  left: -49px;
-  transform: rotate(-14.2deg);
+  left: 7px;
+  transform: scale(0.66);
 }
 
 #editor, #sidebar, #output, .inspect-values, .CodeMirror {
@@ -85,10 +35,10 @@ html {
 }
 
 #editor, #sidebar {
-  min-height: 77vh;
+  min-height: 75vh;
 }
 
-@media (max-height: 700px) {
+@media (max-height: 780px) {
   #editor, #sidebar {
     min-height: 70vh;
   }
@@ -113,7 +63,9 @@ html {
 }
 
 #sidebar-wrapper {
-  background: #f7f7f7;
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid #ccc;
 }
 
 #sidebar {

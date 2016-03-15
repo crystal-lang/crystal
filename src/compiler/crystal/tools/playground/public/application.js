@@ -195,9 +195,9 @@ ws.onmessage = function(e) {
     case "output":
       outputDom.innerText = message.content;
       if (message.content.length > 0) {
-        consoleButton.addClass('disabled');
+        consoleButton.addClass('grey-text').removeClass('teal-text');
         window.setTimeout(function(){
-          consoleButton.removeClass('disabled');
+          consoleButton.removeClass('grey-text').addClass('teal-text');
         }, 200);
       }
       break;

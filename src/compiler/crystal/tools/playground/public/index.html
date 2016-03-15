@@ -12,20 +12,20 @@
 
     <title>Crystal Playground</title>
   </head>
-  <body>
-
+  <body class="grey lighten-3 grey-text text-darken-2">
     <header>
       <div class="navbar-fixed">
         <nav>
-          <div class="nav-wrapper grey darken-3">
-            <a href="#" class="brand-logo right">
-              <div class="hexagon"><span></span></div>
-              <img src="icon.png" /> Crystal Playground
-            </a>
-            <ul class="left">
-              <li><a class="waves-effect waves-light btn" href="#" onclick="return run();">Run</a></li>
-              <li><a class="waves-effect waves-light btn modal-trigger disabled yellow darken-2" href="#output-modal">Output</a></li>
-            </ul>
+          <div class="nav-wrapper white">
+            <div class="col s12">
+              <a href="/" class="brand-logo">
+                <img src="icon.png" />
+              </a>
+              <ul class="right">
+                <li><a href="/" class="grey-text text-darken-2">Playground</a></li>
+                <li><a href="/about.html" class="grey-text text-darken-2">About</a></li>
+              </ul>
+            </div>
             <div id="run-progress" class="progress">
               <div class="indeterminate"></div>
             </div>
@@ -53,17 +53,26 @@
               <div id="sidebar">
               </div>
             </div>
+            <!-- <div class="right-align"> -->
+              <a class="modal-trigger grey-text" href="#output-modal" style="position: relative; top: -14px;">
+                <span class="octicon octicon-terminal"></span>
+              </a></li>
+            <!-- </div> -->
           </div>
         </div>
       </div>
 
       <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
-        <a class="btn-floating btn-large red darken-1" href="#" onclick="return saveAsFile();">
-          <span class="octicon octicon-desktop-download"></span>
+        <a class="btn-floating btn-large waves-effect waves-light tooltipped" style="padding-top: 5px; padding-left: 2px;" href="#" onclick="return run();" data-position="left" data-delay="50" data-tooltip="Runs code">
+          <span class="mega-octicon octicon-triangle-right"></span>
         </a>
 
         <ul>
-          <li><a href="/about.html" class="btn-floating blue"><span class="octicon octicon-question"></span></a></li>
+          <li>
+            <a class="btn-floating btn red darken-1 tooltipped" href="#" onclick="return saveAsFile();" data-position="left" data-delay="50" data-tooltip="Dowload code as file">
+              <span class="octicon octicon-desktop-download"></span>
+            </a>
+          </li>
         </ul>
       </div>
 
@@ -85,7 +94,7 @@
 
     <footer>
       <div class="footer-copyright">
-        <p class="center-align blue-grey-text text-lighten-4">Happy Crystalling ♥</p>
+        <div class="center-align">Happy Crystalling ♥</div>
       </div>
     </footer>
 
