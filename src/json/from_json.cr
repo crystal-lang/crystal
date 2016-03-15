@@ -41,13 +41,11 @@ def Bool.new(pull : JSON::PullParser)
   pull.read_bool
 end
 
-def Int32.new(pull : JSON::PullParser)
-  pull.read_int.to_i
-end
-
-def Int64.new(pull : JSON::PullParser)
-  pull.read_int.to_i64
-end
+{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
+  def {{type.id}}.new(pull : JSON::PullParser)
+    {{type.id}}.new(pull.read_int)
+  end
+{% end %}
 
 def Float32.new(pull : JSON::PullParser)
   case pull.kind
