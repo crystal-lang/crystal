@@ -574,7 +574,7 @@ class HTTP::Client
   end
 end
 
-require "openssl"
+require "openssl" ifdef !without_openssl
 require "socket"
 require "uri"
 require "base64"

@@ -1,7 +1,7 @@
 require "socket"
 require "http"
 require "base64"
-require "openssl"
+require "openssl" ifdef !without_openssl
 require "uri"
 
 # :nodoc:

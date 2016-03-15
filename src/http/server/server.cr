@@ -1,4 +1,4 @@
-require "openssl"
+require "openssl" ifdef !without_openssl
 require "socket"
 require "./context"
 require "./handler"
