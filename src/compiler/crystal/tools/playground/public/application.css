@@ -35,6 +35,14 @@ h4 {
   }
 }
 
+@media only screen and (min-width: 600px) {
+  #toast-container {
+    top: initial;
+    bottom: 45px;
+    right: 90px;
+  }
+}
+
 #editor, #sidebar, #output, .inspect-values, .CodeMirror {
   font-family: Monaco, Menlo, Consolas, 'Courier New', monospace;
   font-size: 14px;

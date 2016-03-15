@@ -5,6 +5,7 @@ var ws = new WebSocket("ws://" + location.host + "/client");
 var outputDom = document.getElementById('output');
 var sidebarDom = $('#sidebar');
 var consoleButton = $('a[href="#output-modal"]');
+var runButton = $('#run');
 var runProgress = $('#run-progress');
 var runTag = 0;
 
@@ -204,6 +205,12 @@ function showEditorError(line, column, message, color) {
   matchEditorSidebarHeight();
 }
 
+ws.onclose = function() {
+  runButton.addClass("disabled");
+  runProgress.hide();
+  Materialize.toast('Connection lost');
+}
+
 ws.onmessage = function(e) {
   var message = JSON.parse(e.data);
   if (message.tag != runTag) return; // discarding message form old execution
@@ -293,7 +300,7 @@ $(document).ready(function(){
   scheduleRun();
 
   var mac = /Mac/.test(navigator.platform);
-  $('[data-tooltip="Runs code"]').attr('data-tooltip', mac ? '⌘ + Enter' : 'Ctrl + Enter');
+  runButton.attr('data-tooltip', mac ? '⌘ + Enter' : 'Ctrl + Enter');
 });
 
 // load file by drag and drop
