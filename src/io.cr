@@ -552,8 +552,8 @@ module IO
   #
   # ```
   # io = MemoryIO.new "hello world"
-  # io.read # => "hello world"
-  # io.read # => ""
+  # io.gets_to_end # => "hello world"
+  # io.gets_to_end # => ""
   # ```
   def gets_to_end : String
     String.build do |str|
