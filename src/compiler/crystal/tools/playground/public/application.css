@@ -28,6 +28,13 @@ h4 {
   transform: scale(0.66);
 }
 
+@media only screen and (max-width: 992px) {
+  nav .brand-logo {
+    left: 7px;
+    transform: none;
+  }
+}
+
 #editor, #sidebar, #output, .inspect-values, .CodeMirror {
   font-family: Monaco, Menlo, Consolas, 'Courier New', monospace;
   font-size: 14px;
