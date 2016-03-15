@@ -22,6 +22,7 @@ var editor = CodeMirror(document.getElementById('editor'), {
   autofocus: true,
   tabSize: 2,
   viewportMargin: Infinity,
+  dragDrop: false, // dragDrop functionality is implemented to capture drop anywhere and replace source
   value: defaultCode
 });
 
@@ -271,3 +272,20 @@ $(document).ready(function(){
 
   scheduleRun();
 });
+
+// load file by drag and drop
+var doc = document.documentElement;
+doc.ondragover = function () { return false; };
+doc.ondragend = function () { return false; };
+doc.ondrop = function (event) {
+  event.preventDefault && event.preventDefault();
+  var files = event.dataTransfer.files;
+  if (files.length > 0) {
+    var reader = new FileReader();
+    reader.onload = function (event) {
+      editor.setValue(reader.result);
+    };
+    reader.readAsText(files[0]);
+  }
+  return false;
+};
