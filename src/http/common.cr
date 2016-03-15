@@ -1,4 +1,4 @@
-require "zlib"
+require "zlib" ifdef !without_zlib
 
 module HTTP
   # :nodoc:
