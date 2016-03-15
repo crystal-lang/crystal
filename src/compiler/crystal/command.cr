@@ -446,14 +446,19 @@ class Crystal::Command
   end
 
   private def playground
+    host = "localhost"
     port = 8080
 
     option_parser =
       OptionParser.parse(options) do |opts|
         opts.banner = "Usage: crystal play [options]\n\nOptions:"
 
-        opts.on("-p PORT", "--port PORT", "HTTP port to host the playground") do |p|
+        opts.on("-p PORT", "--port PORT", "Runs the playground on the specified port") do |p|
           port = p.to_i
+        end
+
+        opts.on("-b HOST", "--binding HOST", "Binds the playground to the specified IP") do |h|
+          host = h
         end
 
         opts.on("-h", "--help", "Show this message") do
@@ -462,7 +467,7 @@ class Crystal::Command
         end
       end
 
-    Playground::Server.new(port).start
+    Playground::Server.new(host, port).start
   end
 
   private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false)

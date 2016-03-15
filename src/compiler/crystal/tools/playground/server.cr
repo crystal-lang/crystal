@@ -28,7 +28,7 @@ module Crystal::Playground
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
-        $p = Crystal::Playground::Agent.new("ws://0.0.0.0:#{@port}/agent", #{@session_key}, #{tag})
+        $p = Crystal::Playground::Agent.new("ws://localhost:#{@port}/agent", #{@session_key}, #{tag})
 
         at_exit do |status|
           $p.exit(status)
@@ -182,7 +182,7 @@ module Crystal::Playground
     @sessions = {} of Int32 => Session
     @sessionsKey = 0
 
-    def initialize(@port : Int32)
+    def initialize(@host : String, @port : Int32)
     end
 
     def start
@@ -224,14 +224,14 @@ module Crystal::Playground
         end
       end
 
-      server = HTTP::Server.new "localhost", @port, [
+      server = HTTP::Server.new @host, @port, [
         client_ws,
         agent_ws,
         IndexHandler.new(File.join(public_dir, "index.html")),
         HTTP::StaticFileHandler.new(public_dir),
       ]
 
-      puts "Listening on http://0.0.0.0:#{@port}"
+      puts "Listening on http://#{@host}:#{@port}"
       server.listen
     end
   end
