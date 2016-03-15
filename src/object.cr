@@ -355,7 +355,7 @@ class Object
   macro getter?(*names)
     {% for name in names %}
       {% if name.is_a?(TypeDeclaration) %}
-        @{{name}}?
+        @{{name}}
         {% name = name.var %}
       {% end %}
 

@@ -2456,8 +2456,10 @@ module Crystal
     getter base_type : IntegerType
     getter? flags : Bool
 
-    def initialize(program, container, name, @base_type, @flags)
+    def initialize(program, container, name, @base_type, flags)
       super(program, container, name)
+
+      @flags = !!flags
 
       add_def Def.new("value", [] of Arg, Primitive.new(:enum_value, @base_type))
       metaclass.add_def Def.new("new", [Arg.new("value", type: @base_type)], Primitive.new(:enum_new, self))
