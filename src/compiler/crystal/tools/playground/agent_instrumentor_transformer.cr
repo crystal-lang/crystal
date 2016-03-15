@@ -44,8 +44,18 @@ module Crystal
       node
     end
 
-    def transform(node : NilLiteral | NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | StringInterpolation | RegexLiteral | Var | InstanceVar | ClassVar | Global | TypeOf | Call)
+    def transform(node : NilLiteral | NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | StringInterpolation | RegexLiteral | Var | InstanceVar | ClassVar | Global | TypeOf)
       instrument(node)
+    end
+
+    def transform(node : Call)
+      case { node.obj, node.name, node.args.size }
+      when { nil, "raise", 1 }
+        node.args[0] = instrument(node.args[0])
+        node
+      else
+        instrument(node)
+      end
     end
 
     def transform(node : Yield)
@@ -99,6 +109,23 @@ module Crystal
     end
 
     def transform(node : Block)
+      node.body = node.body.transform(self)
+      node
+    end
+
+    def transform(node : ExceptionHandler)
+      node.body = node.body.transform(self)
+      node.rescues = transform_many(node.rescues)
+      if node_else = node.else
+        node.else = node_else.transform(self)
+      end
+      if node_ensure = node.ensure
+        node.ensure = node_ensure.transform(self)
+      end
+      node
+    end
+
+    def transform(node : Rescue)
       node.body = node.body.transform(self)
       node
     end

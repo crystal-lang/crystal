@@ -361,4 +361,44 @@ describe Playground::AgentInstrumentorTransformer do
   it "instrument typeof" do
     assert_agent %(typeof(5)), %($p.i(typeof(5), 1))
   end
+
+  it "instrument exceptions" do
+    assert_agent %(
+    begin
+      raise "The exception"
+    rescue ex : String
+      1
+    rescue
+      0
+    else
+      2
+    ensure
+      3
+    end
+    def foo(x)
+      raise "Other"
+    rescue
+      0
+    end
+    ), <<-CR
+    begin
+      raise($p.i("The exception", 3))
+    rescue ex : String
+      $p.i(1, 5)
+    rescue
+      $p.i(0, 7)
+    else
+      $p.i(2, 9)
+    ensure
+      $p.i(3, 11)
+    end
+    def foo(x)
+      begin
+        raise($p.i("Other", 14))
+      rescue
+        $p.i(0, 16)
+      end
+    end
+    CR
+  end
 end
