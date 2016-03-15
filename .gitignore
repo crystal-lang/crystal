@@ -3,3 +3,4 @@ _site
 _book
 vendor/bundle
 .ruby-version
+.crystal
