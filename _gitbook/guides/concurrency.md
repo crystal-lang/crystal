@@ -1,18 +1,18 @@
 # Concurrency
 
-## Concurrency vs. Paralelism
+## Concurrency vs. Parallelism
 
-The definitions of "concurrency" and "paralelism" somtimes get mixed up, but they are not the same.
+The definitions of "concurrency" and "parallelism" sometimes get mixed up, but they are not the same.
 
-A concurrent system is one that can be in charge of many tasks, although not necessarily it is executing them at the same time. You can think of yourself being in the kitchen cooking: you chop an onion, put it to fry, and while it's being fried you chop a tomato, but you are not doing all of those things at the same time: you distribute your time between those tasks. Paralelism would be to stir fry onions with one hand while with the other one you chop a tomato.
+A concurrent system is one that can be in charge of many tasks, although not necessarily it is executing them at the same time. You can think of yourself being in the kitchen cooking: you chop an onion, put it to fry, and while it's being fried you chop a tomato, but you are not doing all of those things at the same time: you distribute your time between those tasks. Parallelism would be to stir fry onions with one hand while with the other one you chop a tomato.
 
-At the moment of this writing, Crystal has concurrency support but not paralelism: several tasks can be executed, and a bit of time will be spent on each of these, but two code paths are never executed at the same exact time.
+At the moment of this writing, Crystal has concurrency support but not parallelism: several tasks can be executed, and a bit of time will be spent on each of these, but two code paths are never executed at the same exact time.
 
 A Crystal program executes in a single operating system thread, except the Garbage Collector (GC) which implements a concurrent mark-and-sweep (currently [Boehm GC](http://www.hboehm.info/gc/)).
 
 ### Fibers
 
-To achieve concurrency, Crystal has fibers. A fiber is in a way similar to an operating system thread execpt that it's much more lightweight and its execution is managed internally by the process. So, a program will spawn multiple fibers and Crystal wil make sure to execute them when the time is right.
+To achieve concurrency, Crystal has fibers. A fiber is in a way similar to an operating system thread except that it's much more lightweight and its execution is managed internally by the process. So, a program will spawn multiple fibers and Crystal will make sure to execute them when the time is right.
 
 ### Event loop
 
@@ -35,7 +35,7 @@ When a program starts, it fires up a main fiber that will execute your top-level
 
 A fiber is an execution unit that is more lightweight than a thread. It's a small object that has an associated [stack](https://en.wikipedia.org/wiki/Call_stack) of 8MB, which is what is usually assigned to an operating system thread.
 
-Fibers, unlike threads, are cooperative. Threads are pre-emptive: the operating system might interrupt a thread at any time and start executing another one. A fiber must expliclty tell the Runtime Scheduler to switch to another fiber. For example if there's I/O to be wait, a fiber will tell the scheduler "Look, I have to wait for this I/O to be available, you continue executing other fibers and come back to me when that I/O is ready".
+Fibers, unlike threads, are cooperative. Threads are pre-emptive: the operating system might interrupt a thread at any time and start executing another one. A fiber must explicitly tell the Runtime Scheduler to switch to another fiber. For example if there's I/O to be wait, a fiber will tell the scheduler "Look, I have to wait for this I/O to be available, you continue executing other fibers and come back to me when that I/O is ready".
 
 The advantage of being cooperative is that a lot of the overhead of doing a context switch (switching between threads) is gone.
 
@@ -52,7 +52,7 @@ The scheduler has a queue of :
 
 ### Communicating data
 
-Because at this moment there's only a single thread executing your code, accessing and modifying a global variable in different fibers will work just fine. However, once multiple threads (paralelism) is introduced in the language, it might break. That's why the recommended mechanism to communicate data is using channels and sending messages between them. Internally, a channel implements all the locking mechanisms to avoid data races, but from the outside you use them as communication primitives, so you (the user) don't have to use locks.
+Because at this moment there's only a single thread executing your code, accessing and modifying a global variable in different fibers will work just fine. However, once multiple threads (parallelism) is introduced in the language, it might break. That's why the recommended mechanism to communicate data is using channels and sending messages between them. Internally, a channel implements all the locking mechanisms to avoid data races, but from the outside you use them as communication primitives, so you (the user) don't have to use locks.
 
 ## Sample code
 
