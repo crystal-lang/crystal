@@ -22,8 +22,9 @@
                 <img src="icon.png" />
               </a>
               <ul class="right">
-                <li><a href="/" class="grey-text text-darken-2">Playground</a></li>
-                <li><a href="/about.html" class="grey-text text-darken-2">About</a></li>
+                <li><a href="/">Playground</a></li>
+                <li><a href="/about.html">About</a></li>
+                <li><a href="#settings-modal"><span class="octicon octicon-settings"></span></a></li>
               </ul>
             </div>
             <div id="run-progress" class="progress">
@@ -69,7 +70,12 @@
 
         <ul>
           <li>
-            <a class="btn-floating btn red darken-1 tooltipped" href="#" onclick="return saveAsFile();" data-position="left" data-delay="50" data-tooltip="Dowload code as file">
+            <a class="btn-floating btn grey darken-1 tooltipped" href="#" onclick="return saveAsGist();" data-position="left" data-delay="50" data-tooltip="Share as gist">
+              <span class="octicon octicon-mark-github"></span>
+            </a>
+          </li>
+          <li>
+            <a class="btn-floating btn red darken-1 tooltipped" href="#" onclick="return saveAsFile();" data-position="left" data-delay="50" data-tooltip="Download code as file">
               <span class="octicon octicon-desktop-download"></span>
             </a>
           </li>
@@ -87,7 +93,38 @@
         <div class="modal-content">
         </div>
         <div class="modal-footer">
-          <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+          <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+        </div>
+      </div>
+
+      <div id="settings-modal" class="modal">
+        <div class="modal-content">
+          <div class="row">
+            <div class="input-field col s12">
+              <input id="github" name="settingsGithubToken" type="text">
+              <label for="github">GitHub Access Token</label>
+            </div>
+            <div class="col s12">
+              Create a <a href="https://github.com/settings/tokens">GitHub Access Token</a> in order to use the <i>share as gist</i> button.
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="input-field col s12">
+              <div class="switch">
+                <label>
+                  Hide types
+                  <input name="settingsShowTypes" type="checkbox">
+                  <span class="lever"></span>
+                  Show types
+                </label>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
         </div>
       </div>
     </main>

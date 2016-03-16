@@ -8,6 +8,10 @@ main {
   flex: 1 0 auto;
 }
 
+nav ul a {
+  color: #616161;
+}
+
 footer > div > div {
   margin-bottom: 1em;
 }
