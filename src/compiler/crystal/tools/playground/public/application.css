@@ -123,3 +123,11 @@ h4 {
 #run-progress, #stop {
   display: none;
 }
+
+.inspect-table th, .inspect-table td {
+  padding: 8px 5px
+}
+
+.inspect-table th {
+  font-weight: 400;
+}
