@@ -32,9 +32,9 @@ module HTTP
           encoding = headers["Content-Encoding"]?
           case encoding
           when "gzip"
-            body = Zlib::Inflate.gzip(body)
+            body = Zlib::Inflate.gzip(body, sync_close: true)
           when "deflate"
-            body = Zlib::Inflate.new(body)
+            body = Zlib::Inflate.new(body, sync_close: true)
           end
         end
 

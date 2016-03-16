@@ -15,16 +15,33 @@ module Zlib
       inflate.gets_to_end.should eq(message)
     end
 
-    it "can be closed" do
+    it "can be closed without sync" do
       io = MemoryIO.new
       deflate = Deflate.new(io)
       deflate.close
       deflate.closed?.should be_true
-      io.closed?.should be_true
+      io.closed?.should be_false
 
       expect_raises IO::Error, "closed stream" do
         deflate.print "a"
       end
+    end
+
+    it "can be closed with sync (1)" do
+      io = MemoryIO.new
+      deflate = Deflate.new(io, sync_close: true)
+      deflate.close
+      deflate.closed?.should be_true
+      io.closed?.should be_true
+    end
+
+    it "can be closed with sync (2)" do
+      io = MemoryIO.new
+      deflate = Deflate.new(io)
+      deflate.sync_close = true
+      deflate.close
+      deflate.closed?.should be_true
+      io.closed?.should be_true
     end
 
     it "can be flushed" do
