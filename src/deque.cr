@@ -214,6 +214,23 @@ class Deque(T)
     self
   end
 
+  # Removes all items from `self` that are equal to *obj*.
+  #
+  # ```
+  # a = Deque{"a", "b", "b", "b", "c"}
+  # a.delete("b")
+  # a # => Deque{"a", "c"}
+  # ```
+  def delete(obj)
+    # TODO this can probably be optimized a lot
+    found = false
+    while index = index(obj)
+      delete_at(index)
+      found = true
+    end
+    found
+  end
+
   # Delete the item that is present at the `index`. Items to the right of this one will have their indices decremented.
   # Raises `IndexError` if trying to delete an element outside the deque's range.
   #
