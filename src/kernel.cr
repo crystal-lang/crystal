@@ -1,6 +1,6 @@
 STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
 STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
-STDERR = IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)
+STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 ARGV         = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
