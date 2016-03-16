@@ -115,3 +115,6 @@
 * [Conventions](conventions/README.md)
    * [Coding style](conventions/coding_style.md)
    * [Documenting code](conventions/documenting_code.md)
+* [Guides](guides/README.md)
+   * [Concurrency](guides/concurrency.md)
+
