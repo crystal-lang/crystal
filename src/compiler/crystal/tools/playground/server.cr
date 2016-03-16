@@ -202,7 +202,10 @@ module Crystal::Playground
 
             # temporal solution for streamming output
             case json["type"].as_s
-            when "value", "exit"
+            when "value"
+              session.stream_output
+            when "exit"
+              sleep 1
               session.stream_output
             end
           end

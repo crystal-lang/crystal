@@ -238,19 +238,22 @@ ws.onclose = function() {
   Materialize.toast('Connection lost. Refresh.');
 }
 
+var exitStatus;
 ws.onmessage = function(e) {
   var message = JSON.parse(e.data);
   if (message.tag != runTag) return; // discarding message form old execution
 
   switch (message.type) {
     case "run":
+      exitStatus = 0;
       break;
     case "output":
       outputDom.innerText = message.content;
+      var color = exitStatus == 0 ? 'teal-text' : 'red-text'
       if (message.content.length > 0) {
-        consoleButton.addClass('grey-text').removeClass('teal-text');
+        consoleButton.addClass('grey-text').removeClass('teal-text red-text');
         window.setTimeout(function(){
-          consoleButton.removeClass('grey-text').addClass('teal-text');
+          consoleButton.removeClass('grey-text').addClass(color);
         }, 200);
       }
       break;
@@ -259,6 +262,7 @@ ws.onmessage = function(e) {
       break;
     case "exit":
       runProgress.hide();
+      exitStatus = message.status;
       break;
     case "exception":
       runProgress.hide();
@@ -297,7 +301,7 @@ function run() {
   clearInspectors();
   hideEditorErrors();
   outputDom.innerText = "";
-  consoleButton.addClass('disabled');
+  consoleButton.addClass('grey-text').removeClass('teal-text red-text');
 
   ws.send(JSON.stringify({
     type: "run",
