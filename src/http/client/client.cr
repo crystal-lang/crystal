@@ -81,7 +81,13 @@ class HTTP::Client
   property? compress : Bool
 
   @before_request : Array(Request ->)?
-  @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
+
+  ifdef without_openssl
+    @socket : TCPSocket | Nil
+  else
+    @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
+  end
+
   @dns_timeout : Float64?
   @connect_timeout : Float64?
   @read_timeout : Float64?
@@ -91,6 +97,12 @@ class HTTP::Client
   # be used depending on the *ssl* arguments: 80 for if *ssl* is `false`,
   # 443 if *ssl* is `true`.
   def initialize(@host, port = nil, @ssl = false)
+    ifdef without_openssl
+      if @ssl
+        raise "HTTP::Client ssl is disabled because `-D without_openssl` was passed at compile time"
+      end
+    end
+
     @port = (port || (ssl ? 443 : 80)).to_i
     @compress = true
   end
@@ -399,11 +411,15 @@ class HTTP::Client
 
   private def set_defaults(request)
     request.headers["User-agent"] ||= "Crystal"
-    if compress? && !request.headers.has_key?("Accept-Encoding")
-      request.headers["Accept-Encoding"] = "gzip, deflate"
-      true
-    else
+    ifdef without_zlib
       false
+    else
+      if compress? && !request.headers.has_key?("Accept-Encoding")
+        request.headers["Accept-Encoding"] = "gzip, deflate"
+        true
+      else
+        false
+      end
     end
   end
 
@@ -488,9 +504,11 @@ class HTTP::Client
     socket.sync = false
     @socket = socket
 
-    if @ssl
-      ssl_socket = OpenSSL::SSL::Socket.new(socket, sync_close: true)
-      @socket = socket = ssl_socket
+    ifdef !without_openssl
+      if @ssl
+        ssl_socket = OpenSSL::SSL::Socket.new(socket, sync_close: true)
+        @socket = socket = ssl_socket
+      end
     end
 
     socket
@@ -556,7 +574,7 @@ class HTTP::Client
   end
 end
 
-require "openssl"
+require "openssl" ifdef !without_openssl
 require "socket"
 require "uri"
 require "base64"

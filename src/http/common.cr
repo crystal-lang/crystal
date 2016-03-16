@@ -1,4 +1,4 @@
-require "zlib"
+require "zlib" ifdef !without_zlib
 
 module HTTP
   # :nodoc:
@@ -29,12 +29,16 @@ module HTTP
         end
 
         if decompress && body
-          encoding = headers["Content-Encoding"]?
-          case encoding
-          when "gzip"
-            body = Zlib::Inflate.gzip(body, sync_close: true)
-          when "deflate"
-            body = Zlib::Inflate.new(body, sync_close: true)
+          ifdef without_zlib
+            raise "Can't decompress because `-D without_zlib` was passed at compile time"
+          else
+            encoding = headers["Content-Encoding"]?
+            case encoding
+            when "gzip"
+              body = Zlib::Inflate.gzip(body, sync_close: true)
+            when "deflate"
+              body = Zlib::Inflate.new(body, sync_close: true)
+            end
           end
         end
 

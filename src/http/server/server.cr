@@ -1,4 +1,4 @@
-require "openssl"
+require "openssl" ifdef !without_openssl
 require "socket"
 require "./context"
 require "./handler"
@@ -88,7 +88,9 @@ require "../common"
 # server.listen
 # ```
 class HTTP::Server
-  property ssl : OpenSSL::SSL::Context?
+  ifdef !without_openssl
+    property ssl : OpenSSL::SSL::Context?
+  end
 
   @wants_close : Bool
   @wants_close = false
@@ -138,9 +140,13 @@ class HTTP::Server
 
   private def handle_client(io)
     io.sync = false
-    if ssl = @ssl
-      io = OpenSSL::SSL::Socket.new(io, :server, ssl, sync_close: true)
+
+    ifdef !without_openssl
+      if ssl = @ssl
+        io = OpenSSL::SSL::Socket.new(io, :server, ssl, sync_close: true)
+      end
     end
+
     must_close = true
     response = Response.new(io)
 

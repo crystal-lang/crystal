@@ -1,7 +1,7 @@
 require "socket"
 require "http"
 require "base64"
-require "openssl"
+require "openssl" ifdef !without_openssl
 require "uri"
 
 # :nodoc:
@@ -232,9 +232,19 @@ class HTTP::WebSocket::Protocol
   end
 
   def self.new(host : String, path : String, port = nil, ssl = false)
+    ifdef without_openssl
+      if ssl
+        raise "WebSocket ssl is disabled because `-D without_openssl` was passed at compile time"
+      end
+    end
+
     port = port || (ssl ? 443 : 80)
+
     socket = TCPSocket.new(host, port)
-    socket = OpenSSL::SSL::Socket.new(socket, sync_close: true) if ssl
+
+    ifdef !without_openssl
+      socket = OpenSSL::SSL::Socket.new(socket, sync_close: true) if ssl
+    end
 
     headers = HTTP::Headers.new
     headers["Host"] = "#{host}:#{port}"
