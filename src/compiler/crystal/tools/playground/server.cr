@@ -29,10 +29,6 @@ module Crystal::Playground
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
         $p = Crystal::Playground::Agent.new("ws://localhost:#{@port}/agent", #{@session_key}, #{tag})
-
-        at_exit do |status|
-          $p.exit(status)
-        end
         )
 
       sources = [
@@ -67,6 +63,10 @@ module Crystal::Playground
 
       data = {"type": "run", "tag": tag, "filename": output_filename}
       send(data.to_json)
+    end
+
+    def stop
+      stop_process
     end
 
     def send(message)
@@ -126,8 +126,21 @@ module Crystal::Playground
     private def execute(output_filename)
       stop_process
 
-      @process = Process.new(output_filename, args: [] of String, input: true, output: @output_w, error: @output_w)
+      @process = process = Process.new(output_filename, args: [] of String, input: true, output: @output_w, error: @output_w)
       @running_process_filename = output_filename
+      tag = @tag
+
+      spawn do
+        exit_status = process.wait.exit_status
+
+        stream_output
+
+        send_with_json_builder do |json, io|
+          json.field "type", "exit"
+          json.field "tag", tag
+          json.field "status", exit_status
+        end
+      end
 
       # if status.normal_exit?
       #   exit status.exit_code
@@ -204,9 +217,6 @@ module Crystal::Playground
             case json["type"].as_s
             when "value"
               session.stream_output
-            when "exit"
-              sleep 1
-              session.stream_output
             end
           end
         end
@@ -223,6 +233,8 @@ module Crystal::Playground
             source = json["source"].as_s
             tag = json["tag"].as_i
             session.run source, tag
+          when "stop"
+            session.stop
           end
         end
       end

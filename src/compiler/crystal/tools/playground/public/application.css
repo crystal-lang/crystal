@@ -120,6 +120,6 @@ h4 {
   overflow: scroll;
 }
 
-#run-progress {
+#run-progress, #stop {
   display: none;
 }

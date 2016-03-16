@@ -6,6 +6,7 @@ var outputDom = document.getElementById('output');
 var sidebarDom = $('#sidebar');
 var consoleButton = $('a[href="#output-modal"]');
 var runButton = $('#run');
+var stopButton = $('#stop');
 var runProgress = $('#run-progress');
 var runTag = 0;
 
@@ -235,25 +236,25 @@ function showEditorError(line, column, message, color) {
 ws.onclose = function() {
   runButton.addClass("disabled");
   runProgress.hide();
+  runButton.show();
+  stopButton.hide();
+
   Materialize.toast('Connection lost. Refresh.');
 }
 
-var exitStatus;
 ws.onmessage = function(e) {
   var message = JSON.parse(e.data);
   if (message.tag != runTag) return; // discarding message form old execution
 
   switch (message.type) {
     case "run":
-      exitStatus = 0;
       break;
     case "output":
       outputDom.innerText = message.content;
-      var color = exitStatus == 0 ? 'teal-text' : 'red-text'
       if (message.content.length > 0) {
         consoleButton.addClass('grey-text').removeClass('teal-text red-text');
         window.setTimeout(function(){
-          consoleButton.removeClass('grey-text').addClass(color);
+          consoleButton.removeClass('grey-text').addClass('teal-text');
         }, 200);
       }
       break;
@@ -262,10 +263,20 @@ ws.onmessage = function(e) {
       break;
     case "exit":
       runProgress.hide();
-      exitStatus = message.status;
+      runButton.show();
+      stopButton.hide();
+      if (message.status != 0) {
+        $(outputDom).append("exit status: " + message.status);
+        window.setTimeout(function(){
+          consoleButton.removeClass('grey-text teal-text').addClass('red-text');
+        }, 200);
+      }
       break;
     case "exception":
       runProgress.hide();
+      runButton.show();
+      stopButton.hide();
+
       for (var i = 0; i < message.exception.payload.length; i++) {
         var ex = message.exception.payload[i];
         if (ex.file == "play" || ex.file == "") {
@@ -275,6 +286,9 @@ ws.onmessage = function(e) {
       break;
     case "bug":
       runProgress.hide();
+      runButton.show();
+      stopButton.hide();
+
       showModal(
         $("<h4>").append("Bug"),
         $("<p>")
@@ -298,6 +312,8 @@ function run() {
   runTag++;
 
   runProgress.show();
+  runButton.hide();
+  stopButton.show();
   clearInspectors();
   hideEditorErrors();
   outputDom.innerText = "";
@@ -306,6 +322,15 @@ function run() {
   ws.send(JSON.stringify({
     type: "run",
     source: editor.getValue(),
+    tag: runTag
+  }));
+
+  return false;
+}
+
+function stop() {
+  ws.send(JSON.stringify({
+    type: "stop",
     tag: runTag
   }));
 
