@@ -12,14 +12,14 @@ class Crystal::Playground::Agent
   def i(value, line, names = nil)
     send "value" do |json, io|
       json.field "line", line
-      json.field "value", to_value(value)
+      json.field "value", safe_to_value(value)
       json.field "value_type", typeof(value).to_s
 
       if names && value.is_a?(Tuple)
         json.field "data" do
           io.json_object do |json|
             value.to_a.zip(names) do |v, name|
-              json.field name, v.inspect
+              json.field name, safe_to_value(v)
             end
           end
         end
@@ -27,6 +27,10 @@ class Crystal::Playground::Agent
     end
 
     value
+  end
+
+  def safe_to_value(value)
+    to_value(value) rescue "(error)"
   end
 
   def to_value(value : Void)
