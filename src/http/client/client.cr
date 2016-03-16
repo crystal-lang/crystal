@@ -81,11 +81,10 @@ class HTTP::Client
   property? compress : Bool
 
   @before_request : Array(Request ->)?
-  @socket : TCPSocket?
+  @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
   @dns_timeout : Float64?
   @connect_timeout : Float64?
   @read_timeout : Float64?
-  @ssl_socket : OpenSSL::SSL::Socket?
 
   # Creates a new HTTP client with the given *host*, *port* and *ssl*
   # configurations. If no port is given, the default one will
@@ -466,9 +465,6 @@ class HTTP::Client
 
   # Closes this client. If used again, a new connection will be opened.
   def close
-    @ssl_socket.try &.close
-    @ssl_socket = nil
-
     @socket.try &.close
     @socket = nil
   end
@@ -484,14 +480,20 @@ class HTTP::Client
   end
 
   private def socket
-    socket = @socket ||= TCPSocket.new @host, @port, @dns_timeout, @connect_timeout
+    socket = @socket
+    return socket if socket
+
+    socket = TCPSocket.new @host, @port, @dns_timeout, @connect_timeout
     socket.read_timeout = @read_timeout if @read_timeout
     socket.sync = false
+    @socket = socket
+
     if @ssl
-      @ssl_socket ||= OpenSSL::SSL::Socket.new(socket)
-    else
-      socket
+      ssl_socket = OpenSSL::SSL::Socket.new(socket, sync_close: true)
+      @socket = socket = ssl_socket
     end
+
+    socket
   end
 
   private def host_header

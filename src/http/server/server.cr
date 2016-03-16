@@ -136,11 +136,10 @@ class HTTP::Server
     @wants_close = true
   end
 
-  private def handle_client(sock)
-    sock.sync = false
-    io = sock
+  private def handle_client(io)
+    io.sync = false
     if ssl = @ssl
-      io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, ssl)
+      io = OpenSSL::SSL::Socket.new(io, :server, ssl, sync_close: true)
     end
     must_close = true
     response = Response.new(io)
@@ -167,15 +166,12 @@ class HTTP::Server
         end
 
         response.output.close
-        sock.flush
+        io.flush
 
         break unless request.keep_alive?
       end
     ensure
-      if must_close
-        ssl_sock.try &.close if @ssl
-        sock.close
-      end
+      io.close if must_close
     end
   end
 

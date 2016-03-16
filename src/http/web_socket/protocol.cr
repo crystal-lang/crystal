@@ -234,7 +234,7 @@ class HTTP::WebSocket::Protocol
   def self.new(host : String, path : String, port = nil, ssl = false)
     port = port || (ssl ? 443 : 80)
     socket = TCPSocket.new(host, port)
-    socket = OpenSSL::SSL::Socket.new(socket) if ssl
+    socket = OpenSSL::SSL::Socket.new(socket, sync_close: true) if ssl
 
     headers = HTTP::Headers.new
     headers["Host"] = "#{host}:#{port}"
