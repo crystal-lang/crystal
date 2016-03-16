@@ -2,14 +2,14 @@ require "event"
 
 # :nodoc:
 class Scheduler
-  @@runnables : Array(Fiber)
-  @@runnables = [] of Fiber
+  @@runnables : Deque(Fiber)
+  @@runnables = Deque(Fiber).new
 
   @@eb : Event::Base
   @@eb = Event::Base.new
 
   def self.reschedule
-    if runnable = @@runnables.pop?
+    if runnable = @@runnables.shift?
       runnable.resume
     else
       @@loop_fiber.not_nil!.resume

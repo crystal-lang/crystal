@@ -9,8 +9,8 @@ abstract class Channel(T)
 
   def initialize
     @closed = false
-    @senders = [] of Fiber
-    @receivers = [] of Fiber
+    @senders = Deque(Fiber).new
+    @receivers = Deque(Fiber).new
   end
 
   def self.new
@@ -220,7 +220,7 @@ class Channel::Unbuffered(T) < Channel(T)
     @has_value = true
     @sender = Fiber.current
 
-    if receiver = @receivers.pop?
+    if receiver = @receivers.shift?
       receiver.resume
     else
       Scheduler.reschedule
@@ -231,7 +231,7 @@ class Channel::Unbuffered(T) < Channel(T)
     until @has_value
       yield if @closed
       @receivers << Fiber.current
-      if sender = @senders.pop?
+      if sender = @senders.shift?
         sender.resume
       else
         Scheduler.reschedule

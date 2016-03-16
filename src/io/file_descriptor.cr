@@ -2,8 +2,8 @@
 class IO::FileDescriptor
   include Buffered
 
-  @readers : Array(Fiber)?
-  @writers : Array(Fiber)?
+  @readers : Deque(Fiber)?
+  @writers : Deque(Fiber)?
   @edge_triggerable : Bool
   @flush_on_newline : Bool
   @closed : Bool
@@ -99,14 +99,14 @@ class IO::FileDescriptor
 
   # :nodoc:
   def resume_read
-    if reader = @readers.try &.pop?
+    if reader = @readers.try &.shift?
       reader.resume
     end
   end
 
   # :nodoc:
   def resume_write
-    if writer = @writers.try &.pop?
+    if writer = @writers.try &.shift?
       writer.resume
     end
   end
@@ -261,7 +261,7 @@ class IO::FileDescriptor
   end
 
   private def wait_readable
-    readers = (@readers ||= [] of Fiber)
+    readers = (@readers ||= Deque(Fiber).new)
     readers << Fiber.current
     add_read_event
     Scheduler.reschedule
@@ -287,7 +287,7 @@ class IO::FileDescriptor
 
   # msg/timeout are overridden in nonblock_connect
   private def wait_writable(msg = "write timed out", timeout = @write_timeout)
-    writers = (@writers ||= [] of Fiber)
+    writers = (@writers ||= Deque(Fiber).new)
     writers << Fiber.current
     add_write_event timeout
     Scheduler.reschedule
