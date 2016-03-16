@@ -23,7 +23,12 @@ lib LibC
   alias PtrDiffT = SSizeT
   alias TimeT = SSizeT
   alias PidT = Int
-  alias OffT = SSizeT
+
+  ifdef musl
+    alias OffT = Int64
+  else
+    alias OffT = SSizeT
+  end
 
   ifdef darwin
     alias ModeT = UInt16
@@ -67,7 +72,7 @@ lib LibC
 
   MAP_FAILED = Pointer(Void).new(SizeT.new(-1))
 
-  fun mmap(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : SSizeT) : Void*
+  fun mmap(addr : Void*, len : SizeT, prot : Int, flags : Int, fd : Int, offset : OffT) : Void*
   fun munmap(addr : Void*, len : SizeT)
   fun madvise(addr : Void*, len : SizeT, advise : Int) : Int
   fun mprotect(addr : Void*, len : SizeT, prot : Int) : Int
