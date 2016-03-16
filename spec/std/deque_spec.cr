@@ -1,5 +1,4 @@
 require "spec"
-require "deque"
 
 class DequeTester
   # Execute the same actions on an Array and a Deque and compare them at each step.
