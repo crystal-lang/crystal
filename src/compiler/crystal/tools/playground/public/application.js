@@ -250,7 +250,7 @@ ws.onmessage = function(e) {
     case "run":
       break;
     case "output":
-      outputDom.innerText = message.content;
+      outputDom.innerText += message.content;
       if (message.content.length > 0) {
         consoleButton.addClass('grey-text').removeClass('teal-text red-text');
         window.setTimeout(function(){

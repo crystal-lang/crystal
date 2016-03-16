@@ -6,12 +6,10 @@ module Crystal::Playground
     @ws : HTTP::WebSocket
     @process : Process?
     @running_process_filename : String
-    @output_w : MemoryIO
     getter tag : Int32
 
     def initialize(@ws, @session_key, @port)
       @running_process_filename = ""
-      @output_w = MemoryIO.new
       @tag = 0
     end
 
@@ -59,10 +57,13 @@ module Crystal::Playground
         return
       end
 
-      execute output_filename
+      execute tag, output_filename
 
-      data = {"type": "run", "tag": tag, "filename": output_filename}
-      send(data.to_json)
+      send_with_json_builder do |json, io|
+        json.field "type", "run"
+        json.field "tag", tag
+        json.field "filename", output_filename
+      end
     end
 
     def stop
@@ -98,18 +99,6 @@ module Crystal::Playground
       end
     end
 
-    def stream_output
-      content = @output_w.to_s
-
-      return if content.empty?
-
-      send_with_json_builder do |json|
-        json.field "type", "output"
-        json.field "tag", @tag
-        json.field "content", content
-      end
-    end
-
     private def tempfile(basename)
       Crystal.tempfile(basename)
     end
@@ -119,21 +108,18 @@ module Crystal::Playground
         @process = nil
         File.delete @running_process_filename
         process.kill rescue nil
-        @output_w = MemoryIO.new
       end
     end
 
-    private def execute(output_filename)
+    private def execute(tag, output_filename)
       stop_process
 
-      @process = process = Process.new(output_filename, args: [] of String, input: true, output: @output_w, error: @output_w)
+      @process = process = Process.new(output_filename, args: [] of String, input: nil, output: nil, error: nil)
       @running_process_filename = output_filename
-      tag = @tag
 
       spawn do
-        exit_status = process.wait.exit_status
-
-        stream_output
+        status = process.wait
+        exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
 
         send_with_json_builder do |json, io|
           json.field "type", "exit"
@@ -142,20 +128,32 @@ module Crystal::Playground
         end
       end
 
-      # if status.normal_exit?
-      #   exit status.exit_code
-      # else
-      #   case status.exit_signal
-      #   when Signal::KILL
-      #     STDERR.puts "Program was killed"
-      #   when Signal::SEGV
-      #     STDERR.puts "Program exited because of a segmentation fault (11)"
-      #   else
-      #     STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
-      #   end
+      bind_io_as_output tag, process.output
+      bind_io_as_output tag, process.error
+    end
 
-      #   exit 1
-      # end
+    private def bind_io_as_output(tag, io)
+      spawn do
+        loop do
+          begin
+            output = String.new(4096) do |buffer|
+              length = io.read_utf8(Slice.new(buffer, 4096))
+              {length, 0}
+            end
+            unless output.empty?
+              send_with_json_builder do |json|
+                json.field "type", "output"
+                json.field "tag", tag
+                json.field "content", output
+              end
+            else
+              break
+            end
+          rescue
+            break
+          end
+        end
+      end
     end
   end
 
@@ -212,12 +210,6 @@ module Crystal::Playground
           if json["tag"].as_i == session.tag
             json.as_h.delete "session"
             session.send(json.to_json)
-
-            # temporal solution for streamming output
-            case json["type"].as_s
-            when "value"
-              session.stream_output
-            end
           end
         end
       end

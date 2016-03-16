@@ -49,12 +49,6 @@ class Crystal::Playground::Agent
     value.inspect
   end
 
-  def exit(status)
-    send "exit" do |json|
-      json.field "status", status
-    end
-  end
-
   private def send(message_type)
     message = String.build do |io|
       io.json_object do |json|
