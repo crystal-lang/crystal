@@ -8,10 +8,10 @@ class HTTP::DeflateHandler < HTTP::Handler
 
     if encoding.try &.includes?("gzip")
       context.response.headers["Content-Encoding"] = "gzip"
-      context.response.output = Zlib::Deflate.gzip(context.response.output)
+      context.response.output = Zlib::Deflate.gzip(context.response.output, sync_close: true)
     elsif encoding.try &.includes?("deflate")
       context.response.headers["Content-Encoding"] = "deflate"
-      context.response.output = Zlib::Deflate.new(context.response.output)
+      context.response.output = Zlib::Deflate.new(context.response.output, sync_close: true)
     end
 
     call_next(context)

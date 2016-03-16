@@ -20,16 +20,33 @@ module Zlib
       inflate.read(Slice(UInt8).new(10)).should eq(0)
     end
 
-    it "can be closed" do
+    it "can be closed without sync" do
       io = MemoryIO.new("")
       inflate = Inflate.new(io)
       inflate.close
-      io.closed?.should be_true
       inflate.closed?.should be_true
+      io.closed?.should be_false
 
       expect_raises IO::Error, "closed stream" do
         inflate.gets
       end
+    end
+
+    it "can be closed with sync (1)" do
+      io = MemoryIO.new("")
+      inflate = Inflate.new(io, sync_close: true)
+      inflate.close
+      inflate.closed?.should be_true
+      io.closed?.should be_true
+    end
+
+    it "can be closed with sync (2)" do
+      io = MemoryIO.new("")
+      inflate = Inflate.new(io)
+      inflate.sync_close = true
+      inflate.close
+      inflate.closed?.should be_true
+      io.closed?.should be_true
     end
   end
 end
