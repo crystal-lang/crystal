@@ -1,5 +1,5 @@
 var defaultCode = 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n';
-var runDebounce = 300;
+var runDebounce = 800;
 
 var ws = new WebSocket("ws://" + location.host + "/client");
 var outputDom = document.getElementById('output');
@@ -233,6 +233,11 @@ function showEditorError(line, column, message, color) {
   matchEditorSidebarHeight();
 }
 
+ws.onopen = function() {
+  runButton.removeClass("disabled");
+  scheduleRun();
+};
+
 ws.onclose = function() {
   runButton.addClass("disabled");
   runProgress.hide();
@@ -240,7 +245,7 @@ ws.onclose = function() {
   stopButton.hide();
 
   Materialize.toast('Connection lost. Refresh.');
-}
+};
 
 ws.onmessage = function(e) {
   var message = JSON.parse(e.data);
@@ -384,8 +389,6 @@ function saveAsGist() {
 
 $(document).ready(function(){
   $('.modal-trigger').leanModal();
-
-  scheduleRun();
 
   var mac = /Mac/.test(navigator.platform);
   runButton.attr('data-tooltip', mac ? '⌘ + Enter' : 'Ctrl + Enter');
