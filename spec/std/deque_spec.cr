@@ -232,6 +232,20 @@ describe "Deque" do
     end
   end
 
+  describe "delete" do
+    it "deletes many" do
+      a = Deque{1, 2, 3, 1, 2, 3}
+      a.delete(2).should be_true
+      a.should eq(Deque{1, 3, 1, 3})
+    end
+
+    it "delete not found" do
+      a = Deque{1, 2}
+      a.delete(4).should be_false
+      a.should eq(Deque{1, 2})
+    end
+  end
+
   describe "delete_at" do
     it "deletes positive index" do
       a = Deque{1, 2, 3, 4, 5}
