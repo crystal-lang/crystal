@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Instance variables type inference | Crystal Programming Language</title>
+        <title>Concurrency | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.3.2">
@@ -25,10 +25,8 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/overloading.html" />
     
-    
-    <link rel="prev" href="../syntax_and_semantics/methods_and_instance_variables.html" />
+    <link rel="prev" href="../guides/index.html" />
     
 
         
@@ -36,7 +34,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.3.3" data-basepath=".." data-revision="Wed Mar 16 2016 18:33:09 GMT+0000 (UTC)">
+    <div class="book" data-level="6.1" data-basepath=".." data-revision="Wed Mar 16 2016 18:33:09 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -921,7 +919,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="4.7.3.3" data-path="syntax_and_semantics/instance_variables_type_inference.html">
+        <li class="chapter " data-level="4.7.3.3" data-path="syntax_and_semantics/instance_variables_type_inference.html">
             
                 
                     <a href="../syntax_and_semantics/instance_variables_type_inference.html">
@@ -1906,7 +1904,7 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="6.1" data-path="guides/concurrency.html">
+        <li class="chapter active" data-level="6.1" data-path="guides/concurrency.html">
             
                 
                     <a href="../guides/concurrency.html">
@@ -2031,141 +2029,262 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="instance-variables-type-inference">Instance variables type inference</h1>
-<p>Did you notice that in all of the previous examples we never said the types of a <code>Person</code>&apos;s <code>@name</code> and <code>@age</code>? This is because the compiler inferred them for us.</p>
-<p>When we wrote:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  getter name
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
-    <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
-  <span class="hljs-keyword">end</span>
+                        <h1 id="concurrency">Concurrency</h1>
+<h2 id="concurrency-vs-paralelism">Concurrency vs. Paralelism</h2>
+<p>The definitions of &quot;concurrency&quot; and &quot;paralelism&quot; somtimes get mixed up, but they are not the same.</p>
+<p>A concurrent system is one that can be in charge of many tasks, although not necessarily it is executing them at the same time. You can think of yourself being in the kitchen cooking: you chop an onion, put it to fry, and while it&apos;s being fried you chop a tomato, but you are not doing all of those things at the same time: you distribute your time between those tasks. Paralelism would be to stir fry onions with one hand while with the other one you chop a tomato.</p>
+<p>At the moment of this writing, Crystal has concurrency support but not paralelism: several tasks can be executed, and a bit of time will be spent on each of these, but two code paths are never executed at the same exact time.</p>
+<p>A Crystal program executes in a single operating system thread, except the Garbage Collector (GC) which implements a concurrent mark-and-sweep (currently <a href="http://www.hboehm.info/gc/" target="_blank">Boehm GC</a>).</p>
+<h3 id="fibers">Fibers</h3>
+<p>To achieve concurrency, Crystal has fibers. A fiber is in a way similar to an operating system thread execpt that it&apos;s much more lightweight and its execution is managed internally by the process. So, a program will spawn multiple fibers and Crystal wil make sure to execute them when the time is right.</p>
+<h3 id="event-loop">Event loop</h3>
+<p>For everything I/O related there&apos;s an event loop. Some time-consuming operations are delegated to it, and while the event loop waits for that operation to finish the program can continue executing other fibers. A simple example of this is waiting for data to come through a socket.</p>
+<h3 id="channels">Channels</h3>
+<p>Crystal has Channels inspired by <a href="https://en.wikipedia.org/wiki/Communicating_sequential_processes" target="_blank">CSP</a>. They allow communicating data between fibers without sharing memory and without having to worry about locks, semaphores or other special structures.</p>
+<h2 id="execution-of-a-program">Execution of a program</h2>
+<p>When a program starts, it fires up a main fiber that will execute your top-level code. There, one can spawn many other fibers. The components of a program are:</p>
+<ul>
+<li>The Runtime Scheduler, in charge of executing all fibers when the time is right.</li>
+<li>The Event Loop, which is just another fiber, being in charge of async tasks, like for example files, sockets, pipes, signals and timers (like doing a <code>sleep</code>).</li>
+<li>Channels, to communicate data between fibers. The Runtime Scheduler will coordinate fibers and channels for their communication.</li>
+<li>Garbage Collector: to clean up &quot;no longer used&quot; memory.</li>
+</ul>
+<h3 id="a-fiber">A Fiber</h3>
+<p>A fiber is an execution unit that is more lightweight than a thread. It&apos;s a small object that has an associated <a href="https://en.wikipedia.org/wiki/Call_stack" target="_blank">stack</a> of 8MB, which is what is usually assigned to an operating system thread.</p>
+<p>Fibers, unlike threads, are cooperative. Threads are pre-emptive: the operating system might interrupt a thread at any time and start executing another one. A fiber must expliclty tell the Runtime Scheduler to switch to another fiber. For example if there&apos;s I/O to be wait, a fiber will tell the scheduler &quot;Look, I have to wait for this I/O to be available, you continue executing other fibers and come back to me when that I/O is ready&quot;.</p>
+<p>The advantage of being cooperative is that a lot of the overhead of doing a context switch (switching between threads) is gone.</p>
+<p>A Fiber is much more lightweight than a thread: even though it&apos;s assigned 8MB, it starts with a small stack of 4KB.</p>
+<p>On a 64-bits machine it lets us spawn millions and millions of fibers. In a 32-bits machine wen can only spawn 512 fibers, which is not a lot. But because 32-bits machine are starting to be obsolete, we bet for the future, so for now we focus more on 64-bits machines.</p>
+<h3 id="the-runtime-scheduler">The Runtime Scheduler</h3>
+<p>The scheduler has a queue of :</p>
+<ul>
+<li>Fibers ready to be executed: for example when you spawn a fiber, it&apos;s ready to be executed.</li>
+<li>The event loop: which is another fiber. When there are no other fibers ready to be executed, the event loop checks if there is any async operation that is ready, and then executes the fiber waiting for that operation. The event loop is currently implemented with <code>libevent</code>, which is an abstraction of other event mechanisms like <code>epoll</code> and <code>kqueue</code>.</li>
+<li>Fibers that voluntarily asked to wait: this is done with <code>Fiber.yield</code>, which means &quot;I can continue executing, but I&apos;ll give you some time to execute other fibers if you want&quot;.</li>
+</ul>
+<h3 id="communicating-data">Communicating data</h3>
+<p>Because at this moment there&apos;s only a single thread executing your code, accessing and modifying a global variable in different fibers will work just fine. However, once multiple threads (paralelism) is introduced in the language, it might break. That&apos;s why the recommended mechanism to communicate data is using channels and sending messages between them. Internally, a channel implements all the locking mechanisms to avoid data races, but from the outside you use them as communication primitives, so you (the user) don&apos;t have to use locks.</p>
+<h2 id="sample-code">Sample code</h2>
+<h3 id="spawning-a-fiber">Spawning a fiber</h3>
+<p>To spawn a fiber you use <code>spawn</code> with a block:</p>
+<pre><code class="lang-crystal">spawn <span class="hljs-keyword">do</span>
+  <span class="hljs-comment"># ...</span>
+  socket.gets
+  <span class="hljs-comment"># ...</span>
 <span class="hljs-keyword">end</span>
 
-john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-john.name <span class="hljs-comment">#=&gt; &quot;John&quot;</span>
-john.name.size <span class="hljs-comment">#=&gt; 4</span>
-</code></pre>
-<p>Since we invoked <code>Person.new</code> with a <code>String</code> argument, the compiler makes <code>@name</code> be a <code>String</code> too.</p>
-<p>If we had invoked <code>Person.new</code> with another type, <code>@name</code> would have taken a different type:</p>
-<pre><code class="lang-crystal">one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-one.name <span class="hljs-comment">#=&gt; 1</span>
-one.name + <span class="hljs-number">2</span> <span class="hljs-comment">#=&gt; 3</span>
-</code></pre>
-<p>If you compile the previous programs with the <code>tool hierarchy</code> command, the compiler will show you a hierarchy graph with the types it inferred. In the first case:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : String
-            @age  : Int32
-</code></pre><p>In the second case:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : Int32
-            @age  : Int32
-</code></pre><p>What happens if we create two different people, one with a <code>String</code> and one with an <code>Int32</code>? Let&apos;s try it:</p>
-<pre><code class="lang-crystal">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-</code></pre>
-<p>Invoking the compiler with the <code>tool hierarchy</code> command we get:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : (String | Int32)
-            @age  : Int32
-</code></pre><p>We can see that now <code>@name</code> has a type <code>(String | Int32)</code>, which is read as a <em>union</em> of <code>String</code> and <code>Int32</code>. The compiler made <code>@name</code> have all types assigned to it.</p>
-<p>In this case, the compiler will consider any usage of <code>@name</code> as always being either a <code>String</code> or an <code>Int32</code> and will give a compile time error if a method is not found for <em>both</em> types:</p>
-<pre><code class="lang-crystal">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-
-<span class="hljs-comment"># Error: undefined method &apos;size&apos; for Int32</span>
-john.name.size
-
-<span class="hljs-comment"># Error: no overload matches &apos;String#+&apos; with types Int32</span>
-john.name + <span class="hljs-number">3</span>
-</code></pre>
-<p>The compiler will even give an error if you first use a variable assuming it has a type and later you change that type:</p>
-<pre><code class="lang-crystal">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-john.name.size
-one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-</code></pre>
-<p>Gives this compile-time error:</p>
-<pre><code>Error in foo.cr:14: instantiating &apos;Person:Class#new(Int32)&apos;
-
-one = Person.new 1
-             ^~~
-
-instantiating &apos;Person#initialize(Int32)&apos;
-
-in foo.cr:12: undefined method &apos;size&apos; for Int32
-
-john.name.size
-          ^~~~~~
-</code></pre><p>That is, the compiler does global type inference and tells you whenever you make a mistake in the usage of a class or method. You can go ahead and put a type restriction like <code>def initialize(@name : String)</code>, but that makes the code a bit more verbose and also less generic: everything will work just fine if you create <code>Person</code> instance with types that have the same <em>interface</em> as a <code>String</code>, as long as you use a <code>Person</code>&apos;s name like if it were a <code>String</code>.</p>
-<p>If you do want to have different <code>Person</code> types, one with <code>@name</code> being an <code>Int32</code> and one with <code>@name</code> being a <code>String</code>, you must use <a href="generics.html">generics</a>.</p>
-<h2 id="nilable-instance-variables">Nilable instance variables</h2>
-<p>If an instance variable is not assigned in all of the <code>initialize</code> defined in a class, it will be considered as also having the type <code>Nil</code>:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  getter name
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
-    <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">address</span></span>
-    <span class="hljs-variable">@address</span>
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">address=</span></span>(<span class="hljs-variable">@address</span>)
-  <span class="hljs-keyword">end</span>
+spawn <span class="hljs-keyword">do</span>
+  <span class="hljs-comment"># ...</span>
+  sleep <span class="hljs-number">5</span>.seconds
+  <span class="hljs-comment">#  ...</span>
 <span class="hljs-keyword">end</span>
-
-john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-john.address = <span class="hljs-string">&quot;Argentina&quot;</span>
 </code></pre>
-<p>The hierarchy graph now shows:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : String
-            @age : Int32
-            @address : String?
-</code></pre><p>You can see <code>@address</code> is <code>String?</code>, which is a short form notation of <code>String | Nil</code>. This means that the following gives a compile time error:</p>
-<pre><code class="lang-crystal"><span class="hljs-comment"># Error: undefined method &apos;size&apos; for Nil</span>
-john.address.size
-</code></pre>
-<p>To deal with <code>Nil</code>, and generally with union types, you have several options: use an <a href="if_var.html">if var</a>, <a href="if_varis_a.html">if var.is_a?</a>, <a href="case.html">case</a> and <a href="is_a.html">is_a?</a>.</p>
-<h2 id="catch-all-initialization">Catch-all initialization</h2>
-<p>Instance variables can also be initialized outside <code>initialize</code> methods:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
+<p>Here we have two fibers: one reads from a socket and the other does a <code>sleep</code>. When the first fiber reaches the <code>socket.gets</code> line, that fibers gets suspended, the Event Loop is told to continue executing this fiber when there&apos;s data in the socket, and the program continues with the second fiber. This fiber wants to sleep for 5 seconds, so the Event Loop is told to continue with this fiber in 5 seconds. If there aren&apos;t other fibers to execute, the Event Loop will wait until either of these events happen, without consuming CPU time.</p>
+<p>The reason why <code>socket.gets</code> and <code>sleep</code> behave like this is because their implementation talk directly with the Runtime Scheduler and the Event Loop, there&apos;s nothing magical about it. In general, the standard library already takes care of doing all of this so you don&apos;t have to.</p>
+<p>Note, however, that fibers don&apos;t get executed right away. For example:</p>
+<pre><code class="lang-crystal">spawn <span class="hljs-keyword">do</span>
+  loop <span class="hljs-keyword">do</span>
+    puts <span class="hljs-string">&quot;Hello!&quot;</span>
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
-<p>This will initialize <code>@age</code> to zero in every constructor. This is useful to avoid duplication, but also to avoid the <code>Nil</code> type when reopening a class and adding instance variables to it.</p>
-<h2 id="specifying-the-types-of-instance-variables">Specifying the types of instance variables</h2>
-<p>In certain cases you want to tell the compiler to fix the type of an instance variable. You can do this with <code>:</code>:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-variable">@age</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
-    <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
+<p>Running the above code will produce no output and exit immediately.</p>
+<p>The reason for this is that a fiber is not executed as soon as it is spawned. So, the main fiber, the one that spawns the above fiber, finishes its execution and the program exits.</p>
+<p>One way to solve it is to do a <code>sleep</code>:</p>
+<pre><code class="lang-crystal">spawn <span class="hljs-keyword">do</span>
+  loop <span class="hljs-keyword">do</span>
+    puts <span class="hljs-string">&quot;Hello!&quot;</span>
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
+
+sleep <span class="hljs-number">1</span>.second
 </code></pre>
-<p>In this case, if we assign something that&apos;s not an <code>Int32</code> to <code>@age</code>, a compile-time error will be issued at the assignment location.</p>
-<p>Note that you still have to initialize the instance variables, either with a catch-all initializer or within an <code>initialize</code> method: there are no &quot;default&quot; values for types.</p>
+<p>This program will now print &quot;Hello!&quot; for one second and then exit. This is because the <code>sleep</code> call will schedule the main fiber to be executed in a second, and then executes another &quot;ready to execute&quot; fiber, which in this case is the one above.</p>
+<p>Another way is this:</p>
+<pre><code class="lang-crystal">spawn <span class="hljs-keyword">do</span>
+  loop <span class="hljs-keyword">do</span>
+    puts <span class="hljs-string">&quot;Hello!&quot;</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Fiber</span>.<span class="hljs-keyword">yield</span>
+</code></pre>
+<p>This time <code>Fiber.yield</code> will tell the scheduler to execute the other fiber. This will print &quot;Hello!&quot; until the standard output blocks (the system call will tell us we have to wait until the output is ready), and then execution continues with the main fiber and the program exits. Here the standard output <em>might</em> never block so the program will continue executing forever.</p>
+<p>If we want to execute the spawned fiber for ever, we can use <code>sleep</code> without arguments:</p>
+<pre><code class="lang-crystal">spawn <span class="hljs-keyword">do</span>
+  loop <span class="hljs-keyword">do</span>
+    puts <span class="hljs-string">&quot;Hello!&quot;</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+sleep
+</code></pre>
+<p>Of course the above program can be written without <code>spawn</code> at all, just with a loop. <code>sleep</code> is more useful when spawning more than one fiber.</p>
+<h3 id="spawning-a-call">Spawning a call</h3>
+<p>You can also spawn by passing a method call instead of a block. To understand why this is useful, let&apos;s look at this example:</p>
+<pre><code class="lang-crystal">i = <span class="hljs-number">0</span>
+<span class="hljs-keyword">while</span> i &lt; <span class="hljs-number">10</span>
+  spawn <span class="hljs-keyword">do</span>
+    puts(i)
+  <span class="hljs-keyword">end</span>
+  i += <span class="hljs-number">1</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Fiber</span>.<span class="hljs-keyword">yield</span>
+</code></pre>
+<p>The above program prints &quot;10&quot; ten times. The problem is that there&apos;s only one variable <code>i</code> that all spawned fibers refer to, and when <code>Fiber.yield</code> is executed its value is 10.</p>
+<p>To solve this, we can do this:</p>
+<pre><code class="lang-crystal">i = <span class="hljs-number">0</span>
+<span class="hljs-keyword">while</span> i &lt; <span class="hljs-number">10</span>
+  proc = -&gt;(x <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>) <span class="hljs-keyword">do</span>
+    spawn <span class="hljs-keyword">do</span>
+      puts(x)
+    <span class="hljs-keyword">end</span>
+  <span class="hljs-keyword">end</span>
+  proc.call(i)
+  i += <span class="hljs-number">1</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Fiber</span>.<span class="hljs-keyword">yield</span>
+</code></pre>
+<p>Now it works because we are creating a <a href="http://crystal-lang.org/api/Proc.html" target="_blank">Proc</a> and we invoke it passing <code>i</code>, so the value gets copied and now the spawned fiber receives a copy.</p>
+<p>To avoid all this boilerplate, the standard library provides a <code>spawn</code> macro that accepts a call expression and basically rewrites it to do the above. Using it, we end up with:</p>
+<pre><code class="lang-crystal">i = <span class="hljs-number">0</span>
+<span class="hljs-keyword">while</span> i &lt; <span class="hljs-number">10</span>
+  spawn puts(i)
+  i += <span class="hljs-number">1</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Fiber</span>.<span class="hljs-keyword">yield</span>
+</code></pre>
+<p>This is mostly useful with local variables that change at iterations. This doesn&apos;t happen with block arguments. For example, this works as expected:</p>
+<pre><code class="lang-crystal"><span class="hljs-number">10</span>.times <span class="hljs-keyword">do</span> |i|
+  spawn <span class="hljs-keyword">do</span>
+    puts i
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Fiber</span>.<span class="hljs-keyword">yield</span>
+</code></pre>
+<h3 id="spawning-a-fiber-and-waiting-for-it-to-complete">Spawning a fiber and waiting for it to complete</h3>
+<p>We can use a channel for this:</p>
+<pre><code class="lang-crystal">channel = <span class="hljs-constant">Channel</span>(<span class="hljs-constant">Nil</span>).new
+
+spawn <span class="hljs-keyword">do</span>
+  puts <span class="hljs-string">&quot;Before send&quot;</span>
+  channel.send(<span class="hljs-literal">nil</span>)
+  puts <span class="hljs-string">&quot;After send&quot;</span>
+<span class="hljs-keyword">end</span>
+
+puts <span class="hljs-string">&quot;Before receive&quot;</span>
+channel.receive
+puts <span class="hljs-string">&quot;After receive&quot;</span>
+</code></pre>
+<p>This prints:</p>
+<pre><code class="lang-text">Before receive
+Before send
+After receive
+</code></pre>
+<p>First, the program spawns a fiber but doesn&apos;t execute it yet. When we invoke <code>channel.receive</code>, the main fiber blocks and execution continues with the spawned fiber. Then <code>channel.send(nil)</code> is invoked, and so execution continues at <code>channel.receive</code>, which was waiting for a value. Then the main fiber continues executing and finishes, so the program exits without giving the other fiber a chance to print &quot;After send&quot;.</p>
+<p>In the above example we used <code>nil</code> just to communicate that the fiber ended. We can also use channels to communicate values between fibers:</p>
+<pre><code>channel = Channel(Int32).new
+
+spawn do
+  puts &quot;Before first send&quot;
+  channel.send(1)
+  puts &quot;Before second send&quot;
+  channel.send(2)
+end
+
+puts &quot;Before first receive&quot;
+value = channel.receive
+puts value # =&gt; 1
+
+puts &quot;Before second receive&quot;
+value = channel.receive
+puts value # =&gt; 2
+</code></pre><p>Output:</p>
+<pre><code class="lang-text">Before first receive
+Before first send
+1
+Before second receive
+Before second send
+2
+</code></pre>
+<p>Note that when the program executes a <code>receive</code>, that fiber blocks and execution continues with the other fiber. When <code>send</code> is executed, execution continues with the fiber that was waiting on that channel.</p>
+<p>Here we are sending literal values, but the spawned fiber might compute this value by, for example, reading a file, or getting it from a socket. When this fiber will have to wait for I/O, other fibers will be able to continue executing code until I/O is ready, and finally when the value is ready and sent through the channel, the main fiber will receive it.</p>
+<p>Likewise, we can wait for multiple fibers to complete execution, and gather their values:</p>
+<pre><code class="lang-crystal">channel = <span class="hljs-constant">Channel</span>(<span class="hljs-constant">Int32</span>).new
+
+<span class="hljs-number">10</span>.times <span class="hljs-keyword">do</span> |i|
+  spawn <span class="hljs-keyword">do</span>
+    channel.send(i * <span class="hljs-number">2</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+sum = <span class="hljs-number">0</span>
+<span class="hljs-number">10</span>.times <span class="hljs-keyword">do</span>
+  sum += channel.receive
+<span class="hljs-keyword">end</span>
+puts sum <span class="hljs-comment"># =&gt; 90</span>
+</code></pre>
+<p>You can, of course, use <code>receive</code> inside a spawned fiber:</p>
+<pre><code class="lang-crystal">channel = <span class="hljs-constant">Channel</span>(<span class="hljs-constant">Int32</span>).new
+
+spawn <span class="hljs-keyword">do</span>
+  puts <span class="hljs-string">&quot;Before send&quot;</span>
+  channel.send(<span class="hljs-number">1</span>)
+  puts <span class="hljs-string">&quot;After send&quot;</span>
+<span class="hljs-keyword">end</span>
+
+spawn <span class="hljs-keyword">do</span>
+  puts <span class="hljs-string">&quot;Before receive&quot;</span>
+  puts channel.receive
+  puts <span class="hljs-string">&quot;After receive&quot;</span>
+<span class="hljs-keyword">end</span>
+
+puts <span class="hljs-string">&quot;Before yield&quot;</span>
+<span class="hljs-constant">Fiber</span>.<span class="hljs-keyword">yield</span>
+puts <span class="hljs-string">&quot;After yield&quot;</span>
+</code></pre>
+<p>Output:</p>
+<pre><code class="lang-text">Before yield
+Before send
+Before receive
+1
+After receive
+After send
+After yield
+</code></pre>
+<p>Here <code>channel.send</code> is executed first, but since there&apos;s no one waiting for a value (yet), execution continues in other fibers. The second fiber is executed, there&apos;s a value on the channel, it&apos;s obtained, and execution continues, first with the first fiber, and then with the main fiber, because <code>Fiber.yield</code> puts a fiber at the end of the execution queue.</p>
+<h3 id="unbuffered-channels">Unbuffered channels</h3>
+<p>The above examples use unbuffered channels: when sending a value, if a fiber is waiting on that channel then execution continues on that fiber.</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># A buffered channel of capacity 2</span>
+channel = <span class="hljs-constant">Channel</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">2</span>)
+
+spawn <span class="hljs-keyword">do</span>
+  puts <span class="hljs-string">&quot;Before send 1&quot;</span>
+  channel.send(<span class="hljs-number">1</span>)
+  puts <span class="hljs-string">&quot;Before send 2&quot;</span>
+  channel.send(<span class="hljs-number">2</span>)
+  puts <span class="hljs-string">&quot;Before send 3&quot;</span>
+  channel.send(<span class="hljs-number">3</span>)
+  puts <span class="hljs-string">&quot;After send&quot;</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-number">3</span>.times <span class="hljs-keyword">do</span> |i|
+  puts channel.receive
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Output:</p>
+<pre><code>Before send 1
+Before send 2
+Before send 3
+1
+2
+After send
+3
+</code></pre><p>Note that the first 2 sends are executed without switching to another fiber. However, in the third send the channel&apos;s buffer is full, so execution goes to the main fiber. Here the two values are received and the channel is depleted. At the third <code>receive</code> the main fiber blocks and execution goes to the other fiber, which sends another values, finishes, etc.</p>
 
                     
                     </section>
@@ -2176,10 +2295,8 @@ john.address.size
         </div>
 
         
-        <a href="../syntax_and_semantics/methods_and_instance_variables.html" class="navigation navigation-prev " aria-label="Previous page: Methods and instance variables"><i class="fa fa-angle-left"></i></a>
+        <a href="../guides/index.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page: Guides"><i class="fa fa-angle-left"></i></a>
         
-        
-        <a href="../syntax_and_semantics/overloading.html" class="navigation navigation-next " aria-label="Next page: Overloading"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

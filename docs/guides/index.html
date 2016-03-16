@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Instance variables type inference | Crystal Programming Language</title>
+        <title>Guides | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.3.2">
@@ -25,10 +25,10 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/overloading.html" />
+    <link rel="next" href="../guides/concurrency.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/methods_and_instance_variables.html" />
+    <link rel="prev" href="../conventions/documenting_code.html" />
     
 
         
@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.3.3" data-basepath=".." data-revision="Wed Mar 16 2016 18:33:09 GMT+0000 (UTC)">
+    <div class="book" data-level="6" data-basepath=".." data-revision="Wed Mar 16 2016 18:33:09 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -921,7 +921,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="4.7.3.3" data-path="syntax_and_semantics/instance_variables_type_inference.html">
+        <li class="chapter " data-level="4.7.3.3" data-path="syntax_and_semantics/instance_variables_type_inference.html">
             
                 
                     <a href="../syntax_and_semantics/instance_variables_type_inference.html">
@@ -1890,7 +1890,7 @@
             
         </li>
     
-        <li class="chapter " data-level="6" data-path="guides/index.html">
+        <li class="chapter active" data-level="6" data-path="guides/index.html">
             
                 
                     <a href="../guides/index.html">
@@ -2031,141 +2031,8 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="instance-variables-type-inference">Instance variables type inference</h1>
-<p>Did you notice that in all of the previous examples we never said the types of a <code>Person</code>&apos;s <code>@name</code> and <code>@age</code>? This is because the compiler inferred them for us.</p>
-<p>When we wrote:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  getter name
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
-    <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-john.name <span class="hljs-comment">#=&gt; &quot;John&quot;</span>
-john.name.size <span class="hljs-comment">#=&gt; 4</span>
-</code></pre>
-<p>Since we invoked <code>Person.new</code> with a <code>String</code> argument, the compiler makes <code>@name</code> be a <code>String</code> too.</p>
-<p>If we had invoked <code>Person.new</code> with another type, <code>@name</code> would have taken a different type:</p>
-<pre><code class="lang-crystal">one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-one.name <span class="hljs-comment">#=&gt; 1</span>
-one.name + <span class="hljs-number">2</span> <span class="hljs-comment">#=&gt; 3</span>
-</code></pre>
-<p>If you compile the previous programs with the <code>tool hierarchy</code> command, the compiler will show you a hierarchy graph with the types it inferred. In the first case:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : String
-            @age  : Int32
-</code></pre><p>In the second case:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : Int32
-            @age  : Int32
-</code></pre><p>What happens if we create two different people, one with a <code>String</code> and one with an <code>Int32</code>? Let&apos;s try it:</p>
-<pre><code class="lang-crystal">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-</code></pre>
-<p>Invoking the compiler with the <code>tool hierarchy</code> command we get:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : (String | Int32)
-            @age  : Int32
-</code></pre><p>We can see that now <code>@name</code> has a type <code>(String | Int32)</code>, which is read as a <em>union</em> of <code>String</code> and <code>Int32</code>. The compiler made <code>@name</code> have all types assigned to it.</p>
-<p>In this case, the compiler will consider any usage of <code>@name</code> as always being either a <code>String</code> or an <code>Int32</code> and will give a compile time error if a method is not found for <em>both</em> types:</p>
-<pre><code class="lang-crystal">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-
-<span class="hljs-comment"># Error: undefined method &apos;size&apos; for Int32</span>
-john.name.size
-
-<span class="hljs-comment"># Error: no overload matches &apos;String#+&apos; with types Int32</span>
-john.name + <span class="hljs-number">3</span>
-</code></pre>
-<p>The compiler will even give an error if you first use a variable assuming it has a type and later you change that type:</p>
-<pre><code class="lang-crystal">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-john.name.size
-one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-</code></pre>
-<p>Gives this compile-time error:</p>
-<pre><code>Error in foo.cr:14: instantiating &apos;Person:Class#new(Int32)&apos;
-
-one = Person.new 1
-             ^~~
-
-instantiating &apos;Person#initialize(Int32)&apos;
-
-in foo.cr:12: undefined method &apos;size&apos; for Int32
-
-john.name.size
-          ^~~~~~
-</code></pre><p>That is, the compiler does global type inference and tells you whenever you make a mistake in the usage of a class or method. You can go ahead and put a type restriction like <code>def initialize(@name : String)</code>, but that makes the code a bit more verbose and also less generic: everything will work just fine if you create <code>Person</code> instance with types that have the same <em>interface</em> as a <code>String</code>, as long as you use a <code>Person</code>&apos;s name like if it were a <code>String</code>.</p>
-<p>If you do want to have different <code>Person</code> types, one with <code>@name</code> being an <code>Int32</code> and one with <code>@name</code> being a <code>String</code>, you must use <a href="generics.html">generics</a>.</p>
-<h2 id="nilable-instance-variables">Nilable instance variables</h2>
-<p>If an instance variable is not assigned in all of the <code>initialize</code> defined in a class, it will be considered as also having the type <code>Nil</code>:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  getter name
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
-    <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">address</span></span>
-    <span class="hljs-variable">@address</span>
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">address=</span></span>(<span class="hljs-variable">@address</span>)
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-john.address = <span class="hljs-string">&quot;Argentina&quot;</span>
-</code></pre>
-<p>The hierarchy graph now shows:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : String
-            @age : Int32
-            @address : String?
-</code></pre><p>You can see <code>@address</code> is <code>String?</code>, which is a short form notation of <code>String | Nil</code>. This means that the following gives a compile time error:</p>
-<pre><code class="lang-crystal"><span class="hljs-comment"># Error: undefined method &apos;size&apos; for Nil</span>
-john.address.size
-</code></pre>
-<p>To deal with <code>Nil</code>, and generally with union types, you have several options: use an <a href="if_var.html">if var</a>, <a href="if_varis_a.html">if var.is_a?</a>, <a href="case.html">case</a> and <a href="is_a.html">is_a?</a>.</p>
-<h2 id="catch-all-initialization">Catch-all initialization</h2>
-<p>Instance variables can also be initialized outside <code>initialize</code> methods:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>This will initialize <code>@age</code> to zero in every constructor. This is useful to avoid duplication, but also to avoid the <code>Nil</code> type when reopening a class and adding instance variables to it.</p>
-<h2 id="specifying-the-types-of-instance-variables">Specifying the types of instance variables</h2>
-<p>In certain cases you want to tell the compiler to fix the type of an instance variable. You can do this with <code>:</code>:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-variable">@age</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
-    <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>In this case, if we assign something that&apos;s not an <code>Int32</code> to <code>@age</code>, a compile-time error will be issued at the assignment location.</p>
-<p>Note that you still have to initialize the instance variables, either with a catch-all initializer or within an <code>initialize</code> method: there are no &quot;default&quot; values for types.</p>
+                        <h1 id="guides">Guides</h1>
+<p>Read these guides to get the best out of Crystal.</p>
 
                     
                     </section>
@@ -2176,10 +2043,10 @@ john.address.size
         </div>
 
         
-        <a href="../syntax_and_semantics/methods_and_instance_variables.html" class="navigation navigation-prev " aria-label="Previous page: Methods and instance variables"><i class="fa fa-angle-left"></i></a>
+        <a href="../conventions/documenting_code.html" class="navigation navigation-prev " aria-label="Previous page: Documenting code"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/overloading.html" class="navigation navigation-next " aria-label="Next page: Overloading"><i class="fa fa-angle-right"></i></a>
+        <a href="../guides/concurrency.html" class="navigation navigation-next " aria-label="Next page: Concurrency"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
