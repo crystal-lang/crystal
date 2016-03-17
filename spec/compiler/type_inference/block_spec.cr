@@ -1086,4 +1086,32 @@ describe "Block inference" do
       foo { Foo(Int32).new }
       )) { int32.metaclass }
   end
+
+  it "doesn't mix local var with block var, using break (#2314)" do
+    assert_type(%(
+      def foo
+        yield 1
+      end
+
+      x = true
+      foo do |x|
+        break
+      end
+      x
+      )) { bool }
+  end
+
+  it "doesn't mix local var with block var, using next (#2314)" do
+    assert_type(%(
+      def foo
+        yield 1
+      end
+
+      x = true
+      foo do |x|
+        next
+      end
+      x
+      )) { bool }
+  end
 end
