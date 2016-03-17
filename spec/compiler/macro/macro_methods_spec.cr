@@ -780,6 +780,12 @@ describe "macro methods" do
     end
   end
 
+  describe "splat methods" do
+    it "executes exp" do
+      assert_macro "x", %({{x.exp}}), [Splat.new(NumberLiteral.new(2))] of ASTNode, "2"
+    end
+  end
+
   describe "env" do
     it "has key" do
       ENV["FOO"] = "foo"
