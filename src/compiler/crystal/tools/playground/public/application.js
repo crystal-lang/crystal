@@ -100,22 +100,46 @@ editor.on("change", function(){
 });
 $(window).resize(matchEditorSidebarHeight);
 
+function ModalDialog(options) {
+  options = $.extend({}, {destroyOnClose: true}, options);
 
-var fixedModal = $("#fixed-modal");
+  $("body").append(
+    this.modalDom = $("<div>").addClass("modal modal-fixed-footer")
+      .append(this.modalContenDom = $("<div>").addClass("modal-content"))
+      .append($("<div>").addClass("modal-footer")
+        .append($("<a>").text("Close")
+          .addClass("modal-action modal-close waves-effect waves-green btn-flat")
+          .attr("href", "javascript:"))));
 
-function showModal() {
-  var content = $(".modal-content", fixedModal).empty();
-  for(var i = 0; i < arguments.length; i++) {
-    content.append(arguments[i]);
-  }
-  fixedModal.openModal();
+  this.openModal = function() {
+    this.modalDom.openModal({
+      complete: function() {
+        if (this.onClose) {
+          this.onClose();
+        }
+        if (options.destroyOnClose) {
+          this.destroy();
+        }
+      }.bind(this)
+    });
+    return this;
+  }.bind(this);
+
+  this.append = function() {
+    for(var i = 0; i < arguments.length; i++) {
+      this.modalContenDom.append(arguments[i]);
+    }
+    return this;
+  }.bind(this);
+
+  this.destroy = function() {
+    this.modalDom.remove();
+  }.bind(this);
 }
 
 var inspectors = {};
 
 function Inspector(line) {
-  var inspectModalTable = $("<table>").addClass("inspect-table highlight")
-
   this.lineDom = $("<div>")
       .addClass("truncate")
       .css("top", editor.heightAtLine(line-1, "local") + "px")
@@ -125,9 +149,27 @@ function Inspector(line) {
   this.messages = [];
   this.value_type = null; // null if mismatch. keep value is always the same.
 
+  this.modal = null;
+
+  var labels;
+  var tableBody = null;
+  var appendMessageToTableBody = function(i, message) {
+    var row = $("<tr>");
+    row.append($("<td>").text(i+1));
+
+    for(var j = 0; j < labels.length; j++) {
+      row.append($("<td>").text(message.data[labels[j]]));
+    }
+
+    row.append($("<td>").text(message.value));
+    row.append($("<td>").text(message.value_type));
+    tableBody.append(row);
+  }
+
   this.lineDom.click(function() {
-    var labels = this.dataLabels();
-    inspectModalTable.empty();
+    var inspectModalTable = $("<table>").addClass("inspect-table highlight")
+
+    labels = this.dataLabels();
     var tableHeaderRow = $("<tr>")
     inspectModalTable.append($("<thead>").append(tableHeaderRow));
     tableHeaderRow.append($("<th>").text("#"));
@@ -137,23 +179,17 @@ function Inspector(line) {
     tableHeaderRow.append($("<th>").text("Value"));
     tableHeaderRow.append($("<th>").text("Type"));
 
-    var tableBody = $("<tbody>");
+    tableBody = $("<tbody>");
     inspectModalTable.append(tableBody);
 
     for(var i = 0; i < this.messages.length; i++) {
-      var message = this.messages[i];
-      var row = $("<tr>");
-      row.append($("<td>").text(i+1));
-
-      for(var j = 0; j < labels.length; j++) {
-        row.append($("<td>").text(message.data[labels[j]]));
-      }
-
-      row.append($("<td>").text(message.value));
-      row.append($("<td>").text(message.value_type));
-      tableBody.append(row);
+      appendMessageToTableBody(i, this.messages[i]);
     }
-    showModal(inspectModalTable);
+
+    this.modal = new ModalDialog().append(inspectModalTable).openModal();
+    this.modal.onClose = function() {
+      this.modal = null;
+    }.bind(this);
   }.bind(this));
 
   this.addMessage = function(message) {
@@ -169,6 +205,10 @@ function Inspector(line) {
     }
     if (this.value_type != null && localStorage.settingsShowTypes == 'true') {
       this.lineDom.append($("<span>").addClass("type").text(this.value_type));
+    }
+
+    if (this.modal != null) {
+      appendMessageToTableBody(this.messages.length-1, message);
     }
   }.bind(this);
 
@@ -294,7 +334,7 @@ ws.onmessage = function(e) {
       runButton.show();
       stopButton.hide();
 
-      showModal(
+      new ModalDialog().append(
         $("<h4>").append("Bug"),
         $("<p>")
           .append("You've reached a bug in the playground. Please ")
@@ -306,7 +346,9 @@ ws.onmessage = function(e) {
         $("<h5>").append("Code"),
         $("<pre>").append(editor.getValue()),
         $("<h5>").append("Exception"),
-        $("<pre>").append(message.exception.message));
+        $("<pre>").append(message.exception.message)).openModal();
+
+      break;
     default:
       console.error("ws message not handled", message);
   }
@@ -371,7 +413,7 @@ function saveAsGist() {
       "files": {"play.cr": {"content": editor.getValue() }}
     }),
     success: function(msg) {
-      showModal(
+      new ModalDialog().append(
         $("<p>")
           .append("There is a new gist at ")
           .append($("<a>")
@@ -380,7 +422,7 @@ function saveAsGist() {
             .append($("<span>").text(msg.html_url))
             .append(" ")
             .append($("<span>").addClass("octicon octicon-link-external"))
-          ));
+          )).openModal();
     }
   });
 
