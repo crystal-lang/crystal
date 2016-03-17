@@ -1,6 +1,10 @@
 require "fiber"
 require "./*"
 
+# Blocks the current fiber for the specified number of seconds.
+#
+# While this fiber is waiting this time other ready-to-execute
+# fibers might start their execution.
 def sleep(seconds : Number)
   if seconds < 0
     raise ArgumentError.new "sleep seconds must be positive"
@@ -9,52 +13,116 @@ def sleep(seconds : Number)
   Fiber.sleep(seconds)
 end
 
+# Blocks the current Fiber for the specified time span.
+#
+# While this fiber is waiting this time other ready-to-execute
+# fibers might start their execution.
 def sleep(time : Time::Span)
   sleep(time.total_seconds)
 end
 
+# Blocks the current fiber forever.
+#
+# Meanwhile, other ready-to-execute fibers might start their execution.
 def sleep
   Scheduler.reschedule
 end
 
+# Spawns a new fiber.
+#
+# The newly created fiber doesn't run as soon as spawned.
+#
+# Example: writing "1" every 1 second and "2" every 2 seconds for 6 seconds.
+#
+# ```
+# ch = Channel(Nil).new
+#
+# spawn do
+#   6.times do
+#     sleep 1
+#     puts 1
+#   end
+#   ch.send(nil)
+# end
+#
+# spawn do
+#   3.times do
+#     sleep 2
+#     puts 2
+#   end
+#   ch.send(nil)
+# end
+#
+# 2.times { ch.receive }
+# ```
 def spawn(&block)
   fiber = Fiber.new(&block)
   Scheduler.enqueue fiber
   fiber
 end
 
-macro spawn(exp)
-  {% if exp.is_a?(Call) %}
+# Spawns a fiber by first creating a Proc, passing the *call*'s
+# expressions to it, and letting the Proc finally invoke the *call*.
+#
+# Compare this:
+#
+# ```
+# i = 0
+# while i < 5
+#   spawn { print(i) }
+#   i += 1
+# end
+# Fiber.yield
+# # Output: 55555
+# ```
+#
+# To this:
+#
+# ```
+# i = 0
+# while i < 5
+#   spawn print(i)
+#   i += 1
+# end
+# Fiber.yield
+# # Output: 01234
+# ```
+#
+# This is because in the first case all spawned fibers refer to
+# the same local variable, while in the second example copies of
+# `i` are passed to a Proc that eventually invokes the call.
+macro spawn(call)
+  {% if call.is_a?(Call) %}
     ->(
-      {% for arg, i in exp.args %}
+      {% for arg, i in call.args %}
         __arg{{i}} : typeof({{arg}}),
       {% end %}
-      {% if exp.named_args %}
-        {% for narg, i in exp.named_args %}
+      {% if call.named_args %}
+        {% for narg, i in call.named_args %}
           __narg{{i}} : typeof({{narg.value}}),
         {% end %}
       {% end %}
       ) {
       spawn do
-        {{exp.name}}(
-          {% for arg, i in exp.args %}
+        {{call.name}}(
+          {% for arg, i in call.args %}
             __arg{{i}},
           {% end %}
-          {% if exp.named_args %}
-            {% for narg, i in exp.named_args %}
+          {% if call.named_args %}
+            {% for narg, i in call.named_args %}
               {{narg.name}}: __narg{{i}},
             {% end %}
           {% end %}
         )
       end
-    {% if exp.named_args %}
-      }.call({{*exp.args}}, {{*exp.named_args.map(&.value)}})
+    {% if call.named_args %}
+      }.call({{*call.args}}, {{*call.named_args.map(&.value)}})
     {% else %}
-      }.call({{*exp.args}})
+      }.call({{*call.args}})
     {% end %}
   {% else %}
     spawn do
-      {{exp}}
+      {{call}}
     end
   {% end %}
 end
