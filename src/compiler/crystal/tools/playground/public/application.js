@@ -90,10 +90,13 @@ var matchEditorSidebarHeight = function() {
     sidebarWrapper.height(editorWrapper.height());
   },0)
 };
-editor.on("change", function(){
+function saveAsLastCode() {
   if(typeof(Storage) !== "undefined") {
     localStorage.lastCode = sessionStorage.lastCode = editor.getValue();
   }
+}
+editor.on("change", function(){
+  saveAsLastCode();
   hideEditorErrors();
   matchEditorSidebarHeight();
   scheduleRun();
@@ -435,6 +438,10 @@ $(document).ready(function(){
   var mac = /Mac/.test(navigator.platform);
   runButton.attr('data-tooltip', mac ? '⌘ + Enter' : 'Ctrl + Enter');
 });
+
+window.onunload = function(){
+  saveAsLastCode();
+};
 
 // load file by drag and drop
 var doc = document.documentElement;
