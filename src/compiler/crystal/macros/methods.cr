@@ -1033,4 +1033,15 @@ module Crystal
       end
     end
   end
+
+  class Splat
+    def interpret(method, args, block, interpreter)
+      case method
+      when "exp"
+        interpret_argless_method(method, args) { exp }
+      else
+        super
+      end
+    end
+  end
 end

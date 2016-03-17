@@ -927,8 +927,12 @@ module Macros
   # class Underscore < ASTNode
   # end
 
-  # class Splat < UnaryExpression
-  # end
+  # A splat expression: `*exp`.
+  class Splat < ASTNode
+    # Returns the splatted expression.
+    def exp : ASTNode
+    end
+  end
 
   # class MagicConstant < ASTNode
   # end
