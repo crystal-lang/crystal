@@ -18,28 +18,30 @@ describe HTTP::WebSocketHandler do
     io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello")
   end
 
-  it "gives upgrade response for websocket upgrade request" do
-    io = MemoryIO.new
-    headers = HTTP::Headers{
-      "Upgrade":           "websocket",
-      "Connection":        "Upgrade",
-      "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
-    }
-    request = HTTP::Request.new("GET", "/", headers: headers)
-    response = HTTP::Server::Response.new(io)
-    context = HTTP::Server::Context.new(request, response)
+  {% for connection in ["Upgrade", "keep-alive, Upgrade"] %}
+    it "gives upgrade response for websocket upgrade request with '{{connection.id}}' request" do
+      io = MemoryIO.new
+      headers = HTTP::Headers{
+        "Upgrade":           "websocket",
+        "Connection":        {{connection}},
+        "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+      }
+      request = HTTP::Request.new("GET", "/", headers: headers)
+      response = HTTP::Server::Response.new(io)
+      context = HTTP::Server::Context.new(request, response)
 
-    handler = HTTP::WebSocketHandler.new { }
-    handler.next = HTTP::Handler::Proc.new &.response.print("Hello")
+      handler = HTTP::WebSocketHandler.new { }
+      handler.next = HTTP::Handler::Proc.new &.response.print("Hello")
 
-    begin
-      handler.call context
-    rescue IO::Error
-      # Raises because the MemoryIO is empty
+      begin
+        handler.call context
+      rescue IO::Error
+        # Raises because the MemoryIO is empty
+      end
+
+      response.close
+
+      io.to_s.should eq("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-Websocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n\r\n")
     end
-
-    response.close
-
-    io.to_s.should eq("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-Websocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=\r\n\r\n")
-  end
+  {% end %}
 end
