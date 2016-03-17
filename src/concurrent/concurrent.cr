@@ -17,20 +17,10 @@ def sleep
   Scheduler.reschedule
 end
 
-macro spawn
-  %fiber = Fiber.new do
-    begin
-      {{ yield }}
-    rescue %ex
-      STDERR.puts "Unhandled exception:"
-      %ex.inspect_with_backtrace STDERR
-      STDERR.flush
-    end
-  end
-
-  Scheduler.enqueue %fiber
-
-  %fiber
+def spawn(&block)
+  fiber = Fiber.new(&block)
+  Scheduler.enqueue fiber
+  fiber
 end
 
 # TODO: this doesn't work if a Call has a block or named arguments... yet

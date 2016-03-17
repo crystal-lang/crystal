@@ -95,10 +95,14 @@ class Fiber
 
   def run
     @proc.call
+  rescue ex
+    STDERR.puts "Unhandled exception:"
+    ex.inspect_with_backtrace STDERR
+    STDERR.flush
+  ensure
     @@stack_pool << @stack
 
     # Remove the current fiber from the linked list
-
     if prev_fiber = @prev_fiber
       prev_fiber.next_fiber = @next_fiber
     else
@@ -112,9 +116,7 @@ class Fiber
     end
 
     # Delete the resume event if it was used by `yield` or `sleep`
-    if event = @resume_event
-      event.free
-    end
+    @resume_event.try &.free
 
     Scheduler.reschedule
   end
