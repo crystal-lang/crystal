@@ -257,7 +257,33 @@ Before second send
 
 Note that when the program executes a `receive`, that fiber blocks and execution continues with the other fiber. When `send` is executed, execution continues with the fiber that was waiting on that channel.
 
-Here we are sending literal values, but the spawned fiber might compute this value by, for example, reading a file, or getting it from a socket. When this fiber will have to wait for I/O, other fibers will be able to continue executing code until I/O is ready, and finally when the value is ready and sent through the channel, the main fiber will receive it.
+Here we are sending literal values, but the spawned fiber might compute this value by, for example, reading a file, or getting it from a socket. When this fiber will have to wait for I/O, other fibers will be able to continue executing code until I/O is ready, and finally when the value is ready and sent through the channel, the main fiber will receive it. For example:
+
+```crystal
+require "socket"
+
+channel = Channel(String).new
+
+spawn do
+  server = TCPServer.new("0.0.0.0", 8080)
+  socket = server.accept
+  while line = socket.gets
+    channel.send(line)
+  end
+end
+
+spawn do
+  while line = gets
+    channel.send(line)
+  end
+end
+
+3.times do
+  puts channel.receive
+end
+```
+
+The above program spawns two fibers. The first one creates a TCPServer, accepts one connection and the read lines from there, sending them to the channel. There's a second fiber that reads lines from standard input. The main fibers reads the first 3 messages that are sent to the channel, eihter from the socket or stdin, and then the program exits. The `gets` calls will block the fibers and tell the Event Loop to continue from there if data comes.
 
 Likewise, we can wait for multiple fibers to complete execution, and gather their values:
 
@@ -316,6 +342,8 @@ Here `channel.send` is executed first, but since there's no one waiting for a va
 ### Unbuffered channels
 
 The above examples use unbuffered channels: when sending a value, if a fiber is waiting on that channel then execution continues on that fiber.
+
+With a buffered channel, invoking `send` won't switch to another fiber unless the buffer is full:
 
 ```crystal
 # A buffered channel of capacity 2
