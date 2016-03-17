@@ -36,7 +36,14 @@ class Crystal::Doc::Method
   end
 
   def prefix
-    @class_method ? '.' : '#'
+    case
+    when @type.program?
+      ""
+    when @class_method
+      "."
+    else
+      "#"
+    end
   end
 
   def abstract?
@@ -44,7 +51,14 @@ class Crystal::Doc::Method
   end
 
   def kind
-    @class_method ? "def self." : "def "
+    case
+    when @type.program?
+      "def "
+    when @class_method
+      "def self."
+    else
+      "def "
+    end
   end
 
   def id
