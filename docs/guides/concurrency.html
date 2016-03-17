@@ -34,7 +34,7 @@
     <body>
         
         
-    <div class="book" data-level="6.1" data-basepath=".." data-revision="Wed Mar 16 2016 18:47:51 GMT+0000 (UTC)">
+    <div class="book" data-level="6.1" data-basepath=".." data-revision="Thu Mar 17 2016 12:58:41 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2212,7 +2212,30 @@ Before second send
 2
 </code></pre>
 <p>Note that when the program executes a <code>receive</code>, that fiber blocks and execution continues with the other fiber. When <code>send</code> is executed, execution continues with the fiber that was waiting on that channel.</p>
-<p>Here we are sending literal values, but the spawned fiber might compute this value by, for example, reading a file, or getting it from a socket. When this fiber will have to wait for I/O, other fibers will be able to continue executing code until I/O is ready, and finally when the value is ready and sent through the channel, the main fiber will receive it.</p>
+<p>Here we are sending literal values, but the spawned fiber might compute this value by, for example, reading a file, or getting it from a socket. When this fiber will have to wait for I/O, other fibers will be able to continue executing code until I/O is ready, and finally when the value is ready and sent through the channel, the main fiber will receive it. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-keyword">require</span> <span class="hljs-string">&quot;socket&quot;</span>
+
+channel = <span class="hljs-constant">Channel</span>(<span class="hljs-constant">String</span>).new
+
+spawn <span class="hljs-keyword">do</span>
+  server = <span class="hljs-constant">TCPServer</span>.new(<span class="hljs-string">&quot;0.0.0.0&quot;</span>, <span class="hljs-number">8080</span>)
+  socket = server.accept
+  <span class="hljs-keyword">while</span> line = socket.gets
+    channel.send(line)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+spawn <span class="hljs-keyword">do</span>
+  <span class="hljs-keyword">while</span> line = gets
+    channel.send(line)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-number">3</span>.times <span class="hljs-keyword">do</span>
+  puts channel.receive
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The above program spawns two fibers. The first one creates a TCPServer, accepts one connection and the read lines from there, sending them to the channel. There&apos;s a second fiber that reads lines from standard input. The main fibers reads the first 3 messages that are sent to the channel, eihter from the socket or stdin, and then the program exits. The <code>gets</code> calls will block the fibers and tell the Event Loop to continue from there if data comes.</p>
 <p>Likewise, we can wait for multiple fibers to complete execution, and gather their values:</p>
 <pre><code class="lang-crystal">channel = <span class="hljs-constant">Channel</span>(<span class="hljs-constant">Int32</span>).new
 
@@ -2259,6 +2282,7 @@ After yield
 <p>Here <code>channel.send</code> is executed first, but since there&apos;s no one waiting for a value (yet), execution continues in other fibers. The second fiber is executed, there&apos;s a value on the channel, it&apos;s obtained, and execution continues, first with the first fiber, and then with the main fiber, because <code>Fiber.yield</code> puts a fiber at the end of the execution queue.</p>
 <h3 id="unbuffered-channels">Unbuffered channels</h3>
 <p>The above examples use unbuffered channels: when sending a value, if a fiber is waiting on that channel then execution continues on that fiber.</p>
+<p>With a buffered channel, invoking <code>send</code> won&apos;t switch to another fiber unless the buffer is full:</p>
 <pre><code class="lang-crystal"><span class="hljs-comment"># A buffered channel of capacity 2</span>
 channel = <span class="hljs-constant">Channel</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">2</span>)
 
