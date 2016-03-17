@@ -24,7 +24,7 @@
               <ul class="right">
                 <li><a href="/">Playground</a></li>
                 <li><a href="/about.html">About</a></li>
-                <li><a href="#settings-modal"><span class="octicon octicon-settings"></span></a></li>
+                <li><a href="/settings.html"><span class="octicon octicon-settings"></span></a></li>
               </ul>
             </div>
             <div id="run-progress" class="progress">
@@ -92,37 +92,6 @@
           <pre id="output"></pre>
         </div>
       </div>
-
-      <div id="settings-modal" class="modal">
-        <div class="modal-content">
-          <div class="row">
-            <div class="input-field col s12">
-              <input id="github" name="settingsGithubToken" type="text">
-              <label for="github">GitHub Access Token</label>
-            </div>
-            <div class="col s12">
-              Create a <a href="https://github.com/settings/tokens">GitHub Access Token</a> in order to use the <i>share as gist</i> button.
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="input-field col s12">
-              <div class="switch">
-                <label>
-                  Hide types
-                  <input name="settingsShowTypes" type="checkbox">
-                  <span class="lever"></span>
-                  Show types
-                </label>
-              </div>
-            </div>
-          </div>
-
-        </div>
-        <div class="modal-footer">
-          <a href="javascript:" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
-        </div>
-      </div>
     </main>
 
     <footer>
@@ -137,6 +106,7 @@
     <script src="/vendor/CodeMirror-5.12.0/lib/codemirror.js"></script>
     <script src="/vendor/CodeMirror-5.12.0/addon/comment/comment.js"></script>
     <script src="/vendor/CodeMirror-5.12.0/mode/crystal/crystal.js"></script>
+    <script type="text/javascript" src="/settings.js"></script>
     <script type="text/javascript" src="/application.js"></script>
   </body>
 </html>

@@ -10,33 +10,6 @@ var stopButton = $('#stop');
 var runProgress = $('#run-progress');
 var runTag = 0;
 
-// begin Settings
-// default settings
-if(typeof(localStorage.settingsGithubToken) === 'undefined') {
-  localStorage.settingsGithubToken = ''
-}
-if(typeof(localStorage.settingsShowTypes) === 'undefined') {
-  localStorage.settingsShowTypes = 'true'
-}
-$(document).ready(function(){
-  function loadSettings() {
-    $("[name=settingsGithubToken]").val(localStorage.settingsGithubToken);
-    $("[name=settingsShowTypes]").prop('checked', localStorage.settingsShowTypes == 'true');
-  }
-
-  loadSettings();
-
-  $('[href="#settings-modal"]').leanModal({
-    ready: loadSettings,
-    complete: function() {
-      localStorage.settingsGithubToken = $("[name=settingsGithubToken]").val();
-      localStorage.settingsShowTypes = $("[name=settingsShowTypes]").is(":checked") ? 'true' : 'false';
-    }
-  })
-})
-// end Settings
-
-
 if(typeof(Storage) !== "undefined") {
   defaultCode = sessionStorage.lastCode || localStorage.lastCode || defaultCode;
 }
@@ -206,7 +179,7 @@ function Inspector(line) {
         this.value_type = null;
       }
     }
-    if (this.value_type != null && localStorage.settingsShowTypes == 'true') {
+    if (this.value_type != null && Playground.settings.getShowTypes()) {
       this.lineDom.append($("<span>").addClass("type").text(this.value_type));
     }
 
@@ -401,14 +374,15 @@ function saveAsFile() {
 }
 
 function saveAsGist() {
-  if (localStorage.settingsGithubToken == '') {
-    $('[href="#settings-modal"]').click();
+  if (Playground.settings.getGithubToken() == '') {
+    window.open('/settings.html');
+    return;
   }
 
   $.ajax({
     type:"POST",
     beforeSend: function (request) {
-      request.setRequestHeader("Authorization", "token " + localStorage.settingsGithubToken);
+      request.setRequestHeader("Authorization", "token " + Playground.settings.getGithubToken());
     },
     url: "https://api.github.com/gists",
     data: JSON.stringify({

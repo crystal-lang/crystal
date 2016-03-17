@@ -32,32 +32,31 @@
 
     <main>
       <div class="container">
-        <h4>Source</h4>
+        <h4>Settings</h4>
 
-        <p>
-          Crystal Playground is developed together with Crystal Compiler.
-        </p>
+          <div class="row">
+            <div class="input-field col s12">
+              <input id="github" name="settingsGithubToken" type="text">
+              <label for="github">GitHub Access Token</label>
+            </div>
+            <div class="col s12">
+              Create a <a href="https://github.com/settings/tokens" target="_blank">GitHub Access Token <span class="octicon octicon-link-external"></span></a> in order to use the <i>share as gist</i> button.
+            </div>
+          </div>
 
-        <p>
-          You can find the source code at <a href="https://github.com/crystal-lang/crystal/tree/master/src/compiler/crystal/tools/playground">https://github.com/crystal-lang/crystal/tree/master/src/compiler/crystal/tools/playground</a>.
-        </p>
+          <div class="row">
+            <div class="input-field col s12">
+              <div class="switch">
+                <label>
+                  Hide types
+                  <input name="settingsShowTypes" type="checkbox">
+                  <span class="lever"></span>
+                  Show types
+                </label>
+              </div>
+            </div>
+          </div>
 
-        <h4>Credits</h4>
-
-        <p>
-          The following libraries are used in Crystal Playground.
-        </p>
-
-        <ul>
-          <li><a href="//materializecss.com">Materialize</a></li>
-          <li><a href="//codemirror.net">CodeMirror</a></li>
-          <li><a href="//octicons.github.com">GitHub Octicons</a></li>
-          <li><a href="//jquery.com">jQuery</a></li>
-        </ul>
-
-        <p>
-          Thanks for all the hard work!
-        </p>
       </div>
     </main>
 
@@ -69,5 +68,6 @@
 
     <script src="/vendor/jquery-2.2.1.min.js"></script>
     <script src="/vendor/materialize-v0.97.5/js/materialize.min.js"></script>
+    <script type="text/javascript" src="/settings.js"></script>
   </body>
 </html>
