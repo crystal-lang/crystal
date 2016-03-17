@@ -71,6 +71,27 @@ struct HTTP::Headers
     values ? concat(values) : nil
   end
 
+  # Returns if among the headers for `key` there is some that contains `word` as a value.
+  # The `word` is expected to match between word boundaries (i.e. non-alphanumeric chars).
+  #
+  # ```
+  # headers = HTTP::Headers{"Connection": "keep-alive, Upgrade"}
+  # headers.includes_word?("Connection", "Upgrade") # => true
+  # ```
+  def includes_word?(key, word)
+    # iterates over all header values avoiding the concatenation
+    get?(key).try &.each do |value|
+      start = value.index(word)
+      next unless start
+      # check if the match is not surrounded by alphanumeric chars
+      next if start > 0 && value[start - 1].alphanumeric?
+      next if start + word.size < value.size && value[start + word.size].alphanumeric?
+      return true
+    end
+
+    false
+  end
+
   def add(key, value : String)
     check_invalid_header_content value
 
