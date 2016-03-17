@@ -446,28 +446,30 @@ class Crystal::Command
   end
 
   private def playground
-    host = "localhost"
-    port = 8080
+    server = Playground::Server.new
 
-    option_parser =
-      OptionParser.parse(options) do |opts|
-        opts.banner = "Usage: crystal play [options]\n\nOptions:"
+    OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal play [options]\n\nOptions:"
 
-        opts.on("-p PORT", "--port PORT", "Runs the playground on the specified port") do |p|
-          port = p.to_i
-        end
-
-        opts.on("-b HOST", "--binding HOST", "Binds the playground to the specified IP") do |h|
-          host = h
-        end
-
-        opts.on("-h", "--help", "Show this message") do
-          puts opts
-          exit 1
-        end
+      opts.on("-p PORT", "--port PORT", "Runs the playground on the specified port") do |port|
+        server.port = port.to_i
       end
 
-    Playground::Server.new(host, port).start
+      opts.on("-b HOST", "--binding HOST", "Binds the playground to the specified IP") do |host|
+        server.host = host
+      end
+
+      opts.on("-v", "--verbose", "Display detailed information of executed code") do
+        server.logger.level = Logger::Severity::DEBUG
+      end
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit 1
+      end
+    end
+
+    server.start
   end
 
   private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false)

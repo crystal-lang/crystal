@@ -1,19 +1,23 @@
 require "http/server"
 require "tempfile"
+require "logger"
 
 module Crystal::Playground
   class Session
     @ws : HTTP::WebSocket
     @process : Process?
     @running_process_filename : String
+    @logger : Logger
     getter tag : Int32
 
-    def initialize(@ws, @session_key, @port)
+    def initialize(@ws, @session_key, @port, @logger)
       @running_process_filename = ""
       @tag = 0
     end
 
     def run(source, tag)
+      @logger.info "Request to run code (session=#{@session_key}, tag=#{tag}).\n#{source}"
+
       @tag = tag
       begin
         ast = Parser.new(source).parse
@@ -23,6 +27,7 @@ module Crystal::Playground
       end
 
       instrumented = ast.transform(Playground::AgentInstrumentorTransformer.new).to_s
+      @logger.info "Code instrumentation (session=#{@session_key}, tag=#{tag}).\n#{instrumented}"
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
@@ -36,16 +41,22 @@ module Crystal::Playground
       output_filename = tempfile "play-#{@session_key}-#{tag}"
       compiler = Compiler.new
       begin
+        @logger.info "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})."
         result = compiler.compile sources, output_filename
       rescue ex : Crystal::Exception
+        @logger.info "Instrumented code compilation failed (session=#{@session_key}, tag=#{tag})."
+
         # due to instrumentation, we compile the original program
         begin
+          @logger.info "Original code compilation started (session=#{@session_key}, tag=#{tag})."
           compiler.compile Compiler::Source.new("play", source), output_filename
         rescue ex : Crystal::Exception
+          @logger.info "Original code compilation failed (session=#{@session_key}, tag=#{tag})."
           send_exception ex, tag
           return # if we don't exit here we've found a bug
         end
 
+        @logger.error "Instrumention bug found (session=#{@session_key}, tag=#{tag})."
         send_with_json_builder do |json, io|
           json.field "type", "bug"
           json.field "tag", tag
@@ -105,6 +116,7 @@ module Crystal::Playground
 
     private def stop_process
       if process = @process
+        @logger.info "Code execution killed (session=#{@session_key}, filename=#{@running_process_filename})."
         @process = nil
         File.delete @running_process_filename
         process.kill rescue nil
@@ -114,11 +126,13 @@ module Crystal::Playground
     private def execute(tag, output_filename)
       stop_process
 
+      @logger.info "Code execution started (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
       @process = process = Process.new(output_filename, args: [] of String, input: nil, output: nil, error: nil)
       @running_process_filename = output_filename
 
       spawn do
         status = process.wait
+        @logger.info "Code execution ended (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
         exit_status = status.normal_exit? ? status.exit_code : status.exit_signal.value
 
         send_with_json_builder do |json, io|
@@ -191,21 +205,33 @@ module Crystal::Playground
   class Server
     $sockets = [] of HTTP::WebSocket
     @sessions = {} of Int32 => Session
-    @sessionsKey = 0
+    @sessions_key = 0
 
-    def initialize(@host : String, @port : Int32)
+    property host
+    property port
+    property logger
+
+    def initialize
+      @host = "localhost"
+      @port = 8080
+      @verbose = false
+      @logger = Logger.new(STDOUT)
+      @logger.level = Logger::Severity::WARN
     end
 
     def start
       public_dir = File.join(File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0]), "public")
 
       agent_ws = PathWebSocketHandler.new "/agent" do |ws|
+        @logger.info "/agent WebSocket connected"
+
         ws.on_message do |message|
           # forward every message to the client.
           # removing the session key
           json = JSON.parse(message)
-          sessionKey = json["session"].as_i
-          session = @sessions[sessionKey]
+          session_key = json["session"].as_i
+          session = @sessions[session_key]
+
           # ignore if the session is already about another execution
           if json["tag"].as_i == session.tag
             json.as_h.delete "session"
@@ -215,8 +241,9 @@ module Crystal::Playground
       end
 
       client_ws = PathWebSocketHandler.new "/client" do |ws|
-        @sessionsKey += 1
-        @sessions[@sessionsKey] = session = Session.new(ws, @sessionsKey, @port)
+        @sessions_key += 1
+        @sessions[@sessions_key] = session = Session.new(ws, @sessions_key, @port, @logger)
+        @logger.info "/client WebSocket connected as session=#{@sessions_key}"
 
         ws.on_message do |message|
           json = JSON.parse(message)
