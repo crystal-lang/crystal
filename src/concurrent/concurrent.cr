@@ -23,12 +23,16 @@ def spawn(&block)
   fiber
 end
 
-# TODO: this doesn't work if a Call has a block or named arguments... yet
 macro spawn(exp)
   {% if exp.is_a?(Call) %}
     ->(
       {% for arg, i in exp.args %}
         __arg{{i}} : typeof({{arg}}),
+      {% end %}
+      {% if exp.named_args %}
+        {% for narg, i in exp.named_args %}
+          __narg{{i}} : typeof({{narg.value}}),
+        {% end %}
       {% end %}
       ) {
       spawn do
@@ -36,9 +40,18 @@ macro spawn(exp)
           {% for arg, i in exp.args %}
             __arg{{i}},
           {% end %}
+          {% if exp.named_args %}
+            {% for narg, i in exp.named_args %}
+              {{narg.name}}: __narg{{i}},
+            {% end %}
+          {% end %}
         )
       end
-    }.call({{*exp.args}})
+    {% if exp.named_args %}
+      }.call({{*exp.args}}, {{*exp.named_args.map(&.value)}})
+    {% else %}
+      }.call({{*exp.args}})
+    {% end %}
   {% else %}
     spawn do
       {{exp}}
