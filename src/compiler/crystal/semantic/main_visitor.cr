@@ -1667,12 +1667,12 @@ module Crystal
     end
 
     def end_visit(node : Break)
-      if target_block = block
-        node.target = target_block.call.not_nil!
+      if block = @block
+        node.target = block.call.not_nil!
 
-        target_block.break.bind_to(node.exp || mod.nil_var)
+        block.break.bind_to(node.exp || mod.nil_var)
 
-        bind_vars @vars, target_block.after_vars
+        bind_vars @vars, block.after_vars, block.args
       elsif target_while = @while_stack.last?
         node.target = target_while
         target_while.has_breaks = true
@@ -1697,7 +1697,7 @@ module Crystal
         block.bind_to(node.exp || mod.nil_var)
 
         bind_vars @vars, block.vars
-        bind_vars @vars, block.after_vars
+        bind_vars @vars, block.after_vars, block.args
       elsif target_while = @while_stack.last?
         node.target = target_while
 
