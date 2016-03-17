@@ -132,4 +132,32 @@ describe HTTP::Headers do
     headers = HTTP::Headers.new
     headers.should be headers.merge!({"foo": "bar"})
   end
+
+  it "matches word" do
+    headers = HTTP::Headers{"foo": "bar"}
+    headers.includes_word?("foo", "bar").should be_true
+    headers.includes_word?("foo", "ba").should be_false
+    headers.includes_word?("foo", "ar").should be_false
+  end
+
+  it "matches word with comma separated value" do
+    headers = HTTP::Headers{"foo": "bar, baz"}
+    headers.includes_word?("foo", "bar").should be_true
+    headers.includes_word?("foo", "baz").should be_true
+    headers.includes_word?("foo", "ba").should be_false
+  end
+
+  it "matches word among headers" do
+    headers = HTTP::Headers.new
+    headers.add("foo", "bar")
+    headers.add("foo", "baz")
+    headers.includes_word?("foo", "bar").should be_true
+    headers.includes_word?("foo", "baz").should be_true
+  end
+
+  it "does not matches word if missing header" do
+    headers = HTTP::Headers.new
+    headers.includes_word?("foo", "bar").should be_false
+    headers.includes_word?("foo", "").should be_false
+  end
 end
