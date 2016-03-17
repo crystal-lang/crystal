@@ -34,7 +34,7 @@
     <body>
         
         
-    <div class="book" data-level="6.1" data-basepath=".." data-revision="Thu Mar 17 2016 12:58:41 GMT+0000 (UTC)">
+    <div class="book" data-level="6.1" data-basepath=".." data-revision="Thu Mar 17 2016 14:39:32 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2187,23 +2187,24 @@ After receive
 </code></pre>
 <p>First, the program spawns a fiber but doesn&apos;t execute it yet. When we invoke <code>channel.receive</code>, the main fiber blocks and execution continues with the spawned fiber. Then <code>channel.send(nil)</code> is invoked, and so execution continues at <code>channel.receive</code>, which was waiting for a value. Then the main fiber continues executing and finishes, so the program exits without giving the other fiber a chance to print &quot;After send&quot;.</p>
 <p>In the above example we used <code>nil</code> just to communicate that the fiber ended. We can also use channels to communicate values between fibers:</p>
-<pre><code>channel = Channel(Int32).new
+<pre><code class="lang-crystal">channel = <span class="hljs-constant">Channel</span>(<span class="hljs-constant">Int32</span>).new
 
-spawn do
-  puts &quot;Before first send&quot;
-  channel.send(1)
-  puts &quot;Before second send&quot;
-  channel.send(2)
-end
+spawn <span class="hljs-keyword">do</span>
+  puts <span class="hljs-string">&quot;Before first send&quot;</span>
+  channel.send(<span class="hljs-number">1</span>)
+  puts <span class="hljs-string">&quot;Before second send&quot;</span>
+  channel.send(<span class="hljs-number">2</span>)
+<span class="hljs-keyword">end</span>
 
-puts &quot;Before first receive&quot;
+puts <span class="hljs-string">&quot;Before first receive&quot;</span>
 value = channel.receive
-puts value # =&gt; 1
+puts value <span class="hljs-comment"># =&gt; 1</span>
 
-puts &quot;Before second receive&quot;
+puts <span class="hljs-string">&quot;Before second receive&quot;</span>
 value = channel.receive
-puts value # =&gt; 2
-</code></pre><p>Output:</p>
+puts value <span class="hljs-comment"># =&gt; 2</span>
+</code></pre>
+<p>Output:</p>
 <pre><code class="lang-text">Before first receive
 Before first send
 1
