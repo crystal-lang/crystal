@@ -225,7 +225,7 @@ First, the program spawns a fiber but doesn't execute it yet. When we invoke `ch
 
 In the above example we used `nil` just to communicate that the fiber ended. We can also use channels to communicate values between fibers:
 
-```
+```crystal
 channel = Channel(Int32).new
 
 spawn do
