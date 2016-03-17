@@ -31,7 +31,7 @@ module Crystal::Playground
 
       prelude = %(
         require "compiler/crystal/tools/playground/agent"
-        $p = Crystal::Playground::Agent.new("ws://localhost:#{@port}/agent", #{@session_key}, #{tag})
+        $p = Crystal::Playground::Agent.new("ws://localhost:#{@port}/agent/#{@session_key}/#{tag}", #{tag})
         )
 
       sources = [
@@ -189,12 +189,12 @@ module Crystal::Playground
   class PathWebSocketHandler < HTTP::WebSocketHandler
     @path : String
 
-    def initialize(@path, &proc : HTTP::WebSocket ->)
+    def initialize(@path, &proc : HTTP::WebSocket, HTTP::Server::Context ->)
       super(&proc)
     end
 
     def call(context)
-      if context.request.path == @path
+      if context.request.path.try &.starts_with?(@path)
         super
       else
         call_next(context)
@@ -222,20 +222,19 @@ module Crystal::Playground
     def start
       public_dir = File.join(File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0]), "public")
 
-      agent_ws = PathWebSocketHandler.new "/agent" do |ws|
-        @logger.info "/agent WebSocket connected"
+      agent_ws = PathWebSocketHandler.new "/agent" do |ws, context|
+        match_data = context.request.path.not_nil!.match(/\/(\d+)\/(\d+)$/).not_nil!
+        session_key = match_data[1]?.try(&.to_i)
+        tag = match_data[2]?.try(&.to_i)
+        @logger.info "#{context.request.path} WebSocket connected (session=#{session_key}, tag=#{tag})"
+
+        session = @sessions[session_key]
 
         ws.on_message do |message|
-          # forward every message to the client.
-          # removing the session key
-          json = JSON.parse(message)
-          session_key = json["session"].as_i
-          session = @sessions[session_key]
-
-          # ignore if the session is already about another execution
-          if json["tag"].as_i == session.tag
-            json.as_h.delete "session"
-            session.send(json.to_json)
+          # ignore if the session is already about another execution.
+          if tag == session.tag
+            # forward every message to the client.
+            session.send(message)
           end
         end
       end
