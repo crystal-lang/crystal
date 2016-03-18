@@ -82,7 +82,11 @@ module Crystal::Playground
     end
 
     def send(message)
-      @ws.send(message)
+      begin
+        @ws.send(message)
+      rescue ex : IO::Error
+        @logger.warn "Unable to send message (session=#{@session_key})."
+      end
     end
 
     def send_with_json_builder
