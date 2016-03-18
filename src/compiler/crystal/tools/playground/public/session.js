@@ -10,8 +10,6 @@ CodeMirror.commands.runCode = function(editor) {
   }
 };
 
-var runDebounce = 800;
-
 function ModalDialog(options) {
   options = $.extend({}, {destroyOnClose: true}, options);
 
@@ -466,7 +464,7 @@ Playground.Session = function(options) {
     this._removeScheduledRun();
     this._runTimeout = window.setTimeout(function(){
       this.run();
-    }.bind(this), runDebounce);
+    }.bind(this), Playground.settings.getRunDebounce());
   }.bind(this);
   //
 
