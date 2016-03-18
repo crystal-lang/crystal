@@ -449,7 +449,7 @@ class Crystal::Command
     server = Playground::Server.new
 
     OptionParser.parse(options) do |opts|
-      opts.banner = "Usage: crystal play [options]\n\nOptions:"
+      opts.banner = "Usage: crystal play [options] [file]\n\nOptions:"
 
       opts.on("-p PORT", "--port PORT", "Runs the playground on the specified port") do |port|
         server.port = port.to_i
@@ -466,6 +466,12 @@ class Crystal::Command
       opts.on("-h", "--help", "Show this message") do
         puts opts
         exit 1
+      end
+
+      opts.unknown_args do |before, after|
+        if before.size > 0
+          server.source = gather_sources([before.first]).first
+        end
       end
     end
 

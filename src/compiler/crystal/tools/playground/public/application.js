@@ -2,22 +2,23 @@ $(function(){
   $('.modal-trigger').leanModal();
 });
 
-var defaultCode = 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n';
-
-if (Playground.hasStorage) {
-  defaultCode = sessionStorage.lastCode || localStorage.lastCode || defaultCode;
-}
-
 // main page initialization
 $(function(){
   if ($('#mainEditorContainer').length == 0)
     return;
 
+  // session is first so the user can navigates back and forth from pages.
+  // new tabs will load the environment code.
+  var code = (Playground.hasStorage ? sessionStorage.lastCode : null) ||
+              Environment.source ||
+             (Playground.hasStorage ? localStorage.lastCode : null) ||
+              Environment.defaultSource;
+
   var session = new Playground.Session({
     container: $('#mainEditorContainer'),
     stdout: $('#mainOutput'),
     outputIndicator: $('#mainOutputIndicator'),
-    source: defaultCode,
+    source: code,
     autofocus: true,
   });
   var buttons = new Playground.RunButtons({
@@ -34,9 +35,9 @@ $(function(){
   session.onChange = function() {
     saveAsLastCode();
   };
-  window.onunload = function(){
+  $(window).unload(function(){
     saveAsLastCode();
-  };
+  });
 
   $("#saveAsFile").click(function(e) {
     var uri = "data:text/plain;charset=utf-8," + encodeURIComponent(session.getSource());

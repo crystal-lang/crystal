@@ -202,6 +202,39 @@ module Crystal::Playground
     end
   end
 
+  class EnvironmentHandler < HTTP::Handler
+    def initialize(@server)
+    end
+
+    def call(context)
+      case {context.request.method, context.request.resource}
+      when {"GET", "/environment.js"}
+        context.response.headers["Content-Type"] = "application/javascript"
+        context.response.puts %(Environment = {})
+
+        context.response.puts %(Environment.version = #{("Crystal " + Crystal.version_string).inspect})
+
+        defaultSource = <<-CR
+          a = 1
+          b = 3
+          c = a + b
+          r = rand
+          puts c + r
+
+          CR
+        context.response.puts "Environment.defaultSource = #{defaultSource.inspect}"
+
+        if source = @server.source
+          context.response.puts "Environment.source = #{source.code.inspect};"
+        else
+          context.response.puts "Environment.source = null;"
+        end
+      else
+        call_next(context)
+      end
+    end
+  end
+
   class Server
     $sockets = [] of HTTP::WebSocket
     @sessions = {} of Int32 => Session
@@ -210,6 +243,7 @@ module Crystal::Playground
     property host
     property port
     property logger
+    property source : Compiler::Source?
 
     def initialize
       @host = "localhost"
@@ -261,6 +295,7 @@ module Crystal::Playground
         client_ws,
         agent_ws,
         IndexHandler.new(File.join(public_dir, "index.html")),
+        EnvironmentHandler.new(self),
         HTTP::StaticFileHandler.new(public_dir),
       ]
 

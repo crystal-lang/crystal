@@ -528,4 +528,8 @@ Playground.Session = function(options) {
 
   $(window).resize(this._matchEditorSidebarHeight);
   this._matchEditorSidebarHeight();
+
+  $(window).unload(function(){
+    this.stop();
+  }.bind(this));
 };
