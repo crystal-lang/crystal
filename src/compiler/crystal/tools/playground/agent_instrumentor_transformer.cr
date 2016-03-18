@@ -44,6 +44,17 @@ module Crystal
       node
     end
 
+    def transform(node : MultiAssign)
+      node.values = if node.values.size == 1
+        [instrument(node.values[0])]
+      else
+        rhs = TupleLiteral.new(node.values)
+        rhs.location = node.location
+        [instrument(rhs)]
+      end
+      node
+    end
+
     def transform(node : NilLiteral | NumberLiteral | StringLiteral | BoolLiteral | CharLiteral | SymbolLiteral | TupleLiteral | ArrayLiteral | StringInterpolation | RegexLiteral | Var | InstanceVar | ClassVar | Global | TypeOf)
       instrument(node)
     end

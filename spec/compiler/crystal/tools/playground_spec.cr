@@ -88,6 +88,12 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %(a = 4), %(a = $p.i(4, 1))
   end
 
+  it "instrument multi assignments in the rhs" do
+    assert_agent %(a, b = t), %(a, b = $p.i(t, 1))
+    assert_agent %(a, b = d, f), %(a, b = $p.i({d, f}, 1, ["d", "f"]))
+    assert_agent %(a, b = {d, f}), %(a, b = $p.i({d, f}, 1, ["d", "f"]))
+  end
+
   it "instrument puts" do
     assert_agent %(puts 3), %(puts($p.i(3, 1)))
     assert_agent %(puts a, 2, b), %(puts(*$p.i({a, 2, b}, 1, ["a", "2", "b"])))
