@@ -80,6 +80,7 @@ $(function(){
             )).openModal();
       }
     });
+    Materialize.toast('Uploading gist', 4000);
 
     e.preventDefault();
   });
