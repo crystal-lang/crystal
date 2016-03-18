@@ -453,6 +453,25 @@ Playground.Session = function(options) {
   //
 
   // editor errors
+  var renderConsoleText = function(dom, text) {
+    var lines = text.match(/[^\r\n]+/g);
+
+    for(var i = 0; i < lines.length; i++) {
+      if (i > 0) {
+        dom.append("<br>");
+      }
+      var str = lines[i];
+      var firstNonWhite = 0;
+      while (str[firstNonWhite] == ' ') {
+        firstNonWhite++;
+      }
+      var rendered = "\u00a0".repeat(firstNonWhite) + str.substring(firstNonWhite);
+      dom.append(document.createTextNode(rendered));
+    }
+
+    return dom;
+  };
+
   this.currentErrors = [];
 
   this._hideEditorErrors = function() {
@@ -465,13 +484,14 @@ Playground.Session = function(options) {
   }.bind(this);
 
   this._showEditorError = function(line, column, message, color) {
+    var msg;
     var colorClass = "red" + (color > 0 ? " darken-" + Math.min(color, 4) : "");
     var cursor = $("<div>").addClass(colorClass + " editor-error-col");
     var dom = $("<div>").addClass("editor-error")
       .append(cursor)
-      .append($("<pre>")
-        .addClass(colorClass + " editor-error-msg white-text")
-        .text(message));
+      .append(renderConsoleText($("<div>"), message)
+        .addClass(colorClass + " editor-error-msg white-text"));
+
     this.currentErrors.push(this.editor.addLineWidget(line-1, dom[0]));
     cursor.css('left', column + 'ch');
     this._matchEditorSidebarHeight();
@@ -484,7 +504,7 @@ Playground.Session = function(options) {
   this._showFullError = function() {
     new ModalDialog().append(
       $("<h4>").append("Error"),
-      $("<pre>").text(this._fullError))
+      $("<pre>").css("min-height", "70%").text(this._fullError))
       .openModal();
   }.bind(this);
   //

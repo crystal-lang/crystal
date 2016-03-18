@@ -131,11 +131,13 @@ h4 {
   height: 1em;
   transform: rotate(45deg);
   transform-origin: 65% -21%;
+  z-index: -1;
 }
 
 .editor-error-msg {
   margin-top: 0.5em !important;
-  overflow: scroll;
+  padding: 0 4px;
+  z-index: 2;
 }
 
 .inspect-table th, .inspect-table td {
