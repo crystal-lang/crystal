@@ -45,7 +45,7 @@ end
 
 # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
 lib LibPThread
-  fun create = GC_pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*) : LibC::Int
+  fun create = GC_pthread_create(thread : Thread*, attr : Attr*, start : Void* ->, arg : Void*) : LibC::Int
   fun join = GC_pthread_join(thread : Thread, value : Void**) : LibC::Int
   fun detach = GC_pthread_detach(thread : Thread) : LibC::Int
 end

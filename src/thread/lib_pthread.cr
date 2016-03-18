@@ -14,18 +14,25 @@ lib LibPThread
   end
 
   ifdef darwin
+    type Attr = UInt8[64]
     type MutexAttr = UInt8[16]
   else
+    type Attr = UInt8[56]
     type MutexAttr = UInt8[4]
   end
 
   type Cond = Int64[6]
   type CondAttr = Void*
 
-  fun create = pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*) : Int
+  fun create = pthread_create(thread : Thread*, attr : Attr*, start : Void* ->, arg : Void*) : Int
   fun exit = pthread_exit(value : Void*)
   fun join = pthread_join(thread : Thread, value : Void**) : Int
   fun detach = pthread_detach(thread : Thread) : Int
+
+  fun attr_init = pthread_attr_init(attr : Attr*) : Int
+  fun attr_getstack = pthread_attr_getstack(attr : Attr*, addr : Void**, ssize : LibC::SizeT*) : Int
+  fun attr_setstack = pthread_attr_setstack(attr : Attr*, addr : Void*, ssize : LibC::SizeT) : Int
+  fun attr_destroy = pthread_attr_destroy(attr : Attr*) : Int
 
   fun mutex_init = pthread_mutex_init(mutex : Mutex*, mutex_attr : MutexAttr*) : Int
   fun mutex_lock = pthread_mutex_lock(mutex : Mutex*) : Int
