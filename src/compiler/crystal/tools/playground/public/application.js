@@ -1,5 +1,4 @@
 $(function(){
-  Playground.progress.attach($('#run-progress'));
   $('.modal-trigger').leanModal();
 });
 
@@ -119,7 +118,7 @@ function initDemoPlayground(dom) {
       ).append(
       outputIndicator = $("<div>").addClass("col s1")
       ).append(
-      buttonsContainer = $("<div>").addClass("col s4 center-align")
+        $("<div>").addClass("col s4").append(buttonsContainer = $("<div>").addClass("demoButtonsContainer"))
       ));
 
   var session = new Playground.Session({

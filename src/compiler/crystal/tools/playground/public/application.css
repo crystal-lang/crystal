@@ -134,10 +134,6 @@ h4 {
   overflow: scroll;
 }
 
-#run-progress {
-  display: none;
-}
-
 .inspect-table th, .inspect-table td {
   padding: 8px 5px
 }
@@ -149,6 +145,22 @@ h4 {
 .run-button {
   padding-top: 5px;
   padding-left: 2px;
+}
+
+.run-button-preloader {
+  position: absolute;
+  top: 11px;
+  left: -5px;
+}
+
+.demoButtonsContainer {
+  position: relative;
+  width: 55.5px;
+  margin: 0 auto;
+}
+
+.demoButtonsContainer .run-button-preloader {
+  top: -4px;
 }
 
 .f-16 {

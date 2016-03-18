@@ -53,31 +53,6 @@ function cdiv(cssClass) {
   return $("<div>").addClass(cssClass);
 }
 
-Playground.Progress = function() {
-  this.counter = 0;
-
-  this.attach = function(dom) {
-    this.dom = dom;
-  }.bind(this);
-
-  this.show = function() {
-    this.counter++;
-    if (this.counter > 0) {
-      this.dom.show();
-    }
-  };
-
-  this.hide = function() {
-    this.counter--;
-    if (this.counter <= 0) {
-      this.dom.hide();
-    }
-  };
-
-  return this;
-}
-Playground.progress = new Playground.Progress();
-
 Playground.RunButtons = function(options) {
   var buildAnchor = function(tooltip, octicon) {
     return $("<a>").addClass("run-button btn-floating btn-large waves-effect waves-light tooltipped")
@@ -86,31 +61,51 @@ Playground.RunButtons = function(options) {
       .append($("<span>").addClass("mega-octicon " + octicon));
   }
 
+  var buildProgress = function() {
+    var buildSpinner = function(color) {
+      return cdiv("spinner-layer spinner-" + color)
+        .append(cdiv("circle-clipper left").append(cdiv("circle")))
+        .append(cdiv("gap-patch").append(cdiv("circle")))
+        .append(cdiv("circle-clipper right").append(cdiv("circle")))
+    };
+
+    return cdiv("preloader-wrapper big active run-button-preloader")
+      .append(buildSpinner("blue"))
+      .append(buildSpinner("red"))
+      .append(buildSpinner("yellow"))
+      .append(buildSpinner("green"));
+  }
+
   var mac = /Mac/.test(navigator.platform);
 
   options.container
     .prepend(this.stopButton = buildAnchor("Stops code", "octicon-primitive-square"))
-    .prepend(this.playButton = buildAnchor(mac ? "⌘ + Enter" : "Ctrl + Enter", "octicon-triangle-right"));
+    .prepend(this.playButton = buildAnchor(mac ? "⌘ + Enter" : "Ctrl + Enter", "octicon-triangle-right"))
+    .prepend(this.progress = buildProgress());
 
   this.stopButton.hide().tooltip();
   this.playButton.hide().tooltip();
+  this.progress.hide();
 
   this.showPlay = function() {
     this.playButton.removeClass("disabled");
     this.playButton.show();
     this.stopButton.hide();
+    this.progress.hide();
   }.bind(this);
 
   this.showStop = function() {
     this.playButton.removeClass("disabled");
     this.playButton.hide();
     this.stopButton.show();
+    this.progress.show();
   }.bind(this);
 
   this.showPlayDisabled = function() {
     this.playButton.addClass("disabled");
     this.playButton.show();
     this.stopButton.hide();
+    this.progress.hide();
   }.bind(this);
 
   this.onPlay = function() { }
@@ -280,7 +275,6 @@ Playground.Session = function(options) {
 
   this.stdout = options.stdout;
   this.outputIndicator = new Playground.OutputIndicator(options.outputIndicator);
-  this.running = false;
 
   this.editor = CodeMirror(this.editorDom[0], {
     mode: 'crystal',
@@ -303,7 +297,6 @@ Playground.Session = function(options) {
 
     this.ws.onclose = function() {
       Materialize.toast('Connection lost. Refresh.');
-      Playground.progress.hide();
       this._triggerDisconnect();
     }.bind(this);
 
@@ -322,8 +315,6 @@ Playground.Session = function(options) {
           this._getInspector(message.line).addMessage(message);
           break;
         case "exit":
-          this.running = false;
-          Playground.progress.hide();
           this._triggerFinish();
 
           if (message.status != 0) {
@@ -332,8 +323,6 @@ Playground.Session = function(options) {
           }
           break;
         case "exception":
-          this.running = false;
-          Playground.progress.hide();
           this._triggerFinish();
 
           for (var i = 0; i < message.exception.payload.length; i++) {
@@ -344,7 +333,6 @@ Playground.Session = function(options) {
           }
           break;
         case "bug":
-          this.running = false;
           this._triggerFinish();
 
           new ModalDialog().append(
@@ -370,9 +358,6 @@ Playground.Session = function(options) {
 
   this.runTag = 0;
   this.run = function() {
-    if (this.running) {
-      Playground.progress.hide();
-    }
     this._removeScheduledRun();
     this.runTag++;
 
@@ -380,20 +365,16 @@ Playground.Session = function(options) {
     this._hideEditorErrors();
     this._clearStdout();
 
-    this.running = true;
     this.ws.send(JSON.stringify({
       type: "run",
       source: this.editor.getValue(),
       tag: this.runTag
     }));
 
-    Playground.progress.show();
     this._triggerRun();
   }.bind(this);
 
   this.stop = function() {
-    Playground.progress.hide();
-    this.running = false;
     this.ws.send(JSON.stringify({
       type: "stop",
       tag: this.runTag
