@@ -150,3 +150,7 @@ h4 {
   padding-top: 5px;
   padding-left: 2px;
 }
+
+.f-16 {
+  width: 16px; /* avoid horizontal flicking in the toolbar */
+}
