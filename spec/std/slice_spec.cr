@@ -45,6 +45,26 @@ describe "Slice" do
     expect_raises(IndexError) { slice + (-1) }
   end
 
+  it "does + with other slice" do
+    a = Slice.new(3) { |i| i }
+    b = Slice.new(3) { |i| i + 3 }
+    c = a + b
+    c.size.should eq(6)
+    6.times do |i|
+      c[i].should eq(i)
+    end
+  end
+
+  it "does concat with other slice" do
+    a = Slice.new(3) { |i| i }
+    b = Slice.new(3) { |i| i + 3 }
+    a.concat(b)
+    a.size.should eq(6)
+    6.times do |i|
+      a[i].should eq(i)
+    end
+  end
+
   it "does [] with start and count" do
     slice = Slice.new(4) { |i| i + 1 }
     slice1 = slice[1, 2]
@@ -148,5 +168,66 @@ describe "Slice" do
     c = Slice.new(3) { |i| i + 1 }
     a.should eq(b)
     a.should_not eq(c)
+  end
+
+  it "does extend_to size" do
+    a = Slice.new(3) { |i| i }
+    a.extend_to(4)
+    a.size.should eq(4)
+    a[a.size - 1] = a.size - 1
+    a.size.times do |i|
+      a[i].should eq(i)
+    end
+  end
+
+  it "does extend_by size" do
+    a = Slice.new(3) { |i| i }
+    a.extend_by(1)
+    a.size.should eq(4)
+    a[a.size - 1] = a.size - 1
+    a.size.times do |i|
+      a[i].should eq(i)
+    end
+  end
+
+  it "raises if trying to extend_to less than size" do
+    a = Slice.new(3) { |i| i }
+    expect_raises Exception, "use 'truncate_to!' for reducing size" do
+      a.extend_to(2)
+    end
+  end
+
+  it "does truncate_to! size" do
+    a = Slice.new(3) { |i| i }
+    a.truncate_to!(2)
+    a.size.should eq(2)
+    a[a.size - 1] = a.size - 1
+    a.size.times do |i|
+      a[i].should eq(i)
+    end
+  end
+
+  it "raises if trying to truncate_to greater than size" do
+    a = Slice.new(3) { |i| i }
+    expect_raises Exception, "use 'extend_to' for increasing size" do
+      a.truncate_to!(4)
+    end
+  end
+
+  it "does truncate_by! size" do
+    a = Slice.new(3) { |i| i }
+    a.truncate_by!(1)
+    a.size.should eq(2)
+    a[a.size - 1] = a.size - 1
+    a.size.times do |i|
+      a[i].should eq(i)
+    end
+  end
+
+  it "raises if trying to truncate_by! greater than size" do
+    a = Slice.new(3) { |i| i }
+    expect_raises Exception, "cannot truncate by more than size" do
+      a.truncate_by!(4)
+    end
   end
 end
