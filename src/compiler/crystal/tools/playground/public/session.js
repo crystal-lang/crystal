@@ -325,6 +325,7 @@ Playground.Session = function(options) {
         case "exception":
           this._triggerFinish();
 
+          this._fullError = message.exception.message;
           for (var i = 0; i < message.exception.payload.length; i++) {
             var ex = message.exception.payload[i];
             if (ex.file == "play" || ex.file == "") {
@@ -455,6 +456,7 @@ Playground.Session = function(options) {
   this.currentErrors = [];
 
   this._hideEditorErrors = function() {
+    this._fullError = null;
     for(var i = 0; i < this.currentErrors.length; i++) {
       this.currentErrors[i].clear();
     }
@@ -465,7 +467,7 @@ Playground.Session = function(options) {
   this._showEditorError = function(line, column, message, color) {
     var colorClass = "red" + (color > 0 ? " darken-" + Math.min(color, 4) : "");
     var cursor = $("<div>").addClass(colorClass + " editor-error-col");
-    var dom = $("<div>")
+    var dom = $("<div>").addClass("editor-error")
       .append(cursor)
       .append($("<pre>")
         .addClass(colorClass + " editor-error-msg white-text")
@@ -473,6 +475,17 @@ Playground.Session = function(options) {
     this.currentErrors.push(this.editor.addLineWidget(line-1, dom[0]));
     cursor.css('left', column + 'ch');
     this._matchEditorSidebarHeight();
+    dom.click(function(e) {
+      this._showFullError();
+      e.stopPropagation();
+    }.bind(this));
+  }.bind(this);
+
+  this._showFullError = function() {
+    new ModalDialog().append(
+      $("<h4>").append("Error"),
+      $("<pre>").text(this._fullError))
+      .openModal();
   }.bind(this);
   //
 
