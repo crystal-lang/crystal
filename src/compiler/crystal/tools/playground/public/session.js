@@ -296,7 +296,10 @@ Playground.Session = function(options) {
     }.bind(this);
 
     this.ws.onclose = function() {
-      Materialize.toast('Connection lost. Refresh.');
+      if (Playground.connectLostShown !== true) {
+        Playground.connectLostShown = true;
+        Materialize.toast('Connection lost. Refresh.');
+      }
       this._triggerDisconnect();
     }.bind(this);
 
