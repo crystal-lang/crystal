@@ -129,11 +129,11 @@ function initDemoPlayground(dom) {
     outputIndicator: outputIndicator,
     source: dom.text()
   });
-  dom.remove();
   var buttons = new Playground.RunButtons({
     container: buttonsContainer
   });
-  session.bindRunButtons(buttons);
+  session.bindRunButtons(buttons, {autorun: dom.hasClass("autorun")});
+  dom.remove();
   session.connect();
 }
 

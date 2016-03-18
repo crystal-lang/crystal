@@ -67,7 +67,7 @@ s = "Lorem ipsum"
 puts s</pre>
 
 <p>
-In the main playground, this is hidden by default and will appear when <span class="octicon octicon-terminal teal-text"></span> is pressed. Since the sidebar will likely show all the needed information you won't need this output all the time.
+In the main playground, this is hidden by default and will appear when <span class="octicon octicon-terminal teal-text"></span> is pressed. Since the sidebar will likely show all the needed information you won't need this output all the time. Also, <code>puts</code> returns <code>nil</code>, but the sidebar will show the argument instead of the returned value. The same applies for <code>print</code> and <code>raises</code>.
 </p>
 
 <p>
@@ -123,6 +123,18 @@ In loops it sometimes is usefull to inspect the values of multiple variables. Tu
 
   {i, r, i % 3, i % 5}
 end
+</pre>
+
+<p>
+And regarding errors, try to fix the following code one step at a time. You can see the full trace when clicking the inline errors.
+</p>
+
+<pre class="playground autorun">
+def bar
+  "Hurray " + 42
+end
+
+baz
 </pre>
 
         <h4>Load, Store and Share</h4>
