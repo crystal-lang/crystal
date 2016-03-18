@@ -443,9 +443,11 @@ Playground.Session = function(options) {
 
   this._scheduleRun = function() {
     this._removeScheduledRun();
-    this._runTimeout = window.setTimeout(function(){
-      this.run();
-    }.bind(this), Playground.settings.getRunDebounce());
+    if (isFinite(Playground.settings.getRunDebounce())) {
+      this._runTimeout = window.setTimeout(function(){
+        this.run();
+      }.bind(this), Playground.settings.getRunDebounce());
+    }
   }.bind(this);
   //
 
