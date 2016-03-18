@@ -233,12 +233,19 @@ module Crystal::Playground
         context.response.puts %(Environment.version = #{("Crystal " + Crystal.version_string).inspect})
 
         defaultSource = <<-CR
-          a = 1
-          b = 3
-          c = a + b
-          r = rand
-          puts c + r
+          def find_string(text, word)
+            (0..text.size-word.size).each do |i|
+              { i, text[i..i+word.size-1] }
+              if text[i..i+word.size-1] == word
+                return i
+              end
+            end
 
+            nil
+          end
+
+          find_string "Crystal is awesome!", "awesome"
+          find_string "Crystal is awesome!", "not sure"
           CR
         context.response.puts "Environment.defaultSource = #{defaultSource.inspect}"
 
