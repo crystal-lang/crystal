@@ -23,8 +23,8 @@
               </a>
               <ul class="right">
                 <li><a href="/">Playground</a></li>
-                <li><a href="/about.html">About</a></li>
-                <li><a href="/settings.html"><span class="f-16 octicon octicon-settings"></span></a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/settings"><span class="f-16 octicon octicon-settings"></span></a></li>
               </ul>
             </div>
           </div>
@@ -33,42 +33,7 @@
     </header>
 
     <main>
-      <div class="container">
-        <h4>Settings</h4>
-
-          <div class="row">
-            <div class="input-field col s12">
-              <input id="github" name="settingsGithubToken" type="text">
-              <label for="github">GitHub Access Token</label>
-            </div>
-            <div class="col s12">
-              Create a <a href="https://github.com/settings/tokens" target="_blank">GitHub Access Token <span class="octicon octicon-link-external"></span></a> in order to use the <i>share as gist</i> button.
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="input-field col s12">
-              <div class="switch">
-                <label>
-                  Hide types
-                  <input name="settingsShowTypes" type="checkbox">
-                  <span class="lever"></span>
-                  Show types
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <br>
-          <br>
-
-          <div class="row">
-            <div class="input-field col s12">
-              <input id="runDebounce" name="settingsRunDebounce" type="number">
-              <label for="runDebounce">Time to wait before running the code in milliseconds (leave blank for explicit runs only)</label>
-            </div>
-          </div>
-      </div>
+      <%= content %>
     </main>
 
     <footer>

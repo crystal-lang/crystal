@@ -1,6 +1,7 @@
 require "http/server"
 require "tempfile"
 require "logger"
+require "ecr/macros"
 
 module Crystal::Playground
   class Session
@@ -176,15 +177,27 @@ module Crystal::Playground
     end
   end
 
-  class IndexHandler < HTTP::Handler
-    def initialize(@filename)
+  class PageHandler < HTTP::Handler
+    class Page
+      def initialize(@filename)
+      end
+
+      def content
+        File.read(@filename)
+      end
+
+      ECR.def_to_s "#{__DIR__}/views/layout.html.ecr"
+    end
+
+    def initialize(@path, filename)
+      @page = Page.new(filename)
     end
 
     def call(context)
       case {context.request.method, context.request.resource}
-      when {"GET", "/"}
+      when {"GET", @path}
         context.response.headers["Content-Type"] = "text/html"
-        context.response << File.read(@filename)
+        context.response << @page.to_s
       else
         call_next(context)
       end
@@ -259,7 +272,9 @@ module Crystal::Playground
     end
 
     def start
-      public_dir = File.join(File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0]), "public")
+      playground_dir = File.dirname(CrystalPath.new.find("compiler/crystal/tools/playground/server.cr").not_nil![0])
+      views_dir = File.join(playground_dir, "views")
+      public_dir = File.join(playground_dir, "public")
 
       agent_ws = PathWebSocketHandler.new "/agent" do |ws, context|
         match_data = context.request.path.not_nil!.match(/\/(\d+)\/(\d+)$/).not_nil!
@@ -299,7 +314,9 @@ module Crystal::Playground
       server = HTTP::Server.new @host, @port, [
         client_ws,
         agent_ws,
-        IndexHandler.new(File.join(public_dir, "index.html")),
+        PageHandler.new("/", File.join(views_dir, "_index.html")),
+        PageHandler.new("/about", File.join(views_dir, "_about.html")),
+        PageHandler.new("/settings", File.join(views_dir, "_settings.html")),
         EnvironmentHandler.new(self),
         HTTP::StaticFileHandler.new(public_dir),
       ]
