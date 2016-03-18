@@ -31,6 +31,10 @@ class HTTP::Client::Response
     @body
   end
 
+  def success?
+    (200..299).includes?(status_code)
+  end
+
   # Returns a convenience wrapper around querying and setting cookie related
   # headers, see `HTTP::Cookies`.
   def cookies

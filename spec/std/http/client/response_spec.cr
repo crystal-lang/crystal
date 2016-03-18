@@ -210,5 +210,19 @@ class HTTP::Client
       response.content_type.should eq("text/plain")
       response.charset.should eq("UTF-8")
     end
+
+    describe "success?" do
+      it "returns true for the 2xx" do
+        response = Response.new(200)
+
+        response.success?.should eq(true)
+      end
+
+      it "returns false for other ranges" do
+        response = Response.new(500)
+
+        response.success?.should eq(false)
+      end
+    end
   end
 end
