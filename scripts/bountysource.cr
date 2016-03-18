@@ -93,6 +93,8 @@ module GitHub
   end
 end
 
+record Sponsor, name, url
+
 token = ARGV[0]?
 unless token
   puts <<-USAGE
@@ -114,7 +116,8 @@ support_levels = bountysource.support_levels
 support_levels.select! { |s| s.status == "active" && s.owner.display_name != "Anonymous" }
 support_levels.sort_by! &.amount
 
-puts "- sponsors = [nil,"
+sponsors = [] of Sponsor
+
 support_levels.each do |support_level|
   name = support_level.owner.display_name
   url = nil
@@ -139,13 +142,20 @@ support_levels.each do |support_level|
   amount = support_level.amount
 
   if !url || amount < 5
-    puts %(              [#{name.inspect}],)
-  elsif amount < 75
-    puts %(              [#{name.inspect}, #{url.inspect}],)
+    sponsors << Sponsor.new(name, "")
   else
-    # TODO logo
-    puts %(              [#{name.inspect}, #{url.inspect}],)
+    sponsors << Sponsor.new(name, url.not_nil!)
   end
 end
 
+sponsors.sort_by! { |s| {s.name.downcase, s.url} }.uniq!
+
+puts "- sponsors = [nil,"
+sponsors.each do |sponsor|
+  if sponsor.url.empty?
+    puts %(              [#{sponsor.name.inspect}],)
+  else
+    puts %(              [#{sponsor.name.inspect}, #{sponsor.url.inspect}],)
+  end
+end
 puts "             ].compact.sort { |x, y| cmp = x.length <=> y.length; cmp == 0 ? x.dup.tap { |z| z[0] = z[0].downcase } <=> y.dup.tap { |z| z[0] = z[0].downcase } : -cmp }"
