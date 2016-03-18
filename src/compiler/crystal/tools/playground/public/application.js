@@ -4,7 +4,7 @@ $(function(){
 
 var defaultCode = 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n';
 
-if(typeof(Storage) !== "undefined") {
+if (Playground.hasStorage) {
   defaultCode = sessionStorage.lastCode || localStorage.lastCode || defaultCode;
 }
 

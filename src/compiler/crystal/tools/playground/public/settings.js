@@ -1,30 +1,54 @@
-if(typeof(localStorage.settingsGithubToken) === 'undefined') {
-  localStorage.settingsGithubToken = ''
-}
-
-if(typeof(localStorage.settingsShowTypes) === 'undefined') {
-  localStorage.settingsShowTypes = 'true'
-}
-
-if(typeof(localStorage.settingsRunDebounce) === 'undefined') {
-  localStorage.settingsRunDebounce = '800'
-}
-
 if(typeof(Playground) === 'undefined') {
   Playground = {};
 }
 
+function hasStorage() {
+  if (typeof(Storage) !== 'undefined') {
+    try {
+      localStorage.setItem('feature_test', 'yes');
+      if (localStorage.getItem('feature_test') === 'yes') {
+        localStorage.removeItem('feature_test');
+        return true;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+Playground.hasStorage = hasStorage();
+
 Playground.settings = {
+  default: {
+    settingsGithubToken: '',
+    settingsShowTypes: 'true',
+    settingsRunDebounce: '800'
+  },
+  _readSetting: function(key) {
+    if(Playground.hasStorage && typeof(localStorage[key]) !== 'undefined') {
+      return localStorage[key];
+    }
+    return Playground.settings.default[key];
+  },
+  _saveSetting: function(key, value) {
+    if(Playground.hasStorage) {
+      localStorage[key] = value;
+    } else {
+      console.error("Unable to save settings since localStorage is not available");
+    }
+  },
   getGithubToken: function() {
-    return localStorage.settingsGithubToken;
+    return Playground.settings._readSetting('settingsGithubToken');
   },
   getShowTypes: function() {
-    return localStorage.settingsShowTypes == 'true';
+    return Playground.settings._readSetting('settingsShowTypes') == 'true';
   },
   getRunDebounce: function() {
-    return parseInt(localStorage.settingsRunDebounce);
+    return parseInt(Playground.settings._readSetting('settingsRunDebounce'));
   }
-}
+};
 
 $(document).ready(function(){
   var githubTokenText = $("[name=settingsGithubToken]")
@@ -38,10 +62,10 @@ $(document).ready(function(){
     runDebounceInput.val(Playground.settings.getRunDebounce());
 
     var saveSettings = function() {
-      localStorage.settingsGithubToken = githubTokenText.val();
-      localStorage.settingsShowTypes = showTypesCheck.is(":checked") ? 'true' : 'false';
-      localStorage.settingsRunDebounce = runDebounceInput.val();
-    }
+      Playground.settings._saveSetting("settingsGithubToken", githubTokenText.val());
+      Playground.settings._saveSetting("settingsShowTypes", showTypesCheck.is(":checked") ? 'true' : 'false');
+      Playground.settings._saveSetting("settingsRunDebounce", runDebounceInput.val());
+    };
 
     $("input").change(function(){
       saveSettings();
