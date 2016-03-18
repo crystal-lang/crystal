@@ -1,5 +1,7 @@
 $(function(){
   $('.modal-trigger').leanModal();
+
+  $(".crystal-version").text(Environment.version);
 });
 
 // main page initialization
