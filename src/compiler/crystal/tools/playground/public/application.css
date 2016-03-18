@@ -47,29 +47,34 @@ h4 {
   }
 }
 
-#editor, #sidebar, #output, .inspect-values, .CodeMirror {
+.row-narrow {
+  margin-bottom: 0;
+}
+
+.editor, .sidebar, .output, .inspect-values, .CodeMirror {
   font-family: Monaco, Menlo, Consolas, 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.46em;
 }
 
-#editor, #sidebar {
+
+#mainEditorContainer .editor, #mainEditorContainer .sidebar {
   min-height: 75vh;
 }
 
 @media (max-height: 780px) {
-  #editor, #sidebar {
+  #mainEditorContainer .editor, #mainEditorContainer .sidebar {
     min-height: 70vh;
   }
 }
 
 @media (max-height: 540px) {
-  #editor, #sidebar {
+  #mainEditorContainer .editor, #mainEditorContainer .sidebar {
     min-height: 65vh;
   }
 }
 
-#editor-wrapper, #sidebar-wrapper {
+.editor-wrapper, .sidebar-wrapper {
   position: relative;
 }
 
@@ -81,29 +86,38 @@ h4 {
   padding: 0.5em 0;
 }
 
-#sidebar-wrapper {
+.CodeMirror-gutters.phantom {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 29px;
+}
+
+.card-plain {
   background: transparent;
   box-shadow: none;
   border: 1px solid #ccc;
+  padding-left: 1ch;
 }
 
-#sidebar {
+.sidebar {
   position: relative;
 }
 
-#sidebar div {
+.sidebar div {
   position: absolute;
   white-space: nowrap;
-  left: 1ch;
+  left: 0;
   right: 0;
 }
 
-#sidebar .type {
+.sidebar .type {
   color: #64b5f6;
   font-weight: 200;
 }
 
-#sidebar .type::before {
+.sidebar .type::before {
   content: ' : ';
 }
 
@@ -120,7 +134,7 @@ h4 {
   overflow: scroll;
 }
 
-#run-progress, #stop {
+#run-progress {
   display: none;
 }
 
@@ -130,4 +144,9 @@ h4 {
 
 .inspect-table th {
   font-weight: 400;
+}
+
+.run-button {
+  padding-top: 5px;
+  padding-left: 2px;
 }

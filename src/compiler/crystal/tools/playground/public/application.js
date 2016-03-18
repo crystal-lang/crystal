@@ -1,435 +1,143 @@
-var defaultCode = 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n';
-var runDebounce = 800;
+$(function(){
+  Playground.progress.attach($('#run-progress'));
+  $('.modal-trigger').leanModal();
+});
 
-var ws = new WebSocket("ws://" + location.host + "/client");
-var outputDom = document.getElementById('output');
-var sidebarDom = $('#sidebar');
-var consoleButton = $('a[href="#output-modal"]');
-var runButton = $('#run');
-var stopButton = $('#stop');
-var runProgress = $('#run-progress');
-var runTag = 0;
+var defaultCode = 'a = 1\nb = 3\nc = a + b\nr = rand\nputs c + r\n';
 
 if(typeof(Storage) !== "undefined") {
   defaultCode = sessionStorage.lastCode || localStorage.lastCode || defaultCode;
 }
 
-CodeMirror.keyMap.macDefault["Cmd-/"] = "toggleComment";
-CodeMirror.keyMap.pcDefault["Ctrl-/"] = "toggleComment";
-
-CodeMirror.keyMap.macDefault["Cmd-Enter"] = "runCode";
-CodeMirror.keyMap.pcDefault["Ctrl-Enter"] = "runCode";
-
-CodeMirror.commands.runCode = function() {
-  run();
-}
-
-var editor = CodeMirror(document.getElementById('editor'), {
-  mode: 'crystal',
-  theme: 'neat',
-  lineNumbers: true,
-  autofocus: true,
-  tabSize: 2,
-  viewportMargin: Infinity,
-  dragDrop: false, // dragDrop functionality is implemented to capture drop anywhere and replace source
-  value: defaultCode
-});
-
-
-var runTimeout = null;
-function removeScheduledRun() {
-  if (runTimeout == null) return;
-  clearTimeout(runTimeout);
-}
-function scheduleRun() {
-  removeScheduledRun()
-  runTimeout = window.setTimeout(run, runDebounce);
-}
-
-// when clicking below the editor, set the cursor at the very end
-var editorDom = $('#editor').click(function(e){
-  hideEditorErrors();
-  if (e.target == editorDom[0]) {
-    var info = editor.lineInfo(editor.lastLine())
-    editor.setCursor(info.line, info.text.length);
-    editor.focus();
-  }
-});
-
-var sidebarWrapper = $('#sidebar-wrapper');
-var editorWrapper = $('#editor-wrapper');
-var matchEditorSidebarHeight = function() {
-  window.setTimeout(function(){
-    sidebarWrapper.height(editorWrapper.height());
-  },0)
-};
-function saveAsLastCode() {
-  if(typeof(Storage) !== "undefined") {
-    localStorage.lastCode = sessionStorage.lastCode = editor.getValue();
-  }
-}
-editor.on("change", function(){
-  saveAsLastCode();
-  hideEditorErrors();
-  matchEditorSidebarHeight();
-  scheduleRun();
-});
-$(window).resize(matchEditorSidebarHeight);
-
-function ModalDialog(options) {
-  options = $.extend({}, {destroyOnClose: true}, options);
-
-  $("body").append(
-    this.modalDom = $("<div>").addClass("modal modal-fixed-footer")
-      .append(this.modalContenDom = $("<div>").addClass("modal-content"))
-      .append($("<div>").addClass("modal-footer")
-        .append($("<a>").text("Close")
-          .addClass("modal-action modal-close waves-effect waves-green btn-flat")
-          .attr("href", "javascript:"))));
-
-  this.openModal = function() {
-    this.modalDom.openModal({
-      complete: function() {
-        if (this.onClose) {
-          this.onClose();
-        }
-        if (options.destroyOnClose) {
-          this.destroy();
-        }
-      }.bind(this)
-    });
-    return this;
-  }.bind(this);
-
-  this.append = function() {
-    for(var i = 0; i < arguments.length; i++) {
-      this.modalContenDom.append(arguments[i]);
-    }
-    return this;
-  }.bind(this);
-
-  this.destroy = function() {
-    this.modalDom.remove();
-  }.bind(this);
-}
-
-var inspectors = {};
-
-function Inspector(line) {
-  this.lineDom = $("<div>")
-      .addClass("truncate")
-      .css("top", editor.heightAtLine(line-1, "local") + "px")
-      .css("cursor", "pointer");
-  sidebarDom.append(this.lineDom);
-
-  this.messages = [];
-  this.value_type = null; // null if mismatch. keep value is always the same.
-
-  this.modal = null;
-
-  var labels;
-  var tableBody = null;
-  var appendMessageToTableBody = function(i, message) {
-    var row = $("<tr>");
-    row.append($("<td>").text(i+1));
-
-    for(var j = 0; j < labels.length; j++) {
-      row.append($("<td>").text(message.data[labels[j]]));
-    }
-
-    row.append($("<td>").text(message.value));
-    row.append($("<td>").text(message.value_type));
-    tableBody.append(row);
-  }
-
-  this.lineDom.click(function() {
-    var inspectModalTable = $("<table>").addClass("inspect-table highlight")
-
-    labels = this.dataLabels();
-    var tableHeaderRow = $("<tr>")
-    inspectModalTable.append($("<thead>").append(tableHeaderRow));
-    tableHeaderRow.append($("<th>").text("#"));
-    for(var j = 0; j < labels.length; j++) {
-      tableHeaderRow.append($("<th>").text(labels[j]));
-    }
-    tableHeaderRow.append($("<th>").text("Value"));
-    tableHeaderRow.append($("<th>").text("Type"));
-
-    tableBody = $("<tbody>");
-    inspectModalTable.append(tableBody);
-
-    for(var i = 0; i < this.messages.length; i++) {
-      appendMessageToTableBody(i, this.messages[i]);
-    }
-
-    this.modal = new ModalDialog().append(inspectModalTable).openModal();
-    this.modal.onClose = function() {
-      this.modal = null;
-    }.bind(this);
-  }.bind(this));
-
-  this.addMessage = function(message) {
-    this.messages.push(message);
-    if (this.messages.length == 1) {
-      this.lineDom.text(message.value);
-      this.value_type = message.value_type;
-    } else {
-      this.lineDom.text("(" + this.messages.length + " times)");
-      if (this.value_type != message.value_type) {
-        this.value_type = null;
-      }
-    }
-    if (this.value_type != null && Playground.settings.getShowTypes()) {
-      this.lineDom.append($("<span>").addClass("type").text(this.value_type));
-    }
-
-    if (this.modal != null) {
-      appendMessageToTableBody(this.messages.length-1, message);
-    }
-  }.bind(this);
-
-  this.dataLabels = function() {
-    // collect all data labels, in order of apperance
-    var res = []
-    var resSet = {}
-    for(var i = 0; i < this.messages.length; i++) {
-      var message = this.messages[i];
-      if (message.data) {
-        for(var k in message.data) {
-          if (resSet[k] != true) {
-            resSet[k] = true;
-            res.push(k);
-          }
-        }
-      }
-    }
-
-    return res;
-  }.bind(this);
-
-  return this;
-}
-
-function clearInspectors() {
-  sidebarDom.empty();
-  inspectors = {};
-}
-
-function getInspector(line) {
-  var res = inspectors[line];
-  if (!res) {
-    res = new Inspector(line);
-    inspectors[line] = res;
-  }
-  return res;
-}
-
-var currentErrors = [];
-
-function hideEditorErrors() {
-  if (currentErrors != null) {
-    for(var i = 0; i < currentErrors.length; i++) {
-      currentErrors[i].clear();
-    }
-    currentErrors.splice(0,currentErrors.length);
-    matchEditorSidebarHeight();
-  }
-}
-
-function showEditorError(line, column, message, color) {
-  var colorClass = "red" + (color > 0 ? " darken-" + Math.min(color, 4) : "");
-  var cursor = $("<div>").addClass(colorClass + " editor-error-col");
-  var dom = $("<div>")
-    .append(cursor)
-    .append($("<pre>")
-      .addClass(colorClass + " editor-error-msg white-text")
-      .text(message));
-  currentErrors.push(editor.addLineWidget(line-1, dom[0]));
-  cursor.css('left', column + 'ch');
-  matchEditorSidebarHeight();
-}
-
-ws.onopen = function() {
-  runButton.removeClass("disabled");
-  scheduleRun();
-};
-
-ws.onclose = function() {
-  runButton.addClass("disabled");
-  runProgress.hide();
-  runButton.show();
-  stopButton.hide();
-
-  Materialize.toast('Connection lost. Refresh.');
-};
-
-ws.onmessage = function(e) {
-  var message = JSON.parse(e.data);
-  if (message.tag != runTag) return; // discarding message form old execution
-
-  switch (message.type) {
-    case "run":
-      break;
-    case "output":
-      outputDom.innerText += message.content;
-      if (message.content.length > 0) {
-        consoleButton.addClass('grey-text').removeClass('teal-text red-text');
-        window.setTimeout(function(){
-          consoleButton.removeClass('grey-text').addClass('teal-text');
-        }, 200);
-      }
-      break;
-    case "value":
-      getInspector(message.line).addMessage(message);
-      break;
-    case "exit":
-      runProgress.hide();
-      runButton.show();
-      stopButton.hide();
-      if (message.status != 0) {
-        $(outputDom).append("exit status: " + message.status);
-        window.setTimeout(function(){
-          consoleButton.removeClass('grey-text teal-text').addClass('red-text');
-        }, 200);
-      }
-      break;
-    case "exception":
-      runProgress.hide();
-      runButton.show();
-      stopButton.hide();
-
-      for (var i = 0; i < message.exception.payload.length; i++) {
-        var ex = message.exception.payload[i];
-        if (ex.file == "play" || ex.file == "") {
-          showEditorError(ex.line, ex.column, ex.message, i);
-        }
-      }
-      break;
-    case "bug":
-      runProgress.hide();
-      runButton.show();
-      stopButton.hide();
-
-      new ModalDialog().append(
-        $("<h4>").append("Bug"),
-        $("<p>")
-          .append("You've reached a bug in the playground. Please ")
-          .append($("<a>")
-            .text("let us know")
-            .attr("href", "https://github.com/crystal-lang/crystal/issues/new")
-            .attr("target", "_blank"))
-          .append(" about it."),
-        $("<h5>").append("Code"),
-        $("<pre>").append(editor.getValue()),
-        $("<h5>").append("Exception"),
-        $("<pre>").append(message.exception.message)).openModal();
-
-      break;
-    default:
-      console.error("ws message not handled", message);
-  }
-};
-
-function run() {
-  removeScheduledRun();
-  runTag++;
-
-  runProgress.show();
-  runButton.hide();
-  stopButton.show();
-  clearInspectors();
-  hideEditorErrors();
-  outputDom.innerText = "";
-  consoleButton.addClass('grey-text').removeClass('teal-text red-text');
-
-  ws.send(JSON.stringify({
-    type: "run",
-    source: editor.getValue(),
-    tag: runTag
-  }));
-
-  return false;
-}
-
-function stop() {
-  ws.send(JSON.stringify({
-    type: "stop",
-    tag: runTag
-  }));
-
-  return false;
-}
-
-function saveAsFile() {
-  var uri = "data:text/plain;charset=utf-8," + encodeURIComponent(editor.getValue());
-
-  var link = $("<a>");
-  $("body").append(link);
-  link.attr('download', 'play.cr');
-  link.attr('href', uri);
-  link[0].click();
-  link.remove();
-
-  return false;
-}
-
-function saveAsGist() {
-  if (Playground.settings.getGithubToken() == '') {
-    window.open('/settings.html');
+// main page initialization
+$(function(){
+  if ($('#mainEditorContainer').length == 0)
     return;
-  }
 
-  $.ajax({
-    type:"POST",
-    beforeSend: function (request) {
-      request.setRequestHeader("Authorization", "token " + Playground.settings.getGithubToken());
-    },
-    url: "https://api.github.com/gists",
-    data: JSON.stringify({
-      "public": true,
-      "files": {"play.cr": {"content": editor.getValue() }}
-    }),
-    success: function(msg) {
-      new ModalDialog().append(
-        $("<p>")
-          .append("There is a new gist at ")
-          .append($("<a>")
-            .attr("href", msg.html_url)
-            .attr("target", "_blank")
-            .append($("<span>").text(msg.html_url))
-            .append(" ")
-            .append($("<span>").addClass("octicon octicon-link-external"))
-          )).openModal();
+  var session = new Playground.Session({
+    container: $('#mainEditorContainer'),
+    stdout: $('#mainOutput'),
+    outputIndicator: $('#mainOutputIndicator'),
+    source: defaultCode,
+    autofocus: true,
+  });
+  var buttons = new Playground.RunButtons({
+    container: $('#mainButtonsContainer')
+  });
+  session.bindRunButtons(buttons, {autorun: true});
+  session.connect();
+
+  function saveAsLastCode() {
+    if(typeof(Storage) !== "undefined") {
+      localStorage.lastCode = sessionStorage.lastCode = session.getSource();
     }
+  }
+  session.onChange = function() {
+    saveAsLastCode();
+  };
+  window.onunload = function(){
+    saveAsLastCode();
+  };
+
+  $("#saveAsFile").click(function(e) {
+    var uri = "data:text/plain;charset=utf-8," + encodeURIComponent(session.getSource());
+
+    var link = $("<a>");
+    $("body").append(link);
+    link.attr('download', 'play.cr');
+    link.attr('href', uri);
+    link[0].click();
+    link.remove();
+
+    e.preventDefault();
   });
 
-  return false;
-}
+  $("#saveAsGist").click(function(e) {
+    if (Playground.settings.getGithubToken() == '') {
+      window.open('/settings.html');
+      return;
+    }
 
-$(document).ready(function(){
-  $('.modal-trigger').leanModal();
+    $.ajax({
+      type:"POST",
+      beforeSend: function (request) {
+        request.setRequestHeader("Authorization", "token " + Playground.settings.getGithubToken());
+      },
+      url: "https://api.github.com/gists",
+      data: JSON.stringify({
+        "public": true,
+        "files": {"play.cr": {"content": session.getSource() }}
+      }),
+      success: function(msg) {
+        new ModalDialog().append(
+          $("<p>")
+            .append("There is a new gist at ")
+            .append($("<a>")
+              .attr("href", msg.html_url)
+              .attr("target", "_blank")
+              .append($("<span>").text(msg.html_url))
+              .append(" ")
+              .append($("<span>").addClass("octicon octicon-link-external"))
+            )).openModal();
+      }
+    });
 
-  var mac = /Mac/.test(navigator.platform);
-  runButton.attr('data-tooltip', mac ? '⌘ + Enter' : 'Ctrl + Enter');
+    e.preventDefault();
+  });
+
+  // load file by drag and drop
+  var doc = document.documentElement;
+  doc.ondragover = function () { return false; };
+  doc.ondragend = function () { return false; };
+  doc.ondrop = function (event) {
+    event.preventDefault && event.preventDefault();
+    var files = event.dataTransfer.files;
+    if (files.length > 0) {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        session.setSource(reader.result);
+      };
+      reader.readAsText(files[0]);
+    }
+    return false;
+  };
+
+  $(window).resize(session._matchEditorSidebarHeight());
 });
 
-window.onunload = function(){
-  saveAsLastCode();
-};
 
-// load file by drag and drop
-var doc = document.documentElement;
-doc.ondragover = function () { return false; };
-doc.ondragend = function () { return false; };
-doc.ondrop = function (event) {
-  event.preventDefault && event.preventDefault();
-  var files = event.dataTransfer.files;
-  if (files.length > 0) {
-    var reader = new FileReader();
-    reader.onload = function (event) {
-      editor.setValue(reader.result);
-    };
-    reader.readAsText(files[0]);
-  }
-  return false;
-};
+// about page initialization
+function initDemoPlayground(dom) {
+  var editorContainer, output, outputIndicator, buttonsContainer;
+
+  dom.after(editorContainer = $("<div>").addClass("row row-narrow"));
+  editorContainer.after(
+    $("<div>").addClass("row").append(
+      $("<div>").addClass("col s7").append(
+        $("<div>").addClass("card card-plain").append(
+          output = $("<pre>").addClass("output").css("min-height", "1.5em")))
+      ).append(
+      outputIndicator = $("<div>").addClass("col s1")
+      ).append(
+      buttonsContainer = $("<div>").addClass("col s4 center-align")
+      ));
+
+  var session = new Playground.Session({
+    container: editorContainer,
+    stdout: output,
+    outputIndicator: outputIndicator,
+    source: dom.text()
+  });
+  dom.remove();
+  var buttons = new Playground.RunButtons({
+    container: buttonsContainer
+  });
+  session.bindRunButtons(buttons);
+  session.connect();
+}
+
+$(function(){
+  $(".playground").each(function(){
+    initDemoPlayground($(this));
+  });
+});

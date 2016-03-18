@@ -40,52 +40,29 @@
         <div class="row">
         </div>
 
-        <div class="row">
-          <div class="col s7">
-            <div class="card" id="editor-wrapper">
-              <div class="CodeMirror-gutters" style="position: absolute; top: 0; bottom: 0; left: 0; width: 29px;"></div>
-
-              <div id="editor">
-              </div>
-            </div>
-          </div>
-          <div class="col s5">
-            <div class="card" id="sidebar-wrapper">
-              <div id="sidebar">
-              </div>
-            </div>
-          </div>
+        <div class="row row-narrow" id="mainEditorContainer">
         </div>
 
-        <div class="row" style="position: relative; top: -34px; margin-bottom: 0;">
+        <div class="row">
           <div class="col s7">
             &nbsp;
           </div>
           <div class="col s5">
-            <a class="modal-trigger grey-text" href="#output-modal">
-              <span class="octicon octicon-terminal"></span>
+            <a class="modal-trigger" href="#output-modal" id="mainOutputIndicator">
             </a>
           </div>
         </div>
       </div>
 
-      <div class="fixed-action-btn" style="bottom: 45px; right: 24px;">
-        <a id="run" class="btn-floating btn-large waves-effect waves-light tooltipped disabled" style="padding-top: 5px; padding-left: 2px;" href="#" onclick="return run();" data-position="left" data-delay="50" data-tooltip="Runs code">
-          <span class="mega-octicon octicon-triangle-right"></span>
-        </a>
-
-        <a id="stop" class="btn-floating btn-large waves-effect waves-light tooltipped" style="padding-top: 5px; padding-left: 2px;" href="#" onclick="return stop();" data-position="left" data-delay="50" data-tooltip="Stops code">
-          <span class="mega-octicon octicon-primitive-square"></span>
-        </a>
-
+      <div class="fixed-action-btn" style="bottom: 45px; right: 24px;" id="mainButtonsContainer">
         <ul>
           <li>
-            <a class="btn-floating btn grey darken-1 tooltipped" href="#" onclick="return saveAsGist();" data-position="left" data-delay="50" data-tooltip="Share as gist">
+            <a class="btn-floating btn grey darken-1 tooltipped" href="#" data-position="left" data-delay="50" data-tooltip="Share as gist" id="saveAsGist">
               <span class="octicon octicon-mark-github"></span>
             </a>
           </li>
           <li>
-            <a class="btn-floating btn red darken-1 tooltipped" href="#" onclick="return saveAsFile();" data-position="left" data-delay="50" data-tooltip="Download code as file">
+            <a class="btn-floating btn red darken-1 tooltipped" href="#" data-position="left" data-delay="50" data-tooltip="Download code as file" id="saveAsFile">
               <span class="octicon octicon-desktop-download"></span>
             </a>
           </li>
@@ -95,7 +72,7 @@
       <div id="output-modal" class="modal bottom-sheet">
         <div class="modal-content">
           <h6>Output</h6>
-          <pre id="output"></pre>
+          <pre class="output" id="mainOutput"></pre>
         </div>
       </div>
     </main>
@@ -113,6 +90,7 @@
     <script src="/vendor/CodeMirror-5.12.0/addon/comment/comment.js"></script>
     <script src="/vendor/CodeMirror-5.12.0/mode/crystal/crystal.js"></script>
     <script type="text/javascript" src="/settings.js"></script>
+    <script type="text/javascript" src="/session.js"></script>
     <script type="text/javascript" src="/application.js"></script>
   </body>
 </html>

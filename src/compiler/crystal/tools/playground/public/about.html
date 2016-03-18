@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/vendor/materialize-v0.97.5/css/materialize.min.css">
+    <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/lib/codemirror.css">
+    <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/theme/neat.css">
     <link rel="stylesheet" href="/vendor/octicons-3.5.0/octicons.css">
     <link rel="stylesheet" type="text/css" href="/application.css">
 
@@ -25,6 +27,9 @@
                 <li><a href="/settings.html"><span class="octicon octicon-settings"></span></a></li>
               </ul>
             </div>
+            <div id="run-progress" class="progress">
+              <div class="indeterminate"></div>
+            </div>
           </div>
         </nav>
       </div>
@@ -41,6 +46,16 @@
         <p>
           You can find the source code at <a href="https://github.com/crystal-lang/crystal/tree/master/src/compiler/crystal/tools/playground">https://github.com/crystal-lang/crystal/tree/master/src/compiler/crystal/tools/playground</a>.
         </p>
+
+        <h4>Usage</h4>
+
+<pre class="playground">
+a = 1
+b = 3</pre>
+
+<pre class="playground">
+s = "Lorem ipsum"
+puts s</pre>
 
         <h4>Credits</h4>
 
@@ -69,5 +84,11 @@
 
     <script src="/vendor/jquery-2.2.1.min.js"></script>
     <script src="/vendor/materialize-v0.97.5/js/materialize.min.js"></script>
+    <script src="/vendor/CodeMirror-5.12.0/lib/codemirror.js"></script>
+    <script src="/vendor/CodeMirror-5.12.0/addon/comment/comment.js"></script>
+    <script src="/vendor/CodeMirror-5.12.0/mode/crystal/crystal.js"></script>
+    <script type="text/javascript" src="/settings.js"></script>
+    <script type="text/javascript" src="/session.js"></script>
+    <script type="text/javascript" src="/application.js"></script>
   </body>
 </html>
