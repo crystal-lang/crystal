@@ -2,18 +2,21 @@ class URI
   # :nodoc:
   struct Parser
     # Parser is based on https://url.spec.whatwg.org/ .
-    # Step nmes and variables are roughly the same as that document.
+    # Step names and variables are roughly the same as that document.
     # notable deviations from the spec
     #   does not parse windows slashes
     #   does not validate port < 2**16-1
     #   does not validate IPv4 or v6 hosts are valid
     #   ports greater than 2^16-1 are not errors
-    property uri
+    property uri : URI
 
     # overridden in specs to test step transitions
     macro step(method)
       return {{method}}
     end
+
+    @input : UInt8*
+    @ptr : Int32
 
     def initialize(input)
       @uri = URI.new

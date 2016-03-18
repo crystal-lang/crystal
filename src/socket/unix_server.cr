@@ -1,7 +1,7 @@
 require "./unix_socket"
 
 class UNIXServer < UNIXSocket
-  def initialize(@path : String, socktype = Socket::Type::STREAM : Socket::Type, backlog = 128)
+  def initialize(@path : String, socktype : Socket::Type = Socket::Type::STREAM, backlog = 128)
     File.delete(path) if File.exists?(path)
 
     sock = create_socket(LibC::AF_UNIX, socktype.value, 0)

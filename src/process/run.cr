@@ -15,7 +15,7 @@ class Process
   # Executes a process and waits for it to complete.
   #
   # By default the process is configured without input, output or error.
-  def self.run(cmd : String, args = nil, env = nil : Env, clear_env = false : Bool, shell = false : Bool, input = false : Stdio, output = false : Stdio, error = false : Stdio, chdir = nil : String?) : Process::Status
+  def self.run(cmd : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = false, output : Stdio = false, error : Stdio = false, chdir : String? = nil) : Process::Status
     status = new(cmd, args, env, clear_env, shell, input, output, error, chdir).wait
     $? = status
     status
@@ -27,7 +27,7 @@ class Process
   # will be closed automatically at the end of the block.
   #
   # Returns the block's value.
-  def self.run(cmd : String, args = nil, env = nil : Env, clear_env = false : Bool, shell = false : Bool, input = nil : Stdio, output = nil : Stdio, error = nil : Stdio, chdir = nil : String?)
+  def self.run(cmd : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = nil, output : Stdio = nil, error : Stdio = nil, chdir : String? = nil)
     process = new(cmd, args, env, clear_env, shell, input, output, error, chdir)
     begin
       value = yield process
@@ -39,7 +39,7 @@ class Process
     end
   end
 
-  getter pid
+  getter pid : Int32
 
   # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
   getter! input
@@ -50,12 +50,14 @@ class Process
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
   getter! error
 
+  @wait_count : Int32
+
   # Creates a process, executes it, but doesn't wait for it to complete.
   #
   # To wait for it to finish, invoke `wait`.
   #
   # By default the process is configured without input, output or error.
-  def initialize(command : String, args = nil, env = nil : Env, clear_env = false : Bool, shell = false : Bool, input = false : Stdio, output = false : Stdio, error = false : Stdio, chdir = nil : String?)
+  def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = false, output : Stdio = false, error : Stdio = false, chdir : String? = nil)
     if shell
       command = %(#{command} "${@}") unless command.includes?(' ')
       shell_args = ["-c", command, "--"]

@@ -4,7 +4,7 @@
 # (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
   # :nodoc:
-  record Key, name do
+  record Key, name : String do
     forward_missing_to @name
 
     def hash
@@ -38,13 +38,15 @@ struct HTTP::Headers
     private def normalize_byte(byte)
       char = byte.chr
 
-      return byte if 'a' <= char <= 'z' || char == '-' # Optimize the common case
-      return byte + 32 if 'A' <= char <= 'Z'
+      return byte if char.lowercase? || char == '-' # Optimize the common case
+      return byte + 32 if char.uppercase?
       return '-'.ord if char == '_'
 
       byte
     end
   end
+
+  @hash : Hash(Key, Array(String))
 
   def initialize
     @hash = Hash(Key, Array(String)).new
@@ -55,6 +57,8 @@ struct HTTP::Headers
   end
 
   def []=(key, value : Array(String))
+    value.each { |val| check_invalid_header_content val }
+
     @hash[wrap(key)] = value
   end
 
@@ -67,7 +71,30 @@ struct HTTP::Headers
     values ? concat(values) : nil
   end
 
+  # Returns if among the headers for `key` there is some that contains `word` as a value.
+  # The `word` is expected to match between word boundaries (i.e. non-alphanumeric chars).
+  #
+  # ```
+  # headers = HTTP::Headers{"Connection": "keep-alive, Upgrade"}
+  # headers.includes_word?("Connection", "Upgrade") # => true
+  # ```
+  def includes_word?(key, word)
+    # iterates over all header values avoiding the concatenation
+    get?(key).try &.each do |value|
+      start = value.index(word)
+      next unless start
+      # check if the match is not surrounded by alphanumeric chars
+      next if start > 0 && value[start - 1].alphanumeric?
+      next if start + word.size < value.size && value[start + word.size].alphanumeric?
+      return true
+    end
+
+    false
+  end
+
   def add(key, value : String)
+    check_invalid_header_content value
+
     key = wrap(key)
     existing = @hash[key]?
     if existing
@@ -79,6 +106,8 @@ struct HTTP::Headers
   end
 
   def add(key, value : Array(String))
+    value.each { |val| check_invalid_header_content val }
+
     key = wrap(key)
     existing = @hash[key]?
     if existing
@@ -220,6 +249,19 @@ struct HTTP::Headers
       values.first
     else
       values.join ","
+    end
+  end
+
+  private def check_invalid_header_content(value)
+    # According to RFC 7230, characters accepted as HTTP header
+    # are '\t', ' ', all US-ASCII printable characters and
+    # range from '\x80' to '\xff' (but the last is obsoleted.)
+    value.each_byte do |byte|
+      char = byte.chr
+      next if char == '\t'
+      if char < ' ' || char > '\u{ff}' || char == '\u{7e}'
+        raise ArgumentError.new("header content contains invalid character #{char.inspect}")
+      end
     end
   end
 end

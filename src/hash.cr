@@ -30,9 +30,16 @@ class Hash(K, V)
     end
   end
 
-  getter size
+  getter size : Int32
+  @buckets : Pointer(Entry(K, V)?)
+  @buckets_size : Int32
+  @first : Entry(K, V)?
+  @last : Entry(K, V)?
+  @block : (self, K -> V)?
 
-  def initialize(block = nil : (Hash(K, V), K -> V)?, @comp = StandardComparator, initial_capacity = nil)
+  # TODO @comp
+
+  def initialize(block : (Hash(K, V), K -> V)? = nil, @comp = StandardComparator, initial_capacity = nil)
     initial_capacity ||= 11
     initial_capacity = 11 if initial_capacity < 11
     initial_capacity = initial_capacity.to_i
@@ -129,8 +136,8 @@ class Hash(K, V)
   # ```
   def fetch(key)
     fetch(key) do
-      if block = @block
-        block.call(self, key)
+      if (block = @block) && key.is_a?(K)
+        block.call(self, key as K)
       else
         raise KeyError.new "Missing hash key: #{key.inspect}"
       end
@@ -622,7 +629,8 @@ class Hash(K, V)
   # Zips two arrays into a `Hash`, taking keys from *ary1* and values from *ary2*.
   #
   # ```
-  # Hash.zip(["foo", "bar"], ["baz", "qux"]) # => {"foo" => "baz", "baz" => "quz"}
+  # Hash.zip(["key1", "key2", "key3"], ["value1", "value2", "value3"])
+  # # => {"key1" => "value1", "key2" => "value2", "key3" => "value3"}
   # ```
   def self.zip(ary1 : Array(K), ary2 : Array(V))
     hash = {} of K => V
@@ -982,17 +990,17 @@ class Hash(K, V)
 
   # :nodoc:
   class Entry(K, V)
-    getter :key
-    property :value
+    getter key : K
+    property value : V
 
     # Next in the linked list of each bucket
-    property :next
+    property next : self?
 
     # Next in the ordered sense of hash
-    property :fore
+    property fore : self?
 
     # Previous in the ordered sense of hash
-    property :back
+    property back : self?
 
     def initialize(@key : K, @value : V)
     end
@@ -1023,6 +1031,9 @@ class Hash(K, V)
     include BaseIterator
     include Iterator({K, V})
 
+    @hash : Hash(K, V)
+    @current : Hash::Entry(K, V)?
+
     def next
       base_next { |entry| {entry.key, entry.value} }
     end
@@ -1033,6 +1044,9 @@ class Hash(K, V)
     include BaseIterator
     include Iterator(K)
 
+    @hash : Hash(K, V)
+    @current : Hash::Entry(K, V)?
+
     def next
       base_next &.key
     end
@@ -1042,6 +1056,9 @@ class Hash(K, V)
   class ValueIterator(K, V)
     include BaseIterator
     include Iterator(V)
+
+    @hash : Hash(K, V)
+    @current : Hash::Entry(K, V)?
 
     def next
       base_next &.value

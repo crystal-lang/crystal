@@ -1,7 +1,7 @@
 # A read-only `IO` object to decompress data in zlib or gzip format.
 #
 # Instances of this class wrap another IO object. When you read from this instance
-# instance, it reads data from the underlying IO, descompresses it, and returns
+# instance, it reads data from the underlying IO, decompresses it, and returns
 # it to the caller.
 #
 # ### Example: decompress text a file
@@ -19,8 +19,16 @@
 class Zlib::Inflate
   include IO
 
+  @input : IO
+  @closed : Bool
+  @sync_close : Bool
+  @stream : LibZ::ZStream
+
+  # If `sync_close` is true, closing this IO will close the underlying IO.
+  property? sync_close : Bool
+
   # Creates an instance of Zlib::Inflate.
-  def initialize(@input : IO, wbits = LibZ::MAX_BITS)
+  def initialize(@input : IO, wbits = LibZ::MAX_BITS, @sync_close : Bool = false)
     @buf = uninitialized UInt8[8192] # input buffer used by zlib
     @stream = LibZ::ZStream.new
     @stream.zalloc = LibZ::AllocFunc.new { |opaque, items, size| GC.malloc(items * size) }
@@ -29,12 +37,13 @@ class Zlib::Inflate
     if ret != LibZ::Error::OK
       raise Zlib::Error.new(ret, @stream)
     end
+    @closed = false
   end
 
   # Creates an instance of Zlib::Inflate, yields it to the given block, and closes
   # it at its end.
-  def self.new(input : IO, wbits = LibZ::MAX_BITS)
-    inflate = new input, wbits
+  def self.new(input : IO, wbits = LibZ::MAX_BITS, sync_close : Bool = false)
+    inflate = new input, wbits: wbits, sync_close: sync_close
     begin
       yield inflate
     ensure
@@ -44,14 +53,14 @@ class Zlib::Inflate
 
   # Creates an instance of Zlib::Inflate for the gzip format.
   # has written.
-  def self.gzip(input)
-    new input, wbits: GZIP
+  def self.gzip(input, sync_close : Bool = false)
+    new input, wbits: GZIP, sync_close: sync_close
   end
 
   # Creates an instance of Zlib::Inflate for the gzip format, yields it to the given block, and closes
   # it at its end.
-  def self.gzip(input)
-    inflate = gzip input
+  def self.gzip(input, sync_close : Bool = false)
+    inflate = gzip input, sync_close: sync_close
     begin
       yield inflate
     ensure
@@ -105,7 +114,8 @@ class Zlib::Inflate
     @closed = true
 
     LibZ.inflateEnd(pointerof(@stream))
-    @input.close
+
+    @input.close if @sync_close
   end
 
   # Returns `true` if this IO is closed.

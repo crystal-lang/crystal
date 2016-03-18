@@ -572,6 +572,15 @@ describe "Array" do
         ([] of Int32).first
       end
     end
+
+    it "returns a sub array with given number of elements" do
+      arr = [1, 2, 3]
+      arr.first(0).should eq([] of Int32)
+      arr.first(1).should eq [1]
+      arr.first(2).should eq [1, 2]
+      arr.first(3).should eq [1, 2, 3]
+      arr.first(4).should eq [1, 2, 3]
+    end
   end
 
   describe "first?" do
@@ -656,6 +665,15 @@ describe "Array" do
       expect_raises IndexError do
         ([] of Int32).last
       end
+    end
+
+    it "returns a sub array with given number of elements" do
+      arr = [1, 2, 3]
+      arr.last(0).should eq([] of Int32)
+      arr.last(1).should eq [3]
+      arr.last(2).should eq [2, 3]
+      arr.last(3).should eq [1, 2, 3]
+      arr.last(4).should eq [1, 2, 3]
     end
   end
 
@@ -1263,7 +1281,7 @@ describe "Array" do
     end
 
     it "cycles" do
-      [1, 2, 3].cycle.take(8).join.should eq("12312312")
+      [1, 2, 3].cycle.first(8).join.should eq("12312312")
     end
   end
 
@@ -1314,7 +1332,7 @@ describe "Array" do
     end
 
     it "cycles with iterator" do
-      [1, 2, 3].cycle.take(5).to_a.should eq([1, 2, 3, 1, 2])
+      [1, 2, 3].cycle.first(5).to_a.should eq([1, 2, 3, 1, 2])
     end
 
     it "cycles with N and iterator" do

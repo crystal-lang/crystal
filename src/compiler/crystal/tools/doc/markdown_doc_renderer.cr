@@ -3,6 +3,12 @@ class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
     new obj.type, io
   end
 
+  @type : Type
+  @inside_inline_code : Bool
+  @code_buffer : MemoryIO
+  @inside_code : Bool
+  @inside_link : Bool
+
   def initialize(@type : Type, io)
     super(io)
 

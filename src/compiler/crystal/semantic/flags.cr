@@ -1,10 +1,10 @@
 class Crystal::Program
   def flags
-    @flags ||= parse_flags(`uname -m -s`)
+    @flags ||= parse_flags(target_machine.triple.split('-'))
   end
 
   def flags=(flags)
-    @flags = parse_flags(flags)
+    @flags = parse_flags(flags.split)
   end
 
   def has_flag?(name)
@@ -18,11 +18,15 @@ class Crystal::Program
   end
 
   private def parse_flags(flags_name)
-    flags_name.split.map(&.downcase).to_set
+    set = flags_name.map(&.downcase).to_set
+    set.add "darwin" if set.any?(&.starts_with?("macosx"))
+    set.add "i686" if set.any? { |flag| %w(i586 i486 i386).includes?(flag) }
+    set
   end
 
   class FlagsEvaluator < Visitor
-    getter value
+    getter value : Bool
+    @program : Program
 
     def initialize(@program)
       @value = false

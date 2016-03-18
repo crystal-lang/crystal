@@ -90,6 +90,20 @@ module Random
     end
   end
 
+  # Returns a random `Float64` which is greater than or equal to 0 and less than *max*.
+  #
+  # ```
+  # Random.new.rand(3.5)    # => 2.88938
+  # Random.new.rand(10.725) # => 7.70147
+  # ```
+  def rand(max : Float) : Float64
+    if max > 0
+      next_u32 * (1 / (UInt32::MAX.to_f64 + 1)) * max
+    else
+      raise ArgumentError.new "incorrect rand value: #{max}"
+    end
+  end
+
   # Returns a random `Int32` in the given *range*.
   #
   # ```
@@ -105,13 +119,27 @@ module Random
     end
   end
 
+  # Returns a random `Float64` in the given *range*.
+  #
+  # ```
+  # Random.new.rand(6.2..21.768) # => 15.2989
+  # ```
+  def rand(range : Range(Float, Float)) : Float64
+    span = range.end - range.begin
+    if span > 0 || !range.excludes_end?
+      range.begin + (range.excludes_end? ? rand(span) : rand * span)
+    else
+      raise ArgumentError.new "incorrect rand value: #{range}"
+    end
+  end
+
   # see `#rand`
   def self.rand : Float64
     DEFAULT.rand
   end
 
   # see `#rand(x)`
-  def self.rand(x) : Int32
+  def self.rand(x)
     DEFAULT.rand(x)
   end
 end

@@ -353,7 +353,7 @@ struct Float
 end
 
 struct Time::MonthSpan
-  getter value
+  getter value : Int64
 
   def initialize(value)
     @value = value.to_i64

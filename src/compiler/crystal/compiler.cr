@@ -11,27 +11,37 @@ module Crystal
 
     CC = ENV["CC"]? || "cc"
 
-    record Source, filename, code
-    record Result, program, node, original_node
+    record Source,
+      filename : String,
+      code : String
 
-    property cross_compile_flags
-    property flags
-    property? debug
-    property? dump_ll
-    property link_flags
-    property mcpu
-    property? color
-    property? no_codegen
-    property n_threads
-    property prelude
-    property? release
-    property? single_module
-    property? stats
-    property target_triple
-    property? verbose
-    property? wants_doc
-    property emit
-    property original_output_filename
+    record Result,
+      program : Program,
+      node : ASTNode,
+      original_node : ASTNode
+
+    property cross_compile_flags : String?
+    property flags : Array(String)
+    property? debug : Bool
+    property? dump_ll : Bool
+    property link_flags : String?
+    property mcpu : String?
+    property? color : Bool
+    property? no_codegen : Bool
+    property n_threads : Int32
+    property prelude : String
+    property? release : Bool
+    property? single_module : Bool
+    property? stats : Bool
+    property target_triple : String?
+    property? verbose : Bool
+    property? wants_doc : Bool
+    property emit : Array(String)?
+    property original_output_filename : String?
+
+    @target_machine : LLVM::TargetMachine?
+    @pass_manager_builder : LLVM::PassManagerBuilder?
+    @module_pass_manager : LLVM::ModulePassManager?
 
     def initialize
       @debug = false
@@ -83,7 +93,7 @@ module Crystal
       timing("Parse") do
         nodes = sources.map do |source|
           program.add_to_requires source.filename
-          parse source
+          parse(source) as ASTNode
         end
         node = Expressions.from(nodes)
 
@@ -316,8 +326,12 @@ module Crystal
     end
 
     class CompilationUnit
-      getter compiler
-      getter llvm_mod
+      getter compiler : Compiler
+      getter llvm_mod : LLVM::Module
+
+      @name : String
+      @output_dir : String
+      @bc_flags_changed : Bool
 
       def initialize(@compiler, type_name, @llvm_mod, @output_dir, @bc_flags_changed)
         type_name = "_main" if type_name == ""
@@ -437,12 +451,13 @@ module Crystal
 
   def self.timing(label, stats)
     if stats
+      print "%-34s" % "#{label}:"
       time = Time.now
       value = yield
       elapsed_time = Time.now - time
       LibGC.get_heap_usage_safe(out heap_size, out free_bytes, out unmapped_bytes, out bytes_since_gc, out total_bytes)
       mb = heap_size / 1024.0 / 1024.0
-      puts "%-34s %s (%7.2fMB)" % {"#{label}:", elapsed_time, mb}
+      puts " %s (%7.2fMB)" % {elapsed_time, mb}
       value
     else
       yield

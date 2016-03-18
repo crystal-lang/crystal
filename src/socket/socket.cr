@@ -24,13 +24,93 @@ class Socket < IO::FileDescriptor
     INET6  = LibC::AF_INET6
   end
 
-  struct Addr
-    property :family, :ip_port, :ip_address, :path
+  struct IPAddress
+    getter family : Family
+    getter address : String
+    getter port : UInt16
 
-    def initialize(@family, @ip_port, @ip_address)
+    def initialize(family : Family, address : String, port : Int)
+      if family != Family::INET && family != Family::INET6
+        raise ArgumentError.new("Unsupported address family")
+      end
+
+      @family = family
+      @address = address
+      @port = port.to_u16
     end
 
-    def initialize(@family, @path)
+    def initialize(sockaddr : LibC::SockAddrIn6, addrlen : LibC::SocklenT)
+      case addrlen
+      when LibC::SocklenT.new(sizeof(LibC::SockAddrIn))
+        sockaddrin = (pointerof(sockaddr) as LibC::SockAddrIn*).value
+        addr = sockaddrin.addr
+        @family = Family::INET
+        @address = inet_ntop(family.value, pointerof(addr) as Void*, addrlen)
+      when LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
+        addr6 = sockaddr.addr
+        @family = Family::INET6
+        @address = inet_ntop(family.value, pointerof(addr6) as Void*, addrlen)
+      else
+        raise ArgumentError.new("Unsupported address family")
+      end
+      @port = LibC.htons(sockaddr.port).to_u16
+    end
+
+    def sockaddr
+      sockaddrin6 = LibC::SockAddrIn6.new
+      sockaddrin6.family = family.value.to_u8
+
+      case family
+      when Family::INET
+        sockaddrin = (pointerof(sockaddrin6) as LibC::SockAddrIn*).value
+        addr = sockaddrin.addr
+        LibC.inet_pton(family.value, address, pointerof(addr) as Void*)
+        sockaddrin.addr = addr
+        sockaddrin6 = (pointerof(sockaddrin) as LibC::SockAddrIn6*).value
+      when Family::INET6
+        addr6 = sockaddrin6.addr
+        LibC.inet_pton(family.value, address, pointerof(addr6) as Void*)
+        sockaddrin6.addr = addr6
+      end
+
+      sockaddrin6.port = LibC.ntohs(port).to_i16
+      sockaddrin6
+    end
+
+    def addrlen
+      case family
+      when Family::INET  then LibC::SocklenT.new(sizeof(LibC::SockAddrIn))
+      when Family::INET6 then LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
+      else                    LibC::SocklenT.new(0)
+      end
+    end
+
+    def to_s(io)
+      io << address << ":" << port
+    end
+
+    private def inet_ntop(af : Int, src : Void*, len : LibC::SocklenT)
+      dest = GC.malloc_atomic(addrlen.to_u32) as UInt8*
+      if LibC.inet_ntop(af, src, dest, len).null?
+        raise Errno.new("Failed to convert IP address")
+      end
+      String.new(dest)
+    end
+  end
+
+  struct UNIXAddress
+    getter path : String
+
+    def initialize(path)
+      @path = path
+    end
+
+    def family
+      Family::UNIX
+    end
+
+    def to_s(io)
+      path.to_s(io)
     end
   end
 
@@ -97,6 +177,14 @@ class Socket < IO::FileDescriptor
 
   def reuse_address=(val : Bool)
     setsockopt_bool LibC::SO_REUSEADDR, val
+  end
+
+  def broadcast?
+    getsockopt_bool LibC::SO_BROADCAST
+  end
+
+  def broadcast=(val : Bool)
+    setsockopt_bool LibC::SO_BROADCAST, val
   end
 
   def keepalive?
@@ -168,24 +256,6 @@ class Socket < IO::FileDescriptor
     v = optval ? 1 : 0
     ret = setsockopt optname, v, level
     optval
-  end
-
-  def self.inet_ntop(sa : LibC::SockAddrIn6)
-    ip_address = GC.malloc_atomic(LibC::INET6_ADDRSTRLEN.to_u32) as UInt8*
-    addr = sa.addr
-    if LibC.inet_ntop(LibC::AF_INET6, pointerof(addr) as Void*, ip_address, LibC::INET6_ADDRSTRLEN).null?
-      raise Errno.new("inet_ntop")
-    end
-    String.new(ip_address)
-  end
-
-  def self.inet_ntop(sa : LibC::SockAddrIn)
-    ip_address = GC.malloc_atomic(LibC::INET_ADDRSTRLEN.to_u32) as UInt8*
-    addr = sa.addr
-    if LibC.inet_ntop(LibC::AF_INET, pointerof(addr) as Void*, ip_address, LibC::INET_ADDRSTRLEN).null?
-      raise Errno.new("inet_ntop")
-    end
-    String.new(ip_address)
   end
 
   private def nonblocking_connect(host, port, ai, timeout = nil)

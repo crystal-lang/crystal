@@ -38,6 +38,9 @@ module Crystal
   # subclasses or not and we can tag it as "virtual" (having subclasses), but that concept
   # might disappear in the future and we'll make consider everything as "maybe virtual".
   class TopLevelVisitor < BaseTypeVisitor
+    @process_types : Int32
+    @inside_block : Int32
+
     def initialize(mod)
       super(mod)
 
@@ -117,7 +120,7 @@ module Crystal
       if node_superclass
         superclass = lookup_path_type(node_superclass)
       else
-        superclass = node.struct ? mod.struct : mod.reference
+        superclass = node.struct? ? mod.struct : mod.reference
       end
 
       if node_superclass.is_a?(Generic)
@@ -126,7 +129,7 @@ module Crystal
         end
 
         if node_superclass.type_vars.size != superclass.type_vars.size
-          node_superclass.raise "wrong number of type vars for #{superclass} (#{node_superclass.type_vars.size} for #{superclass.type_vars.size})"
+          node_superclass.wrong_number_of "type vars", superclass, node_superclass.type_vars.size, superclass.type_vars.size
         end
       end
 
@@ -135,8 +138,8 @@ module Crystal
       type = scope.types[name]?
 
       if !type && superclass
-        if (!!node.struct) != (!!superclass.struct?)
-          node.raise "can't make #{node.struct ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
+        if node.struct? != superclass.struct?
+          node.raise "can't make #{node.struct? ? "struct" : "class"} '#{node.name}' inherit #{superclass.type_desc} '#{superclass.to_s}'"
         end
       end
 
@@ -146,11 +149,11 @@ module Crystal
         type = type.remove_alias
 
         unless type.is_a?(ClassType)
-          node.raise "#{name} is not a #{node.struct ? "struct" : "class"}, it's a #{type.type_desc}"
+          node.raise "#{name} is not a #{node.struct? ? "struct" : "class"}, it's a #{type.type_desc}"
         end
 
-        if (!!node.struct) != (!!type.struct?)
-          node.raise "#{name} is not a #{node.struct ? "struct" : "class"}, it's a #{type.type_desc}"
+        if node.struct? != type.struct?
+          node.raise "#{name} is not a #{node.struct? ? "struct" : "class"}, it's a #{type.type_desc}"
         end
 
         if node.superclass && type.superclass != superclass
@@ -180,7 +183,7 @@ module Crystal
             mapping = Hash.zip(superclass.type_vars, node_superclass.type_vars)
             superclass = InheritedGenericClass.new(@mod, superclass, mapping)
           else
-            node_superclass.not_nil!.raise "wrong number of type vars for #{superclass} (0 for #{superclass.type_vars.size})"
+            node_superclass.not_nil!.wrong_number_of "type vars", superclass, 0, superclass.type_vars.size
           end
         else
           node_superclass.not_nil!.raise "#{superclass} is not a class, it's a #{superclass.type_desc}"
@@ -192,11 +195,12 @@ module Crystal
         else
           type = NonGenericClassType.new @mod, scope, name, superclass, false
         end
-        type.abstract = node.abstract
-        type.struct = node.struct
+        type.abstract = node.abstract?
+        type.struct = node.struct?
 
         if superclass.is_a?(InheritedGenericClass)
           superclass.extending_class = type
+          (superclass.extended_class as GenericClassType).add_inherited(type)
         end
 
         scope.types[name] = type
@@ -320,8 +324,8 @@ module Crystal
 
       node.raises = true if node.has_attribute?("Raises")
 
-      if node.abstract
-        if (target_type.class? || target_type.struct?) && !target_type.abstract
+      if node.abstract?
+        if (target_type.class? || target_type.struct?) && !target_type.abstract?
           node.raise "can't define abstract def on non-abstract #{target_type.type_desc}"
         end
         if target_type.metaclass?
@@ -471,7 +475,6 @@ module Crystal
       attach_doc enum_type, node
 
       enum_type.doc ||= attributes_doc
-      enum_type.add_attributes(node.attributes)
       @attributes = nil
 
       pushing_type(enum_type) do
@@ -526,7 +529,8 @@ module Crystal
           end
         end
 
-        node.enum_type = scope.types[name] = enum_type
+        scope.types[name] = enum_type
+        node.created_new_type = true
       end
 
       node.type = mod.nil
@@ -587,9 +591,15 @@ module Crystal
 
     def visit(node : FunDef)
       return false if @lib_def_pass == 1
-      return false if node.body
 
+      # Only declare the function, but do not type it
+      # (we do that later in MainVisitor)
+      body = node.body
+      node.body = nil
       visit_fun_def(node)
+      node.body = body
+
+      false
     end
 
     def visit(node : Cast)
@@ -735,7 +745,7 @@ module Crystal
           end
           lib_framework = arg.value
         else
-          attr.raise "wrong number of link arguments (#{args.size} for 1..4)"
+          attr.wrong_number_of "link arguments", args.size, "1..4"
         end
 
         count += 1
@@ -799,11 +809,13 @@ module Crystal
         end
 
         if type.type_vars.size != node_name.type_vars.size
-          node_name.raise "wrong number of type vars for #{type} (#{node_name.type_vars.size} for #{type.type_vars.size})"
+          node_name.wrong_number_of "type vars", type, node_name.type_vars.size, type.type_vars.size
         end
 
         mapping = Hash.zip(type.type_vars, node_name.type_vars)
         module_to_include = IncludedGenericModule.new(@mod, type, current_type, mapping)
+
+        type.add_inherited(current_type)
       else
         if type.is_a?(GenericModuleType)
           node_name.raise "#{type} is a generic module"
@@ -844,6 +856,9 @@ module Crystal
     end
 
     class StructOrUnionVisitor < Visitor
+      @type_inference : TopLevelVisitor
+      @struct_or_union : CStructOrUnionType
+
       def initialize(@type_inference, @struct_or_union)
       end
 

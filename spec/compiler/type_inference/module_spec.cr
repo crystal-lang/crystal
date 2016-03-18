@@ -98,7 +98,7 @@ describe "Type inference: module" do
         include Foo(Int)
       end
       ",
-      "wrong number of type vars for Foo(T, U) (1 for 2)"
+      "wrong number of type vars for Foo(T, U) (given 1, expected 2)"
   end
 
   it "includes generic module but wrong number of arguments 2" do
@@ -732,5 +732,175 @@ describe "Type inference: module" do
       A.new
       ),
       "undefined method 'new' for A:Module"
+  end
+
+  it "uses type declaration inside module" do
+    assert_type(%(
+      module Moo
+        @x : Int32
+
+        def x
+          @x
+        end
+      end
+
+      class Foo
+        include Moo
+
+        def initialize
+          @x = 1
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "uses type declaration inside module and gives error" do
+    assert_error %(
+      module Moo
+        @x : Int32
+
+        def moo
+          @x = false
+        end
+      end
+
+      class Foo
+        include Moo
+
+        def initialize
+          @x = 1
+        end
+      end
+
+      Foo.new.moo
+      ),
+      "instance variable '@x' of Foo must be Int32"
+  end
+
+  it "uses type declaration inside module, recursive, and gives error" do
+    assert_error %(
+      module Moo
+        @x : Int32
+
+        def moo
+          @x = false
+        end
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      class Foo
+        include Moo2
+
+        def initialize
+          @x = 1
+        end
+      end
+
+      Foo.new.moo
+      ),
+      "instance variable '@x' of Foo must be Int32"
+  end
+
+  it "initializes variable in module" do
+    assert_type(%(
+      module Moo
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "initializes variable in module, recursive" do
+    assert_type(%(
+      module Moo
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      module Moo2
+        include Moo
+      end
+
+      class Foo
+        include Moo2
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "inherits instance var type annotation from generic to concrete" do
+    assert_type(%(
+      module Foo(T)
+        @x : Int32?
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        include Foo(Int32)
+      end
+
+      Bar.new.x
+      )) { nilable int32 }
+  end
+
+  it "inherits instance var type annotation from generic to concrete with T" do
+    assert_type(%(
+      module Foo(T)
+        @x : T?
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        include Foo(Int32)
+      end
+
+      Bar.new.x
+      )) { nilable int32 }
+  end
+
+  it "inherits instance var type annotation from generic to generic to concrete" do
+    assert_type(%(
+      module Foo(T)
+        @x : Int32?
+
+        def x
+          @x
+        end
+      end
+
+      module Bar(T)
+        include Foo(T)
+      end
+
+      class Baz
+        include Bar(Int32)
+      end
+
+      Baz.new.x
+      )) { nilable int32 }
   end
 end

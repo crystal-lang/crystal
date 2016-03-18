@@ -2,7 +2,7 @@ module Crystal
   class Call
     def define_new(scope, arg_types)
       instance_type = scope.instance_type
-      if instance_type.abstract && !instance_type.is_a?(VirtualType)
+      if instance_type.abstract? && !instance_type.is_a?(VirtualType)
         # If the type defines `new` methods it means that the types or arguments didn't match
         new_defs = scope.lookup_defs("new")
         if new_defs.empty?
@@ -76,7 +76,15 @@ module Crystal
       if defs.size == 0 && arg_types.size > 0
         news = scope.instance_type.metaclass.lookup_defs("new")
         if news.empty?
-          raise "wrong number of arguments for '#{full_name(scope.instance_type)}' (#{self.args.size} for 0)"
+          # If there's a method with a name similar to "initialize", it's probably a typo
+          similar_def = scope.instance_type.lookup_similar_def("initialize", arg_types.size, block)
+          if similar_def
+            inner_msg = colorize("do you maybe have a typo in this '#{similar_def.name}' method?").yellow.bold.to_s
+            raise wrong_number_of_message("arguments", "'#{full_name(scope.instance_type)}'", self.args.size, 0),
+              inner: TypeException.for_node(similar_def, inner_msg)
+          else
+            wrong_number_of_arguments "'#{full_name(scope.instance_type)}'", self.args.size, 0
+          end
         else
           raise_matches_not_found scope.instance_type.metaclass, "new"
         end
@@ -87,10 +95,16 @@ module Crystal
       end
 
       new_def = Def.argless_new(scope.instance_type)
-      match = Match.new(new_def, arg_types, MatchContext.new(scope, scope))
       scope.add_def new_def
 
-      Matches.new([match], true)
+      # We only return matches if there are no args and no named args,
+      # because we just defined `def self.new; x = initialize; x; end`
+      if arg_types.empty? && !named_args
+        match = Match.new(new_def, arg_types, MatchContext.new(scope, scope))
+        Matches.new([match], true)
+      else
+        Matches.new([] of Match, false)
+      end
     end
 
     def define_new_with_initialize(scope, arg_types, matches)
@@ -113,7 +127,7 @@ module Crystal
     end
 
     def define_new_recursive(owner, arg_types, matches = [] of Match)
-      unless owner.abstract
+      unless owner.abstract?
         owner_matches = define_new(owner.metaclass, arg_types)
         owner_matches_matches = owner_matches.matches
         if owner_matches_matches

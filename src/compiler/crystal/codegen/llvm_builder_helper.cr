@@ -24,8 +24,8 @@ module Crystal
       int32(n)
     end
 
-    def null
-      int(0)
+    def int(n, type)
+      LLVM.int llvm_type(type), n
     end
 
     def llvm_nil
@@ -49,11 +49,11 @@ module Crystal
     end
 
     def null_pointer?(value)
-      equal? builder.ptr2int(value, LLVM::Int32), null
+      builder.icmp LLVM::IntPredicate::EQ, value, value.type.null
     end
 
     def not_null_pointer?(value)
-      not_equal? builder.ptr2int(value, LLVM::Int32), null
+      builder.icmp LLVM::IntPredicate::NE, value, value.type.null
     end
 
     def gep(ptr, index0 : Int32, name = "")

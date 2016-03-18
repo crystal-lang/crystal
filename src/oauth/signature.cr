@@ -1,6 +1,12 @@
 # :nodoc:
 struct OAuth::Signature
-  def initialize(@consumer_key, @client_shared_secret, @oauth_token = nil, @token_shared_secret = nil, @extra_params = nil)
+  @consumer_key : String
+  @client_shared_secret : String
+  @oauth_token : String?
+  @token_shared_secret : String?
+  @extra_params : Hash(String, String)?
+
+  def initialize(@consumer_key : String, @client_shared_secret : String, @oauth_token : String? = nil, @token_shared_secret : String? = nil, @extra_params : Hash(String, String)? = nil)
   end
 
   def base_string(request, ssl, ts, nonce)
@@ -49,7 +55,7 @@ struct OAuth::Signature
       str << "%3A%2F%2F"
       URI.escape host, str
       if port
-        str << ':'
+        str << "%3A"
         str << port
       end
       uri_path = request.path || "/"

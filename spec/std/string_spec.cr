@@ -798,6 +798,49 @@ describe "String" do
     it "subs using $~" do
       "foo".sub(/(o)/) { "x#{$1}x" }.should eq("fxoxo")
     end
+
+    it "subs using with \\" do
+      "foo".sub(/(o)/, "\\").should eq("f\\o")
+    end
+
+    it "subs using with z\\w" do
+      "foo".sub(/(o)/, "z\\w").should eq("fz\\wo")
+    end
+
+    it "replaces with numeric back-reference" do
+      "foo".sub(/o/, "x\\0x").should eq("fxoxo")
+      "foo".sub(/(o)/, "x\\1x").should eq("fxoxo")
+      "foo".sub(/(o)/, "\\\\1").should eq("f\\1o")
+      "hello".sub(/[aeiou]/, "(\\0)").should eq("h(e)llo")
+    end
+
+    it "replaces with incomplete named back-reference (1)" do
+      "foo".sub(/(oo)/, "|\\k|").should eq("f|\\k|")
+    end
+
+    it "replaces with incomplete named back-reference (2)" do
+      "foo".sub(/(oo)/, "|\\k\\1|").should eq("f|\\koo|")
+    end
+
+    it "replaces with named back-reference" do
+      "foo".sub(/(?<bar>oo)/, "|\\k<bar>|").should eq("f|oo|")
+    end
+
+    it "replaces with multiple named back-reference" do
+      "fooxx".sub(/(?<bar>oo)(?<baz>x+)/, "|\\k<bar>|\\k<baz>|").should eq("f|oo|xx|")
+    end
+
+    it "replaces with \\a" do
+      "foo".sub(/(oo)/, "|\\a|").should eq("f|\\a|")
+    end
+
+    it "replaces with \\\\\\1" do
+      "foo".sub(/(oo)/, "|\\\\\\1|").should eq("f|\\oo|")
+    end
+
+    it "ignores if backreferences: false" do
+      "foo".sub(/o/, "x\\0x", backreferences: false).should eq("fx\\0xo")
+    end
   end
 
   describe "gsub" do
@@ -905,6 +948,62 @@ describe "String" do
 
     it "gsubs using $~" do
       "foo".gsub(/(o)/) { "x#{$1}x" }.should eq("fxoxxox")
+    end
+
+    it "replaces with numeric back-reference" do
+      "foo".gsub(/o/, "x\\0x").should eq("fxoxxox")
+      "foo".gsub(/(o)/, "x\\1x").should eq("fxoxxox")
+      "foo".gsub(/(ここ)|(oo)/, "x\\1\\2x").should eq("fxoox")
+    end
+
+    it "replaces with named back-reference" do
+      "foo".gsub(/(?<bar>oo)/, "|\\k<bar>|").should eq("f|oo|")
+      "foo".gsub(/(?<x>ここ)|(?<bar>oo)/, "|\\k<bar>|").should eq("f|oo|")
+    end
+
+    it "replaces with incomplete back-reference (1)" do
+      "foo".gsub(/o/, "\\").should eq("f\\\\")
+    end
+
+    it "replaces with incomplete back-reference (2)" do
+      "foo".gsub(/o/, "\\\\").should eq("f\\\\")
+    end
+
+    it "replaces with incomplete back-reference (3)" do
+      "foo".gsub(/o/, "\\k").should eq("f\\k\\k")
+    end
+
+    it "raises with incomplete back-reference (1)" do
+      expect_raises(ArgumentError) do
+        "foo".gsub(/(?<bar>oo)/, "|\\k<bar|")
+      end
+    end
+
+    it "raises with incomplete back-reference (2)" do
+      expect_raises(ArgumentError, "missing ending '>' for '\\\\k<...") do
+        "foo".gsub(/o/, "\\k<")
+      end
+    end
+
+    it "replaces with back-reference to missing capture group" do
+      "foo".gsub(/o/, "\\1").should eq("f")
+
+      expect_raises(IndexError, "undefined group name reference: \"bar\"") do
+        "foo".gsub(/o/, "\\k<bar>").should eq("f")
+      end
+
+      expect_raises(IndexError, "undefined group name reference: \"\"") do
+        "foo".gsub(/o/, "\\k<>")
+      end
+    end
+
+    it "replaces with escaped back-reference" do
+      "foo".gsub(/o/, "\\\\0").should eq("f\\0\\0")
+      "foo".gsub(/oo/, "\\\\k<bar>").should eq("f\\k<bar>")
+    end
+
+    it "ignores if backreferences: false" do
+      "foo".gsub(/o/, "x\\0x", backreferences: false).should eq("fx\\0xx\\0x")
     end
   end
 
@@ -1428,7 +1527,7 @@ describe "String" do
   end
 
   it "cycles chars" do
-    "abc".each_char.cycle.take(8).join.should eq("abcabcab")
+    "abc".each_char.cycle.first(8).join.should eq("abcabcab")
   end
 
   it "gets each_byte iterator" do
@@ -1443,7 +1542,7 @@ describe "String" do
   end
 
   it "cycles bytes" do
-    "abc".each_byte.cycle.take(8).join.should eq("9798999798999798")
+    "abc".each_byte.cycle.first(8).join.should eq("9798999798999798")
   end
 
   it "gets lines" do

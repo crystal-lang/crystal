@@ -59,7 +59,7 @@ struct Range(B, E)
   # (1..10).begin  # => 1
   # (1...10).begin # => 1
   # ```
-  getter :begin
+  getter begin : B
 
   # Returns the object that defines the end of the range.
   #
@@ -67,11 +67,11 @@ struct Range(B, E)
   # (1..10).end  # => 10
   # (1...10).end # => 10
   # ```
-  getter :end
+  getter end : E
 
   # Returns `true` if the range is exclusive.
   # Returns `false` otherwise (default).
-  getter? :exclusive
+  getter? exclusive : Bool
 
   # Constructs a range using the given beginning and end.
   #
@@ -79,13 +79,13 @@ struct Range(B, E)
   # Range.new(1, 10)                  # => 1..10
   # Range.new(1, 10, exclusive: true) # => 1...10
   # ```
-  def initialize(@begin : B, @end : E, @exclusive = false : Bool)
+  def initialize(@begin : B, @end : E, @exclusive : Bool = false)
   end
 
   # Returns an `Iterator` that cycles over the values of this range.
   #
   # ```
-  # (1..3).cycle.take(5).to_a # => [1, 2, 3, 1, 3]
+  # (1..3).cycle.first(5).to_a # => [1, 2, 3, 1, 3]
   # ```
   def cycle
     each.cycle
@@ -172,8 +172,8 @@ struct Range(B, E)
   # ```
   # (1..10).step(3).skip(1).to_a # => [4, 7, 10]
   # ```
-  def step(n = 1)
-    StepIterator.new(self, n)
+  def step(n : Int = 1)
+    StepIterator(self, B, typeof(n)).new(self, n)
   end
 
   # Returns true if this range excludes the *end* element.
@@ -265,6 +265,10 @@ struct Range(B, E)
   class ItemIterator(B, E)
     include Iterator(B)
 
+    @range : Range(B, E)
+    @current : B
+    @reached_end : Bool
+
     def initialize(@range : Range(B, E), @current = range.begin, @reached_end = false)
     end
 
@@ -294,10 +298,15 @@ struct Range(B, E)
   end
 
   # :nodoc:
-  class StepIterator(B, E)
+  class StepIterator(R, B, N)
     include Iterator(B)
 
-    def initialize(@range : Range(B, E), @step, @current = range.begin, @reached_end = false)
+    @range : R
+    @step : N
+    @current : B
+    @reached_end : Bool
+
+    def initialize(@range, @step, @current = range.begin, @reached_end = false)
     end
 
     def next

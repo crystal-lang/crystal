@@ -1,4 +1,6 @@
 class Mutex
+  @mutex : LibPThread::Mutex
+
   def initialize
     LibPThread.mutex_init(out @mutex, nil)
   end

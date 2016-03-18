@@ -368,7 +368,7 @@ describe "File" do
 
     it "expands paths of symlinks" do
       symlink_path = "/tmp/test_file_symlink.txt"
-      file_path = "#{ __DIR__ }/data/test_file.txt"
+      file_path = "#{__DIR__}/data/test_file.txt"
       begin
         File.symlink(file_path, symlink_path)
         real_symlink_path = File.real_path(symlink_path)

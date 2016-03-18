@@ -91,7 +91,9 @@ class Crystal::Def
     expansion.uses_block_arg = uses_block_arg
     expansion.yields = yields
     expansion.location = location
-    expansion.owner = owner?
+    if owner = self.owner?
+      expansion.owner = owner
+    end
 
     if retain_body
       new_body = [] of ASTNode
@@ -151,7 +153,7 @@ class Crystal::Def
           str << ";"
         end
         new_literal = MacroLiteral.new(literal_body)
-        expansion.body = Expressions.from([new_literal, body.clone])
+        expansion.body = Expressions.from([new_literal, body.clone] of ASTNode)
       else
         new_body.push body
         expansion.body = Expressions.new(new_body)
@@ -199,6 +201,9 @@ class Crystal::Def
   end
 
   class ReplaceFreeVarTransformer < Transformer
+    @free_var_name : String
+    @replacement_name : String
+
     def initialize(@free_var_name, @replacement_name)
     end
 

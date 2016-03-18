@@ -4,12 +4,28 @@ require "./lexer"
 
 module Crystal
   class Parser < Lexer
-    record Unclosed, name, location
+    record Unclosed, name : String, location : Location
 
     property visibility : Visibility?
-    property def_nest
-    property type_nest
-    getter? wants_doc
+    property def_nest : Int32
+    property type_nest : Int32
+    getter? wants_doc : Bool
+    @def_vars : Array(Set(String))
+    @last_call_has_parenthesis : Bool
+    @temp_token : Token
+    @unclosed_stack : Array(Unclosed)
+    @calls_super : Bool
+    @calls_initialize : Bool
+    @uses_block_arg : Bool
+    @assigns_special_var : Bool
+    @block_arg_count : Int32
+    @in_macro_expression : Bool
+    @stop_on_yield : Int32
+    @inside_c_struct : Bool
+    @no_type_declaration : Int32
+    @yields : Int32?
+    @instance_vars : Set(String)?
+    @block_arg_name : String?
 
     def self.parse(str, def_vars = [Set(String).new])
       new(str, def_vars).parse
@@ -31,11 +47,13 @@ module Crystal
       @stop_on_yield = 0
       @inside_c_struct = false
       @wants_doc = false
+      @doc_enabled = false
       @no_type_declaration = 0
     end
 
-    def wants_doc=(@wants_doc)
-      @doc_enabled = @wants_doc
+    def wants_doc=(wants_doc)
+      @wants_doc = !!wants_doc
+      @doc_enabled = !!wants_doc
     end
 
     def parse
@@ -901,116 +919,140 @@ module Crystal
       when :IDENT
         case @token.value
         when :begin
-          parse_begin
+          check_type_declaration { parse_begin }
         when :nil
-          node_and_next_token NilLiteral.new
+          check_type_declaration { node_and_next_token NilLiteral.new }
         when :true
-          node_and_next_token BoolLiteral.new(true)
+          check_type_declaration { node_and_next_token BoolLiteral.new(true) }
         when :false
-          node_and_next_token BoolLiteral.new(false)
+          check_type_declaration { node_and_next_token BoolLiteral.new(false) }
         when :yield
-          parse_yield
+          check_type_declaration { parse_yield }
         when :with
-          parse_yield_with_scope
+          check_type_declaration { parse_yield_with_scope }
         when :abstract
-          check_not_inside_def("can't use abstract inside def") do
-            doc = @token.doc
+          check_type_declaration do
+            check_not_inside_def("can't use abstract inside def") do
+              doc = @token.doc
 
-            next_token_skip_space_or_newline
-            case @token.type
-            when :IDENT
-              case @token.value
-              when :def
-                parse_def is_abstract: true, doc: doc
-              when :class
-                parse_class_def is_abstract: true, doc: doc
-              when :struct
-                parse_class_def is_abstract: true, is_struct: true, doc: doc
+              next_token_skip_space_or_newline
+              case @token.type
+              when :IDENT
+                case @token.value
+                when :def
+                  parse_def is_abstract: true, doc: doc
+                when :class
+                  parse_class_def is_abstract: true, doc: doc
+                when :struct
+                  parse_class_def is_abstract: true, is_struct: true, doc: doc
+                else
+                  unexpected_token
+                end
               else
                 unexpected_token
               end
-            else
-              unexpected_token
             end
           end
         when :def
-          check_not_inside_def("can't define def inside def") do
-            parse_def
+          check_type_declaration do
+            check_not_inside_def("can't define def inside def") do
+              parse_def
+            end
           end
         when :macro
-          check_not_inside_def("can't define macro inside def") do
-            parse_macro
+          check_type_declaration do
+            check_not_inside_def("can't define macro inside def") do
+              parse_macro
+            end
           end
         when :require
-          parse_require
+          check_type_declaration { parse_require }
         when :case
-          parse_case
+          check_type_declaration { parse_case }
         when :if
-          parse_if
+          check_type_declaration { parse_if }
         when :ifdef
-          parse_ifdef
+          check_type_declaration { parse_ifdef }
         when :unless
-          parse_unless
+          check_type_declaration { parse_unless }
         when :include
-          check_not_inside_def("can't include inside def") do
-            parse_include
+          check_type_declaration do
+            check_not_inside_def("can't include inside def") do
+              parse_include
+            end
           end
         when :extend
-          check_not_inside_def("can't extend inside def") do
-            parse_extend
+          check_type_declaration do
+            check_not_inside_def("can't extend inside def") do
+              parse_extend
+            end
           end
         when :class
-          check_not_inside_def("can't define class inside def") do
-            parse_class_def
+          check_type_declaration do
+            check_not_inside_def("can't define class inside def") do
+              parse_class_def
+            end
           end
         when :struct
-          check_not_inside_def("can't define struct inside def") do
-            parse_class_def is_struct: true
+          check_type_declaration do
+            check_not_inside_def("can't define struct inside def") do
+              parse_class_def is_struct: true
+            end
           end
         when :module
-          check_not_inside_def("can't define module inside def") do
-            parse_module_def
+          check_type_declaration do
+            check_not_inside_def("can't define module inside def") do
+              parse_module_def
+            end
           end
         when :enum
-          check_not_inside_def("can't define enum inside def") do
-            parse_enum_def
+          check_type_declaration do
+            check_not_inside_def("can't define enum inside def") do
+              parse_enum_def
+            end
           end
         when :while
-          parse_while
+          check_type_declaration { parse_while }
         when :until
-          parse_until
+          check_type_declaration { parse_until }
         when :return
-          parse_return
+          check_type_declaration { parse_return }
         when :next
-          parse_next
+          check_type_declaration { parse_next }
         when :break
-          parse_break
+          check_type_declaration { parse_break }
         when :lib
-          check_not_inside_def("can't define lib inside def") do
-            parse_lib
+          check_type_declaration do
+            check_not_inside_def("can't define lib inside def") do
+              parse_lib
+            end
           end
         when :fun
-          check_not_inside_def("can't define fun inside def") do
-            parse_fun_def require_body: true
+          check_type_declaration do
+            check_not_inside_def("can't define fun inside def") do
+              parse_fun_def require_body: true
+            end
           end
         when :alias
-          check_not_inside_def("can't define alias inside def") do
-            parse_alias
+          check_type_declaration do
+            check_not_inside_def("can't define alias inside def") do
+              parse_alias
+            end
           end
         when :pointerof
-          parse_pointerof
+          check_type_declaration { parse_pointerof }
         when :sizeof
-          parse_sizeof
+          check_type_declaration { parse_sizeof }
         when :instance_sizeof
-          parse_instance_sizeof
+          check_type_declaration { parse_instance_sizeof }
         when :typeof
-          parse_typeof
+          check_type_declaration { parse_typeof }
         when :private
-          parse_visibility_modifier Visibility::Private
+          check_type_declaration { parse_visibility_modifier Visibility::Private }
         when :protected
-          parse_visibility_modifier Visibility::Protected
+          check_type_declaration { parse_visibility_modifier Visibility::Protected }
         when :asm
-          parse_asm
+          check_type_declaration { parse_asm }
         else
           set_visibility parse_var_or_call
         end
@@ -1027,6 +1069,37 @@ module Crystal
       else
         unexpected_token_in_atomic
       end
+    end
+
+    def check_type_declaration
+      if next_comes_colon_space?
+        name = @token.value.to_s
+        var = Var.new(name).at(@token.location)
+        next_token_skip_space
+        check :":"
+        next_token_skip_space_or_newline
+        var_type = parse_single_type
+        type_declaration = TypeDeclaration.new(var, var_type).at(var.location)
+        set_visibility type_declaration
+      else
+        yield
+      end
+    end
+
+    def next_comes_colon_space?
+      return false unless @no_type_declaration == 0
+
+      pos = current_pos
+      while current_char.whitespace?
+        next_char_no_column_increment
+      end
+      comes_colon_space = current_char == ':'
+      if comes_colon_space
+        next_char_no_column_increment
+        comes_colon_space = current_char.whitespace?
+      end
+      self.current_pos = pos
+      comes_colon_space
     end
 
     def new_node_check_type_declaration(klass)
@@ -1635,9 +1708,9 @@ module Crystal
       FunPointer.new(obj, name, types)
     end
 
-    record Piece, value, line_number do
-      @value : String | ASTNode
-    end
+    record Piece,
+      value : String | ASTNode,
+      line_number : Int32
 
     def parse_delimiter
       if @token.type == :STRING
@@ -1817,7 +1890,7 @@ module Crystal
         else
           if remove_indent
             line = current_line.to_s
-            if (line.size < indent) || !line.each_char.take(indent).all?(&.whitespace?)
+            if (line.size < indent) || !line.each_char.first(indent).all?(&.whitespace?)
               raise "heredoc line must have an indent greater or equal than #{indent}", piece.line_number, 1
             else
               line = line[indent..-1]
@@ -1827,6 +1900,12 @@ module Crystal
             remove_indent = false
             current_line.clear
           else
+            unless current_line.empty?
+              line = current_line.to_s
+              new_pieces << StringLiteral.new(line)
+              current_line.clear
+            end
+
             new_pieces << value
           end
         end
@@ -1840,7 +1919,7 @@ module Crystal
     end
 
     def remove_heredoc_from_line(line, indent, line_number)
-      if line.each_char.take(indent).all? &.whitespace?
+      if line.each_char.first(indent).all? &.whitespace?
         if line.size - 1 < indent
           "\n"
         else
@@ -2113,33 +2192,47 @@ module Crystal
             slash_is_regex!
             next_token_skip_space_or_newline
             when_conds = [] of ASTNode
-            while true
-              if cond && @token.type == :"."
-                next_token
-                call = parse_var_or_call(force_call: true) as Call
-                call.obj = ImplicitObj.new
-                when_conds << call
-              else
-                when_conds << parse_op_assign_no_control
-              end
-              skip_space
-              if @token.keyword?(:then)
-                next_token_skip_space_or_newline
-                break
-              else
-                slash_is_regex!
-                case @token.type
-                when :","
+
+            if cond.is_a?(TupleLiteral)
+              while true
+                if @token.type == :"{"
+                  curly_location = @token.location
+
                   next_token_skip_space_or_newline
-                when :NEWLINE
-                  skip_space_or_newline
-                  break
-                when :";"
-                  skip_statement_end
-                  break
+
+                  tuple_elements = [] of ASTNode
+
+                  while true
+                    tuple_elements << parse_when_expression(cond)
+                    skip_space
+                    if @token.type == :","
+                      next_token_skip_space_or_newline
+                    else
+                      break
+                    end
+                  end
+
+                  if tuple_elements.size != cond.elements.size
+                    raise "wrong number of tuple elements (given #{tuple_elements.size}, expected #{cond.elements.size})", curly_location
+                  end
+
+                  tuple = TupleLiteral.new(tuple_elements)
+                  when_conds << tuple
+
+                  check :"}"
+                  next_token_skip_space
                 else
-                  unexpected_token @token.to_s, "expecting ',', ';' or '\n'"
+                  when_conds << parse_when_expression(cond)
+                  skip_space
                 end
+
+                break if when_expression_end
+              end
+            else
+              while true
+                when_conds << parse_when_expression(cond)
+                skip_space
+                break if when_expression_end
               end
             end
 
@@ -2173,6 +2266,39 @@ module Crystal
       end
 
       Case.new(cond, whens, a_else)
+    end
+
+    def when_expression_end
+      if @token.keyword?(:then)
+        next_token_skip_space_or_newline
+        return true
+      else
+        slash_is_regex!
+        case @token.type
+        when :","
+          next_token_skip_space_or_newline
+        when :NEWLINE
+          skip_space_or_newline
+          return true
+        when :";"
+          skip_statement_end
+          return true
+        else
+          unexpected_token @token.to_s, "expecting ',', ';' or '\n'"
+        end
+      end
+      false
+    end
+
+    def parse_when_expression(cond)
+      if cond && @token.type == :"."
+        next_token
+        call = parse_var_or_call(force_call: true) as Call
+        call.obj = ImplicitObj.new
+        call
+      else
+        parse_op_assign_no_control
+      end
     end
 
     def parse_include
@@ -2253,22 +2379,39 @@ module Crystal
     def parse_macro
       doc = @token.doc
 
-      next_token_skip_space_or_newline
+      next_token
 
-      if @token.keyword?(:def)
-        a_def = parse_def_helper is_macro_def: true
-        a_def.doc = doc
-        return a_def
+      case current_char
+      when '%'
+        next_char
+        @token.type = :"%"
+        @token.column_number += 1
+      when '/'
+        next_char
+        @token.type = :"/"
+        @token.column_number += 1
+      else
+        skip_space_or_newline
+
+        if @token.keyword?(:def)
+          a_def = parse_def_helper is_macro_def: true
+          a_def.doc = doc
+          return a_def
+        end
+
+        check DefOrMacroCheck1
       end
 
       push_def
 
-      check DefOrMacroCheck1
-
       name_line_number = @token.line_number
       name_column_number = @token.column_number
 
-      name = check_ident
+      if @token.type == :IDENT
+        name = @token.value.to_s
+      else
+        name = @token.type.to_s
+      end
       next_token_skip_space
 
       args = [] of Arg
@@ -2781,7 +2924,7 @@ module Crystal
       end
 
       @def_nest -= 1
-      @doc_enabled = @wants_doc
+      @doc_enabled = !!@wants_doc
       pop_def
 
       node = Def.new name, args, body, receiver, block_arg, return_type, is_macro_def, @yields, is_abstract, splat_index
@@ -2800,7 +2943,10 @@ module Crystal
       end
     end
 
-    record ArgExtras, block_arg, default_value, splat
+    record ArgExtras,
+      block_arg : Arg?,
+      default_value : Bool,
+      splat : Bool
 
     def parse_arg(args, extra_assigns, parenthesis, found_default_value, found_splat, allow_restrictions = true)
       if @token.type == :"&"
@@ -2840,6 +2986,24 @@ module Crystal
         skip_space
       end
 
+      if @token.type == :SYMBOL
+        raise "space required after colon in type restriction", @token
+      end
+
+      found_colon = false
+
+      if allow_restrictions && @token.type == :":"
+        if !default_value && !found_space
+          raise "space required before colon in type restriction", @token
+        end
+
+        next_token_skip_space_or_newline
+
+        location = @token.location
+        restriction = parse_single_type
+        found_colon = true
+      end
+
       unless splat
         if @token.type == :"="
           if found_splat || splat
@@ -2866,19 +3030,14 @@ module Crystal
         end
       end
 
-      if @token.type == :SYMBOL
-        raise "space required after colon in type restriction", @token
-      end
-
-      if allow_restrictions && @token.type == :":"
-        if !default_value && !found_space
-          raise "space required before colon in type restriction", @token
+      unless found_colon
+        if @token.type == :SYMBOL
+          raise "the syntax for an argument with a default value V and type T is `arg : T = V`", @token
         end
 
-        next_token_skip_space_or_newline
-
-        location = @token.location
-        restriction = parse_single_type
+        if allow_restrictions && @token.type == :":"
+          raise "the syntax for an argument with a default value V and type T is `arg : T = V`", @token
+        end
       end
 
       raise "Bug: arg_name is nil" unless arg_name
@@ -3255,7 +3414,13 @@ module Crystal
       Block.new(block_args, block_body).at_end(end_location)
     end
 
-    record CallArgs, args, block, block_arg, named_args, stopped_on_do_after_space, end_location
+    record CallArgs,
+      args : Array(ASTNode)?,
+      block : Block?,
+      block_arg : ASTNode?,
+      named_args : Array(NamedArgument)?,
+      stopped_on_do_after_space : Bool,
+      end_location : Location?
 
     def parse_call_args(stop_on_do_after_space = false, allow_curly = false, control = false)
       case @token.type
@@ -3328,7 +3493,7 @@ module Crystal
     end
 
     def parse_call_args_space_consumed(check_plus_and_minus = true, allow_curly = false)
-      if @token.keyword?(:as) || @token.keyword?(:end)
+      if (@token.keyword?(:as) || @token.keyword?(:end)) && !next_comes_colon_space?
         return nil
       end
 
@@ -3357,9 +3522,9 @@ module Crystal
 
       case @token.value
       when :if, :unless, :while, :until, :rescue, :ensure
-        return nil
+        return nil unless next_comes_colon_space?
       when :yield
-        return nil if @stop_on_yield > 0
+        return nil if @stop_on_yield > 0 && !next_comes_colon_space?
       end
 
       args = [] of ASTNode
@@ -3393,7 +3558,7 @@ module Crystal
           location = @token.location
           slash_is_regex!
           next_token_skip_space_or_newline
-          raise "invalid trailing comma in call" if @token.keyword?(:end) || @token.type == :EOF
+          raise "invalid trailing comma in call" if (@token.keyword?(:end) && !next_comes_colon_space?) || @token.type == :EOF
         else
           break
         end
@@ -3609,7 +3774,7 @@ module Crystal
       if @token.type == :"->"
         next_token_skip_space
         case @token.type
-        when :",", :")", :"}", :";", :NEWLINE
+        when :"=", :",", :")", :"}", :";", :NEWLINE
           return_type = nil
         else
           type_union = parse_type_union(allow_primitives)
@@ -4113,7 +4278,7 @@ module Crystal
         next_token_skip_space_or_newline
         type = parse_single_type
 
-        if 'A' <= name[0] <= 'Z'
+        if name[0].uppercase?
           raise "external variables must start with lowercase, use for example `$#{name.underscore} = #{name} : #{type}`", location
         end
 
@@ -4475,6 +4640,10 @@ module Crystal
       if @token.type == :IDENT
         case @token.value
         when :do, :end, :else, :elsif, :when, :rescue, :ensure
+          if next_comes_colon_space?
+            return false
+          end
+
           return true
         end
       end
@@ -4563,7 +4732,9 @@ module Crystal
       when :IDENT
         case @token.value
         when :break, :next, :return
-          raise "void value expression", @token, @token.value.to_s.size
+          unless next_comes_colon_space?
+            raise "void value expression", @token, @token.value.to_s.size
+          end
         end
       end
     end

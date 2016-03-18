@@ -1,8 +1,14 @@
 module YAML
   class Generator
+    @io : IO
+    @recent_nl : Bool
+    @first : Bool
+    @indent : String?
+
     def initialize(@io)
-      self << "--- "
+      @recent_nl = false
       @first = true
+      @io << "--- "
     end
 
     def <<(s)

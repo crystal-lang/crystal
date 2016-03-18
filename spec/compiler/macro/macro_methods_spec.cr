@@ -647,6 +647,12 @@ describe "macro methods" do
         [TypeNode.new(GenericClassType.new(program, program, "SomeType", program.object, ["A", "B"]))] of ASTNode
       end
     end
+
+    it "executes class" do
+      assert_macro("x", "{{x.class.name}}", "String:Class") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
   end
 
   describe "declare var methods" do
@@ -771,6 +777,12 @@ describe "macro methods" do
 
     it "executes value" do
       assert_macro "x", %({{x.value}}), [Assign.new(Var.new("foo"), NumberLiteral.new(2))] of ASTNode, "2"
+    end
+  end
+
+  describe "splat methods" do
+    it "executes exp" do
+      assert_macro "x", %({{x.exp}}), [Splat.new(NumberLiteral.new(2))] of ASTNode, "2"
     end
   end
 

@@ -169,10 +169,10 @@ struct Tuple
   # Returns an `Iterator` for the elements in this tuple.
   #
   # ```
-  # {1, 'a'}.each.cycle.take(3).to_a # => [1, 'a', 1]
+  # {1, 'a'}.each.cycle.first(3).to_a # => [1, 'a', 1]
   # ```
   def each
-    ItemIterator(typeof((i = 0; self[i]))).new(self)
+    ItemIterator(self, typeof((i = 0; self[i]))).new(self)
   end
 
   # Returns `true` if this tuple has the same size as the other tuple
@@ -199,6 +199,39 @@ struct Tuple
 
     size.times do |i|
       return false unless self[i] == other[i]
+    end
+    true
+  end
+
+  # Returns `true` if case equality holds for the elements in `self` and *other*.
+  #
+  # ```
+  # {1, 2} === {1, 2} # => true
+  # {1, 2} === {1, 3} # => false
+  # ```
+  #
+  # See `Object#===`
+  def ===(other : self)
+    {% for i in 0...@type.size %}
+      return false unless self[{{i}}] === other[{{i}}]
+    {% end %}
+    true
+  end
+
+  # Returns `true` if `self` and *other* have the same size and case equality holds
+  # for the elements in `self` and *other*.
+  #
+  # ```
+  # {1, 2} === {1, 2, 3}             # => false
+  # {/o+/, "bar"} === {"foo", "bar"} # => true
+  # ```
+  #
+  # See `Object#===`
+  def ===(other : Tuple)
+    return false unless size == other.size
+
+    size.times do |i|
+      return false unless self[i] === other[i]
     end
     true
   end
@@ -373,10 +406,10 @@ struct Tuple
   # Returns an `Iterator` for the elements in this tuple.
   #
   # ```
-  # {1, 'a'}.reverse_each.cycle.take(3).to_a # => [1, 'a', 1]
+  # {1, 'a'}.reverse_each.cycle.first(3).to_a # => [1, 'a', 1]
   # ```
   def reverse_each
-    ReverseIterator(typeof((i = 0; self[i]))).new(self)
+    ReverseIterator(self, typeof((i = 0; self[i]))).new(self)
   end
 
   # Returns the first element of this tuple. Doesn't compile
@@ -438,8 +471,11 @@ struct Tuple
     {% end %}
   end
 
-  class ItemIterator(T)
+  class ItemIterator(I, T)
     include Iterator(T)
+
+    @tuple : I
+    @index : Int32
 
     def initialize(@tuple, @index = 0)
     end
@@ -457,8 +493,11 @@ struct Tuple
   end
 
   # :nodoc:
-  class ReverseIterator(T)
+  class ReverseIterator(I, T)
     include Iterator(T)
+
+    @tuple : I
+    @index : Int32
 
     def initialize(@tuple, @index = tuple.size - 1)
     end

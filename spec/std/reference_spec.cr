@@ -1,6 +1,9 @@
 require "spec"
 
 class ReferenceSpecTestClass
+  @x : Int32
+  @y : String
+
   def initialize(@x, @y)
   end
 end

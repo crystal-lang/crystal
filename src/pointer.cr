@@ -27,9 +27,12 @@
 # For a safe alternative, see `Slice`, which is a pointer with a size and with bounds checking.
 struct Pointer(T)
   # Unsafe wrapper around a `Pointer` that allows to write values to
-  # it while advancing Athe location and keeping track of how many elements
-  # where written. See `Pointer#appender`
+  # it while advancing the location and keeping track of how many elements
+  # were written. See `Pointer#appender`
   struct Appender(T)
+    @pointer : T*
+    @start : T*
+
     def initialize(@pointer : Pointer(T))
       @start = @pointer
     end
@@ -397,7 +400,7 @@ struct Pointer(T)
   # ptr[9] #=> 0
   #
   # ```
-  def self.malloc(size = 1 : Int)
+  def self.malloc(size : Int = 1)
     if size < 0
       raise ArgumentError.new("negative Pointer#malloc size")
     end

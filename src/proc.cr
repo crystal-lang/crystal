@@ -85,8 +85,8 @@
 # end
 # ```
 #
-# Note that we save the callback in `@@callback`. The reason is that if we dont' do it, and our code doesn't
-# reference it anymore, the GC will collect it. The C library will of course store the callabck, but Crystal's
+# Note that we save the callback in `@@callback`. The reason is that if we don't do it, and our code doesn't
+# reference it anymore, the GC will collect it. The C library will of course store the callback, but Crystal's
 # GC has no way of knowing that.
 struct Proc
   def self.new(pointer : Void*, closure_data : Void*)

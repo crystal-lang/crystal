@@ -4,15 +4,15 @@ module Crystal
   class Location
     include PartialComparable(self)
 
-    getter line_number
-    getter column_number
-    getter filename
+    getter line_number : Int32
+    getter column_number : Int32
+    getter filename : String | VirtualFile | Nil
 
     def initialize(@line_number, @column_number, @filename)
     end
 
     def dirname
-      filename = @filename
+      filename = original_filename
       if filename.is_a?(String)
         File.dirname(filename)
       else

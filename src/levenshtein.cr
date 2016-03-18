@@ -26,21 +26,21 @@ module Levenshtein
       t_size, s_size = s_size, t_size
     end
 
-    v0 = Pointer(Int32).malloc(t_size + 1) { |i| i }
-    v1 = Pointer(Int32).malloc(t_size + 1)
+    v = Pointer(Int32).malloc(t_size + 1) { |i| i }
 
     s_size.times do |i|
-      v1[0] = i + 1
+      last_cost = i + 1
 
-      0.upto(t_size - 1) do |j|
-        cost = s[i] == t[j] ? 0 : 1
-        v1[j + 1] = Math.min(Math.min(v1[j] + 1, v0[j + 1] + 1), v0[j] + cost)
+      t_size.times do |j|
+        sub_cost = s[i] == t[j] ? 0 : 1
+        cost = Math.min(Math.min(last_cost + 1, v[j + 1] + 1), v[j] + sub_cost)
+        v[j] = last_cost
+        last_cost = cost
       end
-
-      v0.copy_from(v1, t_size + 1)
+      v[t_size] = last_cost
     end
 
-    v1[t_size]
+    v[t_size]
   end
 
   # Finds the closest string to a given string amongst many strings.
@@ -55,13 +55,19 @@ module Levenshtein
   # ```
   class Finder
     # :nodoc:
-    record Entry, value, distance
+    record Entry,
+      value : String,
+      distance : Int32
 
-    def initialize(@target : String, tolerance = nil : Int?)
+    @target : String
+    @tolerance : Int32
+    @best_entry : Entry?
+
+    def initialize(@target : String, tolerance : Int? = nil)
       @tolerance = tolerance || (target.size / 5.0).ceil.to_i
     end
 
-    def test(name : String, value = name : String)
+    def test(name : String, value : String = name)
       distance = Levenshtein.distance(@target, name)
       if distance <= @tolerance
         if best_entry = @best_entry

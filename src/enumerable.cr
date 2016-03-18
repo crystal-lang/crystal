@@ -174,7 +174,7 @@ module Enumerable(T)
   #     User #0: Alice
   #     User #1: Bob
   #
-  # Accepts an optional *offset* parameter, which tells it to start counting from there. So, a more humand
+  # Accepts an optional *offset* parameter, which tells it to start counting from there. So, a more human
   # friendly version of the previous snippet would be:
   #
   #     ["Alice", "Bob"].each_with_index(1) do |user, i|
@@ -277,7 +277,7 @@ module Enumerable(T)
   #     [1, 2, 3].in_groups_of(2, 0) #=> [[1, 2], [3, 0]]
   #     [1, 2, 3].in_groups_of(2) #=> [[1, 2], [3, nil]]
   #
-  def in_groups_of(size : Int, filled_up_with = nil : U)
+  def in_groups_of(size : Int, filled_up_with : U = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
 
     # TODO: this consumes the enumerable twice, fix
@@ -300,7 +300,7 @@ module Enumerable(T)
   #     #=> 3
   #     #=> 4
   #
-  def in_groups_of(size : Int, filled_up_with = nil : U)
+  def in_groups_of(size : Int, filled_up_with : U = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
     ary = Array(T | U).new(size, filled_up_with)
 
@@ -346,7 +346,7 @@ module Enumerable(T)
     index { |e| e == obj }
   end
 
-  # Convers an Enumerable to a hash by using the value returned by the block
+  # Converts an Enumerable to a hash by using the value returned by the block
   # as the hash key.
   # Be aware, if two elements return the same value as a key one will override
   # the other. If you want to keep all values, then you should probably use
@@ -888,7 +888,7 @@ module Enumerable(T)
   #
   # If *count* is bigger than the number of elements in the collection, returns as many as possible. This
   # include the case of calling it over an empty collection, in which case it returns an empty array.
-  def take(count : Int)
+  def first(count : Int)
     raise ArgumentError.new("attempt to take negative size") if count < 0
 
     ary = Array(T).new(count)

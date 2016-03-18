@@ -2,11 +2,16 @@
 # Singleton that handles SIG_CHLD and queues events for Process#waitpid.
 # Process.waitpid uses this class for nonblocking operation.
 class Event::SignalChildHandler
+  @@instance : Event::SignalChildHandler?
+
   def self.instance
     @@instance ||= new
   end
 
   alias ChanType = Channel::Buffered(Process::Status?)
+
+  @pending : Hash(LibC::PidT, Process::Status)
+  @waiting : Hash(LibC::PidT, ChanType)
 
   def initialize
     @pending = Hash(LibC::PidT, Process::Status).new

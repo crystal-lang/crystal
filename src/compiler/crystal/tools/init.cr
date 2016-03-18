@@ -91,13 +91,13 @@ module Crystal
     end
 
     class Config
-      property skeleton_type
-      property name
-      property dir
-      property author
-      property email
-      property github_name
-      property silent
+      property skeleton_type : String
+      property name : String
+      property dir : String
+      property author : String
+      property email : String
+      property github_name : String
+      property silent : Bool
 
       def initialize(
                      @skeleton_type = "none",
@@ -111,8 +111,9 @@ module Crystal
     end
 
     abstract class View
-      getter config
+      getter config : Config
 
+      @@views : Array(View.class)
       @@views = [] of View.class
 
       def self.views
@@ -144,7 +145,7 @@ module Crystal
     end
 
     class InitProject
-      getter config
+      getter config : Config
 
       def initialize(@config)
       end

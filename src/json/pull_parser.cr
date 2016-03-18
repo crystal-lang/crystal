@@ -1,10 +1,13 @@
 # This class allows you to consume JSON on demand, token by token.
 class JSON::PullParser
-  getter kind
-  getter bool_value
-  getter int_value
-  getter float_value
-  getter string_value
+  getter kind : Symbol
+  getter bool_value : Bool
+  getter int_value : Int64
+  getter float_value : Float64
+  getter string_value : String
+  @object_stack : Array(Symbol)
+  @skip_count : Int32
+  @lexer : Lexer
 
   def initialize(input)
     @lexer = Lexer.new input

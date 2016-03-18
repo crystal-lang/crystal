@@ -394,7 +394,7 @@ module IO
 
   # ditto
   def printf(format_string, args : Array | Tuple) : Nil
-    String::Formatter.new(format_string, args, self).format
+    String::Formatter(typeof(args)).new(format_string, args, self).format
     nil
   end
 
@@ -552,8 +552,8 @@ module IO
   #
   # ```
   # io = MemoryIO.new "hello world"
-  # io.read # => "hello world"
-  # io.read # => ""
+  # io.gets_to_end # => "hello world"
+  # io.gets_to_end # => ""
   # ```
   def gets_to_end : String
     String.build do |str|
@@ -743,7 +743,7 @@ module IO
   # io.rewind
   # io.gets(4) # => "\u{4}\u{3}\u{2}\u{1}"
   # ```
-  def write_bytes(object, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
+  def write_bytes(object, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)
     object.to_io(self, format)
   end
 
@@ -759,7 +759,7 @@ module IO
   # io.rewind
   # io.read_bytes(Int32, IO::ByteFormat::LittleEndian) # => 0x01020304
   # ```
-  def read_bytes(type, format = IO::ByteFormat::SystemEndian : IO::ByteFormat)
+  def read_bytes(type, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)
     type.from_io(self, format)
   end
 
@@ -882,6 +882,16 @@ module IO
     ByteIterator.new(self)
   end
 
+  # Rewinds this IO. By default this method raises, but including types
+  # mayb implement it.
+  def rewind
+    raise IO::Error.new("can't rewind")
+  end
+
+  @encoding : EncodingOptions?
+  @encoder : Encoder?
+  @decoder : Decoder?
+
   # Sets the encoding of this IO.
   #
   # The *invalid* argument can be:
@@ -890,7 +900,7 @@ module IO
   #
   # String operations (`gets`, `gets_to_end`, `read_char`, `<<`, `print`, `puts`
   # `printf`) will use this encoding.
-  def set_encoding(encoding : String, invalid = nil : Symbol?)
+  def set_encoding(encoding : String, invalid : Symbol? = nil)
     if encoding == "UTF-8"
       @encoding = nil
     else
@@ -932,6 +942,9 @@ module IO
   struct LineIterator(I, A)
     include Iterator(String)
 
+    @io : I
+    @args : A
+
     def initialize(@io : I, @args : A)
     end
 
@@ -949,6 +962,8 @@ module IO
   struct CharIterator(I)
     include Iterator(Char)
 
+    @io : I
+
     def initialize(@io : I)
     end
 
@@ -965,6 +980,8 @@ module IO
   # :nodoc:
   struct ByteIterator(I)
     include Iterator(UInt8)
+
+    @io : I
 
     def initialize(@io : I)
     end

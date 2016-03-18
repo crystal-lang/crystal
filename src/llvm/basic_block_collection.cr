@@ -1,4 +1,6 @@
 struct LLVM::BasicBlockCollection
+  @function : Function
+
   def initialize(@function)
   end
 

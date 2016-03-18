@@ -1,6 +1,8 @@
 struct XML::Node
   LOOKS_LIKE_XPATH = /^(\.\/|\/|\.\.|\.$)/
 
+  @node : LibXML::Node*
+
   def initialize(node : LibXML::Attr*)
     initialize(node as LibXML::Node*)
   end
@@ -302,7 +304,7 @@ struct XML::Node
     to_xml io
   end
 
-  def to_xml(indent = 2 : Int, indent_text = " ", options = SaveOptions.xml_default : SaveOptions)
+  def to_xml(indent : Int = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
     String.build do |str|
       to_xml str, indent, indent_text, options
     end
@@ -311,7 +313,7 @@ struct XML::Node
   # :nodoc:
   SAVE_MUTEX = Mutex.new
 
-  def to_xml(io : IO, indent = 2, indent_text = " ", options = SaveOptions.xml_default : SaveOptions)
+  def to_xml(io : IO, indent = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
     # We need to use a mutex because we modify global libxml variables
     SAVE_MUTEX.synchronize do
       oldXmlIndentTreeOutput = LibXML.xmlIndentTreeOutput

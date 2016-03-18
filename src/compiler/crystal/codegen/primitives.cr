@@ -109,13 +109,16 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_binary_op(op, t1 : IntegerType, t2 : IntegerType, p1, p2)
-    if t1.normal_rank == t2.normal_rank
-      # Nothing to do
-    elsif t1.rank < t2.rank
-      p1 = extend_int t1, t2, p1
-    else
-      p2 = extend_int t2, t1, p2
+    # Comparisons are a bit trickier because we want to get comparisons
+    # between signed and unsigned integers right.
+    case op
+    when "<"  then return @last = codegen_binary_op_lt(t1, t2, p1, p2)
+    when "<=" then return @last = codegen_binary_op_lte(t1, t2, p1, p2)
+    when ">"  then return @last = codegen_binary_op_gt(t1, t2, p1, p2)
+    when ">=" then return @last = codegen_binary_op_gte(t1, t2, p1, p2)
     end
+
+    p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
 
     @last = case op
             when "+"               then builder.add p1, p2
@@ -130,10 +133,6 @@ class Crystal::CodeGenVisitor
             when "^"               then builder.xor(p1, p2)
             when "=="              then return builder.icmp LLVM::IntPredicate::EQ, p1, p2
             when "!="              then return builder.icmp LLVM::IntPredicate::NE, p1, p2
-            when "<"               then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SLT : LLVM::IntPredicate::ULT), p1, p2
-            when "<="              then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SLE : LLVM::IntPredicate::ULE), p1, p2
-            when ">"               then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SGT : LLVM::IntPredicate::UGT), p1, p2
-            when ">="              then return builder.icmp (t1.signed? ? LLVM::IntPredicate::SGE : LLVM::IntPredicate::UGE), p1, p2
             else                        raise "Bug: trying to codegen #{t1} #{op} #{t2}"
             end
 
@@ -142,6 +141,169 @@ class Crystal::CodeGenVisitor
     end
 
     @last
+  end
+
+  def codegen_binary_extend_int(t1, t2, p1, p2)
+    if t1.normal_rank == t2.normal_rank
+      # Nothing to do
+    elsif t1.rank < t2.rank
+      p1 = extend_int t1, t2, p1
+    else
+      p2 = extend_int t2, t1, p2
+    end
+    {p1, p2}
+  end
+
+  def codegen_binary_op_lt(t1, t2, p1, p2)
+    if t1.signed? == t2.signed?
+      p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+      builder.icmp (t1.signed? ? LLVM::IntPredicate::SLT : LLVM::IntPredicate::ULT), p1, p2
+    else
+      if t1.signed? && t2.unsigned?
+        if t1.bytes > t2.bytes
+          # x < 0 || x < x.class.new(y)
+          or(
+            builder.icmp(LLVM::IntPredicate::SLT, p1, int(0, t1)),
+            builder.icmp(LLVM::IntPredicate::SLT, p1, extend_int(t2, t1, p2))
+          )
+        else
+          # x < 0 || y.class.new(x) < y
+          or(
+            builder.icmp(LLVM::IntPredicate::SLT, p1, int(0, t1)),
+            builder.icmp(LLVM::IntPredicate::ULT, extend_int(t1, t2, p1), p2)
+          )
+        end
+      else
+        # t1.unsigned? && t2.signed?
+        if t1.bytes < t2.bytes
+          # y >= 0 && y.class.new(x) < y
+          and(
+            builder.icmp(LLVM::IntPredicate::SGE, p2, int(0, t2)),
+            builder.icmp(LLVM::IntPredicate::SLT, extend_int(t1, t2, p1), p2)
+          )
+        else
+          # y >= 0 && x < x.class.new(y)
+          and(
+            builder.icmp(LLVM::IntPredicate::SGE, p2, int(0, t2)),
+            builder.icmp(LLVM::IntPredicate::ULT, p1, extend_int(t2, t1, p2))
+          )
+        end
+      end
+    end
+  end
+
+  def codegen_binary_op_lte(t1, t2, p1, p2)
+    if t1.signed? == t2.signed?
+      p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+      builder.icmp (t1.signed? ? LLVM::IntPredicate::SLE : LLVM::IntPredicate::ULE), p1, p2
+    else
+      if t1.signed? && t2.unsigned?
+        if t1.bytes > t2.bytes
+          # x <= 0 || x <= x.class.new(y)
+          or(
+            builder.icmp(LLVM::IntPredicate::SLE, p1, int(0, t1)),
+            builder.icmp(LLVM::IntPredicate::SLE, p1, extend_int(t2, t1, p2))
+          )
+        else
+          # x <= 0 || y.class.new(x) <= y
+          or(
+            builder.icmp(LLVM::IntPredicate::SLE, p1, int(0, t1)),
+            builder.icmp(LLVM::IntPredicate::ULE, extend_int(t1, t2, p1), p2)
+          )
+        end
+      else
+        # t1.unsigned? && t2.signed?
+        if t1.bytes < t2.bytes
+          # y >= 0 && y.class.new(x) <= y
+          and(
+            builder.icmp(LLVM::IntPredicate::SGE, p2, int(0, t2)),
+            builder.icmp(LLVM::IntPredicate::SLE, extend_int(t1, t2, p1), p2)
+          )
+        else
+          # y >= 0 && x <= x.class.new(y)
+          and(
+            builder.icmp(LLVM::IntPredicate::SGE, p2, int(0, t2)),
+            builder.icmp(LLVM::IntPredicate::ULE, p1, extend_int(t2, t1, p2))
+          )
+        end
+      end
+    end
+  end
+
+  def codegen_binary_op_gt(t1, t2, p1, p2)
+    if t1.signed? == t2.signed?
+      p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+      builder.icmp (t1.signed? ? LLVM::IntPredicate::SGT : LLVM::IntPredicate::UGT), p1, p2
+    else
+      if t1.signed? && t2.unsigned?
+        if t1.bytes > t2.bytes
+          # x >= 0 && x > x.class.new(y)
+          and(
+            builder.icmp(LLVM::IntPredicate::SGE, p1, int(0, t1)),
+            builder.icmp(LLVM::IntPredicate::SGT, p1, extend_int(t2, t1, p2))
+          )
+        else
+          # x >= 0 && y.class.new(x) > y
+          and(
+            builder.icmp(LLVM::IntPredicate::SGE, p1, int(0, t1)),
+            builder.icmp(LLVM::IntPredicate::UGT, extend_int(t1, t2, p1), p2)
+          )
+        end
+      else
+        # t1.unsigned? && t2.signed?
+        if t1.bytes < t2.bytes
+          # y < 0 || y.class.new(x) > y
+          or(
+            builder.icmp(LLVM::IntPredicate::SLT, p2, int(0, t2)),
+            builder.icmp(LLVM::IntPredicate::SGT, extend_int(t1, t2, p1), p2)
+          )
+        else
+          # y < 0 || x > x.class.new(y)
+          or(
+            builder.icmp(LLVM::IntPredicate::SLT, p2, int(0, t2)),
+            builder.icmp(LLVM::IntPredicate::UGT, p1, extend_int(t2, t1, p2))
+          )
+        end
+      end
+    end
+  end
+
+  def codegen_binary_op_gte(t1, t2, p1, p2)
+    if t1.signed? == t2.signed?
+      p1, p2 = codegen_binary_extend_int(t1, t2, p1, p2)
+      builder.icmp (t1.signed? ? LLVM::IntPredicate::SGE : LLVM::IntPredicate::UGE), p1, p2
+    else
+      if t1.signed? && t2.unsigned?
+        if t1.bytes > t2.bytes
+          # x >= 0 && x >= x.class.new(y)
+          and(
+            builder.icmp(LLVM::IntPredicate::SGE, p1, int(0, t1)),
+            builder.icmp(LLVM::IntPredicate::SGE, p1, extend_int(t2, t1, p2))
+          )
+        else
+          # x >= 0 && y.class.new(x) >= y
+          and(
+            builder.icmp(LLVM::IntPredicate::SGE, p1, int(0, t1)),
+            builder.icmp(LLVM::IntPredicate::UGE, extend_int(t1, t2, p1), p2)
+          )
+        end
+      else
+        # t1.unsigned? && t2.signed?
+        if t1.bytes < t2.bytes
+          # y <= 0 || y.class.new(x) >= y
+          or(
+            builder.icmp(LLVM::IntPredicate::SLE, p2, int(0, t2)),
+            builder.icmp(LLVM::IntPredicate::SGE, extend_int(t1, t2, p1), p2)
+          )
+        else
+          # y <= 0 || x >= x.class.new(y)
+          or(
+            builder.icmp(LLVM::IntPredicate::SLE, p2, int(0, t2)),
+            builder.icmp(LLVM::IntPredicate::UGE, p1, extend_int(t2, t1, p2))
+          )
+        end
+      end
+    end
   end
 
   def codegen_binary_op(op, t1 : IntegerType, t2 : FloatType, p1, p2)

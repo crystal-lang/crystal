@@ -9,17 +9,25 @@ module Crystal
     include MatchesLookup
     include ClassVarContainer
 
-    getter symbols
-    getter global_vars
-    getter target_machine
-    getter splat_expansions
-    getter after_inference_types
-    getter file_modules
-    property vars
-    property literal_expander
-    property initialized_global_vars
-    property? wants_doc
-    property? color
+    getter symbols : Set(String)
+    getter global_vars : Hash(String, Global)
+    getter target_machine : LLVM::TargetMachine?
+    getter splat_expansions : Hash(Def, Type)
+    getter after_inference_types : Set(Type)
+    getter file_modules : Hash(String, FileModule)
+    property vars : Hash(String, MetaVar)
+    property literal_expander : LiteralExpander?
+    property initialized_global_vars : Set(String)
+    property? wants_doc : Bool
+    property? color : Bool
+
+    @requires : Set(String)
+    @temp_var_counter : Int32
+    @crystal_path : CrystalPath
+    @def_macros : Array(Def)
+    @unions : Hash(Array(UInt64), Type)
+    @macro_expander : MacroExpander?
+    @flags : Set(String)?
 
     def initialize
       super(self, self, "main")
@@ -97,13 +105,13 @@ module Crystal
       string.instance_vars_in_initialize = Set.new(["@bytesize", "@length", "@c"])
       string.allocated = true
 
-      string.lookup_instance_var("@bytesize").set_type(@int32)
-      string.lookup_instance_var("@length").set_type(@int32)
-      string.lookup_instance_var("@c").set_type(@uint8)
+      freeze_type string.lookup_instance_var("@bytesize"), @int32
+      freeze_type string.lookup_instance_var("@length"), @int32
+      freeze_type string.lookup_instance_var("@c"), @uint8
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
-      object.force_metaclass klass
-      klass.force_metaclass klass
+      object.metaclass = klass
+      klass.metaclass = klass
       klass.allocated = true
       klass.allowed_in_generics = false
 
@@ -203,7 +211,8 @@ module Crystal
     end
 
     def tuple_of(types)
-      tuple.instantiate types
+      type_vars = types.map { |type| type as TypeVar }
+      tuple.instantiate(type_vars)
     end
 
     def union_of(types : Array)
@@ -266,16 +275,17 @@ module Crystal
     end
 
     def fun_of(types : Array)
-      proc.instantiate(types)
+      type_vars = types.map { |type| type as TypeVar }
+      proc.instantiate(type_vars)
     end
 
     def fun_of(nodes : Array(ASTNode), return_type : Type)
-      types = Array(Type).new(nodes.size + 1)
+      type_vars = Array(TypeVar).new(nodes.size + 1)
       nodes.each do |node|
-        types << node.type
+        type_vars << node.type
       end
-      types << return_type
-      proc.instantiate(types)
+      type_vars << return_type
+      proc.instantiate(type_vars)
     end
 
     def add_to_requires(filename)
@@ -303,6 +313,40 @@ module Crystal
         end
       end
     end
+
+    @class : MetaclassType?
+    @proc : FunType?
+    @enum : NonGenericClassType?
+    @object : NonGenericClassType?
+    @reference : NonGenericClassType?
+    @value : NonGenericClassType?
+    @number : NonGenericClassType?
+    @no_return : NoReturnType?
+    @void : VoidType?
+    @nil : NilType?
+    @bool : BoolType?
+    @char : CharType?
+    @int : NonGenericClassType?
+    @int8 : IntegerType?
+    @uint8 : IntegerType?
+    @int16 : IntegerType?
+    @uint16 : IntegerType?
+    @int32 : IntegerType?
+    @uint32 : IntegerType?
+    @int64 : IntegerType?
+    @uint64 : IntegerType?
+    @float : NonGenericClassType?
+    @float32 : FloatType?
+    @float64 : FloatType?
+    @symbol : SymbolType?
+    @pointer : PointerType?
+    @tuple : TupleType?
+    @static_array : StaticArrayType?
+    @nil_var : Var?
+    @string : NonGenericClassType?
+    @exception : NonGenericClassType?
+    @array : GenericClassType?
+    @struct_t : NonGenericClassType?
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64
                      uint8 uint16 uint32 uint64 float float32 float64 string symbol pointer array static_array
@@ -358,6 +402,11 @@ module Crystal
       type.struct = true
       type.allocated = true
       type.allowed_in_generics = false
+    end
+
+    private def freeze_type(var, type)
+      var.set_type type
+      var.freeze_type = type
     end
 
     def to_s(io)

@@ -3,14 +3,18 @@ require "../exception"
 
 module Crystal
   class Lexer
-    property? doc_enabled
-    property? comments_enabled
-    property? count_whitespace
-    property? wants_raw
-    property? slash_is_regex
-    getter reader
-    getter token
-    getter line_number
+    property? doc_enabled : Bool
+    property? comments_enabled : Bool
+    property? count_whitespace : Bool
+    property? wants_raw : Bool
+    property? slash_is_regex : Bool
+    getter reader : Char::Reader
+    getter token : Token
+    getter line_number : Int32
+    @column_number : Int32
+    @filename : String | VirtualFile | Nil
+    @wants_regex : Bool
+    @token_end_location : Location?
 
     def initialize(string)
       @reader = Char::Reader.new(string)
@@ -153,8 +157,6 @@ module Crystal
               when char == '\n'
                 @line_number += 1
                 @column_number = 0
-                @token.line_number = @line_number
-                @token.column_number = @column_number
                 break
               when ident_part?(char)
                 here << char
@@ -969,14 +971,14 @@ module Crystal
 
         scan_ident(start)
       else
-        if 'A' <= current_char <= 'Z'
+        if current_char.uppercase?
           start = current_pos
           while ident_part?(next_char)
             # Nothing to do
           end
           @token.type = :CONST
           @token.value = string_range(start)
-        elsif ('a' <= current_char <= 'z') || current_char == '_' || current_char.ord > 0x9F
+        elsif current_char.lowercase? || current_char == '_' || current_char.ord > 0x9F
           next_char
           scan_ident(start)
         else
@@ -1965,6 +1967,11 @@ module Crystal
           end
         when '#'
           if delimiter_state
+            # If it's "#{..." we don't want "#{{{" to parse it as "# {{ {", but as "#{ {{"
+            # (macro expression inside a string interpolation)
+            if peek_next_char == '{'
+              char = next_char
+            end
             whitespace = false
           else
             break

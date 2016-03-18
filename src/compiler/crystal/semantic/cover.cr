@@ -1,9 +1,10 @@
 require "bit_array"
+require "../types"
 
 module Crystal
   struct Cover
-    getter :arg_types
-    getter :matches
+    getter arg_types : Array(Type)
+    getter matches : Array(Match)
 
     def self.create(arg_types, matches)
       if matches
@@ -90,22 +91,29 @@ module Crystal
       arg_type = cover_arg_types[index]
       match_arg_type = match.arg_types[index]
 
-      match_arg_type.each do |match_arg_type2|
+      match_arg_type.each_cover do |match_arg_type2|
         match_arg_type2_cover = match_arg_type2.cover
-        match_arg_type2_cover = [match_arg_type2_cover] unless match_arg_type2_cover.is_a?(Array)
-        match_arg_type2_cover.each do |sub_match_arg_type|
-          if arg_type.is_a?(Array)
-            offset = arg_type.index(sub_match_arg_type)
-            if offset
-              new_multiplier = multiplier * arg_type.size
-              mark_cover match, cover, cover_arg_types, indices, index + 1, position + offset * multiplier, new_multiplier
-            end
-          elsif arg_type == sub_match_arg_type
-            offset = 0
-            new_multiplier = multiplier
-            mark_cover match, cover, cover_arg_types, indices, index + 1, position + offset * multiplier, new_multiplier
+        if match_arg_type2_cover.is_a?(Array)
+          match_arg_type2_cover.each do |sub_match_arg_type|
+            mark_cover_item arg_type, match, cover, cover_arg_types, indices, index, position, multiplier, sub_match_arg_type
           end
+        else
+          mark_cover_item arg_type, match, cover, cover_arg_types, indices, index, position, multiplier, match_arg_type2_cover
         end
+      end
+    end
+
+    private def mark_cover_item(arg_type, match, cover, cover_arg_types, indices, index, position, multiplier, sub_match_arg_type)
+      if arg_type.is_a?(Array)
+        offset = arg_type.index(sub_match_arg_type)
+        if offset
+          new_multiplier = multiplier * arg_type.size
+          mark_cover match, cover, cover_arg_types, indices, index + 1, position + offset * multiplier, new_multiplier
+        end
+      elsif arg_type == sub_match_arg_type
+        offset = 0
+        new_multiplier = multiplier
+        mark_cover match, cover, cover_arg_types, indices, index + 1, position + offset * multiplier, new_multiplier
       end
     end
 
@@ -124,6 +132,98 @@ module Crystal
         new_multiplier = multiplier * arg_types.size
         add_missing missing, cover, cover_arg_types, types, index + 1, position + offset * multiplier, new_multiplier
         types.pop
+      end
+    end
+  end
+
+  class Type
+    def each_cover
+      yield self
+    end
+
+    def cover
+      self
+    end
+
+    def append_cover(array)
+      array << self
+    end
+
+    def cover_size
+      1
+    end
+  end
+
+  class NonGenericModuleType
+    def cover
+      including_types.try(&.cover) || self
+    end
+
+    def append_cover(array)
+      if including_types = including_types()
+        including_types.append_cover(array)
+      else
+        array << self
+      end
+    end
+
+    def cover_size
+      including_types.try(&.cover_size) || 1
+    end
+  end
+
+  class UnionType
+    def each_cover
+      @union_types.each do |union_type|
+        yield union_type
+      end
+    end
+
+    def cover
+      cover = [] of Type
+      append_cover(cover)
+      cover
+    end
+
+    def append_cover(array)
+      union_types.each &.append_cover(array)
+    end
+
+    def cover_size
+      union_types.sum &.cover_size
+    end
+  end
+
+  class VirtualType
+    def each_cover
+      subtypes.each do |subtype|
+        yield subtype
+      end
+    end
+
+    def cover
+      if base_type.abstract?
+        cover = [] of Type
+        append_cover(cover)
+        cover
+      else
+        base_type
+      end
+    end
+
+    def append_cover(array)
+      if base_type.abstract?
+        base_type.subclasses.each &.virtual_type.append_cover(array)
+      else
+        array << base_type
+      end
+    end
+
+    def cover_size
+      if base_type.abstract?
+        base_type.subclasses.sum &.virtual_type.cover_size
+      else
+        1
       end
     end
   end

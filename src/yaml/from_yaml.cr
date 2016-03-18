@@ -27,13 +27,12 @@ def Bool.new(pull : YAML::PullParser)
   pull.read_scalar == "true"
 end
 
-def Int32.new(pull : YAML::PullParser)
-  pull.read_scalar.to_i
-end
 
-def Int64.new(pull : YAML::PullParser)
-  pull.read_scalar.to_i64
-end
+{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
+  def {{type.id}}.new(pull : YAML::PullParser)
+    {{type.id}}.new(pull.read_scalar)
+  end
+{% end %}
 
 def String.new(pull : YAML::PullParser)
   pull.read_scalar

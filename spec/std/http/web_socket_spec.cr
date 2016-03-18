@@ -258,6 +258,27 @@ describe HTTP::WebSocket do
     end
   end
 
+  describe "close" do
+    it "closes with message" do
+      message = "bye"
+      io = MemoryIO.new
+      ws = HTTP::WebSocket::Protocol.new(io)
+      ws.close(message)
+      bytes = io.to_slice
+      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
+      String.new(bytes[2, bytes[1]]).should eq(message)
+    end
+
+    it "closes without message" do
+      io = MemoryIO.new
+      ws = HTTP::WebSocket::Protocol.new(io)
+      ws.close
+      bytes = io.to_slice
+      (bytes[0] & 0x0f).should eq(0x8) # CLOSE frame
+      bytes[1].should eq(0)
+    end
+  end
+
   typeof(HTTP::WebSocket.new(URI.parse("ws://localhost")))
   typeof(HTTP::WebSocket.new("localhost", "/"))
   typeof(HTTP::WebSocket.new("ws://localhost"))

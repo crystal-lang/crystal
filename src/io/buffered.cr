@@ -9,16 +9,19 @@ module IO::Buffered
 
   BUFFER_SIZE = 8192
 
-  # Due to https://github.com/crystal-lang/crystal/issues/456 this
-  # initialization logic must be copied in the included type's
-  # initialize method:
-  #
-  # def initialize
-  #   @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
-  #   @out_count = 0
-  #   @sync = false
-  #   @flush_on_newline = false
-  # end
+  @in_buffer : Pointer(UInt8)?
+  @in_buffer_rem : Slice(UInt8)
+  @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+
+  @out_buffer : Pointer(UInt8)?
+  @out_count : Int32
+  @out_count = 0
+
+  @sync : Bool
+  @sync = false
+
+  @flush_on_newline : Bool
+  @flush_on_newline = false
 
   # Reads at most *slice.size* bytes from the wrapped IO into *slice*. Returns the number of bytes read.
   abstract def unbuffered_read(slice : Slice(UInt8))

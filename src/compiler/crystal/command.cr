@@ -42,11 +42,15 @@ class Crystal::Command
     new(options).run
   end
 
+  private getter options : Array(String)
+
+  @color : Bool
+  @config : CompilerConfig?
+  @format : String?
+
   def initialize(@options)
     @color = true
   end
-
-  private getter options
 
   def run
     command = options.first?
@@ -350,30 +354,46 @@ class Crystal::Command
   end
 
   private def run_specs
-    target_index = options.index { |o| !o.starts_with? '-' }
-    if target_index
-      target_filename_and_line_number = options[target_index]
-      splitted = target_filename_and_line_number.split ':', 2
-      target_filename = splitted[0]
-      if File.file?(target_filename)
-        options.delete_at target_index
-        cwd = Dir.current
-        if target_filename.starts_with?(cwd)
-          target_filenames = [target_filename[cwd.size..-1]]
+    # Assume spec files end with ".cr" and optionally with a colon and a number
+    # (for the target line number). Everything else is an option we forward.
+    filenames = options.select { |option| option =~ /\.cr(\:\d+)?\Z/ }
+    options.reject! { |option| filenames.includes?(option) }
+
+    locations = [] of {String, String}
+
+    if filenames.empty?
+      target_filenames = Dir["spec/**/*_spec.cr"]
+    else
+      target_filenames = [] of String
+      filenames.each do |filename|
+        if filename =~ /\A(.+?)\:(\d+)\Z/
+          file, line = $1, $2
+          unless File.file?(file)
+            error "'#{file}' is not a file"
+          end
+          target_filenames << file
+          locations << {file, line}
         else
-          target_filenames = [target_filename]
+          if Dir.exists?(filename)
+            target_filenames.concat Dir["#{filename}/**/*_spec.cr"]
+          elsif File.file?(filename)
+            target_filenames << filename
+          else
+            error "'#{filename}' is not a file"
+          end
         end
-        if splitted.size == 2
-          target_line = splitted[1]
-          options << "-l" << target_line
-        end
-      elsif File.directory?(target_filename)
-        target_filenames = Dir["#{target_filename}/**/*_spec.cr"]
-      else
-        error "'#{target_filename}' is not a file"
+      end
+    end
+
+    if target_filenames.size == 1
+      if locations.size == 1
+        # This is in case other spec runners use `-l`, we keep compatibility
+        options << "-l" << locations.first[1]
       end
     else
-      target_filenames = Dir["spec/**/*_spec.cr"]
+      locations.each do |loc|
+        options << "--location" << "#{loc[0]}:#{loc[1]}"
+      end
     end
 
     source = target_filenames.map { |filename| %(require "./#{filename}") }.join("\n")
@@ -461,7 +481,16 @@ class Crystal::Command
     Crystal.tempfile(basename)
   end
 
-  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format do
+  record(CompilerConfig,
+    compiler : Compiler,
+    sources : Array(Compiler::Source),
+    output_filename : String,
+    original_output_filename : String,
+    arguments : Array(String),
+    specified_output : Bool,
+    hierarchy_exp : String?,
+    cursor_location : String?,
+    output_format : String?) do
     def compile(output_filename = self.output_filename)
       compiler.original_output_filename = original_output_filename
       compiler.compile sources, output_filename

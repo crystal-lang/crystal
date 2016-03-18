@@ -3,12 +3,16 @@ require "uri"
 require "http/params"
 
 class HTTP::Request
-  getter method
-  getter headers
-  getter body
-  getter version
+  getter method : String
+  getter headers : Headers
+  getter body : String?
+  getter version : String
+  @cookies : Cookies?
+  @resource : String
+  @query_params : Params?
+  @uri : URI?
 
-  def initialize(@method : String, @resource, @headers = Headers.new : Headers, @body = nil, @version = "HTTP/1.1")
+  def initialize(@method : String, @resource, @headers : Headers = Headers.new, @body = nil, @version = "HTTP/1.1")
     if body = @body
       @headers["Content-Length"] = body.bytesize.to_s
     elsif @method == "POST" || @method == "PUT"

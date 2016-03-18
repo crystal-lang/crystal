@@ -327,7 +327,7 @@ describe "Type inference: def" do
 
       Foo.bar
       ),
-      "wrong number of arguments for 'foo' (1 for 0)"
+      "wrong number of arguments for 'foo' (given 1, expected 0)"
   end
 
   it "gives correct error for wrong number of arguments for program call inside type (2) (#1024)" do
@@ -357,7 +357,7 @@ describe "Type inference: def" do
 
   it "accesses free var of default argument (#1101)" do
     assert_type(%(
-      def foo(x, y = nil : U)
+      def foo(x, y : U = nil)
         U
       end
 

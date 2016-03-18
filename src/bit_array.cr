@@ -18,13 +18,15 @@ struct BitArray
   include Enumerable(Bool)
 
   # The number of bits the BitArray stores
-  getter size
+  getter size : Int32
+
+  @bits : UInt32*
 
   # Create a new BitArray of `size` bits.
   #
   # `initial` optionally sets the starting value, true or false, for all bits
   # in the array.
-  def initialize(@size, initial = false : Bool)
+  def initialize(@size, initial : Bool = false)
     value = initial ? UInt32::MAX : UInt32::MIN
     @bits = Pointer(UInt32).malloc(malloc_size, value)
   end
@@ -63,7 +65,7 @@ struct BitArray
   #     ba = BitArray.new(5)
   #     ba[3] # => false
   #     ba.toggle(3)
-  #     ba[3] # => false
+  #     ba[3] # => true
   def toggle(index)
     bit_index, sub_index = bit_index_and_sub_index(index)
     @bits[bit_index] ^= 1 << sub_index
@@ -107,6 +109,13 @@ struct BitArray
       io << (value ? "1" : "0")
     end
     io << "]"
+  end
+
+  # Returns a Slice(UInt8) able to read and write bytes from a buffer.
+  # The slice will be long enough to hold all the bits groups in bytes despite the `UInt32` internal representation.
+  # It's useful for reading and writing a bit array from a byte buffer directly.
+  def to_slice : Slice(UInt8)
+    Slice.new(@bits as Pointer(UInt8), (@size / 8.0).ceil.to_i)
   end
 
   private def bit_index_and_sub_index(index)

@@ -64,21 +64,19 @@ module Crystal
 
     include LLVMBuilderHelper
 
-    getter :llvm_mod
-    getter :fun
-    getter :builder
-    getter :typer
-    getter :main
-    getter :modules
-    getter :context
-    getter :llvm_typer
-    getter :alloca_block
-    getter :entry_block
-    property :last
+    getter llvm_mod : LLVM::Module
+    getter builder : CrystalLLVMBuilder
+    getter main : LLVM::Function
+    getter modules : Hash(String, LLVM::Module)
+    getter context : Context
+    getter llvm_typer : LLVMTyper
+    getter alloca_block : LLVM::BasicBlock
+    getter entry_block : LLVM::BasicBlock
+    property last : LLVM::Value
 
     class LLVMVar
-      getter pointer
-      getter type
+      getter pointer : LLVM::Value
+      getter type : Type
 
       # Normally a variable is associated with an alloca.
       # So for example, if you have a "x = Reference.new" you will have
@@ -88,7 +86,7 @@ module Crystal
       # it's accessed from the arguments list, and it a "Reference*"
       # llvm value, so in a way it's "already loaded".
       # This field is true if that's the case.
-      getter already_loaded
+      getter already_loaded : Bool
 
       def initialize(@pointer, @type, @already_loaded = false)
       end
@@ -96,11 +94,45 @@ module Crystal
 
     alias LLVMVars = Hash(String, LLVMVar)
 
-    record Handler, node, context
-    record StringKey, mod, string
+    record Handler, node : ExceptionHandler, context : Context
+    record StringKey, mod : LLVM::Module, string : String
 
-    def initialize(@mod, @node, @single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
+    @mod : Program
+    @node : ASTNode
+    @single_module : Bool
+    @debug : Bool
+    @main_mod : LLVM::Module
+    @abi : LLVM::ABI
+    @llvm_id : LLVMId
+    @main_ret_type : Type
+    @di_builders : Hash(LLVM::Module, LLVM::DIBuilder)?
+    @fun_metadatas : Hash(LLVM::Function, LibLLVMExt::Metadata)?
+    @argc : LLVM::Value
+    @argv : LLVM::Value
+    @dbg_kind : UInt32
+    @types_to_modules : Hash(Type, LLVM::Module)
+    @in_lib : Bool
+    @strings : Hash(StringKey, LLVM::Value)
+    @symbols : Hash(String, Int32)
+    @symbol_table_values : Array(LLVM::Value)
+    @fun_literal_count : Int32
+    @needs_value : Bool
+    @empty_md_list : LLVM::Value
+    @unused_fun_defs : Array(FunDef)
+    @proc_counts : Hash(String, Int32)
+    @node_ensure_exception_handlers : Hash(UInt64, Handler)
+    @ensure_exception_handlers : Array(Handler)?
+    @rescue_block : LLVM::BasicBlock?
+    @main_scopes : Hash({String, String}, LibLLVMExt::Metadata)?
+    @malloc_fun : LLVM::Function?
+    @debug_types : Hash(Type, LibLLVMExt::Metadata?)?
+    @sret_value : LLVM::Value?
+    @cant_pass_closure_to_c_exception_call : Call?
+    @realloc_fun : LLVM::Function?
+
+    def initialize(@mod, @node, single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       @main_mod = @llvm_mod
+      @single_module = !!single_module
       @abi = @mod.target_machine.abi
       @llvm_typer = LLVMTyper.new(@mod)
       @llvm_id = LLVMId.new(@mod)
@@ -179,6 +211,8 @@ module Crystal
     end
 
     class CodegenWellKnownFunctions < Visitor
+      @codegen : CodeGenVisitor
+
       def initialize(@codegen)
       end
 
@@ -523,8 +557,10 @@ module Crystal
     end
 
     def visit(node : EnumDef)
-      node.enum_type.try &.types.each_value do |type|
-        initialize_const(type as Const)
+      if node.created_new_type
+        node.resolved_type.types.each_value do |type|
+          initialize_const(type as Const)
+        end
       end
 
       node.members.each do |member|
@@ -649,7 +685,7 @@ module Crystal
 
     def codegen_cond(node : ASTNode)
       accept node
-      codegen_cond node.type
+      codegen_cond node.type.remove_indirection
     end
 
     def visit(node : Break)
@@ -926,17 +962,17 @@ module Crystal
     end
 
     def visit(node : InstanceVar)
-      read_instance_var node, context.type, node.name, llvm_self_ptr
+      read_instance_var node.type, context.type, node.name, llvm_self_ptr
     end
 
     def end_visit(node : ReadInstanceVar)
-      read_instance_var node, node.obj.type, node.name, @last
+      read_instance_var node.type, node.obj.type, node.name, @last
     end
 
-    def read_instance_var(node, type, name, value)
-      ivar = type.lookup_instance_var(node.name)
-      ivar_ptr = instance_var_ptr type, node.name, value
-      @last = downcast ivar_ptr, node.type, ivar.type, false
+    def read_instance_var(node_type, type, name, value)
+      ivar = type.lookup_instance_var(name)
+      ivar_ptr = instance_var_ptr type, name, value
+      @last = downcast ivar_ptr, node_type, ivar.type, false
       false
     end
 

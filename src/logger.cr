@@ -30,8 +30,10 @@
 #   log.fatal(err)
 # end
 # ```
-class Logger(T)
-  property :level, :progname, :formatter
+class Logger
+  property level : Severity
+  property progname : String
+  property formatter
 
   # A logger severity level
   enum Severity
@@ -62,9 +64,19 @@ class Logger(T)
   end
 
   # :nodoc:
-  record Message, severity, datetime, progname, message
+  record Message,
+    severity : Severity,
+    datetime : Time,
+    progname : String,
+    message : String
 
-  def initialize(@io : T)
+  @io : IO
+  @channel : Channel::Buffered(Message)
+  @close_channel : Channel::Unbuffered(Nil)
+  @closed : Bool
+  @shutdown : Bool
+
+  def initialize(@io : IO)
     @level = Severity::INFO
     @formatter = DEFAULT_FORMATTER
     @progname = ""
@@ -109,7 +121,7 @@ class Logger(T)
   end
 
   private def enqueue(severity, datetime, progname, message)
-    @channel.send Message.new(severity, datetime, progname, message)
+    @channel.send Message.new(severity, datetime, progname.to_s, message.to_s)
   end
 
   private def write_messages

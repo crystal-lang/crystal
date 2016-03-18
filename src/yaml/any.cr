@@ -50,7 +50,7 @@ struct YAML::Any
   end
 
   # Returns the raw underlying value, a `YAML::Type`.
-  getter raw
+  getter raw : YAML::Type
 
   # Creates a `YAML::Any` that wraps the given `YAML::Type`.
   def initialize(@raw : YAML::Type)

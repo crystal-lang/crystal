@@ -9,6 +9,8 @@ struct BigInt < Int
   include Comparable(BigInt)
   include Comparable(Float)
 
+  @mpz : LibGMP::MPZ
+
   # Creates a BigInt with the value zero.
   #
   # ```
@@ -54,6 +56,12 @@ struct BigInt < Int
   # ditto
   def initialize(num : Float)
     LibGMP.init_set_d(out @mpz, num)
+  end
+
+  # Returns `num`. Useful for generic code that does `T.new(...)` with `T`
+  # being a `Number`.
+  def self.new(num : BigInt)
+    num
   end
 
   # :nodoc:
@@ -202,15 +210,28 @@ struct BigInt < Int
     to_s io
   end
 
+  # Returns a string representation of self.
+  #
+  # ```
+  # puts BigInt.new("123456789101101987654321").to_s  # => 123456789101101987654321
+  # ```
   def to_s
     String.new(to_cstr)
   end
 
+  # ditto
   def to_s(io)
     str = to_cstr
     io.write_utf8 Slice.new(str, LibC.strlen(str))
   end
-
+  
+  # Returns a string containing the representation of big radix base (2 through 36).
+  # 
+  # ```
+  # puts BigInt.new("123456789101101987654321").to_s(8)  # => 32111154373025463465765261
+  # puts BigInt.new("123456789101101987654321").to_s(16) # => 1a249b1f61599cd7eab1
+  # puts BigInt.new("123456789101101987654321").to_s(36) # => k3qmt029k48nmpd
+  # ```
   def to_s(base : Int)
     raise "Invalid base #{base}" unless 2 <= base <= 36
     cstr = LibGMP.get_str(nil, base, self)
@@ -252,19 +273,19 @@ struct BigInt < Int
   end
 
   def to_u8
-    to_i64.to_u8
+    to_u64.to_u8
   end
 
   def to_u16
-    to_i64.to_u16
+    to_u64.to_u16
   end
 
   def to_u32
-    to_i64.to_u32
+    to_u64.to_u32
   end
 
   def to_u64
-    to_i64.to_u64
+    LibGMP.get_ui(self)
   end
 
   def to_f

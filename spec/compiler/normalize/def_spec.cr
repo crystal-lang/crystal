@@ -30,14 +30,14 @@ describe "Normalize: def" do
   end
 
   it "expands a def on request with default arguments and type restrictions" do
-    a_def = parse("def foo(x, y = 1 : Int32, z = 2 : Int64); x + y + z; end") as Def
+    a_def = parse("def foo(x, y : Int32 = 1, z : Int64 = 2); x + y + z; end") as Def
     actual = a_def.expand_default_arguments(Program.new, 1)
     expected = parse("def foo(x); y = 1; z = 2; x + y + z; end")
     actual.should eq(expected)
   end
 
   it "expands a def on request with default arguments and type restrictions (2)" do
-    a_def = parse("def foo(x, y = 1 : Int32, z = 2 : Int64); x + y + z; end") as Def
+    a_def = parse("def foo(x, y : Int32 = 1, z : Int64 = 2); x + y + z; end") as Def
     actual = a_def.expand_default_arguments(Program.new, 2)
     expected = parse("def foo(x, y : Int32); z = 2; x + y + z; end")
     actual.should eq(expected)

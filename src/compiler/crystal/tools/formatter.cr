@@ -11,22 +11,65 @@ module Crystal
       formatter.finish
     end
 
-    record AlignInfo, id, line, start_column, middle_column, end_column, number do
+    record AlignInfo,
+      id : UInt64,
+      line : Int32,
+      start_column : Int32,
+      middle_column : Int32,
+      end_column : Int32,
+      number : Bool do
       def size
         end_column - start_column
       end
     end
 
     class CommentInfo
-      property start_line
-      property end_line
-      property needs_newline
+      property start_line : Int32
+      property end_line : Int32
+      property needs_newline : Bool
+      @kind : Symbol
 
       def initialize(@start_line, @kind)
         @end_line = @start_line
         @needs_newline = true
       end
     end
+
+    record HeredocFix,
+      start_line : Int32,
+      end_line : Int32,
+      difference : Int32
+
+    @lexer : Lexer
+    @comment_columns : Array(Int32?)
+    @indent : Int32
+    @line : Int32
+    @column : Int32
+    @token : Token
+    @output : MemoryIO
+    @line_output : MemoryIO
+    @wrote_newline : Bool
+    @wrote_comment : Bool
+    @macro_state : Token::MacroState
+    @inside_macro : Int32
+    @inside_cond : Int32
+    @inside_lib : Int32
+    @inside_struct_or_union : Int32
+    @dot_column : Int32?
+    @def_indent : Int32
+    @last_write : String
+    @exp_needs_indent : Bool
+    @inside_def : Int32
+    @when_infos : Array(AlignInfo)
+    @hash_infos : Array(AlignInfo)
+    @assign_infos : Array(AlignInfo)
+    @doc_comments : Array(CommentInfo)
+    @current_doc_comment : CommentInfo?
+    @hash_in_same_line : Set(UInt64)
+    @shebang : Bool
+    @heredoc_fixes : Array(HeredocFix)
+    @assign_length : Int32?
+    @current_hash : HashLiteral?
 
     def initialize(source)
       @lexer = Lexer.new(source)
@@ -42,7 +85,6 @@ module Crystal
 
       @output = MemoryIO.new(source.bytesize)
       @line_output = MemoryIO.new
-      @next_exp_column = nil
       @wrote_newline = false
       @wrote_comment = false
       @macro_state = Token::MacroState.default
@@ -64,6 +106,7 @@ module Crystal
       @current_doc_comment = nil
       @hash_in_same_line = Set(typeof(object_id)).new
       @shebang = @token.type == :COMMENT && @token.value.to_s.starts_with?("#!")
+      @heredoc_fixes = [] of HeredocFix
     end
 
     def visit(node : FileNode)
@@ -143,7 +186,7 @@ module Crystal
           next_exp = node.expressions[i + 1]
           needs_two_lines = !last?(i, node.expressions) && !exp.is_a?(Attribute) &&
             (!(exp.is_a?(IfDef) && next_exp.is_a?(LibDef))) &&
-            (!(exp.is_a?(Def) && exp.abstract && next_exp.is_a?(Def) && next_exp.abstract)) &&
+            (!(exp.is_a?(Def) && exp.abstract? && next_exp.is_a?(Def) && next_exp.abstract?)) &&
             (needs_two_lines?(exp) || needs_two_lines?(next_exp))
         end
 
@@ -327,6 +370,10 @@ module Crystal
 
       check :DELIMITER_START
       is_regex = @token.delimiter_state.kind == :regex
+      is_heredoc = @token.delimiter_state.kind == :heredoc
+
+      indent_difference = @token.column_number - (@column + 1)
+      heredoc_line = @line
 
       write @token.raw
       next_string_token
@@ -353,6 +400,10 @@ module Crystal
       write @token.raw
       format_regex_modifiers if is_regex
 
+      if is_heredoc && indent_difference != 0
+        @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
+      end
+
       if space_slash_newline?
         write " \\"
         write_line
@@ -373,9 +424,17 @@ module Crystal
       next_string_token
 
       delimiter_state = @token.delimiter_state
+      is_heredoc = @token.delimiter_state.kind == :heredoc
+
+      indent_difference = @token.column_number - (@column + 1)
+      heredoc_line = @line
 
       node.expressions.each do |exp|
         if @token.type == :DELIMITER_END
+          # If the delimiter ends with "\n" it's something like "\n  HEREDOC",
+          # so we are done
+          break if @token.raw.starts_with?("\n")
+
           # This is for " ... " \
           #     " ... "
           write @token.raw
@@ -421,6 +480,11 @@ module Crystal
 
       check :DELIMITER_END
       write @token.raw
+
+      if is_heredoc && indent_difference != 0
+        @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
+      end
+
       format_regex_modifiers if is_regex
       next_token
 
@@ -1042,14 +1106,8 @@ module Crystal
       @def_indent = @indent
       @inside_def += 1
 
-      if node.abstract
-        write_keyword :abstract, " "
-      end
-
-      if node.macro_def?
-        write_keyword :macro, " "
-      end
-
+      write_keyword :abstract, " " if node.abstract?
+      write_keyword :macro, " " if node.macro_def?
       write_keyword :def, " ", skip_space_or_newline: false
 
       if receiver = node.receiver
@@ -1097,7 +1155,7 @@ module Crystal
           end
         end
 
-        unless node.abstract
+        unless node.abstract?
           format_nested_with_end body
         end
       end
@@ -1575,6 +1633,7 @@ module Crystal
 
     def visit(node : Arg)
       restriction = node.restriction
+      default_value = node.default_value
 
       if @inside_lib > 0
         # This is the case of `fun foo(Char)`
@@ -1586,16 +1645,6 @@ module Crystal
 
       write @token.value
       next_token
-
-      if default_value = node.default_value
-        skip_space_or_newline
-        check_align = check_assign_length node
-        write_token " ", :"=", " "
-        before_column = @column
-        skip_space_or_newline
-        accept default_value
-        check_assign_align before_column, default_value if check_align
-      end
 
       if restriction
         skip_space_or_newline
@@ -1613,8 +1662,19 @@ module Crystal
         accept restriction
       end
 
+      if default_value
+        skip_space_or_newline
+
+        check_align = check_assign_length node
+        write_token " ", :"=", " "
+        before_column = @column
+        skip_space_or_newline
+        accept default_value
+        check_assign_align before_column, default_value if check_align
+      end
+
       # This is the case of an enum member
-      if 'A' <= node.name[0] <= 'Z' && @token.type == :","
+      if node.name[0].uppercase? && @token.type == :","
         write ", "
         next_token_skip_space
         @exp_needs_indent = @token.type == :NEWLINE
@@ -2427,7 +2487,7 @@ module Crystal
 
     def check_assign_align(before_column, exp)
       if exp.is_a?(NumberLiteral)
-        @assign_infos << AlignInfo.new(0, @line, before_column, @column, @column, true)
+        @assign_infos << AlignInfo.new(0_u64, @line, before_column, @column, @column, true)
       end
     end
 
@@ -2470,15 +2530,8 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      if node.abstract
-        write_keyword :abstract, " "
-      end
-
-      if node.struct
-        write_keyword :struct, " "
-      else
-        write_keyword :class, " "
-      end
+      write_keyword :abstract, " " if node.abstract?
+      write_keyword (node.struct? ? :struct : :class), " "
 
       accept node.name
       format_type_vars node.type_vars
@@ -3630,6 +3683,7 @@ module Crystal
       skip_space_or_newline last: true
       result = to_s.strip
       lines = result.split("\n")
+      fix_heredocs(lines, @heredoc_fixes)
       align_infos(lines, @when_infos)
       align_infos(lines, @hash_infos)
       align_infos(lines, @assign_infos)
@@ -3642,6 +3696,17 @@ module Crystal
         result = result[0] + result[2..-1]
       end
       result
+    end
+
+    def fix_heredocs(lines, @heredoc_fixes)
+      @heredoc_fixes.each do |fix|
+        fix.start_line.upto(fix.end_line) do |line_number|
+          line = lines[line_number]
+          if (0...fix.difference).all? { |index| line[index]?.try &.whitespace? }
+            lines[line_number] = line[fix.difference..-1]
+          end
+        end
+      end
     end
 
     # Align series of successive inline when/else (in a case),

@@ -25,6 +25,8 @@ struct Set(T)
   include Enumerable(T)
   include Iterable
 
+  @hash : Hash(T, Nil)
+
   # Creates a new, empty `Set`
   #
   #     s = Set(Int32).new
@@ -119,7 +121,7 @@ struct Set(T)
     @hash.empty?
   end
 
-  # Yeilds each element of the set, and returns `self`.
+  # Yields each element of the set, and returns `self`.
   def each
     @hash.each_key do |key|
       yield key

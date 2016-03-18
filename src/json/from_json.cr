@@ -3,11 +3,34 @@ def Object.from_json(string_or_io)
   new parser
 end
 
-def Array.from_json(string_or_io)
+# Parses a String or IO denoting a JSON array, yielding
+# each of its elements to the given block. This is useful
+# for decoding an array and processing its elements without
+# creating an Array in memory, which might be expensive.
+#
+# ```
+# require "json"
+#
+# Array(Int32).from_json("[1, 2, 3]") do |element|
+#   puts element
+# end
+# ```
+#
+# Output:
+#
+# ```text
+# 1
+# 2
+# 3
+# ```
+#
+# To parse and get an Array, use the block-less overload.
+def Array.from_json(string_or_io) : Nil
   parser = JSON::PullParser.new(string_or_io)
   new(parser) do |element|
     yield element
   end
+  nil
 end
 
 def Nil.new(pull : JSON::PullParser)
@@ -18,13 +41,11 @@ def Bool.new(pull : JSON::PullParser)
   pull.read_bool
 end
 
-def Int32.new(pull : JSON::PullParser)
-  pull.read_int.to_i
-end
-
-def Int64.new(pull : JSON::PullParser)
-  pull.read_int.to_i64
-end
+{% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
+  def {{type.id}}.new(pull : JSON::PullParser)
+    {{type.id}}.new(pull.read_int)
+  end
+{% end %}
 
 def Float32.new(pull : JSON::PullParser)
   case pull.kind

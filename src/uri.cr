@@ -33,90 +33,90 @@ class URI
   # URI.parse("http://foo.com").scheme           # => "http"
   # URI.parse("mailto:alice@example.com").scheme # => "mailto"
   # ```
-  getter scheme
+  getter scheme : String?
 
   # Sets the scheme component of the URI.
-  setter scheme
+  setter scheme : String?
 
   # Returns the host component of the URI.
   #
   # ```
   # URI.parse("http://foo.com").host # => "foo.com"
   # ```
-  getter host
+  getter host : String?
 
   # Sets the host component of the URI.
-  setter host
+  setter host : String?
 
   # Returns the port component of the URI.
   #
   # ```
   # URI.parse("http://foo.com:5432").port # => 5432
   # ```
-  getter port
+  getter port : Int32?
 
   # Sets the port component of the URI.
-  setter port
+  setter port : Int32?
 
   # Returns the path component of the URI.
   #
   # ```
   # URI.parse("http://foo.com/bar").path # => "/bar"
   # ```
-  getter path
+  getter path : String?
 
   # Sets the path component of the URI.
-  setter path
+  setter path : String?
 
   # Returns the query component of the URI.
   #
   # ```
   # URI.parse("http://foo.com/bar?q=1").query # => "q=1"
   # ```
-  getter query
+  getter query : String?
 
   # Sets the query component of the URI.
-  setter query
+  setter query : String?
 
   # Returns the user component of the URI.
   #
   # ```
   # URI.parse("http://admin:password@foo.com").user # => "admin"
   # ```
-  getter user
+  getter user : String?
 
   # Sets the user component of the URI.
-  setter user
+  setter user : String?
 
   # Returns the password component of the URI.
   #
   # ```
   # URI.parse("http://admin:password@foo.com").password # => "password"
   # ```
-  getter password
+  getter password : String?
 
   # Sets the password component of the URI.
-  setter password
+  setter password : String?
 
   # Returns the fragment component of the URI.
   #
   # ```
   # URI.parse("http://foo.com/bar#section1").fragment # => "section1"
   # ```
-  getter fragment
+  getter fragment : String?
 
   # Sets the fragment component of the URI.
-  setter fragment
+  setter fragment : String?
 
   # Returns the opaque component of the URI.
   #
   # ```
   # URI.parse("mailto:alice@example.com").opaque # => "alice@example.com"
   # ```
-  getter opaque
+  getter opaque : String?
 
   # Sets the opaque component of the URI.
-  setter opaque
+  setter opaque : String?
 
   def initialize(@scheme = nil, @host = nil, @port = nil, @path = nil, @query = nil, @user = nil, @password = nil, @fragment = nil, @opaque = nil)
   end
@@ -186,35 +186,83 @@ class URI
 
   # URL-decode a string.
   #
-  #     URI.unescape("%27Stop%21%27+said+Fred") #=> "'Stop!' said Fred"
-  def self.unescape(string : String)
-    String.build { |io| unescape(string, io) }
+  # If *plus_to_space* is true, it replace plus character (0x2B) to ' '.
+  # e.g. `application/x-www-form-urlencoded` wants this replace.
+  #
+  #     URI.unescape("%27Stop%21%27%20said%20Fred")                  #=> "'Stop!' said Fred"
+  #     URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) #=> "'Stop!' said Fred"
+  def self.unescape(string : String, plus_to_space = false)
+    String.build { |io| unescape(string, io, plus_to_space) }
+  end
+
+  # URL-decode a string.
+  #
+  # This method requires block, the block is called with each bytes
+  # whose is less than `0x80`. The bytes that block returns `true`
+  # are not unescaped, other characters are unescaped.
+  def self.unescape(string : String, plus_to_space = false, &block)
+    String.build { |io| unescape(string, io, plus_to_space) { |byte| yield byte } }
   end
 
   # URL-decode a string and write the result to an `IO`.
-  def self.unescape(string : String, io : IO)
+  def self.unescape(string : String, io : IO, plus_to_space = false)
+    self.unescape(string, io, plus_to_space) { false }
+  end
+
+  # URL-decode a string and write the result to an `IO`.
+  #
+  # This method requires block.
+  def self.unescape(string : String, io : IO, plus_to_space = false, &block)
     i = 0
     bytesize = string.bytesize
     while i < bytesize
       byte = string.unsafe_byte_at(i)
       char = byte.chr
-      i = unescape_one string, bytesize, i, byte, char, io
+      i = unescape_one(string, bytesize, i, byte, char, io, plus_to_space) { |byte| yield byte }
     end
     io
   end
 
   # URL-encode a string.
   #
-  #     URI.escape("'Stop!' said Fred") #=> "%27Stop%21%27+said+Fred"
-  def self.escape(string : String)
-    String.build { |io| escape(string, io) }
+  # If *space_to_plus* is true, it replace space character (0x20) to '+' and '+' is
+  # encoded to '%2B'. e.g. `application/x-www-form-urlencoded` want this replace.
+  #
+  #     URI.escape("'Stop!' said Fred")                      #=> "%27Stop%21%27%20said%20Fred"
+  #     URI.escape("'Stop!' said Fred", space_to_plus: true) #=> "%27Stop%21%27+said+Fred"
+  def self.escape(string : String, space_to_plus = false)
+    String.build { |io| escape(string, io, space_to_plus) }
+  end
+
+  # URL-encode a string.
+  #
+  # This method requires block, the block is called with each characters
+  # whose code is less than `0x80`. The characters that block returns
+  # `true` are not escaped, other characters are escaped.
+  #
+  #     # Escape URI path
+  #     URI.escape("/foo/file?(1).txt") do |byte|
+  #       URI.unreserved?(byte) || byte.chr == '/'
+  #     end
+  #     #=> "/foo/file%3F%281%29.txt"
+  def self.escape(string : String, space_to_plus = false, &block)
+    String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
   end
 
   # URL-encode a string and write the result to an `IO`.
-  def self.escape(string : String, io : IO)
+  def self.escape(string : String, io : IO, space_to_plus = false)
+    self.escape(string, io, space_to_plus) { |byte| URI.unreserved? byte }
+  end
+
+  # URL-encode a string and write the result to an `IO`.
+  #
+  # This method requires block.
+  def self.escape(string : String, io : IO, space_to_plus = false, &block)
     string.each_byte do |byte|
-      case byte.chr
-      when 'a'..'z', 'A'..'Z', '0'..'9', '_', '.', '-'
+      char = byte.chr
+      if char == ' ' && space_to_plus
+        io.write_byte '+'.ord.to_u8
+      elsif byte < 0x80 && yield(byte) && (!space_to_plus || char != '+')
         io.write_byte byte
       else
         io.write_byte '%'.ord.to_u8
@@ -223,6 +271,25 @@ class URI
       end
     end
     io
+  end
+
+  # Returns whether given byte is reserved character defined in RFC 3986.
+  #
+  # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
+  # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
+  def self.reserved?(byte)
+    char = byte.chr
+    '&' <= char <= ',' ||
+      {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
+  end
+
+  # Returns whether given byte is unreserved character defined in RFC 3986.
+  #
+  # Unreserved characters are alphabet, digit, '_', '.', '-', '~'.
+  def self.unreserved?(byte)
+    char = byte.chr
+    char.alphanumeric? ||
+      {'_', '.', '-', '~'}.includes?(char)
   end
 
   # Returns the user-information component containing the provided username and password.
@@ -238,9 +305,14 @@ class URI
   end
 
   # :nodoc:
+  def self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space = false)
+    self.unescape_one(string, bytesize, i, byte, char, io) { false }
+  end
+
+  # :nodoc:
   # Unescapes one character. Private API
-  def self.unescape_one(string, bytesize, i, byte, char, io)
-    if char == '+'
+  def self.unescape_one(string, bytesize, i, byte, char, io, plus_to_space = false)
+    if plus_to_space && char == '+'
       io.write_byte ' '.ord.to_u8
       i += 1
       return i
@@ -264,8 +336,15 @@ class URI
         return i
       end
 
-      io.write_byte (first_num * 16 + second_num).to_u8
+      encoded = (first_num * 16 + second_num).to_u8
       i += 1
+      if encoded < 0x80 && yield encoded
+        io.write_byte byte
+        io.write_byte first
+        io.write_byte second
+        return i
+      end
+      io.write_byte encoded
       return i
     end
 
@@ -275,22 +354,10 @@ class URI
   end
 
   private def userinfo(user, io)
-    escape(user, io)
+    URI.escape(user, io)
     if password = @password
       io << ':'
-      escape(password, io)
-    end
-  end
-
-  private def escape(str, io)
-    str.each_byte do |byte|
-      case byte
-      when ':', '@', '/'
-        io << '%'
-        byte.to_s(16, io, upcase: true)
-      else
-        io.write_byte byte
-      end
+      URI.escape(password, io)
     end
   end
 end

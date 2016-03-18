@@ -7,6 +7,9 @@ end
 
 # :nodoc:
 struct CallStack
+  @callstack : Array(Void*)
+  @backtrace : Array(String)?
+
   def initialize
     @callstack = CallStack.unwind
   end
@@ -55,7 +58,7 @@ struct CallStack
   end
 
   struct RepeatedFrame
-    getter ip, count
+    getter ip : Void*, count : Int32
 
     def initialize(@ip)
       @count = 0
@@ -132,10 +135,11 @@ struct CallStack
 end
 
 class Exception
-  getter message
-  getter cause
+  getter message : String?
+  getter cause : Exception?
+  @callstack : CallStack
 
-  def initialize(message = nil : String?, cause = nil : Exception?)
+  def initialize(message : String? = nil, cause : Exception? = nil)
     @message = message
     @cause = cause
     @callstack = CallStack.new
@@ -189,7 +193,7 @@ end
 # Raised when the arguments are wrong and there isn't a more specific `Exception` class.
 #
 # ```
-# [1, 2, 3].take(-4) # => ArgumentError: attempt to take negative size
+# [1, 2, 3].first(-4) # => ArgumentError: attempt to take negative size
 # ```
 class ArgumentError < Exception
   def initialize(message = "Argument error")

@@ -14,6 +14,11 @@ LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 LIB_CRYSTAL_SOURCES = $(shell find src/ext -name '*.c')
 LIB_CRYSTAL_OBJS = $(subst .c,.o,$(LIB_CRYSTAL_SOURCES))
 LIB_CRYSTAL_TARGET = src/ext/libcrystal.a
+CFLAGS += -fPIC
+
+ifeq (${LLVM_CONFIG},)
+$(error Could not locate llvm-config, make sure it is installed and in your PATH)
+endif
 
 all: crystal
 spec: all_spec

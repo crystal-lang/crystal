@@ -51,6 +51,9 @@ you can do `make spec` or `bin/crystal spec/all_spec.cr`. To run a particular sp
 Note: at this point you might get long compile error that include "library not found for: ...". This means
 you are [missing some libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).
 
+Make sure that your changes follow the recommended [Coding Style](http://crystal-lang.org/docs/conventions/coding_style.html).
+You can run `crystal tool format` to automate this.
+
 Then push your changes and create a pull request.
 
 ## Contributing to the compiler itself
@@ -61,10 +64,7 @@ the first thing you will need to do is to [install the compiler](http://crystal-
 Once you have a compiler up and running, and that executing `crystal` on the command line prints its usage,
 it's time to setup your environment to compile Crystal itself, which is written in Crystal. Check out
 the `install` and `before_install` sections found in [.travis.yml](https://github.com/crystal-lang/crystal/blob/master/.travis.yml).
-These set-up LLVM and its required libraries.
-
-**Note**: if you are on a Mac make sure to install the LLVM that is used in that travis script, the LLVM that you download
-or get from homebrew has a bug (uninstall the LLVM from homebrew too).
+These set-up LLVM 3.6 and its required libraries.
 
 Next, executing `make clean crystal spec` should compile a compiler and using that compiler compile and execute
 the specs. All specs should pass.

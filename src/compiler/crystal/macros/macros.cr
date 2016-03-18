@@ -97,7 +97,10 @@ module Crystal
     # and later must be replaced. The mapping of placeholders is the `yields` property
     # of this record. What must be replaced are argless calls whose name appear in this
     # `yields` hash.
-    record ExpandedMacro, source, yields
+    record ExpandedMacro, source : String, yields : Hash(String, ASTNode)?
+
+    @mod : Program
+    @cache : Hash(String, String)
 
     def initialize(@mod)
       @cache = {} of String => String
@@ -150,9 +153,18 @@ module Crystal
     end
 
     class MacroVisitor < Visitor
-      getter last
-      getter yields
-      property free_vars
+      getter last : ASTNode
+      getter yields : Hash(String, ASTNode)?
+      property free_vars : Hash(String, Type)?
+
+      @expander : MacroExpander
+      @mod : Program
+      @scope : Type
+      @location : Location?
+      @vars : Hash(String, ASTNode)
+      @block : Block?
+      @str : MemoryIO
+      @macro_vars : Hash(MacroVarKey, String)?
 
       def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
@@ -210,7 +222,7 @@ module Crystal
         new(expander, mod, scope, a_macro.location, vars, call.block)
       end
 
-      record MacroVarKey, name, exps
+      record MacroVarKey, name : String, exps : Array(ASTNode)?
 
       def initialize(@expander, @mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
         @str = MemoryIO.new(512)
@@ -511,6 +523,8 @@ module Crystal
       end
 
       class ReplaceBlockVarsTransformer < Transformer
+        @vars : Hash(String, ASTNode)
+
         def initialize(@vars)
         end
 
@@ -561,7 +575,7 @@ module Crystal
           env_value = ENV[cmd]?
           @last = env_value ? StringLiteral.new(env_value) : NilLiteral.new
         else
-          node.raise "wrong number of arguments for macro call 'env' (#{node.args.size} for 1)"
+          node.wrong_number_of_arguments "macro call 'env'", node.args.size, 1
         end
       end
 
@@ -614,29 +628,42 @@ module Crystal
 
       def execute_run(node)
         if node.args.size == 0
-          node.raise "wrong number of arguments for macro run (0 for 1..)"
+          node.wrong_number_of_arguments "macro call 'run'", 0, "1+"
         end
 
         node.args.first.accept self
         filename = @last.to_macro_id
         original_filanme = filename
 
-        begin
-          relative_to = @location.try &.original_filename
-          found_filenames = @mod.find_in_path(filename, relative_to)
-        rescue ex
-          node.raise "error executing macro run: #{ex.message}"
-        end
+        # Support absolute paths
+        if filename.starts_with?("/")
+          filename = "#{filename}.cr" unless filename.ends_with?(".cr")
 
-        unless found_filenames
-          node.raise "error executing macro run: can't find file '#{filename}'"
-        end
+          if File.exists?(filename)
+            unless File.file?(filename)
+              node.raise "error executing macro run: '#{filename}' is not a file"
+            end
+          else
+            node.raise "error executing macro run: can't find file '#{filename}'"
+          end
+        else
+          begin
+            relative_to = @location.try &.original_filename
+            found_filenames = @mod.find_in_path(filename, relative_to)
+          rescue ex
+            node.raise "error executing macro run: #{ex.message}"
+          end
 
-        if found_filenames.size > 1
-          node.raise "error executing macro run: '#{filename}' is a directory"
-        end
+          unless found_filenames
+            node.raise "error executing macro run: can't find file '#{filename}'"
+          end
 
-        filename = found_filenames.first
+          if found_filenames.size > 1
+            node.raise "error executing macro run: '#{filename}' is a directory"
+          end
+
+          filename = found_filenames.first
+        end
 
         run_args = [] of String
         node.args.each_with_index do |arg, i|
@@ -731,6 +758,8 @@ module Crystal
   end
 
   class YieldsTransformer < Transformer
+    @yields : Hash(String, Crystal::ASTNode+)
+
     def initialize(@yields)
     end
 

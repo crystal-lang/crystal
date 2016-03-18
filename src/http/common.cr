@@ -1,4 +1,4 @@
-require "zlib"
+require "zlib" ifdef !without_zlib
 
 module HTTP
   # :nodoc:
@@ -12,7 +12,7 @@ module HTTP
   end
 
   # :nodoc:
-  def self.parse_headers_and_body(io, body_type = BodyType::OnDemand : BodyType, decompress = true)
+  def self.parse_headers_and_body(io, body_type : BodyType = BodyType::OnDemand, decompress = true)
     headers = Headers.new
 
     while line = io.gets
@@ -29,12 +29,16 @@ module HTTP
         end
 
         if decompress && body
-          encoding = headers["Content-Encoding"]?
-          case encoding
-          when "gzip"
-            body = Zlib::Inflate.gzip(body)
-          when "deflate"
-            body = Zlib::Inflate.new(body)
+          ifdef without_zlib
+            raise "Can't decompress because `-D without_zlib` was passed at compile time"
+          else
+            encoding = headers["Content-Encoding"]?
+            case encoding
+            when "gzip"
+              body = Zlib::Inflate.gzip(body, sync_close: true)
+            when "deflate"
+              body = Zlib::Inflate.new(body, sync_close: true)
+            end
           end
         end
 
@@ -155,7 +159,9 @@ module HTTP
     end
   end
 
-  record ComputedContentTypeHeader, content_type, charset
+  record ComputedContentTypeHeader,
+    content_type : String?,
+    charset : String?
 
   # :nodoc:
   def self.content_type_and_charset(headers)

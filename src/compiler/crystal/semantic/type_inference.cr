@@ -18,6 +18,7 @@ module Crystal
     # - top level (TopLevelVisitor): declare clases, modules, macros, defs and other top-level stuff
     # - check abstract defs (AbstractDefChecker): check that abstract defs are implemented
     # - type declarations (TypeDeclarationVisitor): process type declarations like `@x : Int32`
+    # - initializers (InitializerVisitor): process initializers like `@x = 1`
     # - main: process "main" code, calls and method bodies (the whole program).
     # - check recursive structs (RecursiveStructChecker): check that structs are not recursive (impossible to codegen)
     def infer_type(node, stats = false)
@@ -29,6 +30,9 @@ module Crystal
       end
       result = Crystal.timing("Semantic (type declarations)", stats) do
         visit_type_declarations(node)
+      end
+      result = Crystal.timing("Semantic (initializers)", stats) do
+        visit_initializers(node)
       end
       result = Crystal.timing("Semantic (main)", stats) do
         visit_main(node)
@@ -44,6 +48,8 @@ module Crystal
   end
 
   class PropagateDocVisitor < Visitor
+    @doc : String
+
     def initialize(@doc)
     end
 

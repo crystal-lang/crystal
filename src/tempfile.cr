@@ -49,11 +49,11 @@ class Tempfile < IO::FileDescriptor
     super(fileno, blocking: true)
   end
 
-  # Retrives the full path of a this tempfile.
+  # Retrieves the full path of a this tempfile.
   # ```
   # Tempfile.new("foo").path # => "/tmp/foo.ulBCPS"
   # ```
-  getter path
+  getter path : String
 
   # Creates a file with *filename*, and yields it to the given block.
   # It is closed and returned at the end of this method call.

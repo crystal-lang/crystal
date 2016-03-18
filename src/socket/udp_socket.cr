@@ -27,15 +27,15 @@ require "./ip_socket"
 # client = UDPSocket.new
 # client.connect "localhost", 1234
 #
-# client << "message" # send message to server
-# server.read(7)      # => "message"
+# client.puts "message" # send message to server
+# server.gets           # => "message\n"
 #
 # # Close client and server
 # client.close
 # server.close
 # ```
 class UDPSocket < IPSocket
-  def initialize(family = Socket::Family::INET : Socket::Family)
+  def initialize(family : Socket::Family = Socket::Family::INET)
     super create_socket(family.value, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP)
   end
 
@@ -72,6 +72,62 @@ class UDPSocket < IPSocket
       end
 
       true
+    end
+  end
+
+  def send(string : String)
+    send(string.to_slice)
+  end
+
+  def send(slice : Slice(UInt8))
+    bytes_sent = LibC.send(fd, (slice.to_unsafe as Void*), slice.size, 0)
+    if bytes_sent != -1
+      return bytes_sent
+    end
+
+    raise Errno.new("Error writing datagram")
+  ensure
+    if (writers = @writers) && !writers.empty?
+      add_write_event
+    end
+  end
+
+  def send(string : String, addr : IPAddress)
+    send(string.to_slice, addr)
+  end
+
+  def send(slice : Slice(UInt8), addr : IPAddress)
+    sockaddr = addr.sockaddr
+    bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::SockAddr*, addr.addrlen)
+    if bytes_sent != -1
+      return bytes_sent
+    end
+
+    raise Errno.new("Error writing datagram")
+  end
+
+  def receive(slice : Slice(UInt8)) : {Int32, IPAddress}
+    loop do
+      sockaddr = uninitialized LibC::SockAddrIn6
+      addrlen = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
+
+      bytes_read = LibC.recvfrom(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::SockAddr*, pointerof(addrlen))
+      if bytes_read != -1
+        return {
+          bytes_read.to_i32,
+          IPAddress.new(sockaddr, addrlen),
+        }
+      end
+
+      if Errno.value == Errno::EAGAIN
+        wait_readable
+      else
+        raise Errno.new("Error receiving datagram")
+      end
+    end
+  ensure
+    if (readers = @readers) && !readers.empty?
+      add_read_event
     end
   end
 end

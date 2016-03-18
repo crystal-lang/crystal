@@ -1,7 +1,7 @@
 require "secure_random"
 require "./subtle"
 
-# Pure Crystal implementation of the Bcrypt algorythm by Niels Provos and David
+# Pure Crystal implementation of the Bcrypt algorithm by Niels Provos and David
 # Mazières, as [presented at USENIX in
 # 1999](https://www.usenix.org/legacy/events/usenix99/provos/provos_html/index.html).
 #
@@ -58,7 +58,9 @@ class Crypto::Bcrypt
     new(passwordb, saltb, cost)
   end
 
-  getter :password, :salt, :cost
+  getter password : Slice(UInt8)
+  getter salt : Slice(UInt8)
+  getter cost : Int32
 
   def initialize(@password, @salt, @cost = DEFAULT_COST)
     raise Error.new("Invalid cost") unless COST_RANGE.includes?(cost)
@@ -66,9 +68,13 @@ class Crypto::Bcrypt
     raise Error.new("Invalid password size") unless PASSWORD_RANGE.includes?(password.size)
   end
 
+  @digest : Slice(UInt8)?
+
   def digest
     @digest ||= hash_password
   end
+
+  @hash : String?
 
   def to_s
     @hash ||= begin

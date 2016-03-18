@@ -18,7 +18,7 @@ describe "Code gen: untyped expression spec" do
         foo.foo
         false
       rescue ex
-        ex.message.includes?("Foo in `foo` was never instantiated")
+        ex.message.not_nil!.includes?("Foo in `foo` was never instantiated")
       end
       )).to_b.should be_true
   end

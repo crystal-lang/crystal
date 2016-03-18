@@ -30,6 +30,7 @@ lib LibGMP
   fun set_str = __gmpz_set_str(rop : MPZ*, str : UInt8*, base : Int) : Int
   fun get_str = __gmpz_get_str(str : UInt8*, base : Int, op : MPZ*) : UInt8*
   fun get_si = __gmpz_get_si(op : MPZ*) : Long
+  fun get_ui = __gmpz_get_ui(op : MPZ*) : ULong
   fun get_d = __gmpz_get_d(op : MPZ*) : Double
 
   # # Arithmetic

@@ -1,7 +1,7 @@
 require "spec"
 
 class TupleSpecObj
-  getter x
+  getter x : Int32
 
   def initialize(@x)
   end
@@ -218,5 +218,13 @@ describe "Tuple" do
     tuple.last?.should eq("a")
 
     Tuple.new.last?.should be_nil
+  end
+
+  it "does ===" do
+    ({1, 2} === {1, 2}).should be_true
+    ({1, 2} === {1, 3}).should be_false
+    ({1, 2, 3} === {1, 2}).should be_false
+    ({/o+/, "bar"} === {"fox", "bar"}).should be_true
+    ({1, 2} === nil).should be_false
   end
 end

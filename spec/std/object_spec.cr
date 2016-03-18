@@ -4,6 +4,8 @@ class StringWrapper
   delegate downcase, @string
   delegate upcase, capitalize, @string
 
+  @string : String
+
   def initialize(@string)
   end
 end

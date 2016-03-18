@@ -4,9 +4,12 @@ class Crystal::CodeGenVisitor
   class Phi
     include LLVMBuilderHelper
 
-    getter node
-    getter count
-    getter exit_block
+    getter node : ASTNode
+    getter count : Int32
+    getter exit_block : LLVM::BasicBlock?
+    @phi_table : LLVM::PhiTable?
+    @codegen : CodeGenVisitor
+    @needs_value : Bool
 
     def self.open(codegen, node, needs_value = true)
       block = new codegen, node, needs_value

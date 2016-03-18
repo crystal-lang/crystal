@@ -1,9 +1,9 @@
 module Crystal
   class MatchContext
-    property owner
-    property type_lookup
-    getter free_vars
-    getter? strict
+    property owner : Type
+    property type_lookup : Type
+    getter free_vars : Hash(String, Type)?
+    getter? strict : Bool
 
     def initialize(@owner, @type_lookup, @free_vars = nil, @strict = false)
     end
@@ -23,9 +23,9 @@ module Crystal
   end
 
   class Match
-    getter :def
-    getter :arg_types
-    getter :context
+    getter def : Def
+    getter arg_types : Array(Type)
+    getter context : MatchContext
 
     def initialize(@def, @arg_types, @context)
     end
@@ -34,9 +34,10 @@ module Crystal
   struct Matches
     include Enumerable(Match)
 
-    property :matches
-    property :cover
-    property :owner
+    property matches : Array(Match)?
+    property cover : Bool | Cover | Nil
+    property owner : Type?
+    @success : Bool
 
     def initialize(@matches, @cover, @owner = nil, @success = true)
     end

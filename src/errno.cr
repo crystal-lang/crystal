@@ -1,7 +1,11 @@
 lib LibC
   ifdef linux
-    @[ThreadLocal]
-    $errno : Int
+    ifdef musl
+      fun __errno_location : Int*
+    else
+      @[ThreadLocal]
+      $errno : Int
+    end
   elsif darwin
     fun __error : Int*
   end
@@ -193,7 +197,7 @@ class Errno < Exception
   end
 
   # Returns the numeric value of errno.
-  getter errno
+  getter errno : Int32
 
   # Creates a new Errno with the given message. The message will
   # have concatenated the message denoted by `Errno#value`.
@@ -215,7 +219,11 @@ class Errno < Exception
   # Returns the value of libc's errno.
   def self.value
     ifdef linux
-      LibC.errno
+      ifdef musl
+        LibC.__errno_location.value
+      else
+        LibC.errno
+      end
     elsif darwin
       LibC.__error.value
     end
@@ -224,7 +232,11 @@ class Errno < Exception
   # Sets the value of libc's errno.
   def self.value=(value)
     ifdef linux
-      LibC.errno = value
+      ifdef musl
+        LibC.__errno_location.value = value
+      else
+        LibC.errno = value
+      end
     elsif darwin
       LibC.__error.value = value
     end

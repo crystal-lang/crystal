@@ -365,7 +365,7 @@ describe "Type inference: closure" do
         x.to_f
       end
       ",
-      "wrong number of block arguments (1 for 0)"
+      "wrong number of block arguments (given 1, expected 0)"
   end
 
   it "allows giving less block args when transforming block to fun literal" do
@@ -418,7 +418,7 @@ describe "Type inference: closure" do
       f = ->(x : Int32) { x + 1 }
       foo &f
       ",
-      "wrong number of block argument's arguments (1 for 2)"
+      "wrong number of block argument's arguments (given 1, expected 2)"
   end
 
   it "lookups return type in correct scope" do

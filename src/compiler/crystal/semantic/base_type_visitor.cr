@@ -1,7 +1,20 @@
 module Crystal
   abstract class BaseTypeVisitor < Visitor
-    getter mod
-    property types
+    getter mod : Program
+    property types : Array(Type)
+
+    @exp_nest : Int32
+    @attributes : Array(Attribute)?
+    @lib_def_pass : Int32
+    @in_type_args : Int32
+    @block_nest : Int32
+    @vars : MetaVars
+    @free_vars : Hash(String, Type)?
+    @type_lookup : Type?
+    @scope : Type?
+    @typed_def : Def?
+    @in_is_a : Bool
+    @last_doc : String?
 
     def initialize(@mod, @vars = MetaVars.new)
       @types = [@mod] of Type
@@ -10,6 +23,7 @@ module Crystal
       @lib_def_pass = 0
       @in_type_args = 0
       @block_nest = 0
+      @in_is_a = false
     end
 
     def visit(node : Attribute)
@@ -99,6 +113,15 @@ module Crystal
       node.type = node.name.type.virtual_type!.metaclass
     end
 
+    def visit(node : Self)
+      the_self = (@scope || current_type)
+      if the_self.is_a?(Program)
+        node.raise "there's no self in this scope"
+      end
+
+      node.type = the_self.instance_type
+    end
+
     def visit(node : Generic)
       node.in_type_args = @in_type_args > 0
       node.scope = @scope
@@ -119,11 +142,11 @@ module Crystal
       if instance_type.variadic
         min_needed = instance_type.type_vars.size - 1
         if node.type_vars.size < min_needed
-          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.size} for #{min_needed}..)"
+          node.wrong_number_of "type vars", instance_type, node.type_vars.size, "#{min_needed}+"
         end
       else
         if instance_type.type_vars.size != node.type_vars.size
-          node.raise "wrong number of type vars for #{instance_type} (#{node.type_vars.size} for #{instance_type.type_vars.size})"
+          node.wrong_number_of "type vars", instance_type, node.type_vars.size, instance_type.type_vars.size
         end
       end
 
@@ -166,11 +189,18 @@ module Crystal
         return_type = @mod.void
       end
 
-      external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
-      external.doc = node.doc
-      check_ditto external
-
-      external.call_convention = call_convention
+      external = node.external?
+      had_external = external
+      if external && (body = node.body)
+        # This is the case where there's a body and we already have an external
+        # because we declared it in TopLevelVisitor
+        external.body = body
+      else
+        external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
+        external.doc = node.doc
+        check_ditto external
+        external.call_convention = call_convention
+      end
 
       if node_body = node.body
         vars = MetaVars.new
@@ -201,21 +231,23 @@ module Crystal
         external.set_type(return_type)
       end
 
-      external.raises = true if node.has_attribute?("Raises")
+      unless had_external
+        external.raises = true if node.has_attribute?("Raises")
 
-      begin
-        old_external = current_type.add_def external
-      rescue ex : Crystal::Exception
-        node.raise ex.message
-      end
+        begin
+          old_external = current_type.add_def external
+        rescue ex : Crystal::Exception
+          node.raise ex.message
+        end
 
-      if old_external.is_a?(External)
-        old_external.dead = true
-      end
+        if old_external.is_a?(External)
+          old_external.dead = true
+        end
 
-      if node.body
-        key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil, nil
-        current_type.add_def_instance key, external
+        if current_type.is_a?(Program)
+          key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil, nil
+          current_type.add_def_instance key, external
+        end
       end
 
       node.type = @mod.nil
@@ -666,7 +698,7 @@ module Crystal
         end
 
         if attr.args.size != 1
-          attr.raise "wrong number of arguments for attribute CallConvention (#{attr.args.size} for 1)"
+          attr.wrong_number_of_arguments "attribute CallConvention", attr.args.size, 1
         end
 
         call_convention_node = attr.args.first

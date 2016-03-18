@@ -6,10 +6,16 @@ class MemoryIO
   include IO
 
   # Returns the internal buffer as a `Pointer(UInt8)`.
-  getter buffer
+  getter buffer : Pointer(UInt8)
 
   # Same as `size`.
-  getter bytesize
+  getter bytesize : Int32
+
+  @capacity : Int32
+  @pos : Int32
+  @closed : Bool
+  @resizeable : Bool
+  @writeable : Bool
 
   # Creates an empty, resizeable and writeable MemoryIO with the given
   # initialize capactiy for the internal buffer.
@@ -19,12 +25,12 @@ class MemoryIO
   # io.pos  # => 0
   # io.read # => ""
   # ```
-  def initialize(capacity = 64 : Int)
+  def initialize(capacity : Int = 64)
     String.check_capacity_in_bounds(capacity)
 
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
     @bytesize = 0
-    @capacity = capacity
+    @capacity = capacity.to_i
     @pos = 0
     @closed = false
     @resizeable = true
@@ -44,7 +50,7 @@ class MemoryIO
   # ```
   def initialize(slice : Slice(UInt8), writeable = true)
     @buffer = slice.to_unsafe
-    @bytesize = @capacity = slice.size
+    @bytesize = @capacity = slice.size.to_i
     @pos = 0
     @closed = false
     @resizeable = false
@@ -252,7 +258,7 @@ class MemoryIO
   # io.seek(-1, IO::Seek::Current)
   # io.gets(1) # => "c"
   # ```
-  def seek(offset, whence = Seek::Set : Seek)
+  def seek(offset, whence : Seek = Seek::Set)
     check_open
 
     case whence

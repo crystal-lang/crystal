@@ -16,21 +16,26 @@ class HTTP::Server
     include IO
 
     # The response headers (`HTTP::Headers`). These must be set before writing to the response.
-    getter headers
+    getter headers : HTTP::Headers
 
     # The version of the HTTP::Request that created this response.
-    getter version
+    getter version : String
 
     # The `IO` to which output is written. This can be changed/wrapped to filter
     # the response body (for example to compress the output).
-    property output
+    property output : IO
 
     # :nodoc:
-    setter version
+    setter version : String
 
     # The status code of this response, which must be set before writing the response
     # body. If not set, the default value is 200 (OK).
-    property status_code
+    property status_code : Int32
+
+    @io : IO
+    @wrote_headers : Bool
+    @upgraded : Bool
+    @original_output : Output
 
     # :nodoc:
     def initialize(@io, @version = "HTTP/1.1")
@@ -118,13 +123,12 @@ class HTTP::Server
     class Output
       include IO::Buffered
 
-      property! response
+      property! response : Response
+
+      @chunked : Bool
+      @io : IO
 
       def initialize(@io)
-        @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
-        @out_count = 0
-        @sync = false
-        @flush_on_newline = false
         @chunked = false
       end
 

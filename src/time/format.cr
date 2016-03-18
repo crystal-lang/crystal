@@ -4,7 +4,8 @@ struct Time::Format
   class Error < ::Exception
   end
 
-  getter pattern
+  getter pattern : String
+  @kind : Time::Kind
 
   def initialize(@pattern : String, @kind = Time::Kind::Unspecified)
   end

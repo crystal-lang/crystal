@@ -1,6 +1,6 @@
 STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
 STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
-STDERR = IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)
+STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
 ARGV         = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
@@ -60,7 +60,7 @@ end
 # ditto
 def sprintf(format_string, args : Array | Tuple) : String
   String.build(format_string.bytesize) do |str|
-    String::Formatter.new(format_string, args, str).format
+    String::Formatter(typeof(args)).new(format_string, args, str).format
   end
 end
 
@@ -89,7 +89,11 @@ end
 
 # :nodoc:
 module AtExitHandlers
+  @@handlers : Array(Int32 ->)?
   @@handlers = nil
+
+  @@running : Bool
+  @@running = false
 
   def self.add(handler)
     handlers = @@handlers ||= [] of Int32 ->
@@ -152,6 +156,7 @@ end
 
 class Process
   # hooks defined here due to load order problems
+  @@after_fork_child_callbacks : Array(-> Nil)
   @@after_fork_child_callbacks = [
     ->{ Scheduler.after_fork; nil },
     ->{ Event::SignalHandler.after_fork; nil },

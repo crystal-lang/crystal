@@ -9,9 +9,10 @@ module Crystal
   end
 
   # In this pass we check type declarations like:
-  # - @x : Int32
-  # - @@x : Int32
-  # - $x : Int32
+  #
+  #     @x : Int32
+  #     @@x : Int32
+  #     $x : Int32
   #
   # In this way we declare their type before the "main" code.
   #
@@ -22,10 +23,11 @@ module Crystal
   # we'll have a complete definition of the type hierarchy and
   # their instance/class variables types.
   class TypeDeclarationVisitor < BaseTypeVisitor
+    @process_types : Int32
+
     def initialize(mod)
       super(mod)
 
-      @inside_block = 0
       @process_types = 0
     end
 
@@ -53,6 +55,10 @@ module Crystal
     end
 
     def visit(node : Metaclass)
+      @process_types > 0 ? super : false
+    end
+
+    def visit(node : Self)
       @process_types > 0 ? super : false
     end
 
@@ -114,21 +120,7 @@ module Crystal
       when Var
         node.raise "declaring the type of a local variable is not yet supported"
       when InstanceVar
-        type = current_type
-        case type
-        when NonGenericClassType
-          processing_types do
-            node.declared_type.accept self
-          end
-          var_type = check_declare_var_type node
-          type.declare_instance_var(var.name, var_type.virtual_type)
-        when GenericClassType
-          type.declare_instance_var(var.name, node.declared_type)
-        when GenericClassInstanceType
-          # OK
-        else
-          node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
-        end
+        declare_instance_var(node, var)
       when ClassVar
         class_var = lookup_class_var(var, bind_to_nil_if_non_existent: false)
 
@@ -139,10 +131,6 @@ module Crystal
 
         class_var.freeze_type = var_type.virtual_type
       when Global
-        if @untyped_def
-          node.raise "declaring the type of a global variable must be done at the class level"
-        end
-
         global_var = mod.global_vars[var.name]?
         unless global_var
           global_var = Global.new(var.name)
@@ -161,6 +149,39 @@ module Crystal
       node.type = @mod.nil
 
       false
+    end
+
+    def declare_instance_var(node, var)
+      type = current_type
+      case type
+      when NonGenericClassType
+        processing_types do
+          node.declared_type.accept self
+        end
+        var_type = check_declare_var_type node
+        type.declare_instance_var(var.name, var_type.virtual_type)
+        return
+      when GenericClassType
+        type.declare_instance_var(var.name, node.declared_type)
+        return
+      when GenericModuleType
+        type.declare_instance_var(var.name, node.declared_type)
+        return
+      when GenericClassInstanceType
+        # OK
+        return
+      when Program, FileModule
+        # Error, continue
+      when NonGenericModuleType
+        processing_types do
+          node.declared_type.accept self
+        end
+        var_type = check_declare_var_type node
+        type.declare_instance_var(var.name, var_type.virtual_type)
+        return
+      end
+
+      node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
     end
 
     def visit(node : Def)
@@ -240,7 +261,7 @@ module Crystal
     end
 
     def inside_block?
-      @inside_block > 0
+      false
     end
   end
 end

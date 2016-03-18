@@ -1,4 +1,8 @@
 class Markdown::Parser
+  @renderer : Renderer
+  @lines : Array(String)
+  @line : Int32
+
   def initialize(text, @renderer)
     @lines = text.lines.map &.chomp
     @line = 0
@@ -117,7 +121,7 @@ class Markdown::Parser
   end
 
   def render_code
-    @renderer.begin_code
+    @renderer.begin_code nil
 
     while true
       line = @lines[@line]
@@ -148,7 +152,7 @@ class Markdown::Parser
     language = line[3..-1].strip
 
     if language.empty?
-      @renderer.begin_code
+      @renderer.begin_code nil
     else
       @renderer.begin_code language
     end
@@ -229,7 +233,7 @@ class Markdown::Parser
       process_line line.byte_slice(line.index(prefix).not_nil! + 1)
       @renderer.end_list_item
 
-      if line.starts_with?("  ") && next_line_is_not_intended? 
+      if line.starts_with?("  ") && next_line_is_not_intended?
         @renderer.end_unordered_list
       end
 

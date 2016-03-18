@@ -93,6 +93,13 @@ class JsonWithDefaults
   })
 end
 
+class JSONWithSmallIntegers
+  JSON.mapping({
+    foo: Int16,
+    bar: Int8
+  })
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -206,6 +213,16 @@ describe "JSON mapping" do
   it "parses json array as set" do
     json = JsonWithSet.from_json(%({"set": ["a", "a", "b"]}))
     json.set.should eq(Set(String){"a", "b"})
+  end
+
+  it "allows small types of integer" do
+    json = JSONWithSmallIntegers.from_json(%({"foo": 23, "bar": 7}))
+
+    json.foo.should eq(23)
+    typeof(json.foo).should eq(Int16)
+
+    json.bar.should eq(7)
+    typeof(json.bar).should eq(Int8)
   end
 
   describe "parses json with defaults" do

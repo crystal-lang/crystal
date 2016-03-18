@@ -22,10 +22,19 @@
 class Zlib::Deflate
   include IO
 
+  @output : IO
+  @stream : LibZ::ZStream
+  @closed : Bool
+  @sync_close : Bool
+
+  # If `sync_close` is true, closing this IO will close the underlying IO.
+  property? sync_close : Bool
+
   # Creates an instance of Zlib::Deflate. `close` must be invoked after all data
   # has written.
   def initialize(@output : IO, level = LibZ::DEFAULT_COMPRESSION, wbits = LibZ::MAX_BITS,
-                 mem_level = LibZ::DEF_MEM_LEVEL, strategy = LibZ::Strategy::DEFAULT_STRATEGY)
+                 mem_level = LibZ::DEF_MEM_LEVEL, strategy = LibZ::Strategy::DEFAULT_STRATEGY,
+                 @sync_close : Bool = false)
     @buf = uninitialized UInt8[8192] # output buffer used by zlib
     @stream = LibZ::ZStream.new
     @stream.zalloc = LibZ::AllocFunc.new { |opaque, items, size| GC.malloc(items * size) }
@@ -41,8 +50,9 @@ class Zlib::Deflate
   # Creates an instance of Zlib::Deflate, yields it to the given block, and closes
   # it at its end.
   def self.new(output : IO, level = LibZ::DEFAULT_COMPRESSION, wbits = LibZ::MAX_BITS,
-               mem_level = LibZ::DEF_MEM_LEVEL, strategy = LibZ::Strategy::DEFAULT_STRATEGY)
-    deflate = new(output, level, wbits, mem_level, strategy)
+               mem_level = LibZ::DEF_MEM_LEVEL, strategy = LibZ::Strategy::DEFAULT_STRATEGY,
+               sync_close : Bool = false)
+    deflate = new(output, level: level, wbits: wbits, mem_level: mem_level, strategy: strategy, sync_close: sync_close)
     begin
       yield deflate
     ensure
@@ -52,14 +62,14 @@ class Zlib::Deflate
 
   # Creates an instance of Zlib::Deflate for the gzip format. `close` must be invoked after all data
   # has written.
-  def self.gzip(output)
-    new output, wbits: GZIP
+  def self.gzip(output, sync_close : Bool = false)
+    new output, wbits: GZIP, sync_close: sync_close
   end
 
   # Creates an instance of Zlib::Deflate for the gzip format, yields it to the given block, and closes
   # it at its end.
-  def self.gzip(output)
-    deflate = gzip(output)
+  def self.gzip(output, sync_close : Bool = false)
+    deflate = gzip(output, sync_close: sync_close)
     begin
       yield deflate
     ensure
@@ -97,7 +107,8 @@ class Zlib::Deflate
     @stream.next_in = Pointer(UInt8).null
     consume_output LibZ::Flush::FINISH
     LibZ.deflateEnd(pointerof(@stream))
-    @output.close
+
+    @output.close if @sync_close
   end
 
   # Returns `true` if this IO is closed.

@@ -1,6 +1,6 @@
 # A Slice is a `Pointer` with an associated size.
 #
-# While a pointer is unsafe because no bound checks are performend when reading from and writing to it,
+# While a pointer is unsafe because no bound checks are performed when reading from and writing to it,
 # reading from and writing to a slice involve bound checks.
 # In this way, a slice is a safe alternative to Pointer.
 struct Slice(T)
@@ -12,7 +12,9 @@ struct Slice(T)
   # ```
   # Slice(UInt8).new(3).size # => 3
   # ```
-  getter size
+  getter size : Int32
+
+  @pointer : T*
 
   # Creates a slice to the given *pointer*, bounded by the given *size*. This
   # method does not allocate heap memory.
@@ -300,6 +302,9 @@ struct Slice(T)
   class ItemIterator(T)
     include Iterator(T)
 
+    @slice : ::Slice(T)
+    @index : Int32
+
     def initialize(@slice : ::Slice(T), @index = 0)
     end
 
@@ -317,6 +322,9 @@ struct Slice(T)
 
   class ReverseIterator(T)
     include Iterator(T)
+
+    @slice : ::Slice(T)
+    @index : Int32
 
     def initialize(@slice : ::Slice(T), @index = slice.size)
     end

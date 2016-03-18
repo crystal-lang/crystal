@@ -1,4 +1,4 @@
-require "openssl"
+require "openssl" ifdef !without_openssl
 require "socket"
 require "./context"
 require "./handler"
@@ -88,9 +88,14 @@ require "../common"
 # server.listen
 # ```
 class HTTP::Server
-  property ssl
+  ifdef !without_openssl
+    property ssl : OpenSSL::SSL::Context?
+  end
 
+  @wants_close : Bool
   @wants_close = false
+  @host : String
+  @port : Int32
 
   def self.new(port, &handler : Context ->)
     new("127.0.0.1", port, &handler)
@@ -133,10 +138,15 @@ class HTTP::Server
     @wants_close = true
   end
 
-  private def handle_client(sock)
-    sock.sync = false
-    io = sock
-    io = ssl_sock = OpenSSL::SSL::Socket.new(io, :server, @ssl.not_nil!) if @ssl
+  private def handle_client(io)
+    io.sync = false
+
+    ifdef !without_openssl
+      if ssl = @ssl
+        io = OpenSSL::SSL::Socket.new(io, :server, ssl, sync_close: true)
+      end
+    end
+
     must_close = true
     response = Response.new(io)
 
@@ -162,20 +172,17 @@ class HTTP::Server
         end
 
         response.output.close
-        sock.flush
+        io.flush
 
         break unless request.keep_alive?
       end
     ensure
-      if must_close
-        ssl_sock.try &.close if @ssl
-        sock.close
-      end
+      io.close if must_close
     end
   end
 
   # Builds all handlers as the middleware for HTTP::Server.
-  def self.build_middleware(handlers, last_handler = nil : Context ->)
+  def self.build_middleware(handlers, last_handler : Context -> = nil)
     raise ArgumentError.new "You must specify at least one HTTP Handler." if handlers.empty?
     0.upto(handlers.size - 2) { |i| handlers[i].next = handlers[i + 1] }
     handlers.last.next = last_handler if last_handler

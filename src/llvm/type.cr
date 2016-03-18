@@ -1,5 +1,5 @@
 struct LLVM::Type
-  getter :unwrap
+  getter unwrap : LibLLVM::TypeRef
 
   def initialize(@unwrap)
   end

@@ -6,18 +6,21 @@ require "io"
 class String::Builder
   include IO
 
-  getter bytesize
+  getter bytesize : Int32
+  @capacity : Int32
+  @buffer : Pointer(UInt8)
+  @finished : Bool
 
-  def initialize(capacity = 64 : Int)
+  def initialize(capacity : Int = 64)
     String.check_capacity_in_bounds(capacity)
 
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
     @bytesize = 0
-    @capacity = capacity
+    @capacity = capacity.to_i
     @finished = false
   end
 
-  def self.build(capacity = 64 : Int)
+  def self.build(capacity : Int = 64)
     builder = new(capacity)
     yield builder
     builder.to_s

@@ -16,7 +16,7 @@ class Crystal::Call
     obj_type.used = true
     external.used = true
 
-    untyped_defs = [external]
+    untyped_defs = [external] of Def
     @target_defs = untyped_defs
 
     self.unbind_from old_target_defs if old_target_defs
@@ -39,7 +39,7 @@ class Crystal::Call
 
     return if required_args_count <= call_args_count <= all_args_count
 
-    raise "wrong number of arguments for '#{full_name(obj_type)}' (#{args.size} for #{external.args.size})"
+    wrong_number_of_arguments "'#{full_name(obj_type)}'", args.size, external.args.size
   end
 
   def check_fun_out_args(untyped_def)

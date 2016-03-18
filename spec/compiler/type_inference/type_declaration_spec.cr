@@ -195,4 +195,22 @@ describe "Type inference: type declaration" do
 
       Foo.new.x") { |mod| mod.union_of(mod.types["Parent"].virtual_type!, mod.nil) }
   end
+
+  it "declares with `self`" do
+    assert_type(%(
+      class Foo
+        @foo : self
+
+        def initialize
+          @foo = uninitialized self
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Foo.new.foo
+      )) { types["Foo"] }
+  end
 end

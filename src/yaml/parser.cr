@@ -1,4 +1,7 @@
 class YAML::Parser
+  @pull_parser : PullParser
+  @anchors : Hash(String, YAML::Type)
+
   def initialize(content)
     @pull_parser = PullParser.new(content)
     @anchors = {} of String => YAML::Type

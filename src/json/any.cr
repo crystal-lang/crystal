@@ -45,7 +45,7 @@ struct JSON::Any
   end
 
   # Returns the raw underlying value, a `JSON::Type`.
-  getter raw
+  getter raw : JSON::Type
 
   # Creates a `JSON::Any` that wraps the given `JSON::Type`.
   def initialize(@raw : JSON::Type)

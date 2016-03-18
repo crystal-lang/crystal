@@ -2,27 +2,27 @@
 class IO::FileDescriptor
   include Buffered
 
-  private getter! readers
-  private getter! writers
+  @readers : Deque(Fiber)?
+  @writers : Deque(Fiber)?
+  @edge_triggerable : Bool
+  @flush_on_newline : Bool
+  @closed : Bool
+  @fd : Int32
+  @read_timeout : Float64?
+  @write_timeout : Float64?
+  @read_event : Event::Event?
+  @write_event : Event::Event?
 
   # :nodoc:
-  property read_timed_out, write_timed_out # only used in event callbacks
-
+  property read_timed_out : Bool
+  property write_timed_out : Bool
 
   def initialize(fd, blocking = false, edge_triggerable = false)
     @edge_triggerable = !!edge_triggerable
-    @flush_on_newline = false
-    @sync = false
     @closed = false
     @read_timed_out = false
     @write_timed_out = false
     @fd = fd
-    @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
-    @out_count = 0
-    @read_timeout = nil
-    @write_timeout = nil
-    @readers = [] of Fiber
-    @writers = [] of Fiber
 
     unless blocking
       self.blocking = false
@@ -99,14 +99,14 @@ class IO::FileDescriptor
 
   # :nodoc:
   def resume_read
-    if reader = readers.pop?
+    if reader = @readers.try &.shift?
       reader.resume
     end
   end
 
   # :nodoc:
   def resume_write
-    if writer = writers.pop?
+    if writer = @writers.try &.shift?
       writer.resume
     end
   end
@@ -129,7 +129,7 @@ class IO::FileDescriptor
   # file.seek(-1, IO::Seek::Current)
   # file.gets(1) # => "c"
   # ```
-  def seek(offset, whence = Seek::Set : Seek)
+  def seek(offset, whence : Seek = Seek::Set)
     check_open
 
     flush
@@ -225,7 +225,9 @@ class IO::FileDescriptor
       end
     end
   ensure
-    add_read_event unless readers.empty?
+    if (readers = @readers) && !readers.empty?
+      add_read_event
+    end
   end
 
   private def unbuffered_write(slice : Slice(UInt8))
@@ -249,7 +251,9 @@ class IO::FileDescriptor
       end
     end
   ensure
-    add_write_event unless writers.empty?
+    if (writers = @writers) && !writers.empty?
+      add_write_event
+    end
   end
 
   private def wait_readable
@@ -257,6 +261,7 @@ class IO::FileDescriptor
   end
 
   private def wait_readable
+    readers = (@readers ||= Deque(Fiber).new)
     readers << Fiber.current
     add_read_event
     Scheduler.reschedule
@@ -282,6 +287,7 @@ class IO::FileDescriptor
 
   # msg/timeout are overridden in nonblock_connect
   private def wait_writable(msg = "write timed out", timeout = @write_timeout)
+    writers = (@writers ||= Deque(Fiber).new)
     writers << Fiber.current
     add_write_event timeout
     Scheduler.reschedule
@@ -325,10 +331,15 @@ class IO::FileDescriptor
     @read_event = nil
     @write_event.try &.free
     @write_event = nil
-    Scheduler.enqueue @readers
-    @readers.clear
-    Scheduler.enqueue @writers
-    @writers.clear
+    if readers = @readers
+      Scheduler.enqueue readers
+      readers.clear
+    end
+
+    if writers = @writers
+      Scheduler.enqueue writers
+      writers.clear
+    end
 
     raise err if err
   end

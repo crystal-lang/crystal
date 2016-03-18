@@ -5,7 +5,10 @@ require "colorize"
 module Crystal
   abstract class Exception < ::Exception
     property? color
+    @color : Bool?
     @color = false
+
+    @filename : String | VirtualFile | Nil
 
     def to_s(io)
       to_s_with_source(nil, io)
@@ -70,17 +73,17 @@ module Crystal
   end
 
   class SyntaxException < Exception
-    getter line_number
-    getter column_number
+    getter line_number : Int32
+    getter column_number : Int32
     getter filename
-    getter size
+    getter size : Int32?
 
     def initialize(message, @line_number, @column_number, @filename, @size = nil)
       super(message)
     end
 
     def has_location?
-      @filename || @line
+      @filename || @line_number
     end
 
     def json_obj(ar, io)
@@ -148,10 +151,14 @@ module Crystal
 
   class TypeException < Exception
     getter node
-    property inner
+    property inner : Exception?
+    @line : Int32?
+    @column : Int32
+    @size : Int32
 
-    def color=(@color)
-      inner.try &.color=(@color)
+    def color=(color)
+      @color = !!color
+      inner.try &.color=(color)
     end
 
     def self.for_node(node, message, inner = nil)
@@ -288,6 +295,10 @@ module Crystal
   end
 
   class MethodTraceException < Exception
+    @owner : Type?
+    @trace : Array(ASTNode)
+    @nil_reason : NilReason?
+
     def initialize(@owner, @trace, @nil_reason)
       super(nil)
     end

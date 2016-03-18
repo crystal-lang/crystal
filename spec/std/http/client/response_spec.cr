@@ -85,16 +85,22 @@ class HTTP::Client
     end
 
     it "parses response with chunked body" do
-      response = Response.from_io(io = MemoryIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n"))
+      response = Response.from_io(io = MemoryIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n\r\n"))
       response.body.should eq("abcde0123456789")
       io.gets.should be_nil
     end
 
     it "parses response with streamed chunked body" do
-      Response.from_io(io = MemoryIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n")) do |response|
+      Response.from_io(io = MemoryIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n5\r\nabcde\r\na\r\n0123456789\r\n0\r\n\r\n")) do |response|
         response.body_io.gets_to_end.should eq("abcde0123456789")
         io.gets.should be_nil
       end
+    end
+
+    it "parses response with chunked body of size 0" do
+      response = Response.from_io(io = MemoryIO.new("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n"))
+      response.body.should eq("")
+      io.gets.should be_nil
     end
 
     it "parses response ignoring body" do

@@ -47,7 +47,7 @@ describe "Type inference: named args" do
 
   it "errors if doesn't pass named arg restriction" do
     assert_error %(
-      def foo(x = 1 : Int32)
+      def foo(x : Int32 = 1)
       end
 
       foo x: 1.5

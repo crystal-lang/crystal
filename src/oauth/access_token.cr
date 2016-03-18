@@ -1,8 +1,9 @@
 class OAuth::AccessToken
-  getter token
-  getter secret
+  getter token : String
+  getter secret : String
+  @extra : Hash(String, String)?
 
-  def initialize(@token, @secret, @extra = nil)
+  def initialize(@token : String, @secret : String, @extra : Hash(String, String)? = nil)
   end
 
   def extra

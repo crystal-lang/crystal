@@ -1,6 +1,6 @@
 struct Complex
-  getter real
-  getter imag
+  getter real : Float64
+  getter imag : Float64
 
   def initialize(real : Number, imag : Number)
     @real = real.to_f

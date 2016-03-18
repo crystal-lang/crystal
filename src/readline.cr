@@ -37,6 +37,8 @@ module Readline
     end
   end
 
+  @@key_bind_handlers : Hash(LibReadline::Int, KeyBindingProc)?
+
   def readline(prompt = "", add_history = false)
     line = LibReadline.readline(prompt)
     if line
@@ -46,6 +48,8 @@ module Readline
       nil
     end
   end
+
+  @@completion_proc : (String -> Array(String)?) | (String -> Array(String)) | Nil
 
   def autocomplete(&@@completion_proc : CompletionProc)
   end

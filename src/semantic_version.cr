@@ -3,7 +3,11 @@
 class SemanticVersion
   include Comparable(self)
 
-  getter major, minor, patch, prerelease, build
+  getter major : Int32
+  getter minor : Int32
+  getter patch : Int32
+  getter build : String?
+  getter prerelease : Prerelease
 
   def self.parse(str : String)
     m = str.match /^(\d+)\.(\d+)\.(\d+)(-([\w\.]+))?(\+(\w+))??$/
@@ -19,7 +23,7 @@ class SemanticVersion
     end
   end
 
-  def initialize(@major : Int, @minor : Int, @patch : Int, prerelease = nil : String | Prerelease | Nil, @build = nil : String?)
+  def initialize(@major : Int, @minor : Int, @patch : Int, prerelease : String | Prerelease | Nil = nil, @build : String? = nil)
     @prerelease = case prerelease
                   when Prerelease
                     prerelease
@@ -70,9 +74,9 @@ class SemanticVersion
       Prerelease.new identifiers
     end
 
-    getter identifiers
+    getter identifiers : Array(String | Int32)
 
-    def initialize(@identifiers = [] of String | Int32 : Array(String | Int32))
+    def initialize(@identifiers : Array(String | Int32) = [] of String | Int32)
     end
 
     def to_s(io : IO)

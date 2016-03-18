@@ -1,4 +1,10 @@
 class HTTP::WebSocket
+  @ws : Protocol
+  @buffer : Slice(UInt8)
+  @current_message : MemoryIO
+  @on_message : Nil | (String ->)
+  @on_close : Nil | (String ->)
+
   # :nodoc:
   def initialize(io : IO)
     initialize(Protocol.new(io))
@@ -53,24 +59,30 @@ class HTTP::WebSocket
     end
   end
 
+  def close(message = nil)
+    @ws.close(message)
+  end
+
   def run
     loop do
-      info = @ws.receive(@buffer)
+      begin
+        info = @ws.receive(@buffer)
+      rescue IO::EOFError
+        @on_close.try &.call("")
+        break
+      end
+
       case info.opcode
       when Protocol::Opcode::TEXT
         @current_message.write @buffer[0, info.size]
         if info.final
-          if handler = @on_message
-            handler.call(@current_message.to_s)
-          end
+          @on_message.try &.call(@current_message.to_s)
           @current_message.clear
         end
       when Protocol::Opcode::CLOSE
         @current_message.write @buffer[0, info.size]
         if info.final
-          if handler = @on_close
-            handler.call(@current_message.to_s)
-          end
+          @on_close.try &.call(@current_message.to_s)
           @current_message.clear
           break
         end

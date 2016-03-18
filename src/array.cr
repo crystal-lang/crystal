@@ -53,9 +53,9 @@ class Array(T)
   # ```
   # [:foo, :bar].size # => 2
   # ```
-  getter size
-  @size : Int32
+  getter size : Int32
   @capacity : Int32
+  @buffer : T*
 
   # Creates a new empty Array.
   def initialize
@@ -69,7 +69,7 @@ class Array(T)
   #
   # The *initial_capacity* is useful to avoid unnecessary reallocations
   # of the internal buffer in case of growth. If you have an estimate
-  # of the maxinum number of elements an array will hold, the array should
+  # of the maximum number of elements an array will hold, the array should
   # be initialized with that capacity for improved performance.
   #
   # ```
@@ -482,7 +482,7 @@ class Array(T)
   # Returns all elements that are within the given range
   #
   # Negative indices count backward from the end of the array (-1 is the last
-  # element). Aditionally, an empty array is returned when the starting index
+  # element). Additionally, an empty array is returned when the starting index
   # for an element range is at the end of the array.
   #
   # Raises `IndexError` if the starting index is out of range.
@@ -503,7 +503,7 @@ class Array(T)
   # given start index.
   #
   # Negative indices count backward from the end of the array (-1 is the last
-  # element). Aditionally, an empty array is returned when the starting index
+  # element). Additionally, an empty array is returned when the starting index
   # for an element range is at the end of the array.
   #
   # Raises `IndexError` if the starting index is out of range.
@@ -997,6 +997,16 @@ class Array(T)
     @size == 0 ? yield : @buffer[0]
   end
 
+  # Returns the first `n` elements of the array.
+  #
+  # ```
+  # [1, 2, 3].first(2) # => [1, 2]
+  # [1, 2, 3].first(4) # => [1, 2, 3]
+  # ```
+  def first(n : Int)
+    self[0, n]
+  end
+
   # Returns the first element of `self` if it's not empty, or `.
   #
   # ```
@@ -1067,6 +1077,20 @@ class Array(T)
   # ```
   def last
     @size == 0 ? yield : @buffer[@size - 1]
+  end
+
+  # Returns the last `n` elements of the array.
+  #
+  # ```
+  # [1, 2, 3].last(2) # => [2, 3]
+  # [1, 2, 3].last(4) # => [1, 2, 3]
+  # ```
+  def last(n : Int)
+    if n < @size
+      self[@size - n, n]
+    else
+      dup
+    end
   end
 
   # Returns the last element of `self` if it's not empty, or `.
@@ -1154,7 +1178,7 @@ class Array(T)
   #     a.permutations(0) #=> [[]]
   #     a.permutations(4) #=> []
   #
-  def permutations(size = self.size : Int)
+  def permutations(size : Int = self.size)
     ary = [] of Array(T)
     each_permutation(size) do |a|
       ary << a
@@ -1169,7 +1193,7 @@ class Array(T)
   #     a.each_permutation(2) { |p| sums << p.sum } #=> [1, 2, 3]
   #     sums #=> [3, 4, 3, 5, 4, 5]
   #
-  def each_permutation(size = self.size : Int)
+  def each_permutation(size : Int = self.size)
     n = self.size
     return self if size > n
 
@@ -1214,13 +1238,13 @@ class Array(T)
   # iter.next # => [3, 2, 1]
   # iter.next # => Iterator::Stop
   # ```
-  def each_permutation(size = self.size : Int)
+  def each_permutation(size : Int = self.size)
     raise ArgumentError.new("size must be positive") if size < 0
 
     PermutationIterator.new(self, size.to_i)
   end
 
-  def combinations(size = self.size : Int)
+  def combinations(size : Int = self.size)
     ary = [] of Array(T)
     each_combination(size) do |a|
       ary << a
@@ -1228,7 +1252,7 @@ class Array(T)
     ary
   end
 
-  def each_combination(size = self.size : Int)
+  def each_combination(size : Int = self.size)
     n = self.size
     return self if size > n
     raise ArgumentError.new("size must be positive") if size < 0
@@ -1264,7 +1288,7 @@ class Array(T)
     end
   end
 
-  def each_combination(size = self.size : Int)
+  def each_combination(size : Int = self.size)
     raise ArgumentError.new("size must be positive") if size < 0
 
     CombinationIterator.new(self, size.to_i)
@@ -1284,7 +1308,7 @@ class Array(T)
     FlattenHelper(typeof(FlattenHelper.element_type(self))).flatten(self)
   end
 
-  def repeated_combinations(size = self.size : Int)
+  def repeated_combinations(size : Int = self.size)
     ary = [] of Array(T)
     each_repeated_combination(size) do |a|
       ary << a
@@ -1292,7 +1316,7 @@ class Array(T)
     ary
   end
 
-  def each_repeated_combination(size = self.size : Int)
+  def each_repeated_combination(size : Int = self.size)
     n = self.size
     return self if size > n && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
@@ -1325,7 +1349,7 @@ class Array(T)
     end
   end
 
-  def each_repeated_combination(size = self.size : Int)
+  def each_repeated_combination(size : Int = self.size)
     raise ArgumentError.new("size must be positive") if size < 0
 
     RepeatedCombinationIterator.new(self, size.to_i)
@@ -1373,7 +1397,7 @@ class Array(T)
     end
   end
 
-  def repeated_permutations(size = self.size : Int)
+  def repeated_permutations(size : Int = self.size)
     ary = [] of Array(T)
     each_repeated_permutation(size) do |a|
       ary << a
@@ -1381,7 +1405,7 @@ class Array(T)
     ary
   end
 
-  def each_repeated_permutation(size = self.size : Int)
+  def each_repeated_permutation(size : Int = self.size)
     n = self.size
     return self if size != 0 && n == 0
     raise ArgumentError.new("size must be positive") if size < 0
@@ -2064,6 +2088,9 @@ class Array(T)
   class ItemIterator(T)
     include Iterator(T)
 
+    @array : Array(T)
+    @index : Int32
+
     def initialize(@array : Array(T), @index = 0)
     end
 
@@ -2082,6 +2109,9 @@ class Array(T)
   # :nodoc:
   class IndexIterator(T)
     include Iterator(Int32)
+
+    @array : Array(T)
+    @index : Int32
 
     def initialize(@array : Array(T), @index = 0)
     end
@@ -2104,6 +2134,9 @@ class Array(T)
   class ReverseIterator(T)
     include Iterator(T)
 
+    @array : Array(T)
+    @index : Int32
+
     def initialize(@array : Array(T), @index = array.size - 1)
     end
 
@@ -2124,6 +2157,15 @@ class Array(T)
   # :nodoc:
   class PermutationIterator(T)
     include Iterator(Array(T))
+
+    @array : Array(T)
+    @size : Int32
+    @n : Int32
+    @cycles : Array(Int32)
+    @pool : Array(T)
+    @stop : Bool
+    @i : Int32
+    @first : Bool
 
     def initialize(@array : Array(T), @size)
       @n = @array.size
@@ -2175,6 +2217,15 @@ class Array(T)
   # :nodoc:
   class CombinationIterator(T)
     include Iterator(Array(T))
+
+    @size : Int32
+    @n : Int32
+    @copy : Array(T)
+    @pool : Array(T)
+    @indices : Array(Int32)
+    @stop : Bool
+    @i : Int32
+    @first : Bool
 
     def initialize(array : Array(T), @size)
       @n = array.size
@@ -2228,6 +2279,15 @@ class Array(T)
   # :nodoc:
   class RepeatedCombinationIterator(T)
     include Iterator(Array(T))
+
+    @size : Int32
+    @n : Int32
+    @copy : Array(T)
+    @indices : Array(Int32)
+    @pool : Array(T)
+    @stop : Bool
+    @i : Int32
+    @first : Bool
 
     def initialize(array : Array(T), @size)
       @n = array.size

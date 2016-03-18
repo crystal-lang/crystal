@@ -1,7 +1,7 @@
 require "./libxml2"
 
 class XML::Error < Exception
-  getter line_number
+  getter line_number : Int32
 
   def self.new(error : LibXML::Error*)
     new String.new(error.value.message).chomp, error.value.line
@@ -13,6 +13,7 @@ class XML::Error < Exception
 
   # TODO: this logic isn't thread/fiber safe, but error checking is less needed than
   # the ability to parse HTML5 and malformed documents. In any case, fix this.
+  @@errors : Array(XML::Error)
   @@errors = [] of self
 
   LibXML.xmlSetStructuredErrorFunc nil, ->(ctx, error) {

@@ -83,6 +83,8 @@ end
 
 class File
   struct Stat
+    @stat : LibC::Stat
+
     def initialize(filename : String)
       if LibC.stat(filename, out @stat) != 0
         raise Errno.new("Unable to get stat for '#{filename}'")

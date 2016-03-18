@@ -1,5 +1,7 @@
 # :nodoc:
 struct LEBReader
+  @data : UInt8*
+
   def initialize(@data : UInt8*)
   end
 

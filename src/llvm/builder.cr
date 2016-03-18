@@ -1,4 +1,6 @@
 class LLVM::Builder
+  @unwrap : LibLLVM::BuilderRef
+
   def initialize
     @unwrap = LibLLVM.create_builder
   end
@@ -40,16 +42,16 @@ class LLVM::Builder
     Value.new phi_node
   end
 
-  def call(func, name = "" : String)
+  def call(func, name : String = "")
     Value.new LibLLVM.build_call(self, func, nil, 0, name)
   end
 
-  def call(func, arg : LLVM::Value, name = "" : String)
+  def call(func, arg : LLVM::Value, name : String = "")
     value = arg.to_unsafe
     Value.new LibLLVM.build_call(self, func, pointerof(value), 1, name)
   end
 
-  def call(func, args : Array(LLVM::Value), name = "" : String)
+  def call(func, args : Array(LLVM::Value), name : String = "")
     Value.new LibLLVM.build_call(self, func, (args.to_unsafe as LibLLVM::ValueRef*), args.size, name)
   end
 

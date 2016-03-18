@@ -1,15 +1,27 @@
 require "base64"
-require "openssl/sha1"
 require "../../web_socket"
 
+ifdef without_openssl
+  require "digest/sha1"
+else
+  require "openssl/sha1"
+end
+
 class HTTP::WebSocketHandler < HTTP::Handler
-  def initialize(&@proc : WebSocket ->)
+  @proc : WebSocket, Server::Context ->
+
+  def initialize(&@proc : WebSocket, Server::Context ->)
   end
 
   def call(context)
-    if context.request.headers["Upgrade"]? == "websocket" && context.request.headers["Connection"]? == "Upgrade"
+    if context.request.headers["Upgrade"]? == "websocket" && context.request.headers.includes_word?("Connection", "Upgrade")
       key = context.request.headers["Sec-Websocket-Key"]
-      accept_code = Base64.strict_encode(OpenSSL::SHA1.hash("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
+
+      ifdef without_openssl
+        accept_code = Digest::SHA1.base64digest("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11")
+      else
+        accept_code = Base64.strict_encode(OpenSSL::SHA1.hash("#{key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11"))
+      end
 
       response = context.response
       response.status_code = 101
@@ -18,7 +30,7 @@ class HTTP::WebSocketHandler < HTTP::Handler
       response.headers["Sec-Websocket-Accept"] = accept_code
       response.upgrade do |io|
         ws_session = WebSocket.new(io)
-        @proc.call(ws_session)
+        @proc.call(ws_session, context)
         ws_session.run
         io.close
       end

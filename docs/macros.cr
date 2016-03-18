@@ -927,8 +927,12 @@ module Macros
   # class Underscore < ASTNode
   # end
 
-  # class Splat < UnaryExpression
-  # end
+  # A splat expression: `*exp`.
+  class Splat < ASTNode
+    # Returns the splatted expression.
+    def exp : ASTNode
+    end
+  end
 
   # class MagicConstant < ASTNode
   # end
@@ -1126,6 +1130,11 @@ module Macros
     # Returns the type variables of the generic type. If the type is not
     # generic, an empty array is returned.
     def type_vars : ArrayLiteral(TypeNode)
+    end
+
+    # Returns the class of this type. With this you can, for example, obtain class
+    # methods by invoking `type.class.methods`.
+    def class : TypeNode
     end
   end
 

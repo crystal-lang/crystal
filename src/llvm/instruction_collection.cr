@@ -1,4 +1,6 @@
 struct LLVM::InstructionCollection
+  @basic_block : BasicBlock
+
   def initialize(@basic_block)
   end
 

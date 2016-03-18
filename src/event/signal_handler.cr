@@ -19,21 +19,29 @@ class Event::SignalHandler
     @@instance = nil
   end
 
+  @@instance : Event::SignalHandler?
+
   private def self.instance
     @@instance ||= new
   end
 
+  @callbacks : Hash(Signal, (Signal ->))
+  @read_pipe : IO::FileDescriptor
+  @write_pipe : IO::FileDescriptor
+
+  @@write_pipe : IO::FileDescriptor?
+
   def initialize
-    @callbacks = Hash(Signal, (Signal -> Void)).new
-    @pipes = IO.pipe
-    @@write_pipe = @pipes[1]
+    @callbacks = Hash(Signal, (Signal ->)).new
+    @read_pipe, @write_pipe = IO.pipe
+    @@write_pipe = @write_pipe
 
     spawn_reader
   end
 
   # :nodoc:
   def run
-    read_pipe = @pipes[0]
+    read_pipe = @read_pipe
     sig = 0
     slice = Slice(UInt8).new pointerof(sig) as Pointer(UInt8), sizeof(typeof(sig))
 
@@ -47,14 +55,14 @@ class Event::SignalHandler
 
   def after_fork
     close
-    @pipes = IO.pipe
-    @@write_pipe = @pipes[1]
+    @read_pipe, @write_pipe = IO.pipe
+    @@write_pipe = @write_pipe
     spawn_reader
   end
 
   def close
     # Close writer only: reader will give EOF
-    @pipes[1].close
+    @write_pipe.close
   end
 
   def add_handler(signal : Signal, callback)

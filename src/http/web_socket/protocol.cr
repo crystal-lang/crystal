@@ -1,7 +1,7 @@
 require "socket"
 require "http"
 require "base64"
-require "openssl"
+require "openssl" ifdef !without_openssl
 require "uri"
 
 # :nodoc:
@@ -26,7 +26,18 @@ class HTTP::WebSocket::Protocol
   MASK_BIT = 128_u8
   VERSION  =     13
 
-  record PacketInfo, opcode, size, final
+  record PacketInfo,
+    opcode : Opcode,
+    size : Int32,
+    final : Bool
+
+  @io : IO
+  @header : UInt8[2]
+  @mask : UInt8[4]
+  @remaining : Int32
+  @mask_offset : Int32
+  @opcode : Opcode
+  @masked : Bool
 
   def initialize(@io : IO, @masked = false)
     @header = uninitialized UInt8[2]
@@ -38,6 +49,11 @@ class HTTP::WebSocket::Protocol
 
   class StreamIO
     include IO
+
+    @websocket : Protocol
+    @buffer : Slice(UInt8)
+    @pos : Int32
+    @opcode : Opcode
 
     def initialize(@websocket, binary, frame_size)
       @opcode = binary ? Opcode::BINARY : Opcode::TEXT
@@ -207,13 +223,28 @@ class HTTP::WebSocket::Protocol
     (@header[1] & 0x80_u8) != 0_u8
   end
 
-  def close
+  def close(message = nil)
+    if message
+      send(message.to_slice, Opcode::CLOSE)
+    else
+      send(Slice.new(Pointer(UInt8).null, 0), Opcode::CLOSE)
+    end
   end
 
   def self.new(host : String, path : String, port = nil, ssl = false)
+    ifdef without_openssl
+      if ssl
+        raise "WebSocket ssl is disabled because `-D without_openssl` was passed at compile time"
+      end
+    end
+
     port = port || (ssl ? 443 : 80)
+
     socket = TCPSocket.new(host, port)
-    socket = OpenSSL::SSL::Socket.new(socket) if ssl
+
+    ifdef !without_openssl
+      socket = OpenSSL::SSL::Socket.new(socket, sync_close: true) if ssl
+    end
 
     headers = HTTP::Headers.new
     headers["Host"] = "#{host}:#{port}"

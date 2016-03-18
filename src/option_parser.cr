@@ -39,7 +39,9 @@ class OptionParser
   end
 
   # :nodoc:
-  record Handler, flag, block
+  record Handler,
+    flag : String,
+    block : String ->
 
   # Creates a new parser, with its configuration specified in the block, and uses it to parse the passed `args`.
   def self.parse(args)
@@ -53,6 +55,11 @@ class OptionParser
   def self.parse!
     parse(ARGV) { |parser| yield parser }
   end
+
+  protected property flags : Array(String)
+  protected property handlers : Array(Handler)
+  protected property unknown_args
+  @unknown_args : (Array(String), Array(String) ->)?
 
   # Creates a new parser.
   def initialize
@@ -72,7 +79,7 @@ class OptionParser
   #
   #     parser.banner = "Usage: crystal [command] [switches] [program file] [--] [arguments]"
   #
-  setter banner
+  setter banner : String?
 
   # Establishes a handler for a flag.
   #
@@ -133,7 +140,7 @@ class OptionParser
 
   # Parses the passed *args*, running the handlers associated to each option.
   def parse(args)
-    ParseTask.new(args, @flags, @handlers, @unknown_args).parse
+    ParseTask.new(self, args).parse
   end
 
   # Parses the passed the arguments passed to the program, running the handlers associated to each option.
@@ -143,7 +150,11 @@ class OptionParser
 
   # :nodoc:
   struct ParseTask
-    def initialize(@args, @flags, @handlers, @unknown_args)
+    @parser : OptionParser
+    @args : Array(String)
+    @double_dash_index : Int32?
+
+    def initialize(@parser, @args)
       double_dash_index = @double_dash_index = @args.index("--")
       if double_dash_index
         @args.delete_at(double_dash_index)
@@ -151,11 +162,11 @@ class OptionParser
     end
 
     def parse
-      @handlers.each do |handler|
+      @parser.handlers.each do |handler|
         process_handler handler
       end
 
-      if unknown_args = @unknown_args
+      if unknown_args = @parser.unknown_args
         double_dash_index = @double_dash_index
         if double_dash_index
           before_dash = @args[0...double_dash_index]
@@ -197,7 +208,7 @@ class OptionParser
     end
 
     private def process_double_flag(flag, block, raise_if_missing = false)
-      while index = args_index { |arg| arg.starts_with?(flag) }
+      while index = args_index { |arg| arg.split("=")[0] == flag }
         arg = @args[index]
         if arg.size == flag.size
           delete_arg_at_index(index)

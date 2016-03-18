@@ -331,7 +331,7 @@ describe "Type inference: fun" do
       alias F = Int32 -> Int32
       F.new { |x, y| }
       ",
-      "wrong number of block arguments for (Int32 -> Int32)#new (2 for 1)"
+      "wrong number of block arguments for (Int32 -> Int32)#new (given 2, expected 1)"
   end
 
   it "says wrong return type in new on fun type" do
@@ -339,7 +339,7 @@ describe "Type inference: fun" do
       alias F = Int32 -> Int32
       F.new &.to_f
       ",
-      "expected new to return Int32, not Float64"
+      "expected block to return Int32, not Float64"
   end
 
   it "errors if missing argument type in fun literal" do
@@ -503,7 +503,7 @@ describe "Type inference: fun" do
         fun foo : Int32
       end
       ),
-      "wrong number of arguments for attribute CallConvention (2 for 1)"
+      "wrong number of arguments for attribute CallConvention (given 2, expected 1)"
   end
 
   it "errors if CallConvention argument is not a string" do
@@ -800,5 +800,11 @@ describe "Type inference: fun" do
       FOO = ->LibC.foo
       1
       )) { int32 }
+  end
+
+  it "sets proc type as void if explicitly told so, when using new" do
+    assert_type(%(
+      Proc(Int32, Void).new { 1 }
+      )) { fun_of(int32, void) }
   end
 end

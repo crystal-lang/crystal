@@ -28,7 +28,10 @@ class Crystal::Program
   end
 end
 
-record InferTypeResult, program, node, type
+record InferTypeResult,
+  program : Program,
+  node : ASTNode,
+  type : Type
 
 def assert_type(str, flags = nil)
   result = infer_type_result(str, flags)
@@ -143,6 +146,8 @@ def codegen(code)
 end
 
 class Crystal::SpecRunOutput
+  @output : String
+
   def initialize(@output)
   end
 

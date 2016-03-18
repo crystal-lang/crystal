@@ -8,9 +8,15 @@ module Crystal
     NIL_TYPE        = LLVM::Type.struct([] of LLVM::Type, "Nil")
     NIL_VALUE       = NIL_TYPE.null
 
-    getter landing_pad_type
+    getter landing_pad_type : LLVM::Type
 
     alias TypeCache = Hash(Type, LLVM::Type)
+
+    @cache : Hash(Type, LLVM::Type)
+    @struct_cache : Hash(Type, LLVM::Type)
+    @union_value_cache : Hash(Type, LLVM::Type)
+    @layout : LLVM::TargetData
+    @landing_pad_type : LLVM::Type
 
     def initialize(program)
       @cache = TypeCache.new
@@ -152,18 +158,14 @@ module Crystal
         @cache[type] = a_struct
 
         max_size = 0
-        type.union_types.each do |subtype|
+        type.expand_union_types.each do |subtype|
           unless subtype.void?
             size = size_of(llvm_type(subtype))
             max_size = size if size > max_size
           end
         end
 
-        ifdef x86_64
-          max_size /= 8.0
-        else
-          max_size /= 4.0
-        end
+        max_size /= pointer_size.to_f
         max_size = max_size.ceil.to_i
 
         max_size = 1 if max_size == 0
@@ -408,6 +410,8 @@ module Crystal
     def align_of(type)
       @layout.abi_alignment(type)
     end
+
+    @pointer_size : UInt64?
 
     def pointer_size
       @pointer_size ||= size_of(LLVM::VoidPointer)

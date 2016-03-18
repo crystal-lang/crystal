@@ -48,10 +48,15 @@ struct OpenSSL::BIO
     crystal_bio
   end
 
-  def initialize(io)
+  @io : IO
+  @bio : LibCrypto::Bio*
+
+  def initialize(@io)
     @bio = LibCrypto.bio_new(pointerof(CRYSTAL_BIO))
-    @bio.value.ptr = @boxed_io = Box(IO).box(io)
+    @bio.value.ptr = Box(IO).box(io)
   end
+
+  getter io
 
   def to_unsafe
     @bio

@@ -41,8 +41,8 @@
 module JSON
   # Exception thrown on a JSON parse error.
   class ParseException < Exception
-    getter line_number
-    getter column_number
+    getter line_number : Int32
+    getter column_number : Int32
 
     def initialize(message, @line_number, @column_number)
       super "#{message} at #{@line_number}:#{@column_number}"

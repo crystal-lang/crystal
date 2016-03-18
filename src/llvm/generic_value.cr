@@ -1,4 +1,6 @@
 class LLVM::GenericValue
+  @unwrap : LibLLVM::GenericValueRef
+
   def initialize(@unwrap : LibLLVM::GenericValueRef)
   end
 

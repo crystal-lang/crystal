@@ -46,9 +46,10 @@ describe "JSON serialization" do
 
     it "does for Array(Int32) with block" do
       elements = [] of Int32
-      Array(Int32).from_json("[1, 2, 3]") do |element|
+      ret = Array(Int32).from_json("[1, 2, 3]") do |element|
         elements << element
       end
+      ret.should be_nil
       elements.should eq([1, 2, 3])
     end
 

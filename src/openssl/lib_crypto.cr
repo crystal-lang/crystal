@@ -1,5 +1,4 @@
 @[Link("crypto")]
-
 lib LibCrypto
   alias Char = LibC::Char
   alias Int = LibC::Int

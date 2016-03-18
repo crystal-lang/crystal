@@ -1,5 +1,8 @@
 # :nodoc:
 class JSON::Lexer::IOBased < JSON::Lexer
+  @io : IO
+  @current_char : Char
+
   def initialize(io)
     super()
     @io = io

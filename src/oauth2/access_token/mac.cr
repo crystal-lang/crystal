@@ -4,9 +4,9 @@ require "base64"
 require "./access_token"
 
 class OAuth2::AccessToken::Mac < OAuth2::AccessToken
-  property mac_algorithm
-  property mac_key
-  property issued_at
+  property mac_algorithm : String
+  property mac_key : String
+  property issued_at : Int64
 
   def initialize(access_token, expires_in, @mac_algorithm, @mac_key, refresh_token = nil, scope = nil, @issued_at = Time.now.epoch)
     super(access_token, expires_in, refresh_token, scope)

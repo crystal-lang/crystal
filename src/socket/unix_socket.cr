@@ -1,7 +1,7 @@
 class UNIXSocket < Socket
-  getter :path
+  getter path : String?
 
-  def initialize(@path : String, socktype = Socket::Type::STREAM : Socket::Type)
+  def initialize(@path : String, socktype : Socket::Type = Socket::Type::STREAM)
     sock = create_socket(LibC::AF_UNIX, socktype.value, 0)
 
     addr = LibC::SockAddrUn.new
@@ -23,7 +23,7 @@ class UNIXSocket < Socket
     super fd
   end
 
-  def self.open(path, socktype = Socket::Type::STREAM : Socket::Type)
+  def self.open(path, socktype : Socket::Type = Socket::Type::STREAM)
     sock = new(path, socktype)
     begin
       yield sock
@@ -32,7 +32,7 @@ class UNIXSocket < Socket
     end
   end
 
-  def self.pair(socktype = Socket::Type::STREAM : Socket::Type, protocol = Socket::Protocol::IP : Socket::Protocol)
+  def self.pair(socktype : Socket::Type = Socket::Type::STREAM, protocol : Socket::Protocol = Socket::Protocol::IP)
     fds = StaticArray(Int32, 2).new { 0_i32 }
     if LibC.socketpair(LibC::AF_UNIX, socktype.value | LibC::SOCK_CLOEXEC, protocol.value, pointerof(fds)) != 0
       raise Errno.new("socketpair:")
@@ -40,7 +40,7 @@ class UNIXSocket < Socket
     fds.map { |fd| UNIXSocket.new(fd) }
   end
 
-  def self.pair(socktype = Socket::Type::STREAM : Socket::Type, protocol = Socket::Protocol::IP : Socket::Protocol)
+  def self.pair(socktype : Socket::Type = Socket::Type::STREAM, protocol : Socket::Protocol = Socket::Protocol::IP)
     left, right = pair(socktype, protocol)
     begin
       yield left, right
@@ -50,11 +50,11 @@ class UNIXSocket < Socket
     end
   end
 
-  def addr
-    Addr.new("AF_UNIX", path.to_s)
+  def local_address
+    UNIXAddress.new(path.to_s)
   end
 
-  def peeraddr
-    Addr.new("AF_UNIX", path.to_s)
+  def remote_address
+    UNIXAddress.new(path.to_s)
   end
 end

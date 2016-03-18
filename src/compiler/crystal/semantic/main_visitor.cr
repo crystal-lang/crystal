@@ -34,14 +34,14 @@ module Crystal
   class MainVisitor < BaseTypeVisitor
     property! scope
     getter! typed_def
-    property! untyped_def
-    getter block
-    property call
+    property! untyped_def : Def
+    getter block : Block?
+    property call : Call?
     property type_lookup
-    property fun_literal_context
-    property parent
-    property block_nest
-    property with_scope
+    property fun_literal_context : Def | Program | Nil
+    property parent : MainVisitor?
+    property block_nest : Int32
+    property with_scope : Type?
 
     # These are the free variables that came from matches. We look up
     # here first if we find a single-element Path like `T`.
@@ -50,7 +50,7 @@ module Crystal
     # These are the variables and types that come from a block specification
     # like `&block : Int32 -> Int32`. When doing `yield 1` we need to verify
     # that the yielded expression has the type that the block specification said.
-    property yield_vars
+    property yield_vars : Array(Var)?
 
     # In vars we store the types of variables as we traverse the nodes.
     # These type are not cummulative: if you do `x = 1`, 'x' will have
@@ -58,13 +58,25 @@ module Crystal
     getter vars
 
     # Here we store the cummulative types of variables as we traverse the nodes.
-    getter meta_vars
+    getter meta_vars : MetaVars
 
-    property is_initialize
-    property block_nest
+    property is_initialize : Bool
 
+    @unreachable : Bool
     @unreachable = false
+
     @is_initialize = false
+
+    @while_stack : Array(While)
+    @type_filters : TypeFilters?
+    @needs_type_filters : Int32
+    @typeof_nest : Int32
+    @found_self_in_initialize_call : Array(ASTNode)?
+    @used_ivars_in_calls_in_initialize : Hash(String, Array(ASTNode))?
+    @block_context : Block?
+    @file_module : FileModule?
+    @exception_handler_vars : MetaVars?
+    @while_vars : MetaVars?
 
     def initialize(mod, vars = MetaVars.new, @typed_def = nil, meta_vars = nil)
       super(mod, vars)
@@ -94,6 +106,9 @@ module Crystal
       end
 
       @meta_vars = meta_vars
+    end
+
+    def untyped_def=(@untyped_def : Nil)
     end
 
     def visit_any(node)
@@ -433,31 +448,12 @@ module Crystal
     def type_assign(target : InstanceVar, value, node)
       # Check if this is an instance variable initializer
       unless @scope
-        current_type = current_type()
-        if current_type.is_a?(ClassType)
-          @mod.after_inference_types << current_type
-
-          ivar_visitor = MainVisitor.new(mod)
-          ivar_visitor.scope = current_type
-
-          unless current_type.is_a?(GenericType)
-            value.accept ivar_visitor
-          end
-
-          current_type.add_instance_var_initializer(target.name, value, ivar_visitor.meta_vars)
-          if current_type.is_a?(GenericType)
-            node.type = @mod.nil
-            return
-          else
-            var = current_type.lookup_instance_var(target.name, true)
-          end
-        end
+        # Already handled by InitializerVisitor
+        return
       end
 
-      unless var
-        value.accept self
-        var = lookup_instance_var target
-      end
+      value.accept self
+      var = lookup_instance_var target
 
       target.bind_to var
       node.bind_to value
@@ -1036,7 +1032,7 @@ module Crystal
       end
 
       if block.args.size > fun_type.fun_types.size - 1
-        node.raise "wrong number of block arguments for #{fun_type}#new (#{block.args.size} for #{fun_type.fun_types.size - 1})"
+        node.wrong_number_of "block arguments", "#{fun_type}#new", block.args.size, fun_type.fun_types.size - 1
       end
 
       # We create a ->(...) { } from the block
@@ -1045,9 +1041,12 @@ module Crystal
         Arg.new(block_arg.try(&.name) || @mod.new_temp_var_name, type: arg_type)
       end
 
+      expected_return_type = fun_type.return_type
+
       fun_def = Def.new("->", fun_args, block.body)
       fun_literal = FunLiteral.new(fun_def).at(node.location)
-      fun_literal.expected_return_type = fun_type.return_type
+      fun_literal.expected_return_type = expected_return_type
+      fun_literal.force_void = true if expected_return_type.void?
       fun_literal.accept self
 
       node.bind_to fun_literal
@@ -1097,8 +1096,13 @@ module Crystal
     end
 
     class InstanceVarsCollector < Visitor
-      getter ivars
-      getter found_self
+      getter ivars : Hash(String, Array(ASTNode))?
+      getter found_self : Array(ASTNode)?
+      @scope : Type
+      @in_super : Int32
+      @callstack : Array(ASTNode)
+      @visited : Set(UInt64)?
+      @vars : MetaVars
 
       def initialize(a_def, @scope, @vars)
         @found_self = nil
@@ -1663,12 +1667,12 @@ module Crystal
     end
 
     def end_visit(node : Break)
-      if target_block = block
-        node.target = target_block.call.not_nil!
+      if block = @block
+        node.target = block.call.not_nil!
 
-        target_block.break.bind_to(node.exp || mod.nil_var)
+        block.break.bind_to(node.exp || mod.nil_var)
 
-        bind_vars @vars, target_block.after_vars
+        bind_vars @vars, block.after_vars, block.args
       elsif target_while = @while_stack.last?
         node.target = target_while
         target_while.has_breaks = true
@@ -1693,7 +1697,7 @@ module Crystal
         block.bind_to(node.exp || mod.nil_var)
 
         bind_vars @vars, block.vars
-        bind_vars @vars, block.after_vars
+        bind_vars @vars, block.after_vars, block.args
       elsif target_while = @while_stack.last?
         node.target = target_while
 
@@ -1821,7 +1825,7 @@ module Crystal
         node.raise "can't create instance of generic class #{instance_type} without specifying its type vars"
       end
 
-      if !instance_type.virtual? && instance_type.abstract
+      if !instance_type.virtual? && instance_type.abstract?
         node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
       end
 
@@ -1910,15 +1914,6 @@ module Crystal
     def visit_union_get(node)
       scope = @scope as CUnionType
       node.bind_to scope.vars[untyped_def.name]
-    end
-
-    def visit(node : Self)
-      the_self = (@scope || current_type)
-      if the_self.is_a?(Program)
-        node.raise "there's no self in this scope"
-      end
-
-      node.type = the_self.instance_type
     end
 
     def visit(node : PointerOf)
@@ -2198,7 +2193,7 @@ module Crystal
         end
 
         if attr.args.size != 1
-          attr.raise "wrong number of arguments for attribute CallConvention (#{attr.args.size} for 1)"
+          attr.wrong_number_of_arguments "attribute CallConvention", attr.args.size, 1
         end
 
         call_convention_node = attr.args.first
@@ -2303,8 +2298,8 @@ module Crystal
           type_name = type.name.split "::"
 
           path = Path.global(type_name).at(node.location)
-          type_of_keys = TypeOf.new(node.entries.map &.key).at(node.location)
-          type_of_values = TypeOf.new(node.entries.map &.value).at(node.location)
+          type_of_keys = TypeOf.new(node.entries.map { |x| x.key as ASTNode }).at(node.location)
+          type_of_values = TypeOf.new(node.entries.map { |x| x.value as ASTNode }).at(node.location)
           generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode).at(node.location)
 
           node.name = generic
