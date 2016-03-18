@@ -362,6 +362,8 @@ Playground.Session = function(options) {
 
   this.runTag = 0;
   this.run = function() {
+    if (Playground.connectLostShown) return;
+
     this._removeScheduledRun();
     this.runTag++;
 
