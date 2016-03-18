@@ -2,6 +2,10 @@ $(function(){
   $('.modal-trigger').leanModal();
 
   $(".crystal-version").text(Environment.version);
+
+  if (Playground.hasStorage == false) {
+    Materialize.toast("LocalStorage not available", 4000);
+  }
 });
 
 // main page initialization
