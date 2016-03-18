@@ -174,6 +174,6 @@ struct Number
   end
 
   def /(other : Complex)
-    self * inv(other)
+    self * other.inv
   end
 end
