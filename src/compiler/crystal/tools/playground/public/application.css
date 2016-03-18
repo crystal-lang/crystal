@@ -1,0 +1,174 @@
+body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+nav ul a {
+  color: #616161;
+}
+
+footer > div > div {
+  margin-bottom: 1em;
+}
+
+html {
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+  font-weight: 200;
+}
+
+h4 {
+  margin-top: 3.14rem;
+}
+
+.brand-logo img {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  transform: scale(0.66);
+}
+
+@media only screen and (max-width: 992px) {
+  nav .brand-logo {
+    left: 7px;
+    transform: none;
+  }
+}
+
+@media only screen and (min-width: 600px) {
+  #toast-container {
+    top: initial;
+    bottom: 45px;
+    right: 90px;
+  }
+}
+
+.row-narrow {
+  margin-bottom: 0;
+}
+
+.editor, .sidebar, .output, .inspect-values, .CodeMirror {
+  font-family: Monaco, Menlo, Consolas, 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.46em;
+}
+
+
+#mainEditorContainer .editor, #mainEditorContainer .sidebar {
+  min-height: 75vh;
+}
+
+@media (max-height: 780px) {
+  #mainEditorContainer .editor, #mainEditorContainer .sidebar {
+    min-height: 70vh;
+  }
+}
+
+@media (max-height: 540px) {
+  #mainEditorContainer .editor, #mainEditorContainer .sidebar {
+    min-height: 65vh;
+  }
+}
+
+.editor-wrapper, .sidebar-wrapper {
+  position: relative;
+}
+
+.CodeMirror {
+  height: auto;
+}
+
+.CodeMirror-lines {
+  padding: 0.5em 0;
+}
+
+.CodeMirror-gutters.phantom {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 29px;
+}
+
+.card-plain {
+  background: transparent;
+  box-shadow: none;
+  border: 1px solid #ccc;
+  padding-left: 1ch;
+}
+
+.sidebar {
+  position: relative;
+}
+
+.sidebar div {
+  position: absolute;
+  white-space: nowrap;
+  left: 0;
+  right: 0;
+}
+
+.sidebar .type {
+  color: #64b5f6;
+  font-weight: 200;
+}
+
+.sidebar .type::before {
+  content: ' : ';
+}
+
+.editor-error {
+  cursor: pointer;
+}
+
+.editor-error-col {
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  transform: rotate(45deg);
+  transform-origin: 65% -21%;
+  z-index: -1;
+}
+
+.editor-error-msg {
+  margin-top: 0.5em !important;
+  padding: 0 4px;
+  z-index: 2;
+}
+
+.inspect-table th, .inspect-table td {
+  padding: 8px 5px
+}
+
+.inspect-table th {
+  font-weight: 400;
+}
+
+.run-button {
+  padding-top: 5px;
+  padding-left: 2px;
+}
+
+.run-button-preloader {
+  position: absolute;
+  top: 11px;
+  left: -5px;
+}
+
+.demoButtonsContainer {
+  position: relative;
+  width: 55.5px;
+  margin: 0 auto;
+}
+
+.demoButtonsContainer .run-button-preloader {
+  top: -4px;
+}
+
+.f-16 {
+  width: 16px; /* avoid horizontal flicking in the toolbar */
+}

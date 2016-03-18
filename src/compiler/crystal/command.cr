@@ -14,6 +14,7 @@ class Crystal::Command
     Command:
         init                     generate a new project
         build                    compile program
+        play                     starts crystal playground server
         deps                     install project dependencies
         docs                     generate documentation
         eval                     eval code from args or standard input
@@ -63,6 +64,9 @@ class Crystal::Command
       when "build".starts_with?(command)
         options.shift
         build
+      when "play".starts_with?(command)
+        options.shift
+        playground
       when "deps".starts_with?(command)
         options.shift
         deps
@@ -439,6 +443,39 @@ class Crystal::Command
   private def types
     config, result = compile_no_codegen "tool types"
     Crystal.print_types result.original_node
+  end
+
+  private def playground
+    server = Playground::Server.new
+
+    OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal play [options] [file]\n\nOptions:"
+
+      opts.on("-p PORT", "--port PORT", "Runs the playground on the specified port") do |port|
+        server.port = port.to_i
+      end
+
+      opts.on("-b HOST", "--binding HOST", "Binds the playground to the specified IP") do |host|
+        server.host = host
+      end
+
+      opts.on("-v", "--verbose", "Display detailed information of executed code") do
+        server.logger.level = Logger::Severity::DEBUG
+      end
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit 1
+      end
+
+      opts.unknown_args do |before, after|
+        if before.size > 0
+          server.source = gather_sources([before.first]).first
+        end
+      end
+    end
+
+    server.start
   end
 
   private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false)
