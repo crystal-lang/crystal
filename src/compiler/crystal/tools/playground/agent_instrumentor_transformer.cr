@@ -51,11 +51,30 @@ module Crystal
     def transform(node : Call)
       case { node.obj, node.name, node.args.size }
       when { nil, "raise", 1 }
-        node.args[0] = instrument(node.args[0])
-        node
+        instrument_arg node
+      when { nil, "puts", 1 }
+        instrument_arg node
+      when { nil, "puts", _ }
+        instrument_args_and_splat node
+      when { nil, "print", 1 }
+        instrument_arg node
+      when { nil, "print", _ }
+        instrument_args_and_splat node
       else
         instrument(node)
       end
+    end
+
+    private def instrument_arg(node : Call)
+      node.args[0] = instrument(node.args[0])
+      node
+    end
+
+    private def instrument_args_and_splat(node : Call)
+      args = TupleLiteral.new(node.args)
+      args.location = node.location
+      node.args = [Splat.new(instrument(args))] of ASTNode
+      node
     end
 
     def transform(node : Yield)

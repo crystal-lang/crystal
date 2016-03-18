@@ -88,6 +88,16 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %(a = 4), %(a = $p.i(4, 1))
   end
 
+  it "instrument puts" do
+    assert_agent %(puts 3), %(puts($p.i(3, 1)))
+    assert_agent %(puts a, 2, b), %(puts(*$p.i({a, 2, b}, 1, ["a", "2", "b"])))
+  end
+
+  it "instrument print" do
+    assert_agent %(print 3), %(print($p.i(3, 1)))
+    assert_agent %(print a, 2, b), %(print(*$p.i({a, 2, b}, 1, ["a", "2", "b"])))
+  end
+
   it "instrument single statement def" do
     assert_agent %(
     def foo
