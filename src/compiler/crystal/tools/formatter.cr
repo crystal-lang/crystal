@@ -808,15 +808,23 @@ module Crystal
       false
     end
 
-    def visit(node : Path)
-      has_parentheses = false
-
+    def check_open_paren
       if @token.type == :"("
         write "("
         next_token_skip_space
-        has_parentheses = true
         @paren_count += 1
       end
+    end
+
+    def check_close_paren
+      if @token.type == :")" && @paren_count > 0
+        @paren_count -= 1
+        write_token :")"
+      end
+    end
+
+    def visit(node : Path)
+      check_open_paren
 
       # Sometimes the :: is not present because the parser generates ::Nil, for example
       if node.global && @token.type == :"::"
@@ -836,11 +844,7 @@ module Crystal
         end
       end
 
-      if @token.type == :")" && @paren_count > 0
-        @paren_count -= 1
-        write ")"
-        next_token
-      end
+      check_close_paren
 
       false
     end
@@ -901,8 +905,7 @@ module Crystal
       accept name
       skip_space_or_newline
 
-      write_token :"("
-      @paren_count += 1
+      check_open_paren
       skip_space_or_newline
 
       node.type_vars.each_with_index do |type_var, i|
@@ -914,10 +917,7 @@ module Crystal
         end
       end
 
-      if @token.type == :")" && @paren_count > 0
-        @paren_count -= 1
-        write_token :")"
-      end
+      check_close_paren
 
       false
     end
@@ -931,13 +931,7 @@ module Crystal
         return false
       end
 
-      has_parentheses = false
-      if @token.type == :"("
-        @paren_count += 1
-        write "("
-        next_token_skip_space_or_newline
-        has_parentheses = true
-      end
+      check_open_paren
 
       node.types.each_with_index do |type, i|
         accept type
@@ -973,17 +967,7 @@ module Crystal
         break if must_break
       end
 
-      if @token.type == :")" && @paren_count > 0
-        @paren_count -= 1
-        write ")"
-        next_token
-      end
-
-      # This can happen in a case like (A)?
-      if @token.type == :"?"
-        write "?"
-        next_token
-      end
+      check_close_paren
 
       false
     end
@@ -1726,13 +1710,7 @@ module Crystal
     end
 
     def visit(node : Fun)
-      has_parentheses = false
-      if @token.type == :"("
-        @paren_count += 1
-        write "("
-        next_token_skip_space_or_newline
-        has_parentheses = true
-      end
+      check_open_paren
 
       if inputs = node.inputs
         inputs.each_with_index do |input, i|
@@ -1745,12 +1723,7 @@ module Crystal
         end
       end
 
-      if @token.type == :")" && @paren_count > 0
-        @paren_count -= 1
-        next_token_skip_space
-        write ")"
-        has_parentheses = false
-      end
+      check_close_paren
 
       write " " if inputs
       write_token :"->"
@@ -1761,10 +1734,7 @@ module Crystal
         accept output
       end
 
-      if @token.type == :")" && @paren_count > 0
-        @paren_count -= 1
-        write_token :")"
-      end
+      check_close_paren
 
       false
     end
