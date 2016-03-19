@@ -925,6 +925,21 @@ class Hash(K, V)
     memo
   end
 
+  # Retrieves the value object corresponding to the each key objects repeatedly.
+  # 
+  #
+  # ```
+  # h = { foo: {bar: {baz: 5}}}
+  #
+  # h.dig(:foo, :bar, :baz)           #=> 5
+  # h.dig(:foo, :blah)                #=> nil
+  # ```
+  def dig(*keys)
+    keys.reduce(self) do |hash, key|
+      hash[key]? if hash.is_a?(Hash)
+    end
+  end
+
   protected def find_entry(key)
     index = bucket_index key
     entry = @buckets[index]
