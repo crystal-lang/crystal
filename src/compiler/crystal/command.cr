@@ -185,6 +185,7 @@ class Crystal::Command
 
   private def format
     @format = "text"
+    @stdout = false
 
     option_parser =
       OptionParser.parse(options) do |opts|
@@ -201,6 +202,10 @@ class Crystal::Command
 
         opts.on("--no-color", "Disable colored output") do
           @color = false
+        end
+
+        opts.on("--stdout", "Output to STDOUT") do
+          @stdout = true
         end
       end
 
@@ -244,7 +249,12 @@ class Crystal::Command
     source = File.read(filename)
 
     begin
-      File.write(filename, Crystal::Formatter.format(source, filename: filename))
+      result = Crystal::Formatter.format(source, filename: filename)
+      if @stdout
+        puts result
+      else
+        File.write(filename, result)
+      end
     rescue ex : Crystal::SyntaxException
       if @format == "json"
         puts ex.to_json
@@ -285,7 +295,12 @@ class Crystal::Command
       result = Crystal::Formatter.format(source, filename: filename)
       return if result == source
 
-      File.write(filename, result)
+      if @stdout
+        puts result
+      else
+        File.write(filename, result)
+      end
+
       STDOUT << "Format".colorize(:green).toggle(@color) << " " << filename << "\n"
     rescue ex : Crystal::SyntaxException
       STDOUT << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
