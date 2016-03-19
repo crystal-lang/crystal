@@ -844,6 +844,14 @@ module Crystal
     end
 
     def get_global(node, name, type, real_var)
+      if real_var.thread_local?
+        get_thread_local(name, type, real_var)
+      else
+        get_global_var(name, type, real_var)
+      end
+    end
+
+    def get_global_var(name, type, real_var)
       ptr = @llvm_mod.globals[name]?
       unless ptr
         llvm_type = llvm_type(type)
@@ -869,6 +877,10 @@ module Crystal
         end
       end
 
+      ptr
+    end
+
+    def get_thread_local(name, type, real_var)
       # If it's thread local, we use a NoInline function to access it
       # because of http://lists.llvm.org/pipermail/llvm-dev/2016-February/094736.html
       #
@@ -883,25 +895,19 @@ module Crystal
       # which is the same as the global, but through a non-inlined function.
       #
       # Making a function that just returns the pointer doesn't work: LLVM inlines it.
-      if ptr.thread_local?
-        fun_name = "*#{name}"
-        thread_local_fun = @main_mod.functions[fun_name]?
-        unless thread_local_fun
-          thread_local_fun = @main_mod.functions.add(fun_name, ([llvm_type(type).pointer.pointer]), LLVM::Void) do |func|
-            func.basic_blocks.append do |builder|
-              builder.store ptr, func.params[0]
-              builder.ret
-            end
-          end
-          thread_local_fun.add_attribute LLVM::Attribute::NoInline
+      fun_name = "*#{name}"
+      thread_local_fun = @main_mod.functions[fun_name]?
+      unless thread_local_fun
+        thread_local_fun = define_main_function(fun_name, [llvm_type(type).pointer.pointer], LLVM::Void) do |func|
+          builder.store get_global_var(name, type, real_var), func.params[0]
+          builder.ret
         end
-        thread_local_fun = check_main_fun(fun_name, thread_local_fun)
-        indirection_ptr = alloca llvm_type(type).pointer
-        call thread_local_fun, indirection_ptr
-        ptr = load indirection_ptr
+        thread_local_fun.add_attribute LLVM::Attribute::NoInline
       end
-
-      ptr
+      thread_local_fun = check_main_fun(fun_name, thread_local_fun)
+      indirection_ptr = alloca llvm_type(type).pointer
+      call thread_local_fun, indirection_ptr
+      ptr = load indirection_ptr
     end
 
     def class_var_global_name(node)

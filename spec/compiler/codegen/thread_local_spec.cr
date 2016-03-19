@@ -62,4 +62,21 @@ describe "Codegen: thread local" do
       Foo.a
       )).to_i.should eq(123)
   end
+
+  it "compiles with class variable referenced from initializer" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        @[ThreadLocal]
+        @@x = new
+
+        def initialize
+          @@x
+        end
+      end
+
+      0
+    ))
+  end
 end
