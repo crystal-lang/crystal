@@ -51,4 +51,32 @@ describe "FileUtils" do
       end
     end
   end
+
+  describe "cp_r" do
+    it "copies a directory recursively" do
+      path = "#{__DIR__}/data/"
+      src_path = path + "cp_r_test/"
+      dest_path = path + "cp_r_test_copied/"
+
+      begin
+        Dir.mkdir(src_path)
+        File.new(src_path + "a", "w").close
+        Dir.mkdir(src_path + "b")
+        File.new(src_path + "b/c", "w").close
+
+        FileUtils.cp_r(src_path, dest_path)
+        File.exists?(dest_path + "a").should be_true
+        File.exists?(dest_path + "b/c").should be_true
+      ensure
+        File.delete(dest_path + "b/c") if File.exists?(dest_path + "b/c")
+        File.delete(dest_path + "a") if File.exists?(dest_path + "a")
+        Dir.rmdir(dest_path + "b") if Dir.exists?(dest_path)
+        Dir.rmdir(dest_path) if Dir.exists?(dest_path)
+        File.delete(src_path + "b/c") if File.exists?(src_path + "b/c")
+        File.delete(src_path + "a") if File.exists?(src_path + "a")
+        Dir.rmdir(src_path + "b") if Dir.exists?(src_path)
+        Dir.rmdir(src_path) if Dir.exists?(src_path)
+      end
+    end
+  end
 end
