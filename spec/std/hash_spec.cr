@@ -734,6 +734,11 @@ describe "Hash" do
     end
   end
 
+  it "doesn't generate a negative index for the bucket index (#2321)" do
+    items = (0..100000).map { rand(100000).to_i16 }
+    items.uniq.size
+  end
+
   # Check that Hash can be created with an initial capacity
   typeof(Hash(Int32, Int32).new(initial_capacity: 1234))
   typeof(Hash(Int32, Int32).new(0, initial_capacity: 1234))

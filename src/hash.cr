@@ -976,7 +976,7 @@ class Hash(K, V)
   end
 
   private def bucket_index(key)
-    (@comp.hash(key).abs % @buckets_size).to_i
+    @comp.hash(key).to_u32.remainder(@buckets_size).to_i
   end
 
   private def calculate_new_size(size)
