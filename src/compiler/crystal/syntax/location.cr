@@ -39,6 +39,10 @@ module Crystal
       original_location.try &.filename
     end
 
+    def between?(min, max)
+      min <= self && self <= max
+    end
+
     def inspect
       to_s
     end

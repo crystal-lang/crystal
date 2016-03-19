@@ -8,8 +8,6 @@ describe Symbol do
     # :かたな.inspect.should eq(%(:かたな))
   end
   it "can be compared with another symbol" do
-    :s.between?(:a, :z).should be_true
-    :a.between?(:s, :z).should be_false
     (:foo > :bar).should be_true
     (:foo < :bar).should be_false
 

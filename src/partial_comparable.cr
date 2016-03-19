@@ -4,8 +4,7 @@
 # another object, returning -1, 0, +1 or nil depending on whether the receiver is less than,
 # equal to, greater than the other object, or no order can be established.
 #
-# Comparable uses `<=>` to implement the conventional comparison operators (`<`, `<=`, `==`, `>=`, and `>`)
-# and the method `between?`.
+# Comparable uses `<=>` to implement the conventional comparison operators (`<`, `<=`, `==`, `>=`, and `>`).
 module PartialComparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `-1`.
   def <(other : T)
@@ -45,11 +44,6 @@ module PartialComparable(T)
     compare_with(other) do |cmp|
       cmp >= 0
     end
-  end
-
-  # Returns `false` if `self <=> min` is less than zero or if `self <=> max` is greater than zero, `true` otherwise.
-  def between?(min, max)
-    min <= self && self <= max
   end
 
   def compare_with(other : T)

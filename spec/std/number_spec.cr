@@ -127,17 +127,6 @@ describe "Number" do
     ary.should eq([1])
   end
 
-  it "can use methods from Comparable" do
-    5.between?(0, 9).should be_true
-    0.between?(5, 9).should be_false
-
-    5_u64.between?(0_i8, 9_u16).should be_true
-    0_i8.between?(5_u32, 9_i64).should be_false
-
-    25641_i16.between?(594_i64, 487696874_u32).should be_true
-    594_i64.between?(25641_i16, 487696874_u32).should be_false
-  end
-
   it "steps from int to float" do
     count = 0
     0.step(by: 0.1, limit: 0.3) do |x|
