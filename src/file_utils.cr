@@ -51,4 +51,48 @@ module FileUtils
       cp(src, dest)
     end
   end
+
+  # Copies a file or directory *src_path* to *dest_path*
+  # If *src_path* is a directory, this method copies all its contents recursively
+  # ```
+  # FileUtils.cp_r("src_dir", "src_dir_copy")
+  # ```
+  def cp_r(src_path : String, dest_path : String)
+    if Dir.exists?(src_path)
+      Dir.mkdir(dest_path)
+      Dir.open(src_path) do |dir|
+        dir.each do |entry|
+          if entry != "." && entry != ".."
+            src = src_path + File::SEPARATOR + entry
+            dest = dest_path + File::SEPARATOR + entry
+            cp_r(src, dest)
+          end
+        end
+      end
+    else
+      cp(src_path, dest_path)
+    end
+  end
+
+  # Deletes a file or directory *path*
+  # If *path* is a directory, this method removes all its contents recursively
+  # ```
+  # FileUtils.rm_r("dir")
+  # FileUtils.rm_r("file.cr")
+  # ```
+  def rm_r(path : String)
+    if Dir.exists?(path)
+      Dir.open(path) do |dir|
+        dir.each do |entry|
+          if entry != "." && entry != ".."
+            src = path + File::SEPARATOR + entry
+            rm_r(src)
+          end
+        end
+      end
+      Dir.rmdir(path)
+    else
+      File.delete(path)
+    end
+  end
 end
