@@ -79,4 +79,26 @@ describe "FileUtils" do
       end
     end
   end
+
+  describe "rm_r" do
+    it "deletes a directory recursively" do
+      data_path = "#{__DIR__}/data/"
+      path = data_path + "rm_r_test/"
+
+      begin
+        Dir.mkdir(path)
+        File.new(path + "a", "w").close
+        Dir.mkdir(path + "b")
+        File.new(path + "b/c", "w").close
+
+        FileUtils.rm_r(path)
+        Dir.exists?(path).should be_false
+      ensure
+        File.delete(path + "b/c") if File.exists?(path + "b/c")
+        File.delete(path + "a") if File.exists?(path + "a")
+        Dir.rmdir(path + "b") if Dir.exists?(path)
+        Dir.rmdir(path) if Dir.exists?(path)
+      end
+    end
+  end
 end

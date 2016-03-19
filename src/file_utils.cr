@@ -73,4 +73,26 @@ module FileUtils
       cp(src_path, dest_path)
     end
   end
+
+  # Deletes a file or directory *path*
+  # If *path* is a directory, this method removes all its contents recursively
+  # ```
+  # FileUtils.rm_r("dir")
+  # FileUtils.rm_r("file.cr")
+  # ```
+  def rm_r(path : String)
+    if Dir.exists?(path)
+      Dir.open(path) do |dir|
+        dir.each do |entry|
+          if entry != "." && entry != ".."
+            src = path + File::SEPARATOR + entry
+            rm_r(src)
+          end
+        end
+      end
+      Dir.rmdir(path)
+    else
+      File.delete(path)
+    end
+  end
 end
