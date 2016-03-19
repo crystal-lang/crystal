@@ -251,7 +251,7 @@ module Spec
     end
 
     macro expect_raises
-      expect_raises(Exception) do
+      expect_raises(Exception, nil) do
         {{yield}}
       end
     end
@@ -262,12 +262,12 @@ module Spec
       end
     end
 
-    macro expect_raises(klass, message)
+    macro expect_raises(klass, message, file = __FILE__, line = __LINE__)
       %failed = false
       begin
         {{yield}}
         %failed = true
-        fail "expected {{klass.id}} but nothing was raised"
+        fail "expected {{klass.id}} but nothing was raised", {{file}}, {{line}}
       rescue %ex : {{klass.id}}
         # We usually bubble Spec::AssertaionFailed, unless this is the expected exception
         if %ex.class == Spec::AssertionFailed && {{klass}} != Spec::AssertionFailed
@@ -280,12 +280,12 @@ module Spec
         when Regex
           unless (%ex_to_s =~ %msg)
             backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-            fail "expected {{klass.id}} with message matching #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}"
+            fail "expected {{klass.id}} with message matching #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
           end
         when String
           unless %ex_to_s.includes?(%msg)
             backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-            fail "expected {{klass.id}} with #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}"
+            fail "expected {{klass.id}} with #{ %msg.inspect }, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
           end
         end
       rescue %ex
@@ -294,7 +294,7 @@ module Spec
         else
           %ex_to_s = %ex.to_s
           backtrace = %ex.backtrace.map { |f| "  # #{f}" }.join "\n"
-          fail "expected {{klass.id}}, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}"
+          fail "expected {{klass.id}}, got #<#{ %ex.class }: #{ %ex_to_s }> with backtrace:\n#{backtrace}", {{file}}, {{line}}
         end
       end
     end
