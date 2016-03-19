@@ -2313,9 +2313,25 @@ module Crystal
         when RespondsTo
           call = Call.new(nil, "responds_to?", args: [SymbolLiteral.new(body.name.to_s)] of ASTNode)
           accept call
+        when Cast
+          clear_object(body)
+          accept body
         else
-          raise "Bug: expected Call, IsA or RespondsTo as &. argument, at #{node.location}"
+          raise "Bug: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
         end
+      end
+    end
+
+    def clear_object(node)
+      case node
+      when Call
+        if node.obj.is_a?(Call)
+          clear_object(node.obj)
+        else
+          node.obj = nil
+        end
+      when Cast
+        clear_object(node.obj)
       end
     end
 

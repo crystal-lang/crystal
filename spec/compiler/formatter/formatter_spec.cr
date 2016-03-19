@@ -809,4 +809,8 @@ describe Crystal::Formatter do
   assert_format "foo.[1]"
 
   assert_format "@foo : Int32 # comment\n\ndef foo\nend"
+
+  assert_format "a &.b as C"
+  assert_format "a &.b.c as C"
+  assert_format "a(&.b.c as C)"
 end
