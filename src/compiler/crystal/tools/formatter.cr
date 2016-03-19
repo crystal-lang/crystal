@@ -98,6 +98,13 @@ module Crystal
       @exp_needs_indent = true
       @inside_def = 0
 
+      # When we parse a type, parentheses information is not stored in ASTs, unlike
+      # for an Expressions node. So when we are printing a type (Path, Fun, Union, etc.)
+      # we increment this when we find a '(', and decrement it when we find ')', but
+      # only if `paren_count > 0`: it might be the case of `def foo(x : A)`, but we don't
+      # want to print that last ')' when printing the type A.
+      @paren_count = 0
+
       # This stores the column number (if any) of each comment in every line
       @when_infos = [] of AlignInfo
       @hash_infos = [] of AlignInfo
@@ -808,6 +815,7 @@ module Crystal
         write "("
         next_token_skip_space
         has_parentheses = true
+        @paren_count += 1
       end
 
       # Sometimes the :: is not present because the parser generates ::Nil, for example
@@ -828,9 +836,10 @@ module Crystal
         end
       end
 
-      if has_parentheses
-        skip_space_or_newline
-        write_token :")"
+      if @token.type == :")" && @paren_count > 0
+        @paren_count -= 1
+        write ")"
+        next_token
       end
 
       false
@@ -893,6 +902,7 @@ module Crystal
       skip_space_or_newline
 
       write_token :"("
+      @paren_count += 1
       skip_space_or_newline
 
       node.type_vars.each_with_index do |type_var, i|
@@ -904,7 +914,10 @@ module Crystal
         end
       end
 
-      write_token :")"
+      if @token.type == :")" && @paren_count > 0
+        @paren_count -= 1
+        write_token :")"
+      end
 
       false
     end
@@ -920,6 +933,7 @@ module Crystal
 
       has_parentheses = false
       if @token.type == :"("
+        @paren_count += 1
         write "("
         next_token_skip_space_or_newline
         has_parentheses = true
@@ -931,26 +945,38 @@ module Crystal
         last = last?(i, node.types)
         skip_space_or_newline unless last
 
-        # This can happen if it's a nilable type written like T?
-        case @token.type
-        when :"?"
-          write " " if type.is_a?(Self)
-          write "?"
-          next_token
-          break
-        when :"|"
-          write " | " unless last
-          next_token
-          skip_space_or_newline unless last
-        when :")"
-          # This can happen in a case like (A)?
-          break
+        must_break = false
+        while true
+          case @token.type
+          when :"?"
+            # This can happen if it's a nilable type written like T?
+            write "?"
+            next_token
+            must_break = true
+            break
+          when :"|"
+            write " | " unless last
+            next_token
+            skip_space_or_newline unless last
+          when :")"
+            if @paren_count > 0
+              @paren_count -= 1
+              write ")"
+              next_token_skip_space
+            else
+              break
+            end
+          else
+            break
+          end
         end
+        break if must_break
       end
 
-      if has_parentheses
-        write_token :")"
-        skip_space
+      if @token.type == :")" && @paren_count > 0
+        @paren_count -= 1
+        write ")"
+        next_token
       end
 
       # This can happen in a case like (A)?
@@ -1702,6 +1728,7 @@ module Crystal
     def visit(node : Fun)
       has_parentheses = false
       if @token.type == :"("
+        @paren_count += 1
         write "("
         next_token_skip_space_or_newline
         has_parentheses = true
@@ -1718,7 +1745,8 @@ module Crystal
         end
       end
 
-      if @token.type == :")"
+      if @token.type == :")" && @paren_count > 0
+        @paren_count -= 1
         next_token_skip_space
         write ")"
         has_parentheses = false
@@ -1733,7 +1761,8 @@ module Crystal
         accept output
       end
 
-      if has_parentheses
+      if @token.type == :")" && @paren_count > 0
+        @paren_count -= 1
         write_token :")"
       end
 

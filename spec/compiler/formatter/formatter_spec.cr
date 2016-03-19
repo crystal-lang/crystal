@@ -659,8 +659,7 @@ describe Crystal::Formatter do
   assert_format "  ((1) + 2)", "((1) + 2)"
   assert_format "if 1\n  ((1) + 2)\nend"
 
-  # This case is special and must be fixed in the parser
-  assert_format "def   foo(x   :  self ?) \n  end", "def foo(x : self ?)\nend"
+  assert_format "def   foo(x   :  self ?) \n  end", "def foo(x : self?)\nend"
 
   assert_format "  macro foo\n  end\n\n  :+", "macro foo\n  end\n\n:+"
   assert_format "[\n1, # a\n2, # b\n 3 # c\n]", "[\n  1, # a\n  2, # b\n  3, # c\n]"
@@ -816,4 +815,13 @@ describe Crystal::Formatter do
 
   assert_format "foo : self?"
   assert_format "foo : self? | A"
+
+  assert_format "foo : (A) | D"
+  assert_format "foo : (F(A)) | D"
+
+  assert_format "def   foo(x   :  (A | B)) \n  end", "def foo(x : (A | B))\nend"
+  assert_format "foo : (String -> String?) | (String)"
+  assert_format "foo : (Array(String)?) | String"
+  assert_format "foo : (String -> Array(String)?) | (String -> Array(String)) | Nil"
+  assert_format "module Readline\n  @@completion_proc : (String -> Array(String)?) | (String -> Array(String)) | Nil\nend"
 end
