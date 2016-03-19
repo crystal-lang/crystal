@@ -10,7 +10,8 @@ lib LibXML
   $xmlIndentTreeOutput : Int
   $xmlTreeIndentString : UInt8*
 
-  type DocPtr = Void*
+  type Dtd = Void*
+  type Dict = Void*
 
   struct NS
     next : NS*
@@ -18,7 +19,7 @@ lib LibXML
     href : UInt8*
     prefix : UInt8*
     _private : Void*
-    context : DocPtr
+    context : Doc*
   end
 
   struct NodeCommon
@@ -30,7 +31,26 @@ lib LibXML
     parent : Node*
     next : Node*
     prev : Node*
-    doc : DocPtr
+    doc : Doc*
+  end
+
+  struct Doc
+    include NodeCommon
+    compression : Int
+    standalone : Int
+    int_subset : Dtd
+    ext_subset : Dtd
+    old_ns : NS*
+    version : UInt8*
+    encoding : UInt8*
+    ids : Void*
+    refs : Void*
+    url : UInt8*
+    charset : Int
+    dict : Dict
+    psvi : Void*
+    parse_flags : Int
+    properties : Int
   end
 
   struct Attr
@@ -88,16 +108,16 @@ lib LibXML
 
   fun xmlTextReaderLocatorLineNumber(XMLTextReaderLocator) : Int
 
-  fun xmlReadMemory(buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : DocPtr
-  fun htmlReadMemory(buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : DocPtr
+  fun xmlReadMemory(buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
+  fun htmlReadMemory(buffer : UInt8*, size : Int, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
 
   alias InputReadCallback = (Void*, UInt8*, Int) -> Int
   alias InputCloseCallback = (Void*) -> Int
 
-  fun xmlReadIO(ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : DocPtr
-  fun htmlReadIO(ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : DocPtr
+  fun xmlReadIO(ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::ParserOptions) : Doc*
+  fun htmlReadIO(ioread : InputReadCallback, ioclose : InputCloseCallback, ioctx : Void*, url : UInt8*, encoding : UInt8*, options : XML::HTMLParserOptions) : Doc*
 
-  fun xmlDocGetRootElement(doc : DocPtr) : Node*
+  fun xmlDocGetRootElement(doc : Doc*) : Node*
   fun xmlXPathNodeSetCreate(node : Node*) : NodeSet*
   fun xmlXPathNodeSetAddUnique(cur : NodeSet*, val : Node*) : Int
   fun xmlNodeGetContent(node : Node*) : UInt8*
@@ -145,7 +165,7 @@ lib LibXML
   fun xmlGetLastError : Error*
 
   struct XPathContext
-    doc : DocPtr
+    doc : Doc*
     node : Node*
     nb_variables_unused : Int
     max_variables_unused : Int
@@ -212,7 +232,7 @@ lib LibXML
   end
 
   fun xmlXPathInit
-  fun xmlXPathNewContext(doc : DocPtr) : XPathContext*
+  fun xmlXPathNewContext(doc : Doc*) : XPathContext*
 
   @[Raises]
   fun xmlXPathEvalExpression(str : UInt8*, ctx : XPathContext*) : XPathObject*
@@ -229,7 +249,7 @@ lib LibXML
   fun xmlSetStructuredErrorFunc(ctx : Void*, f : StructuredErrorFunc)
   fun xmlSetGenericErrorFunc(ctx : Void*, f : GenericErrorFunc)
 
-  fun xmlGetNsList(doc : DocPtr, node : Node*) : NS**
+  fun xmlGetNsList(doc : Doc*, node : Node*) : NS**
 end
 
 LibXML.xmlGcMemSetup(

@@ -222,4 +222,46 @@ describe XML do
     root.name = "last-name"
     root.name.should eq("last-name")
   end
+
+  it "gets encoding" do
+    doc = XML.parse(<<-XML
+        <?xml version='1.0' encoding='UTF-8'?>
+        <people>
+        </people>
+        XML
+    )
+    doc.encoding.should eq("UTF-8")
+  end
+
+  it "gets encoding when nil" do
+    doc = XML.parse(<<-XML
+        <?xml version='1.0'>
+        <people>
+        </people>
+        XML
+    )
+    doc.encoding.should be_nil
+  end
+
+  it "gets version" do
+    doc = XML.parse(<<-XML
+        <?xml version='1.0' encoding='UTF-8'?>
+        <people>
+        </people>
+        XML
+    )
+    doc.version.should eq("1.0")
+  end
+
+  it "does to_s with correct encoding (#2319)" do
+    xml_str = <<-XML
+    <?xml version='1.0' encoding='UTF-8'?>
+    <person>
+      <name>たろう</name>
+    </person>
+    XML
+
+    doc = XML.parse(xml_str)
+    doc.root.to_s.should eq("<person>\n  <name>たろう</name>\n</person>")
+  end
 end
