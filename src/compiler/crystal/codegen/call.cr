@@ -305,13 +305,20 @@ class Crystal::CodeGenVisitor
     call.with_scope = with_scope
     call.uses_with_scope = node.uses_with_scope?
 
+    is_super = node.name == "super"
+
     with_cloned_context do
       context.vars = new_vars
 
       Phi.open(self, node, old_needs_value) do |phi|
         # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
         target_defs.each do |a_def|
-          result = match_type_id(owner, a_def.owner, obj_type_id)
+          if is_super
+            # A super call always matches the obj type
+            result = int1(1)
+          else
+            result = match_type_id(owner, a_def.owner, obj_type_id)
+          end
           node.args.each_with_index do |node_arg, i|
             a_def_arg = a_def.args[i]
             result = and(result, match_type_id(node_arg.type, a_def_arg.type, arg_type_ids[i]))

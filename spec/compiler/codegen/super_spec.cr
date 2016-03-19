@@ -373,4 +373,27 @@ describe "Codegen: super" do
       One.foo
       )).to_i.should eq(5)
   end
+
+  it "calls super with dispatch (#2318)" do
+    run(%(
+      class Foo
+        def foo(x : Int32)
+          x
+        end
+
+        def foo(x : Float64)
+          x
+        end
+      end
+
+      class Bar < Foo
+        def foo(obj)
+          super(obj)
+        end
+      end
+
+      z = Bar.new.foo(3 || 2.5)
+      z.to_i
+      )).to_i.should eq(3)
+  end
 end
