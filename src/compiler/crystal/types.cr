@@ -192,6 +192,8 @@ module Crystal
     end
 
     def implements?(other_type : Type)
+      return true if self == other_type
+
       other_type = other_type.remove_alias
       case other_type
       when UnionType

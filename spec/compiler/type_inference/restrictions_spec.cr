@@ -352,4 +352,25 @@ describe "Restrictions" do
       foo(Baz.new as Bar)
       )) { int32 }
   end
+
+  it "matches alias against alias in block type" do
+    assert_type(%(
+      class Foo(T)
+        def self.new(&block : -> T)
+          Foo(T).new
+        end
+
+        def initialize
+        end
+
+        def t
+          T
+        end
+      end
+
+      alias Rec = Nil | Array(Rec)
+
+      Foo.new { nil as Rec }.t
+      )) { types["Rec"].metaclass }
+  end
 end
