@@ -910,6 +910,14 @@ module Crystal
     end
 
     def visit(node : Union)
+      if @token.type == :IDENT && @token.value == "self?" && node.types.size == 2 &&
+         node.types.any?(&.is_a?(Self)) &&
+         node.types.any? { |t| t.to_s == "::Nil" }
+        write "self?"
+        next_token
+        return false
+      end
+
       has_parentheses = false
       if @token.type == :"("
         write "("

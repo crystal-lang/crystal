@@ -813,4 +813,7 @@ describe Crystal::Formatter do
   assert_format "a &.b as C"
   assert_format "a &.b.c as C"
   assert_format "a(&.b.c as C)"
+
+  assert_format "foo : self?"
+  assert_format "foo : self? | A"
 end
