@@ -718,4 +718,19 @@ describe "File" do
       File.delete filename
     end
   end
+
+  describe "closed stream" do
+    it "raises if writing on a closed stream" do
+      io = File.open(__FILE__, "r")
+      io.close
+
+      expect_raises(IO::Error, "closed stream") { io.gets_to_end }
+      expect_raises(IO::Error, "closed stream") { io.print "hi" }
+      expect_raises(IO::Error, "closed stream") { io.puts "hi" }
+      expect_raises(IO::Error, "closed stream") { io.seek(1) }
+      expect_raises(IO::Error, "closed stream") { io.gets }
+      expect_raises(IO::Error, "closed stream") { io.read_byte }
+      expect_raises(IO::Error, "closed stream") { io.write_byte('a'.ord.to_u8) }
+    end
+  end
 end

@@ -238,6 +238,17 @@ module IO
   def close
   end
 
+  # Returns `true` if this IO is closed.
+  #
+  # IO defines returns `false`, but including types may override.
+  def closed?
+    false
+  end
+
+  protected def check_open
+    raise IO::Error.new "closed stream" if closed?
+  end
+
   # Flushes buffered data, if any.
   #
   # IO defines this is a no-op method, but including types may override.

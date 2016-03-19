@@ -75,7 +75,7 @@ class Zlib::Inflate
 
   # See `IO#read`.
   def read(slice : Slice(UInt8))
-    raise IO::Error.new "closed stream" if closed?
+    check_open
 
     while true
       if @stream.avail_in == 0

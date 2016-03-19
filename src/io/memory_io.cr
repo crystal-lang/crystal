@@ -350,12 +350,6 @@ class MemoryIO
     io.write Slice.new(@buffer, @bytesize)
   end
 
-  private def check_open
-    if closed?
-      raise IO::Error.new "closed stream"
-    end
-  end
-
   private def check_writeable
     unless @writeable
       raise IO::Error.new "read-only stream"

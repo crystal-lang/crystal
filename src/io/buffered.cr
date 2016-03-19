@@ -40,6 +40,8 @@ module IO::Buffered
 
   # :nodoc:
   def gets(delimiter : Char, limit : Int)
+    check_open
+
     if delimiter.ord >= 128 || @encoding
       return super
     end
@@ -113,6 +115,8 @@ module IO::Buffered
 
   # :nodoc:
   def read_byte : UInt8?
+    check_open
+
     fill_buffer if @in_buffer_rem.empty?
     if @in_buffer_rem.empty?
       nil
@@ -155,6 +159,8 @@ module IO::Buffered
 
   # Buffered implementation of `IO#read(slice)`.
   def read(slice : Slice(UInt8))
+    check_open
+
     count = slice.size
     return 0 if count == 0
 
@@ -177,6 +183,8 @@ module IO::Buffered
 
   # Buffered implementation of `IO#write(slice)`.
   def write(slice : Slice(UInt8))
+    check_open
+
     count = slice.size
 
     if sync?
@@ -210,6 +218,8 @@ module IO::Buffered
 
   # :nodoc:
   def write_byte(byte : UInt8)
+    check_open
+
     if sync?
       return super
     end

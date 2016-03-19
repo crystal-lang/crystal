@@ -347,10 +347,4 @@ class IO::FileDescriptor
   private def unbuffered_flush
     # Nothing
   end
-
-  private def check_open
-    if closed?
-      raise IO::Error.new "closed stream"
-    end
-  end
 end

@@ -84,7 +84,7 @@ class Zlib::Deflate
 
   # See `IO#write`.
   def write(slice : Slice(UInt8))
-    raise IO::Error.new "closed stream" if closed?
+    check_open
 
     @stream.avail_in = slice.size
     @stream.next_in = slice

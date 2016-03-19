@@ -28,12 +28,16 @@ class OpenSSL::SSL::Socket
   end
 
   def read(slice : Slice(UInt8))
+    check_open
+
     count = slice.size
     return 0 if count == 0
     LibSSL.ssl_read(@ssl, slice.pointer(count), count)
   end
 
   def write(slice : Slice(UInt8))
+    check_open
+
     count = slice.size
     LibSSL.ssl_write(@ssl, slice.pointer(count), count)
     nil
