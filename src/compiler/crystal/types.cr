@@ -761,10 +761,10 @@ module Crystal
   end
 
   module ClassVarContainer
-    @class_vars : Hash(String, Var)?
+    @class_vars : Hash(String, ClassVar)?
 
     def class_vars
-      @class_vars ||= {} of String => Var
+      @class_vars ||= {} of String => ClassVar
     end
 
     def has_class_var?(name)
@@ -772,7 +772,7 @@ module Crystal
     end
 
     def lookup_class_var(name)
-      class_vars[name] ||= Var.new name
+      class_vars[name] ||= ClassVar.new name
     end
   end
 

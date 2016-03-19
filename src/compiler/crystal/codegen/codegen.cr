@@ -384,9 +384,9 @@ module Crystal
               when InstanceVar
                 instance_var_ptr (context.type.remove_typedef as InstanceVarContainer), node_exp.name, llvm_self_ptr
               when ClassVar
-                get_global node_exp, class_var_global_name(node_exp), node_exp.type
+                get_global node_exp, class_var_global_name(node_exp), node_exp.type, node_exp.var
               when Global
-                get_global node_exp, node_exp.name, node_exp.type
+                get_global node_exp, node_exp.name, node_exp.type, node_exp.var
               when Path
                 accept(node_exp)
                 global_name = node_exp.target_const.not_nil!.llvm_name
@@ -809,9 +809,9 @@ module Crystal
             when InstanceVar
               instance_var_ptr (context.type as InstanceVarContainer), target.name, llvm_self_ptr
             when Global
-              get_global target, target.name, target_type
+              get_global target, target.name, target_type, target.var
             when ClassVar
-              get_global target, class_var_global_name(target), target_type
+              get_global target, class_var_global_name(target), target_type, target.var
             when Var
               # Can't assign void
               return if target.type.void?
@@ -843,13 +843,12 @@ module Crystal
       end
     end
 
-    def get_global(node, name, type)
+    def get_global(node, name, type, real_var)
       ptr = @llvm_mod.globals[name]?
       unless ptr
         llvm_type = llvm_type(type)
 
-        global_var = @mod.global_vars[name]?
-        thread_local = global_var.try(&.has_attribute?("ThreadLocal")) || node.has_attribute?("ThreadLocal")
+        thread_local = real_var.thread_local?
 
         # Declare global in this module as external
         ptr = @llvm_mod.globals.add(llvm_type, name)
@@ -949,15 +948,15 @@ module Crystal
     end
 
     def visit(node : Global)
-      read_global node, node.name.to_s, node.type
+      read_global node, node.name.to_s, node.type, node.var
     end
 
     def visit(node : ClassVar)
-      read_global node, class_var_global_name(node), node.type
+      read_global node, class_var_global_name(node), node.type, node.var
     end
 
-    def read_global(node, name, type)
-      @last = get_global node, name, type
+    def read_global(node, name, type, real_var)
+      @last = get_global node, name, type, real_var
       @last = to_lhs @last, type
     end
 

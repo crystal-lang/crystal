@@ -562,6 +562,7 @@ module Crystal
           end
         end
         node.attributes = attributes
+        attributes
       end
     end
 

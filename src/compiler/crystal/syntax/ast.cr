@@ -719,7 +719,6 @@ module Crystal
 
   class ClassVar < ASTNode
     property name : String
-    property attributes : Array(Attribute)?
 
     def initialize(@name)
     end
@@ -734,19 +733,8 @@ module Crystal
   # A global variable.
   class Global < ASTNode
     property name : String
-    property attributes : Array(Attribute)?
 
     def initialize(@name)
-    end
-
-    def add_attributes(attributes)
-      if attributes
-        if my_attributes = @attributes
-          my_attributes.concat attributes
-        else
-          @attributes = attributes.dup
-        end
-      end
     end
 
     def name_size
@@ -1907,7 +1895,7 @@ module Crystal
     end
 
     def self.any?(attributes, name)
-      attributes.try &.any? { |attr| attr.name == name }
+      !!(attributes.try &.any? { |attr| attr.name == name })
     end
 
     def_equals_and_hash name, args, named_args

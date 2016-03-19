@@ -301,6 +301,7 @@ module Crystal
       end
       var.bind_to mod.nil_var unless var.dependencies?
       node.bind_to var
+      node.var = var
       var
     end
 
@@ -347,8 +348,8 @@ module Crystal
       class_var = lookup_class_var(node)
       check_valid_attributes class_var, ValidClassVarAttributes, "class variable"
 
-      node.attributes = class_var.attributes
       node.bind_to class_var
+      node.var = class_var
 
       class_var
     end
@@ -496,7 +497,7 @@ module Crystal
     end
 
     def type_assign(target : Global, value, node)
-      check_valid_attributes target, ValidGlobalAttributes, "global variable"
+      attributes = check_valid_attributes target, ValidGlobalAttributes, "global variable"
 
       value.accept self
 
@@ -510,7 +511,8 @@ module Crystal
         var.bind_to mod.nil_var if @typed_def
         mod.global_vars[target.name] = var
       end
-      var.add_attributes(target.attributes)
+      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+      target.var = var
 
       target.bind_to var
 
@@ -523,12 +525,13 @@ module Crystal
       # if this is the first time we are assigning to it, because
       # the method might be called conditionally
       var = lookup_class_var target, bind_to_nil_if_non_existent: !!@typed_def
-      check_valid_attributes var, ValidClassVarAttributes, "class variable"
+      attributes = check_valid_attributes target, ValidClassVarAttributes, "class variable"
 
       value.accept self
 
-      target.attributes = var.attributes
+      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
       target.bind_to var
+      target.var = var
 
       node.bind_to value
       var.bind_to node
