@@ -104,7 +104,7 @@ describe "URI" do
       end.should eq("hello world")
     end
 
-    it "dose not unescape string when block returns true" do
+    it "does not unescape string when block returns true" do
       URI.unescape("hello%26world") { |byte| URI.reserved? byte }
          .should eq("hello%26world")
     end

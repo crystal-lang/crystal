@@ -36,7 +36,7 @@ describe "Enumerable" do
       ["ant", "bear", "cat"].any? { |word| word.size >= 4 }.should be_true
     end
 
-    it "returns false if all elements dose not fulfill the condition" do
+    it "returns false if all elements does not fulfill the condition" do
       ["ant", "bear", "cat"].any? { |word| word.size > 4 }.should be_false
     end
   end

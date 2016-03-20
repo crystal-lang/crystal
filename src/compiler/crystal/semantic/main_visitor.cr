@@ -1455,7 +1455,7 @@ module Crystal
         then_var = then_vars[name]?
         else_var = else_vars[name]?
 
-        # Check wether the var didn't change at all
+        # Check whether the var didn't change at all
         next if then_var.same?(else_var)
 
         if_var = MetaVar.new(name)
