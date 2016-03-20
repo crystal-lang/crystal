@@ -123,7 +123,7 @@ class Process
     Tms.new(tms.utime / hertz, tms.stime / hertz, tms.cutime / hertz, tms.cstime / hertz)
   end
 
-  def self.daemonize(stdin : String = "/dev/null", stdout : String = "/dev/null", stderr : String = "/dev/null", dir : String = "/")
+  def self.daemonize(stdin : String = "/dev/null", stdout : String = "/dev/null", stderr : String = "/dev/null", dir : String = Dir.current)
     exit if fork
     setsid
     exit if fork
