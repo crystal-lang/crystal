@@ -55,7 +55,7 @@ describe "Spec matchers" do
     end
 
     it "works with range" do
-      (50 .. 55).should contain(53)
+      (50..55).should contain(53)
     end
 
     it "does not pass when string does not includes? specified substring" do
@@ -80,6 +80,22 @@ describe "Spec matchers" do
   context "should work like describe" do
     it "is true" do
       true.should be_truthy
+    end
+  end
+end
+
+describe "Spec" do
+  describe "use_colors?" do
+    it "returns if output is colored or not" do
+      saved = Spec.use_colors?
+      begin
+        Spec.use_colors = false
+        Spec.use_colors?.should be_false
+        Spec.use_colors = true
+        Spec.use_colors?.should be_true
+      ensure
+        Spec.use_colors = saved
+      end
     end
   end
 end

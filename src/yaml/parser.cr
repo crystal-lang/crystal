@@ -1,4 +1,7 @@
 class YAML::Parser
+  @pull_parser : PullParser
+  @anchors : Hash(String, YAML::Type)
+
   def initialize(content)
     @pull_parser = PullParser.new(content)
     @anchors = {} of String => YAML::Type
@@ -9,13 +12,13 @@ class YAML::Parser
   end
 
   def parse_all
-    documents = [] of YAML::Type
+    documents = [] of YAML::Any
     loop do
       case @pull_parser.read_next
       when EventKind::STREAM_END
         return documents
       when EventKind::DOCUMENT_START
-        documents << parse_document
+        documents << YAML::Any.new(parse_document)
       else
         unexpected_event
       end
@@ -23,14 +26,15 @@ class YAML::Parser
   end
 
   def parse
-    case @pull_parser.read_next
-    when EventKind::STREAM_END
-      nil
-    when EventKind::DOCUMENT_START
-      parse_document
-    else
-      unexpected_event
-    end
+    value = case @pull_parser.read_next
+            when EventKind::STREAM_END
+              nil
+            when EventKind::DOCUMENT_START
+              parse_document
+            else
+              unexpected_event
+            end
+    YAML::Any.new(value)
   end
 
   def parse_document
@@ -73,15 +77,22 @@ class YAML::Parser
 
   def parse_mapping
     mapping = {} of YAML::Type => YAML::Type
+    anchor mapping, @pull_parser.mapping_anchor
+
     loop do
       case @pull_parser.read_next
       when EventKind::MAPPING_END
         return mapping
       else
         key = parse_node
+        tag = @pull_parser.tag
         @pull_parser.read_next
         value = parse_node
-        mapping[key] = value
+        if key == "<<" && value.is_a?(Hash) && tag != "tag:yaml.org,2002:str"
+          mapping.merge!(value)
+        else
+          mapping[key] = value
+        end
       end
     end
   end

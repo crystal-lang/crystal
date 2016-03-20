@@ -4,7 +4,7 @@ module Crystal
   class Program
     def type_merge(types : Array(Type?))
       # Merging two types is the most common case, so we optimize it
-      if types.length == 2
+      if types.size == 2
         first, second = types[0], types[1]
         did_merge, merged_type = type_merge_two(first, second)
         return merged_type if did_merge
@@ -15,7 +15,7 @@ module Crystal
 
     def type_merge(nodes : Dependencies)
       # Merging two types is the most common case, so we optimize it
-      if nodes.length == 2
+      if nodes.size == 2
         first, second = nodes.two!
         did_merge, merged_type = type_merge_two(first.type?, second.type?)
         return merged_type if did_merge
@@ -26,7 +26,7 @@ module Crystal
 
     def type_merge(nodes : Array(ASTNode))
       # Merging two types is the most common case, so we optimize it
-      if nodes.length == 2
+      if nodes.size == 2
         first, second = nodes
         did_merge, merged_type = type_merge_two(first.type?, second.type?)
         return merged_type if did_merge
@@ -42,7 +42,7 @@ module Crystal
       elsif first
         if second
           # first and second not nil and different
-          if first.type_id > second.type_id
+          if first.opaque_id > second.opaque_id
             first, second = second, first
           end
 
@@ -73,9 +73,9 @@ module Crystal
     end
 
     def compact_types(objects)
-      all_types = Array(Type).new(objects.length)
+      all_types = Array(Type).new(objects.size)
       objects.each { |obj| add_type all_types, yield(obj) }
-      all_types.delete_if &.no_return? if all_types.length > 1
+      all_types.reject! &.no_return? if all_types.size > 1
       all_types
     end
 
@@ -98,7 +98,7 @@ module Crystal
     end
 
     def combined_union_of(types : Array)
-      case types.length
+      case types.size
       when 0
         nil
       when 1
@@ -136,7 +136,7 @@ module Crystal
     end
 
     def self.merge(types : Array(Type))
-      if types.length == 0
+      if types.size == 0
         nil
       else
         types.first.program.type_merge(types)

@@ -50,4 +50,41 @@ describe "Type inference: if" do
       ),
       "can't require dynamically"
   end
+
+  it "correctly filters type of variable if there's a raise with an interpolation that can't be typed" do
+    assert_type(%(
+      require "prelude"
+
+      def bar
+        bar
+      end
+
+      def foo
+        a = 1 || nil
+        unless a
+          raise "Oh no \#{bar}"
+        end
+        a + 2
+      end
+
+      foo
+      )) { int32 }
+  end
+
+  it "passes bug (related to #1729)" do
+    assert_type(%(
+      n = true ? 3 : 3.2
+      if n.is_a?(Float64)
+        n
+      end
+      n
+      )) { int32 }
+  end
+
+  it "restricts the type of the right hand side of an || when using is_a? (#1728)" do
+    assert_type(%(
+      n = 3 || "foobar"
+      n.is_a?(String) || (n + 1 == 2)
+      )) { bool }
+  end
 end

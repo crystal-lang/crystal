@@ -6,39 +6,49 @@ module Crystal
       (node.global ? program : self).lookup_similar_type_name(node.names)
     end
 
-    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
+    def lookup_similar_type_name(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       nil
     end
 
-    def lookup_similar_def_name(name, args_length, block)
+    def lookup_similar_def(name, args_size, block)
       nil
+    end
+
+    def lookup_similar_def_name(name, args_size, block)
+      lookup_similar_def(name, args_size, block).try &.name
     end
   end
 
   module MatchesLookup
-    SuggestableName =/\A[a-z_]/
+    SuggestableName = /\A[a-z_]/
 
-    def lookup_similar_def_name(name, args_length, block)
+    def lookup_similar_def(name, args_size, block)
       return nil unless name =~ SuggestableName
 
       if (defs = self.defs)
-        best_match = Levenshtein.find(name) do |finder|
+        best_def = nil
+        best_match = nil
+        Levenshtein.find(name) do |finder|
           defs.each do |def_name, hash|
             if def_name =~ SuggestableName
-              hash.each do |filter, overload|
-                if filter.max_length == args_length && filter.yields == !!block
+              hash.each do |def_with_metadata|
+                if def_with_metadata.max_size == args_size && def_with_metadata.yields == !!block && def_with_metadata.def.name != name
                   finder.test(def_name)
+                  if finder.best_match != best_match
+                    best_match = finder.best_match
+                    best_def = def_with_metadata.def
+                  end
                 end
               end
             end
           end
         end
-        return best_match if best_match
+        return best_def if best_def
       end
 
       parents.try &.each do |parent|
-        similar_def_name = parent.lookup_similar_def_name(name, args_length, block)
-        return similar_def_name if similar_def_name
+        similar_def = parent.lookup_similar_def(name, args_size, block)
+        return similar_def if similar_def
       end
 
       nil
@@ -46,26 +56,26 @@ module Crystal
   end
 
   class ModuleType
-    def lookup_similar_type_name(names : Array, already_looked_up = TypeIdSet.new, lookup_in_container = true)
-      return nil if already_looked_up.includes?(type_id)
+    def lookup_similar_type_name(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
+      return nil if already_looked_up.includes?(object_id)
 
       if lookup_in_container
-        already_looked_up.add(type_id)
+        already_looked_up.add(object_id)
       end
 
       type = self
       names.each_with_index do |name, idx|
         previous_type = type
-        type = previous_type.types[name]?
+        type = previous_type.types?.try &.[name]?
         unless type
           best_match = Levenshtein.find(name.downcase) do |finder|
-            previous_type.types.each_key do |type_name|
+            previous_type.types?.try &.each_key do |type_name|
               finder.test(type_name.downcase, type_name)
             end
           end
 
           if best_match
-            return (names[0 ... idx] + [best_match]).join "::"
+            return (names[0...idx] + [best_match]).join "::"
           else
             break
           end
@@ -88,17 +98,17 @@ module Crystal
   end
 
   class IncludedGenericModule
-    delegate lookup_similar_def_name, @module
+    delegate lookup_similar_def, @module
     delegate lookup_similar_type_name, @module
   end
 
   class InheritedGenericClass
-    delegate lookup_similar_def_name, @extended_class
+    delegate lookup_similar_def, @extended_class
     delegate lookup_similar_type_name, @extended_class
   end
 
   class AliasType
-    delegate lookup_similar_def_name, aliased_type
+    delegate lookup_similar_def, aliased_type
   end
 
   class MetaclassType
@@ -110,7 +120,7 @@ module Crystal
   end
 
   class VirtualType
-    delegate lookup_similar_def_name, base_type
+    delegate lookup_similar_def, base_type
     delegate lookup_similar_type_name, base_type
   end
 

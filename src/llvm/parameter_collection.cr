@@ -1,32 +1,26 @@
 struct LLVM::ParameterCollection
+  @function : Function
+
   def initialize(@function)
   end
 
-  def count
+  def size
     LibLLVM.count_param_types(@function.function_type).to_i
   end
 
-  def length
-    count
-  end
-
-  def size
-    count
-  end
-
   def to_a
-    param_count = count()
-    Array(LLVM::Value).build(param_count) do |buffer|
+    param_size = size()
+    Array(LLVM::Value).build(param_size) do |buffer|
       LibLLVM.get_params(@function, buffer as LibLLVM::ValueRef*)
-      param_count
+      param_size
     end
   end
 
   def [](index)
-    param_count = count()
-    index += param_count if index < 0
+    param_size = size()
+    index += param_size if index < 0
 
-    unless 0 <= index < param_count
+    unless 0 <= index < param_size
       raise IndexError.new
     end
 
@@ -34,16 +28,16 @@ struct LLVM::ParameterCollection
   end
 
   def first
-    raise IndexError.new if count == 0
+    raise IndexError.new if size == 0
 
     Value.new LibLLVM.get_param(@function, 0)
   end
 
   def types
-    param_count = count()
-    Array(LLVM::Type).build(param_count) do |buffer|
+    param_size = size()
+    Array(LLVM::Type).build(param_size) do |buffer|
       LibLLVM.get_param_types(@function.function_type, buffer as LibLLVM::TypeRef*)
-      param_count
+      param_size
     end
   end
 end

@@ -19,14 +19,14 @@ describe CSV do
       CSV.parse("hello,world\ngood,bye").should eq([
         ["hello", "world"],
         ["good", "bye"],
-        ])
+      ])
     end
 
     it "parses two rows with the last one having a newline" do
       CSV.parse("hello,world\ngood,bye\n").should eq([
         ["hello", "world"],
         ["good", "bye"],
-        ])
+      ])
     end
 
     it "parses with quote" do
@@ -68,7 +68,15 @@ describe CSV do
     end
 
     it "parses from IO" do
-      CSV.parse(StringIO.new(%("hel""lo",world))).should eq([[%(hel"lo), %(world)]])
+      CSV.parse(MemoryIO.new(%("hel""lo",world))).should eq([[%(hel"lo), %(world)]])
+    end
+
+    it "takes an optional separator argument" do
+      CSV.parse("foo;bar", separator: ';').should eq([["foo", "bar"]])
+    end
+
+    it "takes an optional quote char argument" do
+      CSV.parse("'foo,bar'", quote_char: '\'').should eq([["foo,bar"]])
     end
   end
 

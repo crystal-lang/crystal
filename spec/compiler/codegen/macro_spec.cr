@@ -438,18 +438,21 @@ describe "Code gen: macro" do
       class Foo
         def initialize(@x, @y)
         end
+
+        macro def foo : String
+          {{ Foo.instance_vars.last.name.stringify }}
+        end
+
       end
 
-      Foo.new(1, 2)
-
-      {{ Foo.instance_vars.last.name.stringify }}
+      Foo.new(1, 2).foo
       )).to_string.should eq("y")
   end
 
   it "runs macro with splat" do
     run(%(
       macro foo(*args)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo 1, 1, 1
@@ -459,7 +462,7 @@ describe "Code gen: macro" do
   it "runs macro with arg and splat" do
     run(%(
       macro foo(name, *args)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo bar, 1, 1, 1
@@ -469,7 +472,7 @@ describe "Code gen: macro" do
   it "runs macro with arg and splat in first position (1)" do
     run(%(
       macro foo(*args, name)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo 1, 1, 1, bar
@@ -489,7 +492,7 @@ describe "Code gen: macro" do
   it "runs macro with arg and splat in the middle (1)" do
     run(%(
       macro foo(foo, *args, name)
-        {{args.length}}
+        {{args.size}}
       end
 
       foo x, 1, 1, 1, bar
@@ -590,44 +593,56 @@ describe "Code gen: macro" do
           @x = 1; @x = 1.1
         end
         def foo
-          {{ @type.instance_vars.first.type.union_types.map &.name }}.join("-")
+          {{ @type.instance_vars.first.type.union_types.map(&.name).sort }}.join("-")
         end
       end
       Foo.new.foo
-    )).to_string.should eq("Int32-Float64")
+    )).to_string.should eq("Float64-Int32")
   end
 
-  it "can access type parameters" do
+  it "can access type variables" do
     run(%(
       class Foo(T)
         def foo
-          {{ @type.type_params.first.name.stringify }}
+          {{ @type.type_vars.first.name.stringify }}
         end
       end
       Foo(Int32).new.foo
     )).to_string.should eq("Int32")
   end
 
-  it "can acccess type parameters that are not types" do
+  it "can acccess type variables that are not types" do
     run(%(
       class Foo(T)
         def foo
-          {{ @type.type_params.first.is_a?(NumberLiteral) }}
+          {{ @type.type_vars.first.is_a?(NumberLiteral) }}
         end
       end
       Foo(1).new.foo
     )).to_b.should eq(true)
   end
 
-  it "can acccess type parameters of a tuple" do
+  it "can acccess type variables of a tuple" do
     run(%(
       struct Tuple
         def foo
-          {{ @type.type_params.first.name.stringify }}
+          {{ @type.type_vars.first.name.stringify }}
         end
       end
       {1, 2, 3}.foo
     )).to_string.should eq("Int32")
+  end
+
+  it "can access type variables of a generic type" do
+    run(%(
+      require "prelude"
+      class Foo(T, K)
+        macro def self.foo : String
+          {{ @type.type_vars.map(&.stringify) }}.join("-")
+        end
+      end
+      Foo.foo
+    )).to_string.should eq("T-K")
   end
 
   it "receives &block" do
@@ -739,7 +754,7 @@ describe "Code gen: macro" do
       )).to_string.should eq("Bar-Baz")
   end
 
-  it "gets enum members with @constants" do
+  it "gets enum members with @type.constants" do
     run(%(
       enum Color
         Red
@@ -747,15 +762,15 @@ describe "Code gen: macro" do
         Blue
 
         def self.red
-          {{@constants[0]}}
+          {{@type.constants[0]}}
         end
 
         def self.green
-          {{@constants[1]}}
+          {{@type.constants[1]}}
         end
 
         def self.blue
-          {{@constants[2]}}
+          {{@type.constants[2]}}
         end
       end
 
@@ -1001,7 +1016,7 @@ describe "Code gen: macro" do
       )).to_i.should eq(6)
   end
 
-  it "codegens macro def with default arg (similar to #496)"  do
+  it "codegens macro def with default arg (similar to #496)" do
     run(%(
       class Foo
         macro def bar(foo = 1) : Int32
@@ -1036,7 +1051,7 @@ describe "Code gen: macro" do
   it "expands macro with default arg and splat (3) (#784)" do
     run(%(
       macro some_macro(a=5, *args)
-        {{args.length}}
+        {{args.size}}
       end
 
       some_macro 1, 2, 3, 4
@@ -1142,5 +1157,104 @@ describe "Code gen: macro" do
 
       a
       )).to_i.should eq(123)
+  end
+
+  it "fixes empty types of macro expansions (#1379)" do
+    run(%(
+      macro lala(exp)
+        {{exp}}
+      end
+
+      def foo
+        bar do
+          return 123
+        end
+      end
+
+      def bar
+        return yield
+      end
+
+      lala foo
+      )).to_i.should eq(123)
+  end
+
+  it "expands macro as class method" do
+    run(%(
+      class Foo
+        macro bar
+          1
+        end
+      end
+
+      Foo.bar
+      )).to_i.should eq(1)
+  end
+
+  it "expands macro as class method and accesses @type" do
+    run(%(
+      class Foo
+        macro bar
+          {{@type.stringify}}
+        end
+      end
+
+      Foo.bar
+      )).to_string.should eq("Foo")
+  end
+
+  it "codegens macro with comment (bug) (#1396)" do
+    run(%(
+      macro my_macro
+        # {{ 1 }}
+        {{ 1 }}
+      end
+
+      my_macro
+      )).to_i.should eq(1)
+  end
+
+  it "correctly resolves constant inside block in macro def" do
+    run(%(
+      def foo
+        yield
+      end
+
+      class Foo
+        Const = 123
+
+        macro def self.bar : Int32
+          foo { Const }
+        end
+      end
+
+      Foo.bar
+      )).to_i.should eq(123)
+  end
+
+  it "can access free variables" do
+    run(%(
+      def foo(x : T)
+        {{ T.stringify }}
+      end
+
+      foo(1)
+      )).to_string.should eq("Int32")
+  end
+
+  it "types macro expansion bug (#1734)" do
+    run(%(
+      class Foo
+        macro def foo : Int32
+          1 || 2
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      x = true ? Foo.new : Bar.new
+      x.foo
+      )).to_i.should eq(1)
   end
 end

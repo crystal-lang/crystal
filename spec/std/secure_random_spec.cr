@@ -5,13 +5,13 @@ describe SecureRandom do
   describe "base64" do
     it "gets base64 with default number of digits" do
       base64 = SecureRandom.base64
-      base64.length.should eq(24)
+      base64.size.should eq(24)
       base64.should_not match(/\n/)
     end
 
     it "gets base64 with requested number of digits" do
       base64 = SecureRandom.base64(50)
-      base64.length.should eq(68)
+      base64.size.should eq(68)
       base64.should_not match(/\n/)
     end
   end
@@ -19,13 +19,13 @@ describe SecureRandom do
   describe "urlsafe_base64" do
     it "gets urlsafe base64 with default number of digits" do
       base64 = SecureRandom.urlsafe_base64
-      (base64.length <= 24).should be_true
+      (base64.size <= 24).should be_true
       base64.should_not match(/[\n+\/=]/)
     end
 
     it "gets urlsafe base64 with requested number of digits" do
       base64 = SecureRandom.urlsafe_base64(50)
-      (base64.length >= 24 && base64.length <= 68).should be_true
+      (base64.size >= 24 && base64.size <= 68).should be_true
       base64.should_not match(/[\n+\/=]/)
     end
 
@@ -38,7 +38,7 @@ describe SecureRandom do
   describe "hex" do
     it "gets hex with default number of digits" do
       hex = SecureRandom.hex
-      hex.length.should eq(32)
+      hex.size.should eq(32)
       hex.each_char do |char|
         ('0' <= char <= '9' || 'a' <= char <= 'f').should be_true
       end
@@ -46,7 +46,7 @@ describe SecureRandom do
 
     it "gets hex with requested number of digits" do
       hex = SecureRandom.hex(50)
-      hex.length.should eq(100)
+      hex.size.should eq(100)
       hex.each_char do |char|
         ('0' <= char <= '9' || 'a' <= char <= 'f').should be_true
       end
@@ -56,12 +56,12 @@ describe SecureRandom do
   describe "random_bytes" do
     it "gets random bytes with default number of digits" do
       bytes = SecureRandom.random_bytes
-      bytes.length.should eq(16)
+      bytes.size.should eq(16)
     end
 
     it "gets random bytes with requested number of digits" do
       bytes = SecureRandom.random_bytes(50)
-      bytes.length.should eq(50)
+      bytes.size.should eq(50)
     end
   end
 

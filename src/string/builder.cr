@@ -1,21 +1,26 @@
 require "io"
 
-# Similar to `StringIO`, but optimized for building a single string.
+# Similar to `MemoryIO`, but optimized for building a single string.
 #
 # You should never have to deal with this class. Instead, use `String.build`.
 class String::Builder
   include IO
 
-  getter bytesize
+  getter bytesize : Int32
+  @capacity : Int32
+  @buffer : Pointer(UInt8)
+  @finished : Bool
 
-  def initialize(capacity = 64)
+  def initialize(capacity : Int = 64)
+    String.check_capacity_in_bounds(capacity)
+
     @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
     @bytesize = 0
-    @capacity = capacity
+    @capacity = capacity.to_i
     @finished = false
   end
 
-  def self.build(capacity = 64)
+  def self.build(capacity : Int = 64)
     builder = new(capacity)
     yield builder
     builder.to_s
@@ -32,7 +37,7 @@ class String::Builder
   end
 
   def write(slice : Slice(UInt8))
-    count = slice.length
+    count = slice.size
     new_bytesize = real_bytesize + count
     if new_bytesize > @capacity
       resize_to_capacity(Math.pw2ceil(new_bytesize))
@@ -41,7 +46,7 @@ class String::Builder
     slice.copy_to(@buffer + real_bytesize, count)
     @bytesize += count
 
-    count
+    nil
   end
 
   def buffer

@@ -24,5 +24,5 @@ describe "Signal" do
     Process.kill Signal::USR2, Process.pid
   end
 
-# TODO: test Signal::X.reset
+  # TODO: test Signal::X.reset
 end

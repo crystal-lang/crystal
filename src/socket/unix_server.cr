@@ -1,18 +1,18 @@
 require "./unix_socket"
 
 class UNIXServer < UNIXSocket
-  def initialize(@path : String, socktype =  Socket::Type::STREAM : Socket::Type, backlog = 128)
+  def initialize(@path : String, socktype : Socket::Type = Socket::Type::STREAM, backlog = 128)
     File.delete(path) if File.exists?(path)
 
     sock = create_socket(LibC::AF_UNIX, socktype.value, 0)
 
     addr = LibC::SockAddrUn.new
-    addr.family = typeof(addr.family).cast(LibC::AF_UNIX)
-    if path.bytesize + 1 > addr.path.length
-      raise "Path length exceeds the maximum size of #{addr.path.length - 1} bytes"
+    addr.family = typeof(addr.family).new(LibC::AF_UNIX)
+    if path.bytesize + 1 > addr.path.size
+      raise "Path size exceeds the maximum size of #{addr.path.size - 1} bytes"
     end
-    addr.path.buffer.copy_from(path.cstr, path.bytesize + 1)
-    if LibC.bind(sock, (pointerof(addr) as LibC::SockAddr*), LibC::SocklenT.cast(sizeof(LibC::SockAddrUn))) != 0
+    addr.path.to_unsafe.copy_from(path.to_unsafe, path.bytesize + 1)
+    if LibC.bind(sock, (pointerof(addr) as LibC::SockAddr*), sizeof(LibC::SockAddrUn)) != 0
       LibC.close(sock)
       raise Errno.new("Error binding UNIX server at #{path}")
     end
@@ -26,8 +26,20 @@ class UNIXServer < UNIXSocket
   end
 
   def accept
-    client_fd = LibC.accept(@fd, out client_addr, out client_addrlen)
-    UNIXSocket.new(client_fd)
+    loop do
+      client_fd = LibC.accept(@fd, out client_addr, out client_addrlen)
+      if client_fd == -1
+        if Errno.value == Errno::EAGAIN
+          wait_readable
+        else
+          raise Errno.new("Error accepting socket at #{path}")
+        end
+      else
+        sock = UNIXSocket.new(client_fd)
+        sock.sync = sync?
+        return sock
+      end
+    end
   end
 
   def accept

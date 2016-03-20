@@ -3,7 +3,7 @@ require "../../spec_helper"
 class Crystal::Program
   def t(type)
     if type.ends_with?('+')
-      types[type[0 .. -2]].virtual_type
+      types[type[0..-2]].virtual_type
     else
       types[type]
     end
@@ -103,7 +103,7 @@ describe "Restrictions" do
 
   it "passes #278" do
     assert_error %(
-      def bar(x : String, y = nil : String)
+      def bar(x : String, y : String = nil)
       end
 
       bar(1 || "")
@@ -119,7 +119,7 @@ describe "Restrictions" do
 
       foo(1 || 1.5)
       ),
-      "can't lookup type in union (Int32 | Float64)"
+      "can't lookup type in union (Float64 | Int32)"
   end
 
   it "errors on T::Type that's a union when used from block type restriction" do
@@ -131,7 +131,7 @@ describe "Restrictions" do
 
       Foo(Int32 | Float64).foo { 1 + 2 }
       ),
-      "can't lookup type in union (Int32 | Float64)"
+      "can't lookup type in union (Float64 | Int32)"
   end
 
   it "errors if can't find type on lookup" do
@@ -162,7 +162,7 @@ describe "Restrictions" do
         'a'
       end
 
-      x :: UInt8[2]
+      x = uninitialized UInt8[2]
       foo(x)
       )) { char }
   end
@@ -173,7 +173,7 @@ describe "Restrictions" do
         'a'
       end
 
-      x :: UInt8[2]
+      x = uninitialized UInt8[2]
       foo(x)
       )) { char }
   end
@@ -230,9 +230,9 @@ describe "Restrictions" do
 
       foo(Foo(Int32).new || Foo(Float64).new)
       )) { union_of(
-            (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar),
-            (types["Foo"] as GenericClassType).instantiate([float64] of TypeVar),
-           ) }
+      (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar),
+      (types["Foo"] as GenericClassType).instantiate([float64] of TypeVar),
+    ) }
   end
 
   it "should not let GenericChild(Base) pass as a GenericBase(Child) (#1294)" do
@@ -274,5 +274,103 @@ describe "Restrictions" do
       h1 = Bar(NestedParams).new
       bar(h1)
       )) { char }
+  end
+
+  it "restricts class union type to overloads with classes" do
+    assert_type(%(
+      def foo(x : Int32.class)
+        1_u8
+      end
+
+      def foo(x : String.class)
+        1_u16
+      end
+
+      def foo(x : Bool.class)
+        1_u32
+      end
+
+      a = 1 || "foo" || true
+      foo(a.class)
+      )) { union_of([uint8, uint16, uint32] of Type) }
+  end
+
+  it "restricts class union type to overloads with classes (2)" do
+    assert_type(%(
+      def foo(x : Int32.class)
+        1_u8
+      end
+
+      def foo(x : String.class)
+        1_u16
+      end
+
+      def foo(x : Bool.class)
+        1_u32
+      end
+
+      a = 1 || "foo"
+      foo(a.class)
+      )) { union_of([uint8, uint16] of Type) }
+  end
+
+  it "makes metaclass subclass pass parent metaclass restriction (#2079)" do
+    assert_type(%(
+      class A; end
+
+      class B < A; end
+
+      def foo : A.class # offending return type restriction
+        B
+      end
+
+      foo
+      )) { types["B"].metaclass }
+  end
+
+  it "matches virtual type against alias" do
+    assert_type(%(
+      module Moo
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar < Foo
+      end
+
+      class Baz < Bar
+      end
+
+      alias Alias = Moo
+
+      def foo(x : Alias)
+        1
+      end
+
+      foo(Baz.new as Bar)
+      )) { int32 }
+  end
+
+  it "matches alias against alias in block type" do
+    assert_type(%(
+      class Foo(T)
+        def self.new(&block : -> T)
+          Foo(T).new
+        end
+
+        def initialize
+        end
+
+        def t
+          T
+        end
+      end
+
+      alias Rec = Nil | Array(Rec)
+
+      Foo.new { nil as Rec }.t
+      )) { types["Rec"].metaclass }
   end
 end

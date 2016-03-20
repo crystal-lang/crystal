@@ -10,6 +10,8 @@ struct IO::FdSet
     fdset
   end
 
+  @fdset : Int32[32]
+
   def initialize
     @fdset = StaticArray(Int32, 32).new(0)
   end
@@ -26,4 +28,3 @@ struct IO::FdSet
     pointerof(@fdset) as Void*
   end
 end
-

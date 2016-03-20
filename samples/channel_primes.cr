@@ -17,17 +17,13 @@ def filter(in_chan, out_chan, prime)
   end
 end
 
-def run_filter(in_chan, out_chan, prime)
-  spawn { filter(in_chan, out_chan, prime) }
-end
-
 ch = Channel(Int32).new
-spawn { generate(ch) }
+spawn generate(ch)
 
 100.times do
   prime = ch.receive
   puts prime
   ch1 = Channel(Int32).new
-  run_filter(ch, ch1, prime)
+  spawn filter(ch, ch1, prime)
   ch = ch1
 end

@@ -29,10 +29,10 @@ module Crystal
   end
 
   class ContextResult
-    json_mapping({
-      status:           {type: String},
-      message:          {type: String},
-      contexts:         {type: Array(HashStringType), nilable: true},
+    JSON.mapping({
+      status:   {type: String},
+      message:  {type: String},
+      contexts: {type: Array(HashStringType), nilable: true},
     })
 
     def initialize(@status, @message)
@@ -41,14 +41,14 @@ module Crystal
     def to_text(io)
       io.puts message
 
-      if (ctxs = contexts) && ctxs.length > 0
+      if (ctxs = contexts) && ctxs.size > 0
         exprs = ctxs.first.keys
 
         io.puts
         TablePrint.new(io).build do
           row do
             cell "Expr"
-            cell "Type", colspan: ctxs.length
+            cell "Type", colspan: ctxs.size
           end
           separator
 
@@ -64,12 +64,14 @@ module Crystal
           end
         end
         io.puts
-
       end
     end
   end
 
   class RechableVisitor < Visitor
+    @context_visitor : Crystal::ContextVisitor
+    @visited_typed_defs : Set(UInt64)
+
     def initialize(@context_visitor)
       @visited_typed_defs = Set(typeof(object_id)).new
     end
@@ -98,8 +100,10 @@ module Crystal
   end
 
   class ContextVisitor < Visitor
-    getter contexts
-    getter def_with_yield
+    getter contexts : Array(HashStringType)
+    getter def_with_yield : Def?
+    @context : HashStringType
+    @target_location : Location
 
     def initialize(@target_location)
       @contexts = Array(HashStringType).new
@@ -134,8 +138,8 @@ module Crystal
     end
 
     def process_type(type, &block)
-      if type.is_a?(ContainedType)
-        type.types.values.each do |inner_type|
+      if type.is_a?(NamedType)
+        type.types?.try &.values.each do |inner_type|
           process_type(inner_type)
         end
       end
@@ -146,8 +150,8 @@ module Crystal
           process_type(instanced_types) do
             type_vars.each.zip(type_vars_args.each).each do |e|
               generic_arg_name, generic_arg_type = e
-                # TODO handle generic_arg_type that are not types but ASTNode
-                add_context generic_arg_name, generic_arg_type if generic_arg_type.is_a?(Type)
+              # TODO handle generic_arg_type that are not types but ASTNode
+              add_context generic_arg_name, generic_arg_type if generic_arg_type.is_a?(Type)
             end
           end
         end
@@ -162,7 +166,7 @@ module Crystal
         visit_and_append_context typed_def
       end
 
-      result.program.types.values.each do |type|
+      result.program.types?.try &.values.each do |type|
         process_type type
       end
 
@@ -185,7 +189,7 @@ module Crystal
       if @contexts.empty?
         return ContextResult.new("failed", "no context information found")
       else
-        res = ContextResult.new("ok", "#{@contexts.count} possible context#{@contexts.count > 1 ? "s" : ""} found")
+        res = ContextResult.new("ok", "#{@contexts.size} possible context#{@contexts.size > 1 ? "s" : ""} found")
         res.contexts = @contexts
         return res
       end
@@ -204,7 +208,6 @@ module Crystal
 
     def visit(node : Def)
       if contains_target(node)
-
         if @def_with_yield.nil? && !node.yields.nil?
           @def_with_yield = node
           return false
@@ -228,7 +231,7 @@ module Crystal
           add_context arg.name, arg.type
         end
         node.vars.try do |vars|
-          vars.each do |_,var|
+          vars.each do |_, var|
             add_context var.name, var.type
           end
         end

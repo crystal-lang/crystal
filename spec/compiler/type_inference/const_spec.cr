@@ -172,17 +172,27 @@ describe "Type inference: const" do
       "constant A requires initialization of B, which is initialized later. Initialize B before A"
   end
 
-  it "errors if constant depends on another one defined later through method" do
-    assert_error %(
-      A = foo
-      B = 1
+  ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2", "1 + 2", "1 + Z"].each do |node|
+    it "doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})" do
+      infer_type(%(
+        Z = 10
 
-      def foo
-        B
-      end
+        struct Int32
+          def +; 0; end
+          def ~; 0; end
+          def -; 0; end
+        end
 
-      A
-      ), "constant A requires initialization of B, which is initialized later. Initialize B before A"
+        A = foo
+        B = #{node}
+
+        def foo
+          B
+        end
+
+        A
+        ))
+    end
   end
 
   it "doesn't error if using c enum" do
@@ -220,5 +230,27 @@ describe "Type inference: const" do
 
       A
       )) { |mod| mod.nil }
+  end
+
+  it "errors on dynamic constant assignment inside block" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do
+        A = 1
+      end
+      ),
+      "can't declare constant inside block"
+  end
+
+  it "errors on dynamic constant assignment inside if" do
+    assert_error %(
+      if 1 == 1
+        A = 1
+      end
+      ),
+      "can't declare constant dynamically"
   end
 end

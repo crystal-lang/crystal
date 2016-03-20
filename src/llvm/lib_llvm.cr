@@ -33,8 +33,9 @@ lib LibLLVM
   fun add_function_attr = LLVMAddFunctionAttr(fn : ValueRef, pa : LLVM::Attribute)
   fun get_function_attr = LLVMGetFunctionAttr(fn : ValueRef) : LLVM::Attribute
   fun add_global = LLVMAddGlobal(module : ModuleRef, type : TypeRef, name : UInt8*) : ValueRef
-  fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef *, count : Int32)
+  fun add_incoming = LLVMAddIncoming(phi_node : ValueRef, incoming_values : ValueRef*, incoming_blocks : BasicBlockRef*, count : Int32)
   fun add_named_metadata_operand = LLVMAddNamedMetadataOperand(mod : ModuleRef, name : UInt8*, val : ValueRef)
+  fun add_target_dependent_function_attr = LLVMAddTargetDependentFunctionAttr(fn : ValueRef, a : LibC::Char*, v : LibC::Char*)
   fun append_basic_block = LLVMAppendBasicBlock(fn : ValueRef, name : UInt8*) : BasicBlockRef
   fun array_type = LLVMArrayType(element_type : TypeRef, count : UInt32) : TypeRef
   fun vector_type = LLVMVectorType(element_type : TypeRef, count : UInt32) : TypeRef
@@ -105,7 +106,7 @@ lib LibLLVM
   fun create_builder = LLVMCreateBuilder : BuilderRef
   fun create_generic_value_of_int = LLVMCreateGenericValueOfInt(ty : TypeRef, n : UInt64, is_signed : Int32) : GenericValueRef
   fun create_generic_value_of_pointer = LLVMCreateGenericValueOfPointer(p : Void*) : GenericValueRef
-  fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule (jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : UInt8**) : Int32
+  fun create_jit_compiler_for_module = LLVMCreateJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, opt_level : Int32, error : UInt8**) : Int32
   fun create_mc_jit_compiler_for_module = LLVMCreateMCJITCompilerForModule(jit : ExecutionEngineRef*, m : ModuleRef, options : JITCompilerOptions*, options_length : UInt32, error : UInt8**) : Int32
   fun create_target_machine = LLVMCreateTargetMachine(target : TargetRef, triple : UInt8*, cpu : UInt8*, features : UInt8*, level : LLVM::CodeGenOptLevel, reloc : LLVM::RelocMode, code_model : LLVM::CodeModel) : TargetMachineRef
   fun delete_basic_block = LLVMDeleteBasicBlock(block : BasicBlockRef)
@@ -120,6 +121,7 @@ lib LibLLVM
   fun generic_value_to_int = LLVMGenericValueToInt(value : GenericValueRef, signed : Int32) : UInt64
   fun generic_value_to_pointer = LLVMGenericValueToPointer(value : GenericValueRef) : Void*
   fun get_attribute = LLVMGetAttribute(arg : ValueRef) : LLVM::Attribute
+  fun get_current_debug_location = LLVMGetCurrentDebugLocation(builder : BuilderRef) : ValueRef
   fun get_element_type = LLVMGetElementType(ty : TypeRef) : TypeRef
   fun get_first_instruction = LLVMGetFirstInstruction(block : BasicBlockRef) : ValueRef
   fun get_first_target = LLVMGetFirstTarget : TargetRef
@@ -157,6 +159,8 @@ lib LibLLVM
   fun md_node = LLVMMDNode(values : ValueRef*, count : Int32) : ValueRef
   fun md_string = LLVMMDString(str : UInt8*, length : Int32) : ValueRef
   fun module_create_with_name = LLVMModuleCreateWithName(module_id : UInt8*) : ModuleRef
+  fun module_create_with_name_in_context = LLVMModuleCreateWithNameInContext(module_id : UInt8*, context : ContextRef) : ModuleRef
+  fun offset_of_element = LLVMOffsetOfElement(td : TargetDataRef, struct_type : TypeRef, element : LibC::UInt) : Int64
   fun pass_manager_builder_create = LLVMPassManagerBuilderCreate : PassManagerBuilderRef
   fun pass_manager_builder_set_opt_level = LLVMPassManagerBuilderSetOptLevel(builder : PassManagerBuilderRef, opt_level : UInt32)
   fun pass_manager_builder_set_size_level = LLVMPassManagerBuilderSetSizeLevel(builder : PassManagerBuilderRef, size_level : UInt32)
@@ -170,7 +174,7 @@ lib LibLLVM
   fun pointer_type = LLVMPointerType(element_type : TypeRef, address_space : UInt32) : TypeRef
   fun position_builder_at_end = LLVMPositionBuilderAtEnd(builder : BuilderRef, block : BasicBlockRef)
   fun print_module_to_file = LLVMPrintModuleToFile(m : ModuleRef, filename : UInt8*, error_msg : UInt8**) : Int32
-  fun run_function = LLVMRunFunction (ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : GenericValueRef*) : GenericValueRef
+  fun run_function = LLVMRunFunction(ee : ExecutionEngineRef, f : ValueRef, num_args : Int32, args : GenericValueRef*) : GenericValueRef
   fun run_pass_manager = LLVMRunPassManager(pm : PassManagerRef, m : ModuleRef) : Int32
   fun initialize_function_pass_manager = LLVMInitializeFunctionPassManager(fpm : PassManagerRef) : Int32
   fun run_function_pass_manager = LLVMRunFunctionPassManager(fpm : PassManagerRef, f : ValueRef) : Int32
@@ -238,4 +242,14 @@ lib LibLLVM
   fun abi_alignment_of_type = LLVMABIAlignmentOfType(td : TargetDataRef, ty : TypeRef) : UInt32
   fun get_target_machine_target = LLVMGetTargetMachineTarget(t : TargetMachineRef) : TargetRef
   fun const_inline_asm = LLVMConstInlineAsm(t : TypeRef, asm_string : UInt8*, constraints : UInt8*, has_side_effects : Int32, is_align_stack : Int32) : ValueRef
+  fun create_context = LLVMContextCreate : ContextRef
+  fun dispose_module = LLVMDisposeModule(ModuleRef)
+  fun dispose_builder = LLVMDisposeBuilder(BuilderRef)
+  fun dispose_target_machine = LLVMDisposeTargetMachine(TargetMachineRef)
+  fun dispose_generic_value = LLVMDisposeGenericValue(GenericValueRef)
+  fun dispose_execution_engine = LLVMDisposeExecutionEngine(ExecutionEngineRef)
+  fun dispose_context = LLVMContextDispose(ContextRef)
+  fun dispose_pass_manager = LLVMDisposePassManager(PassManagerRef)
+  fun dispose_target_data = LLVMDisposeTargetData(TargetDataRef)
+  fun dispose_pass_manager_builder = LLVMPassManagerBuilderDispose(PassManagerBuilderRef)
 end

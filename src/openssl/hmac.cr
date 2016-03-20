@@ -14,12 +14,12 @@ class OpenSSL::HMAC
           when :sha256    then LibCrypto.evp_sha256
           when :sha384    then LibCrypto.evp_sha384
           when :sha512    then LibCrypto.evp_sha512
-          else raise "Unsupported digest algorithm: #{algorithm}"
+          else                 raise "Unsupported digest algorithm: #{algorithm}"
           end
     key_slice = key.to_slice
     data_slice = data.to_slice
     buffer = Slice(UInt8).new(128)
-    LibCrypto.hmac(evp, key_slice, key_slice.length, data_slice, LibC::SizeT.cast(data_slice.length), buffer, out buffer_len)
+    LibCrypto.hmac(evp, key_slice, key_slice.size, data_slice, data_slice.size, buffer, out buffer_len)
     buffer[0, buffer_len.to_i]
   end
 

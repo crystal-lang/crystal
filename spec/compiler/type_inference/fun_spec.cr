@@ -66,7 +66,7 @@ describe "Type inference: fun" do
       ") { float64 }
   end
 
-  it "errors when using local varaible with fun argument name" do
+  it "errors when using local variable with fun argument name" do
     assert_error "->(a : Int32) { }; a",
       "undefined local variable or method 'a'"
   end
@@ -154,7 +154,7 @@ describe "Type inference: fun" do
       "no overload matches"
   end
 
-  it "has fun literal as restriction and errors if lengths is different" do
+  it "has fun literal as restriction and errors if sizes are different" do
     assert_error "
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -179,7 +179,7 @@ describe "Type inference: fun" do
   it "disallows casting a fun type to one accepting more arguments" do
     assert_error("
       f = ->(x : Int32) { x.to_f }
-      f as Int32, Int32 -> Float64
+      f as (Int32, Int32 -> Float64)
       ",
       "can't cast")
   end
@@ -199,7 +199,7 @@ describe "Type inference: fun" do
       "can't cast (Int32 -> Float64) to ( -> Float64)"
   end
 
-  it "disallows casting a fun type to one accepting same length argument but different output" do
+  it "disallows casting a fun type to one accepting same size argument but different output" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f as Int32 -> Int32
@@ -207,7 +207,7 @@ describe "Type inference: fun" do
       "can't cast (Int32 -> Float64) to (Int32 -> Int32)"
   end
 
-  it "disallows casting a fun type to one accepting same length argument but different input" do
+  it "disallows casting a fun type to one accepting same size argument but different input" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f as Float64 -> Float64
@@ -260,19 +260,6 @@ describe "Type inference: fun" do
   it "types nil or fun type" do
     result = assert_type("1 == 1 ? nil : ->{}") { |mod| union_of(mod.nil, mod.fun_of(mod.nil)) }
     result.node.type.should be_a(NilableFunType)
-  end
-
-  it "undefs fun" do
-    assert_error %(
-      fun foo : Int32
-        1
-      end
-
-      undef foo
-
-      foo
-      ),
-      "undefined local variable or method 'foo'"
   end
 
   it "allows passing NoReturn type for any return type (1)" do
@@ -344,7 +331,7 @@ describe "Type inference: fun" do
       alias F = Int32 -> Int32
       F.new { |x, y| }
       ",
-      "wrong number of block arguments for (Int32 -> Int32)#new (2 for 1)"
+      "wrong number of block arguments for (Int32 -> Int32)#new (given 2, expected 1)"
   end
 
   it "says wrong return type in new on fun type" do
@@ -352,7 +339,7 @@ describe "Type inference: fun" do
       alias F = Int32 -> Int32
       F.new &.to_f
       ",
-      "expected new to return Int32, not Float64"
+      "expected block to return Int32, not Float64"
   end
 
   it "errors if missing argument type in fun literal" do
@@ -516,7 +503,7 @@ describe "Type inference: fun" do
         fun foo : Int32
       end
       ),
-      "wrong number of arguments for attribute CallConvention (2 for 1)"
+      "wrong number of arguments for attribute CallConvention (given 2, expected 1)"
   end
 
   it "errors if CallConvention argument is not a string" do
@@ -624,7 +611,7 @@ describe "Type inference: fun" do
       )) { fun_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
   end
 
-  it "uses array argument of fun arg(3)" do
+  it "uses array argument of fun arg (3)" do
     assert_type(%(
       require "prelude"
 
@@ -645,7 +632,7 @@ describe "Type inference: fun" do
       block = foo { |elems| Bar.new((elems[0] as Bar).value) }
       elems = [Foo.new, Bar.new(1)]
       block
-      )) { fun_of(array_of(types["Foo"].virtual_type), types["Bar"]) }
+      )) { fun_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
   end
 
   it "uses array argument of fun arg (4)" do
@@ -802,5 +789,22 @@ describe "Type inference: fun" do
 
       foo
       )) { int32 }
+  end
+
+  it "doesn't crash on constant to fun pointer" do
+    assert_type(%(
+      lib LibC
+        fun foo
+      end
+
+      FOO = ->LibC.foo
+      1
+      )) { int32 }
+  end
+
+  it "sets proc type as void if explicitly told so, when using new" do
+    assert_type(%(
+      Proc(Int32, Void).new { 1 }
+      )) { fun_of(int32, void) }
   end
 end

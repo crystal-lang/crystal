@@ -9,37 +9,66 @@ module Crystal
       config = Config.new
 
       OptionParser.parse(args) do |opts|
-        opts.banner = %{USAGE: crystal init TYPE NAME [DIR]
+        opts.banner = <<-USAGE
+          Usage: crystal init TYPE NAME [DIR]
 
-TYPE is one of:
-    lib                      creates library skeleton
-    app                      creates application skeleton
+          TYPE is one of:
+              lib                      creates library skeleton
+              app                      creates application skeleton
 
-NAME - name of project to be generated,
-       eg: example
-DIR  - directory where project will be generated,
-       default: NAME, eg: ./custom/path/example
-}
+          NAME - name of project to be generated,
+                 eg: example
+          DIR  - directory where project will be generated,
+                 default: NAME, eg: ./custom/path/example
 
-        opts.on("--help", "Shows this message") do
+          USAGE
+
+        opts.on("--help", "show this help") do
           puts opts
           exit
         end
 
         opts.unknown_args do |args, after_dash|
           config.skeleton_type = fetch_skeleton_type(opts, args)
-          config.name = fetch_required_parameter(opts, args, "NAME")
-          config.dir = args.empty? ? config.name : args.shift
+          config.name = fetch_name(opts, args)
+          config.dir = fetch_directory(args, config.name)
         end
       end
 
       config.author = fetch_author
+      config.email = fetch_email
+      config.github_name = fetch_github_name
       InitProject.new(config).run
     end
 
     def self.fetch_author
       return "[your-name-here]" unless system(WHICH_GIT_COMMAND)
       `git config --get user.name`.strip
+    end
+
+    def self.fetch_email
+      return "[your-email-here]" unless system(WHICH_GIT_COMMAND)
+      `git config --get user.email`.strip
+    end
+
+    def self.fetch_github_name
+      default = "[your-github-name]"
+      return default unless system(WHICH_GIT_COMMAND)
+      github_user = `git config --get github.user`.strip
+      github_user.empty? ? default : github_user
+    end
+
+    def self.fetch_name(opts, args)
+      fetch_required_parameter(opts, args, "NAME")
+    end
+
+    def self.fetch_directory(args, project_name)
+      directory = args.empty? ? project_name : args.shift
+      if Dir.exists?(directory) || File.exists?(directory)
+        puts "file or directory #{directory} already exists"
+        exit 1
+      end
+      directory
     end
 
     def self.fetch_skeleton_type(opts, args)
@@ -62,27 +91,29 @@ DIR  - directory where project will be generated,
     end
 
     class Config
-      property skeleton_type
-      property name
-      property dir
-      property author
-      property silent
+      property skeleton_type : String
+      property name : String
+      property dir : String
+      property author : String
+      property email : String
+      property github_name : String
+      property silent : Bool
 
-      def initialize
-        @skeleton_type = "none"
-        @name = "none"
-        @dir = "none"
-        @author = "none"
-        @silent = false
-      end
-
-      def initialize(@skeleton_type, @name, @dir, @author, @silent = false)
+      def initialize(
+                     @skeleton_type = "none",
+                     @name = "none",
+                     @dir = "none",
+                     @author = "none",
+                     @email = "none",
+                     @github_name = "none",
+                     @silent = false)
       end
     end
 
     abstract class View
-      getter config
+      getter config : Config
 
+      @@views : Array(View.class)
       @@views = [] of View.class
 
       def self.views
@@ -103,7 +134,7 @@ DIR  - directory where project will be generated,
       end
 
       def log_message
-        "      #{"create".colorize(:light_green)}  #{full_path}" 
+        "      #{"create".colorize(:light_green)}  #{full_path}"
       end
 
       def module_name
@@ -114,7 +145,7 @@ DIR  - directory where project will be generated,
     end
 
     class InitProject
-      getter config
+      getter config : Config
 
       def initialize(@config)
       end
@@ -150,7 +181,7 @@ DIR  - directory where project will be generated,
 
     macro template(name, template_path, full_path)
       class {{name.id}} < View
-        ecr_file "{{TEMPLATE_DIR.id}}/{{template_path.id}}"
+        ECR.def_to_s "{{TEMPLATE_DIR.id}}/{{template_path.id}}"
         def full_path
           "#{config.dir}/#{{{full_path}}}"
         end
@@ -163,7 +194,7 @@ DIR  - directory where project will be generated,
     template LicenseView, "license.ecr", "LICENSE"
     template ReadmeView, "readme.md.ecr", "README.md"
     template TravisView, "travis.yml.ecr", ".travis.yml"
-    template ProjectileView, "projectfile.ecr", "Projectfile"
+    template ShardView, "shard.yml.ecr", "shard.yml"
 
     template SrcExampleView, "example.cr.ecr", "src/#{config.name}.cr"
     template SrcVersionView, "version.cr.ecr", "src/#{config.name}/version.cr"

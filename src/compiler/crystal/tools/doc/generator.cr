@@ -1,5 +1,13 @@
 class Crystal::Doc::Generator
-  getter program
+  getter program : Program
+
+  @included_dirs : Array(String)
+  @dir : String
+  @base_dir : String
+  @types : Hash(Crystal::Type, Doc::Type)
+  @is_crystal_repository : Bool
+  @repo_name : String
+  @repository : String?
 
   def initialize(@program, @included_dirs, @dir = "./doc")
     @base_dir = `pwd`.chomp
@@ -20,6 +28,10 @@ class Crystal::Doc::Generator
     end
 
     generate_docs program_type, types
+  end
+
+  def program_type
+    type(@program)
   end
 
   def generate_docs(program_type, types)
@@ -165,7 +177,7 @@ class Crystal::Doc::Generator
   def collect_subtypes(parent)
     types = [] of Type
 
-    parent.types.each_value do |type|
+    parent.types?.try &.each_value do |type|
       case type
       when Const, LibType
         next
@@ -180,7 +192,7 @@ class Crystal::Doc::Generator
   def collect_constants(parent)
     types = [] of Constant
 
-    parent.type.types.each_value do |type|
+    parent.type.types?.try &.each_value do |type|
       if type.is_a?(Const) && must_include? type
         types << Constant.new(self, parent, type)
       end
@@ -203,7 +215,7 @@ class Crystal::Doc::Generator
 
     dot_index = line =~ /\.($|\s)/
     if dot_index
-      line = line[0 .. dot_index]
+      line = line[0..dot_index]
     end
 
     doc context, line
@@ -224,7 +236,7 @@ class Crystal::Doc::Generator
 
   def fetch_doc_lines(doc)
     doc.gsub /\n+/ do |match|
-      if match.length == 1
+      if match.size == 1
         " "
       else
         "\n"
@@ -234,23 +246,21 @@ class Crystal::Doc::Generator
 
   def compute_repository
     remotes = `git remote -v`
-    return unless  $?.success?
+    return unless $?.success?
 
-    remotes.lines.each do |line|
-      if line =~ /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_|\.)+)/
-        user, repo = $1, $2.gsub(/\.git$/, "")
-        rev = `git rev-parse HEAD`.chomp
+    github_remote_pattern = /github\.com(?:\:|\/)((?:\w|-|_)+)\/((?:\w|-|_|\.)+)/
+    github_remotes = remotes.lines.select &.match(github_remote_pattern)
+    remote = github_remotes.find(&.starts_with?("origin")) || github_remotes.first?
+    return unless remote
 
-        @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
-        @repo_name = "github.com/#{user}/#{repo}"
+    _, user, repo = remote.match(github_remote_pattern).not_nil!
+    repo = repo.gsub(/\.git$/, "")
+    rev = `git rev-parse HEAD`.chomp
 
-        if user == "manastech" && repo == "crystal"
-          @is_crystal_repository = true
-        end
+    @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
+    @repo_name = "github.com/#{user}/#{repo}"
 
-        break
-      end
-    end
+    @is_crystal_repository ||= (user == "crystal-lang" && repo == "crystal")
   end
 
   def source_link(node)
@@ -285,10 +295,10 @@ class Crystal::Doc::Generator
     filename = location.filename
     return unless filename.is_a?(String)
     return unless filename.starts_with? @base_dir
-    filename[@base_dir.length .. -1]
+    filename[@base_dir.size..-1]
   end
 
-  record RelativeLocation, filename, url
+  record RelativeLocation, filename : String, url : String?
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)
@@ -303,8 +313,8 @@ class Crystal::Doc::Generator
 
       url = "#{repository}#{filename}" if repository
 
-      filename = filename[1 .. -1] if filename.starts_with? File::SEPARATOR
-      filename = filename[4 .. -1] if filename.starts_with? SRC_SEP
+      filename = filename[1..-1] if filename.starts_with? File::SEPARATOR
+      filename = filename[4..-1] if filename.starts_with? SRC_SEP
 
       locations << RelativeLocation.new(filename, url)
     end

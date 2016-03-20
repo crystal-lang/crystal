@@ -10,7 +10,10 @@ module Event
 
   # :nodoc:
   struct Event
-    def initialize(@event)
+    @event : LibEvent2::Event
+    @freed : Bool
+
+    def initialize(@event : LibEvent2::Event)
       @freed = false
     end
 
@@ -37,17 +40,17 @@ module Event
     end
 
     private def to_timeval(time : Int)
-      t :: LibC::TimeVal
-      t.tv_sec = typeof(t.tv_sec).cast(time)
-      t.tv_usec = typeof(t.tv_usec).cast(0)
+      t = uninitialized LibC::TimeVal
+      t.tv_sec = typeof(t.tv_sec).new(time)
+      t.tv_usec = typeof(t.tv_usec).new(0)
       t
     end
 
     private def to_timeval(time : Float)
-      t :: LibC::TimeVal
+      t = uninitialized LibC::TimeVal
 
-      seconds = typeof(t.tv_sec).cast(time)
-      useconds = typeof(t.tv_usec).cast((time - seconds) * 1e6)
+      seconds = typeof(t.tv_sec).new(time)
+      useconds = typeof(t.tv_usec).new((time - seconds) * 1e6)
 
       t.tv_sec = seconds
       t.tv_usec = useconds
@@ -57,6 +60,8 @@ module Event
 
   # :nodoc:
   struct Base
+    @base : LibEvent2::EventBase
+
     def initialize
       @base = LibEvent2.event_base_new
     end
@@ -84,9 +89,30 @@ module Event
       LibEvent2.event_base_loopbreak(@base)
     end
 
-    def dns_base
-      @dns_base ||= begin
-        LibEvent2.evdns_base_new(@base, 1)
+    def new_dns_base(init = true)
+      DnsBase.new LibEvent2.evdns_base_new(@base, init ? 1 : 0)
+    end
+  end
+
+  struct DnsBase
+    @dns_base : LibEvent2::DnsBase
+
+    def initialize(@dns_base)
+    end
+
+    def getaddrinfo(nodename, servname, hints, data, &callback : LibEvent2::DnsGetAddrinfoCallback)
+      request = LibEvent2.evdns_getaddrinfo(@dns_base, nodename, servname, hints, callback, data as Void*)
+      GetAddrInfoRequest.new request if request
+    end
+
+    struct GetAddrInfoRequest
+      @request : LibEvent2::DnsGetAddrinfoRequest
+
+      def initialize(@request)
+      end
+
+      def cancel
+        LibEvent2.evdns_getaddrinfo_cancel(@request)
       end
     end
   end

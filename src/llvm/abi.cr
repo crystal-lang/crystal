@@ -1,8 +1,8 @@
 # Based on https://github.com/rust-lang/rust/blob/master/src/librustc_trans/trans/cabi.rs
 abstract class LLVM::ABI
-  getter target_data
-  getter is_osx
-  getter is_windows
+  getter target_data : TargetData
+  getter is_osx : Bool
+  getter is_windows : Bool
 
   def initialize(target_machine : TargetMachine)
     @target_data = target_machine.data_layout
@@ -22,11 +22,11 @@ abstract class LLVM::ABI
   end
 
   struct ArgType
-    getter kind
-    getter type
-    getter cast
-    getter pad
-    getter attr
+    getter kind : ArgKind
+    getter type : Type
+    getter cast : Type?
+    getter pad : Nil
+    getter attr : Attribute?
 
     def self.direct(type, cast = nil, pad = nil, attr = nil)
       new ArgKind::Direct, type, cast, pad, attr
@@ -45,8 +45,8 @@ abstract class LLVM::ABI
   end
 
   class FunctionType
-    getter arg_types
-    getter return_type
+    getter arg_types : Array(ArgType)
+    getter return_type : ArgType
 
     def initialize(@arg_types, @return_type)
     end

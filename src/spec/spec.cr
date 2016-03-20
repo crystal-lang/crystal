@@ -10,9 +10,9 @@ require "signal"
 # require "spec"
 #
 # describe "Array" do
-#   describe "#length" do
+#   describe "#size" do
 #     it "correctly reports the number of elements in the Array" do
-#       [1, 2, 3].length.should eq 3
+#       [1, 2, 3].size.should eq 3
 #     end
 #   end
 #
@@ -69,34 +69,49 @@ module Spec
   # :nodoc:
   COLORS = {
     success: :green,
-    fail: :red,
-    error: :red,
+    fail:    :red,
+    error:   :red,
     pending: :yellow,
   }
 
   # :nodoc:
   LETTERS = {
     success: '.',
-    fail: 'F',
-    error: 'E',
+    fail:    'F',
+    error:   'E',
     pending: '*',
   }
 
+  @@use_colors : Bool
+  @@use_colors = true
+
   # :nodoc:
   def self.color(str, status)
-    str.colorize(COLORS[status])
+    if use_colors?
+      str.colorize(COLORS[status])
+    else
+      str
+    end
+  end
+
+  def self.use_colors?
+    @@use_colors
+  end
+
+  def self.use_colors=(@@use_colors)
   end
 
   # :nodoc:
   class AssertionFailed < Exception
-    getter file
-    getter line
+    getter file : String
+    getter line : Int32
 
     def initialize(message, @file, @line)
       super(message)
     end
   end
 
+  @@aborted : Bool
   @@aborted = false
 
   # :nodoc:
@@ -109,6 +124,7 @@ module Spec
     @@aborted
   end
 
+  @@pattern : Regex?
   @@pattern = nil
 
   # :nodoc:
@@ -116,26 +132,45 @@ module Spec
     @@pattern = Regex.new(Regex.escape(pattern))
   end
 
+  @@line : Int32?
   @@line = nil
 
   # :nodoc:
   def self.line=(@@line)
   end
 
+  @@locations : Hash(String, Array(Int32))?
+  @@locations = nil
+
+  def self.add_location(file, line)
+    locations = @@locations ||= Hash(String, Array(Int32)).new
+    lines = locations[File.expand_path(file)] ||= [] of Int32
+    lines << line
+  end
+
   # :nodoc:
   def self.matches?(description, file, line)
     spec_pattern = @@pattern
     spec_line = @@line
+    locations = @@locations
 
     if line == spec_line
       return true
-    elsif spec_pattern || spec_line
-      Spec::RootContext.matches?(description, spec_pattern, spec_line)
+    end
+
+    if locations
+      lines = locations[file]?
+      return true if lines && lines.includes?(line)
+    end
+
+    if spec_pattern || spec_line || locations
+      Spec::RootContext.matches?(description, spec_pattern, spec_line, locations)
     else
       true
     end
   end
 
+  @@fail_fast : Bool
   @@fail_fast = false
 
   # :nodoc:
@@ -147,10 +182,14 @@ module Spec
     @@fail_fast
   end
 
+  @@before_each : Array(->)?
+
   def self.before_each(&block)
     before_each = @@before_each ||= [] of ->
     before_each << block
   end
+
+  @@after_each : Array(->)?
 
   def self.after_each(&block)
     after_each = @@after_each ||= [] of ->
@@ -167,7 +206,7 @@ module Spec
     @@after_each.try &.each &.call
   end
 
-  # :nodoc
+  # :nodoc:
   def self.run
     start_time = Time.now
     at_exit do
@@ -191,12 +230,23 @@ OptionParser.parse! do |opts|
   opts.on("--fail-fast", "abort the run on first failure") do
     Spec.fail_fast = true
   end
+  opts.on("--location file:line", "run example at line 'line' in file 'file', multiple allowed") do |location|
+    if location =~ /\A(.+?)\:(\d+)\Z/
+      Spec.add_location $1, $2.to_i
+    else
+      puts "location #{location} must be file:line"
+      exit
+    end
+  end
   opts.on("--help", "show this help") do |pattern|
     puts opts
     exit
   end
   opts.on("-v", "--verbose", "verbose output") do
-    Spec.formatter = Spec::VerboseFormatter.new
+    Spec.formatters.replace([Spec::VerboseFormatter.new])
+  end
+  opts.on("--no-color", "Disable colored output") do
+    Spec.use_colors = false
   end
 end
 

@@ -55,6 +55,65 @@ describe "Number" do
     end
   end
 
+  describe "clamp" do
+    it "clamps integers" do
+      -5.clamp(-10, 100).should eq(-5)
+      -5.clamp(10, 100).should eq(10)
+      5.clamp(10, 100).should eq(10)
+      50.clamp(10, 100).should eq(50)
+      500.clamp(10, 100).should eq(100)
+
+      50.clamp(10..100).should eq(50)
+    end
+
+    it "clamps floats" do
+      -5.5.clamp(-10.1, 100.1).should eq(-5.5)
+      -5.5.clamp(10.1, 100.1).should eq(10.1)
+      5.5.clamp(10.1, 100.1).should eq(10.1)
+      50.5.clamp(10.1, 100.1).should eq(50.5)
+      500.5.clamp(10.1, 100.1).should eq(100.1)
+
+      50.5.clamp(10.1..100.1).should eq(50.5)
+    end
+
+    it "fails with an exclusive range" do
+      expect_raises(ArgumentError) do
+        range = Range.new(1, 2, exclusive: true)
+        5.clamp(range)
+      end
+    end
+  end
+
+  it "gives the absolute value" do
+    123.abs.should eq(123)
+    -123.abs.should eq(123)
+  end
+
+  it "gives the square of a value" do
+    2.abs2.should eq(4)
+    -2.abs2.should eq(4)
+    2.5.abs2.should eq(6.25)
+    -2.5.abs2.should eq(6.25)
+  end
+
+  it "gives the sign" do
+    123.sign.should eq(1)
+    -123.sign.should eq(-1)
+    0.sign.should eq(0)
+  end
+
+  it "divides and calculs the modulo" do
+    10.divmod(2).should eq({5, 0})
+    10.divmod(-2).should eq({-5, 0})
+    11.divmod(-2).should eq({-5, -1})
+  end
+
+  it "compare the numbers" do
+    10.<=>(10).should eq(0)
+    10.<=>(11).should eq(-1)
+    11.<=>(10).should eq(1)
+  end
+
   it "creates an array with [] and some elements" do
     ary = Int64[1, 2, 3]
     ary.should eq([1, 2, 3])
@@ -66,17 +125,6 @@ describe "Number" do
     ary.should eq([] of Int64)
     ary << 1_i64
     ary.should eq([1])
-  end
-
-  it "can use methods from Comparable" do
-    5.between?(0, 9).should be_true
-    0.between?(5, 9).should be_false
-
-    5_u64.between?(0_i8, 9_u16).should be_true
-    0_i8.between?(5_u32, 9_i64).should be_false
-
-    25641_i16.between?(594_i64, 487696874_u32).should be_true
-    594_i64.between?(25641_i16, 487696874_u32).should be_false
   end
 
   it "steps from int to float" do

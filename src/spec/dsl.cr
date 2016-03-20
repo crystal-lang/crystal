@@ -1,23 +1,21 @@
 module Spec::DSL
-  def describe(description, file = __FILE__, line = __LINE__)
-    Spec::RootContext.describe(description.to_s, file, line) do |context|
-      yield
-    end
+  def describe(description, file = __FILE__, line = __LINE__, &block)
+    Spec::RootContext.describe(description.to_s, file, line, &block)
   end
 
-  def context(description, file = __FILE__, line = __LINE__)
-    describe(description.to_s, file, line) { |ctx| yield ctx }
+  def context(description, file = __FILE__, line = __LINE__, &block)
+    describe(description.to_s, file, line, &block)
   end
 
-  def it(description, file = __FILE__, line = __LINE__)
+  def it(description, file = __FILE__, line = __LINE__, &block)
     return if Spec.aborted?
     return unless Spec.matches?(description, file, line)
 
-    Spec.formatter.before_example description
+    Spec.formatters.each(&.before_example(description))
 
     begin
       Spec.run_before_each_hooks
-      yield
+      block.call
       Spec::RootContext.report(:success, description, file, line)
     rescue ex : Spec::AssertionFailed
       Spec::RootContext.report(:fail, description, file, line, ex)
@@ -34,13 +32,13 @@ module Spec::DSL
     return if Spec.aborted?
     return unless Spec.matches?(description, file, line)
 
-    Spec.formatter.before_example description
+    Spec.formatters.each(&.before_example(description))
 
     Spec::RootContext.report(:pending, description, file, line)
   end
 
-  def assert(file = __FILE__, line = __LINE__)
-    it("assert", file, line) { yield }
+  def assert(file = __FILE__, line = __LINE__, &block)
+    it("assert", file, line, &block)
   end
 
   def fail(msg, file = __FILE__, line = __LINE__)

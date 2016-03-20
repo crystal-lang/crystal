@@ -1,4 +1,5 @@
 require "./**"
+
 # The Benchmark module provides methods for benchmarking Crystal code, giving
 # detailed reports on the time taken for each task.
 #
@@ -7,16 +8,17 @@ require "./**"
 # ```
 # require "benchmark"
 # Benchmark.ips do |x|
-#   x.report("short sleep")   { sleep 0.01  }
+#   x.report("short sleep") { sleep 0.01 }
 #   x.report("shorter sleep") { sleep 0.001 }
 # end
 # ```
 #
-# This generates the following output:
+# This generates the following output showing the mean iterations per second,
+# the standard deviation relative to the mean, and a comparison:
 #
 # ```text
-#   short sleep    91.82 (±  1.11)  8.72× slower
-# shorter sleep   800.98 (±  4.72)       fastest
+#   short sleep    91.82 (± 2.51%)  8.72× slower
+# shorter sleep   800.98 (± 1.10%)       fastest
 # ```
 #
 # `Benchmark::IPS` defaults to 2 seconds of warmup time and 5 seconds of
@@ -55,8 +57,12 @@ require "./**"
 #
 # n = 5000000
 # Benchmark.bm do |x|
-#  x.report("times:") { n.times do ; a = "1"; end }
-#  x.report("upto:") { 1.upto(n) do ; a = "1"; end }
+#   x.report("times:") { n.times do
+#     a = "1"
+#   end }
+#   x.report("upto:") { 1.upto(n) do
+#     a = "1"
+#   end }
 # end
 # ```
 #
@@ -75,6 +81,10 @@ module Benchmark
   # Main interface of the `Benchmark` module. Yields a `Job` to which
   # one can report the benchmarks. See the module's description.
   def bm
+    ifdef !release
+      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id }}
+    end
+
     report = BM::Job.new
     yield report
     report.execute
@@ -86,9 +96,14 @@ module Benchmark
   #
   # The optional parameters `calculation` and `warmup` set the duration of
   # those stages in seconds. For more detail on these stages see
-  # `Benchmark::IPS`.
-  def ips(calculation = 5, warmup = 2)
-    job = IPS::Job.new(calculation, warmup)
+  # `Benchmark::IPS`. When the `interactive` parameter is true, results are
+  # displayed and updated as they are calculated, otherwise all at once.
+  def ips(calculation = 5, warmup = 2, interactive = STDOUT.tty?)
+    ifdef !release
+      {{ puts "Warning: benchmarking without the `--release` flag won't yield useful results".id }}
+    end
+
+    job = IPS::Job.new(calculation, warmup, interactive)
     yield job
     job.execute
     job.report
@@ -100,20 +115,20 @@ module Benchmark
     t0, r0 = Process.times, Time.now
     yield
     t1, r1 = Process.times, Time.now
-    BM::Tms.new(t1.utime  - t0.utime,
-                     t1.stime  - t0.stime,
-                     t1.cutime - t0.cutime,
-                     t1.cstime - t0.cstime,
-                     (r1.ticks - r0.ticks).to_f / TimeSpan::TicksPerSecond,
-                     label)
+    BM::Tms.new(t1.utime - t0.utime,
+      t1.stime - t0.stime,
+      t1.cutime - t0.cutime,
+      t1.cstime - t0.cstime,
+      (r1.ticks - r0.ticks).to_f / Time::Span::TicksPerSecond,
+      label)
   end
 
   # Returns the elapsed real time used to execute the given block.
   #
   # ```
-  # Benchmark.realtime { "a" * 100_000 } #=> 00:00:00.0005840
+  # Benchmark.realtime { "a" * 100_000 } # => 00:00:00.0005840
   # ```
-  def realtime : TimeSpan
+  def realtime : Time::Span
     r0 = Time.now
     yield
     Time.now - r0

@@ -1,4 +1,5 @@
 require "spec"
+require "big_int"
 
 private def to_s_with_io(num)
   String.build { |str| num.to_s(str) }
@@ -10,15 +11,15 @@ end
 
 describe "Int" do
   describe "**" do
-    assert { (2 ** 2).should eq(4) }
-    assert { (2 ** 2.5_f32).should eq(5.656854249492381) }
-    assert { (2 ** 2.5).should eq(5.656854249492381) }
+    assert { (2 ** 2).should be_close(4, 0.0001) }
+    assert { (2 ** 2.5_f32).should be_close(5.656854249492381, 0.0001) }
+    assert { (2 ** 2.5).should be_close(5.656854249492381, 0.0001) }
   end
 
   describe "#===(:Char)" do
-    assert { (99 === 'c').should     be_true }
-    assert { (99_u8 === 'c').should  be_true }
-    assert { (99 === 'z').should     be_false }
+    assert { (99 === 'c').should be_true }
+    assert { (99_u8 === 'c').should be_true }
+    assert { (99 === 'z').should be_false }
     assert { (37202 === '酒').should be_true }
   end
 
@@ -93,6 +94,15 @@ describe "Int" do
     assert { 0.to_s(16).should eq("0") }
     assert { 1.to_s(2).should eq("1") }
     assert { 1.to_s(16).should eq("1") }
+    assert { 0.to_s(62).should eq("0") }
+    assert { 1.to_s(62).should eq("1") }
+    assert { 10.to_s(62).should eq("a") }
+    assert { 35.to_s(62).should eq("z") }
+    assert { 36.to_s(62).should eq("A") }
+    assert { 61.to_s(62).should eq("Z") }
+    assert { 62.to_s(62).should eq("10") }
+    assert { 97.to_s(62).should eq("1z") }
+    assert { 3843.to_s(62).should eq("ZZ") }
 
     it "raises on base 1" do
       expect_raises { 123.to_s(1) }
@@ -100,6 +110,10 @@ describe "Int" do
 
     it "raises on base 37" do
       expect_raises { 123.to_s(37) }
+    end
+
+    it "raises on base 62 with upcase" do
+      expect_raises { 123.to_s(62, upcase: true) }
     end
 
     assert { to_s_with_io(12, 2).should eq("1100") }
@@ -117,6 +131,15 @@ describe "Int" do
     assert { to_s_with_io(0, 16).should eq("0") }
     assert { to_s_with_io(1, 2).should eq("1") }
     assert { to_s_with_io(1, 16).should eq("1") }
+    assert { to_s_with_io(0, 62).should eq("0") }
+    assert { to_s_with_io(1, 62).should eq("1") }
+    assert { to_s_with_io(10, 62).should eq("a") }
+    assert { to_s_with_io(35, 62).should eq("z") }
+    assert { to_s_with_io(36, 62).should eq("A") }
+    assert { to_s_with_io(61, 62).should eq("Z") }
+    assert { to_s_with_io(62, 62).should eq("10") }
+    assert { to_s_with_io(97, 62).should eq("1z") }
+    assert { to_s_with_io(3843, 62).should eq("ZZ") }
 
     it "raises on base 1 with io" do
       expect_raises { to_s_with_io(123, 1) }
@@ -125,6 +148,10 @@ describe "Int" do
     it "raises on base 37 with io" do
       expect_raises { to_s_with_io(123, 37) }
     end
+
+    it "raises on base 62 with upcase with io" do
+      expect_raises { to_s_with_io(12, 62, upcase: true) }
+    end
   end
 
   describe "bit" do
@@ -132,6 +159,10 @@ describe "Int" do
     assert { 5.bit(1).should eq(0) }
     assert { 5.bit(2).should eq(1) }
     assert { 5.bit(3).should eq(0) }
+    assert { 0.bit(63).should eq(0) }
+    assert { Int64::MAX.bit(63).should eq(0) }
+    assert { UInt64::MAX.bit(63).should eq(1) }
+    assert { UInt64::MAX.bit(64).should eq(0) }
   end
 
   describe "divmod" do
@@ -242,29 +273,29 @@ describe "Int" do
   end
 
   it "casts" do
-    Int8.cast(1).should be_a(Int8)
-    Int8.cast(1).should eq(1)
+    Int8.new(1).should be_a(Int8)
+    Int8.new(1).should eq(1)
 
-    Int16.cast(1).should be_a(Int16)
-    Int16.cast(1).should eq(1)
+    Int16.new(1).should be_a(Int16)
+    Int16.new(1).should eq(1)
 
-    Int32.cast(1).should be_a(Int32)
-    Int32.cast(1).should eq(1)
+    Int32.new(1).should be_a(Int32)
+    Int32.new(1).should eq(1)
 
-    Int64.cast(1).should be_a(Int64)
-    Int64.cast(1).should eq(1)
+    Int64.new(1).should be_a(Int64)
+    Int64.new(1).should eq(1)
 
-    UInt8.cast(1).should be_a(UInt8)
-    UInt8.cast(1).should eq(1)
+    UInt8.new(1).should be_a(UInt8)
+    UInt8.new(1).should eq(1)
 
-    UInt16.cast(1).should be_a(UInt16)
-    UInt16.cast(1).should eq(1)
+    UInt16.new(1).should be_a(UInt16)
+    UInt16.new(1).should eq(1)
 
-    UInt32.cast(1).should be_a(UInt32)
-    UInt32.cast(1).should eq(1)
+    UInt32.new(1).should be_a(UInt32)
+    UInt32.new(1).should eq(1)
 
-    UInt64.cast(1).should be_a(UInt64)
-    UInt64.cast(1).should eq(1)
+    UInt64.new(1).should be_a(UInt64)
+    UInt64.new(1).should eq(1)
   end
 
   it "raises when divides by zero" do
@@ -335,5 +366,45 @@ describe "Int" do
 
     iter.rewind
     iter.next.should eq(1)
+  end
+
+  describe "#popcount" do
+    assert { 5_i8.popcount.should eq(2) }
+    assert { 127_i8.popcount.should eq(7) }
+    assert { -1_i8.popcount.should eq(8) }
+    assert { -128_i8.popcount.should eq(1) }
+
+    assert { 0_u8.popcount.should eq(0) }
+    assert { 255_u8.popcount.should eq(8) }
+
+    assert { 5_i16.popcount.should eq(2) }
+    assert { -6_i16.popcount.should eq(14) }
+    assert { 65535_u16.popcount.should eq(16) }
+
+    assert { 0_i32.popcount.should eq(0) }
+    assert { 2147483647_i32.popcount.should eq(31) }
+    assert { 4294967295_u32.popcount.should eq(32) }
+
+    assert { 5_i64.popcount.should eq(2) }
+    assert { 9223372036854775807_i64.popcount.should eq(63) }
+    assert { 18446744073709551615_u64.popcount.should eq(64) }
+  end
+
+  it "compares signed vs. unsigned integers" do
+    signed_ints = [Int8::MAX, Int16::MAX, Int32::MAX, Int64::MAX, Int8::MIN, Int16::MIN, Int32::MIN, Int64::MIN, 0_i8, 0_i16, 0_i32, 0_i64]
+    unsigned_ints = [UInt8::MAX, UInt16::MAX, UInt32::MAX, UInt64::MAX, 0_u8, 0_u16, 0_u32, 0_u64]
+
+    big_signed_ints = signed_ints.map &.to_big_i
+    big_unsigned_ints = unsigned_ints.map &.to_big_i
+
+    signed_ints.zip(big_signed_ints) do |si, bsi|
+      unsigned_ints.zip(big_unsigned_ints) do |ui, bui|
+        {% for op in %w(< <= > >=).map(&.id) %}
+          if (si {{op}} ui) != (bsi {{op}} bui)
+            fail "comparison of #{si} {{op}} #{ui} (#{si.class} {{op}} #{ui.class}) gave incorrect result"
+          end
+        {% end %}
+      end
+    end
   end
 end

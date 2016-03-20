@@ -1,24 +1,27 @@
-STDIN = FileDescriptorIO.new(0, blocking: LibC.isatty(0) == 0)
-STDOUT = (FileDescriptorIO.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
-STDERR = FileDescriptorIO.new(2, blocking: LibC.isatty(2) == 0)
+STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
+STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
+STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }
 
 PROGRAM_NAME = String.new(ARGV_UNSAFE.value)
-ARGV = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
-ARGF = IO::ARGF.new(ARGV, STDIN)
+ARGV         = (ARGV_UNSAFE + 1).to_slice(ARGC_UNSAFE - 1).map { |c_str| String.new(c_str) }
+ARGF         = IO::ARGF.new(ARGV, STDIN)
 
-# Repeatedly executes the block.
+# Repeatedly executes the block, passing an incremental `Int32`
+# that starts with 0.
 #
 # ```
-# loop do
-#   print "Input: "
+# loop do |i|
+#   print "#{i}) "
 #   line = gets
 #   break unless line
 #   # ...
 # end
 # ```
 def loop
+  i = 0
   while true
-    yield
+    yield i
+    i += 1
   end
 end
 
@@ -32,19 +35,14 @@ def read_line(*args)
   STDIN.read_line(*args)
 end
 
-# Prints objects to STDIN. See `IO#print`.
+# Prints objects to STDOUT and then invokes `STDOUT.flush`. See `IO#print`.
 def print(*objects : _)
   STDOUT.print *objects
-end
-
-# Prints objects to STDIN and then invokes `STDIN.flush`. See `IO#print`.
-def print!(*objects : _)
-  print *objects
   STDOUT.flush
   nil
 end
 
-# Prints a formatted string to STDIN. See `IO#printf`.
+# Prints a formatted string to STDOUT. See `IO#printf`.
 def printf(format_string, *args)
   printf format_string, args
 end
@@ -62,7 +60,7 @@ end
 # ditto
 def sprintf(format_string, args : Array | Tuple) : String
   String.build(format_string.bytesize) do |str|
-    String::Formatter.new(format_string, args, str).format
+    String::Formatter(typeof(args)).new(format_string, args, str).format
   end
 end
 
@@ -71,31 +69,47 @@ def puts(*objects)
   STDOUT.puts *objects
 end
 
-# Prints *obj* to STDOUT by invoking `inspect(io)` on it, and followed
-# by a newline.
-def p(obj)
-  obj.inspect(STDOUT)
+# Prints *object* to STDOUT by invoking `inspect(io)` on it, followed
+# by a newline. Returns *object*.
+def p(object)
+  object.inspect(STDOUT)
   puts
-  obj
+  object
+end
+
+# Prints each object in *objects* to STDOUT by invoking `inspect(io)` on it, followed
+# by a newline. Returns *objects*.
+def p(*objects)
+  objects.each do |obj|
+    obj.inspect(STDOUT)
+    puts
+  end
+  objects
 end
 
 # :nodoc:
 module AtExitHandlers
+  @@handlers : Array(Int32 ->)?
   @@handlers = nil
 
+  @@running : Bool
+  @@running = false
+
   def self.add(handler)
-    handlers = @@handlers ||= [] of ->
+    handlers = @@handlers ||= [] of Int32 ->
     handlers << handler
   end
 
-  def self.run
+  def self.run(status)
     return if @@running
     @@running = true
 
-    begin
-      @@handlers.try &.reverse_each &.call
-    rescue handler_ex
-      puts "Error running at_exit handler: #{handler_ex}"
+    @@handlers.try &.reverse_each do |handler|
+      begin
+        handler.call status
+      rescue handler_ex
+        STDERR.puts "Error running at_exit handler: #{handler_ex}"
+      end
     end
   end
 end
@@ -118,7 +132,7 @@ end
 # ```text
 # goodbye cruel world
 # ```
-def at_exit(&handler)
+def at_exit(&handler : Int32 ->)
   AtExitHandlers.add(handler)
 end
 
@@ -127,7 +141,7 @@ end
 #
 # Registered `at_exit` procs are executed.
 def exit(status = 0)
-  AtExitHandlers.run
+  AtExitHandlers.run status
   STDOUT.flush
   STDERR.flush
   Process.exit(status)
@@ -140,7 +154,19 @@ def abort(message, status = 1)
   exit status
 end
 
+class Process
+  # hooks defined here due to load order problems
+  @@after_fork_child_callbacks : Array(-> Nil)
+  @@after_fork_child_callbacks = [
+    ->{ Scheduler.after_fork; nil },
+    ->{ Event::SignalHandler.after_fork; nil },
+    ->{ Event::SignalChildHandler.instance.after_fork; nil },
+    ->{ Random::DEFAULT.new_seed; nil },
+  ]
+end
+
 Signal::PIPE.ignore
+Signal::CHLD.reset
 at_exit { Event::SignalHandler.close }
 
 # Background loop to cleanup unused fiber stacks
@@ -150,4 +176,3 @@ spawn do
     Fiber.stack_pool_collect
   end
 end
-

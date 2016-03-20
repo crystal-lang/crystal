@@ -9,10 +9,10 @@ struct CSV::Token
   end
 
   # The `Kind`.
-  property kind
+  property kind : Kind
 
   # The string value. Only makes sense for a `Cell`.
-  property value
+  property value : String
 
   # :nodoc:
   def initialize
@@ -20,4 +20,3 @@ struct CSV::Token
     @value = ""
   end
 end
-

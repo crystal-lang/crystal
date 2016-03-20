@@ -70,7 +70,7 @@ describe Time do
 
   it "add" do
     t1 = Time.new TimeSpecTicks[1]
-    span = TimeSpan.new 3, 54, 1
+    span = Time::Span.new 3, 54, 1
     t2 = t1 + span
 
     t2.day.should eq(25)
@@ -88,7 +88,7 @@ describe Time do
     t1 = Time.new TimeSpecTicks[1]
 
     expect_raises ArgumentError do
-      t1 + TimeSpan::MaxValue
+      t1 + Time::Span::MaxValue
     end
   end
 
@@ -96,7 +96,7 @@ describe Time do
     t1 = Time.new TimeSpecTicks[1]
 
     expect_raises ArgumentError do
-      t1 + TimeSpan::MinValue
+      t1 + Time::Span::MinValue
     end
   end
 
@@ -209,12 +209,12 @@ describe Time do
 
   it "gets time of day" do
     t = Time.new 2014, 10, 30, 21, 18, 13
-    t.time_of_day.should eq(TimeSpan.new(21, 18, 13))
+    t.time_of_day.should eq(Time::Span.new(21, 18, 13))
   end
 
   it "gets day of week" do
     t = Time.new 2014, 10, 30, 21, 18, 13
-    t.day_of_week.should eq(DayOfWeek::Thursday)
+    t.day_of_week.should eq(Time::DayOfWeek::Thursday)
   end
 
   it "gets day of year" do
@@ -232,9 +232,15 @@ describe Time do
   end
 
   it "gets unix epoch seconds" do
-    t1 = Time.new 2014, 10, 30, 21, 18, 13
+    t1 = Time.new 2014, 10, 30, 21, 18, 13, 0, Time::Kind::Utc
     t1.epoch.should eq(1414703893)
     t1.epoch_f.should be_close(1414703893, 1e-01)
+  end
+
+  it "gets unix epoch seconds at GMT" do
+    t1 = Time.now
+    t1.epoch.should eq(t1.to_utc.epoch)
+    t1.epoch_f.should be_close(t1.to_utc.epoch_f, 1e-01)
   end
 
   it "to_s" do
@@ -549,14 +555,14 @@ describe Time do
   end
 
   it "does time span units" do
-    1.millisecond.ticks.should eq(TimeSpan::TicksPerMillisecond)
-    1.milliseconds.ticks.should eq(TimeSpan::TicksPerMillisecond)
-    1.second.ticks.should eq(TimeSpan::TicksPerSecond)
-    1.seconds.ticks.should eq(TimeSpan::TicksPerSecond)
-    1.minute.ticks.should eq(TimeSpan::TicksPerMinute)
-    1.minutes.ticks.should eq(TimeSpan::TicksPerMinute)
-    1.hour.ticks.should eq(TimeSpan::TicksPerHour)
-    1.hours.ticks.should eq(TimeSpan::TicksPerHour)
+    1.millisecond.ticks.should eq(Time::Span::TicksPerMillisecond)
+    1.milliseconds.ticks.should eq(Time::Span::TicksPerMillisecond)
+    1.second.ticks.should eq(Time::Span::TicksPerSecond)
+    1.seconds.ticks.should eq(Time::Span::TicksPerSecond)
+    1.minute.ticks.should eq(Time::Span::TicksPerMinute)
+    1.minutes.ticks.should eq(Time::Span::TicksPerMinute)
+    1.hour.ticks.should eq(Time::Span::TicksPerHour)
+    1.hours.ticks.should eq(Time::Span::TicksPerHour)
     1.week.should eq(7.days)
     2.weeks.should eq(14.days)
   end

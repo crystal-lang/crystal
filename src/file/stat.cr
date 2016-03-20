@@ -77,12 +77,14 @@ lib LibC
   S_IFMT   = 0o170000
 
   fun stat(path : Char*, stat : Stat*) : Int
-  fun lstat(path : Char*, stat : Stat *) : Int
+  fun lstat(path : Char*, stat : Stat*) : Int
   fun fstat(fileno : Int, stat : Stat*) : Int
 end
 
 class File
   struct Stat
+    @stat : LibC::Stat
+
     def initialize(filename : String)
       if LibC.stat(filename, out @stat) != 0
         raise Errno.new("Unable to get stat for '#{filename}'")

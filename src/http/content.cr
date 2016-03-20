@@ -1,8 +1,10 @@
 module HTTP
   # :nodoc:
   abstract class Content
+    include IO
+
     def close
-      buffer :: UInt8[1024]
+      buffer = uninitialized UInt8[1024]
       while read(buffer.to_slice) > 0
       end
     end
@@ -10,14 +12,15 @@ module HTTP
 
   # :nodoc:
   class FixedLengthContent < Content
-    include IO
+    @io : IO
+    @remaining : UInt64
 
-    def initialize(@io, length)
-      @remaining = length
+    def initialize(@io, size : UInt64)
+      @remaining = size
     end
 
     def read(slice : Slice(UInt8))
-      count = Math.min(slice.length, @remaining)
+      count = Math.min(slice.size.to_u64, @remaining)
       bytes_read = @io.read slice[0, count]
       @remaining -= bytes_read
       bytes_read
@@ -30,7 +33,7 @@ module HTTP
 
   # :nodoc:
   class UnknownLengthContent < Content
-    include IO
+    @io : IO
 
     def initialize(@io)
     end
@@ -46,30 +49,39 @@ module HTTP
 
   # :nodoc:
   class ChunkedContent < Content
-    include IO
+    @io : IO
+    @chunk_remaining : Int32
 
     def initialize(@io)
       @chunk_remaining = io.gets.not_nil!.to_i(16)
+      check_last_chunk
     end
 
     def read(slice : Slice(UInt8))
-      count = slice.length
+      count = slice.size
       return 0 if @chunk_remaining == 0 || count == 0
 
-      to_read = Math.min(slice.length, @chunk_remaining)
+      to_read = Math.min(slice.size, @chunk_remaining)
 
       bytes_read = @io.read slice[0, to_read]
       @chunk_remaining -= bytes_read
       if @chunk_remaining == 0
-        @io.read(2) # Read \r\n
+        read_chunk_end
         @chunk_remaining = @io.gets.not_nil!.to_i(16)
-
-        if @chunk_remaining == 0
-          @io.read(2) # Read \r\n
-        end
+        check_last_chunk
       end
 
       bytes_read
+    end
+
+    private def read_chunk_end
+      # Read "\r\n"
+      @io.skip(2)
+    end
+
+    private def check_last_chunk
+      # If we read "0\r\n", we need to read another "\r\n"
+      read_chunk_end if @chunk_remaining == 0
     end
 
     def write(slice : Slice(UInt8))

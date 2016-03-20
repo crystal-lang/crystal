@@ -23,7 +23,7 @@
 # puts result
 # ```
 #
-# Ouptut:
+# Output:
 #
 # ```text
 # Hello,1,a,"String with ""quotes"""
@@ -31,6 +31,9 @@
 # 4,5,6,7,8
 # ```
 class CSV::Builder
+  @io : IO
+  @first_cell_in_row : Bool
+
   # Creates a builder that will write to the given IO.
   def initialize(@io : IO)
     @first_cell_in_row = true
@@ -87,8 +90,10 @@ class CSV::Builder
     @first_cell_in_row = false
   end
 
-  # A CSV Row buing built.
+  # A CSV Row being built.
   struct Row
+    @builder : Builder
+
     # :nodoc:
     def initialize(@builder)
     end

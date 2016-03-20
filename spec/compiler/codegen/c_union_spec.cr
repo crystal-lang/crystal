@@ -97,4 +97,100 @@ describe "Code gen: c union" do
       color.to_s
       )).to_string.should eq("LibNVG::Color()")
   end
+
+  it "automatically converts numeric type in field assignment" do
+    run(%(
+      lib LibFoo
+        union Foo
+          x : Int8
+        end
+      end
+
+      a = 12345
+
+      foo = LibFoo::Foo.new
+      foo.x = a
+      foo.x
+      )).to_i.should eq(57)
+  end
+
+  it "automatically converts numeric union type in field assignment" do
+    run(%(
+      lib LibFoo
+        union Foo
+          x : Int8
+        end
+      end
+
+      a = 12345 || 12346_u16
+
+      foo = LibFoo::Foo.new
+      foo.x = a
+      foo.x
+      )).to_i.should eq(57)
+  end
+
+  it "automatically converts by invoking to_unsafe" do
+    run(%(
+      lib LibFoo
+        union Foo
+          x : Int32
+        end
+      end
+
+      class Foo
+        def to_unsafe
+          123
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.x = Foo.new
+      foo.x
+      )).to_i.should eq(123)
+  end
+
+  it "aligns to the member with biggest align requirements" do
+    run(%(
+      lib LibFoo
+        union Foo
+          bytes : UInt8[4]
+          short : UInt16
+        end
+
+        struct Bar
+          a : Int8
+          b : Foo
+        end
+      end
+
+      class String
+        def to_unsafe
+          pointerof(@c)
+        end
+      end
+
+      str = "00XX0"
+      foo = str.to_unsafe as LibFoo::Bar*
+      foo.value.b.short.to_i
+      )).to_i.should eq(0x5858)
+  end
+
+  it "fills union type to the max size" do
+    run(%(
+      lib LibFoo
+        union Foo
+          bytes : UInt8[4]
+          short : UInt16
+        end
+
+        struct Bar
+          a : Int8
+          b : Foo
+        end
+      end
+
+      sizeof(LibFoo::Bar)
+      )).to_i.should eq(6)
+  end
 end

@@ -29,7 +29,7 @@ describe "Type inference: enum" do
       end
 
       foo 1
-      ), "no overload matches 'foo' with types Int32"
+      ), "no overload matches 'foo' with type Int32"
   end
 
   it "finds method in enum type" do
@@ -133,7 +133,7 @@ describe "Type inference: enum" do
   end
 
   it "errors if reopen but not enum" do
-    assert_error  %(
+    assert_error %(
       class Foo
       end
 
@@ -146,7 +146,7 @@ describe "Type inference: enum" do
   end
 
   it "errors if reopen and tries to define constant" do
-    assert_error  %(
+    assert_error %(
       enum Foo
         A
         B
@@ -252,5 +252,20 @@ describe "Type inference: enum" do
       X::A.meth
       ),
       "can't use instance variables inside enums (at enum X)"
+  end
+
+  it "marks as flags with base type (#2185)" do
+    result = infer_type(%(
+      @[Flags]
+      enum SomeFacts : UInt8
+        AppleLover
+        PearLover
+        CoolDude
+      end
+
+      SomeFacts::AppleLover
+      ))
+    enum_type = result.program.types["SomeFacts"] as EnumType
+    enum_type.has_attribute?("Flags").should be_true
   end
 end

@@ -1,15 +1,17 @@
 struct XML::Node
   LOOKS_LIKE_XPATH = /^(\.\/|\/|\.\.|\.$)/
 
+  @node : LibXML::Node*
+
   def initialize(node : LibXML::Attr*)
     initialize(node as LibXML::Node*)
   end
 
-  def initialize(node : LibXML::DocPtr)
+  def initialize(node : LibXML::Doc*)
     initialize(node as LibXML::Node*)
   end
 
-  def initialize(node : LibXML::DocPtr)
+  def initialize(node : LibXML::Doc*)
     initialize(node as LibXML::Node*)
   end
 
@@ -69,12 +71,36 @@ struct XML::Node
     end
   end
 
+  def content=(content)
+    LibXML.xmlNodeSetContent(self, content.to_s)
+  end
+
   def document
     Node.new @node.value.doc
   end
 
   def document?
     type == XML::Type::DOCUMENT_NODE
+  end
+
+  # Returns the encoding of this node's document
+  def encoding
+    if document?
+      encoding = (@node as LibXML::Doc*).value.encoding
+      encoding ? String.new(encoding) : nil
+    else
+      document.encoding
+    end
+  end
+
+  # Returns the version of this node's document
+  def version
+    if document?
+      version = (@node as LibXML::Doc*).value.version
+      version ? String.new(version) : nil
+    else
+      document.version
+    end
   end
 
   def element?
@@ -107,27 +133,27 @@ struct XML::Node
   def inspect(io)
     io << "#<XML::"
     case type
-    when XML::Type::ELEMENT_NODE        then io << "Element"
-    when XML::Type::ATTRIBUTE_NODE      then io << "Attribute"
-    when XML::Type::TEXT_NODE           then io << "Text"
-    when XML::Type::CDATA_SECTION_NODE  then io << "CData"
-    when XML::Type::ENTITY_REF_NODE     then io << "EntityRef"
-    when XML::Type::ENTITY_NODE         then io << "Entity"
-    when XML::Type::PI_NODE             then io << "ProcessingInstruction"
-    when XML::Type::COMMENT_NODE        then io << "Comment"
-    when XML::Type::DOCUMENT_NODE       then io << "Document"
-    when XML::Type::DOCUMENT_TYPE_NODE  then io << "DocumentType"
-    when XML::Type::DOCUMENT_FRAG_NODE  then io << "DocumentFragment"
-    when XML::Type::NOTATION_NODE       then io << "Notation"
-    when XML::Type::HTML_DOCUMENT_NODE  then io << "HTMLDocument"
-    when XML::Type::DTD_NODE            then io << "DTD"
-    when XML::Type::ELEMENT_DECL        then io << "Element"
-    when XML::Type::ATTRIBUTE_DECL      then io << "AttributeDecl"
-    when XML::Type::ENTITY_DECL         then io << "EntityDecl"
-    when XML::Type::NAMESPACE_DECL      then io << "NamespaceDecl"
-    when XML::Type::XINCLUDE_START      then io << "XIncludeStart"
-    when XML::Type::XINCLUDE_END        then io << "XIncludeEnd"
-    when XML::Type::DOCB_DOCUMENT_NODE  then io << "DOCBDocument"
+    when XML::Type::ELEMENT_NODE       then io << "Element"
+    when XML::Type::ATTRIBUTE_NODE     then io << "Attribute"
+    when XML::Type::TEXT_NODE          then io << "Text"
+    when XML::Type::CDATA_SECTION_NODE then io << "CData"
+    when XML::Type::ENTITY_REF_NODE    then io << "EntityRef"
+    when XML::Type::ENTITY_NODE        then io << "Entity"
+    when XML::Type::PI_NODE            then io << "ProcessingInstruction"
+    when XML::Type::COMMENT_NODE       then io << "Comment"
+    when XML::Type::DOCUMENT_NODE      then io << "Document"
+    when XML::Type::DOCUMENT_TYPE_NODE then io << "DocumentType"
+    when XML::Type::DOCUMENT_FRAG_NODE then io << "DocumentFragment"
+    when XML::Type::NOTATION_NODE      then io << "Notation"
+    when XML::Type::HTML_DOCUMENT_NODE then io << "HTMLDocument"
+    when XML::Type::DTD_NODE           then io << "DTD"
+    when XML::Type::ELEMENT_DECL       then io << "Element"
+    when XML::Type::ATTRIBUTE_DECL     then io << "AttributeDecl"
+    when XML::Type::ENTITY_DECL        then io << "EntityDecl"
+    when XML::Type::NAMESPACE_DECL     then io << "NamespaceDecl"
+    when XML::Type::XINCLUDE_START     then io << "XIncludeStart"
+    when XML::Type::XINCLUDE_END       then io << "XIncludeEnd"
+    when XML::Type::DOCB_DOCUMENT_NODE then io << "DOCBDocument"
     end
 
     io << ":0x"
@@ -196,6 +222,13 @@ struct XML::Node
     else
       String.new(@node.value.name)
     end
+  end
+
+  def name=(name)
+    if document? || text? || cdata? || fragment?
+      raise XML::Error.new("can't set name of XML #{type}", 0)
+    end
+    LibXML.xmlNodeSetName(self, name.to_s)
   end
 
   def namespace
@@ -279,6 +312,10 @@ struct XML::Node
     content
   end
 
+  def text=(text)
+    self.content = text
+  end
+
   def text?
     type == XML::Type::TEXT_NODE
   end
@@ -287,16 +324,16 @@ struct XML::Node
     to_xml io
   end
 
-  def to_xml(indent = 2 : Int, indent_text = " ", options = SaveOptions.xml_default : SaveOptions)
+  def to_xml(indent : Int = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
     String.build do |str|
       to_xml str, indent, indent_text, options
     end
   end
 
   # :nodoc:
-  SAVE_MUTEX = Mutex.new
+  SAVE_MUTEX = Thread::Mutex.new
 
-  def to_xml(io : IO, indent = 2, indent_text = " ", options = SaveOptions.xml_default : SaveOptions)
+  def to_xml(io : IO, indent = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
     # We need to use a mutex because we modify global libxml variables
     SAVE_MUTEX.synchronize do
       oldXmlIndentTreeOutput = LibXML.xmlIndentTreeOutput
@@ -315,7 +352,7 @@ struct XML::Node
           0
         },
         Box(IO).box(io),
-        nil,
+        @node.value.doc.value.encoding,
         options)
       LibXML.xmlSaveTree(save_ctx, self)
       LibXML.xmlSaveClose(save_ctx)
@@ -364,5 +401,15 @@ struct XML::Node
 
   def xpath_string(path, namespaces = nil, variables = nil)
     xpath(path, namespaces) as String
+  end
+
+  # :nodoc:
+  def errors=(errors)
+    @node.value._private = errors as Void*
+  end
+
+  def errors
+    ptr = @node.value._private
+    ptr ? (ptr as Array(XML::Error)) : nil
   end
 end

@@ -1,62 +1,139 @@
+# A `Hash`-like object that holds HTTP headers.
+#
+# Two headers are considered the same if their downcase representation is the same
+# (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
+  # :nodoc:
+  record Key, name : String do
+    forward_missing_to @name
+
+    def hash
+      h = 0
+      name.each_byte do |c|
+        c = normalize_byte(c)
+        h = 31 * h + c
+      end
+      h
+    end
+
+    def ==(key2)
+      key1 = name
+      key2 = key2.name
+
+      return false if key1.bytesize != key2.bytesize
+
+      cstr1 = key1.to_unsafe
+      cstr2 = key2.to_unsafe
+
+      key1.bytesize.times do |i|
+        next if cstr1[i] == cstr2[i] # Optimize the common case
+
+        byte1 = normalize_byte(cstr1[i])
+        byte2 = normalize_byte(cstr2[i])
+
+        return false if byte1 != byte2
+      end
+    end
+
+    private def normalize_byte(byte)
+      char = byte.chr
+
+      return byte if char.lowercase? || char == '-' # Optimize the common case
+      return byte + 32 if char.uppercase?
+      return '-'.ord if char == '_'
+
+      byte
+    end
+  end
+
+  @hash : Hash(Key, Array(String))
+
   def initialize
-    @hash = {} of String => Array(String)
+    @hash = Hash(Key, Array(String)).new
   end
 
   def []=(key, value : String)
-    self[key] = [value]
+    self[wrap(key)] = [value]
   end
 
   def []=(key, value : Array(String))
-    @hash[key_name(key)] = value
+    value.each { |val| check_invalid_header_content val }
+
+    @hash[wrap(key)] = value
   end
 
   def [](key)
-    fetch key
+    fetch wrap(key)
   end
 
   def []?(key)
-    values = @hash[key_name(key)]?
+    values = @hash[wrap(key)]?
     values ? concat(values) : nil
   end
 
+  # Returns if among the headers for `key` there is some that contains `word` as a value.
+  # The `word` is expected to match between word boundaries (i.e. non-alphanumeric chars).
+  #
+  # ```
+  # headers = HTTP::Headers{"Connection": "keep-alive, Upgrade"}
+  # headers.includes_word?("Connection", "Upgrade") # => true
+  # ```
+  def includes_word?(key, word)
+    # iterates over all header values avoiding the concatenation
+    get?(key).try &.each do |value|
+      start = value.index(word)
+      next unless start
+      # check if the match is not surrounded by alphanumeric chars
+      next if start > 0 && value[start - 1].alphanumeric?
+      next if start + word.size < value.size && value[start + word.size].alphanumeric?
+      return true
+    end
+
+    false
+  end
+
   def add(key, value : String)
-    existing = @hash[key_name(key)]?
+    check_invalid_header_content value
+
+    key = wrap(key)
+    existing = @hash[key]?
     if existing
       existing << value
     else
-      @hash[key_name(key)] = [value]
+      @hash[key] = [value]
     end
     self
   end
 
   def add(key, value : Array(String))
-    existing = @hash[key_name(key)]?
+    value.each { |val| check_invalid_header_content val }
+
+    key = wrap(key)
+    existing = @hash[key]?
     if existing
       existing.concat value
     else
-      @hash[key_name(key)] = value
+      @hash[key] = value
     end
     self
   end
 
   def fetch(key)
-    values = @hash.fetch key_name(key)
+    values = @hash.fetch wrap(key)
     concat values
   end
 
   def fetch(key, default)
-    fetch(key) { default }
+    fetch(wrap(key)) { default }
   end
 
   def fetch(key)
-    k = key_name(key)
-    values = @hash[k]?
-    values ? concat(values) : yield k
+    values = @hash[wrap(key)]?
+    values ? concat(values) : yield key
   end
 
   def has_key?(key)
-    @hash.has_key? key_name(key)
+    @hash.has_key? wrap(key)
   end
 
   def empty?
@@ -64,14 +141,15 @@ struct HTTP::Headers
   end
 
   def delete(key)
-    values = @hash.delete key_name(key)
+    values = @hash.delete wrap(key)
     values ? concat(values) : nil
   end
 
   def merge!(other)
     other.each do |key, value|
-      self[key] = value
+      self[wrap(key)] = value
     end
+    self
   end
 
   def ==(other : self)
@@ -79,14 +157,14 @@ struct HTTP::Headers
   end
 
   def ==(other : Hash)
-    return false unless @hash.length == other.length
+    return false unless @hash.size == other.size
 
     other.each do |key, value|
-      this_value = @hash[key_name(key)]?
+      this_value = @hash[wrap(key)]?
       if this_value
         case value
         when String
-          return false unless this_value.length == 1 && this_value[0] == value
+          return false unless this_value.size == 1 && this_value[0] == value
         when Array(String)
           return false unless this_value == value
         else
@@ -100,12 +178,18 @@ struct HTTP::Headers
     true
   end
 
+  def each
+    @hash.each do |key, value|
+      yield key.name, value
+    end
+  end
+
   def get(key)
-    @hash[key_name(key)]
+    @hash[wrap(key)]
   end
 
   def get?(key)
-    @hash[key_name(key)]?
+    @hash[wrap(key)]?
   end
 
   def dup
@@ -120,13 +204,17 @@ struct HTTP::Headers
     dup
   end
 
+  def same?(other : HTTP::Headers)
+    object_id == other.object_id
+  end
+
   def to_s(io : IO)
     io << "HTTP::Headers{"
     @hash.each_with_index do |key, values, index|
       io << ", " if index > 0
-      key.inspect(io)
+      key.name.inspect(io)
       io << " => "
-      if values.length == 1
+      if values.size == 1
         values.first.inspect(io)
       else
         values.inspect(io)
@@ -141,27 +229,8 @@ struct HTTP::Headers
 
   forward_missing_to @hash
 
-  private def key_name(key)
-    if needs_capitalize?(key)
-      key.capitalize
-    else
-      key
-    end
-  end
-
-  private def needs_capitalize?(key)
-    return false if key.empty?
-
-    cstr = key.to_unsafe
-    return true unless 'A' <= cstr[0].chr <= 'Z'
-
-    i = 1
-    while i < key.bytesize
-      return true if 'A' <= cstr[i].chr <= 'Z'
-      i += 1
-    end
-
-    false
+  private def wrap(key)
+    key.is_a?(Key) ? key : Key.new(key)
   end
 
   private def cast(value : String)
@@ -173,13 +242,26 @@ struct HTTP::Headers
   end
 
   private def concat(values)
-    case values.length
+    case values.size
     when 0
       ""
     when 1
       values.first
     else
       values.join ","
+    end
+  end
+
+  private def check_invalid_header_content(value)
+    # According to RFC 7230, characters accepted as HTTP header
+    # are '\t', ' ', all US-ASCII printable characters and
+    # range from '\x80' to '\xff' (but the last is obsoleted.)
+    value.each_byte do |byte|
+      char = byte.chr
+      next if char == '\t'
+      if char < ' ' || char > '\u{ff}' || char == '\u{7e}'
+        raise ArgumentError.new("header content contains invalid character #{char.inspect}")
+      end
     end
   end
 end

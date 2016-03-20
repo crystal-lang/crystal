@@ -34,6 +34,13 @@ lib LibGC
   fun push_all_eager = GC_push_all_eager(bottom : Void*, top : Void*)
 
   $stackbottom = GC_stackbottom : Void*
+
+  fun set_on_collection_event = GC_set_on_collection_event(cb : ->)
+
+  $gc_no = GC_gc_no : LibC::ULong
+  $bytes_found = GC_bytes_found : LibC::Long
+  # GC_on_collection_event isn't exported.  Can't collect totals without it.
+  # bytes_allocd, heap_size, unmapped_bytes are macros
 end
 
 # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
@@ -45,17 +52,17 @@ end
 
 # :nodoc:
 fun __crystal_malloc(size : UInt32) : Void*
-  LibGC.malloc(LibC::SizeT.cast(size))
+  LibGC.malloc(size)
 end
 
 # :nodoc:
 fun __crystal_malloc_atomic(size : UInt32) : Void*
-  LibGC.malloc_atomic(LibC::SizeT.cast(size))
+  LibGC.malloc_atomic(size)
 end
 
 # :nodoc:
 fun __crystal_realloc(ptr : Void*, size : UInt32) : Void*
-  LibGC.realloc(ptr, LibC::SizeT.cast(size))
+  LibGC.realloc(ptr, size)
 end
 
 module GC
@@ -81,20 +88,20 @@ module GC
   end
 
   def self.add_finalizer(object : T)
-    if object.responds_to?(:finalize)
-      LibGC.register_finalizer_ignore_self(object as Void*,
-        ->(obj, data) {
-          same_object = obj as T
-          if same_object.responds_to?(:finalize)
-            same_object.finalize
-          end
-        }, nil, nil, nil)
-      nil
-    end
+    LibGC.register_finalizer_ignore_self(object as Void*,
+      ->(obj, data) { (obj as T).finalize },
+      nil, nil, nil)
+    nil
   end
 
   def self.add_root(object : Reference)
     roots = $roots ||= [] of Pointer(Void)
     roots << Pointer(Void).new(object.object_id)
+  end
+
+  record Stats, collections, bytes_found
+
+  def self.stats
+    Stats.new LibGC.gc_no - 1, LibGC.bytes_found
   end
 end

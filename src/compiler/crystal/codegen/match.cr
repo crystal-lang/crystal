@@ -49,7 +49,7 @@ class Crystal::CodeGenVisitor
 
   def create_match_fun_body(type : UnionType, type_id)
     result = nil
-    type.union_types.each do |sub_type|
+    type.expand_union_types.each do |sub_type|
       sub_type_cond = match_any_type_id(sub_type, type_id)
       result = result ? or(result, sub_type_cond) : sub_type_cond
     end

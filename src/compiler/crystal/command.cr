@@ -7,77 +7,93 @@ module Crystal
   end
 end
 
-module Crystal::Command
+class Crystal::Command
   USAGE = <<-USAGE
-Usage: crystal [command] [switches] [program file] [--] [arguments]
+    Usage: crystal [command] [switches] [program file] [--] [arguments]
 
-Command:
-    init                     generate new crystal project
-    build                    compile program file
-    deps                     install project dependencies
-    docs                     generate documentation
-    eval                     eval code from args or standard input
-    run (default)            compile and run program file
-    spec                     compile and run specs (in spec directory)
-    tool                     run a tool
-    --help, -h               show this help
-    --version, -v            show version
-USAGE
+    Command:
+        init                     generate a new project
+        build                    compile program
+        play                     starts crystal playground server
+        deps                     install project dependencies
+        docs                     generate documentation
+        eval                     eval code from args or standard input
+        run (default)            compile and run program
+        spec                     compile and run specs (in spec directory)
+        tool                     run a tool
+        help, --help, -h         show this help
+        version, --version, -v   show version
+    USAGE
 
   COMMANDS_USAGE = <<-USAGE
-Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
+    Usage: crystal tool [tool] [switches] [program file] [--] [arguments]
 
-Tool:
-    browser                  open an http server to browse program file
-    context                  show context for given location
-    hierarchy                show type hierarchy
-    implementations          show implementations for given call in location
-    types                    show type of main variables
-    --help, -h               show this help
-USAGE
+    Tool:
+        context                  show context for given location
+        format                   format project, directories and/or files
+        hierarchy                show type hierarchy
+        implementations          show implementations for given call in location
+        types                    show type of main variables
+        --help, -h               show this help
+    USAGE
 
   VALID_EMIT_VALUES = %w(asm llvm-bc llvm-ir obj)
 
-  @@color = true
-
   def self.run(options = ARGV)
+    new(options).run
+  end
+
+  private getter options : Array(String)
+
+  @color : Bool
+  @config : CompilerConfig?
+  @format : String?
+
+  def initialize(@options)
+    @color = true
+  end
+
+  def run
     command = options.first?
 
     if command
-      if File.file?(command)
-        run_command options
+      case
+      when "init".starts_with?(command)
+        options.shift
+        init
+      when "build".starts_with?(command)
+        options.shift
+        build
+      when "play".starts_with?(command)
+        options.shift
+        playground
+      when "deps".starts_with?(command)
+        options.shift
+        deps
+      when "docs".starts_with?(command)
+        options.shift
+        docs
+      when "eval".starts_with?(command)
+        options.shift
+        eval
+      when "run".starts_with?(command)
+        options.shift
+        run_command
+      when "spec/".starts_with?(command)
+        options.shift
+        run_specs
+      when "tool".starts_with?(command)
+        options.shift
+        tool
+      when "help".starts_with?(command), "--help" == command, "-h" == command
+        puts USAGE
+        exit
+      when "version".starts_with?(command), "--version" == command, "-v" == command
+        puts "Crystal #{Crystal.version_string}"
+        exit
       else
-        case
-        when "init".starts_with?(command)
-          options.shift
-          init options
-        when "build".starts_with?(command)
-          options.shift
-          build options
-        when "deps".starts_with?(command)
-          options.shift
-          deps options
-        when "docs".starts_with?(command)
-          options.shift
-          docs options
-        when "eval".starts_with?(command)
-          options.shift
-          eval options
-        when "run".starts_with?(command)
-          options.shift
-          run_command options
-        when "spec/".starts_with?(command)
-          options.shift
-          run_specs options
-        when "tool".starts_with?(command)
-          options.shift
-          tool options
-        when "--help" == command, "-h" == command
-          puts USAGE
-          exit
-        when "--version" == command, "-v" == command
-          puts "Crystal #{Crystal.version_string}"
-          exit
+        if File.file?(command)
+          run_command
         else
           error "unknown command: #{command}"
         end
@@ -87,8 +103,12 @@ USAGE
       exit
     end
   rescue ex : Crystal::Exception
-    ex.color = @@color
-    puts ex
+    ex.color = @color
+    if @config.try(&.output_format) == "json"
+      puts ex.to_json
+    else
+      puts ex
+    end
     exit 1
   rescue ex
     puts ex
@@ -96,28 +116,28 @@ USAGE
       puts frame
     end
     puts
-    error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/manastech/crystal/issues"
+    error "you've found a bug in the Crystal compiler. Please open an issue, including source code that will allow us to reproduce the bug: https://github.com/crystal-lang/crystal/issues"
   end
 
-  private def self.tool(options)
+  private def tool
     tool = options.first?
     if tool
       case
-      when "browser".starts_with?(tool)
-        options.shift
-        browser options
       when "context".starts_with?(tool)
         options.shift
-        context options
+        context
+      when "format".starts_with?(tool)
+        options.shift
+        format
       when "hierarchy".starts_with?(tool)
         options.shift
-        hierarchy options
+        hierarchy
       when "implementations".starts_with?(tool)
         options.shift
-        implementations options
+        implementations
       when "types".starts_with?(tool)
         options.shift
-        types options
+        types
       when "--help" == tool, "-h" == tool
         puts COMMANDS_USAGE
         exit
@@ -130,31 +150,26 @@ USAGE
     end
   end
 
-  private def self.init(options)
+  private def init
     Init.run(options)
   end
 
-  private def self.build(options)
-    config = create_compiler "build", options
+  private def build
+    config = create_compiler "build"
     config.compile
   end
 
-  private def self.browser(options)
-    config, result = compile_no_codegen "tool browser", options
-    Browser.open result.original_node
-  end
-
-  private def self.eval(args)
-    if args.empty?
-      program_source = STDIN.read
+  private def eval
+    if options.empty?
+      program_source = STDIN.gets_to_end
       program_args = [] of String
     else
-      double_dash_index = args.index("--")
+      double_dash_index = options.index("--")
       if double_dash_index
-        program_source = args[0 ... double_dash_index].join " "
-        program_args = args[double_dash_index + 1 .. -1]
+        program_source = options[0...double_dash_index].join " "
+        program_args = options[double_dash_index + 1..-1]
       else
-        program_source = args.join " "
+        program_source = options.join " "
         program_args = [] of String
       end
     end
@@ -168,27 +183,145 @@ USAGE
     execute output_filename, program_args
   end
 
-  private def self.hierarchy(options)
-    config, result = compile_no_codegen "tool hierarchy", options, hierarchy: true
+  private def format
+    @format = "text"
+
+    option_parser =
+      OptionParser.parse(options) do |opts|
+        opts.banner = "Usage: crystal tool format [options] [file or directory]\n\nOptions:"
+
+        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+          @format = f
+        end
+
+        opts.on("-h", "--help", "Show this message") do
+          puts opts
+          exit 1
+        end
+
+        opts.on("--no-color", "Disable colored output") do
+          @color = false
+        end
+      end
+
+    files = options
+
+    if files.size == 1
+      file = files.first
+      if file == "-"
+        return format_stdin
+      elsif File.file?(file)
+        return format_single(file)
+      end
+    end
+
+    files = Dir["./**/*.cr"] if files.empty?
+    format_many files
+  end
+
+  private def format_stdin
+    source = STDIN.gets_to_end
+
+    begin
+      print Crystal::Formatter.format(source)
+      STDOUT.flush
+    rescue ex : Crystal::SyntaxException
+      if @format == "json"
+        puts ex.to_json
+      else
+        puts ex
+      end
+      exit 1
+    rescue ex
+      couldnt_format "STDIN"
+      STDERR.puts
+      STDERR.flush
+      exit 1
+    end
+  end
+
+  private def format_single(filename)
+    source = File.read(filename)
+
+    begin
+      File.write(filename, Crystal::Formatter.format(source, filename: filename))
+    rescue ex : Crystal::SyntaxException
+      if @format == "json"
+        puts ex.to_json
+      else
+        puts ex
+      end
+      exit 1
+    rescue ex
+      couldnt_format "'#{filename}'"
+      STDERR.puts
+      STDERR.flush
+      exit 1
+    end
+  end
+
+  private def format_many(files)
+    files.each do |filename|
+      format_file_or_directory filename
+    end
+  end
+
+  private def format_file_or_directory(filename)
+    if File.file?(filename)
+      format_file filename
+    elsif Dir.exists?(filename)
+      filename = filename[0...-1] if filename.ends_with?('/')
+      filenames = Dir["#{filename}/**/*.cr"]
+      format_many filenames
+    else
+      error "file or directory does not exist: #{filename}"
+    end
+  end
+
+  private def format_file(filename)
+    source = File.read(filename)
+
+    begin
+      result = Crystal::Formatter.format(source, filename: filename)
+      return if result == source
+
+      File.write(filename, result)
+      STDOUT << "Format".colorize(:green).toggle(@color) << " " << filename << "\n"
+    rescue ex : Crystal::SyntaxException
+      STDOUT << "Syntax Error:".colorize(:yellow).toggle(@color) << " " << ex.message << " at " << filename << ":" << ex.line_number << ":" << ex.column_number << "\n"
+    rescue ex
+      couldnt_format "'#{filename}'"
+      STDERR.puts
+      STDERR.flush
+    end
+  end
+
+  private def couldnt_format(file)
+    STDERR << "Error:".colorize(:red).toggle(@color) << ", " <<
+      "couldn't format " << file << ", please report a bug including the contents of it: https://github.com/crystal-lang/crystal/issues"
+  end
+
+  private def hierarchy
+    config, result = compile_no_codegen "tool hierarchy", hierarchy: true
     Crystal.print_hierarchy result.program, config.hierarchy_exp
   end
 
-  private def self.implementations(options)
-    cursor_command("implementations", options) do |location, config, result|
+  private def implementations
+    cursor_command("implementations") do |location, config, result|
       result = ImplementationsVisitor.new(location).process(result)
     end
   end
 
-  private def self.context(options)
-    cursor_command("context", options) do |location, config, result|
+  private def context
+    cursor_command("context") do |location, config, result|
       result = ContextVisitor.new(location).process(result)
     end
   end
 
-  private def self.cursor_command(command, options)
-    config, result = compile_no_codegen command, options, cursor_command: true
+  private def cursor_command(command)
+    config, result = compile_no_codegen command, cursor_command: true
 
-    format = config.output_format || "text"
+    format = config.output_format
 
     file = ""
     line = ""
@@ -211,8 +344,8 @@ USAGE
     end
   end
 
-  private def self.run_command(options)
-    config = create_compiler "run", options, run: true
+  private def run_command
+    config = create_compiler "run", run: true
     if config.specified_output
       config.compile
       return
@@ -224,31 +357,51 @@ USAGE
     execute output_filename, config.arguments unless config.compiler.no_codegen?
   end
 
-  private def self.run_specs(options)
-    target_filename_and_line_number = options.first?
-    if target_filename_and_line_number
-      splitted = target_filename_and_line_number.split ':', 2
-      target_filename = splitted[0]
-      if File.file?(target_filename)
-        options.shift
-        cwd = Dir.working_directory
-        if target_filename.starts_with?(cwd)
-          target_filename = "#{target_filename[cwd.length .. -1]}"
-        end
-        if splitted.length == 2
-          target_line = splitted[1]
-          options << "-l" << target_line
-        end
-      elsif File.directory?(target_filename)
-        target_filename = "#{target_filename}/**"
-      else
-        error "'#{target_filename}' is not a file"
-      end
+  private def run_specs
+    # Assume spec files end with ".cr" and optionally with a colon and a number
+    # (for the target line number). Everything else is an option we forward.
+    filenames = options.select { |option| option =~ /\.cr(\:\d+)?\Z/ }
+    options.reject! { |option| filenames.includes?(option) }
+
+    locations = [] of {String, String}
+
+    if filenames.empty?
+      target_filenames = Dir["spec/**/*_spec.cr"]
     else
-      target_filename = "spec/**"
+      target_filenames = [] of String
+      filenames.each do |filename|
+        if filename =~ /\A(.+?)\:(\d+)\Z/
+          file, line = $1, $2
+          unless File.file?(file)
+            error "'#{file}' is not a file"
+          end
+          target_filenames << file
+          locations << {file, line}
+        else
+          if Dir.exists?(filename)
+            target_filenames.concat Dir["#{filename}/**/*_spec.cr"]
+          elsif File.file?(filename)
+            target_filenames << filename
+          else
+            error "'#{filename}' is not a file"
+          end
+        end
+      end
     end
 
-    sources = [Compiler::Source.new("spec", %(require "./#{target_filename}"))]
+    if target_filenames.size == 1
+      if locations.size == 1
+        # This is in case other spec runners use `-l`, we keep compatibility
+        options << "-l" << locations.first[1]
+      end
+    else
+      locations.each do |loc|
+        options << "--location" << "#{loc[0]}:#{loc[1]}"
+      end
+    end
+
+    source = target_filenames.map { |filename| %(require "./#{filename}") }.join("\n")
+    sources = [Compiler::Source.new("spec", source)]
 
     output_filename = tempfile "spec"
 
@@ -257,19 +410,17 @@ USAGE
     execute output_filename, options
   end
 
-  private def self.deps(options)
-    gather_sources(["./Projectfile"])
+  private def deps
+    path_to_shards = `which shards`.chomp
+    if path_to_shards.empty?
+      error "`shards` executable is missing. Please install shards: https://github.com/ysbaddaden/shards"
+    end
 
-    sources = Compiler::Source.new("require", %(require "crystal/project_cli"))
-
-    output_filename = tempfile "deps"
-
-    compiler = Compiler.new
-    compiler.compile sources, output_filename
-    execute output_filename, options
+    status = Process.run(path_to_shards, args: options, output: true, error: true)
+    exit status.exit_code unless status.success?
   end
 
-  private def self.docs(options)
+  private def docs
     if options.empty?
       sources = [Compiler::Source.new("require", %(require "./src/**"))]
       included_dirs = [] of String
@@ -289,44 +440,101 @@ USAGE
     Crystal.generate_docs result.program, included_dirs
   end
 
-  private def self.types(options)
-    config, result = compile_no_codegen "tool types", options
+  private def types
+    config, result = compile_no_codegen "tool types"
     Crystal.print_types result.original_node
   end
 
-  private def self.compile_no_codegen(command, options, wants_doc = false, hierarchy = false, cursor_command = false)
-    config = create_compiler command, options, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
+  private def playground
+    server = Playground::Server.new
+
+    OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal play [options] [file]\n\nOptions:"
+
+      opts.on("-p PORT", "--port PORT", "Runs the playground on the specified port") do |port|
+        server.port = port.to_i
+      end
+
+      opts.on("-b HOST", "--binding HOST", "Binds the playground to the specified IP") do |host|
+        server.host = host
+      end
+
+      opts.on("-v", "--verbose", "Display detailed information of executed code") do
+        server.logger.level = Logger::Severity::DEBUG
+      end
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit 1
+      end
+
+      opts.unknown_args do |before, after|
+        if before.size > 0
+          server.source = gather_sources([before.first]).first
+        end
+      end
+    end
+
+    server.start
+  end
+
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false)
+    config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
     config.compiler.no_codegen = true
     config.compiler.wants_doc = wants_doc
     {config, config.compile}
   end
 
-  private def self.execute(output_filename, run_args)
+  private def execute(output_filename, run_args)
     begin
-      status = Process.run(output_filename, args: run_args, input: true, output: true, error: true)
+      Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
+        Signal::INT.trap do
+          process.kill
+          exit
+        end
+      end
+      status = $?
     ensure
       File.delete output_filename
     end
 
-    if status.exit_status == 11
-      puts "Program exited because of a segmentation fault: 11"
-    end
+    if status.normal_exit?
+      exit status.exit_code
+    else
+      case status.exit_signal
+      when Signal::KILL
+        STDERR.puts "Program was killed"
+      when Signal::SEGV
+        STDERR.puts "Program exited because of a segmentation fault (11)"
+      else
+        STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
+      end
 
-    exit status.exit_code
+      exit 1
+    end
   end
 
-  private def self.tempfile(basename)
+  private def tempfile(basename)
     Crystal.tempfile(basename)
   end
 
-  record CompilerConfig, compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format do
+  record(CompilerConfig,
+    compiler : Compiler,
+    sources : Array(Compiler::Source),
+    output_filename : String,
+    original_output_filename : String,
+    arguments : Array(String),
+    specified_output : Bool,
+    hierarchy_exp : String?,
+    cursor_location : String?,
+    output_format : String?) do
     def compile(output_filename = self.output_filename)
       compiler.original_output_filename = original_output_filename
       compiler.compile sources, output_filename
     end
   end
 
-  private def self.create_compiler(command, options, no_codegen = false, run = false, hierarchy = false, cursor_command = false)
+  private def create_compiler(command, no_codegen = false, run = false, hierarchy = false, cursor_command = false)
     compiler = Compiler.new
     link_flags = [] of String
     opt_filenames = nil
@@ -371,10 +579,10 @@ USAGE
         opts.on("-c LOC", "--cursor LOC", "Cursor location with LOC as path/to/file.cr:line:column") do |cursor|
           cursor_location = cursor
         end
+      end
 
-        opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
-          output_format = f
-        end
+      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+        output_format = f
       end
 
       opts.on("-h", "--help", "Show this message") do
@@ -395,7 +603,7 @@ USAGE
       end
 
       opts.on("--no-color", "Disable colored output") do
-        @@color = false
+        @color = false
         compiler.color = false
       end
 
@@ -448,21 +656,34 @@ USAGE
     filenames = opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
 
-    if filenames.length == 0 || (cursor_command && cursor_location.nil?)
+    if filenames.size == 0 || (cursor_command && cursor_location.nil?)
       puts option_parser
       exit 1
     end
 
     sources = gather_sources(filenames)
-    original_output_filename = output_filename_from_sources(sources)
-    output_filename ||= original_output_filename
+    first_filename = sources.first.filename
+    first_file_ext = File.extname(first_filename)
+    original_output_filename = File.basename(first_filename, first_file_ext)
 
-    CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
+    # Check if we'll overwrite the main source file
+    if first_file_ext.empty? && !output_filename && !no_codegen && !run && first_filename == File.expand_path(original_output_filename)
+      error "compilation will overwrite source file '#{Crystal.relative_filename(first_filename)}', either change its extension to '.cr' or specify an output file with '-o'"
+    end
+
+    output_filename ||= original_output_filename
+    output_format ||= "text"
+
+    if !no_codegen && !run && Dir.exists?(output_filename)
+      error "can't use `#{output_filename}` as output filename because it's a directory"
+    end
+
+    @config = CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
   rescue ex : OptionParser::Exception
     error ex.message
   end
 
-  private def self.gather_sources(filenames)
+  private def gather_sources(filenames)
     filenames.map do |filename|
       unless File.file?(filename)
         error "File #{filename} does not exist"
@@ -472,12 +693,7 @@ USAGE
     end
   end
 
-  private def self.output_filename_from_sources(sources)
-    first_filename = sources.first.filename
-    File.basename(first_filename, File.extname(first_filename))
-  end
-
-  private def self.validate_emit_values(values)
+  private def validate_emit_values(values)
     values.each do |value|
       unless VALID_EMIT_VALUES.includes?(value)
         error "invalid emit value '#{value}'"
@@ -486,16 +702,9 @@ USAGE
     values
   end
 
-  private def self.error(msg)
+  private def error(msg)
     # This is for the case where the main command is wrong
-    @@color = false if ARGV.includes?("--no-color")
-
-    print colorize("Error: ").red.bold
-    puts colorize(msg).toggle(@@color).bold
-    exit 1
-  end
-
-  private def self.colorize(obj)
-    obj.colorize.toggle(@@color)
+    @color = false if ARGV.includes?("--no-color")
+    Crystal.error msg, @color
   end
 end

@@ -47,7 +47,7 @@ module Macros
   # The `run` macro is useful when the subset of available macro methods
   # are not enough for your purposes and you need something more powerful.
   # With `run` you can read files at compile time, connect to the internet
-  # or to a datbase.
+  # or to a database.
   #
   # A simple example:
   #
@@ -89,9 +89,9 @@ module Macros
     # define_method "bar", 2
     # define_method baz, 3
     #
-    # puts foo #=> prints 1
-    # puts bar #=> prints 2
-    # puts baz #=> prints 3
+    # puts foo # => prints 1
+    # puts bar # => prints 2
+    # puts baz # => prints 3
     # ```
     def id : MacroId
     end
@@ -116,7 +116,7 @@ module Macros
     #   {{ "foo".class_name }}
     # end
     #
-    # puts test #=> prints StringLiteral
+    # puts test # => prints StringLiteral
     # ```
     def class_name : StringLiteral
     end
@@ -146,8 +146,8 @@ module Macros
     #   {% end %}
     # end
     #
-    # test 1    #=> prints "Got a number literal"
-    # test "hi" #=> prints "Didn't get a number literal"
+    # test 1    # => prints "Got a number literal"
+    # test "hi" # => prints "Didn't get a number literal"
     # ```
     def is_a?(name) : BoolLiteral
     end
@@ -305,8 +305,8 @@ module Macros
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : StringLiteral
     end
 
-    # Similar to `String#length`.
-    def length : NumberLiteral
+    # Similar to `String#size`.
+    def size : NumberLiteral
     end
 
     # Similar to `String#lines`.
@@ -395,8 +395,8 @@ module Macros
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : SymbolLiteral
     end
 
-    # Similar to `String#length`.
-    def length : NumberLiteral
+    # Similar to `String#size`.
+    def size : NumberLiteral
     end
 
     # Similar to `String#lines`.
@@ -455,6 +455,10 @@ module Macros
     def first : ASTNode | NilLiteral
     end
 
+    # Similar to `Enumerable#includes?(obj)`.
+    def includes?(node : ASTNode) : BoolLiteral
+    end
+
     # Similar to `Enumerable#join`
     def join(separator) : StringLiteral
     end
@@ -463,8 +467,8 @@ module Macros
     def last : ASTNode | NilLiteral
     end
 
-    # Similar to `Array#length`
-    def length : NumberLiteral
+    # Similar to `Array#size`
+    def size : NumberLiteral
     end
 
     # Similar to `Enumerable#map`
@@ -473,6 +477,10 @@ module Macros
 
     # Similar to `Enumerable#select`
     def select(&block) : ArrayLiteral
+    end
+
+    # Similar to `Enumerable#reject`
+    def reject(&block) : ArrayLiteral
     end
 
     # Similar to `Array#shuffle`
@@ -502,8 +510,8 @@ module Macros
     def keys : ArrayLiteral
     end
 
-    # Similar to `Hash#length`
-    def length : NumberLiteral
+    # Similar to `Hash#size`
+    def size : NumberLiteral
     end
 
     # Similar to `Hash#to_a`
@@ -537,8 +545,8 @@ module Macros
     def empty? : BoolLiteral
     end
 
-    # Similar to `Tuple#length`
-    def length : NumberLiteral
+    # Similar to `Tuple#size`
+    def size : NumberLiteral
     end
 
     # Similar to `Tuple#[]`
@@ -690,10 +698,6 @@ module Macros
   # class Fun < ASTNode
   # end
 
-  # A def's block argument (&block)
-  # class BlockArg < ASTNode
-  # end
-
   # A method definition.
   class Def < ASTNode
     # Returns the name of this method.
@@ -803,8 +807,8 @@ module Macros
   # class Generic < ASTNode
   # end
 
-  # A low-level variable declaration like `x :: Int32`
-  class DeclareVar < ASTNode
+  # A type declaration like `x : Int32`
+  class TypeDeclaration < ASTNode
     # Returns the variable part of the declaration.
     def var : MacroId
     end
@@ -854,9 +858,6 @@ module Macros
   # end
 
   # class Extend < ASTNode
-  # end
-
-  # class Undef < ASTNode
   # end
 
   # class LibDef < ASTNode
@@ -926,8 +927,12 @@ module Macros
   # class Underscore < ASTNode
   # end
 
-  # class Splat < UnaryExpression
-  # end
+  # A splat expression: `*exp`.
+  class Splat < ASTNode
+    # Returns the splatted expression.
+    def exp : ASTNode
+    end
+  end
 
   # class MagicConstant < ASTNode
   # end
@@ -1024,8 +1029,8 @@ module Macros
     def gsub(regex : RegexLiteral, replacement : StringLiteral) : MacroId
     end
 
-    # Similar to `String#length`.
-    def length : NumberLiteral
+    # Similar to `String#size`.
+    def size : NumberLiteral
     end
 
     # Similar to `String#lines`.
@@ -1098,9 +1103,15 @@ module Macros
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
+    # Returns true if this type has a constant. For example `DEFAULT_OPTIONS`
+    # (the name you pass to this method is "DEFAULT_OPTIONS" or :DEFAULT_OPTIONS
+    # in this cases).
+    def has_constant?(name : StringLiteral | SymbolLiteral) : BoolLiteral
+    end
+
     # Returns the number of elements in this tuple type or tuple metaclass type.
     # Gives a compile error if this is not one of those types.
-    def length : NumberLiteral
+    def size : NumberLiteral
     end
 
     # Returns true if this type is a union type, false otherwise.
@@ -1116,9 +1127,14 @@ module Macros
     def union_types : ArrayLiteral(TypeNode)
     end
 
-    # Returns the type parameters of the generic type. If the type is not
+    # Returns the type variables of the generic type. If the type is not
     # generic, an empty array is returned.
-    def type_params : ArrayLiteral(TypeNode)
+    def type_vars : ArrayLiteral(TypeNode)
+    end
+
+    # Returns the class of this type. With this you can, for example, obtain class
+    # methods by invoking `type.class.methods`.
+    def class : TypeNode
     end
   end
 

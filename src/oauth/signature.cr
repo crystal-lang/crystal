@@ -1,6 +1,12 @@
 # :nodoc:
 struct OAuth::Signature
-  def initialize(@consumer_key, @client_shared_secret, @oauth_token = nil, @token_shared_secret = nil, @extra_params = nil)
+  @consumer_key : String
+  @client_shared_secret : String
+  @oauth_token : String?
+  @token_shared_secret : String?
+  @extra_params : Hash(String, String)?
+
+  def initialize(@consumer_key : String, @client_shared_secret : String, @oauth_token : String? = nil, @token_shared_secret : String? = nil, @extra_params : Hash(String, String)? = nil)
   end
 
   def base_string(request, ssl, ts, nonce)
@@ -9,10 +15,10 @@ struct OAuth::Signature
 
   def key
     String.build do |str|
-      CGI.escape @client_shared_secret, str
+      URI.escape @client_shared_secret, str
       str << '&'
       if token_shared_secret = @token_shared_secret
-        CGI.escape token_shared_secret, str
+        URI.escape token_shared_secret, str
       end
     end
   end
@@ -47,14 +53,14 @@ struct OAuth::Signature
       str << '&'
       str << (ssl ? "https" : "http")
       str << "%3A%2F%2F"
-      CGI.escape host, str
+      URI.escape host, str
       if port
-        str << ':'
+        str << "%3A"
         str << port
       end
-      uri_path = request.uri.path || "/"
+      uri_path = request.path || "/"
       uri_path = "/" if uri_path.empty?
-      CGI.escape(uri_path, str)
+      URI.escape(uri_path, str)
       str << '&'
       str << params
     end
@@ -73,7 +79,7 @@ struct OAuth::Signature
       params.add key, value
     end
 
-    if query = request.uri.query
+    if query = request.query
       params.add_query query
     end
 
@@ -89,8 +95,8 @@ struct OAuth::Signature
   private def host_and_port(request, ssl)
     host_header = request.headers["Host"]
     if colon_index = host_header.index ':'
-      host = host_header[0 ... colon_index]
-      port = host_header[colon_index + 1 .. -1].to_i
+      host = host_header[0...colon_index]
+      port = host_header[colon_index + 1..-1].to_i
       {host, port}
     else
       {host_header, nil}

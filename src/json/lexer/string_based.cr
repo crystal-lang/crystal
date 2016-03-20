@@ -1,8 +1,10 @@
 # :nodoc:
 class JSON::Lexer::StringBased < JSON::Lexer
+  @reader : Char::Reader
+
   def initialize(string)
     super()
-    @reader = CharReader.new(string)
+    @reader = Char::Reader.new(string)
   end
 
   # Consume a string by remembering the start position of it and then
@@ -28,7 +30,7 @@ class JSON::Lexer::StringBased < JSON::Lexer
     if @expects_object_key
       start_pos += 1
       end_pos = current_pos - 1
-      @token.string_value = @string_pool.get(@reader.string.cstr + start_pos, end_pos - start_pos)
+      @token.string_value = @string_pool.get(@reader.string.to_unsafe + start_pos, end_pos - start_pos)
     else
       @token.string_value = string_range(start_pos + 1, current_pos - 1)
     end

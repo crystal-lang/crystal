@@ -2,10 +2,15 @@
 #
 # Most of the time `CSV#parse` and `CSV#each_row` are more convenient.
 class CSV::Parser
+  @lexer : Lexer
+  @max_row_size : Int32
+
   # Creates a parser from a `String` or `IO`.
-  def initialize(string_or_io : String | IO)
-    @lexer = CSV::Lexer.new(string_or_io)
-    @max_row_length = 3
+  # Optionally takes the optional *separator* and *quote_char* arguments for
+  # specifying non-standard cell separators and quote characters
+  def initialize(string_or_io : String | IO, separator : Char = DEFAULT_SEPARATOR, quote_char : Char = DEFAULT_QUOTE_CHAR)
+    @lexer = CSV::Lexer.new(string_or_io, separator, quote_char)
+    @max_row_size = 3
   end
 
   # Returns the remaining rows.
@@ -15,7 +20,7 @@ class CSV::Parser
     rows
   end
 
-  # Yields each of the reamining rows as an `Array(String)`.
+  # Yields each of the remaining rows as an `Array(String)`.
   def each_row
     while row = next_row
       yield row
@@ -34,14 +39,29 @@ class CSV::Parser
       return nil
     end
 
-    row = Array(String).new(@max_row_length)
+    row = Array(String).new(@max_row_size)
+    next_row_internal(token, row)
+  end
+
+  # Reads the next row into the given *array*.
+  # Returns that same array, if a row was found, or `nil`.
+  def next_row(array : Array(String)) : Array(String) | Nil
+    token = @lexer.next_token
+    if token.kind == Token::Kind::Eof
+      return nil
+    end
+
+    next_row_internal(token, array)
+  end
+
+  private def next_row_internal(token, row)
     while true
       case token.kind
       when Token::Kind::Cell
         row << token.value
         token = @lexer.next_token
-      else #:newline, :eof
-        @max_row_length = row.length if row.length > @max_row_length
+      else # :newline, :eof
+        @max_row_size = row.size if row.size > @max_row_size
         return row
       end
     end
@@ -55,6 +75,8 @@ class CSV::Parser
   # :nodoc:
   struct RowIterator
     include Iterator(Array(String))
+
+    @parser : Parser
 
     def initialize(@parser)
     end

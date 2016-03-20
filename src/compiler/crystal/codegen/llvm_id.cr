@@ -2,7 +2,10 @@ require "../types"
 
 module Crystal
   class LLVMId
-    getter id_to_metaclass
+    getter id_to_metaclass : Hash(Int32, Int32)
+
+    @ids : Hash(Type, {Int32, Int32})
+    @next_id : Int32
 
     def initialize(program)
       @ids = {} of Type => {Int32, Int32}
@@ -65,7 +68,7 @@ module Crystal
         put_id type, id, id
         id
       else
-        min_id :: Int32
+        min_id = uninitialized Int32
         first = true
         subtypes.each do |subtype|
           sub_id = assign_id(subtype)

@@ -1,4 +1,6 @@
-struct LLVM::Builder
+class LLVM::Builder
+  @unwrap : LibLLVM::BuilderRef
+
   def initialize
     @unwrap = LibLLVM.create_builder
   end
@@ -34,23 +36,23 @@ struct LLVM::Builder
   def phi(type, incoming_blocks : Array(LLVM::BasicBlock), incoming_values : Array(LLVM::Value), name = "")
     phi_node = LibLLVM.build_phi self, type, name
     LibLLVM.add_incoming phi_node,
-      (incoming_values.buffer as LibLLVM::ValueRef*),
-      (incoming_blocks.buffer as LibLLVM::BasicBlockRef*),
-      incoming_blocks.length
+      (incoming_values.to_unsafe as LibLLVM::ValueRef*),
+      (incoming_blocks.to_unsafe as LibLLVM::BasicBlockRef*),
+      incoming_blocks.size
     Value.new phi_node
   end
 
-  def call(func, name = "" : String)
+  def call(func, name : String = "")
     Value.new LibLLVM.build_call(self, func, nil, 0, name)
   end
 
-  def call(func, arg : LLVM::Value, name = "" : String)
+  def call(func, arg : LLVM::Value, name : String = "")
     value = arg.to_unsafe
     Value.new LibLLVM.build_call(self, func, pointerof(value), 1, name)
   end
 
-  def call(func, args : Array(LLVM::Value), name = "" : String)
-    Value.new LibLLVM.build_call(self, func, (args.buffer as LibLLVM::ValueRef*), args.length, name)
+  def call(func, args : Array(LLVM::Value), name : String = "")
+    Value.new LibLLVM.build_call(self, func, (args.to_unsafe as LibLLVM::ValueRef*), args.size, name)
   end
 
   def alloca(type, name = "")
@@ -75,24 +77,24 @@ struct LLVM::Builder
 
   {% for method_name in %w(gep inbounds_gep) %}
     def {{method_name.id}}(value, indices : Array(LLVM::ValueRef), name = "")
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.buffer as LibLLVM::ValueRef*), indices.length.to_u32, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.to_unsafe as LibLLVM::ValueRef*), indices.size, name)
     end
 
     def {{method_name.id}}(value, index : LLVM::Value, name = "")
       indices = pointerof(index) as LibLLVM::ValueRef*
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1_u32, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, indices, 1, name)
     end
 
     def {{method_name.id}}(value, index1 : LLVM::Value, index2 : LLVM::Value, name = "")
-      indices :: LLVM::Value[2]
+      indices = uninitialized LLVM::Value[2]
       indices[0] = index1
       indices[1] = index2
-      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.buffer as LibLLVM::ValueRef*), 2_u32, name)
+      Value.new LibLLVM.build_{{method_name.id}}(self, value, (indices.to_unsafe as LibLLVM::ValueRef*), 2, name)
     end
   {% end %}
 
   def extract_value(value, index, name = "")
-    Value.new LibLLVM.build_extract_value(self, value, index.to_u32, name)
+    Value.new LibLLVM.build_extract_value(self, value, index, name)
   end
 
   {% for name in %w(bit_cast si2fp ui2fp zext sext trunc fpext fptrunc fp2si fp2ui si2fp ui2fp int2ptr ptr2int) %}
@@ -130,7 +132,7 @@ struct LLVM::Builder
   end
 
   def landing_pad(type, personality, clauses, name = "")
-    lpad = LibLLVM.build_landing_pad self, type, personality, clauses.length.to_u32, name
+    lpad = LibLLVM.build_landing_pad self, type, personality, clauses.size, name
     LibLLVM.set_cleanup lpad, 1
     clauses.each do |clause|
       LibLLVM.add_clause lpad, clause
@@ -139,18 +141,34 @@ struct LLVM::Builder
   end
 
   def invoke(fn, args : Array(LLVM::Value), a_then, a_catch, name = "")
-    Value.new LibLLVM.build_invoke self, fn, (args.buffer as LibLLVM::ValueRef*), args.length.to_u32, a_then, a_catch, name
+    Value.new LibLLVM.build_invoke self, fn, (args.to_unsafe as LibLLVM::ValueRef*), args.size, a_then, a_catch, name
   end
 
   def switch(value, otherwise, cases)
-    switch = LibLLVM.build_switch self, value, otherwise, cases.length.to_u32
+    switch = LibLLVM.build_switch self, value, otherwise, cases.size
     cases.each do |case_value, block|
       LibLLVM.add_case switch, case_value, block
     end
     switch
   end
 
+  def set_current_debug_location(line, column, scope, inlined_at = nil)
+    LibLLVMExt.set_current_debug_location(self, line, column, scope, inlined_at)
+  end
+
+  def set_metadata(value, kind, node)
+    LibLLVM.set_metadata(value, kind, node)
+  end
+
+  def current_debug_location
+    Value.new LibLLVM.get_current_debug_location(self)
+  end
+
   def to_unsafe
     @unwrap
+  end
+
+  def finalize
+    LibLLVM.dispose_builder(@unwrap)
   end
 end

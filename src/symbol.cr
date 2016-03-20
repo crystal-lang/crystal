@@ -4,6 +4,7 @@
 # ```
 # :hello
 # :welcome
+# :"123"
 # :"symbol with spaces"
 # ```
 #
@@ -62,7 +63,7 @@ struct Symbol
     else
       string.each_char do |char|
         case char
-        when '0'..'9', 'A'..'Z', 'a'..'z', '_'
+        when .alphanumeric?, '_'
           # Nothing
         else
           return true

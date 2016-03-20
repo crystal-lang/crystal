@@ -4,24 +4,23 @@ module Crystal
       @def_macros << a_def
     end
 
-    def expand_macro(scope : Type, a_macro : Macro, call)
-      macro_expander.expand scope, a_macro, call
+    def expand_macro(a_macro : Macro, call : Call, scope : Type)
+      macro_expander.expand a_macro, call, scope
     end
 
-    def expand_macro(scope : Type, node)
-      macro_expander.expand scope, node
+    def expand_macro(node : ASTNode, scope : Type, free_vars = nil)
+      macro_expander.expand node, scope, free_vars
     end
 
-    def expand_def_macros
+    def expand_macro_defs
       until @def_macros.empty?
         def_macro = @def_macros.pop
-        expand_def_macro def_macro
+        expand_macro_def def_macro
       end
     end
 
-    def expand_def_macro(target_def)
-      the_macro = Macro.new("macro_#{target_def.object_id}", [] of Arg, target_def.body)
-      the_macro.location = target_def.location
+    def expand_macro_def(target_def)
+      the_macro = Macro.new("macro_#{target_def.object_id}", [] of Arg, target_def.body).at(target_def)
 
       owner = target_def.owner
 
@@ -33,7 +32,7 @@ module Crystal
       end
 
       begin
-        expanded_macro = @program.expand_macro owner, target_def.body
+        expanded_macro = @program.expand_macro target_def.body, owner
       rescue ex : Crystal::Exception
         target_def.raise "expanding macro", ex
       end
@@ -53,17 +52,17 @@ module Crystal
 
       expected_type = target_def.type
 
-      type_visitor = TypeVisitor.new(@program, vars, target_def)
+      type_visitor = MainVisitor.new(@program, vars, target_def)
       type_visitor.scope = owner
+      type_visitor.types << owner
       generated_nodes.accept type_visitor
 
+      target_def.body = generated_nodes
       target_def.bind_to generated_nodes
 
-      if target_def.type != expected_type
+      unless target_def.type.covariant?(expected_type)
         target_def.raise "expected '#{target_def.name}' to return #{expected_type}, not #{target_def.type}"
       end
-
-      target_def.body = generated_nodes
     end
 
     def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false, inside_type = false, inside_exp = false)
@@ -98,21 +97,25 @@ module Crystal
     # and later must be replaced. The mapping of placeholders is the `yields` property
     # of this record. What must be replaced are argless calls whose name appear in this
     # `yields` hash.
-    record ExpandedMacro, source, yields
+    record ExpandedMacro, source : String, yields : Hash(String, ASTNode)?
+
+    @mod : Program
+    @cache : Hash(String, String)
 
     def initialize(@mod)
       @cache = {} of String => String
     end
 
-    def expand(scope : Type, a_macro, call)
+    def expand(a_macro : Macro, call : Call, scope : Type)
       visitor = MacroVisitor.new self, @mod, scope, a_macro, call
       a_macro.body.accept visitor
       source = visitor.to_s
       ExpandedMacro.new source, visitor.yields
     end
 
-    def expand(scope : Type, node)
+    def expand(node : ASTNode, scope : Type, free_vars = nil)
       visitor = MacroVisitor.new self, @mod, scope, node.location
+      visitor.free_vars = free_vars
       node.accept visitor
       source = visitor.to_s
       ExpandedMacro.new source, visitor.yields
@@ -122,7 +125,7 @@ module Crystal
       compiled_file = @cache[filename] ||= compile(filename)
 
       command = String.build do |str|
-        str << compiled_file
+        str << compiled_file.inspect
         args.each do |arg|
           str << " "
           str << arg.inspect
@@ -150,14 +153,24 @@ module Crystal
     end
 
     class MacroVisitor < Visitor
-      getter last
-      getter yields
+      getter last : ASTNode
+      getter yields : Hash(String, ASTNode)?
+      property free_vars : Hash(String, Type)?
+
+      @expander : MacroExpander
+      @mod : Program
+      @scope : Type
+      @location : Location?
+      @vars : Hash(String, ASTNode)
+      @block : Block?
+      @str : MemoryIO
+      @macro_vars : Hash(MacroVarKey, String)?
 
       def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
 
-        macro_args_length = a_macro.args.length
-        call_args_length = call.args.length
+        marg_args_size = a_macro.args.size
+        call_args_size = call.args.size
         splat_index = a_macro.splat_index || -1
 
         # Args before the splat argument
@@ -170,15 +183,15 @@ module Crystal
 
         # The splat argument
         if splat_index == -1
-          splat_length = 0
+          splat_size = 0
           offset = 0
         else
-          splat_length = call_args_length - (macro_args_length - 1)
-          splat_length = 0 if splat_length < 0
-          offset = splat_index + splat_length
+          splat_size = call_args_size - (marg_args_size - 1)
+          splat_size = 0 if splat_size < 0
+          offset = splat_index + splat_size
           splat_arg = a_macro.args[splat_index]
-          splat_elements = if splat_index < call.args.length
-                             call.args[splat_index, splat_length]
+          splat_elements = if splat_index < call.args.size
+                             call.args[splat_index, splat_size]
                            else
                              [] of ASTNode
                            end
@@ -187,7 +200,7 @@ module Crystal
 
         # Args after the splat argument
         base = splat_index + 1
-        base.upto(macro_args_length - 1) do |index|
+        base.upto(marg_args_size - 1) do |index|
           macro_arg = a_macro.args[index]
           call_arg = call.args[offset + index - base]? || macro_arg.default_value.not_nil!
           call_arg = call_arg.expand_node(call.location) if call_arg.is_a?(MagicConstant)
@@ -209,10 +222,10 @@ module Crystal
         new(expander, mod, scope, a_macro.location, vars, call.block)
       end
 
-      record MacroVarKey, name, exps
+      record MacroVarKey, name : String, exps : Array(ASTNode)?
 
       def initialize(@expander, @mod, @scope, @location, @vars = {} of String => ASTNode, @block = nil)
-        @str = StringIO.new(512)
+        @str = MemoryIO.new(512)
         @last = Nop.new
       end
 
@@ -454,12 +467,12 @@ module Crystal
       def visit(node : Yield)
         if block = @block
           if node.exps.empty?
-            @last = block.body
+            @last = block.body.clone
           else
             block_vars = {} of String => ASTNode
             node.exps.each_with_index do |exp, i|
               if block_arg = block.args[i]?
-                block_vars[block_arg.name] = exp
+                block_vars[block_arg.name] = exp.clone
               end
             end
             @last = replace_block_vars block.body.clone, block_vars
@@ -471,7 +484,12 @@ module Crystal
       end
 
       def visit(node : Path)
-        matched_type = @scope.lookup_type(node)
+        if node.names.size == 1 && (match = @free_vars.try &.[node.names.first])
+          matched_type = match
+        else
+          matched_type = @scope.lookup_type(node)
+        end
+
         unless matched_type
           node.raise "undefined constant #{node}"
         end
@@ -505,6 +523,8 @@ module Crystal
       end
 
       class ReplaceBlockVarsTransformer < Transformer
+        @vars : Hash(String, ASTNode)
+
         def initialize(@vars)
         end
 
@@ -549,13 +569,13 @@ module Crystal
       end
 
       def execute_env(node)
-        if node.args.length == 1
+        if node.args.size == 1
           node.args[0].accept self
           cmd = @last.to_macro_id
           env_value = ENV[cmd]?
           @last = env_value ? StringLiteral.new(env_value) : NilLiteral.new
         else
-          node.raise "wrong number of arguments for macro call 'env' (#{node.args.length} for 1)"
+          node.wrong_number_of_arguments "macro call 'env'", node.args.size, 1
         end
       end
 
@@ -607,34 +627,43 @@ module Crystal
       end
 
       def execute_run(node)
-        if node.args.length == 0
-          node.raise "wrong number of arguments for macro run (0 for 1..)"
+        if node.args.size == 0
+          node.wrong_number_of_arguments "macro call 'run'", 0, "1+"
         end
 
         node.args.first.accept self
         filename = @last.to_macro_id
         original_filanme = filename
 
-        begin
-          relative_to = @location.try &.filename
-          if relative_to.is_a?(VirtualFile)
-            relative_to = relative_to.expanded_location.try(&.filename)
+        # Support absolute paths
+        if filename.starts_with?("/")
+          filename = "#{filename}.cr" unless filename.ends_with?(".cr")
+
+          if File.exists?(filename)
+            unless File.file?(filename)
+              node.raise "error executing macro run: '#{filename}' is not a file"
+            end
+          else
+            node.raise "error executing macro run: can't find file '#{filename}'"
+          end
+        else
+          begin
+            relative_to = @location.try &.original_filename
+            found_filenames = @mod.find_in_path(filename, relative_to)
+          rescue ex
+            node.raise "error executing macro run: #{ex.message}"
           end
 
-          found_filenames = @mod.find_in_path(filename, relative_to)
-        rescue ex
-          node.raise "error executing macro run: #{ex.message}"
-        end
+          unless found_filenames
+            node.raise "error executing macro run: can't find file '#{filename}'"
+          end
 
-        unless found_filenames
-          node.raise "error executing macro run: can't find file '#{filename}'"
-        end
+          if found_filenames.size > 1
+            node.raise "error executing macro run: '#{filename}' is a directory"
+          end
 
-        if found_filenames.length > 1
-          node.raise "error executing macro run: '#{filename}' is a directory"
+          filename = found_filenames.first
         end
-
-        filename = found_filenames.first
 
         run_args = [] of String
         node.args.each_with_index do |arg, i|
@@ -654,22 +683,9 @@ module Crystal
 
       def visit(node : InstanceVar)
         case node.name
-        when "@length"
-          scope = @scope.try &.instance_type
-          if scope.is_a?(TupleInstanceType)
-            return @last = NumberLiteral.new(scope.tuple_types.length)
-          end
         when "@type"
           target = @scope == @mod.class_type ? @scope : @scope.instance_type
           return @last = TypeNode.new(target)
-        when "@constants"
-          scope = @scope.try &.instance_type
-          return @last = TypeNode.constants(scope)
-        when "@enum_flags"
-          scope = @scope.try &.instance_type
-          if scope.is_a?(EnumType)
-            return @last = BoolLiteral.new(scope.flags?)
-          end
         end
 
         node.raise "unknown macro instance var: '#{node.name}'"
@@ -742,6 +758,8 @@ module Crystal
   end
 
   class YieldsTransformer < Transformer
+    @yields : Hash(String, Crystal::ASTNode+)
+
     def initialize(@yields)
     end
 

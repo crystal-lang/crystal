@@ -8,7 +8,7 @@ describe "Type inference: macro" do
       end
 
       foo
-      )) { int32 }
+    )) { int32 }
   end
 
   it "errors if macro uses undefined variable" do
@@ -34,6 +34,94 @@ describe "Type inference: macro" do
   it "errors if macro def type doesn't match found" do
     assert_error "macro def foo : Int32; 'a'; end; foo",
       "expected 'foo' to return Int32, not Char"
+  end
+
+  it "allows subclasses of return type for macro def" do
+    run(%{
+      class Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          2
+        end
+      end
+
+      macro def foobar : Foo
+        Bar.new
+      end
+
+      foobar.foo
+    }).to_i.should eq(2)
+  end
+
+  it "allows return values that include the return type of the macro def" do
+    run(%{
+      module Foo
+        def foo
+          1
+        end
+      end
+
+      class Bar
+        include Foo
+
+        def foo
+          2
+        end
+      end
+
+      macro def foobar : Foo
+        Bar.new
+      end
+
+      foobar.foo
+    }).to_i.should eq(2)
+  end
+
+  it "allows generic return types for macro def" do
+    run(%{
+      class Foo(T)
+        def foo
+          @foo
+        end
+
+        def initialize(@foo : T)
+        end
+      end
+
+      macro def foobar : Foo(Int32)
+        Foo.new(2)
+      end
+
+      foobar.foo
+    }).to_i.should eq(2)
+
+    assert_error %{
+      class Foo(T)
+        def initialize(@foo : T)
+        end
+      end
+
+      macro def bar : Foo(String)
+        Foo.new(3)
+      end
+
+      bar
+    }, "Error in line 7: expected 'bar' to return Foo(String), not Foo(Int32)"
+  end
+
+  it "allows union return types for macro def" do
+    assert_type(%{
+      macro def foo : String | Int32
+        1
+      end
+
+      foo
+    }) { int32 }
   end
 
   it "types macro def that calls another method" do
@@ -133,7 +221,7 @@ describe "Type inference: macro" do
       end
 
       foo(1)
-      ), "wrong number of arguments for macro 'foo' (1 for 0)"
+      ), "wrong number of arguments for macro 'foo' (given 1, expected 0)"
   end
 
   it "executs raise inside macro" do
@@ -196,12 +284,12 @@ describe "Type inference: macro" do
           @foo
         end
 
-        macro def ivars_length : Int32
-          {{@type.instance_vars.length}}
+        macro def ivars_size : Int32
+          {{@type.instance_vars.size}}
         end
       end
 
-      ->(x : Foo) { x.foo; x.ivars_length }
+      ->(x : Foo) { x.foo; x.ivars_size }
       )) { fun_of(types["Foo"], no_return) }
   end
 
@@ -475,5 +563,74 @@ describe "Type inference: macro" do
       end
       ),
       "can't require dynamically"
+  end
+
+  it "can define constant via macro included" do
+    assert_type(%(
+      module Mod
+        macro included
+          CONST = 1
+        end
+      end
+
+      include Mod
+
+
+      CONST
+      )) { int32 }
+  end
+
+  it "errors if using private on non-top-level macro" do
+    assert_error %(
+      class Foo
+        private macro bar
+        end
+      end
+      ),
+      "private macros can only be declared at the top-level"
+  end
+
+  it "expands macro with break inside while (#1852)" do
+    assert_type(%(
+      macro test
+        foo = "bar"
+        break
+      end
+
+      while true
+        test
+      end
+      )) { |mod| mod.nil }
+  end
+
+  it "can access variable inside macro expansion (#2057)" do
+    assert_type(%(
+      macro foo
+        x
+      end
+
+      def method
+        yield 1
+      end
+
+      method do |x|
+        foo
+      end
+      )) { int32 }
+  end
+
+  it "declares variable for macro with out" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Int32*)
+      end
+
+      macro some_macro
+        z
+      end
+
+      LibFoo.foo(out z)
+      some_macro
+      )) { int32 }
   end
 end

@@ -2,14 +2,14 @@ require "spec"
 
 describe "Proc" do
   it "does to_s(io)" do
-    str = StringIO.new
+    str = MemoryIO.new
     f = ->(x : Int32) { x.to_f }
     f.to_s(str)
     str.to_s.should eq("#<(Int32 -> Float64):0x#{f.pointer.address.to_s(16)}>")
   end
 
   it "does to_s(io) when closured" do
-    str = StringIO.new
+    str = MemoryIO.new
     a = 1.5
     f = ->(x : Int32) { x + a }
     f.to_s(str)
@@ -17,13 +17,13 @@ describe "Proc" do
   end
 
   it "does to_s" do
-    str = StringIO.new
+    str = MemoryIO.new
     f = ->(x : Int32) { x.to_f }
     f.to_s.should eq("#<(Int32 -> Float64):0x#{f.pointer.address.to_s(16)}>")
   end
 
   it "does to_s when closured" do
-    str = StringIO.new
+    str = MemoryIO.new
     a = 1.5
     f = ->(x : Int32) { x + a }
     f.to_s.should eq("#<(Int32 -> Float64):0x#{f.pointer.address.to_s(16)}:closure>")
@@ -49,7 +49,7 @@ describe "Proc" do
 
   it "does new" do
     a = 1
-    f = ->(x : Int32){ x + a }
+    f = ->(x : Int32) { x + a }
     f2 = Proc(Int32, Int32).new(f.pointer, f.closure_data)
     f2.call(3).should eq(4)
   end

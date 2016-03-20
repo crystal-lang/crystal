@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/vendor/materialize-v0.97.5/css/materialize.min.css">
+    <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/lib/codemirror.css">
+    <link rel="stylesheet" href="/vendor/CodeMirror-5.12.0/theme/neat.css">
+    <link rel="stylesheet" href="/vendor/octicons-3.5.0/octicons.css">
+    <link rel="stylesheet" type="text/css" href="/application.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <title>Crystal Playground</title>
+  </head>
+  <body class="grey lighten-3 grey-text text-darken-2">
+    <header>
+      <div class="navbar-fixed">
+        <nav>
+          <div class="nav-wrapper white">
+            <div class="col s12">
+              <a href="/" class="brand-logo">
+                <img src="icon.png" />
+              </a>
+              <ul class="right">
+                <li><a href="/">Playground</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/settings"><span class="f-16 octicon octicon-settings"></span></a></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <%= content %>
+    </main>
+
+    <footer>
+      <div class="footer-copyright">
+        <div class="center-align">Happy Crystalling ♥</div>
+      </div>
+    </footer>
+
+    <script src="/vendor/jquery-2.2.1.min.js"></script>
+    <script src="/vendor/materialize-v0.97.5/js/materialize.min.js"></script>
+    <script src="/vendor/CodeMirror-5.12.0/lib/codemirror.js"></script>
+    <script src="/vendor/CodeMirror-5.12.0/addon/comment/comment.js"></script>
+    <script src="/vendor/CodeMirror-5.12.0/mode/crystal/crystal.js"></script>
+    <script type="text/javascript" src="/environment.js"></script>
+    <script type="text/javascript" src="/settings.js"></script>
+    <script type="text/javascript" src="/session.js"></script>
+    <script type="text/javascript" src="/application.js"></script>
+  </body>
+</html>

@@ -3,17 +3,15 @@ require "socket"
 # goes with tcp_client.cr
 
 def process(client)
-  client_addr = "#{client.peeraddr.ip_address}:#{client.peeraddr.ip_port}"
+  client_addr = client.remote_address
   puts "#{client_addr} connected"
 
   while msg = client.read_line
     puts "#{client_addr} msg '#{msg.chop}'"
     client << msg
   end
-
 rescue IO::EOFError
   puts "#{client_addr} dissconnected"
-
 ensure
   client.close
 end

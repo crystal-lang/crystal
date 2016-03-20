@@ -1,4 +1,4 @@
-enum DayOfWeek
+enum Time::DayOfWeek
   Sunday
   Monday
   Tuesday

@@ -44,7 +44,7 @@ describe "Type inference: splat" do
       a = {1} || {1, 2}
       foo *a
       ),
-      "splatting a union ({Int32} | {Int32, Int32}) is not yet supported"
+      "splatting a union ({Int32, Int32} | {Int32}) is not yet supported"
   end
 
   it "errors if splatting non-tuple type" do
@@ -260,11 +260,11 @@ describe "Type inference: splat" do
 
   it "splats arg and splat against splat (1) (#1042)" do
     assert_type(%(
-      def foo(a: Bool, *b: Int32)
+      def foo(a : Bool, *b : Int32)
         1
       end
 
-      def foo(*b: Int32)
+      def foo(*b : Int32)
         'a'
       end
 
@@ -274,11 +274,11 @@ describe "Type inference: splat" do
 
   it "splats arg and splat against splat (2) (#1042)" do
     assert_type(%(
-      def foo(a: Bool, *b: Int32)
+      def foo(a : Bool, *b : Int32)
         1
       end
 
-      def foo(*b: Int32)
+      def foo(*b : Int32)
         'a'
       end
 
@@ -297,7 +297,7 @@ describe "Type inference: splat" do
 
       bar 'a', 1
       ),
-      "wrong number of arguments for 'foo' (2 for 1)"
+      "wrong number of arguments for 'foo' (given 2, expected 1)"
   end
 
   it "gives correct error when forwarding splat (2)" do

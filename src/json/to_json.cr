@@ -18,6 +18,10 @@ end
 
 # Handly struct to write JSON objects
 struct JSON::ObjectBuilder(T)
+  @io : T
+  @indent : Int32
+  @count : Int32
+
   def initialize(@io : T, @indent = 0)
     @count = 0
   end
@@ -45,6 +49,10 @@ end
 
 # Handly struct to write JSON arrays
 struct JSON::ArrayBuilder(T)
+  @io : T
+  @indent : Int32
+  @count : Int32
+
   def initialize(@io : T, @indent = 0)
     @count = 0
   end
@@ -91,7 +99,7 @@ end
 #     end
 #   end
 # end
-# result #=> %({"address":"Crystal Road 1234","location":[12.3,34.5]})
+# result # => %({"address":"Crystal Road 1234","location":[12.3,34.5]})
 # ```
 module JSON::Builder
   # Writes a JSON object to the given IO. Yields a `JSON::ObjectBuilder`.
@@ -115,6 +123,9 @@ end
 
 class JSON::PrettyWriter
   include IO
+
+  @io : IO
+  @indent : Int32
 
   def initialize(@io)
     @indent = 0
@@ -223,6 +234,21 @@ class Array
   end
 end
 
+struct Set
+  def to_json(io)
+    if empty?
+      io << "[]"
+      return
+    end
+
+    io.json_array do |array|
+      each do |element|
+        array << element
+      end
+    end
+  end
+end
+
 class Hash
   def to_json(io)
     if empty?
@@ -241,14 +267,14 @@ end
 struct Tuple
   def to_json(io)
     io.json_array do |array|
-      {% for i in 0 ... @length %}
+      {% for i in 0...@type.size %}
         array << self[{{i}}]
       {% end %}
     end
   end
 end
 
-struct TimeFormat
+struct Time::Format
   def to_json(value : Time, io : IO)
     format(value).to_json(io)
   end

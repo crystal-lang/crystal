@@ -20,7 +20,7 @@ module Base64
   class Error < Exception; end
 
   # :nodoc:
-  CHARS_STD  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+  CHARS_STD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
   # :nodoc:
   CHARS_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
   # :nodoc:
@@ -48,7 +48,7 @@ module Base64
   # ```
   def encode(data)
     slice = data.to_slice
-    String.new(encode_size(slice.length, new_lines: true)) do |buf|
+    String.new(encode_size(slice.size, new_lines: true)) do |buf|
       inc = 0
       appender = buf.appender
       to_base64(slice, CHARS_STD, pad: true) do |byte|
@@ -62,8 +62,8 @@ module Base64
       if inc > 0
         appender << NL
       end
-      count = appender.count
-      {count, count}
+      size = appender.size
+      {size, size}
     end
   end
 
@@ -85,11 +85,11 @@ module Base64
   # :nodoc:
   def strict_encode(data, alphabet, pad = false)
     slice = data.to_slice
-    String.new(encode_size(slice.length)) do |buf|
+    String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
       to_base64(slice, alphabet, pad: pad) { |byte| appender << byte }
-      count = appender.count
-      {count, count}
+      size = appender.size
+      {size, size}
     end
   end
 
@@ -103,22 +103,34 @@ module Base64
   # are added to make the output divisible by 3.
   def urlsafe_encode(data, padding = false)
     slice = data.to_slice
-    String.new(encode_size(slice.length)) do |buf|
+    String.new(encode_size(slice.size)) do |buf|
       appender = buf.appender
       to_base64(slice, CHARS_SAFE, pad: padding) { |byte| appender << byte }
-      count = appender.count
-      {count, count}
+      size = appender.size
+      {size, size}
     end
   end
 
-  # Returns the Base64-decoded version of `data`.
+  # Returns the Base64-decoded version of `data` as a *Slice(UInt8)*.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data)
     slice = data.to_slice
-    String.new(decode_size(slice.length)) do |buf|
+    buf = Pointer(UInt8).malloc(decode_size(slice.size))
+    appender = buf.appender
+    from_base64(slice, DECODE_TABLE) { |byte| appender << byte }
+    Slice.new(buf, appender.size.to_i32)
+  end
+
+  # Returns the Base64-decoded version of `data` as a string.
+  # If the data doesn't decode to a valid UTF8 string,
+  # *InvalidByteSequenceError* will be raised.
+  # This will decode either the normal or urlsafe alphabets.
+  def decode_string(data)
+    slice = data.to_slice
+    String.new(decode_size(slice.size)) do |buf|
       appender = buf.appender
       from_base64(slice, DECODE_TABLE) { |byte| appender << byte }
-      {appender.count, 0}
+      {appender.size, 0}
     end
   end
 
@@ -133,10 +145,10 @@ module Base64
   end
 
   private def to_base64(data, chars, pad = false)
-    bytes = chars.cstr
-    len = data.length
-    cstr = data.pointer(len)
-    endcstr = cstr + len - len % 3
+    bytes = chars.to_unsafe
+    size = data.size
+    cstr = data.pointer(size)
+    endcstr = cstr + size - size % 3
     while cstr < endcstr
       n = Intrinsics.bswap32((cstr as UInt32*).value)
       yield bytes[(n >> 26) & 63]
@@ -146,7 +158,7 @@ module Base64
       cstr += 3
     end
 
-    pd = len % 3
+    pd = size % 3
     if pd == 1
       n = (cstr.value.to_u32 << 16)
       yield bytes[(n >> 18) & 63]
@@ -165,13 +177,13 @@ module Base64
   end
 
   private def from_base64(data, decode_table)
-    len = data.length
-    dt = DECODE_TABLE.buffer
-    cstr = data.pointer(len)
-    while (len > 0) && (sym = cstr[len - 1]) && (sym == NL || sym == NR || sym == PAD)
-      len -= 1
+    size = data.size
+    dt = DECODE_TABLE.to_unsafe
+    cstr = data.pointer(size)
+    while (size > 0) && (sym = cstr[size - 1]) && (sym == NL || sym == NR || sym == PAD)
+      size -= 1
     end
-    endcstr = cstr + len - 4
+    endcstr = cstr + size - 4
 
     while true
       break if cstr > endcstr
@@ -196,7 +208,7 @@ module Base64
       yield (a << 2 | b >> 4).to_u8
       yield (b << 4 | c >> 2).to_u8
     elsif mod != 0
-      raise Error.new("Wrong length")
+      raise Error.new("Wrong size")
     end
   end
 
@@ -214,12 +226,12 @@ module Base64
   # :nodoc:
   DECODE_TABLE = Array(Int8).new(256) do |i|
     case i.chr
-    when 'A'..'Z'   then (i - 0x41).to_i8
-    when 'a'..'z'   then (i - 0x47).to_i8
-    when '0'..'9'   then (i + 0x04).to_i8
-    when '+', '-'   then 0x3E_i8
-    when '/', '_'   then 0x3F_i8
-    else                 -1_i8
+    when 'A'..'Z' then (i - 0x41).to_i8
+    when 'a'..'z' then (i - 0x47).to_i8
+    when '0'..'9' then (i + 0x04).to_i8
+    when '+', '-' then 0x3E_i8
+    when '/', '_' then 0x3F_i8
+    else               -1_i8
     end
   end
 end

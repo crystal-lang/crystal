@@ -1,6 +1,9 @@
 struct XML::NodeSet
   include Enumerable(Node)
 
+  @doc : Node
+  @set : LibXML::NodeSet*
+
   def initialize(@doc : Node, @set : LibXML::NodeSet*)
   end
 
@@ -9,9 +12,9 @@ struct XML::NodeSet
   end
 
   def [](index : Int)
-    index += length if index < 0
+    index += size if index < 0
 
-    unless 0 <= index < length
+    unless 0 <= index < size
       raise IndexError.new
     end
 
@@ -19,13 +22,13 @@ struct XML::NodeSet
   end
 
   def each
-    length.times do |i|
+    size.times do |i|
       yield internal_at(i)
     end
   end
 
   def empty?
-    length == 0
+    size == 0
   end
 
   def hash
@@ -38,7 +41,7 @@ struct XML::NodeSet
     io << "]"
   end
 
-  def length
+  def size
     @set.value.node_nr
   end
 

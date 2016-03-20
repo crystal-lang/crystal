@@ -1,29 +1,31 @@
 module Crystal
   class TablePrint
-    COL_SEP = '|'
+    COL_SEP     = '|'
     CELL_MARGIN = ' '
 
     struct Separator
     end
 
     class Column
+      @max_size : Int32
+
       def initialize
-        @max_length = 0
+        @max_size = 0
       end
 
       def width
-        @max_length
+        @max_size
       end
 
       def will_render(cell)
-        @max_length = Math.max(@max_length, cell.text.length) if cell.colspan == 1
+        @max_size = Math.max(@max_size, cell.text.size) if cell.colspan == 1
       end
 
       def render_cell(table, cell)
         if cell.colspan == 1
           available_width = width
         else
-          available_width = table.columns.skip(cell.column_index).take(cell.colspan).sum(&.width) + 3 * (cell.colspan - 1)
+          available_width = table.columns.skip(cell.column_index).first(cell.colspan).sum(&.width) + 3 * (cell.colspan - 1)
         end
 
         case cell.align
@@ -32,18 +34,18 @@ module Crystal
         when :right
           "%+#{available_width}s" % cell.text
         when :center
-          left = " " * ((available_width - cell.text.length) / 2)
-          right = " " * (available_width - cell.text.length - left.length)
+          left = " " * ((available_width - cell.text.size) / 2)
+          right = " " * (available_width - cell.text.size - left.size)
           "#{left}#{cell.text}#{right}"
         end
       end
     end
 
     class Cell
-      property text
-      property align
-      property colspan
-      property! column_index
+      property text : String
+      property align : Symbol
+      property colspan : Int32
+      property! column_index : Int32
 
       def initialize(@text, @align, @colspan)
       end
@@ -51,8 +53,11 @@ module Crystal
 
     alias RowTypes = Array(Cell) | Separator
 
-    property! last_string_row
-    property columns
+    property! last_string_row : Array(Cell)?
+    property columns : Array(Column)
+
+    @io : IO
+    @data : Array(RowTypes)
 
     def initialize(@io : IO)
       @data = [] of RowTypes
@@ -88,7 +93,7 @@ module Crystal
       @data.each_with_index do |data_row, i|
         @io << '\n' if i != 0
         if data_row.is_a?(Separator)
-          @io << "-" * (@columns.sum(&.width) + 1 + 3 * @columns.length)
+          @io << "-" * (@columns.sum(&.width) + 1 + 3 * @columns.size)
         elsif data_row.is_a?(Array(Cell))
           column_index = 0
           data_row.each_with_index do |cell, i|
@@ -104,7 +109,7 @@ module Crystal
     end
 
     protected def column_for_last_cell
-      col = @columns[last_string_row.length-1]?
+      col = @columns[last_string_row.size - 1]?
       unless col
         col = Column.new
         @columns << col

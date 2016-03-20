@@ -1,9 +1,10 @@
 # An OAuth2 session makes it easy to implement APIs that need to refresh
 # an access token once its expired before executing an HTTP request.
 class OAuth2::Session
-  getter oauth2_client
-  getter access_token
-  getter expires_at
+  getter oauth2_client : Client
+  getter access_token : AccessToken
+  getter expires_at : Time
+  @callback : OAuth2::Session ->
 
   # Creates an OAuth2::Session.
   #

@@ -108,7 +108,7 @@ describe "Type inference: virtual" do
       ")
     result = infer_type nodes
     mod, nodes = result.program, result.node as Expressions
-    (nodes.last as Call).target_defs.not_nil!.length.should eq(1)
+    (nodes.last as Call).target_defs.not_nil!.size.should eq(1)
   end
 
   it "dispatches virtual method with overload" do
@@ -131,7 +131,7 @@ describe "Type inference: virtual" do
       ")
     result = infer_type nodes
     mod, nodes = result.program, result.node as Expressions
-    (nodes.last as Call).target_defs.not_nil!.length.should eq(2)
+    (nodes.last as Call).target_defs.not_nil!.size.should eq(2)
   end
 
   it "works with restriction alpha" do
@@ -202,7 +202,7 @@ describe "Type inference: virtual" do
     mod = result.program
 
     var = mod.types["Var"] as InstanceVarContainer
-    var.instance_vars.length.should eq(0)
+    var.instance_vars.size.should eq(0)
 
     base = mod.types["Base"] as InstanceVarContainer
     base.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32))
@@ -617,10 +617,10 @@ describe "Type inference: virtual" do
 
       Bar(Foo).new
       ") {
-        foo = types["Foo"]
-        bar = types["Bar"] as GenericClassType
-        bar.instantiate([foo.virtual_type] of TypeVar)
-      }
+      foo = types["Foo"]
+      bar = types["Bar"] as GenericClassType
+      bar.instantiate([foo.virtual_type] of TypeVar)
+    }
   end
 
   it "uses virtual type as generic type if class is abstract even in union" do
@@ -636,10 +636,10 @@ describe "Type inference: virtual" do
 
       Bar(Foo | Int32).new
       ") {
-        foo = types["Foo"]
-        bar = types["Bar"] as GenericClassType
-        bar.instantiate([union_of(foo.virtual_type, int32)] of TypeVar)
-      }
+      foo = types["Foo"]
+      bar = types["Bar"] as GenericClassType
+      bar.instantiate([union_of(foo.virtual_type, int32)] of TypeVar)
+    }
   end
 
   it "automatically does virtual for generic type if there are subclasses" do
@@ -649,5 +649,26 @@ describe "Type inference: virtual" do
 
       Pointer(Foo).malloc(1_u64)
       ") { pointer_of(types["Foo"].virtual_type) }
+  end
+
+  it "types instance var as virtual when using type declaration and has subclasses" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+        @foo : Foo
+
+        def initialize
+          @foo = Foo.new
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Bar.new.foo
+      )) { types["Foo"].virtual_type! }
   end
 end

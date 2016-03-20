@@ -14,9 +14,17 @@ module Crystal
   end
 
   class ToSVisitor < Visitor
-    def initialize(@str = StringIO.new)
+    @str : IO
+    @indent : Int32
+    @inside_macro : Int32
+    @inside_lib : Bool
+    @inside_struct_or_union : Bool
+
+    def initialize(@str = MemoryIO.new)
       @indent = 0
       @inside_macro = 0
+      @inside_lib = false
+      @inside_struct_or_union = false
     end
 
     def visit(node : Primitive)
@@ -180,15 +188,11 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      if node.abstract
+      if node.abstract?
         @str << keyword("abstract")
         @str << " "
       end
-      if node.struct
-        @str << keyword("struct")
-      else
-        @str << keyword("class")
-      end
+      @str << keyword(node.struct? ? "struct" : "class")
       @str << " "
       node.name.accept self
       if type_vars = node.type_vars
@@ -243,25 +247,7 @@ module Crystal
 
       node_obj = ignore_obj ? nil : node.obj
 
-      need_parens =
-        case node_obj
-        when Call
-          case node_obj.args.length
-          when 0
-            !is_alpha(node_obj.name)
-          else
-            true
-          end
-        when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
-             StringInterpolation, Path, Generic, InstanceVar, Global
-          false
-        when ArrayLiteral
-          !!node_obj.of
-        when HashLiteral
-          !!node_obj.of
-        else
-          true
-        end
+      need_parens = need_parens(node_obj)
       call_args_need_parens = false
 
       @str << "::" if node.global
@@ -292,23 +278,25 @@ module Crystal
         @str << decorate_call(node, "=")
         @str << " "
         node.args[1].accept self
-      elsif node_obj && !is_alpha(node.name) && node.args.length == 0
+      elsif node_obj && !is_alpha(node.name) && node.args.size == 0
         @str << decorate_call(node, node.name)
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !is_alpha(node.name) && node.args.length == 1
+      elsif node_obj && !is_alpha(node.name) && node.args.size == 1
         in_parenthesis(need_parens, node_obj)
 
         @str << " "
         @str << decorate_call(node, node.name)
         @str << " "
-        node.args[0].accept self
+
+        arg = node.args[0]
+        in_parenthesis(need_parens(arg), arg)
       else
         if node_obj
           in_parenthesis(need_parens, node_obj)
           @str << "."
         end
         if node.name.ends_with?('=')
-          @str << decorate_call(node, node.name[0 .. -2])
+          @str << decorate_call(node, node.name[0..-2])
           @str << " = "
           node.args.each_with_index do |arg, i|
             @str << ", " if i > 0
@@ -348,7 +336,7 @@ module Crystal
       if block
         # Check if this is foo &.bar
         first_block_arg = block.args.first?
-        if first_block_arg && block.args.length == 1
+        if first_block_arg && block.args.size == 1
           block_body = block.body
           if block_body.is_a?(Call)
             block_obj = block_body.obj
@@ -377,6 +365,27 @@ module Crystal
       false
     end
 
+    private def need_parens(obj)
+      case obj
+      when Call
+        case obj.args.size
+        when 0
+          !is_alpha(obj.name)
+        else
+          true
+        end
+      when Var, NilLiteral, BoolLiteral, CharLiteral, NumberLiteral, StringLiteral,
+           StringInterpolation, Path, Generic, InstanceVar, Global
+        false
+      when ArrayLiteral
+        !!obj.of
+      when HashLiteral
+        !!obj.of
+      else
+        true
+      end
+    end
+
     def in_parenthesis(need_parens)
       if need_parens
         @str << "("
@@ -389,7 +398,7 @@ module Crystal
 
     def in_parenthesis(need_parens, node)
       in_parenthesis(need_parens) do
-        if node.is_a?(Expressions) && node.expressions.length == 1
+        if node.is_a?(Expressions) && node.expressions.size == 1
           node.expressions.first.accept self
         else
           node.accept self
@@ -418,14 +427,13 @@ module Crystal
       @str << '`'
       case exp
       when StringLiteral
-        @str << exp.value.inspect[1 .. -2]
+        @str << exp.value.inspect[1..-2]
       when StringInterpolation
         visit_interpolation exp, &.gsub('`', "\\`")
       end
       @str << '`'
       false
     end
-
 
     def keyword(str)
       str
@@ -460,7 +468,7 @@ module Crystal
     end
 
     def is_alpha(string)
-      'a' <= string[0].downcase <= 'z'
+      string[0].alpha?
     end
 
     def visit(node : Assign)
@@ -518,7 +526,7 @@ module Crystal
 
     def visit(node : FunLiteral)
       @str << "->"
-      if node.def.args.length > 0
+      if node.def.args.size > 0
         @str << "("
         node.def.args.each_with_index do |arg, i|
           @str << ", " if i > 0
@@ -543,7 +551,7 @@ module Crystal
       end
       @str << node.name
 
-      if node.args.length > 0
+      if node.args.size > 0
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
@@ -555,7 +563,7 @@ module Crystal
     end
 
     def visit(node : Def)
-      @str << "abstract " if node.abstract
+      @str << "abstract " if node.abstract?
       @str << "macro " if node.macro_def?
       @str << keyword("def")
       @str << " "
@@ -564,7 +572,7 @@ module Crystal
         @str << "."
       end
       @str << def_name(node.name)
-      if node.args.length > 0 || node.block_arg
+      if node.args.size > 0 || node.block_arg
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
@@ -572,7 +580,7 @@ module Crystal
           arg.accept self
         end
         if block_arg = node.block_arg
-          @str << ", " if node.args.length > 0
+          @str << ", " if node.args.size > 0
           @str << "&"
           block_arg.accept self
         end
@@ -584,7 +592,7 @@ module Crystal
       end
       newline
 
-      unless node.abstract
+      unless node.abstract?
         accept_with_indent(node.body)
         append_indent
         @str << keyword("end")
@@ -596,14 +604,14 @@ module Crystal
       @str << keyword("macro")
       @str << " "
       @str << node.name.to_s
-      if node.args.length > 0 || node.block_arg
+      if node.args.size > 0 || node.block_arg
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
           arg.accept self
         end
         if block_arg = node.block_arg
-          @str << ", " if node.args.length > 0
+          @str << ", " if node.args.size > 0
           @str << "&"
           block_arg.accept self
         end
@@ -688,6 +696,7 @@ module Crystal
     end
 
     def visit(node : ExternalVar)
+      @str << "$"
       @str << node.name
       if real_name = node.real_name
         @str << " = "
@@ -704,10 +713,6 @@ module Crystal
       else
         @str << "?"
       end
-      if default_value = node.default_value
-        @str << " = "
-        default_value.accept self
-      end
       if type = node.type?
         @str << " : "
         TypeNode.new(type).accept(self)
@@ -715,19 +720,15 @@ module Crystal
         @str << " : "
         restriction.accept self
       end
-      false
-    end
-
-    def visit(node : BlockArg)
-      @str << node.name
-      if a_fun = node.fun
-        @str << " : "
-        a_fun.accept self
+      if default_value = node.default_value
+        @str << " = "
+        default_value.accept self
       end
       false
     end
 
     def visit(node : Fun)
+      @str << "("
       if inputs = node.inputs
         inputs.each_with_index do |input, i|
           @str << ", " if i > 0
@@ -739,6 +740,8 @@ module Crystal
       if output = node.output
         output.accept self
       end
+      @str << ")"
+      false
     end
 
     def visit(node : Self)
@@ -753,6 +756,23 @@ module Crystal
     end
 
     def visit(node : Generic)
+      if @inside_lib && node.name.names.size == 1
+        case node.name.names.first
+        when "Pointer"
+          node.type_vars.first.accept self
+          @str << "*"
+          return false
+        when "StaticArray"
+          if node.type_vars.size == 2
+            node.type_vars[0].accept self
+            @str << "["
+            node.type_vars[1].accept self
+            @str << "]"
+            return false
+          end
+        end
+      end
+
       node.name.accept self
       @str << "("
       node.type_vars.each_with_index do |var, i|
@@ -776,7 +796,7 @@ module Crystal
 
     def visit(node : Union)
       node.types.each_with_index do |ident, i|
-        @str << " | " if  i > 0
+        @str << " | " if i > 0
         ident.accept self
       end
       false
@@ -817,7 +837,7 @@ module Crystal
         @str << " "
       end
       @str << keyword("yield")
-      if node.exps.length > 0
+      if node.exps.size > 0
         @str << " "
         node.exps.each_with_index do |exp, i|
           @str << ", " if i > 0
@@ -872,9 +892,16 @@ module Crystal
       false
     end
 
-    def visit(node : DeclareVar)
+    def visit(node : TypeDeclaration)
       node.var.accept self
-      @str << " :: "
+      @str << " : "
+      node.declared_type.accept self
+      false
+    end
+
+    def visit(node : UninitializedVar)
+      node.var.accept self
+      @str << " = uninitialized "
       node.declared_type.accept self
       false
     end
@@ -940,14 +967,14 @@ module Crystal
     end
 
     def to_s_binary(node, op)
-      left_needs_parens = node.left.is_a?(Assign) || node.left.is_a?(Expressions)
+      left_needs_parens = need_parens(node.left)
       in_parenthesis(left_needs_parens, node.left)
 
       @str << " "
       @str << op
       @str << " "
 
-      right_needs_parens = node.right.is_a?(Assign) || node.right.is_a?(Expressions)
+      right_needs_parens = need_parens(node.right)
       in_parenthesis(right_needs_parens, node.right)
       false
     end
@@ -956,17 +983,14 @@ module Crystal
       @str << node.name
     end
 
-    def visit(node : Undef)
-      @str << "undef "
-      @str << node.name
-    end
-
     def visit(node : LibDef)
       @str << keyword("lib")
       @str << " "
       @str << node.name
       newline
+      @inside_lib = true
       accept_with_indent(node.body)
+      @inside_lib = false
       append_indent
       @str << keyword("end")
       false
@@ -982,11 +1006,14 @@ module Crystal
         @str << " = "
         @str << node.real_name
       end
-      if node.args.length > 0
+      if node.args.size > 0
         @str << "("
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
-          arg.accept self
+          if arg_name = arg.name
+            @str << arg_name << " : "
+          end
+          arg.restriction.not_nil!.accept self
         end
         if node.varargs
           @str << ", ..."
@@ -1013,7 +1040,7 @@ module Crystal
       @str << keyword("type")
       @str << " "
       @str << node.name.to_s
-      @str << " : "
+      @str << " = "
       node.type_spec.accept self
       false
     end
@@ -1104,7 +1131,7 @@ module Crystal
     end
 
     def visit(node : Cast)
-      node.obj.accept self
+      accept_with_maybe_begin_end node.obj
       @str << " "
       @str << keyword("as")
       @str << " "
@@ -1200,7 +1227,7 @@ module Crystal
         @str << " "
         @str << name
       end
-      if (types = node.types) && types.length > 0
+      if (types = node.types) && types.size > 0
         if node.name
           @str << " :"
         end
@@ -1317,6 +1344,14 @@ module Crystal
       false
     end
 
+    def visit(node : FileNode)
+      @str.puts
+      @str << "# " << node.filename
+      @str.puts
+      node.node.accept self
+      false
+    end
+
     def newline
       @str << "\n"
     end
@@ -1356,11 +1391,17 @@ module Crystal
 
     def accept_with_maybe_begin_end(node)
       if node.is_a?(Expressions)
-        @str << keyword("begin")
-        newline
-        accept_with_indent(node)
-        append_indent
-        @str << keyword("end")
+        if node.expressions.size == 1
+          @str << "("
+          node.expressions.first.accept self
+          @str << ")"
+        else
+          @str << keyword("begin")
+          newline
+          accept_with_indent(node)
+          append_indent
+          @str << keyword("end")
+        end
       else
         node.accept self
       end

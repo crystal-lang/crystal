@@ -13,9 +13,11 @@ struct LLVM::Target
 
   def self.from_triple(triple)
     return_code = LibLLVM.get_target_from_triple triple, out target, out error
-    raise String.new(error) unless return_code == 0
+    raise LLVM.string_and_dispose(error) unless return_code == 0
     new target
   end
+
+  @unwrap : LibLLVM::TargetRef
 
   def initialize(@unwrap)
   end
@@ -29,9 +31,9 @@ struct LLVM::Target
   end
 
   def create_target_machine(triple, cpu = "", features = "",
-      opt_level = LLVM::CodeGenOptLevel::Default,
-      reloc = LLVM::RelocMode::PIC,
-      code_model = LLVM::CodeModel::Default)
+                            opt_level = LLVM::CodeGenOptLevel::Default,
+                            reloc = LLVM::RelocMode::PIC,
+                            code_model = LLVM::CodeModel::Default)
     target_machine = LibLLVM.create_target_machine(self, triple, cpu, features, opt_level, reloc, code_model)
     target_machine ? TargetMachine.new(target_machine) : raise "Couldn't create target machine"
   end

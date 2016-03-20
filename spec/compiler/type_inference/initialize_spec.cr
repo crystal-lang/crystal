@@ -122,7 +122,7 @@ describe "Type inference: initialize" do
     foo.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32, mod.char))
 
     bar = mod.types["Bar"] as NonGenericClassType
-    bar.instance_vars.length.should eq(0)
+    bar.instance_vars.size.should eq(0)
   end
 
   it "errors when instance variable never assigned" do
@@ -750,5 +750,50 @@ describe "Type inference: initialize" do
       p.value = Baz.new
       p.value.foo
       )) { int32 }
+  end
+
+  it "types initializer of recursive generic type" do
+    assert_type(%(
+      class Foo(T)
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      alias Rec = Foo(Rec)
+
+      Foo(Rec).new.x + 1
+      )) { int32 }
+  end
+
+  it "types initializer of generic type after instantiated" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      alias X = Foo(Int32)
+
+      class Foo(T)
+        @x = 1
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new.x + 1
+      )) { int32 }
+  end
+
+  it "errors on default new when using named arguments (#2245)" do
+    assert_error %(
+      class Foo
+      end
+
+      Foo.new(x: 1)
+      ),
+      "no argument named 'x'"
   end
 end

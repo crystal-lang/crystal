@@ -1,0 +1,129 @@
+#!/bin/bash
+
+fail() {
+  echo "${@}" >&2
+  exit 1
+}
+
+fail_on_error() {
+  "${@}"
+
+  exit=$?
+  if [ "$exit" -ne "0" ]; then
+    fail "${@} exited with $exit"
+  fi
+
+  return 0
+}
+
+verify_environment() {
+  if [ -z "$TRAVIS_OS_NAME" ]; then
+    fail "\$TRAVIS_OS_NAME is not set or empty."
+  fi
+}
+
+verify_linux_environment() {
+  if [ -z "$ARCH" ]; then
+    fail "\$ARCH is not set or empty."
+  fi
+
+  if [ -z "$ARCH_CMD" ]; then
+    fail "\$ARCH_CMD is not set or empty."
+  fi
+}
+
+on_os() {
+  os="$1"
+  shift
+
+  verify_environment
+
+  if [ "$TRAVIS_OS_NAME" = "$os" ]; then
+    echo "${@}"
+    eval "${@}"
+    return $?
+  else
+    return 0
+  fi
+}
+
+on_linux() {
+  fail_on_error on_os "linux" "${@}"
+}
+
+on_osx() {
+  fail_on_error on_os "osx" "${@}"
+}
+
+prepare_system() {
+  on_osx brew update
+}
+
+prepare_build() {
+  on_linux verify_linux_environment
+
+  on_linux docker pull "jhass/crystal-build-$ARCH"
+
+  on_osx brew install libevent crystal-lang
+  on_osx /bin/bash -c "'curl \"http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-darwin-x86_64.tar.gz\" | tar xz -C /tmp'"
+}
+
+with_build_env() {
+  command="$1"
+
+  on_linux verify_linux_environment
+  on_linux docker run \
+    --rm \
+    -u $(id -u) \
+    -v $(pwd):/mnt \
+    -w /mnt \
+    -e LIBRARY_PATH="/opt/crystal/embedded/lib/" \
+    -e CRYSTAL_CONFIG_VERSION="ci" \
+    "jhass/crystal-build-$ARCH" \
+    "$ARCH_CMD" /bin/bash -c "'$command'"
+
+  on_osx PATH="/tmp/llvm-3.5.0-1/bin:\$PATH" \
+    CRYSTAL_CONFIG_VERSION="ci" \
+    CRYSTAL_CACHE_DIR="/tmp/crystal" \
+    /bin/bash -c "'$command'"
+
+}
+
+usage() {
+  echo -e "bin/ci [-h|--help] command [parameter ...]"
+  echo -e ""
+  echo -e "Helper script to prepare and run the testsuite on Travis CI."
+  echo -e ""
+  echo -e "Commands:"
+  echo -e "  prepare_system          setup any necessaries repositories etc."
+  echo -e "  prepare_build           download and extract any dependencies needed for the build"
+  echo -e "  with_build_env command  run command in the build environment"
+  echo -e "  help                    display this"
+  echo -e ""
+}
+
+command="$1"
+shift
+case $command in
+  prepare_system)
+    prepare_system
+    ;;
+  prepare_build)
+    prepare_build
+    ;;
+  with_build_env)
+    target_command="${@}"
+    with_build_env "$target_command"
+    ;;
+  -h|--help|help)
+    usage
+    ;;
+  *)
+    if [ -n "$command" ]; then
+      fail "Unknown command $command"
+    else
+      usage
+      exit 1
+    fi
+    ;;
+esac

@@ -35,32 +35,44 @@ describe "types to_s of" do
     assert_type_to_s "Array(Int32)" { array_of(int32) }
   end
 
-  it "array of simple types" do
-    assert_type_to_s "(String | Int32)" { union_of(string, int32) }
+  it "union of simple types" do
+    assert_type_to_s "(Int32 | String)" { union_of(string, int32) }
+  end
+
+  it "nilable reference type" do
+    assert_type_to_s "String?" { nilable string }
+  end
+
+  it "nilable value type" do
+    assert_type_to_s "Int32?" { nilable int32 }
+  end
+
+  it "nilable type with more than two elements, Nil at the end" do
+    assert_type_to_s "(Int32 | String | Nil)" { |mod| union_of(string, int32, mod.nil) }
   end
 
   describe "union types" do
     describe "should not have extra parens" do
       it "in arrays" do
-        assert_type_to_s "Array(String | Int32)" { array_of(union_of(string, int32)) }
+        assert_type_to_s "Array(Int32 | String)" { array_of(union_of(string, int32)) }
       end
 
       it "in pointers" do
-        assert_type_to_s "Pointer(String | Int32)" { pointer_of(union_of(string, int32)) }
+        assert_type_to_s "Pointer(Int32 | String)" { pointer_of(union_of(string, int32)) }
       end
 
       it "in tuples" do
-        assert_type_to_s "{String, String | Int32}" { tuple_of [string, union_of(string, int32)]  }
+        assert_type_to_s "{String, Int32 | String}" { tuple_of [string, union_of(string, int32)] }
       end
     end
 
     describe "should have parens" do
       it "as return type" do
-        assert_type_to_s "( -> (String | Int32))" { fun_of union_of(string, int32) }
+        assert_type_to_s "( -> (Int32 | String))" { fun_of union_of(string, int32) }
       end
 
       it "as arg type" do
-        assert_type_to_s "((String | Int32) -> Int32)" { fun_of union_of(string, int32), int32 }
+        assert_type_to_s "((Int32 | String) -> Int32)" { fun_of union_of(string, int32), int32 }
       end
     end
   end

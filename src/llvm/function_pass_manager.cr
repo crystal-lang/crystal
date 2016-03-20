@@ -1,4 +1,6 @@
-struct LLVM::FunctionPassManager
+class LLVM::FunctionPassManager
+  @unwrap : LibLLVM::PassManagerRef
+
   def initialize(@unwrap)
   end
 
@@ -31,7 +33,13 @@ struct LLVM::FunctionPassManager
     @unwrap
   end
 
+  def finalize
+    LibLLVM.dispose_pass_manager(@unwrap)
+  end
+
   struct Runner
+    @fpm : FunctionPassManager
+
     def initialize(@fpm)
     end
 

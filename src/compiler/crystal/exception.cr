@@ -5,12 +5,37 @@ require "colorize"
 module Crystal
   abstract class Exception < ::Exception
     property? color
+    @color : Bool?
+    @color = false
+
+    @filename : String | VirtualFile | Nil
 
     def to_s(io)
       to_s_with_source(nil, io)
     end
 
     abstract def to_s_with_source(source, io)
+
+    def to_json(io)
+      io.json_array { |ar| json_obj(ar, io) }
+    end
+
+    def true_filename(filename = @filename) : String
+      if filename.is_a? VirtualFile
+        loc = filename.expanded_location
+        if loc
+          return true_filename loc.filename
+        else
+          return ""
+        end
+      else
+        if filename
+          return filename
+        else
+          return ""
+        end
+      end
+    end
 
     def to_s_with_source(source)
       String.build do |io|
@@ -48,17 +73,29 @@ module Crystal
   end
 
   class SyntaxException < Exception
-    getter line_number
-    getter column_number
+    getter line_number : Int32
+    getter column_number : Int32
     getter filename
-    getter length
+    getter size : Int32?
 
-    def initialize(message, @line_number, @column_number, @filename, @length = nil)
+    def initialize(message, @line_number, @column_number, @filename, @size = nil)
       super(message)
     end
 
     def has_location?
-      @filename || @line
+      @filename || @line_number
+    end
+
+    def json_obj(ar, io)
+      ar.push do
+        io.json_object do |obj|
+          obj.field "file", true_filename
+          obj.field "line", @line_number
+          obj.field "column", @column_number
+          obj.field "size", @size
+          obj.field "message", @message
+        end
+      end
     end
 
     def append_to_s(source, io)
@@ -72,7 +109,7 @@ module Crystal
 
       if source
         lines = source.lines
-        if @line_number - 1 < lines.length
+        if @line_number - 1 < lines.size
           line = lines[@line_number - 1]
           if line
             io << "\n\n"
@@ -83,8 +120,8 @@ module Crystal
             end
             with_color.green.bold.surround(io) do
               io << "^"
-              if length = @length
-                io << ("~" * (length - 1))
+              if size = @size
+                io << ("~" * (size - 1))
               end
             end
             io << "\n"
@@ -114,33 +151,56 @@ module Crystal
 
   class TypeException < Exception
     getter node
-    property inner
+    property inner : Exception?
+    @line : Int32?
+    @column : Int32
+    @size : Int32
 
-    def color=(@color)
-      inner.try &.color=(@color)
+    def color=(color)
+      @color = !!color
+      inner.try &.color=(color)
     end
 
     def self.for_node(node, message, inner = nil)
       location = node.location
       if location
         column_number = node.name_column_number
-        name_length = node.name_length
+        name_size = node.name_size
         if column_number == 0
-          name_length = 0
+          name_size = 0
           column_number = location.column_number
         end
-        new message, location.line_number, column_number, location.filename, name_length, inner
+        new message, location.line_number, column_number, location.filename, name_size, inner
       else
         new message, nil, 0, nil, 0, inner
       end
     end
 
-    def initialize(message, @line, @column : Int32, @filename, @length, @inner = nil)
+    def initialize(message, @line, @column : Int32, @filename, @size, @inner = nil)
       super(message)
     end
 
-    def self.new(message)
+    def self.new(message : String)
       new message, nil, 0, nil, 0
+    end
+
+    def self.new(message : String, location : Location)
+      new message, location.line_number, location.column_number, location.filename, 0
+    end
+
+    def json_obj(ar, io)
+      ar.push do
+        io.json_object do |obj|
+          obj.field "file", true_filename
+          obj.field "line", @line
+          obj.field "column", @column
+          obj.field "size", @size
+          obj.field "message", @message
+        end
+      end
+      if inner = @inner
+        inner.json_obj(ar, io)
+      end
     end
 
     def to_s_with_source(source, io)
@@ -191,8 +251,8 @@ module Crystal
         io << (" " * (@column - 1))
         with_color.green.bold.surround(io) do
           io << "^"
-          if @length > 0
-            io << ("~" * (@length - 1))
+          if @size > 0
+            io << ("~" * (@size - 1))
           end
         end
       end
@@ -235,12 +295,19 @@ module Crystal
   end
 
   class MethodTraceException < Exception
+    @owner : Type?
+    @trace : Array(ASTNode)
+    @nil_reason : NilReason?
+
     def initialize(@owner, @trace, @nil_reason)
       super(nil)
     end
 
     def has_location?
       true
+    end
+
+    def json_obj(ar, io)
     end
 
     def to_s_with_source(source, io)
@@ -318,7 +385,7 @@ module Crystal
         io.puts
         io.puts
         io << "Specifically in "
-        io << (defs.length == 1 ? "this one" : "these ones")
+        io << (defs.size == 1 ? "this one" : "these ones")
         io << ":"
         defs.each do |a_def|
           print_with_location a_def, io
@@ -332,7 +399,7 @@ module Crystal
       filtered = defs.select do |a_def|
         if a_def.calls_super
           false
-        elsif(instance_vars = a_def.instance_vars)
+        elsif (instance_vars = a_def.instance_vars)
           !instance_vars.includes?(var_name)
         else
           true
@@ -368,7 +435,7 @@ module Crystal
       line = lines[line_number - 1]
 
       name_column = node.name_column_number
-      name_length = node.name_length
+      name_size = node.name_size
 
       io << "    "
       io << replace_leading_tabs_with_spaces(line.chomp)
@@ -380,8 +447,8 @@ module Crystal
       io << (" " * (name_column - 1))
       with_color.green.bold.surround(io) do
         io << "^"
-        if name_length > 0
-          io << ("~" * (name_length - 1)) if name_length
+        if name_size > 0
+          io << ("~" * (name_size - 1)) if name_size
         end
       end
     end

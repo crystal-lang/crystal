@@ -149,6 +149,62 @@ describe "Type inference: did you mean" do
     assert_error %(
       a if a = 1
       ),
-      "if you declared 'a' in a suffix if, declare it in a regular if for this to work"
+      "If you declared 'a' in a suffix if, declare it in a regular if for this to work"
+  end
+
+  it "doesn't suggest when declaring var inside macro (#466)" do
+    assert_error %(
+      macro foo
+        a = 1
+      end
+
+      foo
+      a
+      ),
+      "If the variable was declared in a macro it's not visible outside it"
+  end
+
+  it "suggest that there might be a type for an initialize method" do
+    assert_error %(
+      class Foo
+        def intialize(x)
+        end
+      end
+
+      Foo.new(1)
+      ),
+      "do you maybe have a typo in this 'intialize' method?"
+  end
+
+  it "suggest that there might be a type for an initialize method in inherited class" do
+    assert_error %(
+      class Foo
+        def initialize
+        end
+      end
+
+      class Bar < Foo
+        def intialize(x)
+        end
+      end
+
+      Bar.new(1)
+      ),
+      "do you maybe have a typo in this 'intialize' method?"
+  end
+
+  it "suggest that there might be a type for an initialize method with overload" do
+    assert_error %(
+      class Foo
+        def initialize(x : Int32)
+        end
+
+        def intialize(y : Float64)
+        end
+      end
+
+      Foo.new(1.0)
+      ),
+      "do you maybe have a typo in this 'intialize' method?"
   end
 end

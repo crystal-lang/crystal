@@ -123,7 +123,7 @@ describe "Type inference: cast" do
 
   it "disallows casting pointer to fun" do
     assert_error %(
-      a :: Void*
+      a = uninitialized Void*
       a as -> Int32
       ),
       "can't cast Pointer(Void) to ( -> Int32)"
@@ -244,5 +244,15 @@ describe "Type inference: cast" do
       Gen(Foo).new
       Gen(Bar).new as Gen(Foo)
       ), "can't cast Gen(Bar) to Gen(Foo+)"
+  end
+
+  it "allows casting NoReturn to any type (#2132)" do
+    assert_type(%(
+      def foo
+        foo
+      end
+
+      foo as Int32
+      )) { no_return }
   end
 end

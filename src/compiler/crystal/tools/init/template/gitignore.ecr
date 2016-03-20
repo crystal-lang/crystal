@@ -1,10 +1,10 @@
-/.deps/
+/doc/
 /libs/
 /.crystal/
-/doc/
+/.shards/
 
 <% if config.skeleton_type == "lib" %>
 # Libraries don't need dependency lock
 # Dependencies will be locked in application that uses them
-/.deps.lock
+/shard.lock
 <% end %>

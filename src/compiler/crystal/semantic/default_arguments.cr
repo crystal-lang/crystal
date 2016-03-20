@@ -1,14 +1,14 @@
 require "../syntax/ast"
 
 class Crystal::Def
-  def expand_default_arguments(args_length, named_args = nil)
+  def expand_default_arguments(program, args_size, named_args = nil)
     # If the named arguments cover all arguments with a default value and
     # they come in the same order, we can safely return this def without
     # needing a useless indirection.
-    if named_args && args_length + named_args.length == args.length
+    if named_args && args_size + named_args.size == args.size
       all_match = true
       named_args.each_with_index do |named_arg, i|
-        arg = args[args_length + i]
+        arg = args[args_size + i]
         unless arg.name == named_arg
           all_match = false
           break
@@ -23,7 +23,7 @@ class Crystal::Def
     # constants we can return outself (magic constants will be filled later)
     if !named_args && !splat_index
       all_magic = true
-      args_length.upto(args.length - 1) do |index|
+      args_size.upto(args.size - 1) do |index|
         unless args[index].default_value.is_a?(MagicConstant)
           all_magic = false
           break
@@ -42,28 +42,31 @@ class Crystal::Def
 
     # Args before splat index
     if splat_index == -1
-      before_length = 0
+      before_size = 0
     else
-      before_length = Math.min(args_length, splat_index)
-      before_length.times do |index|
+      before_size = Math.min(args_size, splat_index)
+      before_size.times do |index|
         new_args << args[index].clone
       end
     end
 
     # Splat arg
     if splat_index == -1
-      splat_length = 0
+      splat_size = 0
     else
-      splat_length = args_length - (args.length - 1)
-      splat_length = 0 if splat_length < 0
-      splat_length.times do |index|
-        new_args << Arg.new("_arg#{index}")
+      splat_names = [] of String
+      splat_size = args_size - (args.size - 1)
+      splat_size = 0 if splat_size < 0
+      splat_size.times do |index|
+        splat_name = program.new_temp_var_name
+        splat_names << splat_name
+        new_args << Arg.new(splat_name)
       end
     end
 
     base = splat_index + 1
-    after_length = args_length - before_length - splat_length
-    after_length.times do |i|
+    after_size = args_size - before_size - splat_size
+    after_size.times do |i|
       new_args << args[base + i].clone
     end
 
@@ -88,20 +91,23 @@ class Crystal::Def
     expansion.uses_block_arg = uses_block_arg
     expansion.yields = yields
     expansion.location = location
-    expansion.owner = owner?
+    if owner = self.owner?
+      expansion.owner = owner
+    end
 
     if retain_body
       new_body = [] of ASTNode
+      body = self.body.clone
 
       # Default values
       if splat_index == -1
-        end_index = args.length - 1
+        end_index = args.size - 1
       else
-        end_index = Math.min(args_length, splat_index - 1)
+        end_index = Math.min(args_size, splat_index - 1)
       end
 
       # Declare variables that are not covered
-      args_length.upto(end_index) do |index|
+      args_size.upto(end_index) do |index|
         arg = args[index]
 
         # But first check if we already have it in the named arguments
@@ -114,15 +120,25 @@ class Crystal::Def
             expansion.args.push arg.clone
           else
             new_body << Assign.new(Var.new(arg.name), default_value)
+
+            # If the restriction is a free var it will be lost in the replacement, so we save the default value in
+            # a temporary variable (tmp_var) and then replace all ocurrences of that free var with typeof(tmp_var)
+            # to achieve the same effect, since we can't define a type alias inside a method.
+            restriction = arg.restriction
+            if restriction.is_a?(Path) && restriction.names.size == 1 && Parser.free_var_name?(restriction.names.first)
+              restriction_name = program.new_temp_var_name
+              new_body << Assign.new(Var.new(restriction_name), Var.new(arg.name))
+              body = body.transform(ReplaceFreeVarTransformer.new(restriction.names.first, restriction_name))
+            end
           end
         end
       end
 
       # Splat argument
-      if splat_index != -1
+      if splat_names
         tuple_args = [] of ASTNode
-        splat_length.times do |index|
-          tuple_args << Var.new("_arg#{index}")
+        splat_size.times do |i|
+          tuple_args << Var.new(splat_names[i])
         end
         tuple = TupleLiteral.new(tuple_args)
         new_body << Assign.new(Var.new(args[splat_index].name), tuple)
@@ -137,9 +153,9 @@ class Crystal::Def
           str << ";"
         end
         new_literal = MacroLiteral.new(literal_body)
-        expansion.body = Expressions.from([new_literal, body.clone])
+        expansion.body = Expressions.from([new_literal, body.clone] of ASTNode)
       else
-        new_body.push body.clone
+        new_body.push body
         expansion.body = Expressions.new(new_body)
       end
     else
@@ -147,13 +163,13 @@ class Crystal::Def
       body = [] of ASTNode
 
       # Append variables that are already covered
-      0.upto(args_length - 1) do |index|
+      0.upto(args_size - 1) do |index|
         arg = args[index]
         new_args.push Var.new(arg.name)
       end
 
       # Append default values for those not covered
-      args_length.upto(args.length - 1) do |index|
+      args_size.upto(args.size - 1) do |index|
         arg = args[index]
 
         # But first check if we already have it in the named arguments
@@ -182,5 +198,27 @@ class Crystal::Def
     end
 
     expansion
+  end
+
+  class ReplaceFreeVarTransformer < Transformer
+    @free_var_name : String
+    @replacement_name : String
+
+    def initialize(@free_var_name, @replacement_name)
+    end
+
+    def transform(node : Generic)
+      # Don't transform the name, because it must always be a Path
+      transform_many node.type_vars
+      node
+    end
+
+    def transform(node : Path)
+      if !node.global && node.names.size == 1 && node.names.first == @free_var_name
+        TypeOf.new([Var.new(@replacement_name)] of ASTNode)
+      else
+        node
+      end
+    end
   end
 end

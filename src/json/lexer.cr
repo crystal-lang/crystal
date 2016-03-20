@@ -1,9 +1,6 @@
 require "string_pool"
 
 abstract class JSON::Lexer
-  getter token
-  property skip
-
   def self.new(string : String)
     StringBased.new(string)
   end
@@ -12,11 +9,19 @@ abstract class JSON::Lexer
     IOBased.new(io)
   end
 
+  getter token : Token
+  property skip : Bool
+  @line_number : Int32
+  @column_number : Int32
+  @buffer : MemoryIO
+  @string_pool : StringPool
+  @expects_object_key : Bool
+
   def initialize
     @token = Token.new
     @line_number = 1
     @column_number = 1
-    @buffer = StringIO.new
+    @buffer = MemoryIO.new
     @string_pool = StringPool.new
     @skip = false
     @expects_object_key = false
@@ -136,7 +141,7 @@ abstract class JSON::Lexer
   end
 
   private def consume_string_with_buffer
-    consume_string_with_buffer {}
+    consume_string_with_buffer { }
   end
 
   private def consume_string_with_buffer
@@ -218,13 +223,13 @@ abstract class JSON::Lexer
         consume_float(negative, integer)
       when 'e', 'E'
         consume_exponent(negative, integer.to_f64)
-      when '0' .. '9'
+      when '0'..'9'
         unexpected_char
       else
         @token.type = :INT
         @token.int_value = 0_i64
       end
-    when '1' .. '9'
+    when '1'..'9'
       integer = (current_char - '0').to_i64
       char = next_char
       while '0' <= char <= '9'

@@ -1,43 +1,48 @@
 # The JSON module allows parsing and generating [JSON](http://json.org/) documents.
 #
-# ### Parsing and generating with `JSON::Mapping`
+# ### Parsing and generating with `JSON#mapping`
 #
-# Use `JSON::Mapping` to define how an object is mapped to JSON, making it
+# Use `JSON#mapping` to define how an object is mapped to JSON, making it
 # the recommended easy, type-safe and efficient option for parsing and generating
 # JSON. Refer to that module's documentation to learn about it.
 #
 # ### Parsing with `JSON#parse`
 #
-# `JSON#parse` will return a `Type`, which is a union of all possible JSON types,
-# making it mandatory to use casts or type checks to deal with parsed values:
+# `JSON#parse` will return an `Any`, which is a convenient wrapper around all possible JSON types,
+# making it easy to traverse a complex JSON structure but requires some casts from time to time,
+# mostly via some method invocations.
 #
 # ```
 # require "json"
 #
-# value = JSON.parse("[1, 2, 3]") #:: JSON::Type
-# # value[0] # compile-error, compiler can't know that value is indeed an Array
-# array = value as Array
-# array[0] #:: JSON::Type
-# (array[0] as Int) + 10 #=> 11
+# value = JSON.parse("[1, 2, 3]") # : JSON::Any
+#
+# value[0]              # => 1
+# typeof(value[0])      # => JSON::Any
+# value[0].as_i         # => 1
+# typeof(value[0].as_i) # => Int32
+#
+# value[0] + 1       # Error, because value[0] is JSON::Any
+# value[0].as_i + 10 # => 11
 # ```
 #
-# The above becomes tedious quickly, but can be useful for handling dynamic JSON content.
+# The above is useful for dealing with a dynamic JSON structure but is slower than using `JSON#mapping`.
 #
 # ### Generating with `JSON::Builder`
 #
-# Use `JSON::Buidler` to generate JSON on the fly by directly emitting data
+# Use `JSON::Builder` to generate JSON on the fly by directly emitting data
 # to an `IO`.
 #
 # ### Generating with `to_json`
 #
 # `to_json` and `to_json(IO)` methods are provided for primitive types, but you
 # need to define `to_json(IO)` for custom objects, either manually or using
-# `JSON::Mapping`.
+# `JSON#mapping`.
 module JSON
   # Exception thrown on a JSON parse error.
   class ParseException < Exception
-    getter line_number
-    getter column_number
+    getter line_number : Int32
+    getter column_number : Int32
 
     def initialize(message, @line_number, @column_number)
       super "#{message} at #{@line_number}:#{@column_number}"
@@ -48,8 +53,8 @@ module JSON
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(Type) | Hash(String, Type)
 
   # Parses a JSON document.
-  def self.parse(input : String | IO) : Type
-    Parser.new(input).parse
+  def self.parse(input : String | IO) : Any
+    Any.new Parser.new(input).parse
   end
 end
 

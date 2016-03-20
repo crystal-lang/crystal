@@ -1,7 +1,18 @@
 require "spec"
+require "big_int"
 
 struct StructSpecTestClass
+  @x : Int32
+  @y : String
+
   def initialize(@x, @y)
+  end
+end
+
+struct StructSpecBigIntWrapper
+  @value : BigInt
+
+  def initialize(@value : BigInt)
   end
 end
 
@@ -19,5 +30,9 @@ describe "Struct" do
   it "does hash" do
     s = StructSpecTestClass.new(1, "hello")
     s.hash.should eq(31 + "hello".hash)
+  end
+
+  it "does hash for struct wrapper (#1940)" do
+    StructSpecBigIntWrapper.new(BigInt.new(0)).hash.should eq(0)
   end
 end

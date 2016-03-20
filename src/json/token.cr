@@ -1,10 +1,10 @@
 class JSON::Token
-  property :type
-  property :string_value
-  property :int_value
-  property :float_value
-  property :line_number
-  property :column_number
+  property type : Symbol
+  property string_value : String
+  property int_value : Int64
+  property float_value : Float64
+  property line_number : Int32
+  property column_number : Int32
 
   def initialize
     @type = :EOF

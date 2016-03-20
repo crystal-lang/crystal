@@ -11,3 +11,6 @@ coverage/
 all_spec
 /tmp
 /doc/
+/src/llvm/ext/llvm_ext.o
+/src/ext/*.o
+/src/ext/libcrystal.a

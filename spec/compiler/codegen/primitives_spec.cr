@@ -145,4 +145,31 @@ describe "Code gen: primitives" do
       Test.foo + 1
       ))
   end
+
+  it "allows redefining a primitive method" do
+    run(%(
+      struct Int32
+        def *(other : Int32)
+          42
+        end
+      end
+
+      1 * 2
+      )).to_i.should eq(42)
+  end
+
+  it "doesn't optimize away call whose obj is not passed as self (#2226)" do
+    run(%(
+      $x = 1
+
+      def foo
+        $x = 2
+        3
+      end
+
+      foo.class.crystal_type_id
+
+      $x
+      )).to_i.should eq(2)
+  end
 end

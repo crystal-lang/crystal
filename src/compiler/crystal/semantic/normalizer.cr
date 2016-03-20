@@ -14,8 +14,11 @@ module Crystal
   end
 
   class Normalizer < Transformer
-    getter program
-    property exp_nest
+    getter program : Program
+    property exp_nest : Int32
+
+    @dead_code : Bool
+    @current_def : Def?
 
     def initialize(@program)
       @dead_code = false
@@ -38,8 +41,8 @@ module Crystal
       case node
       when Return, Break, Next
         @dead_code = true
-      when If, Unless, Expressions, Block
-       # Skip
+      when If, Unless, Expressions, Block, Assign
+        # Skip
       else
         @dead_code = false
       end
@@ -67,7 +70,7 @@ module Crystal
         end
         break if @dead_code
       end
-      case exps.length
+      case exps.size
       when 0
         Nop.new
       when 1
@@ -90,12 +93,12 @@ module Crystal
       #     temp = [1, 2]
       #     a = temp[0]
       #     b = temp[1]
-      if node.values.length == 1
+      if node.values.size == 1
         value = node.values[0]
 
         temp_var = new_temp_var
 
-        assigns = Array(ASTNode).new(node.targets.length + 1)
+        assigns = Array(ASTNode).new(node.targets.size + 1)
         assigns << Assign.new(temp_var.clone, value).at(value)
         node.targets.each_with_index do |target, i|
           call = Call.new(temp_var.clone, "[]", NumberLiteral.new(i)).at(value)
@@ -103,28 +106,28 @@ module Crystal
         end
         exps = Expressions.new(assigns)
 
-      # From:
-      #
-      #     a = 1, 2, 3
-      #
-      # To:
-      #
-      #     a = [1, 2, 3]
-      elsif node.targets.length == 1
+        # From:
+        #
+        #     a = 1, 2, 3
+        #
+        # To:
+        #
+        #     a = [1, 2, 3]
+      elsif node.targets.size == 1
         target = node.targets.first
         array = ArrayLiteral.new(node.values)
         exps = transform_multi_assign_target(target, array)
 
-      # From:
-      #
-      #     a, b = c, d
-      #
-      # To:
-      #
-      #     temp1 = c
-      #     temp2 = d
-      #     a = temp1
-      #     b = temp2
+        # From:
+        #
+        #     a, b = c, d
+        #
+        # To:
+        #
+        #     temp1 = c
+        #     temp2 = d
+        #     a = temp1
+        #     b = temp2
       else
         temp_vars = node.values.map { new_temp_var }
 
@@ -180,7 +183,7 @@ module Crystal
         when NumberLiteral, Var, InstanceVar
           transform_many node.args
           left = obj
-          right = Call.new(middle, node.name, node.args)
+          right = Call.new(middle.clone, node.name, node.args)
         else
           temp_var = new_temp_var
           temp_assign = Assign.new(temp_var.clone, middle)
@@ -215,8 +218,10 @@ module Crystal
       # and the semantic code won't have to bother checking it
       block_arg = node.block_arg
       if !node.uses_block_arg && block_arg
-        block_arg_fun = block_arg.fun
-        if block_arg_fun.is_a?(Fun) && !block_arg_fun.inputs && !block_arg_fun.output
+        block_arg_restriction = block_arg.restriction
+        if block_arg_restriction.is_a?(Fun) && !block_arg_restriction.inputs && !block_arg_restriction.output
+          node.block_arg = nil
+        elsif !block_arg_restriction
           node.block_arg = nil
         end
       end
@@ -237,7 +242,7 @@ module Crystal
       node.else = node.else.transform(self)
       else_dead_code = @dead_code
 
-      @dead_code = then_dead_code &&  else_dead_code
+      @dead_code = then_dead_code && else_dead_code
       node
     end
 
@@ -303,13 +308,13 @@ module Crystal
       location = node.location
       filenames = @program.find_in_path(node.string, location.try &.filename)
       if filenames
-        nodes = Array(ASTNode).new(filenames.length)
+        nodes = Array(ASTNode).new(filenames.size)
         filenames.each do |filename|
           if @program.add_to_requires(filename)
             parser = Parser.new File.read(filename)
             parser.filename = filename
             parser.wants_doc = @program.wants_doc?
-            nodes << parser.parse.transform(self)
+            nodes << FileNode.new(parser.parse.transform(self), filename)
           end
         end
         Expressions.from(nodes)
@@ -320,6 +325,17 @@ module Crystal
       node.raise "while requiring \"#{node.string}\"", ex
     rescue ex
       node.raise "while requiring \"#{node.string}\": #{ex.message}"
+    end
+
+    # Check if the right hand side is dead code
+    def transform(node : Assign)
+      super
+
+      if @dead_code
+        node.value
+      else
+        node
+      end
     end
 
     def new_temp_var

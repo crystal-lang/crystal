@@ -1,29 +1,118 @@
 lib LibC
   struct TimeZone
     tz_minuteswest : Int
-    tz_dsttime     : Int
+    tz_dsttime : Int
   end
 
   fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int
+
+  ifdef linux
+    fun tzset : Void
+    $timezone : Int
+  end
 end
 
+ifdef linux
+  LibC.tzset
+end
+
+# The `Time` library allows you to inspect, analyze, calculate, and format time. Here are some examples:
+#
+# ### Basic Usage
+#
+#     time = Time.now
+#     #=> 2016-02-15 10:20:30 UTC
+#
+#     time.year    #=> 2015
+#     time.month   #=> 2
+#     time.day     #=> 15
+#     time.hour    #=> 10
+#     time.minute  #=> 20
+#     time.second  #=> 30
+#     time.monday? #=> true
+#
+#     # Creating a time instance with a date only
+#     Time.new(2016,2,15)
+#     #=> 2016-02-15 00:00:00
+#
+#     # Specifying a time
+#     Time.new(2016,2,15,10,20,30)
+#     #=> 2016-02-15 10:20:30 UTC
+#
+# ### Formatting Time
+#
+# The `to_s` method returns a `String` value in the assigned format.
+#
+#     Time.now.to_s("%Y-%m-%d")
+#     #=> "2015-10-12"
+#
+#     # Format specifiers include but are not limited to:
+#     %Y  => year
+#     %m  => month
+#     %d  => day
+#     %H  => hour
+#     %M  => minute
+#     %S  => second
+#     %D  => date
+#     %u  => weekday
+#
+# ### Calculation
+#
+#     Time.new(2015,10,10) - 5.day
+#     #=> 2015-10-05 00:00:00
+#
+#     # Time calculation returns a Time::Span instance,
+#     # which can be analyzed with its methods.
+#     span = Time.new(2015,10,10) - Time.new(2015,9,10)
+#     span.days          #=> 30
+#     span.total_hours   #=> 720
+#     span.total_minutes #=> 43200
+#
+#     # Calculation between Time::Span instances
+#     span_a = Time::Span.new(3,0,0)
+#     span_b = Time::Span.new(2,0,0)
+#     span = span_a - span_b
+#     span       #=> 02:00:00
+#     span.class #=> Time::Span
+#     span.hours #=> 2
 struct Time
   # *Heavily* inspired by Mono's DateTime class:
   # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/DateTime.cs
 
   include Comparable(self)
 
-  TicksMask       = 0x3fffffffffffffff
-  KindMask        = 0xc000000000000000
+  TicksMask       =      0x3fffffffffffffff
+  KindMask        =      0xc000000000000000
   MAX_VALUE_TICKS = 3155378975999999999_i64
 
-  DAYS_MONTH = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+  DAYS_MONTH      = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
   DAYS_MONTH_LEAP = [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
   DP400 = 146097
-  DP100 = 36524
-  DP4   = 1461
+  DP100 =  36524
+  DP4   =   1461
 
+  # `Kind` represents a specified time zone.
+  #
+  # Initializing a `Time` instance with specified `Kind`:
+  # ```crystal
+  # time = Time.new(2016, 2, 15, 21, 1, 10, 0, Time::Kind::Local)
+  # ```
+  #
+  # Alternatively, you can switch the `Kind` for any instance:
+  #
+  # ```crystal
+  # time.to_utc   # => 2016-02-15 21:00:00 UTC
+  # time.to_local # => 2016-02-16 05:01:10 +0800
+  # ```
+  #
+  # Inspection:
+  #
+  # ```crystal
+  # time.local? # => true
+  # time.utc?   # => false
+  # ```
+  #
   enum Kind : Int64
     Unspecified = 0
     Utc         = 1
@@ -39,7 +128,7 @@ struct Time
 
   # 1 tick is a tenth of a millisecond
   # The 2 higher bits are reserved for the kind of time.
-  @encoded :: Int64
+  @encoded : Int64
   protected property encoded
 
   def initialize
@@ -66,27 +155,27 @@ struct Time
       raise ArgumentError.new "invalid time"
     end
 
-    @encoded = TimeSpan.new(Time.absolute_days(year, month, day), hour, minute, second, millisecond).ticks
+    @encoded = Span.new(Time.absolute_days(year, month, day), hour, minute, second, millisecond).ticks
     @encoded |= kind.value << KindShift
   end
 
   def self.new(time : LibC::TimeSpec, kind = Kind::Unspecified)
-    new(UnixEpoch + time.tv_sec.to_i64 * TimeSpan::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
+    new(UnixEpoch + time.tv_sec.to_i64 * Span::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
   end
 
   def self.epoch(seconds : Int)
-    new(UnixEpoch + seconds.to_i64 * TimeSpan::TicksPerSecond, Kind::Utc)
+    new(UnixEpoch + seconds.to_i64 * Span::TicksPerSecond, Kind::Utc)
   end
 
   def self.epoch_ms(milliseconds : Int)
-    new(UnixEpoch + milliseconds.to_i64 * TimeSpan::TicksPerMillisecond, Kind::Utc)
+    new(UnixEpoch + milliseconds.to_i64 * Span::TicksPerMillisecond, Kind::Utc)
   end
 
-  def +(other : TimeSpan)
+  def +(other : Span)
     add_ticks other.ticks
   end
 
-  def -(other : TimeSpan)
+  def -(other : Span)
     add_ticks -other.ticks
   end
 
@@ -134,7 +223,7 @@ struct Time
   end
 
   def -(other : Time)
-    TimeSpan.new(ticks - other.ticks)
+    Span.new(ticks - other.ticks)
   end
 
   def self.now
@@ -166,27 +255,27 @@ struct Time
   end
 
   def hour
-    ((encoded & TicksMask) % TimeSpan::TicksPerDay / TimeSpan::TicksPerHour).to_i32
+    ((encoded & TicksMask) % Span::TicksPerDay / Span::TicksPerHour).to_i32
   end
 
   def minute
-    ((encoded & TicksMask) % TimeSpan::TicksPerHour / TimeSpan::TicksPerMinute).to_i32
+    ((encoded & TicksMask) % Span::TicksPerHour / Span::TicksPerMinute).to_i32
   end
 
   def second
-    ((encoded & TicksMask) % TimeSpan::TicksPerMinute / TimeSpan::TicksPerSecond).to_i32
+    ((encoded & TicksMask) % Span::TicksPerMinute / Span::TicksPerSecond).to_i32
   end
 
   def millisecond
-    ((encoded & TicksMask) % TimeSpan::TicksPerSecond / TimeSpan::TicksPerMillisecond).to_i32
+    ((encoded & TicksMask) % Span::TicksPerSecond / Span::TicksPerMillisecond).to_i32
   end
 
   def time_of_day
-    TimeSpan.new((encoded & TicksMask) % TimeSpan::TicksPerDay)
+    Span.new((encoded & TicksMask) % Span::TicksPerDay)
   end
 
   def day_of_week
-    value = (((encoded & TicksMask) / TimeSpan::TicksPerDay) + 1) % 7
+    value = (((encoded & TicksMask) / Span::TicksPerDay) + 1) % 7
     DayOfWeek.new value.to_i
   end
 
@@ -194,14 +283,17 @@ struct Time
     year_month_day_day_year[3]
   end
 
+  # Returns `Kind` of the instance.
   def kind
     Kind.new((encoded.to_u64 >> KindShift).to_i64)
   end
 
+  # Returns *true* if `Kind` is set to *Utc*.
   def utc?
     kind == Kind::Utc
   end
 
+  # Returns *true* if `Kind` is set to *Local*.
   def local?
     kind == Kind::Local
   end
@@ -242,35 +334,35 @@ struct Time
   end
 
   def inspect(io : IO)
-    TimeFormat.new("%F %T").format(self, io)
+    Format.new("%F %T").format(self, io)
     io << " UTC" if utc?
-    TimeFormat.new(" %z").format(self, io) if local?
+    Format.new(" %z").format(self, io) if local?
     io
   end
 
   def to_s(format : String)
-    TimeFormat.new(format).format(self)
+    Format.new(format).format(self)
   end
 
   def to_s(format : String, io : IO)
-    TimeFormat.new(format).format(self, io)
+    Format.new(format).format(self, io)
   end
 
   def self.parse(time, pattern, kind = Time::Kind::Unspecified)
-    TimeFormat.new(pattern, kind).parse(time)
+    Format.new(pattern, kind).parse(time)
   end
 
   # Returns the number of seconds since the Epoch
   def epoch
-    (ticks - UnixEpoch) / TimeSpan::TicksPerSecond
+    (to_utc.ticks - UnixEpoch) / Span::TicksPerSecond
   end
 
   def epoch_ms
-    (ticks - UnixEpoch) / TimeSpan::TicksPerMillisecond
+    (to_utc.ticks - UnixEpoch) / Span::TicksPerMillisecond
   end
 
   def epoch_f
-    (ticks - UnixEpoch) / TimeSpan::TicksPerSecond.to_f
+    (to_utc.ticks - UnixEpoch) / Span::TicksPerSecond.to_f
   end
 
   def to_utc
@@ -296,13 +388,13 @@ struct Time
     end
   end
 
-  def_at(beginning_of_year)     { Time.new(year, 1, 1) }
+  def_at(beginning_of_year) { Time.new(year, 1, 1) }
   def_at(beginning_of_semester) { Time.new(year, ((month - 1) / 6) * 6 + 1, 1) }
-  def_at(beginning_of_quarter)  { Time.new(year, ((month - 1) / 3) * 3 + 1, 1) }
-  def_at(beginning_of_month)    { Time.new(year, month, 1) }
-  def_at(beginning_of_day)      { Time.new(year, month, day) }
-  def_at(beginning_of_hour)     { Time.new(year, month, day, hour) }
-  def_at(beginning_of_minute)   { Time.new(year, month, day, hour, minute) }
+  def_at(beginning_of_quarter) { Time.new(year, ((month - 1) / 3) * 3 + 1, 1) }
+  def_at(beginning_of_month) { Time.new(year, month, 1) }
+  def_at(beginning_of_day) { Time.new(year, month, day) }
+  def_at(beginning_of_hour) { Time.new(year, month, day, hour) }
+  def_at(beginning_of_minute) { Time.new(year, month, day, hour, minute) }
 
   def at_beginning_of_week
     dow = day_of_week.value
@@ -350,10 +442,10 @@ struct Time
     end
   end
 
-  def_at(end_of_day)    { Time.new(year, month, day, 23, 59, 59, 999) }
-  def_at(end_of_hour)   { Time.new(year, month, day, hour, 59, 59, 999) }
+  def_at(end_of_day) { Time.new(year, month, day, 23, 59, 59, 999) }
+  def_at(end_of_hour) { Time.new(year, month, day, hour, 59, 59, 999) }
   def_at(end_of_minute) { Time.new(year, month, day, hour, minute, 59, 999) }
-  def_at(midday)        { Time.new(year, month, day, 12, 0, 0, 0) }
+  def_at(midday) { Time.new(year, month, day, 12, 0, 0, 0) }
 
   {% for name, index in %w(sunday monday tuesday wednesday thursday friday saturday) %}
     def {{name.id}}?
@@ -371,14 +463,14 @@ struct Time
       m += 1
     end
 
-    (day-1) + temp + (365* (year-1)) + ((year-1)/4) - ((year-1)/100) + ((year-1)/400)
+    (day - 1) + temp + (365*(year - 1)) + ((year - 1)/4) - ((year - 1)/100) + ((year - 1)/400)
   end
 
   private def year_month_day_day_year
     m = 1
 
     days = DAYS_MONTH
-    totaldays = ((encoded & TicksMask) / TimeSpan::TicksPerDay).to_i32
+    totaldays = ((encoded & TicksMask) / Span::TicksPerDay).to_i32
 
     num400 = totaldays / DP400
     totaldays -= num400 * DP400
@@ -424,13 +516,13 @@ struct Time
   end
 
   def self.local_ticks
-    compute_ticks do |ticks, tp, tzp|
-      ticks - (tzp.tz_minuteswest.to_i64 * TimeSpan::TicksPerMinute)
+    compute_ticks do |ticks, tp, tz|
+      ticks - tz
     end
   end
 
   def self.utc_ticks
-    compute_ticks do |ticks, tp, tzp|
+    compute_ticks do |ticks, tp, tz|
       ticks
     end
   end
@@ -439,32 +531,46 @@ struct Time
   #
   # ```
   # # Assume in Argentina, where it's GMT-3
-  # Time.local_offset_in_minutes #=> -180
+  # Time.local_offset_in_minutes # => -180
   # ```
   def self.local_offset_in_minutes
-    LibC.gettimeofday(nil, out tzp)
-    -tzp.tz_minuteswest.to_i32
+    ifdef linux
+      -LibC.timezone.to_i32 / 60
+    else
+      if LibC.gettimeofday(nil, out tzp) != 0
+        raise Errno.new("gettimeofday")
+      end
+      -tzp.tz_minuteswest.to_i32
+    end
   end
 
   protected def self.compute_utc_ticks(ticks)
-    compute_ticks do |t, tp, tzp|
-      ticks + tzp.tz_minuteswest.to_i64 * TimeSpan::TicksPerMinute
+    compute_ticks do |t, tp, tz|
+      ticks + tz
     end
   end
 
   protected def self.compute_local_ticks(ticks)
-    compute_ticks do |t, tp, tzp|
-      ticks - tzp.tz_minuteswest.to_i64 * TimeSpan::TicksPerMinute
+    compute_ticks do |t, tp, tz|
+      ticks - tz
     end
   end
 
   private def self.compute_ticks
-    LibC.gettimeofday(out tp, out tzp)
-    ticks = tp.tv_sec.to_i64 * TimeSpan::TicksPerSecond + tp.tv_usec.to_i64 * 10_i64
+    if LibC.gettimeofday(out tp, out tzp) != 0
+      raise Errno.new("gettimeofday")
+    end
+    ticks = tp.tv_sec.to_i64 * Span::TicksPerSecond + tp.tv_usec.to_i64 * 10_i64
     ticks += UnixEpoch
-    yield ticks, tp, tzp
+
+    ifdef linux
+      tz = LibC.timezone.to_i64 / 60
+    else
+      tz = tzp.tz_minuteswest.to_i64
+    end
+
+    yield ticks, tp, tz * Span::TicksPerMinute
   end
 end
 
 require "./**"
-

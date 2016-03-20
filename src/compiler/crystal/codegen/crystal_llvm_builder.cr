@@ -1,6 +1,9 @@
 module Crystal
   class CrystalLLVMBuilder
-    property :end
+    property end : Bool
+
+    @builder : LLVM::Builder
+    @printf : LLVM::Function
 
     def initialize(@builder, @printf)
       @end = false
@@ -52,6 +55,10 @@ module Crystal
 
     def insert_block
       @builder.insert_block
+    end
+
+    def to_unsafe
+      @builder.to_unsafe
     end
 
     macro method_missing(name, args, block)

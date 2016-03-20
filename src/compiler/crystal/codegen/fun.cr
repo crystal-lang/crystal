@@ -67,9 +67,17 @@ class Crystal::CodeGenVisitor
       if needs_body
         emit_def_debug_metadata target_def if @debug
 
+        context.fun.add_attribute LLVM::Attribute::UWTable
+        if @mod.has_flag?("darwin")
+          # Disable frame pointer elimination in Darwin, as it causes issues during stack unwind
+          context.fun.add_target_dependent_attribute "no-frame-pointer-elim", "true"
+          context.fun.add_target_dependent_attribute "no-frame-pointer-elim-non-leaf", "true"
+        end
+
         new_entry_block
 
         if is_closure
+          clear_current_debug_location if @debug
           setup_closure_vars context.closure_vars.not_nil!
         else
           context.reset_closure
@@ -87,7 +95,16 @@ class Crystal::CodeGenVisitor
           context.closure_parent_context = closure_parent_context
         end
 
+        set_current_debug_location target_def if @debug
         alloca_vars target_def.vars, target_def, args, context.closure_parent_context
+
+        if @debug
+          in_alloca_block do
+            context.vars.each do |name, var|
+              declare_variable(name, var.type, var.pointer, target_def)
+            end
+          end
+        end
 
         create_local_copy_of_fun_args(target_def, self_type, args, is_fun_literal, is_closure)
 
@@ -96,6 +113,7 @@ class Crystal::CodeGenVisitor
 
         accept target_def.body
 
+        set_current_debug_location target_def.end_location if @debug
         codegen_return target_def.body.type?
 
         br_from_alloca_to_entry
@@ -125,7 +143,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_fun_signature_non_external(mangled_name, target_def, self_type, is_fun_literal, is_closure)
-    args = Array(Arg).new(target_def.args.length + 1)
+    args = Array(Arg).new(target_def.args.size + 1)
 
     if !is_fun_literal && self_type.passed_as_self?
       args.push Arg.new("self", type: self_type)
@@ -197,7 +215,7 @@ class Crystal::CodeGenVisitor
 
     abi_info = abi_info(target_def)
 
-    llvm_args_types = Array(LLVM::Type).new(abi_info.arg_types.length)
+    llvm_args_types = Array(LLVM::Type).new(abi_info.arg_types.size)
     abi_info.arg_types.each do |arg_type|
       case arg_type.kind
       when LLVM::ABI::ArgKind::Direct
@@ -284,6 +302,8 @@ class Crystal::CodeGenVisitor
         context.fun.add_attribute LLVM::Attribute::AlwaysInline
       when "ReturnsTwice"
         context.fun.add_attribute LLVM::Attribute::ReturnsTwice
+      when "Naked"
+        context.fun.add_attribute LLVM::Attribute::Naked
       end
     end
     no_inline
@@ -299,12 +319,12 @@ class Crystal::CodeGenVisitor
       end
 
       if (closure_parent_context = context.closure_parent_context) &&
-          (parent_vars = closure_parent_context.closure_vars)
-        parent_closure_ptr = gep(closure_ptr, 0, closure_vars.length, "parent_ptr")
+         (parent_vars = closure_parent_context.closure_vars)
+        parent_closure_ptr = gep(closure_ptr, 0, closure_vars.size, "parent_ptr")
         setup_closure_vars(parent_vars, closure_parent_context, load(parent_closure_ptr, "parent"))
       elsif closure_self = context.closure_self
         offset = context.closure_parent_context ? 1 : 0
-        self_value = gep(closure_ptr, 0, closure_vars.length + offset, "self")
+        self_value = gep(closure_ptr, 0, closure_vars.size + offset, "self")
         self_value = load(self_value) unless context.type.passed_by_value?
         self.context.vars["self"] = LLVMVar.new(self_value, closure_self, true)
       end

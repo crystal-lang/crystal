@@ -3,14 +3,12 @@ require "spec"
 describe "StaticArray" do
   it "creates with new" do
     a = StaticArray(Int32, 3).new 0
-    a.length.should eq(3)
     a.size.should eq(3)
-    a.count.should eq(3)
   end
 
   it "creates with new and value" do
     a = StaticArray(Int32, 3).new 1
-    a.length.should eq(3)
+    a.size.should eq(3)
     a[0].should eq(1)
     a[1].should eq(1)
     a[2].should eq(1)
@@ -18,7 +16,7 @@ describe "StaticArray" do
 
   it "creates with new and block" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
-    a.length.should eq(3)
+    a.size.should eq(3)
     a[0].should eq(1)
     a[1].should eq(2)
     a[2].should eq(3)
@@ -92,6 +90,25 @@ describe "StaticArray" do
     end
   end
 
+  it "shuffles with a seed" do
+    a = StaticArray(Int32, 10).new { |i| i + 1 }
+    b = StaticArray(Int32, 10).new { |i| i + 1 }
+    a.shuffle!(Random.new(42))
+    b.shuffle!(Random.new(42))
+
+    10.times do |i|
+      a[i].should eq(b[i])
+    end
+  end
+
+  it "reverse" do
+    a = StaticArray(Int32, 3).new { |i| i + 1 }
+    a.reverse!
+    a[0].should eq(3)
+    a[1].should eq(2)
+    a[2].should eq(1)
+  end
+
   it "maps!" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
     a.map! { |i| i + 1 }
@@ -99,7 +116,6 @@ describe "StaticArray" do
     a[1].should eq(3)
     a[2].should eq(4)
   end
-
 
   it "updates value" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }

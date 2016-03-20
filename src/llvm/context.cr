@@ -1,4 +1,6 @@
 class LLVM::Context
+  @unwrap : LibLLVM::ContextRef
+
   def initialize(@unwrap)
   end
 

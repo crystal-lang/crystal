@@ -1,30 +1,31 @@
 require "fiber"
 
-class ChannelClosed < Exception
-  def initialize
-    super("Channel is closed")
-  end
-end
-
 abstract class Channel(T)
+  class ClosedError < Exception
+    def initialize(msg = "Channel is closed")
+      super(msg)
+    end
+  end
+
   def initialize
     @closed = false
-    @senders = [] of Fiber
-    @receivers = [] of Fiber
+    @senders = Deque(Fiber).new
+    @receivers = Deque(Fiber).new
   end
 
   def self.new
-    UnbufferedChannel(T).new
+    Unbuffered(T).new
   end
 
   def self.new(capacity)
-    BufferedChannel(T).new(capacity)
+    Buffered(T).new(capacity)
   end
 
   def close
     @closed = true
     Scheduler.enqueue @receivers
     @receivers.clear
+    nil
   end
 
   def closed?
@@ -32,7 +33,7 @@ abstract class Channel(T)
   end
 
   def receive
-    receive_impl { raise ChannelClosed.new }
+    receive_impl { raise ClosedError.new }
   end
 
   def receive?
@@ -60,7 +61,7 @@ abstract class Channel(T)
   end
 
   protected def raise_if_closed
-    raise ChannelClosed.new if @closed
+    raise ClosedError.new if @closed
   end
 
   def self.receive_first(*channels)
@@ -100,14 +101,16 @@ abstract class Channel(T)
   end
 
   def send_op(value : T)
-    SendOp.new(self, value)
+    SendOp(self, T).new(self, value)
   end
 
   def receive_op
-    ReceiveOp.new(self)
+    ReceiveOp(self, T).new(self)
   end
 
-  struct ReceiveOp(T)
+  struct ReceiveOp(C, T)
+    @channel : C
+
     def initialize(@channel : Channel(T))
     end
 
@@ -128,7 +131,10 @@ abstract class Channel(T)
     end
   end
 
-  struct SendOp(T)
+  struct SendOp(C, T)
+    @channel : C
+    @value : T
+
     def initialize(@channel : Channel(T), @value : T)
     end
 
@@ -150,7 +156,7 @@ abstract class Channel(T)
   end
 end
 
-class BufferedChannel(T) < Channel(T)
+class Channel::Buffered(T) < Channel(T)
   def initialize(@capacity = 32)
     @queue = Array(T).new(@capacity)
     super()
@@ -168,6 +174,8 @@ class BufferedChannel(T) < Channel(T)
     @queue << value
     Scheduler.enqueue @receivers
     @receivers.clear
+
+    self
   end
 
   private def receive_impl
@@ -184,7 +192,7 @@ class BufferedChannel(T) < Channel(T)
   end
 
   def full?
-    @queue.length >= @capacity
+    @queue.size >= @capacity
   end
 
   def empty?
@@ -192,10 +200,10 @@ class BufferedChannel(T) < Channel(T)
   end
 end
 
-class UnbufferedChannel(T) < Channel(T)
+class Channel::Unbuffered(T) < Channel(T)
   def initialize
     @has_value = false
-    @value :: T
+    @value = uninitialized T
     super
   end
 
@@ -212,7 +220,7 @@ class UnbufferedChannel(T) < Channel(T)
     @has_value = true
     @sender = Fiber.current
 
-    if receiver = @receivers.pop?
+    if receiver = @receivers.shift?
       receiver.resume
     else
       Scheduler.reschedule
@@ -223,7 +231,7 @@ class UnbufferedChannel(T) < Channel(T)
     until @has_value
       yield if @closed
       @receivers << Fiber.current
-      if sender = @senders.pop?
+      if sender = @senders.shift?
         sender.resume
       else
         Scheduler.reschedule

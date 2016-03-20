@@ -1,16 +1,23 @@
 class OAuth2::Client
-  property scope
+  @host : String
+  @client_id : String
+  @client_secret : String
+  @port : Int32
+  @scheme : String
+  @authorize_uri : String
+  @token_uri : String
+  @redirect_uri : String?
 
-  def initialize(@host, @client_id, @client_secret,
-    @port = 443,
-    @scheme = "https",
-    @authorize_uri = "/oauth2/authorize",
-    @token_uri = "/oauth2/token",
-    @redirect_uri = nil)
+  def initialize(@host : String, @client_id : String, @client_secret : String,
+                 @port = 443,
+                 @scheme = "https",
+                 @authorize_uri = "/oauth2/authorize",
+                 @token_uri = "/oauth2/token",
+                 @redirect_uri = nil)
   end
 
   def get_authorize_uri(scope = nil, state = nil)
-    query = CGI.build_form do |form|
+    query = HTTP::Params.build do |form|
       form.add "client_id", @client_id
       form.add "redirect_uri", @redirect_uri
       form.add "response_type", "code"
@@ -45,7 +52,7 @@ class OAuth2::Client
   end
 
   private def get_access_token
-    body = CGI.build_form do |form|
+    body = HTTP::Params.build do |form|
       form.add("client_id", @client_id)
       form.add("client_secret", @client_secret)
       yield form

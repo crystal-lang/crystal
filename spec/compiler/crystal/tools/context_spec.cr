@@ -20,7 +20,7 @@ def run_context_tool(code)
 
   code.lines.each_with_index do |line, line_number_0|
     if column_number = line.index('‸')
-      cursor_location = Location.new(line_number_0+1, column_number+1, ".")
+      cursor_location = Location.new(line_number_0 + 1, column_number + 1, ".")
     end
   end
 
@@ -196,7 +196,7 @@ describe "context" do
     end
     ‸
     0
-    ), "a", ["(String | Int64)"]
+    ), "a", ["(Int64 | String)"]
   end
 
   it "can display text output" do
@@ -215,7 +215,7 @@ describe "context" do
 
 | Expr | Type           |
 -------------------------
-| a    | String | Int64 |
+| a    | Int64 | String |
 )
     end
   end
@@ -232,7 +232,7 @@ describe "context" do
     )) do |result|
       String::Builder.build do |io|
         result.to_json(io)
-      end.should eq %({"status":"ok","message":"1 possible context found","contexts":[{"a":"String | Int64"}]})
+      end.should eq %({"status":"ok","message":"1 possible context found","contexts":[{"a":"Int64 | String"}]})
     end
   end
 

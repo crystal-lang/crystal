@@ -49,10 +49,10 @@ describe "Type inference: tuples" do
       x = {1, 1.5, 'a'}
       x.types
       ") do
-        meta = tuple_of([int32, float64, char]).metaclass
-        meta.metaclass?.should be_true
-        meta
-      end
+      meta = tuple_of([int32, float64, char]).metaclass
+      meta.metaclass?.should be_true
+      meta
+    end
   end
 
   it "errors on recursive splat expansion (#218)" do
@@ -73,7 +73,7 @@ describe "Type inference: tuples" do
     assert_error %(
       require "prelude"
 
-      def foo type, *args
+      def foo(type, *args)
         foo 1, args.to_a
       end
 
@@ -87,7 +87,7 @@ describe "Type inference: tuples" do
       class Foo(T)
       end
 
-      def foo type, *args
+      def foo(type, *args)
         foo 1, Foo(typeof(args)).new
       end
 

@@ -1,5 +1,5 @@
 module LLVM::ValueMethods
-  getter :unwrap
+  getter unwrap : LibLLVM::ValueRef
 
   def initialize(@unwrap)
   end
@@ -14,6 +14,10 @@ module LLVM::ValueMethods
 
   def add_attribute(attribute)
     LibLLVM.add_attribute self, attribute
+  end
+
+  def add_instruction_attribute(index : Int, attribute : LLVM::Attribute)
+    LibLLVM.add_instr_attribute(self, index, attribute)
   end
 
   def attributes

@@ -4,8 +4,10 @@ module Crystal
   struct CrystalPath
     DEFAULT_PATH = ENV["CRYSTAL_PATH"]? || Crystal::Config::PATH
 
+    @crystal_path : Array(String)
+
     def initialize(path = DEFAULT_PATH)
-      @crystal_path = path.split ':'
+      @crystal_path = path.split(':').reject &.empty?
     end
 
     def find(filename, relative_to = nil)
@@ -24,7 +26,7 @@ module Crystal
         # Check if it's a wildcard.
         if filename.ends_with?("/*") || (recursive = filename.ends_with?("/**"))
           filename_dir_index = filename.rindex('/').not_nil!
-          filename_dir = filename[0 .. filename_dir_index]
+          filename_dir = filename[0..filename_dir_index]
           relative_dir = "#{relative_to}/#{filename_dir}"
           if File.exists?(relative_dir)
             files = [] of String
@@ -90,7 +92,7 @@ module Crystal
     end
 
     private def make_relative_unless_absolute(filename)
-      filename = "#{Dir.working_directory}/#{filename}" unless filename.starts_with?('/')
+      filename = "#{Dir.current}/#{filename}" unless filename.starts_with?('/')
       File.expand_path(filename)
     end
 

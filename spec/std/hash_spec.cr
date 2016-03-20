@@ -3,7 +3,8 @@ require "spec"
 alias RecursiveHash = Hash(RecursiveHash, RecursiveHash)
 
 class HashBreaker
-  getter x
+  getter x : Int32
+
   def initialize(@x)
   end
 end
@@ -13,9 +14,9 @@ end
 
 describe "Hash" do
   describe "empty" do
-    it "length should be zero" do
+    it "size should be zero" do
       h = {} of Int32 => Int32
-      h.length.should eq(0)
+      h.size.should eq(0)
       h.empty?.should be_true
     end
   end
@@ -79,8 +80,8 @@ describe "Hash" do
     end
 
     it "compares hash of nested hash" do
-      a = { {1 => 2} => 3}
-      b = { {1 => 2} => 3}
+      a = { {1 => 2} => 3 }
+      b = { {1 => 2} => 3 }
       a.should eq(b)
     end
   end
@@ -147,6 +148,45 @@ describe "Hash" do
     end
   end
 
+  describe "key" do
+    it "returns the first key with the given value" do
+      hash = {"foo": "bar", "baz": "qux"}
+      hash.key("bar").should eq("foo")
+      hash.key("qux").should eq("baz")
+    end
+
+    it "raises when no key pairs with the given value" do
+      expect_raises KeyError do
+        {"foo": "bar"}.key("qux")
+      end
+    end
+
+    describe "if block is given," do
+      it "returns the first key with the given value" do
+        hash = {"foo": "bar", "baz": "bar"}
+        hash.key("bar") { |value| value.upcase }.should eq("foo")
+      end
+
+      it "yields the argument if no hash key pairs with the value" do
+        hash = {"foo": "bar"}
+        hash.key("qux") { |value| value.upcase }.should eq("QUX")
+      end
+    end
+  end
+
+  describe "key?" do
+    it "returns the first key with the given value" do
+      hash = {"foo": "bar", "baz": "qux"}
+      hash.key?("bar").should eq("foo")
+      hash.key?("qux").should eq("baz")
+    end
+
+    it "returns nil if no key pairs with the given value" do
+      hash = {"foo": "bar", "baz": "qux"}
+      hash.key?("foobar").should eq nil
+      hash.key?("bazqux").should eq nil
+    end
+  end
 
   describe "has_key?" do
     it "doesn't have key" do
@@ -167,7 +207,7 @@ describe "Hash" do
       a.has_key?(1).should be_false
       a.has_key?(3).should be_true
       a.has_key?(5).should be_true
-      a.length.should eq(2)
+      a.size.should eq(2)
       a.should eq({3 => 4, 5 => 6})
     end
 
@@ -177,7 +217,7 @@ describe "Hash" do
       a.has_key?(1).should be_true
       a.has_key?(3).should be_false
       a.has_key?(5).should be_true
-      a.length.should eq(2)
+      a.size.should eq(2)
       a.should eq({1 => 2, 5 => 6})
     end
 
@@ -187,15 +227,15 @@ describe "Hash" do
       a.has_key?(1).should be_true
       a.has_key?(3).should be_true
       a.has_key?(5).should be_false
-      a.length.should eq(2)
-      a.should eq({1 => 2, 3 =>4})
+      a.size.should eq(2)
+      a.should eq({1 => 2, 3 => 4})
     end
 
     it "deletes only remaining entry" do
       a = {1 => 2}
       a.delete(1).should eq(2)
       a.has_key?(1).should be_false
-      a.length.should eq(0)
+      a.size.should eq(0)
       a.should eq({} of Int32 => Int32)
     end
 
@@ -206,15 +246,15 @@ describe "Hash" do
   end
 
   describe "size" do
-    it "is the same as length" do
+    it "is the same as size" do
       a = {} of Int32 => Int32
-      a.size.should eq(a.length)
+      a.size.should eq(a.size)
 
       a = {1 => 2}
-      a.size.should eq(a.length)
+      a.size.should eq(a.size)
 
       a = {1 => 2, 3 => 4, 5 => 6, 7 => 8}
-      a.size.should eq(a.length)
+      a.size.should eq(a.size)
     end
   end
 
@@ -334,6 +374,54 @@ describe "Hash" do
     h3.should eq({1 => "2", 2 => "4", 3 => "x"})
   end
 
+  it "selects" do
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.select { |k, v| k == :b }
+    h2.should eq({b: 2})
+    h2.should_not be(h1)
+  end
+
+  it "selects!" do
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.select! { |k, v| k == :b }
+    h2.should eq({b: 2})
+    h2.should be(h1)
+  end
+
+  it "returns nil when using select! and no changes were made" do
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.select! { true }
+    h2.should eq(nil)
+    h1.should eq({a: 1, b: 2, c: 3})
+  end
+
+  it "rejects" do
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.reject { |k, v| k == :b }
+    h2.should eq({a: 1, c: 3})
+    h2.should_not be(h1)
+  end
+
+  it "rejects!" do
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.reject! { |k, v| k == :b }
+    h2.should eq({a: 1, c: 3})
+    h2.should be(h1)
+  end
+
+  it "returns nil when using reject! and no changes were made" do
+    h1 = {a: 1, b: 2, c: 3}
+
+    h2 = h1.reject! { false }
+    h2.should eq(nil)
+    h1.should eq({a: 1, b: 2, c: 3})
+  end
+
   it "zips" do
     ary1 = [1, 2, 3]
     ary2 = ['a', 'b', 'c']
@@ -389,7 +477,7 @@ describe "Hash" do
     h = {} of Int32 => Int32
     times.times do |i|
       h[i] = i
-      h.length.should eq(i + 1)
+      h.size.should eq(i + 1)
     end
     times.times do |i|
       h[i].should eq(i)
@@ -399,7 +487,7 @@ describe "Hash" do
     times.times do |i|
       h.delete(i).should eq(i)
       h.has_key?(i).should be_false
-      h.length.should eq(times - i - 1)
+      h.size.should eq(times - i - 1)
     end
   end
 
@@ -407,7 +495,7 @@ describe "Hash" do
     h = {11 => 1}
     h.delete(0).should be_nil
     h.has_key?(11).should be_true
-    h.length.should eq(1)
+    h.size.should eq(1)
   end
 
   it "does to_a" do
@@ -419,7 +507,7 @@ describe "Hash" do
     h = {1 => 2, 3 => 4}
     h.clear
     h.empty?.should be_true
-    h.to_a.length.should eq(0)
+    h.to_a.size.should eq(0)
   end
 
   it "computes hash" do
@@ -428,6 +516,10 @@ describe "Hash" do
 
     h2 = { {1 => 2} => {3 => 4} }
     h.hash.should eq(h2.hash)
+
+    h3 = {1 => 2, 3 => 4}
+    h4 = {3 => 4, 1 => 2}
+    h3.hash.should eq(h4.hash)
   end
 
   it "fetches from empty hash with default value" do
@@ -441,12 +533,6 @@ describe "Hash" do
     x.to_s.should eq("{}")
   end
 
-  it "deletes if" do
-    x = {a: 1, b: 2, c: 3, d: 4}
-    x.delete_if { |k, v| v % 2 == 0 }
-    x.should eq({a: 1, c: 3})
-  end
-
   it "inverts" do
     h1 = {"one" => 1, "two" => 2, "three" => 3}
     h2 = {"a" => 1, "b" => 2, "c" => 1}
@@ -454,8 +540,8 @@ describe "Hash" do
     h1.invert.should eq({1 => "one", 2 => "two", 3 => "three"})
 
     h3 = h2.invert
-    h3.length.should eq(2)
-    %w[a c].should contain h3[1]
+    h3.size.should eq(2)
+    %w(a c).should contain h3[1]
   end
 
   it "gets each iterator" do
@@ -501,6 +587,25 @@ describe "Hash" do
       results = [] of Int32
       hash.each_with_index(3) { |k, v, i| results << k + v + i }
       results.should eq [9, 19, 26]
+    end
+  end
+
+  describe "each_with_object" do
+    it "passes memo, key and value into block" do
+      hash = {a: 'b'}
+      hash.each_with_object(:memo) do |memo, k, v|
+        memo.should eq(:memo)
+        k.should eq(:a)
+        v.should eq('b')
+      end
+    end
+
+    it "reduces the hash to the accumulated value of memo" do
+      hash = {a: 'b', c: 'd', e: 'f'}
+      result = hash.each_with_object({} of Char => Symbol) do |memo, k, v|
+        memo[v] = k
+      end
+      result.should eq({'b' => :a, 'd' => :c, 'f' => :e})
     end
   end
 
@@ -568,10 +673,10 @@ describe "Hash" do
     end
   end
 
-  describe "inject" do
+  describe "reduce" do
     it "passes memo, key and value into block" do
       hash = {a: 'b'}
-      hash.inject(:memo) do |memo, k, v|
+      hash.reduce(:memo) do |memo, k, v|
         memo.should eq(:memo)
         k.should eq(:a)
         v.should eq('b')
@@ -580,10 +685,62 @@ describe "Hash" do
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {a: 'b', c: 'd', e: 'f'}
-      result = hash.inject("") do |memo, k, v|
+      result = hash.reduce("") do |memo, k, v|
         memo + v
       end
       result.should eq("bdf")
     end
   end
+
+  describe "reject" do
+    assert { {a: 2, b: 3}.reject(:b, :d).should eq({a: 2}) }
+    assert { {a: 2, b: 3}.reject(:b, :a).should eq({} of Symbol => Int32) }
+    it "does not change currrent hash" do
+      h = {a: 3, b: 6, c: 9}
+      h2 = h.reject(:b, :c)
+      h.should eq({a: 3, b: 6, c: 9})
+    end
+  end
+
+  describe "reject!" do
+    assert { {a: 2, b: 3}.reject!(:b, :d).should eq({a: 2}) }
+    assert { {a: 2, b: 3}.reject!(:b, :a).should eq({} of Symbol => Int32) }
+    it "changes currrent hash" do
+      h = {a: 3, b: 6, c: 9}
+      h.reject!(:b, :c)
+      h.should eq({a: 3})
+    end
+  end
+
+  describe "select" do
+    assert { {a: 2, b: 3}.select(:b, :d).should eq({b: 3}) }
+    assert { {a: 2, b: 3}.select.should eq({} of Symbol => Int32) }
+    assert { {a: 2, b: 3}.select(:b, :a).should eq({a: 2, b: 3}) }
+    it "does not change currrent hash" do
+      h = {a: 3, b: 6, c: 9}
+      h2 = h.select(:b, :c)
+      h.should eq({a: 3, b: 6, c: 9})
+    end
+  end
+
+  describe "select!" do
+    assert { {a: 2, b: 3}.select!(:b, :d).should eq({b: 3}) }
+    assert { {a: 2, b: 3}.select!.should eq({} of Symbol => Int32) }
+    assert { {a: 2, b: 3}.select!(:b, :a).should eq({a: 2, b: 3}) }
+    it "does change currrent hash" do
+      h = {a: 3, b: 6, c: 9}
+      h.select!(:b, :c)
+      h.should eq({b: 6, c: 9})
+    end
+  end
+
+  it "doesn't generate a negative index for the bucket index (#2321)" do
+    items = (0..100000).map { rand(100000).to_i16 }
+    items.uniq.size
+  end
+
+  # Check that Hash can be created with an initial capacity
+  typeof(Hash(Int32, Int32).new(initial_capacity: 1234))
+  typeof(Hash(Int32, Int32).new(0, initial_capacity: 1234))
+  typeof(Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 0 })
 end

@@ -3,13 +3,16 @@ require "./item"
 class Crystal::Doc::Type
   include Item
 
-  getter type
+  getter type : Crystal::Type
+  @generator : Generator
 
   def initialize(@generator, @type : Crystal::Type)
   end
 
   def kind
     case @type
+    when Const
+      :const
     when .struct?
       :struct
     when .class?, .metaclass?
@@ -22,6 +25,10 @@ class Crystal::Doc::Type
       :enum
     when NoReturnType, VoidType
       :struct
+    when InheritedGenericClass
+      :class
+    when IncludedGenericModule
+      :module
     else
       raise "Unhandled type in `kind`: #{@type}"
     end
@@ -41,6 +48,8 @@ class Crystal::Doc::Type
       type.extended_class.name
     when IncludedGenericModule
       type.module.name
+    when Const
+      type.name
     else
       raise "Unhandled type in `name`: #{@type}"
     end
@@ -60,7 +69,7 @@ class Crystal::Doc::Type
   end
 
   def abstract?
-    @type.abstract
+    @type.abstract?
   end
 
   def parents_of?(type)
@@ -143,6 +152,10 @@ class Crystal::Doc::Type
     kind == :alias
   end
 
+  def const?
+    kind == :const
+  end
+
   def alias_definition
     alias_def = (@type as AliasType).aliased_type
     alias_def
@@ -152,9 +165,13 @@ class Crystal::Doc::Type
     type_to_html alias_definition
   end
 
+  @types : Array(Type)?
+
   def types
     @types ||= @generator.collect_subtypes(@type)
   end
+
+  @instance_methods : Array(Method)?
 
   def instance_methods
     @instance_methods ||= begin
@@ -166,7 +183,7 @@ class Crystal::Doc::Type
         type.defs.try &.each do |def_name, defs_with_metadata|
           defs_with_metadata.each do |def_with_metadata|
             case def_with_metadata.def.visibility
-            when :private, :protected
+            when .private?, .protected?
               next
             end
 
@@ -182,6 +199,8 @@ class Crystal::Doc::Type
     end
   end
 
+  @class_methods : Array(Method)?
+
   def class_methods
     @class_methods ||= begin
       class_methods =
@@ -192,7 +211,7 @@ class Crystal::Doc::Type
             defs_with_metadata.each do |def_with_metadata|
               a_def = def_with_metadata.def
               case a_def.visibility
-              when :private, :protected
+              when .private?, .protected?
                 next
               end
 
@@ -239,6 +258,8 @@ class Crystal::Doc::Type
     end
   end
 
+  @macros : Array(Macro)?
+
   def macros
     @macros ||= begin
       case type = @type.metaclass
@@ -258,9 +279,13 @@ class Crystal::Doc::Type
     end
   end
 
+  @constants : Array(Constant)?
+
   def constants
     @constants ||= @generator.collect_constants(self)
   end
+
+  @included_modules : Array(Type)?
 
   def included_modules
     @included_modules ||= begin
@@ -275,6 +300,8 @@ class Crystal::Doc::Type
     end
   end
 
+  @extended_modules : Array(Type)?
+
   def extended_modules
     @extended_modules ||= begin
       parents = @type.metaclass.parents || [] of Crystal::Type
@@ -287,6 +314,8 @@ class Crystal::Doc::Type
       extended_modules.sort_by! &.full_name.downcase
     end
   end
+
+  @subclasses : Array(Type)?
 
   def subclasses
     @subclasses ||= begin
@@ -311,6 +340,8 @@ class Crystal::Doc::Type
       end
     end
   end
+
+  @including_types : Array(Type)?
 
   def including_types
     @including_types ||= begin
@@ -337,7 +368,7 @@ class Crystal::Doc::Type
 
   def container
     case type = @type
-    when ContainedType
+    when NamedType
       container = type.container
       if container.is_a?(Program)
         nil
@@ -397,7 +428,12 @@ class Crystal::Doc::Type
   end
 
   def path_to(type : Type)
-    path_to(type.path)
+    if type.const?
+      container = type.container || @generator.program_type
+      "#{path_to(container)}##{type.name}"
+    else
+      path_to(type.path)
+    end
   end
 
   def link_from(type : Type)
@@ -435,33 +471,33 @@ class Crystal::Doc::Type
     lookup_in_methods instance_methods, name
   end
 
-  def lookup_method(name, args_count)
-    lookup_in_methods instance_methods, name, args_count
+  def lookup_method(name, args_size)
+    lookup_in_methods instance_methods, name, args_size
   end
 
   def lookup_class_method(name)
     lookup_in_methods class_methods, name
   end
 
-  def lookup_class_method(name, args_count)
-    lookup_in_methods class_methods, name, args_count
+  def lookup_class_method(name, args_size)
+    lookup_in_methods class_methods, name, args_size
   end
 
   def lookup_macro(name)
     lookup_in_methods macros, name
   end
 
-  def lookup_macro(name, args_count)
-    lookup_in_methods macros, name, args_count
+  def lookup_macro(name, args_size)
+    lookup_in_methods macros, name, args_size
   end
 
   private def lookup_in_methods(methods, name)
     methods.find { |method| method.name == name }
   end
 
-  private def lookup_in_methods(methods, name, args_count)
-    if args_count
-      methods.find { |method| method.name == name && method.args.length == args_count }
+  private def lookup_in_methods(methods, name, args_size)
+    if args_size
+      methods.find { |method| method.name == name && method.args.size == args_size }
     else
       methods = methods.select { |method| method.name == name }
       (methods.find { |method| method.args.empty? }) || methods.first?

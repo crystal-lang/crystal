@@ -1,4 +1,6 @@
 lib LibC
+  WNOHANG = 0x00000001
+
   @[ReturnsTwice]
   fun fork : PidT
   fun getpgid(pid : PidT) : PidT
@@ -32,7 +34,7 @@ class Process
   end
 
   def self.pid
-    LibC.getpid()
+    LibC.getpid
   end
 
   def self.getpgid(pid : Int32)
@@ -43,45 +45,64 @@ class Process
 
   def self.kill(signal : Signal, *pids : Int)
     pids.each do |pid|
-      ret = LibC.kill(pid.to_i32, signal.value)
+      ret = LibC.kill(pid, signal.value)
       raise Errno.new(ret) if ret < 0
     end
-    0
+    nil
   end
 
   def self.ppid
-    LibC.getppid()
+    LibC.getppid
   end
 
-  def self.fork(&block)
-    pid = self.fork()
+  # Returns a `Process`.
+  def self.fork
+    pid = fork_internal do
+      with self yield self
+    end
+    Process.new pid
+  end
+
+  # Returns a `Process`.
+  def self.fork
+    if pid = fork_internal
+      Process.new pid
+    else
+      nil
+    end
+  end
+
+  protected def self.fork_internal(run_hooks : Bool = true, &block)
+    pid = self.fork_internal(run_hooks)
 
     unless pid
-      yield
-      exit
+      begin
+        yield
+        LibC._exit 0
+      rescue ex
+        ex.inspect STDERR
+        STDERR.flush
+        LibC._exit 1
+      ensure
+        LibC._exit 254 # not reached
+      end
     end
 
     pid
   end
 
-  def self.fork
+  # run_hooks should ALWAYS be true unless exec* is used immediately after fork.
+  # Channels, IO and other will not work reliably if run_hooks is false.
+  protected def self.fork_internal(run_hooks : Bool = true)
     pid = LibC.fork
     case pid
     when 0
       pid = nil
-      Scheduler.after_fork
+      @@after_fork_child_callbacks.each(&.call) if run_hooks
     when -1
       raise Errno.new("fork")
     end
     pid
-  end
-
-  def self.waitpid(pid)
-    if LibC.waitpid(pid, out exit_code, 0) == -1
-      raise Errno.new("Error during waitpid")
-    end
-
-    exit_code
   end
 
   record Tms, utime, stime, cutime, cstime
@@ -97,8 +118,8 @@ def fork
   Process.fork { yield }
 end
 
-def fork()
-  Process.fork()
+def fork
+  Process.fork
 end
 
 require "./*"

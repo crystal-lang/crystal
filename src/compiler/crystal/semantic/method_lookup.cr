@@ -6,6 +6,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_matches"
     end
 
+    def lookup_matches_without_parents(signature, owner = self, type_lookup = self, matches_array = nil)
+      raise "Bug: #{self} doesn't implement lookup_matches_without_parents"
+    end
+
     def lookup_matches_with_modules(signature, owner = self, type_lookup = self, matches_array = nil)
       raise "Bug: #{self} doesn't implement lookup_matches_with_modules"
     end
@@ -17,7 +21,7 @@ module Crystal
         context = MatchContext.new(owner, type_lookup)
 
         defs.each do |item|
-          next if item.def.abstract
+          next if item.def.abstract?
 
           match = MatchesLookup.match_def(signature, item, context)
 
@@ -78,8 +82,8 @@ module Crystal
     end
 
     def self.match_def(signature, def_metadata, context)
-      unless (def_metadata.min_length <= signature.arg_types.length <= def_metadata.max_length) &&
-        (def_metadata.yields == !!signature.block)
+      unless (def_metadata.min_size <= signature.arg_types.size <= def_metadata.max_size) &&
+             (def_metadata.yields == !!signature.block)
         return nil
       end
 
@@ -109,18 +113,18 @@ module Crystal
 
       # The splat argument
       if splat_index == -1
-        splat_length = 0
+        splat_size = 0
         offset = 0
       else
-        splat_length = arg_types.length - (a_def.args.length - 1)
-        offset = splat_index + splat_length
+        splat_size = arg_types.size - (a_def.args.size - 1)
+        offset = splat_index + splat_size
         splat_arg = def_metadata.def.args[splat_index]
 
         # If there's a restriction on a splat, zero splatted args don't match
-        return nil if splat_arg.restriction && splat_length == 0
+        return nil if splat_arg.restriction && splat_size == 0
 
         matched_arg_types ||= [] of Type
-        splat_length.times do |i|
+        splat_size.times do |i|
           matched_arg_type = arg_types[splat_index + i]
 
           # Check that every splatted type matches the restriction
@@ -134,7 +138,7 @@ module Crystal
 
       # Args after the splat argument
       base = splat_index + 1
-      base.upto(a_def.args.length - 1) do |index|
+      base.upto(a_def.args.size - 1) do |index|
         def_arg = a_def.args[index]
         arg_type = arg_types[offset + index - base]?
 
@@ -152,7 +156,7 @@ module Crystal
 
       # Now check named args
       if named_args
-        min_index = signature.arg_types.length
+        min_index = signature.arg_types.size
         named_args.each do |named_arg|
           found_index = a_def.args.index { |arg| arg.name == named_arg.name }
           if found_index
@@ -197,6 +201,7 @@ module Crystal
 
   class AliasType
     delegate lookup_matches, aliased_type
+    delegate lookup_matches_without_parents, aliased_type
   end
 
   module VirtualTypeLookup
@@ -214,7 +219,7 @@ module Crystal
       base_type_covers_all = base_type_matches.cover_all?
 
       # If the base type doesn't cover every possible type combination, it's a failure
-      if !base_type.abstract && !base_type_covers_all
+      if !base_type.abstract? && !base_type_covers_all
         return Matches.new(base_type_matches.matches, base_type_matches.cover, base_type_lookup, false)
       end
 
@@ -225,8 +230,6 @@ module Crystal
       # Traverse all subtypes
       instance_type.subtypes(base_type).each do |subtype|
         unless subtype.value?
-          subtype = subtype as NonGenericOrGenericClassInstanceType
-
           subtype_lookup = virtual_lookup(subtype)
           subtype_virtual_lookup = virtual_lookup(subtype.virtual_type)
 
@@ -276,21 +279,21 @@ module Crystal
             end
           end
 
-          if !subtype.leaf? && subtype_matches.length > 0
+          if !subtype.leaf? && subtype_matches.size > 0
             type_to_matches ||= {} of Type => Matches
             type_to_matches[subtype] = subtype_matches
           end
 
           # If the subtype is non-abstract but doesn't cover all,
           # we need to check if a parent covers it
-          if !subtype.abstract && !base_type_covers_all && !subtype_matches.cover_all?
+          if !subtype.abstract? && !base_type_covers_all && !subtype_matches.cover_all?
             unless covered_by_superclass?(subtype, type_to_matches)
               return Matches.new(subtype_matches.matches, subtype_matches.cover, subtype_lookup, false)
             end
           end
 
           if !subtype_matches.empty? && (subtype_matches_matches = subtype_matches.matches)
-            if subtype.abstract && subtype.subclasses.empty?
+            if subtype.abstract? && !self.is_a?(VirtualMetaclassType) && subtype.subclasses.empty?
               # No need to add matches if for an abstract class without subclasses
             else
               # We need to insert the matches before the previous ones
@@ -308,7 +311,7 @@ module Crystal
         change.type.add_def change.def
       end
 
-      Matches.new(matches, (matches && matches.length > 0), self)
+      Matches.new(matches, !!(matches && matches.size > 0), self)
     end
 
     def covered_by_superclass?(subtype, type_to_matches)

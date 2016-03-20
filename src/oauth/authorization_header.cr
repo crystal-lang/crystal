@@ -1,7 +1,10 @@
 # :nodoc:
 struct OAuth::AuthorizationHeader
+  @str : MemoryIO
+  @first : Bool
+
   def initialize
-    @str = StringIO.new
+    @str = MemoryIO.new
     @str << "OAuth "
     @first = true
   end
@@ -12,7 +15,7 @@ struct OAuth::AuthorizationHeader
     @str << ", " unless @first
     @str << key
     @str << %(=")
-    CGI.escape value, @str
+    URI.escape value, @str
     @str << '"'
     @first = false
   end

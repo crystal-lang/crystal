@@ -1,26 +1,24 @@
 struct XML::Attributes
   include Enumerable(Node)
 
+  @node : Node
+
   def initialize(@node)
   end
 
   def empty?
     return true unless @node.element?
 
-    props = self.props()
+    props = self.props
     props.nil?
   end
 
-  def length
-    count
-  end
-
   def [](index : Int)
-    length = self.length
+    size = self.size
 
-    index += length if index < 0
+    index += size if index < 0
 
-    unless 0 <= index < length
+    unless 0 <= index < size
       raise IndexError.new
     end
 
@@ -42,7 +40,7 @@ struct XML::Attributes
   def each
     return unless @node.element?
 
-    props = self.props()
+    props = self.props
     until props.nil?
       yield Node.new(props)
       props = props.value.next

@@ -1,4 +1,6 @@
 module Spec
+  @@lines_cache : Hash(String, Array(String))?
+
   # :nodoc:
   def self.lines_cache
     @@lines_cache ||= {} of String => Array(String)
@@ -14,9 +16,9 @@ module Spec
 
   # :nodoc:
   def self.relative_file(file)
-    cwd = Dir.working_directory
+    cwd = Dir.current
     if file.starts_with?(cwd)
-      file = ".#{file[cwd.length .. -1]}"
+      file = ".#{file[cwd.size..-1]}"
     end
     file
   end

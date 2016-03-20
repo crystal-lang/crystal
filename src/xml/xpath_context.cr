@@ -1,4 +1,6 @@
 struct XML::XPathContext
+  @ctx : LibXML::XPathContext*
+
   def initialize(node : Node)
     @ctx = LibXML.xmlXPathNewContext(node.to_unsafe.value.doc)
     @ctx.value.node = node.to_unsafe
@@ -6,6 +8,8 @@ struct XML::XPathContext
 
   def evaluate(search_path : String)
     xpath = LibXML.xmlXPathEvalExpression(search_path, self)
+    raise XML::Error.new("error in '#{search_path}' expression", 0) unless xpath.value
+
     case xpath.value.type
     when LibXML::XPathObjectType::STRING
       String.new(xpath.value.stringval)

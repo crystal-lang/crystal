@@ -135,7 +135,7 @@ describe "Type inference: NoReturn" do
   end
 
   it "computes NoReturn in a lazy way inside if then (#314) (5)" do
-    assert_error  %(
+    assert_error %(
       require "prelude"
 
       a = 1
@@ -148,7 +148,7 @@ describe "Type inference: NoReturn" do
           b = "hello"
         end
 
-        b.length
+        b.size
 
         b = nil
 
@@ -156,7 +156,7 @@ describe "Type inference: NoReturn" do
         a += 1
       end
       ),
-      "undefined method 'length' for Nil"
+      "undefined method 'size' for Nil"
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (1)" do
@@ -258,7 +258,7 @@ describe "Type inference: NoReturn" do
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (5)" do
-    assert_error  %(
+    assert_error %(
       require "prelude"
 
       a = 1
@@ -271,7 +271,7 @@ describe "Type inference: NoReturn" do
           x.not_nil!
         end
 
-        b.length
+        b.size
 
         b = nil
 
@@ -279,6 +279,20 @@ describe "Type inference: NoReturn" do
         a += 1
       end
       ),
-      "undefined method 'length' for Nil"
+      "undefined method 'size' for Nil"
+  end
+
+  it "types exception handler as NoReturn if ensure is NoReturn" do
+    assert_type(%(
+      lib LibC
+        fun foo : NoReturn
+      end
+
+      begin
+        1
+      ensure
+        LibC.foo
+      end
+      )) { no_return }
   end
 end

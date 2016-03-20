@@ -1,15 +1,15 @@
 class OAuth::RequestToken
-  getter token
-  getter secret
+  getter token : String
+  getter secret : String
 
-  def initialize(@token, @secret)
+  def initialize(@token : String, @secret : String)
   end
 
   def self.from_response(response)
     token = nil
     secret = nil
 
-    CGI.parse(response) do |key, value|
+    HTTP::Params.parse(response) do |key, value|
       case key
       when "oauth_token"        then token = value
       when "oauth_token_secret" then secret = value

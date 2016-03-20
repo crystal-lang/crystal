@@ -1,13 +1,13 @@
-# A tuple is a fixed-length, immutable, stack-allocated sequence of values
+# A tuple is a fixed-size, immutable, stack-allocated sequence of values
 # of possibly different types.
 #
 # A tuple can be created with the usual `new` method or with a tuple literal:
 #
 # ```
 # tuple = {1, "hello", 'x'} # Tuple(Int32, String, Char)
-# tuple[0]                  #=> 1       (Int32)
-# tuple[1]                  #=> "hello" (String)
-# tuple[2]                  #=> 'x'     (Char)
+# tuple[0]                  # => 1       (Int32)
+# tuple[1]                  # => "hello" (String)
+# tuple[2]                  # => 'x'     (Char)
 # ```
 #
 # The compiler knows what types are in each position, so when indexing
@@ -20,7 +20,7 @@
 # a value whose type is the union of all the types in the tuple, and might raise
 # `IndexError` .
 #
-# Tuples are the preferred way to return fixed-length multiple return
+# Tuples are the preferred way to return fixed-size multiple return
 # values because no memory is needed to be allocated for them:
 #
 # ```
@@ -29,8 +29,8 @@
 # end
 #
 # one, hello = one_and_hello
-# one                        #=> 1
-# hello                      #=> "hello"
+# one   # => 1
+# hello # => "hello"
 # ```
 #
 # Good examples of the above are `Number#divmod` and `Enumerable#minmax`.
@@ -44,7 +44,7 @@
 #
 # tuple = {"hey", 2}
 # value = multiply(*tuple) # same as multiply tuple[0], tuple[1]
-# value #=> "heyhey"
+# value                    # => "heyhey"
 # ```
 #
 # Finally, when using a splat argument in a method definition its type
@@ -56,7 +56,7 @@
 # end
 #
 # tuple = splat_test 1, "hello", 'x'
-# tuple                              #=> {1, "hello", 'x'} (Tuple(Int32, String, Char))
+# tuple # => {1, "hello", 'x'} (Tuple(Int32, String, Char))
 # ```
 struct Tuple
   include Enumerable(typeof((i = 0; self[i])))
@@ -79,18 +79,18 @@ struct Tuple
   end
 
   # Returns the element at the given index. Read the type docs to understand
-  # the difference bewteen indexing with a number literal or a variable.
+  # the difference between indexing with a number literal or a variable.
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0]                  #=> 1 (Int32)
-  # tuple[3]                  #=> compile error: index out of bounds for tuple {Int32, String, Char}
+  # tuple[0] # => 1 (Int32)
+  # tuple[3] # => compile error: index out of bounds for tuple {Int32, String, Char}
   #
   # i = 0
-  # tuple[i]                  #=> 1 (Int32 | String | Char)
+  # tuple[i] # => 1 (Int32 | String | Char)
   #
   # i = 3
-  # tuple[i]                  #=> runtime error: IndexError
+  # tuple[i] # => runtime error: IndexError
   # ```
   def [](index : Int)
     at(index)
@@ -100,8 +100,8 @@ struct Tuple
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0]                  #=> 1
-  # tuple[3]                  #=> nil
+  # tuple[0] # => 1
+  # tuple[3] # => nil
   # ```
   def []?(index : Int)
     at(index) { nil }
@@ -111,8 +111,8 @@ struct Tuple
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple[0]                  #=> 1
-  # tuple[3]                  #=> raises IndexError
+  # tuple[0] # => 1
+  # tuple[3] # => raises IndexError
   # ```
   def at(index : Int)
     at(index) { raise IndexError.new }
@@ -123,11 +123,11 @@ struct Tuple
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple.at(0) { 10 }        #=> 1
-  # tuple.at(3) { 10 }        #=> 10
+  # tuple.at(0) { 10 } # => 1
+  # tuple.at(3) { 10 } # => 10
   # ```
   def at(index : Int)
-    {% for i in 0 ... @length %}
+    {% for i in 0...@type.size %}
       return self[{{i}}] if {{i}} == index
     {% end %}
     yield
@@ -137,10 +137,10 @@ struct Tuple
   # Raises if any index is invalid.
   #
   # ```
-  # {"a", "b", "c", "d"}.values_at(0, 2) #=> {"a", "c"}
+  # {"a", "b", "c", "d"}.values_at(0, 2) # => {"a", "c"}
   # ```
   def values_at(*indexes : Int)
-    indexes.map {|index| self[index] }
+    indexes.map { |index| self[index] }
   end
 
   # Yields each of the elements in this tuple.
@@ -160,7 +160,7 @@ struct Tuple
   # 'x'
   # ```
   def each
-    {% for i in 0 ... @length %}
+    {% for i in 0...@type.size %}
       yield self[{{i}}]
     {% end %}
     self
@@ -169,13 +169,13 @@ struct Tuple
   # Returns an `Iterator` for the elements in this tuple.
   #
   # ```
-  # {1, 'a'}.each.cycle.take(3).to_a #=> [1, 'a', 1]
+  # {1, 'a'}.each.cycle.first(3).to_a # => [1, 'a', 1]
   # ```
   def each
-    ItemIterator(typeof((i = 0; self[i]))).new(self)
+    ItemIterator(self, typeof((i = 0; self[i]))).new(self)
   end
 
-  # Returns `true` if this tuple has the same length as the other tuple
+  # Returns `true` if this tuple has the same size as the other tuple
   # and their elements are equal to each other when  compared with `==`.
   #
   # ```crystal
@@ -183,11 +183,11 @@ struct Tuple
   # t2 = {1.0, "hello"}
   # t3 = {2, "hello"}
   #
-  # t1 == t2            #=> true
-  # t1 == t3            #=> false
+  # t1 == t2 # => true
+  # t1 == t3 # => false
   # ```
   def ==(other : self)
-    {% for i in 0 ... @length %}
+    {% for i in 0...@type.size %}
       return false unless self[{{i}}] == other[{{i}}]
     {% end %}
     true
@@ -195,10 +195,43 @@ struct Tuple
 
   # ditto
   def ==(other : Tuple)
-    return false unless length == other.length
+    return false unless size == other.size
 
-    length.times do |i|
+    size.times do |i|
       return false unless self[i] == other[i]
+    end
+    true
+  end
+
+  # Returns `true` if case equality holds for the elements in `self` and *other*.
+  #
+  # ```
+  # {1, 2} === {1, 2} # => true
+  # {1, 2} === {1, 3} # => false
+  # ```
+  #
+  # See `Object#===`
+  def ===(other : self)
+    {% for i in 0...@type.size %}
+      return false unless self[{{i}}] === other[{{i}}]
+    {% end %}
+    true
+  end
+
+  # Returns `true` if `self` and *other* have the same size and case equality holds
+  # for the elements in `self` and *other*.
+  #
+  # ```
+  # {1, 2} === {1, 2, 3}             # => false
+  # {/o+/, "bar"} === {"foo", "bar"} # => true
+  # ```
+  #
+  # See `Object#===`
+  def ===(other : Tuple)
+    return false unless size == other.size
+
+    size.times do |i|
+      return false unless self[i] === other[i]
     end
     true
   end
@@ -213,19 +246,19 @@ struct Tuple
   # (i.e. the two corresponding elements are not equal), that result is returned for the whole tuple comparison.
   #
   #
-  # If all the elements are equal, then the result is based on a comparison of the tuple lengths.
-  # Thus, two tuples are "equal" according to `<=>` if, and only if, they have the same length
+  # If all the elements are equal, then the result is based on a comparison of the tuple sizes.
+  # Thus, two tuples are "equal" according to `<=>` if, and only if, they have the same size
   # and the value of each element is equal to the value of the corresponding element in the other tuple.
   #
   # ```
-  # { "a", "a", "c" }    <=> { "a", "b", "c" }   #=> -1
-  # { 1, 2, 3, 4, 5, 6 } <=> { 1, 2 }            #=> +1
-  # { 1, 2 }             <=> { 1, 2.0 }          #=>  0
+  # {"a", "a", "c"} <=> {"a", "b", "c"} # => -1
+  # {1, 2, 3, 4, 5, 6} <=> {1, 2}       # => +1
+  # {1, 2} <=> {1, 2.0}                 # => 0
   # ```
   #
   # See `Object#<=>`.
   def <=>(other : self)
-    {% for i in 0 ... @length %}
+    {% for i in 0...@type.size %}
       cmp = self[{{i}}] <=> other[{{i}}]
       return cmp unless cmp == 0
     {% end %}
@@ -234,20 +267,20 @@ struct Tuple
 
   # ditto
   def <=>(other : Tuple)
-    min_length = Math.min(length, other.length)
-    min_length.times do |i|
+    min_size = Math.min(size, other.size)
+    min_size.times do |i|
       cmp = self[i] <=> other[i]
       return cmp unless cmp == 0
     end
-    length <=> other.length
+    size <=> other.size
   end
 
   # returns a hash value based on this tuple's length and contents.
   #
   # see `object#hash`.
   def hash
-    hash = 31 * length
-    {% for i in 0 ... @length %}
+    hash = 31 * size
+    {% for i in 0...@type.size %}
       hash = 31 * hash + self[{{i}}].hash
     {% end %}
     hash
@@ -262,7 +295,7 @@ struct Tuple
   def clone
     {% if true %}
       Tuple.new(
-        {% for i in 0 ... @length %}
+        {% for i in 0...@type.size %}
           self[{{i}}].clone,
         {% end %}
       )
@@ -272,32 +305,27 @@ struct Tuple
   # Returns true if this tuple is empty.
   #
   # ```
-  # Tuple.new.empty? #=> true
-  # {1, 2}.empty?    #=> false
+  # Tuple.new.empty? # => true
+  # {1, 2}.empty?    # => false
   # ```
   def empty?
-    length == 0
-  end
-
-  # Same as `length`.
-  def size
-    length
+    size == 0
   end
 
   # Returns the number of elements in this tuple.
   #
   # ```
-  # {'a', 'b'}.length #=> 2
+  # {'a', 'b'}.size # => 2
   # ```
-  def length
-    {{@length}}
+  def size
+    {{@type.size}}
   end
 
   # Returns a tuple containing the types of this tuple.
   #
   # ```
   # tuple = {1, "hello", 'x'}
-  # tuple.types               #=> {Int32, String, Char}
+  # tuple.types # => {Int32, String, Char}
   # ```
   def types
     T
@@ -312,7 +340,7 @@ struct Tuple
   #
   # ```
   # tuple = {1, "hello"}
-  # tuple.to_s           #=> "{1, \"hello\"}"
+  # tuple.to_s # => "{1, \"hello\"}"
   # ```
   def to_s(io)
     io << "{"
@@ -324,16 +352,64 @@ struct Tuple
   #
   # ```
   # tuple = {1, 2.5, "a"}
-  # tuple.map &.to_s #=> {"1", "2.5", "a"}
+  # tuple.map &.to_s # => {"1", "2.5", "a"}
   # ```
   def map
     {% if true %}
       Tuple.new(
-        {% for i in 0 ... @length %}
+        {% for i in 0...@type.size %}
           (yield self[{{i}}]),
         {% end %}
       )
    {% end %}
+  end
+
+  # Returns a new tuple where the elements are in reverse order.
+  #
+  # ```
+  # tuple = {1, 2.5, "a"}
+  # tuple.reverse # => {"a", 2.5, 1}
+  # ```
+  def reverse
+    {% if true %}
+      Tuple.new(
+        {% for i in 1..@type.size %}
+          self[{{@type.size - i}}],
+        {% end %}
+      )
+    {% end %}
+  end
+
+  # Yields each of the elements in this tuple in reverse order.
+  #
+  # ```
+  # tuple = {1, "hello", 'x'}
+  # tuple.reverse_each do |value|
+  #   puts value
+  # end
+  # ```
+  #
+  # Output:
+  #
+  # ```text
+  # 'x'
+  # "hello"
+  # 1
+  # ```
+  def reverse_each
+    {% for i in 1..@type.size %}
+      yield self[{{@type.size - i}}]
+    {% end %}
+    self
+  end
+
+  # Returns an `Iterator` for the elements in this tuple.
+  #
+  # ```
+  # {1, 'a'}.reverse_each.cycle.first(3).to_a # => [1, 'a', 1]
+  # ```
+  def reverse_each
+    ReverseIterator(self, typeof((i = 0; self[i]))).new(self)
   end
 
   # Returns the first element of this tuple. Doesn't compile
@@ -341,7 +417,7 @@ struct Tuple
   #
   # ```
   # tuple = {1, 2.5}
-  # tuple.first #=> 1
+  # tuple.first # => 1
   # ```
   def first
     self[0]
@@ -351,13 +427,13 @@ struct Tuple
   # is the empty tuple.
   # ```
   # tuple = {1, 2.5}
-  # tuple.first? #=> 1
+  # tuple.first? # => 1
   #
   # empty = Tuple.new
-  # empty.first? #=> nil
+  # empty.first? # => nil
   # ```
   def first?
-    {% if @length == 0 %}
+    {% if @type.size == 0 %}
       nil
     {% else %}
       self[0]
@@ -369,11 +445,11 @@ struct Tuple
   #
   # ```
   # tuple = {1, 2.5}
-  # tuple.last #=> 2.5
+  # tuple.last # => 2.5
   # ```
   def last
     {% if true %}
-      self[{{@length - 1}}]
+      self[{{@type.size - 1}}]
     {% end %}
   end
 
@@ -382,21 +458,24 @@ struct Tuple
   #
   # ```
   # tuple = {1, 2.5}
-  # tuple.last? #=> 2.5
+  # tuple.last? # => 2.5
   #
   # empty = Tuple.new
-  # empty.last? #=> nil
+  # empty.last? # => nil
   # ```
   def last?
-    {% if @length == 0 %}
+    {% if @type.size == 0 %}
       nil
     {% else %}
-      self[{{@length - 1}}]
+      self[{{@type.size - 1}}]
     {% end %}
   end
 
-  class ItemIterator(T)
+  class ItemIterator(I, T)
     include Iterator(T)
+
+    @tuple : I
+    @index : Int32
 
     def initialize(@tuple, @index = 0)
     end
@@ -409,6 +488,30 @@ struct Tuple
 
     def rewind
       @index = 0
+      self
+    end
+  end
+
+  # :nodoc:
+  class ReverseIterator(I, T)
+    include Iterator(T)
+
+    @tuple : I
+    @index : Int32
+
+    def initialize(@tuple, @index = tuple.size - 1)
+    end
+
+    def next
+      return stop if @index < 0
+
+      value = @tuple.at(@index) { stop }
+      @index -= 1
+      value
+    end
+
+    def rewind
+      @index = @tuple.size - 1
       self
     end
   end

@@ -5,7 +5,7 @@ describe StringPool do
   it "is empty" do
     pool = StringPool.new
     pool.empty?.should be_true
-    pool.length.should eq(0)
+    pool.size.should eq(0)
   end
 
   it "gets string" do
@@ -16,12 +16,12 @@ describe StringPool do
     s1.should eq("foo")
     s2.should eq("foo")
     s1.should be(s2)
-    pool.length.should eq(1)
+    pool.size.should eq(1)
   end
 
   it "gets string IO" do
     pool = StringPool.new
-    io = StringIO.new "foo"
+    io = MemoryIO.new "foo"
 
     s1 = pool.get io
     s2 = pool.get "foo"
@@ -29,7 +29,7 @@ describe StringPool do
     s1.should eq("foo")
     s2.should eq("foo")
     s1.should be(s2)
-    pool.length.should eq(1)
+    pool.size.should eq(1)
   end
 
   it "gets slice" do
@@ -42,20 +42,20 @@ describe StringPool do
     s1.should eq("aaa")
     s2.should eq("aaa")
     s1.should be(s2)
-    pool.length.should eq(1)
+    pool.size.should eq(1)
   end
 
-  it "gets pointer with length" do
+  it "gets pointer with size" do
     pool = StringPool.new
     slice = Slice(UInt8).new(3, 'a'.ord.to_u8)
 
-    s1 = pool.get(slice.pointer(slice.length), slice.length)
-    s2 = pool.get(slice.pointer(slice.length), slice.length)
+    s1 = pool.get(slice.pointer(slice.size), slice.size)
+    s2 = pool.get(slice.pointer(slice.size), slice.size)
 
     s1.should eq("aaa")
     s2.should eq("aaa")
     s1.should be(s2)
-    pool.length.should eq(1)
+    pool.size.should eq(1)
   end
 
   it "puts many" do
@@ -63,6 +63,6 @@ describe StringPool do
     10_000.times do |i|
       pool.get(i.to_s)
     end
-    pool.length.should eq(10_000)
+    pool.size.should eq(10_000)
   end
 end

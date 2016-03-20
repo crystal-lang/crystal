@@ -90,7 +90,7 @@ class LLVM::ABI
         arg_types = [LLVM::Int32, LLVM::Int64]
         return_type = LLVM::Int8
         info = abi.abi_info(arg_types, return_type, true)
-        info.arg_types.length.should eq(2)
+        info.arg_types.size.should eq(2)
 
         info.arg_types[0].should eq(ArgType.direct(LLVM::Int32))
         info.arg_types[1].should eq(ArgType.direct(LLVM::Int64))
@@ -103,7 +103,7 @@ class LLVM::ABI
         return_type = str
 
         info = abi.abi_info(arg_types, return_type, true)
-        info.arg_types.length.should eq(1)
+        info.arg_types.size.should eq(1)
 
         info.arg_types[0].should eq(ArgType.direct(str, cast: LLVM::Type.struct([LLVM::Int64])))
         info.return_type.should eq(ArgType.direct(str, cast: LLVM::Type.struct([LLVM::Int64])))
@@ -115,7 +115,7 @@ class LLVM::ABI
         return_type = str
 
         info = abi.abi_info(arg_types, return_type, true)
-        info.arg_types.length.should eq(1)
+        info.arg_types.size.should eq(1)
 
         info.arg_types[0].should eq(ArgType.direct(str, cast: LLVM::Type.struct([LLVM::Int64, LLVM::Int64])))
         info.return_type.should eq(ArgType.direct(str, cast: LLVM::Type.struct([LLVM::Int64, LLVM::Int64])))
@@ -127,7 +127,7 @@ class LLVM::ABI
         return_type = str
 
         info = abi.abi_info(arg_types, return_type, true)
-        info.arg_types.length.should eq(1)
+        info.arg_types.size.should eq(1)
 
         info.arg_types[0].should eq(ArgType.indirect(str, Attribute::ByVal))
         info.return_type.should eq(ArgType.indirect(str, Attribute::StructRet))

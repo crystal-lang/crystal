@@ -1,4 +1,6 @@
-struct LLVM::ModulePassManager
+class LLVM::ModulePassManager
+  @unwrap : LibLLVM::PassManagerRef
+
   def initialize
     @unwrap = LibLLVM.pass_manager_create
   end
@@ -13,5 +15,9 @@ struct LLVM::ModulePassManager
 
   def to_unsafe
     @unwrap
+  end
+
+  def finalize
+    LibLLVM.dispose_pass_manager(@unwrap)
   end
 end

@@ -32,21 +32,7 @@ module Crystal
     end
   end
 
-  class While
-    property :ensure_exception_handler
-  end
-
-  class Block
-    property :ensure_exception_handler
-  end
-
-  class Call
-    property :ensure_exception_handler
-  end
-
   class Def
-    property :ensure_exception_handler
-
     def mangled_name(self_type)
       name = String.build do |str|
         str << "*"
@@ -54,6 +40,10 @@ module Crystal
         if owner = @owner
           if owner.metaclass?
             owner.instance_type.llvm_name(str)
+            if original_owner != self_type
+              str << "@"
+              original_owner.instance_type.llvm_name(str)
+            end
             str << "::"
           elsif !owner.is_a?(Crystal::Program)
             owner.llvm_name(str)
@@ -75,12 +65,12 @@ module Crystal
 
         needs_self_type = self_type.try &.passed_as_self?
 
-        if args.length > 0 || needs_self_type || uses_block_arg
+        if args.size > 0 || needs_self_type || uses_block_arg
           str << "<"
           if needs_self_type
             self_type.not_nil!.llvm_name(str)
           end
-          if args.length > 0
+          if args.size > 0
             str << ", " if needs_self_type
             args.each_with_index do |arg, i|
               str << ", " if i > 0
@@ -88,7 +78,7 @@ module Crystal
             end
           end
           if uses_block_arg
-            str << ", " if needs_self_type || args.length > 0
+            str << ", " if needs_self_type || args.size > 0
             str << "&"
             block_arg.not_nil!.type.llvm_name(str)
           end
@@ -100,22 +90,7 @@ module Crystal
         end
       end
 
-      # Windows only allows alphanumeric, dot, dollar and underscore
-      # for mangled names.
-      ifdef windows
-        name = name.gsub do |char|
-          case char
-          when '<', '>', '(', ')', '*', ':', ',', '#', ' '
-            "."
-          when '+'
-            ".."
-          else
-            char
-          end
-        end
-      end
-
-      name
+      Crystal.safe_mangling(name)
     end
 
     def varargs
@@ -124,6 +99,6 @@ module Crystal
   end
 
   class External
-    property abi_info
+    property abi_info : LLVM::ABI::FunctionType?
   end
 end

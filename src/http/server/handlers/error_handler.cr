@@ -1,9 +1,15 @@
+# A handler that invokes the next handler and, if that next handler raises
+# an exception, returns with a 500 (Internal Server Error) status code and
+# prints the exception with its backtrace to the response's body.
 class HTTP::ErrorHandler < HTTP::Handler
-  def call(request)
+  def call(context)
     begin
-      call_next(request)
+      call_next(context)
     rescue ex : Exception
-      Response.error("text/plain", "ERROR: #{ex.inspect_with_backtrace}\n")
+      context.response.status_code = 500
+      context.response.content_type = "text/plain"
+      context.response.print("ERROR: ")
+      ex.inspect_with_backtrace(context.response)
     end
   end
 end

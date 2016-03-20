@@ -325,4 +325,75 @@ describe "Codegen: super" do
       (Base.new || Child.new).bar
       )).to_i.should eq(123)
   end
+
+  it "doesn't invoke super twice in inherited generic types (#942)" do
+    run(%(
+      $a = 0
+
+      abstract class Foo
+      end
+
+      class Bar(T) < Foo
+        def initialize
+            $a += 1
+            super
+        end
+      end
+
+      class Baz(T) < Bar(T)
+      end
+
+      Baz(Int8).new
+
+      $a
+      )).to_i.should eq(1)
+  end
+
+  it "calls super in metaclass (#1522)" do
+    # We include the prelude so this is codegened for real, because that's where the issue lies
+    run(%(
+      require "prelude"
+
+      $a = 0
+
+      class Base
+        def self.foo
+          $a += 1
+        end
+      end
+
+      class One < Base
+        def self.foo
+          $a += 3
+          super
+        end
+      end
+
+      Base.foo
+      One.foo
+      )).to_i.should eq(5)
+  end
+
+  it "calls super with dispatch (#2318)" do
+    run(%(
+      class Foo
+        def foo(x : Int32)
+          x
+        end
+
+        def foo(x : Float64)
+          x
+        end
+      end
+
+      class Bar < Foo
+        def foo(obj)
+          super(obj)
+        end
+      end
+
+      z = Bar.new.foo(3 || 2.5)
+      z.to_i
+      )).to_i.should eq(3)
+  end
 end

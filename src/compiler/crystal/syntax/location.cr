@@ -4,15 +4,15 @@ module Crystal
   class Location
     include PartialComparable(self)
 
-    getter line_number
-    getter column_number
-    getter filename
+    getter line_number : Int32
+    getter column_number : Int32
+    getter filename : String | VirtualFile | Nil
 
     def initialize(@line_number, @column_number, @filename)
     end
 
     def dirname
-      filename = @filename
+      filename = original_filename
       if filename.is_a?(String)
         File.dirname(filename)
       else
@@ -24,15 +24,23 @@ module Crystal
       to_s(io)
     end
 
-    def original_filename
+    def original_location
       case filename = @filename
       when String
-        filename
+        self
       when VirtualFile
-        filename.expanded_location.try &.original_filename
+        filename.expanded_location.try &.original_location
       else
         nil
       end
+    end
+
+    def original_filename
+      original_location.try &.filename
+    end
+
+    def between?(min, max)
+      min <= self && self <= max
     end
 
     def inspect

@@ -45,6 +45,6 @@ module Crystal
   end
 
   class Const
-    property initializer
+    property initializer : LLVM::Value?
   end
 end

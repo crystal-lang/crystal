@@ -10,10 +10,10 @@ struct Char
   # and thus its byte representation.
   #
   # ```
-  # 'a'.ord      #=> 97
-  # '\0'.ord     #=> 0
-  # '\u007f'.ord #=> 127
-  # '☃'.ord      #=> 9731
+  # 'a'.ord      # => 97
+  # '\0'.ord     # => 0
+  # '\u007f'.ord # => 127
+  # '☃'.ord      # => 9731
   # ```
   def ord : Int32
     1

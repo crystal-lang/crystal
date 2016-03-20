@@ -1,39 +1,39 @@
 require "ecr/macros"
 
 module Crystal::Doc
-  record TypeTemplate, type, types do
-    ecr_file "#{__DIR__}/html/type.html"
+  record TypeTemplate, type : Type, types : Array(Type) do
+    ECR.def_to_s "#{__DIR__}/html/type.html"
   end
 
-  record ListItemsTemplate, types, current_type do
-    ecr_file "#{__DIR__}/html/list_items.html"
+  record ListItemsTemplate, types : Array(Type), current_type : Type? do
+    ECR.def_to_s "#{__DIR__}/html/list_items.html"
   end
 
-  record MethodSummaryTemplate, title, methods do
-    ecr_file "#{__DIR__}/html/method_summary.html"
+  record MethodSummaryTemplate, title : String, methods : Array(Method) | Array(Macro) do
+    ECR.def_to_s "#{__DIR__}/html/method_summary.html"
   end
 
-  record MethodDetailTemplate, title, methods do
-    ecr_file "#{__DIR__}/html/method_detail.html"
+  record MethodDetailTemplate, title : String, methods : Array(Method) | Array(Macro) do
+    ECR.def_to_s "#{__DIR__}/html/method_detail.html"
   end
 
-  record MethodsInheritedTemplate, type, ancestor do
-    ecr_file "#{__DIR__}/html/methods_inherited.html"
+  record MethodsInheritedTemplate, type : Type, ancestor : Type, methods : Array(Method), label : String do
+    ECR.def_to_s "#{__DIR__}/html/methods_inherited.html"
   end
 
-  record OtherTypesTemplate, title, type, other_types do
-    ecr_file "#{__DIR__}/html/other_types.html"
+  record OtherTypesTemplate, title : String, type : Type, other_types : Array(Type) do
+    ECR.def_to_s "#{__DIR__}/html/other_types.html"
   end
 
-  record MainTemplate, body, types, repository_name do
-    ecr_file "#{__DIR__}/html/main.html"
+  record MainTemplate, body : String, types : Array(Type), repository_name : String do
+    ECR.def_to_s "#{__DIR__}/html/main.html"
   end
 
   struct JsTypeTemplate
-    ecr_file "#{__DIR__}/html/js/doc.js"
+    ECR.def_to_s "#{__DIR__}/html/js/doc.js"
   end
 
   struct StyleTemplate
-    ecr_file "#{__DIR__}/html/css/style.css"
+    ECR.def_to_s "#{__DIR__}/html/css/style.css"
   end
 end

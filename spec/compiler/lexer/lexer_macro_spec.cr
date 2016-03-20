@@ -334,16 +334,17 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)
     token.value.should eq("good ")
-
-    token = lexer.next_macro_token(Token::MacroState.default, false)
-    token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("# end")
     token.line_number.should eq(1)
 
     token = lexer.next_macro_token(Token::MacroState.default, false)
     token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("\n day ")
-    token.line_number.should eq(1)
+    token.value.should eq("# end\n")
+    token.line_number.should eq(2)
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(" day ")
+    token.line_number.should eq(2)
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)
@@ -377,13 +378,13 @@ describe "Lexer macro" do
 
     token = lexer.next_macro_token(token_before_expression.macro_state, false)
     token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq(" end")
+    token.value.should eq(" end\n")
     token.macro_state.comment.should be_false
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_LITERAL)
-    token.value.should eq("\n day ")
-    token.line_number.should eq(1)
+    token.value.should eq(" day ")
+    token.line_number.should eq(2)
 
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)
@@ -594,5 +595,28 @@ describe "Lexer macro" do
     token.value.should eq("{%    for")
     token.macro_state.beginning_of_line.should be_false
     token.macro_state.nest.should eq(1)
+  end
+
+  it "lexes begin end" do
+    lexer = Lexer.new(%(begin\nend end))
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("begin\n")
+
+    token = lexer.next_macro_token(token.macro_state, token.macro_state.beginning_of_line)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq("end ")
+    token.line_number.should eq(2)
+  end
+
+  it "lexes macro with string interpolation and double curly brace" do
+    lexer = Lexer.new(%("\#{{{1}}}"))
+
+    token = lexer.next_macro_token(Token::MacroState.default, false)
+    token.type.should eq(:MACRO_LITERAL)
+    token.value.should eq(%("\#{))
+
+    token = lexer.next_macro_token(token.macro_state, false)
+    token.type.should eq(:MACRO_EXPRESSION_START)
   end
 end

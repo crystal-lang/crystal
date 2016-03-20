@@ -11,13 +11,7 @@ class Crystal::CodeGenVisitor
       node.raise "Bug: no target defs"
     end
 
-    if target_defs.length > 1
-      # Check if it's a call on a union metaclass
-      if (obj = node.obj) && (obj_type = obj.type?) && obj_type.is_a?(MetaclassType) && (instance_type = obj_type.instance_type).is_a?(UnionType)
-        codegen_union_metaclass_call(instance_type, node)
-        return false
-      end
-
+    if target_defs.size > 1
       codegen_dispatch node, target_defs
       return false
     end
@@ -60,17 +54,24 @@ class Crystal::CodeGenVisitor
   end
 
   def prepare_call_args_non_external(node, target_def, owner)
-    call_args = Array(LLVM::Value).new(node.args.length + 1)
+    call_args = Array(LLVM::Value).new(node.args.size + 1)
     old_needs_value = @needs_value
 
-    # First self.
-    if (obj = node.obj) && obj.type.passed_as_self?
+    obj = node.obj
+
+    # Always accept obj: even if it's not passed as self this might
+    # involve intermerdiate calls with side effects.
+    if obj
       @needs_value = true
       accept obj
+    end
+
+    # First self.
+    if obj && obj.type.passed_as_self?
       call_args << downcast(@last, target_def.owner, obj.type, true)
     elsif owner.passed_as_self?
       if node.uses_with_scope? && (yield_scope = context.vars["%scope"]?)
-        call_args << yield_scope.pointer
+        call_args << downcast(yield_scope.pointer, target_def.owner, node.with_scope.not_nil!, true)
       else
         call_args << llvm_self(owner)
       end
@@ -96,7 +97,7 @@ class Crystal::CodeGenVisitor
     end
 
     # Then magic constants (__LINE__, __FILE__, __DIR__)
-    node.args.length.upto(target_def.args.length - 1) do |index|
+    node.args.size.upto(target_def.args.size - 1) do |index|
       arg = target_def.args[index]
       default_value = arg.default_value as MagicConstant
       location = node.location
@@ -131,7 +132,7 @@ class Crystal::CodeGenVisitor
     has_out = false
     abi_info = call_abi_info(target_def, node)
 
-    call_args = Array(LLVM::Value).new(node.args.length + 1)
+    call_args = Array(LLVM::Value).new(node.args.size + 1)
     old_needs_value = @needs_value
 
     if abi_info.return_type.attr == LLVM::Attribute::StructRet
@@ -167,8 +168,14 @@ class Crystal::CodeGenVisitor
             # Nil to pointer
             call_arg = llvm_c_type(def_arg.type).null
           else
-            # Def argument might be missing if it's a variadic call
-            call_arg = downcast(call_arg, def_arg.type, arg.type, true) if def_arg
+            if def_arg
+              call_arg = downcast(call_arg, def_arg.type, arg.type, true)
+            else
+              # Def argument might be missing if it's a variadic call
+              if arg.is_a?(NilLiteral)
+                call_arg = LLVM::VoidPointer.null
+              end
+            end
           end
         end
       end
@@ -182,7 +189,7 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]
       case abi_arg_type.kind
       when LLVM::ABI::ArgKind::Direct
-        if cast = abi_arg_type.cast
+        if (cast = abi_arg_type.cast) && !arg.is_a?(NilLiteral)
           final_value = alloca cast
           final_value_casted = bit_cast final_value, LLVM::VoidPointer
           gep_call_arg = bit_cast gep(call_arg, 0, 0), LLVM::VoidPointer
@@ -230,8 +237,9 @@ class Crystal::CodeGenVisitor
         context.reset_closure
 
         target_def = node.target_def
-        node.ensure_exception_handler = current_ensure_exception_handler
-        target_def.ensure_exception_handler = current_ensure_exception_handler
+
+        set_ensure_exception_handler(node)
+        set_ensure_exception_handler(target_def)
 
         alloca_vars target_def.vars, target_def
         create_local_copy_of_block_args(target_def, self_type, call_args)
@@ -269,6 +277,9 @@ class Crystal::CodeGenVisitor
       @needs_value = true
       accept node_obj
       obj_type_id = @last
+    elsif node.uses_with_scope? && (with_scope = node.with_scope)
+      owner = with_scope
+      obj_type_id = context.vars["%scope"].pointer
     else
       owner = node.scope
       obj_type_id = llvm_self
@@ -276,7 +287,7 @@ class Crystal::CodeGenVisitor
     obj_type_id = type_id(obj_type_id, owner)
 
     # Create self var if available
-    if node_obj && node_obj.type.passed_as_self?
+    if node_obj
       new_vars["%self"] = LLVMVar.new(@last, node_obj.type, true)
     end
 
@@ -289,9 +300,12 @@ class Crystal::CodeGenVisitor
     end
 
     # Reuse this call for each dispatch branch
-    call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}") as ASTNode }, node.block)
-    call.scope = node.scope
-    call.location = node.location
+    call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}") as ASTNode }, node.block).at(node)
+    call.scope = with_scope || node.scope
+    call.with_scope = with_scope
+    call.uses_with_scope = node.uses_with_scope?
+
+    is_super = node.name == "super"
 
     with_cloned_context do
       context.vars = new_vars
@@ -299,7 +313,12 @@ class Crystal::CodeGenVisitor
       Phi.open(self, node, old_needs_value) do |phi|
         # Iterate all defs and check if any match the current types, given their ids (obj_type_id and arg_type_ids)
         target_defs.each do |a_def|
-          result = match_type_id(owner, a_def.owner, obj_type_id)
+          if is_super
+            # A super call always matches the obj type
+            result = int1(1)
+          else
+            result = match_type_id(owner, a_def.owner, obj_type_id)
+          end
           node.args.each_with_index do |node_arg, i|
             a_def_arg = a_def.args[i]
             result = and(result, match_type_id(node_arg.type, a_def_arg.type, arg_type_ids[i]))
@@ -333,45 +352,63 @@ class Crystal::CodeGenVisitor
     @needs_value = old_needs_value
   end
 
-  # We codegen a call to the first type in the union, and cast it to the node's type.
-  # So for example if you have ::(Int32 | Float64).zero it will give (0 as Int32 | Float)
-  def codegen_union_metaclass_call(union_type, node)
-    new_type = union_type.union_types.first.metaclass
-
-    call = node.clone
-    call.obj.not_nil!.set_type(new_type)
-
-    node.args.zip(call.args) do |node_arg, call_arg|
-      call_arg.set_type(node_arg.type?)
-    end
-
-    new_target_defs = node.target_defs.not_nil!.select { |a_def| a_def.owner == new_type }
-
-    call.target_defs = new_target_defs
-    call.bind_to(new_target_defs)
-    call.scope = call.type
-
-    call.accept(self)
-
-    @last = upcast(@last, node.type, call.type)
-  end
-
   def codegen_call(node, target_def, self_type, call_args)
     body = target_def.body
-    if body.is_a?(Crystal::Primitive)
+
+    # Try to inline the call
+    if try_inline_call(target_def, body, self_type, call_args)
+      return
+    end
+
+    # We also always inline primitives
+    if body.is_a?(Primitive)
       # Change context type: faster then creating a new context
       old_type = context.type
       context.type = self_type
       codegen_primitive(body, target_def, call_args)
       context.type = old_type
-      return
+      return true
     end
 
     func = target_def_fun(target_def, self_type)
     codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
   end
 
+  # If a method's body is just a simple literal, "self", or an instance variable,
+  # we always inline it: less code generated, easier job for LLVM to optimize, and
+  # avoid a call in non-release builds. But do this only in non-debug builds, so we can still step.
+  def try_inline_call(target_def, body, self_type, call_args)
+    return false if @debug || target_def.is_a?(External)
+
+    case body
+    when Nop, NilLiteral, BoolLiteral, CharLiteral, StringLiteral, NumberLiteral, SymbolLiteral
+      return true unless @needs_value
+
+      accept body
+      @last = upcast(@last, target_def.type, body.type)
+      return true
+    when Var
+      if body.name == "self"
+        return true unless @needs_value
+
+        @last = self_type.passed_as_self? ? call_args.first : type_id(self_type)
+        @last = upcast(@last, target_def.type, body.type)
+        return true
+      end
+    when InstanceVar
+      return true unless @needs_value
+
+      read_instance_var(body.type, self_type, body.name, call_args.first)
+      @last = upcast(@last, target_def.type, body.type)
+      return true
+    end
+
+    false
+  end
+
   def codegen_call_or_invoke(node, target_def, self_type, func, call_args, raises, type, is_closure = false, fun_type = nil)
+    set_current_debug_location node if @debug
+
     if raises && (rescue_block = @rescue_block)
       invoke_out_block = new_block "invoke_out"
       @last = builder.invoke func, call_args, invoke_out_block, rescue_block
@@ -389,7 +426,6 @@ class Crystal::CodeGenVisitor
     end
 
     set_call_attributes node, target_def, self_type, is_closure, fun_type
-    emit_debug_metadata node, @last if @debug
 
     if target_def.is_a?(External) && (target_def.type.fun? || target_def.type.is_a?(NilableFunType))
       fun_ptr = bit_cast(@last, LLVM::VoidPointer)
@@ -454,7 +490,7 @@ class Crystal::CodeGenVisitor
     node.args.each_with_index do |arg, i|
       next unless arg.type.passed_by_value?
 
-      LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
+      @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
     end
   end
 
@@ -472,19 +508,19 @@ class Crystal::CodeGenVisitor
       abi_arg_type = abi_info.arg_types[i]?
       if abi_arg_type
         if (attr = abi_arg_type.attr)
-          LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, attr)
+          @last.add_instruction_attribute(i + arg_offset, attr)
         end
       else
         # TODO: this is for variadic arguments, which is still not handled properly (in regards to the ABI for structs)
         arg_type = arg.type
         next unless arg_type.passed_by_value?
 
-        LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
+        @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
       end
     end
 
     if sret
-      LibLLVM.add_instr_attribute(@last, 1_u32, LLVM::Attribute::StructRet)
+      @last.add_instruction_attribute(1, LLVM::Attribute::StructRet)
     end
   end
 
@@ -494,7 +530,7 @@ class Crystal::CodeGenVisitor
     arg_types = fun_type.try(&.arg_types) || target_def.try &.args.map &.type
     arg_types.try &.each_with_index do |arg_type, i|
       next unless arg_type.passed_by_value?
-      LibLLVM.add_instr_attribute(@last, (i + arg_offset).to_u32, LLVM::Attribute::ByVal)
+      @last.add_instruction_attribute(i + arg_offset, LLVM::Attribute::ByVal)
     end
   end
 end

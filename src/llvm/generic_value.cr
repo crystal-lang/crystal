@@ -1,5 +1,7 @@
-struct LLVM::GenericValue
-  def initialize(@unwrap)
+class LLVM::GenericValue
+  @unwrap : LibLLVM::GenericValueRef
+
+  def initialize(@unwrap : LibLLVM::GenericValueRef)
   end
 
   def to_i
@@ -28,5 +30,9 @@ struct LLVM::GenericValue
 
   def to_unsafe
     @unwrap
+  end
+
+  def finalize
+    LibLLVM.dispose_generic_value(@unwrap)
   end
 end

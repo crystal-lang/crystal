@@ -2,23 +2,22 @@ require "spec"
 require "iterator"
 
 describe Iterator do
-
   describe "Iterator.of" do
     it "creates singleton" do
       iter = Iterator.of(42)
-      iter.take(3).to_a.should eq([42, 42, 42])
+      iter.first(3).to_a.should eq([42, 42, 42])
     end
 
     it "creates singleton from block" do
       a = 0
       iter = Iterator.of { a += 1 }
-      iter.take(3).to_a.should eq([1, 2, 3])
+      iter.first(3).to_a.should eq([1, 2, 3])
     end
   end
 
   describe "compact_map" do
     it "applies the function and removes nil values" do
-      iter = (1..3).each.compact_map {|e| e.odd? ? e : nil}
+      iter = (1..3).each.compact_map { |e| e.odd? ? e : nil }
       iter.next.should eq(1)
       iter.next.should eq(3)
       iter.next.should be_a(Iterator::Stop)
@@ -28,7 +27,7 @@ describe Iterator do
     end
 
     it "sums after compact_map to_a" do
-      (1..3).each.compact_map {|e| e.odd? ? e : nil}.to_a.sum.should eq(4)
+      (1..3).each.compact_map { |e| e.odd? ? e : nil }.to_a.sum.should eq(4)
     end
   end
 
@@ -51,7 +50,7 @@ describe Iterator do
 
   describe "compact_map" do
     it "does not return nil values" do
-      iter = [1, nil, 2, nil].each.compact_map {|e| e.try &.*(2)}
+      iter = [1, nil, 2, nil].each.compact_map { |e| e.try &.*(2) }
       iter.next.should eq 2
       iter.next.should eq 4
       iter.next.should be_a(Iterator::Stop)
@@ -117,7 +116,7 @@ describe Iterator do
     it "yields the individual elements to the block" do
       iter = ["a", "b", "c"].each
       concatinated = ""
-      iter.each {|e| concatinated += e}
+      iter.each { |e| concatinated += e }
       concatinated.should eq "abc"
     end
   end
@@ -242,7 +241,7 @@ describe Iterator do
 
   describe "skip_while" do
     it "does skip_while with an array" do
-      iter = [1, 2, 3, 4, 0].each.skip_while { |i| i < 3}
+      iter = [1, 2, 3, 4, 0].each.skip_while { |i| i < 3 }
       iter.next.should eq(3)
       iter.next.should eq(4)
       iter.next.should eq(0)
@@ -253,12 +252,12 @@ describe Iterator do
     end
 
     it "can skip everything" do
-      iter = (1..3).each.skip_while {true}
+      iter = (1..3).each.skip_while { true }
       iter.to_a.should eq [] of Int32
     end
 
     it "returns the full array if the condition is false for the first item" do
-      iter = (1..2).each.skip_while {false}
+      iter = (1..2).each.skip_while { false }
       iter.to_a.should eq [1, 2]
     end
 
@@ -268,7 +267,7 @@ describe Iterator do
         called += 1
         i < 3
       end
-      5.times {iter.next}
+      5.times { iter.next }
       called.should eq 3
     end
   end
@@ -286,9 +285,46 @@ describe Iterator do
     end
   end
 
-  describe "take" do
-    it "does take with Range iterator" do
-      iter = (1..3).each.take(2)
+  describe "step" do
+    it "returns every element" do
+      iter = (1..3).each.step(1)
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "returns every other element" do
+      iter = (1..5).each.step(2)
+      iter.next.should eq(1)
+      iter.next.should eq(3)
+      iter.next.should eq(5)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "returns every third element" do
+      iter = (1..12).each.step(3)
+      iter.next.should eq(1)
+      iter.next.should eq(4)
+      iter.next.should eq(7)
+      iter.next.should eq(10)
+      iter.next.should be_a(Iterator::Stop)
+    end
+
+    it "raises with nonsensical steps" do
+      expect_raises(ArgumentError) do
+        (1..2).each.step(0)
+      end
+
+      expect_raises(ArgumentError) do
+        (1..2).each.step(-1)
+      end
+    end
+  end
+
+  describe "first" do
+    it "does first with Range iterator" do
+      iter = (1..3).each.first(2)
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
@@ -297,25 +333,25 @@ describe Iterator do
       iter.next.should eq(1)
     end
 
-    it "does take with more than available" do
-      (1..3).each.take(10).to_a.should eq([1, 2, 3])
+    it "does first with more than available" do
+      (1..3).each.first(10).to_a.should eq([1, 2, 3])
     end
 
-    it "is cool to take 0 elements" do
-      iter = (1..3).each.take(0)
+    it "is cool to first 0 elements" do
+      iter = (1..3).each.first(0)
       iter.next.should be_a Iterator::Stop
     end
 
     it "raises ArgumentError if negative size is provided" do
       expect_raises(ArgumentError) do
-        (1..3).each.take(-1)
+        (1..3).each.first(-1)
       end
     end
   end
 
   describe "take_while" do
     it "does take_while with Range iterator" do
-      iter = (1..5).each.take_while {|i| i < 3}
+      iter = (1..5).each.take_while { |i| i < 3 }
       iter.next.should eq(1)
       iter.next.should eq(2)
       iter.next.should be_a(Iterator::Stop)
@@ -325,7 +361,7 @@ describe Iterator do
     end
 
     it "does take_while with more than available" do
-      (1..3).each.take_while{true}.to_a.should eq([1, 2, 3])
+      (1..3).each.take_while { true }.to_a.should eq([1, 2, 3])
     end
 
     it "only calls the block as much as needed" do
@@ -334,7 +370,7 @@ describe Iterator do
         called += 1
         i < 3
       end
-      5.times {iter.next}
+      5.times { iter.next }
       called.should eq 3
     end
   end
@@ -444,9 +480,91 @@ describe Iterator do
       (1..100).each
               .select { |x| 50 <= x < 60 }
               .map { |x| x * 2 }
-              .take(3)
+              .first(3)
               .to_a
               .should eq([100, 102, 104])
+    end
+  end
+
+  describe "flatten" do
+    it "flattens an iterator of mixed-type iterators" do
+      iter = [(1..2).each, ('a'..'b').each, {c: 3}.each].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+      iter.next.should eq('b')
+      iter.next.should eq(:c)
+      iter.next.should eq(3)
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a', 'b', :c, 3])
+    end
+
+    it "flattens an iterator of mixed-type elements and iterators" do
+      iter = [(1..2).each, 'a'].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a'])
+    end
+
+    it "flattens an iterator of mixed-type elements and iterators and iterators of iterators" do
+      iter = [(1..2).each, [['a', 'b'].each].each, "foo"].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq('a')
+      iter.next.should eq('b')
+      iter.next.should eq("foo")
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 'a', 'b', "foo"])
+    end
+
+    it "flattens deeply-nested and mixed type iterators" do
+      iter = [[[1], 2], [3, [[4, 5], 6], 7], "a"].each.flatten
+
+      iter.next.should eq(1)
+      iter.next.should eq(2)
+      iter.next.should eq(3)
+      iter.next.should eq(4)
+      iter.next.should eq(5)
+      iter.next.should eq(6)
+      iter.next.should eq(7)
+      iter.next.should eq("a")
+
+      iter.next.should be_a(Iterator::Stop)
+
+      iter.rewind
+      iter.next.should eq(1)
+
+      iter.rewind
+      iter.to_a.should eq([1, 2, 3, 4, 5, 6, 7, "a"])
+    end
+
+    it "flattens a variety of edge cases" do
+      ([] of Nil).each.flatten.to_a.should eq([] of Nil)
+      ['a'].each.flatten.to_a.should eq(['a'])
+      [[[[[["hi"]]]]]].each.flatten.to_a.should eq(["hi"])
     end
   end
 end

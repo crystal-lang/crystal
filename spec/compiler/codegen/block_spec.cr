@@ -502,13 +502,12 @@ describe "Code gen: block" do
   end
 
   it "can break without value from yielder that returns nilable (1)" do
-    run("
-      require \"nil\"
-      require \"reference\"
+    run(%(
+      require "prelude"
 
       def foo
         yield
-        \"\"
+        ""
       end
 
       a = foo do
@@ -516,17 +515,16 @@ describe "Code gen: block" do
       end
 
       a.nil?
-    ").to_b.should be_true
+    )).to_b.should be_true
   end
 
   it "can break without value from yielder that returns nilable (2)" do
-    run("
-      require \"nil\"
-      require \"reference\"
+    run(%(
+      require "prelude"
 
       def foo
         yield
-        \"\"
+        ""
       end
 
       a = foo do
@@ -534,26 +532,25 @@ describe "Code gen: block" do
       end
 
       a.nil?
-    ").to_b.should be_true
+    )).to_b.should be_true
   end
 
   it "break with value from yielder that returns a nilable" do
-    run("
-      require \"nil\"
-      require \"reference\"
+    run(%(
+      require "prelude"
 
       def foo
         yield
-        \"\"
+        ""
       end
 
       a = foo do
         break if false
-        break \"\"
+        break ""
       end
 
       a.nil?
-    ").to_b.should be_false
+    )).to_b.should be_false
   end
 
   it "can use self inside a block called from dispatch" do
@@ -956,7 +953,7 @@ describe "Code gen: block" do
       end
       n.to_i
       ").to_i.should eq(3)
-   end
+  end
 
   it "codegens block call when argument type changes" do
     run("
@@ -1279,5 +1276,56 @@ describe "Code gen: block" do
       end
       $x
       )).to_i.should eq(1)
+  end
+
+  it "returns from proc literal" do
+    run(%(
+      foo = ->{
+        if 1 == 1
+          return 10
+        end
+
+        20
+      }
+
+      foo.call
+      )).to_i.should eq(10)
+  end
+
+  it "does next from captured block" do
+    run(%(
+      def foo(&block : -> T)
+        block
+      end
+
+      f = foo do
+        if 1 == 1
+          next 10
+        end
+
+        next 20
+      end
+
+      f.call
+      )).to_i.should eq(10)
+  end
+
+  it "codegens captured block with next inside yielded block (#2097)" do
+    run(%(
+      def foo
+        yield
+      end
+
+      def bar(&block : -> Int32)
+        block
+      end
+
+      foo do
+        block = bar do
+          next 123
+        end
+        block.call
+      end
+      )).to_i.should eq(123)
   end
 end

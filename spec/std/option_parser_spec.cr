@@ -9,7 +9,7 @@ private def expect_capture_option(args, option, value)
     end
   end
   flag.should eq(value)
-  args.length.should eq(0)
+  args.size.should eq(0)
 end
 
 private def expect_doesnt_capture_option(args, option)
@@ -147,8 +147,8 @@ describe "OptionParser" do
     end
     parser.to_s.should eq([
       "Usage: foo",
-      "    -f, --flag                       some flag"
-      "    -g[FLAG]                         some other flag"
+      "    -f, --flag                       some flag",
+      "    -g[FLAG]                         some other flag",
     ].join "\n")
   end
 
@@ -168,10 +168,10 @@ describe "OptionParser" do
       "Usage: foo",
       "",
       "Type F flags:",
-      "    -f, --flag                       some flag"
+      "    -f, --flag                       some flag",
       "",
       "Type G flags:",
-      "    -g[FLAG]                         some other flag"
+      "    -g[FLAG]                         some other flag",
     ].join "\n")
   end
 
@@ -320,6 +320,39 @@ describe "OptionParser" do
         ARGV.clear
         ARGV.concat old_argv
       end
+    end
+
+    it "gets `-` as argument" do
+      args = %w(-)
+      OptionParser.parse(args) do |opts|
+      end
+      args.should eq(%w(-))
+    end
+  end
+
+  describe "forward-match" do
+    it "distinguishes between '--lamb VALUE' and '--lambda VALUE'" do
+      args = %w(--lamb value1 --lambda value2)
+      value1 = nil
+      value2 = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("--lamb VALUE", "") { |v| value1 = v }
+        opts.on("--lambda VALUE", "") { |v| value2 = v }
+      end
+      value1.should eq("value1")
+      value2.should eq("value2")
+    end
+
+    it "distinguishes between '--lamb=VALUE' and '--lambda=VALUE'" do
+      args = %w(--lamb=value1 --lambda=value2)
+      value1 = nil
+      value2 = nil
+      OptionParser.parse(args) do |opts|
+        opts.on("--lamb=VALUE", "") { |v| value1 = v }
+        opts.on("--lambda=VALUE", "") { |v| value2 = v }
+      end
+      value1.should eq("value1")
+      value2.should eq("value2")
     end
   end
 end

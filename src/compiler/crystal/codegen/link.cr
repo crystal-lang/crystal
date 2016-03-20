@@ -1,8 +1,9 @@
 module Crystal
   struct LinkAttribute
-    getter :lib
-    getter :ldflags
-    getter :framework
+    getter lib : String?
+    getter ldflags : String?
+    getter framework : String?
+    @static : Bool
 
     def initialize(@lib = nil, @ldflags = nil, @static = false, @framework = nil)
     end
@@ -56,9 +57,9 @@ module Crystal
           flags = [] of String
           `pkg-config #{libname} --libs --static`.split.each do |cfg|
             if cfg.starts_with?("-L")
-              library_path << cfg[2 .. -1]
+              library_path << cfg[2..-1]
             elsif cfg.starts_with?("-l")
-              flags << (find_static_lib(cfg[2 .. -1], library_path) || cfg)
+              flags << (find_static_lib(cfg[2..-1], library_path) || cfg)
             else
               flags << cfg
             end
@@ -79,16 +80,15 @@ module Crystal
     end
 
     private def add_link_attributes(types, attrs)
-      types.each_value do |type|
+      types.try &.each_value do |type|
         next if type.is_a?(AliasType) || type.is_a?(TypeDefType)
 
         if type.is_a?(LibType) && type.used? && (link_attrs = type.link_attributes)
           attrs.concat link_attrs
         end
 
-        add_link_attributes type.types, attrs
+        add_link_attributes type.types?, attrs
       end
     end
   end
 end
-

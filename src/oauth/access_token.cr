@@ -1,8 +1,9 @@
 class OAuth::AccessToken
-  getter token
-  getter secret
+  getter token : String
+  getter secret : String
+  @extra : Hash(String, String)?
 
-  def initialize(@token, @secret, @extra = nil)
+  def initialize(@token : String, @secret : String, @extra : Hash(String, String)? = nil)
   end
 
   def extra
@@ -14,7 +15,7 @@ class OAuth::AccessToken
     secret = nil
     extra = {} of String => String
 
-    CGI.parse(response) do |key, value|
+    HTTP::Params.parse(response) do |key, value|
       case key
       when "oauth_token"        then token = value
       when "oauth_token_secret" then secret = value

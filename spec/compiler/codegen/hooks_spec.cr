@@ -48,6 +48,21 @@ describe "Code gen: hooks" do
       ").to_i.should eq(1)
   end
 
+  it "does added method macro" do
+    run("
+      $x = 0
+      class Foo
+        macro method_added(d)
+          $x = 1
+        end
+
+        def foo; end
+      end
+
+      $x
+      ").to_i.should eq(1)
+  end
+
   it "does inherited macro recursively" do
     run("
       $x = 0

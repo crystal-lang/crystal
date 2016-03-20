@@ -1,5 +1,6 @@
-language: c
+language: generic
 sudo: required
+dist: trusty
 services:
   - docker
 matrix:
@@ -9,39 +10,11 @@ matrix:
     - env: ARCH=x86_64 ARCH_CMD=linux64
       os: linux
     - os: osx
-before_install: |
-  case $TRAVIS_OS_NAME in
-    linux)
-      docker pull jhass/crystal-build-$ARCH
-      ;;
-    osx)
-      brew update
-      brew tap manastech/crystal
-      ;;
-  esac
-install: |
-  case $TRAVIS_OS_NAME in
-    osx)
-      brew install gmp libevent crystal-lang
-      curl "http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-darwin-x86_64.tar.gz" | tar xz -C /tmp
-      export LIBRARY_PATH="/usr/local/opt/crystal-lang/embedded/lib"
-      export PATH="/tmp/llvm-3.5.0-1/bin:$PATH"
-      ;;
-  esac
-script: |
-  set -e
-  case $TRAVIS_OS_NAME in
-    linux)
-      docker run -v $(pwd):/mnt -w /mnt jhass/crystal-build-$ARCH $ARCH_CMD make crystal spec CRYSTAL_CONFIG_VERSION="ci" LIBRARY_PATH="/opt/crystal/embedded/lib/"
-      docker run -v $(pwd):/mnt -w /mnt jhass/crystal-build-$ARCH $ARCH_CMD /bin/bash -c 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen' CRYSTAL_CONFIG_VERSION="ci" LIBRARY_PATH="/opt/crystal/embedded/lib/"
-      ;;
-    osx)
-      export CRYSTAL_CONFIG_VERSION="ci"
-      export CRYSTAL_CACHE_DIR="/tmp/crystal"
-      make crystal spec
-      find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen
-      ;;
-  esac
+before_install: bin/ci prepare_system
+install: bin/ci prepare_build
+script:
+  - bin/ci with_build_env 'make crystal spec doc'
+  - bin/ci with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
 branches:
   only:
     - master

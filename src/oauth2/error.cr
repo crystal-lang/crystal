@@ -1,6 +1,6 @@
 class OAuth2::Error < Exception
-  getter error
-  getter error_description
+  getter error : String
+  getter error_description : String?
 
   def initialize(@error, @error_description)
     if error_description = @error_description
@@ -16,7 +16,7 @@ class OAuth2::Error < Exception
 
     pull.read_object do |key|
       case key
-      when "error"             then error             = pull.read_string
+      when "error"             then error = pull.read_string
       when "error_description" then error_description = pull.read_string
       else
         raise "Uknown key in oauth2 error json: #{key}"

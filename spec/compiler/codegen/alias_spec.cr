@@ -100,4 +100,40 @@ describe "Code gen: alias" do
       ptr.value = 1
       ))
   end
+
+  it "lazyly solves aliases (#1346)" do
+    run(%(
+      class Session; end
+
+      alias CmdHandler = Proc(Session, Int32)
+
+      class Session
+        def foo
+          1
+        end
+      end
+
+      class SmtpSession < Session
+        def foo
+          2
+        end
+      end
+
+      cmd = CmdHandler.new { |s| s.foo }
+      cmd.call(SmtpSession.new)
+      ))
+  end
+
+  it "codegens cast to alias that includes bool" do
+    run(%(
+      alias Foo = Bool | Array(Foo)
+
+      a = false as Foo
+      if a
+        1
+      else
+        2
+      end
+      )).to_i.should eq(2)
+  end
 end

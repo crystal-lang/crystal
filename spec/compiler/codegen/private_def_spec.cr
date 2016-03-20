@@ -1,4 +1,5 @@
 require "../../spec_helper"
+require "tempfile"
 
 describe "Codegen: private def" do
   it "codegens private def in same file" do

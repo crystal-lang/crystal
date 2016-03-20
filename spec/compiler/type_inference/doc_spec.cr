@@ -10,7 +10,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.length.should eq(1)
+    foo.locations.size.should eq(1)
   end
 
   it "stores doc for abstract class" do
@@ -33,7 +33,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.length.should eq(1)
+    foo.locations.size.should eq(1)
   end
 
   it "stores doc for module" do
@@ -45,7 +45,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.length.should eq(1)
+    foo.locations.size.should eq(1)
   end
 
   it "stores doc for def" do
@@ -124,7 +124,7 @@ describe "Type inference: doc" do
 
   it "stores doc for abstract def" do
     result = infer_type %(
-      class Foo
+      abstract class Foo
         # Hello
         abstract def bar
       end
@@ -170,7 +170,21 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.length.should eq(1)
+    foo.locations.size.should eq(1)
+  end
+
+  it "stores doc for flags enum with base type" do
+    result = infer_type %(
+      # Hello
+      @[Flags]
+      enum Foo : UInt8
+      end
+    ), wants_doc: true
+    program = result.program
+    foo = program.types["Foo"]
+    foo.has_attribute?("Flags").should be_true
+    foo.doc.should eq("Hello")
+    foo.locations.size.should eq(1)
   end
 
   it "stores doc for enum and doesn't mix with value" do
@@ -184,7 +198,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.length.should eq(1)
+    foo.locations.size.should eq(1)
   end
 
   it "stores doc for enum with @[Flags]" do
@@ -210,7 +224,7 @@ describe "Type inference: doc" do
     foo = program.types["Foo"]
     a = foo.types["A"]
     a.doc.should eq("Hello")
-    a.locations.length.should eq(1)
+    a.locations.size.should eq(1)
   end
 
   it "stores doc for constant" do
@@ -221,7 +235,7 @@ describe "Type inference: doc" do
     program = result.program
     a = program.types["A"]
     a.doc.should eq("Hello")
-    a.locations.length.should eq(1)
+    a.locations.size.should eq(1)
   end
 
   it "stores doc for alias" do
@@ -232,7 +246,7 @@ describe "Type inference: doc" do
     program = result.program
     a = program.types["A"]
     a.doc.should eq("Hello")
-    a.locations.length.should eq(1)
+    a.locations.size.should eq(1)
   end
 
   it "stores doc for nodes defined in macro call" do
@@ -290,7 +304,7 @@ describe "Type inference: doc" do
     program = result.program
     foo = program.types["Foo"]
     foo.doc.should eq("Hello")
-    foo.locations.length.should eq(2)
+    foo.locations.size.should eq(2)
   end
 
   it "stores doc for module if reopening" do
@@ -314,6 +328,6 @@ describe "Type inference: doc" do
     ), wants_doc: true
     program = result.program
     foo = program.types["Foo"]
-    foo.locations.length.should eq(1)
+    foo.locations.size.should eq(1)
   end
 end

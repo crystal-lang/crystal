@@ -10,13 +10,13 @@ abstract class OAuth2::AccessToken
 
     pull.read_object do |key|
       case key
-      when "token_type"    then token_type    = pull.read_string
-      when "access_token"  then access_token  = pull.read_string
-      when "expires_in"    then expires_in    = pull.read_int
+      when "token_type"    then token_type = pull.read_string
+      when "access_token"  then access_token = pull.read_string
+      when "expires_in"    then expires_in = pull.read_int
       when "refresh_token" then refresh_token = pull.read_string_or_null
-      when "scope"         then scope         = pull.read_string_or_null
+      when "scope"         then scope = pull.read_string_or_null
       when "mac_algorithm" then mac_algorithm = pull.read_string
-      when "mac_key"       then mac_key       = pull.read_string
+      when "mac_key"       then mac_key = pull.read_string
       else
         raise "Uknown key in access token json: #{key}"
       end
@@ -39,12 +39,13 @@ abstract class OAuth2::AccessToken
     end
   end
 
-  property access_token
-  property expires_in
-  property refresh_token
-  property scope
+  property access_token : String
+  property expires_in : Int64
+  property refresh_token : String?
+  property scope : String?
 
-  def initialize(@access_token, @expires_in, @refresh_token = nil, @scope = nil)
+  def initialize(@access_token, expires_in : Int, @refresh_token = nil, @scope = nil)
+    @expires_in = expires_in.to_i64
   end
 
   abstract def authenticate(request : HTTP::Request, ssl)

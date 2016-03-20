@@ -6,6 +6,10 @@ module Crystal
   class Dependencies
     include Enumerable(ASTNode)
 
+    @first : ASTNode?
+    @second : ASTNode?
+    @all : Array(ASTNode)?
+
     def initialize
       @first = nil
       @second = nil
@@ -51,9 +55,9 @@ module Crystal
       end
     end
 
-    def delete_if
+    def reject!
       if all = @all
-        all.delete_if do |node|
+        all.reject! do |node|
           yield node
         end
       elsif second = @second
@@ -70,9 +74,9 @@ module Crystal
       end
     end
 
-    def length
+    def size
       if all = @all
-        all.length
+        all.size
       elsif @second
         2
       elsif @first

@@ -1,13 +1,13 @@
 # Copied with little modifications from: https://github.com/attractivechaos/plb/blob/master/sudoku/sudoku_v1.rb
 
-def sd_genmat()
+def sd_genmat
   mr = Array.new(324) { [] of Int32 }
   mc = Array.new(729) { [] of Int32 }
   r = 0
   (0...9).each do |i|
     (0...9).each do |j|
       (0...9).each do |k|
-        mc[r] = [ 9 * i + j, (i / 3 * 3 + j / 3) * 9 + k + 81, 9 * i + k + 162, 9 * j + k + 243 ]
+        mc[r] = [9 * i + j, (i / 3 * 3 + j / 3) * 9 + k + 81, 9 * i + k + 162, 9 * j + k + 243]
         r += 1
       end
     end
@@ -34,14 +34,22 @@ def sd_update(mr, mc, sr, sc, r, v)
     if v > 0
       (0...9).each do |r2|
         rr = mr[c][r2]
-        sr[rr] += + 1
+        sr[rr] += +1
         if sr[rr] == 1
           p = mc[rr]
           sc[p[0]] -= 1; sc[p[1]] -= 1; sc[p[2]] -= 1; sc[p[3]] -= 1
-          if sc[p[0]] < min; min, min_c = sc[p[0]], p[0] end
-          if sc[p[1]] < min; min, min_c = sc[p[1]], p[1] end
-          if sc[p[2]] < min; min, min_c = sc[p[2]], p[2] end
-          if sc[p[3]] < min; min, min_c = sc[p[3]], p[3] end
+          if sc[p[0]] < min
+            min, min_c = sc[p[0]], p[0]
+          end
+          if sc[p[1]] < min
+            min, min_c = sc[p[1]], p[1]
+          end
+          if sc[p[2]] < min
+            min, min_c = sc[p[2]], p[2]
+          end
+          if sc[p[3]] < min
+            min, min_c = sc[p[3]], p[3]
+          end
         end
       end
     else
@@ -90,14 +98,14 @@ def sd_solve(mr, mc, s)
         sd_update(mr, mc, sr, sc, mr[c][cr[i]], -1)
       end
       r2_ = 9
-      (cr[i]+1...9).each do |r2|
+      (cr[i] + 1...9).each do |r2|
         if sr[mr[c][r2]] == 0
           r2_ = r2
           break
         end
       end
       if r2_ < 9
-        min, cc[i+1] = sd_update(mr, mc, sr, sc, mr[c][r2_], 1)
+        min, cc[i + 1] = sd_update(mr, mc, sr, sc, mr[c][r2_], 1)
         cr[i], dir, i = r2_, 1, i + 1
       else
         cr[i], dir, i = -1, -1, i - 1
@@ -141,7 +149,7 @@ sudoku = "
 def solve_all(sudoku)
   mr, mc = sd_genmat()
   sudoku.split("\n").map do |line|
-    if line.length >= 81
+    if line.size >= 81
       ret = sd_solve(mr, mc, line)
       ret.map { |s2| s2.join }
     end

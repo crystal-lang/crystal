@@ -10,12 +10,12 @@ class Process
   # * `true`: inherit from parent
   # * `IO`: use the given IO
   alias Stdio = Nil | Bool | IO
-  alias Env = Nil | Hash(String, Nil) | Hash(String, String?) |  Hash(String, String)
+  alias Env = Nil | Hash(String, Nil) | Hash(String, String?) | Hash(String, String)
 
   # Executes a process and waits for it to complete.
   #
   # By default the process is configured without input, output or error.
-  def self.run(cmd : String, args = nil, env = nil : Env, clear_env = false : Bool, shell = false : Bool, input = false : Stdio, output = false : Stdio, error = false : Stdio, chdir = nil : String?) : Process::Status
+  def self.run(cmd : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = false, output : Stdio = false, error : Stdio = false, chdir : String? = nil) : Process::Status
     status = new(cmd, args, env, clear_env, shell, input, output, error, chdir).wait
     $? = status
     status
@@ -27,7 +27,7 @@ class Process
   # will be closed automatically at the end of the block.
   #
   # Returns the block's value.
-  def self.run(cmd : String, args = nil, env = nil : Env, clear_env = false : Bool, shell = false : Bool, input = nil : Stdio, output = nil : Stdio, error = nil : Stdio, chdir = nil : String?)
+  def self.run(cmd : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = nil, output : Stdio = nil, error : Stdio = nil, chdir : String? = nil)
     process = new(cmd, args, env, clear_env, shell, input, output, error, chdir)
     begin
       value = yield process
@@ -39,7 +39,7 @@ class Process
     end
   end
 
-  getter pid
+  getter pid : Int32
 
   # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
   getter! input
@@ -50,23 +50,35 @@ class Process
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
   getter! error
 
+  @wait_count : Int32
+
   # Creates a process, executes it, but doesn't wait for it to complete.
   #
   # To wait for it to finish, invoke `wait`.
   #
   # By default the process is configured without input, output or error.
-  def initialize(command : String, args = nil, env = nil : Env, clear_env = false : Bool, shell = false : Bool, input = false : Stdio, output = false : Stdio, error = false : Stdio, chdir = nil : String?)
-    cmd, argv = if shell
-      raise "args not allowed with shell" if args
-      {"/bin/sh", ["/bin/sh".to_unsafe, "-c".to_unsafe, command.to_unsafe, Pointer(UInt8).null]}
-    else
-      a = [command.to_unsafe]
-      args.try &.each do |arg|
-        a << arg.to_unsafe
+  def initialize(command : String, args = nil, env : Env = nil, clear_env : Bool = false, shell : Bool = false, input : Stdio = false, output : Stdio = false, error : Stdio = false, chdir : String? = nil)
+    if shell
+      command = %(#{command} "${@}") unless command.includes?(' ')
+      shell_args = ["-c", command, "--"]
+
+      if args
+        unless command.includes?(%("${@}"))
+          raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
+        end
+
+        shell_args.concat(args)
       end
-      a << Pointer(UInt8).null
-      {command, a}
+
+      command = "/bin/sh"
+      args = shell_args
     end
+
+    argv = [command.to_unsafe]
+    args.try &.each do |arg|
+      argv << arg.to_unsafe
+    end
+    argv << Pointer(UInt8).null
 
     @wait_count = 0
 
@@ -100,7 +112,7 @@ class Process
       end
     end
 
-    @pid = fork do
+    @pid = Process.fork_internal(run_hooks: false) do
       begin
         # File.umask(umask) if umask
 
@@ -117,9 +129,9 @@ class Process
           end
         end
 
-        Dir.chdir(chdir) if chdir
+        Dir.cd(chdir) if chdir
 
-        LibC.execvp(cmd, argv)
+        LibC.execvp(command, argv)
       rescue ex
         ex.inspect_with_backtrace STDERR
       ensure
@@ -127,13 +139,20 @@ class Process
       end
     end
 
+    @waitpid_future = Event::SignalChildHandler.instance.waitpid(pid)
+
     fork_input.try &.close
     fork_output.try &.close
     fork_error.try &.close
   end
 
+  protected def initialize(@pid)
+    @waitpid_future = Event::SignalChildHandler.instance.waitpid(pid)
+    @wait_count = 0
+  end
+
   # See Process.kill
-  def kill sig = Signal::TERM
+  def kill(sig = Signal::TERM)
     Process.kill sig, @pid
   end
 
@@ -145,9 +164,9 @@ class Process
       ex = channel.receive
       raise ex if ex
     end
+    @wait_count = 0
 
-    exit_code = Process.waitpid(@pid)
-    Status.new(exit_code)
+    @waitpid_future.get
   ensure
     close
   end
@@ -164,7 +183,7 @@ class Process
   end
 
   private def needs_pipe?(io)
-    io.nil? || (io.is_a?(IO) && !io.is_a?(FileDescriptorIO))
+    io.nil? || (io.is_a?(IO) && !io.is_a?(IO::FileDescriptor))
   end
 
   private def copy_io(src, dst, channel, close_src = false, close_dst = false)
@@ -192,7 +211,7 @@ class Process
 
   private def reopen_io(src_io, dst_io, mode)
     case src_io
-    when FileDescriptorIO
+    when IO::FileDescriptor
       src_io.blocking = true
       dst_io.reopen(src_io)
     when true
@@ -219,6 +238,14 @@ end
 # Returns `true` if the command gives zero exit code, `false` otherwise.
 # The special `$?` variable is set to a `Process::Status` associated with this execution.
 #
+# If *command* contains no spaces and *args* is given, it will become
+# its argument list.
+#
+# If *command* contains spaces and *args* is given, *command* must include
+# `"${@}"` (including the quotes) to receive the argument list.
+#
+# No shell interpretation is done in *args*.
+#
 # Example:
 #
 # ```
@@ -228,10 +255,10 @@ end
 # Produces:
 #
 # ```text
-# LICENSE Projectfile Readme.md spec src
+# LICENSE shard.yml Readme.md spec src
 # ```
-def system(command : String) : Bool
-  status = Process.run(command, shell: true, input: true, output: true, error: true)
+def system(command : String, args = nil) : Bool
+  status = Process.run(command, args, shell: true, input: true, output: true, error: true)
   $? = status
   status.success?
 end
@@ -243,11 +270,11 @@ end
 # Example:
 #
 # ```
-# `echo *` #=> "LICENSE Projectfile Readme.md spec src\n"
+# `echo *` # => "LICENSE shard.yml Readme.md spec src\n"
 # ```
 def `(command) : String
   process = Process.new(command, shell: true, input: true, output: nil, error: true)
-  output = process.output.read
+  output = process.output.gets_to_end
   status = process.wait
   $? = status
   output

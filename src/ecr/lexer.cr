@@ -1,10 +1,10 @@
 # :nodoc:
 class ECR::Lexer
   class Token
-    property :type
-    property :value
-    property :line_number
-    property :column_number
+    property type : Symbol
+    property value : String
+    property line_number : Int32
+    property column_number : Int32
 
     def initialize
       @type = :EOF
@@ -14,8 +14,13 @@ class ECR::Lexer
     end
   end
 
+  @reader : Char::Reader
+  @token : Token
+  @line_number : Int32
+  @column_number : Int32
+
   def initialize(string)
-    @reader = CharReader.new(string)
+    @reader = Char::Reader.new(string)
     @token = Token.new
     @line_number = 1
     @column_number = 1
@@ -32,16 +37,21 @@ class ECR::Lexer
       if peek_next_char == '%'
         next_char
         next_char
-        if current_char == '='
+
+        case current_char
+        when '='
           next_char
           copy_location_info_to_token
           is_output = true
+        when '%'
+          next_char
+          copy_location_info_to_token
+          is_escape = true
         else
           copy_location_info_to_token
-          is_output = false
         end
 
-        return consume_control(is_output)
+        return consume_control(is_output, is_escape)
       end
     end
 
@@ -70,13 +80,15 @@ class ECR::Lexer
     @token
   end
 
-  private def consume_control(is_output)
+  private def consume_control(is_output, is_escape)
     start_pos = current_pos
     while true
       case current_char
       when '\0'
         if is_output
           raise "unexpected end of file inside <%= ..."
+        elsif is_escape
+          raise "unexpected end of file inside <%% ..."
         else
           raise "unexpected end of file inside <% ..."
         end
@@ -85,7 +97,11 @@ class ECR::Lexer
         @column_number = 0
       when '%'
         if peek_next_char == '>'
-          @token.value = string_range(start_pos)
+          @token.value = if is_escape
+                           "<%#{string_range(start_pos, current_pos + 2)}"
+                         else
+                           string_range(start_pos)
+                         end
           next_char
           next_char
           break
@@ -94,7 +110,7 @@ class ECR::Lexer
       next_char
     end
 
-    @token.type = is_output ? :OUTPUT : :CONTROL
+    @token.type = is_escape ? :STRING : (is_output ? :OUTPUT : :CONTROL)
     @token
   end
 

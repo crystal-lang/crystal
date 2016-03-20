@@ -633,7 +633,7 @@ describe "Type inference: def overload" do
       ") { int32 }
   end
 
-  it "doesn't match tuples of different lengths" do
+  it "doesn't match tuples of different sizes" do
     assert_error "
       def foo(x : {X, Y, Z})
         'a'
@@ -644,7 +644,7 @@ describe "Type inference: def overload" do
       "no overload matches"
   end
 
-  it "matches tuples of different lengths" do
+  it "matches tuples of different sizes" do
     assert_type("
       def foo(x : {X, Y})
         1
@@ -706,7 +706,7 @@ describe "Type inference: def overload" do
 
       foo Foo(Int32, Int32).new
       ),
-      "wrong number of type vars for Foo(A, B) (1 for 2)"
+      "wrong number of type vars for Foo(A, B) (given 1, expected 2)"
   end
 
   it "includes splat symbol in error message" do
@@ -756,5 +756,43 @@ describe "Type inference: def overload" do
 
       Foo.new.foo
       )) { char }
+  end
+
+  it "reports no overload matches with correct method owner (#2083)" do
+    assert_error %(
+      class Foo
+        def foo(x : Int32)
+          x + 1
+        end
+      end
+
+      class Bar < Foo
+        def foo(x : Int32)
+          x + 2
+        end
+      end
+
+      Bar.new.foo("hello")
+      ),
+      <<-MSG
+       - Bar#foo(x : Int32)
+       - Foo#foo(x : Int32)
+      MSG
+  end
+
+  it "gives better error message with consecutive arguments sizes" do
+    assert_error %(
+      def foo
+      end
+
+      def foo(x)
+      end
+
+      def foo(x, y)
+      end
+
+      foo 1, 2, 3
+      ),
+      "wrong number of arguments for 'foo' (given 3, expected 0..2)"
   end
 end

@@ -1,6 +1,6 @@
 struct LLVM::PhiTable
-  getter blocks
-  getter values
+  getter blocks : Array(LLVM::BasicBlock)
+  getter values : Array(LLVM::Value)
 
   def initialize
     @blocks = [] of LLVM::BasicBlock
@@ -16,7 +16,7 @@ struct LLVM::PhiTable
     @blocks.empty?
   end
 
-  def length
-    @blocks.length
+  def size
+    @blocks.size
   end
 end

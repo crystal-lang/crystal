@@ -74,9 +74,11 @@ class Reference
     nil
   end
 
+  @[ThreadLocal]
+  $_exec_recursive : Hash({UInt64, Symbol}, Bool)?
+
   private def exec_recursive(method)
-    # hash = (@[ThreadLocal] $_exec_recursive ||= {} of Tuple(UInt64, Symbol) => Bool)
-    hash = ($_exec_recursive ||= {} of Tuple(UInt64, Symbol) => Bool)
+    hash = ($_exec_recursive ||= {} of {UInt64, Symbol} => Bool)
     key = {object_id, method}
     if hash[key]?
       false

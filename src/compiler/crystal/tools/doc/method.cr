@@ -1,11 +1,15 @@
 require "html"
+require "uri"
 require "./item"
 
 class Crystal::Doc::Method
   include Item
 
-  getter type
-  getter :def
+  getter type : Type
+  getter def : Def
+
+  @generator : Generator
+  @class_method : Bool
 
   def initialize(@generator, @type, @def, @class_method)
   end
@@ -32,15 +36,29 @@ class Crystal::Doc::Method
   end
 
   def prefix
-    @class_method ? '.' : '#'
+    case
+    when @type.program?
+      ""
+    when @class_method
+      "."
+    else
+      "#"
+    end
   end
 
   def abstract?
-    @def.abstract
+    @def.abstract?
   end
 
   def kind
-    @class_method ? "def self." : "def "
+    case
+    when @type.program?
+      "def "
+    when @class_method
+      "def self."
+    else
+      "def "
+    end
   end
 
   def id
@@ -59,7 +77,7 @@ class Crystal::Doc::Method
   end
 
   def anchor
-    "#" + CGI.escape(id)
+    "#" + URI.escape(id)
   end
 
   def to_s(io)
@@ -110,10 +128,6 @@ class Crystal::Doc::Method
 
   def arg_to_html(arg : Arg, io, links = true)
     io << arg.name
-    if default_value = arg.default_value
-      io << " = "
-      io << Highlighter.highlight(default_value.to_s)
-    end
     if restriction = arg.restriction
       io << " : "
       node_to_html restriction, io, links: links
@@ -121,13 +135,9 @@ class Crystal::Doc::Method
       io << " : "
       @type.type_to_html type, io, links: links
     end
-  end
-
-  def arg_to_html(arg : BlockArg, io, links = true)
-    io << arg.name
-    if arg_fun = arg.fun
-      io << " : "
-      node_to_html arg_fun, io, links: links
+    if default_value = arg.default_value
+      io << " = "
+      io << Highlighter.highlight(default_value.to_s)
     end
   end
 

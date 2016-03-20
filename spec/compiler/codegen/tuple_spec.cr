@@ -99,15 +99,15 @@ describe "Code gen: tuple" do
       )).to_i.should eq(2)
   end
 
-  it "gets length at compile time" do
+  it "gets size at compile time" do
     run(%(
       struct Tuple
-        def my_length
-          {{ @length }}
+        def my_size
+          {{ @type.size }}
         end
       end
 
-      {1, 1}.my_length
+      {1, 1}.my_size
       )).to_i.should eq(2)
   end
 end

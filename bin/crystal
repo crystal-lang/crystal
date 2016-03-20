@@ -120,7 +120,7 @@ export CRYSTAL_PATH=$CRYSTAL_ROOT/src:libs
 
 if [ -x "$CRYSTAL_DIR/crystal" ]
 then
-  echo -e "\x1B[33mUsing compiled compiler at .build/crystal\x1B[0m"
+  >&2 echo -e "\x1B[33mUsing compiled compiler at .build/crystal\x1B[0m"
   exec "$CRYSTAL_DIR/crystal" "$@"
 elif ! command -v crystal > /dev/null
 then

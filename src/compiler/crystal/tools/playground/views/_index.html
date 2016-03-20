@@ -1,0 +1,39 @@
+<div class="container">
+  <div class="row">
+  </div>
+
+  <div class="row row-narrow" id="mainEditorContainer">
+  </div>
+
+  <div class="row">
+    <div class="col s7">
+      <small class="crystal-version grey-text text-lighten-1"></small>
+    </div>
+    <div class="col s5">
+      <a class="modal-trigger" href="#output-modal" id="mainOutputIndicator">
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="fixed-action-btn" style="bottom: 45px; right: 24px;" id="mainButtonsContainer">
+  <ul>
+    <li>
+      <a class="btn-floating btn grey darken-1 tooltipped" href="#" data-position="left" data-delay="50" data-tooltip="Share as gist" id="saveAsGist">
+        <span class="octicon octicon-mark-github"></span>
+      </a>
+    </li>
+    <li>
+      <a class="btn-floating btn red darken-1 tooltipped" href="#" data-position="left" data-delay="50" data-tooltip="Download code as file" id="saveAsFile">
+        <span class="octicon octicon-desktop-download"></span>
+      </a>
+    </li>
+  </ul>
+</div>
+
+<div id="output-modal" class="modal bottom-sheet">
+  <div class="modal-content">
+    <h6>Output</h6>
+    <pre class="output" id="mainOutput"></pre>
+  </div>
+</div>

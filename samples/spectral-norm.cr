@@ -1,13 +1,13 @@
 # Copied with little modifications from: https://github.com/wmoxam/Ruby-Benchmarks-Game/blob/master/benchmarks/spectral-norm.rb
 
-def eval_A(i,j)
+def eval_A(i, j)
   return 1.0_f64 / ((i + j) * (i + j + 1.0) / 2.0 + i + 1.0)
 end
 
 def eval_A_times_u(u)
-  (0...u.length).map do |i|
+  (0...u.size).map do |i|
     v = 0.0_f64
-    (0...u.length).each do |j|
+    (0...u.size).each do |j|
       v += eval_A(i, j) * u[j]
     end
     v
@@ -15,9 +15,9 @@ def eval_A_times_u(u)
 end
 
 def eval_At_times_u(u)
-  (0...u.length).map do |i|
+  (0...u.size).map do |i|
     v = 0.0_f64
-    (0...u.length).each do |j|
+    (0...u.size).each do |j|
       v += eval_A(j, i) * u[j]
     end
     v

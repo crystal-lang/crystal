@@ -22,11 +22,11 @@ describe "Code gen: return" do
   end
 
   it "return from function with nilable type" do
-    run("require \"nil\"; require \"reference\"; def foo; return Reference.new if 1 == 1; end; foo.nil?").to_b.should be_false
+    run(%(require "prelude"; def foo; return Reference.new if 1 == 1; end; foo.nil?)).to_b.should be_false
   end
 
   it "return from function with nilable type 2" do
-    run("require \"nil\"; require \"reference\"; def foo; return Reference.new if 1 == 1; end; foo.nil?").to_b.should be_false
+    run(%(require "prelude"; def foo; return Reference.new if 1 == 1; end; foo.nil?)).to_b.should be_false
   end
 
   it "returns empty from function" do
@@ -50,5 +50,15 @@ describe "Code gen: return" do
 
       bar.is_a?(Nil)
       )).to_b.should be_true
+  end
+
+  it "codegens assign with if with two returns" do
+    run(%(
+      def test
+        a = 1 ? return 2 : return 3
+      end
+
+      test
+      )).to_i.should eq(2)
   end
 end

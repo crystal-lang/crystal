@@ -6,15 +6,35 @@ describe "Type inference: lib" do
   end
 
   it "raises on undefined fun" do
-    assert_error("lib LibC; end; LibC.foo", "undefined fun 'foo' for LibC")
+    assert_error %(
+      lib LibC
+      end
+
+      LibC.foo
+      ),
+      "undefined fun 'foo' for LibC"
   end
 
   it "raises wrong number of arguments" do
-    assert_error("lib LibC; fun foo : Int32; end; LibC.foo 1", "wrong number of arguments for 'LibC#foo' (1 for 0)")
+    assert_error %(
+      lib LibC
+        fun foo : Int32
+      end
+
+      LibC.foo 1
+      ),
+      "wrong number of arguments for 'LibC#foo' (given 1, expected 0)"
   end
 
   it "raises wrong argument type" do
-    assert_error("lib LibC; fun foo(x : Int32) : Int32; end; LibC.foo 1.5", "argument 'x' of 'LibC#foo' must be Int32, not Float64")
+    assert_error %(
+      lib LibC
+        fun foo(x : Int32) : Int32
+      end
+
+      LibC.foo 'a'
+      ),
+      "argument 'x' of 'LibC#foo' must be Int32, not Char"
   end
 
   it "reports error when changing var type and something breaks" do
@@ -123,6 +143,18 @@ describe "Type inference: lib" do
       end
 
       LibC.errno = 1
+      ") { int32 }
+  end
+
+  it "types lib var get with forward declaration" do
+    assert_type("
+      lib LibC
+        $errno : A
+
+        alias A = Int32
+      end
+
+      LibC.errno
       ") { int32 }
   end
 
@@ -290,16 +322,16 @@ describe "Type inference: lib" do
       lib LibFoo
       end
       ),
-      "wrong number of link arguments (5 for 1..4)"
+      "wrong number of link arguments (given 5, expected 1..4)"
   end
 
-it "errors if unknown named arg" do
+  it "errors if unknown named arg" do
     assert_error %(
       @[Link(boo: "bar")]
       lib LibFoo
       end
       ),
-      "unkonwn link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
+      "unknown link argument: 'boo' (valid arguments are 'lib', 'ldflags', 'static' and 'framework')"
   end
 
   it "errors if lib already specified with positional argument" do
@@ -343,13 +375,13 @@ it "errors if unknown named arg" do
   end
 
   it "errors if lib fun call is part of dispatch" do
-    assert_error  %(
+    assert_error %(
       lib LibFoo
         fun foo : Int32
       end
 
       class Bar
-        def foo
+        def self.foo
         end
       end
 
@@ -382,7 +414,7 @@ it "errors if unknown named arg" do
       ))
     sdl = result.program.types["LibSDL"] as LibType
     attrs = sdl.link_attributes.not_nil!
-    attrs.length.should eq(2)
+    attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
     attrs[1].lib.should eq("SDLMain")
   end
@@ -443,7 +475,7 @@ it "errors if unknown named arg" do
       ))
     sdl = result.program.types["LibSDL"] as LibType
     attrs = sdl.link_attributes.not_nil!
-    attrs.length.should eq(2)
+    attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
     attrs[1].lib.should eq("SDLMain")
   end
@@ -463,7 +495,7 @@ it "errors if unknown named arg" do
       ))
     sdl = result.program.types["LibSDL"] as LibType
     attrs = sdl.link_attributes.not_nil!
-    attrs.length.should eq(1)
+    attrs.size.should eq(1)
     attrs[0].lib.should eq("SDL")
   end
 
@@ -509,5 +541,96 @@ it "errors if unknown named arg" do
       LibFoo.foo(bar)
       ),
       "argument 'x' of 'LibFoo#foo' must be Pointer(LibFoo::Bar), not LibFoo::Bar"
+  end
+
+  it "passes int as another integer type in variable" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      a = 1_u8
+      LibFoo.foo a
+      )) { float64 }
+  end
+
+  it "passes float as another integer type in variable" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Float32) : Int32
+      end
+
+      a = 1_f64
+      LibFoo.foo a
+      )) { int32 }
+  end
+
+  it "passes int as another integer type with literal" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      LibFoo.foo 1_u8
+      )) { float64 }
+  end
+
+  it "errors if invoking to_i32 and got error in that call" do
+    assert_error %(
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      class Foo
+        def to_i32
+          1 + 'a'
+        end
+      end
+
+      LibFoo.foo Foo.new
+      ),
+      "converting from Foo to Int32 by invoking 'to_i32'"
+  end
+
+  it "errors if invoking to_i32 and got wrong type" do
+    assert_error %(
+      lib LibFoo
+        fun foo(x : Int32) : Float64
+      end
+
+      class Foo
+        def to_i32
+          'a'
+        end
+      end
+
+      LibFoo.foo Foo.new
+      ),
+      "invoked 'to_i32' to convert from Foo to Int32, but got Char"
+  end
+
+  it "defines lib funs before funs with body" do
+    assert_type(%(
+      fun foo : Int32
+        LibX.x
+      end
+
+      lib LibX
+        fun x : Int32
+      end
+
+      foo
+      )) { int32 }
+  end
+
+  it "errors if using out with varargs" do
+    assert_error %(
+      lib LibX
+        fun x(...)
+      end
+
+      LibX.x(out z)
+      ),
+      "can't use out at varargs position: declare the variable with `z = uninitialized ...` and pass it with `pointerof(z)`"
   end
 end

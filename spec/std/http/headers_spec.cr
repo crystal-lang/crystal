@@ -12,6 +12,29 @@ describe HTTP::Headers do
     headers["foo"].should eq("bar")
   end
 
+  it "it allows indifferent access for underscore and dash separated keys" do
+    headers = HTTP::Headers{"foo_Bar": "bar", "Foobar-foo": "baz"}
+    headers["foo-bar"].should eq("bar")
+    headers["foobar_foo"].should eq("baz")
+  end
+
+  it "raises an error if header value contains invalid character" do
+    expect_raises ArgumentError do
+      headers = HTTP::Headers{"invalid-header": "\r\nLocation: http://example.com"}
+    end
+  end
+
+  it "should retain the input casing" do
+    headers = HTTP::Headers{"FOO_BAR": "bar", "Foobar-foo": "baz"}
+    serialized = String.build do |io|
+      headers.each do |name, values|
+        io << name << ": " << values.first << ";"
+      end
+    end
+
+    serialized.should eq("FOO_BAR: bar;Foobar-foo: baz;")
+  end
+
   it "is gets with []?" do
     headers = HTTP::Headers.new
     headers["foo"]?.should be_nil
@@ -35,7 +58,7 @@ describe HTTP::Headers do
 
   it "fetches with block" do
     headers = HTTP::Headers.new
-    headers.fetch("foo") { |k| "#{k}baz" }.should eq("Foobaz")
+    headers.fetch("foo") { |k| "#{k}baz" }.should eq("foobaz")
 
     headers["Foo"] = "bar"
     headers.fetch("foo") { "baz" }.should eq("bar")
@@ -101,7 +124,40 @@ describe HTTP::Headers do
   end
 
   it "does to_s" do
-    headers = HTTP::Headers{"foo": "bar", "baz": ["a", "b"]}
-    headers.to_s.should eq(%(HTTP::Headers{"Foo" => "bar", "Baz" => ["a", "b"]}))
+    headers = HTTP::Headers{"Foo_quux": "bar", "Baz-Quux": ["a", "b"]}
+    headers.to_s.should eq(%(HTTP::Headers{"Foo_quux" => "bar", "Baz-Quux" => ["a", "b"]}))
+  end
+
+  it "merges and return self" do
+    headers = HTTP::Headers.new
+    headers.should be headers.merge!({"foo": "bar"})
+  end
+
+  it "matches word" do
+    headers = HTTP::Headers{"foo": "bar"}
+    headers.includes_word?("foo", "bar").should be_true
+    headers.includes_word?("foo", "ba").should be_false
+    headers.includes_word?("foo", "ar").should be_false
+  end
+
+  it "matches word with comma separated value" do
+    headers = HTTP::Headers{"foo": "bar, baz"}
+    headers.includes_word?("foo", "bar").should be_true
+    headers.includes_word?("foo", "baz").should be_true
+    headers.includes_word?("foo", "ba").should be_false
+  end
+
+  it "matches word among headers" do
+    headers = HTTP::Headers.new
+    headers.add("foo", "bar")
+    headers.add("foo", "baz")
+    headers.includes_word?("foo", "bar").should be_true
+    headers.includes_word?("foo", "baz").should be_true
+  end
+
+  it "does not matches word if missing header" do
+    headers = HTTP::Headers.new
+    headers.includes_word?("foo", "bar").should be_false
+    headers.includes_word?("foo", "").should be_false
   end
 end

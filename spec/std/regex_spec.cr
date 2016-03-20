@@ -8,7 +8,7 @@ describe "Regex" do
 
   it "does =~" do
     (/foo/ =~ "bar foo baz").should eq(4)
-    $~.length.should eq(0)
+    $~.size.should eq(0)
   end
 
   it "does inspect" do
@@ -57,7 +57,7 @@ describe "Regex" do
 
   it "matches with =~ and captures" do
     ("fooba" =~ /f(o+)(bar?)/).should eq(0)
-    $~.length.should eq(2)
+    $~.size.should eq(2)
     $1.should eq("oo")
     $2.should eq("ba")
   end
@@ -70,7 +70,7 @@ describe "Regex" do
   it "matches with === and captures" do
     "foo" =~ /foo/
     (/f(o+)(bar?)/ === "fooba").should be_true
-    $~.length.should eq(2)
+    $~.size.should eq(2)
     $1.should eq("oo")
     $2.should eq("ba")
   end
@@ -96,7 +96,7 @@ describe "Regex" do
   end
 
   describe ".union" do
-    it "constructs a Regex that matches things any of its arguments match" do 
+    it "constructs a Regex that matches things any of its arguments match" do
       re = Regex.union(/skiing/i, "sledding")
       re.match("Skiing").not_nil![0].should eq "Skiing"
       re.match("sledding").not_nil![0].should eq "sledding"
@@ -107,22 +107,22 @@ describe "Regex" do
       Regex.union("skiing", "sledding").should eq /skiing|sledding/
       Regex.union(/dogs/, /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
     end
-  
+
     it "quotes any string arguments" do
       Regex.union("n", ".").should eq /n|\./
     end
-  
+
     it "returns a Regex with an Array(String) with special characters" do
-      Regex.union(["+","-"]).should eq /\+|\-/
+      Regex.union(["+", "-"]).should eq /\+|\-/
     end
 
-    it "accepts a single Array(String | Regexp) argument" do
+    it "accepts a single Array(String | Regex) argument" do
       Regex.union(["skiing", "sledding"]).should eq /skiing|sledding/
       Regex.union([/dogs/, /cats/i]).should eq /(?-imsx:dogs)|(?i-msx:cats)/
       (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/
     end
 
-    it "accepts a single Tuple(String | Regexp) argument" do
+    it "accepts a single Tuple(String | Regex) argument" do
       Regex.union({"skiing", "sledding"}).should eq /skiing|sledding/
       Regex.union({/dogs/, /cats/i}).should eq /(?-imsx:dogs)|(?i-msx:cats)/
       (/dogs/ + /cats/i).should eq /(?-imsx:dogs)|(?i-msx:cats)/

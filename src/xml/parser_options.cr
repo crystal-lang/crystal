@@ -30,13 +30,13 @@ enum XML::ParserOptions
   # Use the SAX1 interface internally
   SAX1 = 512
 
-  # Implement XInclude substitition
+  # Implement XInclude substitution
   XINCLUDE = 1024
 
   # Forbid network access
   NONET = 2048
 
-  # Do not reuse the context dictionnary
+  # Do not reuse the context dictionary
   NODICT = 4096
 
   # Remove redundant namespaces declarations
@@ -70,6 +70,6 @@ enum XML::ParserOptions
   BIG_LINES = 4194304
 
   def self.default
-    NOERROR | NOWARNING
+    RECOVER | NOERROR | NOWARNING | NONET
   end
 end

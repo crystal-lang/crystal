@@ -20,7 +20,7 @@ describe "Type inference: generic class" do
       class Bar < Foo(A, B)
       end
       ),
-      "wrong number of type vars for Foo(T) (2 for 1)"
+      "wrong number of type vars for Foo(T) (given 2, expected 1)"
   end
 
   it "inhertis from generic with instantiation" do
@@ -253,7 +253,7 @@ describe "Type inference: generic class" do
 
       Foo(Char | String).bar
       ),
-      "can't lookup type in union (String | Char)"
+      "can't lookup type in union (Char | String)"
   end
 
   it "instantiates generic class with default argument in initialize (#394)" do
@@ -324,7 +324,7 @@ describe "Type inference: generic class" do
       class Bar < Foo
       end
       ),
-      "wrong number of type vars for Foo(T) (0 for 1)"
+      "wrong number of type vars for Foo(T) (given 0, expected 1)"
   end
 
   %w(Object Value Reference Number Int Float Struct Class Proc Tuple Enum StaticArray Pointer).each do |type|
@@ -346,6 +346,7 @@ describe "Type inference: generic class" do
   it "errors if using Number in alias" do
     assert_error %(
       alias T = Number | String
+      T
       ),
       "can't use Number in unions yet, use a more specific type"
   end
@@ -353,6 +354,7 @@ describe "Type inference: generic class" do
   it "errors if using Number in recursive alias" do
     assert_error %(
       alias T = Number | Pointer(T)
+      T
       ),
       "can't use Number in unions yet, use a more specific type"
   end
@@ -475,5 +477,191 @@ describe "Type inference: generic class" do
       Bar(Moo)
       ),
       "use a more specific type"
+  end
+
+  it "errors on too nested generic instance" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      def foo
+        Foo(typeof(foo)).new
+      end
+
+      foo
+      ),
+      "generic type too nested"
+  end
+
+  it "errors on too nested generic instance, with union type" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      def foo
+        1 || Foo(typeof(foo)).new
+      end
+
+      foo
+      ),
+      "generic type too nested"
+  end
+
+  it "errors on generic type too nested (#2257)" do
+    assert_error %(
+      class Foo(T)
+      end
+
+      class Bar
+        def initialize(@value)
+        end
+
+        def value
+          @value
+        end
+      end
+
+      foo = Foo(typeof(Bar.new(nil).value))
+      Bar.new(foo)
+      ),
+      "generic type too nested"
+  end
+
+  it "errors on too nested tuple instance" do
+    assert_error %(
+      def foo
+        {typeof(foo)}
+      end
+
+      foo
+      ),
+      "tuple type too nested"
+  end
+
+  it "gives helpful error message when generic type var is missing (#1526)" do
+    assert_error %(
+      class Foo(T)
+        def initialize(x)
+        end
+      end
+
+      Foo.new(1)
+      ),
+      "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
+  end
+
+  it "gives helpful error message when generic type var is missing in block spec (#1526)" do
+    assert_error %(
+      class Foo(T)
+        def initialize(&block : T -> )
+          block
+        end
+      end
+
+      Foo.new { |x| }
+      ),
+      "can't infer the type parameter T for the generic class Foo(T). Please provide it explicitly"
+  end
+
+  it "can define instance var forward declared (#962)" do
+    assert_type(%(
+      class ClsA
+        @c : ClsB(Int32)
+
+        def initialize
+          @c = ClsB(Int32).new
+        end
+
+        def c
+          @c
+        end
+      end
+
+      class ClsB(T)
+        @pos = 0i64
+
+        def pos
+          @pos
+        end
+      end
+
+      fooA = ClsA.new
+      fooA.c.pos
+      )) { int64 }
+  end
+
+  it "class doesn't conflict with generic type arg" do
+    assert_type(%(
+      class Foo(X)
+        def initialize(b : X)
+        end
+
+        def x
+          1
+        end
+      end
+
+      class Bar(Y)
+      end
+
+      class X
+      end
+
+      Foo.new(Bar(Int32).new).x
+      )) { int32 }
+  end
+
+  it "inherits instance var type annotation from generic to concrete" do
+    assert_type(%(
+      class Foo(T)
+        @x : Int32?
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      Bar.new.x
+      )) { nilable int32 }
+  end
+
+  it "inherits instance var type annotation from generic to concrete with T" do
+    assert_type(%(
+      class Foo(T)
+        @x : T?
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo(Int32)
+      end
+
+      Bar.new.x
+      )) { nilable int32 }
+  end
+
+  it "inherits instance var type annotation from generic to generic to concrete" do
+    assert_type(%(
+      class Foo(T)
+        @x : Int32?
+
+        def x
+          @x
+        end
+      end
+
+      class Bar(T) < Foo(T)
+      end
+
+      class Baz < Bar(Int32)
+      end
+
+      Baz.new.x
+      )) { nilable int32 }
   end
 end

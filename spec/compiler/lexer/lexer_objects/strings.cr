@@ -1,5 +1,8 @@
 module LexerObjects
   class Strings
+    @lexer : Lexer
+    @token : Token
+
     def initialize(@lexer)
       @token = Token.new
     end

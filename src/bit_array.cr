@@ -18,13 +18,15 @@ struct BitArray
   include Enumerable(Bool)
 
   # The number of bits the BitArray stores
-  getter length
+  getter size : Int32
 
-  # Create a new BitArray of `length` bits.
+  @bits : UInt32*
+
+  # Create a new BitArray of `size` bits.
   #
   # `initial` optionally sets the starting value, true or false, for all bits
   # in the array.
-  def initialize(@length, initial = false : Bool)
+  def initialize(@size, initial : Bool = false)
     value = initial ? UInt32::MAX : UInt32::MIN
     @bits = Pointer(UInt32).malloc(malloc_size, value)
   end
@@ -63,7 +65,7 @@ struct BitArray
   #     ba = BitArray.new(5)
   #     ba[3] # => false
   #     ba.toggle(3)
-  #     ba[3] # => false
+  #     ba[3] # => true
   def toggle(index)
     bit_index, sub_index = bit_index_and_sub_index(index)
     @bits[bit_index] ^= 1 << sub_index
@@ -83,12 +85,24 @@ struct BitArray
     end
   end
 
+  # Calls the given block once for each element in self, passing that element as a parameter.
+  #
+  #     ba = BitArray.new(5)
+  #     ba[2] = true; ba[3] = true
+  #     ba # => BitArray[00110]
+  #     ba.each do |i|
+  #         print i, ", "
+  #     end # => false, false, true, true, false
   def each
-    @length.times do |i|
+    @size.times do |i|
       yield self[i]
     end
   end
 
+  # Creates a string representation of self.
+  #
+  #     ba = BitArray.new(5)
+  #     puts ba.to_s #=> "BitArray[00000]"
   def to_s(io : IO)
     io << "BitArray["
     each do |value|
@@ -97,14 +111,21 @@ struct BitArray
     io << "]"
   end
 
+  # Returns a Slice(UInt8) able to read and write bytes from a buffer.
+  # The slice will be long enough to hold all the bits groups in bytes despite the `UInt32` internal representation.
+  # It's useful for reading and writing a bit array from a byte buffer directly.
+  def to_slice : Slice(UInt8)
+    Slice.new(@bits as Pointer(UInt8), (@size / 8.0).ceil.to_i)
+  end
+
   private def bit_index_and_sub_index(index)
-    index += @length if index < 0
-    raise IndexError.new if index >= @length || index < 0
+    index += @size if index < 0
+    raise IndexError.new if index >= @size || index < 0
 
     index.divmod(32)
   end
 
   private def malloc_size
-    (@length / 32.0).ceil.to_i
+    (@size / 32.0).ceil.to_i
   end
 end

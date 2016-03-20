@@ -80,4 +80,16 @@ describe "Codegen: while" do
       x
     ").to_i.should eq(25)
   end
+
+  it "doesn't crash on a = NoReturn" do
+    codegen(%(
+      lib LibFoo
+        fun foo : NoReturn
+      end
+
+      while a = LibFoo.foo
+        a
+      end
+      ))
+  end
 end

@@ -6,6 +6,10 @@ enum SpecEnum : Int8
   Three
 end
 
+enum SpecEnum2
+  FourtyTwo
+end
+
 @[Flags]
 enum SpecEnumFlags
   One
@@ -36,6 +40,9 @@ describe Enum do
   it "gets value with to_i" do
     SpecEnum::Two.to_i.should eq(1)
     SpecEnum::Two.to_i.should be_a(Int32)
+
+    SpecEnum::Two.to_i64.should eq(1)
+    SpecEnum::Two.to_i64.should be_a(Int64)
   end
 
   it "does +" do
@@ -95,6 +102,8 @@ describe Enum do
 
   it "parses" do
     SpecEnum.parse("Two").should eq(SpecEnum::Two)
+    SpecEnum2.parse("FourtyTwo").should eq(SpecEnum2::FourtyTwo)
+    SpecEnum2.parse("fourty_two").should eq(SpecEnum2::FourtyTwo)
     expect_raises(Exception, "Unknown enum SpecEnum value: Four") { SpecEnum.parse("Four") }
   end
 

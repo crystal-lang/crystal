@@ -15,9 +15,13 @@ module Benchmark
     class Job
       # List of all entries in the benchmark.
       # After #execute, these are populated with the resulting statistics.
-      property items :: Array(Entry)
+      property items : Array(Entry)
 
-      def initialize(calculation = 5, warmup = 2)
+      @interactive : Bool
+      @warmup_time : Time::Span
+      @calculation_time : Time::Span
+
+      def initialize(calculation = 5, warmup = 2, @interactive = STDOUT.tty?)
         @warmup_time = warmup.seconds
         @calculation_time = calculation.seconds
         @items = [] of Entry
@@ -37,20 +41,15 @@ module Benchmark
       end
 
       def report
-        max_label = @items.max_of &.label.size
+        max_label = ran_items.max_of &.label.size
+        max_compare = ran_items.max_of &.human_compare.size
 
-        @items.each do |item|
-          if item.slower == 1.0
-            compare = "      fastest"
-          else
-            compare = sprintf "%5.2f× slower", item.slower
-          end
-
-          printf "%s %8.2f (± %5.2f) %s\n",
+        ran_items.each do |item|
+          printf "%s %s (±%5.2f%%) %s\n",
             item.label.rjust(max_label),
-            item.mean,
-            item.stddev,
-            compare
+            item.human_mean,
+            item.relative_stddev,
+            item.human_compare.rjust(max_compare)
         end
       end
 
@@ -71,7 +70,7 @@ module Benchmark
 
           after = Time.now
 
-          item.set_cycles(after-before, count)
+          item.set_cycles(after - before, count)
         end
       end
 
@@ -79,7 +78,7 @@ module Benchmark
         @items.each do |item|
           GC.collect
 
-          measurements = [] of TimeSpan
+          measurements = [] of Time::Span
           target = Time.now + @calculation_time
 
           loop do
@@ -87,7 +86,7 @@ module Benchmark
             item.call_for_100ms
             after = Time.now
 
-            measurements << after-before
+            measurements << after - before
 
             break if Time.now >= target
           end
@@ -95,13 +94,23 @@ module Benchmark
           final_time = Time.now
 
           ips = measurements.map { |m| item.cycles.to_f / m.total_seconds }
-          item.calculate_stats(ips)# = Stats.new(ips)
+          item.calculate_stats(ips)
+
+          if @interactive
+            run_comparison
+            report
+            print "\e[#{ran_items.size}A"
+          end
         end
       end
 
+      private def ran_items
+        @items.select(&.ran?)
+      end
+
       private def run_comparison
-        fastest = @items.max_by { |i| i.mean }
-        @items.each do |item|
+        fastest = ran_items.max_by { |i| i.mean }
+        ran_items.each do |item|
           item.slower = (fastest.mean / item.mean).to_f
         end
       end
@@ -109,31 +118,42 @@ module Benchmark
 
     class Entry
       # Label of the benchmark
-      property label  :: String
+      property label : String
 
       # Code to be benchmarked
-      property action :: ->
+      property action : ->
 
       # Number of cycles needed to run for approx 100ms
       # Calculated during the warmup stage
-      property! cycles :: Int
+      property! cycles : Int32
 
       # Number of 100ms runs during the calculation stage
-      property! size :: Int
+      property! size : Int32
 
-      # Statistcal mean from calculation stage
-      property! mean :: Float
+      # Statistical mean from calculation stage
+      property! mean : Float64
 
-      # Statistcal variance from calculation stage
-      property! variance :: Float
+      # Statistical variance from calculation stage
+      property! variance : Float64
 
-      # Statistcal standard deviation from calculation stage
-      property! stddev :: Float
+      # Statistical standard deviation from calculation stage
+      property! stddev : Float64
+
+      # Relative standard deviation as a percentage
+      property! relative_stddev : Float64
 
       # Multiple slower than the fastest entry
-      property! slower :: Float
+      property! slower : Float64
 
-      def initialize(@label, @action) end
+      @ran : Bool
+      @ran = false
+
+      def initialize(@label, @action : ->)
+      end
+
+      def ran?
+        @ran
+      end
 
       def call
         action.call
@@ -149,10 +169,34 @@ module Benchmark
       end
 
       def calculate_stats(samples)
+        @ran = true
         @size = samples.size
         @mean = samples.sum.to_f / size.to_f
-        @variance = (samples.inject(0) { |acc, i| acc + ((i - mean) ** 2) }).to_f / size.to_f
+        @variance = (samples.reduce(0) { |acc, i| acc + ((i - mean) ** 2) }).to_f / size.to_f
         @stddev = Math.sqrt(variance)
+        @relative_stddev = 100.0 * (stddev / mean)
+      end
+
+      def human_mean
+        pair = case Math.log10(mean)
+               when -1..3
+                 {mean, ' '}
+               when 3..6
+                 {mean/1_000, 'k'}
+               when 6..9
+                 {mean/1_000_000, 'M'}
+               else
+                 {mean/1_000_000_000, 'G'}
+               end
+        "#{pair[0].round(2).to_s.rjust(6)}#{pair[1]}"
+      end
+
+      def human_compare
+        if slower == 1.0
+          "fastest"
+        else
+          sprintf "%5.2f× slower", slower
+        end
       end
     end
   end
