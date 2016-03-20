@@ -225,6 +225,24 @@ describe TCPSocket do
 end
 
 describe UDPSocket do
+  it "sends messages to nowhere, once" do
+    client = UDPSocket.new(Socket::Family::INET)
+    client.connect("127.0.0.1", 12341)
+
+    client << "message"
+  end
+
+  it "flaky: sends messages to nowhere, iterate" do
+    client = UDPSocket.new(Socket::Family::INET)
+    client.connect("127.0.0.1", 12342)
+
+    10.times do |iteration|
+      client << "message"
+      p iteration
+    end
+    client.close
+  end
+
   it "sends and receives messages by reading and writing" do
     port = free_udp_socket_port
 
