@@ -378,7 +378,7 @@ describe "Type inference: macro" do
         1 + 'a'
       end
       ),
-      "Error in line 7"
+      "in line 7"
   end
 
   it "transforms with {{yield}} and call" do
@@ -632,5 +632,25 @@ describe "Type inference: macro" do
       LibFoo.foo(out z)
       some_macro
       )) { int32 }
+  end
+
+  it "show macro trace in errors (1)" do
+    assert_error %(
+      macro foo
+        Bar
+      end
+
+      foo
+    ),
+      "Error in line 6: expanding macro"
+  end
+
+  it "show macro trace in errors (2)" do
+    assert_error %(
+      {% begin %}
+        Bar
+      {% end %}
+    ),
+      "Error in line 2: expanding macro"
   end
 end
