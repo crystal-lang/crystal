@@ -301,7 +301,7 @@ module Crystal
     end
 
     private def system(command, args = nil)
-      puts command if verbose?
+      puts "#{command} #{args.join " "}" if verbose?
 
       ::system(command, args)
       unless $?.success?
