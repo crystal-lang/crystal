@@ -133,8 +133,11 @@ macro parallel(*jobs)
   {% for job, i in jobs %}
     %ret{i} = uninitialized typeof({{job}})
     spawn do
-      %ret{i} = {{job}}
-      %channel.send nil
+      begin
+        %ret{i} = {{job}}
+      ensure
+        %channel.send nil
+      end
     end
   {% end %}
 
