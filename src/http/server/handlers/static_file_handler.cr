@@ -10,7 +10,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
   # Creates a handler that will serve files in the given *public_dir*, after
   # expanding it (using `File#expand_path`).
   #
-  # If *fallthrough* is `false`, this handler dose not call next handler when
+  # If *fallthrough* is `false`, this handler does not call next handler when
   # request method is neither GET or HEAD, then serves `405 Method Not Allowed`.
   # Otherwise, it calls next handler.
   def initialize(public_dir, fallthrough = true)
