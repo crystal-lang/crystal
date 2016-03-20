@@ -331,7 +331,7 @@ struct XML::Node
   end
 
   # :nodoc:
-  SAVE_MUTEX = Mutex.new
+  SAVE_MUTEX = Thread::Mutex.new
 
   def to_xml(io : IO, indent = 2, indent_text = " ", options : SaveOptions = SaveOptions.xml_default)
     # We need to use a mutex because we modify global libxml variables

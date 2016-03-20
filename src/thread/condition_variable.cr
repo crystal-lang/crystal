@@ -1,37 +1,41 @@
-class ConditionVariable
-  @cond : LibPThread::Cond
+# :nodoc:
+class Thread(T, R)
+  # :nodoc:
+  class ConditionVariable
+    @cond : LibPThread::Cond
 
-  def initialize
-    if LibPThread.cond_init(out @cond, nil) != 0
-      raise Errno.new("pthread_cond_init")
+    def initialize
+      if LibPThread.cond_init(out @cond, nil) != 0
+        raise Errno.new("pthread_cond_init")
+      end
     end
-  end
 
-  def signal
-    if LibPThread.cond_signal(self) != 0
-      raise Errno.new("pthread_cond_signal")
+    def signal
+      if LibPThread.cond_signal(self) != 0
+        raise Errno.new("pthread_cond_signal")
+      end
     end
-  end
 
-  def broadcast
-    if LibPThread.cond_broadcast(self) != 0
-      raise Errno.new("pthread_cond_broadcast")
+    def broadcast
+      if LibPThread.cond_broadcast(self) != 0
+        raise Errno.new("pthread_cond_broadcast")
+      end
     end
-  end
 
-  def wait(mutex : Mutex)
-    if LibPThread.cond_wait(self, mutex) != 0
-      raise Errno.new("pthread_cond_wait")
+    def wait(mutex : Thread::Mutex)
+      if LibPThread.cond_wait(self, mutex) != 0
+        raise Errno.new("pthread_cond_wait")
+      end
     end
-  end
 
-  def finalize
-    if LibPThread.cond_destroy(self) != 0
-      raise Errno.new("pthread_cond_broadcast")
+    def finalize
+      if LibPThread.cond_destroy(self) != 0
+        raise Errno.new("pthread_cond_broadcast")
+      end
     end
-  end
 
-  def to_unsafe
-    pointerof(@cond)
+    def to_unsafe
+      pointerof(@cond)
+    end
   end
 end

@@ -1,10 +1,10 @@
 require "spec"
 
-describe ConditionVariable do
+describe Thread::ConditionVariable do
   it "signals" do
-    mutex = Mutex.new
-    cond = ConditionVariable.new
-    pcond = ConditionVariable.new
+    mutex = Thread::Mutex.new
+    cond = Thread::ConditionVariable.new
+    pcond = Thread::ConditionVariable.new
     waiting = 0
     signaled = 0
 
@@ -31,9 +31,9 @@ describe ConditionVariable do
   end
 
   it "broadcasts" do
-    mutex = Mutex.new
-    cond = ConditionVariable.new
-    pcond = ConditionVariable.new
+    mutex = Thread::Mutex.new
+    cond = Thread::ConditionVariable.new
+    pcond = Thread::ConditionVariable.new
     waiting = 0
     signaled = false
 
@@ -59,5 +59,26 @@ describe ConditionVariable do
     end
 
     threads.map &.join
+  end
+
+  pending "waits and send signal" do
+    a = 0
+    cv1 = Thread::ConditionVariable.new
+    cv2 = Thread::ConditionVariable.new
+    m = Thread::Mutex.new
+
+    thread = Thread.new do
+      3.times do
+        m.synchronize { cv1.wait(m); a += 1; cv2.signal }
+      end
+    end
+
+    a.should eq(0)
+    3.times do |i|
+      m.synchronize { cv1.signal; cv2.wait(m) }
+      a.should eq(i + 1)
+    end
+
+    thread.join
   end
 end
