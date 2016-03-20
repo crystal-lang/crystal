@@ -195,17 +195,21 @@ def run(code, filename = nil)
 end
 
 def test_c(c_code, crystal_code)
-  File.write("./temp_abi.c", c_code)
+  c_filename = "#{__DIR__}/temp_abi.c"
+  o_filename = "#{__DIR__}/temp_abi.o"
+  begin
+    File.write(c_filename, c_code)
 
-  `#{Crystal::Compiler::CC} ./temp_abi.c -c -o ./temp_abi.o`.should be_truthy
+    `#{Crystal::Compiler::CC} #{c_filename} -c -o #{o_filename}`.should be_truthy
 
-  yield run(%(
+    yield run(%(
     require "prelude"
 
-    @[Link(ldflags: "temp_abi.o")]
+    @[Link(ldflags: "#{o_filename}")]
     #{crystal_code}
     ))
-ensure
-  File.delete("./temp_abi.c")
-  File.delete("./temp_abi.o")
+  ensure
+    File.delete(c_filename)
+    File.delete(o_filename)
+  end
 end

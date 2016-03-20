@@ -142,7 +142,7 @@ module Crystal
       bc_flags_changed
     end
 
-    private def codegen(program, node, sources, output_filename)
+    private def codegen(program : Program, node, sources, output_filename)
       lib_flags = program.lib_flags
 
       llvm_modules = timing("Codegen (crystal)") do
@@ -166,7 +166,7 @@ module Crystal
       if @cross_compile_flags
         cross_compile program, units, lib_flags, output_filename
       else
-        codegen units, lib_flags, output_filename
+        codegen units, lib_flags, output_filename, output_dir
       end
     end
 
@@ -193,8 +193,8 @@ module Crystal
       puts "#{CC} #{o_name} -o #{output_filename} #{@link_flags} #{lib_flags}"
     end
 
-    private def codegen(units, lib_flags, output_filename)
-      object_names = units.map &.object_name
+    private def codegen(units : Array(CompilationUnit), lib_flags, output_filename, output_dir)
+      object_names = units.map &.object_filename
       multithreaded = LLVM.start_multithreaded
 
       # First write bitcodes: it breaks if we paralellize it
@@ -226,8 +226,12 @@ module Crystal
         error "can't use `#{output_filename}` as output filename because it's a directory"
       end
 
+      output_filename = File.expand_path(output_filename)
+
       timing("Codegen (linking)") do
-        system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
+        Dir.cd(output_dir) do
+          system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
+        end
       end
     end
 
@@ -408,7 +412,11 @@ module Crystal
       end
 
       def object_name
-        Crystal.relative_filename("#{@output_dir}/#{@name}.o")
+        Crystal.relative_filename("#{@output_dir}/#{object_filename}")
+      end
+
+      def object_filename
+        "#{@name}.o"
       end
 
       def bc_name
