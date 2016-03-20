@@ -128,13 +128,13 @@ macro spawn(call)
 end
 
 macro parallel(*jobs)
-  %channel = Channel(Bool).new
+  %channel = Channel(Nil).new
 
   {% for job, i in jobs %}
     %ret{i} = uninitialized typeof({{job}})
     spawn do
       %ret{i} = {{job}}
-      %channel.send true
+      %channel.send nil
     end
   {% end %}
 
