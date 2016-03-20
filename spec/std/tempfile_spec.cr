@@ -54,14 +54,14 @@ describe Tempfile do
     tempfile.close
   end
 
-  it "return default directory for tempfiles" do
+  it "returns default directory for tempfiles" do
     old_tmpdir = ENV["TMPDIR"]?
     ENV.delete("TMPDIR")
     Tempfile.dirname.should eq("/tmp")
     ENV["TMPDIR"] = old_tmpdir if old_tmpdir
   end
 
-  it "return configure directory for tempfiles" do
+  it "returns configure directory for tempfiles" do
     old_tmpdir = ENV["TMPDIR"]?
     ENV["TMPDIR"] = "/my/tmp"
     Tempfile.dirname.should eq("/my/tmp")
