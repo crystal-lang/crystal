@@ -908,15 +908,20 @@ module Crystal
       check_open_paren
       skip_space_or_newline
 
+      paren_count = @paren_count
+
       node.type_vars.each_with_index do |type_var, i|
         accept type_var
-        skip_space_or_newline
-        if @token.type == :","
-          write ", " unless last?(i, node.type_vars)
-          next_token_skip_space_or_newline
+        if @paren_count == paren_count
+          skip_space_or_newline
+          if @token.type == :","
+            write ", " unless last?(i, node.type_vars)
+            next_token_skip_space_or_newline
+          end
         end
       end
 
+      skip_space_or_newline if @paren_count == paren_count
       check_close_paren
 
       false
@@ -932,6 +937,8 @@ module Crystal
       end
 
       check_open_paren
+
+      paren_count = @paren_count
 
       node.types.each_with_index do |type, i|
         accept type
@@ -1712,18 +1719,24 @@ module Crystal
     def visit(node : Fun)
       check_open_paren
 
+      paren_count = @paren_count
+
       if inputs = node.inputs
         inputs.each_with_index do |input, i|
           accept input
-          skip_space_or_newline
-          if @token.type == :","
-            write ", " unless last?(i, inputs)
-            next_token_skip_space_or_newline
+          if @paren_count == paren_count
+            skip_space_or_newline
+            if @token.type == :","
+              write ", " unless last?(i, inputs)
+              next_token_skip_space_or_newline
+            end
           end
         end
       end
 
+      skip_space_or_newline if paren_count == @paren_count
       check_close_paren
+      skip_space
 
       write " " if inputs
       write_token :"->"
