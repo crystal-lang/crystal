@@ -1,0 +1,2 @@
+require "spec"
+require "./std/**"

@@ -1,3 +1,3 @@
 require "spec"
 require "./compiler/**"
-require "./std/**"
+require "./std_spec"
