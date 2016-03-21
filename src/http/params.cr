@@ -7,9 +7,9 @@ module HTTP
     #
     #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo")
     #     #=> #<HTTP::Params @raw_params = {"foo" => ["bar", "baz"], "qux" => ["zoo"]}>
-    def self.parse(query : String)
+    def self.parse(query : String, plus_to_space : Bool = false)
       parsed = {} of String => Array(String)
-      parse(query) do |key, value|
+      parse(query, plus_to_space) do |key, value|
         ary = parsed[key] ||= [] of String
         ary.push value
       end
@@ -21,7 +21,7 @@ module HTTP
     #     HTTP::Params.parse(query) do |key, value|
     #       # ...
     #     end
-    def self.parse(query : String)
+    def self.parse(query : String, plus_to_space : Bool = false)
       return if query.empty?
 
       key = nil
@@ -51,7 +51,7 @@ module HTTP
           key = nil
           i += 1
         else
-          i = URI.unescape_one query, bytesize, i, byte, char, buffer
+          i = URI.unescape_one query, bytesize, i, byte, char, buffer, plus_to_space
         end
       end
 
