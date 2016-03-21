@@ -155,7 +155,7 @@ describe "Complex" do
     end
 
     it "number / complex" do
-      (-5.7*(Complex.new(2.27, 8.92))).should eq(Complex.new(-12.939, -50.844))
+      (-5.7/(Complex.new(2.27, 8.92))).should eq(Complex.new(-0.1527278908111847, 0.6001466017778712))
     end
   end
 end
