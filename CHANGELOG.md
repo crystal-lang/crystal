@@ -1,6 +1,6 @@
 ## 0.14.0 (2016-03-21)
 
-* **(breaking change)** The syntax of a method argument with a default value and a type restriction is now `def foo(arg : Type = default_value)`. Run `crystal tool format` to automatically upgrade exsiting code to this new syntax. The old `def foo(arg = default_value : Type)` was removed.
+* **(breaking change)** The syntax of a method argument with a default value and a type restriction is now `def foo(arg : Type = default_value)`. The old `def foo(arg = default_value : Type)` was removed.
 * **(breaking change)** `Enumerable#take(n)` and `Iterator#take(n)` were renamed to `first(n)`
 * **(breaking change)** `Socket#addr` and `Socket#peeraddr` were renamed to `local_address` and `remote_address` respectively
 * **(breaking change)** Removed `Comparable#between?(a, z)`. Use `a <= x <= z` instead
