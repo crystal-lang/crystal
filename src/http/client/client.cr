@@ -495,9 +495,9 @@ class HTTP::Client
 
   def ssl_context
     ctx = OpenSSL::SSL::Context.new(ssl_method)
-    ctx.ca_file = ssl_ca_file unless ssl_ca_file
-    ctx.private_key = ssl_key_file unless ssl_key_file
-    ctx.certificate_file = ssl_cert_file unless ssl_cert_file
+    ctx.ca_file = ssl_ca_file unless ssl_ca_file.empty?
+    ctx.private_key = ssl_key_file unless ssl_key_file.empty?
+    ctx.certificate_file = ssl_cert_file unless ssl_cert_file.empty?
     ctx
   end
 
