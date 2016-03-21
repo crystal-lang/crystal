@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="../Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="../Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="../ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="../Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="../Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="../Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="../Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="../Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="../Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="../Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="../Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="../Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="../Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="../Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="../Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="../Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="../Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="../Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2131,7 +2156,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr" target="_blank">spec/expectations.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr" target="_blank">spec/expectations.cr</a>
     
     <br/>
   
@@ -2215,7 +2240,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#expect_raises%28klass%2Cmessage%29-macro" class="signature"><strong>expect_raises</strong>(klass, message)</a>
+        <a href="#expect_raises%28klass%2Cmessage%2Cfile%3D__FILE__%2Cline%3D__LINE__%29-macro" class="signature"><strong>expect_raises</strong>(klass, message, file = __FILE__, line = __LINE__)</a>
         
       </li>
     
@@ -2253,7 +2278,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L229" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L235" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2269,7 +2294,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L201" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L207" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2285,7 +2310,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L225" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L231" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2301,7 +2326,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L209" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L215" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2317,7 +2342,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L217" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L223" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2333,7 +2358,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L221" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L227" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2349,7 +2374,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L211" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2365,7 +2390,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L213" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2384,7 +2409,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L239" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L245" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2400,7 +2425,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L197" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L203" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2416,7 +2441,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L233" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L239" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2437,23 +2462,23 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L243" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L249" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="expect_raises&#40;klass,message&#41;-macro">
+    <div class="entry-detail" id="expect_raises&#40;klass,message,file&#61;__FILE__,line&#61;__LINE__&#41;-macro">
       <div class="signature">
         
-        macro <strong>expect_raises</strong>(klass, message)
+        macro <strong>expect_raises</strong>(klass, message, file = __FILE__, line = __LINE__)
 
-        <a class="method-permalink" href="#expect_raises%28klass%2Cmessage%29-macro">#</a>
+        <a class="method-permalink" href="#expect_raises%28klass%2Cmessage%2Cfile%3D__FILE__%2Cline%3D__LINE__%29-macro">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L259" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L265" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2469,7 +2494,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L253" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L259" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2485,7 +2510,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/spec/expectations.cr#L247" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/spec/expectations.cr#L253" target="_blank">View source</a>]
         
       </div>
     </div>

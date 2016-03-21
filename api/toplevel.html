@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2174,7 +2199,7 @@
       
     
       <dt class="entry-const" id="STDERR">
-        <strong>STDERR</strong> = <code><span class="t">IO</span><span class="t">::</span><span class="t">FileDescriptor</span>.<span class="k">new</span>(<span class="n">2</span>, (<span class="t">LibC</span>.isatty(<span class="n">2</span>)) <span class="o">==</span> <span class="n">0</span>)</code>
+        <strong>STDERR</strong> = <code>(<span class="t">IO</span><span class="t">::</span><span class="t">FileDescriptor</span>.<span class="k">new</span>(<span class="n">2</span>, (<span class="t">LibC</span>.isatty(<span class="n">2</span>)) <span class="o">==</span> <span class="n">0</span>)).tap(<span class="o">&</span>.flush_on_newline <span class="o">=</span> <span class="n">true</span>)</code>
       </dt>
       
     
@@ -2196,214 +2221,222 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#__crystal_sigfault_handler%28sig%3AInt32%2Caddr%3APointer%28Void%29%29-class-method" class="signature"><strong>.__crystal_sigfault_handler</strong>(sig : Int32, addr : Pointer(Void))</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%60%28command%29%3AString-class-method" class="signature"><strong>.`</strong>(command) : String</a>
+        <a href="#%60%28command%29%3AString-class-method" class="signature"><strong>`</strong>(command) : String</a>
         
           <div class="summary"><p>Returns the standard output of executing <em>command</em> in a subshell.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#abort%28message%2Cstatus%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%29-class-method" class="signature"><strong>.abort</strong>(message, status = <span class="n">1</span>)</a>
+        <a href="#abort%28message%2Cstatus%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%29-class-method" class="signature"><strong>abort</strong>(message, status = <span class="n">1</span>)</a>
         
-          <div class="summary"><p>Terminates execution immediately, printing <em>message</em> to STDERR and then calling <code><a href="toplevel.html#exit%28status%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-class-method">.exit(status)</a></code>.</p></div>
+          <div class="summary"><p>Terminates execution immediately, printing <em>message</em> to STDERR and then calling <code><a href="toplevel.html#exit%28status%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-class-method">exit(status)</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#at_exit%28%26handler%3AInt32-%3E%29-class-method" class="signature"><strong>.at_exit</strong>(&handler : Int32 -> )</a>
+        <a href="#at_exit%28%26handler%3AInt32-%3E%29-class-method" class="signature"><strong>at_exit</strong>(&handler : Int32 -> )</a>
         
           <div class="summary"><p>Registers the given <code><a href="Proc.html">Proc</a></code> for execution when the program exits.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#caller-class-method" class="signature"><strong>.caller</strong></a>
+        <a href="#caller-class-method" class="signature"><strong>caller</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#delay%28delay%2C%26block%3A-%3ER%29-class-method" class="signature"><strong>.delay</strong>(delay, &block :  -> R)</a>
+        <a href="#delay%28delay%2C%26block%3A-%3ER%29-class-method" class="signature"><strong>delay</strong>(delay, &block :  -> R)</a>
         
           <div class="summary"><p>Spawns a <code><a href="Fiber.html">Fiber</a></code> to compute <em>&block</em> in the background after <em>delay</em> has elapsed.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#exit%28status%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-class-method" class="signature"><strong>.exit</strong>(status = <span class="n">0</span>)</a>
+        <a href="#exit%28status%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-class-method" class="signature"><strong>exit</strong>(status = <span class="n">0</span>)</a>
         
           <div class="summary"><p>Terminates execution immediately, returning the given status code to the invoking environment.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#fork-class-method" class="signature"><strong>.fork</strong></a>
+        <a href="#fork-class-method" class="signature"><strong>fork</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#fork%28%26block%29-class-method" class="signature"><strong>.fork</strong>(&block)</a>
+        <a href="#fork%28%26block%29-class-method" class="signature"><strong>fork</strong>(&block)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#future%28%26exp%3A-%3ER%29-class-method" class="signature"><strong>.future</strong>(&exp :  -> R)</a>
+        <a href="#future%28%26exp%3A-%3ER%29-class-method" class="signature"><strong>future</strong>(&exp :  -> R)</a>
         
           <div class="summary"><p>Spawns a <code><a href="Fiber.html">Fiber</a></code> to compute <em>&block</em> in the background.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#get_stack_top-class-method" class="signature"><strong>.get_stack_top</strong></a>
+        <a href="#get_stack_top-class-method" class="signature"><strong>get_stack_top</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#gets%28%2Aargs%29-class-method" class="signature"><strong>.gets</strong>(*args)</a>
+        <a href="#gets%28%2Aargs%29-class-method" class="signature"><strong>gets</strong>(*args)</a>
         
           <div class="summary"><p>Reads a line from STDIN.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#lazy%28%26block%3A-%3ER%29-class-method" class="signature"><strong>.lazy</strong>(&block :  -> R)</a>
+        <a href="#lazy%28%26block%3A-%3ER%29-class-method" class="signature"><strong>lazy</strong>(&block :  -> R)</a>
         
           <div class="summary"><p>Conditionally spawns a <code><a href="Fiber.html">Fiber</a></code> to run <em>&block</em> in the background.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#loop%28%26block%29-class-method" class="signature"><strong>.loop</strong>(&block)</a>
+        <a href="#loop%28%26block%29-class-method" class="signature"><strong>loop</strong>(&block)</a>
         
           <div class="summary"><p>Repeatedly executes the block, passing an incremental <code><a href="Int32.html">Int32</a></code> that starts with 0.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#main%28argc%3AInt32%2Cargv%3APointer%28Pointer%28UInt8%29%29%29-class-method" class="signature"><strong>.main</strong>(argc : Int32, argv : Pointer(Pointer(UInt8)))</a>
+        <a href="#main%28argc%3AInt32%2Cargv%3APointer%28Pointer%28UInt8%29%29%29-class-method" class="signature"><strong>main</strong>(argc : Int32, argv : Pointer(Pointer(UInt8)))</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#p%28object%29-class-method" class="signature"><strong>.p</strong>(object)</a>
-        
-          <div class="summary"><p>Prints <em>object</em> to STDOUT by invoking <code>inspect(io)</code> on it, followed by a newline.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#p%28%2Aobjects%29-class-method" class="signature"><strong>.p</strong>(*objects)</a>
+        <a href="#p%28%2Aobjects%29-class-method" class="signature"><strong>p</strong>(*objects)</a>
         
           <div class="summary"><p>Prints each object in <em>objects</em> to STDOUT by invoking <code>inspect(io)</code> on it, followed by a newline.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#print%28%2Aobjects%3A_%29-class-method" class="signature"><strong>.print</strong>(*objects : _)</a>
+        <a href="#p%28object%29-class-method" class="signature"><strong>p</strong>(object)</a>
+        
+          <div class="summary"><p>Prints <em>object</em> to STDOUT by invoking <code>inspect(io)</code> on it, followed by a newline.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#print%28%2Aobjects%3A_%29-class-method" class="signature"><strong>print</strong>(*objects : _)</a>
         
           <div class="summary"><p>Prints objects to STDOUT and then invokes <code>STDOUT.flush</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#printf%28format_string%2C%2Aargs%29-class-method" class="signature"><strong>.printf</strong>(format_string, *args)</a>
+        <a href="#printf%28format_string%2Cargs%3AArray%7CTuple%29-class-method" class="signature"><strong>printf</strong>(format_string, args : Array | Tuple)</a>
         
           <div class="summary"><p>Prints a formatted string to STDOUT.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#printf%28format_string%2Cargs%3AArray%7CTuple%29-class-method" class="signature"><strong>.printf</strong>(format_string, args : Array | Tuple)</a>
+        <a href="#printf%28format_string%2C%2Aargs%29-class-method" class="signature"><strong>printf</strong>(format_string, *args)</a>
         
           <div class="summary"><p>Prints a formatted string to STDOUT.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#puts%28%2Aobjects%29-class-method" class="signature"><strong>.puts</strong>(*objects)</a>
+        <a href="#puts%28%2Aobjects%29-class-method" class="signature"><strong>puts</strong>(*objects)</a>
         
           <div class="summary"><p>Prints objects to STDOUT, each followed by a newline.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#raise%28ex%3AException%29-class-method" class="signature"><strong>.raise</strong>(ex : Exception)</a>
+        <a href="#raise%28message%3AString%29-class-method" class="signature"><strong>raise</strong>(message : String)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#raise%28message%3AString%29-class-method" class="signature"><strong>.raise</strong>(message : String)</a>
+        <a href="#raise%28ex%3AException%29-class-method" class="signature"><strong>raise</strong>(ex : Exception)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#rand%28x%29-class-method" class="signature"><strong>.rand</strong>(x)</a>
+        <a href="#rand%28x%29-class-method" class="signature"><strong>rand</strong>(x)</a>
         
           <div class="summary"><p>see <code>Random#rand(x)</code></p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#rand-class-method" class="signature"><strong>.rand</strong></a>
+        <a href="#rand-class-method" class="signature"><strong>rand</strong></a>
         
           <div class="summary"><p>see <code>Random#rand</code></p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#read_line%28%2Aargs%29-class-method" class="signature"><strong>.read_line</strong>(*args)</a>
+        <a href="#read_line%28%2Aargs%29-class-method" class="signature"><strong>read_line</strong>(*args)</a>
         
           <div class="summary"><p>Reads a line from STDIN.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#sleep%28seconds%3ANumber%29-class-method" class="signature"><strong>.sleep</strong>(seconds : Number)</a>
+        <a href="#sleep%28seconds%3ANumber%29-class-method" class="signature"><strong>sleep</strong>(seconds : Number)</a>
+        
+          <div class="summary"><p>Blocks the current fiber for the specified number of seconds.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#sleep%28time%3ATime%3A%3ASpan%29-class-method" class="signature"><strong>.sleep</strong>(time : Time::Span)</a>
+        <a href="#sleep%28time%3ATime%3A%3ASpan%29-class-method" class="signature"><strong>sleep</strong>(time : Time::Span)</a>
+        
+          <div class="summary"><p>Blocks the current Fiber for the specified time span.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#sleep-class-method" class="signature"><strong>.sleep</strong></a>
+        <a href="#sleep-class-method" class="signature"><strong>sleep</strong></a>
+        
+          <div class="summary"><p>Blocks the current fiber forever.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#sprintf%28format_string%2C%2Aargs%29%3AString-class-method" class="signature"><strong>.sprintf</strong>(format_string, *args) : String</a>
+        <a href="#spawn%28%26block%29-class-method" class="signature"><strong>spawn</strong>(&block)</a>
+        
+          <div class="summary"><p>Spawns a new fiber.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sprintf%28format_string%2Cargs%3AArray%7CTuple%29%3AString-class-method" class="signature"><strong>sprintf</strong>(format_string, args : Array | Tuple) : String</a>
         
           <div class="summary"><p>Returns a formatted string.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#sprintf%28format_string%2Cargs%3AArray%7CTuple%29%3AString-class-method" class="signature"><strong>.sprintf</strong>(format_string, args : Array | Tuple) : String</a>
+        <a href="#sprintf%28format_string%2C%2Aargs%29%3AString-class-method" class="signature"><strong>sprintf</strong>(format_string, *args) : String</a>
         
           <div class="summary"><p>Returns a formatted string.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#system%28command%3AString%2Cargs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29%3ABool-class-method" class="signature"><strong>.system</strong>(command : String, args = <span class="n">nil</span>) : Bool</a>
+        <a href="#system%28command%3AString%2Cargs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29%3ABool-class-method" class="signature"><strong>system</strong>(command : String, args = <span class="n">nil</span>) : Bool</a>
         
           <div class="summary"><p>Executes the given command in a subshell.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#with_color%28color%3ASymbol%29-class-method" class="signature"><strong>.with_color</strong>(color : Symbol)</a>
+        <a href="#with_color-class-method" class="signature"><strong>with_color</strong></a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#with_color-class-method" class="signature"><strong>.with_color</strong></a>
+        <a href="#with_color%28color%3ASymbol%29-class-method" class="signature"><strong>with_color</strong>(color : Symbol)</a>
         
       </li>
     
@@ -2451,14 +2484,9 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#spawn-macro" class="signature"><strong>spawn</strong></a>
+        <a href="#spawn%28call%29-macro" class="signature"><strong>spawn</strong>(call)</a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#spawn%28exp%29-macro" class="signature"><strong>spawn</strong>(exp)</a>
-        
-          <div class="summary"><p>TODO: this doesn't work if a Call has a block or named arguments...</p></div>
+          <div class="summary"><p>Spawns a fiber by first creating a Proc, passing the <em>call</em>'s expressions to it, and letting the Proc finally invoke the <em>call</em>.</p></div>
         
       </li>
     
@@ -2557,26 +2585,10 @@
 
   <h2>Method Detail</h2>
   
-    <div class="entry-detail" id="__crystal_sigfault_handler&#40;sig:Int32,addr:Pointer&#40;Void&#41;&#41;-class-method">
-      <div class="signature">
-        
-        def self.<strong>__crystal_sigfault_handler</strong>(sig : <a href="Int32.html">Int32</a>, addr : <a href="Pointer.html">Pointer</a>(Void))
-
-        <a class="method-permalink" href="#__crystal_sigfault_handler%28sig%3AInt32%2Caddr%3APointer%28Void%29%29-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/signal.cr#L120" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
     <div class="entry-detail" id="&#96;&#40;command&#41;:String-class-method">
       <div class="signature">
         
-        def self.<strong>`</strong>(command) : <a href="String.html">String</a>
+        def <strong>`</strong>(command) : <a href="String.html">String</a>
 
         <a class="method-permalink" href="#%60%28command%29%3AString-class-method">#</a>
       </div>
@@ -2592,7 +2604,7 @@ The special <code>$?</code> variable is set to a <code><a href="Process/Status.h
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/process/run.cr#L273" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/process/run.cr#L275" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2600,18 +2612,18 @@ The special <code>$?</code> variable is set to a <code><a href="Process/Status.h
     <div class="entry-detail" id="abort&#40;message,status&#61;&lt;spanclass&#61;&quot;n&quot;&gt;1&lt;/span&gt;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>abort</strong>(message, status = <span class="n">1</span>)
+        def <strong>abort</strong>(message, status = <span class="n">1</span>)
 
         <a class="method-permalink" href="#abort%28message%2Cstatus%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%29-class-method">#</a>
       </div>
       
         <div class="doc"><p>Terminates execution immediately, printing <em>message</em> to STDERR and
-then calling <code><a href="toplevel.html#exit%28status%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-class-method">.exit(status)</a></code>.</p></div>
+then calling <code><a href="toplevel.html#exit%28status%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-class-method">exit(status)</a></code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L148" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L152" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2619,7 +2631,7 @@ then calling <code><a href="toplevel.html#exit%28status%3D%3Cspanclass%3D%22n%22
     <div class="entry-detail" id="at_exit&#40;&amp;handler:Int32-&gt;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>at_exit</strong>(&handler : <a href="Int32.html">Int32</a> -> )
+        def <strong>at_exit</strong>(&handler : <a href="Int32.html">Int32</a> -> )
 
         <a class="method-permalink" href="#at_exit%28%26handler%3AInt32-%3E%29-class-method">#</a>
       </div>
@@ -2642,7 +2654,7 @@ exit</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L131" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L135" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2650,7 +2662,7 @@ exit</code></pre>
     <div class="entry-detail" id="caller-class-method">
       <div class="signature">
         
-        def self.<strong>caller</strong>
+        def <strong>caller</strong>
 
         <a class="method-permalink" href="#caller-class-method">#</a>
       </div>
@@ -2658,7 +2670,7 @@ exit</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/exception.cr#L4" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/exception.cr#L4" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2666,7 +2678,7 @@ exit</code></pre>
     <div class="entry-detail" id="delay&#40;delay,&amp;block:-&gt;R&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>delay</strong>(delay, &block :  -> R)
+        def <strong>delay</strong>(delay, &block :  -> R)
 
         <a class="method-permalink" href="#delay%28delay%2C%26block%3A-%3ER%29-class-method">#</a>
       </div>
@@ -2682,7 +2694,7 @@ d.cancel</code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/concurrent/future.cr#L123" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/concurrent/future.cr#L131" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2690,7 +2702,7 @@ d.cancel</code></pre></div>
     <div class="entry-detail" id="exit&#40;status&#61;&lt;spanclass&#61;&quot;n&quot;&gt;0&lt;/span&gt;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>exit</strong>(status = <span class="n">0</span>)
+        def <strong>exit</strong>(status = <span class="n">0</span>)
 
         <a class="method-permalink" href="#exit%28status%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-class-method">#</a>
       </div>
@@ -2698,12 +2710,12 @@ d.cancel</code></pre></div>
         <div class="doc"><p>Terminates execution immediately, returning the given status code
 to the invoking environment.</p>
 
-<p>Registered <code><a href="toplevel.html#at_exit%28%26handler%3AInt32-%3E%29-class-method">.at_exit</a></code> procs are executed.</p></div>
+<p>Registered <code><a href="toplevel.html#at_exit%28%26handler%3AInt32-%3E%29-class-method">at_exit</a></code> procs are executed.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L139" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L143" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2711,7 +2723,7 @@ to the invoking environment.</p>
     <div class="entry-detail" id="fork-class-method">
       <div class="signature">
         
-        def self.<strong>fork</strong>
+        def <strong>fork</strong>
 
         <a class="method-permalink" href="#fork-class-method">#</a>
       </div>
@@ -2719,7 +2731,7 @@ to the invoking environment.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/process/process.cr#L121" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/process/process.cr#L121" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2727,7 +2739,7 @@ to the invoking environment.</p>
     <div class="entry-detail" id="fork&#40;&amp;block&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>fork</strong>(&block)
+        def <strong>fork</strong>(&block)
 
         <a class="method-permalink" href="#fork%28%26block%29-class-method">#</a>
       </div>
@@ -2735,7 +2747,7 @@ to the invoking environment.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/process/process.cr#L117" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/process/process.cr#L117" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2743,7 +2755,7 @@ to the invoking environment.</p>
     <div class="entry-detail" id="future&#40;&amp;exp:-&gt;R&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>future</strong>(&exp :  -> R)
+        def <strong>future</strong>(&exp :  -> R)
 
         <a class="method-permalink" href="#future%28%26exp%3A-%3ER%29-class-method">#</a>
       </div>
@@ -2758,7 +2770,7 @@ f.get <span class="c">#&#61;&gt; String</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/concurrent/future.cr#L134" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/concurrent/future.cr#L142" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2766,7 +2778,7 @@ f.get <span class="c">#&#61;&gt; String</span></code></pre></div>
     <div class="entry-detail" id="get_stack_top-class-method">
       <div class="signature">
         
-        def self.<strong>get_stack_top</strong>
+        def <strong>get_stack_top</strong>
 
         <a class="method-permalink" href="#get_stack_top-class-method">#</a>
       </div>
@@ -2774,7 +2786,7 @@ f.get <span class="c">#&#61;&gt; String</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/fiber/fiber.cr#L2" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/fiber/fiber.cr#L2" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2782,7 +2794,7 @@ f.get <span class="c">#&#61;&gt; String</span></code></pre></div>
     <div class="entry-detail" id="gets&#40;*args&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>gets</strong>(*args)
+        def <strong>gets</strong>(*args)
 
         <a class="method-permalink" href="#gets%28%2Aargs%29-class-method">#</a>
       </div>
@@ -2792,7 +2804,7 @@ f.get <span class="c">#&#61;&gt; String</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L29" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L29" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2800,7 +2812,7 @@ f.get <span class="c">#&#61;&gt; String</span></code></pre></div>
     <div class="entry-detail" id="lazy&#40;&amp;block:-&gt;R&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>lazy</strong>(&block :  -> R)
+        def <strong>lazy</strong>(&block :  -> R)
 
         <a class="method-permalink" href="#lazy%28%26block%3A-%3ER%29-class-method">#</a>
       </div>
@@ -2816,7 +2828,7 @@ spawn { maybe_use_computation(l) }</code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/concurrent/future.cr#L146" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/concurrent/future.cr#L154" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2824,7 +2836,7 @@ spawn { maybe_use_computation(l) }</code></pre></div>
     <div class="entry-detail" id="loop&#40;&amp;block&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>loop</strong>(&block)
+        def <strong>loop</strong>(&block)
 
         <a class="method-permalink" href="#loop%28%26block%29-class-method">#</a>
       </div>
@@ -2842,7 +2854,7 @@ that starts with 0.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L20" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L20" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2850,7 +2862,7 @@ that starts with 0.</p>
     <div class="entry-detail" id="main&#40;argc:Int32,argv:Pointer&#40;Pointer&#40;UInt8&#41;&#41;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>main</strong>(argc : <a href="Int32.html">Int32</a>, argv : <a href="Pointer.html">Pointer</a>(<a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>)))
+        def <strong>main</strong>(argc : <a href="Int32.html">Int32</a>, argv : <a href="Pointer.html">Pointer</a>(<a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>)))
 
         <a class="method-permalink" href="#main%28argc%3AInt32%2Cargv%3APointer%28Pointer%28UInt8%29%29%29-class-method">#</a>
       </div>
@@ -2858,26 +2870,7 @@ that starts with 0.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/main.cr#L25" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="p&#40;object&#41;-class-method">
-      <div class="signature">
-        
-        def self.<strong>p</strong>(object)
-
-        <a class="method-permalink" href="#p%28object%29-class-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Prints <em>object</em> to STDOUT by invoking <code>inspect(io)</code> on it, followed
-by a newline. Returns <em>object</em>.</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L74" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/main.cr#L26" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2885,7 +2878,7 @@ by a newline. Returns <em>object</em>.</p></div>
     <div class="entry-detail" id="p&#40;*objects&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>p</strong>(*objects)
+        def <strong>p</strong>(*objects)
 
         <a class="method-permalink" href="#p%28%2Aobjects%29-class-method">#</a>
       </div>
@@ -2896,7 +2889,26 @@ by a newline. Returns <em>objects</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L82" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="p&#40;object&#41;-class-method">
+      <div class="signature">
+        
+        def <strong>p</strong>(object)
+
+        <a class="method-permalink" href="#p%28object%29-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Prints <em>object</em> to STDOUT by invoking <code>inspect(io)</code> on it, followed
+by a newline. Returns <em>object</em>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L74" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2904,7 +2916,7 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="print&#40;*objects:_&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>print</strong>(*objects : _)
+        def <strong>print</strong>(*objects : _)
 
         <a class="method-permalink" href="#print%28%2Aobjects%3A_%29-class-method">#</a>
       </div>
@@ -2914,25 +2926,7 @@ by a newline. Returns <em>objects</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L39" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="printf&#40;format_string,*args&#41;-class-method">
-      <div class="signature">
-        
-        def self.<strong>printf</strong>(format_string, *args)
-
-        <a class="method-permalink" href="#printf%28format_string%2C%2Aargs%29-class-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Prints a formatted string to STDOUT. See <code>IO#printf</code>.</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L39" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2940,7 +2934,7 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="printf&#40;format_string,args:Array|Tuple&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>printf</strong>(format_string, args : <a href="Array.html">Array</a> | <a href="Tuple.html">Tuple</a>)
+        def <strong>printf</strong>(format_string, args : <a href="Array.html">Array</a> | <a href="Tuple.html">Tuple</a>)
 
         <a class="method-permalink" href="#printf%28format_string%2Cargs%3AArray%7CTuple%29-class-method">#</a>
       </div>
@@ -2950,7 +2944,25 @@ by a newline. Returns <em>objects</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L51" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L51" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="printf&#40;format_string,*args&#41;-class-method">
+      <div class="signature">
+        
+        def <strong>printf</strong>(format_string, *args)
+
+        <a class="method-permalink" href="#printf%28format_string%2C%2Aargs%29-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Prints a formatted string to STDOUT. See <code>IO#printf</code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L46" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2958,7 +2970,7 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="puts&#40;*objects&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>puts</strong>(*objects)
+        def <strong>puts</strong>(*objects)
 
         <a class="method-permalink" href="#puts%28%2Aobjects%29-class-method">#</a>
       </div>
@@ -2968,23 +2980,7 @@ by a newline. Returns <em>objects</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L68" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="raise&#40;ex:Exception&#41;-class-method">
-      <div class="signature">
-        
-        def self.<strong>raise</strong>(ex : <a href="Exception.html">Exception</a>)
-
-        <a class="method-permalink" href="#raise%28ex%3AException%29-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/raise.cr#L97" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L68" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2992,7 +2988,7 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="raise&#40;message:String&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>raise</strong>(message : <a href="String.html">String</a>)
+        def <strong>raise</strong>(message : <a href="String.html">String</a>)
 
         <a class="method-permalink" href="#raise%28message%3AString%29-class-method">#</a>
       </div>
@@ -3000,7 +2996,23 @@ by a newline. Returns <em>objects</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/raise.cr#L106" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/raise.cr#L108" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="raise&#40;ex:Exception&#41;-class-method">
+      <div class="signature">
+        
+        def <strong>raise</strong>(ex : <a href="Exception.html">Exception</a>)
+
+        <a class="method-permalink" href="#raise%28ex%3AException%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/raise.cr#L99" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3008,7 +3020,7 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="rand&#40;x&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>rand</strong>(x)
+        def <strong>rand</strong>(x)
 
         <a class="method-permalink" href="#rand%28x%29-class-method">#</a>
       </div>
@@ -3018,7 +3030,7 @@ by a newline. Returns <em>objects</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/random.cr#L153" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/random.cr#L153" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3026,7 +3038,7 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="rand-class-method">
       <div class="signature">
         
-        def self.<strong>rand</strong>
+        def <strong>rand</strong>
 
         <a class="method-permalink" href="#rand-class-method">#</a>
       </div>
@@ -3036,7 +3048,7 @@ by a newline. Returns <em>objects</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/random.cr#L148" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/random.cr#L148" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3044,7 +3056,7 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="read_line&#40;*args&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>read_line</strong>(*args)
+        def <strong>read_line</strong>(*args)
 
         <a class="method-permalink" href="#read_line%28%2Aargs%29-class-method">#</a>
       </div>
@@ -3054,7 +3066,7 @@ by a newline. Returns <em>objects</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L34" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L34" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3062,15 +3074,20 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="sleep&#40;seconds:Number&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>sleep</strong>(seconds : <a href="Number.html">Number</a>)
+        def <strong>sleep</strong>(seconds : <a href="Number.html">Number</a>)
 
         <a class="method-permalink" href="#sleep%28seconds%3ANumber%29-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Blocks the current fiber for the specified number of seconds.</p>
+
+<p>While this fiber is waiting this time other ready-to-execute
+fibers might start their execution.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/concurrent/concurrent.cr#L4" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/concurrent/concurrent.cr#L8" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3078,15 +3095,20 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="sleep&#40;time:Time::Span&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>sleep</strong>(time : <a href="Time/Span.html">Time::Span</a>)
+        def <strong>sleep</strong>(time : <a href="Time/Span.html">Time::Span</a>)
 
         <a class="method-permalink" href="#sleep%28time%3ATime%3A%3ASpan%29-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Blocks the current Fiber for the specified time span.</p>
+
+<p>While this fiber is waiting this time other ready-to-execute
+fibers might start their execution.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/concurrent/concurrent.cr#L12" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/concurrent/concurrent.cr#L20" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3094,33 +3116,61 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="sleep-class-method">
       <div class="signature">
         
-        def self.<strong>sleep</strong>
+        def <strong>sleep</strong>
 
         <a class="method-permalink" href="#sleep-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Blocks the current fiber forever.</p>
+
+<p>Meanwhile, other ready-to-execute fibers might start their execution.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/concurrent/concurrent.cr#L16" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/concurrent/concurrent.cr#L27" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="sprintf&#40;format_string,*args&#41;:String-class-method">
+    <div class="entry-detail" id="spawn&#40;&amp;block&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>sprintf</strong>(format_string, *args) : <a href="String.html">String</a>
+        def <strong>spawn</strong>(&block)
 
-        <a class="method-permalink" href="#sprintf%28format_string%2C%2Aargs%29%3AString-class-method">#</a>
+        <a class="method-permalink" href="#spawn%28%26block%29-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns a formatted string. See <code>IO#printf</code>.</p></div>
+        <div class="doc"><p>Spawns a new fiber.</p>
+
+<p>The newly created fiber doesn't run as soon as spawned.</p>
+
+<p>Example: writing "1" every 1 second and "2" every 2 seconds for 6 seconds.</p>
+
+<pre><code>ch <span class="o">=</span> <span class="t">Channel</span>(<span class="t">Nil</span>).<span class="k">new</span>
+
+spawn <span class="k">do</span>
+  <span class="n">6</span>.times <span class="k">do</span>
+    sleep <span class="n">1</span>
+    puts <span class="n">1</span>
+  <span class="k">end</span>
+  ch.send(<span class="n">nil</span>)
+<span class="k">end</span>
+
+spawn <span class="k">do</span>
+  <span class="n">3</span>.times <span class="k">do</span>
+    sleep <span class="n">2</span>
+    puts <span class="n">2</span>
+  <span class="k">end</span>
+  ch.send(<span class="n">nil</span>)
+<span class="k">end</span>
+
+<span class="n">2</span>.times { ch.receive }</code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/concurrent/concurrent.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3128,7 +3178,7 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="sprintf&#40;format_string,args:Array|Tuple&#41;:String-class-method">
       <div class="signature">
         
-        def self.<strong>sprintf</strong>(format_string, args : <a href="Array.html">Array</a> | <a href="Tuple.html">Tuple</a>) : <a href="String.html">String</a>
+        def <strong>sprintf</strong>(format_string, args : <a href="Array.html">Array</a> | <a href="Tuple.html">Tuple</a>) : <a href="String.html">String</a>
 
         <a class="method-permalink" href="#sprintf%28format_string%2Cargs%3AArray%7CTuple%29%3AString-class-method">#</a>
       </div>
@@ -3138,7 +3188,25 @@ by a newline. Returns <em>objects</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/kernel.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L61" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sprintf&#40;format_string,*args&#41;:String-class-method">
+      <div class="signature">
+        
+        def <strong>sprintf</strong>(format_string, *args) : <a href="String.html">String</a>
+
+        <a class="method-permalink" href="#sprintf%28format_string%2C%2Aargs%29%3AString-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a formatted string. See <code>IO#printf</code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/kernel.cr#L56" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3146,7 +3214,7 @@ by a newline. Returns <em>objects</em>.</p></div>
     <div class="entry-detail" id="system&#40;command:String,args&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;&#41;:Bool-class-method">
       <div class="signature">
         
-        def self.<strong>system</strong>(command : <a href="String.html">String</a>, args = <span class="n">nil</span>) : <a href="Bool.html">Bool</a>
+        def <strong>system</strong>(command : <a href="String.html">String</a>, args = <span class="n">nil</span>) : <a href="Bool.html">Bool</a>
 
         <a class="method-permalink" href="#system%28command%3AString%2Cargs%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29%3ABool-class-method">#</a>
       </div>
@@ -3175,23 +3243,7 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/process/run.cr#L258" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="with_color&#40;color:Symbol&#41;-class-method">
-      <div class="signature">
-        
-        def self.<strong>with_color</strong>(color : <a href="Symbol.html">Symbol</a>)
-
-        <a class="method-permalink" href="#with_color%28color%3ASymbol%29-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/colorize.cr#L86" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/process/run.cr#L260" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3199,7 +3251,7 @@ its argument list.</p>
     <div class="entry-detail" id="with_color-class-method">
       <div class="signature">
         
-        def self.<strong>with_color</strong>
+        def <strong>with_color</strong>
 
         <a class="method-permalink" href="#with_color-class-method">#</a>
       </div>
@@ -3207,7 +3259,23 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/colorize.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/colorize.cr#L82" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="with_color&#40;color:Symbol&#41;-class-method">
+      <div class="signature">
+        
+        def <strong>with_color</strong>(color : <a href="Symbol.html">Symbol</a>)
+
+        <a class="method-permalink" href="#with_color%28color%3ASymbol%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/colorize.cr#L86" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3230,7 +3298,7 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/macros.cr#L72" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/macros.cr#L72" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3246,7 +3314,7 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/intrinsics.cr#L21" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/intrinsics.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3262,7 +3330,7 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/concurrent/concurrent.cr#L59" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/concurrent/concurrent.cr#L130" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3285,7 +3353,7 @@ pp [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/macros.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/macros.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3338,7 +3406,7 @@ person.full_name <span class="c"># &#61;&gt; &quot;John Doe&quot;</span></code><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/macros.cr#L43" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/macros.cr#L43" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3354,41 +3422,50 @@ person.full_name <span class="c"># &#61;&gt; &quot;John Doe&quot;</span></code><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/main.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/main.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="spawn-macro">
+    <div class="entry-detail" id="spawn&#40;call&#41;-macro">
       <div class="signature">
         
-        macro <strong>spawn</strong>
+        macro <strong>spawn</strong>(call)
 
-        <a class="method-permalink" href="#spawn-macro">#</a>
+        <a class="method-permalink" href="#spawn%28call%29-macro">#</a>
       </div>
+      
+        <div class="doc"><p>Spawns a fiber by first creating a Proc, passing the <em>call</em>'s
+expressions to it, and letting the Proc finally invoke the <em>call</em>.</p>
+
+<p>Compare this:</p>
+
+<pre><code>i <span class="o">=</span> <span class="n">0</span>
+<span class="k">while</span> i <span class="o"><</span> <span class="n">5</span>
+  spawn { print(i) }
+  i += <span class="n">1</span>
+<span class="k">end</span>
+<span class="t">Fiber</span>.<span class="k">yield</span>
+<span class="c"># Output: 55555</span></code></pre>
+
+<p>To this:</p>
+
+<pre><code>i <span class="o">=</span> <span class="n">0</span>
+<span class="k">while</span> i <span class="o"><</span> <span class="n">5</span>
+  spawn print(i)
+  i += <span class="n">1</span>
+<span class="k">end</span>
+<span class="t">Fiber</span>.<span class="k">yield</span>
+<span class="c"># Output: 01234</span></code></pre>
+
+<p>This is because in the first case all spawned fibers refer to
+the same local variable, while in the second example copies of
+<code>i</code> are passed to a Proc that eventually invokes the call.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/concurrent/concurrent.cr#L20" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="spawn&#40;exp&#41;-macro">
-      <div class="signature">
-        
-        macro <strong>spawn</strong>(exp)
-
-        <a class="method-permalink" href="#spawn%28exp%29-macro">#</a>
-      </div>
-      
-        <div class="doc"><p>TODO: this doesn't work if a Call has a block or named arguments... yet</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/concurrent/concurrent.cr#L37" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/concurrent/concurrent.cr#L94" target="_blank">View source</a>]
         
       </div>
     </div>

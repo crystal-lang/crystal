@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2142,7 +2167,7 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/secure_random.cr" target="_blank">secure_random.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/secure_random.cr" target="_blank">secure_random.cr</a>
     
     <br/>
   
@@ -2155,30 +2180,30 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#base64%28n%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%3AInt%29%3AString-class-method" class="signature"><strong>.base64</strong>(n = <span class="n">16</span> : Int) : String</a>
+        <a href="#base64%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%29%3AString-class-method" class="signature"><strong>.base64</strong>(n : Int = <span class="n">16</span>) : String</a>
         
           <div class="summary"><p>Generates <em>n</em> random bytes that are encoded into Base64.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#hex%28n%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%3AInt%29%3AString-class-method" class="signature"><strong>.hex</strong>(n = <span class="n">16</span> : Int) : String</a>
+        <a href="#hex%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%29%3AString-class-method" class="signature"><strong>.hex</strong>(n : Int = <span class="n">16</span>) : String</a>
         
           <div class="summary"><p>Generates a hexadecimal string based on <em>n</em> random bytes.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#random_bytes%28n%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%3AInt%29%3ASlice%28UInt8%29-class-method" class="signature"><strong>.random_bytes</strong>(n = <span class="n">16</span> : Int) : Slice(UInt8)</a>
+        <a href="#random_bytes%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%29%3ASlice%28UInt8%29-class-method" class="signature"><strong>.random_bytes</strong>(n : Int = <span class="n">16</span>) : Slice(UInt8)</a>
         
           <div class="summary"><p>Generates a slice filled with <em>n</em> random bytes.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#urlsafe_base64%28n%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%3AInt%2Cpadding%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29%3AString-class-method" class="signature"><strong>.urlsafe_base64</strong>(n = <span class="n">16</span> : Int, padding = <span class="n">false</span>) : String</a>
+        <a href="#urlsafe_base64%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%2Cpadding%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29%3AString-class-method" class="signature"><strong>.urlsafe_base64</strong>(n : Int = <span class="n">16</span>, padding = <span class="n">false</span>) : String</a>
         
-          <div class="summary"><p>URL-safe variant of <code><a href="SecureRandom.html#base64%28n%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%3AInt%29%3AString-class-method">#base64</a></code></p></div>
+          <div class="summary"><p>URL-safe variant of <code><a href="SecureRandom.html#base64%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%29%3AString-class-method">#base64</a></code></p></div>
         
       </li>
     
@@ -2204,12 +2229,12 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="base64&#40;n&#61;&lt;spanclass&#61;&quot;n&quot;&gt;16&lt;/span&gt;:Int&#41;:String-class-method">
+    <div class="entry-detail" id="base64&#40;n:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;16&lt;/span&gt;&#41;:String-class-method">
       <div class="signature">
         
-        def self.<strong>base64</strong>(n = <span class="n">16</span> : <a href="Int.html">Int</a>) : <a href="String.html">String</a>
+        def self.<strong>base64</strong>(n : <a href="Int.html">Int</a> = <span class="n">16</span>) : <a href="String.html">String</a>
 
-        <a class="method-permalink" href="#base64%28n%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%3AInt%29%3AString-class-method">#</a>
+        <a class="method-permalink" href="#base64%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%29%3AString-class-method">#</a>
       </div>
       
         <div class="doc"><p>Generates <em>n</em> random bytes that are encoded into Base64.</p>
@@ -2221,17 +2246,17 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/secure_random.cr#L21" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/secure_random.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="hex&#40;n&#61;&lt;spanclass&#61;&quot;n&quot;&gt;16&lt;/span&gt;:Int&#41;:String-class-method">
+    <div class="entry-detail" id="hex&#40;n:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;16&lt;/span&gt;&#41;:String-class-method">
       <div class="signature">
         
-        def self.<strong>hex</strong>(n = <span class="n">16</span> : <a href="Int.html">Int</a>) : <a href="String.html">String</a>
+        def self.<strong>hex</strong>(n : <a href="Int.html">Int</a> = <span class="n">16</span>) : <a href="String.html">String</a>
 
-        <a class="method-permalink" href="#hex%28n%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%3AInt%29%3AString-class-method">#</a>
+        <a class="method-permalink" href="#hex%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%29%3AString-class-method">#</a>
       </div>
       
         <div class="doc"><p>Generates a hexadecimal string based on <em>n</em> random bytes.</p>
@@ -2244,17 +2269,17 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/secure_random.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/secure_random.cr#L46" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="random_bytes&#40;n&#61;&lt;spanclass&#61;&quot;n&quot;&gt;16&lt;/span&gt;:Int&#41;:Slice&#40;UInt8&#41;-class-method">
+    <div class="entry-detail" id="random_bytes&#40;n:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;16&lt;/span&gt;&#41;:Slice&#40;UInt8&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>random_bytes</strong>(n = <span class="n">16</span> : <a href="Int.html">Int</a>) : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>)
+        def self.<strong>random_bytes</strong>(n : <a href="Int.html">Int</a> = <span class="n">16</span>) : <a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>)
 
-        <a class="method-permalink" href="#random_bytes%28n%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%3AInt%29%3ASlice%28UInt8%29-class-method">#</a>
+        <a class="method-permalink" href="#random_bytes%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%29%3ASlice%28UInt8%29-class-method">#</a>
       </div>
       
         <div class="doc"><p>Generates a slice filled with <em>n</em> random bytes.</p>
@@ -2265,20 +2290,20 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/secure_random.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/secure_random.cr#L56" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="urlsafe_base64&#40;n&#61;&lt;spanclass&#61;&quot;n&quot;&gt;16&lt;/span&gt;:Int,padding&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;&#41;:String-class-method">
+    <div class="entry-detail" id="urlsafe_base64&#40;n:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;16&lt;/span&gt;,padding&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;&#41;:String-class-method">
       <div class="signature">
         
-        def self.<strong>urlsafe_base64</strong>(n = <span class="n">16</span> : <a href="Int.html">Int</a>, padding = <span class="n">false</span>) : <a href="String.html">String</a>
+        def self.<strong>urlsafe_base64</strong>(n : <a href="Int.html">Int</a> = <span class="n">16</span>, padding = <span class="n">false</span>) : <a href="String.html">String</a>
 
-        <a class="method-permalink" href="#urlsafe_base64%28n%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%3AInt%2Cpadding%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29%3AString-class-method">#</a>
+        <a class="method-permalink" href="#urlsafe_base64%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%2Cpadding%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29%3AString-class-method">#</a>
       </div>
       
-        <div class="doc"><p>URL-safe variant of <code><a href="SecureRandom.html#base64%28n%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%3AInt%29%3AString-class-method">#base64</a></code></p>
+        <div class="doc"><p>URL-safe variant of <code><a href="SecureRandom.html#base64%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E16%3C%2Fspan%3E%29%3AString-class-method">#base64</a></code></p>
 
 <p>Check <code><a href="Base64.html#urlsafe_encode%28data%2Cpadding%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method">Base64#urlsafe_encode</a></code> for details.</p>
 
@@ -2289,7 +2314,7 @@ It uses the RNG (random number generator) of libcrypto (OpenSSL).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/secure_random.cr#L34" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/secure_random.cr#L34" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2312,7 +2337,7 @@ for the used algorithm and its implications.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/secure_random.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/secure_random.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>

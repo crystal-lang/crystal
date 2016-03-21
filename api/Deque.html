@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" current" data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2158,7 +2183,7 @@ and remove the item at the beginning of the queue.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr" target="_blank">deque.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr" target="_blank">deque.cr</a>
     
     <br/>
   
@@ -2286,6 +2311,13 @@ and remove the item at the beginning of the queue.</p>
         <a href="#concat%28other%3AEnumerable%28T%29%29-instance-method" class="signature"><strong>#concat</strong>(other : Enumerable(T))</a>
         
           <div class="summary"><p>Appends the elements of <em>other</em> to <code>self</code>, and returns <code>self</code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#delete%28obj%29-instance-method" class="signature"><strong>#delete</strong>(obj)</a>
+        
+          <div class="summary"><p>Removes all items from <code>self</code> that are equal to <em>obj</em>.</p></div>
         
       </li>
     
@@ -2447,7 +2479,7 @@ and remove the item at the beginning of the queue.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#rotate%21%28n%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%3AInt%29-instance-method" class="signature"><strong>#rotate!</strong>(n = <span class="n">1</span> : Int)</a>
+        <a href="#rotate%21%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#rotate!</strong>(n : Int = <span class="n">1</span>)</a>
         
           <div class="summary"><p>Rotates this deque in place so that the element at <code>n</code> becomes first.</p></div>
         
@@ -2548,11 +2580,7 @@ and remove the item at the beginning of the queue.</p>
   
     <a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method" class="tooltip">
       <span>>=(other : T)</span>
-    >=</a>, 
-  
-    <a href="Comparable.html#between%3F%28min%2Cmax%29-instance-method" class="tooltip">
-      <span>between?(min, max)</span>
-    between?</a>
+    >=</a>
   
 
 
@@ -2643,7 +2671,7 @@ and remove the item at the beginning of the queue.</p>
     find</a>, 
   
     <a href="Enumerable.html#first-instance-method" class="tooltip">
-      <span>first</span>
+      <span>first<br/>first(count : Int)</span>
     first</a>, 
   
     <a href="Enumerable.html#first%3F-instance-method" class="tooltip">
@@ -2662,8 +2690,8 @@ and remove the item at the beginning of the queue.</p>
       <span>group_by(&block : T -> U)</span>
     group_by</a>, 
   
-    <a href="Enumerable.html#in_groups_of%28size%3AInt%2Cfilled_up_with%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AU%2C%26block%29-instance-method" class="tooltip">
-      <span>in_groups_of(size : Int, filled_up_with = <span class="n">nil</span> : U, &block)<br/>in_groups_of(size : Int, filled_up_with = <span class="n">nil</span> : U)</span>
+    <a href="Enumerable.html#in_groups_of%28size%3AInt%2Cfilled_up_with%3AU%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%2C%26block%29-instance-method" class="tooltip">
+      <span>in_groups_of(size : Int, filled_up_with : U = <span class="n">nil</span>, &block)<br/>in_groups_of(size : Int, filled_up_with : U = <span class="n">nil</span>)</span>
     in_groups_of</a>, 
   
     <a href="Enumerable.html#includes%3F%28obj%29-instance-method" class="tooltip">
@@ -2774,8 +2802,8 @@ and remove the item at the beginning of the queue.</p>
       <span>partition(&block)</span>
     partition</a>, 
   
-    <a href="Enumerable.html#reduce%28%26block%29-instance-method" class="tooltip">
-      <span>reduce(&block)<br/>reduce(memo, &block)</span>
+    <a href="Enumerable.html#reduce%28memo%2C%26block%29-instance-method" class="tooltip">
+      <span>reduce(memo, &block)<br/>reduce(&block)</span>
     reduce</a>, 
   
     <a href="Enumerable.html#reject%28%26block%3AT-%3E%29-instance-method" class="tooltip">
@@ -2801,10 +2829,6 @@ and remove the item at the beginning of the queue.</p>
     <a href="Enumerable.html#sum%28initial%2C%26block%29-instance-method" class="tooltip">
       <span>sum(initial, &block)<br/>sum(&block)<br/>sum(initial)<br/>sum</span>
     sum</a>, 
-  
-    <a href="Enumerable.html#take%28count%3AInt%29-instance-method" class="tooltip">
-      <span>take(count : Int)</span>
-    take</a>, 
   
     <a href="Enumerable.html#take_while%28%26block%29-instance-method" class="tooltip">
       <span>take_while(&block)</span>
@@ -3023,7 +3047,7 @@ and remove the item at the beginning of the queue.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L102" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L107" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3043,7 +3067,7 @@ and remove the item at the beginning of the queue.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L60" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3068,7 +3092,7 @@ deq.size <span class="c"># &#61;&gt; 0</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L46" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3086,7 +3110,7 @@ deq.size <span class="c"># &#61;&gt; 0</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L25" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L30" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3107,7 +3131,7 @@ value in that index.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L80" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L85" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3131,7 +3155,7 @@ deque is the union of the types of both the other deques.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L126" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L131" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3149,7 +3173,7 @@ deque is the union of the types of both the other deques.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L136" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L141" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3173,7 +3197,7 @@ deq <span class="o">==</span> <span class="t">Deque</span>{<span class="n">2</sp
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L115" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L120" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3194,7 +3218,7 @@ Raises <code><a href="IndexError.html">IndexError</a></code> if trying to access
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L144" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L149" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3214,7 +3238,7 @@ Raises <code><a href="IndexError.html">IndexError</a></code> if trying to access
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L159" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L164" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3235,7 +3259,7 @@ Returns <code>nil</code> if trying to access an element outside the deque's rang
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L152" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L157" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3253,7 +3277,7 @@ Returns <code>nil</code> if trying to access an element outside the deque's rang
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L175" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L180" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3271,7 +3295,7 @@ Returns <code>nil</code> if trying to access an element outside the deque's rang
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L170" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L175" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3289,7 +3313,7 @@ Returns <code>nil</code> if trying to access an element outside the deque's rang
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L187" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L192" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3310,7 +3334,7 @@ That is, it returns a deep copy of this deque.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L200" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3328,7 +3352,29 @@ That is, it returns a deep copy of this deque.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L210" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="delete&#40;obj&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>delete</strong>(obj)
+
+        <a class="method-permalink" href="#delete%28obj%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Removes all items from <code>self</code> that are equal to <em>obj</em>.</p>
+
+<pre><code>a <span class="o">=</span> <span class="t">Deque</span>{<span class="s">&quot;a&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;b&quot;</span>, <span class="s">&quot;c&quot;</span>}
+a.delete(<span class="s">&quot;b&quot;</span>)
+a <span class="c"># &#61;&gt; Deque&#123;&quot;a&quot;, &quot;c&quot;&#125;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L224" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3350,7 +3396,7 @@ a.delete_at(<span class="n">1</span>) <span class="c"># &#61;&gt; Deque&#123;1, 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L219" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L241" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3369,7 +3415,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L269" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L291" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3387,7 +3433,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L285" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L307" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3407,7 +3453,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L276" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L298" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3425,7 +3471,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L298" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L320" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3443,7 +3489,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L290" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L312" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3461,7 +3507,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L303" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L325" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3479,7 +3525,7 @@ That is, it returns a shallow copy of this deque.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L308" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L330" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3498,7 +3544,7 @@ value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L323" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L345" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3516,7 +3562,7 @@ value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L317" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L339" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3534,7 +3580,7 @@ value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L328" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L350" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3550,7 +3596,7 @@ value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L332" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L354" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3571,7 +3617,7 @@ a.insert_at(<span class="n">1</span>, <span class="n">7</span>) <span class="c">
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L344" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L366" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3587,7 +3633,7 @@ a.insert_at(<span class="n">1</span>, <span class="n">7</span>) <span class="c">
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L392" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L414" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3606,7 +3652,7 @@ returns its value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L408" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L430" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3624,7 +3670,7 @@ returns its value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L402" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L424" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3642,7 +3688,7 @@ returns its value.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L413" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L435" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3664,7 +3710,7 @@ a.pop <span class="c"># &#61;&gt; 3</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L433" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L455" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3682,7 +3728,7 @@ a.pop <span class="c"># &#61;&gt; 3</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L438" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L460" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3700,7 +3746,7 @@ a.pop <span class="c"># &#61;&gt; 3</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L457" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L479" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3718,7 +3764,7 @@ a.pop <span class="c"># &#61;&gt; 3</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L452" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L474" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3739,7 +3785,7 @@ a.push <span class="n">3</span> <span class="c"># &#61;&gt; Deque&#123;1, 2, 3&#
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L472" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L494" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3759,17 +3805,17 @@ a.push <span class="n">3</span> <span class="c"># &#61;&gt; Deque&#123;1, 2, 3&#
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L484" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L506" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="rotate&#33;&#40;n&#61;&lt;spanclass&#61;&quot;n&quot;&gt;1&lt;/span&gt;:Int&#41;-instance-method">
+    <div class="entry-detail" id="rotate&#33;&#40;n:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;1&lt;/span&gt;&#41;-instance-method">
       <div class="signature">
         
-        def <strong>rotate!</strong>(n = <span class="n">1</span> : <a href="Int.html">Int</a>)
+        def <strong>rotate!</strong>(n : <a href="Int.html">Int</a> = <span class="n">1</span>)
 
-        <a class="method-permalink" href="#rotate%21%28n%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%3AInt%29-instance-method">#</a>
+        <a class="method-permalink" href="#rotate%21%28n%3AInt%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Rotates this deque in place so that the element at <code>n</code> becomes first.</p>
@@ -3780,7 +3826,7 @@ For negative <code>n</code>, equivalent to <code>(-n).times { unshift(pop) }</co
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L495" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L517" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3802,7 +3848,7 @@ a.shift <span class="c"># &#61;&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L522" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L544" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3820,7 +3866,7 @@ a.shift <span class="c"># &#61;&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L527" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L549" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3838,7 +3884,7 @@ a.shift <span class="c"># &#61;&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L546" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L568" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3856,7 +3902,7 @@ a.shift <span class="c"># &#61;&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L541" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L563" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3876,7 +3922,7 @@ a.shift <span class="c"># &#61;&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L422" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L444" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3894,7 +3940,7 @@ a.shift <span class="c"># &#61;&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L556" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L578" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3912,7 +3958,7 @@ a.shift <span class="c"># &#61;&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L562" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L584" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3928,7 +3974,7 @@ a.shift <span class="c"># &#61;&gt; 1</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L570" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L592" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3949,7 +3995,7 @@ a.unshift <span class="n">0</span> <span class="c"># &#61;&gt; Deque&#123;0, 1, 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/deque.cr#L580" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/deque.cr#L602" target="_blank">View source</a>]
         
       </div>
     </div>

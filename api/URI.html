@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2157,12 +2182,12 @@ uri.to_s
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri/uri_parser.cr" target="_blank">uri/uri_parser.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri/uri_parser.cr" target="_blank">uri/uri_parser.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr" target="_blank">uri.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr" target="_blank">uri.cr</a>
     
     <br/>
   
@@ -2278,7 +2303,7 @@ uri.to_s
       </li>
     
       <li class="entry-summary">
-        <a href="#fragment%3D%28fragment%29-instance-method" class="signature"><strong>#fragment=</strong>(fragment)</a>
+        <a href="#fragment%3D%28fragment%3AString%7CNil%29-instance-method" class="signature"><strong>#fragment=</strong>(fragment : String | Nil)</a>
         
           <div class="summary"><p>Sets the fragment component of the URI.</p></div>
         
@@ -2299,7 +2324,7 @@ uri.to_s
       </li>
     
       <li class="entry-summary">
-        <a href="#host%3D%28host%29-instance-method" class="signature"><strong>#host=</strong>(host)</a>
+        <a href="#host%3D%28host%3AString%7CNil%29-instance-method" class="signature"><strong>#host=</strong>(host : String | Nil)</a>
         
           <div class="summary"><p>Sets the host component of the URI.</p></div>
         
@@ -2313,7 +2338,7 @@ uri.to_s
       </li>
     
       <li class="entry-summary">
-        <a href="#opaque%3D%28opaque%29-instance-method" class="signature"><strong>#opaque=</strong>(opaque)</a>
+        <a href="#opaque%3D%28opaque%3AString%7CNil%29-instance-method" class="signature"><strong>#opaque=</strong>(opaque : String | Nil)</a>
         
           <div class="summary"><p>Sets the opaque component of the URI.</p></div>
         
@@ -2327,7 +2352,7 @@ uri.to_s
       </li>
     
       <li class="entry-summary">
-        <a href="#password%3D%28password%29-instance-method" class="signature"><strong>#password=</strong>(password)</a>
+        <a href="#password%3D%28password%3AString%7CNil%29-instance-method" class="signature"><strong>#password=</strong>(password : String | Nil)</a>
         
           <div class="summary"><p>Sets the password component of the URI.</p></div>
         
@@ -2341,7 +2366,7 @@ uri.to_s
       </li>
     
       <li class="entry-summary">
-        <a href="#path%3D%28path%29-instance-method" class="signature"><strong>#path=</strong>(path)</a>
+        <a href="#path%3D%28path%3AString%7CNil%29-instance-method" class="signature"><strong>#path=</strong>(path : String | Nil)</a>
         
           <div class="summary"><p>Sets the path component of the URI.</p></div>
         
@@ -2355,7 +2380,7 @@ uri.to_s
       </li>
     
       <li class="entry-summary">
-        <a href="#port%3D%28port%29-instance-method" class="signature"><strong>#port=</strong>(port)</a>
+        <a href="#port%3D%28port%3AInt32%7CNil%29-instance-method" class="signature"><strong>#port=</strong>(port : Int32 | Nil)</a>
         
           <div class="summary"><p>Sets the port component of the URI.</p></div>
         
@@ -2369,7 +2394,7 @@ uri.to_s
       </li>
     
       <li class="entry-summary">
-        <a href="#query%3D%28query%29-instance-method" class="signature"><strong>#query=</strong>(query)</a>
+        <a href="#query%3D%28query%3AString%7CNil%29-instance-method" class="signature"><strong>#query=</strong>(query : String | Nil)</a>
         
           <div class="summary"><p>Sets the query component of the URI.</p></div>
         
@@ -2383,7 +2408,7 @@ uri.to_s
       </li>
     
       <li class="entry-summary">
-        <a href="#scheme%3D%28scheme%29-instance-method" class="signature"><strong>#scheme=</strong>(scheme)</a>
+        <a href="#scheme%3D%28scheme%3AString%7CNil%29-instance-method" class="signature"><strong>#scheme=</strong>(scheme : String | Nil)</a>
         
           <div class="summary"><p>Sets the scheme component of the URI.</p></div>
         
@@ -2402,7 +2427,7 @@ uri.to_s
       </li>
     
       <li class="entry-summary">
-        <a href="#user%3D%28user%29-instance-method" class="signature"><strong>#user=</strong>(user)</a>
+        <a href="#user%3D%28user%3AString%7CNil%29-instance-method" class="signature"><strong>#user=</strong>(user : String | Nil)</a>
         
           <div class="summary"><p>Sets the user component of the URI.</p></div>
         
@@ -2622,7 +2647,7 @@ encoded to '%2B'. e.g. <code>application/x-www-form-urlencoded</code> want this 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L233" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L233" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2640,7 +2665,7 @@ encoded to '%2B'. e.g. <code>application/x-www-form-urlencoded</code> want this 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L253" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L253" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2668,7 +2693,7 @@ whose code is less than <code>0x80</code>. The characters that block returns
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L248" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L248" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2688,7 +2713,7 @@ whose code is less than <code>0x80</code>. The characters that block returns
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L260" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L260" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2708,7 +2733,7 @@ whose code is less than <code>0x80</code>. The characters that block returns
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L183" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2729,7 +2754,7 @@ whose code is less than <code>0x80</code>. The characters that block returns
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L280" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L280" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2751,7 +2776,7 @@ are not unescaped, other characters are unescaped.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L203" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L203" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2769,7 +2794,7 @@ are not unescaped, other characters are unescaped.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L208" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L208" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2789,7 +2814,7 @@ are not unescaped, other characters are unescaped.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L215" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L215" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2813,7 +2838,7 @@ e.g. <code>application/x-www-form-urlencoded</code> wants this replace.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L194" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L194" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2832,7 +2857,7 @@ Unescapes one character. Private API</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L314" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L314" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2852,7 +2877,7 @@ Unescapes one character. Private API</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L289" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L289" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2868,7 +2893,7 @@ Unescapes one character. Private API</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L121" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L121" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2893,17 +2918,17 @@ Unescapes one character. Private API</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L106" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L106" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="fragment&#61;&#40;fragment&#41;-instance-method">
+    <div class="entry-detail" id="fragment&#61;&#40;fragment:String|Nil&#41;-instance-method">
       <div class="signature">
         
-        def <strong>fragment=</strong>(fragment)
+        def <strong>fragment=</strong>(fragment : <a href="String.html">String</a> | <a href="Nil.html">Nil</a>)
 
-        <a class="method-permalink" href="#fragment%3D%28fragment%29-instance-method">#</a>
+        <a class="method-permalink" href="#fragment%3D%28fragment%3AString%7CNil%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Sets the fragment component of the URI.</p></div>
@@ -2911,7 +2936,7 @@ Unescapes one character. Private API</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L109" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L109" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2932,7 +2957,7 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L130" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L130" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2952,17 +2977,17 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L46" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="host&#61;&#40;host&#41;-instance-method">
+    <div class="entry-detail" id="host&#61;&#40;host:String|Nil&#41;-instance-method">
       <div class="signature">
         
-        def <strong>host=</strong>(host)
+        def <strong>host=</strong>(host : <a href="String.html">String</a> | <a href="Nil.html">Nil</a>)
 
-        <a class="method-permalink" href="#host%3D%28host%29-instance-method">#</a>
+        <a class="method-permalink" href="#host%3D%28host%3AString%7CNil%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Sets the host component of the URI.</p></div>
@@ -2970,7 +2995,7 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L49" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L49" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2990,17 +3015,17 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L116" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L116" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="opaque&#61;&#40;opaque&#41;-instance-method">
+    <div class="entry-detail" id="opaque&#61;&#40;opaque:String|Nil&#41;-instance-method">
       <div class="signature">
         
-        def <strong>opaque=</strong>(opaque)
+        def <strong>opaque=</strong>(opaque : <a href="String.html">String</a> | <a href="Nil.html">Nil</a>)
 
-        <a class="method-permalink" href="#opaque%3D%28opaque%29-instance-method">#</a>
+        <a class="method-permalink" href="#opaque%3D%28opaque%3AString%7CNil%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Sets the opaque component of the URI.</p></div>
@@ -3008,7 +3033,7 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L119" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L119" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3028,17 +3053,17 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L96" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="password&#61;&#40;password&#41;-instance-method">
+    <div class="entry-detail" id="password&#61;&#40;password:String|Nil&#41;-instance-method">
       <div class="signature">
         
-        def <strong>password=</strong>(password)
+        def <strong>password=</strong>(password : <a href="String.html">String</a> | <a href="Nil.html">Nil</a>)
 
-        <a class="method-permalink" href="#password%3D%28password%29-instance-method">#</a>
+        <a class="method-permalink" href="#password%3D%28password%3AString%7CNil%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Sets the password component of the URI.</p></div>
@@ -3046,7 +3071,7 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L99" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L99" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3066,17 +3091,17 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="path&#61;&#40;path&#41;-instance-method">
+    <div class="entry-detail" id="path&#61;&#40;path:String|Nil&#41;-instance-method">
       <div class="signature">
         
-        def <strong>path=</strong>(path)
+        def <strong>path=</strong>(path : <a href="String.html">String</a> | <a href="Nil.html">Nil</a>)
 
-        <a class="method-permalink" href="#path%3D%28path%29-instance-method">#</a>
+        <a class="method-permalink" href="#path%3D%28path%3AString%7CNil%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Sets the path component of the URI.</p></div>
@@ -3084,7 +3109,7 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L69" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L69" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3104,17 +3129,17 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L56" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="port&#61;&#40;port&#41;-instance-method">
+    <div class="entry-detail" id="port&#61;&#40;port:Int32|Nil&#41;-instance-method">
       <div class="signature">
         
-        def <strong>port=</strong>(port)
+        def <strong>port=</strong>(port : <a href="Int32.html">Int32</a> | <a href="Nil.html">Nil</a>)
 
-        <a class="method-permalink" href="#port%3D%28port%29-instance-method">#</a>
+        <a class="method-permalink" href="#port%3D%28port%3AInt32%7CNil%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Sets the port component of the URI.</p></div>
@@ -3122,7 +3147,7 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L59" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L59" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3142,17 +3167,17 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L76" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L76" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="query&#61;&#40;query&#41;-instance-method">
+    <div class="entry-detail" id="query&#61;&#40;query:String|Nil&#41;-instance-method">
       <div class="signature">
         
-        def <strong>query=</strong>(query)
+        def <strong>query=</strong>(query : <a href="String.html">String</a> | <a href="Nil.html">Nil</a>)
 
-        <a class="method-permalink" href="#query%3D%28query%29-instance-method">#</a>
+        <a class="method-permalink" href="#query%3D%28query%3AString%7CNil%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Sets the query component of the URI.</p></div>
@@ -3160,7 +3185,7 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L79" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3181,17 +3206,17 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L36" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L36" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="scheme&#61;&#40;scheme&#41;-instance-method">
+    <div class="entry-detail" id="scheme&#61;&#40;scheme:String|Nil&#41;-instance-method">
       <div class="signature">
         
-        def <strong>scheme=</strong>(scheme)
+        def <strong>scheme=</strong>(scheme : <a href="String.html">String</a> | <a href="Nil.html">Nil</a>)
 
-        <a class="method-permalink" href="#scheme%3D%28scheme%29-instance-method">#</a>
+        <a class="method-permalink" href="#scheme%3D%28scheme%3AString%7CNil%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Sets the scheme component of the URI.</p></div>
@@ -3199,7 +3224,7 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L39" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L39" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3215,7 +3240,7 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L137" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L137" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3235,17 +3260,17 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L86" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L86" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="user&#61;&#40;user&#41;-instance-method">
+    <div class="entry-detail" id="user&#61;&#40;user:String|Nil&#41;-instance-method">
       <div class="signature">
         
-        def <strong>user=</strong>(user)
+        def <strong>user=</strong>(user : <a href="String.html">String</a> | <a href="Nil.html">Nil</a>)
 
-        <a class="method-permalink" href="#user%3D%28user%29-instance-method">#</a>
+        <a class="method-permalink" href="#user%3D%28user%3AString%7CNil%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Sets the user component of the URI.</p></div>
@@ -3253,7 +3278,7 @@ uri.full_path <span class="c"># &#61;&gt; &quot;/posts?id&#61;30&amp;limit&#61;5
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L89" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L89" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3274,7 +3299,7 @@ uri.userinfo <span class="c"># &#61;&gt; &quot;admin:password&quot;</span></code
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/uri.cr#L301" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/uri.cr#L301" target="_blank">View source</a>]
         
       </div>
     </div>

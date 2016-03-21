@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="../Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="../Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="../ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="../Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="../Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="../Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="../Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="../Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="../Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="../Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="../Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="../Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="../Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="../Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="../Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="../Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="../Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="../Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2177,7 +2202,7 @@ end</code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr" target="_blank">docs/macros.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr" target="_blank">docs/macros.cr</a>
     
     <br/>
   
@@ -2285,14 +2310,14 @@ end</code></pre>
       <li class="entry-summary">
         <a href="#split%3AMacros%3A%3AArrayLiteral%28StringLiteral%29-instance-method" class="signature"><strong>#split</strong> : Macros::ArrayLiteral(StringLiteral)</a>
         
-          <div class="summary"><p>Similar to <code><a href="../String.html#split%28limit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AInt32%7CNil%29-instance-method">String#split</a></code>.</p></div>
+          <div class="summary"><p>Similar to <code><a href="../String.html#split%28limit%3AInt32%7CNil%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">String#split</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#split%28node%3AASTNode%29%3AMacros%3A%3AArrayLiteral%28StringLiteral%29-instance-method" class="signature"><strong>#split</strong>(node : ASTNode) : Macros::ArrayLiteral(StringLiteral)</a>
         
-          <div class="summary"><p>Similar to <code><a href="../String.html#split%28limit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AInt32%7CNil%29-instance-method">String#split</a></code>.</p></div>
+          <div class="summary"><p>Similar to <code><a href="../String.html#split%28limit%3AInt32%7CNil%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">String#split</a></code>.</p></div>
         
       </li>
     
@@ -2569,7 +2594,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L997" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1001" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2587,7 +2612,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L993" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L997" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2605,7 +2630,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L989" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L993" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2623,7 +2648,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1001" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1005" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2641,7 +2666,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1005" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1009" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2659,7 +2684,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1009" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1013" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2677,7 +2702,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1013" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1017" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2695,7 +2720,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1017" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1021" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2713,7 +2738,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1021" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1025" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2731,7 +2756,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1025" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1029" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2749,7 +2774,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L985" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L989" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2767,7 +2792,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1033" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1037" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2785,7 +2810,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1029" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1033" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2798,12 +2823,12 @@ end</code></pre>
         <a class="method-permalink" href="#split%3AMacros%3A%3AArrayLiteral%28StringLiteral%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Similar to <code><a href="../String.html#split%28limit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AInt32%7CNil%29-instance-method">String#split</a></code>.</p></div>
+        <div class="doc"><p>Similar to <code><a href="../String.html#split%28limit%3AInt32%7CNil%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">String#split</a></code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1037" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1041" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2816,12 +2841,12 @@ end</code></pre>
         <a class="method-permalink" href="#split%28node%3AASTNode%29%3AMacros%3A%3AArrayLiteral%28StringLiteral%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Similar to <code><a href="../String.html#split%28limit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3AInt32%7CNil%29-instance-method">String#split</a></code>.</p></div>
+        <div class="doc"><p>Similar to <code><a href="../String.html#split%28limit%3AInt32%7CNil%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">String#split</a></code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1041" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1045" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2839,7 +2864,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1045" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1049" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2857,7 +2882,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1049" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1053" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2875,7 +2900,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1053" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1057" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2893,7 +2918,7 @@ end</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/docs/macros.cr#L1057" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/docs/macros.cr#L1061" target="_blank">View source</a>]
         
       </div>
     </div>

@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="../Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="../Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="../ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="../Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="../Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="../Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="../Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="../Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="../Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="../Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="../Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="../Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="../Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="../Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="../Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="../Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="../Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="../Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2133,7 +2158,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr" target="_blank">xml/node.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr" target="_blank">xml/node.cr</a>
     
     <br/>
   
@@ -2163,7 +2188,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28node%3ALibXML%3A%3ADocPtr%29-class-method" class="signature"><strong>.new</strong>(node : LibXML::DocPtr)</a>
+        <a href="#new%28node%3APointer%28LibXML%3A%3ADoc%29%29-class-method" class="signature"><strong>.new</strong>(node : Pointer(LibXML::Doc))</a>
         
       </li>
     
@@ -2241,6 +2266,13 @@
     
       <li class="entry-summary">
         <a href="#element%3F-instance-method" class="signature"><strong>#element?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#encoding-instance-method" class="signature"><strong>#encoding</strong></a>
+        
+          <div class="summary"><p>Returns the encoding of this node's document</p></div>
         
       </li>
     
@@ -2375,17 +2407,24 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#to_xml%28indent%3D%3Cspanclass%3D%22n%22%3E2%3C%2Fspan%3E%3AInt%2Cindent_text%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2Coptions%3D%3Cspanclass%3D%22t%22%3ESaveOptions%3C%2Fspan%3E.xml_default%3ASaveOptions%29-instance-method" class="signature"><strong>#to_xml</strong>(indent = <span class="n">2</span> : Int, indent_text = <span class="s">&quot; &quot;</span>, options = <span class="t">SaveOptions</span>.xml_default : SaveOptions)</a>
+        <a href="#to_xml%28indent%3AInt%3D%3Cspanclass%3D%22n%22%3E2%3C%2Fspan%3E%2Cindent_text%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2Coptions%3ASaveOptions%3D%3Cspanclass%3D%22t%22%3ESaveOptions%3C%2Fspan%3E.xml_default%29-instance-method" class="signature"><strong>#to_xml</strong>(indent : Int = <span class="n">2</span>, indent_text = <span class="s">&quot; &quot;</span>, options : SaveOptions = <span class="t">SaveOptions</span>.xml_default)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#to_xml%28io%3AIO%2Cindent%3D%3Cspanclass%3D%22n%22%3E2%3C%2Fspan%3E%2Cindent_text%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2Coptions%3D%3Cspanclass%3D%22t%22%3ESaveOptions%3C%2Fspan%3E.xml_default%3ASaveOptions%29-instance-method" class="signature"><strong>#to_xml</strong>(io : IO, indent = <span class="n">2</span>, indent_text = <span class="s">&quot; &quot;</span>, options = <span class="t">SaveOptions</span>.xml_default : SaveOptions)</a>
+        <a href="#to_xml%28io%3AIO%2Cindent%3D%3Cspanclass%3D%22n%22%3E2%3C%2Fspan%3E%2Cindent_text%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2Coptions%3ASaveOptions%3D%3Cspanclass%3D%22t%22%3ESaveOptions%3C%2Fspan%3E.xml_default%29-instance-method" class="signature"><strong>#to_xml</strong>(io : IO, indent = <span class="n">2</span>, indent_text = <span class="s">&quot; &quot;</span>, options : SaveOptions = <span class="t">SaveOptions</span>.xml_default)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#type-instance-method" class="signature"><strong>#type</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#version-instance-method" class="signature"><strong>#version</strong></a>
+        
+          <div class="summary"><p>Returns the version of this node's document</p></div>
         
       </li>
     
@@ -2629,23 +2668,23 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L4" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="new&#40;node:LibXML::DocPtr&#41;-class-method">
+    <div class="entry-detail" id="new&#40;node:Pointer&#40;LibXML::Doc&#41;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(node : LibXML::DocPtr)
+        def self.<strong>new</strong>(node : <a href="../Pointer.html">Pointer</a>(LibXML::Doc))
 
-        <a class="method-permalink" href="#new%28node%3ALibXML%3A%3ADocPtr%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28node%3APointer%28LibXML%3A%3ADoc%29%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L12" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L14" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2661,7 +2700,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L16" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L18" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2682,7 +2721,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L27" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L29" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2698,7 +2737,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2714,7 +2753,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L23" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L25" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2730,7 +2769,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L35" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L37" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2746,7 +2785,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L31" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L33" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2762,7 +2801,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L39" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2778,7 +2817,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L43" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L45" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2794,7 +2833,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L59" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L61" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2810,7 +2849,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L63" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2826,7 +2865,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L72" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L74" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2842,7 +2881,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L76" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L78" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2858,7 +2897,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L80" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2874,7 +2913,25 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L84" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L106" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="encoding-instance-method">
+      <div class="signature">
+        
+        def <strong>encoding</strong>
+
+        <a class="method-permalink" href="#encoding-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the encoding of this node's document</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L87" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2890,7 +2947,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L389" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L411" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2906,7 +2963,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L88" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L110" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2922,7 +2979,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L99" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L121" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2938,7 +2995,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L103" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L125" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2954,7 +3011,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L107" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L129" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2970,7 +3027,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L111" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L133" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2986,7 +3043,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L191" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L213" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3002,7 +3059,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L227" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3018,7 +3075,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L212" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L234" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3034,7 +3091,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L222" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L244" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3050,7 +3107,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L234" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L256" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3066,7 +3123,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L171" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L193" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3082,7 +3139,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L180" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L202" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3098,7 +3155,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L176" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L198" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3114,7 +3171,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L251" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L273" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3130,7 +3187,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L255" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L277" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3146,7 +3203,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L260" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L282" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3162,7 +3219,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L265" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L287" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3178,7 +3235,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L276" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L298" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3194,7 +3251,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L280" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L302" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3210,7 +3267,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L284" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L306" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3226,7 +3283,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L289" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L311" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3242,7 +3299,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L293" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L315" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3258,7 +3315,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L297" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L319" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3274,7 +3331,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L301" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L323" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3290,39 +3347,39 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L345" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L367" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="to_xml&#40;indent&#61;&lt;spanclass&#61;&quot;n&quot;&gt;2&lt;/span&gt;:Int,indent_text&#61;&lt;spanclass&#61;&quot;s&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;,options&#61;&lt;spanclass&#61;&quot;t&quot;&gt;SaveOptions&lt;/span&gt;.xml_default:SaveOptions&#41;-instance-method">
+    <div class="entry-detail" id="to_xml&#40;indent:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;2&lt;/span&gt;,indent_text&#61;&lt;spanclass&#61;&quot;s&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;,options:SaveOptions&#61;&lt;spanclass&#61;&quot;t&quot;&gt;SaveOptions&lt;/span&gt;.xml_default&#41;-instance-method">
       <div class="signature">
         
-        def <strong>to_xml</strong>(indent = <span class="n">2</span> : <a href="../Int.html">Int</a>, indent_text = <span class="s">&quot; &quot;</span>, options = <span class="t">SaveOptions</span>.xml_default : <a href="../XML/SaveOptions.html">SaveOptions</a>)
+        def <strong>to_xml</strong>(indent : <a href="../Int.html">Int</a> = <span class="n">2</span>, indent_text = <span class="s">&quot; &quot;</span>, options : <a href="../XML/SaveOptions.html">SaveOptions</a> = <span class="t">SaveOptions</span>.xml_default)
 
-        <a class="method-permalink" href="#to_xml%28indent%3D%3Cspanclass%3D%22n%22%3E2%3C%2Fspan%3E%3AInt%2Cindent_text%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2Coptions%3D%3Cspanclass%3D%22t%22%3ESaveOptions%3C%2Fspan%3E.xml_default%3ASaveOptions%29-instance-method">#</a>
+        <a class="method-permalink" href="#to_xml%28indent%3AInt%3D%3Cspanclass%3D%22n%22%3E2%3C%2Fspan%3E%2Cindent_text%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2Coptions%3ASaveOptions%3D%3Cspanclass%3D%22t%22%3ESaveOptions%3C%2Fspan%3E.xml_default%29-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L305" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L327" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="to_xml&#40;io:IO,indent&#61;&lt;spanclass&#61;&quot;n&quot;&gt;2&lt;/span&gt;,indent_text&#61;&lt;spanclass&#61;&quot;s&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;,options&#61;&lt;spanclass&#61;&quot;t&quot;&gt;SaveOptions&lt;/span&gt;.xml_default:SaveOptions&#41;-instance-method">
+    <div class="entry-detail" id="to_xml&#40;io:IO,indent&#61;&lt;spanclass&#61;&quot;n&quot;&gt;2&lt;/span&gt;,indent_text&#61;&lt;spanclass&#61;&quot;s&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;,options:SaveOptions&#61;&lt;spanclass&#61;&quot;t&quot;&gt;SaveOptions&lt;/span&gt;.xml_default&#41;-instance-method">
       <div class="signature">
         
-        def <strong>to_xml</strong>(io : <a href="../IO.html">IO</a>, indent = <span class="n">2</span>, indent_text = <span class="s">&quot; &quot;</span>, options = <span class="t">SaveOptions</span>.xml_default : <a href="../XML/SaveOptions.html">SaveOptions</a>)
+        def <strong>to_xml</strong>(io : <a href="../IO.html">IO</a>, indent = <span class="n">2</span>, indent_text = <span class="s">&quot; &quot;</span>, options : <a href="../XML/SaveOptions.html">SaveOptions</a> = <span class="t">SaveOptions</span>.xml_default)
 
-        <a class="method-permalink" href="#to_xml%28io%3AIO%2Cindent%3D%3Cspanclass%3D%22n%22%3E2%3C%2Fspan%3E%2Cindent_text%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2Coptions%3D%3Cspanclass%3D%22t%22%3ESaveOptions%3C%2Fspan%3E.xml_default%3ASaveOptions%29-instance-method">#</a>
+        <a class="method-permalink" href="#to_xml%28io%3AIO%2Cindent%3D%3Cspanclass%3D%22n%22%3E2%3C%2Fspan%3E%2Cindent_text%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%2Coptions%3ASaveOptions%3D%3Cspanclass%3D%22t%22%3ESaveOptions%3C%2Fspan%3E.xml_default%29-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L314" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L336" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3338,7 +3395,25 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L349" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L371" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="version-instance-method">
+      <div class="signature">
+        
+        def <strong>version</strong>
+
+        <a class="method-permalink" href="#version-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the version of this node's document</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L97" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3354,7 +3429,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L353" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L375" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3370,7 +3445,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L357" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L379" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3386,7 +3461,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L364" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L386" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3402,7 +3477,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L368" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L390" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3418,7 +3493,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L376" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L398" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3434,7 +3509,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L372" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L394" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3450,7 +3525,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/xml/node.cr#L380" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/xml/node.cr#L402" target="_blank">View source</a>]
         
       </div>
     </div>

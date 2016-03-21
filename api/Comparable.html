@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2123,8 +2148,7 @@
 another object, returning -1, 0, or +1 depending on whether the receiver is less than,
 equal to, or greater than the other object.</p>
 
-<p>Comparable uses <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> to implement the conventional comparison operators (<code><a href="Comparable.html#%3C%28other%3AT%29-instance-method">#<</a></code>, <code><a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method">#<=</a></code>, <code><a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method">#==</a></code>, <code><a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method">#>=</a></code>, and <code><a href="Comparable.html#%3E%28other%3AT%29-instance-method">#></a></code>)
-and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance-method">#between?</a></code>.</p>
+<p>Comparable uses <code><a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method">#<=></a></code> to implement the conventional comparison operators (<code><a href="Comparable.html#%3C%28other%3AT%29-instance-method">#<</a></code>, <code><a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method">#<=</a></code>, <code><a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method">#==</a></code>, <code><a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method">#>=</a></code>, and <code><a href="Comparable.html#%3E%28other%3AT%29-instance-method">#></a></code>).</p>
 
 
 
@@ -2142,6 +2166,8 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
     <li class="other-type"><a href="Array.html">Array(T)</a></li>
   
     <li class="other-type"><a href="BigInt.html">BigInt</a></li>
+  
+    <li class="other-type"><a href="Char.html">Char</a></li>
   
     <li class="other-type"><a href="Deque.html">Deque(T)</a></li>
   
@@ -2173,7 +2199,7 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/comparable.cr" target="_blank">comparable.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/comparable.cr" target="_blank">comparable.cr</a>
     
     <br/>
   
@@ -2229,13 +2255,6 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
         
       </li>
     
-      <li class="entry-summary">
-        <a href="#between%3F%28min%2Cmax%29-instance-method" class="signature"><strong>#between?</strong>(min, max)</a>
-        
-          <div class="summary"><p>Returns <code>false</code> if <code>self <=> min</code> is less than zero or if <code>self <=> max</code> is greater than zero, <code>true</code> otherwise.</p></div>
-        
-      </li>
-    
   </ul>
 
 
@@ -2264,7 +2283,7 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/comparable.cr#L11" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/comparable.cr#L10" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2282,7 +2301,7 @@ and the method <code><a href="Comparable.html#between%3F%28min%2Cmax%29-instance
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/comparable.cr#L16" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/comparable.cr#L15" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2302,12 +2321,12 @@ or a positive number otherwise.</p>
 <p>Subclasses define this method to provide class-specific ordering.</p>
 
 <pre><code><span class="c"># Sort in a descending way</span>
-[<span class="n">4</span>, <span class="n">7</span>, <span class="n">2</span>].sort { <span class="o">|</span>x, y<span class="o">|</span> x <span class="o"><=></span> y } <span class="c"># &#61;&gt; &#91;7, 4, 2&#93;</span></code></pre></div>
+[<span class="n">4</span>, <span class="n">7</span>, <span class="n">2</span>].sort { <span class="o">|</span>x, y<span class="o">|</span> y <span class="o"><=></span> x } <span class="c"># &#61;&gt; &#91;7, 4, 2&#93;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/comparable.cr#L55" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/comparable.cr#L49" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2326,7 +2345,7 @@ Also returns <code>true</code> if this and <code>other</code> are the same objec
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/comparable.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/comparable.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2344,7 +2363,7 @@ Also returns <code>true</code> if this and <code>other</code> are the same objec
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/comparable.cr#L31" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/comparable.cr#L30" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2362,25 +2381,7 @@ Also returns <code>true</code> if this and <code>other</code> are the same objec
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/comparable.cr#L36" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="between?&#40;min,max&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>between?</strong>(min, max)
-
-        <a class="method-permalink" href="#between%3F%28min%2Cmax%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns <code>false</code> if <code>self <=> min</code> is less than zero or if <code>self <=> max</code> is greater than zero, <code>true</code> otherwise.</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/comparable.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/comparable.cr#L35" target="_blank">View source</a>]
         
       </div>
     </div>

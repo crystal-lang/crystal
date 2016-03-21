@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="../Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="../Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="../ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="../Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="../Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="../Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="../Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="../Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="../Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="../Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="../Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="../Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="../Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="../Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="../Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="../Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="../Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="../Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2133,7 +2158,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/json/token.cr" target="_blank">json/token.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/json/token.cr" target="_blank">json/token.cr</a>
     
     <br/>
   
@@ -2163,7 +2188,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#column_number%3D%28column_number%29-instance-method" class="signature"><strong>#column_number=</strong>(column_number)</a>
+        <a href="#column_number%3D%28column_number%3AInt32%29-instance-method" class="signature"><strong>#column_number=</strong>(column_number : Int32)</a>
         
       </li>
     
@@ -2173,7 +2198,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#float_value%3D%28float_value%29-instance-method" class="signature"><strong>#float_value=</strong>(float_value)</a>
+        <a href="#float_value%3D%28float_value%3AFloat64%29-instance-method" class="signature"><strong>#float_value=</strong>(float_value : Float64)</a>
         
       </li>
     
@@ -2183,7 +2208,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#int_value%3D%28int_value%29-instance-method" class="signature"><strong>#int_value=</strong>(int_value)</a>
+        <a href="#int_value%3D%28int_value%3AInt64%29-instance-method" class="signature"><strong>#int_value=</strong>(int_value : Int64)</a>
         
       </li>
     
@@ -2193,7 +2218,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#line_number%3D%28line_number%29-instance-method" class="signature"><strong>#line_number=</strong>(line_number)</a>
+        <a href="#line_number%3D%28line_number%3AInt32%29-instance-method" class="signature"><strong>#line_number=</strong>(line_number : Int32)</a>
         
       </li>
     
@@ -2203,7 +2228,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#string_value%3D%28string_value%29-instance-method" class="signature"><strong>#string_value=</strong>(string_value)</a>
+        <a href="#string_value%3D%28string_value%3AString%29-instance-method" class="signature"><strong>#string_value=</strong>(string_value : String)</a>
         
       </li>
     
@@ -2218,7 +2243,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#type%3D%28type%29-instance-method" class="signature"><strong>#type=</strong>(type)</a>
+        <a href="#type%3D%28type%3ASymbol%29-instance-method" class="signature"><strong>#type=</strong>(type : Symbol)</a>
         
       </li>
     
@@ -2421,7 +2446,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/json/token.cr#L9" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/json/token.cr#L9" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2445,12 +2470,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="column_number&#61;&#40;column_number&#41;-instance-method">
+    <div class="entry-detail" id="column_number&#61;&#40;column_number:Int32&#41;-instance-method">
       <div class="signature">
         
-        def <strong>column_number=</strong>(column_number)
+        def <strong>column_number=</strong>(column_number : <a href="../Int32.html">Int32</a>)
 
-        <a class="method-permalink" href="#column_number%3D%28column_number%29-instance-method">#</a>
+        <a class="method-permalink" href="#column_number%3D%28column_number%3AInt32%29-instance-method">#</a>
       </div>
       
       <br/>
@@ -2473,12 +2498,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="float_value&#61;&#40;float_value&#41;-instance-method">
+    <div class="entry-detail" id="float_value&#61;&#40;float_value:Float64&#41;-instance-method">
       <div class="signature">
         
-        def <strong>float_value=</strong>(float_value)
+        def <strong>float_value=</strong>(float_value : <a href="../Float64.html">Float64</a>)
 
-        <a class="method-permalink" href="#float_value%3D%28float_value%29-instance-method">#</a>
+        <a class="method-permalink" href="#float_value%3D%28float_value%3AFloat64%29-instance-method">#</a>
       </div>
       
       <br/>
@@ -2501,12 +2526,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="int_value&#61;&#40;int_value&#41;-instance-method">
+    <div class="entry-detail" id="int_value&#61;&#40;int_value:Int64&#41;-instance-method">
       <div class="signature">
         
-        def <strong>int_value=</strong>(int_value)
+        def <strong>int_value=</strong>(int_value : <a href="../Int64.html">Int64</a>)
 
-        <a class="method-permalink" href="#int_value%3D%28int_value%29-instance-method">#</a>
+        <a class="method-permalink" href="#int_value%3D%28int_value%3AInt64%29-instance-method">#</a>
       </div>
       
       <br/>
@@ -2529,12 +2554,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="line_number&#61;&#40;line_number&#41;-instance-method">
+    <div class="entry-detail" id="line_number&#61;&#40;line_number:Int32&#41;-instance-method">
       <div class="signature">
         
-        def <strong>line_number=</strong>(line_number)
+        def <strong>line_number=</strong>(line_number : <a href="../Int32.html">Int32</a>)
 
-        <a class="method-permalink" href="#line_number%3D%28line_number%29-instance-method">#</a>
+        <a class="method-permalink" href="#line_number%3D%28line_number%3AInt32%29-instance-method">#</a>
       </div>
       
       <br/>
@@ -2557,12 +2582,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="string_value&#61;&#40;string_value&#41;-instance-method">
+    <div class="entry-detail" id="string_value&#61;&#40;string_value:String&#41;-instance-method">
       <div class="signature">
         
-        def <strong>string_value=</strong>(string_value)
+        def <strong>string_value=</strong>(string_value : <a href="../String.html">String</a>)
 
-        <a class="method-permalink" href="#string_value%3D%28string_value%29-instance-method">#</a>
+        <a class="method-permalink" href="#string_value%3D%28string_value%3AString%29-instance-method">#</a>
       </div>
       
       <br/>
@@ -2582,7 +2607,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/json/token.cr#L18" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/json/token.cr#L18" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2601,12 +2626,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="type&#61;&#40;type&#41;-instance-method">
+    <div class="entry-detail" id="type&#61;&#40;type:Symbol&#41;-instance-method">
       <div class="signature">
         
-        def <strong>type=</strong>(type)
+        def <strong>type=</strong>(type : <a href="../Symbol.html">Symbol</a>)
 
-        <a class="method-permalink" href="#type%3D%28type%29-instance-method">#</a>
+        <a class="method-permalink" href="#type%3D%28type%3ASymbol%29-instance-method">#</a>
       </div>
       
       <br/>

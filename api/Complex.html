@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2117,6 +2142,16 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>A complex number is a number represented in the form a + bi. In this form, 
+a and b are real numbers, and i is an imaginary number such as i² = -1. 
+The a is the real part of the number, and the b is the imaginary part of 
+ the number.</p>
+
+<pre><code><span class="t">Complex</span>.<span class="k">new</span>(<span class="n">1</span>, <span class="n">0</span>)   <span class="c"># &#61;&gt; 1 &#43; 0i</span>
+<span class="t">Complex</span>.<span class="k">new</span>(<span class="n">5</span>, <span class="n">-12</span>) <span class="c"># &nbsp;&#61;&gt; 5 - 12i</span></code></pre>
+
 
 
 
@@ -2133,7 +2168,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr" target="_blank">complex.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr" target="_blank">complex.cr</a>
     
     <br/>
   
@@ -2147,6 +2182,8 @@
     
       <li class="entry-summary">
         <a href="#zero-class-method" class="signature"><strong>.zero</strong></a>
+        
+          <div class="summary"><p>Returns the number 0 in complex form</p></div>
         
       </li>
     
@@ -2165,120 +2202,168 @@
       <li class="entry-summary">
         <a href="#%2A%28other%3AComplex%29-instance-method" class="signature"><strong>#*</strong>(other : Complex)</a>
         
+          <div class="summary"><p>Multiplies self by <em>other</em></p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%2A%28other%3ANumber%29-instance-method" class="signature"><strong>#*</strong>(other : Number)</a>
+        
+          <div class="summary"><p>Multiplies self by <em>other</em></p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%2B%28other%3AComplex%29-instance-method" class="signature"><strong>#+</strong>(other : Complex)</a>
         
+          <div class="summary"><p>Adds the value of self to <em>other</em></p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%2B%28other%3ANumber%29-instance-method" class="signature"><strong>#+</strong>(other : Number)</a>
+        
+          <div class="summary"><p>Adds the value of self to <em>other</em></p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#--instance-method" class="signature"><strong>#-</strong></a>
         
+          <div class="summary"><p> Returns the opposite of self</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#-%28other%3AComplex%29-instance-method" class="signature"><strong>#-</strong>(other : Complex)</a>
+        
+          <div class="summary"><p>Removes the value from <em>other</em> to self</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#-%28other%3ANumber%29-instance-method" class="signature"><strong>#-</strong>(other : Number)</a>
         
+          <div class="summary"><p>Removes the value from <em>other</em> to self</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%2F%28other%3ANumber%29-instance-method" class="signature"><strong>#/</strong>(other : Number)</a>
+        
+          <div class="summary"><p> ditto</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%2F%28other%3AComplex%29-instance-method" class="signature"><strong>#/</strong>(other : Complex)</a>
         
+          <div class="summary"><p>Divides self by <em>other</em></p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%3ANumber%29-instance-method" class="signature"><strong>#==</strong>(other : Number)</a>
+        
+          <div class="summary"><p>Determines whether self equals <em>other</em> or not</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%3AComplex%29-instance-method" class="signature"><strong>#==</strong>(other : Complex)</a>
         
+          <div class="summary"><p>Determines whether self equals <em>other</em> or not</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#%3D%3D%28other%29-instance-method" class="signature"><strong>#==</strong>(other)</a>
+        
+          <div class="summary"><p>Determines whether self equals <em>other</em> or not</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#abs-instance-method" class="signature"><strong>#abs</strong></a>
         
+          <div class="summary"><p>Returns the absolute value of this complex number in a number form, using the Pythagorean theorem.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#abs2-instance-method" class="signature"><strong>#abs2</strong></a>
+        
+          <div class="summary"><p>Returns the square of absolute value in a number form.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#conj-instance-method" class="signature"><strong>#conj</strong></a>
         
+          <div class="summary"><p>Returns the conjugate of self</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#exp-instance-method" class="signature"><strong>#exp</strong></a>
+        
+          <div class="summary"><p>Calculates the exp of self</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#imag-instance-method" class="signature"><strong>#imag</strong></a>
         
+          <div class="summary"><p>Returns the image part of self</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#inv-instance-method" class="signature"><strong>#inv</strong></a>
+        
+          <div class="summary"><p>Returns the inverse of self</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#log-instance-method" class="signature"><strong>#log</strong></a>
         
+          <div class="summary"><p>Calculates the log of self</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#log10-instance-method" class="signature"><strong>#log10</strong></a>
+        
+          <div class="summary"><p>Calculates the log10 of self</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#log2-instance-method" class="signature"><strong>#log2</strong></a>
         
+          <div class="summary"><p>Calculates the log2 of self</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#phase-instance-method" class="signature"><strong>#phase</strong></a>
+        
+          <div class="summary"><p>Returns the phase of self</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#polar-instance-method" class="signature"><strong>#polar</strong></a>
         
+          <div class="summary"><p>Returns a tuple with the abs value and the phase.</p></div>
+        
       </li>
     
       <li class="entry-summary">
         <a href="#real-instance-method" class="signature"><strong>#real</strong></a>
+        
+          <div class="summary"><p> Returns the real part of self</p></div>
         
       </li>
     
@@ -2296,6 +2381,8 @@
     
       <li class="entry-summary">
         <a href="#to_s%28io%3AIO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        
+          <div class="summary"><p>Write this complex object to an io</p></div>
         
       </li>
     
@@ -2501,10 +2588,12 @@
         <a class="method-permalink" href="#zero-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns the number 0 in complex form</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L142" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2520,7 +2609,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L5" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L17" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2538,10 +2627,12 @@
         <a class="method-permalink" href="#%2A%28other%3AComplex%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Multiplies self by <em>other</em></p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L118" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L177" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2554,10 +2645,12 @@
         <a class="method-permalink" href="#%2A%28other%3ANumber%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Multiplies self by <em>other</em></p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L122" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L182" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2570,10 +2663,12 @@
         <a class="method-permalink" href="#%2B%28other%3AComplex%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Adds the value of self to <em>other</em></p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L98" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L152" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2586,10 +2681,12 @@
         <a class="method-permalink" href="#%2B%28other%3ANumber%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Adds the value of self to <em>other</em></p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L102" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L157" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2602,10 +2699,12 @@
         <a class="method-permalink" href="#--instance-method">#</a>
       </div>
       
+        <div class="doc"><p> Returns the opposite of self</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L106" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L162" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2618,10 +2717,12 @@
         <a class="method-permalink" href="#-%28other%3AComplex%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Removes the value from <em>other</em> to self</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L110" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L167" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2634,10 +2735,12 @@
         <a class="method-permalink" href="#-%28other%3ANumber%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Removes the value from <em>other</em> to self</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L114" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L172" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2650,10 +2753,12 @@
         <a class="method-permalink" href="#%2F%28other%3ANumber%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p> ditto</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L138" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L200" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2666,10 +2771,12 @@
         <a class="method-permalink" href="#%2F%28other%3AComplex%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Divides self by <em>other</em></p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L126" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L187" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2682,10 +2789,12 @@
         <a class="method-permalink" href="#%3D%3D%28other%3ANumber%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Determines whether self equals <em>other</em> or not</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L14" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L28" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2698,10 +2807,12 @@
         <a class="method-permalink" href="#%3D%3D%28other%3AComplex%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Determines whether self equals <em>other</em> or not</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L10" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L23" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2714,10 +2825,12 @@
         <a class="method-permalink" href="#%3D%3D%28other%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Determines whether self equals <em>other</em> or not</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L18" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L33" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2730,10 +2843,16 @@
         <a class="method-permalink" href="#abs-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns the absolute value of this complex number in a
+number form, using the Pythagorean theorem.</p>
+
+<pre><code><span class="t">Complex</span>.<span class="k">new</span>(<span class="n">42</span>, <span class="n">2</span>).abs  <span class="c"># &#61;&gt; 42.0476</span>
+<span class="t">Complex</span>.<span class="k">new</span>(<span class="n">-42</span>, <span class="n">2</span>).abs <span class="c"># &#61;&gt; 42.0476</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L29" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L56" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2746,10 +2865,14 @@
         <a class="method-permalink" href="#abs2-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns the square of absolute value in a number form.</p>
+
+<pre><code><span class="t">Complex</span>.<span class="k">new</span>(<span class="n">42</span>, <span class="n">2</span>).abs2 <span class="c"># &#61;&gt; 1768</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L33" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2762,10 +2885,15 @@
         <a class="method-permalink" href="#conj-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns the conjugate of self</p>
+
+<pre><code><span class="t">Complex</span>.<span class="k">new</span>(<span class="n">42</span>, <span class="n">2</span>).conj  <span class="c"># &#61;&gt; 42 - 2i</span>
+<span class="t">Complex</span>.<span class="k">new</span>(<span class="n">42</span>, <span class="n">-2</span>).conj <span class="c"># &#61;&gt; 42 &#43; 2i</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L49" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L93" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2778,10 +2906,14 @@
         <a class="method-permalink" href="#exp-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Calculates the exp of self</p>
+
+<pre><code><span class="t">Complex</span>.<span class="k">new</span>(<span class="n">4</span>, <span class="n">2</span>).exp <span class="c"># &nbsp;&#61;&gt; -22.7208 &#43; 49.646i</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L81" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L131" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2794,10 +2926,12 @@
         <a class="method-permalink" href="#imag-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns the image part of self</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L3" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L15" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2810,10 +2944,12 @@
         <a class="method-permalink" href="#inv-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns the inverse of self</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L53" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L98" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2826,10 +2962,12 @@
         <a class="method-permalink" href="#log-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Calculates the log of self</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L86" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L137" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2842,10 +2980,12 @@
         <a class="method-permalink" href="#log10-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Calculates the log10 of self</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L94" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L147" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2858,10 +2998,12 @@
         <a class="method-permalink" href="#log2-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Calculates the log2 of self</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L90" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L142" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2874,10 +3016,12 @@
         <a class="method-permalink" href="#phase-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns the phase of self</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L74" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2890,10 +3034,14 @@
         <a class="method-permalink" href="#polar-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns a tuple with the abs value and the phase.</p>
+
+<pre><code><span class="t">Complex</span>.<span class="k">new</span>(<span class="n">42</span>, <span class="n">2</span>).polar <span class="c"># &#61;&gt; &#123;2.54311, 0.665774&#125;</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L83" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2906,10 +3054,12 @@
         <a class="method-permalink" href="#real-instance-method">#</a>
       </div>
       
+        <div class="doc"><p> Returns the real part of self</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L2" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L12" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2925,7 +3075,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L37" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L69" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2944,7 +3094,7 @@ https://pavpanchekha.com/casio/index.html</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L59" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L104" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2957,10 +3107,14 @@ https://pavpanchekha.com/casio/index.html</p></div>
         <a class="method-permalink" href="#to_s%28io%3AIO%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Write this complex object to an io</p>
+
+<pre><code><span class="t">Complex</span>.<span class="k">new</span>(<span class="n">42</span>, <span class="n">2</span>).to_s <span class="c"># &#61;&gt; 42 &#43; 2i</span></code></pre></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/complex.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/complex.cr#L42" target="_blank">View source</a>]
         
       </div>
     </div>

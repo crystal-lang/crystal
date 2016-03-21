@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="../Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="../Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="../ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="../Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="../Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="../Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="../Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="../Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="../Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="../Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="../Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="../Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="../Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="../Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="../Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="../Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="../Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="../Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2121,6 +2146,13 @@
 
 
 
+  <h2>Included Modules</h2>
+  <ul class="other-types-list">
+  
+    <li class="other-type"><a href="../Markdown/Renderer.html">Markdown::Renderer</a></li>
+  
+  </ul>
+
 
 
 
@@ -2133,7 +2165,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr" target="_blank">markdown/html_renderer.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr" target="_blank">markdown/html_renderer.cr</a>
     
     <br/>
   
@@ -2163,7 +2195,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#begin_code%28language%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#begin_code</strong>(language = <span class="n">nil</span>)</a>
+        <a href="#begin_code%28language%29-instance-method" class="signature"><strong>#begin_code</strong>(language)</a>
         
       </li>
     
@@ -2289,6 +2321,116 @@
 
 
 <div class="methods-inherited">
+  
+    
+
+  <h3>Instance methods inherited from module <code><a href="../Markdown/Renderer.html">Markdown::Renderer</a></code></h3>
+  
+    <a href="../Markdown/Renderer.html#begin_bold-instance-method" class="tooltip">
+      <span>begin_bold</span>
+    begin_bold</a>, 
+  
+    <a href="../Markdown/Renderer.html#begin_code%28language%29-instance-method" class="tooltip">
+      <span>begin_code(language)</span>
+    begin_code</a>, 
+  
+    <a href="../Markdown/Renderer.html#begin_header%28level%29-instance-method" class="tooltip">
+      <span>begin_header(level)</span>
+    begin_header</a>, 
+  
+    <a href="../Markdown/Renderer.html#begin_inline_code-instance-method" class="tooltip">
+      <span>begin_inline_code</span>
+    begin_inline_code</a>, 
+  
+    <a href="../Markdown/Renderer.html#begin_italic-instance-method" class="tooltip">
+      <span>begin_italic</span>
+    begin_italic</a>, 
+  
+    <a href="../Markdown/Renderer.html#begin_link%28url%29-instance-method" class="tooltip">
+      <span>begin_link(url)</span>
+    begin_link</a>, 
+  
+    <a href="../Markdown/Renderer.html#begin_list_item-instance-method" class="tooltip">
+      <span>begin_list_item</span>
+    begin_list_item</a>, 
+  
+    <a href="../Markdown/Renderer.html#begin_ordered_list-instance-method" class="tooltip">
+      <span>begin_ordered_list</span>
+    begin_ordered_list</a>, 
+  
+    <a href="../Markdown/Renderer.html#begin_paragraph-instance-method" class="tooltip">
+      <span>begin_paragraph</span>
+    begin_paragraph</a>, 
+  
+    <a href="../Markdown/Renderer.html#begin_quote-instance-method" class="tooltip">
+      <span>begin_quote</span>
+    begin_quote</a>, 
+  
+    <a href="../Markdown/Renderer.html#begin_unordered_list-instance-method" class="tooltip">
+      <span>begin_unordered_list</span>
+    begin_unordered_list</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_bold-instance-method" class="tooltip">
+      <span>end_bold</span>
+    end_bold</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_code-instance-method" class="tooltip">
+      <span>end_code</span>
+    end_code</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_header%28level%29-instance-method" class="tooltip">
+      <span>end_header(level)</span>
+    end_header</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_inline_code-instance-method" class="tooltip">
+      <span>end_inline_code</span>
+    end_inline_code</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_italic-instance-method" class="tooltip">
+      <span>end_italic</span>
+    end_italic</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_link-instance-method" class="tooltip">
+      <span>end_link</span>
+    end_link</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_list_item-instance-method" class="tooltip">
+      <span>end_list_item</span>
+    end_list_item</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_ordered_list-instance-method" class="tooltip">
+      <span>end_ordered_list</span>
+    end_ordered_list</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_paragraph-instance-method" class="tooltip">
+      <span>end_paragraph</span>
+    end_paragraph</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_quote-instance-method" class="tooltip">
+      <span>end_quote</span>
+    end_quote</a>, 
+  
+    <a href="../Markdown/Renderer.html#end_unordered_list-instance-method" class="tooltip">
+      <span>end_unordered_list</span>
+    end_unordered_list</a>, 
+  
+    <a href="../Markdown/Renderer.html#horizontal_rule-instance-method" class="tooltip">
+      <span>horizontal_rule</span>
+    horizontal_rule</a>, 
+  
+    <a href="../Markdown/Renderer.html#image%28url%2Calt%29-instance-method" class="tooltip">
+      <span>image(url, alt)</span>
+    image</a>, 
+  
+    <a href="../Markdown/Renderer.html#text%28text%29-instance-method" class="tooltip">
+      <span>text(text)</span>
+    text</a>
+  
+
+
+    
+
+
   
     
 
@@ -2481,7 +2623,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L2" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L8" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2502,23 +2644,23 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L21" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L27" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="begin_code&#40;language&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;&#41;-instance-method">
+    <div class="entry-detail" id="begin_code&#40;language&#41;-instance-method">
       <div class="signature">
         
-        def <strong>begin_code</strong>(language = <span class="n">nil</span>)
+        def <strong>begin_code</strong>(language)
 
-        <a class="method-permalink" href="#begin_code%28language%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">#</a>
+        <a class="method-permalink" href="#begin_code%28language%29-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L49" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L55" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2534,7 +2676,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L29" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L35" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2550,7 +2692,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L47" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2566,7 +2708,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L13" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L19" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2582,7 +2724,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L93" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L99" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2598,7 +2740,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L85" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L91" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2614,7 +2756,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L77" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L83" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2630,7 +2772,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L5" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L11" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2646,7 +2788,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L67" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2662,7 +2804,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L69" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L75" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2678,7 +2820,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L25" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L31" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2694,7 +2836,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L57" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L63" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2710,7 +2852,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L35" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2726,7 +2868,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L51" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2742,7 +2884,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L17" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L23" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2758,7 +2900,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L99" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L105" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2774,7 +2916,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L89" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2790,7 +2932,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L81" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L87" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2806,7 +2948,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L9" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L15" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2822,7 +2964,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L65" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L71" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2838,7 +2980,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2854,7 +2996,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L115" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L121" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2870,7 +3012,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L103" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L109" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2886,7 +3028,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/markdown/html_renderer.cr#L111" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/markdown/html_renderer.cr#L117" target="_blank">View source</a>]
         
       </div>
     </div>

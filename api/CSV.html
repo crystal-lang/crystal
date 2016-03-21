@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2127,16 +2152,16 @@
 <h3>Parsing</h3>
 
 <p>Several ways of parsing CSV are provided. The most straight-forward, but
-slow or inefficient for some scenarios, is <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29%3AArray%28Array%28String%29%29-class-method">CSV#parse</a></code>, which returns
+slow or inefficient for some scenarios, is <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29%3AArray%28Array%28String%29%29-class-method">CSV#parse</a></code>, which returns
 an array of arrays of all data.</p>
 
-<p>Rows can be traversed in a linear fashion with <code><a href="CSV.html#each_row%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%2C%26block%29-class-method">CSV#each_row</a></code>, or
+<p>Rows can be traversed in a linear fashion with <code><a href="CSV.html#each_row%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%2C%26block%29-class-method">CSV#each_row</a></code>, or
 using an <code><a href="Iterator.html">Iterator</a></code>.</p>
 
 <p>To parse a CSV in an efficient way, optionally being able to access
 row values from header names, create an instance of a <code><a href="CSV.html">CSV</a></code>.</p>
 
-<h3>Parsing with <code><a href="CSV.html#new%28string_or_io%3AString%7CIO%2Cheaders%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrip%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%2C%26block%29-class-method">CSV#new</a></code></h3>
+<h3>Parsing with <code><a href="CSV.html#new%28string_or_io%3AString%7CIO%2Cheaders%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrip%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%2C%26block%29-class-method">CSV#new</a></code></h3>
 
 <p>A CSV instance holds a cursor to the current row in the CSV. The cursor
 is advanced by invoking <code><a href="CSV.html#next-instance-method">#next</a></code>, which returns <code>true</code> if a next row was found,
@@ -2191,17 +2216,17 @@ csv.<span class="k">next</span> <span class="c"># &#61;&gt; false</span></code><
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr" target="_blank">csv/csv.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr" target="_blank">csv/csv.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/error.cr" target="_blank">csv/error.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/error.cr" target="_blank">csv/error.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr" target="_blank">csv/csv.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr" target="_blank">csv/csv.cr</a>
     
     <br/>
   
@@ -2245,35 +2270,35 @@ csv.<span class="k">next</span> <span class="c"># &#61;&gt; false</span></code><
       </li>
     
       <li class="entry-summary">
-        <a href="#each_row%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%2C%26block%29-class-method" class="signature"><strong>.each_row</strong>(string_or_io : String | IO, separator = <span class="t">DEFAULT_SEPARATOR</span> : Char, quote_char = <span class="t">DEFAULT_QUOTE_CHAR</span> : Char, &block)</a>
+        <a href="#each_row%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%2C%26block%29-class-method" class="signature"><strong>.each_row</strong>(string_or_io : String | IO, separator : Char = <span class="t">DEFAULT_SEPARATOR</span>, quote_char : Char = <span class="t">DEFAULT_QUOTE_CHAR</span>, &block)</a>
         
           <div class="summary"><p>Yields each of a CSV's rows as an <code><a href="Array.html">Array</a>(<a href="String.html">String</a>)</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#each_row%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29-class-method" class="signature"><strong>.each_row</strong>(string_or_io : String | IO, separator = <span class="t">DEFAULT_SEPARATOR</span> : Char, quote_char = <span class="t">DEFAULT_QUOTE_CHAR</span> : Char)</a>
+        <a href="#each_row%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29-class-method" class="signature"><strong>.each_row</strong>(string_or_io : String | IO, separator : Char = <span class="t">DEFAULT_SEPARATOR</span>, quote_char : Char = <span class="t">DEFAULT_QUOTE_CHAR</span>)</a>
         
           <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> of <code><a href="Array.html">Array</a>(<a href="String.html">String</a>)</code> over a CSV's rows.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28string_or_io%3AString%7CIO%2Cheaders%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrip%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%2C%26block%29-class-method" class="signature"><strong>.new</strong>(string_or_io : String | IO, headers = <span class="n">false</span>, strip = <span class="n">false</span>, separator = <span class="t">DEFAULT_SEPARATOR</span> : Char, quote_char = <span class="t">DEFAULT_QUOTE_CHAR</span> : Char, &block)</a>
+        <a href="#new%28string_or_io%3AString%7CIO%2Cheaders%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrip%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%2C%26block%29-class-method" class="signature"><strong>.new</strong>(string_or_io : String | IO, headers = <span class="n">false</span>, strip = <span class="n">false</span>, separator : Char = <span class="t">DEFAULT_SEPARATOR</span>, quote_char : Char = <span class="t">DEFAULT_QUOTE_CHAR</span>, &block)</a>
         
           <div class="summary"><p>Creates a new instance from the given <code><a href="String.html">String</a></code> or <code><a href="IO.html">IO</a></code>, and yields it to the given block once for each row in the CSV.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#parse%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29%3AArray%28Array%28String%29%29-class-method" class="signature"><strong>.parse</strong>(string_or_io : String | IO, separator = <span class="t">DEFAULT_SEPARATOR</span> : Char, quote_char = <span class="t">DEFAULT_QUOTE_CHAR</span> : Char) : Array(Array(String))</a>
+        <a href="#parse%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29%3AArray%28Array%28String%29%29-class-method" class="signature"><strong>.parse</strong>(string_or_io : String | IO, separator : Char = <span class="t">DEFAULT_SEPARATOR</span>, quote_char : Char = <span class="t">DEFAULT_QUOTE_CHAR</span>) : Array(Array(String))</a>
         
           <div class="summary"><p>Parses a CSV or IO into an array.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28string_or_io%3AString%7CIO%2Cheaders%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrip%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29-class-method" class="signature"><strong>.new</strong>(string_or_io : String | IO, headers = <span class="n">false</span>, strip = <span class="n">false</span>, separator = <span class="t">DEFAULT_SEPARATOR</span> : Char, quote_char = <span class="t">DEFAULT_QUOTE_CHAR</span> : Char)</a>
+        <a href="#new%28string_or_io%3AString%7CIO%2Cheaders%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrip%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(string_or_io : String | IO, headers = <span class="n">false</span>, strip = <span class="n">false</span>, separator : Char = <span class="t">DEFAULT_SEPARATOR</span>, quote_char : Char = <span class="t">DEFAULT_QUOTE_CHAR</span>)</a>
         
           <div class="summary"><p>Creates a new instance from the given <code><a href="String.html">String</a></code> or <code><a href="IO.html">IO</a></code>.</p></div>
         
@@ -2566,7 +2591,7 @@ io.to_s <span class="c"># &#61;&gt; &quot;HEADER\none,two\nthree&quot;</span></c
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L140" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L140" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2590,21 +2615,21 @@ result <span class="c"># &#61;&gt; &quot;one,two\nthree&quot;</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L122" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L122" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="each_row&#40;string_or_io:String|IO,separator&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_SEPARATOR&lt;/span&gt;:Char,quote_char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_QUOTE_CHAR&lt;/span&gt;:Char,&amp;block&#41;-class-method">
+    <div class="entry-detail" id="each_row&#40;string_or_io:String|IO,separator:Char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_SEPARATOR&lt;/span&gt;,quote_char:Char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_QUOTE_CHAR&lt;/span&gt;,&amp;block&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>each_row</strong>(string_or_io : <a href="String.html">String</a> | <a href="IO.html">IO</a>, separator = <span class="t">DEFAULT_SEPARATOR</span> : <a href="Char.html">Char</a>, quote_char = <span class="t">DEFAULT_QUOTE_CHAR</span> : <a href="Char.html">Char</a>, &block)
+        def self.<strong>each_row</strong>(string_or_io : <a href="String.html">String</a> | <a href="IO.html">IO</a>, separator : <a href="Char.html">Char</a> = <span class="t">DEFAULT_SEPARATOR</span>, quote_char : <a href="Char.html">Char</a> = <span class="t">DEFAULT_QUOTE_CHAR</span>, &block)
 
-        <a class="method-permalink" href="#each_row%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%2C%26block%29-class-method">#</a>
+        <a class="method-permalink" href="#each_row%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%2C%26block%29-class-method">#</a>
       </div>
       
         <div class="doc"><p>Yields each of a CSV's rows as an <code><a href="Array.html">Array</a>(<a href="String.html">String</a>)</code>.
-see <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29%3AArray%28Array%28String%29%29-class-method">CSV.parse</a></code> about the <em>separator</em> and <em>quote_char</em> arguments</p>
+see <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29%3AArray%28Array%28String%29%29-class-method">CSV.parse</a></code> about the <em>separator</em> and <em>quote_char</em> arguments</p>
 
 <pre><code><span class="t">CSV</span>.each_row(<span class="s">&quot;one,two\nthree&quot;</span>) <span class="k">do</span> <span class="o">|</span>row<span class="o">|</span>
   puts row
@@ -2618,21 +2643,21 @@ see <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3D%3C
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L95" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L95" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="each_row&#40;string_or_io:String|IO,separator&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_SEPARATOR&lt;/span&gt;:Char,quote_char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_QUOTE_CHAR&lt;/span&gt;:Char&#41;-class-method">
+    <div class="entry-detail" id="each_row&#40;string_or_io:String|IO,separator:Char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_SEPARATOR&lt;/span&gt;,quote_char:Char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_QUOTE_CHAR&lt;/span&gt;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>each_row</strong>(string_or_io : <a href="String.html">String</a> | <a href="IO.html">IO</a>, separator = <span class="t">DEFAULT_SEPARATOR</span> : <a href="Char.html">Char</a>, quote_char = <span class="t">DEFAULT_QUOTE_CHAR</span> : <a href="Char.html">Char</a>)
+        def self.<strong>each_row</strong>(string_or_io : <a href="String.html">String</a> | <a href="IO.html">IO</a>, separator : <a href="Char.html">Char</a> = <span class="t">DEFAULT_SEPARATOR</span>, quote_char : <a href="Char.html">Char</a> = <span class="t">DEFAULT_QUOTE_CHAR</span>)
 
-        <a class="method-permalink" href="#each_row%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29-class-method">#</a>
+        <a class="method-permalink" href="#each_row%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29-class-method">#</a>
       </div>
       
         <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> of <code><a href="Array.html">Array</a>(<a href="String.html">String</a>)</code> over a CSV's rows.
-see <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29%3AArray%28Array%28String%29%29-class-method">CSV.parse</a></code> about the <em>separator</em> and <em>quote_char</em> arguments</p>
+see <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29%3AArray%28Array%28String%29%29-class-method">CSV.parse</a></code> about the <em>separator</em> and <em>quote_char</em> arguments</p>
 
 <pre><code>rows <span class="o">=</span> <span class="t">CSV</span>.each_row(<span class="s">&quot;one,two\nthree&quot;</span>)
 rows.<span class="k">next</span> <span class="c"># &#61;&gt; &#91;&quot;one&quot;, &quot;two&quot;&#93;</span>
@@ -2641,17 +2666,17 @@ rows.<span class="k">next</span> <span class="c"># &#61;&gt; &#91;&quot;three&qu
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L109" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L109" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="new&#40;string_or_io:String|IO,headers&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,strip&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,separator&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_SEPARATOR&lt;/span&gt;:Char,quote_char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_QUOTE_CHAR&lt;/span&gt;:Char,&amp;block&#41;-class-method">
+    <div class="entry-detail" id="new&#40;string_or_io:String|IO,headers&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,strip&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,separator:Char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_SEPARATOR&lt;/span&gt;,quote_char:Char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_QUOTE_CHAR&lt;/span&gt;,&amp;block&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(string_or_io : <a href="String.html">String</a> | <a href="IO.html">IO</a>, headers = <span class="n">false</span>, strip = <span class="n">false</span>, separator = <span class="t">DEFAULT_SEPARATOR</span> : <a href="Char.html">Char</a>, quote_char = <span class="t">DEFAULT_QUOTE_CHAR</span> : <a href="Char.html">Char</a>, &block)
+        def self.<strong>new</strong>(string_or_io : <a href="String.html">String</a> | <a href="IO.html">IO</a>, headers = <span class="n">false</span>, strip = <span class="n">false</span>, separator : <a href="Char.html">Char</a> = <span class="t">DEFAULT_SEPARATOR</span>, quote_char : <a href="Char.html">Char</a> = <span class="t">DEFAULT_QUOTE_CHAR</span>, &block)
 
-        <a class="method-permalink" href="#new%28string_or_io%3AString%7CIO%2Cheaders%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrip%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%2C%26block%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28string_or_io%3AString%7CIO%2Cheaders%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrip%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%2C%26block%29-class-method">#</a>
       </div>
       
         <div class="doc"><p>Creates a new instance from the given <code><a href="String.html">String</a></code> or <code><a href="IO.html">IO</a></code>, and yields it to
@@ -2663,22 +2688,22 @@ returned from methods.</p>
 <p>If <em>headers</em> is true, row values can be accessed with header names or patterns.
 Headers are always stripped.</p>
 
-<p>see <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29%3AArray%28Array%28String%29%29-class-method">CSV.parse</a></code> about the <em>separator</em> and <em>quote_char</em> arguments</p></div>
+<p>see <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29%3AArray%28Array%28String%29%29-class-method">CSV.parse</a></code> about the <em>separator</em> and <em>quote_char</em> arguments</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L177" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L184" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="parse&#40;string_or_io:String|IO,separator&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_SEPARATOR&lt;/span&gt;:Char,quote_char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_QUOTE_CHAR&lt;/span&gt;:Char&#41;:Array&#40;Array&#40;String&#41;&#41;-class-method">
+    <div class="entry-detail" id="parse&#40;string_or_io:String|IO,separator:Char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_SEPARATOR&lt;/span&gt;,quote_char:Char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_QUOTE_CHAR&lt;/span&gt;&#41;:Array&#40;Array&#40;String&#41;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>parse</strong>(string_or_io : <a href="String.html">String</a> | <a href="IO.html">IO</a>, separator = <span class="t">DEFAULT_SEPARATOR</span> : <a href="Char.html">Char</a>, quote_char = <span class="t">DEFAULT_QUOTE_CHAR</span> : <a href="Char.html">Char</a>) : <a href="Array.html">Array</a>(<a href="Array.html">Array</a>(<a href="String.html">String</a>))
+        def self.<strong>parse</strong>(string_or_io : <a href="String.html">String</a> | <a href="IO.html">IO</a>, separator : <a href="Char.html">Char</a> = <span class="t">DEFAULT_SEPARATOR</span>, quote_char : <a href="Char.html">Char</a> = <span class="t">DEFAULT_QUOTE_CHAR</span>) : <a href="Array.html">Array</a>(<a href="Array.html">Array</a>(<a href="String.html">String</a>))
 
-        <a class="method-permalink" href="#parse%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29%3AArray%28Array%28String%29%29-class-method">#</a>
+        <a class="method-permalink" href="#parse%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29%3AArray%28Array%28String%29%29-class-method">#</a>
       </div>
       
         <div class="doc"><p>Parses a CSV or IO into an array.
@@ -2693,17 +2718,17 @@ non-standard csv cell separators and quote characters</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L76" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L76" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="new&#40;string_or_io:String|IO,headers&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,strip&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,separator&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_SEPARATOR&lt;/span&gt;:Char,quote_char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_QUOTE_CHAR&lt;/span&gt;:Char&#41;-class-method">
+    <div class="entry-detail" id="new&#40;string_or_io:String|IO,headers&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,strip&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,separator:Char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_SEPARATOR&lt;/span&gt;,quote_char:Char&#61;&lt;spanclass&#61;&quot;t&quot;&gt;DEFAULT_QUOTE_CHAR&lt;/span&gt;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(string_or_io : <a href="String.html">String</a> | <a href="IO.html">IO</a>, headers = <span class="n">false</span>, strip = <span class="n">false</span>, separator = <span class="t">DEFAULT_SEPARATOR</span> : <a href="Char.html">Char</a>, quote_char = <span class="t">DEFAULT_QUOTE_CHAR</span> : <a href="Char.html">Char</a>)
+        def self.<strong>new</strong>(string_or_io : <a href="String.html">String</a> | <a href="IO.html">IO</a>, headers = <span class="n">false</span>, strip = <span class="n">false</span>, separator : <a href="Char.html">Char</a> = <span class="t">DEFAULT_SEPARATOR</span>, quote_char : <a href="Char.html">Char</a> = <span class="t">DEFAULT_QUOTE_CHAR</span>)
 
-        <a class="method-permalink" href="#new%28string_or_io%3AString%7CIO%2Cheaders%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrip%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28string_or_io%3AString%7CIO%2Cheaders%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrip%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29-class-method">#</a>
       </div>
       
         <div class="doc"><p>Creates a new instance from the given <code><a href="String.html">String</a></code> or <code><a href="IO.html">IO</a></code>.</p>
@@ -2714,12 +2739,12 @@ returned from methods.</p>
 <p>If <em>headers</em> is true, row values can be accessed with header names or patterns.
 Headers are always stripped.</p>
 
-<p>see <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%3AChar%2Cquote_char%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%3AChar%29%3AArray%28Array%28String%29%29-class-method">CSV.parse</a></code> about the <em>separator</em> and <em>quote_char</em> arguments</p></div>
+<p>see <code><a href="CSV.html#parse%28string_or_io%3AString%7CIO%2Cseparator%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_SEPARATOR%3C%2Fspan%3E%2Cquote_char%3AChar%3D%3Cspanclass%3D%22t%22%3EDEFAULT_QUOTE_CHAR%3C%2Fspan%3E%29%3AArray%28Array%28String%29%29-class-method">CSV.parse</a></code> about the <em>separator</em> and <em>quote_char</em> arguments</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L154" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L161" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2744,7 +2769,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L218" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L225" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2764,7 +2789,7 @@ Raises <code><a href="IndexError.html">IndexError</a></code> if no such column e
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L232" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L239" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2784,7 +2809,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L246" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L253" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2804,7 +2829,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L225" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L232" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2824,7 +2849,7 @@ Returns nil if no such column exists.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L239" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L246" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2844,7 +2869,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L253" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L260" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2862,7 +2887,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L192" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L199" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2881,7 +2906,7 @@ Raises <code><a href="CSV/Error.html">CSV::Error</a></code> if headers were not 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L187" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L194" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2901,7 +2926,7 @@ the cursor in the first row. Returns <code>true</code> if a next row was found,
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L201" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L208" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2919,7 +2944,7 @@ the cursor in the first row. Returns <code>true</code> if a next row was found,
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/csv/csv.cr#L258" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/csv/csv.cr#L265" target="_blank">View source</a>]
         
       </div>
     </div>

@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2140,7 +2165,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr" target="_blank">socket/tcp_socket.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr" target="_blank">socket/tcp_socket.cr</a>
     
     <br/>
   
@@ -2234,13 +2259,13 @@
 
   <h3>Instance methods inherited from class <code><a href="IPSocket.html">IPSocket</a></code></h3>
   
-    <a href="IPSocket.html#addr-instance-method" class="tooltip">
-      <span>addr</span>
-    addr</a>, 
+    <a href="IPSocket.html#local_address-instance-method" class="tooltip">
+      <span>local_address</span>
+    local_address</a>, 
   
-    <a href="IPSocket.html#peeraddr-instance-method" class="tooltip">
-      <span>peeraddr</span>
-    peeraddr</a>
+    <a href="IPSocket.html#remote_address-instance-method" class="tooltip">
+      <span>remote_address</span>
+    remote_address</a>
   
 
 
@@ -2258,6 +2283,14 @@
     
 
   <h3>Instance methods inherited from class <code><a href="Socket.html">Socket</a></code></h3>
+  
+    <a href="Socket.html#broadcast%3D%28val%3ABool%29-instance-method" class="tooltip">
+      <span>broadcast=(val : Bool)</span>
+    broadcast=</a>, 
+  
+    <a href="Socket.html#broadcast%3F-instance-method" class="tooltip">
+      <span>broadcast?</span>
+    broadcast?</a>, 
   
     <a href="Socket.html#close_read-instance-method" class="tooltip">
       <span>close_read</span>
@@ -2325,10 +2358,6 @@
 
   <h3>Class methods inherited from class <code><a href="Socket.html">Socket</a></code></h3>
   
-    <a href="Socket.html#inet_ntop%28sa%3ALibC%3A%3ASockAddrIn%29-class-method" class="tooltip">
-      <span>inet_ntop(sa : LibC::SockAddrIn)<br/>inet_ntop(sa : LibC::SockAddrIn6)</span>
-    inet_ntop</a>, 
-  
     <a href="Socket.html#new%28fd%2Cblocking%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-class-method" class="tooltip">
       <span>new(fd, blocking = <span class="n">false</span>)</span>
     new</a>
@@ -2384,8 +2413,8 @@
       <span>read_timed_out</span>
     read_timed_out</a>, 
   
-    <a href="IO/FileDescriptor.html#read_timed_out%3D%28read_timed_out%29-instance-method" class="tooltip">
-      <span>read_timed_out=(read_timed_out)</span>
+    <a href="IO/FileDescriptor.html#read_timed_out%3D%28read_timed_out%3ABool%29-instance-method" class="tooltip">
+      <span>read_timed_out=(read_timed_out : Bool)</span>
     read_timed_out=</a>, 
   
     <a href="IO/FileDescriptor.html#read_timeout%3D%28read_timeout%3ANumber%29-instance-method" class="tooltip">
@@ -2396,8 +2425,8 @@
       <span>reopen(other : IO::FileDescriptor)</span>
     reopen</a>, 
   
-    <a href="IO/FileDescriptor.html#seek%28offset%2Cwhence%3D%3Cspanclass%3D%22t%22%3ESeek%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESet%3C%2Fspan%3E%3ASeek%29-instance-method" class="tooltip">
-      <span>seek(offset, whence = <span class="t">Seek</span><span class="t">::</span><span class="t">Set</span> : Seek)</span>
+    <a href="IO/FileDescriptor.html#seek%28offset%2Cwhence%3ASeek%3D%3Cspanclass%3D%22t%22%3ESeek%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESet%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>seek(offset, whence : Seek = <span class="t">Seek</span><span class="t">::</span><span class="t">Set</span>)</span>
     seek</a>, 
   
     <a href="IO/FileDescriptor.html#stat-instance-method" class="tooltip">
@@ -2420,8 +2449,8 @@
       <span>write_timed_out</span>
     write_timed_out</a>, 
   
-    <a href="IO/FileDescriptor.html#write_timed_out%3D%28write_timed_out%29-instance-method" class="tooltip">
-      <span>write_timed_out=(write_timed_out)</span>
+    <a href="IO/FileDescriptor.html#write_timed_out%3D%28write_timed_out%3ABool%29-instance-method" class="tooltip">
+      <span>write_timed_out=(write_timed_out : Bool)</span>
     write_timed_out=</a>, 
   
     <a href="IO/FileDescriptor.html#write_timeout%3D%28write_timeout%3ANumber%29-instance-method" class="tooltip">
@@ -2523,6 +2552,10 @@
       <span>close</span>
     close</a>, 
   
+    <a href="IO.html#closed%3F-instance-method" class="tooltip">
+      <span>closed?</span>
+    closed?</a>, 
+  
     <a href="IO.html#cooked%28%26block%29-instance-method" class="tooltip">
       <span>cooked(&block)</span>
     cooked</a>, 
@@ -2567,8 +2600,8 @@
       <span>printf(format_string, *args) : Nil<br/>printf(format_string, args : Array | Tuple) : Nil</span>
     printf</a>, 
   
-    <a href="IO.html#puts%28%2Aobjects%3A_%29%3ANil-instance-method" class="tooltip">
-      <span>puts(*objects : _) : Nil<br/>puts(string : String) : Nil<br/>puts(obj) : Nil<br/>puts : Nil</span>
+    <a href="IO.html#puts%3ANil-instance-method" class="tooltip">
+      <span>puts : Nil<br/>puts(*objects : _) : Nil<br/>puts(string : String) : Nil<br/>puts(obj) : Nil</span>
     puts</a>, 
   
     <a href="IO.html#raw%28%26block%29-instance-method" class="tooltip">
@@ -2587,8 +2620,8 @@
       <span>read_byte : UInt8 | Nil</span>
     read_byte</a>, 
   
-    <a href="IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method" class="tooltip">
-      <span>read_bytes(type, format = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span> : IO::ByteFormat)</span>
+    <a href="IO.html#read_bytes%28type%2Cformat%3AIO%3A%3AByteFormat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>read_bytes(type, format : IO::ByteFormat = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span>)</span>
     read_bytes</a>, 
   
     <a href="IO.html#read_char%3AChar%7CNil-instance-method" class="tooltip">
@@ -2615,8 +2648,12 @@
       <span>read_utf8_byte</span>
     read_utf8_byte</a>, 
   
-    <a href="IO.html#set_encoding%28encoding%3AString%2Cinvalid%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3ASymbol%7CNil%29-instance-method" class="tooltip">
-      <span>set_encoding(encoding : String, invalid = <span class="n">nil</span> : Symbol | Nil)</span>
+    <a href="IO.html#rewind-instance-method" class="tooltip">
+      <span>rewind</span>
+    rewind</a>, 
+  
+    <a href="IO.html#set_encoding%28encoding%3AString%2Cinvalid%3ASymbol%7CNil%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>set_encoding(encoding : String, invalid : Symbol | Nil = <span class="n">nil</span>)</span>
     set_encoding</a>, 
   
     <a href="IO.html#skip%28bytes_count%3AInt%29%3ANil-instance-method" class="tooltip">
@@ -2635,8 +2672,8 @@
       <span>write_byte(byte : UInt8)</span>
     write_byte</a>, 
   
-    <a href="IO.html#write_bytes%28object%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method" class="tooltip">
-      <span>write_bytes(object, format = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span> : IO::ByteFormat)</span>
+    <a href="IO.html#write_bytes%28object%2Cformat%3AIO%3A%3AByteFormat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>write_bytes(object, format : IO::ByteFormat = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span>)</span>
     write_bytes</a>, 
   
     <a href="IO.html#write_utf8%28slice%3ASlice%28UInt8%29%29-instance-method" class="tooltip">
@@ -2873,7 +2910,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L22" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2889,7 +2926,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L4" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L4" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2905,7 +2942,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L18" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L18" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2928,7 +2965,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L61" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2944,7 +2981,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L65" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2962,7 +2999,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2978,7 +3015,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L45" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2996,7 +3033,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L51" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L51" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3012,7 +3049,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L55" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L55" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3028,7 +3065,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L36" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L36" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3046,7 +3083,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/tcp_socket.cr#L32" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/socket/tcp_socket.cr#L32" target="_blank">View source</a>]
         
       </div>
     </div>

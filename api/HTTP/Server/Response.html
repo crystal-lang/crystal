@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="../../Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="../../Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="../../ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="../../Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="../../Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="../../Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="../../Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="../../Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="../../Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="../../Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="../../Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="../../Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="../../Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="../../Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="../../Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="../../Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="../../Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="../../Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2156,7 +2181,7 @@ This is useful to implement protocol upgrades, such as websockets.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/http/server/response.cr" target="_blank">http/server/response.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/response.cr" target="_blank">http/server/response.cr</a>
     
     <br/>
   
@@ -2211,7 +2236,7 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#output%3D%28output%29-instance-method" class="signature"><strong>#output=</strong>(output)</a>
+        <a href="#output%3D%28output%3AIO%29-instance-method" class="signature"><strong>#output=</strong>(output : IO)</a>
         
       </li>
     
@@ -2221,7 +2246,7 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#status_code%3D%28status_code%29-instance-method" class="signature"><strong>#status_code=</strong>(status_code)</a>
+        <a href="#status_code%3D%28status_code%3AInt32%29-instance-method" class="signature"><strong>#status_code=</strong>(status_code : Int32)</a>
         
       </li>
     
@@ -2265,6 +2290,10 @@ This is useful to implement protocol upgrades, such as websockets.</p>
     <a href="../../IO.html#close-instance-method" class="tooltip">
       <span>close</span>
     close</a>, 
+  
+    <a href="../../IO.html#closed%3F-instance-method" class="tooltip">
+      <span>closed?</span>
+    closed?</a>, 
   
     <a href="../../IO.html#cooked%28%26block%29-instance-method" class="tooltip">
       <span>cooked(&block)</span>
@@ -2310,8 +2339,8 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       <span>printf(format_string, *args) : Nil<br/>printf(format_string, args : Array | Tuple) : Nil</span>
     printf</a>, 
   
-    <a href="../../IO.html#puts%28%2Aobjects%3A_%29%3ANil-instance-method" class="tooltip">
-      <span>puts(*objects : _) : Nil<br/>puts(string : String) : Nil<br/>puts(obj) : Nil<br/>puts : Nil</span>
+    <a href="../../IO.html#puts%3ANil-instance-method" class="tooltip">
+      <span>puts : Nil<br/>puts(*objects : _) : Nil<br/>puts(string : String) : Nil<br/>puts(obj) : Nil</span>
     puts</a>, 
   
     <a href="../../IO.html#raw%28%26block%29-instance-method" class="tooltip">
@@ -2330,8 +2359,8 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       <span>read_byte : UInt8 | Nil</span>
     read_byte</a>, 
   
-    <a href="../../IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method" class="tooltip">
-      <span>read_bytes(type, format = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span> : IO::ByteFormat)</span>
+    <a href="../../IO.html#read_bytes%28type%2Cformat%3AIO%3A%3AByteFormat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>read_bytes(type, format : IO::ByteFormat = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span>)</span>
     read_bytes</a>, 
   
     <a href="../../IO.html#read_char%3AChar%7CNil-instance-method" class="tooltip">
@@ -2358,8 +2387,12 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       <span>read_utf8_byte</span>
     read_utf8_byte</a>, 
   
-    <a href="../../IO.html#set_encoding%28encoding%3AString%2Cinvalid%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3ASymbol%7CNil%29-instance-method" class="tooltip">
-      <span>set_encoding(encoding : String, invalid = <span class="n">nil</span> : Symbol | Nil)</span>
+    <a href="../../IO.html#rewind-instance-method" class="tooltip">
+      <span>rewind</span>
+    rewind</a>, 
+  
+    <a href="../../IO.html#set_encoding%28encoding%3AString%2Cinvalid%3ASymbol%7CNil%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>set_encoding(encoding : String, invalid : Symbol | Nil = <span class="n">nil</span>)</span>
     set_encoding</a>, 
   
     <a href="../../IO.html#skip%28bytes_count%3AInt%29%3ANil-instance-method" class="tooltip">
@@ -2378,8 +2411,8 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       <span>write_byte(byte : UInt8)</span>
     write_byte</a>, 
   
-    <a href="../../IO.html#write_bytes%28object%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method" class="tooltip">
-      <span>write_bytes(object, format = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span> : IO::ByteFormat)</span>
+    <a href="../../IO.html#write_bytes%28object%2Cformat%3AIO%3A%3AByteFormat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>write_bytes(object, format : IO::ByteFormat = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span>)</span>
     write_bytes</a>, 
   
     <a href="../../IO.html#write_utf8%28slice%3ASlice%28UInt8%29%29-instance-method" class="tooltip">
@@ -2621,7 +2654,7 @@ This method must be implemented if wrapping the response output.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/http/server/response.cr#L97" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/response.cr#L102" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2639,7 +2672,7 @@ This method must be implemented if wrapping the response output.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/http/server/response.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/response.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2657,7 +2690,7 @@ This method must be implemented if wrapping the response output.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/http/server/response.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/response.cr#L61" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2675,7 +2708,7 @@ This method must be implemented if wrapping the response output.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/http/server/response.cr#L91" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/response.cr#L96" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2693,7 +2726,7 @@ This method must be implemented if wrapping the response output.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/http/server/response.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/response.cr#L19" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2712,12 +2745,12 @@ This method must be implemented if wrapping the response output.</p></div>
       </div>
     </div>
   
-    <div class="entry-detail" id="output&#61;&#40;output&#41;-instance-method">
+    <div class="entry-detail" id="output&#61;&#40;output:IO&#41;-instance-method">
       <div class="signature">
         
-        def <strong>output=</strong>(output)
+        def <strong>output=</strong>(output : <a href="../../IO.html">IO</a>)
 
-        <a class="method-permalink" href="#output%3D%28output%29-instance-method">#</a>
+        <a class="method-permalink" href="#output%3D%28output%3AIO%29-instance-method">#</a>
       </div>
       
       <br/>
@@ -2740,12 +2773,12 @@ This method must be implemented if wrapping the response output.</p></div>
       </div>
     </div>
   
-    <div class="entry-detail" id="status_code&#61;&#40;status_code&#41;-instance-method">
+    <div class="entry-detail" id="status_code&#61;&#40;status_code:Int32&#41;-instance-method">
       <div class="signature">
         
-        def <strong>status_code=</strong>(status_code)
+        def <strong>status_code=</strong>(status_code : <a href="../../Int32.html">Int32</a>)
 
-        <a class="method-permalink" href="#status_code%3D%28status_code%29-instance-method">#</a>
+        <a class="method-permalink" href="#status_code%3D%28status_code%3AInt32%29-instance-method">#</a>
       </div>
       
       <br/>
@@ -2769,7 +2802,7 @@ This is useful to implement protocol upgrades, such as websockets.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/http/server/response.cr#L78" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/response.cr#L83" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2787,7 +2820,7 @@ This is useful to implement protocol upgrades, such as websockets.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/http/server/response.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/response.cr#L22" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2805,7 +2838,7 @@ This is useful to implement protocol upgrades, such as websockets.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/http/server/response.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/response.cr#L71" target="_blank">View source</a>]
         
       </div>
     </div>

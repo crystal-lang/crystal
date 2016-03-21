@@ -5,7 +5,7 @@
   <meta id="repository-name" content="github.com/crystal-lang/crystal">
   <link href="../css/style.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="../js/doc.js"></script>
-  <title>Socket::Addr - github.com/crystal-lang/crystal</title>
+  <title>Digest::SHA1 - github.com/crystal-lang/crystal</title>
 </head>
 <body>
 
@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="../Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="../Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="../ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="../Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent open current" data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="../Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" current" data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="../Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="../Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="../Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="../Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="../Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="../Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1725,15 +1745,10 @@
       
     </li>
   
-  <li class="parent open current" data-id="github.com/crystal-lang/crystal/Socket" data-name="socket">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Socket" data-name="socket">
       <a href="../Socket.html">Socket</a>
       
         <ul>
-  
-  <li class=" current" data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="../Socket/Addr.html">Addr</a>
-      
-    </li>
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="../Socket/Error.html">Error</a>
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="../Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="../Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="../Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="../Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="../Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2107,12 +2132,10 @@
 <div id="main-content">
 <h1 class="type-name">
 
-  <span class="kind">struct</span> Socket::Addr
+  <span class="kind">module</span> Digest::SHA1
 
 </h1>
 
-
-  <ul class="superclass-hierarchy"><li class="superclass"><a href="../Socket/Addr.html">Socket::Addr</a></li><li class="superclass"><a href="../Struct.html">Struct</a></li><li class="superclass"><a href="../Value.html">Value</a></li><li class="superclass"><a href="../Object.html">Object</a></li></ul>
 
 
 
@@ -2133,7 +2156,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/socket.cr" target="_blank">socket/socket.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/digest/sha1.cr" target="_blank">digest/sha1.cr</a>
     
     <br/>
   
@@ -2146,63 +2169,28 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28family%2Cip_port%2Cip_address%29-class-method" class="signature"><strong>.new</strong>(family, ip_port, ip_address)</a>
+        <a href="#base64digest%28string_or_slice%3AString%7CSlice%28UInt8%29%29-class-method" class="signature"><strong>.base64digest</strong>(string_or_slice : String | Slice(UInt8))</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28family%2Cpath%29-class-method" class="signature"><strong>.new</strong>(family, path)</a>
+        <a href="#digest%28slice%3ASlice%28UInt8%29%29-class-method" class="signature"><strong>.digest</strong>(slice : Slice(UInt8))</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#digest%28string%3AString%29-class-method" class="signature"><strong>.digest</strong>(string : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#hexdigest%28string_or_slice%3AString%7CSlice%28UInt8%29%29-class-method" class="signature"><strong>.hexdigest</strong>(string_or_slice : String | Slice(UInt8))</a>
         
       </li>
     
   </ul>
 
 
-
-  <h2>Instance Method Summary</h2>
-  <ul class="list-summary">
-    
-      <li class="entry-summary">
-        <a href="#family-instance-method" class="signature"><strong>#family</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#family%3D%28family%29-instance-method" class="signature"><strong>#family=</strong>(family)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#ip_address-instance-method" class="signature"><strong>#ip_address</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#ip_address%3D%28ip_address%29-instance-method" class="signature"><strong>#ip_address=</strong>(ip_address)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#ip_port-instance-method" class="signature"><strong>#ip_port</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#ip_port%3D%28ip_port%29-instance-method" class="signature"><strong>#ip_port=</strong>(ip_port)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#path-instance-method" class="signature"><strong>#path</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#path%3D%28path%29-instance-method" class="signature"><strong>#path=</strong>(path)</a>
-        
-      </li>
-    
-  </ul>
 
 
 
@@ -2210,341 +2198,77 @@
 
 <div class="methods-inherited">
   
-    
-
-  <h3>Instance methods inherited from struct <code><a href="../Struct.html">Struct</a></code></h3>
-  
-    <a href="../Struct.html#%3D%3D%28other%3Aself%29%3ABool-instance-method" class="tooltip">
-      <span>==(other : self) : Bool</span>
-    ==</a>, 
-  
-    <a href="../Struct.html#hash%3AInt32-instance-method" class="tooltip">
-      <span>hash : Int32</span>
-    hash</a>, 
-  
-    <a href="../Struct.html#inspect%28io%3AIO%29%3ANil-instance-method" class="tooltip">
-      <span>inspect(io : IO) : Nil</span>
-    inspect</a>, 
-  
-    <a href="../Struct.html#to_s%28io%29-instance-method" class="tooltip">
-      <span>to_s(io)</span>
-    to_s</a>
-  
-
-
-    
-
-
-  
-    
-
-  <h3>Instance methods inherited from struct <code><a href="../Value.html">Value</a></code></h3>
-  
-    <a href="../Value.html#%21-instance-method" class="tooltip">
-      <span>!</span>
-    !</a>, 
-  
-    <a href="../Value.html#%3D%3D%28other%29-instance-method" class="tooltip">
-      <span>==(other)</span>
-    ==</a>, 
-  
-    <a href="../Value.html#nil%3F-instance-method" class="tooltip">
-      <span>nil?</span>
-    nil?</a>
-  
-
-
-    
-
-
-  
-    
-
-  <h3>Instance methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
-  
-    <a href="../Object.html#%21-instance-method" class="tooltip">
-      <span>!</span>
-    !</a>, 
-  
-    <a href="../Object.html#%21%3D%28other%29-instance-method" class="tooltip">
-      <span>!=(other)</span>
-    !=</a>, 
-  
-    <a href="../Object.html#%21~%28other%29-instance-method" class="tooltip">
-      <span>!~(other)</span>
-    !~</a>, 
-  
-    <a href="../Object.html#%3D%3D%28other%29-instance-method" class="tooltip">
-      <span>==(other)</span>
-    ==</a>, 
-  
-    <a href="../Object.html#%3D%3D%3D%28other%29-instance-method" class="tooltip">
-      <span>===(other)</span>
-    ===</a>, 
-  
-    <a href="../Object.html#%3D~%28other%29-instance-method" class="tooltip">
-      <span>=~(other)</span>
-    =~</a>, 
-  
-    <a href="../Object.html#class-instance-method" class="tooltip">
-      <span>class</span>
-    class</a>, 
-  
-    <a href="../Object.html#clone-instance-method" class="tooltip">
-      <span>clone</span>
-    clone</a>, 
-  
-    <a href="../Object.html#crystal_type_id-instance-method" class="tooltip">
-      <span>crystal_type_id</span>
-    crystal_type_id</a>, 
-  
-    <a href="../Object.html#dup-instance-method" class="tooltip">
-      <span>dup</span>
-    dup</a>, 
-  
-    <a href="../Object.html#hash-instance-method" class="tooltip">
-      <span>hash</span>
-    hash</a>, 
-  
-    <a href="../Object.html#inspect-instance-method" class="tooltip">
-      <span>inspect<br/>inspect(io : IO)</span>
-    inspect</a>, 
-  
-    <a href="../Object.html#itself-instance-method" class="tooltip">
-      <span>itself</span>
-    itself</a>, 
-  
-    <a href="../Object.html#not_nil%21-instance-method" class="tooltip">
-      <span>not_nil!</span>
-    not_nil!</a>, 
-  
-    <a href="../Object.html#tap%28%26block%29-instance-method" class="tooltip">
-      <span>tap(&block)</span>
-    tap</a>, 
-  
-    <a href="../Object.html#to_json-instance-method" class="tooltip">
-      <span>to_json</span>
-    to_json</a>, 
-  
-    <a href="../Object.html#to_pretty_json%28io%3AIO%29-instance-method" class="tooltip">
-      <span>to_pretty_json(io : IO)<br/>to_pretty_json</span>
-    to_pretty_json</a>, 
-  
-    <a href="../Object.html#to_s-instance-method" class="tooltip">
-      <span>to_s<br/>to_s(io : IO)</span>
-    to_s</a>, 
-  
-    <a href="../Object.html#to_yaml%28io%3AIO%29-instance-method" class="tooltip">
-      <span>to_yaml(io : IO)<br/>to_yaml</span>
-    to_yaml</a>, 
-  
-    <a href="../Object.html#try%28%26block%29-instance-method" class="tooltip">
-      <span>try(&block)</span>
-    try</a>
-  
-
-
-    
-
-  <h3>Class methods inherited from class <code><a href="../Object.html">Object</a></code></h3>
-  
-    <a href="../Object.html#%3D%3D%28other%3AClass%29-class-method" class="tooltip">
-      <span>==(other : Class)</span>
-    ==</a>, 
-  
-    <a href="../Object.html#%3D%3D%3D%28other%29-class-method" class="tooltip">
-      <span>===(other)</span>
-    ===</a>, 
-  
-    <a href="../Object.html#cast%28other%29%3Aself-class-method" class="tooltip">
-      <span>cast(other) : self</span>
-    cast</a>, 
-  
-    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
-    from_json</a>, 
-  
-    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
-    from_yaml</a>, 
-  
-    <a href="../Object.html#hash-class-method" class="tooltip">
-      <span>hash</span>
-    hash</a>, 
-  
-    <a href="../Object.html#inspect%28io%29-class-method" class="tooltip">
-      <span>inspect(io)</span>
-    inspect</a>, 
-  
-    <a href="../Object.html#name%3AString-class-method" class="tooltip">
-      <span>name : String</span>
-    name</a>, 
-  
-    <a href="../Object.html#to_s%28io%29-class-method" class="tooltip">
-      <span>to_s(io)</span>
-    to_s</a>, 
-  
-    <a href="../Object.html#%7C%28other%3AU.class%29-class-method" class="tooltip">
-      <span>|(other : U.class)</span>
-    |</a>
-  
-
-
-  
 </div>
 
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="new&#40;family,ip_port,ip_address&#41;-class-method">
+    <div class="entry-detail" id="base64digest&#40;string_or_slice:String|Slice&#40;UInt8&#41;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(family, ip_port, ip_address)
+        def self.<strong>base64digest</strong>(string_or_slice : <a href="../String.html">String</a> | <a href="../Slice.html">Slice</a>(<a href="../UInt8.html">UInt8</a>))
 
-        <a class="method-permalink" href="#new%28family%2Cip_port%2Cip_address%29-class-method">#</a>
+        <a class="method-permalink" href="#base64digest%28string_or_slice%3AString%7CSlice%28UInt8%29%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/socket.cr#L30" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/digest/sha1.cr#L18" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="new&#40;family,path&#41;-class-method">
+    <div class="entry-detail" id="digest&#40;slice:Slice&#40;UInt8&#41;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(family, path)
+        def self.<strong>digest</strong>(slice : <a href="../Slice.html">Slice</a>(<a href="../UInt8.html">UInt8</a>))
 
-        <a class="method-permalink" href="#new%28family%2Cpath%29-class-method">#</a>
+        <a class="method-permalink" href="#digest%28slice%3ASlice%28UInt8%29%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/socket/socket.cr#L33" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/digest/sha1.cr#L8" target="_blank">View source</a>]
         
       </div>
     </div>
   
-
-
-
-  <h2>Instance Method Detail</h2>
-  
-    <div class="entry-detail" id="family-instance-method">
+    <div class="entry-detail" id="digest&#40;string:String&#41;-class-method">
       <div class="signature">
         
-        def <strong>family</strong>
+        def self.<strong>digest</strong>(string : <a href="../String.html">String</a>)
 
-        <a class="method-permalink" href="#family-instance-method">#</a>
+        <a class="method-permalink" href="#digest%28string%3AString%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/digest/sha1.cr#L4" target="_blank">View source</a>]
+        
       </div>
     </div>
   
-    <div class="entry-detail" id="family&#61;&#40;family&#41;-instance-method">
+    <div class="entry-detail" id="hexdigest&#40;string_or_slice:String|Slice&#40;UInt8&#41;&#41;-class-method">
       <div class="signature">
         
-        def <strong>family=</strong>(family)
+        def self.<strong>hexdigest</strong>(string_or_slice : <a href="../String.html">String</a> | <a href="../Slice.html">Slice</a>(<a href="../UInt8.html">UInt8</a>))
 
-        <a class="method-permalink" href="#family%3D%28family%29-instance-method">#</a>
+        <a class="method-permalink" href="#hexdigest%28string_or_slice%3AString%7CSlice%28UInt8%29%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/digest/sha1.cr#L14" target="_blank">View source</a>]
+        
       </div>
     </div>
   
-    <div class="entry-detail" id="ip_address-instance-method">
-      <div class="signature">
-        
-        def <strong>ip_address</strong>
 
-        <a class="method-permalink" href="#ip_address-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="ip_address&#61;&#40;ip_address&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>ip_address=</strong>(ip_address)
 
-        <a class="method-permalink" href="#ip_address%3D%28ip_address%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="ip_port-instance-method">
-      <div class="signature">
-        
-        def <strong>ip_port</strong>
-
-        <a class="method-permalink" href="#ip_port-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="ip_port&#61;&#40;ip_port&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>ip_port=</strong>(ip_port)
-
-        <a class="method-permalink" href="#ip_port%3D%28ip_port%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="path-instance-method">
-      <div class="signature">
-        
-        def <strong>path</strong>
-
-        <a class="method-permalink" href="#path-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="path&#61;&#40;path&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>path=</strong>(path)
-
-        <a class="method-permalink" href="#path%3D%28path%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
 
 
 

@@ -135,12 +135,12 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/ReceiveOp" data-name="channel::receiveop(c, t)">
       <a href="../Channel/ReceiveOp.html">ReceiveOp</a>
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Channel/SendOp" data-name="channel::sendop(c, t)">
       <a href="../Channel/SendOp.html">SendOp</a>
       
     </li>
@@ -217,11 +217,6 @@
   
 </ul>
 
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/ConditionVariable" data-name="conditionvariable">
-      <a href="../ConditionVariable.html">ConditionVariable</a>
       
     </li>
   
@@ -337,6 +332,21 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Deque" data-name="deque(t)">
       <a href="../Deque.html">Deque</a>
+      
+    </li>
+  
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Digest" data-name="digest">
+      <a href="../Digest.html">Digest</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Digest/SHA1" data-name="digest::sha1">
+      <a href="../Digest/SHA1.html">SHA1</a>
+      
+    </li>
+  
+</ul>
+
       
     </li>
   
@@ -1125,7 +1135,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger(t)">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Logger" data-name="logger">
       <a href="../Logger.html">Logger</a>
       
         <ul>
@@ -1270,6 +1280,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Splat" data-name="macros::splat">
+      <a href="../Macros/Splat.html">Splat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/StringLiteral" data-name="macros::stringliteral">
       <a href="../Macros/StringLiteral.html">StringLiteral</a>
       
@@ -1322,6 +1337,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Parser" data-name="markdown::parser">
       <a href="../Markdown/Parser.html">Parser</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Markdown/Renderer" data-name="markdown::renderer">
+      <a href="../Markdown/Renderer.html">Renderer</a>
       
     </li>
   
@@ -1730,11 +1750,6 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Addr" data-name="socket::addr">
-      <a href="../Socket/Addr.html">Addr</a>
-      
-    </li>
-  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Error" data-name="socket::error">
       <a href="../Socket/Error.html">Error</a>
       
@@ -1745,6 +1760,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/IPAddress" data-name="socket::ipaddress">
+      <a href="../Socket/IPAddress.html">IPAddress</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Protocol" data-name="socket::protocol">
       <a href="../Socket/Protocol.html">Protocol</a>
       
@@ -1752,6 +1772,11 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Socket/Type" data-name="socket::type">
       <a href="../Socket/Type.html">Type</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Socket/UNIXAddress" data-name="socket::unixaddress">
+      <a href="../Socket/UNIXAddress.html">UNIXAddress</a>
       
     </li>
   
@@ -1890,7 +1915,7 @@
       
         <ul>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(t)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Tuple/ItemIterator" data-name="tuple::itemiterator(i, t)">
       <a href="../Tuple/ItemIterator.html">ItemIterator</a>
       
     </li>
@@ -2155,7 +2180,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr" target="_blank">io/file_descriptor.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr" target="_blank">io/file_descriptor.cr</a>
     
     <br/>
   
@@ -2244,7 +2269,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#read_timed_out%3D%28read_timed_out%29-instance-method" class="signature"><strong>#read_timed_out=</strong>(read_timed_out)</a>
+        <a href="#read_timed_out%3D%28read_timed_out%3ABool%29-instance-method" class="signature"><strong>#read_timed_out=</strong>(read_timed_out : Bool)</a>
         
       </li>
     
@@ -2275,7 +2300,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#seek%28offset%2Cwhence%3D%3Cspanclass%3D%22t%22%3ESeek%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESet%3C%2Fspan%3E%3ASeek%29-instance-method" class="signature"><strong>#seek</strong>(offset, whence = <span class="t">Seek</span><span class="t">::</span><span class="t">Set</span> : Seek)</a>
+        <a href="#seek%28offset%2Cwhence%3ASeek%3D%3Cspanclass%3D%22t%22%3ESeek%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESet%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#seek</strong>(offset, whence : Seek = <span class="t">Seek</span><span class="t">::</span><span class="t">Set</span>)</a>
         
           <div class="summary"><p>Seeks to a given <em>offset</em> (in bytes) according to the <em>whence</em> argument.</p></div>
         
@@ -2309,7 +2334,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#write_timed_out%3D%28write_timed_out%29-instance-method" class="signature"><strong>#write_timed_out=</strong>(write_timed_out)</a>
+        <a href="#write_timed_out%3D%28write_timed_out%3ABool%29-instance-method" class="signature"><strong>#write_timed_out=</strong>(write_timed_out : Bool)</a>
         
       </li>
     
@@ -2420,6 +2445,10 @@
       <span>close</span>
     close</a>, 
   
+    <a href="../IO.html#closed%3F-instance-method" class="tooltip">
+      <span>closed?</span>
+    closed?</a>, 
+  
     <a href="../IO.html#cooked%28%26block%29-instance-method" class="tooltip">
       <span>cooked(&block)</span>
     cooked</a>, 
@@ -2464,8 +2493,8 @@
       <span>printf(format_string, *args) : Nil<br/>printf(format_string, args : Array | Tuple) : Nil</span>
     printf</a>, 
   
-    <a href="../IO.html#puts%28%2Aobjects%3A_%29%3ANil-instance-method" class="tooltip">
-      <span>puts(*objects : _) : Nil<br/>puts(string : String) : Nil<br/>puts(obj) : Nil<br/>puts : Nil</span>
+    <a href="../IO.html#puts%3ANil-instance-method" class="tooltip">
+      <span>puts : Nil<br/>puts(*objects : _) : Nil<br/>puts(string : String) : Nil<br/>puts(obj) : Nil</span>
     puts</a>, 
   
     <a href="../IO.html#raw%28%26block%29-instance-method" class="tooltip">
@@ -2484,8 +2513,8 @@
       <span>read_byte : UInt8 | Nil</span>
     read_byte</a>, 
   
-    <a href="../IO.html#read_bytes%28type%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method" class="tooltip">
-      <span>read_bytes(type, format = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span> : IO::ByteFormat)</span>
+    <a href="../IO.html#read_bytes%28type%2Cformat%3AIO%3A%3AByteFormat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>read_bytes(type, format : IO::ByteFormat = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span>)</span>
     read_bytes</a>, 
   
     <a href="../IO.html#read_char%3AChar%7CNil-instance-method" class="tooltip">
@@ -2512,8 +2541,12 @@
       <span>read_utf8_byte</span>
     read_utf8_byte</a>, 
   
-    <a href="../IO.html#set_encoding%28encoding%3AString%2Cinvalid%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%3ASymbol%7CNil%29-instance-method" class="tooltip">
-      <span>set_encoding(encoding : String, invalid = <span class="n">nil</span> : Symbol | Nil)</span>
+    <a href="../IO.html#rewind-instance-method" class="tooltip">
+      <span>rewind</span>
+    rewind</a>, 
+  
+    <a href="../IO.html#set_encoding%28encoding%3AString%2Cinvalid%3ASymbol%7CNil%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>set_encoding(encoding : String, invalid : Symbol | Nil = <span class="n">nil</span>)</span>
     set_encoding</a>, 
   
     <a href="../IO.html#skip%28bytes_count%3AInt%29%3ANil-instance-method" class="tooltip">
@@ -2532,8 +2565,8 @@
       <span>write_byte(byte : UInt8)</span>
     write_byte</a>, 
   
-    <a href="../IO.html#write_bytes%28object%2Cformat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%3AIO%3A%3AByteFormat%29-instance-method" class="tooltip">
-      <span>write_bytes(object, format = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span> : IO::ByteFormat)</span>
+    <a href="../IO.html#write_bytes%28object%2Cformat%3AIO%3A%3AByteFormat%3D%3Cspanclass%3D%22t%22%3EIO%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EByteFormat%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESystemEndian%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>write_bytes(object, format : IO::ByteFormat = <span class="t">IO</span><span class="t">::</span><span class="t">ByteFormat</span><span class="t">::</span><span class="t">SystemEndian</span>)</span>
     write_bytes</a>, 
   
     <a href="../IO.html#write_utf8%28slice%3ASlice%28UInt8%29%29-instance-method" class="tooltip">
@@ -2770,7 +2803,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L90" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L90" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2786,7 +2819,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L12" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L20" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2807,7 +2840,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2823,7 +2856,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L70" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L70" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2839,7 +2872,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L85" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L85" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2855,7 +2888,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L80" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L80" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2871,7 +2904,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L190" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L190" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2887,7 +2920,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L96" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2903,7 +2936,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L180" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L180" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2919,7 +2952,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L184" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L184" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2942,7 +2975,7 @@ io.pos     <span class="c"># &#61;&gt; 2</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L159" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L159" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2964,7 +2997,7 @@ io.gets_to_end <span class="c"># &#61;&gt; &quot;lo&quot;</span></code></pre></d
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L175" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L175" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2983,12 +3016,12 @@ io.gets_to_end <span class="c"># &#61;&gt; &quot;lo&quot;</span></code></pre></d
       </div>
     </div>
   
-    <div class="entry-detail" id="read_timed_out&#61;&#40;read_timed_out&#41;-instance-method">
+    <div class="entry-detail" id="read_timed_out&#61;&#40;read_timed_out:Bool&#41;-instance-method">
       <div class="signature">
         
-        def <strong>read_timed_out=</strong>(read_timed_out)
+        def <strong>read_timed_out=</strong>(read_timed_out : <a href="../Bool.html">Bool</a>)
 
-        <a class="method-permalink" href="#read_timed_out%3D%28read_timed_out%29-instance-method">#</a>
+        <a class="method-permalink" href="#read_timed_out%3D%28read_timed_out%3ABool%29-instance-method">#</a>
       </div>
       
       <br/>
@@ -3010,7 +3043,7 @@ io.gets_to_end <span class="c"># &#61;&gt; &quot;lo&quot;</span></code></pre></d
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L37" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L37" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3028,7 +3061,7 @@ io.gets_to_end <span class="c"># &#61;&gt; &quot;lo&quot;</span></code></pre></d
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L42" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L42" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3046,7 +3079,7 @@ io.gets_to_end <span class="c"># &#61;&gt; &quot;lo&quot;</span></code></pre></d
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L47" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L47" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3062,17 +3095,17 @@ io.gets_to_end <span class="c"># &#61;&gt; &quot;lo&quot;</span></code></pre></d
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L198" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L198" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="seek&#40;offset,whence&#61;&lt;spanclass&#61;&quot;t&quot;&gt;Seek&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;::&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;Set&lt;/span&gt;:Seek&#41;-instance-method">
+    <div class="entry-detail" id="seek&#40;offset,whence:Seek&#61;&lt;spanclass&#61;&quot;t&quot;&gt;Seek&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;::&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;Set&lt;/span&gt;&#41;-instance-method">
       <div class="signature">
         
-        def <strong>seek</strong>(offset, whence = <span class="t">Seek</span><span class="t">::</span><span class="t">Set</span> : <a href="../IO/Seek.html">Seek</a>)
+        def <strong>seek</strong>(offset, whence : <a href="../IO/Seek.html">Seek</a> = <span class="t">Seek</span><span class="t">::</span><span class="t">Set</span>)
 
-        <a class="method-permalink" href="#seek%28offset%2Cwhence%3D%3Cspanclass%3D%22t%22%3ESeek%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESet%3C%2Fspan%3E%3ASeek%29-instance-method">#</a>
+        <a class="method-permalink" href="#seek%28offset%2Cwhence%3ASeek%3D%3Cspanclass%3D%22t%22%3ESeek%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3ESet%3C%2Fspan%3E%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Seeks to a given <em>offset</em> (in bytes) according to the <em>whence</em> argument.
@@ -3088,7 +3121,7 @@ file.gets(<span class="n">1</span>) <span class="c"># &#61;&gt; &quot;c&quot;</s
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L132" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L132" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3104,7 +3137,7 @@ file.gets(<span class="n">1</span>) <span class="c"># &#61;&gt; &quot;c&quot;</s
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L114" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L114" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3122,7 +3155,7 @@ file.gets(<span class="n">1</span>) <span class="c"># &#61;&gt; &quot;c&quot;</s
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L147" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L147" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3138,7 +3171,7 @@ file.gets(<span class="n">1</span>) <span class="c"># &#61;&gt; &quot;c&quot;</s
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L209" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L209" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3154,7 +3187,7 @@ file.gets(<span class="n">1</span>) <span class="c"># &#61;&gt; &quot;c&quot;</s
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L194" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L194" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3173,12 +3206,12 @@ file.gets(<span class="n">1</span>) <span class="c"># &#61;&gt; &quot;c&quot;</s
       </div>
     </div>
   
-    <div class="entry-detail" id="write_timed_out&#61;&#40;write_timed_out&#41;-instance-method">
+    <div class="entry-detail" id="write_timed_out&#61;&#40;write_timed_out:Bool&#41;-instance-method">
       <div class="signature">
         
-        def <strong>write_timed_out=</strong>(write_timed_out)
+        def <strong>write_timed_out=</strong>(write_timed_out : <a href="../Bool.html">Bool</a>)
 
-        <a class="method-permalink" href="#write_timed_out%3D%28write_timed_out%29-instance-method">#</a>
+        <a class="method-permalink" href="#write_timed_out%3D%28write_timed_out%3ABool%29-instance-method">#</a>
       </div>
       
       <br/>
@@ -3200,7 +3233,7 @@ file.gets(<span class="n">1</span>) <span class="c"># &#61;&gt; &quot;c&quot;</s
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L52" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L52" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3218,7 +3251,7 @@ file.gets(<span class="n">1</span>) <span class="c"># &#61;&gt; &quot;c&quot;</s
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L57" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L57" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3236,7 +3269,7 @@ file.gets(<span class="n">1</span>) <span class="c"># &#61;&gt; &quot;c&quot;</s
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/60777f31ea84f8fd627bfec448ac86bd6221c161/src/io/file_descriptor.cr#L62" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/io/file_descriptor.cr#L62" target="_blank">View source</a>]
         
       </div>
     </div>
