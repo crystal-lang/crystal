@@ -193,7 +193,7 @@ module Spec
 
   def self.after_each(&block)
     after_each = @@after_each ||= [] of ->
-    after_each << block
+    after_each.unshift(block)
   end
 
   # :nodoc:
