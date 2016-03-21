@@ -179,7 +179,7 @@ class Crystal::Command
     end
 
     vars = {
-      "CRYSTAL_PATH":    Config::PATH || "",
+      "CRYSTAL_PATH":    CrystalPath::DEFAULT_PATH,
       "CRYSTAL_VERSION": Config::VERSION || "",
     }
 
