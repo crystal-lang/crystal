@@ -824,4 +824,13 @@ describe Crystal::Formatter do
   assert_format "foo : (Array(String)?) | String"
   assert_format "foo : (String -> Array(String)?) | (String -> Array(String)) | Nil"
   assert_format "module Readline\n  @@completion_proc : (String -> Array(String)?) | (String -> Array(String)) | Nil\nend"
+
+  assert_format "foo : A(B)\nbar : C"
+  assert_format "foo : (A -> B)\nbar : C"
+  assert_format "def foo(x : A(B), y)\nend"
+  assert_format "alias X = (A, B) ->\nbar : C"
+  assert_format "macro def foo : A(B)\n  nil\nend"
+  assert_format "macro def foo : (A, B) ->\n  nil\nend"
+  assert_format "macro def foo : (A | B(C))\n  nil\nend"
+  assert_format "macro def foo : A | B(C)\n  nil\nend"
 end

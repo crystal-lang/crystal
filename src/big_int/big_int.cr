@@ -213,7 +213,7 @@ struct BigInt < Int
   # Returns a string representation of self.
   #
   # ```
-  # puts BigInt.new("123456789101101987654321").to_s  # => 123456789101101987654321
+  # puts BigInt.new("123456789101101987654321").to_s # => 123456789101101987654321
   # ```
   def to_s
     String.new(to_cstr)
@@ -224,9 +224,9 @@ struct BigInt < Int
     str = to_cstr
     io.write_utf8 Slice.new(str, LibC.strlen(str))
   end
-  
+
   # Returns a string containing the representation of big radix base (2 through 36).
-  # 
+  #
   # ```
   # puts BigInt.new("123456789101101987654321").to_s(8)  # => 32111154373025463465765261
   # puts BigInt.new("123456789101101987654321").to_s(16) # => 1a249b1f61599cd7eab1
