@@ -163,12 +163,15 @@ class Crystal::CodeGenVisitor
     llvm_args_types = args.map do |arg|
       arg_type = arg.type
       if arg_type.void?
-        arg_type = LLVM::Int8
+        llvm_arg_type = LLVM::Int8
       else
-        arg_type = llvm_arg_type(arg_type)
-        arg_type = arg_type.pointer if arg.special_var?
+        llvm_arg_type = llvm_arg_type(arg_type)
+        # We need an extra pointer for special vars that are reference-like:
+        # non-reference-like are unions, so their argument representation is already a pointer
+        # (passed byval, but for these we don't pass them byval)
+        llvm_arg_type = llvm_arg_type.pointer if arg.special_var? && arg_type.reference_like?
       end
-      arg_type
+      llvm_arg_type
     end
     llvm_return_type = llvm_type(target_def.type)
 
@@ -192,7 +195,8 @@ class Crystal::CodeGenVisitor
       # Set 'byval' attribute
       # but don't set it if it's the "self" argument and it's a struct (while not in a closure).
       if arg.type.passed_by_value?
-        if (is_fun_literal && !is_closure) || (is_closure || !(i == 0 && self_type.struct?))
+        if ((is_fun_literal && !is_closure) || (is_closure || !(i == 0 && self_type.struct?))) &&
+           !arg.special_var? # special vars are never passed byval
           param.add_attribute LLVM::Attribute::ByVal
         end
       end

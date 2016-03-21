@@ -33,21 +33,7 @@ describe "Type inference: special vars" do
         end
 
         foo
-        )) { string }
-    end
-
-    it "errors if #{name} is not a reference nilable type" do
-      assert_error %(
-        class Object; def not_nil!; self; end; end
-
-        def foo
-          #{name} = 1
-        end
-
-        foo
-        #{name}
-        ),
-        "'#{name}' only allows reference nilable types"
+        )) { nilable string }
     end
 
     it "errors if assigning #{name} at top level" do
