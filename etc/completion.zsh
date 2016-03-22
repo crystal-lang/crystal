@@ -7,7 +7,6 @@ _crystal_commands() {
   commands=(
     "init:generate new crystal project"
     "build:compile program file"
-    "browser:open an http server to browse program file"
     "deps:install project dependencies"
     "docs:generate documentation"
     "eval:eval code"
@@ -61,12 +60,6 @@ _crystal-build() {
     && ret=0
 }
 
-_crystal-browser() {
-  _arguments \
-    $common_args \
-    && ret=0
-}
-
 _crystal-hierarchy() {
   _arguments \
     $programfile \
@@ -108,4 +101,3 @@ case $state in
 esac
 }
 _crystal
-

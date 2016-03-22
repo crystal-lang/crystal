@@ -59,7 +59,7 @@ _crystal()
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             else
                 if [[ "${prev}" == "tool" ]] ; then
-                    local subcommands="browser context format hierarchy implementations types"
+                    local subcommands="context format hierarchy implementations types"
                     COMPREPLY=( $(compgen -W "${subcommands}" -- ${cur}) )
                 else
                     COMPREPLY=($(_crystal_compgen_files $cur))
