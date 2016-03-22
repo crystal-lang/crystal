@@ -226,21 +226,19 @@ end
 
 describe UDPSocket do
   it "sends messages to nowhere, once" do
-    client = UDPSocket.new(Socket::Family::INET)
-    client.connect("127.0.0.1", 12341)
+    client = UDPSocket.new
+    destination = Socket::IPAddress.new(Socket::Family::INET, "127.0.0.1", 12341)
 
-    client << "message"
+    client.send("message", destination)
   end
 
-  it "flaky: sends messages to nowhere, iterate" do
-    client = UDPSocket.new(Socket::Family::INET)
-    client.connect("127.0.0.1", 12342)
+  it "sends messages to nowhere, iterate" do
+    client = UDPSocket.new
+    destination = Socket::IPAddress.new(Socket::Family::INET, "127.0.0.1", 12342)
 
     10.times do |iteration|
-      client << "message"
-      p iteration
+      client.send("message", destination)
     end
-    client.close
   end
 
   it "sends and receives messages by reading and writing" do
