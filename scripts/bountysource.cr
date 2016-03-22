@@ -31,11 +31,12 @@ module BountySource
 
   class SupportLevel
     JSON.mapping({
-      id:     Int64,
-      amount: Float64,
-      status: String,
-      owner:  Owner,
-      reward: {type: Reward, nilable: true},
+      id:         Int64,
+      amount:     Float64,
+      status:     String,
+      created_at: {type: Time, converter: Time::Format.new("%FT%T.%LZ")},
+      owner:      Owner,
+      reward:     {type: Reward, nilable: true},
     })
 
     class Owner
