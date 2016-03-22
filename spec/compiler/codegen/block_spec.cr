@@ -1328,4 +1328,19 @@ describe "Code gen: block" do
       end
       )).to_i.should eq(123)
   end
+
+  it "codegens captured block that returns union, but proc only returns a single type" do
+    run(%(
+      def run_callbacks(&block : -> Int32 | String)
+        block.call
+      end
+
+      f = run_callbacks { "foo" }
+      if f.is_a?(String)
+        f
+      else
+        "oops"
+      end
+      )).to_string.should eq("foo")
+  end
 end
