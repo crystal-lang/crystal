@@ -833,4 +833,7 @@ describe Crystal::Formatter do
   assert_format "macro def foo : (A, B) ->\n  nil\nend"
   assert_format "macro def foo : (A | B(C))\n  nil\nend"
   assert_format "macro def foo : A | B(C)\n  nil\nend"
+
+  assert_format "foo &.bar.is_a?(Baz)"
+  assert_format "foo &.bar.responds_to?(:baz)"
 end
