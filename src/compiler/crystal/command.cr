@@ -114,6 +114,8 @@ class Crystal::Command
       puts ex
     end
     exit 1
+  rescue ex : OptionParser::Exception
+    error ex.message
   rescue ex
     puts ex
     ex.backtrace.each do |frame|
@@ -714,8 +716,6 @@ class Crystal::Command
     end
 
     @config = CompilerConfig.new compiler, sources, output_filename, original_output_filename, arguments, specified_output, hierarchy_exp, cursor_location, output_format
-  rescue ex : OptionParser::Exception
-    error ex.message
   end
 
   private def gather_sources(filenames)
