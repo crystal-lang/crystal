@@ -2328,11 +2328,21 @@ module Crystal
             indent(@indent, call)
           end
         when IsA
-          call = Call.new(nil, "is_a?", args: [body.const] of ASTNode)
-          accept call
+          if body.obj.is_a?(Var)
+            call = Call.new(nil, "is_a?", args: [body.const] of ASTNode)
+            accept call
+          else
+            clear_object(body)
+            accept body
+          end
         when RespondsTo
-          call = Call.new(nil, "responds_to?", args: [SymbolLiteral.new(body.name.to_s)] of ASTNode)
-          accept call
+          if body.obj.is_a?(Var)
+            call = Call.new(nil, "responds_to?", args: [SymbolLiteral.new(body.name.to_s)] of ASTNode)
+            accept call
+          else
+            clear_object(body)
+            accept body
+          end
         when Cast
           clear_object(body)
           accept body
@@ -2345,11 +2355,15 @@ module Crystal
     def clear_object(node)
       case node
       when Call
-        if node.obj.is_a?(Call)
-          clear_object(node.obj)
-        else
+        if node.obj.is_a?(Var)
           node.obj = nil
+        else
+          clear_object(node.obj)
         end
+      when IsA
+        clear_object(node.obj)
+      when RespondsTo
+        clear_object(node.obj)
       when Cast
         clear_object(node.obj)
       end
