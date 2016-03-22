@@ -410,7 +410,7 @@ module Crystal
       if node.force_void
         node.def.set_type @mod.void
       else
-        # Use fun literal's type, which might have a borader type then then body
+        # Use fun literal's type, which might have a broader type then the body
         # (for example, return type: Int32 | String, body: String)
         node.def.set_type node.return_type
       end
