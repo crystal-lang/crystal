@@ -1,3 +1,9 @@
+## 0.14.2 (2016-03-22)
+
+* Fixed regression with formatter (#2348)
+* Fixed regression with block return types (#2347)
+* Fixed regression with openssl (https://github.com/crystal-lang/crystal/commit/78c12caf2366b01f949046e78ad4dab65d0d80d4)
+
 ## 0.14.1 (2016-03-21)
 
 * Fixed some regressions in the formatter
