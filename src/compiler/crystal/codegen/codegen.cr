@@ -409,6 +409,10 @@ module Crystal
       # of bindings and type propagation.
       if node.force_void
         node.def.set_type @mod.void
+      else
+        # Use fun literal's type, which might have a borader type then then body
+        # (for example, return type: Int32 | String, body: String)
+        node.def.set_type node.return_type
       end
 
       the_fun = codegen_fun fun_literal_name, node.def, context.type, fun_module: @main_mod, is_fun_literal: true, is_closure: is_closure

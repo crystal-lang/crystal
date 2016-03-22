@@ -417,6 +417,10 @@ module Crystal
 
       self.type = self.def.type.program.fun_of(types)
     end
+
+    def return_type
+      (@type as FunInstanceType).return_type
+    end
   end
 
   class Generic
