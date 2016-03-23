@@ -1694,7 +1694,7 @@ module Crystal
     getter generic_class # : GenericClassType
     getter type_vars : Hash(String, ASTNode)
     getter subclasses : Array(Type)
-    property? allocated : Bool
+    getter? allocated : Bool
     getter generic_nest : Int32
 
     def initialize(@program, @generic_class, @type_vars, generic_nest = nil)
