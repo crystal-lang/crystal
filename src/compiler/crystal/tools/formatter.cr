@@ -956,9 +956,9 @@ module Crystal
             must_break = true
             break
           when :"|"
-            write " | " unless last
+            write " | "
             next_token
-            skip_space_or_newline unless last
+            skip_space_or_newline
           when :")"
             if @paren_count > 0
               @paren_count -= 1
