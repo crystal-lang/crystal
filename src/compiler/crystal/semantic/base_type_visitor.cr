@@ -362,7 +362,7 @@ module Crystal
           if create_modules_if_missing
             next_type = base_lookup
             node.names.each do |name|
-              next_type = lookup_type base_lookup, [name], node
+              next_type = lookup_type base_lookup, [name], node, lookup_in_container: false
               if next_type
                 if next_type.is_a?(ASTNode)
                   node.raise "execpted #{name} to be a type"
@@ -388,8 +388,8 @@ module Crystal
       {target_type, similar_name}
     end
 
-    def lookup_type(base_type, names, node)
-      base_type.lookup_type names
+    def lookup_type(base_type, names, node, lookup_in_container = true)
+      base_type.lookup_type names, lookup_in_container: lookup_in_container
     rescue ex
       node.raise ex.message
     end

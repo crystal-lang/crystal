@@ -950,4 +950,19 @@ describe "Type inference: class" do
       a
       )) { int32 }
   end
+
+  it "doesn't mix classes on definition (#2352)" do
+    assert_type(%(
+      class Baz
+      end
+
+      class A::Baz::B
+        def self.foo
+          1
+        end
+      end
+
+      A::Baz::B.foo
+      )) { int32 }
+  end
 end
