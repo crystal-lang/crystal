@@ -696,7 +696,11 @@ class Crystal::Call
       end
 
       if output.is_a?(ASTNode) && !output.is_a?(Underscore)
-        output_type = ident_lookup.lookup_node_type?(output).try &.virtual_type
+        output_type = ident_lookup.lookup_node_type?(output)
+        if output_type
+          Crystal.check_type_allowed_in_generics(output, output_type, "can't use #{output_type} as a block return type")
+          output_type = output_type.virtual_type
+        end
       end
 
       # Check if the call has a block arg (foo &bar). If so, we need to see if the

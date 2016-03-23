@@ -45,6 +45,8 @@ module Crystal
         ident.accept self
         return false if !@raise && !@type
 
+        Crystal.check_type_allowed_in_generics(ident, type, "can't use #{type} in a union type")
+
         type
       end
       @type = program.type_merge(types)
@@ -83,6 +85,8 @@ module Crystal
         type_var.accept self
         return false if !@raise && !@type
 
+        Crystal.check_type_allowed_in_generics(type_var, type, "can't use #{type} as a generic type argument")
+
         type.virtual_type as TypeVar
       end
 
@@ -100,6 +104,9 @@ module Crystal
       if inputs = node.inputs
         inputs.each do |input|
           input.accept self
+
+          Crystal.check_type_allowed_in_generics(input, type, "can't use #{type} as proc argument")
+
           types << type
         end
       end
@@ -108,6 +115,8 @@ module Crystal
         @type = nil
         output.accept self
         return false if !@raise && !@type
+
+        Crystal.check_type_allowed_in_generics(output, type, "can't use #{type} as proc return type")
 
         types << type
       else

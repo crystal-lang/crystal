@@ -1114,4 +1114,23 @@ describe "Block inference" do
       x
       )) { bool }
   end
+
+  ["Object", "Foo(Object)", "Bar | Object", "(Object ->)", "( -> Object)"].each do |string|
+    it "errors if using #{string} as block return type (#2358)" do
+      assert_error %(
+        class Foo(T)
+        end
+
+        class Bar
+        end
+
+        def capture(&block : -> #{string})
+          block
+        end
+
+        capture { 1 }
+        ),
+        "use a more specific type"
+    end
+  end
 end
