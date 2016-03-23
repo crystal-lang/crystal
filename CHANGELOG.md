@@ -14,6 +14,7 @@
 * **(breaking change)** `Enumerable#take(n)` and `Iterator#take(n)` were renamed to `first(n)`
 * **(breaking change)** `Socket#addr` and `Socket#peeraddr` were renamed to `local_address` and `remote_address` respectively
 * **(breaking change)** Removed `Comparable#between?(a, z)`. Use `a <= x <= z` instead
+* **(breaking change)** `HTTP::WebSocketHandler` callbacks can now access the `HTTP::Context`. If you had a forwarding method to it you'll need to update it. See #2313.
 * New command `crystal play` that opens a playground for you to play in the browser :-) (thanks @bcardiff)
 * New command `crystal env` that prints environment information
 * `Spec`: you can now run multiple files with specified line numbers, as in `crystal spec file1.cr:10 file2.cr:20 ...`
