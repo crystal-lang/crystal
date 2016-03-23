@@ -183,13 +183,20 @@ module Crystal::Playground
       end
 
       def content
-        File.read(@filename)
+        begin
+          File.read(@filename)
+        rescue e
+          e.message
+        end
       end
 
       ECR.def_to_s "#{__DIR__}/views/layout.html.ecr"
     end
 
-    def initialize(@path, filename)
+    def initialize(@path, filename, fallback = nil)
+      if fallback && !File.exists?(filename)
+        filename = fallback
+      end
       @page = Page.new(filename)
     end
 
@@ -324,6 +331,8 @@ module Crystal::Playground
         PageHandler.new("/", File.join(views_dir, "_index.html")),
         PageHandler.new("/about", File.join(views_dir, "_about.html")),
         PageHandler.new("/settings", File.join(views_dir, "_settings.html")),
+        PageHandler.new("/workbook", "workbook.html",
+          fallback: File.join(views_dir, "_workbook_instructions.html")),
         EnvironmentHandler.new(self),
         HTTP::StaticFileHandler.new(public_dir),
       ]
