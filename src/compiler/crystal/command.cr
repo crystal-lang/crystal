@@ -344,13 +344,13 @@ class Crystal::Command
   end
 
   private def implementations
-    cursor_command("implementations") do |location, config, result|
+    cursor_command("tool implementations") do |location, config, result|
       result = ImplementationsVisitor.new(location).process(result)
     end
   end
 
   private def context
-    cursor_command("context") do |location, config, result|
+    cursor_command("tool context") do |location, config, result|
       result = ContextVisitor.new(location).process(result)
     end
   end
