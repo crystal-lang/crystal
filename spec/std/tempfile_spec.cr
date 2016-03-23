@@ -53,4 +53,18 @@ describe Tempfile do
     tempfile.gets.should eq("Hello!\n")
     tempfile.close
   end
+
+  it "returns default directory for tempfiles" do
+    old_tmpdir = ENV["TMPDIR"]?
+    ENV.delete("TMPDIR")
+    Tempfile.dirname.should eq("/tmp")
+    ENV["TMPDIR"] = old_tmpdir if old_tmpdir
+  end
+
+  it "returns configure directory for tempfiles" do
+    old_tmpdir = ENV["TMPDIR"]?
+    ENV["TMPDIR"] = "/my/tmp"
+    Tempfile.dirname.should eq("/my/tmp")
+    ENV["TMPDIR"] = old_tmpdir if old_tmpdir
+  end
 end
