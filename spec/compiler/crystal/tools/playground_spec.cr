@@ -224,6 +224,27 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
+  it "allow visibility modifiers" do
+    assert_agent %(
+    class Foo
+      private def bar
+        1
+      end
+      protected def self.bar
+        2
+      end
+    end), <<-CR
+    class Foo
+      private def bar
+        $p.i(1, 4)
+      end
+      protected def self.bar
+        $p.i(2, 7)
+      end
+    end
+    CR
+  end
+
   it "do not instrument macro calls in class" do
     assert_agent %(
     class Foo

@@ -956,7 +956,7 @@ module Crystal
     end
 
     def visit(node : VisibilityModifier)
-      @str << node.modifier
+      @str << node.modifier.to_s.downcase
       @str << ' '
       node.exp.accept self
       false
