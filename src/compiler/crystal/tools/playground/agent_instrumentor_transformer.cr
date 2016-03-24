@@ -51,7 +51,10 @@ module Crystal
     end
 
     def transform(node : Assign)
-      node.value = instrument(node.value)
+      # constants are Path, avoid instrumenting those assignments
+      unless node.target.is_a?(Path)
+        node.value = instrument(node.value)
+      end
       node
     end
 

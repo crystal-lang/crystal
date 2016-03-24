@@ -88,6 +88,10 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %(a = 4), %(a = $p.i(4, 1))
   end
 
+  it "do not instrument constants assignments" do
+    assert_agent %(A = 4), %(A = 4)
+  end
+
   it "instrument multi assignments in the rhs" do
     assert_agent %(a, b = t), %(a, b = $p.i(t, 1))
     assert_agent %(a, b = d, f), %(a, b = $p.i({d, f}, 1, ["d", "f"]))
@@ -179,11 +183,12 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "instrument instance variable and class variables reads" do
+  it "instrument instance variable and class variables reads and writes" do
     assert_agent %(
     class Foo
       def initialize
         @x = 3
+        @@x = 4
       end
       def bar
         @x
@@ -195,12 +200,13 @@ describe Playground::AgentInstrumentorTransformer do
     class Foo
       def initialize
         @x = $p.i(3, 4)
+        @@x = $p.i(4, 5)
       end
       def bar
-        $p.i(@x, 7)
+        $p.i(@x, 8)
       end
       def self.bar
-        $p.i(@@x, 10)
+        $p.i(@@x, 11)
       end
     end
     CR
