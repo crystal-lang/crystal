@@ -1,5 +1,6 @@
 require "spec"
 require "process"
+require "tempfile"
 
 describe Process do
   it "runs true" do
@@ -168,4 +169,16 @@ describe Process do
     end
     buffer.to_s.lines.size.should eq(1000)
   end
+	
+	it "daemonizes and has parent pid == 1" do
+		tmp = Tempfile.new("it_daemonizes")
+		fork {
+			Process.daemonize
+			File.write(tmp.path, Process.ppid.to_s)
+		}
+		sleep 1
+		res = File.read(tmp.path)
+		res.should eq("1")
+		tmp.delete
+	end
 end
