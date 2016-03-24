@@ -1,3 +1,32 @@
+## 0.14.1 (2016-03-21)
+
+* Fixed some regressions in the formatter
+
+## 0.14.0 (2016-03-21)
+
+* **(breaking change)** The syntax of a method argument with a default value and a type restriction is now `def foo(arg : Type = default_value)`. The old `def foo(arg = default_value : Type)` was removed.
+* **(breaking change)** `Enumerable#take(n)` and `Iterator#take(n)` were renamed to `first(n)`
+* **(breaking change)** `Socket#addr` and `Socket#peeraddr` were renamed to `local_address` and `remote_address` respectively
+* **(breaking change)** Removed `Comparable#between?(a, z)`. Use `a <= x <= z` instead
+* New command `crystal play` that opens a playground for you to play in the browser :-) (thanks @bcardiff)
+* New command `crystal env` that prints environment information
+* `Spec`: you can now run multiple files with specified line numbers, as in `crystal spec file1.cr:10 file2.cr:20 ...`
+* Initial support for musl-libc (thanks @ysbaddaden)
+* Added `FileUtils.cp` (thanks @Dreauw)
+* Added `Array#first(n)` and `Array#last(n)` (thanks @greyblake)
+* Added `WebSocket#close` and properly handle disconnections
+* Added `UDPSocket#send` and `UDPSocket#receive` (thanks @tatey)
+* Added `Char#uppercase?` and `Char#lowercase?` (thanks @MaloJaffre`)
+* Added `sync_close` property to `OpenSSL::SSL::Socket`, `Zlib::Inflate` and `Zlib::Deflate`
+* Added `XML::Node#encoding` and `XML::Node#version`
+* Added `HTTP::Client::Response#success?` (thanks @marceloboeira)
+* Added `StaticArray#shuffle!(random)` (thanks @Nesqwik)
+* Added `Splat#exp` method in macros
+* Added fiber-safe `Mutex`
+* All `Int` types (except `BigInt`) can now be used in `JSON` and `YAML` mappings (thanks @marceloboeira)
+* Instance variable declarations/initializations now correctly work in generic classes and modules
+* Lots of bug fixes
+
 ## 0.13.0 (2016-03-07)
 
 * **(breaking change)** `Matrix` was moved to a separate shard: [https://github.com/Exilor/matrix](https://github.com/Exilor/Matrix)

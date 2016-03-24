@@ -41,7 +41,7 @@ module Crystal
   #
   # For example, it rewrites and `if true; 1; else; 2; end` to a single `1`. It does
   # so for other "always true conditions", such as `x.is_a?(Foo)` where `x` can only
-  # be of type `Foo`. These simplications are needed because the codegen would have no
+  # be of type `Foo`. These simplifications are needed because the codegen would have no
   # idea on how to generate code for unreachable branches, because they have no type,
   # and for now the codegen only deals with typed nodes.
   class CleanupTransformer < Transformer
@@ -357,7 +357,7 @@ module Crystal
 
                 # It can happen that the body of the function changed, and as
                 # a result the type changed. In that case we need to rebind the
-                # def to the new body, unbinding it from the prevoius one.
+                # def to the new body, unbinding it from the previous one.
                 if new_type != old_type
                   target_def.unbind_from old_body
                   target_def.bind_to target_def.body

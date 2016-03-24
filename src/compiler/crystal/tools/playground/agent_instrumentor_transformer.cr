@@ -1,6 +1,5 @@
 module Crystal
   class Playground::AgentInstrumentorTransformer < Transformer
-
     class FirstBlockVisitor < Visitor
       def initialize(@instrumentor)
       end
@@ -46,12 +45,12 @@ module Crystal
 
     def transform(node : MultiAssign)
       node.values = if node.values.size == 1
-        [instrument(node.values[0])]
-      else
-        rhs = TupleLiteral.new(node.values)
-        rhs.location = node.location
-        [instrument(rhs)]
-      end
+                      [instrument(node.values[0])]
+                    else
+                      rhs = TupleLiteral.new(node.values)
+                      rhs.location = node.location
+                      [instrument(rhs)]
+                    end
       node
     end
 
@@ -60,16 +59,16 @@ module Crystal
     end
 
     def transform(node : Call)
-      case { node.obj, node.name, node.args.size }
-      when { nil, "raise", 1 }
+      case {node.obj, node.name, node.args.size}
+      when {nil, "raise", 1}
         instrument_arg node
-      when { nil, "puts", 1 }
+      when {nil, "puts", 1}
         instrument_arg node
-      when { nil, "puts", _ }
+      when {nil, "puts", _}
         instrument_args_and_splat node
-      when { nil, "print", 1 }
+      when {nil, "print", 1}
         instrument_arg node
-      when { nil, "print", _ }
+      when {nil, "print", _}
         instrument_args_and_splat node
       else
         instrument(node)

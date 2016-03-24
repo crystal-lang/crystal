@@ -76,7 +76,7 @@ module Crystal
     def visit_interpolation(node)
       node.expressions.each do |exp|
         if exp.is_a?(StringLiteral)
-          @str << yield exp.value.gsub('"', "\\\"")
+          @str << yield exp.value
         else
           @str << "\#{"
           exp.accept(self)

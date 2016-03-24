@@ -27,7 +27,6 @@ def Bool.new(pull : YAML::PullParser)
   pull.read_scalar == "true"
 end
 
-
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   def {{type.id}}.new(pull : YAML::PullParser)
     {{type.id}}.new(pull.read_scalar)

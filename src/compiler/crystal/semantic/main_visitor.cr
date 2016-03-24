@@ -436,6 +436,11 @@ module Crystal
         if typed_def = @typed_def
           typed_def.add_special_var(target.name)
 
+          # Always bind with a special var with nil, so it's easier to assign it later
+          # in the codegen (just store the whole value through a pointer)
+          simple_var.bind_to(@mod.nil_var)
+          meta_var.bind_to(@mod.nil_var)
+
           # If we are in a call's block, define the special var in the block
           if (call = @call) && call.block
             call.parent_visitor.define_special_var(target.name, value)
@@ -1455,7 +1460,7 @@ module Crystal
         then_var = then_vars[name]?
         else_var = else_vars[name]?
 
-        # Check wether the var didn't change at all
+        # Check whether the var didn't change at all
         next if then_var.same?(else_var)
 
         if_var = MetaVar.new(name)
@@ -2522,13 +2527,6 @@ module Crystal
       meta_var.bind_to mod.nil_var unless meta_var.dependencies.any? &.same?(mod.nil_var)
       meta_var.assigned_to = true
       check_closured meta_var
-
-      case meta_var.type
-      when NilType, NilableType
-        # OK
-      else
-        value.raise "'#{name}' only allows reference nilable types, not #{meta_var.type}"
-      end
 
       @vars[name] = meta_var
       meta_var

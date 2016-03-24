@@ -1,4 +1,4 @@
-FROM manastech/crystal
+FROM crystallang/crystal
 
 RUN apt-get update && \
     apt-get install -y build-essential curl libevent-dev && \

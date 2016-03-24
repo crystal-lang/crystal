@@ -1,7 +1,7 @@
-# A complex number is a number represented in the form a + bi. In this form, 
-# a and b are real numbers, and i is an imaginary number such as i² = -1. 
-# The a is the real part of the number, and the b is the imaginary part of 
-# the number.
+# A complex number is a number represented in the form a + bi. In this form,
+# a and b are real numbers, and i is an imaginary number such as i² = -1.
+# The a is the real part of the number, and the b is the imaginary part of
+#  the number.
 #
 # ```
 # Complex.new(1, 0)   # => 1 + 0i
@@ -237,6 +237,6 @@ struct Number
   end
 
   def /(other : Complex)
-    self * inv(other)
+    self * other.inv
   end
 end
