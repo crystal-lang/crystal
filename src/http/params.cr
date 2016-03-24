@@ -51,7 +51,7 @@ module HTTP
           key = nil
           i += 1
         else
-          i = URI.unescape_one query, bytesize, i, byte, char, buffer
+          i = decode_one_www_form_component query, bytesize, i, byte, char, buffer
         end
       end
 
@@ -261,6 +261,16 @@ module HTTP
     end
 
     # :nodoc:
+    def self.encode_www_form_component(string : String, io : IO)
+      URI.escape(string, io, true)
+    end
+
+    # :nodoc:
+    def self.decode_one_www_form_component(query, bytesize, i, byte, char, buffer)
+      URI.unescape_one query, bytesize, i, byte, char, buffer, true
+    end
+
+    # :nodoc:
     class Builder
       @io : IO
       @first : Bool
@@ -274,7 +284,7 @@ module HTTP
         @first = false
         URI.escape key, @io
         @io << '='
-        URI.escape value, @io if value
+        Params.encode_www_form_component value, @io if value
         self
       end
 

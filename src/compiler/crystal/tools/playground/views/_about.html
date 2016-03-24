@@ -16,7 +16,7 @@ Currently you are using <code class="crystal-version"></code>.
 <h4>Usage</h4>
 
 <p>
-Start typing code in the editor. When you stop typing or click the green button the code will be compiler, executed. Go ahead, try it!
+Start typing code in the editor. When you stop typing or click the green button the code will be compiled and executed. Go ahead, try it!
 </p>
 
 <pre class="playground">
@@ -28,7 +28,7 @@ As you can see, some values appeared on the side. These are the values that each
 </p>
 
 <p>
-When a program prints, like using <code>puts</code>, the output is visible in the bottom panel.
+When a program prints, like when using <code>puts</code>, the output is visible in the bottom panel.
 </p>
 
 <pre class="playground">
@@ -36,11 +36,11 @@ s = "Lorem ipsum"
 puts s</pre>
 
 <p>
-In the main playground, this is hidden by default and will appear when <span class="octicon octicon-terminal teal-text"></span> is pressed. Since the sidebar will likely show all the needed information you won't need this output all the time. Also, <code>puts</code> returns <code>nil</code>, but the sidebar will show the argument instead of the returned value. The same applies for <code>print</code> and <code>raises</code>.
+In the main playground this is hidden by default and will appear when <span class="octicon octicon-terminal teal-text"></span> is pressed. Since the sidebar will likely show all the needed information you won't need this output all the time. Also, <code>puts</code> returns <code>nil</code>, but the sidebar will show the argument instead of the returned value. The same applies for <code>print</code> and <code>raises</code>.
 </p>
 
 <p>
-Loops, functions, classes, sleeps and the whole language is available. When a line is executed multiple times, all the produced values are collected and can be inspected in a table.
+Loops, functions, classes, sleeps and the whole language is available. When a line is executed multiple times, all produced values are collected and can be inspected in a table.
 </p>
 
 <pre class="playground">
@@ -55,13 +55,14 @@ end
 sample 5</pre>
 
 <p>
-As you can use all standard library. Seriously. Run the next sample and <a href="http://0.0.0.0:5678" target="_blank">click here <span class="octicon octicon-link-external"></span></a>. Once you finish you can stop the long running process with the stop button. That will kill the process, hence display an exit status and a <span class="octicon octicon-terminal red-text"></span>.
+And you can use the whole standard library. Seriously. Run the next sample and <a href="http://0.0.0.0:5678" target="_blank">click here <span class="octicon octicon-link-external"></span></a>. Once you finish you can stop the long running process with the stop button. That will kill the process, hence display an exit status and a <span class="octicon octicon-terminal red-text"></span>.
 </p>
 
 <pre class="playground">
 require "http/server"
 
 server = HTTP::Server.new "0.0.0.0", 5678 do |context|
+  context.request.path
   context.response.headers["Content-Type"] = "text/plain"
   context.response.print("Hello world!")
 end
@@ -70,11 +71,11 @@ puts "Listening on http://0.0.0.0:5678"
 server.listen</pre>
 
 <p>
-When <code>crystal play</code> is run from your awesome Crystal app or shard you are ablet o use <code>require</code> as you would normaly do: require relative files and even dependencies declared in your <code>shards.yml</code>.
+When <code>crystal play</code> is run from your awesome Crystal app or shard you are able to use <code>require</code> as you would normaly do: require relative files and even dependencies declared in your <code>shards.yml</code>.
 </p>
 
 <p>
-In loops it sometimes is usefull to inspect the values of multiple variables. Tuple literals are handy for this since each element of the tuple will appear in a different column in the table.
+In loops it is sometimes usefull to inspect the values of multiple variables. Tuple literals are handy for this since each element of the tuple will appear in a different column in the table.
 </p>
 
 <pre class="playground">
@@ -111,7 +112,7 @@ baz
 <div class="row">
   <div class="col s8">
     <p>
-    In the playground your code is persisted in every stroke and before you close or refresh. It is persisted in both <code>SessionStore</code> and <code>LocalStore</code> if available. This means that next time you open the playground the code will still be there!
+    In the playground your code is persisted in every stroke and before you close or refresh the window. It is persisted in both <code>SessionStore</code> and <code>LocalStore</code> if available. This means that next time you open the playground the code will still be there!
     </p>
 
     <p>
@@ -119,7 +120,7 @@ baz
     </p>
 
     <p>
-    For loading a Crystal <code>.cr</code> file, just drag and drop it anywhere in the playground. Or starts the server with <code>$ crystal play ./path/to/file.cr</code>.
+    For loading a Crystal <code>.cr</code> file, just drag and drop it anywhere in the playground. Or start the server with <code>$ crystal play ./path/to/file.cr</code>.
     </p>
   </div>
   <div class="col s4 center-align">

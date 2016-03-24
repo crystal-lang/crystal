@@ -45,8 +45,8 @@ you can execute `bin/crystal` instead of `crystal`. This is a wrapper that will 
 as the standard library. Otherwise the barebones `crystal` executable uses the standard library that comes in
 your installation.
 
-Next, make changes to the standard library, making sure you also provide corresponding specs. To run all specs
-you can do `make spec` or `bin/crystal spec/all_spec.cr`. To run a particular spec: `bin/crystal spec/std/array_spec.cr`.
+Next, make changes to the standard library, making sure you also provide corresponding specs. To run
+the specs for the standard library, run `bin/crystal spec/std_spec.cr`. To run a particular spec: `bin/crystal spec/std/array_spec.cr`.
 
 Note: at this point you might get long compile error that include "library not found for: ...". This means
 you are [missing some libraries](https://github.com/crystal-lang/crystal/wiki/All-required-libraries).

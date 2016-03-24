@@ -210,4 +210,47 @@ describe "Codegen: special vars" do
       foo
       )).to_string.should eq("yes")
   end
+
+  it "allows with primitive" do
+    run(%(
+      class Object; def not_nil!; self; end; end
+
+      def foo
+        $~ = 123
+      end
+
+      foo
+
+      v = $~
+      v || 456
+    )).to_i.should eq(123)
+  end
+
+  it "allows with struct" do
+    run(%(
+      class Object; def not_nil!; self; end; end
+
+      struct Foo
+        def initialize(@x : Int32)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      def foo
+        $~ = Foo.new(123)
+      end
+
+      foo
+
+      v = $~
+      if v
+        v.x
+      else
+        456
+      end
+    )).to_i.should eq(123)
+  end
 end

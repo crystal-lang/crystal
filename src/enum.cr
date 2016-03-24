@@ -359,7 +359,7 @@ struct Enum
   # Color.parse?("BLUE")   # => Color::Blue
   # Color.parse?("Yellow") # => nil
   # ```
-  macro def self.parse?(string) : self ?
+  macro def self.parse?(string) : self?
     case string.camelcase
     {% for member in @type.constants %}
       when {{member.stringify.camelcase}}

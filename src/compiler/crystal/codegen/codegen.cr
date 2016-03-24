@@ -831,7 +831,17 @@ module Crystal
               node.raise "Unknown assign target in codegen: #{target}"
             end
 
-      store_instruction = assign ptr, target_type, value.type, @last
+      if target.is_a?(Var) && target.special_var? && !target_type.reference_like?
+        # For special vars that are not reference-like, the function argument will
+        # be a pointer to the struct value. So, we need to first cast the value to
+        # that type (without the pointer), load it, and store it in the argument.
+        # If it's a reference-like then it's just a pointer and we can reuse the
+        # logic in the other branch.
+        upcasted_value = upcast @last, target_type, value.type
+        store load(upcasted_value), ptr
+      else
+        assign ptr, target_type, value.type, @last
+      end
 
       false
     end

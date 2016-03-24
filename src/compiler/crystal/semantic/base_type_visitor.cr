@@ -460,7 +460,11 @@ module Crystal
     def expand_macro(node, raise_on_missing_const = true)
       if expanded = node.expanded
         @exp_nest -= 1
-        expanded.accept self
+        begin
+          expanded.accept self
+        rescue ex : Crystal::Exception
+          node.raise "expanding macro", ex
+        end
         @exp_nest += 1
         return true
       end
@@ -534,7 +538,11 @@ module Crystal
 
     def expand_inline_macro(node)
       if expanded = node.expanded
-        expanded.accept self
+        begin
+          expanded.accept self
+        rescue ex : Crystal::Exception
+          node.raise "expanding macro", ex
+        end
         return false
       end
 

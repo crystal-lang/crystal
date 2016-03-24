@@ -96,7 +96,7 @@ end
 class JSONWithSmallIntegers
   JSON.mapping({
     foo: Int16,
-    bar: Int8
+    bar: Int8,
   })
 end
 
