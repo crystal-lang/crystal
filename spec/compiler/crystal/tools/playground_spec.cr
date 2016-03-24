@@ -224,6 +224,44 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
+  it "do not instrument macro calls in class" do
+    assert_agent %(
+    class Foo
+      property foo
+    end), <<-CR
+    class Foo
+      property(foo)
+    end
+    CR
+  end
+
+  it "instrument nested class defs" do
+    assert_agent %(
+    class Bar
+      class Foo
+        def initialize
+          @x = 3
+        end
+      end
+    end), <<-CR
+    class Bar
+      class Foo
+        def initialize
+          @x = $p.i(3, 5)
+        end
+      end
+    end
+    CR
+  end
+
+  it "do not records class" do
+    assert_agent %(
+    record Foo, x, y
+    ), <<-CR
+    record(Foo, x, y)
+    CR
+  end
+
   it "instrument inside modules" do
     assert_agent %(
     module Bar
