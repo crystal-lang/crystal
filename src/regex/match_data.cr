@@ -135,8 +135,8 @@ class Regex
     # if there is no `n`th capture group.
     #
     # ```
-    # "Crystal".match(/r(ys)/) { |md| md[1]? } # => "ys"
-    # "Crystal".match(/r(ys)/) { |md| md[2]? } # => raises IndexError
+    # "Crystal".match(/r(ys)/) { |md| md[1] } # => "ys"
+    # "Crystal".match(/r(ys)/) { |md| md[2] } # => raises IndexError
     # ```
     def [](n)
       check_index_out_of_bounds n
