@@ -19,7 +19,7 @@
           <div class="nav-wrapper white">
             <div class="col s12">
               <a href="/" class="brand-logo">
-                <img src="icon.png" />
+                <img src="/icon.png" />
               </a>
               <ul class="right">
                 <li><a href="/">Playground</a></li>
@@ -34,7 +34,9 @@
     </header>
 
     <main>
-      <%= content %>
+      <div class="container">
+        <%= yield %>
+      </div>
     </main>
 
     <footer>

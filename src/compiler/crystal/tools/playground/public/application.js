@@ -116,7 +116,11 @@ $(function(){
 // about page initialization
 function initDemoPlayground(dom) {
   var editorContainer, output, outputIndicator, buttonsContainer;
-
+  // markdown renders <pre><code>... and in html is <pre>...
+  // extract code and leave dom been <pre> dom.
+  var code = dom.text();
+  dom = dom.closest("pre");
+  //
   dom.after(editorContainer = $("<div>").addClass("row row-narrow"));
   editorContainer.after(
     $("<div>").addClass("row").append(
@@ -144,7 +148,8 @@ function initDemoPlayground(dom) {
 }
 
 $(function(){
-  $(".playground").each(function(){
+  // .language-playground is for markdown ```playground
+  $(".playground, .language-playground").each(function(){
     initDemoPlayground($(this));
   });
 });
