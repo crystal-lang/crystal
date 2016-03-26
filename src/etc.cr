@@ -75,7 +75,15 @@ module Etc
 
   # Returns a Passwd struct containing the fields of the record in the
   # password database (e.g., the local password file /etc/passwd, NIS, and
-  # LDAP) that matches the user ID `uid`.
+  # LDAP) that matches the specified user ID, or current user if called
+  # without arguments.
+  #
+  # ```
+  # require "etc"
+  #
+  # pwd = Etc.getpwuid(1000)
+  # current_user = Etc.getpwuid
+  # ```
   #
   # See the unix manpage for `getpwuid(3)` for more detail.
   def self.getpwuid(uid : Number)
@@ -86,11 +94,7 @@ module Etc
     convert_passwd(pwd.value)
   end
 
-  # Returns a Passwd struct containing the fields of the record in the
-  # password database (e.g., the local password file /etc/passwd, NIS, and
-  # LDAP) that matches the current user.
-  #
-  # See the unix manpage for `getpwuid(3)` for more detail.
+  # ditto
   def self.getpwuid
     getpwuid(LibC.getuid)
   end
