@@ -45,35 +45,10 @@ end
 #     puts "Hello #{full_name}!"
 #
 module Etc
-  struct Passwd
-    property name
-    property passwd
-    property uid
-    property gid
-    property gecos
-    property dir
-    property shell
-
-    def initialize(pwd : LibC::Passwd)
-      initialize(
-        safe_string(pwd.name),
-        safe_string(pwd.passwd),
-        pwd.uid,
-        pwd.gid,
-        safe_string(pwd.gecos),
-        safe_string(pwd.dir),
-        safe_string(pwd.shell)
-      )
-    end
-
-    def initialize(@name, @passwd, @uid, @gid, @gecos, @dir, @shell)
-    end
-
-    # :nodoc:
-    protected def safe_string(chars : LibC::Char*)
-      chars ? String.new(chars) : ""
-    end
-  end
+  # A struct containing fields of a record in the password database.
+  #
+  # See the unix manpage for `getpwnam(3)` for more detail.
+  record Passwd, name, passwd, uid, gid, gecos, dir, shell
 
   # Returns the short user name of the currently logged in user or `nil` if it
   # can't be determined. Note that this information is not secure.
@@ -95,7 +70,7 @@ module Etc
     if pwd.nil?
       raise ArgumentError.new("can't find user for #{name}")
     end
-    Passwd.new(pwd.value)
+    convert_passwd(pwd.value)
   end
 
   # Returns a Passwd struct containing the fields of the record in the
@@ -108,7 +83,7 @@ module Etc
     if pwd.nil?
       raise ArgumentError.new("can't find user for #{uid}")
     end
-    Passwd.new(pwd.value)
+    convert_passwd(pwd.value)
   end
 
   # Returns a Passwd struct containing the fields of the record in the
@@ -118,5 +93,23 @@ module Etc
   # See the unix manpage for `getpwuid(3)` for more detail.
   def self.getpwuid
     getpwuid(LibC.getuid)
+  end
+
+  # :nodoc:
+  protected def self.convert_passwd(pwd : LibC::Passwd)
+    Passwd.new(
+      safe_string(pwd.name),
+      safe_string(pwd.passwd),
+      pwd.uid,
+      pwd.gid,
+      safe_string(pwd.gecos),
+      safe_string(pwd.dir),
+      safe_string(pwd.shell)
+    )
+  end
+
+  # :nodoc:
+  protected def self.safe_string(chars : LibC::Char*)
+    chars ? String.new(chars) : ""
   end
 end
