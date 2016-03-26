@@ -10,6 +10,7 @@ _crystal_commands() {
     "deps:install project dependencies"
     "docs:generate documentation"
     "eval:eval code"
+    "play:starts playground server"
     "hierarchy:show type hierarchy"
     "run:compile and run program file"
     "spec:compile and run specs (in spec directory)"
@@ -70,6 +71,16 @@ _crystal-hierarchy() {
 _crystal-run() {
   _arguments \
     $shared_run_build \
+    && ret=0
+}
+
+_crystal-play() {
+  _arguments \
+    $programfile \
+    '(--port)--port[PORT]:' \
+    '(--binding)--binding[HOST]:' \
+    '(--verbose)--verbose[display detailed information of executed code]' \
+    '(-h --help)'{-h,--help}'[show help]' \
     && ret=0
 }
 
