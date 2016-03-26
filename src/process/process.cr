@@ -7,6 +7,8 @@ lib LibC
   fun kill(pid : PidT, signal : Int) : Int
   fun getpid : PidT
   fun getppid : PidT
+  fun setsid : PidT
+  fun getsid(pid : PidT) : PidT
   fun exit(status : Int) : NoReturn
 
   ifdef x86_64
@@ -42,6 +44,14 @@ class Process
     raise Errno.new(ret) if ret < 0
     ret
   end
+
+  def self.setsid
+    LibC.setsid
+  end
+	
+	def self.sid(pid : Int32 = 0)
+		LibC.getsid(pid)
+	end
 
   def self.kill(signal : Signal, *pids : Int)
     pids.each do |pid|
@@ -111,6 +121,16 @@ class Process
     hertz = LibC.sysconf(LibC::SC_CLK_TCK).to_f
     LibC.times(out tms)
     Tms.new(tms.utime / hertz, tms.stime / hertz, tms.cutime / hertz, tms.cstime / hertz)
+  end
+
+  def self.daemonize(stdin : String = "/dev/null", stdout : String = "/dev/null", stderr : String = "/dev/null", dir : String = Dir.current)
+    exit if fork
+    setsid
+    exit if fork
+    Dir.cd(dir)
+    STDIN.reopen(File.open(stdin, "a+"))
+    STDOUT.reopen(File.open(stdout, "a"))
+    STDERR.reopen(File.open(stderr, "a"))
   end
 end
 
