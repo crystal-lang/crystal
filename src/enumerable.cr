@@ -280,15 +280,20 @@ module Enumerable(T)
   def in_groups_of(size : Int, filled_up_with : U = nil)
     raise ArgumentError.new("size must be positive") if size <= 0
 
-    # TODO: this consumes the enumerable twice, fix
     parts_count = (self.size.to_f / size).ceil.to_i
     ary = Array(Array(T | U)).new(parts_count)
-    parts_count.times do |i|
-      ary << Array(T | U).new(size, filled_up_with)
-    end
-
-    each_with_index do |e, i|
-      ary[i / size][i % size] = e
+    size_enumerable = (0...size)
+    i = 0
+    while i < self.size
+      new_ary = Array(T | U).new(size, filled_up_with)
+      size_enumerable.each do |part_size|
+        index = i + part_size
+        unless index >= self.size
+          new_ary[part_size] = self[index]
+        end
+      end
+      ary << new_ary
+      i += size
     end
 
     ary
