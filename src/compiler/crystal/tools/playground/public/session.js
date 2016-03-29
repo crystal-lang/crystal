@@ -349,7 +349,7 @@ Playground.Session = function(options) {
           this._triggerFinish();
 
           new ModalDialog().append(
-            $("<h4>").append("Bug"),
+            $("<h1>").append("Bug"),
             $("<p>")
               .append("You've reached a bug in the playground. Please ")
               .append($("<a>")
@@ -357,9 +357,9 @@ Playground.Session = function(options) {
                 .attr("href", "https://github.com/crystal-lang/crystal/issues/new")
                 .attr("target", "_blank"))
               .append(" about it."),
-            $("<h5>").append("Code"),
+            $("<h2>").append("Code"),
             $("<pre>").append(this.editor.getValue()),
-            $("<h5>").append("Exception"),
+            $("<h2>").append("Exception"),
             $("<pre>").append(message.exception.message)).openModal();
 
           break;
@@ -517,7 +517,7 @@ Playground.Session = function(options) {
 
   this._showFullError = function() {
     new ModalDialog().append(
-      $("<h4>").append("Error"),
+      $("<h1>").append("Error"),
       $("<pre>").css("min-height", "70%").text(this._fullError))
       .openModal();
   }.bind(this);
