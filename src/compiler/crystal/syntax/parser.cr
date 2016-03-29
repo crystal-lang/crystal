@@ -560,7 +560,11 @@ module Crystal
         next_token_skip_space_or_newline
         check_void_expression_keyword
         arg = parse_prefix
-        Call.new(arg, token_type.to_s, name_column_number: column_number).at(location).at_end(arg)
+        if token_type == :"!"
+          Not.new(arg).at(location).at_end(arg)
+        else
+          Call.new(arg, token_type.to_s, name_column_number: column_number).at(location).at_end(arg)
+        end
       else
         parse_pow
       end

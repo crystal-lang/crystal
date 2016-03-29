@@ -500,6 +500,19 @@ module Crystal
     end
   end
 
+  class Not
+    def update(from = nil)
+      exp_type = exp.type?
+      return unless exp_type
+
+      if exp_type.no_return?
+        self.type = exp_type
+      else
+        self.type = exp_type.program.bool
+      end
+    end
+  end
+
   class MetaVar < ASTNode
     property name : String
 

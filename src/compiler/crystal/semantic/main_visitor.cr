@@ -2370,6 +2370,15 @@ module Crystal
       false
     end
 
+    def visit(node : Not)
+      node.exp.accept self
+      node.exp.add_observer node
+      node.update
+
+      @type_filters = nil
+      false
+    end
+
     # # Helpers
 
     def check_closured(var)

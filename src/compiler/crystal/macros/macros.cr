@@ -425,6 +425,12 @@ module Crystal
         false
       end
 
+      def visit(node : Not)
+        node.exp.accept self
+        @last = BoolLiteral.new(!@last.truthy?)
+        false
+      end
+
       def visit(node : If)
         node.cond.accept self
         (@last.truthy? ? node.then : node.else).accept self

@@ -692,6 +692,13 @@ module Crystal
       codegen_cond node.type.remove_indirection
     end
 
+    def visit(node : Not)
+      accept node.exp
+      @last = codegen_cond node.exp.type.remove_indirection
+      @last = not @last
+      false
+    end
+
     def visit(node : Break)
       set_current_debug_location(node) if @debug
       node_type = accept_control_expression(node)
