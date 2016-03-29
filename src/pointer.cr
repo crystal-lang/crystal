@@ -71,6 +71,11 @@ struct Pointer(T)
     nil?
   end
 
+  # Returns true if this is a null pointer, false otherwise.
+  def !
+    null?
+  end
+
   # Returns a new pointer whose address is this pointer's address incremented by `other * sizeof(T)`.
   #
   # ```

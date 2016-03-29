@@ -240,4 +240,9 @@ describe "Pointer" do
       ptr[3].should_not be_nil
     end
   end
+
+  it "does !" do
+    (!Pointer(Int32).null).should be_true
+    (!Pointer(Int32).new(123)).should be_false
+  end
 end
