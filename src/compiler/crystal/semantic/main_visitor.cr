@@ -697,8 +697,7 @@ module Crystal
       # must be inside the def's metavars.
       meta_vars.each do |name, var|
         if var.special_var?
-          new_var = @meta_vars[name] ||= new_meta_var(name)
-          new_var.bind_to(var)
+          define_special_var(name, var)
         end
       end
 

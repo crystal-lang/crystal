@@ -253,4 +253,29 @@ describe "Codegen: special vars" do
       end
     )).to_i.should eq(123)
   end
+
+  it "preserves special vars if initialized inside block (#2194)" do
+    run(%(
+      class Object; def not_nil!; self; end; end
+
+      def foo
+        $~ = "foo"
+      end
+
+      def bar
+        yield
+      end
+
+      bar do
+        foo
+      end
+
+      v = $~
+      if v
+        v
+      else
+        "bar"
+      end
+      )).to_string.should eq("foo")
+  end
 end

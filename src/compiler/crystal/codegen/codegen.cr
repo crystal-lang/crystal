@@ -1589,7 +1589,10 @@ module Crystal
       return unless vars
 
       vars.each do |name, var|
-        context.vars.delete(name) if var.belongs_to?(obj)
+        # Don't remove special vars because they are local for the entire method
+        if var.belongs_to?(obj) && !var.special_var?
+          context.vars.delete(name)
+        end
       end
     end
 
