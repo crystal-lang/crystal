@@ -95,6 +95,27 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %(A = 4), %(A = 4)
   end
 
+  it "instrument not expressions" do
+    assert_agent %(!true), %($p.i(1) { !true })
+  end
+
+  it "instrument binary expressions" do
+    assert_agent %(a && b), %($p.i(1) { a && b })
+    assert_agent %(a || b), %($p.i(1) { a || b })
+  end
+
+  it "instrument unary expressions" do
+    assert_agent %(pointerof(x)), %($p.i(1) { pointerof(x) })
+  end
+
+  it "instrument is_a? expressions" do
+    assert_agent %(x.is_a?(Foo)), %($p.i(1) { x.is_a?(Foo) })
+  end
+
+  it "instrument ivar with obj" do
+    assert_agent %(x.@foo), %($p.i(1) { x.@foo })
+  end
+
   it "instrument multi assignments in the rhs" do
     assert_agent %(a, b = t), %(a, b = $p.i(1) { t })
     assert_agent %(a, b = d, f), %(a, b = $p.i(1, ["d", "f"]) { {d, f} })
