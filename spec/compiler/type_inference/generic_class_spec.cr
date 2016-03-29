@@ -664,4 +664,21 @@ describe "Type inference: generic class" do
       Baz.new.x
       )) { nilable int32 }
   end
+
+  it "doesn't duplicate overload on generic class class method (#2385)" do
+    nodes = parse(%(
+      class Foo(T)
+        def self.foo(x : Int32)
+        end
+      end
+
+      Foo(String).foo(35.7)
+      ))
+    begin
+      infer_type(nodes)
+    rescue ex : TypeException
+      msg = ex.to_s.lines.map(&.strip)
+      msg.count("- Foo(T)::foo(x : Int32)").should eq(1)
+    end
+  end
 end

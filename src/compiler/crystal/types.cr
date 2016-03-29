@@ -2572,7 +2572,6 @@ module Crystal
     def parents
       @parents ||= begin
         parents = [] of Type
-        parents << instance_type.generic_class.metaclass
         parents << (instance_type.superclass.try(&.metaclass) || @program.class_type)
         parents
       end

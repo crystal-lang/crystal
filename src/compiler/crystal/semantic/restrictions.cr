@@ -596,6 +596,13 @@ module Crystal
       restricted = instance_type.restrict(other.name, context)
       restricted ? self : nil
     end
+
+    def restrict(other : MetaclassType, context)
+      return self if instance_type.generic_class.metaclass == other
+
+      restricted = instance_type.restrict(other.instance_type, context)
+      restricted ? self : nil
+    end
   end
 
   class FunInstanceType
