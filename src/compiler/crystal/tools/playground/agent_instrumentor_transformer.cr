@@ -40,11 +40,11 @@ module Crystal
     private def instrument(node)
       if (location = node.location) && location.line_number != ignore_line
         @nested_block_visitor.not_nil!.accept(node)
-        args = [node as ASTNode, NumberLiteral.new(location.line_number)] of ASTNode
+        args = [NumberLiteral.new(location.line_number)] of ASTNode
         if node.is_a?(TupleLiteral)
           args << ArrayLiteral.new(node.elements.map { |e| StringLiteral.new(e.to_s) as ASTNode })
         end
-        Call.new(Global.new("$p"), "i", args)
+        Call.new(Global.new("$p"), "i", args, Block.new([] of Var, node as ASTNode))
       else
         node
       end

@@ -4,12 +4,23 @@ require "json"
 class Crystal::Playground::Agent
   def initialize(url, @tag)
     @ws = HTTP::WebSocket.new(URI.parse(url))
+    @send_runtime = true
   end
 
-  def i # para la lineas en blanco
-  end
+  def i(line, names = nil)
+    value = begin
+      yield
+    rescue ex
+      if @send_runtime
+        @send_runtime = false # send only the inner runtime exception
+        send "runtime-exception" do |json, io|
+          json.field "line", line
+          json.field "exception", ex.to_s
+        end
+      end
+      raise ex
+    end
 
-  def i(value, line, names = nil)
     send "value" do |json, io|
       json.field "line", line
       json.field "value", safe_to_value(value)

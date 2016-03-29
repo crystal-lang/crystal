@@ -5,6 +5,9 @@ require "../../../../src/compiler/crystal/**"
 include Crystal
 
 private def assert_agent(source, expected)
+  # parse/to_s expected so block syntax and spaces do not bother
+  expected = Parser.new(expected).parse.to_s
+
   ast = Parser.new(source).parse
   instrumented = ast.transform Playground::AgentInstrumentorTransformer.new
   instrumented.to_s.should contain(expected)
@@ -38,54 +41,54 @@ end
 describe Playground::Agent do
   it "should send json messages and return inspected value" do
     agent = Crystal::Playground::TestAgent.new(".", 32)
-    agent.i(5, 1).should eq(5)
+    agent.i(1) { 5 }.should eq(5)
     agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"5","value_type":"Int32"}))
     x, y = 3, 4
-    agent.i({x, y}, 1, ["x", "y"]).should eq({3, 4})
+    agent.i(1, ["x", "y"]) { {x, y} }.should eq({3, 4})
     agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"{3, 4}","value_type":"{Int32, Int32}","data":{"x":"3","y":"4"}}))
 
-    agent.i(nil as Void?, 1)
+    agent.i(1) { nil as Void? }
     agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"nil","value_type":"Void?"}))
-    agent.i(a_sample_void as Void?, 1)
+    agent.i(1) { a_sample_void as Void? }
     agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"(void)","value_type":"Void?"}))
-    agent.i(a_sample_void, 1)
+    agent.i(1) { a_sample_void }
     agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"(void)","value_type":"Void"}))
   end
 end
 
 describe Playground::AgentInstrumentorTransformer do
   it "instrument literals" do
-    assert_agent %(nil), %($p.i(nil, 1))
-    assert_agent %(5), %($p.i(5, 1))
-    assert_agent %(5.0), %($p.i(5.0, 1))
-    assert_agent %("lorem"), %($p.i("lorem", 1))
-    assert_agent %(true), %($p.i(true, 1))
-    assert_agent %('c'), %($p.i('c', 1))
-    assert_agent %(:foo), %($p.i(:foo, 1))
-    assert_agent %([1, 2]), %($p.i([1, 2], 1))
-    assert_agent %(/a/), %($p.i(/a/, 1))
+    assert_agent %(nil), %($p.i(1) { nil })
+    assert_agent %(5), %($p.i(1) { 5 })
+    assert_agent %(5.0), %($p.i(1) { 5.0 })
+    assert_agent %("lorem"), %($p.i(1) { "lorem" })
+    assert_agent %(true), %($p.i(1) { true })
+    assert_agent %('c'), %($p.i(1) { 'c' })
+    assert_agent %(:foo), %($p.i(1) { :foo })
+    assert_agent %([1, 2]), %($p.i(1) { [1, 2] })
+    assert_agent %(/a/), %($p.i(1) { /a/ })
   end
 
   it "instrument literals with expression names" do
-    assert_agent %({1, 2}), %($p.i({1, 2}, 1, ["1", "2"]))
-    assert_agent %({x, x + y}), %($p.i({x, x + y}, 1, ["x", "x + y"]))
-    assert_agent %(a = {x, x + y}), %(a = $p.i({x, x + y}, 1, ["x", "x + y"]))
+    assert_agent %({1, 2}), %($p.i(1, ["1", "2"]) { {1, 2} })
+    assert_agent %({x, x + y}), %($p.i(1, ["x", "x + y"]) { {x, x + y} })
+    assert_agent %(a = {x, x + y}), %(a = $p.i(1, ["x", "x + y"]) { {x, x + y} })
   end
 
   it "instrument single variables expressions" do
-    assert_agent %(x), %($p.i(x, 1))
+    assert_agent %(x), %($p.i(1) { x })
   end
 
   it "instrument single global variables expressions" do
-    assert_agent %($x), %($p.i($x, 1))
+    assert_agent %($x), %($p.i(1) { $x })
   end
 
   it "instrument string interpolations" do
-    assert_agent %("lorem \#{a} \#{b}"), %($p.i("lorem \#{a} \#{b}", 1))
+    assert_agent %("lorem \#{a} \#{b}"), %($p.i(1) { "lorem \#{a} \#{b}" })
   end
 
   it "instrument assignments in the rhs" do
-    assert_agent %(a = 4), %(a = $p.i(4, 1))
+    assert_agent %(a = 4), %(a = $p.i(1) { 4 })
   end
 
   it "do not instrument constants assignments" do
@@ -93,19 +96,19 @@ describe Playground::AgentInstrumentorTransformer do
   end
 
   it "instrument multi assignments in the rhs" do
-    assert_agent %(a, b = t), %(a, b = $p.i(t, 1))
-    assert_agent %(a, b = d, f), %(a, b = $p.i({d, f}, 1, ["d", "f"]))
-    assert_agent %(a, b = {d, f}), %(a, b = $p.i({d, f}, 1, ["d", "f"]))
+    assert_agent %(a, b = t), %(a, b = $p.i(1) { t })
+    assert_agent %(a, b = d, f), %(a, b = $p.i(1, ["d", "f"]) { {d, f} })
+    assert_agent %(a, b = {d, f}), %(a, b = $p.i(1, ["d", "f"]) { {d, f} })
   end
 
   it "instrument puts" do
-    assert_agent %(puts 3), %(puts($p.i(3, 1)))
-    assert_agent %(puts a, 2, b), %(puts(*$p.i({a, 2, b}, 1, ["a", "2", "b"])))
+    assert_agent %(puts 3), %(puts($p.i(1) { 3 }))
+    assert_agent %(puts a, 2, b), %(puts(*$p.i(1, ["a", "2", "b"]) { {a, 2, b} }))
   end
 
   it "instrument print" do
-    assert_agent %(print 3), %(print($p.i(3, 1)))
-    assert_agent %(print a, 2, b), %(print(*$p.i({a, 2, b}, 1, ["a", "2", "b"])))
+    assert_agent %(print 3), %(print($p.i(1) { 3 }))
+    assert_agent %(print a, 2, b), %(print(*$p.i(1, ["a", "2", "b"]) { {a, 2, b} }))
   end
 
   it "instrument single statement def" do
@@ -114,7 +117,7 @@ describe Playground::AgentInstrumentorTransformer do
       4
     end), <<-CR
     def foo
-      $p.i(4, 3)
+      $p.i(3) { 4 }
     end
     CR
   end
@@ -125,7 +128,7 @@ describe Playground::AgentInstrumentorTransformer do
       x
     end), <<-CR
     def foo(x)
-      $p.i(x, 3)
+      $p.i(3) { x }
     end
     CR
   end
@@ -137,8 +140,8 @@ describe Playground::AgentInstrumentorTransformer do
       6
     end), <<-CR
     def foo
-      $p.i(2, 3)
-      $p.i(6, 4)
+      $p.i(3) { 2 }
+      $p.i(4) { 6 }
     end
     CR
   end
@@ -149,7 +152,7 @@ describe Playground::AgentInstrumentorTransformer do
       return 4
     end), <<-CR
     def foo
-      return $p.i(4, 3)
+      return $p.i(3) { 4 }
     end
     CR
   end
@@ -170,14 +173,14 @@ describe Playground::AgentInstrumentorTransformer do
     end), <<-CR
     class Foo
       def initialize
-        @x = $p.i(3, 4)
+        @x = $p.i(4) { 3 }
       end
       def bar(x)
-        x = $p.i(x + x, 7)
-        $p.i(x, 8)
+        x = $p.i(7) { x + x }
+        $p.i(8) { x }
       end
       def self.bar(x, y)
-        $p.i(x + y, 11)
+        $p.i(11) { x + y }
       end
     end
     CR
@@ -199,14 +202,14 @@ describe Playground::AgentInstrumentorTransformer do
     end), <<-CR
     class Foo
       def initialize
-        @x = $p.i(3, 4)
-        @@x = $p.i(4, 5)
+        @x = $p.i(4) { 3 }
+        @@x = $p.i(5) { 4 }
       end
       def bar
-        $p.i(@x, 8)
+        $p.i(8) { @x }
       end
       def self.bar
-        $p.i(@@x, 11)
+        $p.i(11) { @@x }
       end
     end
     CR
@@ -224,7 +227,7 @@ describe Playground::AgentInstrumentorTransformer do
       def initialize(x, y)
         @x = x
         @y = y
-        @z = $p.i(@x + @y, 4)
+        @z = $p.i(4) { @x + @y }
       end
     end
     CR
@@ -242,10 +245,10 @@ describe Playground::AgentInstrumentorTransformer do
     end), <<-CR
     class Foo
       private def bar
-        $p.i(1, 4)
+        $p.i(4) { 1 }
       end
       protected def self.bar
-        $p.i(2, 7)
+        $p.i(7) { 2 }
       end
     end
     CR
@@ -257,7 +260,7 @@ describe Playground::AgentInstrumentorTransformer do
       property foo
     end), <<-CR
     class Foo
-      property(foo)
+      property foo
     end
     CR
   end
@@ -274,7 +277,7 @@ describe Playground::AgentInstrumentorTransformer do
     class Bar
       class Foo
         def initialize
-          @x = $p.i(3, 5)
+          @x = $p.i(5) { 3 }
         end
       end
     end
@@ -285,7 +288,7 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %(
     record Foo, x, y
     ), <<-CR
-    record(Foo, x, y)
+    record Foo, x, y
     CR
   end
 
@@ -304,7 +307,7 @@ describe Playground::AgentInstrumentorTransformer do
       class Baz
         class Foo
           def initialize
-            @x = $p.i(3, 6)
+            @x = $p.i(6) { 3 }
           end
         end
       end
@@ -321,9 +324,9 @@ describe Playground::AgentInstrumentorTransformer do
     end
     ), <<-CR
     if a
-      $p.i(b, 3)
+      $p.i(3) { b }
     else
-      $p.i(c, 5)
+      $p.i(5) { c }
     end
     CR
   end
@@ -337,9 +340,9 @@ describe Playground::AgentInstrumentorTransformer do
     end
     ), <<-CR
     unless a
-      $p.i(b, 3)
+      $p.i(3) { b }
     else
-      $p.i(c, 5)
+      $p.i(5) { c }
     end
     CR
   end
@@ -352,8 +355,8 @@ describe Playground::AgentInstrumentorTransformer do
     end
     ), <<-CR
     while a
-      $p.i(b, 3)
-      $p.i(c, 4)
+      $p.i(3) { b }
+      $p.i(4) { c }
     end
     CR
   end
@@ -372,11 +375,11 @@ describe Playground::AgentInstrumentorTransformer do
     ), <<-CR
     case a
     when 0
-      $p.i(b, 4)
+      $p.i(4) { b }
     when 1
-      $p.i(c, 6)
+      $p.i(6) { c }
     else
-      $p.i(d, 8)
+      $p.i(8) { d }
     end
     CR
   end
@@ -391,11 +394,13 @@ describe Playground::AgentInstrumentorTransformer do
     end
     ), <<-CR
     def foo(x)
-      yield $p.i(x, 3)
+      yield $p.i(3) { x }
     end
-    $p.i(foo do |a|
-      $p.i(a, 6)
-    end, 5)
+    $p.i(5) do
+      foo do |a|
+        $p.i(6) { a }
+      end
+    end
     CR
   end
 
@@ -411,9 +416,11 @@ describe Playground::AgentInstrumentorTransformer do
     def foo(x)
       yield x, 1
     end
-    $p.i(foo do |a, i|
-      $p.i(a, 6)
-    end, 5)
+    $p.i(5) do
+      foo do |a, i|
+        $p.i(6) { a }
+      end
+    end
     CR
   end
 
@@ -427,20 +434,26 @@ describe Playground::AgentInstrumentorTransformer do
       baz { 'c' }
     end
     ), <<-CR
-    a = $p.i(foo do
-      $p.i('a', 3)
-      $p.i(bar do
-        $p.i('b', 5)
-      end, 4)
-      $p.i(baz do
-        'c'
-      end, 7)
-    end, 2)
+    a = $p.i(2) do
+      foo do
+        $p.i(3) { 'a' }
+        $p.i(4) do
+          bar do
+            $p.i(5) { 'b' }
+          end
+        end
+        $p.i(7) do
+          baz do
+            'c'
+          end
+        end
+      end
+    end
     CR
   end
 
   it "instrument typeof" do
-    assert_agent %(typeof(5)), %($p.i(typeof(5), 1))
+    assert_agent %(typeof(5)), %($p.i(1) { typeof(5) })
   end
 
   it "instrument exceptions" do
@@ -463,21 +476,21 @@ describe Playground::AgentInstrumentorTransformer do
     end
     ), <<-CR
     begin
-      raise($p.i("The exception", 3))
+      raise($p.i(3) { "The exception" })
     rescue ex : String
-      $p.i(1, 5)
+      $p.i(5) { 1 }
     rescue
-      $p.i(0, 7)
+      $p.i(7) { 0 }
     else
-      $p.i(2, 9)
+      $p.i(9) { 2 }
     ensure
-      $p.i(3, 11)
+      $p.i(11) { 3 }
     end
     def foo(x)
       begin
-        raise($p.i("Other", 14))
+        raise($p.i(14) { "Other" })
       rescue
-        $p.i(0, 16)
+        $p.i(16) { 0 }
       end
     end
     CR

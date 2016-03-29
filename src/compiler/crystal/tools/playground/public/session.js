@@ -317,6 +317,11 @@ Playground.Session = function(options) {
         case "value":
           this._getInspector(message.line).addMessage(message);
           break;
+        case "runtime-exception":
+          this._fullError = message.exception;
+          var column =  this.editor.getLine(message.line-1).match(/\s*\S/)[0].length;
+          this._showEditorError(message.line, column, message.exception, 0);
+          break;
         case "exit":
           this._triggerFinish();
 
