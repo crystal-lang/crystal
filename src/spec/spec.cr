@@ -184,6 +184,8 @@ module Spec
 
   @@before_each : Array(->)?
 
+  # Instructs the spec runner to execute the given block
+  # before each spec, regardless of where this method is invoked.
   def self.before_each(&block)
     before_each = @@before_each ||= [] of ->
     before_each << block
@@ -191,6 +193,8 @@ module Spec
 
   @@after_each : Array(->)?
 
+  # Instructs the spec runner to execute the given block
+  # after each spec, regardless of where this method is invoked.
   def self.after_each(&block)
     after_each = @@after_each ||= [] of ->
     after_each << block
