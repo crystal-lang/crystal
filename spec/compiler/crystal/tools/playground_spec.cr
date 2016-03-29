@@ -9,12 +9,12 @@ private def assert_agent(source, expected)
   expected = Parser.new(expected).parse.to_s
 
   ast = Parser.new(source).parse
-  instrumented = ast.transform Playground::AgentInstrumentorTransformer.new
+  instrumented = Playground::AgentInstrumentorTransformer.transform ast
   instrumented.to_s.should contain(expected)
 
   # whatever case should work beforeit should work with appended lines
   ast = Parser.new("#{source}\n1\n").parse
-  instrumented = ast.transform Playground::AgentInstrumentorTransformer.new
+  instrumented = Playground::AgentInstrumentorTransformer.transform ast
   instrumented.to_s.should contain(expected)
 end
 
@@ -284,12 +284,68 @@ describe Playground::AgentInstrumentorTransformer do
     CR
   end
 
-  it "do not records class" do
+  it "do not instrument records class" do
     assert_agent %(
     record Foo, x, y
     ), <<-CR
     record Foo, x, y
     CR
+  end
+
+  it "do not instrument top level macro calls" do
+    assert_agent(<<-CR
+    macro bar
+      def foo
+        4
+      end
+    end
+    bar
+    foo
+    CR
+    , <<-CR
+    macro bar
+      def foo
+        4
+      end
+    end
+    bar
+    $p.i(7) { foo }
+    CR
+    )
+  end
+
+  it "do not instrument class/module declared macro" do
+    assert_agent(<<-CR
+    module Bar
+      macro bar
+        4
+      end
+    end
+
+    class Foo
+      include Bar
+      def foo
+        bar
+        8
+      end
+    end
+    CR
+    , <<-CR
+    module Bar
+      macro bar
+        4
+      end
+    end
+
+    class Foo
+      include Bar
+      def foo
+        bar
+        $p.i(11) { 8 }
+      end
+    end
+    CR
+    )
   end
 
   it "instrument inside modules" do

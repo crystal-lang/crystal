@@ -28,7 +28,7 @@ module Crystal::Playground
         return
       end
 
-      instrumented = ast.transform(Playground::AgentInstrumentorTransformer.new).to_s
+      instrumented = Playground::AgentInstrumentorTransformer.transform(ast).to_s
       @logger.info "Code instrumentation (session=#{@session_key}, tag=#{tag}).\n#{instrumented}"
 
       prelude = %(

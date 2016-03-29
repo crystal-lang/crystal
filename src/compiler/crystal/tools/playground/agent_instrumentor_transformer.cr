@@ -1,5 +1,22 @@
 module Crystal
   class Playground::AgentInstrumentorTransformer < Transformer
+    class MacroDefNameCollector < Visitor
+      getter names
+
+      def initialize
+        @names = Set(String).new
+      end
+
+      def visit(node : Macro)
+        @names << node.name
+        false
+      end
+
+      def visit(node)
+        true
+      end
+    end
+
     class FirstBlockVisitor < Visitor
       def initialize(@instrumentor)
       end
@@ -31,10 +48,26 @@ module Crystal
     @nested_block_visitor : FirstBlockVisitor?
     @type_body_transformer : TypeBodyTransformer?
 
-    def initialize
+    def initialize(@macro_names : Set(String))
+      @macro_names << "record"
+
       @ignore_line = nil
       @nested_block_visitor = FirstBlockVisitor.new(self)
       @type_body_transformer = TypeBodyTransformer.new(self)
+    end
+
+    def self.transform(ast)
+      # collect names of declared macros in ast
+      # so the instrumentor can ignore call's of methods with this name
+      # this will avoid instrumenting calls to methods with the same name than
+      # declared macros in the playground source. For a more accurate solution
+      # a compilation should be done to distigush whether each call refers to a macro or
+      # a method. Between the macro names collection and only instrumenting def's inside
+      # modules/classes the generated instrumentation is pretty good enough. See #2355
+      collector = MacroDefNameCollector.new
+      ast.accept collector
+
+      ast.transform self.new(collector.names)
     end
 
     private def instrument(node)
@@ -85,8 +118,12 @@ module Crystal
         instrument_arg node
       when {nil, "print", _}
         instrument_args_and_splat node
-      when {nil, "record", _}
-        node
+      when {nil, _, _}
+        if @macro_names.includes?(node.name)
+          node
+        else
+          instrument(node)
+        end
       else
         instrument(node)
       end
