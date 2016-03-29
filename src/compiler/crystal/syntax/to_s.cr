@@ -295,7 +295,7 @@ module Crystal
           in_parenthesis(need_parens, node_obj)
           @str << "."
         end
-        if node.name.ends_with?('=')
+        if node.name.ends_with?('=') && node.name[0].alpha?
           @str << decorate_call(node, node.name[0..-2])
           @str << " = "
           node.args.each_with_index do |arg, i|

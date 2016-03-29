@@ -45,4 +45,5 @@ describe "ASTNode#to_s" do
   expect_to_s %(foo : A | (B -> C))
   expect_to_s %[%("\#{foo}")], %["\\\"\#{foo}\\\""]
   expect_to_s "class Foo\n  private def bar\n  end\nend"
+  expect_to_s "foo(&.==(2))"
 end
