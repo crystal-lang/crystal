@@ -10,7 +10,7 @@
 #
 # Internally a symbol is represented as an `Int32`, so it's very efficient.
 #
-# You can't dynamically create symbols: when you compile your program each symbol
+# You can't dynamically create symbols. When you compile your program, each symbol
 # gets assigned a unique number.
 struct Symbol
   include Comparable(Symbol)
