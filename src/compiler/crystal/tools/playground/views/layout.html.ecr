@@ -14,15 +14,16 @@
   </head>
   <body class="grey lighten-3 grey-text text-darken-2">
     <header>
-      <div class="navbar-fixed">
+      <div class="navbar">
         <nav>
           <div class="nav-wrapper white">
             <div class="col s12">
               <a href="/" class="brand-logo">
-                <img src="icon.png" />
+                <img src="/icon.png" />
               </a>
               <ul class="right">
                 <li><a href="/">Playground</a></li>
+                <li><a href="/workbook">Workbook</a></li>
                 <li><a href="/about">About</a></li>
                 <li><a href="/settings"><span class="f-16 octicon octicon-settings"></span></a></li>
               </ul>
@@ -33,7 +34,9 @@
     </header>
 
     <main>
-      <%= content %>
+      <div class="container">
+        <%= yield %>
+      </div>
     </main>
 
     <footer>
