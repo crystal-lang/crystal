@@ -95,4 +95,13 @@ describe JSON::Any do
     obj.should eq([1, 2])
     obj[0].should eq(1)
   end
+
+  it "can compare with ===" do
+    (1 === JSON.parse("1")).should be_truthy
+  end
+
+  it "exposes $~ when doing Regex#===" do
+    (/o+/ === JSON.parse(%("foo"))).should be_truthy
+    $~[0].should eq("oo")
+  end
 end

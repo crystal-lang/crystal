@@ -208,3 +208,17 @@ struct JSON::Any
     raw.to_json(io)
   end
 end
+
+class Object
+  def ===(other : JSON::Any)
+    self === other.raw
+  end
+end
+
+class Regex
+  def ===(other : JSON::Any)
+    value = self === other.raw
+    $~ = $~
+    value
+  end
+end

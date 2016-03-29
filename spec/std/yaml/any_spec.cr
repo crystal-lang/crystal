@@ -86,4 +86,13 @@ describe YAML::Any do
     docs[0].as_s.should eq("foo")
     docs[1].as_s.should eq("bar")
   end
+
+  it "can compare with ===" do
+    ("1" === YAML.parse("1")).should be_truthy
+  end
+
+  it "exposes $~ when doing Regex#===" do
+    (/o+/ === YAML.parse(%("foo"))).should be_truthy
+    $~[0].should eq("oo")
+  end
 end

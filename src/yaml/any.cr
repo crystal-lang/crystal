@@ -188,3 +188,17 @@ struct YAML::Any
     raw.to_yaml(io)
   end
 end
+
+class Object
+  def ===(other : YAML::Any)
+    self === other.raw
+  end
+end
+
+class Regex
+  def ===(other : YAML::Any)
+    value = self === other.raw
+    $~ = $~
+    value
+  end
+end
