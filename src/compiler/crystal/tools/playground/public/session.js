@@ -334,11 +334,15 @@ Playground.Session = function(options) {
           this._triggerFinish();
 
           this._fullError = message.exception.message;
-          for (var i = 0; i < message.exception.payload.length; i++) {
-            var ex = message.exception.payload[i];
-            if (ex.file == "play" || ex.file == "") {
-              this._showEditorError(ex.line, ex.column, ex.message, i);
+          if (message.exception.payload) {
+            for (var i = 0; i < message.exception.payload.length; i++) {
+              var ex = message.exception.payload[i];
+              if (ex.file == "play" || ex.file == "") {
+                this._showEditorError(ex.line, ex.column, ex.message, i);
+              }
             }
+          } else {
+            this._showEditorError(this.editor.lastLine(), 1, "Compiler error", 0);
           }
           break;
         case "bug":

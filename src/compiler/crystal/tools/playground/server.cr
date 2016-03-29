@@ -46,14 +46,14 @@ module Crystal::Playground
       begin
         @logger.info "Instrumented code compilation started (session=#{@session_key}, tag=#{tag})."
         result = compiler.compile sources, output_filename
-      rescue ex : Crystal::Exception
+      rescue ex
         @logger.info "Instrumented code compilation failed (session=#{@session_key}, tag=#{tag})."
 
         # due to instrumentation, we compile the original program
         begin
           @logger.info "Original code compilation started (session=#{@session_key}, tag=#{tag})."
           compiler.compile Compiler::Source.new("play", source), output_filename
-        rescue ex : Crystal::Exception
+        rescue ex
           @logger.info "Original code compilation failed (session=#{@session_key}, tag=#{tag})."
           send_exception ex, tag
           return # if we don't exit here we've found a bug
@@ -113,7 +113,9 @@ module Crystal::Playground
     def append_exception(io, ex)
       io.json_object do |json|
         json.field "message", ex.to_s
-        json.field "payload", ex
+        if ex.is_a?(Crystal::Exception)
+          json.field "payload", ex
+        end
       end
     end
 
