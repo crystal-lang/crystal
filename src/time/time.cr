@@ -72,9 +72,9 @@ end
 #     span_a = Time::Span.new(3,0,0)
 #     span_b = Time::Span.new(2,0,0)
 #     span = span_a - span_b
-#     span       #=> 02:00:00
+#     span       #=> 01:00:00
 #     span.class #=> Time::Span
-#     span.hours #=> 2
+#     span.hours #=> 1
 struct Time
   # *Heavily* inspired by Mono's DateTime class:
   # https://github.com/mono/mono/blob/master/mcs/class/corlib/System/DateTime.cs
