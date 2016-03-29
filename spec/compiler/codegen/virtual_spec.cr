@@ -358,7 +358,7 @@ describe "Code gen: virtual type" do
     ").to_i.should eq(1)
   end
 
-  pending "calls class method 1" do
+  it "calls class method 1" do
     run("
       class Foo
         def self.foo
@@ -376,7 +376,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(1)
   end
 
-  pending "calls class method 2" do
+  it "calls class method 2" do
     run("
       class Foo
         def self.foo
@@ -394,7 +394,7 @@ describe "Code gen: virtual type" do
       ").to_i.should eq(2)
   end
 
-  pending "calls class method 3" do
+  it "calls class method 3" do
     run("
       class Base
         def self.foo
