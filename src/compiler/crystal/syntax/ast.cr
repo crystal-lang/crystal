@@ -350,7 +350,7 @@ module Crystal
     end
 
     def clone_without_location
-      RegexLiteral.new(@value, @options)
+      RegexLiteral.new(@value.clone, @options)
     end
 
     def_equals_and_hash @value, @options

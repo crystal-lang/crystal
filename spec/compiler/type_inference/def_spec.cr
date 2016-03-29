@@ -364,4 +364,18 @@ describe "Type inference: def" do
       foo 1
       )) { |mod| mod.nil.metaclass }
   end
+
+  it "clones regex literal value (#2384)" do
+    assert_type(%(
+      require "prelude"
+
+      def foo(x : String = "")
+        /\#{1}/
+        10
+      end
+
+      foo
+      foo("")
+      )) { int32 }
+  end
 end
