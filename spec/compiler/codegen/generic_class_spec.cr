@@ -176,4 +176,21 @@ describe "Code gen: generic class type" do
       $x
       )).to_i.should eq(2)
   end
+
+  it "uses big integer as generic type argument (#2353)" do
+    run(%(
+      require "prelude"
+
+      MIN_RANGE = -2374623294237463578
+      MAX_RANGE = -MIN_RANGE
+
+      class Hello(T)
+        def self.t
+          T
+        end
+      end
+
+      Hello(MAX_RANGE).t
+      )).to_u64.should eq(2374623294237463578)
+  end
 end

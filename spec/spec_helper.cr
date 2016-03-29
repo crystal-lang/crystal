@@ -156,6 +156,7 @@ class Crystal::SpecRunOutput
   end
 
   delegate to_i, @output
+  delegate to_u64, @output
   delegate to_f, @output
   delegate to_f32, @output
   delegate to_f64, @output

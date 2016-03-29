@@ -8,6 +8,10 @@ class LLVM::GenericValue
     LibLLVM.generic_value_to_int(self, 1)
   end
 
+  def to_u64
+    to_i
+  end
+
   def to_b
     to_i != 0
   end
