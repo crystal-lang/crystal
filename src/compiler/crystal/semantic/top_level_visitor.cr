@@ -267,6 +267,8 @@ module Crystal
 
       check_outside_block_or_exp node, "declare alias"
 
+      check_no_typeof node.value
+
       existing_type = current_type.types[node.name]?
       if existing_type
         if existing_type.is_a?(AliasType)
@@ -283,6 +285,31 @@ module Crystal
       node.type = @mod.nil
 
       false
+    end
+
+    private def check_no_typeof(node)
+      visitor = HasTypeofVisitor.new
+      node.accept visitor
+      if t = visitor.typeof
+        t.raise "can't use typeof inside alias declaration"
+      end
+    end
+
+    class HasTypeofVisitor < Visitor
+      getter typeof : TypeOf?
+
+      def initialize
+        @typeof = nil
+      end
+
+      def visit(node : TypeOf)
+        @typeof ||= node
+        false
+      end
+
+      def visit(node : ASTNode)
+        true
+      end
     end
 
     def visit(node : Macro)

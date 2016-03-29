@@ -204,4 +204,11 @@ describe "type inference: alias" do
       ),
       "can't declare alias dynamically"
   end
+
+  it "errors if trying to use typeof in alias" do
+    assert_error %(
+      alias Foo = typeof(1)
+      ),
+      "can't use typeof inside alias declaration"
+  end
 end

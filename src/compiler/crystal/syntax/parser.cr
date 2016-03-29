@@ -3915,6 +3915,8 @@ module Crystal
     end
 
     def parse_typeof
+      location = @token.location
+
       next_token_skip_space
       check :"("
       next_token_skip_space_or_newline
@@ -3933,7 +3935,7 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      TypeOf.new(exps).at_end(end_location)
+      TypeOf.new(exps).at(location).at_end(end_location)
     end
 
     def next_comes_type
