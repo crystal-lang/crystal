@@ -317,4 +317,28 @@ describe "Visibility modifiers" do
       MyFoo.new.foo
       )) { int32 }
   end
+
+  it "allows invoking protected method from virtual type" do
+    assert_type(%(
+      abstract class Foo
+        def foo
+          bar
+        end
+      end
+
+      class Bar < Foo
+        protected def bar
+          1
+        end
+      end
+
+      class Baz < Foo
+        protected def bar
+          1.5
+        end
+      end
+
+      (Bar.new || Baz.new).foo
+      )) { union_of int32, float64 }
+  end
 end

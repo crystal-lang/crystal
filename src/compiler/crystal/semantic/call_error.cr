@@ -454,8 +454,12 @@ class Crystal::Call
       scope_type = scope.instance_type
       owner_type = match.def.owner.instance_type
 
-      # OK if in the same hierarchy
+      # OK if in the same hierarchy,
+      # either because scope_type < owner_type
       return if scope_type.implements?(owner_type)
+
+      # or because owner_type < scope_type
+      return if owner_type.implements?(scope_type)
 
       # OK if both types are in the same namespace
       return if in_same_namespace?(scope_type, owner_type)
