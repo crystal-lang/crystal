@@ -222,11 +222,15 @@ class Deque(T)
   # a # => Deque{"a", "c"}
   # ```
   def delete(obj)
-    # TODO this can probably be optimized a lot
     found = false
-    while index = index(obj)
-      delete_at(index)
-      found = true
+    i = 0
+    while i < @size
+      if self[i] == obj
+        delete_at(i)
+        found = true
+      else
+        i += 1
+      end
     end
     found
   end
