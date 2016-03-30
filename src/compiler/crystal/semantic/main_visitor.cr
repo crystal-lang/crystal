@@ -334,6 +334,11 @@ module Crystal
         node.raise "#{obj_type} doesn't have an instance var named '#{node.name}'"
       end
 
+      unless obj_type.has_instance_var_in_initialize?(node.name)
+        ivar.nil_reason = NilReason.new(node.name, :not_in_initialize, scope: obj_type)
+        ivar.bind_to mod.nil_var
+      end
+
       node.bind_to ivar
 
       ivar

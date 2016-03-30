@@ -965,4 +965,17 @@ describe "Type inference: class" do
       A::Baz::B.foo
       )) { int32 }
   end
+
+  it "types read-instance-var without a type as nil" do
+    assert_type(%(
+      class Foo
+        def foo
+          @foo
+        end
+      end
+
+      f = Foo.new
+      f.@foo
+      )) { |mod| mod.nil }
+  end
 end
