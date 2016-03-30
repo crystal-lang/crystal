@@ -1438,5 +1438,13 @@ describe "Parser" do
       loc.line_number.should eq(1)
       loc.column_number.should eq(14)
     end
+
+    it "gets correct location after macro with yield" do
+      parser = Parser.new(%(\n  1 ? 2 : 3))
+      node = parser.parse
+      loc = node.location.not_nil!
+      loc.line_number.should eq(2)
+      loc.column_number.should eq(3)
+    end
   end
 end
