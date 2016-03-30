@@ -182,6 +182,10 @@ module Crystal
       end
     end
 
+    def not
+      @filter
+    end
+
     def ==(other : self)
       @filter == other.filter
     end
@@ -302,6 +306,14 @@ module Crystal
 
     def keys
       @filters.keys
+    end
+
+    def not
+      filters = TypeFilters.new
+      each do |key, value|
+        filters[key] = value.not
+      end
+      filters
     end
   end
 end

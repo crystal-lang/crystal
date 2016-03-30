@@ -16,4 +16,38 @@ describe "Type inference: not" do
       !LibC.exit
       )) { no_return }
   end
+
+  it "filters types inside if" do
+    assert_type(%(
+      a = 1 || nil
+      z = nil
+      if !a
+        z = a
+      end
+      z
+      )) { |mod| mod.nil }
+  end
+
+  it "filters types inside if/else" do
+    assert_type(%(
+      a = 1 || nil
+      z = 2
+      if !a
+      else
+        z = a
+      end
+      z
+      )) { int32 }
+  end
+
+  it "filters types with !is_a?" do
+    assert_type(%(
+      a = 1 == 2 ? "x" : 1
+      z = 0
+      if !a.is_a?(String)
+        z = a + 10
+      end
+      z
+      )) { int32 }
+  end
 end

@@ -1404,10 +1404,10 @@ module Crystal
 
       # The only cases where we can deduce something for the 'else'
       # block is when the condition is a Var (in the else it must be
-      # nil), IsA (in the else it's not that type) or RespondsTo
-      # (in the else it doesn't respond to that message).
+      # nil), IsA (in the else it's not that type), RespondsTo
+      # (in the else it doesn't respond to that message) or Not.
       case node.cond
-      when Var, IsA, RespondsTo
+      when Var, IsA, RespondsTo, Not
         filter_vars cond_type_filters, &.not
       end
 
@@ -2375,7 +2375,12 @@ module Crystal
       node.exp.add_observer node
       node.update
 
-      @type_filters = nil
+      if needs_type_filters? && (type_filters = @type_filters)
+        @type_filters = type_filters.not
+      else
+        @type_filters = nil
+      end
+
       false
     end
 
