@@ -1389,6 +1389,8 @@ module Crystal
           call = parse_is_a(obj).at(location)
         elsif @token.value == :responds_to?
           call = parse_responds_to(obj).at(location)
+        elsif @token.value == :nil?
+          call = parse_nil?(obj).at(location)
         elsif @token.type == :"["
           call = parse_atomic_method_suffix obj, location
 
