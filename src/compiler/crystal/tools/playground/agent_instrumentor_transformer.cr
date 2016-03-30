@@ -110,14 +110,10 @@ module Crystal
       case {node.obj, node.name, node.args.size}
       when {nil, "raise", 1}
         instrument_arg node
-      when {nil, "puts", 1}
-        instrument_arg node
       when {nil, "puts", _}
-        instrument_args_and_splat node
-      when {nil, "print", 1}
-        instrument_arg node
+        instrument_if_args node
       when {nil, "print", _}
-        instrument_args_and_splat node
+        instrument_if_args node
       when {nil, _, _}
         if @macro_names.includes?(node.name)
           node
@@ -126,6 +122,17 @@ module Crystal
         end
       else
         instrument(node)
+      end
+    end
+
+    private def instrument_if_args(node : Call)
+      case node.args.size
+      when 0
+        node
+      when 1
+        instrument_arg node
+      else
+        instrument_args_and_splat node
       end
     end
 

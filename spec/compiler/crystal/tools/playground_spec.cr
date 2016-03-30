@@ -4,18 +4,26 @@ require "../../../../src/compiler/crystal/**"
 
 include Crystal
 
+private def instrument(source)
+  ast = Parser.new(source).parse
+  instrumented = Playground::AgentInstrumentorTransformer.transform ast
+  instrumented.to_s
+end
+
 private def assert_agent(source, expected)
   # parse/to_s expected so block syntax and spaces do not bother
   expected = Parser.new(expected).parse.to_s
 
-  ast = Parser.new(source).parse
-  instrumented = Playground::AgentInstrumentorTransformer.transform ast
-  instrumented.to_s.should contain(expected)
+  instrument(source).should contain(expected)
 
   # whatever case should work beforeit should work with appended lines
-  ast = Parser.new("#{source}\n1\n").parse
-  instrumented = Playground::AgentInstrumentorTransformer.transform ast
-  instrumented.to_s.should contain(expected)
+  instrument("#{source}\n1\n").should contain(expected)
+end
+
+private def assert_agent_eq(source, expected)
+  # parse/to_s expected so block syntax and spaces do not bother
+  expected = Parser.new(expected).parse.to_s
+  instrument(source).should eq(expected)
 end
 
 class Crystal::Playground::TestAgent < Playground::Agent
@@ -122,14 +130,16 @@ describe Playground::AgentInstrumentorTransformer do
     assert_agent %(a, b = {d, f}), %(a, b = $p.i(1, ["d", "f"]) { {d, f} })
   end
 
-  it "instrument puts" do
+  it "instrument puts with args" do
     assert_agent %(puts 3), %(puts($p.i(1) { 3 }))
     assert_agent %(puts a, 2, b), %(puts(*$p.i(1, ["a", "2", "b"]) { {a, 2, b} }))
+    assert_agent_eq %(puts), %(puts)
   end
 
-  it "instrument print" do
+  it "instrument print with args" do
     assert_agent %(print 3), %(print($p.i(1) { 3 }))
     assert_agent %(print a, 2, b), %(print(*$p.i(1, ["a", "2", "b"]) { {a, 2, b} }))
+    assert_agent_eq %(print), %(print)
   end
 
   it "instrument single statement def" do
