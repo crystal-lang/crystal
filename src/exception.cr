@@ -25,7 +25,7 @@ struct CallStack
 
       while true
         ret = LibDL.dladdr(makecontext_end, out info)
-        break if ret == 0 || info.sname.nil?
+        break if ret == 0 || info.sname.null?
         break unless LibC.strcmp(info.sname, "makecontext") == 0
         makecontext_end += 1
       end
@@ -127,7 +127,7 @@ struct CallStack
         return decode_frame(ip - 1, original_ip)
       end
 
-      unless info.sname.nil?
+      unless info.sname.null?
         {offset, info.sname}
       end
     end

@@ -229,9 +229,9 @@ class Regex
     @source = source
 
     @re = LibPCRE.compile(@source, (options | Options::UTF_8 | Options::NO_UTF8_CHECK), out errptr, out erroffset, nil)
-    raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.nil?
+    raise ArgumentError.new("#{String.new(errptr)} at #{erroffset}") if @re.null?
     @extra = LibPCRE.study(@re, 0, out studyerrptr)
-    raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.nil? && studyerrptr
+    raise ArgumentError.new("#{String.new(studyerrptr)}") if @extra.null? && studyerrptr
     LibPCRE.full_info(@re, nil, LibPCRE::INFO_CAPTURECOUNT, out @captures)
   end
 

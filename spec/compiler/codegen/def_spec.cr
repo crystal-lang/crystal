@@ -290,18 +290,6 @@ describe "Code gen: def" do
 
   it "codegens return nil when nilable type (1)" do
     run("
-      struct Nil
-        def nil?
-          true
-        end
-      end
-
-      class Reference
-        def nil?
-          false
-        end
-      end
-
       def foo
         return if 1 == 1
         Reference.new
@@ -313,18 +301,6 @@ describe "Code gen: def" do
 
   it "codegens return nil when nilable type (2)" do
     run("
-      struct Nil
-        def nil?
-          true
-        end
-      end
-
-      class Reference
-        def nil?
-          false
-        end
-      end
-
       def foo
         return nil if 1 == 1
         Reference.new

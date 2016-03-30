@@ -130,11 +130,11 @@ describe "Lexer" do
     :begin, :lib, :fun, :type, :struct, :union, :enum, :macro, :out, :require,
     :case, :when, :then, :of, :abstract, :rescue, :ensure, :is_a?, :alias,
     :pointerof, :sizeof, :instance_sizeof, :ifdef, :as, :typeof, :for, :in,
-    :with, :self, :super, :private, :protected, :asm, :uninitialized]
+    :with, :self, :super, :private, :protected, :asm, :uninitialized, :nil?]
   it_lexes_idents ["ident", "something", "with_underscores", "with_1", "foo?", "bar!", "fooBar",
     "❨╯°□°❩╯︵┻━┻"]
   it_lexes_idents ["def?", "if?", "else?", "elsif?", "end?", "true?", "false?", "class?", "while?",
-    "nil?", "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
+    "do?", "yield?", "return?", "unless?", "next?", "break?", "begin?"]
   it_lexes_idents ["def!", "if!", "else!", "elsif!", "end!", "true!", "false!", "class!", "while!",
     "nil!", "do!", "yield!", "return!", "unless!", "next!", "break!", "begin!"]
   it_lexes_i32 ["1", ["0i32", "0"], ["1hello", "1"], "+1", "-1", "1234", "+1234", "-1234",

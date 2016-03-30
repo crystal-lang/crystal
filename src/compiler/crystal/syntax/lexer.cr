@@ -776,7 +776,13 @@ module Crystal
           end
         when 'i'
           case next_char
-          when 'l' then return check_ident_or_keyword(:nil, start)
+          when 'l'
+            if peek_next_char == '?'
+              next_char
+              return check_ident_or_keyword(:nil?, start)
+            else
+              return check_ident_or_keyword(:nil, start)
+            end
           end
         end
         scan_ident(start)

@@ -9,7 +9,7 @@ module SDL
 
   def self.set_video_mode(width, height, bpp, flags)
     surface = LibSDL.set_video_mode(width, height, bpp, flags)
-    if surface.nil?
+    if surface.null?
       raise "Can't set SDL video mode: #{error}"
     end
     Surface.new(surface, width, height, bpp)

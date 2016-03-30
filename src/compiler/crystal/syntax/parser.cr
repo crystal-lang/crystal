@@ -642,6 +642,8 @@ module Crystal
             atomic = parse_is_a(atomic).at(location)
           elsif @token.value == :responds_to?
             atomic = parse_responds_to(atomic).at(location)
+          elsif @token.value == :nil?
+            atomic = parse_nil?(atomic).at(location)
           elsif @token.type == :"["
             return parse_atomic_method_suffix(atomic, location)
           else
@@ -825,6 +827,18 @@ module Crystal
       end
 
       @token.value.to_s
+    end
+
+    def parse_nil?(atomic)
+      next_token
+
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        check :")"
+        next_token_skip_space
+      end
+
+      IsA.new(atomic, Path.global("Nil"))
     end
 
     def parse_atomic
@@ -3262,6 +3276,9 @@ module Crystal
       when :responds_to?
         obj = Var.new("self").at(location)
         return parse_responds_to(obj)
+      when :nil?
+        obj = Var.new("self").at(location)
+        return parse_nil?(obj)
       end
 
       name = @token.value.to_s

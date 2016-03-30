@@ -742,9 +742,6 @@ describe "Code gen: block" do
 
   it "codegens block with nilable type with return (1)" do
     run("
-      struct Nil; def nil?; true; end; end
-      class Reference; def nil?; false; end; end
-
       def foo
         if yield
           return Reference.new
@@ -758,9 +755,6 @@ describe "Code gen: block" do
 
   it "codegens block with nilable type with return (2)" do
     run("
-      struct Nil; def nil?; true; end; end
-      class Reference; def nil?; false; end; end
-
       def foo
         if yield
           return nil

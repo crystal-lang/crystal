@@ -104,7 +104,7 @@ struct Proc
   end
 
   def closure?
-    !closure_data.nil?
+    !closure_data.null?
   end
 
   private def internal_representation

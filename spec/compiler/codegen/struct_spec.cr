@@ -211,18 +211,6 @@ describe "Code gen: struct" do
 
   it "uses nilable struct" do
     run("
-      struct Nil
-        def nil?
-          true
-        end
-      end
-
-      struct Value
-        def nil?
-          false
-        end
-      end
-
       struct Foo
       end
 

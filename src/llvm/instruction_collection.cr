@@ -5,7 +5,7 @@ struct LLVM::InstructionCollection
   end
 
   def empty?
-    llvm_first.nil?
+    llvm_first.null?
   end
 
   def first?
