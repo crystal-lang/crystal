@@ -1016,6 +1016,15 @@ module Crystal
   end
 
   class Path
+    def interpret(method, args, block, interpreter)
+      case method
+      when "resolve"
+        interpret_argless_method(method, args) { interpreter.resolve(self) }
+      else
+        super
+      end
+    end
+
     def to_macro_id
       @names.join "::"
     end

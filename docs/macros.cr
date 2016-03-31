@@ -785,9 +785,14 @@ module Macros
   # class ImplicitObj < ASTNode
   # end
 
-  # A Path to a constant, like `Foo` or `Foo::Bar::Baz`.
-  # class Path < ASTNode
-  # end
+  # A Path to a constant or type, like `Foo` or `Foo::Bar::Baz`.
+  class Path < ASTNode
+    # Resolves this path to a `TypeNode` if it denotes a type, to
+    # the value of a constant if it denotes a constant, or otherwise
+    # gives a compile-time error.
+    def resolve : ASTNode
+    end
+  end
 
   # A class definition.
   # class ClassDef < ASTNode

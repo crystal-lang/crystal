@@ -1257,4 +1257,16 @@ describe "Code gen: macro" do
       x.foo
       )).to_i.should eq(1)
   end
+
+  it "expands Path with resolve method" do
+    run(%(
+      A = 1
+
+      macro id(path)
+        {{path.resolve}}
+      end
+
+      id(A)
+      )).to_i.should eq(1)
+  end
 end

@@ -490,6 +490,11 @@ module Crystal
       end
 
       def visit(node : Path)
+        @last = resolve(node)
+        false
+      end
+
+      def resolve(node : Path)
         if node.names.size == 1 && (match = @free_vars.try &.[node.names.first])
           matched_type = match
         else
@@ -502,16 +507,14 @@ module Crystal
 
         case matched_type
         when Const
-          @last = matched_type.value
+          matched_type.value
         when Type
-          @last = TypeNode.new(matched_type)
+          TypeNode.new(matched_type)
         when ASTNode
-          @last = matched_type
+          matched_type
         else
           node.raise "can't interpret #{node}"
         end
-
-        false
       end
 
       def visit(node : Splat)
