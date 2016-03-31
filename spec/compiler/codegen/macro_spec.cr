@@ -1269,4 +1269,26 @@ describe "Code gen: macro" do
       id(A)
       )).to_i.should eq(1)
   end
+
+  it "solves macro expression arguments before macro expansion (type)" do
+    run(%(
+      macro name(x)
+        {{x.name.stringify}}
+      end
+
+      name({{String}})
+      )).to_string.should eq("String")
+  end
+
+  it "solves macro expression arguments before macro expansion (constant)" do
+    run(%(
+      CONST = 1
+
+      macro id(x)
+        {{x}}
+      end
+
+      id({{CONST}})
+      )).to_i.should eq(1)
+  end
 end
