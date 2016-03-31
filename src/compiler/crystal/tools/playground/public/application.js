@@ -30,7 +30,9 @@ $(function(){
   var buttons = new Playground.RunButtons({
     container: $('#mainButtonsContainer')
   });
-  session.bindRunButtons(buttons, {autorun: true});
+  // honor run debounce in initial autorun
+  var autorun = isFinite(Playground.settings.getRunDebounce());
+  session.bindRunButtons(buttons, {autorun: autorun});
   session.connect();
 
   function saveAsLastCode() {
