@@ -223,9 +223,6 @@ end
 
 Signal::INT.trap { exit }
 
-SDL.init
-SDL.hide_cursor
-surface = SDL.set_video_mode WIDTH, HEIGHT, 32, LibSDL::DOUBLEBUF | LibSDL::HWSURFACE | LibSDL::ASYNCBLIT
 scene = Scene.new(
   [
     Sphere.new(Vec3.new(0.0, -10002.0, -20.0), 10000.0, Vec3.new(0.8, 0.8, 0.8)),
@@ -239,8 +236,24 @@ scene = Scene.new(
   ]
 )
 
-start = SDL.ticks
-render scene, surface
-ms = SDL.ticks - start
-puts "Rendered in #{ms} ms"
-gets
+SDL.init
+SDL.hide_cursor
+surface = SDL.set_video_mode WIDTH, HEIGHT, 32, LibSDL::DOUBLEBUF | LibSDL::HWSURFACE | LibSDL::ASYNCBLIT
+
+first = true
+while true
+  SDL.poll_events do |event|
+    if event.type == LibSDL::QUIT || event.type == LibSDL::KEYDOWN
+      SDL.quit
+      exit
+    end
+  end
+
+  if first
+    start = SDL.ticks
+    render scene, surface
+    ms = SDL.ticks - start
+    puts "Rendered in #{ms} ms"
+    first = false
+  end
+end
