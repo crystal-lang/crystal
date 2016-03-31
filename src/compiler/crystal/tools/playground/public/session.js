@@ -168,6 +168,13 @@ Playground.Inspector = function(session, line) {
       .css("cursor", "pointer");
   session.sidebarDom.append(this.lineDom);
 
+  var INSPECTOR_HOVER_CLASS = "inspector-hover";
+  this.lineDom.hover(function(){
+    session.editor.addLineClass(line-1, "wrap", INSPECTOR_HOVER_CLASS);
+  }.bind(this), function(){
+    session.editor.removeLineClass(line-1, "wrap", INSPECTOR_HOVER_CLASS);
+  }.bind(this));
+
   this.messages = [];
   this.value_type = null; // null if mismatch. keep value if always the same.
 
