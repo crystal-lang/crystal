@@ -457,7 +457,7 @@ module Crystal
       end
     end
 
-    def expand_macro(node, raise_on_missing_const = true)
+    def expand_macro(node, raise_on_missing_const = true, first_pass = false)
       if expanded = node.expanded
         @exp_nest -= 1
         begin
@@ -488,6 +488,13 @@ module Crystal
       end
 
       return false unless the_macro
+
+      # If we find a macro outside a def/block and this is not the first pass it means that the
+      # macro was defined before we first found this call, so it's an error
+      # (we must analyze the macro expansion in all passes)
+      if !@typed_def && !@block && !first_pass
+        node.raise "macro '#{node.name}' must be defined before this point but is defined later"
+      end
 
       @exp_nest -= 1
 

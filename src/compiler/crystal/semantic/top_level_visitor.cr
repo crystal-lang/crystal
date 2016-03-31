@@ -82,6 +82,8 @@ module Crystal
 
     def type_assign(target : Var, value, node)
       @vars[target.name] = MetaVar.new(target.name)
+      value.accept self
+      false
     end
 
     def type_assign(target : Path, value, node)
@@ -109,7 +111,8 @@ module Crystal
     end
 
     def type_assign(target, value, node)
-      # Nothing
+      value.accept self
+      false
     end
 
     def visit(node : ClassDef)
@@ -676,7 +679,7 @@ module Crystal
         node.scope = current_type.metaclass
       end
 
-      if expand_macro(node, raise_on_missing_const: false)
+      if expand_macro(node, raise_on_missing_const: false, first_pass: true)
         false
       else
         true

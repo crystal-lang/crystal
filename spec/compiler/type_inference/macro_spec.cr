@@ -653,4 +653,16 @@ describe "Type inference: macro" do
     ),
       "Error in line 2: expanding macro"
   end
+
+  it "errors if using macro that is defined later" do
+    assert_error %(
+      class Bar
+        foo
+      end
+
+      macro foo
+      end
+      ),
+      "macro 'foo' must be defined before this point but is defined later"
+  end
 end
