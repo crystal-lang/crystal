@@ -1048,8 +1048,9 @@ module Crystal
   class IsA < ASTNode
     property obj : ASTNode
     property const : ASTNode
+    property? nil_check : Bool
 
-    def initialize(@obj, @const)
+    def initialize(@obj, @const, @nil_check = false)
     end
 
     def accept_children(visitor)
@@ -1058,10 +1059,10 @@ module Crystal
     end
 
     def clone_without_location
-      IsA.new(@obj.clone, @const.clone)
+      IsA.new(@obj.clone, @const.clone, @nil_check)
     end
 
-    def_equals_and_hash @obj, @const
+    def_equals_and_hash @obj, @const, @nil_check
   end
 
   class RespondsTo < ASTNode

@@ -772,13 +772,13 @@ describe "Parser" do
 
   it_parses "is_a?(Const)", IsA.new("self".var, "Const".path)
   it_parses "responds_to?(:foo)", RespondsTo.new("self".var, "foo")
-  it_parses "nil?", IsA.new("self".var, Path.global("Nil"))
-  it_parses "nil?(  )", IsA.new("self".var, Path.global("Nil"))
+  it_parses "nil?", IsA.new("self".var, Path.global("Nil"), nil_check: true)
+  it_parses "nil?(  )", IsA.new("self".var, Path.global("Nil"), nil_check: true)
 
-  it_parses "foo.nil?", IsA.new("foo".call, Path.global("Nil"))
-  it_parses "foo.nil?(  )", IsA.new("foo".call, Path.global("Nil"))
+  it_parses "foo.nil?", IsA.new("foo".call, Path.global("Nil"), nil_check: true)
+  it_parses "foo.nil?(  )", IsA.new("foo".call, Path.global("Nil"), nil_check: true)
 
-  it_parses "foo &.nil?", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), Path.global("Nil"))))
+  it_parses "foo &.nil?", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), Path.global("Nil"), nil_check: true)))
 
   it_parses "/foo/", regex("foo")
   it_parses "/foo/i", regex("foo", Regex::Options::IGNORE_CASE)

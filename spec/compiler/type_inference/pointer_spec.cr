@@ -113,4 +113,20 @@ describe "Type inference: pointer" do
       ),
       "recursive pointerof expansion"
   end
+
+  it "errors if using nil? on pointer type" do
+    assert_error %(
+      a = 1
+      pointerof(a).nil?
+      ),
+      "use `null?`"
+  end
+
+  it "errors if using nil? on union including pointer type" do
+    assert_error %(
+      a = 1
+      (1 || pointerof(a)).nil?
+      ),
+      "use `null?`"
+  end
 end

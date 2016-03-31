@@ -838,7 +838,7 @@ module Crystal
         next_token_skip_space
       end
 
-      IsA.new(atomic, Path.global("Nil"))
+      IsA.new(atomic, Path.global("Nil"), nil_check: true)
     end
 
     def parse_atomic
