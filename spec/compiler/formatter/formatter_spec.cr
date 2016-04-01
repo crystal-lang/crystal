@@ -838,4 +838,13 @@ describe Crystal::Formatter do
 
   assert_format "foo &.bar.is_a?(Baz)"
   assert_format "foo &.bar.responds_to?(:baz)"
+
+  assert_format "foo &.nil?"
+  assert_format "foo &.bar.nil?"
+  assert_format "foo &.nil?()"
+  assert_format "foo &.bar.nil?()"
+
+  assert_format "foo(<<-X\na\nX\n, 1)"
+  assert_format "def bar\n  foo(<<-X\n  a\n  X\n  , 1)\nend"
+  assert_format %(run("a", 1))
 end

@@ -56,11 +56,11 @@ class Crystal::Command
         check_files.each do |result|
           case result.code
           when .format?
-            error "formatting '#{result.filename}' produced changes"
+            error "formatting '#{result.filename}' produced changes", exit_code: nil
           when .syntax?
-            error "'#{result.filename}' has syntax errors"
+            error "'#{result.filename}' has syntax errors", exit_code: nil
           when .bug?
-            error "there's a bug formatting '#{result.filename}', please report it including the contents of the file: https://github.com/crystal-lang/crystal/issues"
+            error "there's a bug formatting '#{result.filename}', please report it including the contents of the file: https://github.com/crystal-lang/crystal/issues", exit_code: nil
           end
         end
         exit 1

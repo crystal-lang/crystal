@@ -620,9 +620,9 @@ class Crystal::Command
     values
   end
 
-  private def error(msg)
+  private def error(msg, exit_code = 1)
     # This is for the case where the main command is wrong
     @color = false if ARGV.includes?("--no-color")
-    Crystal.error msg, @color
+    Crystal.error msg, @color, exit_code: exit_code
   end
 end

@@ -114,6 +114,16 @@ module Crystal
       @hash_in_same_line = Set(typeof(object_id)).new
       @shebang = @token.type == :COMMENT && @token.value.to_s.starts_with?("#!")
       @heredoc_fixes = [] of HeredocFix
+      @last_is_heredoc = false
+    end
+
+    def end_visit_any(node)
+      case node
+      when StringLiteral, StringInterpolation
+        # Nothing
+      else
+        @last_is_heredoc = false
+      end
     end
 
     def visit(node : FileNode)
@@ -369,6 +379,8 @@ module Crystal
     end
 
     def visit(node : StringLiteral)
+      @last_is_heredoc = false
+
       if @token.type == :__FILE__ || @token.type == :__DIR__
         write @token.type
         next_token
@@ -378,6 +390,7 @@ module Crystal
       check :DELIMITER_START
       is_regex = @token.delimiter_state.kind == :regex
       is_heredoc = @token.delimiter_state.kind == :heredoc
+      @last_is_heredoc = is_heredoc
 
       indent_difference = @token.column_number - (@column + 1)
       heredoc_line = @line
@@ -432,6 +445,7 @@ module Crystal
 
       delimiter_state = @token.delimiter_state
       is_heredoc = @token.delimiter_state.kind == :heredoc
+      @last_is_heredoc = is_heredoc
 
       indent_difference = @token.column_number - (@column + 1)
       heredoc_line = @line
@@ -2121,7 +2135,13 @@ module Crystal
         end
         next_needs_indent = false
         unless last?(i, args)
-          skip_space
+          if @last_is_heredoc
+            write_line
+            skip_space_or_newline
+            write_indent
+          else
+            skip_space
+          end
           slash_is_regex!
           write_token :","
           found_comment = skip_space
@@ -2329,7 +2349,11 @@ module Crystal
           end
         when IsA
           if body.obj.is_a?(Var)
-            call = Call.new(nil, "is_a?", args: [body.const] of ASTNode)
+            if body.nil_check?
+              call = Call.new(nil, "nil?")
+            else
+              call = Call.new(nil, "is_a?", args: [body.const] of ASTNode)
+            end
             accept call
           else
             clear_object(body)
@@ -2388,9 +2412,22 @@ module Crystal
     end
 
     def visit(node : IsA)
-      format_special_call(node, :is_a?) do
-        accept node.const
-        skip_space
+      if node.nil_check?
+        accept node.obj
+        skip_space_or_newline
+        write_token :"."
+        write_keyword :"nil?"
+        if @token.type == :"("
+          write_token :"("
+          skip_space_or_newline
+          write_token :")"
+        end
+        false
+      else
+        format_special_call(node, :is_a?) do
+          accept node.const
+          skip_space
+        end
       end
     end
 
