@@ -496,12 +496,18 @@ module Crystal
         node.raise "macro '#{node.name}' must be defined before this point but is defined later"
       end
 
+      expansion_scope = (macro_scope || @scope || current_type)
+
+      args = expand_macro_arguments(node, expansion_scope)
+
       @exp_nest -= 1
-
       generated_nodes = expand_macro(the_macro, node) do
-        @mod.expand_macro the_macro, node, (macro_scope || @scope || current_type)
+        old_args = node.args
+        node.args = args
+        expanded = @mod.expand_macro the_macro, node, expansion_scope
+        node.args = old_args
+        expanded
       end
-
       @exp_nest += 1
 
       node.expanded = generated_nodes
@@ -529,6 +535,35 @@ module Crystal
 
       generated_nodes.accept self
       generated_nodes
+    end
+
+    def expand_macro_arguments(node, expansion_scope)
+      # If any argument is a MacroExpression, solve it first and
+      # replace Path with Const/TypeNode if it denotes such thing
+      args = node.args
+      if args.any? &.is_a?(MacroExpression)
+        @exp_nest -= 1
+        args = args.map do |arg|
+          if arg.is_a?(MacroExpression)
+            arg.accept self
+            expanded = arg.expanded.not_nil!
+            if expanded.is_a?(Path)
+              expanded_type = expansion_scope.lookup_type(expanded)
+              case expanded_type
+              when Const
+                expanded = expanded_type.value
+              when Type
+                expanded = TypeNode.new(expanded_type)
+              end
+            end
+            expanded
+          else
+            arg
+          end
+        end
+        @exp_nest += 1
+      end
+      args
     end
 
     def visit(node : MacroExpression)
