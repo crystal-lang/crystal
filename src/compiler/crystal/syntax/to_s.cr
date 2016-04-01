@@ -1124,9 +1124,13 @@ module Crystal
 
     def visit(node : IsA)
       node.obj.accept self
-      @str << ".is_a?("
-      node.const.accept self
-      @str << ")"
+      if node.nil_check?
+        @str << ".nil?"
+      else
+        @str << ".is_a?("
+        node.const.accept self
+        @str << ")"
+      end
       false
     end
 
