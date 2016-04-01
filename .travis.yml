@@ -15,6 +15,7 @@ install: bin/ci prepare_build
 script:
   - bin/ci with_build_env 'make crystal spec doc'
   - bin/ci with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
+  - bin/ci with_build_env './bin/crystal tool format --check'
 branches:
   only:
     - master
