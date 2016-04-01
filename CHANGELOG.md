@@ -1,3 +1,16 @@
+## 0.15.0 (2016-03-31)
+
+* **(breaking change)** `!` has now its meaning hardcoded in the language. If you defined it for a type it won't be invoked as a method anymore.
+* **(breaking change)** `nil?` has now its meaning hardcoded in the language. If you defined it for a type it won't be invoked as a method anymore.
+* **(breaking change)** `typeof` is now disallowed in `alias` declarations
+* Added `crystal tool format --check` to check that source code is properly formatted
+* `crystal play` (playground) added workbooks support, as well as improvements and stabilizations
+* Added `Tempfile.dirname` (thanks @DougEverly)
+* Added `Path#resolve` method in macros
+* `{{...}}` arguments to a macro call are now expanded before macro invocation (#2392)
+* Special variables (`$~` and `$?`) are now accessible after being defined in blocks (#2194)
+* Some bugs and regressions fixed
+
 ## 0.14.2 (2016-03-22)
 
 * Fixed regression with formatter (#2348)
