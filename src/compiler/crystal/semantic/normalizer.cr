@@ -282,7 +282,7 @@ module Crystal
     #    end
     def transform(node : Until)
       node = super
-      not_exp = Call.new(node.cond, "!").at(node.cond)
+      not_exp = Not.new(node.cond).at(node.cond)
       While.new(not_exp, node.body).at(node)
     end
 
