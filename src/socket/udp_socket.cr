@@ -34,6 +34,19 @@ require "./ip_socket"
 # client.close
 # server.close
 # ```
+#
+# The `send` methods may sporadically fail with `Errno::ECONNREFUSED` when sending datagrams
+# to a non-listening server.
+# Wrap with an exception handler to prevent raising. Example:
+# ```
+# begin
+#   client.send(message, @destination)
+# rescue ex : Errno
+#   if ex.errno == Errno::ECONNREFUSED
+#     p ex.inspect
+#   end
+# end
+# ```
 class UDPSocket < IPSocket
   def initialize(family : Socket::Family = Socket::Family::INET)
     super create_socket(family.value, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP)
