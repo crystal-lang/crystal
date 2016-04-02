@@ -121,6 +121,16 @@ describe "JSON serialization" do
     it "does for Tuple" do
       {1, "hello"}.to_json.should eq(%([1,"hello"]))
     end
+
+    it "does for Time" do
+      Time.new(2015, 10, 10).to_json.should eq("1444435200")
+    end
+
+    it "does for Time::Format" do
+      formatter = Time::Format.new("%Y-%m-%d")
+
+      formatter.format(Time.new(2015, 10, 10)).to_json.should eq("\"2015-10-10\"")
+    end
   end
 
   describe "to_pretty_json" do
