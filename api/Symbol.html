@@ -1270,6 +1270,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Path" data-name="macros::path">
+      <a href="Macros/Path.html">Path</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/RangeLiteral" data-name="macros::rangeliteral">
       <a href="Macros/RangeLiteral.html">RangeLiteral</a>
       
@@ -2154,7 +2159,7 @@ it a numeric value.</p>
 
 <p>Internally a symbol is represented as an <code><a href="Int32.html">Int32</a></code>, so it's very efficient.</p>
 
-<p>You can't dynamically create symbols: when you compile your program each symbol
+<p>You can't dynamically create symbols. When you compile your program, each symbol
 gets assigned a unique number.</p>
 
 
@@ -2180,17 +2185,17 @@ gets assigned a unique number.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/symbol.cr" target="_blank">symbol.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/symbol.cr" target="_blank">symbol.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
     
     <br/>
   
@@ -2361,7 +2366,7 @@ gets assigned a unique number.</p>
     ==</a>, 
   
     <a href="Object.html#%3D%3D%3D%28other%29-instance-method" class="tooltip">
-      <span>===(other)</span>
+      <span>===(other)<br/>===(other : YAML::Any)<br/>===(other : JSON::Any)</span>
     ===</a>, 
   
     <a href="Object.html#%3D~%28other%29-instance-method" class="tooltip">
@@ -2494,7 +2499,7 @@ gets assigned a unique number.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/symbol.cr#L57" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/symbol.cr#L57" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2536,7 +2541,7 @@ See <code><a href="String.html#%3C%3D%3E%28other%3Aself%29-instance-method">Stri
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/symbol.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/symbol.cr#L22" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2588,7 +2593,7 @@ See <code><a href="String.html#%3C%3D%3E%28other%3Aself%29-instance-method">Stri
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/symbol.cr#L31" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/symbol.cr#L31" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2620,7 +2625,7 @@ See <code><a href="String.html#%3C%3D%3E%28other%3Aself%29-instance-method">Stri
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/json/to_json.cr#L217" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/to_json.cr#L217" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2640,7 +2645,7 @@ See <code><a href="String.html#%3C%3D%3E%28other%3Aself%29-instance-method">Stri
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/symbol.cr#L47" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/symbol.cr#L47" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2672,7 +2677,7 @@ See <code><a href="String.html#%3C%3D%3E%28other%3Aself%29-instance-method">Stri
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/yaml/to_yaml.cr#L118" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/to_yaml.cr#L118" target="_blank">View source</a>]
         
       </div>
     </div>

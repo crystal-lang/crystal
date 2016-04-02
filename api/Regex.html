@@ -1270,6 +1270,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Path" data-name="macros::path">
+      <a href="Macros/Path.html">Path</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/RangeLiteral" data-name="macros::rangeliteral">
       <a href="Macros/RangeLiteral.html">RangeLiteral</a>
       
@@ -2316,12 +2321,22 @@ unique names within a single Regex.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/match_data.cr" target="_blank">regex/match_data.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/match_data.cr" target="_blank">regex/match_data.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr" target="_blank">regex/regex.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr" target="_blank">regex/regex.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr" target="_blank">json/any.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/any.cr" target="_blank">yaml/any.cr</a>
     
     <br/>
   
@@ -2386,6 +2401,16 @@ unique names within a single Regex.</p>
         <a href="#%3D%3D%28other%3ARegex%29-instance-method" class="signature"><strong>#==</strong>(other : Regex)</a>
         
           <div class="summary"><p>Equality.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%3D%3D%28other%3AJSON%3A%3AAny%29-instance-method" class="signature"><strong>#===</strong>(other : JSON::Any)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3D%3D%3D%28other%3AYAML%3A%3AAny%29-instance-method" class="signature"><strong>#===</strong>(other : YAML::Any)</a>
         
       </li>
     
@@ -2530,7 +2555,7 @@ unique names within a single Regex.</p>
     ==</a>, 
   
     <a href="Object.html#%3D%3D%3D%28other%29-instance-method" class="tooltip">
-      <span>===(other)</span>
+      <span>===(other)<br/>===(other : YAML::Any)<br/>===(other : JSON::Any)</span>
     ===</a>, 
   
     <a href="Object.html#%3D~%28other%29-instance-method" class="tooltip">
@@ -2664,7 +2689,7 @@ If it's not, a String containing the error message is returned.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L245" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L245" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2685,7 +2710,7 @@ If it's not, a String containing the error message is returned.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L260" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L260" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2711,7 +2736,7 @@ re.match(<span class="s">&quot;sledding&quot;</span>) <span class="c"># &#61;&gt
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L305" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L305" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2740,7 +2765,7 @@ re.match(<span class="s">&quot;sledding&quot;</span>) <span class="c"># &#61;&gt
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L290" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L290" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2763,7 +2788,7 @@ options <span class="o">=</span> <span class="t">Regex</span><span class="t">::<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L226" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L226" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2794,7 +2819,7 @@ re.match(<span class="s">&quot;sledding&quot;</span>) <span class="c"># &#61;&gt
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L328" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L328" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2816,7 +2841,39 @@ re.match(<span class="s">&quot;sledding&quot;</span>) <span class="c"># &#61;&gt
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L339" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L339" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="&#61;&#61;&#61;&#40;other:JSON::Any&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>===</strong>(other : <a href="JSON/Any.html">JSON::Any</a>)
+
+        <a class="method-permalink" href="#%3D%3D%3D%28other%3AJSON%3A%3AAny%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L219" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="&#61;&#61;&#61;&#40;other:YAML::Any&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>===</strong>(other : <a href="YAML/Any.html">YAML::Any</a>)
+
+        <a class="method-permalink" href="#%3D%3D%3D%28other%3AYAML%3A%3AAny%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/any.cr#L199" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2847,7 +2904,7 @@ b <span class="c"># &#61;&gt; &quot;Upper case&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L359" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L359" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2871,7 +2928,7 @@ otherwise <code>nil</code>. <code>$~</code> will contain a Regex::MatchData if t
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L374" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L374" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2892,7 +2949,7 @@ otherwise <code>nil</code>. <code>$~</code> will contain a Regex::MatchData if t
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L386" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L386" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2914,7 +2971,7 @@ optional flags included.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L397" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L397" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2939,7 +2996,7 @@ the start of <code>str</code>. Returns a <code><a href="Regex/MatchData.html">Re
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L416" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L416" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2964,7 +3021,7 @@ the start of <code>str</code>. Returns a Regex::MatchData if <code>str</code> ma
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L436" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L436" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2989,7 +3046,7 @@ the Hash. Capture groups are indexed starting from 1.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L461" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L461" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3009,7 +3066,7 @@ the Hash. Capture groups are indexed starting from 1.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3029,7 +3086,7 @@ the Hash. Capture groups are indexed starting from 1.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L212" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L212" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3055,7 +3112,7 @@ re <span class="o">=</span> <span class="s">/A*/</span>                  <span c
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/regex/regex.cr#L494" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/regex/regex.cr#L494" target="_blank">View source</a>]
         
       </div>
     </div>

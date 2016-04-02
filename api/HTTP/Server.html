@@ -1270,6 +1270,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Path" data-name="macros::path">
+      <a href="../Macros/Path.html">Path</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/RangeLiteral" data-name="macros::rangeliteral">
       <a href="../Macros/RangeLiteral.html">RangeLiteral</a>
       
@@ -2159,7 +2164,7 @@ in it.</p>
 <p>The handler given to a server can simply be a block that receives an <code><a href="../HTTP/Server.html">HTTP::Server</a>::<a href="../HTTP/Server/Context.html">Context</a></code>,
 or it can be an <code><a href="../HTTP/Handler.html">HTTP::Handler</a></code>. An <code><a href="../HTTP/Handler.html">HTTP::Handler</a></code> has an optional <code>next</code> handler,
 so handlers can be chained. For example, an initial handler may handle exceptions
-in a subsequent handler and return a 500 staus code (see <code><a href="../HTTP/ErrorHandler.html">HTTP::ErrorHandler</a></code>),
+in a subsequent handler and return a 500 status code (see <code><a href="../HTTP/ErrorHandler.html">HTTP::ErrorHandler</a></code>),
 the next handler might log the incoming request (see <code><a href="../HTTP/LogHandler.html">HTTP::LogHandler</a></code>), and
 the final handler deals with routing and application logic.</p>
 
@@ -2235,17 +2240,17 @@ server.listen</code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/context.cr" target="_blank">http/server/context.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/context.cr" target="_blank">http/server/context.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/response.cr" target="_blank">http/server/response.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/response.cr" target="_blank">http/server/response.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr" target="_blank">http/server/server.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr" target="_blank">http/server/server.cr</a>
     
     <br/>
   
@@ -2402,7 +2407,7 @@ server.listen</code></pre>
     ==</a>, 
   
     <a href="../Object.html#%3D%3D%3D%28other%29-instance-method" class="tooltip">
-      <span>===(other)</span>
+      <span>===(other)<br/>===(other : YAML::Any)<br/>===(other : JSON::Any)</span>
     ===</a>, 
   
     <a href="../Object.html#%3D~%28other%29-instance-method" class="tooltip">
@@ -2532,7 +2537,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L185" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L185" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2548,7 +2553,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L112" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L112" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2564,7 +2569,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L108" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L108" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2580,7 +2585,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L104" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L104" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2596,7 +2601,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L100" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L100" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2612,7 +2617,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L119" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L119" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2628,7 +2633,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L116" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L116" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2644,7 +2649,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L123" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L123" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2660,7 +2665,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L127" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L127" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2681,7 +2686,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L137" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L137" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2697,7 +2702,7 @@ server.listen</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/http/server/server.cr#L130" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/server.cr#L130" target="_blank">View source</a>]
         
       </div>
     </div>

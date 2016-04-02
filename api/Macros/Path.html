@@ -5,7 +5,7 @@
   <meta id="repository-name" content="github.com/crystal-lang/crystal">
   <link href="../css/style.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="../js/doc.js"></script>
-  <title>OAuth2::Client - github.com/crystal-lang/crystal</title>
+  <title>Macros::Path - github.com/crystal-lang/crystal</title>
 </head>
 <body>
 
@@ -1155,7 +1155,7 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Macros" data-name="macros">
+  <li class="parent open current" data-id="github.com/crystal-lang/crystal/Macros" data-name="macros">
       <a href="../Macros.html">Macros</a>
       
         <ul>
@@ -1270,7 +1270,7 @@
       
     </li>
   
-  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Path" data-name="macros::path">
+  <li class=" current" data-id="github.com/crystal-lang/crystal/Macros/Path" data-name="macros::path">
       <a href="../Macros/Path.html">Path</a>
       
     </li>
@@ -1410,7 +1410,7 @@
       
     </li>
   
-  <li class="parent open current" data-id="github.com/crystal-lang/crystal/OAuth2" data-name="oauth2">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/OAuth2" data-name="oauth2">
       <a href="../OAuth2.html">OAuth2</a>
       
         <ul>
@@ -1435,7 +1435,7 @@
       
     </li>
   
-  <li class=" current" data-id="github.com/crystal-lang/crystal/OAuth2/Client" data-name="oauth2::client">
+  <li class=" " data-id="github.com/crystal-lang/crystal/OAuth2/Client" data-name="oauth2::client">
       <a href="../OAuth2/Client.html">Client</a>
       
     </li>
@@ -2137,15 +2137,19 @@
 <div id="main-content">
 <h1 class="type-name">
 
-  <span class="kind">class</span> OAuth2::Client
+  <span class="kind">class</span> Macros::Path
 
 </h1>
 
 
-  <ul class="superclass-hierarchy"><li class="superclass"><a href="../OAuth2/Client.html">OAuth2::Client</a></li><li class="superclass"><a href="../Reference.html">Reference</a></li><li class="superclass"><a href="../Object.html">Object</a></li></ul>
+  <ul class="superclass-hierarchy"><li class="superclass"><a href="../Macros/Path.html">Macros::Path</a></li><li class="superclass"><a href="../Macros/ASTNode.html">Macros::ASTNode</a></li><li class="superclass"><a href="../Reference.html">Reference</a></li><li class="superclass"><a href="../Object.html">Object</a></li></ul>
 
 
 
+
+  <h2>Overview</h2>
+
+  <p>A Path to a constant or type, like <code>Foo</code> or <code>Foo::Bar::Baz</code>.</p>
 
 
 
@@ -2163,7 +2167,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/client.cr" target="_blank">oauth2/client.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/docs/macros.cr" target="_blank">docs/macros.cr</a>
     
     <br/>
   
@@ -2172,38 +2176,15 @@
 
 
 
-  <h2>Class Method Summary</h2>
-  <ul class="list-summary">
-    
-      <li class="entry-summary">
-        <a href="#new%28host%3AString%2Cclient_id%3AString%2Cclient_secret%3AString%2Cport%3D%3Cspanclass%3D%22n%22%3E443%3C%2Fspan%3E%2Cscheme%3D%3Cspanclass%3D%22s%22%3E%26quot%3Bhttps%26quot%3B%3C%2Fspan%3E%2Cauthorize_uri%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%2Foauth2%2Fauthorize%26quot%3B%3C%2Fspan%3E%2Ctoken_uri%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%2Foauth2%2Ftoken%26quot%3B%3C%2Fspan%3E%2Credirect_uri%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(host : String, client_id : String, client_secret : String, port = <span class="n">443</span>, scheme = <span class="s">&quot;https&quot;</span>, authorize_uri = <span class="s">&quot;/oauth2/authorize&quot;</span>, token_uri = <span class="s">&quot;/oauth2/token&quot;</span>, redirect_uri = <span class="n">nil</span>)</a>
-        
-      </li>
-    
-  </ul>
-
 
 
   <h2>Instance Method Summary</h2>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#get_access_token_using_authorization_code%28authorization_code%29-instance-method" class="signature"><strong>#get_access_token_using_authorization_code</strong>(authorization_code)</a>
+        <a href="#resolve%3AASTNode-instance-method" class="signature"><strong>#resolve</strong> : ASTNode</a>
         
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#get_access_token_using_client_credentials%28scope%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#get_access_token_using_client_credentials</strong>(scope = <span class="n">nil</span>)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#get_access_token_using_refresh_token%28refresh_token%2Cscope%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#get_access_token_using_refresh_token</strong>(refresh_token, scope = <span class="n">nil</span>)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#get_authorize_uri%28scope%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%2Cstate%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#get_authorize_uri</strong>(scope = <span class="n">nil</span>, state = <span class="n">nil</span>)</a>
+          <div class="summary"><p>Resolves this path to a <code><a href="../Macros/TypeNode.html">TypeNode</a></code> if it denotes a type, to the value of a constant if it denotes a constant, or otherwise gives a compile-time error.</p></div>
         
       </li>
     
@@ -2214,6 +2195,48 @@
 
 
 <div class="methods-inherited">
+  
+    
+
+  <h3>Instance methods inherited from class <code><a href="../Macros/ASTNode.html">Macros::ASTNode</a></code></h3>
+  
+    <a href="../Macros/ASTNode.html#%21%3ABoolLiteral-instance-method" class="tooltip">
+      <span>! : BoolLiteral</span>
+    !</a>, 
+  
+    <a href="../Macros/ASTNode.html#%21%3D%28other%3AASTNode%29%3ABoolLiteral-instance-method" class="tooltip">
+      <span>!=(other : ASTNode) : BoolLiteral</span>
+    !=</a>, 
+  
+    <a href="../Macros/ASTNode.html#%3D%3D%28other%3AASTNode%29%3ABoolLiteral-instance-method" class="tooltip">
+      <span>==(other : ASTNode) : BoolLiteral</span>
+    ==</a>, 
+  
+    <a href="../Macros/ASTNode.html#class_name%3AStringLiteral-instance-method" class="tooltip">
+      <span>class_name : StringLiteral</span>
+    class_name</a>, 
+  
+    <a href="../Macros/ASTNode.html#id%3AMacroId-instance-method" class="tooltip">
+      <span>id : MacroId</span>
+    id</a>, 
+  
+    <a href="../Macros/ASTNode.html#is_a%3F%28name%29%3ABoolLiteral-instance-method" class="tooltip">
+      <span>is_a?(name) : BoolLiteral</span>
+    is_a?</a>, 
+  
+    <a href="../Macros/ASTNode.html#raise%28message%29%3ANoReturn-instance-method" class="tooltip">
+      <span>raise(message) : NoReturn</span>
+    raise</a>, 
+  
+    <a href="../Macros/ASTNode.html#stringify%3AStringLiteral-instance-method" class="tooltip">
+      <span>stringify : StringLiteral</span>
+    stringify</a>
+  
+
+
+    
+
+
   
     
 
@@ -2393,89 +2416,26 @@
 </div>
 
 
-  <h2>Class Method Detail</h2>
-  
-    <div class="entry-detail" id="new&#40;host:String,client_id:String,client_secret:String,port&#61;&lt;spanclass&#61;&quot;n&quot;&gt;443&lt;/span&gt;,scheme&#61;&lt;spanclass&#61;&quot;s&quot;&gt;&amp;quot;https&amp;quot;&lt;/span&gt;,authorize_uri&#61;&lt;spanclass&#61;&quot;s&quot;&gt;&amp;quot;/oauth2/authorize&amp;quot;&lt;/span&gt;,token_uri&#61;&lt;spanclass&#61;&quot;s&quot;&gt;&amp;quot;/oauth2/token&amp;quot;&lt;/span&gt;,redirect_uri&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;&#41;-class-method">
-      <div class="signature">
-        
-        def self.<strong>new</strong>(host : <a href="../String.html">String</a>, client_id : <a href="../String.html">String</a>, client_secret : <a href="../String.html">String</a>, port = <span class="n">443</span>, scheme = <span class="s">&quot;https&quot;</span>, authorize_uri = <span class="s">&quot;/oauth2/authorize&quot;</span>, token_uri = <span class="s">&quot;/oauth2/token&quot;</span>, redirect_uri = <span class="n">nil</span>)
-
-        <a class="method-permalink" href="#new%28host%3AString%2Cclient_id%3AString%2Cclient_secret%3AString%2Cport%3D%3Cspanclass%3D%22n%22%3E443%3C%2Fspan%3E%2Cscheme%3D%3Cspanclass%3D%22s%22%3E%26quot%3Bhttps%26quot%3B%3C%2Fspan%3E%2Cauthorize_uri%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%2Foauth2%2Fauthorize%26quot%3B%3C%2Fspan%3E%2Ctoken_uri%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%2Foauth2%2Ftoken%26quot%3B%3C%2Fspan%3E%2Credirect_uri%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/client.cr#L11" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-
 
 
   <h2>Instance Method Detail</h2>
   
-    <div class="entry-detail" id="get_access_token_using_authorization_code&#40;authorization_code&#41;-instance-method">
+    <div class="entry-detail" id="resolve:ASTNode-instance-method">
       <div class="signature">
         
-        def <strong>get_access_token_using_authorization_code</strong>(authorization_code)
+        def <strong>resolve</strong> : <a href="../Macros/ASTNode.html">ASTNode</a>
 
-        <a class="method-permalink" href="#get_access_token_using_authorization_code%28authorization_code%29-instance-method">#</a>
+        <a class="method-permalink" href="#resolve%3AASTNode-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Resolves this path to a <code><a href="../Macros/TypeNode.html">TypeNode</a></code> if it denotes a type, to
+the value of a constant if it denotes a constant, or otherwise
+gives a compile-time error.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/client.cr#L31" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="get_access_token_using_client_credentials&#40;scope&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>get_access_token_using_client_credentials</strong>(scope = <span class="n">nil</span>)
-
-        <a class="method-permalink" href="#get_access_token_using_client_credentials%28scope%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/client.cr#L47" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="get_access_token_using_refresh_token&#40;refresh_token,scope&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>get_access_token_using_refresh_token</strong>(refresh_token, scope = <span class="n">nil</span>)
-
-        <a class="method-permalink" href="#get_access_token_using_refresh_token%28refresh_token%2Cscope%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/client.cr#L39" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="get_authorize_uri&#40;scope&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;,state&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>get_authorize_uri</strong>(scope = <span class="n">nil</span>, state = <span class="n">nil</span>)
-
-        <a class="method-permalink" href="#get_authorize_uri%28scope%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%2Cstate%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/client.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/docs/macros.cr#L793" target="_blank">View source</a>]
         
       </div>
     </div>

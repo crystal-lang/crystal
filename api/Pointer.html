@@ -1270,6 +1270,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Path" data-name="macros::path">
+      <a href="Macros/Path.html">Path</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/RangeLiteral" data-name="macros::rangeliteral">
       <a href="Macros/RangeLiteral.html">RangeLiteral</a>
       
@@ -2193,7 +2198,7 @@ puts x <span class="c"># &#61;&gt; 2</span></code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr" target="_blank">pointer.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr" target="_blank">pointer.cr</a>
     
     <br/>
   
@@ -2246,6 +2251,13 @@ puts x <span class="c"># &#61;&gt; 2</span></code></pre>
 
   <h2>Instance Method Summary</h2>
   <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#%21-instance-method" class="signature"><strong>#!</strong></a>
+        
+          <div class="summary"><p>Returns true if this is a null pointer, false otherwise.</p></div>
+        
+      </li>
     
       <li class="entry-summary">
         <a href="#%2B%28other%3AInt%29-instance-method" class="signature"><strong>#+</strong>(other : Int)</a>
@@ -2360,16 +2372,9 @@ puts x <span class="c"># &#61;&gt; 2</span></code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#nil%3F-instance-method" class="signature"><strong>#nil?</strong></a>
-        
-          <div class="summary"><p>Returns true if this pointer's address is zero.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#null%3F-instance-method" class="signature"><strong>#null?</strong></a>
         
-          <div class="summary"><p>Alias of <code><a href="Pointer.html#nil%3F-instance-method">#nil?</a></code></p></div>
+          <div class="summary"><p>Returns true if this pointer's address is zero.</p></div>
         
       </li>
     
@@ -2507,7 +2512,7 @@ puts x <span class="c"># &#61;&gt; 2</span></code></pre>
     ==</a>, 
   
     <a href="Object.html#%3D%3D%3D%28other%29-instance-method" class="tooltip">
-      <span>===(other)</span>
+      <span>===(other)<br/>===(other : YAML::Any)<br/>===(other : JSON::Any)</span>
     ===</a>, 
   
     <a href="Object.html#%3D~%28other%29-instance-method" class="tooltip">
@@ -2649,7 +2654,7 @@ ptr[<span class="n">3</span>] <span class="c"># &#61;&gt; 13</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L444" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L444" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2681,7 +2686,7 @@ ptr[<span class="n">9</span>] <span class="c">#&#61;&gt; 0</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L403" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L403" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2708,7 +2713,7 @@ ptr[<span class="n">1</span>] <span class="c"># &#61;&gt; 42</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L423" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L423" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2729,7 +2734,7 @@ ptr.address <span class="c"># &#61;&gt; 5678</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L382" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L382" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2753,7 +2758,7 @@ ptr.address <span class="c"># &#61;&gt; 0</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L372" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L372" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2762,6 +2767,24 @@ ptr.address <span class="c"># &#61;&gt; 0</span></code></pre></div>
 
 
   <h2>Instance Method Detail</h2>
+  
+    <div class="entry-detail" id="&#33;-instance-method">
+      <div class="signature">
+        
+        def <strong>!</strong>
+
+        <a class="method-permalink" href="#%21-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns true if this is a null pointer, false otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L70" target="_blank">View source</a>]
+        
+      </div>
+    </div>
   
     <div class="entry-detail" id="&#43;&#40;other:Int&#41;-instance-method">
       <div class="signature">
@@ -2783,7 +2806,7 @@ ptr2.address <span class="c"># &#61;&gt; 1238</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L84" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L84" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2829,7 +2852,7 @@ ptr2.address <span class="c"># &#61;&gt; 1230</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L98" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L98" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2850,7 +2873,7 @@ respectively.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L106" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L106" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2874,7 +2897,7 @@ ptr[<span class="n">3</span>] <span class="c"># &#61;&gt; 13</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L119" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L119" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2898,7 +2921,7 @@ ptr2.value <span class="c"># &#61;&gt; 42</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L132" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L132" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2935,7 +2958,7 @@ ptr.address <span class="c">#&#61;&gt; 1234</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L451" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L451" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2957,7 +2980,7 @@ ptr <span class="c">#   &#91;0, 0, 0, 13, 14, 15&#93;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L473" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L473" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2990,7 +3013,7 @@ ptr1[<span class="n">3</span>] <span class="c"># &#61;&gt; 4</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L154" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L154" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3023,7 +3046,7 @@ ptr2[<span class="n">3</span>] <span class="c"># &#61;&gt; 14</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L190" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L190" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3044,7 +3067,7 @@ ptr.hash <span class="c"># &#61;&gt; 1234</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L291" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L291" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3067,7 +3090,7 @@ ptr <span class="c"># &#91;2, 4, 6, 8&#93;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L357" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L357" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3095,7 +3118,7 @@ ptr1.memcmp(ptr1, <span class="n">4</span>) <span class="c"># &#61;&gt; 0</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L267" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L267" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3127,7 +3150,7 @@ ptr1[<span class="n">3</span>] <span class="c"># &#61;&gt; 3</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L211" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L211" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3159,31 +3182,7 @@ ptr1[<span class="n">3</span>] <span class="c"># &#61;&gt; 3</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L250" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="nil?-instance-method">
-      <div class="signature">
-        
-        def <strong>nil?</strong>
-
-        <a class="method-permalink" href="#nil%3F-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns true if this pointer's address is zero.</p>
-
-<pre><code class='language-crystal'>a <span class="o">=</span> <span class="n">1</span>
-<span class="k">pointerof</span>(a).nil? <span class="c"># &#61;&gt; false</span>
-
-b <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">0</span>)
-b.nil? <span class="c"># &#61;&gt; true</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L65" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L250" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3196,12 +3195,18 @@ b.nil? <span class="c"># &#61;&gt; true</span></code></pre></div>
         <a class="method-permalink" href="#null%3F-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Alias of <code><a href="Pointer.html#nil%3F-instance-method">#nil?</a></code></p></div>
+        <div class="doc"><p>Returns true if this pointer's address is zero.</p>
+
+<pre><code class='language-crystal'>a <span class="o">=</span> <span class="n">1</span>
+<span class="k">pointerof</span>(a).null? <span class="c"># &#61;&gt; false</span>
+
+b <span class="o">=</span> <span class="t">Pointer</span>(<span class="t">Int32</span>).<span class="k">new</span>(<span class="n">0</span>)
+b.null? <span class="c"># &#61;&gt; true</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L70" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L65" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3231,7 +3236,7 @@ ptr <span class="c"># &#91;1, 2, 3, 4, 0, 0, 0, 0&#93;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L330" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L330" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3253,7 +3258,7 @@ ptr <span class="c"># &#91;3, 4, 1, 2&#93;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L341" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L341" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3278,7 +3283,7 @@ ptr[<span class="n">3</span>] <span class="c"># &#61;&gt; 3</span></code></pre><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L281" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L281" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3303,7 +3308,7 @@ ptr2.to_s <span class="c"># &#61;&gt; Pointer&#40;Int32&#41;.null</span></code><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L303" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L303" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3325,7 +3330,7 @@ slice.<span class="k">class</span>                            <span class="c"># 
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/pointer.cr#L462" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/pointer.cr#L462" target="_blank">View source</a>]
         
       </div>
     </div>

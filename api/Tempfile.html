@@ -1270,6 +1270,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/Macros/Path" data-name="macros::path">
+      <a href="Macros/Path.html">Path</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/Macros/RangeLiteral" data-name="macros::rangeliteral">
       <a href="Macros/RangeLiteral.html">RangeLiteral</a>
       
@@ -2186,7 +2191,7 @@ tempfile.unlink</code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/tempfile.cr" target="_blank">tempfile.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/tempfile.cr" target="_blank">tempfile.cr</a>
     
     <br/>
   
@@ -2197,6 +2202,13 @@ tempfile.unlink</code></pre>
 
   <h2>Class Method Summary</h2>
   <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#dirname-class-method" class="signature"><strong>.dirname</strong></a>
+        
+          <div class="summary"><p>Returns the tmp dir used for tempfile <code></code>` Tempfile.dirname # => "/tmp" <code></code>`</p></div>
+        
+      </li>
     
       <li class="entry-summary">
         <a href="#open%28filename%2C%26block%29-class-method" class="signature"><strong>.open</strong>(filename, &block)</a>
@@ -2665,7 +2677,7 @@ tempfile.unlink</code></pre>
     ==</a>, 
   
     <a href="Object.html#%3D%3D%3D%28other%29-instance-method" class="tooltip">
-      <span>===(other)</span>
+      <span>===(other)<br/>===(other : YAML::Any)<br/>===(other : JSON::Any)</span>
     ===</a>, 
   
     <a href="Object.html#%3D~%28other%29-instance-method" class="tooltip">
@@ -2782,6 +2794,26 @@ tempfile.unlink</code></pre>
 
   <h2>Class Method Detail</h2>
   
+    <div class="entry-detail" id="dirname-class-method">
+      <div class="signature">
+        
+        def self.<strong>dirname</strong>
+
+        <a class="method-permalink" href="#dirname-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the tmp dir used for tempfile</p>
+
+<pre><code><span class="t">Tempfile</span>.dirname <span class="c"># &#61;&gt; &quot;/tmp&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/tempfile.cr#L77" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
     <div class="entry-detail" id="open&#40;filename,&amp;block&#41;-class-method">
       <div class="signature">
         
@@ -2801,7 +2833,7 @@ It is closed and returned at the end of this method call.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/tempfile.cr#L67" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/tempfile.cr#L63" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2819,7 +2851,7 @@ It is closed and returned at the end of this method call.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/tempfile.cr#L38" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/tempfile.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2842,7 +2874,7 @@ It is closed and returned at the end of this method call.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/tempfile.cr#L78" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/tempfile.cr#L86" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2862,7 +2894,7 @@ It is closed and returned at the end of this method call.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/tempfile.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/tempfile.cr#L52" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2880,7 +2912,7 @@ It is closed and returned at the end of this method call.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/8272664e3d0c1e9fbf657a7626a874ffa19a4938/src/tempfile.cr#L83" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/tempfile.cr#L91" target="_blank">View source</a>]
         
       </div>
     </div>
