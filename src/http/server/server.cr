@@ -20,7 +20,7 @@ require "../common"
 # The handler given to a server can simply be a block that receives an `HTTP::Server::Context`,
 # or it can be an `HTTP::Handler`. An `HTTP::Handler` has an optional `next` handler,
 # so handlers can be chained. For example, an initial handler may handle exceptions
-# in a subsequent handler and return a 500 staus code (see `HTTP::ErrorHandler`),
+# in a subsequent handler and return a 500 status code (see `HTTP::ErrorHandler`),
 # the next handler might log the incoming request (see `HTTP::LogHandler`), and
 # the final handler deals with routing and application logic.
 #
