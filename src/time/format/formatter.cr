@@ -11,6 +11,10 @@ struct Time::Format
     def initialize(@time, @io)
     end
 
+    def unix_epoch
+      io << time.epoch
+    end
+
     def year
       pad4(time.year, '0')
     end

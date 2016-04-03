@@ -61,6 +61,8 @@ struct Time::Format
           twelve_hour_time
         when 'R'
           twenty_four_hour_time
+        when 's'
+          unix_epoch
         when 'S'
           second
         when 'T', 'X'
