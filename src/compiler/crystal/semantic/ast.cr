@@ -1,5 +1,4 @@
 require "../syntax/ast"
-require "simple_hash"
 
 # TODO: 10 is a pretty big number for the number of nested generic instantiations,
 # (think Array(Array(Array(Array(Array(Array(Array(Array(Array(Array(Array(...))))))))))
@@ -208,13 +207,6 @@ module Crystal
       ::raise exception_type.for_node(self, message, inner)
     end
 
-    def visibility=(visibility : Visibility)
-    end
-
-    def visibility
-      Visibility::Public
-    end
-
     def find_owner_trace(owner)
       owner_trace = [] of ASTNode
       node = self
@@ -237,6 +229,63 @@ module Crystal
     end
   end
 
+  # Fictitious node to represent primitives
+  class Primitive < ASTNode
+    getter name : Symbol
+
+    def initialize(@name : Symbol, @type : Type? = nil)
+    end
+
+    def clone_without_location
+      Primitive.new(@name, @type)
+    end
+
+    def_equals_and_hash name
+  end
+
+  # Fictitious node to represent a tuple indexer
+  class TupleIndexer < Primitive
+    getter index : Int32
+
+    def initialize(@index : Int32)
+      super(:tuple_indexer_known_index)
+    end
+
+    def clone_without_location
+      TupleIndexer.new(index)
+    end
+
+    def_equals_and_hash index
+  end
+
+  # Fictitious node to represent a type
+  class TypeNode < ASTNode
+    def initialize(@type : Type)
+    end
+
+    def to_macro_id
+      @type.to_s
+    end
+
+    def clone_without_location
+      self
+    end
+
+    def_equals_and_hash type
+  end
+
+  class Arg
+    def clone_without_location
+      arg = previous_def
+
+      # An arg's type can sometimes be used as a restriction,
+      # and must be preserved when cloned
+      arg.set_type @type
+
+      arg
+    end
+  end
+
   class Def
     property! owner : Type
     property! original_owner : Type
@@ -254,8 +303,6 @@ module Crystal
 
     property previous : DefWithMetadata?
     property next : Def?
-    property visibility : Visibility
-    @visibility = Visibility::Public
 
     getter special_vars : Set(String)?
 
@@ -288,6 +335,13 @@ module Crystal
           end
         end
       end
+    end
+
+    def clone_without_location
+      a_def = previous_def
+      a_def.raises = raises
+      a_def.previous = previous
+      a_def
     end
   end
 
@@ -514,6 +568,8 @@ module Crystal
   end
 
   class MetaVar < ASTNode
+    include SpecialVar
+
     property name : String
 
     # True if we need to mark this variable as nilable
@@ -599,13 +655,9 @@ module Crystal
 
   class Call
     property before_vars : MetaVars?
-    property visibility : Visibility
-    @visibility = Visibility::Public
   end
 
   class Macro
-    property visibility : Visibility
-    @visibility = Visibility::Public
   end
 
   class Block
@@ -747,14 +799,6 @@ module Crystal
     def initialize(@name, @reason, @nodes = nil, @scope = nil)
     end
   end
-
-  {% for name in %w(Arg Var MetaVar) %}
-    class {{name.id}}
-      def special_var?
-        @name.starts_with? '$'
-      end
-    end
-  {% end %}
 
   class Asm
     property ptrof : PointerOf?

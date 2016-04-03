@@ -27,11 +27,6 @@ module Crystal
       @inside_struct_or_union = false
     end
 
-    def visit(node : Primitive)
-      @str << "# primitive: "
-      @str << node.name
-    end
-
     def visit(node : Nop)
     end
 
@@ -418,11 +413,6 @@ module Crystal
       false
     end
 
-    def visit(node : TypeNode)
-      node.type.to_s(@str)
-      false
-    end
-
     def visit_backtick(exp)
       @str << '`'
       case exp
@@ -518,10 +508,6 @@ module Crystal
 
     def visit(node : Var)
       @str << decorate_var(node, node.name)
-    end
-
-    def visit(node : MetaVar)
-      @str << node.name
     end
 
     def visit(node : FunLiteral)
@@ -713,10 +699,7 @@ module Crystal
       else
         @str << "?"
       end
-      if type = node.type?
-        @str << " : "
-        TypeNode.new(type).accept(self)
-      elsif restriction = node.restriction
+      if restriction = node.restriction
         @str << " : "
         restriction.accept self
       end
@@ -959,10 +942,6 @@ module Crystal
       @str << node.modifier.to_s.downcase
       @str << ' '
       node.exp.accept self
-      false
-    end
-
-    def visit(node : TypeFilteredNode)
       false
     end
 

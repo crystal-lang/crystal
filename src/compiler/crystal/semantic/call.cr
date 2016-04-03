@@ -11,9 +11,6 @@ class Crystal::Call
   property target_defs : Array(Def)?
   property expanded : ASTNode?
 
-  property? is_expansion : Bool
-  @is_expansion = false
-
   property? uses_with_scope : Bool
   @uses_with_scope = false
 

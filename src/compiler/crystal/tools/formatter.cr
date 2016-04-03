@@ -1,4 +1,10 @@
+require "../syntax"
+
 module Crystal
+  def self.format(source, filename = nil)
+    Crystal::Formatter.format(source, filename: filename)
+  end
+
   class Formatter < Visitor
     def self.format(source, filename = nil)
       parser = Parser.new(source)
@@ -3271,23 +3277,11 @@ module Crystal
       return false
     end
 
-    def visit(node : Primitive)
-      return false
-    end
-
     def visit(node : MacroId)
       return false
     end
 
-    def visit(node : TypeNode)
-      return false
-    end
-
     def visit(node : MetaVar)
-      return false
-    end
-
-    def visit(node : TypeFilteredNode)
       return false
     end
 
@@ -3438,6 +3432,10 @@ module Crystal
       write_token :")"
 
       false
+    end
+
+    def visit(node : ASTNode)
+      raise "Bug: unexpected node: #{node.class} at #{node.location}"
     end
 
     def to_s(io)

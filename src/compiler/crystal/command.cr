@@ -1,13 +1,6 @@
 require "json"
 require "./command/*"
 
-module Crystal
-  def self.tempfile(basename)
-    Dir.mkdir_p Config.cache_dir
-    File.join(Config.cache_dir, "crystal-run-#{basename}.tmp")
-  end
-end
-
 class Crystal::Command
   USAGE = <<-USAGE
     Usage: crystal [command] [switches] [program file] [--] [arguments]

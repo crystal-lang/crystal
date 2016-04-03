@@ -72,7 +72,7 @@ class Crystal::Command
     source = STDIN.gets_to_end
 
     begin
-      result = Crystal::Formatter.format(source)
+      result = Crystal.format(source)
       exit(result == source ? 0 : 1) if check_files
 
       print result
@@ -96,7 +96,7 @@ class Crystal::Command
     source = File.read(filename)
 
     begin
-      result = Crystal::Formatter.format(source, filename: filename)
+      result = Crystal.format(source, filename: filename)
       exit(result == source ? 0 : 1) if check_files
 
       File.write(filename, result)
@@ -137,7 +137,7 @@ class Crystal::Command
     source = File.read(filename)
 
     begin
-      result = Crystal::Formatter.format(source, filename: filename)
+      result = Crystal.format(source, filename: filename)
       return if result == source
 
       if check_files

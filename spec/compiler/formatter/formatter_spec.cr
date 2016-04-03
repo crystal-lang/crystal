@@ -3,13 +3,13 @@ require "../../spec_helper"
 private def assert_format(input, output = input, strict = false, file = __FILE__, line = __LINE__)
   it "formats #{input.inspect}", file, line do
     output = "#{output}\n" unless strict
-    result = Crystal::Formatter.format(input)
+    result = Crystal.format(input)
     unless result == output
       fail "Expected\n\n~~~\n#{input}\n~~~\nto format to:\n\n~~~\n#{output}\n~~~\n\nbut got:\n\n~~~\n#{result}\n~~~\n\n  assert_format #{input.inspect}, #{result.chomp.inspect}"
     end
 
     # Check idempotency
-    result2 = Crystal::Formatter.format(result)
+    result2 = Crystal.format(result)
     unless result == result2
       fail "Idempotency failed:\nBefore: #{result.inspect}\nAfter:  #{result2.inspect}"
     end

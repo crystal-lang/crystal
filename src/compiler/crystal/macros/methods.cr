@@ -1,3 +1,5 @@
+require "../semantic/ast"
+
 module Crystal
   class ASTNode
     def to_macro_id
@@ -599,7 +601,7 @@ module Crystal
     end
   end
 
-  class MetaVar
+  class MetaVar < ASTNode
     def to_macro_id
       @name
     end
