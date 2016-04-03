@@ -73,7 +73,7 @@ module Crystal
       program.wants_doc = wants_doc?
       program.color = color?
 
-      @link_flags = "#{@link_flags} -rdynamic"
+      @link_flags = "#{@link_flags} -rdynamic -shared"
 
       node, original_node = parse program, sources
       node = infer_type program, node
