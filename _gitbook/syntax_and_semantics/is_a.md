@@ -1,6 +1,6 @@
 # is_a?
 
-The pseudo-method `is_a?` determines whether a type inherits or includes another type. For example:
+The pseudo-method `is_a?` determines whether an expression's runtime type inherits or includes another type. For example:
 
 ```crystal
 a = 1
