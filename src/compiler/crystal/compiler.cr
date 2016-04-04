@@ -237,21 +237,29 @@ module Crystal
 
     private def codegen_many_units(units, target_triple, multithreaded)
       jobs_count = 0
+      wait_channel = Channel(Nil).new(@n_threads)
 
       while unit = units.pop?
-        fork { codegen_single_unit(unit, target_triple, multithreaded) }
-
+        fork_and_codegen_single_unit(unit, target_triple, multithreaded, wait_channel)
         jobs_count += 1
 
         if jobs_count >= @n_threads
-          LibC.waitpid(-1, out stat_loc, 0)
+          wait_channel.receive
           jobs_count -= 1
         end
       end
 
       while jobs_count > 0
-        LibC.waitpid(-1, out stat_loc_2, 0)
+        wait_channel.receive
         jobs_count -= 1
+      end
+    end
+
+    private def fork_and_codegen_single_unit(unit, target_triple, multithreaded, wait_channel)
+      spawn do
+        codegen_process = fork { codegen_single_unit(unit, target_triple, multithreaded) }
+        codegen_process.wait
+        wait_channel.send nil
       end
     end
 
