@@ -90,3 +90,49 @@ end
 ```
 
 This sometimes leads to code that is more natural to read.
+
+## Tuple literal
+
+When a case expression is a tuple literal there are a few semantic differences if a when condition is also a tuple literal.
+
+### Tuple size must match
+
+```crystal
+case {value1, value2}
+when {0, 0} # OK, 2 elements
+  # ...
+when {1, 2, 3} # Compiler error, because it will never match
+  # ...
+end
+```
+
+### Underscore allowed
+
+```crystal
+case {value1, value2}
+when {0, _}
+  # Matches if 0 === value1, no test done against value2
+when {_, 0}
+  # Matches if 0 === value2, no test done against value1
+end
+```
+
+### Implicit-object allowed
+
+```crystal
+case {value1, value2}
+when {.even?, .odd?}
+  # Matches if value1.even? && value2.odd?
+end
+```
+
+### Comparing against a type will perform an is_a? check
+
+```crystal
+case {value1, value2}
+when {String, Int32}
+  # Matches if value1.is_a?(String) && value2.is_a?(Int32)
+  # The type of value1 is known to be a String by the compiler,
+  # and the type of value2 is known to be an Int32
+end
+```
