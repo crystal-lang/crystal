@@ -847,4 +847,9 @@ describe Crystal::Formatter do
   assert_format "foo(<<-X\na\nX\n, 1)"
   assert_format "def bar\n  foo(<<-X\n  a\n  X\n  , 1)\nend"
   assert_format %(run("a", 1))
+
+  assert_format "foo.bar # comment\n   .baz"
+  assert_format "foo.bar(1) # comment\n   .baz"
+
+  assert_format "foo[bar.baz]\n  .qux"
 end

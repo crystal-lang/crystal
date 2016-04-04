@@ -1871,13 +1871,15 @@ module Crystal
 
         # It's something like `foo.bar\n
         #                         .baz`
-        if @token.type == :NEWLINE
+        if (@token.type == :NEWLINE) || @wrote_newline
           newline_indent = @dot_column || @indent + 2
           indent(newline_indent) { consume_newlines }
           write_indent(newline_indent)
         end
 
         if @token.type != :"."
+          old_dot_column = @dot_column
+
           # It's an operator
           if @token.type == :"["
             write "["
@@ -1928,6 +1930,7 @@ module Crystal
               accept_assign_value_after_equals last_arg
             end
 
+            @dot_column = old_dot_column
             return false
           elsif @token.type == :"[]"
             write "[]"
@@ -1940,6 +1943,7 @@ module Crystal
               accept node.args.last
             end
 
+            @dot_column = old_dot_column
             return false
           else
             write " " if needs_space
@@ -1963,12 +1967,14 @@ module Crystal
             write " " if needs_space
             accept node.args.last
           end
+
+          @dot_column = old_dot_column
           return false
         end
 
         next_token
         skip_space
-        if @token.type == :NEWLINE
+        if (@token.type == :NEWLINE) || @wrote_newline
           newline_indent = @dot_column || @indent + 2
           indent(newline_indent) { consume_newlines }
           write_indent(newline_indent)
