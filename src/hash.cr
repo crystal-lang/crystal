@@ -294,6 +294,14 @@ class Hash(K, V)
     @size == 0
   end
 
+  def present?
+    ! blank?
+  end
+
+  def blank?
+    empty?
+  end
+
   # Calls the given block for each key-value pair and passes in the key and the value.
   #
   # ```

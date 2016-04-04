@@ -36,4 +36,11 @@ describe "Bool" do
     assert { true.to_s.should eq("true") }
     assert { false.to_s.should eq("false") }
   end
+
+  describe "present?" do
+    assert { true.present?.should be_true }
+    assert { false.present?.should be_true }
+    assert { true.blank?.should be_false }
+    assert { false.blank?.should be_false }
+  end
 end

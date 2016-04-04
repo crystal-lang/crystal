@@ -1108,6 +1108,21 @@ class Array(T)
     @size = size.to_i
   end
 
+  # length same as size
+  def length
+    size
+  end
+
+  def present?
+    ! blank?
+  end
+
+  def blank?
+    empty?
+  end
+
+
+
   # Optimized version of `Enumerable#map`.
   def map(&block : T -> U)
     Array(U).new(size) { |i| yield @buffer[i] }

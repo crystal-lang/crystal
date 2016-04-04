@@ -503,6 +503,14 @@ describe "Array" do
     end
   end
 
+  describe "present" do
+    ([] of Int32).present?.should be_false
+    ([] of Int32).blank?.should be_true
+
+    ([1]).present?.should be_true
+    ([1,2,3]).blank?.should be_false
+  end
+
   it "does equals? with custom block" do
     a = [1, 3, 2]
     b = [3, 9, 4]
@@ -684,6 +692,12 @@ describe "Array" do
 
     it "has size 2" do
       [1, 2].size.should eq(2)
+    end
+
+    it "length same as size" do
+      [1,3,4].length.should eq(3)
+      a = [1,2,3]
+      a.length.should eq(a.size)
     end
   end
 

@@ -281,6 +281,18 @@ struct Int
   DIGITS_UPCASE = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   # :nodoc:
   DIGITS_BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  
+  def present?
+    true
+  end
+
+  def blank?
+    ! present?
+  end
+
+  def length
+    to_s.length
+  end
 
   def to_s
     to_s(10)

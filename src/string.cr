@@ -2938,6 +2938,11 @@ class String
     @length = each_byte_index_and_char_index { }
   end
 
+  # same as length
+  def length
+    return size
+  end
+
   def ascii_only?
     @bytesize == 0 || size == @bytesize
   end
@@ -2985,6 +2990,18 @@ class String
 
   def to_s(io)
     io.write_utf8 Slice.new(to_unsafe, bytesize)
+  end
+
+  def present?
+    return false if @length < 1
+    count{|c|
+      return true if c != ' '
+    }
+    return false
+  end
+
+  def blank?
+    ! present?
   end
 
   def to_unsafe

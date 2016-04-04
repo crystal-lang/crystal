@@ -56,6 +56,14 @@ struct Bool
     self ? 1 : 0
   end
 
+  def present?
+    true
+  end
+  
+  def blank?
+    ! present?
+  end
+
   # Returns `"true"` for `true` and `"false"` for `false`.
   def to_s
     self ? "true" : "false"

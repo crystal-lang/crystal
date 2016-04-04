@@ -107,6 +107,21 @@ describe "Float" do
     (0.0 / 0.0).nan?.should be_true
   end
 
+  it "present" do
+    assert { 1.0.present?.should be_true }
+    assert { 0.0.present?.should be_true }
+    assert { 1.0.blank?.should be_false }
+    assert { 0.1.blank?.should be_false }
+    assert { 1.0_f32.present?.should be_true }
+    assert { 0.0_f32.present?.should be_true }
+    assert { 1.0_f32.blank?.should be_false }
+    assert { 0.1_f32.blank?.should be_false }
+    assert { 1.0_f64.present?.should be_true }
+    assert { 0.0_f64.present?.should be_true }
+    assert { 1.0_f64.blank?.should be_false }
+    assert { 0.1_f64.blank?.should be_false }
+  end
+
   it "does infinite?" do
     (0.0).infinite?.should be_nil
     (-1.0/0.0).infinite?.should eq(-1)
