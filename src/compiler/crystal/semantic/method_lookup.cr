@@ -23,7 +23,16 @@ module Crystal
         defs.each do |item|
           next if item.def.abstract?
 
+          # If the def has a macro owner, which means that the original
+          # def was defined via a `macro def` and copied to a subtype,
+          # we need to use the type that defined the `macro def` as a
+          # type lookup for arguments.
+          macro_owner = item.def.macro_owner?
+          context.type_lookup = macro_owner if macro_owner
+
           match = MatchesLookup.match_def(signature, item, context)
+
+          context.type_lookup = type_lookup if macro_owner
 
           if match
             matches_array ||= [] of Match

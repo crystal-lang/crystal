@@ -321,6 +321,10 @@ module Crystal
       @macro_owner || @owner
     end
 
+    def macro_owner?
+      @macro_owner
+    end
+
     def add_special_var(name)
       special_vars = @special_vars ||= Set(String).new
       special_vars << name

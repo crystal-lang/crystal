@@ -665,4 +665,37 @@ describe "Type inference: macro" do
       ),
       "macro 'foo' must be defined before this point but is defined later"
   end
+
+  it "looks up argument types in macro owner, not in subclass (#2395)" do
+    assert_type(%(
+      struct Nil
+        def method(x : Problem)
+          0
+        end
+      end
+
+      class Foo
+        macro def method(x : Problem) : Int32
+          {% for ivar in @type.instance_vars %}
+            @{{ivar.id}}.method(x)
+          {% end %}
+          42
+        end
+      end
+
+      class Problem
+      end
+
+      module Moo
+        class Problem
+        end
+
+        class Bar < Foo
+          @foo : Foo?
+        end
+      end
+
+      Moo::Bar.new.method(Problem.new)
+      )) { int32 }
+  end
 end
