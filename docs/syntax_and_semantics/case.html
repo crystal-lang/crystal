@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.6.4" data-basepath=".." data-revision="Wed Mar 16 2016 18:33:09 GMT+0000 (UTC)">
+    <div class="book" data-level="4.6.4" data-basepath=".." data-revision="Mon Apr 04 2016 23:37:55 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -693,6 +693,36 @@
             
         </li>
     
+        <li class="chapter " data-level="4.6.2.7" data-path="syntax_and_semantics/if_var_nil.html">
+            
+                
+                    <a href="../syntax_and_semantics/if_var_nil.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>4.6.2.7.</b>
+                        
+                        if var.nil?
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="4.6.2.8" data-path="syntax_and_semantics/not.html">
+            
+                
+                    <a href="../syntax_and_semantics/not.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>4.6.2.8.</b>
+                        
+                        if !
+                    </a>
+            
+            
+        </li>
+    
 
             </ul>
             
@@ -1319,14 +1349,29 @@
             
         </li>
     
-        <li class="chapter " data-level="4.8.2" data-path="syntax_and_semantics/responds_to.html">
+        <li class="chapter " data-level="4.8.2" data-path="syntax_and_semantics/nil_question.html">
+            
+                
+                    <a href="../syntax_and_semantics/nil_question.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>4.8.2.</b>
+                        
+                        nil?
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="4.8.3" data-path="syntax_and_semantics/responds_to.html">
             
                 
                     <a href="../syntax_and_semantics/responds_to.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.8.2.</b>
+                            <b>4.8.3.</b>
                         
                         responds_to?
                     </a>
@@ -1334,14 +1379,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.8.3" data-path="syntax_and_semantics/as.html">
+        <li class="chapter " data-level="4.8.4" data-path="syntax_and_semantics/as.html">
             
                 
                     <a href="../syntax_and_semantics/as.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.8.3.</b>
+                            <b>4.8.4.</b>
                         
                         as
                     </a>
@@ -1349,14 +1394,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.8.4" data-path="syntax_and_semantics/typeof.html">
+        <li class="chapter " data-level="4.8.5" data-path="syntax_and_semantics/typeof.html">
             
                 
                     <a href="../syntax_and_semantics/typeof.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.8.4.</b>
+                            <b>4.8.5.</b>
                         
                         typeof
                     </a>
@@ -2108,6 +2153,38 @@ tmp = num
 <span class="hljs-keyword">end</span>
 </code></pre>
 <p>This sometimes leads to code that is more natural to read.</p>
+<h2 id="tuple-literal">Tuple literal</h2>
+<p>When a case expression is a tuple literal there are a few semantic differences if a when condition is also a tuple literal.</p>
+<h3 id="tuple-size-must-match">Tuple size must match</h3>
+<pre><code class="lang-crystal"><span class="hljs-keyword">case</span> {value1, value2}
+<span class="hljs-keyword">when</span> {<span class="hljs-number">0</span>, <span class="hljs-number">0</span>} <span class="hljs-comment"># OK, 2 elements</span>
+  <span class="hljs-comment"># ...</span>
+<span class="hljs-keyword">when</span> {<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>} <span class="hljs-comment"># Compiler error, because it will never match</span>
+  <span class="hljs-comment"># ...</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h3 id="underscore-allowed">Underscore allowed</h3>
+<pre><code class="lang-crystal"><span class="hljs-keyword">case</span> {value1, value2}
+<span class="hljs-keyword">when</span> {<span class="hljs-number">0</span>, _}
+  <span class="hljs-comment"># Matches if 0 === value1, no test done against value2</span>
+<span class="hljs-keyword">when</span> {_, <span class="hljs-number">0</span>}
+  <span class="hljs-comment"># Matches if 0 === value2, no test done against value1</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h3 id="implicit-object-allowed">Implicit-object allowed</h3>
+<pre><code class="lang-crystal"><span class="hljs-keyword">case</span> {value1, value2}
+<span class="hljs-keyword">when</span> {.even?, .odd?}
+  <span class="hljs-comment"># Matches if value1.even? &amp;&amp; value2.odd?</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h3 id="comparing-against-a-type-will-perform-an-is-a-check">Comparing against a type will perform an is_a? check</h3>
+<pre><code class="lang-crystal"><span class="hljs-keyword">case</span> {value1, value2}
+<span class="hljs-keyword">when</span> {<span class="hljs-constant">String</span>, <span class="hljs-constant">Int32</span>}
+  <span class="hljs-comment"># Matches if value1.is_a?(String) &amp;&amp; value2.is_a?(Int32)</span>
+  <span class="hljs-comment"># The type of value1 is known to be a String by the compiler,</span>
+  <span class="hljs-comment"># and the type of value2 is known to be an Int32</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
 
                     
                     </section>
