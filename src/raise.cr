@@ -84,10 +84,8 @@ end
 @[Raises]
 fun __crystal_raise(unwind_ex : LibUnwind::Exception*) : NoReturn
   ret = LibUnwind.raise_exception(unwind_ex)
-  LibC.printf "Could not raise"
-  # caller.each do |point|
-  # puts point
-  # end
+  LibC.printf "Failed to raise an exception: %s\n", ret.to_s
+  CallStack.print_backtrace
   LibC.exit(ret)
 end
 

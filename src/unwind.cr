@@ -39,7 +39,7 @@ lib LibUnwind
 
   alias Context = Void*
 
-  fun raise_exception = _Unwind_RaiseException(ex : Exception*) : Int32
+  fun raise_exception = _Unwind_RaiseException(ex : Exception*) : ReasonCode
   fun get_region_start = _Unwind_GetRegionStart(Context) : LibC::SizeT
   fun get_ip = _Unwind_GetIP(Context) : LibC::SizeT
   fun set_ip = _Unwind_SetIP(context : Context, ip : LibC::SizeT) : LibC::SizeT
