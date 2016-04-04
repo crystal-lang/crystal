@@ -982,6 +982,77 @@ class String
     end
   end
 
+  # Returns a new String that results of inserting *other* in *self* at *index*.
+  # Negative indices count from the end of the string, and insert **after**
+  # the given index.
+  #
+  # Raises `IndexError` if the index is out of bounds.
+  #
+  # ```
+  # "abcd".insert(0, 'X')  # => "Xabcd"
+  # "abcd".insert(3, 'X')  # => "abcXd"
+  # "abcd".insert(4, 'X')  # => "abcdX"
+  # "abcd".insert(-3, 'X') # => "abXcd"
+  # "abcd".insert(-1, 'X') # => "abcdX"
+  #
+  # "abcd".insert(5, 'X')  # raises IndexError
+  # "abcd".insert(-6, 'X') # raises IndexError
+  # ```
+  def insert(index : Int, other : Char)
+    index = index.to_i
+    index += size + 1 if index < 0
+
+    byte_index = char_index_to_byte_index(index)
+    raise IndexError.new unless byte_index
+
+    bytes, count = String.char_bytes_and_bytesize(other)
+
+    new_bytesize = bytesize + count
+    new_size = single_byte_optimizable? ? new_bytesize : 0
+
+    insert_impl(byte_index, bytes.to_unsafe, count, new_bytesize, new_size)
+  end
+
+  # Returns a new String that results of inserting *other* in *self* at *index*.
+  # Negative indices count from the end of the string, and insert **after**
+  # the given index.
+  #
+  # Raises `IndexError` if the index is out of bounds.
+  #
+  # ```
+  # "abcd".insert(0, "FOO")  # => "FOOabcd"
+  # "abcd".insert(3, "FOO")  # => "abcFOOd"
+  # "abcd".insert(4, "FOO")  # => "abcdFOO"
+  # "abcd".insert(-3, "FOO") # => "abFOOcd"
+  # "abcd".insert(-1, "FOO") # => "abcdFOO"
+  #
+  # "abcd".insert(5, "FOO")  # raises IndexError
+  # "abcd".insert(-6, "FOO") # raises IndexError
+  # ```
+  def insert(index : Int, other : String)
+    index = index.to_i
+    index += size + 1 if index < 0
+
+    byte_index = char_index_to_byte_index(index)
+    raise IndexError.new unless byte_index
+
+    new_bytesize = bytesize + other.bytesize
+    new_size = single_byte_optimizable? && other.single_byte_optimizable? ? new_bytesize : 0
+
+    insert_impl(byte_index, other.to_unsafe, other.bytesize, new_bytesize, new_size)
+  end
+
+  private def insert_impl(byte_index, other, other_bytesize, new_bytesize, new_size)
+    String.new(new_bytesize) do |buffer|
+      buffer.copy_from(to_unsafe, byte_index)
+      buffer += byte_index
+      buffer.copy_from(other, other_bytesize)
+      buffer += other_bytesize
+      buffer.copy_from(to_unsafe + byte_index, bytesize - byte_index)
+      {new_bytesize, new_size}
+    end
+  end
+
   # Returns a new string with leading and trailing whitespace removed.
   #
   # ```
@@ -1784,14 +1855,7 @@ class String
 
   # ditto
   def +(char : Char)
-    bytes = uninitialized UInt8[4]
-
-    count = 0
-    char.each_byte do |byte|
-      bytes[count] = byte
-      count += 1
-    end
-
+    bytes, count = String.char_bytes_and_bytesize(char)
     size = bytesize + count
     String.new(size) do |buffer|
       buffer.copy_from(to_unsafe, bytesize)
@@ -1961,6 +2025,10 @@ class String
   # "こんにちは".char_index_to_byte_index(5) # => 15
   # ```
   def char_index_to_byte_index(index)
+    if single_byte_optimizable?
+      return 0 <= index <= bytesize ? index : nil
+    end
+
     size = each_byte_index_and_char_index do |byte_index, char_index|
       return byte_index if index == char_index
     end
@@ -1973,6 +2041,10 @@ class String
   # It is valid to pass `bytesize` to *index*, and in this case the answer
   # will be the size of this string.
   def byte_index_to_char_index(index)
+    if single_byte_optimizable?
+      return 0 <= index <= bytesize ? index : nil
+    end
+
     size = each_byte_index_and_char_index do |byte_index, char_index|
       return char_index if index == byte_index
     end
@@ -2392,17 +2464,7 @@ class String
   private def just(len, char, left)
     return self if size >= len
 
-    bytes = uninitialized UInt8[4]
-
-    if char.ord < 0x80
-      count = 1
-    else
-      count = 0
-      char.each_byte do |byte|
-        bytes[count] = byte
-        count += 1
-      end
-    end
+    bytes, count = String.char_bytes_and_bytesize(char)
 
     difference = len - size
     new_bytesize = bytesize + difference * count
@@ -2832,14 +2894,7 @@ class String
       return to_unsafe[bytesize - 1] == char.ord
     end
 
-    bytes = uninitialized UInt8[4]
-
-    count = 0
-    char.each_byte do |byte|
-      bytes[count] = byte
-      count += 1
-    end
-
+    bytes, count = String.char_bytes_and_bytesize(char)
     return false if bytesize < count
 
     count.times do |i|
@@ -2942,6 +2997,18 @@ class String
 
   def unsafe_byte_slice(byte_offset)
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset)
+  end
+
+  protected def self.char_bytes_and_bytesize(char : Char)
+    bytes = uninitialized UInt8[4]
+
+    bytesize = 0
+    char.each_byte do |byte|
+      bytes[bytesize] = byte
+      bytesize += 1
+    end
+
+    {bytes, bytesize}
   end
 
   # Raises an `ArgumentError` if `self` has null bytes. Returns `self` otherwise.

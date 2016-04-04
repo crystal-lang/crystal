@@ -1759,4 +1759,35 @@ describe "String" do
       String.new(bytes, "GB2312", invalid: :skip).should eq("好是")
     end
   end
+
+  it "inserts" do
+    "bar".insert(0, "foo").should eq("foobar")
+    "bar".insert(1, "foo").should eq("bfooar")
+    "bar".insert(2, "foo").should eq("bafoor")
+    "bar".insert(3, "foo").should eq("barfoo")
+
+    "bar".insert(-1, "foo").should eq("barfoo")
+    "bar".insert(-2, "foo").should eq("bafoor")
+
+    "ともだち".insert(0, "ねこ").should eq("ねこともだち")
+    "ともだち".insert(1, "ねこ").should eq("とねこもだち")
+    "ともだち".insert(2, "ねこ").should eq("ともねこだち")
+    "ともだち".insert(4, "ねこ").should eq("ともだちねこ")
+
+    "ともだち".insert(0, 'ね').should eq("ねともだち")
+    "ともだち".insert(1, 'ね').should eq("とねもだち")
+    "ともだち".insert(2, 'ね').should eq("ともねだち")
+    "ともだち".insert(4, 'ね').should eq("ともだちね")
+
+    "ともだち".insert(-1, 'ね').should eq("ともだちね")
+    "ともだち".insert(-2, 'ね').should eq("ともだねち")
+
+    expect_raises(IndexError) { "bar".insert(4, "foo") }
+    expect_raises(IndexError) { "bar".insert(-5, "foo") }
+    expect_raises(IndexError) { "bar".insert(4, 'f') }
+    expect_raises(IndexError) { "bar".insert(-5, 'f') }
+
+    "barbar".insert(0, "foo").size.should eq(9)
+    "ともだち".insert(0, "ねこ").size.should eq(6)
+  end
 end
