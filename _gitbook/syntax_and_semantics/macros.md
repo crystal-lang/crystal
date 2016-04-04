@@ -30,7 +30,7 @@ a `def` without a matching `end`, or a single `when` expression of a
 
 Macros declared at the top-level are visible anywhere. If a top-level macro is marked as `private` it is only accessible in that file.
 
-They can also be defined in classes and modules, and are only visible in those scopes. Macros are also looked-up in the ancestors chain (superclasses and included modules).
+They can also be defined in classes and modules, and are visible in those scopes. Macros are also looked-up in the ancestors chain (superclasses and included modules).
 
 For example, a block which is given an object to use as the default receiver by being invoked with `with ... yield` can access macros defined within that object's ancestors chain:
 
@@ -46,6 +46,18 @@ class Foo
 end
 
 Foo.new.yield_with_self { emphasize(10) } #=> "***10***"
+```
+
+Macros defined in classes and modules can be invoked from outside of them too:
+
+```crystal
+class Foo
+  macro emphasize(value)
+    "***#{ {{value}} }***"
+  end
+end
+
+Foo.emphasize(10) # => "***10***"
 ```
 
 ## Interpolation
