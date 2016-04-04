@@ -66,6 +66,8 @@ tz.minutes_west = 1
 tz.minutes_west #=> 1
 ```
 
+If the assigned value is not exactly the same as the property's type, [to_unsafe](to_unsafe.html) will be tried.
+
 You can also initialize some fields with a syntax similar to [named arguments](../default_and_named_arguments.html):
 
 ```crystal
