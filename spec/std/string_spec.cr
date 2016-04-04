@@ -1457,7 +1457,7 @@ describe "String" do
     assert { "has_content".blank?.should be_false }
     assert { "".blank?.should be_true }
     assert { "     ".blank?.should be_true }
-    assert { "   x  ".present?.should be_false }
+    assert { "   x  ".blank?.should be_false }
   end
 
   describe "succ" do
