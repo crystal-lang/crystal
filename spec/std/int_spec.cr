@@ -368,6 +368,13 @@ describe "Int" do
     iter.next.should eq(1)
   end
 
+  describe "present" do
+    assert { 1.present?.should be_true }
+    assert { 0.present?.should be_true }
+    assert { 1.blank?.should be_false }
+    assert { 0.blank?.should be_false }
+  end
+
   describe "#popcount" do
     assert { 5_i8.popcount.should eq(2) }
     assert { 127_i8.popcount.should eq(7) }

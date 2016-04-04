@@ -87,6 +87,14 @@ struct Nil
     ""
   end
 
+  def present?
+    false
+  end
+  
+  def blank?
+    ! present?
+  end
+
   # Doesn't write anything to the given IO.
   def to_s(io : IO)
     # Nothing to do

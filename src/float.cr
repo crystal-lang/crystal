@@ -129,6 +129,18 @@ struct Float32
     self ** other.to_f32
   end
 
+  def present?
+    true
+  end
+
+  def blank?
+    ! present?
+  end
+
+  def length
+    to_s.length
+  end
+
   def to_s
     to_f64.to_s
   end
@@ -179,6 +191,18 @@ struct Float64
 
   def **(other)
     self ** other.to_f64
+  end
+
+  def present?
+    true
+  end
+
+  def blank?
+    ! present?
+  end
+
+  def length
+    to_s.length
   end
 
   def to_s

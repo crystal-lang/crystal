@@ -1448,6 +1448,18 @@ describe "String" do
     assert { "12".rjust(7, 'あ').should eq("あああああ12") }
   end
 
+  describe "present" do
+    assert { "has_content".present?.should be_true }
+    assert { "".present?.should be_false }
+    assert { "     ".present?.should be_false }
+    assert { "   x  ".present?.should be_true }
+
+    assert { "has_content".blank?.should be_false }
+    assert { "".blank?.should be_true }
+    assert { "     ".blank?.should be_true }
+    assert { "   x  ".blank?.should be_false }
+  end
+
   describe "succ" do
     it "returns an empty string for empty strings" do
       "".succ.should eq("")
@@ -1590,6 +1602,13 @@ describe "String" do
 
   it "gets size of \0 string" do
     "\0\0".size.should eq(2)
+  end
+
+  it "length same as size" do
+    example = "\0\0"
+    example.size.should eq(2)
+    example.size.should eq(example.length)
+    "abc".length.should eq(3)
   end
 
   describe "char_index_to_byte_index" do
