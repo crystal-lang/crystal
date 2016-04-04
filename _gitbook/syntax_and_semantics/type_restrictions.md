@@ -176,6 +176,17 @@ def foo
 end
 ```
 
+A simple way to match against one or more elements of any type is to use `Object` as a restriction:
+
+```crystal
+def foo(*args : Object)
+end
+
+foo() # Error
+foo(1) # OK
+foo(1, "x") # OK
+```
+
 ## Free variables
 
 If you use a single uppercase letter as a type restriction, the identifier becomes a free variable:
