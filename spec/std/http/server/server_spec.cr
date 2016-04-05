@@ -141,12 +141,29 @@ module HTTP
         io.to_s.should eq("HTTP/1.0 200 OK\r\n\r\n1234")
       end
 
-      it "resets and clears headers" do
+      it "resets and clears headers and cookies" do
         io = MemoryIO.new
         response = Response.new(io)
         response.headers["Foo"] = "Bar"
+        response.cookies["Bar"] = "Foo"
         response.reset
         response.headers.empty?.should be_true
+        response.cookies.empty?.should be_true
+      end
+
+      it "writes cookie headers" do
+        io = MemoryIO.new
+        response = Response.new(io)
+        response.cookies["Bar"] = "Foo"
+        response.close
+        io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 0\r\nSet-Cookie: Bar=Foo; path=/\r\n\r\n")
+
+        io = MemoryIO.new
+        response = Response.new(io)
+        response.cookies["Bar"] = "Foo"
+        response.print("Hello")
+        response.close
+        io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\nSet-Cookie: Bar=Foo; path=/\r\n\r\nHello")
       end
     end
   end
