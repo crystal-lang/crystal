@@ -37,12 +37,12 @@ struct Time::Format
           day_of_month_blank_padded
         when 'F'
           iso_8601_date
-        when 'j'
-          day_of_year_zero_padded
         when 'H'
           hour_24_zero_padded
         when 'I'
           hour_12_zero_padded
+        when 'j'
+          day_of_year_zero_padded
         when 'k'
           hour_24_blank_padded
         when 'l'
