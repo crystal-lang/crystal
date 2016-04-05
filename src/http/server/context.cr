@@ -4,7 +4,7 @@ class HTTP::Server
     # The `HTTP::Request` to process.
     getter request : Request
 
-    # The `HTTP::Response` to configure and write to.
+    # The `HTTP::Server::Response` to configure and write to.
     getter response : Response
 
     # :nodoc:
