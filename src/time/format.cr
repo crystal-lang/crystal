@@ -11,6 +11,8 @@ struct Time::Format
   end
 
   def parse(string, kind = @kind)
+    @pattern = "%s" if @pattern.includes?("%s")
+
     parser = Parser.new(string)
     parser.visit(pattern)
     parser.time(kind)

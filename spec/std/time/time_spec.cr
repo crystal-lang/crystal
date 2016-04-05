@@ -366,6 +366,9 @@ describe Time do
   assert { Time.parse("2014", "%Y").year.should eq(2014) }
   assert { Time.parse("19", "%C").year.should eq(1900) }
   assert { Time.parse("14", "%y").year.should eq(2014) }
+  assert { Time.parse("1444435200", "%s").month.should eq(10) }
+  # Ignores all symbols except %s
+  assert { Time.parse("1444435200", "%s %Y-%m-%d").year.should eq(2015) }
   assert { Time.parse("09", "%m").month.should eq(9) }
   assert { Time.parse(" 9", "%_m").month.should eq(9) }
   assert { Time.parse("9", "%-m").month.should eq(9) }

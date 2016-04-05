@@ -14,6 +14,8 @@ struct Time::Format
     @pm : Bool
     @offset_in_minutes : Int32?
     @kind : Time::Kind?
+    @epoch_time : Time
+    @epoch_based : Bool
 
     def initialize(string)
       @reader = Char::Reader.new(string)
@@ -25,9 +27,13 @@ struct Time::Format
       @second = 0
       @millisecond = 0
       @pm = false
+      @epoch_based = false
+      @epoch_time = Time.new(0)
     end
 
     def time(kind = Time::Kind::Unspecified)
+      return @epoch_time if @epoch_based
+
       @hour += 12 if @pm
 
       time_kind = @kind || kind
@@ -108,6 +114,13 @@ struct Time::Format
 
     def day_of_month_zero_padded
       @day = consume_number(2)
+    end
+
+    def unix_epoch
+      string = @reader.string
+      @epoch_based = true
+
+      @epoch_time = Time.epoch(string.to_i)
     end
 
     def day_of_month_blank_padded
