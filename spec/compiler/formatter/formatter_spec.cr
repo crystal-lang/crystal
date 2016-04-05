@@ -852,4 +852,6 @@ describe Crystal::Formatter do
   assert_format "foo.bar(1) # comment\n   .baz"
 
   assert_format "foo[bar.baz]\n  .qux"
+
+  assert_format "bla.select(&.all?{ |x| x } )", "bla.select(&.all? { |x| x })"
 end

@@ -2091,6 +2091,7 @@ module Crystal
       if has_args || node.block_arg
         finish_args(has_parentheses, has_newlines, ends_with_newline, found_comment, column)
       elsif has_parentheses
+        skip_space_or_newline
         write_token :")"
       end
 
