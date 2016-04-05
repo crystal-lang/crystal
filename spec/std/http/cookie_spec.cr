@@ -23,6 +23,13 @@ module HTTP
         cookie.to_set_cookie_header.should eq("key=value; path=/")
       end
 
+      it "parses key=" do
+        cookie = parse_first_cookie("key=")
+        cookie.name.should eq("key")
+        cookie.value.should eq("")
+        cookie.to_set_cookie_header.should eq("key=; path=/")
+      end
+
       it "parses key=key=value" do
         cookie = parse_first_cookie("key=key=value")
         cookie.name.should eq("key")
@@ -85,7 +92,7 @@ module HTTP
         cookie.name.should eq("key")
         cookie.value.should eq("value")
         cookie.domain.should eq("www.example.com")
-        cookie.to_set_cookie_header.should eq("key=value; path=/; domain=www.example.com")
+        cookie.to_set_cookie_header.should eq("key=value; domain=www.example.com; path=/")
       end
 
       it "parses expires rfc1123" do
@@ -115,6 +122,11 @@ module HTTP
         cookie.expires.should eq(time)
       end
 
+      it "parses expires ansi c, variant with zone" do
+        cookie = parse_set_cookie("bla=; expires=Thu, 01 Jan 1970 00:00:00 -0000")
+        cookie.expires.should eq(Time.new(1970, 1, 1, 0, 0, 0))
+      end
+
       it "parses full" do
         cookie = parse_set_cookie("key=value; path=/test; domain=www.example.com; HttpOnly; Secure; expires=Sun, 06 Nov 1994 08:49:37 GMT")
         time = Time.new(1994, 11, 6, 8, 49, 37)
@@ -126,6 +138,44 @@ module HTTP
         cookie.http_only.should eq(true)
         cookie.secure.should eq(true)
         cookie.expires.should eq(time)
+      end
+
+      it "parse domain as IP" do
+        parse_set_cookie("a=1; domain=127.0.0.1; path=/; HttpOnly").domain.should eq "127.0.0.1"
+      end
+
+      it "parse max-age as seconds from Time.now" do
+        cookie = parse_set_cookie("a=1; max-age=10")
+        delta = cookie.expires.not_nil! - Time.now
+        delta.should be > 9.seconds
+        delta.should be < 11.seconds
+
+        cookie = parse_set_cookie("a=1; max-age=0")
+        delta = Time.now - cookie.expires.not_nil!
+        delta.should be > 0.seconds
+        delta.should be < 1.seconds
+      end
+    end
+
+    describe "expired?" do
+      it "by max-age=0" do
+        parse_set_cookie("bla=1; max-age=0").expired?.should eq true
+      end
+
+      it "by old date" do
+        parse_set_cookie("bla=1; expires=Thu, 01 Jan 1970 00:00:00 -0000").expired?.should eq true
+      end
+
+      it "not expired" do
+        parse_set_cookie("bla=1; max-age=1").expired?.should eq false
+      end
+
+      it "not expired" do
+        parse_set_cookie("bla=1; expires=Thu, 01 Jan 2020 00:00:00 -0000").expired?.should eq false
+      end
+
+      it "not expired" do
+        parse_set_cookie("bla=1").expired?.should eq false
       end
     end
   end
