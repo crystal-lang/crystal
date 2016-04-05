@@ -274,6 +274,12 @@ struct Tuple
   end
 end
 
+struct Time
+  def to_json(io : IO)
+    io << epoch.to_s
+  end
+end
+
 struct Time::Format
   def to_json(value : Time, io : IO)
     format(value).to_json(io)
