@@ -96,3 +96,15 @@ struct Time::Format
     parse(string)
   end
 end
+
+module Time::EpochConverter
+  def self.from_yaml(value : YAML::PullParser)
+    Time.epoch(value.read_scalar.to_i)
+  end
+end
+
+module Time::EpochMillisConverter
+  def self.from_yaml(value : YAML::PullParser)
+    Time.epoch_ms(value.read_scalar.to_i64)
+  end
+end

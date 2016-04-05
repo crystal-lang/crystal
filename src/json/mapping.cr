@@ -40,7 +40,7 @@ module JSON
   # * **nilable**: if true, the property can be `Nil`
   # * **default**: value to use if the property is missing in the JSON document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a JSON document is parsed.
   # * **emit_null**: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
-  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods.
+  # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
   #
   # The mapping also automatically defines Crystal properties (getters and setters) for each
   # of the keys. It doesn't define a constructor accepting those arguments, but you can provide

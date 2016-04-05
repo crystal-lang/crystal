@@ -69,6 +69,18 @@ class YAMLWithSmallIntegers
   })
 end
 
+class YAMLWithTimeEpoch
+  YAML.mapping({
+    value: {type: Time, converter: Time::EpochConverter},
+  })
+end
+
+class YAMLWithTimeEpochMillis
+  YAML.mapping({
+    value: {type: Time, converter: Time::EpochMillisConverter},
+  })
+end
+
 describe "YAML mapping" do
   it "parses person" do
     person = YAMLPerson.from_yaml("---\nname: John\nage: 30\n")
@@ -226,5 +238,19 @@ describe "YAML mapping" do
 
     yaml = YAMLWithAny.from_yaml({obj: {foo: :bar}}.to_yaml)
     yaml.obj["foo"].as_s.should eq("bar")
+  end
+
+  it "uses Time::EpochConverter" do
+    string = %({"value":1459859781})
+    yaml = YAMLWithTimeEpoch.from_yaml(string)
+    yaml.value.should be_a(Time)
+    yaml.value.should eq(Time.epoch(1459859781))
+  end
+
+  it "uses Time::EpochMillisConverter" do
+    string = %({"value":1459860483856})
+    yaml = YAMLWithTimeEpochMillis.from_yaml(string)
+    yaml.value.should be_a(Time)
+    yaml.value.should eq(Time.epoch_ms(1459860483856))
   end
 end

@@ -126,3 +126,15 @@ struct Time::Format
     parse(string)
   end
 end
+
+module Time::EpochConverter
+  def self.from_json(value : JSON::PullParser)
+    Time.epoch(value.read_int)
+  end
+end
+
+module Time::EpochMillisConverter
+  def self.from_json(value : JSON::PullParser)
+    Time.epoch_ms(value.read_int)
+  end
+end

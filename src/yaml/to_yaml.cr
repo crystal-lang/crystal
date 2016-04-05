@@ -119,3 +119,9 @@ struct Symbol
     yaml << to_s
   end
 end
+
+module Time::EpochConverter
+  def self.to_yaml(value : Time, io : IO)
+    io << value.epoch
+  end
+end
