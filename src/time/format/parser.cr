@@ -31,6 +31,11 @@ struct Time::Format
       @hour += 12 if @pm
 
       time_kind = @kind || kind
+
+      if epoch = @epoch
+        return Time.epoch(epoch)
+      end
+
       time = Time.new @year, @month, @day, @hour, @minute, @second, @millisecond, time_kind
 
       if offset_in_minutes = @offset_in_minutes
@@ -60,7 +65,7 @@ struct Time::Format
     end
 
     def year_divided_by_100
-      @year = 100 * consume_number(2)
+      @year = consume_number(2) * 100
     end
 
     def month
@@ -84,7 +89,7 @@ struct Time::Format
       string = string.capitalize
       index = MONTH_NAMES.index &.starts_with?(string)
       if index
-        @month = index + 1
+        @month = 1 + index
       else
         raise "invalid month"
       end
@@ -196,6 +201,19 @@ struct Time::Format
       consume_number(1)
     end
 
+    def epoch
+      epoch_negative = false
+      case current_char
+      when '-'
+        epoch_negative = true
+        next_char
+      when '+'
+        next_char
+      end
+
+      @epoch = consume_number_i64(19) * (epoch_negative ? -1 : 1)
+    end
+
     def time_zone
       case char = current_char
       when 'Z'
@@ -264,11 +282,15 @@ struct Time::Format
     end
 
     def consume_number(max_digits)
-      n = 0
+      consume_number_i64(max_digits).to_i
+    end
+
+    def consume_number_i64(max_digits)
+      n = 0_i64
       char = current_char
 
       if char.digit?
-        n = char - '0'
+        n = (char - '0').to_i64
         char = next_char
       else
         raise "expecting number"
@@ -277,7 +299,7 @@ struct Time::Format
       max_digits -= 1
 
       while max_digits > 0 && char.digit?
-        n = 10 * n + (char - '0')
+        n = n * 10 + (char - '0')
         char = next_char
         max_digits -= 1
       end

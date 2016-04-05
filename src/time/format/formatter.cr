@@ -129,6 +129,10 @@ struct Time::Format
       io << time.day_of_week.value
     end
 
+    def epoch
+      io << time.epoch
+    end
+
     def time_zone
       case time.kind
       when Time::Kind::Utc, Time::Kind::Unspecified
