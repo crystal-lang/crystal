@@ -351,7 +351,8 @@ describe Time do
 
     t.to_s("%Y-%m-hello").should eq("2014-01-hello")
 
-    t.to_s("%s").should eq("1388642645")
+    t = Time.new 2014, 1, 2, 3, 4, 5, 6, kind: Time::Kind::Utc
+    t.to_s("%s").should eq("1388631845")
   end
 
   it "parses empty" do
