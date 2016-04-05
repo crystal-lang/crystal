@@ -1365,7 +1365,7 @@ module Crystal
     end
 
     def call_block_arg_follows?
-      @token.type == :"&" && !current_char.whitespace?
+      @token.type == :"&"
     end
 
     def parse_call_block_arg(args, check_paren, named_args = nil)

@@ -349,8 +349,10 @@ describe "Parser" do
 
   it_parses "foo(&block)", Call.new(nil, "foo", block_arg: "block".call)
   it_parses "foo &block", Call.new(nil, "foo", block_arg: "block".call)
+  it_parses "foo(& block)", Call.new(nil, "foo", block_arg: "block".call)
   it_parses "a.foo &block", Call.new("a".call, "foo", block_arg: "block".call)
   it_parses "a.foo(&block)", Call.new("a".call, "foo", block_arg: "block".call)
+  it_parses "a.foo(& block)", Call.new("a".call, "foo", block_arg: "block".call)
 
   it_parses "foo(&.block)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
   it_parses "foo &.block", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "block")))
@@ -386,6 +388,7 @@ describe "Parser" do
 
   it_parses "foo(a: 1, &block)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: 1, &block", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
+  it_parses "foo a: 1, & block", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
 
   it_parses "x = 1; foo x do\nend", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", ["x".var] of ASTNode, Block.new)]
   it_parses "x = 1; foo x { }", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
