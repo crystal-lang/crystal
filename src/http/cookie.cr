@@ -240,6 +240,11 @@ module HTTP
       @cookies.each_value
     end
 
+    # Whether the collection contains any cookies.
+    def empty?
+      @cookies.empty?
+    end
+
     # Adds `Cookie` headers for the cookies in this collection to the
     # given `HTTP::Header` instance and returns it. Removes any existing
     # `Cookie` headers in it.
