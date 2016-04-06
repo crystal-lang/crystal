@@ -642,7 +642,7 @@ describe "Type inference: lib" do
 
       LibFoo.foo(out x)
       ),
-      "can't use out with Void*"
+      "can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
   end
 
   it "errors if using out with void pointer through type" do
@@ -654,6 +654,17 @@ describe "Type inference: lib" do
 
       LibFoo.foo(out x)
       ),
-      "can't use out with Void*"
+      "can't use out with Void* (argument 'x' of LibFoo.foo is Void*)"
+  end
+
+  it "errors if using out with non-pointer" do
+    assert_error %(
+      lib LibFoo
+        fun foo(x : Int32)
+      end
+
+      LibFoo.foo(out x)
+      ),
+      "argument 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
   end
 end
