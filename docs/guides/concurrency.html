@@ -34,7 +34,7 @@
     <body>
         
         
-    <div class="book" data-level="6.1" data-basepath=".." data-revision="Mon Apr 04 2016 23:37:55 GMT+0000 (UTC)">
+    <div class="book" data-level="6.1" data-basepath=".." data-revision="Wed Apr 06 2016 19:51:39 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2099,7 +2099,7 @@
 <p>Fibers, unlike threads, are cooperative. Threads are pre-emptive: the operating system might interrupt a thread at any time and start executing another one. A fiber must explicitly tell the Runtime Scheduler to switch to another fiber. For example if there&apos;s I/O to be wait, a fiber will tell the scheduler &quot;Look, I have to wait for this I/O to be available, you continue executing other fibers and come back to me when that I/O is ready&quot;.</p>
 <p>The advantage of being cooperative is that a lot of the overhead of doing a context switch (switching between threads) is gone.</p>
 <p>A Fiber is much more lightweight than a thread: even though it&apos;s assigned 8MB, it starts with a small stack of 4KB.</p>
-<p>On a 64-bits machine it lets us spawn millions and millions of fibers. In a 32-bits machine wen can only spawn 512 fibers, which is not a lot. But because 32-bits machine are starting to be obsolete, we bet for the future, so for now we focus more on 64-bits machines.</p>
+<p>On a 64-bits machine it lets us spawn millions and millions of fibers. In a 32-bits machine we can only spawn 512 fibers, which is not a lot. But because 32-bits machine are starting to be obsolete, we bet for the future, so for now we focus more on 64-bits machines.</p>
 <h3 id="the-runtime-scheduler">The Runtime Scheduler</h3>
 <p>The scheduler has a queue of :</p>
 <ul>
