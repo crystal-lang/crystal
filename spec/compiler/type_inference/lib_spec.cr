@@ -633,4 +633,27 @@ describe "Type inference: lib" do
       ),
       "can't use out at varargs position: declare the variable with `z = uninitialized ...` and pass it with `pointerof(z)`"
   end
+
+  it "errors if using out with void pointer (#2424)" do
+    assert_error %(
+      lib LibFoo
+        fun foo(x : Void*)
+      end
+
+      LibFoo.foo(out x)
+      ),
+      "can't use out with Void*"
+  end
+
+  it "errors if using out with void pointer through type" do
+    assert_error %(
+      lib LibFoo
+        type Foo = Void
+        fun foo(x : Foo*)
+      end
+
+      LibFoo.foo(out x)
+      ),
+      "can't use out with Void*"
+  end
 end

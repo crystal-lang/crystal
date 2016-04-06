@@ -48,6 +48,11 @@ class Crystal::Call
       if call_arg.is_a?(Out)
         arg_type = arg.type
         if arg_type.is_a?(PointerInstanceType)
+          if arg_type.element_type.remove_indirection.void?
+            arg_name = arg.name.empty? ? "\##{i + 1}" : "'#{arg.name}'"
+            call_arg.raise "can't use out with Void* (argument #{arg_name} of #{untyped_def.owner}.#{untyped_def.name} is Void*)"
+          end
+
           if call_arg.exp.is_a?(Underscore)
             call_arg.exp.type = arg_type.element_type
           else
