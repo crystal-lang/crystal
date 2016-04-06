@@ -41,7 +41,7 @@ The advantage of being cooperative is that a lot of the overhead of doing a cont
 
 A Fiber is much more lightweight than a thread: even though it's assigned 8MB, it starts with a small stack of 4KB.
 
-On a 64-bits machine it lets us spawn millions and millions of fibers. In a 32-bits machine wen can only spawn 512 fibers, which is not a lot. But because 32-bits machine are starting to be obsolete, we bet for the future, so for now we focus more on 64-bits machines.
+On a 64-bits machine it lets us spawn millions and millions of fibers. In a 32-bits machine we can only spawn 512 fibers, which is not a lot. But because 32-bits machine are starting to be obsolete, we bet for the future, so for now we focus more on 64-bits machines.
 
 ### The Runtime Scheduler
 
