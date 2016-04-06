@@ -123,6 +123,10 @@ module Crystal
       self.is_a?(FunInstanceType)
     end
 
+    def tuple?
+      self.is_a?(TupleInstanceType)
+    end
+
     def void?
       self.is_a?(VoidType)
     end
@@ -1774,7 +1778,23 @@ module Crystal
 
     def implements?(other_type)
       other_type = other_type.remove_alias
-      super || generic_class.implements?(other_type)
+      return true if super
+      return true if generic_class.implements?(other_type)
+
+      # If this is the same generic type as the other, but with different type arguments,
+      # check the the type arguments implement the others
+      if other_type.is_a?(GenericClassInstanceType) && (other_type.generic_class == generic_class) &&
+         !other_type.fun? && !other_type.tuple?
+        type_vars.each do |name, node|
+          other_type_var = other_type.type_vars[name]
+          if (type = node.type?) && (other_type_var_type = other_type_var.type?)
+            return false unless type.implements?(other_type_var_type)
+          end
+        end
+        return true
+      end
+
+      false
     end
 
     def covariant?(other_type)

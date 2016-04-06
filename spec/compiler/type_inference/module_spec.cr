@@ -903,4 +903,27 @@ describe "Type inference: module" do
       Baz.new.x
       )) { nilable int32 }
   end
+
+  it "allows union of generic class with module to be assigned to a generic class with module (#2425)" do
+    assert_type(%(
+      module Plugin
+      end
+
+      class PluginContainer(T)
+      end
+
+      class Foo
+        include Plugin
+      end
+
+      class Bar
+        @value : PluginContainer(Plugin)
+
+        def initialize(@value)
+        end
+      end
+
+      Bar.new(PluginContainer(Foo).new)
+      )) { types["Bar"] }
+  end
 end
