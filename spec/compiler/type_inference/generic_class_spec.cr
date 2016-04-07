@@ -681,4 +681,56 @@ describe "Type inference: generic class" do
       msg.count("- Foo(T)::foo(x : Int32)").should eq(1)
     end
   end
+
+  # Given:
+  #
+  # ```
+  # class Parent; end
+  #
+  # class Child1 < Parent; end
+  #
+  # class Child2 < Parent; end
+  #
+  # $x : Array(Parent)
+  # $x = [] of Parent
+  # ```
+  #
+  # This must not be allowed:
+  #
+  # ```
+  # $x = [] of Child1
+  # ```
+  #
+  # Because if the type of $x is considered Array(Parent) by the compiler,
+  # this should be allowed:
+  #
+  # ```
+  # $x << Child2.new
+  # ```
+  #
+  # However, here we will be inserting a `Child2` inside a `Child1`,
+  # which is totally incorrect.
+  it "doesn't allow union of generic class with module to be assigned to a generic class with module (#2425)" do
+    assert_error %(
+      module Plugin
+      end
+
+      class PluginContainer(T)
+      end
+
+      class Foo
+        include Plugin
+      end
+
+      class Bar
+        @value : PluginContainer(Plugin)
+
+        def initialize(@value)
+        end
+      end
+
+      Bar.new(PluginContainer(Foo).new)
+      ),
+      "instance variable '@value' of Bar must be PluginContainer(Plugin), not (PluginContainer(Foo) | PluginContainer(Plugin))"
+  end
 end
