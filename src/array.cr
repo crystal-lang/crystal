@@ -1007,7 +1007,7 @@ class Array(T)
     self[0, n]
   end
 
-  # Returns the first element of `self` if it's not empty, or `.
+  # Returns the first element of `self` if it's not empty, or `nil`.
   #
   # ```
   # ([1, 2, 3]).first?   # => 1
