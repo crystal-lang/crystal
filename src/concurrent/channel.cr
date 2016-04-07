@@ -158,7 +158,7 @@ end
 
 class Channel::Buffered(T) < Channel(T)
   def initialize(@capacity = 32)
-    @queue = Array(T).new(@capacity)
+    @queue = Deque(T).new(@capacity)
     super()
   end
 
