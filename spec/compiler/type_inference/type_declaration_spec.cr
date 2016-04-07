@@ -99,7 +99,7 @@ describe "Type inference: type declaration" do
       $x : Int32
       $x = true
       ),
-      "type must be Int32, not Bool"
+      "global variable '$x' must be Int32, not Bool"
   end
 
   it "declares global variable and reads it (nilable)" do
@@ -107,7 +107,7 @@ describe "Type inference: type declaration" do
       $x : Int32
       $x
       ),
-      "type must be Int32, not Nil"
+      "global variable '$x' must be Int32, not Nil"
   end
 
   it "declares class variable" do
@@ -122,7 +122,7 @@ describe "Type inference: type declaration" do
 
       Foo.x = true
       ),
-      "type must be Int32, not Nil"
+      "class variable '@@x' of Foo must be Int32, not Nil"
   end
 
   it "declares class variable (2)" do
@@ -137,7 +137,7 @@ describe "Type inference: type declaration" do
 
       Foo.x
       ),
-      "type must be Int32, not Nil"
+      "class variable '@@x' of Foo must be Int32, not Nil"
   end
 
   it "errors (for now) when typing a local variable" do

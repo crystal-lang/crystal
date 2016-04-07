@@ -10,7 +10,7 @@ module Crystal
     include ClassVarContainer
 
     getter symbols : Set(String)
-    getter global_vars : Hash(String, Global)
+    getter global_vars : Hash(String, MetaTypeVar)
     getter target_machine : LLVM::TargetMachine?
     getter splat_expansions : Hash(Def, Type)
     getter after_inference_types : Set(Type)
@@ -33,7 +33,7 @@ module Crystal
       super(self, self, "main")
 
       @symbols = Set(String).new
-      @global_vars = {} of String => Global
+      @global_vars = {} of String => MetaTypeVar
       @requires = Set(String).new
       @temp_var_counter = 0
       @crystal_path = CrystalPath.new

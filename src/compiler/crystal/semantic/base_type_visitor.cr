@@ -793,9 +793,7 @@ module Crystal
       var = class_var_owner.lookup_class_var node.name
       var.bind_to mod.nil_var if bind_to_nil_if_non_existent && !var.dependencies?
 
-      node.owner = class_var_owner
       node.var = var
-      node.class_scope = !@typed_def
 
       var
     end

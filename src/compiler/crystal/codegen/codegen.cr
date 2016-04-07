@@ -384,7 +384,7 @@ module Crystal
               when InstanceVar
                 instance_var_ptr (context.type.remove_typedef as InstanceVarContainer), node_exp.name, llvm_self_ptr
               when ClassVar
-                get_global node_exp, class_var_global_name(node_exp), node_exp.type, node_exp.var
+                get_global node_exp, class_var_global_name(node_exp.var), node_exp.type, node_exp.var
               when Global
                 get_global node_exp, node_exp.name, node_exp.type, node_exp.var
               when Path
@@ -822,7 +822,7 @@ module Crystal
             when Global
               get_global target, target.name, target_type, target.var
             when ClassVar
-              get_global target, class_var_global_name(target), target_type, target.var
+              get_global target, class_var_global_name(target.var), target_type, target.var
             when Var
               # Can't assign void
               return if target.type.void?
@@ -932,7 +932,7 @@ module Crystal
     end
 
     def class_var_global_name(node)
-      "#{node.owner}#{node.var.name.gsub('@', ':')}"
+      "#{node.owner}#{node.name.gsub('@', ':')}"
     end
 
     def visit(node : TypeDeclaration)
@@ -979,7 +979,7 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      read_global node, class_var_global_name(node), node.type, node.var
+      read_global node, class_var_global_name(node.var), node.type, node.var
     end
 
     def read_global(node, name, type, real_var)

@@ -40,13 +40,17 @@ module Crystal
       if !type.no_return? && (freeze_type = @freeze_type) && !type.implements?(freeze_type)
         if !freeze_type.includes_type?(type.program.nil) && type.includes_type?(type.program.nil)
           # This means that an instance variable become nil
-          if self.is_a?(MetaInstanceVar) && (nil_reason = self.nil_reason)
+          if self.is_a?(MetaTypeVar) && (nil_reason = self.nil_reason)
             inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason)
           end
         end
 
-        if self.is_a?(MetaInstanceVar)
-          raise "instance variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
+        if self.is_a?(MetaTypeVar)
+          if self.global?
+            raise "global variable '#{self.name}' must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
+          else
+            raise "#{self.kind} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
+          end
         else
           raise "type must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
         end
@@ -217,7 +221,7 @@ module Crystal
         dependencies = deps.select { |dep| dep.type? && dep.type.includes_type?(owner) && !visited.includes?(dep.object_id) }
         if dependencies.size > 0
           node = dependencies.first
-          nil_reason = node.nil_reason if node.is_a?(MetaInstanceVar)
+          nil_reason = node.nil_reason if node.is_a?(MetaTypeVar)
           owner_trace << node if node
           visited.add node.object_id
         else
@@ -631,25 +635,46 @@ module Crystal
 
   alias MetaVars = Hash(String, MetaVar)
 
-  class MetaInstanceVar < Var
+  # A variable belonging to a type: a global,
+  # class or instance variable (globals belong to the program).
+  class MetaTypeVar < Var
     property nil_reason : NilReason?
+
+    # The owner of this variable, useful for showing good
+    # error messages.
     property! owner : Type
+
+    # Is this variable thread local? Only applicable
+    # to global and class variables.
+    property? thread_local : Bool
+    @thread_local = false
+
+    def kind
+      case name[0]
+      when '@'
+        if name[1] == '@'
+          :class
+        else
+          :instance
+        end
+      else
+        :global
+      end
+    end
+
+    def global?
+      kind == :global
+    end
   end
 
   class ClassVar
-    property! owner : Type
-    property! var : ClassVar
-    property class_scope : Bool
-    @class_scope = false
-    property? thread_local : Bool
-    @thread_local = false
+    # The "real" variable associated with this node,
+    # belonging to a type.
+    property! var : MetaTypeVar
   end
 
   class Global
-    property! owner : Type
-    property! var : Global
-    property? thread_local : Bool
-    @thread_local = false
+    property! var : MetaTypeVar
   end
 
   class Path

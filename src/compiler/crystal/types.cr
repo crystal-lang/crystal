@@ -765,10 +765,10 @@ module Crystal
   end
 
   module ClassVarContainer
-    @class_vars : Hash(String, ClassVar)?
+    @class_vars : Hash(String, MetaTypeVar)?
 
     def class_vars
-      @class_vars ||= {} of String => ClassVar
+      @class_vars ||= {} of String => MetaTypeVar
     end
 
     def has_class_var?(name)
@@ -776,7 +776,11 @@ module Crystal
     end
 
     def lookup_class_var(name)
-      class_vars[name] ||= ClassVar.new name
+      class_vars[name] ||= begin
+        var = MetaTypeVar.new name
+        var.owner = self
+        var
+      end
     end
   end
 
@@ -1112,10 +1116,10 @@ module Crystal
   end
 
   module InstanceVarContainer
-    @instance_vars : Hash(String, MetaInstanceVar)?
+    @instance_vars : Hash(String, MetaTypeVar)?
 
     def instance_vars
-      @instance_vars ||= {} of String => MetaInstanceVar
+      @instance_vars ||= {} of String => MetaTypeVar
     end
 
     def owns_instance_var?(name)
@@ -1145,7 +1149,7 @@ module Crystal
       end
 
       if create || owned_instance_vars.includes?(name)
-        instance_vars[name] ||= MetaInstanceVar.new(name).tap { |v| v.owner = self }
+        instance_vars[name] ||= MetaTypeVar.new(name).tap { |v| v.owner = self }
       else
         instance_vars[name]?
       end
@@ -1629,7 +1633,7 @@ module Crystal
         decl_ivars.each do |name, node|
           node.accept visitor
 
-          ivar = MetaInstanceVar.new(name, visitor.type)
+          ivar = MetaTypeVar.new(name, visitor.type)
           ivar.owner = instance
           ivar.bind_to ivar
           ivar.freeze_type = visitor.type
@@ -1749,7 +1753,7 @@ module Crystal
       visitor = TypeLookup.new(self)
       node.accept visitor
 
-      ivar = MetaInstanceVar.new(name, visitor.type)
+      ivar = MetaTypeVar.new(name, visitor.type)
       ivar.owner = self
       ivar.bind_to ivar
       ivar.freeze_type = visitor.type.virtual_type
@@ -2380,11 +2384,11 @@ module Crystal
     include DefContainer
     include DefInstanceContainer
 
-    getter vars : Hash(String, MetaInstanceVar)
+    getter vars : Hash(String, MetaTypeVar)
 
     def initialize(program, container, name)
       super(program, container, name, program.struct)
-      @vars = {} of String => MetaInstanceVar
+      @vars = {} of String => MetaTypeVar
       @struct = true
       @allocated = true
     end

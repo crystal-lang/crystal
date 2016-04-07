@@ -133,7 +133,8 @@ module Crystal
       when Global
         global_var = mod.global_vars[var.name]?
         unless global_var
-          global_var = Global.new(var.name)
+          global_var = MetaTypeVar.new(var.name)
+          global_var.owner = @mod
           mod.global_vars[var.name] = global_var
         end
 
