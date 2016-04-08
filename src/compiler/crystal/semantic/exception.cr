@@ -343,6 +343,8 @@ module Crystal
            is inferred from that fun.
         7. `LibSome.func(out #{example_name})`, and `LibSome` is a `lib`, type
            is inferred from that fun argument.
+
+      Other assignments have no effect on its type.
       MSG
     end
   end
