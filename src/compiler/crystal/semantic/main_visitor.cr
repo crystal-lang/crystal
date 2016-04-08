@@ -182,9 +182,21 @@ module Crystal
         if @untyped_def
           node.raise "declaring the type of a class variable must be done at the class level"
         end
+
+        attributes = check_valid_attributes node, ValidClassVarAttributes, "class variable"
+        if Attribute.any?(attributes, "ThreadLocal")
+          var = lookup_class_var(var, bind_to_nil_if_non_existent: false)
+          var.thread_local = true
+        end
       when Global
         if @untyped_def
           node.raise "declaring the type of a global variable must be done at the class level"
+        end
+
+        attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
+        if Attribute.any?(attributes, "ThreadLocal")
+          var = @mod.global_vars[var.name]
+          var.thread_local = true
         end
       end
 
