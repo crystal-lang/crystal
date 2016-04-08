@@ -74,7 +74,9 @@ class Reference
     nil
   end
 
-  @[ThreadLocal]
+  # TODO: enable this once we have multiple-thread support, and fix its
+  # behaviour because there's currently a bug related to it
+  # @[ThreadLocal]
   $_exec_recursive : Hash({UInt64, Symbol}, Bool)?
 
   private def exec_recursive(method)
