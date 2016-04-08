@@ -206,4 +206,28 @@ describe "Code gen: if" do
       )).to_i.should eq(1)
     end
   end
+
+  it "doesn't crash with if !var using var in else" do
+    run(%(
+      foo = nil
+      if !foo
+        1
+      else
+        foo
+      end
+      1
+      )).to_i.should eq(1)
+  end
+
+  it "doesn't crash with if !is_a? using var in then" do
+    run(%(
+      foo = 1
+      if !foo.is_a?(Int32)
+        foo
+      else
+        1
+      end
+      1
+      )).to_i.should eq(1)
+  end
 end

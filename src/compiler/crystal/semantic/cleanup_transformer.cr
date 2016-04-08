@@ -69,10 +69,27 @@ module Crystal
         else
           @last_is_falsey = true
         end
+      when Not
+        if @last_is_truthy
+          @last_is_falsey = true
+          @last_is_truthy = false
+        elsif @last_is_falsey
+          @last_is_truthy = true
+          @last_is_falsey = false
+        else
+          reset_last_status
+        end
       when NilLiteral
         @last_is_falsey = true
+      when Nop
+        @last_is_falsey = true
       else
-        reset_last_status
+        if node.type?.try &.nil_type?
+          @last_is_falsey = true
+          @last_is_truthy = false
+        else
+          reset_last_status
+        end
       end
     end
 
