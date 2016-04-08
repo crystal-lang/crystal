@@ -807,20 +807,17 @@ module Crystal
       declared_type
     end
 
-    def lookup_class_var(node, bind_to_nil_if_non_existent = true)
+    def class_var_owner(node)
       scope = (@scope || current_type).class_var_owner
-      if scope.is_a?(GenericClassType) || scope.is_a?(GenericModuleType)
-        node.raise "can't use class variable with generic types, only with generic types instances"
+      if scope.is_a?(Program)
+        node.raise "can't use class variables at the top level"
       end
 
-      class_var_owner = scope as ClassVarContainer
+      if scope.is_a?(GenericClassType) || scope.is_a?(GenericModuleType)
+        node.raise "can't use class variables in generic types"
+      end
 
-      var = class_var_owner.lookup_class_var node.name
-      var.bind_to mod.nil_var if bind_to_nil_if_non_existent && !var.dependencies?
-
-      node.var = var
-
-      var
+      scope as ClassVarContainer
     end
 
     def inside_exp?

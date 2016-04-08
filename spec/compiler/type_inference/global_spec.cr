@@ -269,10 +269,20 @@ describe "Global inference" do
       )) { union_of(int32, bool) }
   end
 
-  it "infers from =||" do
+  it "infers from ||=" do
     assert_type(%(
       def foo
         $x ||= 1
+      end
+
+      $x
+      )) { nilable int32 }
+  end
+
+  it "infers from ||= inside another assignment" do
+    assert_type(%(
+      def foo
+        x = $x ||= 1
       end
 
       $x
@@ -306,6 +316,25 @@ describe "Global inference" do
       $x = $y = 1
       $y
       )) { int32 }
+  end
+
+  it "infers from new at top level" do
+    assert_type(%(
+      class Foo
+        $x = new
+      end
+      $x
+      )) { types["Foo"] }
+  end
+
+  it "infers from block argument" do
+    assert_type(%(
+      def foo(&block : Int32 -> Int32)
+        $x = block
+      end
+
+      $x
+      )) { nilable fun_of(int32, int32) }
   end
 
   it "errors if using typeof in type declaration" do

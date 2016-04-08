@@ -20,6 +20,8 @@ describe "Codegen: class var" do
       struct Nil; def to_i; 0; end; end
 
       class Foo
+        @@foo = nil
+
         def self.foo
           @@foo
         end
@@ -56,20 +58,6 @@ describe "Codegen: class var" do
 
       Foo.foo.to_i
       ").to_i.should eq(1)
-  end
-
-  it "codegens class var of program" do
-    run("
-      @@foo = 1
-      @@foo
-      ").to_i.should eq(1)
-  end
-
-  it "codegens class var of program as nil" do
-    run("
-      struct Nil; def to_i; 0; end; end
-      @@foo.to_i
-      ").to_i.should eq(0)
   end
 
   it "codegens class var inside module" do

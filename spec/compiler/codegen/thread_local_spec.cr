@@ -69,6 +69,7 @@ describe "Codegen: thread local" do
 
       class Foo
         @[ThreadLocal]
+        @@x : Foo?
         @@x = new
 
         def initialize

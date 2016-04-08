@@ -766,18 +766,6 @@ module Crystal
     def class_vars
       @class_vars ||= {} of String => MetaTypeVar
     end
-
-    def has_class_var?(name)
-      class_vars.has_key?(name)
-    end
-
-    def lookup_class_var(name)
-      class_vars[name] ||= begin
-        var = MetaTypeVar.new name
-        var.owner = self
-        var
-      end
-    end
   end
 
   module SubclassObservable

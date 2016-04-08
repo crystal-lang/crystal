@@ -185,7 +185,7 @@ module Crystal
 
         attributes = check_valid_attributes node, ValidClassVarAttributes, "class variable"
         if Attribute.any?(attributes, "ThreadLocal")
-          var = lookup_class_var(var, bind_to_nil_if_non_existent: false)
+          var = lookup_class_var(var)
           var.thread_local = true
         end
       when Global
@@ -199,6 +199,8 @@ module Crystal
           var.thread_local = true
         end
       end
+
+      node.type = @mod.nil
 
       false
     end
@@ -311,7 +313,7 @@ module Crystal
         @mod.undefined_global_variable(node)
       end
 
-      if first_time_accessing_global?(var)
+      if first_time_accessing_meta_type_var?(var)
         var.bind_to mod.nil_var
       end
 
@@ -320,7 +322,7 @@ module Crystal
       var
     end
 
-    def first_time_accessing_global?(var)
+    def first_time_accessing_meta_type_var?(var)
       if var.freeze_type
         deps = var.dependencies?
         # If no dependencies it's the case of a global for a regex literal.
@@ -371,18 +373,33 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      visit_class_var node
+      attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
+
+      var = visit_class_var node
+      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+
       false
     end
 
     def visit_class_var(node)
-      class_var = lookup_class_var(node)
-      check_valid_attributes class_var, ValidClassVarAttributes, "class variable"
+      var = lookup_class_var(node)
 
-      node.bind_to class_var
-      node.var = class_var
+      if first_time_accessing_meta_type_var?(var)
+        var.bind_to mod.nil_var
+      end
 
-      class_var
+      node.bind_to var
+      node.var = var
+      var
+    end
+
+    def lookup_class_var(node)
+      class_var_owner = class_var_owner(node)
+      var = class_var_owner.class_vars[node.name]?
+      unless var
+        @mod.undefined_class_variable(node)
+      end
+      var
     end
 
     def lookup_instance_var(node)
@@ -543,7 +560,7 @@ module Crystal
       # If we are assigning to a global inside a method, make it nilable
       # if this is the first time we are assigning to it, because
       # the method might be called conditionally
-      if @typed_def && first_time_accessing_global?(var)
+      if @typed_def && first_time_accessing_meta_type_var?(var)
         var.bind_to mod.nil_var
       end
 
@@ -559,17 +576,23 @@ module Crystal
     end
 
     def type_assign(target : ClassVar, value, node)
+      attributes = check_valid_attributes target, ValidClassVarAttributes, "class variable"
+
+      var = lookup_class_var(target)
+
       # If we are assigning to a class variable inside a method, make it nilable
       # if this is the first time we are assigning to it, because
       # the method might be called conditionally
-      var = lookup_class_var target, bind_to_nil_if_non_existent: !!@typed_def
-      attributes = check_valid_attributes target, ValidClassVarAttributes, "class variable"
+      if @typed_def && first_time_accessing_meta_type_var?(var)
+        var.bind_to mod.nil_var
+      end
 
       value.accept self
 
       var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
-      target.bind_to var
       target.var = var
+
+      target.bind_to var
 
       node.bind_to value
       var.bind_to node

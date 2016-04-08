@@ -319,9 +319,13 @@ module Crystal
 
   class Program
     def undefined_global_variable(node)
-      # TODO: better error message explaining the rules
       explanation = undefined_variable_message("global", node.name)
       node.raise "undefined global variable '#{node.name}'\n\n#{explanation}"
+    end
+
+    def undefined_class_variable(node)
+      explanation = undefined_variable_message("class", node.name)
+      node.raise "undefined class variable '#{node.name}'\n\n#{explanation}"
     end
 
     def undefined_variable_message(kind, example_name)

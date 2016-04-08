@@ -840,6 +840,7 @@ describe "Code gen: macro" do
       end
 
       class A
+        @@children : Pointer(A)
         @@children = Pointer(A).malloc(1_u64)
 
         def self.children
