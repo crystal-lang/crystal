@@ -445,6 +445,7 @@ module Crystal
     def visit(node : StringInterpolation)
       check :DELIMITER_START
       is_regex = @token.delimiter_state.kind == :regex
+      indent_difference = @token.column_number - (@column + 1)
 
       write @token.raw
       next_string_token
@@ -453,7 +454,6 @@ module Crystal
       is_heredoc = @token.delimiter_state.kind == :heredoc
       @last_is_heredoc = is_heredoc
 
-      indent_difference = @token.column_number - (@column + 1)
       heredoc_line = @line
 
       node.expressions.each do |exp|
