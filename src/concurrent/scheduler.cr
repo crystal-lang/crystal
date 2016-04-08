@@ -2,10 +2,7 @@ require "event"
 
 # :nodoc:
 class Scheduler
-  @@runnables : Deque(Fiber)
   @@runnables = Deque(Fiber).new
-
-  @@eb : Event::Base
   @@eb = Event::Base.new
 
   def self.reschedule

@@ -13,7 +13,6 @@ class Fiber
   @@last_fiber : Fiber?
   @@last_fiber = nil
 
-  @@stack_pool : Array(Void*)
   @@stack_pool = [] of Void*
 
   @stack : Void*
@@ -188,7 +187,6 @@ class Fiber
     LibGC.push_all_eager @stack_top, @stack_bottom
   end
 
-  @@root : Fiber
   @@root = new
 
   def self.root
@@ -196,8 +194,8 @@ class Fiber
   end
 
   @[ThreadLocal]
-  @@current = root
   @@current : Fiber
+  @@current = root
 
   def self.current
     @@current

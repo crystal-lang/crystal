@@ -19,8 +19,6 @@ class Event::SignalHandler
     @@instance = nil
   end
 
-  @@instance : Event::SignalHandler?
-
   private def self.instance
     @@instance ||= new
   end

@@ -113,7 +113,6 @@ module Crystal
     abstract class View
       getter config : Config
 
-      @@views : Array(View.class)
       @@views = [] of View.class
 
       def self.views
