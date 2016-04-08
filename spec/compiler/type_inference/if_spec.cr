@@ -87,4 +87,18 @@ describe "Type inference: if" do
       n.is_a?(String) || (n + 1 == 2)
       )) { bool }
   end
+
+  it "restricts type with !var and ||" do
+    assert_type(%(
+      a = 1 == 1 ? 1 : nil
+      !a || a + 2
+      )) { union_of bool, int32 }
+  end
+
+  it "restricts type with !var.is_a?(...) and ||" do
+    assert_type(%(
+      a = 1 == 1 ? 1 : nil
+      !a.is_a?(Int32) || a + 2
+      )) { union_of bool, int32 }
+  end
 end

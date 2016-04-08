@@ -222,6 +222,10 @@ module Crystal
                    If.new(left, node.right, left.clone)
                  elsif left.is_a?(Assign) && left.target.is_a?(Var)
                    If.new(left, node.right, left.target.clone)
+                 elsif left.is_a?(Not) && left.exp.is_a?(Var)
+                   If.new(left, node.right, left.clone)
+                 elsif left.is_a?(Not) && ((left_exp = left.exp).is_a?(IsA) && left_exp.obj.is_a?(Var))
+                   If.new(left, node.right, left.clone)
                  else
                    temp_var = new_temp_var
                    If.new(Assign.new(temp_var.clone, left), node.right, temp_var.clone)
@@ -255,6 +259,10 @@ module Crystal
                    If.new(left, left.clone, node.right)
                  elsif left.is_a?(Assign) && left.target.is_a?(Var)
                    If.new(left, left.target.clone, node.right)
+                 elsif left.is_a?(Not) && left.exp.is_a?(Var)
+                   If.new(left, left.clone, node.right)
+                 elsif left.is_a?(Not) && ((left_exp = left.exp).is_a?(IsA) && left_exp.obj.is_a?(Var))
+                   If.new(left, left.clone, node.right)
                  else
                    temp_var = new_temp_var
                    If.new(Assign.new(temp_var.clone, left), temp_var.clone, node.right)

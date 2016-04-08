@@ -13,6 +13,14 @@ describe "Normalize: and" do
     assert_expand_second "a = 1; a.is_a?(Foo) && b", "if a.is_a?(Foo)\n  b\nelse\n  a.is_a?(Foo)\nend"
   end
 
+  it "normalizes and with ! on var" do
+    assert_expand_second "a = 1; !a && b", "if !a\n  b\nelse\n  !a\nend"
+  end
+
+  it "normalizes and with ! on var.is_a?(...)" do
+    assert_expand_second "a = 1; !a.is_a?(Int32) && b", "if !a.is_a?(Int32)\n  b\nelse\n  !a.is_a?(Int32)\nend"
+  end
+
   it "normalizes and with is_a? on exp" do
     assert_expand_second "a = 1; 1.is_a?(Foo) && b", "if __temp_1 = 1.is_a?(Foo)\n  b\nelse\n  __temp_1\nend"
   end
