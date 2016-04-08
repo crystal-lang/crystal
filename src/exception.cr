@@ -18,19 +18,23 @@ struct CallStack
     @backtrace ||= decode_backtrace
   end
 
-  # This is only used for the workaround described in `Exception.callstack`
-  protected def self.makecontext_range
-    @@makecontext_range ||= begin
-      makecontext_start = makecontext_end = LibDL.dlsym(LibDL::RTLD_DEFAULT, "makecontext")
+  ifdef i686
+    # This is only used for the workaround described in `Exception.unwind`
+    @@makecontext_range : Range(Void*, Void*)?
 
-      while true
-        ret = LibDL.dladdr(makecontext_end, out info)
-        break if ret == 0 || info.sname.null?
-        break unless LibC.strcmp(info.sname, "makecontext") == 0
-        makecontext_end += 1
+    def self.makecontext_range
+      @@makecontext_range ||= begin
+        makecontext_start = makecontext_end = LibDL.dlsym(LibDL::RTLD_DEFAULT, "makecontext")
+
+        while true
+          ret = LibDL.dladdr(makecontext_end, out info)
+          break if ret == 0 || info.sname.null?
+          break unless LibC.strcmp(info.sname, "makecontext") == 0
+          makecontext_end += 1
+        end
+
+        (makecontext_start...makecontext_end)
       end
-
-      (makecontext_start...makecontext_end)
     end
   end
 
