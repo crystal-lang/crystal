@@ -101,7 +101,7 @@ XML
 
 A "heredoc" is written with `<<-IDENT`, where `IDENT` is an identifier, a sequence of letters and numbers that must start with a letter. The "heredoc" finishes in the line that starts with `IDENT`, ignoring leading whitespace.
 
-Leading whitespace is removing from the heredoc contents according to the number of whitespace that this last `IDENT` has. For example:
+Leading whitespace is removed from the heredoc contents according to the number of whitespace that this last `IDENT` has. For example:
 
 ```crystal
 # Same as "Hello\n  world"
