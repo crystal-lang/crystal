@@ -733,7 +733,7 @@ describe "Type inference: class" do
           1
         end
 
-        $x = self.foo
+        $x = self.foo as Int32
       end
 
       $x

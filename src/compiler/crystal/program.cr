@@ -115,13 +115,18 @@ module Crystal
       klass.allocated = true
       klass.allowed_in_generics = false
 
-      types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
-      types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
-
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
       struct_t.abstract = true
       struct_t.struct = true
       struct_t.allowed_in_generics = false
+
+      types["Array"] = @array = GenericClassType.new self, self, "Array", reference, ["T"]
+      types["Hash"] = @hash_type = GenericClassType.new self, self, "Hash", reference, ["K", "V"]
+      types["Regex"] = @regex = NonGenericClassType.new self, self, "Regex", reference
+      types["Range"] = range = @range = GenericClassType.new self, self, "Range", struct_t, ["B", "E"]
+      range.struct = true
+
+      types["Exception"] = @exception = NonGenericClassType.new self, self, "Exception", reference
 
       types["Enum"] = enum_t = @enum = NonGenericClassType.new self, self, "Enum", value
       enum_t.abstract = true
@@ -210,9 +215,25 @@ module Crystal
       array.instantiate [type] of TypeVar
     end
 
+    def hash_of(key_type, value_type)
+      hash_type.instantiate [key_type, value_type] of TypeVar
+    end
+
+    def range_of(from_type, to_type)
+      range.instantiate [from_type, to_type] of TypeVar
+    end
+
     def tuple_of(types)
       type_vars = types.map { |type| type as TypeVar }
       tuple.instantiate(type_vars)
+    end
+
+    def nilable(type)
+      union_of self.nil, type
+    end
+
+    def union_of(type1, type2)
+      union_of([type1, type2] of Type).not_nil!
     end
 
     def union_of(types : Array)
@@ -350,11 +371,15 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64
                      uint8 uint16 uint32 uint64 float float32 float64 string symbol pointer array static_array
-                     exception tuple proc enum) %}
+                     exception tuple proc enum range regex) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end
     {% end %}
+
+    def hash_type
+      @hash_type.not_nil!
+    end
 
     # Finds the IntegerType that matches the given Int value
     def int?(int)

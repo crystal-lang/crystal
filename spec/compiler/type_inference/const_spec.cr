@@ -224,6 +224,8 @@ describe "Type inference: const" do
     assert_type(%(
       A = foo
 
+      $b : Nil
+
       def foo
         $b
       end

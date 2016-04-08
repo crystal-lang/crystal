@@ -12,6 +12,7 @@ describe "Code gen: global" do
   it "codegens global when not initialized" do
     run(%(
       struct Nil; def to_i; 0; end; end
+      $foo : Int32?
       $foo.to_i
       )).to_i.should eq(0)
   end

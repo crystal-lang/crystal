@@ -343,6 +343,7 @@ describe "Type inference: module" do
       module Foo
         class Bar; end
 
+        $x : Bar.class
         $x = foo { Bar }
       end
 
@@ -361,6 +362,7 @@ describe "Type inference: module" do
           1
         end
 
+        $x : Int32
         $x = foo { bar }
       end
 

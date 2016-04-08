@@ -149,18 +149,30 @@ describe "Block inference" do
       "argument #1 of yield expected to be Int32, not Float64"
   end
 
-  it "reports error if yields a type that's not that one in the block specification and type changes" do
+  it "reports error if yields a type that's not that one in the block specification" do
     assert_error "
-      $global = 1
-
       def foo(&block: Int32 -> )
-        yield $global
-        $global = 10.5
+        yield (1 || 1.5)
       end
 
       foo {}
       ",
-      "type must be Int32, not"
+      "argument #1 of yield expected to be Int32, not (Float64 | Int32)"
+  end
+
+  it "reports error if yields a type that later changes and that's not that one in the block specification" do
+    assert_error "
+      def foo(&block: Int32 -> )
+        a = 1
+        while true
+          yield a
+          a = 1.5
+        end
+      end
+
+      foo {}
+      ",
+      "type must be Int32, not (Float64 | Int32)"
   end
 
   it "doesn't report error if yields nil but nothing is yielded" do
@@ -195,15 +207,28 @@ describe "Block inference" do
       "expected block to return Float64, not Char"
   end
 
+  it "reports error if block type doesn't match" do
+    assert_error "
+      def foo(&block: Int32 -> Float64)
+        yield 1
+      end
+
+      foo { 1 || 1.5 }
+      ",
+      "expected block to return Float64, not (Float64 | Int32)"
+  end
+
   it "reports error if block changes type" do
     assert_error "
       def foo(&block: Int32 -> Float64)
         yield 1
       end
 
-      $global = 10.5
-      foo { $global }
-      $global = 'a'
+      a = 10.5
+      while true
+        foo { a }
+        a = 1
+      end
       ",
       "type must be Float64"
   end

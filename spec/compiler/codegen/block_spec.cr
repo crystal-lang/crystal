@@ -563,6 +563,7 @@ describe "Code gen: block" do
       class Bar < Foo
       end
 
+      $x : Int32?
 
       struct Int
         def foo

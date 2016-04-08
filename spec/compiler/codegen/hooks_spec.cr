@@ -87,6 +87,7 @@ describe "Code gen: hooks" do
       $x = 123
       class Foo
         macro inherited
+          $y : Int32
           $y = $x
         end
       end

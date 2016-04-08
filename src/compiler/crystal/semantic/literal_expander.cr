@@ -176,6 +176,18 @@ module Crystal
 
         global_name = "$Regex:#{index}"
         temp_name = @program.new_temp_var_name
+
+        global_var = MetaTypeVar.new(global_name)
+        global_var.owner = @program
+        type = @program.nilable(@program.regex)
+        global_var.freeze_type = type
+        global_var.type = type
+
+        # TODO: need to bind with nil_var for codegen, but shouldn't be needed
+        global_var.bind_to(@program.nil_var)
+
+        @program.global_vars[global_name] = global_var
+
         @program.initialized_global_vars.add global_name
         first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
         regex = regex_new_call(node, StringLiteral.new(string))

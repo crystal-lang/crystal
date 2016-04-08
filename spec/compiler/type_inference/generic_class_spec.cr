@@ -731,6 +731,6 @@ describe "Type inference: generic class" do
 
       Bar.new(PluginContainer(Foo).new)
       ),
-      "instance variable '@value' of Bar must be PluginContainer(Plugin), not (PluginContainer(Foo) | PluginContainer(Plugin))"
+      "instance variable '@value' of Bar must be PluginContainer(Plugin), not PluginContainer(Foo)"
   end
 end

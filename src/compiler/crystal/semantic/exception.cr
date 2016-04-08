@@ -316,4 +316,34 @@ module Crystal
 
   class UndefinedMacroMethodError < TypeException
   end
+
+  class Program
+    def undefined_global_variable(node)
+      # TODO: better error message explaining the rules
+      explanation = undefined_variable_message("global", node.name)
+      node.raise "undefined global variable '#{node.name}'\n\n#{explanation}"
+    end
+
+    def undefined_variable_message(kind, example_name)
+      <<-MSG
+      The type of a #{kind} variable, if not declared explicitly with
+      `#{example_name} : Type`, is inferred from assignments to it across
+      the whole program.
+
+      The assignments must look like this:
+
+        1. `#{example_name} = 1` (or other literals), inferred to the literal's type
+        2. `#{example_name} = Type.new`, type is inferred to be Type
+        3. `#{example_name} = arg`, with 'arg' begin a method argument with a
+           type restriction 'Type', type is inferred to be Type
+        4. `#{example_name} = arg`, with 'arg' begin a method argument with a
+           default value, type is inferred using rules 1 and 2 from it
+        5. `#{example_name} = uninitialized Type`, type is inferred to be Type
+        6. `#{example_name} = LibSome.func`, and `LibSome` is a `lib`, type
+           is inferred from that fun.
+        7. `LibSome.func(out #{example_name})`, and `LibSome` is a `lib`, type
+           is inferred from that fun argument.
+      MSG
+    end
+  end
 end

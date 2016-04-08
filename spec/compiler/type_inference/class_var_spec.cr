@@ -1,6 +1,35 @@
 require "../../spec_helper"
 
 describe "Type inference: class var" do
+  it "declares class variable" do
+    assert_error %(
+      class Foo
+        @@x : Int32
+
+        def self.x=(x)
+          @@x = x
+        end
+      end
+
+      Foo.x = true
+      ),
+      "class variable '@@x' of Foo must be Int32, not Nil"
+  end
+
+  it "declares class variable (2)" do
+    assert_error %(
+      class Foo
+        @@x : Int32
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x
+      ),
+      "class variable '@@x' of Foo must be Int32, not Nil"
+  end
   it "types class var" do
     assert_type("
       class Foo
@@ -100,7 +129,7 @@ describe "Type inference: class var" do
       end
 
       Foo.bar
-      )) { (types["Bar"] as GenericClassType).instantiate([types["Foo"].virtual_type!.metaclass] of TypeVar) }
+      )) { (types["Bar"] as GenericClassType).instantiate([types["Foo"].virtual_type.metaclass] of TypeVar) }
   end
 
   it "errors if using self as type var but there's no self" do

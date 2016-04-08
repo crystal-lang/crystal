@@ -1386,6 +1386,11 @@ module Crystal
       true
     end
 
+    # NoReturn can be assigned to any other type (because it never will)
+    def implements?(other_type)
+      true
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "NoReturn"
     end

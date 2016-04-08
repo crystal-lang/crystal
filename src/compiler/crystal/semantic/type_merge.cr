@@ -143,6 +143,14 @@ module Crystal
       end
     end
 
+    def self.merge!(types_or_nodes)
+      merge(types_or_nodes).not_nil!
+    end
+
+    def self.merge!(type1 : Type, type2 : Type)
+      merge!([type1, type2])
+    end
+
     def common_ancestor(other)
       nil
     end

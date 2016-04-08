@@ -38,22 +38,7 @@ module Crystal
     def set_type(type : Type)
       type = type.remove_alias_if_simple
       if !type.no_return? && (freeze_type = @freeze_type) && !type.implements?(freeze_type)
-        if !freeze_type.includes_type?(type.program.nil) && type.includes_type?(type.program.nil)
-          # This means that an instance variable become nil
-          if self.is_a?(MetaTypeVar) && (nil_reason = self.nil_reason)
-            inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason)
-          end
-        end
-
-        if self.is_a?(MetaTypeVar)
-          if self.global?
-            raise "global variable '#{self.name}' must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
-          else
-            raise "#{self.kind} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
-          end
-        else
-          raise "type must be #{freeze_type}, not #{type}", inner, Crystal::FrozenTypeException
-        end
+        raise_frozen_type freeze_type, type, self
       end
       @type = type
     end
@@ -76,6 +61,25 @@ module Crystal
         from.raise ex.message, ex.inner
       else
         ::raise ex
+      end
+    end
+
+    def raise_frozen_type(freeze_type, invalid_type, from)
+      if !freeze_type.includes_type?(invalid_type.program.nil) && invalid_type.includes_type?(invalid_type.program.nil)
+        # This means that an instance variable become nil
+        if self.is_a?(MetaTypeVar) && (nil_reason = self.nil_reason)
+          inner = MethodTraceException.new(nil, [] of ASTNode, nil_reason)
+        end
+      end
+
+      if self.is_a?(MetaTypeVar)
+        if self.global?
+          from.raise "global variable '#{self.name}' must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
+        else
+          from.raise "#{self.kind} variable '#{self.name}' of #{self.owner} must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
+        end
+      else
+        from.raise "type must be #{freeze_type}, not #{invalid_type}", inner, Crystal::FrozenTypeException
       end
     end
 
@@ -110,6 +114,13 @@ module Crystal
     end
 
     def bind(from = nil)
+      # Quick check to provide a better error message when assigning a type
+      # to a variable whose type is frozen
+      if self.is_a?(MetaTypeVar) && (freeze_type = self.freeze_type) && from &&
+         (from_type = from.type?) && !from_type.implements?(freeze_type)
+        raise_frozen_type freeze_type, from_type, from
+      end
+
       dependencies = @dependencies ||= Dependencies.new
 
       node = yield dependencies

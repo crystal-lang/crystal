@@ -296,14 +296,27 @@ module Crystal
     def visit_global(node)
       var = mod.global_vars[node.name]?
       unless var
-        var = MetaTypeVar.new(node.name)
-        var.owner = @mod
-        mod.global_vars[node.name] = var
+        @mod.undefined_global_variable(node)
       end
-      var.bind_to mod.nil_var unless var.dependencies?
+
+      if first_time_accessing_global?(var)
+        var.bind_to mod.nil_var
+      end
+
       node.bind_to var
       node.var = var
       var
+    end
+
+    def first_time_accessing_global?(var)
+      if var.freeze_type
+        deps = var.dependencies?
+        # If no dependencies it's the case of a global for a regex literal.
+        # If there are dependencies and it's just one, it's the same var
+        deps ? deps.size == 1 : false
+      else
+        !var.dependencies?
+      end
     end
 
     def visit(node : InstanceVar)
@@ -510,19 +523,20 @@ module Crystal
     def type_assign(target : Global, value, node)
       attributes = check_valid_attributes target, ValidGlobalAttributes, "global variable"
 
-      value.accept self
-
       var = mod.global_vars[target.name]?
       unless var
-        var = MetaTypeVar.new(target.name)
-        var.owner = @mod
-
-        # If we are assigning to a global inside a method, make it nilable
-        # if this is the first time we are assigning to it, because
-        # the method might be called conditionally
-        var.bind_to mod.nil_var if @typed_def
-        mod.global_vars[target.name] = var
+        mod.undefined_global_variable(target)
       end
+
+      # If we are assigning to a global inside a method, make it nilable
+      # if this is the first time we are assigning to it, because
+      # the method might be called conditionally
+      if @typed_def && first_time_accessing_global?(var)
+        var.bind_to mod.nil_var
+      end
+
+      value.accept self
+
       var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
       target.var = var
 
@@ -602,8 +616,7 @@ module Crystal
         yield_vars.each_with_index do |var, i|
           exp = node.exps[i]?
           if exp
-            # TODO: this should really be var.type.implements?(exp.type)
-            if (exp_type = exp.type?) && !exp_type.is_restriction_of?(var.type, exp_type)
+            if (exp_type = exp.type?) && !exp_type.implements?(var.type)
               exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp_type}"
             end
 

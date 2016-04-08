@@ -790,7 +790,7 @@ class Crystal::Call
         else
           block_type = block.type
           matched = MatchesLookup.match_arg(block_type, output, match.context)
-          if !matched && !void_return_type?(match.context, output)
+          if (!matched || (matched && !block_type.implements?(matched))) && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore)
               begin
                 block_type = ident_lookup.lookup_node_type(output).virtual_type

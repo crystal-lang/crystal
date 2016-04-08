@@ -7,10 +7,6 @@ require "../src/compiler/crystal/**"
 include Crystal
 
 class Crystal::Program
-  def union_of(type1, type2)
-    union_of([type1, type2] of Type).not_nil!
-  end
-
   def union_of(type1, type2, type3)
     union_of([type1, type2, type3] of Type).not_nil!
   end
@@ -21,10 +17,6 @@ class Crystal::Program
 
   def fun_of(type1 : Type, type2 : Type)
     fun_of([type1, type2] of Type)
-  end
-
-  def nilable(type)
-    union_of self.nil, type
   end
 end
 
