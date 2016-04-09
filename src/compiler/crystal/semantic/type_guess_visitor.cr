@@ -464,6 +464,13 @@ module Crystal
     end
 
     def visit(node : Def)
+      # If this method was redefined and this new method doesn't
+      # call `previous_def`, this method will never be called,
+      # so we ignore it
+      if (next_def = node.next) && !next_def.calls_previous_def
+        return false
+      end
+
       check_outside_block_or_exp node, "declare def"
 
       node.runtime_initializers.try &.each &.accept self

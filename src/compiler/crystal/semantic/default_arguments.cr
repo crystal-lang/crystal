@@ -88,6 +88,7 @@ class Crystal::Def
     expansion.args.each { |arg| arg.default_value = nil }
     expansion.calls_super = calls_super
     expansion.calls_initialize = calls_initialize
+    expansion.calls_previous_def = calls_previous_def
     expansion.uses_block_arg = uses_block_arg
     expansion.yields = yields
     expansion.location = location

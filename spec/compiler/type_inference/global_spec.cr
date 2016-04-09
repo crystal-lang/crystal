@@ -432,6 +432,34 @@ describe "Global inference" do
       "undefined global variable '$x'"
   end
 
+  it "doesn't infer from redefined method" do
+    assert_type(%(
+      def foo
+        $x = 1
+      end
+
+      def foo
+        $x = true
+      end
+
+      $x
+      )) { nilable bool }
+  end
+
+  it "infers from redefined method if calls previous_def" do
+    assert_type(%(
+      def foo
+        $x = 1
+      end
+
+      def foo
+        previous_def
+      end
+
+      $x
+      )) { nilable int32 }
+  end
+
   it "errors if using typeof in type declaration" do
     assert_error %(
       $x : typeof(1)

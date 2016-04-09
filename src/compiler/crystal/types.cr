@@ -637,6 +637,7 @@ module Crystal
           if ex_item.is_restriction_of?(item, self)
             list[i] = item
             a_def.previous = ex_item
+            ex_item.def.next = a_def
             return ex_item.def
           else
             list.insert(i, item)

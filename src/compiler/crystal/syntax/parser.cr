@@ -38,6 +38,7 @@ module Crystal
       @unclosed_stack = [] of Unclosed
       @calls_super = false
       @calls_initialize = false
+      @calls_previous_def = false
       @uses_block_arg = false
       @assigns_special_var = false
       @def_nest = 0
@@ -2349,14 +2350,15 @@ module Crystal
       instance_vars = prepare_parse_def
       @def_nest += 1
 
+      result = parse
+
       # Small memory optimization: don't keep the Set in the Def if it's empty
       instance_vars = nil if instance_vars.empty?
-
-      result = parse
 
       a_def.instance_vars = instance_vars
       a_def.calls_super = @calls_super
       a_def.calls_initialize = @calls_initialize
+      a_def.calls_previous_def = @calls_previous_def
       a_def.uses_block_arg = @uses_block_arg
       a_def.assigns_special_var = @assigns_special_var
 
@@ -2375,12 +2377,14 @@ module Crystal
       a_def.instance_vars = instance_vars
       a_def.calls_super = @calls_super
       a_def.calls_initialize = @calls_initialize
+      a_def.calls_previous_def = @calls_previous_def
       a_def.uses_block_arg = @uses_block_arg
       a_def.assigns_special_var = @assigns_special_var
       a_def.doc = doc
       @instance_vars = nil
       @calls_super = false
       @calls_initialize = false
+      @calls_previous_def = false
       @uses_block_arg = false
       @assigns_special_var = false
       @block_arg_name = nil
@@ -2390,6 +2394,7 @@ module Crystal
     def prepare_parse_def
       @calls_super = false
       @calls_initialize = false
+      @calls_previous_def = false
       @uses_block_arg = false
       @block_arg_name = nil
       @assigns_special_var = false
@@ -3308,6 +3313,8 @@ module Crystal
         @calls_super = true
       when "initialize"
         @calls_initialize = true
+      when "previous_def"
+        @calls_previous_def = true
       end
 
       call_args, last_call_has_parenthesis = preserve_last_call_has_parenthesis do

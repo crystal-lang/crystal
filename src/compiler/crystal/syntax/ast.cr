@@ -879,6 +879,7 @@ module Crystal
     property instance_vars : Set(String)?
     property calls_super : Bool
     property calls_initialize : Bool
+    property calls_previous_def : Bool
     property uses_block_arg : Bool
     property assigns_special_var : Bool
     property name_column_number : Int32
@@ -892,6 +893,7 @@ module Crystal
       @body = Expressions.from body
       @calls_super = false
       @calls_initialize = false
+      @calls_previous_def = false
       @uses_block_arg = false
       @assigns_special_var = false
       @raises = false
@@ -931,6 +933,7 @@ module Crystal
       a_def.instance_vars = instance_vars
       a_def.calls_super = calls_super
       a_def.calls_initialize = calls_initialize
+      a_def.calls_previous_def = calls_previous_def
       a_def.uses_block_arg = uses_block_arg
       a_def.assigns_special_var = assigns_special_var
       a_def.name_column_number = name_column_number
