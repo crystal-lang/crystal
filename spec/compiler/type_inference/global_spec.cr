@@ -295,6 +295,33 @@ describe "Global inference" do
       )) { union_of(int32, bool) }
   end
 
+  it "infers from case" do
+    assert_type(%(
+      class Object
+        def ===(other)
+          self == other
+        end
+      end
+
+      $x = case 1
+           when 2
+             'a'
+           else
+             true
+           end
+      )) { union_of(char, bool) }
+  end
+
+  it "infers from unless" do
+    assert_type(%(
+      $x = unless 1 == 2
+             1
+           else
+             true
+           end
+      )) { union_of(int32, bool) }
+  end
+
   it "infers from begin" do
     assert_type(%(
       $x = begin
@@ -335,6 +362,74 @@ describe "Global inference" do
 
       $x
       )) { nilable fun_of(int32, int32) }
+  end
+
+  it "infers type from !" do
+    assert_type(%(
+      $x = !1
+      $x
+      )) { bool }
+  end
+
+  it "infers type from is_a?" do
+    assert_type(%(
+      $x = 1.is_a?(Int32)
+      $x
+      )) { bool }
+  end
+
+  it "infers type from responds_to?" do
+    assert_type(%(
+      $x = 1.responds_to?(:foo)
+      $x
+      )) { bool }
+  end
+
+  it "infers type from sizeof" do
+    assert_type(%(
+      $x = sizeof(Float64)
+      $x
+      )) { int32 }
+  end
+
+  it "infers type from sizeof" do
+    assert_type(%(
+      class Foo
+      end
+
+      $x = instance_sizeof(Foo)
+      $x
+      )) { int32 }
+  end
+
+  it "infers type from path that is a type" do
+    assert_type(%(
+      class Foo; end
+      class Bar < Foo; end
+
+      $x = Foo
+      $x
+      )) { types["Foo"].virtual_type!.metaclass }
+  end
+
+  it "infers type from path that is a constant" do
+    assert_type(%(
+      CONST = 1
+
+      $x = CONST
+      $x
+      )) { int32 }
+  end
+
+  it "doesn't crash when trying to infer from a recursive constant definition" do
+    assert_error %(
+      A = B
+      B = A
+
+      $x = A
+      $x
+      ),
+      "undefined global variable '$x'"
   end
 
   it "errors if using typeof in type declaration" do

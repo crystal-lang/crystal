@@ -25,6 +25,15 @@ module Crystal
       @globals = {} of String => TypeInfo
       @class_vars = {} of ClassVarContainer => Hash(String, TypeInfo)
 
+      # This is to prevent infinite resolution of constants, like in
+      #
+      # ```
+      # A = B
+      # B = A
+      # $x = A
+      # ```
+      @consts = [] of Const
+
       @outside_def = true
     end
 
@@ -293,6 +302,51 @@ module Crystal
       guess_from_two(then_type, else_type)
     end
 
+    def guess_type(node : Unless)
+      then_type = guess_type(node.then)
+      else_type = guess_type(node.else)
+      guess_from_two(then_type, else_type)
+    end
+
+    def guess_type(node : Case)
+      types = nil
+
+      node.whens.each do |when|
+        type = guess_type(when.body)
+        next unless type
+
+        types ||= [] of Type
+        types << type
+      end
+
+      if node_else = node.else
+        type = guess_type(node_else)
+        if type
+          types ||= [] of Type
+          types << type
+        end
+      end
+
+      types ? Type.merge!(types) : nil
+    end
+
+    def guess_type(node : Path)
+      type = lookup_type?(node)
+      return nil unless type
+
+      if type.is_a?(Const)
+        # Don't solve a constant we've already seen
+        return nil if @consts.includes?(type)
+
+        @consts.push(type)
+        type = guess_type(type.value)
+        @consts.pop
+        type
+      else
+        type.virtual_type.metaclass
+      end
+    end
+
     def guess_type(node : Expressions)
       last = node.expressions.last?
       last ? guess_type(last) : nil
@@ -300,6 +354,26 @@ module Crystal
 
     def guess_type(node : Assign)
       process_assign(node)
+    end
+
+    def guess_type(node : Not)
+      @mod.bool
+    end
+
+    def guess_type(node : IsA)
+      @mod.bool
+    end
+
+    def guess_type(node : RespondsTo)
+      @mod.bool
+    end
+
+    def guess_type(node : SizeOf)
+      @mod.int32
+    end
+
+    def guess_type(node : InstanceSizeOf)
+      @mod.int32
     end
 
     def guess_type(node : Nop)
