@@ -961,6 +961,13 @@ module Crystal
       paren_count = @paren_count
 
       node.types.each_with_index do |type, i|
+        if @token.type == :"?"
+          # This can happen if it's a nilable type written like T?
+          write "?"
+          next_token
+          break
+        end
+
         accept type
 
         last = last?(i, node.types)
@@ -969,12 +976,6 @@ module Crystal
         must_break = false
         while true
           case @token.type
-          when :"?"
-            # This can happen if it's a nilable type written like T?
-            write "?"
-            next_token
-            must_break = true
-            break
           when :"|"
             write " | "
             next_token

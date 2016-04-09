@@ -855,4 +855,6 @@ describe Crystal::Formatter do
 
   assert_format "bla.select(&.all?{ |x| x } )", "bla.select(&.all? { |x| x })"
   assert_format "def foo\n  <<-FOO\n  foo \#{1}\n  FOO\nend"
+
+  assert_format "@x : A(B | C)?"
 end
