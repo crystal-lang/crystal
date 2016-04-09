@@ -714,7 +714,6 @@ describe "Hash" do
 
   describe "select" do
     assert { {a: 2, b: 3}.select(:b, :d).should eq({b: 3}) }
-    assert { {a: 2, b: 3}.select.should eq({} of Symbol => Int32) }
     assert { {a: 2, b: 3}.select(:b, :a).should eq({a: 2, b: 3}) }
     it "does not change currrent hash" do
       h = {a: 3, b: 6, c: 9}
@@ -725,7 +724,6 @@ describe "Hash" do
 
   describe "select!" do
     assert { {a: 2, b: 3}.select!(:b, :d).should eq({b: 3}) }
-    assert { {a: 2, b: 3}.select!.should eq({} of Symbol => Int32) }
     assert { {a: 2, b: 3}.select!(:b, :a).should eq({a: 2, b: 3}) }
     it "does change currrent hash" do
       h = {a: 3, b: 6, c: 9}

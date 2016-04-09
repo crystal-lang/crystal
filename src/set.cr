@@ -77,7 +77,7 @@ struct Set(T)
   #     s = Set.new [1,5]
   #     s.includes? 5  # => true
   #     s.includes? 9  # => false
-  def includes?(object)
+  def includes?(object : T)
     @hash.has_key?(object)
   end
 
@@ -87,7 +87,7 @@ struct Set(T)
   #     s.includes? 5  # => true
   #     s.delete 5
   #     s.includes? 5  # => false
-  def delete(object)
+  def delete(object : T)
     @hash.delete(object)
     self
   end

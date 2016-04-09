@@ -51,7 +51,7 @@ class YAML::Parser
     when EventKind::SCALAR
       anchor @pull_parser.value, @pull_parser.scalar_anchor
     when EventKind::ALIAS
-      @anchors[@pull_parser.alias_anchor]
+      @anchors[@pull_parser.alias_anchor.not_nil!]
     when EventKind::SEQUENCE_START
       parse_sequence
     when EventKind::MAPPING_START

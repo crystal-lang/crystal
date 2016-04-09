@@ -88,7 +88,7 @@ class Hash(K, V)
   end
 
   # See `Hash#fetch`
-  def [](key)
+  def [](key : K)
     fetch(key)
   end
 
@@ -103,7 +103,7 @@ class Hash(K, V)
   # h = Hash(String, String).new("bar")
   # h["foo"]? # => nil
   # ```
-  def []?(key)
+  def []?(key : K)
     fetch(key, nil)
   end
 
@@ -114,7 +114,7 @@ class Hash(K, V)
   # h.has_key?("foo") # => true
   # h.has_key?("bar") # => false
   # ```
-  def has_key?(key)
+  def has_key?(key : K)
     !!find_entry(key)
   end
 
@@ -134,7 +134,7 @@ class Hash(K, V)
   # h = Hash(String, String).new
   # h["foo"] # raises KeyError
   # ```
-  def fetch(key)
+  def fetch(key : K)
     fetch(key) do
       if (block = @block) && key.is_a?(K)
         block.call(self, key as K)
@@ -152,7 +152,7 @@ class Hash(K, V)
   # h.fetch("foo", "foo") # => "bar"
   # h.fetch("bar", "foo") # => "foo"
   # ```
-  def fetch(key, default)
+  def fetch(key : K, default)
     fetch(key) { default }
   end
 
@@ -163,7 +163,7 @@ class Hash(K, V)
   # h.fetch("foo") { |key| key.upcase } # => "bar"
   # h.fetch("bar") { |key| key.upcase } # => "BAR"
   # ```
-  def fetch(key)
+  def fetch(key : K)
     entry = find_entry(key)
     entry ? entry.value : yield key
   end
@@ -186,7 +186,7 @@ class Hash(K, V)
   # hash.key("qux")    # => "baz"
   # hash.key("foobar") # => Missing hash key for value: foobar (KeyError)
   # ```
-  def key(value)
+  def key(value : V)
     key(value) { raise KeyError.new "Missing hash key for value: #{value}" }
   end
 
@@ -198,7 +198,7 @@ class Hash(K, V)
   # hash.key?("qux")    # => "baz"
   # hash.key?("foobar") # => nil
   # ```
-  def key?(value)
+  def key?(value : V)
     key(value) { nil }
   end
 
@@ -209,7 +209,7 @@ class Hash(K, V)
   # hash.key("bar") { |value| value.upcase } # => "foo"
   # hash.key("qux") { |value| value.upcase } # => "QUX"
   # ```
-  def key(value)
+  def key(value : V)
     each do |k, v|
       return k if v == value
     end
@@ -223,7 +223,7 @@ class Hash(K, V)
   # h.delete("foo")     # => "bar"
   # h.fetch("foo", nil) # => nil
   # ```
-  def delete(key)
+  def delete(key : K)
     index = bucket_index(key)
     entry = @buckets[index]
 
@@ -477,7 +477,7 @@ class Hash(K, V)
   # h.key_index("foo") # => 0
   # h.key_index("qux") # => nil
   # ```
-  def key_index(key)
+  def key_index(key : K)
     each_with_index do |my_key, my_value, i|
       return i if key == my_key
     end
@@ -588,7 +588,7 @@ class Hash(K, V)
   # ```
   # {"a": 1, "b": 2, "c": 3, "d": 4}.reject("a", "c") # => {"b": 2, "d": 4}
   # ```
-  def reject(*keys)
+  def reject(*keys : K)
     hash = self.dup
     hash.reject!(*keys)
   end
@@ -599,7 +599,7 @@ class Hash(K, V)
   # h = {"a": 1, "b": 2, "c": 3, "d": 4}.reject!("a", "c")
   # h # => {"b": 2, "d": 4}
   # ```
-  def reject!(*keys)
+  def reject!(*keys : K)
     keys.each { |k| delete(k) }
     self
   end
@@ -609,7 +609,7 @@ class Hash(K, V)
   # ```
   # {"a": 1, "b": 2, "c": 3, "d": 4}.select("a", "c") # => {"a": 1, "c": 3}
   # ```
-  def select(*keys)
+  def select(*keys : K)
     hash = {} of K => V
     keys.each { |k| hash[k] = self[k] if has_key?(k) }
     hash
@@ -621,7 +621,7 @@ class Hash(K, V)
   # h = {"a": 1, "b": 2, "c": 3, "d": 4}.select!("a", "c")
   # h # => {"a": 1, "c": 3}
   # ```
-  def select!(*keys)
+  def select!(*keys : K)
     each { |k, v| delete(k) unless keys.includes?(k) }
     self
   end

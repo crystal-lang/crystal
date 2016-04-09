@@ -22,8 +22,8 @@ describe "Pointer" do
 
   it "does index with count" do
     p1 = Pointer.malloc(4) { |i| i ** 2 }
-    p1.to_slice(4).index(4).should eq(2)
-    p1.to_slice(4).index(5).should be_nil
+    p1.to_slice(4).index(4.0).should eq(2)
+    p1.to_slice(4).index(5.0).should be_nil
   end
 
   describe "copy_from" do
