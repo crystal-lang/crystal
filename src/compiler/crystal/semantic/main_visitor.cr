@@ -308,10 +308,7 @@ module Crystal
     end
 
     def visit_global(node)
-      var = mod.global_vars[node.name]?
-      unless var
-        @mod.undefined_global_variable(node)
-      end
+      var = lookup_global_variable(node)
 
       if first_time_accessing_meta_type_var?(var)
         var.bind_to mod.nil_var
@@ -320,6 +317,25 @@ module Crystal
       node.bind_to var
       node.var = var
       var
+    end
+
+    def lookup_global_variable(node)
+      var = mod.global_vars[node.name]?
+      undefined_global_variable(node) unless var
+      var
+    end
+
+    def undefined_global_variable(node)
+      similar_name = lookup_similar_global_variable_name(node)
+      mod.undefined_global_variable(node, similar_name)
+    end
+
+    def lookup_similar_global_variable_name(node)
+      Levenshtein.find(node.name) do |finder|
+        mod.global_vars.each_key do |name|
+          finder.test(name)
+        end
+      end
     end
 
     def first_time_accessing_meta_type_var?(var)
@@ -397,9 +413,22 @@ module Crystal
       class_var_owner = class_var_owner(node)
       var = class_var_owner.class_vars[node.name]?
       unless var
-        @mod.undefined_class_variable(node)
+        undefined_class_variable(node, class_var_owner)
       end
       var
+    end
+
+    def undefined_class_variable(node, owner)
+      similar_name = lookup_similar_class_variable_name(node, owner)
+      @mod.undefined_class_variable(node, owner, similar_name)
+    end
+
+    def lookup_similar_class_variable_name(node, owner)
+      Levenshtein.find(node.name) do |finder|
+        owner.class_vars.each_key do |name|
+          finder.test(name)
+        end
+      end
     end
 
     def lookup_instance_var(node)
@@ -552,10 +581,7 @@ module Crystal
     def type_assign(target : Global, value, node)
       attributes = check_valid_attributes target, ValidGlobalAttributes, "global variable"
 
-      var = mod.global_vars[target.name]?
-      unless var
-        mod.undefined_global_variable(target)
-      end
+      var = lookup_global_variable(target)
 
       # If we are assigning to a global inside a method, make it nilable
       # if this is the first time we are assigning to it, because

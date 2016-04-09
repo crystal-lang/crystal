@@ -318,14 +318,28 @@ module Crystal
   end
 
   class Program
-    def undefined_global_variable(node)
-      explanation = undefined_variable_message("global", node.name)
-      node.raise "undefined global variable '#{node.name}'\n\n#{explanation}"
+    def undefined_global_variable(node, similar_name)
+      msg = String.build do |str|
+        str << "undefined global variable '#{node.name}'"
+        if similar_name
+          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+        end
+        str << "\n\n"
+        str << undefined_variable_message("global", node.name)
+      end
+      node.raise msg
     end
 
-    def undefined_class_variable(node)
-      explanation = undefined_variable_message("class", node.name)
-      node.raise "undefined class variable '#{node.name}'\n\n#{explanation}"
+    def undefined_class_variable(node, owner, similar_name)
+      msg = String.build do |str|
+        str << "undefined class variable '#{node.name}' of #{owner}"
+        if similar_name
+          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+        end
+        str << "\n\n"
+        str << undefined_variable_message("class", node.name)
+      end
+      node.raise msg
     end
 
     def undefined_variable_message(kind, example_name)
