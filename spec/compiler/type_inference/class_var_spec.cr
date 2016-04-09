@@ -254,4 +254,15 @@ describe "Type inference: class var" do
       ",
       "can't use class variables at the top level"
   end
+
+  it "errors when typing a class variable inside a method" do
+    assert_error %(
+      def foo
+        @@x : Int32
+      end
+
+      foo
+      ),
+      "declaring the type of a class variable must be done at the class level"
+  end
 end

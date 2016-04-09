@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-describe "Type inference: type declaration" do
+describe "Type inference: instance var" do
   it "declares instance var which appears in initialize" do
     result = assert_type("
       class Foo
@@ -110,28 +110,6 @@ describe "Type inference: type declaration" do
       foo
       ),
       "declaring the type of an instance variable must be done at the class level"
-  end
-
-  it "errors when typing a class variable inside a method" do
-    assert_error %(
-      def foo
-        @@x : Int32
-      end
-
-      foo
-      ),
-      "declaring the type of a class variable must be done at the class level"
-  end
-
-  it "errors when typing a global variable inside a method" do
-    assert_error %(
-      def foo
-        $x : Int32
-      end
-
-      foo
-      ),
-      "declaring the type of a global variable must be done at the class level"
   end
 
   it "declares instance var with union type with a virtual member" do

@@ -541,4 +541,15 @@ describe "Global inference" do
       $x
       )) { union_of int32, float64 }
   end
+
+  it "errors when typing a global variable inside a method" do
+    assert_error %(
+      def foo
+        $x : Int32
+      end
+
+      foo
+      ),
+      "declaring the type of a global variable must be done at the class level"
+  end
 end
