@@ -1,10 +1,3 @@
-class CSV
-  DEFAULT_SEPARATOR  = ','
-  DEFAULT_QUOTE_CHAR = '"'
-end
-
-require "./**"
-
 # Provides methods and classes for parsing and generating CSV
 # (comma-separated values) strings.
 #
@@ -63,6 +56,9 @@ require "./**"
 #
 # To create CSV data, check `CSV#build` and the `CSV::Builder` class.
 class CSV
+  DEFAULT_SEPARATOR  = ','
+  DEFAULT_QUOTE_CHAR = '"'
+
   # Parses a CSV or IO into an array.
   # takes optional *separator* and *quote_char* arguments for defining
   # non-standard csv cell separators and quote characters
@@ -393,3 +389,5 @@ class CSV
     end
   end
 end
+
+require "./**"
