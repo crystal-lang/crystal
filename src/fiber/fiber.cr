@@ -193,7 +193,8 @@ class Fiber
     @@root
   end
 
-  @[ThreadLocal]
+  # TODO: Boehm GC doesn't scan thread local vars, so we can't use it yet
+  # @[ThreadLocal]
   @@current : Fiber
   @@current = root
 

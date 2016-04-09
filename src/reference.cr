@@ -74,8 +74,7 @@ class Reference
     nil
   end
 
-  # TODO: enable this once we have multiple-thread support, and fix its
-  # behaviour because there's currently a bug related to it
+  # TODO: Boehm GC doesn't scan thread local vars, so we can't use it yet
   # @[ThreadLocal]
   $_exec_recursive : Hash({UInt64, Symbol}, Bool)?
 
