@@ -49,6 +49,8 @@ describe "Code gen: named args" do
   it "calls new with named arg" do
     run(%(
       class Foo
+        @value : Int32
+
         def initialize(x, y = 2, z = 3)
           @value = x + y + z
         end

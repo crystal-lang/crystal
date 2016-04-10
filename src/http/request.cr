@@ -8,11 +8,10 @@ class HTTP::Request
   getter body : String?
   getter version : String
   @cookies : Cookies?
-  @resource : String
   @query_params : Params?
   @uri : URI?
 
-  def initialize(@method : String, @resource, @headers : Headers = Headers.new, @body = nil, @version = "HTTP/1.1")
+  def initialize(@method : String, @resource : String, @headers : Headers = Headers.new, @body = nil, @version = "HTTP/1.1")
     if body = @body
       @headers["Content-Length"] = body.bytesize.to_s
     elsif @method == "POST" || @method == "PUT"
@@ -49,7 +48,7 @@ class HTTP::Request
     io << @method << " " << resource << " " << @version << "\r\n"
     cookies = @cookies
     headers = cookies ? cookies.add_request_headers(@headers) : @headers
-    HTTP.serialize_headers_and_body(io, headers, @body, @version)
+    HTTP.serialize_headers_and_body(io, headers, @body, nil, @version)
   end
 
   def self.from_io(io)

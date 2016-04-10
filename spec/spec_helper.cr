@@ -78,6 +78,11 @@ def assert_expand_second(from : String, to)
   assert_expand node, to
 end
 
+def assert_expand_third(from : String, to)
+  node = (Parser.parse(from) as Expressions)[2]
+  assert_expand node, to
+end
+
 def assert_after_cleanup(before, after)
   node = Parser.parse(before)
   result = infer_type node

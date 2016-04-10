@@ -1,7 +1,5 @@
 struct LLVM::BasicBlock
-  @unwrap : LibLLVM::BasicBlockRef
-
-  def initialize(@unwrap)
+  def initialize(@unwrap : LibLLVM::BasicBlockRef)
   end
 
   def instructions

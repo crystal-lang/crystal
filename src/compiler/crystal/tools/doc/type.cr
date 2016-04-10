@@ -4,9 +4,8 @@ class Crystal::Doc::Type
   include Item
 
   getter type : Crystal::Type
-  @generator : Generator
 
-  def initialize(@generator, @type : Crystal::Type)
+  def initialize(@generator : Generator, @type : Crystal::Type)
   end
 
   def kind

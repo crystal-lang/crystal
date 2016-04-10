@@ -8,7 +8,7 @@ describe "Code gen: pointer" do
   it "get pointer of instance var" do
     run("
       class Foo
-        def initialize(value)
+        def initialize(value : Int32)
           @value = value
         end
 
@@ -222,7 +222,7 @@ describe "Code gen: pointer" do
         def initialize
         end
 
-        def x=(@x)
+        def x=(@x : Int32*?)
         end
 
         def x
@@ -321,7 +321,7 @@ describe "Code gen: pointer" do
   it "does pointerof class variable with class" do
     run(%(
       class Bar
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x

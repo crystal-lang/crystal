@@ -1,11 +1,5 @@
 # :nodoc:
 struct OAuth::Signature
-  @consumer_key : String
-  @client_shared_secret : String
-  @oauth_token : String?
-  @token_shared_secret : String?
-  @extra_params : Hash(String, String)?
-
   def initialize(@consumer_key : String, @client_shared_secret : String, @oauth_token : String? = nil, @token_shared_secret : String? = nil, @extra_params : Hash(String, String)? = nil)
   end
 

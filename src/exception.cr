@@ -64,7 +64,7 @@ struct CallStack
   struct RepeatedFrame
     getter ip : Void*, count : Int32
 
-    def initialize(@ip)
+    def initialize(@ip : Void*)
       @count = 0
     end
 
@@ -141,7 +141,6 @@ end
 class Exception
   getter message : String?
   getter cause : Exception?
-  @callstack : CallStack
 
   def initialize(message : String? = nil, cause : Exception? = nil)
     @message = message

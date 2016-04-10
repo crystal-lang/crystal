@@ -85,7 +85,7 @@ describe "Type inference: struct" do
   it "errors on recursive struct" do
     assert_error %(
       struct Test
-        def initialize(@test)
+        def initialize(@test : Test?)
         end
       end
 
@@ -97,7 +97,7 @@ describe "Type inference: struct" do
   it "errors on recursive struct inside module" do
     assert_error %(
       struct Foo::Test
-        def initialize(@test)
+        def initialize(@test : Foo::Test?)
         end
       end
 
@@ -109,7 +109,7 @@ describe "Type inference: struct" do
   it "errors on recursive generic struct inside module" do
     assert_error %(
       struct Foo::Test(T)
-        def initialize(@test)
+        def initialize(@test : Foo::Test(T)?)
         end
       end
 
@@ -121,12 +121,12 @@ describe "Type inference: struct" do
   it "errors on mutually recursive struct" do
     assert_error %(
       struct Foo
-        def initialize(@bar)
+        def initialize(@bar : Bar?)
         end
       end
 
       struct Bar
-        def initialize(@foo)
+        def initialize(@foo : Foo?)
         end
       end
 
@@ -141,7 +141,7 @@ describe "Type inference: struct" do
       struct A
         struct B < A end
 
-        def initialize(@x) end
+        def initialize(@x : A::B?) end
       end
 
       a = A.new A::B.new nil

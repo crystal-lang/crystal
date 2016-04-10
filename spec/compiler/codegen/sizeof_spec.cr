@@ -8,7 +8,7 @@ describe "Code gen: sizeof" do
   it "gets sizeof struct" do
     run("
       struct Foo
-        def initialize(@x, @y, @z)
+        def initialize(@x : Int32, @y : Int32, @z : Int32)
         end
       end
 
@@ -22,7 +22,7 @@ describe "Code gen: sizeof" do
     # A class is represented as a pointer to its data
     run("
       class Foo
-        def initialize(@x, @y, @z)
+        def initialize(@x : Int32, @y : Int32, @z : Int32)
         end
       end
 
@@ -58,7 +58,7 @@ describe "Code gen: sizeof" do
   it "gets instance_sizeof class" do
     run("
       class Foo
-        def initialize(@x, @y, @z)
+        def initialize(@x : Int32, @y : Int32, @z : Int32)
         end
       end
 

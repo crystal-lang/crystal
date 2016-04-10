@@ -43,7 +43,7 @@ describe "Type inference: nilable instance var" do
       p.value = Baz.new
       p.value.foo + 1
       ),
-      "instance variable '@foo' of Baz was not initialized in all of the 'initialize' methods, rendering '@foo' of Foo nilable"
+      "Can't infer the type of instance variable '@foo' of Foo"
   end
 
   it "says instance var was not initialized in all of the initialize methods, with var declaration" do
@@ -185,7 +185,7 @@ describe "Type inference: nilable instance var" do
 
       Derived.new.use_x
       ),
-      "instance variable '@x' of Unreferenced was not initialized in all of the 'initialize' methods, rendering '@x' of Derived nilable (Base is the common supertype that defines it)"
+      "this 'initialize' doesn't initialize ancestor instance variable '@x', rendering it nilable"
   end
 
   it "doesn't consider as nil if initialized with catch-all" do
@@ -207,7 +207,7 @@ describe "Type inference: nilable instance var" do
   end
 
   it "marks instance var as nilable if assigned inside captured block (#1696)" do
-    assert_type(%(
+    assert_error %(
       def capture(&block)
         block
       end
@@ -223,11 +223,12 @@ describe "Type inference: nilable instance var" do
       end
 
       Foo.new.foo
-      )) { nilable int32 }
+      ),
+      "instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "marks instance var as nilable if assigned inside fun literal" do
-    assert_type(%(
+    assert_error %(
       class Foo
         def initialize
           ->{ @foo = 1 }
@@ -239,6 +240,7 @@ describe "Type inference: nilable instance var" do
       end
 
       Foo.new.foo
-      )) { nilable int32 }
+      ),
+      "instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 end

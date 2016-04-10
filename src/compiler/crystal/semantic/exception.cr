@@ -148,11 +148,7 @@ module Crystal
   end
 
   class MethodTraceException < Exception
-    @owner : Type?
-    @trace : Array(ASTNode)
-    @nil_reason : NilReason?
-
-    def initialize(@owner, @trace, @nil_reason)
+    def initialize(@owner : Type?, @trace : Array(ASTNode), @nil_reason : NilReason?)
       super(nil)
     end
 
@@ -319,25 +315,55 @@ module Crystal
 
   class Program
     def undefined_global_variable(node, similar_name)
-      msg = String.build do |str|
-        str << "undefined global variable '#{node.name}'"
+      common = String.build do |str|
+        str << "Can't infer the type of global variable '#{node.name}'"
         if similar_name
           str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
         end
+      end
+
+      msg = String.build do |str|
+        str << common
         str << "\n\n"
         str << undefined_variable_message("global", node.name)
+        str << "\n\n"
+        str << common
       end
       node.raise msg
     end
 
     def undefined_class_variable(node, owner, similar_name)
-      msg = String.build do |str|
-        str << "undefined class variable '#{node.name}' of #{owner}"
+      common = String.build do |str|
+        str << "Can't infer the type of class variable '#{node.name}' of #{owner.devirtualize}"
         if similar_name
           str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
         end
+      end
+
+      msg = String.build do |str|
+        str << common
         str << "\n\n"
         str << undefined_variable_message("class", node.name)
+        str << "\n\n"
+        str << common
+      end
+      node.raise msg
+    end
+
+    def undefined_instance_variable(node, owner, similar_name)
+      common = String.build do |str|
+        str << "Can't infer the type of instance variable '#{node.name}' of #{owner.devirtualize}"
+        if similar_name
+          str << colorize(" (did you mean #{similar_name}?)").yellow.bold.to_s
+        end
+      end
+
+      msg = String.build do |str|
+        str << common
+        str << "\n\n"
+        str << undefined_variable_message("instance", node.name)
+        str << "\n\n"
+        str << common
       end
       node.raise msg
     end

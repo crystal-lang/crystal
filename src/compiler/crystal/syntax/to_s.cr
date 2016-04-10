@@ -15,10 +15,6 @@ module Crystal
 
   class ToSVisitor < Visitor
     @str : IO
-    @indent : Int32
-    @inside_macro : Int32
-    @inside_lib : Bool
-    @inside_struct_or_union : Bool
 
     def initialize(@str = MemoryIO.new)
       @indent = 0

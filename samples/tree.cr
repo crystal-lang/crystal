@@ -1,6 +1,8 @@
 class Node
-  def initialize(v)
-    @value = v
+  @left : self?
+  @right : self?
+
+  def initialize(@value : Char)
   end
 
   def add(x)

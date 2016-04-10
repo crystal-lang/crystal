@@ -97,42 +97,21 @@ module Crystal
     record Handler, node : ExceptionHandler, context : Context
     record StringKey, mod : LLVM::Module, string : String
 
-    @mod : Program
-    @node : ASTNode
-    @single_module : Bool
-    @debug : Bool
-    @main_mod : LLVM::Module
     @abi : LLVM::ABI
-    @llvm_id : LLVMId
     @main_ret_type : Type
-    @di_builders : Hash(LLVM::Module, LLVM::DIBuilder)?
-    @fun_metadatas : Hash(LLVM::Function, LibLLVMExt::Metadata)?
     @argc : LLVM::Value
     @argv : LLVM::Value
-    @dbg_kind : UInt32
-    @types_to_modules : Hash(Type, LLVM::Module)
-    @in_lib : Bool
-    @strings : Hash(StringKey, LLVM::Value)
-    @symbols : Hash(String, Int32)
-    @symbol_table_values : Array(LLVM::Value)
-    @fun_literal_count : Int32
-    @needs_value : Bool
     @empty_md_list : LLVM::Value
-    @unused_fun_defs : Array(FunDef)
-    @proc_counts : Hash(String, Int32)
-    @node_ensure_exception_handlers : Hash(UInt64, Handler)
-    @ensure_exception_handlers : Array(Handler)?
     @rescue_block : LLVM::BasicBlock?
-    @main_scopes : Hash({String, String}, LibLLVMExt::Metadata)?
     @malloc_fun : LLVM::Function?
-    @debug_types : Hash(Type, LibLLVMExt::Metadata?)?
     @sret_value : LLVM::Value?
     @cant_pass_closure_to_c_exception_call : Call?
     @realloc_fun : LLVM::Function?
 
-    def initialize(@mod, @node, single_module = false, @debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
+    def initialize(@mod : Program, @node : ASTNode, single_module = false, debug = false, @llvm_mod = LLVM::Module.new("main_module"), expose_crystal_main = true)
       @main_mod = @llvm_mod
       @single_module = !!single_module
+      @debug = !!debug
       @abi = @mod.target_machine.abi
       @llvm_typer = LLVMTyper.new(@mod)
       @llvm_id = LLVMId.new(@mod)
@@ -190,7 +169,7 @@ module Crystal
       @unused_fun_defs = [] of FunDef
       @proc_counts = Hash(String, Int32).new(0)
 
-      @node_ensure_exception_handlers = {} of typeof(object_id) => Handler
+      @node_ensure_exception_handlers = {} of UInt64 => Handler
 
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
       # to avoid some memory being allocated with plain malloc.
@@ -996,7 +975,7 @@ module Crystal
     end
 
     def read_instance_var(node_type, type, name, value)
-      ivar = type.lookup_instance_var(name)
+      ivar = type.lookup_instance_var_with_owner(name).instance_var
       ivar_ptr = instance_var_ptr type, name, value
       @last = downcast ivar_ptr, node_type, ivar.type, false
       false

@@ -53,7 +53,6 @@ class Random::MT19937
   UPPER_MASK = 0x80000000u32
   LOWER_MASK = 0x7fffffffu32
 
-  @mt : UInt32[624]
   @mti : Int32
 
   def initialize(seeds = StaticArray(UInt32, 4).new { Random.new_seed })

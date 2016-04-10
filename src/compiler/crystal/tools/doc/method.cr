@@ -8,10 +8,7 @@ class Crystal::Doc::Method
   getter type : Type
   getter def : Def
 
-  @generator : Generator
-  @class_method : Bool
-
-  def initialize(@generator, @type, @def, @class_method)
+  def initialize(@generator : Generator, @type : Type, @def : Def, @class_method : Bool)
   end
 
   def name

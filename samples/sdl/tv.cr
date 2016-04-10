@@ -1,8 +1,7 @@
 require "./sdl/sdl"
 
 class ColorMaker
-  def initialize(delay)
-    @delay = delay
+  def initialize(@delay : Int32)
     @r = 0
     @g = 255
     @b = 0
@@ -74,10 +73,7 @@ class ColorMaker
 end
 
 class Rectangle
-  def initialize(x, y, light)
-    @x = x
-    @y = y
-    @light = light
+  def initialize(@x : Int32, @y : Int32, @light : Bool)
   end
 
   def light?

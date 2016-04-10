@@ -80,8 +80,6 @@ class HTTP::Client
   # Whether automatic compression/decompression is enabled.
   property? compress : Bool
 
-  @before_request : Array(Request ->)?
-
   ifdef without_openssl
     @socket : TCPSocket | Nil
   else

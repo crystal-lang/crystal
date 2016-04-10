@@ -46,8 +46,6 @@ struct HTTP::Headers
     end
   end
 
-  @hash : Hash(Key, Array(String))
-
   def initialize
     @hash = Hash(Key, Array(String)).new
   end

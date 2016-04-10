@@ -98,14 +98,14 @@ class Process
     case pid
     when 0
       pid = nil
-      @@after_fork_child_callbacks.each(&.call) if run_hooks
+      Process.after_fork_child_callbacks.each(&.call) if run_hooks
     when -1
       raise Errno.new("fork")
     end
     pid
   end
 
-  record Tms, utime, stime, cutime, cstime
+  record Tms, utime : Float64, stime : Float64, cutime : Float64, cstime : Float64
 
   def self.times
     hertz = LibC.sysconf(LibC::SC_CLK_TCK).to_f

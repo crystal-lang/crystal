@@ -1,7 +1,5 @@
 class LLVM::FunctionPassManager
-  @unwrap : LibLLVM::PassManagerRef
-
-  def initialize(@unwrap)
+  def initialize(@unwrap : LibLLVM::PassManagerRef)
   end
 
   def add_target_data(target_data)

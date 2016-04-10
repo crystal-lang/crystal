@@ -42,7 +42,7 @@ describe "Type inference: nil" do
           @foo = 1
         end
 
-        def bar=(bar)
+        def bar=(bar : Int32)
           @bar = bar
         end
 
@@ -64,7 +64,7 @@ describe "Type inference: nil" do
           @foo = 1
         end
 
-        def bar=(bar)
+        def bar=(bar : Int32)
           @bar = bar
         end
 

@@ -454,6 +454,8 @@ describe "Block inference" do
   it "allows initialize with yield (#224)" do
     assert_type(%(
       class Foo
+        @x : Int32
+
         def initialize
           @x = yield 1
         end
@@ -663,7 +665,7 @@ describe "Block inference" do
       require "prelude"
 
       class Bar
-        def initialize(@bar)
+        def initialize(@bar : NoReturn)
         end
 
         def bar
@@ -757,7 +759,7 @@ describe "Block inference" do
   it "uses block return type as return type, even if can't infer block type" do
     assert_type(%(
       class Foo
-        def initialize(@foo)
+        def initialize(@foo : Int32)
         end
 
         def foo
@@ -860,7 +862,7 @@ describe "Block inference" do
           @x = 1
         end
 
-        def x=(@x)
+        def x=(@x : Char)
         end
 
         def bar

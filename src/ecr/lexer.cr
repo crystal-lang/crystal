@@ -14,11 +14,6 @@ class ECR::Lexer
     end
   end
 
-  @reader : Char::Reader
-  @token : Token
-  @line_number : Int32
-  @column_number : Int32
-
   def initialize(string)
     @reader = Char::Reader.new(string)
     @token = Token.new

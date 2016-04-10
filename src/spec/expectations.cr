@@ -1,8 +1,6 @@
 module Spec
   # :nodoc:
   struct EqualExpectation(T)
-    @expected_value : T
-
     def initialize(@expected_value : T)
     end
 
@@ -27,8 +25,6 @@ module Spec
 
   # :nodoc:
   struct BeExpectation(T)
-    @expected_value : T
-
     def initialize(@expected_value : T)
     end
 
@@ -77,9 +73,6 @@ module Spec
 
   # :nodoc:
   struct CloseExpectation(T, D)
-    @expected_value : T
-    @delta : D
-
     def initialize(@expected_value : T, @delta : D)
     end
 
@@ -129,9 +122,6 @@ module Spec
       Be.new(other, :">=")
     end
 
-    @expected_value : T
-    @op : Symbol
-
     def initialize(@expected_value : T, @op : Symbol)
     end
 
@@ -161,8 +151,6 @@ module Spec
 
   # :nodoc:
   struct MatchExpectation(T)
-    @expected_value : T
-
     def initialize(@expected_value : T)
     end
 
@@ -181,8 +169,6 @@ module Spec
 
   # :nodoc:
   struct ContainExpectation(T)
-    @expected_value : T
-
     def initialize(@expected_value : T)
     end
 

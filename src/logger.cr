@@ -70,12 +70,6 @@ class Logger
     progname : String,
     message : String
 
-  @io : IO
-  @closed : Bool
-  @mutex : Mutex
-  @level : Severity
-  @progname : String
-
   def initialize(@io : IO)
     @level = Severity::INFO
     @formatter = DEFAULT_FORMATTER

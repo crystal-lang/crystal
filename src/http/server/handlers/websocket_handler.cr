@@ -8,8 +8,6 @@ else
 end
 
 class HTTP::WebSocketHandler < HTTP::Handler
-  @proc : WebSocket, Server::Context ->
-
   def initialize(&@proc : WebSocket, Server::Context ->)
   end
 

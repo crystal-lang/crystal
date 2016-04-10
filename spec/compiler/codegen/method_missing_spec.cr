@@ -306,6 +306,8 @@ describe "Code gen: method_missing" do
       end
 
       class Foo
+        @x : Int32?
+
         macro method_missing(name, args, block)
           @x = {{args[0]}}
           @x
@@ -354,7 +356,7 @@ describe "Code gen: method_missing" do
       end
 
       class Foo
-        def initialize(@wrapped)
+        def initialize(@wrapped : Wrapped)
         end
 
         macro method_missing(call)

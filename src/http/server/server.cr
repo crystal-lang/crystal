@@ -92,10 +92,7 @@ class HTTP::Server
     property ssl : OpenSSL::SSL::Context?
   end
 
-  @wants_close : Bool
   @wants_close = false
-  @host : String
-  @port : Int32
 
   def self.new(port, &handler : Context ->)
     new("127.0.0.1", port, &handler)
@@ -113,18 +110,18 @@ class HTTP::Server
     new("127.0.0.1", port, handler)
   end
 
-  def initialize(@host, @port, &@handler : Context ->)
+  def initialize(@host : String, @port : Int32, &@handler : Context ->)
   end
 
-  def initialize(@host, @port, handlers : Array(HTTP::Handler), &handler : Context ->)
+  def initialize(@host : String, @port : Int32, handlers : Array(HTTP::Handler), &handler : Context ->)
     @handler = HTTP::Server.build_middleware handlers, handler
   end
 
-  def initialize(@host, @port, handlers : Array(HTTP::Handler))
+  def initialize(@host : String, @port : Int32, handlers : Array(HTTP::Handler))
     @handler = HTTP::Server.build_middleware handlers
   end
 
-  def initialize(@host, @port, @handler)
+  def initialize(@host : String, @port : Int32, @handler : HTTP::Handler | HTTP::Handler::Proc)
   end
 
   def listen

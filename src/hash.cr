@@ -2,34 +2,6 @@
 #
 # See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
 class Hash(K, V)
-  module StandardComparator
-    def self.hash(object)
-      object.hash
-    end
-
-    def self.equals?(o1, o2)
-      o1 == o2
-    end
-  end
-
-  module CaseInsensitiveComparator
-    def self.hash(str : String)
-      str.downcase.hash
-    end
-
-    def self.equals?(str1 : String, str2 : String)
-      str1.downcase == str2.downcase
-    end
-
-    def self.hash(object)
-      object.hash
-    end
-
-    def self.equals?(o1, o2)
-      o1 == o2
-    end
-  end
-
   getter size : Int32
   @buckets : Pointer(Entry(K, V)?)
   @buckets_size : Int32
@@ -37,9 +9,7 @@ class Hash(K, V)
   @last : Entry(K, V)?
   @block : (self, K -> V)?
 
-  # TODO @comp
-
-  def initialize(block : (Hash(K, V), K -> V)? = nil, @comp = StandardComparator, initial_capacity = nil)
+  def initialize(block : (Hash(K, V), K -> V)? = nil, initial_capacity = nil)
     initial_capacity ||= 11
     initial_capacity = 11 if initial_capacity < 11
     initial_capacity = initial_capacity.to_i
@@ -49,16 +19,12 @@ class Hash(K, V)
     @block = block
   end
 
-  def self.new(comp = StandardComparator, initial_capacity = nil, &block : (Hash(K, V), K -> V))
-    new block, comp
+  def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
+    new block
   end
 
-  def self.new(default_value : V, comp = StandardComparator, initial_capacity = nil)
-    new(comp, initial_capacity: initial_capacity) { default_value }
-  end
-
-  def self.new(comparator)
-    new nil, comparator
+  def self.new(default_value : V, initial_capacity = nil)
+    new(initial_capacity: initial_capacity) { default_value }
   end
 
   # Sets the value of *key* to the given *value*.
@@ -229,7 +195,7 @@ class Hash(K, V)
 
     previous_entry = nil
     while entry
-      if @comp.equals?(entry.key, key)
+      if entry.key == key
         back_entry = entry.back
         fore_entry = entry.fore
         if fore_entry
@@ -935,7 +901,7 @@ class Hash(K, V)
     entry = @buckets[index]
     if entry
       while entry
-        if @comp.equals?(entry.key, key)
+        if entry.key == key
           entry.value = value
           return nil
         end
@@ -967,7 +933,7 @@ class Hash(K, V)
 
   private def find_entry_in_bucket(entry, key)
     while entry
-      if @comp.equals?(entry.key, key)
+      if entry.key == key
         return entry
       end
       entry = entry.next
@@ -976,7 +942,7 @@ class Hash(K, V)
   end
 
   private def bucket_index(key)
-    @comp.hash(key).to_u32.remainder(@buckets_size).to_i
+    key.hash.to_u32.remainder(@buckets_size).to_i
   end
 
   private def calculate_new_size(size)

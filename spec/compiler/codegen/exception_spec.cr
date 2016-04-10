@@ -1028,6 +1028,8 @@ describe "Code gen: exception" do
       require "prelude"
 
       class Foo
+        @var : Var?
+
         def method1
           method2
         end

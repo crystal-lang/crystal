@@ -13,8 +13,6 @@ module Spec
 
   # :nodoc:
   class RootContext < Context
-    @results : Hash(Symbol, Array(Result))
-
     def initialize
       @results = {
         success: [] of Result,

@@ -1,12 +1,12 @@
 # Copied with little modifications from: https://github.com/jruby/rubybench/blob/master/time/bench_neural_net.rb
 
 class Synapse
-  property :weight
-  property :prev_weight
+  property weight : Float64
+  property prev_weight : Float64
   property :source_neuron
   property :dest_neuron
 
-  def initialize(@source_neuron, @dest_neuron)
+  def initialize(@source_neuron : Neuron, @dest_neuron : Neuron)
     @prev_weight = @weight = rand * 2 - 1
   end
 end
@@ -17,8 +17,8 @@ class Neuron
 
   property :synapses_in
   property :synapses_out
-  property :threshold
-  property :prev_threshold
+  property threshold : Float64
+  property prev_threshold : Float64
   property :error
   property :output
 
@@ -68,6 +68,10 @@ class Neuron
 end
 
 class NeuralNetwork
+  @input_layer : Array(Neuron)
+  @hidden_layer : Array(Neuron)
+  @output_layer : Array(Neuron)
+
   def initialize(inputs, hidden, outputs)
     @input_layer = (1..inputs).map { Neuron.new }
     @hidden_layer = (1..hidden).map { Neuron.new }

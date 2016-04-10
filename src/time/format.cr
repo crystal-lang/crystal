@@ -59,8 +59,6 @@ struct Time::Format
   # Returns the string pattern of this format.
   getter pattern : String
 
-  @kind : Time::Kind
-
   # Creates a new Time::Format with the given *pattern*. The given time
   # *kind* will be used when parsing a Time and no time zone is found in it.
   def initialize(@pattern : String, @kind = Time::Kind::Unspecified)

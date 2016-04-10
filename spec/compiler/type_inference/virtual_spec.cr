@@ -183,13 +183,13 @@ describe "Type inference: virtual" do
       end
 
       class Var < Base
-        def x=(x)
+        def x=(x : Int32)
           @x = x
         end
       end
 
       class Base
-        def x=(x)
+        def x=(x : Int32)
           @x = x
         end
       end

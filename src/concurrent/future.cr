@@ -8,20 +8,16 @@ class Concurrent::Future(R)
     Canceled
   end
 
-  @block : -> R
-  @state : State
   @value : R?
   @error : Exception?
-  @channel : Channel::Unbuffered(Nil)
-  @delay : Float64 | Int32
-  @cancel_msg : String?
+  @delay : Float64
 
-  def initialize(run_immediately = true, delay : Number = 0, &@block : -> R)
+  def initialize(run_immediately = true, delay = 0.0, &@block : -> R)
     @state = State::Idle
     @value = nil
     @error = nil
-    @channel = Channel(Nil).new
-    @delay = delay
+    @channel = Channel::Unbuffered(Nil).new
+    @delay = delay.to_f
     @cancel_msg = nil
 
     spawn_compute if run_immediately

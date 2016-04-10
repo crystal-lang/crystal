@@ -9,21 +9,16 @@ class Thread(T, R)
     Thread(Nil, R).new(nil) { func.call }
   end
 
-  @func : T -> R
-  @arg : T
-  @detached : Bool
-  @th : LibPThread::Thread
-  @ret : R
+  @th : LibPThread::Thread?
   @exception : Exception?
 
-  def initialize(arg : T, &func : T -> R)
-    @func = func
-    @arg = arg
+  def initialize(@arg : T, &@func : T -> R)
     @detached = false
     @ret = uninitialized R
-    ret = LibPThread.create(out @th, nil, ->(data) {
+    ret = LibPThread.create(out th, nil, ->(data) {
       (data as Thread(T, R)).start
     }, self as Void*)
+    @th = th
 
     if ret != 0
       raise Errno.new("pthread_create")
@@ -31,11 +26,11 @@ class Thread(T, R)
   end
 
   def finalize
-    LibPThread.detach(@th) unless @detached
+    LibPThread.detach(@th.not_nil!) unless @detached
   end
 
   def join
-    if LibPThread.join(@th, out _ret) != 0
+    if LibPThread.join(@th.not_nil!, out _ret) != 0
       raise Errno.new("pthread_join")
     end
     @detached = true

@@ -23,7 +23,7 @@ describe "Global inference" do
   it "errors when reading undefined global variables" do
     assert_error %(
       $x
-      ), "undefined global variable '$x'"
+      ), "Can't infer the type of global variable '$x'"
   end
 
   it "errors when writing undefined global variables" do
@@ -33,7 +33,7 @@ describe "Global inference" do
       end
 
       $x = foo
-      ), "undefined global variable '$x'"
+      ), "Can't infer the type of global variable '$x'"
   end
 
   it "infers type from number literal" do
@@ -185,6 +185,20 @@ describe "Global inference" do
       )) { types["Foo"] }
   end
 
+  it "doesn't infer from new if generic" do
+    assert_error %(
+      class Foo(T)
+        def self.new
+          10
+        end
+      end
+
+      $x = Foo.new
+      $x
+      ),
+      "Can't infer the type of global variable '$x'"
+  end
+
   it "infers type from new expression of generic" do
     assert_type(%(
       class Foo(T)
@@ -251,6 +265,20 @@ describe "Global inference" do
         end
 
         fun foo : Bar
+      end
+
+      $x = LibFoo.foo
+      )) { types["LibFoo"].types["Bar"] }
+  end
+
+  it "infers type from lib variable" do
+    assert_type(%(
+      lib LibFoo
+        struct Bar
+          x : Int32
+        end
+
+        $foo : Bar
       end
 
       $x = LibFoo.foo
@@ -429,7 +457,7 @@ describe "Global inference" do
       $x = A
       $x
       ),
-      "undefined global variable '$x'"
+      "Can't infer the type of global variable '$x'"
   end
 
   it "doesn't infer from redefined method" do
@@ -460,12 +488,52 @@ describe "Global inference" do
       )) { nilable int32 }
   end
 
+  it "infers type in multi assign (1)" do
+    assert_type(%(
+      $x, $y = 1, "foo"
+      $x
+      )) { int32 }
+  end
+
+  it "infers type in multi assign (2)" do
+    assert_type(%(
+      $x, $y = 1, "foo"
+      $y
+      )) { string }
+  end
+
+  it "infers type from enum member" do
+    assert_type(%(
+      enum Color
+        Red, Green, Blue
+      end
+
+      $x = Color::Red
+      $x
+      )) { types["Color"] }
+  end
+
   it "errors if using typeof in type declaration" do
     assert_error %(
       $x : typeof(1)
       $x
       ),
       "can't use 'typeof' here"
+  end
+
+  it "doesn't error if using typeof for guessed variable (but doesn't guess)" do
+    assert_type(%(
+      class Foo(T)
+      end
+
+      def foo
+        1
+      end
+
+      $x = Foo(Int32).new
+      $x = Foo(typeof(foo)).new
+      $x
+      )) { (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar) }
   end
 
   it "infers type of global reference" do

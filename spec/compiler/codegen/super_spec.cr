@@ -196,7 +196,7 @@ describe "Codegen: super" do
   it "codegens super inside closure" do
     run(%(
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def foo
@@ -218,7 +218,7 @@ describe "Codegen: super" do
   it "codegens super inside closure forwarding args" do
     run(%(
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def foo(z)

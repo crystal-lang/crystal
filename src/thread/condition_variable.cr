@@ -2,8 +2,6 @@
 class Thread(T, R)
   # :nodoc:
   class ConditionVariable
-    @cond : LibPThread::Cond
-
     def initialize
       if LibPThread.cond_init(out @cond, nil) != 0
         raise Errno.new("pthread_cond_init")

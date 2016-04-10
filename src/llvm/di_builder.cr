@@ -1,6 +1,4 @@
 struct LLVM::DIBuilder
-  @unwrap : LibLLVMExt::DIBuilder
-
   def initialize(llvm_module)
     @unwrap = LibLLVMExt.create_di_builder(llvm_module)
   end

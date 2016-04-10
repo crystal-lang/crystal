@@ -4,55 +4,8 @@ require "./type_guess_visitor"
 module Crystal
   class Program
     def visit_type_declarations(node)
-      # First check type declarations
-      visitor = TypeDeclarationVisitor.new(self)
-      node.accept visitor
-
-      # Use the last type found for global variables to declare them
-      visitor.globals.each do |name, type|
-        declare_meta_type_var(self.global_vars, self, name, type)
-      end
-
-      # Use the last type found for class variables to declare them
-      visitor.class_vars.each do |owner, vars|
-        vars.each do |name, type|
-          declare_meta_type_var(owner.class_vars, owner, name, type)
-        end
-      end
-
-      # Now use several syntactic rules to infer the types of
-      # variables that don't have an explicit type set
-      visitor = TypeGuessVisitor.new(self)
-      node.accept visitor
-
-      # Process global variables
-      visitor.globals.each do |name, info|
-        declare_meta_type_var(self.global_vars, self, name, info)
-      end
-
-      # Process class variables
-      visitor.class_vars.each do |owner, vars|
-        vars.each do |name, info|
-          declare_meta_type_var(owner.class_vars, owner, name, info)
-        end
-      end
-
-      node
-    end
-
-    private def declare_meta_type_var(vars, owner, name, type : Type)
-      var = MetaTypeVar.new(name)
-      var.owner = owner
-      var.type = type
-      var.bind_to(var)
-      var.freeze_type = type
-      vars[name] = var
-    end
-
-    private def declare_meta_type_var(vars, owner, name, info : TypeGuessVisitor::TypeInfo)
-      type = info.type
-      type = Type.merge!(type, self.nil) unless info.outside_def
-      declare_meta_type_var(vars, owner, name, type)
+      processor = TypeDeclarationProcessor.new(self)
+      processor.process(node)
     end
   end
 
@@ -66,15 +19,15 @@ module Crystal
   #
   # This allows to put "main" code before these declarations,
   # so order matters less in the end.
-  #
-  # In the future these will be mandatory and after this pass
-  # we'll have a complete definition of the type hierarchy and
-  # their instance/class variables types.
   class TypeDeclarationVisitor < BaseTypeVisitor
+    alias TypeDeclarationWithLocation = TypeDeclarationProcessor::TypeDeclarationWithLocation
+
     getter globals
     getter class_vars
+    getter instance_vars
 
-    def initialize(mod)
+    def initialize(mod,
+                   @instance_vars : Hash(Type, Hash(String, TypeDeclarationWithLocation)))
       super(mod)
 
       # The type of global variables. The last one wins.
@@ -155,33 +108,24 @@ module Crystal
       when InstanceVar
         declare_instance_var(node, var)
       when ClassVar
-        owner = class_var_owner(node)
-        var_type = lookup_type(node.declared_type).virtual_type
-        var_type = check_declare_var_type(node, var_type)
-        owner_vars = @class_vars[owner] ||= {} of String => Type
-        owner_vars[var.name] = var_type
+        declare_class_var(node, var)
       when Global
-        var_type = lookup_type(node.declared_type).virtual_type
-        var_type = check_declare_var_type(node, var_type)
-        @globals[var.name] = var_type
+        declare_global_var(node, var)
       end
 
       false
     end
 
     def declare_instance_var(node, var)
-      type = current_type
-      case type
+      case owner = current_type
       when NonGenericClassType
-        var_type = lookup_type(node.declared_type)
-        var_type = check_declare_var_type(node, var_type)
-        type.declare_instance_var(var.name, var_type.virtual_type)
+        declare_instance_var_on_non_generic(owner, node, var)
         return
       when GenericClassType
-        type.declare_instance_var(var.name, node.declared_type)
+        declare_instance_var_on_generic(owner, node, var)
         return
       when GenericModuleType
-        type.declare_instance_var(var.name, node.declared_type)
+        declare_instance_var_on_generic(owner, node, var)
         return
       when GenericClassInstanceType
         # OK
@@ -189,13 +133,41 @@ module Crystal
       when Program, FileModule
         # Error, continue
       when NonGenericModuleType
-        var_type = lookup_type(node.declared_type)
-        var_type = check_declare_var_type(node, var_type)
-        type.declare_instance_var(var.name, var_type.virtual_type)
+        declare_instance_var_on_non_generic(owner, node, var)
         return
       end
 
-      node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
+      node.raise "can only declare instance variables of a non-generic class, not a #{owner.type_desc} (#{owner})"
+    end
+
+    def declare_instance_var_on_non_generic(owner, node, var)
+      # For non-generic types we can solve the type now
+      var_type = lookup_type(node.declared_type)
+      var_type = check_declare_var_type(node, var_type)
+      owner_vars = @instance_vars[owner] ||= {} of String => TypeDeclarationWithLocation
+      type_decl = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!)
+      owner_vars[var.name] = type_decl
+    end
+
+    def declare_instance_var_on_generic(owner, node, var)
+      # For generic types we must delay the type resolution
+      owner_vars = @instance_vars[owner] ||= {} of String => TypeDeclarationWithLocation
+      type_decl = TypeDeclarationWithLocation.new(node.declared_type, node.location.not_nil!)
+      owner_vars[var.name] = type_decl
+    end
+
+    def declare_class_var(node, var)
+      owner = class_var_owner(node)
+      var_type = lookup_type(node.declared_type).virtual_type
+      var_type = check_declare_var_type(node, var_type)
+      owner_vars = @class_vars[owner] ||= {} of String => Type
+      owner_vars[var.name] = var_type
+    end
+
+    def declare_global_var(node, var)
+      var_type = lookup_type(node.declared_type).virtual_type
+      var_type = check_declare_var_type(node, var_type)
+      @globals[var.name] = var_type
     end
 
     def visit(node : Def)

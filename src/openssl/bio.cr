@@ -48,11 +48,9 @@ struct OpenSSL::BIO
     crystal_bio
   end
 
-  @io : IO
   @boxed_io : Void*
-  @bio : LibCrypto::Bio*
 
-  def initialize(@io)
+  def initialize(@io : IO)
     @bio = LibCrypto.bio_new(pointerof(CRYSTAL_BIO))
 
     # We need to store a reference to the box because it's

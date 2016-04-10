@@ -1,9 +1,7 @@
 class Markdown::Parser
-  @renderer : Renderer
   @lines : Array(String)
-  @line : Int32
 
-  def initialize(text, @renderer)
+  def initialize(text : String, @renderer : Renderer)
     @lines = text.lines.map &.chomp
     @line = 0
   end

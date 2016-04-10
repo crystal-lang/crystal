@@ -33,9 +33,8 @@ module Crystal
       property start_line : Int32
       property end_line : Int32
       property needs_newline : Bool
-      @kind : Symbol
 
-      def initialize(@start_line, @kind)
+      def initialize(@start_line : Int32, @kind : Symbol)
         @end_line = @start_line
         @needs_newline = true
       end
@@ -117,7 +116,7 @@ module Crystal
       @assign_infos = [] of AlignInfo
       @doc_comments = [] of CommentInfo
       @current_doc_comment = nil
-      @hash_in_same_line = Set(typeof(object_id)).new
+      @hash_in_same_line = Set(UInt64).new
       @shebang = @token.type == :COMMENT && @token.value.to_s.starts_with?("#!")
       @heredoc_fixes = [] of HeredocFix
       @last_is_heredoc = false

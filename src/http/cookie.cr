@@ -157,8 +157,6 @@ module HTTP
       self
     end
 
-    @cookies : Hash(String, Cookie)
-
     # Create a new empty instance
     def initialize
       @cookies = {} of String => Cookie

@@ -12,7 +12,7 @@ module Crystal
 
         # The above might have produced more macro def expansions,
         # so we need to take care of these too
-        break if @def_macros.empty?
+        break if def_macros.empty?
       end
 
       node
@@ -330,6 +330,19 @@ module Crystal
       mod.undefined_global_variable(node, similar_name)
     end
 
+    def undefined_instance_variable(owner, node)
+      similar_name = lookup_similar_instance_variable_name(node, owner)
+      mod.undefined_instance_variable(node, owner, similar_name)
+    end
+
+    def lookup_similar_instance_variable_name(node, owner)
+      Levenshtein.find(node.name) do |finder|
+        owner.instance_vars.each_key do |name|
+          finder.test(name)
+        end
+      end
+    end
+
     def lookup_similar_global_variable_name(node)
       Levenshtein.find(node.name) do |finder|
         mod.global_vars.each_key do |name|
@@ -373,7 +386,7 @@ module Crystal
         node.raise "#{obj_type} doesn't have instance vars"
       end
 
-      ivar = obj_type.lookup_instance_var?(node.name, false)
+      ivar = obj_type.lookup_instance_var?(node.name)
       unless ivar
         node.raise "#{obj_type} doesn't have an instance var named '#{node.name}'"
       end
@@ -444,13 +457,15 @@ module Crystal
       when .metaclass?
         node.raise "@instance_vars are not yet allowed in metaclasses: use @@class_vars instead"
       when InstanceVarContainer
-        var = scope.lookup_instance_var node.name
-        unless scope.has_instance_var_in_initialize?(node.name)
-          var.nil_reason = NilReason.new(node.name, :not_in_initialize, scope: scope)
-          var.bind_to mod.nil_var
+        var_with_owner = scope.lookup_instance_var_with_owner?(node.name)
+        unless var_with_owner
+          undefined_instance_variable(scope, node)
+        end
+        if !var_with_owner.instance_var.type?
+          undefined_instance_variable(scope, node)
         end
         check_self_closured
-        var
+        var_with_owner.instance_var
       else
         node.raise "Bug: #{scope} is not an InstanceVarContainer"
       end
@@ -535,8 +550,9 @@ module Crystal
         return
       end
 
-      value.accept self
       var = lookup_instance_var target
+
+      value.accept self
 
       target.bind_to var
       node.bind_to value
@@ -2435,6 +2451,11 @@ module Crystal
       false
     end
 
+    def visit(node : MultiAssign)
+      expand(node)
+      false
+    end
+
     def expand(node)
       expand(node) { @mod.literal_expander.expand node }
     end
@@ -2640,7 +2661,7 @@ module Crystal
       @untyped_def || @block_context
     end
 
-    def visit(node : Require | When | Unless | MultiAssign | Until | MacroLiteral)
+    def visit(node : Require | When | Unless | Until | MacroLiteral)
       raise "Bug: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end

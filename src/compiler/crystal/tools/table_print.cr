@@ -7,8 +7,6 @@ module Crystal
     end
 
     class Column
-      @max_size : Int32
-
       def initialize
         @max_size = 0
       end
@@ -55,9 +53,6 @@ module Crystal
 
     property! last_string_row : Array(Cell)?
     property columns : Array(Column)
-
-    @io : IO
-    @data : Array(RowTypes)
 
     def initialize(@io : IO)
       @data = [] of RowTypes

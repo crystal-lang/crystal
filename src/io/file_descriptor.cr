@@ -2,12 +2,6 @@
 class IO::FileDescriptor
   include Buffered
 
-  @readers : Deque(Fiber)?
-  @writers : Deque(Fiber)?
-  @edge_triggerable : Bool
-  @flush_on_newline : Bool
-  @closed : Bool
-  @fd : Int32
   @read_timeout : Float64?
   @write_timeout : Float64?
   @read_event : Event::Event?
@@ -17,7 +11,7 @@ class IO::FileDescriptor
   property read_timed_out : Bool
   property write_timed_out : Bool
 
-  def initialize(fd, blocking = false, edge_triggerable = false)
+  def initialize(@fd : Int32, blocking = false, edge_triggerable = false)
     @edge_triggerable = !!edge_triggerable
     @closed = false
     @read_timed_out = false

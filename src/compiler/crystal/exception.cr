@@ -3,8 +3,7 @@ require "colorize"
 
 module Crystal
   abstract class Exception < ::Exception
-    property? color
-    @color : Bool?
+    property? color : Bool?
     @color = false
 
     @filename : String | VirtualFile | Nil

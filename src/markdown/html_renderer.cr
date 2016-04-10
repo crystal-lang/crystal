@@ -3,9 +3,7 @@ require "./renderer"
 class Markdown::HTMLRenderer
   include Renderer
 
-  @io : IO
-
-  def initialize(@io)
+  def initialize(@io : IO)
   end
 
   def begin_paragraph

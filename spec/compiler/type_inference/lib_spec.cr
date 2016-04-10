@@ -38,7 +38,24 @@ describe "Type inference: lib" do
   end
 
   it "reports error when changing var type and something breaks" do
-    assert_error "class LibFoo; def initialize; @value = 1; end; def value; @value; end; def value=(@value); end; end; f = LibFoo.new; f.value + 1; f.value = 'a'",
+    assert_error %(
+      class LibFoo
+        def initialize
+          @value = 1
+        end
+
+        def value
+          @value
+        end
+
+        def value=(@value : Char)
+        end
+      end
+
+      f = LibFoo.new
+      f.value + 1
+      f.value = 'a'
+      ),
       "undefined method '+' for Char"
   end
 
@@ -49,8 +66,9 @@ describe "Type inference: lib" do
       end
 
       class Foo
-        def value=(@value)
+        def value=(@value : Int32 | Char)
         end
+
         def value
           @value
         end

@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Type inference: initialize" do
   it "types instance vars as nilable if doesn't invoke super in initialize" do
-    node = parse("
+    assert_error %(
       class Foo
         def initialize
           @baz = Baz.new
@@ -21,16 +21,12 @@ describe "Type inference: initialize" do
 
       foo = Foo.new
       bar = Bar.new
-    ")
-    result = infer_type node
-    mod = result.program
-    foo = mod.types["Foo"] as NonGenericClassType
-    foo.instance_vars["@baz"].type.should eq(mod.union_of(mod.nil, mod.types["Baz"]))
-    foo.instance_vars["@another"].type.should eq(mod.int32)
+      ),
+      "this 'initialize' doesn't initialize ancestor instance variable '@baz', rendering it nilable"
   end
 
   it "types instance vars as nilable if doesn't invoke super in initialize with deep subclass" do
-    node = parse("
+    assert_error %(
       class Foo
         def initialize
           @baz = Baz.new
@@ -55,12 +51,8 @@ describe "Type inference: initialize" do
 
       foo = Foo.new
       bar = Bar.new
-    ")
-    result = infer_type node
-    mod = result.program
-    foo = mod.types["Foo"] as NonGenericClassType
-    foo.instance_vars["@baz"].type.should eq(mod.union_of(mod.nil, mod.types["Baz"]))
-    foo.instance_vars["@another"].type.should eq(mod.int32)
+      ),
+      "this 'initialize' doesn't initialize ancestor instance variable '@baz', rendering it nilable"
   end
 
   it "types instance vars as nilable if doesn't invoke super with default arguments" do
@@ -92,7 +84,7 @@ describe "Type inference: initialize" do
   end
 
   it "checks instance vars of included modules" do
-    result = assert_type("
+    assert_error %(
       module Lala
         def lala
           @x = 'a'
@@ -114,46 +106,12 @@ describe "Type inference: initialize" do
       b = Bar.new
       f = Foo.new
       f.lala
-      ") { char }
-
-    mod = result.program
-
-    foo = mod.types["Foo"] as NonGenericClassType
-    foo.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32, mod.char))
-
-    bar = mod.types["Bar"] as NonGenericClassType
-    bar.instance_vars.size.should eq(0)
-  end
-
-  it "errors when instance variable never assigned" do
-    assert_error %(
-      class Foo
-        def foo
-          @x.foo
-        end
-      end
-
-      Foo.new.foo
-      ), "(@x was never assigned a value)"
-  end
-
-  it "errors when instance variable never assigned" do
-    assert_error %(
-      class Foo
-        def initialize
-          @barbar = 1
-        end
-        def foo
-          @barbaz.foo
-        end
-      end
-
-      Foo.new.foo
-      ), "(@barbaz was never assigned a value, did you mean @barbar?)"
+      ),
+      "instance variable '@x' of Foo must be Char?, not Int32"
   end
 
   it "types instance var as nilable if not always assigned" do
-    assert_type(%(
+    assert_error %(
       class Foo
         def initialize
           if 1 == 2
@@ -168,11 +126,12 @@ describe "Type inference: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { nilable int32 }
+      ),
+      "instance variable '@x' of Foo must be Int32, not Nil"
   end
 
   it "types instance var as nilable if assigned in block" do
-    assert_type(%(
+    assert_error %(
       def bar
         yield if 1 == 2
       end
@@ -191,7 +150,8 @@ describe "Type inference: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { nilable int32 }
+      ),
+      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "types instance var as not-nilable if assigned in block but previosly assigned" do
@@ -219,7 +179,7 @@ describe "Type inference: initialize" do
   end
 
   it "types instance var as nilable if used before assignment" do
-    assert_type(%(
+    assert_error %(
       class Foo
         def initialize
           x = @x
@@ -233,7 +193,8 @@ describe "Type inference: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { nilable int32 }
+      ),
+      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "types instance var as non-nilable if calls super and super defines it" do
@@ -310,7 +271,7 @@ describe "Type inference: initialize" do
   end
 
   it "types instance var as nilable if used after method call that reads var" do
-    assert_type(%(
+    assert_error %(
       class Foo
         def initialize
           foo
@@ -328,7 +289,8 @@ describe "Type inference: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { nilable int32 }
+      ),
+      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "types instance var as nilable if used after method call that reads var (2)" do
@@ -355,7 +317,8 @@ describe "Type inference: initialize" do
 
       foo = Foo.new
       foo.x
-      ), "undefined method 'bar' for Nil"
+      ),
+      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "doesn't type instance var as nilable if used after global method call" do
@@ -423,7 +386,7 @@ describe "Type inference: initialize" do
   end
 
   it "types instance var as nilable if used after method call that reads var through other calls" do
-    assert_type(%(
+    assert_error %(
       class Foo
         def initialize
           foo
@@ -453,7 +416,8 @@ describe "Type inference: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { nilable int32 }
+      ),
+      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "doesn't type instance var as nilable if used after method call that assigns var" do
@@ -508,6 +472,7 @@ describe "Type inference: initialize" do
     assert_type(%(
       class Foo
         def initialize
+          @y = 2
           foo
           @x = 1
         end
@@ -527,20 +492,15 @@ describe "Type inference: initialize" do
   end
 
   it "types instance var as nilable if used in first of two method calls" do
-    assert_type(%(
+    assert_error %(
       class Foo
         def initialize
           foo
-          bar
           @x = 1
         end
 
         def foo
           @x
-        end
-
-        def bar
-          @y
         end
 
         def x
@@ -550,7 +510,8 @@ describe "Type inference: initialize" do
 
       foo = Foo.new
       foo.x
-      )) { nilable int32 }
+      ),
+      "instance variable '@x' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
   it "doesn't type instance var as nilable if assigned before method call" do
@@ -577,7 +538,7 @@ describe "Type inference: initialize" do
   end
 
   it "marks instance variable as nilable in initialize if using self in method" do
-    assert_type("
+    assert_error "
       class Foo
         def initialize
           do_something
@@ -599,7 +560,8 @@ describe "Type inference: initialize" do
       end
 
       Foo.new.foo
-      ") { nilable int32 }
+      ",
+      "'self' was used before initializing instance variable '@foo', rendering it nilable"
   end
 
   it "marks instance variable as nilable in initialize if using self" do
@@ -625,7 +587,7 @@ describe "Type inference: initialize" do
   end
 
   it "marks instance variable as nilable in initialize if assigning self" do
-    assert_type("
+    assert_type(%(
       class Foo
         def initialize
           a = self
@@ -643,10 +605,10 @@ describe "Type inference: initialize" do
       end
 
       Foo.new.foo
-      ") { nilable int32 }
+      )) { nilable int32 }
   end
 
-  it "doesn't mark instance variable as nilable when using self in super" do
+  it "marks instance variable as nilable when using self in super" do
     assert_type("
       class Parent
         def initialize(foo)
@@ -665,7 +627,7 @@ describe "Type inference: initialize" do
       end
 
       Foo.new.foo
-      ") { int32 }
+      ") { nilable int32 }
   end
 
   it "errors if found matches for initialize but doesn't cover all (bug #204)" do
@@ -723,33 +685,6 @@ describe "Type inference: initialize" do
 
       Foo.new.foo
       ") { int32 }
-  end
-
-  it "doesn't type instance var as nil if all subclasses initialize it and base class is abstract" do
-    assert_type(%(
-      abstract class Foo
-        def foo
-          @foo + 1
-        end
-      end
-
-      class Bar < Foo
-        def initialize
-          @foo = 1
-        end
-      end
-
-      class Baz < Foo
-        def initialize
-          @foo = 1
-        end
-      end
-
-      p = Pointer(Foo).malloc(1_u64)
-      p.value = Bar.new
-      p.value = Baz.new
-      p.value.foo
-      )) { int32 }
   end
 
   it "types initializer of recursive generic type" do

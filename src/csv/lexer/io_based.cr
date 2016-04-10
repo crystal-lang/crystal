@@ -1,11 +1,7 @@
 # :nodoc:
 class CSV::Lexer::IOBased < CSV::Lexer
-  @io : IO
-  @current_char : Char
-
-  def initialize(io, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
+  def initialize(@io : IO, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
     super(separator, quote_char)
-    @io = io
     @current_char = @io.read_char || '\0'
   end
 

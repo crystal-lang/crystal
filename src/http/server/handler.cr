@@ -13,7 +13,7 @@
 # end
 # ```
 abstract class HTTP::Handler
-  property :next
+  property next : Handler | Proc | Nil
 
   abstract def call(context : HTTP::Server::Context)
 

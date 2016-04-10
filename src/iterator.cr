@@ -116,8 +116,6 @@ module Iterator(T)
   struct Singleton(T)
     include Iterator(T)
 
-    @element : T
-
     def initialize(@element : T)
     end
 
@@ -137,8 +135,6 @@ module Iterator(T)
   # :nodoc:
   struct SingletonProc(T)
     include Iterator(T)
-
-    @proc : -> T
 
     def initialize(@proc : -> T)
     end
@@ -173,11 +169,7 @@ module Iterator(T)
   class Chain(I1, I2, T1, T2)
     include Iterator(T1 | T2)
 
-    @iterator1 : I1
-    @iterator2 : I2
-    @iterator1_consumed : Bool
-
-    def initialize(@iterator1, @iterator2)
+    def initialize(@iterator1 : I1, @iterator2 : I2)
       @iterator1_consumed = false
     end
 
@@ -219,10 +211,7 @@ module Iterator(T)
     include Iterator(U)
     include IteratorWrapper
 
-    @iterator : I
-    @func : T -> U?
-
-    def initialize(@iterator : Iterator(T), @func)
+    def initialize(@iterator : I, @func : T -> U?)
     end
 
     def next
@@ -253,11 +242,7 @@ module Iterator(T)
     include Iterator(Array(T))
     include IteratorWrapper
 
-    @iterator : I
-    @n : N
-    @values : Array(T)
-
-    def initialize(@iterator : Iterator(T), @n : N)
+    def initialize(@iterator : I, @n : N)
       @values = Array(T).new(@n)
     end
 
@@ -298,9 +283,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-
-    def initialize(@iterator : Iterator(T))
+    def initialize(@iterator : I)
     end
 
     def next
@@ -335,11 +318,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-    @n : N
-    @count : Int32
-
-    def initialize(@iterator : Iterator(T), @n : N)
+    def initialize(@iterator : I, @n : N)
       @count = 0
     end
 
@@ -394,6 +373,8 @@ module Iterator(T)
     slice(n)
   end
 
+  # TODO: with the new global type inference algorithm we can't yet express this type.
+  #
   # Returns an iterator that flattens nested iterators into a single iterator
   # whose type is the union of the simple types of all of the nested iterators
   # (and their nested iterators, and so on).
@@ -405,85 +386,85 @@ module Iterator(T)
   #     iter.next # => 'b'
   #     iter.next # => Iterator::Stop::INSTANCE
   #
-  def flatten
-    Flatten(self, typeof(Flatten.element_type(self))).new(self)
-  end
+  # def flatten
+  #   Flatten(self, typeof(Flatten.element_type(self))).new(self)
+  # end
 
   # :nodoc:
-  class Flatten(I, T1)
-    include Iterator(T1)
+  # class Flatten(I, T1)
+  #   include Iterator(T1)
 
-    @iterator : I
-    @top : Bool
-    @to_rewind : Array(Proc(Nil))
+  #   @iterator : I
+  #   @top : Bool
+  #   @to_rewind : Array(Proc(Nil))
 
-    # @generator : I
+  #   # @generator : I
 
-    def initialize(@iterator)
-      @generator = @iterator
-      @top = true
-      @to_rewind = [] of Proc(Nil)
-    end
+  #   def initialize(@iterator)
+  #     @generator = @iterator
+  #     @top = true
+  #     @to_rewind = [] of Proc(Nil)
+  #   end
 
-    def next
-      value = @generator.next
-      if value.is_a?(Stop)
-        if @top
-          return stop
-        else
-          @generator = @iterator
-          @top = true
-          return self.next
-        end
-      end
+  #   def next
+  #     value = @generator.next
+  #     if value.is_a?(Stop)
+  #       if @top
+  #         return stop
+  #       else
+  #         @generator = @iterator
+  #         @top = true
+  #         return self.next
+  #       end
+  #     end
 
-      flatten value
-    end
+  #     flatten value
+  #   end
 
-    def make_rewinder(iter)
-      ->{
-        iter.rewind
-        # Return nil to disguise the individual iterator types
-        nil
-      }
-    end
+  #   def make_rewinder(iter)
+  #     ->{
+  #       iter.rewind
+  #       # Return nil to disguise the individual iterator types
+  #       nil
+  #     }
+  #   end
 
-    def rewind
-      @iterator.rewind
-      @generator = @iterator
-      @top = true
-      @to_rewind.each &.call
-      @to_rewind.clear
-    end
+  #   def rewind
+  #     @iterator.rewind
+  #     @generator = @iterator
+  #     @top = true
+  #     @to_rewind.each &.call
+  #     @to_rewind.clear
+  #   end
 
-    def flatten(element)
-      case element
-      when Iterator
-        flat = element.flatten
-        @generator = flat
-        @to_rewind << make_rewinder flat
-        @top = false
-        self.next
-      when Iterable
-        flatten element.each
-      else
-        element
-      end
-    end
+  #   def flatten(element)
+  #     case element
+  #     when Iterator
+  #       flat = element.flatten
+  #       @generator = flat
+  #       @to_rewind << make_rewinder flat
+  #       @top = false
+  #       self.next
+  #     when Iterable
+  #       flatten element.each
+  #     else
+  #       element
+  #     end
+  #   end
 
-    def self.element_type(element)
-      case element
-      when Stop
-        raise ""
-      when Iterator
-        element_type(element.next)
-      when Iterable
-        element_type(element.each)
-      else
-        element
-      end
-    end
-  end
+  #   def self.element_type(element)
+  #     case element
+  #     when Stop
+  #       raise ""
+  #     when Iterator
+  #       element_type(element.next)
+  #     when Iterable
+  #       element_type(element.each)
+  #     else
+  #       element
+  #     end
+  #   end
+  # end
 
   # Returns an iterator that chunks the iterator's elements in arrays of *size*
   # filling up the remaining elements if no element remains with nil or a given
@@ -509,11 +490,7 @@ module Iterator(T)
     include Iterator(Array(T | U))
     include IteratorWrapper
 
-    @iterator : I
-    @size : N
-    @filled_up_with : U
-
-    def initialize(@iterator : Iterator(T), @size : N, @filled_up_with : U)
+    def initialize(@iterator : I, @size : N, @filled_up_with : U)
     end
 
     def next
@@ -548,10 +525,7 @@ module Iterator(T)
     include Iterator(U)
     include IteratorWrapper
 
-    @iterator : I
-    @func : T -> U
-
-    def initialize(@iterator : Iterator(T), @func : T -> U)
+    def initialize(@iterator : I, @func : T -> U)
     end
 
     def next
@@ -576,10 +550,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-    @func : T -> B
-
-    def initialize(@iterator : Iterator(T), @func : T -> B)
+    def initialize(@iterator : I, @func : T -> B)
     end
 
     def next
@@ -609,10 +580,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-    @func : T -> B
-
-    def initialize(@iterator : Iterator(T), @func : T -> B)
+    def initialize(@iterator : I, @func : T -> B)
     end
 
     def next
@@ -642,11 +610,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-    @n : N
-    @original : N
-
-    def initialize(@iterator : Iterator(T), @n : Int)
+    def initialize(@iterator : I, @n : N)
       @original = @n
     end
 
@@ -682,11 +646,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-    @func : T -> U
-    @returned_false : Bool
-
-    def initialize(@iterator : Iterator(T), @func : T -> U)
+    def initialize(@iterator : I, @func : T -> U)
       @returned_false = false
     end
 
@@ -726,10 +686,7 @@ module Iterator(T)
     include Iterator(Array(T))
     include IteratorWrapper
 
-    @iterator : I
-    @n : N
-
-    def initialize(@iterator : Iterator(T), @n)
+    def initialize(@iterator : I, @n : N)
     end
 
     def next
@@ -767,9 +724,6 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-    @n : N
-
     def initialize(@iterator : I, @n : N)
       raise ArgumentError.new("n must be greater or equal 1") if @n < 1
     end
@@ -804,11 +758,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-    @n : N
-    @original : N
-
-    def initialize(@iterator : Iterator(T), @n : Int)
+    def initialize(@iterator : I, @n : N)
       @original = @n
     end
 
@@ -844,11 +794,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-    @func : T -> U
-    @returned_false : Bool
-
-    def initialize(@iterator : Iterator(T), @func : T -> U)
+    def initialize(@iterator : I, @func : T -> U)
       @returned_false = false
     end
 
@@ -891,10 +837,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-    @proc : T ->
-
-    def initialize(@iterator, @proc)
+    def initialize(@iterator : I, @proc : T ->)
     end
 
     def next
@@ -934,11 +877,7 @@ module Iterator(T)
     include Iterator(T)
     include IteratorWrapper
 
-    @iterator : I
-    @func : T -> U
-    @hash : Hash(T, Bool)
-
-    def initialize(@iterator : Iterator(T), @func : T -> U)
+    def initialize(@iterator : I, @func : T -> U)
       @hash = {} of T => Bool
     end
 
@@ -977,11 +916,7 @@ module Iterator(T)
     include Iterator({T, Int32})
     include IteratorWrapper
 
-    @iterator : I
-    @offset : O
-    @index : O
-
-    def initialize(@iterator : Iterator(T), @offset, @index = offset)
+    def initialize(@iterator : I, @offset : O, @index : O = offset)
     end
 
     def next
@@ -1014,10 +949,7 @@ module Iterator(T)
     include Iterator({T, O})
     include IteratorWrapper
 
-    @iterator : I
-    @object : O
-
-    def initialize(@iterator : Iterator(T), @object : O)
+    def initialize(@iterator : I, @object : O)
     end
 
     def next
@@ -1045,10 +977,7 @@ module Iterator(T)
   struct Zip(I1, I2, T1, T2)
     include Iterator({T1, T2})
 
-    @iterator1 : I1
-    @iterator2 : I2
-
-    def initialize(@iterator1, @iterator2)
+    def initialize(@iterator1 : I1, @iterator2 : I2)
     end
 
     def next

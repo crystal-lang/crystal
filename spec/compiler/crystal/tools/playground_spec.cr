@@ -26,20 +26,24 @@ private def assert_agent_eq(source, expected)
   instrument(source).should eq(expected)
 end
 
+class Crystal::Playground::Agent
+  @ws : HTTP::WebSocket | Crystal::Playground::TestAgent::FakeSocket
+end
+
 class Crystal::Playground::TestAgent < Playground::Agent
   class FakeSocket
     property message
 
-    def send(@message)
+    def send(@message : String)
     end
   end
 
-  def initialize(url, @tag)
-    @ws = FakeSocket.new
+  def initialize(url, @tag : Int32)
+    @ws = @fake_socket = FakeSocket.new
   end
 
   def last_message
-    @ws.message
+    @fake_socket.message
   end
 end
 

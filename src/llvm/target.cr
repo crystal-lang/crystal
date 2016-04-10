@@ -17,9 +17,7 @@ struct LLVM::Target
     new target
   end
 
-  @unwrap : LibLLVM::TargetRef
-
-  def initialize(@unwrap)
+  def initialize(@unwrap : LibLLVM::TargetRef)
   end
 
   def name

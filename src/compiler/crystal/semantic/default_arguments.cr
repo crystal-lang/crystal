@@ -202,10 +202,7 @@ class Crystal::Def
   end
 
   class ReplaceFreeVarTransformer < Transformer
-    @free_var_name : String
-    @replacement_name : String
-
-    def initialize(@free_var_name, @replacement_name)
+    def initialize(@free_var_name : String, @replacement_name : String)
     end
 
     def transform(node : Generic)

@@ -32,19 +32,13 @@ class HTTP::Server
     # body. If not set, the default value is 200 (OK).
     property status_code : Int32
 
-    @io : IO
-    @wrote_headers : Bool
-    @upgraded : Bool
-    @original_output : Output
-    @cookies : HTTP::Cookies?
-
     # :nodoc:
-    def initialize(@io, @version = "HTTP/1.1")
+    def initialize(@io : IO, @version = "HTTP/1.1")
       @headers = Headers.new
       @status_code = 200
       @wrote_headers = false
       @upgraded = false
-      @output = @original_output = output = Output.new(@io)
+      @output = output = @original_output = Output.new(@io)
       output.response = self
     end
 

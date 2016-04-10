@@ -51,20 +51,14 @@ struct Vec3
   end
 end
 
-struct Ray
-  getter :start
-  getter :dir
-
-  def initialize(@start, @dir)
-  end
-end
+record Ray, start : Vec3, dir : Vec3
 
 class Sphere
   getter :color
   getter :reflection
   getter :transparency
 
-  def initialize(@center, @radius, @color, @reflection = 0.0, @transparency = 0.0)
+  def initialize(@center : Vec3, @radius : Float64, @color : Vec3, @reflection = 0.0, @transparency = 0.0)
   end
 
   def intersects?(ray)
@@ -99,21 +93,8 @@ class Sphere
   end
 end
 
-class Light
-  getter :position
-  getter :color
-
-  def initialize(@position, @color)
-  end
-end
-
-class Scene
-  getter :objects
-  getter :lights
-
-  def initialize(@objects, @lights)
-  end
-end
+record Light, position : Vec3, color : Vec3
+record Scene, objects : Array(Sphere), lights : Array(Light)
 
 def trace(ray, scene, depth)
   nearest = 1e9

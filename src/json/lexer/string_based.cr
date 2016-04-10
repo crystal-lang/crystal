@@ -1,7 +1,5 @@
 # :nodoc:
 class JSON::Lexer::StringBased < JSON::Lexer
-  @reader : Char::Reader
-
   def initialize(string)
     super()
     @reader = Char::Reader.new(string)

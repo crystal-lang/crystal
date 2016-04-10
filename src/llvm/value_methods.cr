@@ -1,7 +1,5 @@
 module LLVM::ValueMethods
-  getter unwrap : LibLLVM::ValueRef
-
-  def initialize(@unwrap)
+  def initialize(@unwrap : LibLLVM::ValueRef)
   end
 
   def name=(name)

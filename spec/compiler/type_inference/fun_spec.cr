@@ -220,7 +220,7 @@ describe "Type inference: fun" do
       require "prelude"
 
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -231,7 +231,7 @@ describe "Type inference: fun" do
       ->(f : Foo) do
         {Foo.new(f.x), 0}
       end
-      )) { fun_of(types["Foo"], no_return) }
+      )) { fun_of(types["Foo"], tuple_of([types["Foo"], int32])) }
   end
 
   it "allows implicit cast of fun to return void in non-generic restriction" do
@@ -531,7 +531,7 @@ describe "Type inference: fun" do
       require "prelude"
 
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -540,7 +540,7 @@ describe "Type inference: fun" do
       end
 
       ->(s : Foo) { s.x }
-      )) { fun_of(types["Foo"], no_return) }
+      )) { fun_of(types["Foo"], int32) }
   end
 
   it "types fun pointer with a type that was never instantiated" do
@@ -548,7 +548,7 @@ describe "Type inference: fun" do
       require "prelude"
 
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -561,7 +561,7 @@ describe "Type inference: fun" do
       end
 
       ->foo(Foo)
-      )) { fun_of(types["Foo"], no_return) }
+      )) { fun_of(types["Foo"], types["Foo"]) }
   end
 
   it "allows using fun arg name shadowing local variable" do
@@ -621,7 +621,7 @@ describe "Type inference: fun" do
       class Bar < Foo
         getter value
 
-        def initialize(@value)
+        def initialize(@value : Int32)
         end
       end
 

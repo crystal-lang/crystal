@@ -17,8 +17,6 @@ class Crystal::Call
   getter? raises : Bool
   @raises = false
 
-  @subclass_notifier : ModuleType?
-
   def mod
     scope.program
   end
@@ -1011,7 +1009,7 @@ class Crystal::Call
     {typed_def, args}
   end
 
-  def attach_subclass_observer(type)
+  def attach_subclass_observer(type : ModuleType)
     detach_subclass_observer
     type.add_subclass_observer(self)
     @subclass_notifier = type

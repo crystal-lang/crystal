@@ -478,7 +478,7 @@ describe "Code gen: virtual type" do
   it "codegens new for simple type, then for virtual" do
     run("
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -498,7 +498,7 @@ describe "Code gen: virtual type" do
   it "codegens new twice for virtual" do
     run("
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x

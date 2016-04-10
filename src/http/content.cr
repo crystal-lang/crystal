@@ -12,10 +12,7 @@ module HTTP
 
   # :nodoc:
   class FixedLengthContent < Content
-    @io : IO
-    @remaining : UInt64
-
-    def initialize(@io, size : UInt64)
+    def initialize(@io : IO, size : UInt64)
       @remaining = size
     end
 
@@ -33,9 +30,7 @@ module HTTP
 
   # :nodoc:
   class UnknownLengthContent < Content
-    @io : IO
-
-    def initialize(@io)
+    def initialize(@io : IO)
     end
 
     def read(slice : Slice(UInt8))
@@ -49,10 +44,9 @@ module HTTP
 
   # :nodoc:
   class ChunkedContent < Content
-    @io : IO
     @chunk_remaining : Int32
 
-    def initialize(@io)
+    def initialize(@io : IO)
       @chunk_remaining = io.gets.not_nil!.to_i(16)
       check_last_chunk
     end

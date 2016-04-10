@@ -1,8 +1,6 @@
 # A handler that logs the request method, resource, status code, and
 # the time used to execute the next handler, to the given `IO`.
 class HTTP::LogHandler < HTTP::Handler
-  @io : IO
-
   # Initializes this handler to log to the given `IO`.
   def initialize(@io : IO = STDOUT)
   end

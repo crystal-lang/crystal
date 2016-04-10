@@ -82,9 +82,9 @@ module HTTP
       form_builder.to_s
     end
 
-    protected getter raw_params : Hash(String, Array(String))
+    protected getter raw_params
 
-    def initialize(@raw_params)
+    def initialize(@raw_params : Hash(String, Array(String)))
     end
 
     def ==(other : self)

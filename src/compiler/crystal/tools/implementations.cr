@@ -85,9 +85,8 @@ module Crystal
 
   class ImplementationsVisitor < Visitor
     getter locations : Array(Location)
-    @target_location : Location
 
-    def initialize(@target_location)
+    def initialize(@target_location : Location)
       @locations = [] of Location
     end
 

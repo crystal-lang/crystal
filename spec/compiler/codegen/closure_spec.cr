@@ -205,7 +205,7 @@ describe "Code gen: closure" do
   it "codegens closure with self and var" do
     run("
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def foo
@@ -225,7 +225,7 @@ describe "Code gen: closure" do
   it "codegens closure with implicit self and var" do
     run("
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def foo
@@ -245,7 +245,7 @@ describe "Code gen: closure" do
   it "codegens closure with instance var and var" do
     run("
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def foo
@@ -261,7 +261,7 @@ describe "Code gen: closure" do
   it "codegens closure with instance var" do
     run("
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def foo
@@ -280,7 +280,7 @@ describe "Code gen: closure" do
       end
 
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def foo
@@ -425,7 +425,7 @@ describe "Code gen: closure" do
   it "codegens fun literal with struct" do
     run(%(
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -443,7 +443,7 @@ describe "Code gen: closure" do
   it "codegens closure with struct" do
     run(%(
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -464,7 +464,7 @@ describe "Code gen: closure" do
   it "codegens closure with self and arguments" do
     run(%(
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def foo(x)
@@ -578,7 +578,7 @@ describe "Code gen: closure" do
   it "closures struct self" do
     run(%(
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def foo

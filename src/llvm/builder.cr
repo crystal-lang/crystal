@@ -1,6 +1,4 @@
 class LLVM::Builder
-  @unwrap : LibLLVM::BuilderRef
-
   def initialize
     @unwrap = LibLLVM.create_builder
   end

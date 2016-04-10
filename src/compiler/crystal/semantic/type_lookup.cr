@@ -53,7 +53,7 @@ module Crystal
 
         Crystal.check_type_allowed_in_generics(ident, type, "can't use #{type} in a union type")
 
-        type
+        type.virtual_type
       end
       @type = program.type_merge(types)
       false
@@ -94,6 +94,14 @@ module Crystal
         if type_var.is_a?(NumberLiteral)
           type_var
         else
+          # Check the case of T resolving to a number
+          if type_var.is_a?(Path) && type_var.names.size == 1
+            the_type = @root.lookup_type(type_var)
+            if the_type.is_a?(ASTNode)
+              next the_type as TypeVar
+            end
+          end
+
           @type = nil
           type_var.accept self
           return false if !@raise && !@type
@@ -121,7 +129,7 @@ module Crystal
 
           Crystal.check_type_allowed_in_generics(input, type, "can't use #{type} as proc argument")
 
-          types << type
+          types << type.virtual_type
         end
       end
 
@@ -132,7 +140,7 @@ module Crystal
 
         Crystal.check_type_allowed_in_generics(output, type, "can't use #{type} as proc return type")
 
-        types << type
+        types << type.virtual_type
       else
         types << program.void
       end
@@ -142,13 +150,17 @@ module Crystal
     end
 
     def visit(node : Self)
-      @type = @self_type
+      @type = @self_type.virtual_type
       false
     end
 
     def visit(node : TypeOf)
       unless @allow_typeof
-        node.raise "can't use 'typeof' here"
+        if @raise
+          node.raise "can't use 'typeof' here"
+        else
+          return false
+        end
       end
 
       meta_vars = MetaVars{"self": MetaVar.new("self", @self_type)}

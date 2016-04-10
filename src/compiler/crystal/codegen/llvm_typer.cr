@@ -12,9 +12,6 @@ module Crystal
 
     alias TypeCache = Hash(Type, LLVM::Type)
 
-    @cache : Hash(Type, LLVM::Type)
-    @struct_cache : Hash(Type, LLVM::Type)
-    @union_value_cache : Hash(Type, LLVM::Type)
     @layout : LLVM::TargetData
     @landing_pad_type : LLVM::Type
 

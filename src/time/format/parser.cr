@@ -3,17 +3,7 @@ struct Time::Format
   struct Parser
     include Pattern
 
-    @reader : Char::Reader
-    @year : Int32
-    @month : Int32
-    @day : Int32
-    @hour : Int32
-    @minute : Int32
-    @second : Int32
-    @millisecond : Int32
-    @pm : Bool
-    @offset_in_minutes : Int32?
-    @kind : Time::Kind?
+    @epoch : Int64?
 
     def initialize(string)
       @reader = Char::Reader.new(string)

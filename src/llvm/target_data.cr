@@ -1,7 +1,5 @@
 struct LLVM::TargetData
-  @unwrap : LibLLVM::TargetDataRef
-
-  def initialize(@unwrap)
+  def initialize(@unwrap : LibLLVM::TargetDataRef)
   end
 
   def size_in_bits(type)

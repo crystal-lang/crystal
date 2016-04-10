@@ -15,7 +15,7 @@ abstract class Instruction
 end
 
 class Increment < Instruction
-  def initialize(@amount)
+  def initialize(@amount : Int32)
   end
 
   def compile(program, bb)
@@ -35,7 +35,7 @@ class Increment < Instruction
 end
 
 class DataIncrement < Instruction
-  def initialize(@amount)
+  def initialize(@amount : Int32)
   end
 
   def compile(program, bb)
@@ -88,7 +88,7 @@ class Write < Instruction
 end
 
 class Loop < Instruction
-  def initialize(@body)
+  def initialize(@body : Array(Instruction))
   end
 
   def compile(program, bb)
@@ -127,11 +127,11 @@ class Program
   getter mod
   getter builder
   getter instructions
-  getter! cells_ptr
-  getter! cell_index_ptr
-  getter! func
+  getter! cells_ptr : LLVM::Value
+  getter! cell_index_ptr : LLVM::Value
+  getter! func : LLVM::Function
 
-  def initialize(@instructions)
+  def initialize(@instructions : Array(Instruction))
     @mod = LLVM::Module.new("brainfuck")
     @builder = LLVM::Builder.new
   end

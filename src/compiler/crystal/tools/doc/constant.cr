@@ -5,9 +5,8 @@ class Crystal::Doc::Constant
 
   getter type : Type
   getter const : Const
-  @generator : Generator
 
-  def initialize(@generator, @type : Type, @const)
+  def initialize(@generator : Generator, @type : Type, @const : Const)
   end
 
   def doc

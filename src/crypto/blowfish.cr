@@ -1,7 +1,6 @@
 class Crypto::Blowfish
   DEFAULT_ROUNDS = 16
 
-  @rounds : Int32
   @p : Array(Int32)
   @s : Array(Array(Int32))
 

@@ -1,7 +1,5 @@
 struct LLVM::ParameterCollection
-  @function : Function
-
-  def initialize(@function)
+  def initialize(@function : Function)
   end
 
   def size

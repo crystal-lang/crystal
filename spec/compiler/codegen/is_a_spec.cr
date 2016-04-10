@@ -91,7 +91,7 @@ describe "Codegen: is_a?" do
   it "evaluates method on filtered union type" do
     run("
       class Foo
-        def initialize(x)
+        def initialize(x : Int32)
           @x = x
         end
 
@@ -114,7 +114,7 @@ describe "Codegen: is_a?" do
   it "evaluates method on filtered union type 2" do
     run("
       class Foo
-        def initialize(x)
+        def initialize(x : Int32)
           @x = x
         end
 
@@ -124,7 +124,7 @@ describe "Codegen: is_a?" do
       end
 
       class Bar
-        def initialize(x)
+        def initialize(x : Int32)
           @x = x
         end
 
@@ -422,7 +422,7 @@ describe "Codegen: is_a?" do
   it "restricts type in else but lazily" do
     run("
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x

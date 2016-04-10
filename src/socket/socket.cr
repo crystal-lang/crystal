@@ -29,13 +29,11 @@ class Socket < IO::FileDescriptor
     getter address : String
     getter port : UInt16
 
-    def initialize(family : Family, address : String, port : Int)
+    def initialize(@family : Family, @address : String, port : Int)
       if family != Family::INET && family != Family::INET6
         raise ArgumentError.new("Unsupported address family")
       end
 
-      @family = family
-      @address = address
       @port = port.to_u16
     end
 
@@ -101,8 +99,7 @@ class Socket < IO::FileDescriptor
   struct UNIXAddress
     getter path : String
 
-    def initialize(path)
-      @path = path
+    def initialize(@path : String)
     end
 
     def family

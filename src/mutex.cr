@@ -3,8 +3,6 @@
 # TODO: this isn't thread-safe yet.
 class Mutex
   @mutex_fiber : Fiber?
-  @lock_count : Int32
-  @queue : Deque(Fiber)?
 
   def initialize
     @lock_count = 0

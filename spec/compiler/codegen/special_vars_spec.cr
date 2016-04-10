@@ -81,7 +81,7 @@ describe "Codegen: special vars" do
       class Foo
         getter string
 
-        def initialize(@string)
+        def initialize(@string : String)
         end
       end
 
