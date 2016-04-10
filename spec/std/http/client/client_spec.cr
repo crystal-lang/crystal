@@ -65,6 +65,14 @@ module HTTP
         cl.port.should eq(9999)
       end
 
+      it "allows changing ssl settings" do
+        cl = Client.new(URI.parse("https://demo.com"))
+        cl.ssl_method = OpenSSL::SSL::Method::TLSv1
+        cl.ssl_cert_file = "/path/to/cert"
+        cl.ssl_key_file = "/path/to/key"
+        cl.ssl_ca_file = "/path/to/ca"
+      end
+
       it "raises error if not http schema" do
         expect_raises(ArgumentError, "Unsupported scheme: ssh") do
           Client.new(URI.parse("ssh://demo.com"))

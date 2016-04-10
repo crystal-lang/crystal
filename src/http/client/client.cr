@@ -1,3 +1,5 @@
+require "openssl"
+
 # An HTTP Client.
 #
 # ### One-shot usage
@@ -80,6 +82,11 @@ class HTTP::Client
   # Whether automatic compression/decompression is enabled.
   property? compress : Bool
 
+  property! ssl_ca_file : String
+  property! ssl_cert_file : String
+  property! ssl_key_file : String
+  property! ssl_method : OpenSSL::SSL::Method
+
   @before_request : Array(Request ->)?
 
   ifdef without_openssl
@@ -105,6 +112,7 @@ class HTTP::Client
 
     @port = (port || (ssl ? 443 : 80)).to_i
     @compress = true
+    @ssl_method = OpenSSL::SSL::Method::SSLv23 if ssl
   end
 
   # Creates a new HTTP client from a URI. Parses the *host*, *port*,
@@ -485,6 +493,14 @@ class HTTP::Client
     @socket = nil
   end
 
+  def ssl_context
+    ctx = OpenSSL::SSL::Context.new(ssl_method)
+    ctx.ca_file = ssl_ca_file unless ssl_ca_file.empty?
+    ctx.private_key = ssl_key_file unless ssl_key_file.empty?
+    ctx.certificate_file = ssl_cert_file unless ssl_cert_file.empty?
+    ctx
+  end
+
   private def new_request(method, path, headers, body)
     headers ||= HTTP::Headers.new
     headers["Host"] ||= host_header
@@ -506,7 +522,7 @@ class HTTP::Client
 
     ifdef !without_openssl
       if @ssl
-        ssl_socket = OpenSSL::SSL::Socket.new(socket, sync_close: true)
+        ssl_socket = OpenSSL::SSL::Socket.new(socket, context: ssl_context, sync_close: true)
         @socket = socket = ssl_socket
       end
     end

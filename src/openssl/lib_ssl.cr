@@ -13,9 +13,12 @@ lib LibSSL
     ASN1 = 2
   end
 
+  fun sslv3_method = SSLv3_method : SSLMethod
+  fun sslv23_method = SSLv23_method : SSLMethod
+  fun tlsv1_method = TLSv1_method : SSLMethod
+
   fun ssl_load_error_strings = SSL_load_error_strings
   fun ssl_library_init = SSL_library_init
-  fun sslv23_method = SSLv23_method : SSLMethod
   fun ssl_ctx_new = SSL_CTX_new(method : SSLMethod) : SSLContext
   fun ssl_ctx_free = SSL_CTX_free(context : SSLContext)
 
@@ -41,4 +44,7 @@ lib LibSSL
   fun ssl_ctx_use_certificate_chain_file = SSL_CTX_use_certificate_chain_file(ctx : SSLContext, file : UInt8*) : Int
   fun ssl_ctx_use_privatekey_file = SSL_CTX_use_PrivateKey_file(ctx : SSLContext, file : UInt8*, filetype : SSLFileType) : Int
   fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
+  fun ssl_ctx_load_verify_locations = SSL_CTX_load_verify_locations(ctx: SSLContext, ca_file: UInt8*, ca_path: UInt8*) : Int32
+  fun ssl_ctx_use_certificate_file = SSL_CTX_use_certificate_file(ctx: SSLContext, file: UInt8*, type: Int32) : Int32
+
 end
