@@ -9,6 +9,10 @@ class Crystal::CodeGenVisitor
     llvm_true
   end
 
+  def match_type_id(type, restriction : NonGenericModuleType | GenericClassType, type_id)
+    match_type_id(type, restriction.including_types.not_nil!, type_id)
+  end
+
   def match_type_id(type : NonGenericModuleType | GenericClassType, restriction, type_id)
     match_type_id(type.including_types.not_nil!, restriction, type_id)
   end
@@ -48,6 +52,15 @@ class Crystal::CodeGenVisitor
   end
 
   def create_match_fun_body(type : UnionType, type_id)
+    result = nil
+    type.expand_union_types.each do |sub_type|
+      sub_type_cond = match_any_type_id(sub_type, type_id)
+      result = result ? or(result, sub_type_cond) : sub_type_cond
+    end
+    ret result.not_nil!
+  end
+
+  def create_match_fun_body(type : NonGenericModuleType, type_id)
     result = nil
     type.expand_union_types.each do |sub_type|
       sub_type_cond = match_any_type_id(sub_type, type_id)

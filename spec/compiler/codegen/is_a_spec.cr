@@ -642,4 +642,33 @@ describe "Codegen: is_a?" do
       end
       )).to_i.should eq(3)
   end
+
+  it "does is_a? for union of module and type" do
+    run(%(
+      module Moo
+        def moo
+          2
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      class Bar
+        include Moo
+      end
+
+      def foo(io)
+        if io.is_a?(Moo)
+          io.moo
+        else
+          3
+        end
+      end
+
+      io = (Foo.new as Moo) || 1
+      foo(io)
+      )).to_i.should eq(2)
+  end
 end
