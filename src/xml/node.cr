@@ -245,9 +245,12 @@ struct XML::Node
     scopes = [] of Namespace
 
     ns_list = LibXML.xmlGetNsList(@node.value.doc, @node)
-    while ns_list.value
-      scopes << Namespace.new(document, ns_list.value)
-      ns_list += 1
+
+    if ns_list
+      while ns_list.value
+        scopes << Namespace.new(document, ns_list.value)
+        ns_list += 1
+      end
     end
 
     scopes

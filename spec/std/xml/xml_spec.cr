@@ -177,6 +177,17 @@ describe XML do
     namespaces[1].prefix.should eq("openSearch")
   end
 
+  it "returns empty array if no namespaces scopes exists" do
+    doc = XML.parse(<<-XML
+      <?xml version='1.0' encoding='UTF-8'?>
+      <name>John</name>
+      XML
+    )
+    namespaces = doc.root.not_nil!.namespace_scopes
+
+    namespaces.size.should eq(0)
+  end
+
   it "gets root namespaces as hash" do
     doc = XML.parse(<<-XML
       <?xml version="1.0" encoding="UTF-8"?>
