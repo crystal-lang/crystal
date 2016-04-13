@@ -137,7 +137,17 @@ class Crystal::CodeGenVisitor
             end
 
     if t1.normal_rank != t2.normal_rank && t1.rank < t2.rank
-      @last = trunc @last, llvm_type(t1)
+      # Truncate the result, unless implicitly expanding it to a larger data type regardless
+      # of the operands order. See: https://github.com/crystal-lang/crystal/issues/567
+      @last = trunc @last, llvm_type(t1) unless case op
+                                                when "+", "-", "*", "|", "&", "^"
+                                                  case {t1.to_s, t2.to_s}
+                                                  when {"Int32", "Int64"},
+                                                       {"UInt32", "Int64"},
+                                                       {"UInt32", "UInt64"}
+                                                    true
+                                                  end
+                                                end
     end
 
     @last
