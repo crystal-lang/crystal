@@ -1066,4 +1066,21 @@ describe "Code gen: exception" do
       a
       )).to_i.should eq(2)
   end
+
+  it "doesn't crash on #1988" do
+    run(%(
+      require "prelude"
+
+      begin
+        x = 42
+      rescue
+      end
+
+      if x.is_a?(Int32)
+        x
+      else
+        21
+      end
+      )).to_i.should eq(42)
+  end
 end

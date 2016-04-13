@@ -2237,6 +2237,7 @@ module Crystal
         rescue_vars.each do |name, var|
           after_var = (after_vars[name] ||= new_meta_var(name))
           if var.nil_if_read || !body_vars[name]?
+            after_var.bind_to(mod.nil_var)
             after_var.nil_if_read = true
           end
           after_var.bind_to(var)

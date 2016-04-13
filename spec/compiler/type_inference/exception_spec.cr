@@ -400,4 +400,19 @@ describe "Type inference: exception" do
       foo.bar
       )) { int32 }
   end
+
+  it "correctly types #1988" do
+    assert_type(%(
+      begin
+        x = 1
+      rescue
+      end
+
+      if x.is_a?(Int32)
+        x
+      else
+        x
+      end
+      )) { nilable int32 }
+  end
 end
