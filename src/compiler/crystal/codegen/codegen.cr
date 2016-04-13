@@ -1522,7 +1522,11 @@ module Crystal
       closure_vars = nil
 
       vars.each_value do |var|
-        if var.closure_in?(obj)
+        # It might be the case that a closured variable ends up without
+        # a type, as in #2196, because a branch can't be typed and is
+        # finally removed before codegen. In that case we just assume
+        # Nil as a type.
+        if var.closure_in?(obj) && var.type?
           closure_vars ||= [] of MetaVar
           closure_vars << var
         end

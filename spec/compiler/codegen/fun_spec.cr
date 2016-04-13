@@ -672,4 +672,16 @@ describe "Code gen: fun" do
       $x
       )).to_i.should eq(2)
   end
+
+  it "doesn't crash on #2196" do
+    run(%(
+      x = 42
+      if x.is_a?(Int32)
+        x
+      else
+        y = x
+        ->{ y }
+      end
+      )).to_i.should eq(42)
+  end
 end
