@@ -227,7 +227,7 @@ describe "Type inference: cast" do
     assert_error %(
       nil as Object
       ),
-      "useless cast"
+      "can't cast to Object yet"
   end
 
   it "doesn't allow upcast of generic type var (#996)" do
@@ -254,5 +254,21 @@ describe "Type inference: cast" do
 
       foo as Int32
       )) { no_return }
+  end
+
+  it "errors if casting nil to Object inside typeof (#2403)" do
+    assert_error %(
+      require "prelude"
+
+      puts(typeof(nil as Object))
+      ),
+      "can't cast to Object yet"
+  end
+
+  it "disallows casting to Reference" do
+    assert_error %(
+      "foo" as Reference
+      ),
+      "can't cast to Reference yet"
   end
 end

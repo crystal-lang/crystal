@@ -192,30 +192,6 @@ describe "Code gen: cast" do
       )).to_b.should be_true
   end
 
-  it "casts from nilable to reference" do
-    run(%(
-      require "prelude"
-
-      a = 1 == 1 ? Reference.new : nil
-      c = a as Reference
-      c == nil
-      )).to_b.should be_false
-  end
-
-  it "casts from nilable to reference raises TypeCastError" do
-    run(%(
-      require "prelude"
-
-      a = 1 == 2 ? Reference.new : nil
-      begin
-        a as Reference
-        false
-      rescue ex
-        (ex.message == "cast to Reference failed") && (ex.class == TypeCastError)
-      end
-      )).to_b.should be_true
-  end
-
   it "casts to base class making it virtual" do
     run(%(
       class Foo
