@@ -76,8 +76,8 @@ struct Range(B, E)
   # is itself or exists infront.
   #
   # ```
-  # (0..10).bsearch{ |x| x >= 5 } # => 5
-  # (0..Float64::INFINITY).bsearch{ |x| x ** 4 >= 256 } # => 4
+  # (0..10).bsearch { |x| x >= 5 }                       # => 5
+  # (0..Float64::INFINITY).bsearch { |x| x ** 4 >= 256 } # => 4
   # ```
   #
   # Returns `nil` if the block didn't return `true` for any value.

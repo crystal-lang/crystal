@@ -589,11 +589,11 @@ class Array(T)
   # Returns `nil` if the block didn't return `true` for any element.
   #
   # ```
-  # [2, 5, 7, 10].bsearch{ |x| x >= 4 } # => 5
-  # [2, 5, 7, 10].bsearch{ |x| x > 10 } # => nil
+  # [2, 5, 7, 10].bsearch { |x| x >= 4 } # => 5
+  # [2, 5, 7, 10].bsearch { |x| x > 10 } # => nil
   # ```
   def bsearch
-    bsearch_index{ |value| yield value }.try { |index| self[index] }
+    bsearch_index { |value| yield value }.try { |index| self[index] }
   end
 
   # By using binary search, returns the index of the first element
@@ -608,11 +608,11 @@ class Array(T)
   # Returns `nil` if the block didn't return `true` for any element.
   #
   # ```
-  # [2, 5, 7, 10].bsearch_index{ |x, i| x >= 4 } # => 1
-  # [2, 5, 7, 10].bsearch_index{ |x, i| x > 10 } # => nil
+  # [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 } # => 1
+  # [2, 5, 7, 10].bsearch_index { |x, i| x > 10 } # => nil
   # ```
   def bsearch_index
-    (0...size).bsearch{ |index| yield self[index], index }
+    (0...size).bsearch { |index| yield self[index], index }
   end
 
   # Removes all elements from self.
