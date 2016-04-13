@@ -113,6 +113,9 @@ describe "Code gen: splat" do
   it "splats in initialize" do
     run(%(
       class Foo
+        @x : Int32
+        @y : Int32
+
         def initialize(*args)
           @x, @y = args
         end

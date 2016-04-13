@@ -392,7 +392,7 @@ module Crystal
 
     property name : String
 
-    def initialize(@name : String, @type = nil)
+    def initialize(@name : String)
     end
 
     def name_size
@@ -403,7 +403,7 @@ module Crystal
       Var.new(@name)
     end
 
-    def_equals name, type?
+    def_equals name
     def_hash name
   end
 
@@ -815,7 +815,7 @@ module Crystal
     property restriction : ASTNode?
     property doc : String?
 
-    def initialize(@name, @default_value = nil, @restriction = nil, @type = nil)
+    def initialize(@name, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil)
     end
 
     def accept_children(visitor)

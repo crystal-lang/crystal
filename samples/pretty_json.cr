@@ -9,7 +9,7 @@ require "json"
 require "colorize"
 
 class PrettyPrinter
-  def initialize(@input, @output)
+  def initialize(@input : IO, @output : IO)
     @pull = JSON::PullParser.new @input
     @indent = 0
   end

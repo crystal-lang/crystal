@@ -46,12 +46,8 @@ class Regex
     # ```
     getter string : String
 
-    @code : LibPCRE::Pcre
-    @pos : Int32
-    @ovector : Int32*
-
     # :nodoc:
-    def initialize(@regex, @code, @string, @pos, @ovector, @size)
+    def initialize(@regex : Regex, @code : LibPCRE::Pcre, @string : String, @pos : Int32, @ovector : Int32*, @size : Int32)
     end
 
     # Return the position of the first character of the `n`th match.

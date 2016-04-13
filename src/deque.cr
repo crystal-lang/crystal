@@ -19,11 +19,7 @@ class Deque(T)
   # [234---01] @start = 6, size = 5, @capacity = 8
   # (this Deque has 5 items, each equal to their index)
 
-  @start : Int32
   @start = 0
-
-  @size : Int32
-  @capacity : Int32
   @buffer : T*
 
   # Creates a new empty Deque

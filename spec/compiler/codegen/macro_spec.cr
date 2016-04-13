@@ -148,7 +148,7 @@ describe "Code gen: macro" do
   it "expands def macro with @type.instance_vars" do
     run(%(
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         macro def to_s : String
@@ -170,12 +170,12 @@ describe "Code gen: macro" do
       end
 
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
       end
 
       class Bar < Foo
-        def initialize(@x, @y)
+        def initialize(@x : Int32, @y : Int32)
         end
       end
 
@@ -192,12 +192,12 @@ describe "Code gen: macro" do
       end
 
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
       end
 
       class Bar < Foo
-        def initialize(@x, @y)
+        def initialize(@x : Int32, @y : Int32)
         end
       end
 
@@ -208,7 +208,7 @@ describe "Code gen: macro" do
   it "expands def macro with @type.name" do
     run(%(
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         macro def to_s : String
@@ -333,6 +333,8 @@ describe "Code gen: macro" do
       end
 
       class Foo
+        @name : Int32?
+
         macro def foo : Int32
           name = 1
           @name = name
@@ -436,7 +438,7 @@ describe "Code gen: macro" do
   it "can refer to types" do
     run(%(
       class Foo
-        def initialize(@x, @y)
+        def initialize(@x : Int32, @y : Int32)
         end
 
         macro def foo : String

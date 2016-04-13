@@ -11,9 +11,7 @@ module Crystal
     getter reader : Char::Reader
     getter token : Token
     getter line_number : Int32
-    @column_number : Int32
     @filename : String | VirtualFile | Nil
-    @wants_regex : Bool
     @token_end_location : Location?
 
     def initialize(string)

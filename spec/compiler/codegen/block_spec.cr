@@ -1020,6 +1020,8 @@ describe "Code gen: block" do
   it "allows initialize with yield (#224)" do
     run(%(
       class Foo
+        @x : Int32
+
         def initialize
           @x = yield 1
         end
@@ -1054,7 +1056,7 @@ describe "Code gen: block" do
       require "prelude"
 
       class Bar
-        def initialize(@bar)
+        def initialize(@bar : NoReturn)
         end
 
         def bar
@@ -1084,7 +1086,7 @@ describe "Code gen: block" do
       require "prelude"
 
       class Bar
-        def initialize(@bar)
+        def initialize(@bar : NoReturn)
         end
 
         def bar
@@ -1174,6 +1176,8 @@ describe "Code gen: block" do
       end
 
       class Foo(K)
+        @foo : Nil
+
         def foo
           Array(typeof(yield @foo.not_nil!)).new
         end

@@ -319,7 +319,7 @@ describe "context" do
   it "can get context inside initialize" do
     assert_context_keys %(
     class Bar
-      def initialize(@ivar)
+      def initialize(@ivar : String)
         ‸
       end
     end

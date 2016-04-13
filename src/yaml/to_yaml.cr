@@ -1,11 +1,6 @@
 module YAML
   class Generator
-    @io : IO
-    @recent_nl : Bool
-    @first : Bool
-    @indent : String?
-
-    def initialize(@io)
+    def initialize(@io : IO)
       @recent_nl = false
       @first = true
       @io << "--- "

@@ -44,7 +44,7 @@ abstract class OAuth2::AccessToken
   property refresh_token : String?
   property scope : String?
 
-  def initialize(@access_token, expires_in : Int, @refresh_token = nil, @scope = nil)
+  def initialize(@access_token : String, expires_in : Int, @refresh_token : String? = nil, @scope : String? = nil)
     @expires_in = expires_in.to_i64
   end
 

@@ -1,7 +1,5 @@
 struct LLVM::GlobalCollection
-  @mod : Module
-
-  def initialize(@mod)
+  def initialize(@mod : Module)
   end
 
   def add(type, name)

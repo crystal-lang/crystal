@@ -30,7 +30,7 @@ struct Tape
 end
 
 class Program
-  def initialize(@chars, @bracket_map)
+  def initialize(@chars : Array(Char), @bracket_map : Hash(Int32, Int32))
   end
 
   def run

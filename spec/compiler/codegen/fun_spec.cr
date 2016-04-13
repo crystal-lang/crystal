@@ -97,8 +97,9 @@ describe "Code gen: fun" do
       require \"prelude\"
 
       class B
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
+
         def x
           @x
         end
@@ -194,7 +195,7 @@ describe "Code gen: fun" do
       require "prelude"
 
       class Foo
-        def initialize(@x)
+        def initialize(@x : NoReturn)
         end
 
         def x
@@ -340,7 +341,7 @@ describe "Code gen: fun" do
         def initialize
         end
 
-        def x=(@x)
+        def x=(@x : (-> Int32)?)
         end
 
         def x

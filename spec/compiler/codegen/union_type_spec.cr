@@ -32,6 +32,8 @@ describe "Code gen: union type" do
   it "codegens union type for instance var" do
     run("
       class Foo
+        @value : Int32 | Float32
+
         def initialize(value)
           @value = value
         end
@@ -76,6 +78,8 @@ describe "Code gen: union type" do
       end
 
       class Foo
+        @x : Int32 | Char | Nil
+
         def foo(x)
           @x = x
           @x = @x || 1

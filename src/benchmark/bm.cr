@@ -3,22 +3,22 @@ module Benchmark
     # A data object, representing the times associated with a benchmark measurement.
     class Tms
       # User CPU time
-      getter utime
+      getter utime : Float64
 
       # System CPU time
-      getter stime
+      getter stime : Float64
 
       # User CPU time of children
-      getter cutime
+      getter cutime : Float64
 
       # System CPU time of children
-      getter cstime
+      getter cstime : Float64
 
       # Elapsed real time
-      getter real
+      getter real : Float64
 
       # The label associated with this measure
-      getter label
+      getter label : String
 
       # :nodoc:
       def initialize(@utime, @stime, @cutime, @cstime, @real, @label)

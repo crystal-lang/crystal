@@ -5,7 +5,6 @@ require "uri"
 # A simple handler that lists directories and serves files under a given public directory.
 class HTTP::StaticFileHandler < HTTP::Handler
   @public_dir : String
-  @fallthrough : Bool
 
   # Creates a handler that will serve files in the given *public_dir*, after
   # expanding it (using `File#expand_path`).
@@ -13,7 +12,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
   # If *fallthrough* is `false`, this handler does not call next handler when
   # request method is neither GET or HEAD, then serves `405 Method Not Allowed`.
   # Otherwise, it calls next handler.
-  def initialize(public_dir, fallthrough = true)
+  def initialize(public_dir : String, fallthrough = true)
     @public_dir = File.expand_path public_dir
     @fallthrough = !!fallthrough
   end

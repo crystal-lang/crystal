@@ -9,24 +9,24 @@ module Crystal
     include MatchesLookup
     include ClassVarContainer
 
-    getter symbols : Set(String)
-    getter global_vars : Hash(String, MetaTypeVar)
+    getter! symbols : Set(String)
+    getter! global_vars : Hash(String, MetaTypeVar)
     getter target_machine : LLVM::TargetMachine?
-    getter splat_expansions : Hash(Def, Type)
-    getter after_inference_types : Set(Type)
-    getter file_modules : Hash(String, FileModule)
-    property vars : Hash(String, MetaVar)
+    getter! splat_expansions : Hash(Def, Type)
+    getter! after_inference_types : Set(Type)
+    getter! file_modules : Hash(String, FileModule)
+    property! vars : Hash(String, MetaVar)
     property literal_expander : LiteralExpander?
-    property initialized_global_vars : Set(String)
-    property? wants_doc : Bool
-    property? color : Bool
+    property! initialized_global_vars : Set(String)
+    property? wants_doc : Bool?
+    property? color : Bool?
 
-    @requires : Set(String)
-    @temp_var_counter : Int32
-    @crystal_path : CrystalPath
-    @def_macros : Array(Def)
-    @unions : Hash(Array(UInt64), Type)
-    @macro_expander : MacroExpander?
+    getter! requires : Set(String)
+    getter! temp_var_counter : Int32
+    getter! crystal_path : CrystalPath
+    getter! def_macros : Array(Def)
+    getter! unions : Hash(Array(UInt64), Type)
+    getter! file_modules : Hash(String, FileModule)
     @flags : Set(String)?
 
     def initialize
@@ -174,11 +174,11 @@ module Crystal
     end
 
     def file_module?(filename)
-      @file_modules[filename]?
+      file_modules[filename]?
     end
 
     def file_module(filename)
-      @file_modules[filename] ||= FileModule.new(self, self, filename)
+      file_modules[filename] ||= FileModule.new(self, self, filename)
     end
 
     def check_private(node)
@@ -245,7 +245,7 @@ module Crystal
       else
         types.sort_by! &.opaque_id
         opaque_ids = types.map(&.opaque_id)
-        @unions[opaque_ids] ||= make_union_type(types, opaque_ids)
+        unions[opaque_ids] ||= make_union_type(types, opaque_ids)
       end
     end
 
@@ -310,16 +310,16 @@ module Crystal
     end
 
     def add_to_requires(filename)
-      if @requires.includes? filename
+      if requires.includes? filename
         false
       else
-        @requires.add filename
+        requires.add filename
         true
       end
     end
 
     def find_in_path(filename, relative_to = nil)
-      @crystal_path.find filename, relative_to
+      crystal_path.find filename, relative_to
     end
 
     def load_libs
@@ -334,40 +334,6 @@ module Crystal
         end
       end
     end
-
-    @class : MetaclassType?
-    @proc : FunType?
-    @enum : NonGenericClassType?
-    @object : NonGenericClassType?
-    @reference : NonGenericClassType?
-    @value : NonGenericClassType?
-    @number : NonGenericClassType?
-    @no_return : NoReturnType?
-    @void : VoidType?
-    @nil : NilType?
-    @bool : BoolType?
-    @char : CharType?
-    @int : NonGenericClassType?
-    @int8 : IntegerType?
-    @uint8 : IntegerType?
-    @int16 : IntegerType?
-    @uint16 : IntegerType?
-    @int32 : IntegerType?
-    @uint32 : IntegerType?
-    @int64 : IntegerType?
-    @uint64 : IntegerType?
-    @float : NonGenericClassType?
-    @float32 : FloatType?
-    @float64 : FloatType?
-    @symbol : SymbolType?
-    @pointer : PointerType?
-    @tuple : TupleType?
-    @static_array : StaticArrayType?
-    @nil_var : Var?
-    @string : NonGenericClassType?
-    @exception : NonGenericClassType?
-    @array : GenericClassType?
-    @struct_t : NonGenericClassType?
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64
                      uint8 uint16 uint32 uint64 float float32 float64 string symbol pointer array static_array
@@ -427,7 +393,9 @@ module Crystal
     end
 
     def new_temp_var_name
-      "__temp_#{@temp_var_counter += 1}"
+      counter = temp_var_counter + 1
+      @temp_var_counter = counter
+      "__temp_#{counter}"
     end
 
     def type_desc

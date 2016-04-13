@@ -4,7 +4,7 @@ describe "Code gen: cast" do
   it "allows casting object to pointer and back" do
     run(%(
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x

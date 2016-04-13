@@ -1,7 +1,7 @@
 require "./**"
 
 module LLVM
-  @@initialized = false
+  @@initialized : Bool?
 
   def self.init_x86
     return if @@initialized

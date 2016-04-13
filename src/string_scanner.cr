@@ -56,8 +56,6 @@
 # * `#inspect`
 # * `#string`
 class StringScanner
-  @str : String
-  @byte_offset : Int32
   @last_match : Regex::MatchData?
 
   def initialize(@str : String)

@@ -1,6 +1,6 @@
 # Perlin noise benchmark: https://github.com/nsf/pnoise
 
-record Vec2, x, y
+record Vec2, x : Float64, y : Float64
 
 def lerp(a, b, v)
   a * (1.0 - v) + b * v
@@ -23,7 +23,8 @@ end
 struct Noise2DContext
   def initialize
     @rgradients = StaticArray(Vec2, 256).new { random_gradient }
-    @permutations = StaticArray(Int32, 256).new { |i| i }.shuffle!
+    @permutations = StaticArray(Int32, 256).new { |i| i }
+    @permutations.shuffle!
   end
 
   def get_gradient(x, y)

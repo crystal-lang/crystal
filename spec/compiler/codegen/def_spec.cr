@@ -89,13 +89,15 @@ describe "Code gen: def" do
   it "codegens recursive type with union" do
     run("
       class A
-       def next=(n)
-         @next = n
-       end
+        @next : A?
 
-       def next
-         @next
-       end
+        def next=(n)
+          @next = n
+        end
+
+         def next
+           @next
+        end
       end
 
       a = A.allocate
@@ -107,23 +109,27 @@ describe "Code gen: def" do
   it "codegens with related types" do
     run("
       class A
-       def next=(n)
-         @next = n
-       end
+        @next : A | B | Nil
 
-       def next
-         @next
-       end
+        def next=(n)
+          @next = n
+        end
+
+         def next
+           @next
+        end
       end
 
       class B
-       def next=(n)
-         @next = n
-       end
+        @next : A | B | Nil
 
-       def next
-         @next
-       end
+        def next=(n)
+          @next = n
+        end
+
+         def next
+           @next
+        end
       end
 
       def foo(x, y)
@@ -235,6 +241,8 @@ describe "Code gen: def" do
       end
 
       class Box
+        @elem : Foo | Bar | Nil
+
         def set(elem)
           @elem = elem
         end

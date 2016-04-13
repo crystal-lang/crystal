@@ -1,15 +1,9 @@
 class Crystal::Doc::Generator
   getter program : Program
 
-  @included_dirs : Array(String)
-  @dir : String
   @base_dir : String
-  @types : Hash(Crystal::Type, Doc::Type)
-  @is_crystal_repository : Bool
-  @repo_name : String
-  @repository : String?
 
-  def initialize(@program, @included_dirs, @dir = "./doc")
+  def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
     @is_crystal_repository = false

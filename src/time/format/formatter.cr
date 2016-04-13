@@ -8,7 +8,7 @@ struct Time::Format
     getter io : IO
     getter time : Time
 
-    def initialize(@time, @io)
+    def initialize(@time : Time, @io : IO)
     end
 
     def year

@@ -138,12 +138,8 @@ class CSV
     yield builder
   end
 
-  @parser : Parser
   @headers : Array(String)?
   @indices : Hash(String, Int32)?
-  @row : Array(String)?
-  @strip : Bool
-  @traversed : Bool
 
   # Creates a new instance from the given `String` or `IO`.
   #

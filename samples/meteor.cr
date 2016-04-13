@@ -140,7 +140,7 @@ def print_sol(str)
 end
 
 class SolutionNode
-  def initialize(@x, @prev)
+  def initialize(@x : UInt64, @prev : SolutionNode?)
   end
 
   getter :x
@@ -157,14 +157,14 @@ class SolutionNode
 end
 
 class Meteor
-  def initialize(@masks : Masks, @stop_after)
+  def initialize(@masks : Masks, @stop_after : Int32)
     @nb = 0
     @min = "9" * 50
     @max = "0" * 50
   end
 
-  property :min
-  property :max
+  property min : String
+  property max : String
   property :nb
 
   def handle_sol(cur)

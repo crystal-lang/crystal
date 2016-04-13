@@ -1,7 +1,7 @@
 struct LLVM::Type
   getter unwrap : LibLLVM::TypeRef
 
-  def initialize(@unwrap)
+  def initialize(@unwrap : LibLLVM::TypeRef)
   end
 
   def to_unsafe

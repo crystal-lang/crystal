@@ -7,9 +7,8 @@ class Crystal::Doc::Macro
 
   getter type : Type
   getter macro : Crystal::Macro
-  @generator : Generator
 
-  def initialize(@generator, @type, @macro)
+  def initialize(@generator : Generator, @type : Type, @macro : Crystal::Macro)
   end
 
   def name

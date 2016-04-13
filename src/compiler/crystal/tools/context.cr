@@ -69,11 +69,8 @@ module Crystal
   end
 
   class RechableVisitor < Visitor
-    @context_visitor : Crystal::ContextVisitor
-    @visited_typed_defs : Set(UInt64)
-
-    def initialize(@context_visitor)
-      @visited_typed_defs = Set(typeof(object_id)).new
+    def initialize(@context_visitor : Crystal::ContextVisitor)
+      @visited_typed_defs = Set(UInt64).new
     end
 
     def visit(node : Call)
@@ -102,10 +99,8 @@ module Crystal
   class ContextVisitor < Visitor
     getter contexts : Array(HashStringType)
     getter def_with_yield : Def?
-    @context : HashStringType
-    @target_location : Location
 
-    def initialize(@target_location)
+    def initialize(@target_location : Location)
       @contexts = Array(HashStringType).new
       @context = HashStringType.new
       @def_with_yield = nil

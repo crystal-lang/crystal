@@ -4,7 +4,7 @@ class SDL::Surface
   getter :height
   getter :bpp
 
-  def initialize(@surface, @width, @height, @bpp)
+  def initialize(@surface : LibSDL::Surface*, @width : Int32, @height : Int32, @bpp : Int32)
   end
 
   def lock

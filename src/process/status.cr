@@ -2,7 +2,7 @@
 class Process::Status
   getter exit_status : Int32
 
-  def initialize(@exit_status)
+  def initialize(@exit_status : Int32)
   end
 
   # Returns `true` if the process was terminated by a signal.

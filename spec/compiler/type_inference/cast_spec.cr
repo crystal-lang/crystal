@@ -186,12 +186,12 @@ describe "Type inference: cast" do
       "can't cast Int32 to Bool"
   end
 
-  it "casts to target type even if can't infer casted value type" do
+  it "casts to target type even if can't infer casted value type (obsolete)" do
     assert_type(%(
       require "prelude"
 
       class Foo
-        property! x
+        property! x : Int32
       end
 
       a = [1, 2, 3]

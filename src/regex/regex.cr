@@ -211,10 +211,6 @@ class Regex
   # ```
   getter source : String
 
-  @re : LibPCRE::Pcre
-  @extra : LibPCRE::PcreExtra
-  @captures : Int32
-
   # Creates a new Regex out of the given source String.
   #
   # ```

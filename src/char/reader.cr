@@ -47,10 +47,8 @@ struct Char
     # ```
     getter pos : Int32
 
-    @end : Bool
-
     # Creates a reader with the specified *string*
-    def initialize(@string)
+    def initialize(@string : String)
       @pos = 0
       @current_char = '\0'
       @current_char_width = 0

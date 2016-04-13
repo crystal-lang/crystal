@@ -11,11 +11,6 @@ abstract class JSON::Lexer
 
   getter token : Token
   property skip : Bool
-  @line_number : Int32
-  @column_number : Int32
-  @buffer : MemoryIO
-  @string_pool : StringPool
-  @expects_object_key : Bool
 
   def initialize
     @token = Token.new

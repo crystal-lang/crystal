@@ -1,15 +1,9 @@
 # :nodoc:
 struct String::Formatter(A)
-  @args : A
-  @io : IO
-  @reader : Char::Reader
-  @arg_index : Int32
-  @temp_buf_len : Int32
-  @format_buf_len : Int32
   @format_buf : Pointer(UInt8)?
   @temp_buf : Pointer(UInt8)?
 
-  def initialize(string, @args : A, @io)
+  def initialize(string, @args : A, @io : IO)
     @reader = Char::Reader.new(string)
     @arg_index = 0
     @temp_buf_len = 0

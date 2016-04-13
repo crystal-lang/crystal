@@ -18,7 +18,7 @@ module Crystal
     end
 
     class FirstBlockVisitor < Visitor
-      def initialize(@instrumentor)
+      def initialize(@instrumentor : AgentInstrumentorTransformer)
       end
 
       def visit(node : Call)
@@ -36,7 +36,7 @@ module Crystal
     end
 
     class TypeBodyTransformer < Transformer
-      def initialize(@instrumentor)
+      def initialize(@instrumentor : AgentInstrumentorTransformer)
       end
 
       def transform(node : Def)
@@ -44,9 +44,7 @@ module Crystal
       end
     end
 
-    property ignore_line
-    @nested_block_visitor : FirstBlockVisitor?
-    @type_body_transformer : TypeBodyTransformer?
+    property ignore_line : Int32?
 
     def initialize(@macro_names : Set(String))
       @macro_names << "record"

@@ -116,7 +116,7 @@ describe "Codegen: const" do
   it "codegens variable assignment in const" do
     run("
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -232,7 +232,7 @@ describe "Codegen: const" do
         X = Foo.new(1)
         Y = X
 
-        def initialize(@value)
+        def initialize(@value : Int32)
         end
 
         def value

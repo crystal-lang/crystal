@@ -1,9 +1,6 @@
 module Crystal
   class TypeFilteredNode < ASTNode
-    @filter : TypeFilter
-    @node : ASTNode
-
-    def initialize(@filter, @node)
+    def initialize(@filter : TypeFilter, @node : ASTNode)
       @dependencies = Dependencies.new(@node)
       node.add_observer self
       update(@node)
@@ -80,8 +77,7 @@ module Crystal
   class AndTypeFilter < TypeFilter
     getter filters : Array(TypeFilter)
 
-    def initialize(filters)
-      @filters = filters
+    def initialize(@filters : Array(TypeFilter))
     end
 
     def apply(other)
@@ -135,8 +131,7 @@ module Crystal
   class NotFilter < TypeFilter
     getter filter : TypeFilter
 
-    def initialize(filter)
-      @filter = filter
+    def initialize(@filter : TypeFilter)
     end
 
     def apply(other)
@@ -197,9 +192,7 @@ module Crystal
   end
 
   class RespondsToTypeFilter < TypeFilter
-    @name : String
-
-    def initialize(@name)
+    def initialize(@name : String)
     end
 
     def apply(other)
@@ -232,9 +225,7 @@ module Crystal
   # and applies a filter to the `then` (or `else`) part of the `if`: if it's
   # no return, we return just that. If not, we return the var's type.
   class NoReturnFilter < TypeFilter
-    @var : ASTNode
-
-    def initialize(@var)
+    def initialize(@var : ASTNode)
     end
 
     def apply(other)
@@ -243,8 +234,6 @@ module Crystal
   end
 
   struct TypeFilters
-    @filters : Hash(String, TypeFilter)
-
     def initialize
       @filters = {} of String => TypeFilter
     end

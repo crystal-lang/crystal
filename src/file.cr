@@ -31,7 +31,7 @@ class File < IO::FileDescriptor
   # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
 
-  def initialize(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
+  def initialize(filename : String, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
     oflag = open_flag(mode) | LibC::O_CLOEXEC
 
     fd = LibC.open(filename.check_no_null_byte, oflag, perm)

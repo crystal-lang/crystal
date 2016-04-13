@@ -2,9 +2,10 @@ require "http"
 require "json"
 
 class Crystal::Playground::Agent
-  def initialize(url, @tag)
+  @send_runtime = true
+
+  def initialize(url, @tag : Int32)
     @ws = HTTP::WebSocket.new(URI.parse(url))
-    @send_runtime = true
   end
 
   def i(line, names = nil)

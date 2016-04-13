@@ -10,21 +10,6 @@ module Crystal
     property def_nest : Int32
     property type_nest : Int32
     getter? wants_doc : Bool
-    @def_vars : Array(Set(String))
-    @last_call_has_parenthesis : Bool
-    @temp_token : Token
-    @unclosed_stack : Array(Unclosed)
-    @calls_super : Bool
-    @calls_initialize : Bool
-    @uses_block_arg : Bool
-    @assigns_special_var : Bool
-    @block_arg_count : Int32
-    @in_macro_expression : Bool
-    @stop_on_yield : Int32
-    @inside_c_struct : Bool
-    @no_type_declaration : Int32
-    @yields : Int32?
-    @instance_vars : Set(String)?
     @block_arg_name : String?
 
     def self.parse(str, def_vars = [Set(String).new])

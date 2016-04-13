@@ -1,7 +1,6 @@
 class OAuth::AccessToken
   getter token : String
   getter secret : String
-  @extra : Hash(String, String)?
 
   def initialize(@token : String, @secret : String, @extra : Hash(String, String)? = nil)
   end

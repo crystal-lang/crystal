@@ -59,7 +59,6 @@ class OptionParser
   protected property flags : Array(String)
   protected property handlers : Array(Handler)
   protected property unknown_args
-  @unknown_args : (Array(String), Array(String) ->)?
 
   # Creates a new parser.
   def initialize
@@ -150,11 +149,9 @@ class OptionParser
 
   # :nodoc:
   struct ParseTask
-    @parser : OptionParser
-    @args : Array(String)
     @double_dash_index : Int32?
 
-    def initialize(@parser, @args)
+    def initialize(@parser : OptionParser, @args : Array(String))
       double_dash_index = @double_dash_index = @args.index("--")
       if double_dash_index
         @args.delete_at(double_dash_index)

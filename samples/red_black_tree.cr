@@ -6,15 +6,13 @@ class RedBlackTree
     property :key
     property! :left
     property! :right
-    property! :parent
+    property! parent : self
 
     RED    = :red
     BLACK  = :black
     COLORS = [RED, BLACK]
 
-    def initialize(key, color = RED)
-      @key = key
-      @color = color
+    def initialize(@key : Int32, @color = RED)
       @left = @right = @parent = NilNode.instance
     end
 
@@ -26,7 +24,7 @@ class RedBlackTree
       color == RED
     end
 
-    def nil?
+    def nil_node?
       false
     end
   end
@@ -42,14 +40,14 @@ class RedBlackTree
       @left = @right = @parent = self
     end
 
-    def nil?
+    def nil_node?
       true
     end
   end
 
   #  include Enumerable
 
-  property :root
+  property root : Node
   property :size
 
   def initialize
@@ -68,7 +66,7 @@ class RedBlackTree
     while x != root && x.parent.color == Node::RED
       if x.parent == x.parent.parent.left
         y = x.parent.parent.right
-        if !y.nil? && y.color == Node::RED
+        if !y.nil_node? && y.color == Node::RED
           x.parent.color = Node::BLACK
           y.color = Node::BLACK
           x.parent.parent.color = Node::RED
@@ -84,7 +82,7 @@ class RedBlackTree
         end
       else
         y = x.parent.parent.left
-        if !y.nil? && y.color == Node::RED
+        if !y.nil_node? && y.color == Node::RED
           x.parent.color = Node::BLACK
           y.color = Node::BLACK
           x.parent.parent.color = Node::RED
@@ -108,11 +106,11 @@ class RedBlackTree
   end
 
   def delete(z)
-    y = (z.left.nil? || z.right.nil?) ? z : successor(z)
-    x = y.left.nil? ? y.right : y.left
+    y = (z.left.nil_node? || z.right.nil_node?) ? z : successor(z)
+    x = y.left.nil_node? ? y.right : y.left
     x.parent = y.parent
 
-    if y.parent.nil?
+    if y.parent.nil_node?
       self.root = x
     else
       if y == y.parent.left
@@ -133,25 +131,25 @@ class RedBlackTree
   end
 
   def minimum(x = root)
-    while !x.left.nil?
+    while !x.left.nil_node?
       x = x.left
     end
     x
   end
 
   def maximum(x = root)
-    while !x.right.nil?
+    while !x.right.nil_node?
       x = x.right
     end
     x
   end
 
   def successor(x)
-    if !x.right.nil?
+    if !x.right.nil_node?
       return minimum(x.right)
     end
     y = x.parent
-    while !y.nil? && x == y.right
+    while !y.nil_node? && x == y.right
       x = y
       y = y.parent
     end
@@ -159,11 +157,11 @@ class RedBlackTree
   end
 
   def predecessor(x)
-    if !x.left.nil?
+    if !x.left.nil_node?
       return maximum(x.left)
     end
     y = x.parent
-    while !y.nil? && x == y.left
+    while !y.nil_node? && x == y.left
       x = y
       y = y.parent
     end
@@ -172,7 +170,7 @@ class RedBlackTree
 
   def inorder_walk(x = root)
     x = self.minimum
-    while !x.nil?
+    while !x.nil_node?
       yield x.key
       x = successor(x)
     end
@@ -184,7 +182,7 @@ class RedBlackTree
 
   def reverse_inorder_walk(x = root)
     x = self.maximum
-    while !x.nil?
+    while !x.nil_node?
       yield x.key
       x = predecessor(x)
     end
@@ -195,32 +193,32 @@ class RedBlackTree
   end
 
   def search(key, x = root)
-    while !x.nil? && x.key != key
+    while !x.nil_node? && x.key != key
       x = (key < x.key) ? x.left : x.right
     end
     x
   end
 
   def empty?
-    self.root.nil?
+    self.root.nil_node?
   end
 
   def black_height(x = root)
     height = 0
-    while !x.nil?
+    while !x.nil_node?
       x = x.left
-      height += 1 if x.nil? || x.black?
+      height += 1 if x.nil_node? || x.black?
     end
     height
   end
 
   private def left_rotate(x)
-    raise "x.right is nil!" if x.right.nil?
+    raise "x.right is nil!" if x.right.nil_node?
     y = x.right
     x.right = y.left
-    y.left.parent = x if !y.left.nil?
+    y.left.parent = x if !y.left.nil_node?
     y.parent = x.parent
-    if x.parent.nil?
+    if x.parent.nil_node?
       self.root = y
     else
       if x == x.parent.left
@@ -234,12 +232,12 @@ class RedBlackTree
   end
 
   private def right_rotate(x)
-    raise "x.left is nil!" if x.left.nil?
+    raise "x.left is nil!" if x.left.nil_node?
     y = x.left
     x.left = y.right
-    y.right.parent = x if !y.right.nil?
+    y.right.parent = x if !y.right.nil_node?
     y.parent = x.parent
-    if x.parent.nil?
+    if x.parent.nil_node?
       self.root = y
     else
       if x == x.parent.left
@@ -255,12 +253,12 @@ class RedBlackTree
   private def insert_helper(z)
     y = NilNode.instance
     x = root
-    while !x.nil?
+    while !x.nil_node?
       y = x
       x = (z.key < x.key) ? x.left : x.right
     end
     z.parent = y
-    if y.nil?
+    if y.nil_node?
       self.root = z
     else
       z.key < y.key ? y.left = z : y.right = z
@@ -331,10 +329,10 @@ class RedBlackTreeRunner
     @n = n
 
     random = Random.new(1234) # repeatable random seq
-    @a1 = Array.new(n) { rand(99_999) }
+    @a1 = Array(Int32).new(n) { rand(99_999) }
 
     random = Random.new(4321) # repeatable random seq
-    @a2 = Array.new(n) { rand(99_999) }
+    @a2 = Array(Int32).new(n) { rand(99_999) }
 
     @tree = RedBlackTree.new
   end

@@ -14,7 +14,7 @@ describe "Code gen: struct" do
   it "creates structs with instance var" do
     run("
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -30,7 +30,7 @@ describe "Code gen: struct" do
   it "assigning a struct makes a copy (1)" do
     run("
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -53,7 +53,7 @@ describe "Code gen: struct" do
   it "assigning a struct makes a copy (2)" do
     run("
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -76,7 +76,7 @@ describe "Code gen: struct" do
   it "passes a struct as a parameter makes a copy" do
     run("
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -102,7 +102,7 @@ describe "Code gen: struct" do
   it "passes a generic struct as a parameter makes a copy" do
     run("
       struct Foo(T)
-        def initialize(@x)
+        def initialize(@x : T)
         end
 
         def x
@@ -128,7 +128,7 @@ describe "Code gen: struct" do
   it "returns struct as a copy" do
     run("
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -154,7 +154,7 @@ describe "Code gen: struct" do
   it "creates struct in def" do
     run("
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -173,7 +173,7 @@ describe "Code gen: struct" do
   it "declares const struct" do
     run("
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -190,7 +190,7 @@ describe "Code gen: struct" do
   it "uses struct in if" do
     run("
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -267,7 +267,7 @@ describe "Code gen: struct" do
   it "does phi of struct" do
     run("
       struct Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x

@@ -14,8 +14,6 @@ struct Slice(T)
   # ```
   getter size : Int32
 
-  @pointer : T*
-
   # Creates a slice to the given *pointer*, bounded by the given *size*. This
   # method does not allocate heap memory.
   #

@@ -89,7 +89,7 @@ end
 
 # :nodoc:
 module AtExitHandlers
-  @@running = false
+  @@running : Bool?
 
   def self.add(handler)
     handlers = @@handlers ||= [] of Int32 ->
@@ -152,12 +152,14 @@ end
 
 class Process
   # hooks defined here due to load order problems
-  @@after_fork_child_callbacks = [
-    ->{ Scheduler.after_fork; nil },
-    ->{ Event::SignalHandler.after_fork; nil },
-    ->{ Event::SignalChildHandler.instance.after_fork; nil },
-    ->{ Random::DEFAULT.new_seed; nil },
-  ] of -> Nil
+  def self.after_fork_child_callbacks
+    @@after_fork_child_callbacks ||= [
+      ->{ Scheduler.after_fork; nil },
+      ->{ Event::SignalHandler.after_fork; nil },
+      ->{ Event::SignalChildHandler.instance.after_fork; nil },
+      ->{ Random::DEFAULT.new_seed; nil },
+    ] of -> Nil
+  end
 end
 
 Signal::PIPE.ignore

@@ -3,7 +3,6 @@ module Crystal
     getter lib : String?
     getter ldflags : String?
     getter framework : String?
-    @static : Bool
 
     def initialize(@lib = nil, @ldflags = nil, @static = false, @framework = nil)
     end

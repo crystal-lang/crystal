@@ -42,8 +42,7 @@ describe "Type inference: is_a?" do
   it "restricts type inside if scope 3" do
     nodes = parse "
       class Foo
-        def initialize(x)
-          @x = x
+        def initialize(@x : Int32)
         end
       end
 
@@ -169,7 +168,7 @@ describe "Type inference: is_a?" do
   it "restricts type in else but lazily" do
     assert_type("
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x

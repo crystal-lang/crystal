@@ -16,7 +16,6 @@ class URI
     end
 
     @input : UInt8*
-    @ptr : Int32
 
     def initialize(input)
       @uri = URI.new

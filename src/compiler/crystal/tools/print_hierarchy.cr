@@ -8,14 +8,7 @@ module Crystal
   end
 
   class HierarchyPrinter
-    @program : Program
-    @exp : Regex?
-    @indents : Array(Bool)
-    @printed : Set(Type)
-    @targets : Set(Type)
-    @llvm_typer : LLVMTyper
-
-    def initialize(@program, exp)
+    def initialize(@program : Program, exp : String?)
       @exp = exp ? Regex.new(exp) : nil
       @indents = [] of Bool
       @printed = Set(Type).new

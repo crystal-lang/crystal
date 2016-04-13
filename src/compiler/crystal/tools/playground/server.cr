@@ -6,13 +6,9 @@ require "markdown"
 
 module Crystal::Playground
   class Session
-    @ws : HTTP::WebSocket
-    @process : Process?
-    @running_process_filename : String
-    @logger : Logger
     getter tag : Int32
 
-    def initialize(@ws, @session_key, @port, @logger)
+    def initialize(@ws : HTTP::WebSocket, @session_key : Int32, @port : Int32, @logger : Logger)
       @running_process_filename = ""
       @tag = 0
     end
@@ -136,7 +132,7 @@ module Crystal::Playground
       stop_process
 
       @logger.info "Code execution started (session=#{@session_key}, tag=#{tag}, filename=#{output_filename})."
-      @process = process = Process.new(output_filename, args: [] of String, input: nil, output: nil, error: nil)
+      process = @process = Process.new(output_filename, args: [] of String, input: nil, output: nil, error: nil)
       @running_process_filename = output_filename
 
       spawn do
@@ -187,7 +183,7 @@ module Crystal::Playground
   end
 
   class FileContentPage < PlaygroundPage
-    def initialize(@filename)
+    def initialize(@filename : String)
     end
 
     def content
@@ -238,7 +234,7 @@ module Crystal::Playground
   end
 
   class WorkbookIndexPage < PlaygroundPage
-    record Item, title, path
+    record Item, title : String, path : String
 
     def items
       files.map do |f|
@@ -267,11 +263,11 @@ module Crystal::Playground
   class PageHandler < HTTP::Handler
     @page : PlaygroundPage
 
-    def initialize(@path, filename : String)
+    def initialize(@path : String, filename : String)
       @page = FileContentPage.new(filename)
     end
 
-    def initialize(@path, @page : PlaygroundPage)
+    def initialize(@path : String, @page : PlaygroundPage)
     end
 
     def call(context)
@@ -302,9 +298,7 @@ module Crystal::Playground
   end
 
   class PathWebSocketHandler < HTTP::WebSocketHandler
-    @path : String
-
-    def initialize(@path, &proc : HTTP::WebSocket, HTTP::Server::Context ->)
+    def initialize(@path : String, &proc : HTTP::WebSocket, HTTP::Server::Context ->)
       super(&proc)
     end
 
@@ -318,7 +312,7 @@ module Crystal::Playground
   end
 
   class EnvironmentHandler < HTTP::Handler
-    def initialize(@server)
+    def initialize(@server : Playground::Server)
     end
 
     def call(context)

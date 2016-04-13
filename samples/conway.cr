@@ -1,7 +1,7 @@
 # Ported from http://arthurtw.github.io/2015/01/12/quick-comparison-nim-vs-rust.html
 
 struct ANSI
-  def initialize(@io)
+  def initialize(@io : IO)
   end
 
   def clear
@@ -24,6 +24,8 @@ struct ConwayMap
   HEIGHT = 30
 
   include Math
+
+  @map : Array(Array(Bool))
 
   def initialize(pattern)
     @map = Array.new(HEIGHT) { Array.new(WIDTH, false) }

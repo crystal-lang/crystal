@@ -18,10 +18,6 @@ end
 
 # Handly struct to write JSON objects
 struct JSON::ObjectBuilder(T)
-  @io : T
-  @indent : Int32
-  @count : Int32
-
   def initialize(@io : T, @indent = 0)
     @count = 0
   end
@@ -49,10 +45,6 @@ end
 
 # Handly struct to write JSON arrays
 struct JSON::ArrayBuilder(T)
-  @io : T
-  @indent : Int32
-  @count : Int32
-
   def initialize(@io : T, @indent = 0)
     @count = 0
   end
@@ -124,10 +116,7 @@ end
 class JSON::PrettyWriter
   include IO
 
-  @io : IO
-  @indent : Int32
-
-  def initialize(@io)
+  def initialize(@io : IO)
     @indent = 0
   end
 

@@ -10,7 +10,7 @@
 # python:  958.4s 713Mb
 
 class BasicBlock
-  def initialize(@name)
+  def initialize(@name : Int32)
     @inEdges = [] of BasicBlock
     @outEdges = [] of BasicBlock
   end
@@ -25,6 +25,9 @@ class BasicBlock
 end
 
 struct BasicBlockEdge
+  @from : BasicBlock
+  @to : BasicBlock
+
   def initialize(cfg, fromName, toName)
     @from = cfg.createNode(fromName)
     @to = cfg.createNode(toName)
@@ -44,7 +47,7 @@ class CFG
     @edgeList = [] of BasicBlockEdge
   end
 
-  property :startNode
+  property startNode : BasicBlock?
   property :basicBlockMap
 
   def createNode(name)
@@ -92,12 +95,12 @@ class SimpleLoop
     @children.add(l)
   end
 
-  def setParent(parent)
+  def setParent(parent : SimpleLoop)
     @parent = parent
     parent.addChildLoop(self)
   end
 
-  def setHeader(bb)
+  def setHeader(bb : BasicBlock)
     @basicBlocks.add(bb)
     @header = bb
   end
@@ -111,6 +114,8 @@ end
 $loopCounter = 0
 
 class LSG
+  @root : SimpleLoop
+
   def initialize
     @loops = [] of SimpleLoop
     @root = createNewLoop
@@ -163,10 +168,10 @@ class UnionFindNode
     @dfsNumber = dfsNumber
   end
 
-  property :bb
-  property :parent
-  property :dfsNumber
-  property :l
+  property bb : BasicBlock?
+  property parent : self?
+  property dfsNumber : Int32
+  property l : SimpleLoop?
 
   def findSet
     nodeList = [] of UnionFindNode
@@ -203,7 +208,7 @@ class HavlakLoopFinder
   # Safeguard against pathologic algorithm behavior.
   MAXNONBACKPREDS = (32 * 1024)
 
-  def initialize(@cfg, @lsg)
+  def initialize(@cfg : CFG, @lsg : LSG)
   end
 
   def isAncestor(w, v, last)

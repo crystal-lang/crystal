@@ -146,7 +146,7 @@ module Crystal
     class InitProject
       getter config : Config
 
-      def initialize(@config)
+      def initialize(@config : Config)
       end
 
       def run

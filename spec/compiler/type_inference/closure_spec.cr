@@ -137,6 +137,8 @@ describe "Type inference: closure" do
   it "marks method as self closured if instance var is read" do
     result = assert_type("
       class Foo
+        @x : Int32?
+
         def foo
           -> { @x }
         end

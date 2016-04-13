@@ -1,6 +1,6 @@
 # Ported from Rust from https://gist.github.com/joshmarinacci/c84d0979e100d107f685 http://joshondesign.com/2014/09/17/rustlang
 
-record Vector, x, y, z do
+record Vector, x : Float64, y : Float64, z : Float64 do
   def scale(s)
     Vector.new(x * s, y * s, z * s)
   end
@@ -26,9 +26,9 @@ record Vector, x, y, z do
   end
 end
 
-record Ray, orig, dir
+record Ray, orig : Vector, dir : Vector
 
-record Color, r, g, b do
+record Color, r : Float64, g : Float64, b : Float64 do
   def scale(s)
     Color.new(r * s, g * s, b * s)
   end
@@ -38,15 +38,15 @@ record Color, r, g, b do
   end
 end
 
-record Sphere, center, radius, color do
+record Sphere, center : Vector, radius : Float64, color : Color do
   def get_normal(pt)
     (pt - center).normalize
   end
 end
 
-record Light, position, color
+record Light, position : Vector, color : Color
 
-record Hit, obj, value
+record Hit, obj : Sphere, value : Float64
 
 WHITE = Color.new(1.0, 1.0, 1.0)
 RED   = Color.new(1.0, 0.0, 0.0)

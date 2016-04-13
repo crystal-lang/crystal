@@ -1,7 +1,5 @@
 struct LLVM::InstructionCollection
-  @basic_block : BasicBlock
-
-  def initialize(@basic_block)
+  def initialize(@basic_block : BasicBlock)
   end
 
   def empty?

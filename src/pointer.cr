@@ -30,9 +30,6 @@ struct Pointer(T)
   # it while advancing the location and keeping track of how many elements
   # were written. See `Pointer#appender`
   struct Appender(T)
-    @pointer : T*
-    @start : T*
-
     def initialize(@pointer : Pointer(T))
       @start = @pointer
     end

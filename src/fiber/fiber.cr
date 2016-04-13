@@ -17,7 +17,6 @@ class Fiber
 
   @stack : Void*
   @resume_event : Event::Event?
-  @proc : ->
   protected property stack_top : Void*
   protected property stack_bottom : Void*
   protected property next_fiber : Fiber?
@@ -207,7 +206,6 @@ class Fiber
     block
   end
 
-  @@prev_push_other_roots : ->
   @@prev_push_other_roots = LibGC.get_push_other_roots
 
   # This will push all fibers stacks whenever the GC wants to collect some memory

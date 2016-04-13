@@ -9,8 +9,6 @@ struct BigInt < Int
   include Comparable(BigInt)
   include Comparable(Float)
 
-  @mpz : LibGMP::MPZ
-
   # Creates a BigInt with the value zero.
   #
   # ```

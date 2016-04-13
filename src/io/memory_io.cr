@@ -12,10 +12,6 @@ class MemoryIO
   getter bytesize : Int32
 
   @capacity : Int32
-  @pos : Int32
-  @closed : Bool
-  @resizeable : Bool
-  @writeable : Bool
 
   # Creates an empty, resizeable and writeable MemoryIO with the given
   # initialize capactiy for the internal buffer.

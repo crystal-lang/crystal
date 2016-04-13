@@ -1,7 +1,5 @@
 struct LLVM::FunctionCollection
-  @mod : Module
-
-  def initialize(@mod)
+  def initialize(@mod : Module)
   end
 
   def add(name, arg_types : Array(LLVM::Type), ret_type, varargs = false)

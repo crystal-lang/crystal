@@ -101,21 +101,23 @@ module HTTP
   end
 
   # :nodoc:
-  def self.serialize_headers_and_body(io, headers, body, version)
+  def self.serialize_headers_and_body(io, headers, body, body_io, version)
     # prepare either chunked response headers if protocol supports it
     # or consume the io to get the Content-Length header
-    if body
-      if body.is_a?(IO)
+    unless body
+      if body_io
         if Client::Response.supports_chunked?(version)
           headers["Transfer-Encoding"] = "chunked"
+          body = nil
         else
-          body = body.gets_to_end
+          body = body_io.gets_to_end
+          body_io = nil
         end
       end
+    end
 
-      unless body.is_a?(IO)
-        headers["Content-Length"] = body.bytesize.to_s
-      end
+    if body
+      headers["Content-Length"] = body.bytesize.to_s
     end
 
     headers.each do |name, values|
@@ -127,18 +129,18 @@ module HTTP
     io << "\r\n"
 
     if body
-      if body.is_a?(IO)
-        buf = uninitialized UInt8[8192]
-        while (buf_length = body.read(buf.to_slice)) > 0
-          buf_length.to_s(16, io)
-          io << "\r\n"
-          io.write(buf.to_slice[0, buf_length])
-          io << "\r\n"
-        end
-        io << "0\r\n\r\n"
-      else
-        io << body
+      io << body
+    end
+
+    if body_io
+      buf = uninitialized UInt8[8192]
+      while (buf_length = body_io.read(buf.to_slice)) > 0
+        buf_length.to_s(16, io)
+        io << "\r\n"
+        io.write(buf.to_slice[0, buf_length])
+        io << "\r\n"
       end
+      io << "0\r\n\r\n"
     end
   end
 

@@ -42,15 +42,15 @@ class Process
   getter pid : Int32
 
   # A pipe to this process's input. Raises if a pipe wasn't asked when creating the process.
-  getter! input
+  getter! input : IO::FileDescriptor
 
   # A pipe to this process's output. Raises if a pipe wasn't asked when creating the process.
-  getter! output
+  getter! output : IO::FileDescriptor
 
   # A pipe to this process's error. Raises if a pipe wasn't asked when creating the process.
-  getter! error
+  getter! error : IO::FileDescriptor
 
-  @wait_count : Int32
+  @waitpid_future : Concurrent::Future(Process::Status)
 
   # Creates a process, executes it, but doesn't wait for it to complete.
   #
@@ -179,7 +179,7 @@ class Process
   end
 
   private def channel
-    @channel ||= Channel(Exception?).new
+    @channel ||= Channel::Unbuffered(Exception?).new
   end
 
   private def needs_pipe?(io)

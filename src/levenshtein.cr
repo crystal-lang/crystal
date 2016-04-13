@@ -59,9 +59,7 @@ module Levenshtein
       value : String,
       distance : Int32
 
-    @target : String
     @tolerance : Int32
-    @best_entry : Entry?
 
     def initialize(@target : String, tolerance : Int? = nil)
       @tolerance = tolerance || (target.size / 5.0).ceil.to_i

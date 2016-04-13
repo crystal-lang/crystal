@@ -38,13 +38,9 @@ class Crystal::Command
     new(options).run
   end
 
-  private getter options : Array(String)
+  private getter options
 
-  @color : Bool
-  @config : CompilerConfig?
-  @format : String?
-
-  def initialize(@options)
+  def initialize(@options : Array(String))
     @color = true
   end
 

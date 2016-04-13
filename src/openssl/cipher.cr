@@ -4,8 +4,6 @@ class OpenSSL::Cipher
   class Error < OpenSSL::Error
   end
 
-  @ctx : Pointer(Void)?
-
   def initialize(name)
     cipher = LibCrypto.evp_get_cipherbyname name
     raise ArgumentError.new "unsupported cipher algorithm #{name.inspect}" unless cipher

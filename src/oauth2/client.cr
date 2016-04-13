@@ -1,19 +1,10 @@
 class OAuth2::Client
-  @host : String
-  @client_id : String
-  @client_secret : String
-  @port : Int32
-  @scheme : String
-  @authorize_uri : String
-  @token_uri : String
-  @redirect_uri : String?
-
   def initialize(@host : String, @client_id : String, @client_secret : String,
                  @port = 443,
                  @scheme = "https",
                  @authorize_uri = "/oauth2/authorize",
                  @token_uri = "/oauth2/token",
-                 @redirect_uri = nil)
+                 @redirect_uri : String? = nil)
   end
 
   def get_authorize_uri(scope = nil, state = nil)

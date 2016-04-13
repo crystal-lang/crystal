@@ -32,7 +32,7 @@ describe "Code gen: tuple" do
       end
 
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x
@@ -77,7 +77,7 @@ describe "Code gen: tuple" do
   it "codegens tuple class" do
     run(%(
       class Foo
-        def initialize(@x)
+        def initialize(@x : Int32)
         end
 
         def x

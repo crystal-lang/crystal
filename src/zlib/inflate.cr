@@ -19,11 +19,6 @@
 class Zlib::Inflate
   include IO
 
-  @input : IO
-  @closed : Bool
-  @sync_close : Bool
-  @stream : LibZ::ZStream
-
   # If `sync_close` is true, closing this IO will close the underlying IO.
   property? sync_close : Bool
 

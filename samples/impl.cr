@@ -1,5 +1,5 @@
 class A
-  property lorem
+  property lorem : Int32?
 
   def foo
     1

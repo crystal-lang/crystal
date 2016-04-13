@@ -5,9 +5,6 @@ class JSON::PullParser
   getter int_value : Int64
   getter float_value : Float64
   getter string_value : String
-  @object_stack : Array(Symbol)
-  @skip_count : Int32
-  @lexer : Lexer
 
   def initialize(input)
     @lexer = Lexer.new input

@@ -1,9 +1,6 @@
 class OpenSSL::SSL::Socket
   include IO
 
-  @ssl : LibSSL::SSL
-  @bio : OpenSSL::BIO
-
   # If `sync_close` is true, closing this socket will
   # close the underlying IO.
   property? sync_close : Bool

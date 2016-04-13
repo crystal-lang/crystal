@@ -7,9 +7,6 @@ class Crystal::CodeGenVisitor
     getter node : ASTNode
     getter count : Int32
     getter exit_block : LLVM::BasicBlock?
-    @phi_table : LLVM::PhiTable?
-    @codegen : CodeGenVisitor
-    @needs_value : Bool
 
     def self.open(codegen, node, needs_value = true)
       block = new codegen, node, needs_value
@@ -17,7 +14,7 @@ class Crystal::CodeGenVisitor
       block.close
     end
 
-    def initialize(@codegen, @node, @needs_value)
+    def initialize(@codegen : CodeGenVisitor, @node : ASTNode, @needs_value : Bool)
       @phi_table = @needs_value ? LLVM::PhiTable.new : nil
       @count = 0
     end

@@ -32,10 +32,7 @@ module Crystal
   #
   # TODO: the check currently ignores methods that involve splats.
   class AbstractDefChecker
-    @program : Program
-    @all_checked : Set(Type)
-
-    def initialize(@program)
+    def initialize(@program : Program)
       @all_checked = Set(Type).new
     end
 

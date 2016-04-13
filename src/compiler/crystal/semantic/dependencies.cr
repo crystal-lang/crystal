@@ -6,10 +6,6 @@ module Crystal
   class Dependencies
     include Enumerable(ASTNode)
 
-    @first : ASTNode?
-    @second : ASTNode?
-    @all : Array(ASTNode)?
-
     def initialize
       @first = nil
       @second = nil
@@ -35,7 +31,7 @@ module Crystal
       end
     end
 
-    def push(node)
+    def push(node : ASTNode)
       if all = @all
         all.push node
       elsif second = @second

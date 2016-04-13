@@ -10,7 +10,6 @@ module OpenSSL
     include DigestBase
 
     getter name : String
-    @ctx : LibCrypto::EVP_MD_CTX
 
     def initialize(@name, @ctx : LibCrypto::EVP_MD_CTX)
       raise Error.new("Invalid EVP_MD_CTX") unless @ctx

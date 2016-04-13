@@ -23,7 +23,6 @@ class Event::SignalHandler
     @@instance ||= new
   end
 
-  @callbacks : Hash(Signal, (Signal ->))
   @read_pipe : IO::FileDescriptor
   @write_pipe : IO::FileDescriptor
 

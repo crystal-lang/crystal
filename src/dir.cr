@@ -47,9 +47,6 @@ class Dir
 
   getter path : String
 
-  @dir : LibC::Dir*
-  @closed : Bool
-
   # Returns a new directory object for the named directory.
   def initialize(@path)
     @dir = LibC.opendir(@path.check_no_null_byte)

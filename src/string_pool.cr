@@ -1,6 +1,5 @@
 class StringPool
   getter size : Int32
-  @buckets : Array(Array(String)?)
 
   def initialize
     @buckets = Array(Array(String)?).new(11, nil)

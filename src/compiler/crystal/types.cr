@@ -250,7 +250,7 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_instance_var_initializer"
     end
 
-    def declare_instance_var(name, node_or_type)
+    def declare_instance_var(name, type_var)
       raise "Bug: #{self} doesn't implement declare_instance_var"
     end
 
@@ -296,6 +296,17 @@ module Crystal
       else
         "#{self}##{name}"
       end
+    end
+
+    def solve_type_vars(type_vars : Array(TypeVar))
+      types = type_vars.map do |type_var|
+        if type_var.is_a?(ASTNode)
+          TypeLookup.lookup(self, type_var).virtual_type
+        else
+          type_var
+        end
+      end
+      Type.merge!(types)
     end
 
     def defs
@@ -362,6 +373,10 @@ module Crystal
       raise "Bug: #{self} doesn't implement remove_subclass_observer"
     end
 
+    def instance_vars
+      raise "Bug: #{self} doesn't implement instance_vars"
+    end
+
     def all_instance_vars
       raise "Bug: #{self} doesn't implement all_instance_vars"
     end
@@ -384,6 +399,14 @@ module Crystal
 
     def lookup_instance_var?(name, create = false)
       raise "Bug: #{self} doesn't implement lookup_instance_var?"
+    end
+
+    def lookup_instance_var_with_owner(name)
+      lookup_instance_var_with_owner?(name).not_nil!
+    end
+
+    def lookup_instance_var_with_owner?(name)
+      raise "Bug: #{self} doesn't implement lookup_instance_var_with_owner?"
     end
 
     def owns_instance_var?(name)
@@ -489,8 +512,6 @@ module Crystal
 
     def initialize(@program, @container, @name)
     end
-
-    @types : Hash(String, Type)?
 
     def types
       @types ||= {} of String => Type
@@ -712,8 +733,6 @@ module Crystal
     named_args : Array({String, Type})?
 
   module DefInstanceContainer
-    @def_instances : Hash(DefInstanceKey, Def)?
-
     def def_instances
       @def_instances ||= {} of DefInstanceKey => Def
     end
@@ -729,8 +748,6 @@ module Crystal
 
   abstract class ModuleType < NamedType
     include DefContainer
-
-    @parents : Array(Type)?
 
     def parents
       @parents ||= [] of Type
@@ -762,16 +779,12 @@ module Crystal
   end
 
   module ClassVarContainer
-    @class_vars : Hash(String, MetaTypeVar)?
-
     def class_vars
       @class_vars ||= {} of String => MetaTypeVar
     end
   end
 
   module SubclassObservable
-    @subclass_observers : Array(Call)?
-
     def add_subclass_observer(observer)
       observers = (@subclass_observers ||= [] of Call)
       observers << observer
@@ -829,8 +842,6 @@ module Crystal
     include DefInstanceContainer
     include ClassVarContainer
     include SubclassObservable
-
-    @including_types : Array(Type)?
 
     def add_including_type(type)
       including_types = @including_types ||= [] of Type
@@ -931,8 +942,6 @@ module Crystal
 
   # A module that is related to a file and contains its private defs.
   class FileModule < NonGenericModuleType
-    @vars : MetaVars?
-
     def vars
       @vars ||= MetaVars.new
     end
@@ -1101,8 +1110,6 @@ module Crystal
   end
 
   module InstanceVarContainer
-    @instance_vars : Hash(String, MetaTypeVar)?
-
     def instance_vars
       @instance_vars ||= {} of String => MetaTypeVar
     end
@@ -1128,7 +1135,7 @@ module Crystal
       lookup_instance_var?(name, create).not_nil!
     end
 
-    def lookup_instance_var?(name, create)
+    def lookup_instance_var?(name, create = false)
       if var = superclass.try &.lookup_instance_var?(name, false)
         return var
       end
@@ -1137,6 +1144,21 @@ module Crystal
         instance_vars[name] ||= MetaTypeVar.new(name).tap { |v| v.owner = self }
       else
         instance_vars[name]?
+      end
+    end
+
+    record InstanceVarWithOwner, instance_var : MetaTypeVar, owner : Type
+
+    def lookup_instance_var_with_owner?(name)
+      if result = superclass.try &.lookup_instance_var_with_owner?(name)
+        return result
+      end
+
+      ivar = instance_vars[name]?
+      if ivar
+        InstanceVarWithOwner.new(ivar, self)
+      else
+        nil
       end
     end
 
@@ -1209,8 +1231,6 @@ module Crystal
       end
     end
 
-    @virtual_type : VirtualType?
-
     def virtual_type!
       @virtual_type ||= VirtualType.new(program, self)
     end
@@ -1230,14 +1250,13 @@ module Crystal
       ivar.freeze_type = type
     end
 
-    def declare_instance_var(name, node : ASTNode)
-      visitor = TypeLookup.new(self)
-      node.accept visitor
+    def declare_instance_var(name, type_vars : Array(TypeVar))
+      type = solve_type_vars(type_vars)
 
       ivar = lookup_instance_var(name, create: true)
-      ivar.type = visitor.type
+      ivar.type = type
       ivar.bind_to ivar
-      ivar.freeze_type = visitor.type.virtual_type
+      ivar.freeze_type = type
     end
 
     def covariant?(other_type)
@@ -1402,8 +1421,6 @@ module Crystal
     property variadic : Bool
     @variadic = false
 
-    @generic_types : Hash(Array(TypeVar), Type)?
-
     def generic_types
       @generic_types ||= {} of Array(TypeVar) => Type
     end
@@ -1457,7 +1474,7 @@ module Crystal
       end
     end
 
-    @inherited : Array(Type)?
+    getter inherited : Array(Type)?
 
     def add_inherited(type)
       inherited = @inherited ||= [] of Type
@@ -1539,8 +1556,6 @@ module Crystal
       "generic module"
     end
 
-    @including_types : Array(Type)?
-
     def add_including_type(type)
       including_types = @including_types ||= [] of Type
       including_types.push type
@@ -1550,14 +1565,18 @@ module Crystal
       @including_types
     end
 
-    @declared_instance_vars : Hash(String, ASTNode)?
+    getter declared_instance_var : Hash(String, Array(TypeVar))?
 
-    def declare_instance_var(name, node : ASTNode)
-      declared_instance_vars = (@declared_instance_vars ||= {} of String => ASTNode)
-      declared_instance_vars[name] = node
+    def declare_instance_var(name, type_var : TypeVar)
+      declare_instance_var(name, [type_var] of TypeVar)
+    end
+
+    def declare_instance_var(name, type_vars : Array(TypeVar))
+      declared_instance_vars = (@declared_instance_vars ||= {} of String => Array(TypeVar))
+      declared_instance_vars[name] = type_vars
 
       @inherited.try &.each do |inherited|
-        inherited.declare_instance_var(name, node)
+        inherited.declare_instance_var(name, type_vars)
       end
     end
 
@@ -1578,9 +1597,7 @@ module Crystal
     include GenericType
     include DefInstanceContainer
 
-    @type_vars : Array(String)
-
-    def initialize(program, container, name, superclass, @type_vars, add_subclass = true)
+    def initialize(program, container, name, superclass, @type_vars : Array(String), add_subclass = true)
       super(program, container, name, superclass, add_subclass)
       @variadic = false
       @allocated = true
@@ -1602,31 +1619,35 @@ module Crystal
       GenericClassInstanceType.new program, generic_type, type_vars
     end
 
-    @declared_instance_vars : Hash(String, ASTNode)?
+    getter declared_instance_vars : Hash(String, Array(TypeVar))?
 
-    def declare_instance_var(name, node : ASTNode)
-      declared_instance_vars = (@declared_instance_vars ||= {} of String => ASTNode)
-      declared_instance_vars[name] = node
+    def declare_instance_var(name, type_var : TypeVar)
+      declare_instance_var(name, [type_var] of TypeVar)
+    end
+
+    def declare_instance_var(name, type_vars : Array(TypeVar))
+      declared_instance_vars = (@declared_instance_vars ||= {} of String => Array(TypeVar))
+      declared_instance_vars[name] = type_vars
 
       generic_types.each do |key, instance|
-        instance.declare_instance_var(name, node)
+        instance.declare_instance_var(name, type_vars)
       end
 
       @inherited.try &.each do |inherited|
-        inherited.declare_instance_var(name, node)
+        inherited.declare_instance_var(name, type_vars)
       end
     end
 
     def initialize_instance(instance)
       if decl_ivars = @declared_instance_vars
         visitor = TypeLookup.new(instance)
-        decl_ivars.each do |name, node|
-          node.accept visitor
+        decl_ivars.each do |name, type_vars|
+          type = instance.solve_type_vars(type_vars)
 
-          ivar = MetaTypeVar.new(name, visitor.type)
+          ivar = MetaTypeVar.new(name, type)
           ivar.owner = instance
           ivar.bind_to ivar
-          ivar.freeze_type = visitor.type
+          ivar.freeze_type = type
           instance.instance_vars[name] = ivar
         end
       end
@@ -1689,7 +1710,7 @@ module Crystal
     include MatchesLookup
 
     getter program : Program
-    getter generic_class # : GenericClassType
+    getter generic_class : GenericClassType
     getter type_vars : Hash(String, ASTNode)
     getter subclasses : Array(Type)
     getter? allocated : Bool
@@ -1739,14 +1760,13 @@ module Crystal
       superclass.try { |s| s.allocated = allocated }
     end
 
-    def declare_instance_var(name, node : ASTNode)
-      visitor = TypeLookup.new(self)
-      node.accept visitor
+    def declare_instance_var(name, type_vars : Array(TypeVar))
+      type = solve_type_vars(type_vars)
 
-      ivar = MetaTypeVar.new(name, visitor.type)
+      ivar = MetaTypeVar.new(name, type)
       ivar.owner = self
       ivar.bind_to ivar
-      ivar.freeze_type = visitor.type.virtual_type
+      ivar.freeze_type = type
       self.instance_vars[name] = ivar
     end
 
@@ -1944,14 +1964,10 @@ module Crystal
       super(program, program.tuple, {"T" => var} of String => ASTNode, generic_nest)
     end
 
-    @tuple_indexers : Hash(Int32, Def)?
-
     def tuple_indexer(index)
       indexers = @tuple_indexers ||= {} of Int32 => Def
       tuple_indexer(indexers, index)
     end
-
-    @tuple_metaclass_indexers : Hash(Int32, Def)?
 
     def tuple_metaclass_indexer(index)
       indexers = @tuple_metaclass_indexers ||= {} of Int32 => Def
@@ -2105,6 +2121,10 @@ module Crystal
       nil
     end
 
+    def lookup_instance_var_with_owner?(name)
+      nil
+    end
+
     def all_instance_vars
       {} of String => Var
     end
@@ -2211,8 +2231,7 @@ module Crystal
     include DefInstanceContainer
     include MatchesLookup
 
-    getter typedef # : Type
-
+    getter typedef : Type
 
     def initialize(program, container, name, @typedef)
       super(program, container, name)
@@ -2267,11 +2286,9 @@ module Crystal
   class AliasType < NamedType
     getter? value_processed : Bool
 
-    # @value : ASTNode
     @aliased_type : Type?
-    @simple : Bool
 
-    def initialize(program, container, name, @value)
+    def initialize(program, container, name, @value : ASTNode)
       super(program, container, name)
       @simple = true
       @value_processed = false
@@ -2391,6 +2408,15 @@ module Crystal
       @vars[remove_at_from_var_name(name)]
     end
 
+    def lookup_instance_var_with_owner?(name)
+      ivar = lookup_instance_var?(name)
+      if ivar
+        InstanceVarWithOwner.new(ivar, self)
+      else
+        nil
+      end
+    end
+
     def all_instance_vars
       @vars
     end
@@ -2465,8 +2491,6 @@ module Crystal
       metaclass.add_def Def.new("new", [Arg.new("value", type: @base_type)], Primitive.new(:enum_new, self))
     end
 
-    @parents : Array(Type)?
-
     def parents
       @parents ||= [program.enum] of Type
     end
@@ -2496,11 +2520,9 @@ module Crystal
     include InstanceVarContainer
 
     getter program : Program
-    getter instance_type # : Type
+    getter instance_type : Type
 
-
-    def initialize(@program, instance_type : Type, super_class = nil, name = nil)
-      @instance_type = instance_type
+    def initialize(@program, @instance_type : Type, super_class = nil, name = nil)
       super_class ||= if instance_type.is_a?(ClassType) && instance_type.superclass
                         instance_type.superclass.not_nil!.metaclass
                       elsif instance_type.is_a?(EnumType)
@@ -2561,8 +2583,7 @@ module Crystal
     getter program : Program
     getter instance_type : GenericClassInstanceType
 
-    def initialize(@program, instance_type)
-      @instance_type = instance_type
+    def initialize(@program, @instance_type)
     end
 
     @parents : Array(Type)?
@@ -2873,6 +2894,8 @@ module Crystal
     delegate lookup_defs_with_modules, base_type
     delegate lookup_instance_var, base_type
     delegate lookup_instance_var?, base_type
+    delegate lookup_instance_var_with_owner, base_type
+    delegate lookup_instance_var_with_owner?, base_type
     delegate index_of_instance_var, base_type
     delegate lookup_macro, base_type
     delegate lookup_macros, base_type
@@ -2954,11 +2977,8 @@ module Crystal
     getter program : Program
     getter instance_type : VirtualType
 
-    def initialize(@program, instance_type)
-      @instance_type = instance_type
+    def initialize(@program, @instance_type)
     end
-
-    @parents : Array(Type)?
 
     def parents
       @parents ||= [instance_type.superclass.try(&.metaclass) || @program.class_type] of Type
@@ -3070,8 +3090,6 @@ module Crystal
     def return_type
       fun_types.last
     end
-
-    @parents : Array(Type)?
 
     def parents
       @parents ||= [@program.proc] of Type

@@ -4,9 +4,6 @@ module Crystal
   class LLVMId
     getter id_to_metaclass : Hash(Int32, Int32)
 
-    @ids : Hash(Type, {Int32, Int32})
-    @next_id : Int32
-
     def initialize(program)
       @ids = {} of Type => {Int32, Int32}
       @id_to_metaclass = {} of Int32 => Int32

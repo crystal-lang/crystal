@@ -1,13 +1,4 @@
 class OAuth::Consumer
-  @host : String
-  @consumer_key : String
-  @consumer_secret : String
-  @secret : String
-  @port : Int32
-  @scheme : String
-  @request_token_uri : String
-  @authorize_uri : String
-  @access_token_uri : String
   @ssl : Bool
 
   def initialize(@host : String, @consumer_key : String, @consumer_secret : String,
