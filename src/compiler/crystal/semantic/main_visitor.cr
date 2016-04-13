@@ -1716,8 +1716,18 @@ module Crystal
       # We also need to merge types from breaks inside while.
       if all_break_vars
         all_break_vars.each do |break_vars|
-          break_vars.each do |name, var|
-            @vars[name].bind_to(var)
+          break_vars.each do |name, break_var|
+            var = @vars[name]?
+            unless var
+              # Fix for issue #2441:
+              # it might be that a break variable is not present
+              # in the current vars after a while
+              var = new_meta_var(name)
+              var.bind_to(mod.nil_var)
+              @meta_vars[name].bind_to(mod.nil_var)
+              @vars[name] = var
+            end
+            var.bind_to(break_var)
           end
         end
       end

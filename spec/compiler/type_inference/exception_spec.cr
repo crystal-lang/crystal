@@ -415,4 +415,17 @@ describe "Type inference: exception" do
       end
       )) { nilable int32 }
   end
+
+  it "doesn't crash on break inside rescue, in while (#2441)" do
+    assert_type(%(
+      while true
+        begin
+        rescue ex
+          break
+        end
+      end
+
+      ex
+      )) { nilable types["Exception"].virtual_type }
+  end
 end
