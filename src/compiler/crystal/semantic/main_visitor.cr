@@ -1380,6 +1380,8 @@ module Crystal
         node.raise "can't cast to Object yet"
       when @mod.reference
         node.raise "can't cast to Reference yet"
+      when @mod.class_type
+        node.raise "can't cast to Class yet"
       end
 
       obj_type = node.obj.type?
