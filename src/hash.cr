@@ -565,9 +565,13 @@ class Hash(K, V)
   # h = {"a": 1, "b": 2, "c": 3, "d": 4}.reject!("a", "c")
   # h # => {"b": 2, "d": 4}
   # ```
-  def reject!(*keys)
+  def reject!(keys : Array | Tuple)
     keys.each { |k| delete(k) }
     self
+  end
+
+  def reject!(*keys)
+    reject!(keys)
   end
 
   # Returns a new `Hash` with the given keys.
@@ -575,10 +579,14 @@ class Hash(K, V)
   # ```
   # {"a": 1, "b": 2, "c": 3, "d": 4}.select("a", "c") # => {"a": 1, "c": 3}
   # ```
-  def select(*keys)
+  def select(keys : Array | Tuple)
     hash = {} of K => V
     keys.each { |k| hash[k] = self[k] if has_key?(k) }
     hash
+  end
+
+  def select(*keys)
+    select(keys)
   end
 
   # Removes every element except the given ones.
@@ -587,9 +595,13 @@ class Hash(K, V)
   # h = {"a": 1, "b": 2, "c": 3, "d": 4}.select!("a", "c")
   # h # => {"a": 1, "c": 3}
   # ```
-  def select!(*keys)
+  def select!(keys : Array | Tuple)
     each { |k, v| delete(k) unless keys.includes?(k) }
     self
+  end
+
+  def select!(*keys)
+    select!(keys)
   end
 
   # Zips two arrays into a `Hash`, taking keys from *ary1* and values from *ary2*.
