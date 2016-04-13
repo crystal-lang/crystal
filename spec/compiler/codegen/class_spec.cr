@@ -507,25 +507,6 @@ describe "Code gen: class" do
       )).to_string.should eq("B")
   end
 
-  it "does to_s for virtual metaclass type (4)" do
-    run(%(
-      require "prelude"
-
-      class Foo; end
-      class A < Foo; end
-      class B < Foo; end
-
-      class Obj(T)
-        def self.t
-          T
-        end
-      end
-
-      t = Obj(Foo+).t
-      t.to_s
-      )).to_string.should eq("Foo")
-  end
-
   it "builds generic class bug" do
     codegen(%(
       abstract class Base

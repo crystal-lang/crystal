@@ -838,9 +838,6 @@ module Macros
   # class Union < ASTNode
   # end
 
-  # class Virtual < ASTNode
-  # end
-
   # class Self < ASTNode
   # end
 

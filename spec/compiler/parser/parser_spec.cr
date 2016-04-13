@@ -284,7 +284,6 @@ describe "Parser" do
   it_parses "def foo(var : (Int, Float) -> Double); end", Def.new("foo", [Arg.new("var", restriction: Fun.new(["Int".path, "Float".path] of ASTNode, "Double".path))])
   it_parses "def foo(var : Char[256]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of(256))])
   it_parses "def foo(var : Char[N]); end", Def.new("foo", [Arg.new("var", restriction: "Char".static_array_of("N".path))])
-  it_parses "def foo(var : Foo+); end", Def.new("foo", [Arg.new("var", restriction: Virtual.new("Foo".path))])
   it_parses "def foo(var : Int32 = 1); end", Def.new("foo", [Arg.new("var", 1.int32, "Int32".path)])
   it_parses "def foo(var : Int32 -> = 1); end", Def.new("foo", [Arg.new("var", 1.int32, Fun.new(["Int32".path] of ASTNode))])
   it_parses "def foo; yield; end", Def.new("foo", body: Yield.new, yields: 0)
@@ -1316,6 +1315,8 @@ describe "Parser" do
   assert_syntax_error "@foo :: Foo"
   assert_syntax_error "@@foo :: Foo"
   assert_syntax_error "$foo :: Foo"
+
+  assert_syntax_error "def foo(var : Foo+); end"
 
   %w(&& || !).each do |name|
     assert_syntax_error "foo.#{name}"

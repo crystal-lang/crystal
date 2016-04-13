@@ -1513,23 +1513,6 @@ module Crystal
     def_equals_and_hash types
   end
 
-  class Virtual < ASTNode
-    property name : ASTNode
-
-    def initialize(@name)
-    end
-
-    def accept_children(visitor)
-      @name.accept visitor
-    end
-
-    def clone_without_location
-      Virtual.new(@name.clone)
-    end
-
-    def_equals_and_hash name
-  end
-
   class Self < ASTNode
     def ==(other : self)
       true

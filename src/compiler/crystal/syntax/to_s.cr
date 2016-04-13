@@ -781,12 +781,6 @@ module Crystal
       false
     end
 
-    def visit(node : Virtual)
-      node.name.accept self
-      @str << "+"
-      false
-    end
-
     def visit(node : Metaclass)
       node.name.accept self
       @str << "."

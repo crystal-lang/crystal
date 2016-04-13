@@ -268,11 +268,6 @@ module Crystal
       node
     end
 
-    def transform(node : Virtual)
-      node.name = node.name.transform(self)
-      node
-    end
-
     def transform(node : Metaclass)
       node.name = node.name.transform(self)
       node

@@ -59,12 +59,6 @@ module Crystal
       false
     end
 
-    def visit(node : Virtual)
-      node.name.accept self
-      @type = type.instance_type.virtual_type
-      false
-    end
-
     def visit(node : Metaclass)
       node.name.accept self
       @type = type.virtual_type.metaclass.virtual_type

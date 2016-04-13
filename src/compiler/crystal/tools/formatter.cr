@@ -3258,17 +3258,6 @@ module Crystal
       false
     end
 
-    def visit(node : Virtual)
-      accept node.name
-      skip_space
-
-      check :"+"
-      write "+"
-      next_token
-
-      false
-    end
-
     def visit(node : Block)
       # Handled in format_block
       return false

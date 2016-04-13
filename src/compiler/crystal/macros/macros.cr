@@ -757,7 +757,7 @@ module Crystal
   end
 
   class YieldsTransformer < Transformer
-    @yields : Hash(String, Crystal::ASTNode+)
+    @yields : Hash(String, Crystal::ASTNode)
 
     def initialize(@yields)
     end
