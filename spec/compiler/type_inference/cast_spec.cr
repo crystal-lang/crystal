@@ -272,7 +272,7 @@ describe "Type inference: cast" do
       "can't cast to Reference yet"
   end
 
-  it "disallows casting to Reference" do
+  it "disallows casting to Class" do
     assert_error %(
       nil as Class
       ),
