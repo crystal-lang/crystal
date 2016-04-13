@@ -584,14 +584,14 @@ class Array(T)
   # behind. If the block returns `true`, the finding element
   # is itself or exists infront.
   #
-  # Binary search need sorted array, so self have to be sorted.
+  # Binary search needs sorted array, so self has to be sorted.
+  #
+  # Returns `nil` if the block didn't return `true` for any element.
   #
   # ```
   # [2, 5, 7, 10].bsearch{ |x| x >= 4 } # => 5
   # [2, 5, 7, 10].bsearch{ |x| x > 10 } # => nil
   # ```
-  #
-  # Returns `nil` if the block didn't return `true` for any element.
   def bsearch
     bsearch_index{ |value| yield value }.try { |index| self[index] }
   end
@@ -603,14 +603,14 @@ class Array(T)
   # behind. If the block returns `true`, the finding element
   # is itself or exists infront.
   #
-  # Binary search need sorted array, so self have to be sorted.
+  # Binary search needs sorted array, so self has to be sorted.
+  #
+  # Returns `nil` if the block didn't return `true` for any element.
   #
   # ```
   # [2, 5, 7, 10].bsearch_index{ |x, i| x >= 4 } # => 1
   # [2, 5, 7, 10].bsearch_index{ |x, i| x > 10 } # => nil
   # ```
-  #
-  # Returns `nil` if the block didn't return `true` for any element.
   def bsearch_index
     (0...size).bsearch{ |index| yield self[index], index }
   end
