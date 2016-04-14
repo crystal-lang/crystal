@@ -20,8 +20,6 @@ struct BitArray
   # The number of bits the BitArray stores
   getter size : Int32
 
-  @bits : UInt32*
-
   # Create a new BitArray of `size` bits.
   #
   # `initial` optionally sets the starting value, true or false, for all bits

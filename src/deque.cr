@@ -20,7 +20,6 @@ class Deque(T)
   # (this Deque has 5 items, each equal to their index)
 
   @start = 0
-  @buffer : T*
 
   # Creates a new empty Deque
   def initialize

@@ -1911,6 +1911,110 @@ describe "Type inference: instance var" do
       )) { nilable types["Node"].virtual_type }
   end
 
+  it "infers from Pointer.malloc" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = Pointer(Int32).malloc(1_u64)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { pointer_of(int32) }
+  end
+
+  it "infers from Pointer.malloc with two arguments" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        def initialize
+          @x = Pointer.malloc(10, 1_u8)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { pointer_of(uint8) }
+  end
+
+  it "infers from Pointer.null" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+        def initialize
+          @x = Pointer(Int32).null
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { pointer_of(int32) }
+  end
+
+  it "infers from Pointer.malloc in generic type" do
+    assert_type(%(
+      class Foo(T)
+        def initialize
+          @x = Pointer(T).malloc(1_u64)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new.x
+      )) { pointer_of(int32) }
+  end
+
+  it "infers from Pointer.null in generic type" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo(T)
+        def initialize
+          @x = Pointer(T).null
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new.x
+      )) { pointer_of(int32) }
+  end
+
+  it "infers from Pointer.malloc with two arguments in generic type" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo(T)
+        def initialize
+          @x = Pointer.malloc(10, 1_u8)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new.x
+      )) { pointer_of(uint8) }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

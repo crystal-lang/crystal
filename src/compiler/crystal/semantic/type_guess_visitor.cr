@@ -556,9 +556,38 @@ module Crystal
         return current_type if current_type
       end
 
+      # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
+      if obj.is_a?(Generic) && obj.name.single?("Pointer") &&
+         (node.name == "malloc" || node.name == "null")
+        type = lookup_type?(obj)
+        return type if type.is_a?(PointerInstanceType)
+      end
+
+      if type = guess_type_call_pointer_malloc_two_args(node)
+        return type
+      end
+
       type = guess_type_call_lib_fun(node)
       return type if type
 
+      nil
+    end
+
+    # If it's Pointer.malloc(size, value), infer element type from value
+    # to T and then infer to Pointer(T)
+    def guess_type_call_pointer_malloc_two_args(node)
+      obj = node.obj
+
+      if node.args.size == 2 && obj.is_a?(Path) &&
+         obj.single?("Pointer") && node.name == "malloc"
+        type = lookup_type_no_check?(obj)
+        if type.is_a?(PointerType)
+          element_type = guess_type(node.args[1])
+          if element_type
+            return @mod.pointer_of(element_type)
+          end
+        end
+      end
       nil
     end
 
@@ -762,6 +791,16 @@ module Crystal
       # If it's something like T(X).new, guess T(X).
       if node.name == "new" && obj && (obj.is_a?(Path) || obj.is_a?(Generic))
         return [obj] of TypeVar
+      end
+
+      # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
+      if obj.is_a?(Generic) && obj.name.single?("Pointer") &&
+         (node.name == "malloc" || node.name == "null")
+        return [obj] of TypeVar
+      end
+
+      if type = guess_type_call_pointer_malloc_two_args(node)
+        return [type] of TypeVar
       end
 
       if type = guess_type_call_lib_fun(node)

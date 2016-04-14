@@ -1196,6 +1196,12 @@ module Crystal
       new names, true
     end
 
+    # Returns true if this path has a single component
+    # with the given name
+    def single?(name)
+      names.size == 1 && names.first == name
+    end
+
     def clone_without_location
       ident = Path.new(@names.clone, @global)
       ident.name_size = name_size

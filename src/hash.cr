@@ -3,7 +3,6 @@
 # See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
 class Hash(K, V)
   getter size : Int32
-  @buckets : Pointer(Entry(K, V)?)
   @buckets_size : Int32
   @first : Entry(K, V)?
   @last : Entry(K, V)?

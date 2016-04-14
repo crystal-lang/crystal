@@ -55,7 +55,6 @@ class Array(T)
   # ```
   getter size : Int32
   @capacity : Int32
-  @buffer : T*
 
   # Creates a new empty Array.
   def initialize
