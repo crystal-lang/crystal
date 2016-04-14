@@ -2020,6 +2020,29 @@ describe "Type inference: instance var" do
       )) { pointer_of(uint8) }
   end
 
+  it "doesn't infer generic type without type argument inside generic" do
+    assert_error %(
+      class Bar(T)
+        def self.new
+          1
+        end
+      end
+
+      class Foo(T)
+        def initialize
+          @bar = Bar.new
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo(Int32).new.bar
+      ),
+      "Can't infer the type of instance variable '@bar' of Foo"
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

@@ -790,6 +790,9 @@ module Crystal
       # If it's something like T.new, guess T.
       # If it's something like T(X).new, guess T(X).
       if node.name == "new" && obj && (obj.is_a?(Path) || obj.is_a?(Generic))
+        type = lookup_type_no_check?(obj)
+        return nil if type.is_a?(GenericType)
+
         return [obj] of TypeVar
       end
 
