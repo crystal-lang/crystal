@@ -145,6 +145,25 @@ describe "Type inference: did you mean" do
       "did you mean @barbara"
   end
 
+  it "says did you mean for instance var in subclass" do
+    assert_error %(
+      class Foo
+        def initialize
+          @barbara = 1
+        end
+      end
+
+      class Bar < Foo
+        def foo
+          @bazbaza.abs
+        end
+      end
+
+      Bar.new.foo
+      ),
+      "did you mean @barbara"
+  end
+
   it "doesn't suggest when declaring var with suffix if and using it (#946)" do
     assert_error %(
       a if a = 1

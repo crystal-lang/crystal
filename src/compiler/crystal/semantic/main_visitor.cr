@@ -337,7 +337,7 @@ module Crystal
 
     def lookup_similar_instance_variable_name(node, owner)
       Levenshtein.find(node.name) do |finder|
-        owner.instance_vars.each_key do |name|
+        owner.all_instance_vars.each_key do |name|
           finder.test(name)
         end
       end
