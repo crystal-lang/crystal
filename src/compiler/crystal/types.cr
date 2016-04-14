@@ -1754,6 +1754,7 @@ module Crystal
     delegate struct?, @generic_class
     delegate passed_by_value?, @generic_class
     delegate type_desc, @generic_class
+    delegate container, @generic_class
 
     def allocated=(allocated)
       @allocated = allocated

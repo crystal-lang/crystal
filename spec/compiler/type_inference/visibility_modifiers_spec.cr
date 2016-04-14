@@ -341,4 +341,40 @@ describe "Visibility modifiers" do
       (Bar.new || Baz.new).foo
       )) { union_of int32, float64 }
   end
+
+  it "allows calling protected method from nested generic class (1)" do
+    assert_type(%(
+      class Foo
+        class Bar(U)
+          def bar
+            Foo.new.foo
+          end
+        end
+
+        protected def foo
+          1
+        end
+      end
+
+      Foo::Bar(Int32).new.bar
+      )) { int32 }
+  end
+
+  it "allows calling protected method from nested generic class (2)" do
+    assert_type(%(
+      class Foo(T)
+        class Bar(U)
+          def bar
+            Foo(Int32).new.foo
+          end
+        end
+
+        protected def foo
+          1
+        end
+      end
+
+      Foo::Bar(Int32).new.bar
+      )) { int32 }
+  end
 end
