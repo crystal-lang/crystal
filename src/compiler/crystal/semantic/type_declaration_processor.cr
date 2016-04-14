@@ -466,9 +466,9 @@ module Crystal
         vars.each do |name, info|
           case owner
           when NonGenericClassType
-            ivar = owner.lookup_instance_var(name)
-            unless ivar.type.includes_type?(@program.nil)
-              info.def.raise "this 'initialize' doesn't initialize ancestor instance variable '#{name}', rendering it nilable"
+            ivar = owner.lookup_instance_var_with_owner(name)
+            unless ivar.instance_var.type.includes_type?(@program.nil)
+              info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}' of #{ivar.owner}, with #{owner} < #{ivar.owner}, rendering it nilable"
             end
           when GenericClassType
             type_vars = owner.declared_instance_vars.not_nil![name]

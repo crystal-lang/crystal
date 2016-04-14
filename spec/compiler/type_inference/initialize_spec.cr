@@ -22,7 +22,7 @@ describe "Type inference: initialize" do
       foo = Foo.new
       bar = Bar.new
       ),
-      "this 'initialize' doesn't initialize ancestor instance variable '@baz', rendering it nilable"
+      "this 'initialize' doesn't initialize instance variable '@baz' of Foo, with Bar < Foo, rendering it nilable"
   end
 
   it "types instance vars as nilable if doesn't invoke super in initialize with deep subclass" do
@@ -52,7 +52,7 @@ describe "Type inference: initialize" do
       foo = Foo.new
       bar = Bar.new
       ),
-      "this 'initialize' doesn't initialize ancestor instance variable '@baz', rendering it nilable"
+      "this 'initialize' doesn't initialize instance variable '@baz' of Foo, with BarBar < Foo, rendering it nilable"
   end
 
   it "types instance vars as nilable if doesn't invoke super with default arguments" do

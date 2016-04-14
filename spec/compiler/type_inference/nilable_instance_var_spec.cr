@@ -185,7 +185,7 @@ describe "Type inference: nilable instance var" do
 
       Derived.new.use_x
       ),
-      "this 'initialize' doesn't initialize ancestor instance variable '@x', rendering it nilable"
+      "this 'initialize' doesn't initialize instance variable '@x' of Base, with Unreferenced < Base, rendering it nilable"
   end
 
   it "doesn't consider as nil if initialized with catch-all" do

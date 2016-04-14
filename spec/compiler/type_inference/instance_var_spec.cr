@@ -990,7 +990,7 @@ describe "Type inference: instance var" do
         end
       end
       ),
-      "this 'initialize' doesn't initialize ancestor instance variable '@x', rendering it nilable"
+      "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
   end
 
   it "errors if not initializing super variables (2)" do
@@ -1009,7 +1009,7 @@ describe "Type inference: instance var" do
         end
       end
       ),
-      "this 'initialize' doesn't initialize ancestor instance variable '@x', rendering it nilable"
+      "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
   end
 
   it "errors if not initializing super variables (3)" do
@@ -1026,7 +1026,7 @@ describe "Type inference: instance var" do
         end
       end
       ),
-      "this 'initialize' doesn't initialize ancestor instance variable '@x', rendering it nilable"
+      "this 'initialize' doesn't initialize instance variable '@x' of Foo, with Bar < Foo, rendering it nilable"
   end
 
   it "errors if not initializing super variable in generic" do
