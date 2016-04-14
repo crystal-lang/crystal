@@ -58,7 +58,7 @@ class Crypto::Bcrypt::Password
   # ```
   def ==(password)
     hashed_password = Bcrypt.new(password, salt, cost)
-    Crypto::Subtle.constant_time_compare(@raw_hash.to_slice, hashed_password.to_slice) == 1
+    Crypto::Subtle.constant_time_compare(@raw_hash, hashed_password)
   end
 
   def to_s(io)
