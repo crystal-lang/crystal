@@ -791,9 +791,31 @@ describe "Type inference: instance var" do
       )) { int32 }
   end
 
-  it "infers type to be nilable if not initialized in all initialize" do
+  it "errors if not initialized in all initialize" do
+    assert_error %(
+      class Foo
+        def initialize
+          @x = 1
+        end
+
+        def initialize(x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      ),
+      "this 'initialize' doesn't explicitly initialize instance variable '@x' of Foo, rendering it nilable"
+  end
+
+  it "doesn't error if not initializes in all initialize because declared as nilable" do
     assert_type(%(
       class Foo
+        @x : Int32?
+
         def initialize
           @x = 1
         end
@@ -850,25 +872,6 @@ describe "Type inference: instance var" do
       Foo.new.x
       ),
       "Can't infer the type of instance variable '@x' of Foo"
-  end
-
-  it "infers type to be nilable if not initialized in all initialize" do
-    assert_type(%(
-      class Foo
-        def initialize
-          @x = 1
-        end
-
-        def initialize(x)
-        end
-
-        def x
-          @x
-        end
-      end
-
-      Foo.new.x
-      )) { nilable int32 }
   end
 
   it "errors if declaring instance var and turns out to be nilable" do
@@ -1277,6 +1280,7 @@ describe "Type inference: instance var" do
     assert_type(%(
       class Foo
         def initialize(@x : Int32)
+          @y = nil
         end
 
         def initialize
@@ -1895,6 +1899,7 @@ describe "Type inference: instance var" do
     assert_type(%(
       class Node
         def initialize
+          @x = nil
         end
 
         def initialize(@x : self)

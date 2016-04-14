@@ -18,7 +18,7 @@ describe "Type inference: nilable instance var" do
 
       Foo.new.foo + 1
       ),
-      "instance variable '@foo' of Foo was not initialized in all of the 'initialize' methods, rendering it nilable"
+      "this 'initialize' doesn't explicitly initialize instance variable '@foo' of Foo, rendering it nilable"
   end
 
   it "says instance var was not initialized in all of the initialize methods (2)" do

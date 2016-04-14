@@ -85,7 +85,7 @@ module Crystal
       @instance_vars_outside = {} of Type => Array(String)
 
       # Instance vars that are determined to be non-nilable because
-      # they are initialized in all of the initialize methods
+      # they are initialized in at least one of the initialize methods.
       @non_nilable_instance_vars = {} of Type => Array(String)
 
       # Nilable variables there were detected to not be initilized in an initialize,
@@ -405,14 +405,21 @@ module Crystal
       # Then check which ones are assigned in all of them
       non_nilable = [] of String
       all_instance_vars.each do |instance_var|
-        all_assigned = infos.all? do |info|
+        infos.each do |info|
           # If an initialize calls another initialize, consider it like it initializes
           # all instance vars, because the other initialize will have to do that
-          info.def.calls_initialize || info.try(&.instance_vars.try(&.includes?(instance_var)))
+          next if info.def.calls_initialize
+
+          unless info.try(&.instance_vars.try(&.includes?(instance_var)))
+            all_assigned = false
+            # Rememebr that this variable wasn't initialized here, and later error
+            # if it turns out to be non-nilable
+            nilable_vars = @nilable_instance_vars[owner] ||= {} of String => InitializeInfo
+            nilable_vars[instance_var] = info
+            break
+          end
         end
-        if all_assigned
-          non_nilable << instance_var
-        end
+        non_nilable << instance_var
       end
 
       merge_non_nilable_vars(non_nilable, ancestor_non_nilable)
@@ -467,7 +474,16 @@ module Crystal
           case owner
           when NonGenericClassType
             ivar = owner.lookup_instance_var_with_owner(name)
-            unless ivar.instance_var.type.includes_type?(@program.nil)
+            if ivar.instance_var.type.includes_type?(@program.nil)
+              # If the variable is nilable because it was not initialized
+              # in all of the initialize methods, and it's not explictly nil,
+              # give an error and ask to be explicit.
+              if nilable_instance_var?(owner, name)
+                raise_doesnt_explicitly_initializes(info, name, ivar)
+              end
+            elsif owner == ivar.owner
+              raise_doesnt_explicitly_initializes(info, name, ivar)
+            else
               info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}' of #{ivar.owner}, with #{owner} < #{ivar.owner}, rendering it nilable"
             end
           when GenericClassType
@@ -478,6 +494,24 @@ module Crystal
           end
         end
       end
+    end
+
+    private def raise_doesnt_explicitly_initializes(info, name, ivar)
+      info.def.raise <<-MSG
+        this 'initialize' doesn't explicitly initialize instance variable '#{name}' of #{ivar.owner}, rendering it nilable
+
+        The instance variable '#{name}' is initialized in other 'initialize' methods,
+        and by not initializing it here it's not clear if the variable is supposed
+        to be nilable or if this is a mistake.
+
+        To fix this error, either assign nil to it here:
+
+          #{name} = nil
+
+        Or declare it as nilable outside at the type level:
+
+          #{name} : (#{ivar.instance_var.type})?
+        MSG
     end
 
     private def sort_types_by_depth(types)
