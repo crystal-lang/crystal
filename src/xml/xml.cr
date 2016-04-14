@@ -27,7 +27,6 @@
 # end
 # ```
 module XML
-
   SUBSTITUTIONS = {
     '>' => "&gt;",
     '<' => "&lt;",

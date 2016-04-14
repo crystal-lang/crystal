@@ -88,4 +88,12 @@ module Spec
   def self.formatters
     @@formatters
   end
+
+  def self.override_default_formatter(formatter)
+    @@formatters[0] = formatter
+  end
+
+  def self.add_formatter(formatter)
+    @@formatters << formatter
+  end
 end
