@@ -659,7 +659,6 @@ class Crystal::Doc::Type
 
   def type_to_html(type : Crystal::VirtualType, io, text = nil, links = true)
     type_to_html type.base_type, io, text, links: links
-    io << '+'
   end
 
   def type_to_html(type : Crystal::Type, io, text = nil, links = true)
