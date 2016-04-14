@@ -543,14 +543,14 @@ describe "Type inference: class" do
       foo = Foo.new
       foo.@y
       ),
-      "Foo doesn't have an instance var named '@y'"
+      "Can't infer the type of instance variable '@y' of Foo"
   end
 
   it "errors if reading ivar from non-ivar container" do
     assert_error %(
       1.@y
       ),
-      "Int32 doesn't have instance vars"
+      "can't use instance variables inside primitive types (at Int32)"
   end
 
   it "says that instance vars are not allowed in metaclass" do
@@ -987,8 +987,8 @@ describe "Type inference: class" do
       )) { int32 }
   end
 
-  it "types read-instance-var without a type as nil" do
-    assert_type(%(
+  it "errors if using read-instance-var with non-typed variable" do
+    assert_error %(
       class Foo
         def foo
           @foo
@@ -997,6 +997,7 @@ describe "Type inference: class" do
 
       f = Foo.new
       f.@foo
-      )) { |mod| mod.nil }
+      ),
+      "Can't infer the type of instance variable '@foo' of Foo"
   end
 end

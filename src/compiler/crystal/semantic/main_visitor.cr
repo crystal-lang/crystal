@@ -382,23 +382,9 @@ module Crystal
       node.obj.accept self
 
       obj_type = node.obj.type
-      unless obj_type.is_a?(InstanceVarContainer)
-        node.raise "#{obj_type} doesn't have instance vars"
-      end
-
-      ivar = obj_type.lookup_instance_var?(node.name)
-      unless ivar
-        node.raise "#{obj_type} doesn't have an instance var named '#{node.name}'"
-      end
-
-      unless obj_type.has_instance_var_in_initialize?(node.name)
-        ivar.nil_reason = NilReason.new(node.name, :not_in_initialize, scope: obj_type)
-        ivar.bind_to mod.nil_var
-      end
-
-      node.bind_to ivar
-
-      ivar
+      var = lookup_instance_var(node, obj_type)
+      node.bind_to var
+      var
     end
 
     def visit(node : ClassVar)
@@ -445,7 +431,11 @@ module Crystal
     end
 
     def lookup_instance_var(node)
-      case scope = @scope.try &.remove_typedef
+      lookup_instance_var node, @scope.try(&.remove_typedef)
+    end
+
+    def lookup_instance_var(node, scope)
+      case scope
       when Nil
         node.raise "can't use instance variables at the top level"
       when Program
