@@ -166,7 +166,7 @@ module Crystal
       if @cross_compile_flags
         cross_compile program, units, lib_flags, output_filename
       else
-        codegen units, lib_flags, output_filename, output_dir
+        codegen program, units, lib_flags, output_filename, output_dir
       end
     end
 
@@ -193,7 +193,7 @@ module Crystal
       puts "#{CC} #{o_name} -o #{output_filename} #{@link_flags} #{lib_flags}"
     end
 
-    private def codegen(units : Array(CompilationUnit), lib_flags, output_filename, output_dir)
+    private def codegen(program, units : Array(CompilationUnit), lib_flags, output_filename, output_dir)
       object_names = units.map &.object_filename
       multithreaded = LLVM.start_multithreaded
 
@@ -211,13 +211,13 @@ module Crystal
         if units.size == 1
           first_unit = units.first
 
-          codegen_single_unit(first_unit, target_triple, multithreaded)
+          codegen_single_unit(program, first_unit, target_triple, multithreaded)
 
           if emit = @emit
             first_unit.emit(emit, original_output_filename || output_filename)
           end
         else
-          codegen_many_units(units, target_triple, multithreaded)
+          codegen_many_units(program, units, target_triple, multithreaded)
         end
       end
 
@@ -235,12 +235,12 @@ module Crystal
       end
     end
 
-    private def codegen_many_units(units, target_triple, multithreaded)
+    private def codegen_many_units(program, units, target_triple, multithreaded)
       jobs_count = 0
       wait_channel = Channel(Nil).new(@n_threads)
 
       while unit = units.pop?
-        fork_and_codegen_single_unit(unit, target_triple, multithreaded, wait_channel)
+        fork_and_codegen_single_unit(program, unit, target_triple, multithreaded, wait_channel)
         jobs_count += 1
 
         if jobs_count >= @n_threads
@@ -255,17 +255,17 @@ module Crystal
       end
     end
 
-    private def fork_and_codegen_single_unit(unit, target_triple, multithreaded, wait_channel)
+    private def fork_and_codegen_single_unit(program, unit, target_triple, multithreaded, wait_channel)
       spawn do
-        codegen_process = fork { codegen_single_unit(unit, target_triple, multithreaded) }
+        codegen_process = fork { codegen_single_unit(program, unit, target_triple, multithreaded) }
         codegen_process.wait
         wait_channel.send nil
       end
     end
 
-    private def codegen_single_unit(unit, target_triple, multithreaded)
+    private def codegen_single_unit(program, unit, target_triple, multithreaded)
       unit.llvm_mod.target = target_triple
-      ifdef x86_64
+      if program.has_flag?("x86_64")
         unit.llvm_mod.data_layout = DataLayout64
       else
         unit.llvm_mod.data_layout = DataLayout32

@@ -33,7 +33,7 @@ module Crystal
   end
 
   class Def
-    def mangled_name(self_type)
+    def mangled_name(program, self_type)
       name = String.build do |str|
         str << "*"
 
@@ -90,7 +90,7 @@ module Crystal
         end
       end
 
-      Crystal.safe_mangling(name)
+      Crystal.safe_mangling(program, name)
     end
 
     def varargs

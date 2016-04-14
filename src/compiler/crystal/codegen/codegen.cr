@@ -413,7 +413,7 @@ module Crystal
       if location && (type = node.type?)
         proc_name = true
         filename = location.filename as String
-        fun_literal_name = Crystal.safe_mangling("~proc#{type}@#{Crystal.relative_filename(filename)}:#{location.line_number}")
+        fun_literal_name = Crystal.safe_mangling(@mod, "~proc#{type}@#{Crystal.relative_filename(filename)}:#{location.line_number}")
       else
         proc_name = false
         fun_literal_name = "~fun_literal"
@@ -1841,8 +1841,8 @@ module Crystal
     end
   end
 
-  def self.safe_mangling(name)
-    ifdef windows
+  def self.safe_mangling(program, name)
+    if program.has_flag?("windows")
       name.gsub do |char|
         case char
         when '<', '>', '(', ')', '*', ':', ',', '#', '@', ' '

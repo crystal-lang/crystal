@@ -1773,7 +1773,7 @@ module Crystal
       @varargs = false
     end
 
-    def mangled_name(obj_type)
+    def mangled_name(program, obj_type)
       real_name
     end
 

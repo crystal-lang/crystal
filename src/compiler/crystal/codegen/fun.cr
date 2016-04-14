@@ -2,7 +2,7 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   def target_def_fun(target_def, self_type)
-    mangled_name = target_def.mangled_name(self_type)
+    mangled_name = target_def.mangled_name(@mod, self_type)
     self_type_mod = type_module(self_type)
 
     func = self_type_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
