@@ -72,7 +72,7 @@ module Crystal
     def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false, inside_type = false, inside_exp = false)
       generated_source = expanded_macro.source
       begin
-        parser = Parser.new(generated_source, [vars.dup])
+        parser = Parser.new(generated_source, @program.string_pool, [vars.dup])
         parser.filename = VirtualFile.new(the_macro, generated_source, node.location)
         parser.visibility = node.visibility
         parser.def_nest = 1 if inside_def

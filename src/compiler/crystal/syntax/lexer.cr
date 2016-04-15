@@ -1,5 +1,6 @@
 require "./token"
 require "../exception"
+require "string_pool"
 
 module Crystal
   class Lexer
@@ -13,8 +14,9 @@ module Crystal
     getter line_number : Int32
     @filename : String | VirtualFile | Nil
     @token_end_location : Location?
+    @string_pool : StringPool
 
-    def initialize(string)
+    def initialize(string, string_pool : StringPool? = nil)
       @reader = Char::Reader.new(string)
       @token = Token.new
       @line_number = 1
@@ -26,6 +28,7 @@ module Crystal
       @count_whitespace = false
       @slash_is_regex = true
       @wants_raw = false
+      @string_pool = string_pool || StringPool.new
     end
 
     def filename=(filename)
@@ -445,7 +448,7 @@ module Crystal
               next_char
             end
             @token.type = :SYMBOL
-            @token.value = string_range(start)
+            @token.value = string_range_from_pool(start)
             set_token_raw_from_start(start - 1)
           else
             @token.type = :":"
@@ -569,7 +572,7 @@ module Crystal
               # Nothing to do
             end
             @token.type = class_var ? :CLASS_VAR : :INSTANCE_VAR
-            @token.value = string_range(start)
+            @token.value = string_range_from_pool(start)
           else
             unknown_token
           end
@@ -596,14 +599,14 @@ module Crystal
             char = next_char if char == '?'
           end
           @token.type = :GLOBAL_MATCH_DATA_INDEX
-          @token.value = string_range(start)
+          @token.value = string_range_from_pool(start)
         else
           if ident_start?(current_char)
             while ident_part?(next_char)
               # Nothing to do
             end
             @token.type = :GLOBAL
-            @token.value = string_range(start)
+            @token.value = string_range_from_pool(start)
           else
             unknown_token
           end
@@ -981,7 +984,7 @@ module Crystal
             # Nothing to do
           end
           @token.type = :CONST
-          @token.value = string_range(start)
+          @token.value = string_range_from_pool(start)
         elsif current_char.lowercase? || current_char == '_' || current_char.ord > 0x9F
           next_char
           scan_ident(start)
@@ -1117,7 +1120,7 @@ module Crystal
         next_char
       end
       @token.type = :IDENT
-      @token.value = string_range(start)
+      @token.value = string_range_from_pool(start)
       @token
     end
 
@@ -1233,7 +1236,12 @@ module Crystal
 
       end_pos = current_pos - suffix_size
 
-      string_value = string_range(start, end_pos)
+      if end_pos - start == 1
+        # For numbers such as 0, 1, 2, 3, etc., we use a string from the poll
+        string_value = string_range_from_pool(start, end_pos)
+      else
+        string_value = string_range(start, end_pos)
+      end
       string_value = string_value.delete('_') if has_underscore
 
       if is_integer
@@ -1898,7 +1906,7 @@ module Crystal
           char = next_char
         end
         @token.type = :MACRO_VAR
-        @token.value = string_range(start)
+        @token.value = string_range_from_pool(start)
         @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
         return @token
       end
@@ -2402,8 +2410,20 @@ module Crystal
       @reader.string.byte_slice(start_pos, end_pos - start_pos)
     end
 
+    def string_range_from_pool(start_pos)
+      string_range_from_pool(start_pos, current_pos)
+    end
+
+    def string_range_from_pool(start_pos, end_pos)
+      @string_pool.get slice_range(start_pos, end_pos)
+    end
+
     def slice_range(start_pos)
-      Slice.new(@reader.string.to_unsafe + start_pos, current_pos - start_pos)
+      slice_range(start_pos, current_pos)
+    end
+
+    def slice_range(start_pos, end_pos)
+      Slice.new(@reader.string.to_unsafe + start_pos, end_pos - start_pos)
     end
 
     def ident_start?(char)

@@ -86,14 +86,14 @@ module Crystal
       @flags << flag
     end
 
-    private def parse(program, sources)
+    private def parse(program, sources : Array)
       node = nil
       require_node = nil
 
       timing("Parse") do
         nodes = sources.map do |source|
           program.add_to_requires source.filename
-          parse(source) as ASTNode
+          parse(program, source) as ASTNode
         end
         node = Expressions.from(nodes)
 
@@ -112,8 +112,8 @@ module Crystal
       {node, original_node}
     end
 
-    private def parse(source)
-      parser = Parser.new(source.code)
+    private def parse(program, source : Source)
+      parser = Parser.new(source.code, program.string_pool)
       parser.filename = source.filename
       parser.wants_doc = wants_doc?
       parser.parse

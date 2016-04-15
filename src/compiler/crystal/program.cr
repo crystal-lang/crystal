@@ -28,6 +28,7 @@ module Crystal
     getter! unions : Hash(Array(UInt64), Type)
     getter! file_modules : Hash(String, FileModule)
     getter! class_var_initializers : Array(ClassVarInitializer)
+    getter! string_pool
     @flags : Set(String)?
 
     def initialize
@@ -47,6 +48,7 @@ module Crystal
       @wants_doc = false
       @color = true
       @after_inference_types = Set(Type).new
+      @string_pool = StringPool.new
 
       types = @types = {} of String => Type
 

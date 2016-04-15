@@ -231,7 +231,7 @@ module Crystal
         nodes = Array(ASTNode).new(filenames.size)
         filenames.each do |filename|
           if @program.add_to_requires(filename)
-            parser = Parser.new File.read(filename)
+            parser = Parser.new File.read(filename), @program.string_pool
             parser.filename = filename
             parser.wants_doc = @program.wants_doc?
             nodes << FileNode.new(parser.parse.transform(self), filename)

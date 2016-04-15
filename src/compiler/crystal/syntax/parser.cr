@@ -12,12 +12,12 @@ module Crystal
     getter? wants_doc : Bool
     @block_arg_name : String?
 
-    def self.parse(str, def_vars = [Set(String).new])
-      new(str, def_vars).parse
+    def self.parse(str, string_pool : StringPool? = nil, def_vars = [Set(String).new])
+      new(str, string_pool, def_vars).parse
     end
 
-    def initialize(str, @def_vars = [Set(String).new])
-      super(str)
+    def initialize(str, string_pool : StringPool? = nil, @def_vars = [Set(String).new])
+      super(str, string_pool)
       @last_call_has_parenthesis = true
       @temp_token = Token.new
       @unclosed_stack = [] of Unclosed
