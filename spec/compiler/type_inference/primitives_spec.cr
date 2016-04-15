@@ -176,4 +176,50 @@ describe "Type inference: primitives" do
       ),
       "can't use instance variables inside primitive types (at Int32)"
   end
+
+  it "types @[Primitive] method" do
+    assert_type(%(
+      struct Int32
+        @[Primitive(:binary)]
+        def +(other : Int32) : Int32
+        end
+      end
+
+      1 + 2
+      )) { int32 }
+  end
+
+  it "errors if @[Primitive] has no args" do
+    assert_error %(
+      struct Int32
+        @[Primitive]
+        def +(other : Int32) : Int32
+        end
+      end
+      ),
+      "expected Primitive attribute to have one argument"
+  end
+
+  it "errors if @[Primitive] has non-symbol arg" do
+    assert_error %(
+      struct Int32
+        @[Primitive("foo")]
+        def +(other : Int32) : Int32
+        end
+      end
+      ),
+      "expected Primitive argument to be a symbol literal"
+  end
+
+  it "errors if @[Primitive] method has body" do
+    assert_error %(
+      struct Int32
+        @[Primitive(:binary)]
+        def +(other : Int32) : Int32
+          1
+        end
+      end
+      ),
+      "method marked as Primitive must have an empty body"
+  end
 end

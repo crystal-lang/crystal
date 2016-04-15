@@ -252,9 +252,13 @@ module Crystal
 
   # Fictitious node to represent primitives
   class Primitive < ASTNode
-    getter name : Symbol
+    getter name : String
 
-    def initialize(@name : Symbol, @type : Type? = nil)
+    def self.new(name : Symbol, type : Type? = nil)
+      new(name.to_s, type)
+    end
+
+    def initialize(@name : String, @type : Type? = nil)
     end
 
     def clone_without_location
@@ -269,7 +273,7 @@ module Crystal
     getter index : Int32
 
     def initialize(@index : Int32)
-      super(:tuple_indexer_known_index)
+      super("tuple_indexer_known_index")
     end
 
     def clone_without_location

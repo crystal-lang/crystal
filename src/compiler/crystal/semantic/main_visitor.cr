@@ -1811,65 +1811,65 @@ module Crystal
 
     def visit(node : Primitive)
       case node.name
-      when :binary
+      when "binary"
         visit_binary node
-      when :cast
+      when "cast"
         visit_cast node
-      when :allocate
+      when "allocate"
         visit_allocate node
-      when :pointer_malloc
+      when "pointer_malloc"
         visit_pointer_malloc node
-      when :pointer_set
+      when "pointer_set"
         visit_pointer_set node
-      when :pointer_get
+      when "pointer_get"
         visit_pointer_get node
-      when :pointer_address
+      when "pointer_address"
         node.type = @mod.uint64
-      when :pointer_new
+      when "pointer_new"
         visit_pointer_new node
-      when :pointer_realloc
+      when "pointer_realloc"
         node.type = scope
-      when :pointer_add
+      when "pointer_add"
         node.type = scope
-      when :argc
+      when "argc"
         node.type = @mod.int32
-      when :argv
+      when "argv"
         node.type = @mod.pointer_of(@mod.pointer_of(@mod.uint8))
-      when :struct_new
+      when "struct_new"
         node.type = scope.instance_type
-      when :struct_set
+      when "struct_set"
         visit_struct_or_union_set node
-      when :struct_get
+      when "struct_get"
         visit_struct_get node
-      when :union_new
+      when "union_new"
         node.type = scope.instance_type
-      when :union_set
+      when "union_set"
         visit_struct_or_union_set node
-      when :union_get
+      when "union_get"
         visit_union_get node
-      when :external_var_set
+      when "external_var_set"
         # Nothing to do
-      when :external_var_get
+      when "external_var_get"
         # Nothing to do
-      when :object_id
+      when "object_id"
         node.type = mod.uint64
-      when :object_crystal_type_id
+      when "object_crystal_type_id"
         node.type = mod.int32
-      when :symbol_hash
+      when "symbol_hash"
         node.type = mod.int32
-      when :symbol_to_s
+      when "symbol_to_s"
         node.type = mod.string
-      when :class
+      when "class"
         node.type = scope.metaclass
-      when :fun_call
+      when "fun_call"
         # Nothing to do
-      when :pointer_diff
+      when "pointer_diff"
         node.type = mod.int64
-      when :class_name
+      when "class_name"
         node.type = mod.string
-      when :enum_value
+      when "enum_value"
         # Nothing to do
-      when :enum_new
+      when "enum_new"
         # Nothing to do
       else
         node.raise "Bug: unhandled primitive in type inference: #{node.name}"

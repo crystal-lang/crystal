@@ -4,9 +4,9 @@ class Crystal::CodeGenVisitor
   # Can only happen in a Const or as an argument cast.
   def visit(node : Primitive)
     @last = case node.name
-            when :argc
+            when "argc"
               @argc
-            when :argv
+            when "argv"
               @argv
             else
               raise "Bug: unhandled primitive in codegen visit: #{node.name}"
@@ -15,59 +15,59 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive(node, target_def, call_args)
     @last = case node.name
-            when :binary
+            when "binary"
               codegen_primitive_binary node, target_def, call_args
-            when :cast
+            when "cast"
               codegen_primitive_cast node, target_def, call_args
-            when :allocate
+            when "allocate"
               codegen_primitive_allocate node, target_def, call_args
-            when :pointer_malloc
+            when "pointer_malloc"
               codegen_primitive_pointer_malloc node, target_def, call_args
-            when :pointer_set
+            when "pointer_set"
               codegen_primitive_pointer_set node, target_def, call_args
-            when :pointer_get
+            when "pointer_get"
               codegen_primitive_pointer_get node, target_def, call_args
-            when :pointer_address
+            when "pointer_address"
               codegen_primitive_pointer_address node, target_def, call_args
-            when :pointer_new
+            when "pointer_new"
               codegen_primitive_pointer_new node, target_def, call_args
-            when :pointer_realloc
+            when "pointer_realloc"
               codegen_primitive_pointer_realloc node, target_def, call_args
-            when :pointer_add
+            when "pointer_add"
               codegen_primitive_pointer_add node, target_def, call_args
-            when :pointer_diff
+            when "pointer_diff"
               codegen_primitive_pointer_diff node, target_def, call_args
-            when :struct_new
+            when "struct_new"
               codegen_primitive_struct_new node, target_def, call_args
-            when :struct_set
+            when "struct_set"
               codegen_primitive_struct_set node, target_def, call_args
-            when :struct_get
+            when "struct_get"
               codegen_primitive_struct_get node, target_def, call_args
-            when :union_new
+            when "union_new"
               codegen_primitive_union_new node, target_def, call_args
-            when :union_set
+            when "union_set"
               codegen_primitive_union_set node, target_def, call_args
-            when :union_get
+            when "union_get"
               codegen_primitive_union_get node, target_def, call_args
-            when :external_var_set
+            when "external_var_set"
               codegen_primitive_external_var_set node, target_def, call_args
-            when :external_var_get
+            when "external_var_get"
               codegen_primitive_external_var_get node, target_def, call_args
-            when :object_id
+            when "object_id"
               codegen_primitive_object_id node, target_def, call_args
-            when :object_crystal_type_id
+            when "object_crystal_type_id"
               codegen_primitive_object_crystal_type_id node, target_def, call_args
-            when :symbol_hash
+            when "symbol_hash"
               codegen_primitive_symbol_hash node, target_def, call_args
-            when :symbol_to_s
+            when "symbol_to_s"
               codegen_primitive_symbol_to_s node, target_def, call_args
-            when :class
+            when "class"
               codegen_primitive_class node, target_def, call_args
-            when :fun_call
+            when "fun_call"
               codegen_primitive_fun_call node, target_def, call_args
-            when :tuple_indexer_known_index
+            when "tuple_indexer_known_index"
               codegen_primitive_tuple_indexer_known_index node, target_def, call_args
-            when :enum_value, :enum_new
+            when "enum_value", "enum_new"
               call_args[0]
             else
               raise "Bug: unhandled primitive in codegen: #{node.name}"

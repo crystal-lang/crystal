@@ -1,7 +1,7 @@
 module Crystal::Doc::Primitive
   def self.doc(a_def, primitive)
     case primitive.name
-    when :object_id
+    when "object_id"
       %(
 Returns a UInt64 that uniquely identifies this object.
 
@@ -14,7 +14,7 @@ ref2 = pointer as Reference
 ref2.object_id == ref.object_id #=> true
 ```
 )
-    when :cast
+    when "cast"
       case a_def.name
       when "ord"
         %(
@@ -28,7 +28,7 @@ Returns this Char's Unicode codepoint.
       else
         ""
       end
-    when :binary
+    when "binary"
       case a_def.name
       when "=="
         "Returns true if this #{a_def.owner} is equal to `other`."
@@ -64,9 +64,9 @@ Returns this Char's Unicode codepoint.
         ""
         # raise "Bug: missing binary doc: #{a_def.name}"
       end
-    when :pointer_malloc, :pointer_realloc, :pointer_add
+    when "pointer_malloc", "pointer_realloc", "pointer_add"
       ":nodoc:" # documented in the Int overload
-    when :pointer_address
+    when "pointer_address"
       %(
 Returns the address of this pointer.
 
@@ -75,7 +75,7 @@ ptr = Pointer(Int32).new(1234)
 ptr.address #=> 1234
 ```
 )
-    when :pointer_get
+    when "pointer_get"
       %(
 Gets the value pointed by this pointer.
 
@@ -85,7 +85,7 @@ ptr.value = 42
 ptr.value #=> 42
 ```
 )
-    when :pointer_set
+    when "pointer_set"
       %(
 Sets the value pointed by this pointer.
 
@@ -95,7 +95,7 @@ ptr.value = 42
 ptr.value #=> 42
 ```
 )
-    when :pointer_diff
+    when "pointer_diff"
       %(
 Returns how many T elements are there between this pointer and *other*.
 That is, this is `(self.address - other.address) / sizeof(T)`.

@@ -951,7 +951,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && body.name == :fun_call
+    strict_check = body.is_a?(Primitive) && body.name == "fun_call"
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]

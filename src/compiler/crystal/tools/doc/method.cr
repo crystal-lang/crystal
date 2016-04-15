@@ -21,10 +21,11 @@ class Crystal::Doc::Method
 
   def doc
     body = @def.body
-    if body.is_a?(Crystal::Primitive)
+    doc = @def.doc
+    if !doc && body.is_a?(Crystal::Primitive)
       Primitive.doc @def, body
     else
-      @def.doc
+      doc
     end
   end
 

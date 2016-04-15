@@ -281,6 +281,10 @@ module Crystal
       end
     end
 
+    def visit(node : Attribute)
+      false
+    end
+
     def visit(node : FunDef)
       if @in_lib
         return false
