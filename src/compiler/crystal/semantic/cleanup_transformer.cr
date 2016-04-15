@@ -172,6 +172,11 @@ module Crystal
 
       target = node.target
 
+      # Ignore class var initializers
+      if target.is_a?(ClassVar) && !target.type?
+        return node
+      end
+
       # This is the case of an instance variable initializer
       if @def_nest_count == 0 && target.is_a?(InstanceVar)
         return Nop.new

@@ -196,4 +196,19 @@ describe "Codegen: class var" do
       Foo.x
       )).to_i.should eq(4)
   end
+
+  it "codegens second class var initializer" do
+    run(%(
+      class Foo
+        @@var = 1
+        @@var = 2
+
+        def self.var
+          @@var
+        end
+      end
+
+      Foo.var
+      )).to_i.should eq(2)
+  end
 end
