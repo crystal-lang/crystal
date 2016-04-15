@@ -168,6 +168,21 @@ module HTTP
     end
   end
 
+  describe HTTP::Server do
+    it "re-sets special port zero after bind" do
+      server = Server.new(0) { |ctx| }
+      server.bind
+      server.port.should_not eq(0)
+    end
+
+    it "re-sets port to zero after close" do
+      server = Server.new(0) { |ctx| }
+      server.bind
+      server.close
+      server.port.should eq(0)
+    end
+  end
+
   typeof(begin
     # Initialize with custom host
     server = Server.new("0.0.0.0", 0) { |ctx| }

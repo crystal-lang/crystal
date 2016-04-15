@@ -124,8 +124,20 @@ class HTTP::Server
   def initialize(@host : String, @port : Int32, @handler : HTTP::Handler | HTTP::Handler::Proc)
   end
 
+  def port
+    if server = @server
+      server.local_address.port.to_i
+    else
+      @port
+    end
+  end
+
+  def bind
+    @server ||= TCPServer.new(@host, @port)
+  end
+
   def listen
-    server = TCPServer.new(@host, @port)
+    server = bind
     until @wants_close
       spawn handle_client(server.accept)
     end
@@ -133,6 +145,10 @@ class HTTP::Server
 
   def close
     @wants_close = true
+    if server = @server
+      server.close
+      @server = nil
+    end
   end
 
   private def handle_client(io)
