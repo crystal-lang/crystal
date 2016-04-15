@@ -698,4 +698,22 @@ describe "Type inference: macro" do
       Moo::Bar.new.method(Problem.new)
       )) { int32 }
   end
+
+  it "doesn't error when adding macro call to constant (#2457)" do
+    assert_type(%(
+      macro foo
+      end
+
+      ITS = {} of String => String
+
+      macro coco
+        {% ITS["foo"] = yield %}
+        1
+      end
+
+      coco do
+        foo
+      end
+      )) { int32 }
+  end
 end

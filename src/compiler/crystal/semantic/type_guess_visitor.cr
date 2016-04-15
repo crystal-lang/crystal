@@ -170,6 +170,9 @@ module Crystal
         process_assign_class_var(target, value)
       when InstanceVar
         process_assign_instance_var(target, value)
+      when Path
+        # Don't guess anything from constant values
+        false
       else
         # Process the right hand side in case there's an assignment there too
         value.accept self
