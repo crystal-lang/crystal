@@ -2,8 +2,8 @@ require "./base_type_visitor"
 
 module Crystal
   class Program
-    def visit_initializers(node)
-      node.accept InitializerVisitor.new(self)
+    def visit_instance_vars_initializers(node)
+      node.accept InstanceVarsInitializerVisitor.new(self)
       node
     end
   end
@@ -32,7 +32,7 @@ module Crystal
   #   end
   # end
   # ```
-  class InitializerVisitor < BaseTypeVisitor
+  class InstanceVarsInitializerVisitor < BaseTypeVisitor
     def initialize(mod)
       super(mod)
     end
@@ -134,14 +134,15 @@ module Crystal
       when Program, FileModule
         node.raise "can't use instance variables at the top level"
       when ClassType, NonGenericModuleType
-        ivar_visitor = MainVisitor.new(mod)
+        meta_vars = MetaVars.new
+        ivar_visitor = MainVisitor.new(mod, meta_vars: meta_vars)
         ivar_visitor.scope = current_type
 
         unless current_type.is_a?(GenericType)
           value.accept ivar_visitor
         end
 
-        current_type.add_instance_var_initializer(target.name, value, ivar_visitor.meta_vars)
+        current_type.add_instance_var_initializer(target.name, value, meta_vars)
         node.type = @mod.nil
         return
       end

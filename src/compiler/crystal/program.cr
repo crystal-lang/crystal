@@ -27,6 +27,7 @@ module Crystal
     getter! def_macros : Array(Def)
     getter! unions : Hash(Array(UInt64), Type)
     getter! file_modules : Hash(String, FileModule)
+    getter! class_var_initializers : Array(ClassVarInitializer)
     @flags : Set(String)?
 
     def initialize

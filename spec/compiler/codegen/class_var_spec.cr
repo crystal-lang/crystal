@@ -87,4 +87,113 @@ describe "Codegen: class var" do
       Foo.foo
       ").to_i.should eq(1)
   end
+
+  it "reads class var before initializing it (hoisting)" do
+    run(%(
+      x = Foo.var
+
+      class Foo
+        @@var = 42
+
+        def self.var
+          @@var
+        end
+      end
+
+      x
+      )).to_i.should eq(42)
+  end
+
+  it "uses var in class var initializer" do
+    run(%(
+      class Foo
+        @@var : Int32
+        @@var = begin
+          a = class_method
+          a + 3
+        end
+
+        def self.var
+          @@var
+        end
+
+        def self.class_method
+          1 + 2
+        end
+      end
+
+      Foo.var
+      )).to_i.should eq(6)
+  end
+
+  it "reads simple class var before another complex one" do
+    run(%(
+      class Foo
+        @@var2 : Int32
+        @@var2 = @@var + 1
+
+        @@var = 41
+
+        def self.var2
+          @@var2
+        end
+      end
+
+      Foo.var2
+      )).to_i.should eq(42)
+  end
+
+  it "initializes class var of union with single type" do
+    run(%(
+      class Foo
+        @@var : Int32 | String
+        @@var = 42
+
+        def self.var
+          @@var
+        end
+      end
+
+      var = Foo.var
+      if var.is_a?(Int32)
+        var
+      else
+        0
+      end
+      )).to_i.should eq(42)
+  end
+
+  it "initializes class var with array literal" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        @@var = [1, 2, 4]
+
+        def self.var
+          @@var
+        end
+      end
+
+      Foo.var.size
+      )).to_i.should eq(3)
+  end
+
+  it "initializes class var conditionally" do
+    run(%(
+      class Foo
+        if 1 == 2
+          @@x = 3
+        else
+          @@x = 4
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x
+      )).to_i.should eq(4)
+  end
 end

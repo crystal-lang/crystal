@@ -265,7 +265,9 @@ module Crystal
     end
 
     def visit_any(node)
-      @exp_nest += 1 if nesting_exp?(node)
+      if nesting_exp?(node)
+        @exp_nest += 1
+      end
 
       true
     end
@@ -296,7 +298,7 @@ module Crystal
       case node
       when Expressions, LibDef, ClassDef, ModuleDef, FunDef, Def, Macro,
            Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf, MacroExpression,
-           FileNode
+           FileNode, TypeDeclaration
         false
       else
         true
@@ -806,6 +808,28 @@ module Crystal
       end
 
       scope as ClassVarContainer
+    end
+
+    def lookup_class_var(node)
+      class_var_owner = class_var_owner(node)
+      var = class_var_owner.class_vars[node.name]?
+      unless var
+        undefined_class_variable(node, class_var_owner)
+      end
+      var
+    end
+
+    def undefined_class_variable(node, owner)
+      similar_name = lookup_similar_class_variable_name(node, owner)
+      @mod.undefined_class_variable(node, owner, similar_name)
+    end
+
+    def lookup_similar_class_variable_name(node, owner)
+      Levenshtein.find(node.name) do |finder|
+        owner.class_vars.each_key do |name|
+          finder.test(name)
+        end
+      end
     end
 
     def inside_exp?

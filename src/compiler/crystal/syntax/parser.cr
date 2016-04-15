@@ -303,6 +303,8 @@ module Crystal
               needs_new_scope = true
             when InstanceVar
               needs_new_scope = @def_nest == 0
+            when ClassVar
+              needs_new_scope = @def_nest == 0
             when Var
               @assigns_special_var = true if atomic.special_var?
             else

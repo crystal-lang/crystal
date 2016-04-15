@@ -175,10 +175,30 @@ module Crystal
       # to avoid some memory being allocated with plain malloc.
       codgen_well_known_functions @node
 
-      alloca_vars @mod.vars, @mod
-
       initialize_const(@mod.types["ARGC_UNSAFE"] as Const)
       initialize_const(@mod.types["ARGV_UNSAFE"] as Const)
+      initialize_class_vars
+
+      alloca_vars @mod.vars, @mod
+    end
+
+    def initialize_class_vars
+      @mod.class_var_initializers.each do |initializer|
+        alloca_vars initializer.meta_vars
+
+        accept initializer.node
+        last = @last
+
+        class_var = initializer.owner.class_vars[initializer.name]
+        if last.constant? && !class_var.thread_local? && class_var.type == initializer.node.type
+          # If a class variable starts with a constant value, we just initialize
+          # it with it instead of initializing it with null and then doing an assignment
+          get_global class_var_global_name(class_var), class_var.type, class_var, last
+        else
+          global = get_global class_var_global_name(class_var), class_var.type, class_var
+          assign global, class_var.type, initializer.node.type, last
+        end
+      end
     end
 
     def wrap_builder(builder)
@@ -363,9 +383,9 @@ module Crystal
               when InstanceVar
                 instance_var_ptr (context.type.remove_typedef as InstanceVarContainer), node_exp.name, llvm_self_ptr
               when ClassVar
-                get_global node_exp, class_var_global_name(node_exp.var), node_exp.type, node_exp.var
+                get_global class_var_global_name(node_exp.var), node_exp.type, node_exp.var
               when Global
-                get_global node_exp, node_exp.name, node_exp.type, node_exp.var
+                get_global node_exp.name, node_exp.type, node_exp.var
               when Path
                 accept(node_exp)
                 global_name = node_exp.target_const.not_nil!.llvm_name
@@ -778,7 +798,8 @@ module Crystal
 
       target_type = target.type?
 
-      # This means it's an instance variable initialize of a generic type
+      # This means it's an instance variable initialize of a generic type,
+      # or a class variable initializer
       unless target_type
         return false
       end
@@ -799,9 +820,9 @@ module Crystal
             when InstanceVar
               instance_var_ptr (context.type as InstanceVarContainer), target.name, llvm_self_ptr
             when Global
-              get_global target, target.name, target_type, target.var
+              get_global target.name, target_type, target.var
             when ClassVar
-              get_global target, class_var_global_name(target.var), target_type, target.var
+              get_global class_var_global_name(target.var), target_type, target.var
             when Var
               # Can't assign void
               return if target.type.void?
@@ -843,15 +864,15 @@ module Crystal
       end
     end
 
-    def get_global(node, name, type, real_var)
+    def get_global(name, type, real_var, initial_value = nil)
       if real_var.thread_local?
         get_thread_local(name, type, real_var)
       else
-        get_global_var(name, type, real_var)
+        get_global_var(name, type, real_var, initial_value)
       end
     end
 
-    def get_global_var(name, type, real_var)
+    def get_global_var(name, type, real_var, initial_value = nil)
       ptr = @llvm_mod.globals[name]?
       unless ptr
         llvm_type = llvm_type(type)
@@ -863,7 +884,7 @@ module Crystal
         ptr.thread_local = true if thread_local
 
         if @llvm_mod == @main_mod
-          ptr.initializer = llvm_type.null
+          ptr.initializer = initial_value || llvm_type.null
         else
           ptr.linkage = LLVM::Linkage::External
 
@@ -871,7 +892,7 @@ module Crystal
           main_ptr = @main_mod.globals[name]?
           unless main_ptr
             main_ptr = @main_mod.globals.add(llvm_type, name)
-            main_ptr.initializer = llvm_type.null
+            main_ptr.initializer = initial_value || llvm_type.null
             main_ptr.thread_local = true if thread_local
           end
         end
@@ -954,15 +975,15 @@ module Crystal
     end
 
     def visit(node : Global)
-      read_global node, node.name.to_s, node.type, node.var
+      read_global node.name.to_s, node.type, node.var
     end
 
     def visit(node : ClassVar)
-      read_global node, class_var_global_name(node.var), node.type, node.var
+      read_global class_var_global_name(node.var), node.type, node.var
     end
 
-    def read_global(node, name, type, real_var)
-      @last = get_global node, name, type, real_var
+    def read_global(name, type, real_var)
+      @last = get_global name, type, real_var
       @last = to_lhs @last, type
     end
 

@@ -408,28 +408,6 @@ module Crystal
       var
     end
 
-    def lookup_class_var(node)
-      class_var_owner = class_var_owner(node)
-      var = class_var_owner.class_vars[node.name]?
-      unless var
-        undefined_class_variable(node, class_var_owner)
-      end
-      var
-    end
-
-    def undefined_class_variable(node, owner)
-      similar_name = lookup_similar_class_variable_name(node, owner)
-      @mod.undefined_class_variable(node, owner, similar_name)
-    end
-
-    def lookup_similar_class_variable_name(node, owner)
-      Levenshtein.find(node.name) do |finder|
-        owner.class_vars.each_key do |name|
-          finder.test(name)
-        end
-      end
-    end
-
     def lookup_instance_var(node)
       lookup_instance_var node, @scope.try(&.remove_typedef)
     end
@@ -536,7 +514,7 @@ module Crystal
     def type_assign(target : InstanceVar, value, node)
       # Check if this is an instance variable initializer
       unless @scope
-        # Already handled by InitializerVisitor
+        # Already handled by InstanceVarsInitializerVisitor
         return
       end
 
@@ -611,6 +589,15 @@ module Crystal
       attributes = check_valid_attributes target, ValidClassVarAttributes, "class variable"
 
       var = lookup_class_var(target)
+      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+      target.var = var
+
+      # Outside a def is already handled by ClassVarsInitializerVisitor
+      # (@exp_nest is 1 if we are at the top level because it was incremented
+      # by one since we are inside an Assign)
+      if !@typed_def && (@exp_nest <= 1) && !inside_block?
+        return
+      end
 
       # If we are assigning to a class variable inside a method, make it nilable
       # if this is the first time we are assigning to it, because
@@ -620,9 +607,6 @@ module Crystal
       end
 
       value.accept self
-
-      var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
-      target.var = var
 
       target.bind_to var
 

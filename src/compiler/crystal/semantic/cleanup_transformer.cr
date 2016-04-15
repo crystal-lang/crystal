@@ -15,6 +15,14 @@ module Crystal
       after_inference_types.each do |type|
         cleanup_type type, transformer
       end
+
+      class_var_initializers.map! do |initializer|
+        new_node = initializer.node.transform(transformer)
+        unless new_node.same?(initializer.node)
+          initializer = ClassVarInitializer.new(initializer.owner, initializer.name, new_node, initializer.meta_vars)
+        end
+        initializer
+      end
     end
 
     def cleanup_type(type, transformer)
