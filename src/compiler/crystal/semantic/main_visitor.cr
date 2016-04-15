@@ -973,23 +973,20 @@ module Crystal
     # set instance vars from superclasses to not-nil
     def check_super_in_initialize(node)
       if @is_initialize && node.name == "super" && !node.obj
-        superclass = scope.superclass
+        superclass_vars = scope.all_instance_vars.keys - scope.instance_vars.keys
+        superclass_vars.each do |name|
+          instance_var = scope.lookup_instance_var(name)
 
-        while superclass
-          superclass.instance_vars_in_initialize.try &.each do |name|
-            instance_var = scope.lookup_instance_var(name)
-
-            # But variables that were already used are nilable
-            if @used_ivars_in_calls_in_initialize.try &.has_key?(name)
-              instance_var.bind_to @mod.nil_var
-            else
-              meta_var = MetaVar.new(name)
-              meta_var.bind_to instance_var
-              @vars[name] = meta_var
-            end
+          # If a variable was used before this supercall, it becomes nilable
+          if @used_ivars_in_calls_in_initialize.try &.has_key?(name)
+            instance_var.nil_reason ||= NilReason.new(name, :used_before_initialized, [node] of ASTNode)
+            instance_var.bind_to @mod.nil_var
+          else
+            # Otherwise, declare it as a "local" variable
+            meta_var = MetaVar.new(name)
+            meta_var.bind_to instance_var
+            @vars[name] = meta_var
           end
-
-          superclass = superclass.superclass
         end
       end
     end

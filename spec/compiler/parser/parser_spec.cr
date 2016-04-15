@@ -1144,31 +1144,6 @@ describe "Parser" do
     assert_syntax_error "def foo\n#{keyword}\nend"
   end
 
-  it "keeps instance variables declared in def" do
-    node = Parser.parse("def foo; @x = 1; @y = 2; @x = 3; @z; end") as Def
-    node.instance_vars.should eq(Set.new(["@x", "@y", "@z"]))
-  end
-
-  it "keeps instance variables declared in def in multi-assign" do
-    node = Parser.parse("def foo; @x, @y = 1, 2; end") as Def
-    node.instance_vars.should eq(Set.new(["@x", "@y"]))
-  end
-
-  it "keeps instance variables declared in def with ||= and &&=" do
-    node = Parser.parse("def foo; @x ||= 1; @y &&= 1; end") as Def
-    node.instance_vars.should eq(Set.new(["@x", "@y"]))
-  end
-
-  it "keeps instance variables declared in def with declare var" do
-    node = Parser.parse("def foo; @x = uninitialized Int32; end") as Def
-    node.instance_vars.should eq(Set.new(["@x"]))
-  end
-
-  it "doesn't take instance vars inside macro expressions into account (#809)" do
-    node = Parser.parse("def foo; @x = 1; {{ @y }}; @x = 3; @z; end") as Def
-    node.instance_vars.should eq(Set.new(["@x", "@z"]))
-  end
-
   assert_syntax_error "def foo(x = 1, y); end",
     "argument must have a default value"
 

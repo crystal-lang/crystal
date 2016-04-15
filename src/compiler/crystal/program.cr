@@ -98,17 +98,15 @@ module Crystal
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
       static_array.declare_instance_var("@buffer", Path.new("T"))
-      static_array.instance_vars_in_initialize = Set.new(["@buffer"])
       static_array.allocated = true
       static_array.allowed_in_generics = false
 
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
-      string.instance_vars_in_initialize = Set.new(["@bytesize", "@length", "@c"])
       string.allocated = true
 
-      freeze_type string.lookup_instance_var("@bytesize"), @int32
-      freeze_type string.lookup_instance_var("@length"), @int32
-      freeze_type string.lookup_instance_var("@c"), @uint8
+      string.declare_instance_var("@bytesize", @int32)
+      string.declare_instance_var("@length", @int32)
+      string.declare_instance_var("@c", @uint8)
 
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
       object.metaclass = klass
@@ -412,11 +410,6 @@ module Crystal
       type.struct = true
       type.allocated = true
       type.allowed_in_generics = false
-    end
-
-    private def freeze_type(var, type)
-      var.set_type type
-      var.freeze_type = type
     end
 
     def to_s(io)

@@ -242,10 +242,6 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_def_instance"
     end
 
-    def instance_var_owner(var_name)
-      raise "Bug: #{self} doesn't implement instance_var_owner"
-    end
-
     def add_instance_var_initializer(name, value, meta_vars)
       raise "Bug: #{self} doesn't implement add_instance_var_initializer"
     end
@@ -381,10 +377,6 @@ module Crystal
       raise "Bug: #{self} doesn't implement all_instance_vars"
     end
 
-    def owned_instance_vars
-      raise "Bug: #{self} doesn't implement owned_instance_vars"
-    end
-
     def index_of_instance_var(name)
       raise "Bug: #{self} doesn't implement index_of_instance_var"
     end
@@ -409,10 +401,6 @@ module Crystal
       raise "Bug: #{self} doesn't implement lookup_instance_var_with_owner?"
     end
 
-    def owns_instance_var?(name)
-      raise "Bug: #{self} doesn't implement owns_instance_var?"
-    end
-
     def has_instance_var_initializer?(name)
       false
     end
@@ -425,10 +413,6 @@ module Crystal
       raise "Bug: #{self} doesn't implement has_def_without_parents?"
     end
 
-    def remove_instance_var(name)
-      raise "Bug: #{self} doesn't implement remove_instance_var"
-    end
-
     def all_instance_vars_count
       raise "Bug: #{self} doesn't implement all_instance_vars_count"
     end
@@ -439,14 +423,6 @@ module Crystal
 
     def notify_subclass_added
       raise "Bug: #{self} doesn't implement notify_subclass_added"
-    end
-
-    def instance_vars_in_initialize
-      raise "Bug: #{self} doesn't implement instance_vars_in_initialize"
-    end
-
-    def instance_vars_in_initialize=(value)
-      raise "Bug: #{self} doesn't implement instance_vars_in_initialize="
     end
 
     def depth
@@ -960,8 +936,6 @@ module Crystal
     getter depth : Int32
     property? abstract : Bool
     property? struct : Bool
-    getter owned_instance_vars : Set(String)
-    property instance_vars_in_initialize : Set(String)?
     getter? allocated : Bool
     property? allowed_in_generics : Bool
 
@@ -976,7 +950,6 @@ module Crystal
       @abstract = false
       @struct = false
       @allocated = false
-      @owned_instance_vars = Set(String).new
       @allowed_in_generics = true
       parents.push superclass if superclass
       force_add_subclass if add_subclass
@@ -1006,85 +979,7 @@ module Crystal
     def add_def(a_def)
       super
 
-      transfer_instance_vars a_def
-
       a_def
-    end
-
-    def transfer_instance_vars(a_def)
-      # Don't consider macro defs here (only later, when expanded)
-      return if a_def.macro_def?
-
-      is_initialize = a_def.name == "initialize"
-
-      if a_def_instance_vars = a_def.instance_vars
-        a_def_instance_vars.each do |ivar|
-          if superclass = superclass()
-            unless superclass.owns_instance_var?(ivar)
-              unless owned_instance_vars.includes?(ivar)
-                owned_instance_vars.add(ivar)
-                all_subclasses.each do |subclass|
-                  subclass.remove_instance_var(ivar)
-                end
-              end
-            end
-          end
-        end
-
-        if is_initialize
-          unless a_def.calls_initialize
-            if ivii = @instance_vars_in_initialize
-              @instance_vars_in_initialize = ivii & a_def_instance_vars
-            else
-              @instance_vars_in_initialize = a_def_instance_vars
-            end
-          end
-
-          unless a_def.calls_super
-            sup = superclass
-            while sup
-              sup_ivars = sup.instance_vars_in_initialize
-              if sup_ivars
-                sup.instance_vars_in_initialize = sup_ivars & a_def_instance_vars
-              end
-              sup = sup.superclass
-            end
-          end
-        end
-      elsif is_initialize
-        # If it's an initialize without instance variables,
-        # then *all* instance variables are nilable
-        unless a_def.calls_initialize
-          @instance_vars_in_initialize = Set(String).new
-        end
-
-        unless a_def.calls_super
-          sup = superclass
-          while sup
-            sup.instance_vars_in_initialize = Set(String).new
-            sup = sup.superclass
-          end
-        end
-      end
-    end
-
-    def transfer_instance_vars_of_mod(mod)
-      if (defs = mod.defs)
-        defs.each do |def_name, list|
-          list.each do |item|
-            transfer_instance_vars item.def
-          end
-        end
-      end
-
-      mod.parents.try &.each do |parent|
-        transfer_instance_vars_of_mod parent
-      end
-    end
-
-    def include(mod)
-      super mod
-      transfer_instance_vars_of_mod mod
     end
 
     def allocated=(allocated)
@@ -1110,23 +1005,6 @@ module Crystal
       @instance_vars ||= {} of String => MetaTypeVar
     end
 
-    def owns_instance_var?(name)
-      owned_instance_vars.includes?(name) || superclass.try &.owns_instance_var?(name)
-    end
-
-    def instance_var_owner(name)
-      if owned_instance_vars.includes?(name)
-        self
-      else
-        superclass.try &.instance_var_owner(name)
-      end
-    end
-
-    def remove_instance_var(name)
-      owned_instance_vars.delete(name)
-      instance_vars.delete(name)
-    end
-
     def lookup_instance_var(name, create = true)
       lookup_instance_var?(name, create).not_nil!
     end
@@ -1136,11 +1014,13 @@ module Crystal
         return var
       end
 
-      if create || owned_instance_vars.includes?(name)
-        instance_vars[name] ||= MetaTypeVar.new(name).tap { |v| v.owner = self }
-      else
-        instance_vars[name]?
+      ivar = instance_vars[name]?
+      if !ivar && create
+        ivar = MetaTypeVar.new(name)
+        ivar.owner = self
+        instance_vars[name] = ivar
       end
+      ivar
     end
 
     record InstanceVarWithOwner, instance_var : MetaTypeVar, owner : Type
@@ -1731,8 +1611,6 @@ module Crystal
     delegate depth, @generic_class
     delegate defs, @generic_class
     delegate superclass, @generic_class
-    delegate owned_instance_vars, @generic_class
-    delegate instance_vars_in_initialize, @generic_class
     delegate macros, @generic_class
     delegate :abstract?, @generic_class
     delegate struct?, @generic_class
@@ -2094,8 +1972,6 @@ module Crystal
     delegate lookup_macro, @extended_class
     delegate lookup_macros, @extended_class
     delegate has_def?, @extended_class
-    delegate instance_vars_in_initialize, @extended_class
-    delegate :"instance_vars_in_initialize=", @extended_class
     delegate :"allocated=", @extended_class
     delegate notify_subclass_added, @extended_class
     delegate has_def_without_parents?, @extended_class
@@ -2119,10 +1995,6 @@ module Crystal
 
     def all_instance_vars_count
       0
-    end
-
-    def owns_instance_var?(name)
-      false
     end
 
     def parents
@@ -2880,7 +2752,6 @@ module Crystal
     delegate lookup_macro, base_type
     delegate lookup_macros, base_type
     delegate all_instance_vars, base_type
-    delegate owned_instance_vars, base_type
     delegate :abstract?, base_type
     delegate allocated?, base_type
     delegate :"allocated=", base_type

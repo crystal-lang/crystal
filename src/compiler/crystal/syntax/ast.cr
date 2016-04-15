@@ -876,7 +876,6 @@ module Crystal
     property? macro_def : Bool
     property return_type : ASTNode?
     property yields : Int32?
-    property instance_vars : Set(String)?
     property calls_super : Bool
     property calls_initialize : Bool
     property calls_previous_def : Bool
@@ -930,7 +929,6 @@ module Crystal
 
     def clone_without_location
       a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @yields, @abstract, @splat_index)
-      a_def.instance_vars = instance_vars
       a_def.calls_super = calls_super
       a_def.calls_initialize = calls_initialize
       a_def.calls_previous_def = calls_previous_def
