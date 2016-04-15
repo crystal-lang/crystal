@@ -2043,6 +2043,23 @@ describe "Type inference: instance var" do
       "Can't infer the type of instance variable '@bar' of Foo"
   end
 
+  it "doesn't crash on missing var on subclass, with superclass not specifying a type" do
+    assert_error %(
+      class Foo
+        def initialize(@x)
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+        end
+      end
+
+      Bar.new
+      ),
+      "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

@@ -466,18 +466,22 @@ module Crystal
         vars.each do |name, info|
           case owner
           when NonGenericClassType
-            ivar = owner.lookup_instance_var_with_owner(name)
-            if ivar.instance_var.type.includes_type?(@program.nil)
-              # If the variable is nilable because it was not initialized
-              # in all of the initialize methods, and it's not explictly nil,
-              # give an error and ask to be explicit.
-              if nilable_instance_var?(owner, name)
+            ivar = owner.lookup_instance_var_with_owner?(name)
+            if ivar
+              if ivar.instance_var.type.includes_type?(@program.nil)
+                # If the variable is nilable because it was not initialized
+                # in all of the initialize methods, and it's not explictly nil,
+                # give an error and ask to be explicit.
+                if nilable_instance_var?(owner, name)
+                  raise_doesnt_explicitly_initializes(info, name, ivar)
+                end
+              elsif owner == ivar.owner
                 raise_doesnt_explicitly_initializes(info, name, ivar)
+              else
+                info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}' of #{ivar.owner}, with #{owner} < #{ivar.owner}, rendering it nilable"
               end
-            elsif owner == ivar.owner
-              raise_doesnt_explicitly_initializes(info, name, ivar)
             else
-              info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}' of #{ivar.owner}, with #{owner} < #{ivar.owner}, rendering it nilable"
+              info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}', rendering it nilable"
             end
           when GenericClassType
             type_vars = owner.declared_instance_vars.not_nil![name]
