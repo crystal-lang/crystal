@@ -277,12 +277,8 @@ module Crystal
         return if supervar
 
         type = Type.merge!(type_info.type_vars.map { |t| t as Type })
-        nilable = false
-
         if nilable_instance_var?(owner, name)
-          old_type = type
           type = Type.merge!(type, @program.nil)
-          nilable = true if type != old_type
         end
 
         # If the only type that we were able to infer was nil, it's the same
@@ -293,10 +289,7 @@ module Crystal
           return
         end
 
-        var = declare_meta_type_var(owner.instance_vars, owner, name, type)
-        if nilable
-          var.nil_reason = NilReason.new(name, :not_in_initialize, scope: owner)
-        end
+        declare_meta_type_var(owner.instance_vars, owner, name, type)
       when NonGenericModuleType
         # Transfer this guess to including types, recursively
         owner.raw_including_types.try &.each do |including_type|

@@ -185,9 +185,6 @@ module Crystal
 
       io << colorize("Error: ").bold
       case nil_reason.reason
-      when :not_in_initialize
-        scope = nil_reason.scope.not_nil!
-        found = instance_var_not_initialized scope, nil, scope, nil_reason.name, io
       when :used_before_initialized
         io << colorize("instance variable '#{nil_reason.name}' was used before it was initialized in one of the 'initialize' methods, rendering it nilable").bold
       when :used_self_before_initialized
@@ -199,62 +196,6 @@ module Crystal
           print_with_location node, io
         end
       end
-    end
-
-    def instance_var_not_initialized(original_scope, common_supertype, scope : VirtualType, var_name, io, recurse = true)
-      scope.each_concrete_type do |subtype|
-        unless subtype.has_instance_var_in_initialize?(var_name)
-          found = instance_var_not_initialized original_scope, common_supertype, subtype, var_name, io, recurse: recurse
-          break true if found
-        end
-      end
-      false
-    end
-
-    def instance_var_not_initialized(original_scope, common_supertype, scope, var_name, io, recurse = true)
-      defs, all_defs = defs_without_instance_var_initialized scope, var_name
-
-      if defs.empty? && !all_defs.empty?
-        # Couldn't find a def, let's see who owns the instance variable
-        if recurse && (owner = scope.instance_var_owner(var_name)) && (owner != scope)
-          common_supertype = owner.virtual_type!
-          instance_var_not_initialized original_scope, common_supertype, common_supertype, var_name, io, recurse: false
-        else
-          false
-        end
-      else
-        if original_scope == scope
-          io << colorize("instance variable '#{var_name}' of #{scope} was not initialized in all of the 'initialize' methods, rendering it nilable").bold
-        else
-          io << colorize("instance variable '#{var_name}' of #{scope} was not initialized in all of the 'initialize' methods, rendering '#{var_name}' of #{original_scope.devirtualize} nilable").bold
-          if common_supertype
-            io << colorize(" (#{common_supertype.devirtualize} is the common supertype that defines it)").bold
-          end
-        end
-        io.puts
-        io.puts
-        io << "Specifically in "
-        io << (defs.size == 1 ? "this one" : "these ones")
-        io << ":"
-        defs.each do |a_def|
-          print_with_location a_def, io
-        end
-        true
-      end
-    end
-
-    def defs_without_instance_var_initialized(scope, var_name)
-      defs = scope.lookup_defs("initialize")
-      filtered = defs.select do |a_def|
-        if a_def.calls_super
-          false
-        elsif (instance_vars = a_def.instance_vars)
-          !instance_vars.includes?(var_name)
-        else
-          true
-        end
-      end
-      {filtered, defs}
     end
 
     def print_with_location(node, io)

@@ -413,10 +413,6 @@ module Crystal
       raise "Bug: #{self} doesn't implement owns_instance_var?"
     end
 
-    def has_instance_var_in_initialize?(name)
-      raise "Bug: #{self} doesn't implement has_instance_var_in_initialize?"
-    end
-
     def has_instance_var_initializer?(name)
       false
     end
@@ -1204,12 +1200,6 @@ module Crystal
         instance_vars.size
       end
     end
-
-    def has_instance_var_in_initialize?(name)
-      instance_vars_initializers.try(&.any? { |init| init.name == name }) ||
-        instance_vars_in_initialize.try(&.includes?(name)) ||
-        superclass.try &.has_instance_var_in_initialize?(name)
-    end
   end
 
   class NonGenericClassType < ClassType
@@ -1655,12 +1645,6 @@ module Crystal
 
     def initialize_metaclass(metaclass)
       metaclass.add_def Def.new("allocate", body: Primitive.new(:allocate))
-    end
-
-    def has_instance_var_in_initialize?(name)
-      instance_vars_initializers.try(&.any? { |init| init.name == name }) ||
-        instance_vars_in_initialize.try(&.includes?(name)) ||
-        superclass.try &.has_instance_var_in_initialize?(name)
     end
 
     def type_desc
@@ -2110,7 +2094,6 @@ module Crystal
     delegate lookup_macro, @extended_class
     delegate lookup_macros, @extended_class
     delegate has_def?, @extended_class
-    delegate has_instance_var_in_initialize?, @extended_class
     delegate instance_vars_in_initialize, @extended_class
     delegate :"instance_vars_in_initialize=", @extended_class
     delegate :"allocated=", @extended_class
@@ -2395,10 +2378,6 @@ module Crystal
 
     def has_var?(name)
       @vars.has_key?(name)
-    end
-
-    def has_instance_var_in_initialize?(name)
-      true
     end
 
     def lookup_instance_var(name, create = nil)
@@ -2900,7 +2879,6 @@ module Crystal
     delegate index_of_instance_var, base_type
     delegate lookup_macro, base_type
     delegate lookup_macros, base_type
-    delegate has_instance_var_in_initialize?, base_type
     delegate all_instance_vars, base_type
     delegate owned_instance_vars, base_type
     delegate :abstract?, base_type
@@ -2910,19 +2888,6 @@ module Crystal
     delegate implements?, base_type
     delegate covariant?, base_type
     delegate ancestors, base_type
-
-    def has_instance_var_in_initialize?(name)
-      if base_type.abstract?
-        each_concrete_type do |subtype|
-          unless subtype.has_instance_var_in_initialize?(name)
-            return false
-          end
-        end
-        true
-      else
-        base_type.has_instance_var_in_initialize?(name)
-      end
-    end
 
     def metaclass
       @metaclass ||= VirtualMetaclassType.new(program, self)
