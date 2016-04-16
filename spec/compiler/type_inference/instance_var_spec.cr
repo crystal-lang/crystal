@@ -2080,6 +2080,38 @@ describe "Type inference: instance var" do
       )) { int32 }
   end
 
+  it "infers from assign to local var (#2467)" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = x = 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "infers from assign to local var in generic type (#2467)" do
+    assert_type(%(
+      class Foo(T)
+        def initialize
+          @x = x = 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Float64).new.x
+      )) { int32 }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv
