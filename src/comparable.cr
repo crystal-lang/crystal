@@ -19,8 +19,12 @@ module Comparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `0`.
   # Also returns `true` if this and `other` are the same object.
   def ==(other : T)
-    if self.is_a?(Reference) && (other.is_a?(Reference) || other.is_a?(Nil))
-      return true if self.same?(other)
+    if self.is_a?(Reference)
+      # Need to do two different comparisons because the compiler doesn't yet
+      # restrict something like `other.is_a?(Reference) || other.is_a?(Nil)`.
+      # See #2461
+      return true if other.is_a?(Reference) && self.same?(other)
+      return true if other.is_a?(Nil) && self.same?(other)
     end
 
     (self <=> other) == 0
