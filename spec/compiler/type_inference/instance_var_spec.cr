@@ -2060,6 +2060,26 @@ describe "Type inference: instance var" do
       "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
   end
 
+  it "doesn't complain if not initliazed in one initialize, but has initializer (#2465)" do
+    assert_type(%(
+      class Foo
+        @x = 1
+
+        def initialize(@x)
+        end
+
+        def initialize
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

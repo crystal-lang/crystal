@@ -403,6 +403,9 @@ module Crystal
           # all instance vars, because the other initialize will have to do that
           next if info.def.calls_initialize
 
+          # It's non-nilable if it's initialized outside
+          next if initialized_outside?(owner, instance_var)
+
           unless info.try(&.instance_vars.try(&.includes?(instance_var)))
             all_assigned = false
             # Rememebr that this variable wasn't initialized here, and later error
