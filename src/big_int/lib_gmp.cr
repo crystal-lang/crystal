@@ -78,6 +78,39 @@ lib LibGMP
   fun cmp_ui = __gmpz_cmp_ui(op1 : MPZ*, op2 : ULong) : Int
   fun cmp_d = __gmpz_cmp_d(op1 : MPZ*, op2 : Double) : Int
 
+  # MPQ
+  struct MPQ
+    _mp_num : MPZ
+    _mp_den : MPZ
+  end
+
+  # # Initialization
+  fun mpq_init = __gmpq_init(x : MPQ*)
+  fun mpq_set_num = __gmpq_set_num(x : MPQ*, num : MPZ*)
+  fun mpq_set_den = __gmpq_set_den(x : MPQ*, den : MPZ*)
+  fun mpq_get_num = __gmpq_get_num(rop : MPZ*, op : MPQ*)
+  fun mpq_get_den = __gmpq_get_den(rop : MPZ*, op : MPQ*)
+  fun mpq_canonicalize = __gmpq_canonicalize(x : MPQ*)
+
+  # # Conversion
+  fun mpq_get_str = __gmpq_get_str(str : UInt8*, base : Int, op : MPQ*) : UInt8*
+  fun mpq_get_d = __gmpq_get_d(x : MPQ*) : Float64
+
+  # # Compare
+  fun mpq_cmp = __gmpq_cmp(x : MPQ*, o : MPQ*) : Int32
+
+  # # Arithmetic
+  fun mpq_add = __gmpq_add(rop : MPQ*, op1 : MPQ*, op2 : MPQ*)
+  fun mpq_sub = __gmpq_sub(rop : MPQ*, op1 : MPQ*, op2 : MPQ*)
+  fun mpq_mul = __gmpq_mul(rop : MPQ*, op1 : MPQ*, op2 : MPQ*)
+  fun mpq_div = __gmpq_div(rop : MPQ*, op1 : MPQ*, op2 : MPQ*)
+  fun mpq_inv = __gmpq_inv(rop : MPQ*, op1 : MPQ*)
+  fun mpq_neg = __gmpq_neg(rop : MPQ*, op1 : MPQ*)
+  fun mpq_abs = __gmpq_abs(rop : MPQ*, op1 : MPQ*)
+
+  fun mpq_div_2exp = __gmpq_div_2exp(q : MPQ*, n : MPQ*, b : BitcntT)
+  fun mpq_mul_2exp = __gmpq_mul_2exp(rop : MPQ*, op1 : MPQ*, op2 : BitcntT)
+
   # # Memory
 
   fun set_memory_functions = __gmp_set_memory_functions(malloc : SizeT -> Void*, realloc : Void*, SizeT, SizeT -> Void*, free : Void*, SizeT ->)
