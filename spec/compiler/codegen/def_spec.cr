@@ -95,8 +95,8 @@ describe "Code gen: def" do
           @next = n
         end
 
-         def next
-           @next
+        def next
+          @next
         end
       end
 
@@ -115,8 +115,8 @@ describe "Code gen: def" do
           @next = n
         end
 
-         def next
-           @next
+        def next
+          @next
         end
       end
 
@@ -127,8 +127,8 @@ describe "Code gen: def" do
           @next = n
         end
 
-         def next
-           @next
+        def next
+          @next
         end
       end
 
