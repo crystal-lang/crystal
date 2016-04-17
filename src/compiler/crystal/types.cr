@@ -2222,6 +2222,10 @@ module Crystal
       @aliased_type = @value.type.instance_type
     end
 
+    def includes_type?(other)
+      remove_indirection.includes_type?(other)
+    end
+
     def type_desc
       "alias"
     end

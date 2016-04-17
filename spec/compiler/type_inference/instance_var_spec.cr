@@ -2106,6 +2106,25 @@ describe "Type inference: instance var" do
       )) { union_of int32, float64 }
   end
 
+  it "doesn't complain if declared type is recursive alias that's nilable" do
+    assert_type(%(
+      class Bar(T)
+      end
+
+      alias Rec = Int32 | Nil | Bar(Rec)
+
+      class Foo
+        @x : Rec
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { types["Rec"] }
+  end
+
   it "infers from assign to local var (#2467)" do
     assert_type(%(
       class Foo
