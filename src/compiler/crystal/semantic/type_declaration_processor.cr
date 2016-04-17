@@ -166,7 +166,7 @@ module Crystal
       # give an error right now
       if !var.type.includes_type?(@program.nil)
         if nilable_instance_var?(owner, name)
-          var.raise "instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable"
+          raise_not_initialized_in_all_initialize(var, name, owner)
         end
       end
 
@@ -219,7 +219,7 @@ module Crystal
         # is or not non-nilable.
         if nilable_instance_var?(owner, name)
           if !has_syntax_nil?(type_decl.type)
-            raise TypeException.new("instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable", type_decl.location)
+            raise_not_initialized_in_all_initialize(type_decl.location, name, owner)
           end
         end
 
@@ -244,13 +244,13 @@ module Crystal
         var = owner.lookup_instance_var_with_owner(name).instance_var
         if !var.type.includes_type?(@program.nil)
           if nilable_instance_var?(owner, name)
-            var.raise "instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable"
+            raise_not_initialized_in_all_initialize(var, name, owner)
           end
         end
       when GenericClassType
         if nilable_instance_var?(owner, name)
           if !has_syntax_nil?(type_decl.type)
-            raise TypeException.new("instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable", type_decl.location)
+            raise_not_initialized_in_all_initialize(type_decl.location, name, owner)
           end
         end
       end
@@ -494,6 +494,14 @@ module Crystal
           end
         end
       end
+    end
+
+    private def raise_not_initialized_in_all_initialize(node : ASTNode, name, owner)
+      node.raise "instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable"
+    end
+
+    private def raise_not_initialized_in_all_initialize(location : Location, name, owner)
+      raise TypeException.new "instance variable '#{name}' of #{owner} was not initialized in all of the 'initialize' methods, rendering it nilable", location
     end
 
     private def raise_doesnt_explicitly_initializes(info, name, ivar)
