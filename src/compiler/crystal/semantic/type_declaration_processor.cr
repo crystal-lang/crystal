@@ -200,7 +200,7 @@ module Crystal
       when NonGenericClassType
         # Check if a superclass already defined this variable
         supervar = owner.lookup_instance_var_with_owner?(name)
-        if supervar
+        if supervar && supervar.owner != owner
           # Redeclaring a variable with the same type is OK
           unless supervar.instance_var.type.same?(type_decl.type)
             raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.instance_var.type}", type_decl.location)

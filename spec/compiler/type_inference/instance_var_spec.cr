@@ -2080,6 +2080,32 @@ describe "Type inference: instance var" do
       )) { int32 }
   end
 
+  it "can declare type even if included module has a guessed var" do
+    assert_type(%(
+      module Moo
+        def foo
+          @x = 1
+        end
+      end
+
+      class Foo
+        include Moo
+
+        @x : Int32 | Float64
+
+        def initialize
+          @x = 1.5
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { union_of int32, float64 }
+  end
+
   it "infers from assign to local var (#2467)" do
     assert_type(%(
       class Foo
