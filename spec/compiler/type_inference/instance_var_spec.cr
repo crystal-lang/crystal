@@ -2112,6 +2112,48 @@ describe "Type inference: instance var" do
       )) { int32 }
   end
 
+  it "infers from tap" do
+    assert_type(%(
+      require "prelude"
+
+      class Bar
+      end
+
+      class Foo
+        def initialize
+          @x = Bar.new.tap { }
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { types["Bar"] }
+  end
+
+  it "infers from tap in generic type" do
+    assert_type(%(
+      require "prelude"
+
+      class Bar
+      end
+
+      class Foo(T)
+        def initialize
+          @x = T.new.tap { }
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Bar).new.x
+      )) { types["Bar"] }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

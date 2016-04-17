@@ -566,14 +566,29 @@ module Crystal
         return type if type.is_a?(PointerInstanceType)
       end
 
-      if type = guess_type_call_pointer_malloc_two_args(node)
-        return type
-      end
+      type = guess_type_call_pointer_malloc_two_args(node)
+      return type if type
 
       type = guess_type_call_lib_fun(node)
       return type if type
 
+      # If it's `obj.tap { ... }`, guess from `obj`
+      obj = is_tap_call?(node)
+      if obj
+        return guess_type(obj)
+      end
+
       nil
+    end
+
+    # Returns `node.obj` if node is a `obj.tap { ... }`, call, `nil` otherwise.
+    private def is_tap_call?(node)
+      obj = node.obj
+      if obj && node.name == "tap" && node.args.empty? && !node.named_args && (node.block || node.block_arg)
+        obj
+      else
+        nil
+      end
     end
 
     # If it's Pointer.malloc(size, value), infer element type from value
@@ -815,6 +830,12 @@ module Crystal
 
       if type = guess_type_call_lib_fun(node)
         return [type] of TypeVar
+      end
+
+      # If it's `obj.tap { ... }`, guess from `obj`
+      obj = is_tap_call?(node)
+      if obj
+        return guess_type_vars(obj)
       end
 
       nil
