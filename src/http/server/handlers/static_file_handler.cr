@@ -64,6 +64,15 @@ class HTTP::StaticFileHandler
       context.response.content_type = "text/html"
       directory_listing(context.response, request_path, file_path)
     elsif is_file
+      last_modified = File.stat(file_path).mtime.to_s("%a, %-d %h %C%y %T GMT")
+      if if_modified_since = context.request.headers.fetch("If-Modified-Since", nil)
+        if last_modified == if_modified_since
+          context.response.status_code = 304
+          return
+        end
+      end
+      context.response.headers["Cache-Control"] = "public"
+      context.response.headers["Last-Modified"] = last_modified
       context.response.content_type = mime_type(file_path)
       context.response.content_length = File.size(file_path)
       File.open(file_path) do |file|
@@ -93,6 +102,9 @@ class HTTP::StaticFileHandler
     when ".htm", ".html" then "text/html"
     when ".css"          then "text/css"
     when ".js"           then "application/javascript"
+    when ".jpg"          then "image/jpeg"
+    when ".png"          then "image/png"
+    when ".svg"          then "image/svg+xml"
     else                      "application/octet-stream"
     end
   end
