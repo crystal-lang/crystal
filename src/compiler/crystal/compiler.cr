@@ -149,13 +149,15 @@ module Crystal
         program.codegen node, debug: @debug, single_module: @single_module || @release || @cross_compile_flags || @emit, expose_crystal_main: false
       end
 
+      cache_dir = CacheDir.instance
+
       if @cross_compile_flags
         output_dir = "."
       else
-        output_dir = File.join(Config.cache_dir, sources.first.filename)
+        output_dir = cache_dir.directory_for(sources)
       end
 
-      Dir.mkdir_p(output_dir)
+      cache_dir.cleanup
 
       bc_flags_changed = check_bc_flags_changed output_dir
 

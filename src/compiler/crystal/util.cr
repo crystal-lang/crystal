@@ -39,7 +39,6 @@ module Crystal
   end
 
   def self.tempfile(basename)
-    Dir.mkdir_p Config.cache_dir
-    File.join(Config.cache_dir, "crystal-run-#{basename}.tmp")
+    CacheDir.instance.join("crystal-run-#{basename}.tmp")
   end
 end
