@@ -72,7 +72,7 @@ class Crystal::Command
         eval
       when "run".starts_with?(command)
         options.shift
-        run_command
+        run_command(single_file: false)
       when "spec/".starts_with?(command)
         options.shift
         run_specs
@@ -87,7 +87,7 @@ class Crystal::Command
         exit
       else
         if File.file?(command)
-          run_command
+          run_command(single_file: true)
         else
           error "unknown command: #{command}"
         end
@@ -253,8 +253,8 @@ class Crystal::Command
     end
   end
 
-  private def run_command
-    config = create_compiler "run", run: true
+  private def run_command(single_file = false)
+    config = create_compiler "run", run: true, single_file: single_file
     if config.specified_output
       config.compile
       return
@@ -443,7 +443,9 @@ class Crystal::Command
     end
   end
 
-  private def create_compiler(command, no_codegen = false, run = false, hierarchy = false, cursor_command = false)
+  private def create_compiler(command, no_codegen = false, run = false,
+                              hierarchy = false, cursor_command = false,
+                              single_file = false)
     compiler = Compiler.new
     link_flags = [] of String
     opt_filenames = nil
@@ -564,6 +566,11 @@ class Crystal::Command
     output_filename = opt_output_filename
     filenames = opt_filenames.not_nil!
     arguments = opt_arguments.not_nil!
+
+    if single_file && filenames.size > 1
+      arguments = filenames[1..-1] + arguments
+      filenames = [filenames[0]]
+    end
 
     if filenames.size == 0 || (cursor_command && cursor_location.nil?)
       puts option_parser
