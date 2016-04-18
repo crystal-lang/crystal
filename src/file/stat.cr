@@ -207,7 +207,7 @@ class File
     end
 
     private def time(value)
-      Time.new value, Time::Kind::Utc
+      Time.new(value, Time::Kind::Utc).to_local
     end
   end
 end
