@@ -317,6 +317,19 @@ describe "Array" do
     end
   end
 
+  it "find the element by using binary search" do
+    [2, 5, 7, 10].bsearch { |x| x >= 4 }.should eq 5
+    [2, 5, 7, 10].bsearch { |x| x > 10 }.should be_nil
+  end
+
+  it "find the index by using binary search" do
+    [2, 5, 7, 10].bsearch_index { |x, i| x >= 4 }.should eq 1
+    [2, 5, 7, 10].bsearch_index { |x, i| x > 10 }.should be_nil
+
+    [2, 5, 7, 10].bsearch_index { |x, i| i >= 3 }.should eq 3
+    [2, 5, 7, 10].bsearch_index { |x, i| i > 3 }.should be_nil
+  end
+
   it "does clear" do
     a = [1, 2, 3]
     a.clear

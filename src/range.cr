@@ -355,3 +355,5 @@ struct Range(B, E)
     end
   end
 end
+
+require "./range/*"

@@ -98,6 +98,75 @@ describe "Range" do
     end
   end
 
+  describe "bsearch" do
+    it "Int" do
+      ary = [3, 4, 7, 9, 12]
+      (0...ary.size).bsearch { |i| ary[i] >= 2 }.should eq 0
+      (0...ary.size).bsearch { |i| ary[i] >= 4 }.should eq 1
+      (0...ary.size).bsearch { |i| ary[i] >= 6 }.should eq 2
+      (0...ary.size).bsearch { |i| ary[i] >= 8 }.should eq 3
+      (0...ary.size).bsearch { |i| ary[i] >= 10 }.should eq 4
+      (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq nil
+      (0...ary.size).bsearch { |i| true }.should eq 0
+      (0...ary.size).bsearch { |i| false }.should eq nil
+
+      ary = [0, 100, 100, 100, 200]
+      (0...ary.size).bsearch { |i| ary[i] >= 100 }.should eq 1
+
+      (0_i8..10_i8).bsearch { |x| x >= 10 }.should eq 10_i8
+      (0_i8...10_i8).bsearch { |x| x >= 10 }.should eq nil
+      (-10_i8...10_i8).bsearch { |x| x >= -5 }.should eq -5_i8
+
+      (0_u8..10_u8).bsearch { |x| x >= 10 }.should eq 10_u8
+      (0_u8...10_u8).bsearch { |x| x >= 10 }.should eq nil
+      (0_u32..10_u32).bsearch { |x| x >= 10 }.should eq 10_u32
+      (0_u32...10_u32).bsearch { |x| x >= 10 }.should eq nil
+
+      (BigInt.new("-10")...BigInt.new("10")).bsearch { |x| x >= -5 }.should eq BigInt.new("-5")
+    end
+
+    it "Float" do
+      inf = Float64::INFINITY
+      (0.0...100.0).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
+      (0.0...inf).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
+      (-inf..100.0).bsearch { |x| x >= 0 || Math.log(-x / 10) < 0 }.not_nil!.should be_close(-10.0, 0.0001)
+      (-inf..inf).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
+      (-inf..5).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should be_nil
+
+      (-inf..10).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.not_nil!.should be_close(10.0, 0.0001)
+      (inf...10).bsearch { |x| x > 0 && Math.log(x / 10) >= 0 }.should be_nil
+
+      (-inf..inf).bsearch { false }.should be_nil
+      (-inf..inf).bsearch { true }.should eq -inf
+
+      (0..inf).bsearch { |x| x == inf }.should eq inf
+      (0...inf).bsearch { |x| x == inf }.should be_nil
+
+      v = (0.0..1.0).bsearch { |x| x > 0 }.not_nil!
+      v.should be_close(0, 0.0001)
+      (0 < v).should be_true
+
+      (-1.0..0.0).bsearch { |x| x >= 0 }.should eq 0.0
+      (-1.0...0.0).bsearch { |x| x >= 0 }.should be_nil
+
+      (0.0..inf).bsearch { |x| Math.log(x) >= 0 }.not_nil!.should be_close(1.0, 0.0001)
+
+      (0.0..10).bsearch { |x| x >= 3.5 }.not_nil!.should be_close(3.5, 0.0001)
+      (0..10.0).bsearch { |x| x >= 3.5 }.not_nil!.should be_close(3.5, 0.0001)
+
+      (0_f32..5_f32).bsearch { |x| x >= 5_f32 }.not_nil!.should be_close(5_f32, 0.0001_f32)
+      (0_f32...5_f32).bsearch { |x| x >= 5_f32 }.should be_nil
+      (0_f32..5.0).bsearch { |x| x >= 5.0 }.not_nil!.should be_close(5.0, 0.0001)
+      (0..5.0_f32).bsearch { |x| x >= 5.0 }.not_nil!.should be_close(5.0, 0.0001)
+
+      inf32 = Float32::INFINITY
+      (0..inf32).bsearch { |x| x == inf32 }.should eq inf32
+      (0_f32..inf).bsearch { |x| x == inf }.should eq inf
+      (0.0..inf32).bsearch { |x| x == inf32 }.should eq inf32
+      (0_f32...5_f32).bsearch { |x| x >= 5_f32 }.should be_nil
+    end
+  end
+
   describe "each" do
     it "gives correct values with inclusive range" do
       range = -1..3
