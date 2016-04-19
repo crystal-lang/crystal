@@ -1945,15 +1945,15 @@ class String
     nil
   end
 
-  # Returns the index of _last_ appearance of *c* in the string,
+  # Returns the index of the _last_ appearance of *c* in the string,
   # If `offset` is present, it defines the position to _end_ the search
-  # (characters beyond that point will be ignored).
+  # (characters beyond this point are ignored).
   #
   # ```
-  # "Hello, World".index('o')    # => 8
-  # "Hello, World".index('Z')    # => nil
-  # "Hello, World".index("o", 5) # => 4
-  # "Hello, World".index("H", 2) # => nil
+  # "Hello, World".rindex('o')    # => 8
+  # "Hello, World".rindex('Z')    # => nil
+  # "Hello, World".rindex("o", 5) # => 4
+  # "Hello, World".rindex("H", 2) # => nil
   # ```
   def rindex(search : Char, offset = size - 1)
     offset += size if offset < 0
