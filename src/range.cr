@@ -132,6 +132,15 @@ struct Range(B, E)
     self
   end
 
+  # Returns a reverse `Iterator` over the elements of this range.
+  #
+  # ```
+  # (1..3).reverse_each.skip(1).to_a # => [2, 1]
+  # ```
+  def reverse_each
+    ReverseIterator.new(self)
+  end
+
   # Iterates over this range, passing each nth element to the block.
   #
   # ```
@@ -293,6 +302,33 @@ struct Range(B, E)
     def rewind
       @current = @range.begin
       @reached_end = false
+      self
+    end
+  end
+
+  # :nodoc:
+  class ReverseIterator(B, E)
+    include Iterator(E)
+
+    @range : Range(B, E)
+    @current : E
+
+    def initialize(@range : Range(B, E), @current = range.end)
+      rewind
+    end
+
+    def next
+      return stop if @current <= @range.begin
+      return @current = @current.pred
+    end
+
+    def rewind
+      if @range.excludes_end?
+        @current = @range.end
+      else
+        @current = @range.end.succ
+      end
+
       self
     end
   end
