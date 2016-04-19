@@ -685,4 +685,15 @@ describe "Type inference: lib" do
       ),
       "argument 'x' of LibFoo.foo cannot be passed as 'out' because it is not a pointer"
   end
+
+  it "errors if redefining fun with different signature (#2468)" do
+    assert_error %(
+      fun foo
+      end
+
+      fun foo(x : Int32)
+      end
+      ),
+      "fun redefinition with different signature"
+  end
 end
