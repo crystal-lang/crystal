@@ -143,9 +143,19 @@ struct JSON::Any
     @raw as Bool
   end
 
+  # Checks that the underlying value is `Bool`, and returns its value. Returns nil otherwise.
+  def as_bool? : (Bool | Nil)
+    as_bool if @raw.is_a?(Bool)
+  end
+
   # Checks that the underlying value is `Int`, and returns its value as an `Int32`. Raises otherwise.
   def as_i : Int32
     (@raw as Int).to_i
+  end
+
+  # Checks that the underlying value is `Int`, and returns its value as an `Int32`. Returns nil otherwise.
+  def as_i? : (Int32 | Nil)
+    as_i if @raw.is_a?(Int)
   end
 
   # Checks that the underlying value is `Int`, and returns its value as an `Int64`. Raises otherwise.
@@ -153,9 +163,19 @@ struct JSON::Any
     (@raw as Int).to_i64
   end
 
+  # Checks that the underlying value is `Int`, and returns its value as an `Int64`. Returns nil otherwise.
+  def as_i64? : (Int64 | Nil)
+    as_i64 if @raw.is_a?(Int64)
+  end
+
   # Checks that the underlying value is `Float`, and returns its value as an `Float64`. Raises otherwise.
   def as_f : Float64
     (@raw as Float).to_f
+  end
+
+  # Checks that the underlying value is `Float`, and returns its value as an `Float64`. Returns nil otherwise.
+  def as_f? : (Float64 | Nil)
+    as_f if @raw.is_a?(Float64)
   end
 
   # Checks that the underlying value is `Float`, and returns its value as an `Float32`. Raises otherwise.
@@ -163,9 +183,19 @@ struct JSON::Any
     (@raw as Float).to_f32
   end
 
+  # Checks that the underlying value is `Float`, and returns its value as an `Float32`. Returns nil otherwise.
+  def as_f32? : (Float32 | Nil)
+    as_f32 if (@raw.is_a?(Float32) || @raw.is_a?(Float64))
+  end
+
   # Checks that the underlying value is `String`, and returns its value. Raises otherwise.
   def as_s : String
     @raw as String
+  end
+
+  # Checks that the underlying value is `String`, and returns its value. Returns nil otherwise.
+  def as_s? : (String | Nil)
+    as_s if @raw.is_a?(String)
   end
 
   # Checks that the underlying value is `Array`, and returns its value. Raises otherwise.
@@ -173,9 +203,19 @@ struct JSON::Any
     @raw as Array
   end
 
+  # Checks that the underlying value is `Array`, and returns its value. Returns nil otherwise.
+  def as_a? : (Array(Type) | Nil)
+    as_a if @raw.is_a?(Array(Type))
+  end
+
   # Checks that the underlying value is `Hash`, and returns its value. Raises otherwise.
   def as_h : Hash(String, Type)
     @raw as Hash
+  end
+
+  # Checks that the underlying value is `Hash`, and returns its value. Returns nil otherwise.
+  def as_h? : (Hash(String, Type) | Nil)
+    as_h if @raw.is_a?(Hash(String, Type))
   end
 
   # :nodoc:

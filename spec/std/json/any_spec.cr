@@ -10,28 +10,45 @@ describe JSON::Any do
     it "gets bool" do
       JSON.parse("true").as_bool.should be_true
       JSON.parse("false").as_bool.should be_false
+      JSON.parse("true").as_bool?.should be_true
+      JSON.parse("false").as_bool?.should be_false
+      JSON.parse("2").as_bool?.should be_nil
     end
 
     it "gets int" do
       JSON.parse("123").as_i.should eq(123)
       JSON.parse("123456789123456").as_i64.should eq(123456789123456)
+      JSON.parse("123").as_i?.should eq(123)
+      JSON.parse("123456789123456").as_i64?.should eq(123456789123456)
+      JSON.parse("true").as_i?.should be_nil
+      JSON.parse("true").as_i64?.should be_nil
     end
 
     it "gets float" do
       JSON.parse("123.45").as_f.should eq(123.45)
       JSON.parse("123.45").as_f32.should eq(123.45_f32)
+      JSON.parse("123.45").as_f?.should eq(123.45)
+      JSON.parse("123.45").as_f32?.should eq(123.45_f32)
+      JSON.parse("true").as_f?.should be_nil
+      JSON.parse("true").as_f32?.should be_nil
     end
 
     it "gets string" do
       JSON.parse(%("hello")).as_s.should eq("hello")
+      JSON.parse(%("hello")).as_s?.should eq("hello")
+      JSON.parse("true").as_s?.should be_nil
     end
 
     it "gets array" do
       JSON.parse(%([1, 2, 3])).as_a.should eq([1, 2, 3])
+      JSON.parse(%([1, 2, 3])).as_a?.should eq([1, 2, 3])
+      JSON.parse("true").as_a?.should be_nil
     end
 
     it "gets hash" do
       JSON.parse(%({"foo": "bar"})).as_h.should eq({"foo": "bar"})
+      JSON.parse(%({"foo": "bar"})).as_h?.should eq({"foo": "bar"})
+      JSON.parse("true").as_h?.should be_nil
     end
   end
 
