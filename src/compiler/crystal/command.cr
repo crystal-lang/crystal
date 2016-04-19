@@ -171,8 +171,9 @@ class Crystal::Command
     end
 
     vars = {
-      "CRYSTAL_PATH":    CrystalPath::DEFAULT_PATH,
-      "CRYSTAL_VERSION": Config::VERSION || "",
+      "CRYSTAL_CACHE_DIR": CacheDir.instance.dir,
+      "CRYSTAL_PATH":      CrystalPath::DEFAULT_PATH,
+      "CRYSTAL_VERSION":   Config::VERSION || "",
     }
 
     if ARGV.empty?
@@ -309,8 +310,10 @@ class Crystal::Command
       end
     end
 
+    source_filename = File.expand_path("spec")
+
     source = target_filenames.map { |filename| %(require "./#{filename}") }.join("\n")
-    sources = [Compiler::Source.new("spec", source)]
+    sources = [Compiler::Source.new(source_filename, source)]
 
     output_filename = tempfile "spec"
 
