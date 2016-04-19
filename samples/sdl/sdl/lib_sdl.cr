@@ -150,12 +150,12 @@ lib LibSDL
   fun flip = SDL_Flip(screen : Surface*) : Int32
 
   ifdef linux
-    fun main = SDL_main(argc : Int32, argv : UInt8*) : Int32
+    fun main = SDL_main(argc : Int32, argv : UInt8**) : Int32
   end
 end
 
 ifdef linux
-  fun main(argc : Int32, argv : UInt8*)
+  fun main(argc : Int32, argv : UInt8**) : Int32
     return LibSDL.main(argc, argv)
   end
 else
