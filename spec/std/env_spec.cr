@@ -17,6 +17,13 @@ describe "ENV" do
     ENV["FOO"]?.should eq("1")
   end
 
+  it "sets to nil (same as delete)" do
+    ENV["FOO"] = "1"
+    ENV["FOO"]?.should_not be_nil
+    ENV["FOO"] = nil
+    ENV["FOO"]?.should be_nil
+  end
+
   it "does has_key?" do
     ENV["FOO"] = "1"
     ENV.has_key?("BAR").should be_false
