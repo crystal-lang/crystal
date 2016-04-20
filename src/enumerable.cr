@@ -848,6 +848,9 @@ module Enumerable(T)
   end
 
   # Adds *initial* and all the elements in the collection together.
+  # The type of *initial* will be the type of the sum, so use this if
+  # (for instance) you need to specify a large enough type to avoid
+  # overflow.
   #
   # Only collections of numbers (objects that can be added via an `+` method) are supported.
   #
@@ -882,6 +885,59 @@ module Enumerable(T)
   #     ([] of String).sum(1) { |name| name.size } #=> 1
   def sum(initial, &block)
     reduce(initial) { |memo, e| memo + (yield e) }
+  end
+
+  # Multiplies all the elements in the collection together.
+  #
+  # Only collections of numbers (objects that can be multiplied via a `*` method) are supported.
+  #
+  #     [1, 2, 3, 4, 5, 6].product  #=> 720
+  #
+  # If the collection is empty, returns 1.
+  #
+  #     ([] of Int32).product #=> 1
+  def product
+    product Reflect(T).first.zero + 1
+  end
+
+  # Multiplies *initial* and all the elements in the collection
+  # together.  The type of *initial* will be the type of the product,
+  # so use this if (for instance) you need to specify a large enough
+  # type to avoid overflow.
+  #
+  # Only collections of numbers (objects that can be multiplied via a `*` method) are supported.
+  #
+  #     [1, 2, 3, 4, 5, 6].product(7)  #=> 5040
+  #
+  # If the collection is empty, returns *initial*.
+  #
+  #     ([] of Int32).product(7) #=> 7
+  def product(initial : Number)
+    product initial, &.itself
+  end
+
+  # Multiplies all results of the passed block for each element in the collection.
+  #
+  #     ["Alice", "Bob"].product { |name| name.size }  #=> 15 (5 * 3)
+  #
+  # If the collection is empty, returns 1.
+  #
+  #     ([] of Int32).product { |x| x + 1 } #=> 1
+  def product(&block)
+    product(Reflect(typeof(yield first)).first.zero + 1) do |value|
+      yield value
+    end
+  end
+
+  # Multiplies *initial* and all results of the passed block for each element in the collection.
+  #
+  #     ["Alice", "Bob"].product(2) { |name| name.size }  #=> 30 (2 * 5 * 3)
+  #
+  # If the collection is empty, returns one.
+  #
+  #     ([] of String).product(1) { |name| name.size } #=> 1
+  def product(initial : Number, &block)
+    reduce(initial) { |memo, e| memo * (yield e) }
   end
 
   # Returns an array with the first *count* elements in the collection.
