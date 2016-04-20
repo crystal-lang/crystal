@@ -2157,6 +2157,250 @@ describe "Type inference: instance var" do
       )) { int32 }
   end
 
+  it "infers from class method that has type annotation" do
+    assert_type(%(
+      class Bar
+        def self.bar : Bar
+          Bar.new
+        end
+      end
+
+      class Foo
+        def initialize
+          @bar = Bar.bar
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new.bar
+      )) { types["Bar"] }
+  end
+
+  it "infers from class method that has type annotation, in generic class" do
+    assert_type(%(
+      class Bar
+        def self.bar : Bar
+          Bar.new
+        end
+      end
+
+      class Foo(T)
+        def initialize
+          @bar = Bar.bar
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo(Int32).new.bar
+      )) { types["Bar"] }
+  end
+
+  it "infers from generic class method that has type annotation" do
+    assert_type(%(
+      class Bar(T)
+        def self.bar : self
+          Bar(T).new
+        end
+      end
+
+      class Foo
+        def initialize
+          @bar = Bar(Int32).bar
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new.bar
+      )) { (types["Bar"] as GenericClassType).instantiate([int32] of TypeVar) }
+  end
+
+  it "infers from generic class method that has type annotation, without instantiating" do
+    assert_type(%(
+      class Bar(T)
+        def self.bar : Int32
+          1
+        end
+      end
+
+      class Foo
+        def initialize
+          @bar = Bar.bar
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new.bar
+      )) { int32 }
+  end
+
+  it "infers from class method that has type annotation, with overload" do
+    assert_type(%(
+      class Baz
+      end
+
+      class Bar
+        def self.bar : Baz
+          Baz.new
+        end
+
+        def self.bar(x) : Bar
+          Bar.new
+        end
+
+        def self.bar(x) : Baz
+          yield
+          Bar.new
+        end
+      end
+
+      class Foo
+        def initialize
+          @bar = Bar.bar(1)
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new.bar
+      )) { types["Bar"] }
+  end
+
+  it "infers from class method that has type annotation, with multiple overloads matching, all with the same type" do
+    assert_type(%(
+      class Bar
+        def self.bar(x : Int32) : Bar
+          Bar.new
+        end
+
+        def self.bar(x : String) : Bar
+          Bar.new
+        end
+      end
+
+      class Foo
+        def initialize(x)
+          @bar = Bar.bar(x)
+        end
+
+        def bar
+          @bar
+        end
+      end
+
+      Foo.new(1).bar
+      )) { types["Bar"] }
+  end
+
+  it "infers from new with return type" do
+    assert_type(%(
+      class Foo
+        def self.new : Int32
+          1
+        end
+      end
+
+      class Bar
+        def initialize
+          @x = Foo.new
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Bar.new.x
+      )) { int32 }
+  end
+
+  it "infers from new with return type in generic type" do
+    assert_type(%(
+      class Foo
+        def self.new : Int32
+          1
+        end
+      end
+
+      class Bar(T)
+        def initialize
+          @x = Foo.new
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Bar(Float64).new.x
+      )) { int32 }
+  end
+
+  it "infers from new with return type returning generic" do
+    assert_type(%(
+      class Foo(T)
+        def self.new : Bar(T)
+          Bar(T).new
+        end
+      end
+
+      class Bar(T)
+      end
+
+      class Baz
+        def initialize
+          @x = Foo(Int32).new
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Baz.new.x
+      )) { (types["Bar"] as GenericClassType).instantiate([int32] of TypeVar) }
+  end
+
+  it "guesses from new on abstract class" do
+    assert_type(%(
+      abstract class Foo
+        def self.new : Bar
+          Bar.new(1)
+        end
+      end
+
+      class Bar < Foo
+        def initialize(x)
+        end
+      end
+
+      class Baz
+        def initialize
+          @foo = Foo.new
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Baz.new.foo
+      )) { types["Bar"] }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

@@ -67,6 +67,7 @@ module Crystal
 
     def visit(node : Generic)
       node.name.accept self
+      return false if !@raise && !@type
 
       instance_type = self.type
       unless instance_type.is_a?(GenericClassType)

@@ -551,7 +551,14 @@ module Crystal
       # If it's something like T(X).new, guess T(X).
       if node.name == "new" && obj && (obj.is_a?(Path) || obj.is_a?(Generic))
         type = lookup_type?(obj)
-        return type if type
+        if type
+          # See if the "new" method has a return type annotation, and use it if so
+          return_type = guess_type_from_method_return_type(type, node)
+          return return_type if return_type
+
+          # Otherwise, infer it to be T
+          return type
+        end
       end
 
       # If it's `new(...)` and this is a non-generic class type, guess it to be that class
@@ -566,11 +573,13 @@ module Crystal
         return type if type.is_a?(PointerInstanceType)
       end
 
-      if type = guess_type_call_pointer_malloc_two_args(node)
-        return type
-      end
+      type = guess_type_call_pointer_malloc_two_args(node)
+      return type if type
 
       type = guess_type_call_lib_fun(node)
+      return type if type
+
+      type = guess_type_call_with_type_annotation(node)
       return type if type
 
       nil
@@ -616,6 +625,52 @@ module Crystal
         end
       end
       nil
+    end
+
+    # Guess type from T.method, where T is a Path and
+    # method solves to a method with a type annotation
+    # (use the type annotation)
+    def guess_type_call_with_type_annotation(node)
+      obj = node.obj
+      return nil unless obj
+      return nil unless obj.is_a?(Path) || obj.is_a?(Generic)
+
+      obj_type = lookup_type_no_check?(obj)
+      return nil unless obj_type
+
+      guess_type_from_method_return_type(obj_type, node)
+    end
+
+    def guess_type_from_method_return_type(obj_type, node : Call)
+      metaclass = obj_type.devirtualize.metaclass
+
+      defs = metaclass.lookup_defs(node.name)
+      defs = defs.select do |a_def|
+        a_def_has_block = !!a_def.yields
+        call_has_block = !!(node.block || node.block_arg)
+        next unless a_def_has_block == call_has_block
+
+        min_size, max_size = a_def.min_max_args_sizes
+        min_size <= node.args.size <= max_size
+      end
+
+      # If it's a "new" method without arguments, keep the first one
+      # (might happen that a parent new is found here)
+      if node.name == "new" && node.args.empty? && !node.named_args && !node.block
+        defs = [defs.first]
+      end
+
+      # If any of the matching defs doesn't have a return
+      # type we can't infer anything
+      return nil unless defs.all? &.return_type
+
+      # We can only infer the type if all overloads return
+      # the same type (because we can't know the call
+      # argument's type)
+      return_types = defs.map(&.return_type.not_nil!).uniq!
+      return unless return_types.size == 1
+
+      lookup_type?(return_types[0], obj_type)
     end
 
     def guess_type(node : Cast)
@@ -800,6 +855,12 @@ module Crystal
         type = lookup_type_no_check?(obj)
         return nil if type.is_a?(GenericType)
 
+        # See if the "new" method has a return type annotation, and use it if so
+        if type
+          return_type = guess_type_from_method_return_type(type, node)
+          return [return_type] of TypeVar if return_type
+        end
+
         return [obj] of TypeVar
       end
 
@@ -809,13 +870,14 @@ module Crystal
         return [obj] of TypeVar
       end
 
-      if type = guess_type_call_pointer_malloc_two_args(node)
-        return [type] of TypeVar
-      end
+      type = guess_type_call_pointer_malloc_two_args(node)
+      return [type] of TypeVar if type
 
-      if type = guess_type_call_lib_fun(node)
-        return [type] of TypeVar
-      end
+      type = guess_type_call_lib_fun(node)
+      return [type] of TypeVar if type
+
+      type = guess_type_call_with_type_annotation(node)
+      return [type] of TypeVar if type
 
       nil
     end
@@ -1007,8 +1069,8 @@ module Crystal
       @found_self = true if node.name == "self"
     end
 
-    def lookup_type?(node)
-      type = TypeLookup.lookup?(current_type, node, allow_typeof: false)
+    def lookup_type?(node, root = current_type)
+      type = TypeLookup.lookup?(root, node, allow_typeof: false)
       check_allowed_in_generics(type)
     end
 

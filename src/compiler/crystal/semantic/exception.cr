@@ -319,14 +319,16 @@ module Crystal
 
         1. `#{example_name} = 1` (or other literals), inferred to the literal's type
         2. `#{example_name} = Type.new`, type is inferred to be Type
-        3. `#{example_name} = arg`, with 'arg' being a method argument with a
-           type restriction 'Type', type is inferred to be Type
+        3. `#{example_name} = Type.method`, where `method` has a return type
+           annotation, type is inferred from it
         4. `#{example_name} = arg`, with 'arg' being a method argument with a
-           default value, type is inferred using rules 1 and 2 from it
-        5. `#{example_name} = uninitialized Type`, type is inferred to be Type
-        6. `#{example_name} = LibSome.func`, and `LibSome` is a `lib`, type
+           type restriction 'Type', type is inferred to be Type
+        5. `#{example_name} = arg`, with 'arg' being a method argument with a
+           default value, type is inferred using rules 1, 2 and 3 from it
+        6. `#{example_name} = uninitialized Type`, type is inferred to be Type
+        7. `#{example_name} = LibSome.func`, and `LibSome` is a `lib`, type
            is inferred from that fun.
-        7. `LibSome.func(out #{example_name})`, and `LibSome` is a `lib`, type
+        8. `LibSome.func(out #{example_name})`, and `LibSome` is a `lib`, type
            is inferred from that fun argument.
 
       Other assignments have no effect on its type.
