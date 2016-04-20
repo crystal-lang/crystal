@@ -319,9 +319,9 @@ module Crystal
 
         1. `#{example_name} = 1` (or other literals), inferred to the literal's type
         2. `#{example_name} = Type.new`, type is inferred to be Type
-        3. `#{example_name} = arg`, with 'arg' begin a method argument with a
+        3. `#{example_name} = arg`, with 'arg' being a method argument with a
            type restriction 'Type', type is inferred to be Type
-        4. `#{example_name} = arg`, with 'arg' begin a method argument with a
+        4. `#{example_name} = arg`, with 'arg' being a method argument with a
            default value, type is inferred using rules 1 and 2 from it
         5. `#{example_name} = uninitialized Type`, type is inferred to be Type
         6. `#{example_name} = LibSome.func`, and `LibSome` is a `lib`, type
