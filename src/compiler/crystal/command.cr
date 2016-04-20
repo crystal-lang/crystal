@@ -407,7 +407,7 @@ class Crystal::Command
       end
       status = $?
     ensure
-      File.delete output_filename
+      File.delete(output_filename) rescue nil
     end
 
     if status.normal_exit?
