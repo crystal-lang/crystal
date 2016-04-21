@@ -1,6 +1,12 @@
 require "spec"
 require "yaml"
 
+enum YAMLSpecEnum
+  Zero
+  One
+  Two
+end
+
 describe "YAML serialization" do
   describe "from_yaml" do
     it "does Nil#from_yaml" do
@@ -53,6 +59,23 @@ describe "YAML serialization" do
     it "does Tuple#from_yaml" do
       Tuple(Int32, String, Bool).from_yaml("---\n- 1\n- foo\n- true\n").should eq({1, "foo", true})
     end
+
+    # TODO: uncomment after 0.15.0
+    # it "does for Enum with number" do
+    #   YAMLSpecEnum.from_yaml(%("1")).should eq(YAMLSpecEnum::One)
+
+    #   expect_raises do
+    #     YAMLSpecEnum.from_yaml(%("3"))
+    #   end
+    # end
+
+    # it "does for Enum with string" do
+    #   YAMLSpecEnum.from_yaml(%("One")).should eq(YAMLSpecEnum::One)
+
+    #   expect_raises do
+    #     YAMLSpecEnum.from_yaml(%("Three"))
+    #   end
+    # end
 
     it "does Time::Format#from_yaml" do
       pull = YAML::PullParser.new("--- 2014-01-02\n...\n")
@@ -113,6 +136,11 @@ describe "YAML serialization" do
     it "does for Tuple" do
       Tuple(Int32, String).from_yaml({1, "hello"}.to_yaml).should eq({1, "hello"})
     end
+
+    # TODO: uncomment after 0.15.0
+    # it "does for Enum" do
+    #   YAMLSpecEnum.from_yaml(YAMLSpecEnum::One.to_yaml).should eq(YAMLSpecEnum::One)
+    # end
 
     it "does a full document" do
       data = {

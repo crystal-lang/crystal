@@ -90,6 +90,15 @@ def Tuple.new(pull : YAML::PullParser)
  {% end %}
 end
 
+def Enum.new(pull : YAML::PullParser)
+  string = pull.read_scalar
+  if value = string.to_i64?
+    from_value(value)
+  else
+    parse(string)
+  end
+end
+
 struct Time::Format
   def from_yaml(pull : YAML::PullParser)
     string = pull.read_scalar

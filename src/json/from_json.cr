@@ -120,6 +120,17 @@ def Tuple.new(pull : JSON::PullParser)
  {% end %}
 end
 
+def Enum.new(pull : JSON::PullParser)
+  case pull.kind
+  when :int
+    from_value(pull.read_int)
+  when :string
+    parse(pull.read_string)
+  else
+    raise "expecting int or string in JSON for #{self.class}, not #{pull.kind}"
+  end
+end
+
 struct Time::Format
   def from_json(pull : JSON::PullParser)
     string = pull.read_string

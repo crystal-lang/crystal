@@ -1,6 +1,12 @@
 require "spec"
 require "json"
 
+enum JSONSpecEnum
+  Zero
+  One
+  Two
+end
+
 describe "JSON serialization" do
   describe "from_json" do
     it "does Array(Nil)#from_json" do
@@ -58,6 +64,23 @@ describe "JSON serialization" do
       tuple.should eq({1, "hello"})
       tuple.should be_a(Tuple(Int32, String))
     end
+
+    # TODO: uncomment after 0.15.0
+    # it "does for Enum with number" do
+    #   JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
+
+    #   expect_raises do
+    #     JSONSpecEnum.from_json("3")
+    #   end
+    # end
+
+    # it "does for Enum with string" do
+    #   JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
+
+    #   expect_raises do
+    #     JSONSpecEnum.from_json(%("Three"))
+    #   end
+    # end
   end
 
   describe "to_json" do
@@ -120,6 +143,10 @@ describe "JSON serialization" do
 
     it "does for Tuple" do
       {1, "hello"}.to_json.should eq(%([1,"hello"]))
+    end
+
+    it "does for Enum" do
+      JSONSpecEnum::One.to_json.should eq("1")
     end
   end
 

@@ -115,6 +115,12 @@ struct Symbol
   end
 end
 
+struct Enum
+  def to_yaml(yaml : YAML::Generator)
+    yaml << value
+  end
+end
+
 module Time::EpochConverter
   def self.to_yaml(value : Time, io : IO)
     io << value.epoch
