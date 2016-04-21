@@ -597,6 +597,22 @@ describe Time do
     (time.to_utc <=> time).should eq(0)
   end
 
+  it %(changes timezone with ENV["TZ"]) do
+    old_tz = ENV["TZ"]?
+
+    begin
+      ENV["TZ"] = "America/New_York"
+      offset1 = Time.local_offset_in_minutes
+
+      ENV["TZ"] = "Europe/Berlin"
+      offset2 = Time.local_offset_in_minutes
+
+      offset1.should_not eq(offset2)
+    ensure
+      ENV["TZ"] = old_tz
+    end
+  end
+
   typeof(Time.now.year)
   typeof(1.minute.from_now.year)
   typeof(1.minute.ago.year)

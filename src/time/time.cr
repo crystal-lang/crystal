@@ -4,16 +4,34 @@ lib LibC
     tz_dsttime : Int
   end
 
+  struct Tm
+    tm_sec : Int
+    tm_min : Int
+    tm_hour : Int
+    tm_mday : Int
+    tm_mon : Int
+    tm_year : Int
+    tm_wday : Int
+    tm_yday : Int
+    tm_isdst : Int
+    tm_gmtoff : Long
+    tm_zone : Char*
+  end
+
   fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int
+  fun localtime_r(clock : TimeT*, result : Tm*) : Tm*
 
   ifdef linux
-    fun tzset : Void
-    $timezone : Int
-  end
-end
+    alias ClockIdT = Int
 
-ifdef linux
-  LibC.tzset
+    CLOCK_REALTIME = 0
+
+    fun clock_gettime(clk_id : ClockIdT, tp : TimeSpec*) : Int
+  end
+
+  fun tzset : Void
+  $timezone : Int
+  $daylight : Int
 end
 
 # `Time` represents an instance in time. Here are some examples:
@@ -549,15 +567,12 @@ struct Time
   end
 
   def self.local_ticks
-    compute_ticks do |ticks, tp, tz|
-      ticks - tz
-    end
+    ticks, offset = compute_ticks_and_offset
+    ticks + offset
   end
 
   def self.utc_ticks
-    compute_ticks do |ticks, tp, tz|
-      ticks
-    end
+    compute_ticks
   end
 
   # Returns the local time offset in minutes relative to GMT.
@@ -567,42 +582,66 @@ struct Time
   # Time.local_offset_in_minutes # => -180
   # ```
   def self.local_offset_in_minutes
-    ifdef linux
-      -LibC.timezone.to_i32 / 60
-    else
-      if LibC.gettimeofday(nil, out tzp) != 0
-        raise Errno.new("gettimeofday")
-      end
-      -tzp.tz_minuteswest.to_i32
-    end
+    compute_offset / Span::TicksPerMinute
   end
 
   protected def self.compute_utc_ticks(ticks)
-    compute_ticks do |t, tp, tz|
-      ticks + tz
-    end
+    ticks - compute_offset
   end
 
   protected def self.compute_local_ticks(ticks)
-    compute_ticks do |t, tp, tz|
-      ticks - tz
-    end
+    ticks + compute_offset
+  end
+
+  # Returns `ticks, offset`, where `ticks` is the number of ticks
+  # for "now", and `offset` is the number of ticks for now's timezone offset.
+  private def self.compute_ticks_and_offset
+    second, tenth_microsecond = compute_second_and_tenth_microsecond
+    ticks = compute_ticks(second, tenth_microsecond)
+    offset = compute_offset(second)
+    {ticks, offset}
   end
 
   private def self.compute_ticks
-    if LibC.gettimeofday(out tp, out tzp) != 0
-      raise Errno.new("gettimeofday")
-    end
-    ticks = tp.tv_sec.to_i64 * Span::TicksPerSecond + tp.tv_usec.to_i64 * 10_i64
-    ticks += UnixEpoch
+    second, tenth_microsecond = compute_second_and_tenth_microsecond
+    compute_ticks(second, tenth_microsecond)
+  end
 
-    ifdef linux
-      tz = LibC.timezone.to_i64 / 60
+  private def self.compute_ticks(second, tenth_microsecond)
+    UnixEpoch +
+      second.to_i64 * Span::TicksPerSecond +
+      tenth_microsecond.to_i64
+  end
+
+  private def self.compute_offset
+    second, tenth_microsecond = compute_second_and_tenth_microsecond
+    compute_offset(second)
+  end
+
+  private def self.compute_offset(second)
+    LibC.tzset
+    if LibC.daylight == 0
+      # current TZ doesn't have any DST, neither in past, present or future
+      offset = -LibC.timezone.to_i64 / 60
     else
-      tz = tzp.tz_minuteswest.to_i64
+      # current TZ may have DST, either in past, present or future
+      ret = LibC.localtime_r(pointerof(second), out tm)
+      raise Errno.new("localtime_r") if ret.null?
+      offset = tm.tm_gmtoff.to_i64 / 60
     end
+    offset * Span::TicksPerMinute
+  end
 
-    yield ticks, tp, tz * Span::TicksPerMinute
+  private def self.compute_second_and_tenth_microsecond
+    ifdef darwin
+      ret = LibC.gettimeofday(out timeval, nil)
+      raise Errno.new("gettimeofday") unless ret == 0
+      {timeval.tv_sec, timeval.tv_usec.to_i64 * 10}
+    else
+      ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
+      raise Errno.new("clock_gettime") unless ret == 0
+      {timespec.tv_sec, timespec.tv_nsec / 100}
+    end
   end
 end
 
