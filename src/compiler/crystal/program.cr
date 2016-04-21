@@ -12,7 +12,7 @@ module Crystal
     getter! symbols : Set(String)
     getter! global_vars : Hash(String, MetaTypeVar)
     getter target_machine : LLVM::TargetMachine?
-    getter! splat_expansions : Hash(Def, Type)
+    getter! splat_expansions : Hash(UInt64, Type)
     getter! after_inference_types : Set(Type)
     getter! file_modules : Hash(String, FileModule)
     property! vars : Hash(String, MetaVar)
@@ -41,7 +41,7 @@ module Crystal
       @crystal_path = CrystalPath.new
       @vars = MetaVars.new
       @def_macros = [] of Def
-      @splat_expansions = {} of Def => Type
+      @splat_expansions = {} of UInt64 => Type
       @initialized_global_vars = Set(String).new
       @file_modules = {} of String => FileModule
       @unions = {} of Array(UInt64) => Type
