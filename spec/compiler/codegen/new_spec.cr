@@ -1,7 +1,7 @@
 require "../../spec_helper"
 
 describe "Code gen: new" do
-  it "codegens instace method with allocate" do
+  it "codegens instance method with allocate" do
     run(%(
       class Foo
         def coco
@@ -13,7 +13,7 @@ describe "Code gen: new" do
       )).to_i.should eq(1)
   end
 
-  it "codegens instace method with new and instance var" do
+  it "codegens instance method with new and instance var" do
     run(%(
       class Foo
         def initialize
@@ -31,7 +31,7 @@ describe "Code gen: new" do
       )).to_i.should eq(1)
   end
 
-  it "codegens instace method with new" do
+  it "codegens instance method with new" do
     run(%(
       class Foo
         def coco
@@ -49,7 +49,7 @@ describe "Code gen: new" do
       )).to_b.should be_false
   end
 
-  it "inherits intialize" do
+  it "inherits initialize" do
     run(%(
       class Foo
         def initialize(@x : Int32)
@@ -67,7 +67,7 @@ describe "Code gen: new" do
       )).to_i.should eq(42)
   end
 
-  it "inherits intialize for generic type" do
+  it "inherits initialize for generic type" do
     run(%(
       class Foo(T)
         def initialize(@x : Int32)
