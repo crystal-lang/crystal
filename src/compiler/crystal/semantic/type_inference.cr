@@ -26,6 +26,9 @@ module Crystal
       result = Crystal.timing("Semantic (top level)", stats) do
         visit_top_level(node)
       end
+      Crystal.timing("Semantic (new)", stats) do
+        define_new_methods
+      end
       Crystal.timing("Semantic (abstract def check)", stats) do
         check_abstract_defs
       end

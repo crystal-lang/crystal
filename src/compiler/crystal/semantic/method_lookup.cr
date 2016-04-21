@@ -56,7 +56,19 @@ module Crystal
       matches = lookup_matches_without_parents(signature, owner, type_lookup, matches_array)
       return matches unless matches.empty?
 
-      if (my_parents = parents) && !(signature.name == "new" && owner.metaclass?)
+      is_new = owner.metaclass? && signature.name == "new"
+      if is_new
+        # For a `new` method we need to do this in case a `new` is defined
+        # in a module type
+        my_parents = instance_type.parents.try &.map(&.metaclass)
+      else
+        my_parents = parents
+      end
+
+      # `new` must only be searched in ancestors if this type itself doesn't define
+      # an `initialize` or `self.new` method. This was already computed in `new.cr`
+      # and can be known by invoking `lookup_new_in_ancestors?`
+      if my_parents && !(!lookup_new_in_ancestors? && is_new)
         my_parents.each do |parent|
           break unless parent.is_a?(IncludedGenericModule) || parent.module?
 
@@ -76,7 +88,19 @@ module Crystal
 
       cover = matches.cover
 
-      if (my_parents = parents) && !(signature.name == "new" && owner.metaclass?)
+      is_new = owner.metaclass? && signature.name == "new"
+      if is_new
+        # For a `new` method we need to do this in case a `new` is defined
+        # in a module type
+        my_parents = instance_type.parents.try &.map(&.metaclass)
+      else
+        my_parents = parents
+      end
+
+      # `new` must only be searched in ancestors if this type itself doesn't define
+      # an `initialize` or `self.new` method. This was already computed in `new.cr`
+      # and can be known by invoking `lookup_new_in_ancestors?`
+      if my_parents && !(!lookup_new_in_ancestors? && is_new)
         my_parents.each do |parent|
           matches = parent.lookup_matches(signature, owner, parent, matches_array)
           if matches.cover_all?

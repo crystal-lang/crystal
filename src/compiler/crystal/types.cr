@@ -163,6 +163,18 @@ module Crystal
       false
     end
 
+    def lookup_new_in_ancestors=(value)
+      raise "Bug: #{self} doesn't implement lookup_new_in_ancestors="
+    end
+
+    # Should `new` be looked up in ancestors?
+    #
+    # This is `true` if this type doesn't define any
+    # `initialize` methods.
+    def lookup_new_in_ancestors?
+      false
+    end
+
     def is_implicitly_converted_in_c_to?(expected_type)
       case self
       when NilType
@@ -288,7 +300,7 @@ module Crystal
       when Program
         name
       when .metaclass?
-        "#{self.instance_type}::#{name}"
+        "#{self.instance_type}.#{name}"
       else
         "#{self}##{name}"
       end
@@ -313,7 +325,7 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_def"
     end
 
-    def lookup_defs(name)
+    def lookup_defs(name, lookup_ancestors_for_new = false)
       raise "Bug: #{self} doesn't implement lookup_defs"
     end
 
@@ -525,16 +537,17 @@ module Crystal
       end
     end
 
-    def lookup_defs(name)
+    def lookup_defs(name, lookup_ancestors_for_new = false)
       all_defs = [] of Def
 
       self.defs.try &.[name]?.try &.each do |item|
         all_defs << item.def
       end
 
-      unless name == "new" || name == "initialize"
+      if lookup_ancestors_for_new || self.lookup_new_in_ancestors? ||
+         !(name == "new" || name == "initialize")
         parents.try &.each do |parent|
-          all_defs.concat parent.lookup_defs(name)
+          all_defs.concat parent.lookup_defs(name, lookup_ancestors_for_new)
         end
       end
 
@@ -956,6 +969,7 @@ module Crystal
     property? struct : Bool
     getter? allocated : Bool
     property? allowed_in_generics : Bool
+    property? lookup_new_in_ancestors : Bool
 
     def initialize(program, container, name, @superclass, add_subclass = true)
       super(program, container, name)
@@ -969,6 +983,7 @@ module Crystal
       @struct = false
       @allocated = false
       @allowed_in_generics = true
+      @lookup_new_in_ancestors = false
       parents.push superclass if superclass
       force_add_subclass if add_subclass
     end
@@ -1256,7 +1271,7 @@ module Crystal
     def initialize(@program)
     end
 
-    def lookup_defs(name)
+    def lookup_defs(name, lookup_ancestors_for_new = false)
       [] of Def
     end
 
@@ -1635,6 +1650,7 @@ module Crystal
     delegate passed_by_value?, @generic_class
     delegate type_desc, @generic_class
     delegate container, @generic_class
+    delegate lookup_new_in_ancestors?, @generic_class
 
     def allocated=(allocated)
       @allocated = allocated
@@ -2362,6 +2378,10 @@ module Crystal
       true
     end
 
+    def lookup_new_in_ancestors?
+      true
+    end
+
     def type_desc
       "enum"
     end
@@ -2404,6 +2424,7 @@ module Crystal
 
     delegate :abstract?, instance_type
     delegate :generic_nest, instance_type
+    delegate :lookup_new_in_ancestors?, instance_type
 
     def class_var_owner
       instance_type
@@ -2456,6 +2477,7 @@ module Crystal
     delegate type_vars, instance_type
     delegate :abstract?, instance_type
     delegate generic_nest, instance_type
+    delegate lookup_new_in_ancestors?, instance_type
 
     def metaclass?
       true

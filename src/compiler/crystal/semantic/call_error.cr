@@ -143,7 +143,7 @@ class Crystal::Call
     end
 
     # If it's on an initialize method and there's a similar method name, it's probably a typo
-    if def_name == "initialize" && (similar_def = owner.lookup_similar_def(def_name, self.args.size, block))
+    if (def_name == "initialize" || def_name == "new") && (similar_def = owner.instance_type.lookup_similar_def("initialize", self.args.size, block))
       inner_msg = colorize("do you maybe have a typo in this '#{similar_def.name}' method?").yellow.bold.to_s
       inner_exception = TypeException.for_node(similar_def, inner_msg)
     end

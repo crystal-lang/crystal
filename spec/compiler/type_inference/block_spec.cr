@@ -847,7 +847,7 @@ describe "Block inference" do
 
       Foo.new { }
       ),
-      "'Foo#new' is not expected to be invoked with a block, but a block was given"
+      "'Foo.new' is not expected to be invoked with a block, but a block was given"
   end
 
   it "recalculates call that uses block arg output as free var" do

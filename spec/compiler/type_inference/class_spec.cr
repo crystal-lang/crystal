@@ -497,17 +497,6 @@ describe "Type inference: class" do
     assert_error "Number.allocate", "can't instantiate abstract struct Number"
   end
 
-  it "errors if invoking new with zero arguments and new has one" do
-    assert_error %(
-      class Foo
-        def self.new(x)
-        end
-      end
-
-      Foo.new
-      ), "wrong number of arguments"
-  end
-
   it "reads an object instance var" do
     assert_type(%(
       class Foo
@@ -580,7 +569,7 @@ describe "Type inference: class" do
 
       Bar.new(1)
       ),
-      "wrong number of arguments for 'Bar#initialize' (given 1, expected 2)"
+      "wrong number of arguments for 'Bar.new' (given 1, expected 2)"
   end
 
   it "doesn't use initialize from base class with virtual type" do
@@ -653,17 +642,17 @@ describe "Type inference: class" do
       )) { int32 }
   end
 
-  it "says can't instantiate abstract class if wrong number of arguments" do
+  it "says wrong number of arguments for abstract class new" do
     assert_error %(
       abstract class Foo
       end
 
       Foo.new(1)
       ),
-      "can't instantiate abstract class Foo"
+      "wrong number of arguments for 'Foo.new' (given 1, expected 0)"
   end
 
-  it "says can't instantiate abstract class if wrong number of arguments (2)" do
+  it "says wrong number of arguments for abstract class new (2)" do
     assert_error %(
       abstract class Foo
         def initialize(x)
@@ -672,7 +661,7 @@ describe "Type inference: class" do
 
       Foo.new
       ),
-      "can't instantiate abstract class Foo"
+      "wrong number of arguments for 'Foo.new' (given 0, expected 1)"
   end
 
   it "errors if reopening non-generic class as generic" do
@@ -751,7 +740,7 @@ describe "Type inference: class" do
 
       Bar.new
       ),
-      "wrong number of arguments for 'Bar#initialize' (given 0, expected 1)"
+      "wrong number of arguments for 'Bar.new' (given 0, expected 1)"
   end
 
   it "instantiates types inferring generic type when there a type argument has the same name as an existing type" do
