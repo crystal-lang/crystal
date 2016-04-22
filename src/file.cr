@@ -423,11 +423,7 @@ class File < IO::FileDescriptor
   
   # Returns the number of lines in a file.
   def self.count_lines(filename, encoding = nil, invalid = nil)
-    lines = 0
-    each_line(filename, encoding: encoding, invalid: invalid) do |line|
-      lines += 1
-    end
-    lines
+    File.open(filename).each_line.size
   end
 
   # Write the given content to the given filename.
