@@ -420,6 +420,15 @@ class File < IO::FileDescriptor
     end
     lines
   end
+  
+  # Returns the number of lines in a file.
+  def self.count_lines(filename, encoding = nil, invalid = nil)
+    lines = 0
+    each_line(filename, encoding: encoding, invalid: invalid) do |line|
+      lines += 1
+    end
+    lines
+  end
 
   # Write the given content to the given filename.
   # An existing file will be overwritten, or a file will be created with the given filename.
