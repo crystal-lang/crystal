@@ -615,6 +615,8 @@ module Crystal
 
           if @token.value == :is_a?
             atomic = parse_is_a(atomic).at(location)
+          elsif @token.value == :as
+            atomic = parse_as(atomic).at(location)
           elsif @token.value == :responds_to?
             atomic = parse_responds_to(atomic).at(location)
           elsif @token.value == :nil?
@@ -774,6 +776,22 @@ module Crystal
       end
 
       IsA.new(atomic, type)
+    end
+
+    def parse_as(atomic)
+      next_token_skip_space
+
+      if @token.type == :"("
+        next_token_skip_space_or_newline
+        type = parse_single_type
+        skip_space
+        check :")"
+        next_token_skip_space
+      else
+        type = parse_single_type(allow_commas: false)
+      end
+
+      Cast.new(atomic, type)
     end
 
     def parse_responds_to(atomic)
@@ -1367,6 +1385,8 @@ module Crystal
 
         if @token.value == :is_a?
           call = parse_is_a(obj).at(location)
+        elsif @token.value == :as
+          call = parse_as(obj).at(location)
         elsif @token.value == :responds_to?
           call = parse_responds_to(obj).at(location)
         elsif @token.value == :nil?

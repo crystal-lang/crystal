@@ -366,6 +366,7 @@ describe "Parser" do
   it_parses "foo &.[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 0.int32, 1.int32)))
   it_parses "foo(&.is_a?(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), "T".path)))
   it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], RespondsTo.new(Var.new("__arg0"), "foo")))
+  it_parses "foo(&.as(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Cast.new(Var.new("__arg0"), "T".path)))
   it_parses "foo &.each {\n}", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
   it_parses "foo &.each do\nend", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
 
@@ -966,6 +967,12 @@ describe "Parser" do
   it_parses "foo as Bar", Cast.new("foo".call, "Bar".path)
   it_parses "foo.bar as Bar", Cast.new(Call.new("foo".call, "bar"), "Bar".path)
   it_parses "call(foo as Bar, Baz)", Call.new(nil, "call", args: [Cast.new("foo".call, "Bar".path), "Baz".path])
+
+  it_parses "1.as Bar", Cast.new(1.int32, "Bar".path)
+  it_parses "1.as(Bar)", Cast.new(1.int32, "Bar".path)
+  it_parses "foo.as(Bar)", Cast.new("foo".call, "Bar".path)
+  it_parses "foo.bar.as(Bar)", Cast.new(Call.new("foo".call, "bar"), "Bar".path)
+  it_parses "call(foo.as Bar, Baz)", Call.new(nil, "call", args: [Cast.new("foo".call, "Bar".path), "Baz".path])
 
   it_parses "typeof(1)", TypeOf.new([1.int32] of ASTNode)
 
