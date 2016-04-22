@@ -41,6 +41,11 @@ describe "Complex" do
     Complex.new(1.25, -8.2).to_s.should eq("1.25 - 8.2i")
   end
 
+  it "inspect" do
+    Complex.new(1.25, 8.2).inspect.should eq("(1.25 + 8.2i)")
+    Complex.new(1.25, -8.2).inspect.should eq("(1.25 - 8.2i)")
+  end
+
   it "abs" do
     Complex.new(5.1, 9.7).abs.should eq(10.959014554237985)
   end
