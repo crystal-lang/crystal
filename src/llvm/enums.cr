@@ -1,6 +1,6 @@
 module LLVM
   @[Flags]
-  enum Attribute
+  enum Attribute : UInt32
     ZExt            = 1 << 0
     SExt            = 1 << 1
     NoReturn        = 1 << 2
