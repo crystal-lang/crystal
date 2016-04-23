@@ -538,7 +538,7 @@ module Crystal
       end
 
       is_flags = node.has_attribute?("Flags")
-      all_value = 0_u64
+      all_value = interpret_enum_value(NumberLiteral.new(0), enum_base_type)
       existed = !!enum_type
       enum_type ||= EnumType.new(@mod, scope, name, enum_base_type, is_flags)
 

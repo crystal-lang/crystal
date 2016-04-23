@@ -247,4 +247,16 @@ describe "Code gen: enum" do
       x
       )).to_i.should eq(1)
   end
+
+  it "casts All value to base type" do
+    run(%(
+      @[Flags]
+      enum Foo
+        A = 1 << 30
+        B = 1 << 31
+      end
+
+      Foo::All.value
+      )).to_i.should eq(-1073741824)
+  end
 end
