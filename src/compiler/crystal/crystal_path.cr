@@ -2,11 +2,13 @@ require "./config"
 
 module Crystal
   struct CrystalPath
-    DEFAULT_PATH = ENV["CRYSTAL_PATH"]? || Crystal::Config::PATH
+    def self.default_path
+      ENV["CRYSTAL_PATH"]? || Crystal::Config::PATH
+    end
 
     @crystal_path : Array(String)
 
-    def initialize(path = DEFAULT_PATH)
+    def initialize(path = CrystalPath.default_path)
       @crystal_path = path.split(':').reject &.empty?
     end
 
