@@ -47,4 +47,7 @@ describe "ASTNode#to_s" do
   expect_to_s "class Foo\n  private def bar\n  end\nend"
   expect_to_s "foo(&.==(2))"
   expect_to_s "foo.nil?"
+  expect_to_s "foo._bar"
+  expect_to_s "foo._bar(1)"
+  expect_to_s "_foo.bar"
 end
