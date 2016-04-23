@@ -204,7 +204,10 @@ describe "Codegen: const" do
       ").to_i.should eq(3)
   end
 
-  it "works with const initialized after global variable" do
+  # Constants are actually initialized before main code, so this should
+  # probably give an error. Since this code is very unlikely to happen,
+  # we'll fix it later.
+  pending "works with const initialized after global variable" do
     run(%(
       $a = 1
       COCO = $a
@@ -285,5 +288,45 @@ describe "Codegen: const" do
 
       ->(x : Foo) { x.foo }
       ))
+  end
+
+  it "uses const before declaring it (hoisting)" do
+    run(%(
+      x = A
+
+      A = foo
+
+      def foo
+        a = 1
+        b = 2
+        a + b
+      end
+
+      x
+      )).to_i.should eq(3)
+  end
+
+  it "uses const before declaring it in another module" do
+    run(%(
+      require "prelude"
+
+      def foo
+        a = 1
+        b = 2
+        a + b
+      end
+
+      class Foo
+        def self.foo
+          A
+        end
+      end
+
+      x = Foo.foo
+
+      A = foo
+
+      x
+      )).to_i.should eq(3)
   end
 end

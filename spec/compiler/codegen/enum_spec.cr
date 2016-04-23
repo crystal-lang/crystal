@@ -229,4 +229,22 @@ describe "Code gen: enum" do
       Foo::Bar.value
       )).to_i.should eq(~1)
   end
+
+  it "uses enum value before declaration (hoisting)" do
+    run(%(
+      x = Bar.bar
+
+      enum Foo
+        A = 1
+      end
+
+      class Bar
+        def self.bar
+          Foo::A
+        end
+      end
+
+      x
+      )).to_i.should eq(1)
+  end
 end

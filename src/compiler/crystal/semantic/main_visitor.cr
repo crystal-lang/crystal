@@ -1832,9 +1832,9 @@ module Crystal
       when "pointer_add"
         node.type = scope
       when "argc"
-        node.type = @mod.int32
+        # Already typed
       when "argv"
-        node.type = @mod.pointer_of(@mod.pointer_of(@mod.uint8))
+        # Already typed
       when "struct_new"
         node.type = scope.instance_type
       when "struct_set"

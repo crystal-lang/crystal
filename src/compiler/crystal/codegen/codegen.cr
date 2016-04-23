@@ -175,29 +175,35 @@ module Crystal
       # to avoid some memory being allocated with plain malloc.
       codgen_well_known_functions @node
 
-      initialize_const(@mod.types["ARGC_UNSAFE"] as Const)
-      initialize_const(@mod.types["ARGV_UNSAFE"] as Const)
-      initialize_class_vars
+      initialize_class_vars_and_consts
 
       alloca_vars @mod.vars, @mod
     end
 
-    def initialize_class_vars
-      @mod.class_var_initializers.each do |initializer|
-        alloca_vars initializer.meta_vars
-
-        accept initializer.node
-        last = @last
-
-        class_var = initializer.owner.class_vars[initializer.name]
-        if last.constant? && !class_var.thread_local? && class_var.type == initializer.node.type
-          # If a class variable starts with a constant value, we just initialize
-          # it with it instead of initializing it with null and then doing an assignment
-          get_global class_var_global_name(class_var), class_var.type, class_var, last
+    def initialize_class_vars_and_consts
+      @mod.class_var_and_const_initializers.each do |initializer|
+        if initializer.is_a?(Const)
+          initialize_const(initializer)
         else
-          global = get_global class_var_global_name(class_var), class_var.type, class_var
-          assign global, class_var.type, initializer.node.type, last
+          initialize_class_var(initializer)
         end
+      end
+    end
+
+    def initialize_class_var(initializer)
+      alloca_vars initializer.meta_vars
+
+      accept initializer.node
+      last = @last
+
+      class_var = initializer.owner.class_vars[initializer.name]
+      if last.constant? && !class_var.thread_local? && class_var.type == initializer.node.type
+        # If a class variable starts with a constant value, we just initialize
+        # it with it instead of initializing it with null and then doing an assignment
+        get_global class_var_global_name(class_var), class_var.type, class_var, last
+      else
+        global = get_global class_var_global_name(class_var), class_var.type, class_var
+        assign global, class_var.type, initializer.node.type, last
       end
     end
 
@@ -564,12 +570,6 @@ module Crystal
     end
 
     def visit(node : EnumDef)
-      if node.created_new_type
-        node.resolved_type.types.each_value do |type|
-          initialize_const(type as Const)
-        end
-      end
-
       node.members.each do |member|
         if member.is_a?(Assign)
           member.accept self
@@ -793,9 +793,6 @@ module Crystal
         accept value
         return false
       when Path
-        # Initialize constants if they are used
-        const = target.target_const.not_nil!
-        initialize_const const
         @last = llvm_nil
         return false
       end
@@ -1147,8 +1144,6 @@ module Crystal
     end
 
     def initialize_const(const, global_name = const.llvm_name)
-      return unless const.used
-
       # It might be that the constant is already declared by not initialized
       global = declare_const(const, global_name)
 

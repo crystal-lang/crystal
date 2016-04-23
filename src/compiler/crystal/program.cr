@@ -27,9 +27,13 @@ module Crystal
     getter! def_macros : Array(Def)
     getter! unions : Hash(Array(UInt64), Type)
     getter! file_modules : Hash(String, FileModule)
-    getter! class_var_initializers : Array(ClassVarInitializer)
     getter! string_pool
     @flags : Set(String)?
+
+    # Here we store class var initializers and constants, in the
+    # order that they are used. They will be initialized as soon
+    # as the program starts, before the main code.
+    getter! class_var_and_const_initializers
 
     def initialize
       super(self, self, "main")
@@ -49,6 +53,7 @@ module Crystal
       @color = true
       @after_inference_types = Set(Type).new
       @string_pool = StringPool.new
+      @class_var_and_const_initializers = [] of ClassVarInitializer | Const
 
       types = @types = {} of String => Type
 
@@ -138,8 +143,18 @@ module Crystal
       proc.variadic = true
       proc.allowed_in_generics = false
 
-      types["ARGC_UNSAFE"] = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", Primitive.new(:argc)
-      types["ARGV_UNSAFE"] = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", Primitive.new(:argv)
+      argc_primitive = Primitive.new(:argc)
+      argc_primitive.type = int32
+
+      argv_primitive = Primitive.new(:argv)
+      argv_primitive.type = pointer_of(pointer_of(uint8))
+
+      types["ARGC_UNSAFE"] = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", argc_primitive
+      types["ARGV_UNSAFE"] = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", argv_primitive
+
+      # Make sure to initialize ARGC and ARGV as soon as the program starts
+      class_var_and_const_initializers << argc_unsafe
+      class_var_and_const_initializers << argv_unsafe
 
       argc_unsafe.initialized = true
       argv_unsafe.initialized = true

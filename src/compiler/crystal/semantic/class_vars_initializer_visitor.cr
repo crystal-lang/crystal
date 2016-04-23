@@ -49,9 +49,8 @@ module Crystal
         node.accept main_visitor
 
         owner.class_vars[name].bind_to(node)
+        self.class_var_and_const_initializers << initializer
       end
-
-      @class_var_initializers = class_var_initializers
 
       node
     end

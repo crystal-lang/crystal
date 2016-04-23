@@ -42,6 +42,7 @@ module Crystal
           type.value.accept type_visitor
           type.vars = const_def.vars
           type.visitor = self
+          @mod.class_var_and_const_initializers << type
         end
         node.target_const = type
         node.bind_to type.value

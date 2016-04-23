@@ -211,4 +211,27 @@ describe "Codegen: class var" do
       Foo.var
       )).to_i.should eq(2)
   end
+
+  it "initializes dependent constant before class var" do
+    run(%(
+      def foo
+        a = 1
+        b = 2
+        a + b
+      end
+
+      A = foo()
+
+      class Foo
+        @@foo : Int32
+        @@foo = A
+
+        def self.foo
+          @@foo
+        end
+      end
+
+      Foo.foo
+      )).to_i.should eq(3)
+  end
 end
