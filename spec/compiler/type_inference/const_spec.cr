@@ -169,7 +169,7 @@ describe "Type inference: const" do
 
       A
       ),
-      "constant A requires initialization of B, which is initialized later. Initialize B before A"
+      "recursive dependency of constant A: A -> B -> A"
   end
 
   ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2", "1 + 2", "1 + Z"].each do |node|
@@ -254,5 +254,34 @@ describe "Type inference: const" do
       end
       ),
       "can't declare constant dynamically"
+  end
+
+  it "errors if recursive constant definition" do
+    assert_error %(
+      def foo(x)
+      end
+
+      foo B
+
+      B = A
+      A = B
+      ),
+      "recursive dependency of constant B: B -> A -> B"
+  end
+
+  it "errors if recursive constant definition with class var" do
+    assert_error %(
+      def foo(x)
+      end
+
+      foo Foo::B
+
+      class Foo
+        @@a : Int32?
+        B = @@a
+        @@a = 1 + (B ? 0 : 2)
+      end
+      ),
+      "recursive dependency of class var Foo::@@a: Foo::@@a -> Foo::B -> Foo::@@a"
   end
 end

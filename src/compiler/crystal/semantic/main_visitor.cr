@@ -399,6 +399,11 @@ module Crystal
     def visit_class_var(node)
       var = lookup_class_var(node)
 
+      existing = @mod.class_var_and_const_being_typed.find &.same?(var)
+      if existing
+        raise_recursive_dependency node, var
+      end
+
       if first_time_accessing_meta_type_var?(var)
         var.bind_to mod.nil_var
       end

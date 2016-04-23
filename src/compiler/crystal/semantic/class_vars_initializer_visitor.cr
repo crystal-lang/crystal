@@ -46,7 +46,12 @@ module Crystal
 
         main_visitor = MainVisitor.new(self, meta_vars: meta_vars)
         main_visitor.scope = owner.metaclass
+
+        class_var = owner.class_vars[name]
+
+        self.class_var_and_const_being_typed.push class_var
         node.accept main_visitor
+        self.class_var_and_const_being_typed.pop
 
         owner.class_vars[name].bind_to(node)
         self.class_var_and_const_initializers << initializer
