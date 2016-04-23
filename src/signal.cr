@@ -116,7 +116,7 @@ enum Signal
 
   @@default_handlers_setup = false
 
-  # :ndooc:
+  # :nodoc:
   def self.setup_default_handlers
     return if @@default_handlers_setup
     @@default_handlers_setup = true
