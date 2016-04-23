@@ -113,6 +113,17 @@ enum Signal
     Event::SignalHandler.del_handler self
     LibC.signal value, block
   end
+
+  @@default_handlers_setup = false
+
+  # :ndooc:
+  def self.setup_default_handlers
+    return if @@default_handlers_setup
+    @@default_handlers_setup = true
+
+    Signal::PIPE.ignore
+    Signal::CHLD.reset
+  end
 end
 
 # :nodoc:

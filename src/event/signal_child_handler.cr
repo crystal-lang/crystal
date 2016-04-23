@@ -3,7 +3,10 @@
 # Process.waitpid uses this class for nonblocking operation.
 class Event::SignalChildHandler
   def self.instance
-    @@instance ||= new
+    @@instance ||= begin
+      Signal.setup_default_handlers
+      new
+    end
   end
 
   alias ChanType = Channel::Buffered(Process::Status?)

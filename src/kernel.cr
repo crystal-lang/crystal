@@ -162,8 +162,8 @@ class Process
   end
 end
 
-Signal::PIPE.ignore
-Signal::CHLD.reset
+Signal.setup_default_handlers
+
 at_exit { Event::SignalHandler.close }
 
 # Background loop to cleanup unused fiber stacks
