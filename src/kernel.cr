@@ -89,7 +89,7 @@ end
 
 # :nodoc:
 module AtExitHandlers
-  @@running : Bool?
+  @@running = false
 
   def self.add(handler)
     handlers = @@handlers ||= [] of Int32 ->

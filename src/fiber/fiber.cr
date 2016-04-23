@@ -94,9 +94,12 @@ class Fiber
   def run
     @proc.call
   rescue ex
-    STDERR.puts "Unhandled exception:"
-    ex.inspect_with_backtrace STDERR
-    STDERR.flush
+    # Don't use STDERR here because we are at a lower level than that
+    msg = String.build do |io|
+      io.puts "Unhandled exception:"
+      ex.inspect_with_backtrace io
+    end
+    LibC.write(2, msg, msg.bytesize)
   ensure
     @@stack_pool << @stack
 

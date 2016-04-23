@@ -9,13 +9,14 @@ class Scheduler
     if runnable = @@runnables.shift?
       runnable.resume
     else
-      @@loop_fiber.not_nil!.resume
+      loop_fiber.resume
     end
     nil
   end
 
-  @@loop_fiber : Fiber?
-  @@loop_fiber = Fiber.new { @@eb.run_loop }
+  def self.loop_fiber
+    @@loop_fiber ||= Fiber.new { @@eb.run_loop }
+  end
 
   def self.after_fork
     @@eb.reinit
