@@ -145,4 +145,10 @@ describe BigRational do
   it "#>>" do
     (br(10, 3) >> 2).should eq(br(5, 6))
   end
+
+  it "#hash" do
+    b = br(10, 3)
+    hash = b.hash
+    hash.should eq(b.to_f64.hash)
+  end
 end

@@ -129,6 +129,10 @@ struct BigRational
     BigRational.new { |mpq| LibGMP.mpq_abs(mpq, self) }
   end
 
+  def hash
+    to_f64.hash
+  end
+
   # Returns the `Float64` representing this rational.
   def to_f
     to_f64
