@@ -196,7 +196,10 @@ describe "BigInt" do
     big.to_u8.should eq(210)
     big.to_u16.should eq(722)
     big.to_u32.should eq(1234567890)
-    big.to_u64.should eq(1234567890)
+
+    u64 = big.to_u64
+    u64.should eq(1234567890)
+    u64.should be_a(UInt64)
   end
 
   ifdef x86_64

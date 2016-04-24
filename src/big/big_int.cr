@@ -287,7 +287,7 @@ struct BigInt < Int
   end
 
   def to_u64
-    LibGMP.get_ui(self)
+    LibGMP.get_ui(self).to_u64
   end
 
   def to_f
