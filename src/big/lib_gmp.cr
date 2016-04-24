@@ -7,6 +7,12 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = ULong
 
+  ifdef x86_64
+    alias MpExp = Int64
+  else
+    alias MpExp = Int32
+  end
+
   struct MPZ
     _mp_alloc : Int32
     _mp_size : Int32
@@ -113,28 +119,28 @@ lib LibGMP
 
   # MPF
   struct MPF
-    _mp_prec : Int32
-    _mp_size : Int32
-    _mp_exp : Int64
-    _mp_d : UInt64*
+    _mp_prec : Int
+    _mp_size : Int
+    _mp_exp : MpExp
+    _mp_d : ULong*
   end
 
   # # Initialization
   fun mpf_init = __gmpf_init(x : MPF*)
-  fun mpf_init2 = __gmpf_init2(x : MPF*, prec : UInt64)
-  fun mpf_init_set_d = __gmpf_init_set_d(rop : MPF*, op : Float64)
-  fun mpf_init_set_str = __gmpf_init_set_str(rop : MPF*, str : UInt8*, base : Int32) : Int32
+  fun mpf_init2 = __gmpf_init2(x : MPF*, prec : BitcntT)
+  fun mpf_init_set_d = __gmpf_init_set_d(rop : MPF*, op : Double)
+  fun mpf_init_set_str = __gmpf_init_set_str(rop : MPF*, str : UInt8*, base : Int) : Int
 
   # # Precision
-  fun mpf_set_default_prec = __gmpf_set_default_prec(prec : UInt64)
-  fun mpf_get_default_prec = __gmpf_get_default_prec : UInt64
+  fun mpf_set_default_prec = __gmpf_set_default_prec(prec : BitcntT)
+  fun mpf_get_default_prec = __gmpf_get_default_prec : BitcntT
 
   # # I/O
-  fun mpf_get_str = __gmpf_get_str(str : UInt8*, expptr : Int64*, base : Int32, n_digits : Int32, op : MPF*) : UInt8*
-  fun mpf_get_d = __gmpf_get_d(op : MPF*) : Float64
-  fun mpf_set_d = __gmpf_set_d(op : MPF*, op : Float64)
-  fun mpf_get_si = __gmpf_get_si(op : MPF*) : Int64
-  fun mpf_get_ui = __gmpf_get_ui(op : MPF*) : UInt64
+  fun mpf_get_str = __gmpf_get_str(str : UInt8*, expptr : MpExp*, base : Int, n_digits : LibC::SizeT, op : MPF*) : UInt8*
+  fun mpf_get_d = __gmpf_get_d(op : MPF*) : Double
+  fun mpf_set_d = __gmpf_set_d(op : MPF*, op : Double)
+  fun mpf_get_si = __gmpf_get_si(op : MPF*) : Long
+  fun mpf_get_ui = __gmpf_get_ui(op : MPF*) : ULong
   fun mpf_ceil = __gmpf_ceil(rop : MPF*, op : MPF*)
   fun mpf_floor = __gmpf_floor(rop : MPF*, op : MPF*)
 
@@ -145,15 +151,15 @@ lib LibGMP
   fun mpf_div = __gmpf_div(rop : MPF*, op1 : MPF*, op2 : MPF*)
   fun mpf_neg = __gmpf_neg(rop : MPF*, op : MPF*)
   fun mpf_abs = __gmpf_abs(rop : MPF*, op : MPF*)
-  fun mpf_pow_ui = __gmpf_pow_ui(rop : MPF*, op1 : MPF*, op2 : UInt64)
+  fun mpf_pow_ui = __gmpf_pow_ui(rop : MPF*, op1 : MPF*, op2 : ULong)
 
   # # Comparison
-  fun mpf_cmp = __gmpf_cmp(op1 : MPF*, op2 : MPF*) : Int32
-  fun mpf_cmp_d = __gmpf_cmp_d(op1 : MPF*, op2 : Float64) : Int32
-  fun mpf_cmp_ui = __gmpf_cmp_ui(op1 : MPF*, op2 : UInt64) : Int32
-  fun mpf_cmp_si = __gmpf_cmp_si(op1 : MPF*, op2 : Int64) : Int32
+  fun mpf_cmp = __gmpf_cmp(op1 : MPF*, op2 : MPF*) : Int
+  fun mpf_cmp_d = __gmpf_cmp_d(op1 : MPF*, op2 : Double) : Int
+  fun mpf_cmp_ui = __gmpf_cmp_ui(op1 : MPF*, op2 : ULong) : Int
+  fun mpf_cmp_si = __gmpf_cmp_si(op1 : MPF*, op2 : Long) : Int
 
-  fun mpf_integer_p = __gmpf_integer_p(op : MPF*) : Int32
+  fun mpf_integer_p = __gmpf_integer_p(op : MPF*) : Int
 
   # # Memory
 
