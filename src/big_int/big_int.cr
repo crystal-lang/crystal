@@ -208,6 +208,10 @@ struct BigInt < Int
     to_s io
   end
 
+  def hash
+    to_u64
+  end
+
   # Returns a string representation of self.
   #
   # ```

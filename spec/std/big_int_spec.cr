@@ -214,4 +214,10 @@ describe "BigInt" do
   it "does popcount" do
     5.to_big_i.popcount.should eq(2)
   end
+
+  it "#hash" do
+    hash = 5.to_big_i.hash
+    hash.should eq(5)
+    typeof(hash).should eq(UInt64)
+  end
 end
