@@ -25,6 +25,9 @@ abstract class JSON::Lexer
   private abstract def consume_string
   private abstract def next_char_no_column_increment
   private abstract def current_char
+  private abstract def number_start
+  private abstract def append_number_char
+  private abstract def number_end
 
   def next_token
     skip_whitespace
@@ -202,16 +205,20 @@ abstract class JSON::Lexer
   end
 
   private def consume_number
+    number_start
+
     integer = 0_i64
     negative = false
 
     if current_char == '-'
+      append_number_char
       negative = true
       next_char
     end
 
     case current_char
     when '0'
+      append_number_char
       next_char
       case current_char
       when '.'
@@ -223,11 +230,14 @@ abstract class JSON::Lexer
       else
         @token.type = :INT
         @token.int_value = 0_i64
+        number_end
       end
     when '1'..'9'
+      append_number_char
       integer = (current_char - '0').to_i64
       char = next_char
       while '0' <= char <= '9'
+        append_number_char
         integer *= 10
         integer += char - '0'
         char = next_char
@@ -241,6 +251,7 @@ abstract class JSON::Lexer
       else
         @token.type = :INT
         @token.int_value = negative ? -integer : integer
+        number_end
       end
     else
       unexpected_char
@@ -248,9 +259,11 @@ abstract class JSON::Lexer
   end
 
   private def consume_float(negative, integer)
+    append_number_char
     divisor = 1_u64
     char = next_char
     while '0' <= char <= '9'
+      append_number_char
       integer *= 10
       integer += char - '0'
       divisor *= 10
@@ -263,23 +276,28 @@ abstract class JSON::Lexer
     else
       @token.type = :FLOAT
       @token.float_value = negative ? -float : float
+      number_end
     end
   end
 
   private def consume_exponent(negative, float)
+    append_number_char
     exponent = 0
     negative_exponent = false
 
     char = next_char
     if char == '+'
+      append_number_char
       char = next_char
     elsif char == '-'
+      append_number_char
       char = next_char
       negative_exponent = true
     end
 
     if '0' <= char <= '9'
       while '0' <= char <= '9'
+        append_number_char
         exponent *= 10
         exponent += char - '0'
         char = next_char
@@ -293,6 +311,8 @@ abstract class JSON::Lexer
     exponent = -exponent if negative_exponent
     float *= (10_f64 ** exponent)
     @token.float_value = negative ? -float : float
+
+    number_end
   end
 
   private def next_char

@@ -111,6 +111,13 @@ private def assert_pull_parse_error(string)
   end
 end
 
+private def assert_raw(string, file = __FILE__, line = __LINE__)
+  it "parses raw #{string.inspect}", file, line do
+    pull = JSON::PullParser.new(string)
+    pull.read_raw.should eq(string)
+  end
+end
+
 describe JSON::PullParser do
   assert_pull_parse "null"
   assert_pull_parse "false"
@@ -285,5 +292,16 @@ describe JSON::PullParser do
         end
       end
     end
+  end
+
+  describe "raw" do
+    assert_raw "null"
+    assert_raw "true"
+    assert_raw "false"
+    assert_raw "1234"
+    assert_raw "1234.5678"
+    assert_raw %("hello")
+    assert_raw %([1,"hello",true,false,null,[1,2,3]])
+    assert_raw %({"foo":[1,2,{"bar":[1,"hello",true,false,1.5]}]})
   end
 end

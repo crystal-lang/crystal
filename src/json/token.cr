@@ -5,6 +5,7 @@ class JSON::Token
   property float_value : Float64
   property line_number : Int32
   property column_number : Int32
+  property raw_value : String
 
   def initialize
     @type = :EOF
@@ -13,6 +14,7 @@ class JSON::Token
     @string_value = ""
     @int_value = 0_i64
     @float_value = 0.0
+    @raw_value = ""
   end
 
   def to_s(io)

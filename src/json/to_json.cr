@@ -320,3 +320,29 @@ module Time::EpochMillisConverter
     io << value.epoch_ms
   end
 end
+
+# Converter to be used with `JSON.mapping` to read the raw
+# value of a JSON object property as a String.
+#
+# It can be useful to read ints and floats without loosing precision,
+# or to read an object and deserialize it later based on some
+# condition.
+#
+# ```
+# require "json"
+#
+# class Raw
+#   JSON.mapping({
+#     value: {type: String, converter: String::RawConverter},
+#   })
+# end
+#
+# raw = Raw.from_json(%({"value": 123456789876543212345678987654321}))
+# raw.value   # => "123456789876543212345678987654321"
+# raw.to_json # => %({"value":123456789876543212345678987654321})
+# ```
+module String::RawConverter
+  def self.to_json(value : String, io : IO)
+    io << value
+  end
+end

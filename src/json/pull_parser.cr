@@ -5,6 +5,7 @@ class JSON::PullParser
   getter int_value : Int64
   getter float_value : Float64
   getter string_value : String
+  getter raw_value : String
 
   def initialize(input)
     @lexer = Lexer.new input
@@ -13,6 +14,7 @@ class JSON::PullParser
     @int_value = 0_i64
     @float_value = 0.0
     @string_value = ""
+    @raw_value = ""
     @object_stack = [] of Symbol
     @skip_count = 0
 
@@ -29,9 +31,11 @@ class JSON::PullParser
     when :INT
       @kind = :int
       @int_value = token.int_value
+      @raw_value = token.raw_value
     when :FLOAT
       @kind = :float
       @float_value = token.float_value
+      @raw_value = token.raw_value
     when :STRING
       @kind = :string
       @string_value = token.string_value
@@ -109,6 +113,70 @@ class JSON::PullParser
       @float_value.tap { read_next }
     else
       parse_exception "expecting int or float but was #{@kind}"
+    end
+  end
+
+  def read_raw
+    case @kind
+    when :null
+      read_next
+      "null"
+    when :bool
+      @bool_value.to_s.tap { read_next }
+    when :int, :float
+      @raw_value.tap { read_next }
+    when :string
+      @string_value.to_json.tap { read_next }
+    when :begin_array
+      String.build { |io| read_raw(io) }
+    when :begin_object
+      String.build { |io| read_raw(io) }
+    else
+      unexpected_token
+    end
+  end
+
+  def read_raw(io)
+    case @kind
+    when :null
+      read_next
+      io << "null"
+    when :bool
+      io << @bool_value
+      read_next
+    when :int, :float
+      io << @raw_value
+      read_next
+    when :string
+      @string_value.to_json(io)
+      read_next
+    when :begin_array
+      io << "["
+      read_begin_array
+      first = true
+      while kind != :end_array
+        io << "," unless first
+        read_raw(io)
+        first = false
+      end
+      io << "]"
+      read_end_array
+    when :begin_object
+      io << "{"
+      read_begin_object
+      first = true
+      while kind != :end_object
+        io << "," unless first
+        read_object_key
+        @string_value.to_json(io)
+        io << ":"
+        read_raw(io)
+        first = false
+      end
+      io << "}"
+      read_end_object
+    else
+      unexpected_token
     end
   end
 
@@ -200,11 +268,13 @@ class JSON::PullParser
       when :INT
         @kind = :int
         @int_value = token.int_value
+        @raw_value = token.raw_value
         next_token_after_value
         return
       when :FLOAT
         @kind = :float
         @float_value = token.float_value
+        @raw_value = token.raw_value
         next_token_after_value
         return
       when :STRING

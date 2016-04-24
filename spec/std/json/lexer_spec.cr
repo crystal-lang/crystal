@@ -37,6 +37,7 @@ private def it_lexes_int(string, int_value, file = __FILE__, line = __LINE__)
     token = lexer.next_token
     token.type.should eq(:INT)
     token.int_value.should eq(int_value)
+    token.raw_value.should eq(string)
   end
 
   it "lexes #{string} from IO", file, line do
@@ -44,6 +45,7 @@ private def it_lexes_int(string, int_value, file = __FILE__, line = __LINE__)
     token = lexer.next_token
     token.type.should eq(:INT)
     token.int_value.should eq(int_value)
+    token.raw_value.should eq(string)
   end
 end
 
@@ -53,6 +55,7 @@ private def it_lexes_float(string, float_value, file = __FILE__, line = __LINE__
     token = lexer.next_token
     token.type.should eq(:FLOAT)
     token.float_value.should eq(float_value)
+    token.raw_value.should eq(string)
   end
 
   it "lexes #{string} from IO", file, line do
@@ -60,6 +63,7 @@ private def it_lexes_float(string, float_value, file = __FILE__, line = __LINE__
     token = lexer.next_token
     token.type.should eq(:FLOAT)
     token.float_value.should eq(float_value)
+    token.raw_value.should eq(string)
   end
 end
 

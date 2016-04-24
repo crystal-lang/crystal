@@ -1,4 +1,4 @@
-require "./*"
+require "./big"
 
 # A BigInt can represent arbitrarily large integers.
 #
