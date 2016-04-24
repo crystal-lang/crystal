@@ -1,4 +1,4 @@
-require "./lib_gmp"
+require "./*"
 
 # A BigInt can represent arbitrarily large integers.
 #
