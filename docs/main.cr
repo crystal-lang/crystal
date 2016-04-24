@@ -1,4 +1,4 @@
-require "../src/big_int/**"
+require "../src/big/**"
 require "../src/crypto/**"
 require "../src/csv"
 require "../src/digest/**"
