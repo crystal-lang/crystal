@@ -38,14 +38,12 @@ module Crystal
 
       if check
         self_initialize_methods = type.lookup_defs_without_parents("initialize")
+        self_new_methods = type.metaclass.lookup_defs_without_parents("new")
 
         # Check to see if a default `new` needs to be defined
         initialize_methods = type.lookup_defs("initialize", lookup_ancestors_for_new: true)
-        has_new_or_initialize = !initialize_methods.empty?
-        if !has_new_or_initialize
-          new_methods = type.metaclass.lookup_defs("new", lookup_ancestors_for_new: true)
-          has_new_or_initialize = !new_methods.empty?
-        end
+        new_methods = type.metaclass.lookup_defs("new", lookup_ancestors_for_new: true)
+        has_new_or_initialize = !initialize_methods.empty? || !new_methods.empty?
 
         if !has_new_or_initialize
           # Add self.new
@@ -58,24 +56,38 @@ module Crystal
         end
 
         # Check to see if a type doesn't define `initialize`
-        # nor `self.new` on its own. In this case, when we
+        # nor `self.new()` on its own. In this case, when we
         # search a `new` method and we can't find it in this
         # type we must search in the superclass. We record
         # this information here instead of having to do this
         # check every time.
         has_self_initialize_methods = !self_initialize_methods.empty?
         if !has_self_initialize_methods
-          if type.is_a?(GenericClassType) || type.ancestors.any?(&.is_a?(InheritedGenericClass))
+          is_generic = type.is_a?(GenericClassType)
+          inherits_from_generic = type.ancestors.any?(&.is_a?(InheritedGenericClass))
+          if is_generic || inherits_from_generic
+            has_default_self_new = self_new_methods.any? do |a_def|
+              a_def.args.empty? && !a_def.yields
+            end
+
             # For a generic class type we need to define `new` even
             # if a superclass defines it, because the generated new
             # uses, for example, Foo(T) to match free vars, and here
             # we might need Bar(T) with Bar(T) < Foo(T).
             # (we can probably improve this in the future)
             if initialize_methods.empty?
-              type.metaclass.add_def(Def.argless_new(type))
-              type.add_def(Def.argless_initialize)
+              # If the type has `self.new()`, don't override it
+              unless has_default_self_new
+                type.metaclass.add_def(Def.argless_new(type))
+                type.add_def(Def.argless_initialize)
+              end
             else
               initialize_methods.each do |initialize|
+                # If the type has `self.new()`, don't override it
+                if initialize.args.empty? && !initialize.yields && has_default_self_new
+                  next
+                end
+
                 new_method = initialize.expand_new_from_initialize(type)
                 type.metaclass.add_def(new_method)
               end
