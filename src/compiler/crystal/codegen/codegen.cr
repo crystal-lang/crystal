@@ -1000,6 +1000,13 @@ module Crystal
       ivar = type.lookup_instance_var_with_owner(name).instance_var
       ivar_ptr = instance_var_ptr type, name, value
       @last = downcast ivar_ptr, node_type, ivar.type, false
+      if type.is_a?(CStructOrUnionType)
+        # When reading the instance variable of a C struct or union
+        # we need to convert C functions to Crystal procs. This
+        # can happen for example in Struct#to_s, where all fields
+        # are inspected.
+        @last = check_c_fun node_type, @last
+      end
       false
     end
 

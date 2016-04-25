@@ -192,4 +192,18 @@ describe "Code gen: lib" do
       LibFoo.foo(nil)
       ))
   end
+
+  it "casts C fun to Crystal proc when accessing instance var (#2515)" do
+    codegen(%(
+      require "prelude"
+
+      lib LibFoo
+        struct Some
+          x : ->
+        end
+      end
+
+      LibFoo::Some.new.to_s
+      ))
+  end
 end
