@@ -253,7 +253,7 @@ class Regex
   # string = Regex.escape("\*?{}.") # => "\\*\\?\\{\\}\\."
   # /#{string}/                     # => /\*\?\{\}\./
   # ```
-  def self.escape(str)
+  def self.escape(str) : String
     String.build do |result|
       str.each_byte do |byte|
         case byte.chr
@@ -283,7 +283,7 @@ class Regex
   # re.match("Skiing")   # => #<Regex::MatchData "Skiing">
   # re.match("sledding") # => #<Regex::MatchData "sledding">
   # ```
-  def self.union(patterns : Enumerable(Regex | String))
+  def self.union(patterns : Enumerable(Regex | String)) : self
     new patterns.map { |pattern| union_part pattern }.join("|")
   end
 
@@ -298,7 +298,7 @@ class Regex
   # re.match("Skiing")   # => #<Regex::MatchData "Skiing">
   # re.match("sledding") # => #<Regex::MatchData "sledding">
   # ```
-  def self.union(*patterns : Regex | String)
+  def self.union(*patterns : Regex | String) : self
     union patterns
   end
 

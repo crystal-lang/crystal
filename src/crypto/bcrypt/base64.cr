@@ -18,7 +18,7 @@ module Crypto::Bcrypt::Base64
     51, 52, 53, -1, -1, -1, -1, -1,
   ]
 
-  def self.encode(d, len)
+  def self.encode(d, len) : String
     off = 0
 
     String.build do |str|
@@ -55,7 +55,7 @@ module Crypto::Bcrypt::Base64
     end
   end
 
-  def self.decode(string, maxolen)
+  def self.decode(string, maxolen) : Slice(UInt8)
     off, slen, olen = 0, string.size, 0
 
     i = -1

@@ -11,7 +11,7 @@ module Zlib
   GZIP = LibZ::MAX_BITS + 16
 
   # Returns the linked zlib version.
-  def self.version
+  def self.version : String
     String.new LibZ.zlibVersion
   end
 

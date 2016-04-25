@@ -180,7 +180,7 @@ class URI
   # uri.host
   # # => "crystal-lang.org"
   # ```
-  def self.parse(raw_url : String)
+  def self.parse(raw_url : String) : URI
     URI::Parser.new(raw_url).run.uri
   end
 
@@ -191,7 +191,7 @@ class URI
   #
   #     URI.unescape("%27Stop%21%27%20said%20Fred")                  #=> "'Stop!' said Fred"
   #     URI.unescape("%27Stop%21%27+said+Fred", plus_to_space: true) #=> "'Stop!' said Fred"
-  def self.unescape(string : String, plus_to_space = false)
+  def self.unescape(string : String, plus_to_space = false) : String
     String.build { |io| unescape(string, io, plus_to_space) }
   end
 
@@ -200,7 +200,7 @@ class URI
   # This method requires block, the block is called with each bytes
   # whose is less than `0x80`. The bytes that block returns `true`
   # are not unescaped, other characters are unescaped.
-  def self.unescape(string : String, plus_to_space = false, &block)
+  def self.unescape(string : String, plus_to_space = false, &block) : String
     String.build { |io| unescape(string, io, plus_to_space) { |byte| yield byte } }
   end
 
@@ -230,7 +230,7 @@ class URI
   #
   #     URI.escape("'Stop!' said Fred")                      #=> "%27Stop%21%27%20said%20Fred"
   #     URI.escape("'Stop!' said Fred", space_to_plus: true) #=> "%27Stop%21%27+said+Fred"
-  def self.escape(string : String, space_to_plus = false)
+  def self.escape(string : String, space_to_plus = false) : String
     String.build { |io| escape(string, io, space_to_plus) }
   end
 
@@ -245,7 +245,7 @@ class URI
   #       URI.unreserved?(byte) || byte.chr == '/'
   #     end
   #     #=> "/foo/file%3F%281%29.txt"
-  def self.escape(string : String, space_to_plus = false, &block)
+  def self.escape(string : String, space_to_plus = false, &block) : String
     String.build { |io| escape(string, io, space_to_plus) { |byte| yield byte } }
   end
 
@@ -277,7 +277,7 @@ class URI
   #
   # Reserved characters are ':', '/', '?', '#', '[', ']', '@', '!',
   # '$', '&', "'", '(', ')', '*', '+', ',', ';' and '='.
-  def self.reserved?(byte)
+  def self.reserved?(byte) : Bool
     char = byte.chr
     '&' <= char <= ',' ||
       {'!', '#', '$', '/', ':', ';', '?', '@', '[', ']', '='}.includes?(char)
@@ -286,7 +286,7 @@ class URI
   # Returns whether given byte is unreserved character defined in RFC 3986.
   #
   # Unreserved characters are alphabet, digit, '_', '.', '-', '~'.
-  def self.unreserved?(byte)
+  def self.unreserved?(byte) : Bool
     char = byte.chr
     char.alphanumeric? ||
       {'_', '.', '-', '~'}.includes?(char)

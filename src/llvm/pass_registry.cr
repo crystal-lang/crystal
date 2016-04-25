@@ -1,5 +1,5 @@
 struct LLVM::PassRegistry
-  def self.instance
+  def self.instance : self
     new LibLLVM.get_global_pass_registry
   end
 

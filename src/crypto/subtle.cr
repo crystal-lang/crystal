@@ -6,7 +6,7 @@ module Crypto::Subtle
   # Crypto::Suble.constant_time_compare("foo","bar") => false
   # Crypto::Suble.constant_time_compare("foo","foo") => true
   # ```
-  def self.constant_time_compare(x, y)
+  def self.constant_time_compare(x, y) : Bool
     x = x.to_slice
     y = y.to_slice
     return false if x.size != y.size

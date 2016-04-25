@@ -13,11 +13,11 @@ abstract class Channel(T)
     @receivers = Deque(Fiber).new
   end
 
-  def self.new
+  def self.new : Unbuffered(T)
     Unbuffered(T).new
   end
 
-  def self.new(capacity)
+  def self.new(capacity) : Buffered(T)
     Buffered(T).new(capacity)
   end
 

@@ -179,7 +179,7 @@ struct Time
   # ```
   # Time.epoch(981173106) # => 2001-02-03 04:05:06 UTC
   # ```
-  def self.epoch(seconds : Int)
+  def self.epoch(seconds : Int) : self
     new(UnixEpoch + seconds.to_i64 * Span::TicksPerSecond, Kind::Utc)
   end
 
@@ -190,7 +190,7 @@ struct Time
   # time = Time.epoch_ms(981173106789) # => 2001-02-03 04:05:06 UTC
   # time.millisecond                   # => 789
   # ```
-  def self.epoch_ms(milliseconds : Int)
+  def self.epoch_ms(milliseconds : Int) : self
     new(UnixEpoch + milliseconds.to_i64 * Span::TicksPerMillisecond, Kind::Utc)
   end
 
@@ -249,11 +249,11 @@ struct Time
     Span.new(ticks - other.ticks)
   end
 
-  def self.now
+  def self.now : self
     new
   end
 
-  def self.utc_now
+  def self.utc_now : self
     new utc_ticks, Kind::Utc
   end
 
@@ -335,7 +335,7 @@ struct Time
     @encoded
   end
 
-  def self.days_in_month(year, month)
+  def self.days_in_month(year, month) : Int32
     unless 1 <= month <= 12
       raise ArgumentError.new "invalid month"
     end
@@ -348,7 +348,7 @@ struct Time
     days[month]
   end
 
-  def self.leap_year?(year)
+  def self.leap_year?(year) : Bool
     unless 1 <= year <= 9999
       raise ArgumentError.new "invalid year"
     end
@@ -384,7 +384,7 @@ struct Time
   # ```
   # Time.parse("2016-04-05", "%F") # => 2016-04-05 00:00:00
   # ```
-  def self.parse(time : String, pattern : String, kind = Time::Kind::Unspecified)
+  def self.parse(time : String, pattern : String, kind = Time::Kind::Unspecified) : self
     Format.new(pattern, kind).parse(time)
   end
 

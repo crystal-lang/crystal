@@ -54,7 +54,7 @@ struct Symbol
   # Symbol.needs_quotes? "string"      # => false
   # Symbol.needs_quotes? "long string" # => true
   # ```
-  def self.needs_quotes?(string)
+  def self.needs_quotes?(string) : Bool
     case string
     when "+", "-", "*", "/", "==", "<", "<=", ">", ">=", "!", "!=", "=~", "!~"
       # Nothing

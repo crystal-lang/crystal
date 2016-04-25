@@ -1,4 +1,4 @@
-def Object.from_json(string_or_io)
+def Object.from_json(string_or_io) : self
   parser = JSON::PullParser.new(string_or_io)
   new parser
 end
@@ -139,13 +139,13 @@ struct Time::Format
 end
 
 module Time::EpochConverter
-  def self.from_json(value : JSON::PullParser)
+  def self.from_json(value : JSON::PullParser) : Time
     Time.epoch(value.read_int)
   end
 end
 
 module Time::EpochMillisConverter
-  def self.from_json(value : JSON::PullParser)
+  def self.from_json(value : JSON::PullParser) : Time
     Time.epoch_ms(value.read_int)
   end
 end

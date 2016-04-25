@@ -30,7 +30,7 @@ enum XML::HTMLParserOptions
   # Ignore internal document encoding hint
   IGNORE_ENC = 2097152
 
-  def self.default
+  def self.default : self
     RECOVER | NOERROR | NOWARNING
   end
 end

@@ -346,7 +346,7 @@ struct Enum
   # Color.parse("BLUE")   # => Color::Blue
   # Color.parse("Yellow") # => Exception
   # ```
-  def self.parse(string)
+  def self.parse(string) : self
     parse?(string) || raise "Unknown enum #{self} value: #{string}"
   end
 

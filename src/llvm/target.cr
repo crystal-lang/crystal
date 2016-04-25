@@ -7,11 +7,11 @@ struct LLVM::Target
     end
   end
 
-  def self.first
+  def self.first : self
     Target.new LibLLVM.get_first_target
   end
 
-  def self.from_triple(triple)
+  def self.from_triple(triple) : self
     return_code = LibLLVM.get_target_from_triple triple, out target, out error
     raise LLVM.string_and_dispose(error) unless return_code == 0
     new target

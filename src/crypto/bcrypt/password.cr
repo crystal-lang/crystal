@@ -19,7 +19,7 @@ class Crypto::Bcrypt::Password
   # password = Crypto::Bcrypt::Password.create("super secret", cost: 10)
   # # => $2a$10$rI4xRiuAN2fyiKwynO6PPuorfuoM4L2PVv6hlnVJEmNLjqcibAfHq
   # ```
-  def self.create(password, cost = DEFAULT_COST)
+  def self.create(password, cost = DEFAULT_COST) : self
     new(Bcrypt.hash_secret(password, cost).to_s)
   end
 

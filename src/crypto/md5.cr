@@ -1,5 +1,5 @@
 class Crypto::MD5
-  def self.hex_digest(data : String)
+  def self.hex_digest(data : String) : String
     context = Context.new
     context.update(data.to_unsafe, data.bytesize.to_u32)
     context.final

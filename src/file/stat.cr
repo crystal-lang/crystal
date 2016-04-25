@@ -142,7 +142,7 @@ class File
     end
 
     def size
-      @stat.st_size
+      @stat.st_size.to_u64
     end
 
     def uid

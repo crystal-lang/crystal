@@ -9,7 +9,7 @@ class OAuth::AccessToken
     @extra ||= {} of String => String
   end
 
-  def self.from_response(response)
+  def self.from_response(response) : self
     token = nil
     secret = nil
     extra = {} of String => String

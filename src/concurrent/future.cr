@@ -16,7 +16,7 @@ class Concurrent::Future(R)
     @state = State::Idle
     @value = nil
     @error = nil
-    @channel = Channel::Unbuffered(Nil).new
+    @channel = Channel(Nil).new
     @delay = delay.to_f
     @cancel_msg = nil
 

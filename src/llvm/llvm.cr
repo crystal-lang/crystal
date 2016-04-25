@@ -16,39 +16,39 @@ module LLVM
     LibLLVM.link_in_mc_jit
   end
 
-  def self.int(type, value)
+  def self.int(type, value) : Value
     Value.new LibLLVM.const_int(type, value, 0)
   end
 
-  def self.float(value : Float32)
+  def self.float(value : Float32) : Value
     Value.new LibLLVM.const_real(LLVM::Float, value)
   end
 
-  def self.float(string : String)
+  def self.float(string : String) : Value
     Value.new LibLLVM.const_real_of_string(LLVM::Float, string)
   end
 
-  def self.double(value : Float64)
+  def self.double(value : Float64) : Value
     Value.new LibLLVM.const_real(LLVM::Double, value)
   end
 
-  def self.double(string : String)
+  def self.double(string : String) : Value
     Value.new LibLLVM.const_real_of_string(LLVM::Double, string)
   end
 
-  def self.array(type, values : Array(LLVM::Value))
+  def self.array(type, values : Array(LLVM::Value)) : Value
     Value.new LibLLVM.const_array(type, (values.to_unsafe as LibLLVM::ValueRef*), values.size)
   end
 
-  def self.struct(values : Array(LLVM::Value), packed = false)
+  def self.struct(values : Array(LLVM::Value), packed = false) : Value
     Value.new LibLLVM.const_struct((values.to_unsafe as LibLLVM::ValueRef*), values.size, packed ? 1 : 0)
   end
 
-  def self.string(string)
+  def self.string(string) : Value
     Value.new LibLLVM.const_string(string, string.bytesize, 0)
   end
 
-  def self.start_multithreaded
+  def self.start_multithreaded : Bool
     if multithreaded?
       true
     else
@@ -62,11 +62,11 @@ module LLVM
     end
   end
 
-  def self.multithreaded?
+  def self.multithreaded? : Bool
     LibLLVM.is_multithreaded != 0
   end
 
-  def self.default_target_triple
+  def self.default_target_triple : String
     chars = LibLLVM.get_default_target_triple
     triple = string_and_dispose(chars)
     if triple =~ /x86_64-apple-macosx|x86_64-apple-darwin/
@@ -85,7 +85,7 @@ module LLVM
     Value.new LibLLVM.const_inline_asm(type, asm_string, constraints, (has_side_effects ? 1 : 0), (is_align_stack ? 1 : 0))
   end
 
-  def self.string_and_dispose(chars)
+  def self.string_and_dispose(chars) : String
     string = String.new(chars)
     LibLLVM.dispose_message(chars)
     string

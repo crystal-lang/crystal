@@ -75,11 +75,11 @@ class HTTP::Client::Response
     end
   end
 
-  def self.mandatory_body?(status_code)
+  def self.mandatory_body?(status_code) : Bool
     !(status_code / 100 == 1 || status_code == 204 || status_code == 304)
   end
 
-  def self.supports_chunked?(version)
+  def self.supports_chunked?(version) : Bool
     version == "HTTP/1.1"
   end
 

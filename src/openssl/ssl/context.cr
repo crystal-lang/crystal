@@ -1,5 +1,5 @@
 class OpenSSL::SSL::Context
-  def self.default
+  def self.default : self
     @@default ||= new
   end
 

@@ -24,7 +24,7 @@ enum XML::SaveOptions
   # Format with non-significant whitespace
   WSNONSIG = 128
 
-  def self.xml_default
+  def self.xml_default : self
     FORMAT | AS_XML
   end
 end

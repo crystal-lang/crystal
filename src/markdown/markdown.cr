@@ -16,7 +16,7 @@ class Markdown
     parser.parse
   end
 
-  def self.to_html(text)
+  def self.to_html(text) : String
     String.build do |io|
       parse text, Markdown::HTMLRenderer.new(io)
     end

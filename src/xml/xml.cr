@@ -1,9 +1,9 @@
 module XML
-  def self.parse(string : String, options : ParserOptions = ParserOptions.default)
+  def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Node
     from_ptr LibXML.xmlReadMemory(string, string.bytesize, nil, nil, options)
   end
 
-  def self.parse(io : IO, options : ParserOptions = ParserOptions.default)
+  def self.parse(io : IO, options : ParserOptions = ParserOptions.default) : Node
     from_ptr LibXML.xmlReadIO(
       ->(ctx, buffer, len) {
         LibC::Int.new(Box(IO).unbox(ctx).read Slice.new(buffer, len))
@@ -16,11 +16,11 @@ module XML
     )
   end
 
-  def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default)
+  def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     from_ptr LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options)
   end
 
-  def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default)
+  def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     from_ptr LibXML.htmlReadIO(
       ->(ctx, buffer, len) {
         LibC::Int.new(Box(IO).unbox(ctx).read Slice.new(buffer, len))

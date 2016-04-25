@@ -57,7 +57,7 @@ class Dir
   end
 
   # Alias for `new(path)`
-  def self.open(path)
+  def self.open(path) : self
     new path
   end
 
@@ -135,7 +135,7 @@ class Dir
   end
 
   # Returns the current working directory.
-  def self.current
+  def self.current : String
     if dir = LibC.getcwd(nil, 0)
       String.new(dir).tap { LibC.free(dir as Void*) }
     else
@@ -174,7 +174,7 @@ class Dir
   end
 
   # Returns an array containing all of the filenames in the given directory.
-  def self.entries(dirname)
+  def self.entries(dirname) : Array(String)
     entries = [] of String
     foreach(dirname) do |filename|
       entries << filename
@@ -183,7 +183,7 @@ class Dir
   end
 
   # Returns true if the given path exists and is a directory
-  def self.exists?(path)
+  def self.exists?(path) : Bool
     if LibC.stat(path.check_no_null_byte, out stat) != 0
       if Errno.value == Errno::ENOENT
         return false

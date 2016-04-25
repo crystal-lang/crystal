@@ -26,7 +26,7 @@ lib LibDL
 end
 
 module DL
-  def self.dlopen(path, mode = LibDL::LAZY | LibDL::GLOBAL)
+  def self.dlopen(path, mode = LibDL::LAZY | LibDL::GLOBAL) : Void*
     LibDL.dlopen(path, mode)
   end
 end

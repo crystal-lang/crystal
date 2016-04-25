@@ -33,11 +33,11 @@ class Process
     LibC.exit(status)
   end
 
-  def self.pid
+  def self.pid : LibC::PidT
     LibC.getpid
   end
 
-  def self.getpgid(pid : Int32)
+  def self.getpgid(pid : Int32) : LibC::PidT
     ret = LibC.getpgid(pid)
     raise Errno.new(ret) if ret < 0
     ret
@@ -51,7 +51,7 @@ class Process
     nil
   end
 
-  def self.ppid
+  def self.ppid : LibC::PidT
     LibC.getppid
   end
 
@@ -64,7 +64,7 @@ class Process
   end
 
   # Returns a `Process`.
-  def self.fork
+  def self.fork : self?
     if pid = fork_internal
       Process.new pid
     else
@@ -107,7 +107,7 @@ class Process
 
   record Tms, utime : Float64, stime : Float64, cutime : Float64, cstime : Float64
 
-  def self.times
+  def self.times : Tms
     hertz = LibC.sysconf(LibC::SC_CLK_TCK).to_f
     LibC.times(out tms)
     Tms.new(tms.utime / hertz, tms.stime / hertz, tms.cutime / hertz, tms.cstime / hertz)

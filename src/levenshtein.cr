@@ -8,7 +8,7 @@ module Levenshtein
   # levenshtein("こんにちは", "こんちは")           # => 1
   # levensthein("hey", "hey")              # => 0
   # ```
-  def self.distance(string1 : String, string2 : String)
+  def self.distance(string1 : String, string2 : String) : Int32
     return 0 if string1 == string2
 
     s = string1.chars

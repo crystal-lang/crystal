@@ -46,7 +46,7 @@ class Crypto::Bcrypt
     0x64657253, 0x63727944, 0x6f756274,
   ]
 
-  def self.hash_secret(password, cost = DEFAULT_COST)
+  def self.hash_secret(password, cost = DEFAULT_COST) : String
     passwordb = password.to_unsafe.to_slice(password.bytesize + 1) # include leading 0
     saltb = SecureRandom.random_bytes(SALT_SIZE)
     new(passwordb, saltb, cost).to_s

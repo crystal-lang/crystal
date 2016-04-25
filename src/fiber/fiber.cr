@@ -191,7 +191,7 @@ class Fiber
 
   @@root = new
 
-  def self.root
+  def self.root : self
     @@root
   end
 
@@ -200,7 +200,7 @@ class Fiber
   @@current : Fiber
   @@current = root
 
-  def self.current
+  def self.current : self
     @@current
   end
 

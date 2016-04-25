@@ -1,4 +1,4 @@
-def Object.from_yaml(string : String)
+def Object.from_yaml(string : String) : self
   parser = YAML::PullParser.new(string)
   parser.read_stream do
     parser.read_document do
@@ -107,13 +107,13 @@ struct Time::Format
 end
 
 module Time::EpochConverter
-  def self.from_yaml(value : YAML::PullParser)
+  def self.from_yaml(value : YAML::PullParser) : Time
     Time.epoch(value.read_scalar.to_i)
   end
 end
 
 module Time::EpochMillisConverter
-  def self.from_yaml(value : YAML::PullParser)
+  def self.from_yaml(value : YAML::PullParser) : Time
     Time.epoch_ms(value.read_scalar.to_i64)
   end
 end

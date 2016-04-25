@@ -11,11 +11,11 @@ module Digest::SHA1
     context.result
   end
 
-  def self.hexdigest(string_or_slice : String | Slice(UInt8))
+  def self.hexdigest(string_or_slice : String | Slice(UInt8)) : String
     digest(string_or_slice).to_slice.hexstring
   end
 
-  def self.base64digest(string_or_slice : String | Slice(UInt8))
+  def self.base64digest(string_or_slice : String | Slice(UInt8)) : String
     Base64.strict_encode(digest(string_or_slice).to_slice)
   end
 

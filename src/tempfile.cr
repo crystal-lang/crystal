@@ -74,7 +74,7 @@ class Tempfile < IO::FileDescriptor
   # ```
   # Tempfile.dirname # => "/tmp"
   # ```
-  def self.dirname
+  def self.dirname : String
     unless tmpdir = ENV["TMPDIR"]?
       tmpdir = "/tmp"
     end

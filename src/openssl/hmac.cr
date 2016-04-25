@@ -1,7 +1,7 @@
 require "./lib_crypto"
 
 class OpenSSL::HMAC
-  def self.digest(algorithm : Symbol, key, data)
+  def self.digest(algorithm : Symbol, key, data) : Slice(UInt8)
     evp = case algorithm
           when :dss       then LibCrypto.evp_dss
           when :dss1      then LibCrypto.evp_dss1
@@ -23,7 +23,7 @@ class OpenSSL::HMAC
     buffer[0, buffer_len.to_i]
   end
 
-  def self.hexdigest(algorithm : Symbol, key, data)
+  def self.hexdigest(algorithm : Symbol, key, data) : String
     digest(algorithm, key, data).hexstring
   end
 end

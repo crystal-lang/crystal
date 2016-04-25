@@ -179,7 +179,7 @@ class Process
   end
 
   private def channel
-    @channel ||= Channel::Unbuffered(Exception?).new
+    @channel ||= Channel(Exception?).new
   end
 
   private def needs_pipe?(io)

@@ -213,7 +213,7 @@ struct Complex
   end
 
   # Returns the number 0 in complex form
-  def self.zero
+  def self.zero : Complex
     new 0, 0
   end
 end

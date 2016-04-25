@@ -19,13 +19,13 @@ end
 module ENV
   # Retrieves the value for environment variable named `key` as a `String`.
   # Raises `KeyError` if the named variable does not exist.
-  def self.[](key : String)
+  def self.[](key : String) : String
     fetch(key)
   end
 
   # Retrieves the value for environment variable named *key* as a `String?`.
   # Returns `nil` if the named variable does not exist.
-  def self.[]?(key : String)
+  def self.[]?(key : String) : String?
     fetch(key, nil)
   end
 
@@ -46,13 +46,13 @@ module ENV
 
   # Returns `true` if the environment variable named *key* exists and `false`
   # if it doesn't.
-  def self.has_key?(key : String)
+  def self.has_key?(key : String) : Bool
     !!LibC.getenv(key)
   end
 
   # Retrieves a value corresponding to the given *key*. Raises a `KeyError` exception if the
   # key does not exist.
-  def self.fetch(key)
+  def self.fetch(key) : String
     fetch(key) do
       raise KeyError.new "Missing ENV key: #{key.inspect}"
     end
@@ -73,14 +73,14 @@ module ENV
   end
 
   # Returns an array of all the environment variable names.
-  def self.keys
+  def self.keys : Array(String)
     keys = [] of String
     each { |key, v| keys << key }
     keys
   end
 
   # Returns an array of all the environment variable values.
-  def self.values
+  def self.values : Array(String)
     values = [] of String
     each { |k, value| values << value }
     values
@@ -88,7 +88,7 @@ module ENV
 
   # Removes the environment variable named *key*. Returns the previous value if
   # the environment variable existed, otherwise returns `nil`.
-  def self.delete(key : String)
+  def self.delete(key : String) : String?
     if value = self[key]?
       LibC.unsetenv(key)
       value

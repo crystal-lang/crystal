@@ -1,13 +1,13 @@
 class Dir
-  def self.[](*patterns)
+  def self.[](*patterns) : Array(String)
     glob(patterns)
   end
 
-  def self.[](patterns : Enumerable(String))
+  def self.[](patterns : Enumerable(String)) : Array(String)
     glob(patterns)
   end
 
-  def self.glob(*patterns)
+  def self.glob(*patterns) : Array(String)
     glob(patterns)
   end
 
@@ -17,7 +17,7 @@ class Dir
     end
   end
 
-  def self.glob(patterns : Enumerable(String))
+  def self.glob(patterns : Enumerable(String)) : Array(String)
     paths = [] of String
     glob(patterns) do |path|
       paths << path

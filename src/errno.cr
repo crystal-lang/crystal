@@ -217,7 +217,7 @@ class Errno < Exception
   end
 
   # Returns the value of libc's errno.
-  def self.value
+  def self.value : LibC::Int
     ifdef linux
       ifdef musl
         LibC.__errno_location.value

@@ -9,7 +9,7 @@ class SemanticVersion
   getter build : String?
   getter prerelease : Prerelease
 
-  def self.parse(str : String)
+  def self.parse(str : String) : self
     m = str.match /^(\d+)\.(\d+)\.(\d+)(-([\w\.]+))?(\+(\w+))??$/
     if m
       major = m[1].to_i
@@ -62,7 +62,7 @@ class SemanticVersion
   end
 
   struct Prerelease
-    def self.parse(str : String)
+    def self.parse(str : String) : self
       identifiers = [] of String | Int32
       str.split(".").each do |val|
         if val.match /^\d+$/

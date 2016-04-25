@@ -117,7 +117,7 @@ module YAML
   end
 
   # Serializes an object to YAML, returning it as a string.
-  def self.dump(object)
+  def self.dump(object) : String
     object.to_yaml
   end
 

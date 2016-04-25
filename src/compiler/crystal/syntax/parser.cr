@@ -12,7 +12,7 @@ module Crystal
     getter? wants_doc : Bool
     @block_arg_name : String?
 
-    def self.parse(str, string_pool : StringPool? = nil, def_vars = [Set(String).new])
+    def self.parse(str, string_pool : StringPool? = nil, def_vars = [Set(String).new]) : ASTNode
       new(str, string_pool, def_vars).parse
     end
 

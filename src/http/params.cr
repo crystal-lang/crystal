@@ -7,7 +7,7 @@ module HTTP
     #
     #     HTTP::Params.parse("foo=bar&foo=baz&qux=zoo")
     #     #=> #<HTTP::Params @raw_params = {"foo" => ["bar", "baz"], "qux" => ["zoo"]}>
-    def self.parse(query : String)
+    def self.parse(query : String) : self
       parsed = {} of String => Array(String)
       parse(query) do |key, value|
         ary = parsed[key] ||= [] of String
@@ -76,7 +76,7 @@ module HTTP
     # end
     # params # => "color=black&name=crystal&year=2012%20-%20today"
     # ```
-    def self.build
+    def self.build : String
       form_builder = Builder.new
       yield form_builder
       form_builder.to_s

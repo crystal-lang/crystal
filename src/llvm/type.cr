@@ -8,35 +8,35 @@ struct LLVM::Type
     @unwrap
   end
 
-  def self.void
+  def self.void : self
     new LibLLVM.void_type
   end
 
-  def self.int(bits)
+  def self.int(bits) : self
     new LibLLVM.int_type(bits)
   end
 
-  def self.float
+  def self.float : self
     new LibLLVM.float_type
   end
 
-  def self.double
+  def self.double : self
     new LibLLVM.double_type
   end
 
-  def self.pointer(element_type)
+  def self.pointer(element_type) : self
     new LibLLVM.pointer_type(element_type, 0)
   end
 
-  def self.array(element_type, count)
+  def self.array(element_type, count) : self
     new LibLLVM.array_type(element_type, count)
   end
 
-  def self.vector(element_type, count)
+  def self.vector(element_type, count) : self
     new LibLLVM.vector_type(element_type, count)
   end
 
-  def self.struct(name : String, packed = false)
+  def self.struct(name : String, packed = false) : self
     llvm_struct = LibLLVM.struct_create_named(Context.global, name)
     the_struct = new llvm_struct
     element_types = (yield the_struct) as Array(LLVM::Type)
@@ -44,7 +44,7 @@ struct LLVM::Type
     the_struct
   end
 
-  def self.struct(element_types : Array(LLVM::Type), name = nil, packed = false)
+  def self.struct(element_types : Array(LLVM::Type), name = nil, packed = false) : self
     if name
       self.struct(name, packed) { element_types }
     else
@@ -52,7 +52,7 @@ struct LLVM::Type
     end
   end
 
-  def self.function(arg_types : Array(LLVM::Type), return_type, varargs = false)
+  def self.function(arg_types : Array(LLVM::Type), return_type, varargs = false) : self
     new LibLLVM.function_type(return_type, (arg_types.to_unsafe as LibLLVM::TypeRef*), arg_types.size, varargs ? 1 : 0)
   end
 

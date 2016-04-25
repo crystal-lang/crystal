@@ -48,7 +48,7 @@ class Zlib::Inflate
 
   # Creates an instance of Zlib::Inflate for the gzip format.
   # has written.
-  def self.gzip(input, sync_close : Bool = false)
+  def self.gzip(input, sync_close : Bool = false) : self
     new input, wbits: GZIP, sync_close: sync_close
   end
 

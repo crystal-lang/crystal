@@ -21,7 +21,7 @@ module HTML
     '\u{a0}' => "&nbsp;",
   }
 
-  def self.escape(string : String)
+  def self.escape(string : String) : String
     string.gsub(SUBSTITUTIONS)
   end
 

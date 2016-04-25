@@ -3,7 +3,7 @@ require "../program"
 
 module Crystal
   module TargetMachine
-    def self.create(target_triple, cpu, release)
+    def self.create(target_triple, cpu, release) : LLVM::TargetMachine
       LLVM.init_x86
 
       opt_level = release ? LLVM::CodeGenOptLevel::Aggressive : LLVM::CodeGenOptLevel::None

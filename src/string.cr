@@ -234,7 +234,7 @@ class String
   # end
   # str # => "hello 1"
   # ```
-  def self.build(capacity = 64)
+  def self.build(capacity = 64) : self
     String::Builder.build(capacity) do |builder|
       yield builder
     end

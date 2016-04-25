@@ -69,7 +69,7 @@ enum XML::ParserOptions
   # Store big lines numbers in text PSVI field
   BIG_LINES = 4194304
 
-  def self.default
+  def self.default : self
     RECOVER | NOERROR | NOWARNING | NONET
   end
 end
