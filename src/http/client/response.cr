@@ -15,7 +15,7 @@ class HTTP::Client::Response
     if Response.mandatory_body?(@status_code)
       @body = "" unless @body || @body_io
     else
-      if @body || @body_io
+      if (@body || @body_io) && (headers["Content-Length"]? != "0")
         raise ArgumentError.new("status #{status_code} should not have a body")
       end
     end

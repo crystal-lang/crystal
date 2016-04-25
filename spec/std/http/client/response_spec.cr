@@ -113,6 +113,16 @@ class HTTP::Client
       response.body.should eq("")
     end
 
+    it "parses 204 response without body but Content-Length == 0 (#2512)" do
+      response = Response.from_io(MemoryIO.new("HTTP/1.1 204 OK\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n"))
+      response.version.should eq("HTTP/1.1")
+      response.status_code.should eq(204)
+      response.status_message.should eq("OK")
+      response.headers["content-type"].should eq("text/plain")
+      response.headers["content-length"].should eq("0")
+      response.body.should eq("")
+    end
+
     it "doesn't sets content length for 1xx, 204 or 304" do
       [100, 101, 204, 304].each do |status|
         response = Response.new(status)
@@ -209,6 +219,12 @@ class HTTP::Client
       response = Response.new(200, "", headers: HTTP::Headers{"Content-Type": "text/plain ; charset=UTF-8"})
       response.content_type.should eq("text/plain")
       response.charset.should eq("UTF-8")
+    end
+
+    it "creates Response with status code 204, no body and Content-Length == 0 (#2512)" do
+      response = Response.new(204, version: "HTTP/1.0", body: "", headers: HTTP::Headers{"Content-Length": "0"})
+      response.status_code.should eq(204)
+      response.body.should eq("")
     end
 
     describe "success?" do
