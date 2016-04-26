@@ -42,10 +42,33 @@ module Crystal
       indices = BitArray.new(args_size)
 
       matches.each do |match|
-        args_size.times do |i|
-          arg = match.def.args[i]
-          if arg.type? || arg.restriction
-            indices[i] = true
+        splat_index = match.def.splat_index
+        if splat_index
+          # Before splat index
+          (0...splat_index).each do |i|
+            arg = match.def.args[i]
+            indices[i] = true if arg.type? || arg.restriction
+          end
+
+          # Splat index
+          arg = match.def.args[splat_index]
+          splat_size = args_size - match.def.args.size
+          splat_end = splat_index + splat_size
+          (splat_index..splat_end).each do |i|
+            indices[i] = true if arg.type? || arg.restriction
+          end
+
+          # After splat index
+          j = 1
+          ((splat_end + 1)...args_size).each do |i|
+            arg = match.def.args[splat_index + j]
+            indices[i] = true if arg.type? || arg.restriction
+            j += 1
+          end
+        else
+          args_size.times do |i|
+            arg = match.def.args[i]
+            indices[i] = true if arg.type? || arg.restriction
           end
         end
       end

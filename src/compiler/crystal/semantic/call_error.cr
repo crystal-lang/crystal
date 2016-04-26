@@ -268,7 +268,7 @@ class Crystal::Call
             msg << "\nCouldn't find overloads for these types:"
             missing.each_with_index do |missing_types|
               if uniq_arg_names
-                msg << "\n - #{full_name(owner, def_name)}(#{missing_types.map_with_index { |missing_type, i| "#{uniq_arg_names[i]} : #{missing_type}" }.join ", "}"
+                msg << "\n - #{full_name(owner, def_name)}(#{missing_types.map_with_index { |missing_type, i| "#{uniq_arg_names[i]? || "_"} : #{missing_type}" }.join ", "}"
               else
                 msg << "\n - #{full_name(owner, def_name)}(#{missing_types.join ", "}"
               end

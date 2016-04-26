@@ -313,4 +313,18 @@ describe "Type inference: splat" do
       ),
       "no overload matches 'foo' with types Char, Int32, String, Float64"
   end
+
+  it "doesn't crash on non-match (#2521)" do
+    assert_error %(
+      def test_func(a : String, *b, c, d)
+      end
+
+      if true
+        val = ""
+      end
+
+      test_func(val, 1, 2, 3, 4, 5)
+      ),
+      "no overload matches"
+  end
 end
