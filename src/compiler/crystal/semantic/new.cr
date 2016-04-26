@@ -139,8 +139,8 @@ module Crystal
       # This creates:
       #
       #    x = allocate
-      #    GC.add_finalizer x
       #    x.initialize ..., &block
+      #    GC.add_finalizer x if x.responds_to? :finalize
       #    x
       var = Var.new("_")
       new_vars = args.map { |arg| Var.new(arg.name) as ASTNode }
