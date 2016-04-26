@@ -49,6 +49,10 @@ module Crystal
       # ```
       @consts = [] of Const
 
+      # Methods being checked for a type guess. We must remember
+      # them to avoid infinite recursive lookup
+      @methods_being_checked = [] of Def
+
       @outside_def = true
     end
 
@@ -553,7 +557,7 @@ module Crystal
         type = lookup_type?(obj)
         if type
           # See if the "new" method has a return type annotation, and use it if so
-          return_type = guess_type_from_method_return_type(type, node)
+          return_type = guess_type_from_method(type, node)
           return return_type if return_type
 
           # Otherwise, infer it to be T
@@ -562,8 +566,17 @@ module Crystal
       end
 
       # If it's `new(...)` and this is a non-generic class type, guess it to be that class
-      if node.name == "new" && !obj && current_type.is_a?(NonGenericClassType)
-        return current_type if current_type
+      if node.name == "new" && !obj && (
+           current_type.is_a?(NonGenericClassType) ||
+           current_type.is_a?(PrimitiveType) ||
+           current_type.is_a?(GenericClassInstanceType)
+         )
+        # See if the "new" method has a return type annotation
+        return_type = guess_type_from_method(current_type, node)
+        return return_type if return_type
+
+        # Otherwise, infer it to the current type
+        return current_type
       end
 
       # If it's Pointer(T).malloc or Pointer(T).null, guess it to Pointer(T)
@@ -638,10 +651,10 @@ module Crystal
       obj_type = lookup_type_no_check?(obj)
       return nil unless obj_type
 
-      guess_type_from_method_return_type(obj_type, node)
+      guess_type_from_method(obj_type, node)
     end
 
-    def guess_type_from_method_return_type(obj_type, node : Call)
+    def guess_type_from_method(obj_type, node : Call)
       metaclass = obj_type.devirtualize.metaclass
 
       defs = metaclass.lookup_defs(node.name)
@@ -660,17 +673,43 @@ module Crystal
         defs = [defs.first]
       end
 
-      # If any of the matching defs doesn't have a return
-      # type we can't infer anything
-      return nil unless defs.all? &.return_type
+      # Only use teturn type if all matching defs have a return type
+      if defs.all? &.return_type
+        # We can only infer the type if all overloads return
+        # the same type (because we can't know the call
+        # argument's type)
+        return_types = defs.map(&.return_type.not_nil!).uniq!
+        return unless return_types.size == 1
 
-      # We can only infer the type if all overloads return
-      # the same type (because we can't know the call
-      # argument's type)
-      return_types = defs.map(&.return_type.not_nil!).uniq!
-      return unless return_types.size == 1
+        return lookup_type?(return_types[0], obj_type)
+      end
 
-      lookup_type?(return_types[0], obj_type)
+      # If we only have one def, check the body, we might be
+      # able to infer something from it if it's sufficiently simple
+      return nil unless defs.size == 1
+
+      a_def = defs.first
+      body = a_def.body
+
+      # Prevent infinite recursion
+      if @methods_being_checked.any? &.same?(a_def)
+        return nil
+      end
+
+      @methods_being_checked.push a_def
+
+      # Try to guess from the method's body, but now
+      # the current lookup type is obj_type
+      type = nil
+      pushing_type(obj_type) do
+        # Wrap everything in Expressions to check for explicit `return`
+        exps = Expressions.new([body] of ASTNode)
+        type = guess_type_in_method_body(exps)
+      end
+
+      @methods_being_checked.pop
+
+      type
     end
 
     def guess_type(node : Cast)
@@ -795,6 +834,27 @@ module Crystal
       last ? guess_type(last) : nil
     end
 
+    def guess_type_in_method_body(node : Expressions)
+      nodes = gather_returns(node)
+      last = node.expressions.last?
+      nodes << last if last
+
+      types = nil
+      nodes.each do |node|
+        type = guess_type(node)
+        return nil unless type
+
+        types ||= [] of Type
+        types << type
+      end
+
+      if types
+        Type.merge!(types)
+      else
+        nil
+      end
+    end
+
     def guess_type(node : Assign)
       if node.target.is_a?(Var)
         return guess_type(node.value)
@@ -857,7 +917,7 @@ module Crystal
 
         # See if the "new" method has a return type annotation, and use it if so
         if type
-          return_type = guess_type_from_method_return_type(type, node)
+          return_type = guess_type_from_method(type, node)
           return [return_type] of TypeVar if return_type
         end
 
@@ -1293,6 +1353,12 @@ module Crystal
       false
     end
 
+    def gather_returns(node)
+      gatherer = ReturnGatherer.new
+      node.accept gatherer
+      gatherer.returns
+    end
+
     def inside_block?
       false
     end
@@ -1320,6 +1386,23 @@ module Crystal
       if node.name == "self"
         @has_self = true
       end
+    end
+
+    def visit(node : ASTNode)
+      true
+    end
+  end
+
+  class ReturnGatherer < Visitor
+    getter returns
+
+    def initialize
+      @returns = [] of ASTNode
+    end
+
+    def visit(node : Return)
+      @returns << (node.exp || NilLiteral.new)
+      true
     end
 
     def visit(node : ASTNode)
