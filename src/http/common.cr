@@ -177,17 +177,20 @@ module HTTP
     # Avoid allocating an array for the split if there's no ';'
     if content_type.index(';')
       pieces = content_type.split(';')
+      content_type = pieces[0].strip
       (1...pieces.size).each do |i|
         piece = pieces[i]
         eq_index = piece.index('=')
         if eq_index
           key = piece[0...eq_index].strip
-          if key
+          if key == "charset"
             value = piece[eq_index + 1..-1].strip
-            return ComputedContentTypeHeader.new(pieces[0].strip, value)
+            return ComputedContentTypeHeader.new(content_type, value)
           end
         end
       end
+    else
+      content_type = content_type.strip
     end
 
     ComputedContentTypeHeader.new(content_type.strip, nil)
