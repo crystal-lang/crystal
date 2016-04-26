@@ -1871,6 +1871,10 @@ module Crystal
       tuple_indexer(indexers, index)
     end
 
+    def size
+      tuple_types.size
+    end
+
     private def tuple_indexer(indexers, index)
       indexers[index] ||= begin
         indexer = Def.new("[]", [Arg.new("index")], TupleIndexer.new(index))
@@ -1897,6 +1901,22 @@ module Crystal
 
     def allocated?
       true
+    end
+
+    def implements?(other : Type)
+      return true if self == other
+
+      if other.is_a?(TupleInstanceType)
+        return false unless self.size == other.size
+
+        tuple_types.zip(other.tuple_types) do |self_tuple_type, other_tuple_type|
+          return false unless self_tuple_type.implements?(other_tuple_type)
+        end
+
+        return true
+      end
+
+      super
     end
 
     def has_in_type_vars?(type)

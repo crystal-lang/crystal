@@ -95,4 +95,77 @@ describe "Type inference: tuples" do
       ),
       "recursive splat expansion"
   end
+
+  it "allows tuple covariance" do
+    assert_type(%(
+      class Obj
+        def initialize
+          @tuple = {Foo.new}
+        end
+
+        def tuple=(@tuple)
+        end
+
+        def tuple
+          @tuple
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      obj = Obj.new
+      obj.tuple = {Bar.new}
+      obj.tuple
+      )) { tuple_of [types["Foo"].virtual_type!] }
+  end
+
+  it "merges two tuple types of same size" do
+    assert_type(%(
+      def foo
+        if 1 == 2
+          {"foo", 1}
+        else
+          {"foo", nil}
+        end
+      end
+
+      foo
+      )) { tuple_of [string, nilable(int32)] }
+  end
+
+  it "accept tuple in type restriction" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(x : {Foo})
+        x
+      end
+
+      foo({Bar.new})
+      )) { tuple_of [types["Bar"]] }
+  end
+
+  it "accepts tuple covariance in array" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      a = [] of {Foo, Foo}
+      a << {Bar.new, Bar.new}
+      a[0]
+      )) { tuple_of [types["Foo"].virtual_type!, types["Foo"].virtual_type!] }
+  end
 end

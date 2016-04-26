@@ -250,4 +250,16 @@ module Crystal
       common.try &.virtual_type!
     end
   end
+
+  class TupleInstanceType
+    def common_ancestor(other)
+      if other.is_a?(TupleInstanceType) && self.size == other.size
+        result_types = tuple_types.map_with_index do |self_tuple_type, index|
+          program.type_merge([self_tuple_type, other.tuple_types[index]]).not_nil!
+        end
+        return program.tuple_of(result_types)
+      end
+      nil
+    end
+  end
 end

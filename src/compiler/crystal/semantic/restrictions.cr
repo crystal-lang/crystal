@@ -418,7 +418,18 @@ module Crystal
     end
 
     def restrict(other : TupleInstanceType, context)
-      self == other ? self : nil
+      return self if self == other
+
+      if self.size == other.size
+        tuple_types.zip(other.tuple_types) do |self_tuple_type, other_tuple_type|
+          restricted = self_tuple_type.restrict(other_tuple_type, context)
+          return nil unless restricted == self_tuple_type
+        end
+
+        return self
+      end
+
+      nil
     end
   end
 
