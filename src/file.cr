@@ -405,6 +405,11 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Returns an `Iterator` for each line in the given file.
+  def self.each_line(filename, encoding = nil, invalid = nil)
+    File.open(filename, "r", encoding: encoding, invalid: invalid).each_line
+  end
+
   # Returns all lines of the given file as an array of strings.
   #
   # ```crystal

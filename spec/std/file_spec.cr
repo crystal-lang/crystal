@@ -54,6 +54,17 @@ describe "File" do
     idx.should eq(20)
   end
 
+  it "reads lines from file with each as iterator" do
+    idx = 0
+    File.each_line("#{__DIR__}/data/test_file.txt").each do |line|
+      if idx == 0
+        line.should eq("Hello World\n")
+      end
+      idx += 1
+    end
+    idx.should eq(20)
+  end
+
   describe "exists?" do
     it "gives true" do
       File.exists?("#{__DIR__}/data/test_file.txt").should be_true
