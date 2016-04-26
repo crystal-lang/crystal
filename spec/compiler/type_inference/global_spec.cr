@@ -457,7 +457,7 @@ describe "Global inference" do
       $x = A
       $x
       ),
-      "Can't infer the type of global variable '$x'"
+      "recursive dependency of constant A: A -> B -> A"
   end
 
   it "doesn't infer from redefined method" do
@@ -619,5 +619,12 @@ describe "Global inference" do
       foo
       ),
       "declaring the type of a global variable must be done at the class level"
+  end
+
+  it "errors on undefined constant" do
+    assert_error %(
+      $x = Bar.new
+      ),
+      "undefined constant Bar"
   end
 end

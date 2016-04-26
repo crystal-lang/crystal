@@ -47,11 +47,25 @@ module Crystal
         main_visitor = MainVisitor.new(self, meta_vars: meta_vars)
         main_visitor.scope = owner.metaclass
 
-        class_var = owner.class_vars[name]
+        # We want to first type the value, because it might
+        # happend that we couldn't guess a type from an expression
+        # but that expression has an error: we want to signal
+        # that error first.
+        had_class_var = true
+        class_var = owner.class_vars[name]?
+        unless class_var
+          class_var = MetaTypeVar.new(name)
+          class_var.owner = owner
+          had_class_var = false
+        end
 
         self.class_var_and_const_being_typed.push class_var
         node.accept main_visitor
         self.class_var_and_const_being_typed.pop
+
+        unless had_class_var
+          main_visitor.undefined_class_variable(class_var, owner)
+        end
 
         owner.class_vars[name].bind_to(node)
         self.class_var_and_const_initializers << initializer
@@ -194,10 +208,6 @@ module Crystal
     def visit(node : Assign)
       target = node.target as ClassVar
       value = node.value
-
-      # This is to check that the class var's type exists
-      # (its type could be guessed, or it had an explicit type)
-      lookup_class_var(target)
 
       owner = class_var_owner(target)
       cvars = @class_vars[owner] ||= {} of String => ASTNode

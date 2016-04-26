@@ -2401,6 +2401,19 @@ describe "Type inference: instance var" do
       )) { types["Bar"] }
   end
 
+  it "errors on undefined constant" do
+    assert_error %(
+      class Foo
+        def initialize
+          @x = Bar.new
+        end
+      end
+
+      Foo.new
+      ),
+      "undefined constant Bar"
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

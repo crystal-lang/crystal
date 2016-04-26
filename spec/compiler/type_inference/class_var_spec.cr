@@ -277,4 +277,28 @@ describe "Type inference: class var" do
       ),
       "undefined local variable or method 'a'"
   end
+
+  it "errors on undefined constant (1)" do
+    assert_error %(
+      class Foo
+        def self.foo
+          @@x = Bar.new
+        end
+      end
+
+      Foo.foo
+      ),
+      "undefined constant Bar"
+  end
+
+  it "errors on undefined constant (2)" do
+    assert_error %(
+      class Foo
+        @@x = Bar.new
+      end
+
+      Foo.foo
+      ),
+      "undefined constant Bar"
+  end
 end
