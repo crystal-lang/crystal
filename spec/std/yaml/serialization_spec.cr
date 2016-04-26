@@ -1,5 +1,7 @@
 require "spec"
 require "yaml"
+require "big"
+require "big/yaml"
 
 enum YAMLSpecEnum
   Zero
@@ -58,6 +60,18 @@ describe "YAML serialization" do
 
     it "does Tuple#from_yaml" do
       Tuple(Int32, String, Bool).from_yaml("---\n- 1\n- foo\n- true\n").should eq({1, "foo", true})
+    end
+
+    it "does for BigInt" do
+      big = BigInt.from_yaml("123456789123456789123456789123456789123456789")
+      big.should be_a(BigInt)
+      big.should eq(BigInt.new("123456789123456789123456789123456789123456789"))
+    end
+
+    it "does for BigFloat" do
+      big = BigFloat.from_yaml("1234.567891011121314")
+      big.should be_a(BigFloat)
+      big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
     # TODO: uncomment after 0.15.0
@@ -135,6 +149,16 @@ describe "YAML serialization" do
 
     it "does for Tuple" do
       Tuple(Int32, String).from_yaml({1, "hello"}.to_yaml).should eq({1, "hello"})
+    end
+
+    it "does for BigInt" do
+      big = BigInt.new("123456789123456789123456789123456789123456789")
+      BigInt.from_yaml(big.to_yaml).should eq(big)
+    end
+
+    it "does for BigFloat" do
+      big = BigFloat.new("1234.567891011121314")
+      BigFloat.from_yaml(big.to_yaml).should eq(big)
     end
 
     # TODO: uncomment after 0.15.0

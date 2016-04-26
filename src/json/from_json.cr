@@ -149,3 +149,9 @@ module Time::EpochMillisConverter
     Time.epoch_ms(value.read_int)
   end
 end
+
+module String::RawConverter
+  def self.from_json(value : JSON::PullParser)
+    value.read_raw
+  end
+end

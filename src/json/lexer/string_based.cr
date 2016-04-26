@@ -3,6 +3,7 @@ class JSON::Lexer::StringBased < JSON::Lexer
   def initialize(string)
     super()
     @reader = Char::Reader.new(string)
+    @number_start = 0
   end
 
   # Consume a string by remembering the start position of it and then
@@ -59,5 +60,17 @@ class JSON::Lexer::StringBased < JSON::Lexer
 
   private def current_char
     @reader.current_char
+  end
+
+  private def number_start
+    @number_start = current_pos
+  end
+
+  private def append_number_char
+    # Nothing
+  end
+
+  private def number_end
+    @token.raw_value = string_range(@number_start, current_pos)
   end
 end

@@ -14,4 +14,16 @@ class JSON::Lexer::IOBased < JSON::Lexer
   private def consume_string
     consume_string_with_buffer
   end
+
+  private def number_start
+    @buffer.clear
+  end
+
+  private def append_number_char
+    @buffer << current_char
+  end
+
+  private def number_end
+    @token.raw_value = @buffer.to_s
+  end
 end
