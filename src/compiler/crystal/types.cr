@@ -2311,6 +2311,10 @@ module Crystal
       @vars
     end
 
+    def instance_vars
+      @vars
+    end
+
     def index_of_var(name)
       @vars.key_index(remove_at_from_var_name(name)).not_nil!
     end

@@ -305,13 +305,13 @@ module Crystal
           return
         end
 
-        owner.declare_instance_var(name, type_info.type_vars)
+        owner.declare_instance_var(name, type_info.type_vars.uniq)
       when GenericModuleType
         if nilable_instance_var?(owner, name)
           type_info.type_vars << @program.nil
         end
 
-        owner.declare_instance_var(name, type_info.type_vars)
+        owner.declare_instance_var(name, type_info.type_vars.uniq)
       end
     end
 

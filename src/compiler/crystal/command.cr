@@ -212,7 +212,7 @@ class Crystal::Command
   end
 
   private def hierarchy
-    config, result = compile_no_codegen "tool hierarchy", hierarchy: true
+    config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
     Crystal.print_hierarchy result.program, config.hierarchy_exp
   end
 
@@ -344,11 +344,9 @@ class Crystal::Command
 
     included_dirs << File.expand_path("./src")
 
-    output_filename = tempfile "docs"
-
     compiler = Compiler.new
     compiler.wants_doc = true
-    result = compiler.compile sources, output_filename
+    result = compiler.type_top_level sources
     Crystal.generate_docs result.program, included_dirs
   end
 
@@ -390,11 +388,12 @@ class Crystal::Command
     server.start
   end
 
-  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false)
+  private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false, top_level = false)
     config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
     config.compiler.no_codegen = true
     config.compiler.wants_doc = wants_doc
-    {config, config.compile}
+    result = top_level ? config.type_top_level : config.compile
+    {config, result}
   end
 
   private def execute(output_filename, run_args)
@@ -443,6 +442,10 @@ class Crystal::Command
     def compile(output_filename = self.output_filename)
       compiler.original_output_filename = original_output_filename
       compiler.compile sources, output_filename
+    end
+
+    def type_top_level
+      compiler.type_top_level sources
     end
   end
 

@@ -63,6 +63,25 @@ module Crystal
     end
 
     def compile(sources : Array(Source), output_filename)
+      program = new_program
+      node, original_node = parse program, sources
+      node = program.infer_type node, @stats
+      codegen program, node, sources, output_filename unless @no_codegen
+      Result.new program, node, original_node
+    end
+
+    def type_top_level(source : Source)
+      type_top_level [source]
+    end
+
+    def type_top_level(sources : Array(Source))
+      program = new_program
+      node, original_node = parse program, sources
+      node = program.infer_type_top_level(node, @stats)
+      Result.new program, node, original_node
+    end
+
+    private def new_program
       program = Program.new
       program.target_machine = target_machine
       if cross_compile_flags = @cross_compile_flags
@@ -72,14 +91,7 @@ module Crystal
       program.flags.merge @flags
       program.wants_doc = wants_doc?
       program.color = color?
-
-      @link_flags = "#{@link_flags} -rdynamic"
-
-      node, original_node = parse program, sources
-      node = infer_type program, node
-      codegen program, node, sources, output_filename unless @no_codegen
-
-      Result.new program, node, original_node
+      program
     end
 
     def add_flag(flag)
@@ -124,10 +136,6 @@ module Crystal
       exit 1
     end
 
-    private def infer_type(program, node)
-      program.infer_type node, @stats
-    end
-
     private def check_bc_flags_changed(output_dir)
       bc_flags_changed = true
       current_bc_flags = "#{@target_triple}|#{@mcpu}|#{@release}|#{@link_flags}"
@@ -143,6 +151,8 @@ module Crystal
     end
 
     private def codegen(program : Program, node, sources, output_filename)
+      @link_flags = "#{@link_flags} -rdynamic"
+
       lib_flags = program.lib_flags
 
       llvm_modules = timing("Codegen (crystal)") do

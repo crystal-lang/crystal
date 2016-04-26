@@ -11,7 +11,6 @@ module Crystal
     def initialize(@program : Program, exp : String?)
       @exp = exp ? Regex.new(exp) : nil
       @indents = [] of Bool
-      @printed = Set(Type).new
       @targets = Set(Type).new
       @llvm_typer = LLVMTyper.new(@program)
     end
@@ -22,7 +21,7 @@ module Crystal
       end
 
       with_color.light_gray.bold.push(STDOUT) do
-        print_types @program.types
+        print_type @program.object
       end
     end
 
@@ -87,30 +86,18 @@ module Crystal
       false
     end
 
-    def print_types(types_hash)
-      types_hash.each_value do |type|
-        print_subtype type
-      end
-    end
-
     def print_subtypes(types)
-      while types.size > 0
-        type = types.pop
-
-        if types.empty?
-          @indents[@indents.size - 1] = false
+      types = types.sort_by &.to_s
+      types.each_with_index do |type, i|
+        if i == types.size - 1
+          @indents[-1] = false
         end
-
         print_subtype type
-
-        types = types.select { |t| must_print?(t) }
       end
     end
 
     def print_subtype(type)
       return unless must_print? type
-
-      @printed.add type
 
       unless @indents.empty?
         print_indent
@@ -125,7 +112,7 @@ module Crystal
       print_indent
       print "+" unless @indents.empty?
       print "- "
-      print type.type_desc
+      print type.struct? ? "struct" : "class"
       print " "
       print type
 
@@ -144,33 +131,52 @@ module Crystal
     def print_type(type : NonGenericClassType | GenericClassInstanceType)
       print_type_name type
 
-      subtypes = type.subclasses.select { |sub| !sub.is_a?(GenericClassInstanceType) && must_print?(sub) }
+      subtypes = type.subclasses.select { |sub| must_print?(sub) }
       print_instance_vars type, !subtypes.empty?
 
       with_indent do
         print_subtypes subtypes
-      end
-
-      if type.is_a?(NonGenericClassType)
-        print_types type.types
       end
     end
 
     def print_type(type : GenericClassType)
       print_type_name type
 
-      subtypes = type.subclasses.select { |sub| !sub.is_a?(GenericClassInstanceType) && must_print?(sub) }
-      instantiations = type.generic_types.values.select { |sub| must_print?(sub) }
+      subtypes = type.subclasses.select { |sub| must_print?(sub) }
+      print_instance_vars type, !subtypes.empty?
 
       with_indent do
-        print_subtypes subtypes + instantiations
+        print_subtypes subtypes
       end
-
-      print_types type.types
     end
 
     def print_type(type)
       # Nothing to do
+    end
+
+    def print_instance_vars(type : GenericClassType, has_subtypes)
+      instance_vars = type.declared_instance_vars
+      return unless instance_vars
+
+      max_name_size = instance_vars.keys.max_of &.size
+
+      instance_vars.each do |name, types|
+        print_indent
+        print (@indents.last ? "|" : " ")
+        if has_subtypes
+          print "  .   "
+        else
+          print "      "
+        end
+
+        with_color.light_gray.push(STDOUT) do
+          print name.ljust(max_name_size)
+          next if types.size == 0
+          print " : "
+          print types.join " | "
+        end
+        puts
+      end
     end
 
     def print_instance_vars(type, has_subtypes)
@@ -199,14 +205,7 @@ module Crystal
           print "      "
         end
 
-        color = with_color
-        color = if ivar.freeze_type
-                  with_color.bold
-                else
-                  with_color.light_gray
-                end
-
-        color.push(STDOUT) do
+        with_color.light_gray.push(STDOUT) do
           print ivar.name.ljust(max_name_size)
           print " : "
           if ivar_type = ivar.type?
@@ -225,16 +224,12 @@ module Crystal
       end
     end
 
-    def must_print?(type : NonGenericClassType | GenericClassInstanceType)
-      return false if @exp && !@targets.includes?(type)
-
-      type.allocated? && !@printed.includes?(type)
+    def must_print?(type : NonGenericClassType)
+      !(@exp && !@targets.includes?(type))
     end
 
     def must_print?(type : GenericClassType)
-      return false if @exp && !@targets.includes?(type)
-
-      (!type.generic_types.empty? || !type.subclasses.empty?) && !@printed.includes?(type)
+      !(@exp && !@targets.includes?(type))
     end
 
     def must_print?(type)
