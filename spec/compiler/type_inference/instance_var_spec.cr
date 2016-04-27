@@ -2414,6 +2414,207 @@ describe "Type inference: instance var" do
       "undefined constant Bar"
   end
 
+  it "infers from class method that invokes new" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = Bar.create
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def self.create
+          new
+        end
+      end
+
+      Foo.new.x
+      )) { types["Bar"] }
+  end
+
+  it "infers from class method that has number literal" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = Bar.default_num
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def self.default_num
+          1
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "infers from class method that refers to constant" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = Bar.default_instance
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        DEFAULT = new
+
+        def self.default_instance
+          DEFAULT
+        end
+      end
+
+      Foo.new.x
+      )) { types["Bar"] }
+  end
+
+  it "infer from class method with multiple statements and return" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = Bar.default
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def self.default
+          if 1 == 2
+            return nil
+          end
+          1
+        end
+      end
+
+      Foo.new.x
+      )) { nilable int32 }
+  end
+
+  it "doesn't infer from class method with multiple statements and return, on non-easy return" do
+    assert_error %(
+      class Foo
+        def initialize
+          @x = Bar.default
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def self.default
+          if 1 == 2
+            a = 1
+            return a
+          end
+          1
+        end
+      end
+
+      Foo.new.x
+      ),
+      "Can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "doesn't infer from class method with multiple statements and return, on non-easy return (2)" do
+    assert_error %(
+      class Foo
+        def initialize
+          @x = Bar.default
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def self.default
+          if 1 == 2
+            a = 1
+            return a
+          else
+            1
+          end
+        end
+      end
+
+      Foo.new.x
+      ),
+      "Can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "infer from class method where new is redefined" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = Bar.default
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def self.default
+          new
+        end
+
+        def self.new
+          1
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "doesn't crash on recursive method call" do
+    assert_error %(
+      class Foo
+        def initialize
+          @x = Bar.default
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def self.default
+          Bar.default2
+        end
+
+        def self.default2
+          Bar.default
+        end
+      end
+
+      Foo.new.x
+      ),
+      "Can't infer the type of instance variable '@x' of Foo"
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

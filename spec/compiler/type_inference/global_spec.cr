@@ -189,7 +189,8 @@ describe "Global inference" do
     assert_error %(
       class Foo(T)
         def self.new
-          10
+          a = 10
+          a
         end
       end
 
