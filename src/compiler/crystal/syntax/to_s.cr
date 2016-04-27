@@ -43,9 +43,11 @@ module Crystal
     end
 
     def visit(node : SymbolLiteral)
-      @str << ':'
+      visit_symbol_literal_value node.value
+    end
 
-      value = node.value
+    def visit_symbol_literal_value(value : String)
+      @str << ':'
       if Symbol.needs_quotes?(value)
         value.inspect(@str)
       else
@@ -1118,7 +1120,9 @@ module Crystal
 
     def visit(node : RespondsTo)
       node.obj.accept self
-      @str << ".responds_to?(" << node.name << ")"
+      @str << ".responds_to?("
+      visit_symbol_literal_value node.name
+      @str << ")"
       false
     end
 
