@@ -143,34 +143,4 @@ describe "Code gen: tuple" do
       obj.tuple[0].bar
       )).to_i.should eq(42)
   end
-
-  it "merges two tuple types of same size (1)" do
-    run(%(
-      def foo
-        if 1 == 2
-          {"foo", 10}
-        else
-          {"foo", nil}
-        end
-      end
-
-      val = foo[1]
-      val || 20
-      )).to_i.should eq(20)
-  end
-
-  it "merges two tuple types of same size (2)" do
-    run(%(
-      def foo
-        if 1 == 1
-          {"foo", 10}
-        else
-          {"foo", nil}
-        end
-      end
-
-      val = foo[1]
-      val || 20
-      )).to_i.should eq(10)
-  end
 end

@@ -123,7 +123,7 @@ describe "Type inference: tuples" do
       )) { tuple_of [types["Foo"].virtual_type!] }
   end
 
-  it "merges two tuple types of same size" do
+  it "doesn't merge two tuple types of same size" do
     assert_type(%(
       def foo
         if 1 == 2
@@ -134,10 +134,10 @@ describe "Type inference: tuples" do
       end
 
       foo
-      )) { tuple_of [string, nilable(int32)] }
+      )) { |mod| union_of(tuple_of([string, int32]), tuple_of([string, mod.nil])) }
   end
 
-  it "accept tuple in type restriction" do
+  it "accepts tuple in type restriction" do
     assert_type(%(
       class Foo
       end
