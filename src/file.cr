@@ -1,17 +1,8 @@
-lib LibC
-  fun access(filename : Char*, how : Int) : Int
-  fun link(oldpath : Char*, newpath : Char*) : Int
-  fun rename(oldname : Char*, newname : Char*) : Int
-  fun symlink(oldpath : Char*, newpath : Char*) : Int
-  fun unlink(filename : Char*) : Int
-  fun ftruncate(fd : Int, size : OffT) : Int
-  fun realpath(filename : Char*, realpath : Char*) : Char*
-
-  F_OK = 0
-  X_OK = 1 << 0
-  W_OK = 1 << 1
-  R_OK = 1 << 2
-end
+require "c/fcntl"
+require "c/stdio"
+require "c/stdlib"
+require "c/sys/stat"
+require "c/unistd"
 
 class File < IO::FileDescriptor
   # The file/directory separator character. '/' in unix, '\\' in windows.

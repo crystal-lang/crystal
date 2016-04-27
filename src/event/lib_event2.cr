@@ -1,4 +1,4 @@
-require "socket/libc"
+require "c/netdb"
 
 @[Link("rt")] ifdef linux
 @[Link("event")]
@@ -42,7 +42,7 @@ lib LibEvent2
   fun event_reinit(eb : EventBase) : Int
   fun event_new(eb : EventBase, s : EvutilSocketT, events : EventFlags, callback : Callback, data : Void*) : Event
   fun event_free(event : Event)
-  fun event_add(event : Event, timeout : LibC::TimeVal*) : Int
+  fun event_add(event : Event, timeout : LibC::Timeval*) : Int
   fun event_del(event : Event) : Int
 
   type DnsBase = Void*

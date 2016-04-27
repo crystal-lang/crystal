@@ -1,13 +1,4 @@
-ifdef darwin
-  @[Link("iconv")]
-end
-lib LibIconv
-  type Iconv = Void*
-
-  fun open = iconv_open(tocode : LibC::Char*, fromcode : LibC::Char*) : Iconv
-  fun iconv(cd : Iconv, inbuf : LibC::Char**, inbytesleft : LibC::SizeT*, outbuf : LibC::Char**, outbytesleft : LibC::SizeT*) : LibC::SizeT
-  fun close = iconv_close(cd : Iconv) : LibC::Int
-end
+require "c/iconv"
 
 # :nodoc:
 struct Iconv
@@ -23,7 +14,7 @@ struct Iconv
     end
 
     Errno.value = 0
-    @iconv = LibIconv.open(to, from)
+    @iconv = LibC.iconv_open(to, from)
     if Errno.value != 0
       if original_from == "UTF-8"
         raise ArgumentError.new("invalid encoding: #{original_to}")
@@ -45,7 +36,7 @@ struct Iconv
   end
 
   def convert(inbuf : UInt8**, inbytesleft : LibC::SizeT*, outbuf : UInt8**, outbytesleft : LibC::SizeT*)
-    LibIconv.iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft)
+    LibC.iconv(@iconv, inbuf, inbytesleft, outbuf, outbytesleft)
   end
 
   def handle_invalid(inbuf, inbytesleft)
@@ -67,6 +58,6 @@ struct Iconv
   end
 
   def close
-    LibIconv.close(@iconv)
+    LibC.iconv_close(@iconv)
   end
 end

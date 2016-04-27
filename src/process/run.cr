@@ -1,6 +1,4 @@
-lib LibC
-  fun execvp(file : Char*, argv : Char**) : Int
-end
+require "c/unistd"
 
 class Process
   # The standard io configuration of a process:
@@ -65,6 +63,10 @@ class Process
       if args
         unless command.includes?(%("${@}"))
           raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
+        end
+
+        ifdef freebsd
+          shell_args << ""
         end
 
         shell_args.concat(args)

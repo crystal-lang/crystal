@@ -1,21 +1,31 @@
+require "c/pthread"
+
 # :nodoc:
 class Thread(T, R)
   # :nodoc:
   class Mutex
     def initialize
-      LibPThread.mutex_init(out @mutex, nil)
+      if LibC.pthread_mutex_init(out @mutex, nil) != 0
+        raise Errno.new("pthread_mutex_init")
+      end
     end
 
     def lock
-      LibPThread.mutex_lock(self)
+      if LibC.pthread_mutex_lock(self) != 0
+        raise Errno.new("pthread_mutex_lock")
+      end
     end
 
     def try_lock
-      LibPThread.mutex_trylock(self)
+      if LibC.pthread_mutex_trylock(self) != 0
+        raise Errno.new("pthread_mutex_trylock")
+      end
     end
 
     def unlock
-      LibPThread.mutex_unlock(self)
+      if LibC.pthread_mutex_unlock(self) != 0
+        raise Errno.new("pthread_mutex_unlock")
+      end
     end
 
     def synchronize
@@ -26,7 +36,9 @@ class Thread(T, R)
     end
 
     def finalize
-      LibPThread.mutex_destroy(self)
+      if LibC.pthread_mutex_destroy(self) != 0
+        raise Errno.new("pthread_mutex_destroy")
+      end
     end
 
     def to_unsafe

@@ -1,3 +1,5 @@
+require "c/stdio"
+
 # :nodoc:
 struct String::Formatter(A)
   @format_buf : Pointer(UInt8)?

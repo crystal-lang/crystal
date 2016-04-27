@@ -1,3 +1,6 @@
+require "c/signal"
+require "c/unistd"
+
 # :nodoc:
 # Singleton that runs Signal events (libevent2) in it's own Fiber.
 class Event::SignalHandler

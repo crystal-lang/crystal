@@ -1,10 +1,6 @@
-lib LibC
-  fun atof(str : Char*) : Double
-  fun strtof(str : Char*, endp : Char**) : Float
-  fun strlen(s : Char*) : SizeT
-  fun snprintf(str : Char*, n : SizeT, format : Char*, ...) : Int
-  fun strcmp(Char*, Char*) : LibC::Int
-end
+require "c/stdlib"
+require "c/stdio"
+require "c/string"
 
 # A String represents an immutable sequence of UTF-8 characters.
 #

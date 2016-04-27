@@ -1,3 +1,5 @@
+require "c/string"
+
 # A typed pointer to some memory.
 #
 # This is the only unsafe type in Crystal. If you are using a pointer, you are writing

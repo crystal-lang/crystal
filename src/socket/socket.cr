@@ -1,23 +1,30 @@
-require "./libc"
+require "c/arpa/inet"
+require "c/netdb"
+require "c/netinet/in"
+require "c/netinet/tcp"
+require "c/sys/socket"
+require "c/sys/un"
 
 class Socket < IO::FileDescriptor
   class Error < Exception
   end
 
   enum Type
-    STREAM = LibC::SOCK_STREAM
-    DGRAM  = LibC::SOCK_DGRAM
-    RAW    = LibC::SOCK_RAW
+    STREAM    = LibC::SOCK_STREAM
+    DGRAM     = LibC::SOCK_DGRAM
+    RAW       = LibC::SOCK_RAW
+    SEQPACKET = LibC::SOCK_SEQPACKET
   end
 
   enum Protocol
-    IP  = LibC::IPPROTO_IP
-    TCP = LibC::IPPROTO_TCP
-    UDP = LibC::IPPROTO_UDP
-    RAW = LibC::IPPROTO_RAW
+    IP   = LibC::IPPROTO_IP
+    TCP  = LibC::IPPROTO_TCP
+    UDP  = LibC::IPPROTO_UDP
+    RAW  = LibC::IPPROTO_RAW
+    ICMP = LibC::IPPROTO_ICMP
   end
 
-  enum Family : LibC::AddressFamilyType
+  enum Family : LibC::SaFamilyT
     UNSPEC = LibC::AF_UNSPEC
     UNIX   = LibC::AF_UNIX
     INET   = LibC::AF_INET
@@ -37,48 +44,48 @@ class Socket < IO::FileDescriptor
       @port = port.to_u16
     end
 
-    def initialize(sockaddr : LibC::SockAddrIn6, addrlen : LibC::SocklenT)
+    def initialize(sockaddr : LibC::SockaddrIn6, addrlen : LibC::SocklenT)
       case addrlen
-      when LibC::SocklenT.new(sizeof(LibC::SockAddrIn))
-        sockaddrin = (pointerof(sockaddr) as LibC::SockAddrIn*).value
-        addr = sockaddrin.addr
+      when LibC::SocklenT.new(sizeof(LibC::SockaddrIn))
+        sockaddrin = (pointerof(sockaddr) as LibC::SockaddrIn*).value
+        addr = sockaddrin.sin_addr
         @family = Family::INET
         @address = inet_ntop(family.value, pointerof(addr) as Void*, addrlen)
-      when LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
-        addr6 = sockaddr.addr
+      when LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
+        addr6 = sockaddr.sin6_addr
         @family = Family::INET6
         @address = inet_ntop(family.value, pointerof(addr6) as Void*, addrlen)
       else
         raise ArgumentError.new("Unsupported address family")
       end
-      @port = LibC.htons(sockaddr.port).to_u16
+      @port = LibC.htons(sockaddr.sin6_port).to_u16
     end
 
     def sockaddr
-      sockaddrin6 = LibC::SockAddrIn6.new
-      sockaddrin6.family = family.value.to_u8
+      sockaddrin6 = LibC::SockaddrIn6.new
+      sockaddrin6.sin6_family = LibC::SaFamilyT.new(family.value)
 
       case family
       when Family::INET
-        sockaddrin = (pointerof(sockaddrin6) as LibC::SockAddrIn*).value
-        addr = sockaddrin.addr
+        sockaddrin = (pointerof(sockaddrin6) as LibC::SockaddrIn*).value
+        addr = sockaddrin.sin_addr
         LibC.inet_pton(family.value, address, pointerof(addr) as Void*)
-        sockaddrin.addr = addr
-        sockaddrin6 = (pointerof(sockaddrin) as LibC::SockAddrIn6*).value
+        sockaddrin.sin_addr = addr
+        sockaddrin6 = (pointerof(sockaddrin) as LibC::SockaddrIn6*).value
       when Family::INET6
-        addr6 = sockaddrin6.addr
+        addr6 = sockaddrin6.sin6_addr
         LibC.inet_pton(family.value, address, pointerof(addr6) as Void*)
-        sockaddrin6.addr = addr6
+        sockaddrin6.sin6_addr = addr6
       end
 
-      sockaddrin6.port = LibC.ntohs(port).to_i16
+      sockaddrin6.sin6_port = LibC.ntohs(port).to_i16
       sockaddrin6
     end
 
     def addrlen
       case family
-      when Family::INET  then LibC::SocklenT.new(sizeof(LibC::SockAddrIn))
-      when Family::INET6 then LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
+      when Family::INET  then LibC::SocklenT.new(sizeof(LibC::SockaddrIn))
+      when Family::INET6 then LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
       else                    LibC::SocklenT.new(0)
       end
     end
@@ -125,22 +132,22 @@ class Socket < IO::FileDescriptor
 
   # only used when SOCK_CLOEXEC doesn't exist on the current platform
   protected def init_close_on_exec(fd : Int32)
-    {% if LibC::SOCK_CLOEXEC == 0 %}
-       LibC.fcntl(fd, LibC::FCNTL::F_SETFD, LibC::FD_CLOEXEC)
+    {% unless LibC.constants.includes?("SOCK_CLOEXEC".id) %}
+      LibC.fcntl(fd, LibC::F_SETFD, LibC::FD_CLOEXEC)
     {% end %}
   end
 
-  # Calls shutdown(2) with SHUT_READ
+  # Calls shutdown(2) with SHUT_RD
   def close_read
-    shutdown LibC::Shutdown::READ
+    shutdown LibC::SHUT_RD
   end
 
-  # Calls shutdown(2) with SHUT_WRITE
+  # Calls shutdown(2) with SHUT_WR
   def close_write
-    shutdown LibC::Shutdown::WRITE
+    shutdown LibC::SHUT_WR
   end
 
-  private def shutdown(how : LibC::Shutdown)
+  private def shutdown(how)
     if LibC.shutdown(@fd, how) != 0
       raise Errno.new("shutdown #{how}")
     end
@@ -195,15 +202,7 @@ class Socket < IO::FileDescriptor
   def linger
     v = LibC::Linger.new
     ret = getsockopt LibC::SO_LINGER, v
-    case ret.on
-    when 1
-      return ret.secs
-    when 0
-      return nil
-    else
-      raise "unknown linger return #{ret.inspect}"
-    end
-    ret
+    ret.l_onoff == 0 ? nil : ret.l_linger
   end
 
   # WARNING: The behavior of SO_LINGER is platform specific.  Bad things may happen especially with nonblocking sockets.
@@ -218,10 +217,10 @@ class Socket < IO::FileDescriptor
     v = LibC::Linger.new
     case val
     when Int
-      v.on = 1
-      v.secs = val
+      v.l_onoff = 1
+      v.l_linger = val
     when nil
-      v.on = 0
+      v.l_onoff = 0
     end
 
     setsockopt LibC::SO_LINGER, v
@@ -255,9 +254,13 @@ class Socket < IO::FileDescriptor
     optval
   end
 
-  private def nonblocking_connect(host, port, ai, timeout = nil)
+  private def nonblocking_connect(host, port, addrinfo, timeout = nil)
     loop do
-      ret = LibC.connect(@fd, ai.addr, ai.addrlen)
+      ifdef freebsd
+        ret = LibC.connect(@fd, addrinfo.ai_addr as LibC::Sockaddr*, addrinfo.ai_addrlen)
+      else
+        ret = LibC.connect(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
+      end
       return nil if ret == 0 # success
 
       case Errno.value

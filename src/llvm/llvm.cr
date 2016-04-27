@@ -1,4 +1,5 @@
 require "./**"
+require "c/string"
 
 module LLVM
   @@initialized = false

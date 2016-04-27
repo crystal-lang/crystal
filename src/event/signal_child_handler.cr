@@ -1,3 +1,5 @@
+require "c/sys/wait"
+
 # :nodoc:
 # Singleton that handles SIG_CHLD and queues events for Process#waitpid.
 # Process.waitpid uses this class for nonblocking operation.

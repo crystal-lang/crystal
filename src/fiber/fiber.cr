@@ -1,3 +1,5 @@
+require "c/sys/mman"
+
 @[NoInline]
 fun get_stack_top : Void*
   dummy = uninitialized Int32
@@ -99,7 +101,7 @@ class Fiber
       io.puts "Unhandled exception:"
       ex.inspect_with_backtrace io
     end
-    LibC.write(2, msg, msg.bytesize)
+    LibC.write(2, pointerof(msg) as Void*, msg.bytesize)
   ensure
     @@stack_pool << @stack
 

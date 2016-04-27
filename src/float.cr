@@ -1,3 +1,6 @@
+require "c/stdio"
+require "c/string"
+
 # Float is the base type of all floating point numbers.
 #
 # There are two floating point types, `Float32` and `Float64`,

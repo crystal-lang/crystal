@@ -1,5 +1,9 @@
 @[Link("pthread")]
-@[Link("gc")]
+ifdef freebsd
+  @[Link("gc-threaded")]
+else
+  @[Link("gc")]
+end
 lib LibGC
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT
@@ -41,13 +45,11 @@ lib LibGC
   $bytes_found = GC_bytes_found : LibC::Long
   # GC_on_collection_event isn't exported.  Can't collect totals without it.
   # bytes_allocd, heap_size, unmapped_bytes are macros
-end
 
-# Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
-lib LibPThread
-  fun create = GC_pthread_create(thread : Thread*, attr : Void*, start : Void* ->, arg : Void*) : LibC::Int
-  fun join = GC_pthread_join(thread : Thread, value : Void**) : LibC::Int
-  fun detach = GC_pthread_detach(thread : Thread) : LibC::Int
+  # Boehm GC requires to use GC_pthread_create and GC_pthread_join instead of pthread_create and pthread_join
+  fun pthread_create = GC_pthread_create(thread : LibC::PthreadT*, attr : Void*, start : Void* ->, arg : Void*) : LibC::Int
+  fun pthread_join = GC_pthread_join(thread : LibC::PthreadT, value : Void**) : LibC::Int
+  fun pthread_detach = GC_pthread_detach(thread : LibC::PthreadT) : LibC::Int
 end
 
 # :nodoc:

@@ -235,14 +235,14 @@ describe UDPSocket do
     server.local_address.port.should eq(port)
     server.local_address.address.should eq("::")
 
-    client = UDPSocket.new(Socket::Family::INET)
-    client.connect("127.0.0.1", port)
+    client = UDPSocket.new(Socket::Family::INET6)
+    client.connect("::1", port)
 
-    client.local_address.family.should eq(Socket::Family::INET)
-    client.local_address.address.should eq("127.0.0.1")
-    client.remote_address.family.should eq(Socket::Family::INET)
+    client.local_address.family.should eq(Socket::Family::INET6)
+    client.local_address.address.should eq("::1")
+    client.remote_address.family.should eq(Socket::Family::INET6)
     client.remote_address.port.should eq(port)
-    client.remote_address.address.should eq("127.0.0.1")
+    client.remote_address.address.should eq("::1")
 
     client << "message"
     server.gets(7).should eq("message")

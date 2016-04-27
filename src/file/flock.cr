@@ -1,3 +1,6 @@
+# TODO: use fcntl/lockf instead of flock (which doesn't lock over NFS)
+# TODO: always use non-blocking locks, yield fiber until resource becomes available
+
 lib LibC
   @[Flags]
   enum FlockOp

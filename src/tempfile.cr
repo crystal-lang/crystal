@@ -1,6 +1,4 @@
-lib LibC
-  fun mkstemp(result : Char*) : Int
-end
+require "c/stdlib"
 
 # The `Tempfile` class is for managing temporary files.
 # Every tempfile is operated as a `File`, including

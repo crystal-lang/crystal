@@ -1,7 +1,7 @@
 require "./enums"
 
 @[Link("stdc++")]
-@[Link(ldflags: "`(llvm-config-3.6 --libs --system-libs --ldflags 2> /dev/null) || (llvm-config-3.5 --libs --system-libs --ldflags 2> /dev/null) || (llvm-config --libs --system-libs --ldflags 2>/dev/null)`")]
+@[Link(ldflags: "`$(command -v llvm-config-3.6 || command -v llvm-config36 || command -v llvm-config-3.5 || command -v llvm-config35 || command -v llvm-config) --libs --system-libs --ldflags 2> /dev/null`")]
 lib LibLLVM
   type ContextRef = Void*
   type ModuleRef = Void*

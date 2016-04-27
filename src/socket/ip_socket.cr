@@ -1,9 +1,9 @@
 class IPSocket < Socket
   def local_address
-    sockaddr = uninitialized LibC::SockAddrIn6
-    addrlen = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
+    sockaddr = uninitialized LibC::SockaddrIn6
+    addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
 
-    if LibC.getsockname(fd, pointerof(sockaddr) as LibC::SockAddr*, pointerof(addrlen)) != 0
+    if LibC.getsockname(fd, pointerof(sockaddr) as LibC::Sockaddr*, pointerof(addrlen)) != 0
       raise Errno.new("getsockname")
     end
 
@@ -11,10 +11,10 @@ class IPSocket < Socket
   end
 
   def remote_address
-    sockaddr = uninitialized LibC::SockAddrIn6
-    addrlen = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
+    sockaddr = uninitialized LibC::SockaddrIn6
+    addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
 
-    if LibC.getpeername(fd, pointerof(sockaddr) as LibC::SockAddr*, pointerof(addrlen)) != 0
+    if LibC.getpeername(fd, pointerof(sockaddr) as LibC::Sockaddr*, pointerof(addrlen)) != 0
       raise Errno.new("getpeername")
     end
 
@@ -46,10 +46,10 @@ class IPSocket < Socket
 
   def self.getaddrinfo(host, port, family, socktype, protocol = LibC::IPPROTO_IP, timeout = nil)
     hints = LibC::Addrinfo.new
-    hints.family = (family || LibC::AF_UNSPEC).to_i32
-    hints.socktype = socktype
-    hints.protocol = protocol
-    hints.flags = 0
+    hints.ai_family = (family || LibC::AF_UNSPEC).to_i32
+    hints.ai_socktype = socktype
+    hints.ai_protocol = protocol
+    hints.ai_flags = 0
 
     dns_req = DnsRequestCbArg.new
 
@@ -87,7 +87,7 @@ class IPSocket < Socket
           success = yield cur_addr.value
 
           break if success
-          cur_addr = cur_addr.value.next
+          cur_addr = cur_addr.value.ai_next
         end
       ensure
         LibEvent2.evutil_freeaddrinfo value

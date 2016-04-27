@@ -1,85 +1,4 @@
-lib LibC
-  ifdef darwin
-    struct Stat
-      st_dev : Int32
-      st_ino : Int32
-      st_mode : LibC::ModeT
-      st_nlink : UInt16
-      st_uid : UInt32
-      st_gid : UInt32
-      st_rdev : Int32
-      st_atimespec : LibC::TimeSpec
-      st_mtimespec : LibC::TimeSpec
-      st_ctimespec : LibC::TimeSpec
-      st_size : Int64
-      st_blocks : Int64
-      st_blksize : Int32
-      st_flags : UInt32
-      st_gen : UInt32
-      st_lspare : Int32
-      st_qspare1 : Int64
-      st_qspare2 : Int64
-    end
-  elsif linux
-    ifdef x86_64
-      struct Stat
-        st_dev : UInt64
-        st_ino : UInt64
-        st_nlink : UInt64
-        st_mode : LibC::ModeT
-        st_uid : UInt32
-        st_gid : UInt32
-        __pad0 : UInt32
-        st_rdev : UInt32
-        st_size : Int64
-        st_blksize : Int64
-        st_blocks : Int64
-        st_atimespec : LibC::TimeSpec
-        st_mtimespec : LibC::TimeSpec
-        st_ctimespec : LibC::TimeSpec
-        __unused0 : Int64
-        __unused1 : Int64
-        __unused2 : Int64
-      end
-    else
-      struct Stat
-        st_dev : UInt64
-        __pad1 : UInt16
-        st_ino : UInt32
-        st_mode : LibC::ModeT
-        st_nlink : UInt32
-        st_uid : UInt32
-        st_gid : UInt32
-        st_rdev : UInt64
-        __pad2 : Int16
-        st_size : UInt32
-        st_blksize : Int32
-        st_blocks : Int32
-        st_atimespec : LibC::TimeSpec
-        st_mtimespec : LibC::TimeSpec
-        st_ctimespec : LibC::TimeSpec
-        __unused4 : UInt64
-        __unused5 : UInt64
-      end
-    end
-  end
-
-  S_ISVTX  = 0o001000
-  S_ISGID  = 0o002000
-  S_ISUID  = 0o004000
-  S_IFIFO  = 0o010000
-  S_IFCHR  = 0o020000
-  S_IFDIR  = 0o040000
-  S_IFBLK  = 0o060000
-  S_IFREG  = 0o100000
-  S_IFLNK  = 0o120000
-  S_IFSOCK = 0o140000
-  S_IFMT   = 0o170000
-
-  fun stat(path : Char*, stat : Stat*) : Int
-  fun lstat(path : Char*, stat : Stat*) : Int
-  fun fstat(fileno : Int, stat : Stat*) : Int
-end
+require "c/sys/stat"
 
 class File
   struct Stat
@@ -93,7 +12,11 @@ class File
     end
 
     def atime
-      time @stat.st_atimespec
+      ifdef darwin
+        time @stat.st_atimespec
+      else
+        time @stat.st_atim
+      end
     end
 
     def blksize
@@ -105,7 +28,11 @@ class File
     end
 
     def ctime
-      time @stat.st_ctimespec
+      ifdef darwin
+        time @stat.st_ctimespec
+      else
+        time @stat.st_ctim
+      end
     end
 
     def dev
@@ -130,7 +57,11 @@ class File
     end
 
     def mtime
-      time @stat.st_mtimespec
+      ifdef darwin
+        time @stat.st_mtimespec
+      else
+        time @stat.st_mtim
+      end
     end
 
     def nlink
