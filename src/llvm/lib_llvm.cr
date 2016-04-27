@@ -1,7 +1,11 @@
 require "./enums"
 
 @[Link("stdc++")]
-@[Link(ldflags: "`(llvm-config-3.6 --libs --system-libs --ldflags 2> /dev/null) || (llvm-config-3.5 --libs --system-libs --ldflags 2> /dev/null) || (llvm-config --libs --system-libs --ldflags 2>/dev/null)`")]
+ifdef freebsd
+  @[Link(ldflags: "`llvm-config36 --libs --system-libs --ldflags 2> /dev/null`")]
+else
+  @[Link(ldflags: "`(llvm-config-3.6 --libs --system-libs --ldflags 2> /dev/null) || (llvm-config-3.5 --libs --system-libs --ldflags 2> /dev/null) || (llvm-config --libs --system-libs --ldflags 2>/dev/null)`")]
+end
 lib LibLLVM
   type ContextRef = Void*
   type ModuleRef = Void*

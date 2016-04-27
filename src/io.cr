@@ -17,7 +17,7 @@ lib LibC
     O_TRUNC    = 0o0001000
     O_NONBLOCK = 0o0004000
     O_CLOEXEC  = 0o2000000
-  elsif darwin
+  elsif darwin || freebsd
     O_RDONLY   =    0x0000
     O_WRONLY   =    0x0001
     O_RDWR     =    0x0002

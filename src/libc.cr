@@ -30,7 +30,7 @@ lib LibC
     alias OffT = SSizeT
   end
 
-  ifdef darwin
+  ifdef darwin || freebsd
     alias ModeT = UInt16
   elsif linux
     alias ModeT = UInt32
@@ -63,7 +63,7 @@ lib LibC
   MAP_SHARED  = 0x0001
   MAP_PRIVATE = 0x0002
 
-  ifdef darwin
+  ifdef darwin || freebsd
     MAP_ANON = 0x1000
   end
   ifdef linux

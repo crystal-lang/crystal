@@ -3,7 +3,7 @@ lib LibPThread
 
   type Thread = Void*
 
-  ifdef darwin
+  ifdef darwin || freebsd
     type Mutex = Int64[8]
   else
     ifdef x86_64

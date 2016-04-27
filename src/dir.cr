@@ -9,6 +9,14 @@ lib LibC
       namelen : UInt8
       name : UInt8[1024]
     end
+  elsif freebsd
+    struct DirEntry
+      d_ino : Int32
+      reclen : UInt16
+      type : UInt8
+      namelen : UInt8
+      name : UInt8[256]
+    end
   elsif linux
     struct DirEntry
       d_ino : UInt64
@@ -27,10 +35,10 @@ lib LibC
   fun mkdir(path : UInt8*, mode : LibC::ModeT) : Int
   fun rmdir(path : UInt8*) : Int
 
-  ifdef darwin
-    fun readdir(dir : Dir*) : DirEntry*
-  elsif linux
+  ifdef linux
     fun readdir = readdir64(dir : Dir*) : DirEntry*
+  elsif darwin || freebsd
+    fun readdir(dir : Dir*) : DirEntry*
   end
 
   fun rewinddir(dir : Dir*)
