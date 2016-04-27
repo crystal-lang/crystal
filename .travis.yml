@@ -23,7 +23,7 @@ branches:
 notifications:
   irc:
     channels:
-      - "irc.freenode.net#crystal-lang"
+      - secure: iarUM4VAMZxdZZQxDrQy+MpxygaFFXJJ1bxvafehnk2vjWbifmnQHZx5z3POaSfp76q+hdqSgBrK/QnGwd8NY70wD+bR0Vb5JQoHwEyHyGbLczHp606SXRl7c/ZMozfOk4bo0X5EPPtie+2mtkjSUB03TI4NYY/5LMFhCw79zsU=
     use_notice: true
     skip_join: true
     template:
