@@ -122,6 +122,7 @@ GEM
     rdiscount (2.1.7)
     redcarpet (3.3.2)
     ref (2.0.0)
+    rouge (1.10.1)
     safe_yaml (1.0.4)
     sass (3.4.18)
     terminal-table (1.5.2)
@@ -148,7 +149,8 @@ DEPENDENCIES
   haml
   less
   rake
+  rouge
   therubyracer
 
 BUNDLED WITH
-   1.10.6
+   1.11.2
