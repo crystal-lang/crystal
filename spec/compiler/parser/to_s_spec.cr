@@ -50,4 +50,6 @@ describe "ASTNode#to_s" do
   expect_to_s "foo._bar"
   expect_to_s "foo._bar(1)"
   expect_to_s "_foo.bar"
+  expect_to_s "1.responds_to?(:to_s)"
+  expect_to_s "1.responds_to?(:\"&&\")"
 end

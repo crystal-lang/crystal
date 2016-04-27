@@ -798,7 +798,7 @@ module Crystal
 
     def parse_responds_to_name
       if @token.type != :SYMBOL
-        unexpected_token msg: "expected name or symbol"
+        unexpected_token msg: "expected symbol"
       end
 
       @token.value.to_s
