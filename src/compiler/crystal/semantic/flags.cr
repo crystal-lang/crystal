@@ -20,6 +20,7 @@ class Crystal::Program
   private def parse_flags(flags_name)
     set = flags_name.map(&.downcase).to_set
     set.add "darwin" if set.any?(&.starts_with?("macosx"))
+    set.add "freebsd" if set.any?(&.starts_with?("freebsd"))
     set.add "i686" if set.any? { |flag| %w(i586 i486 i386).includes?(flag) }
     set
   end
