@@ -111,12 +111,47 @@ remove_path_item() {
 
 ##############################################################################
 
+# required to build Crystal 0.16.0 with Crystal 0.15.0 (because the previous
+# compiler won't append the target folder).
+# TODO: remove this + the CRYSTAL_PATH injection below once 0.16.0 is released!
+
+LLVM_CONFIG=`command -v llvm-config-3.6 lllvm-config36 lvm-config-3.5 llvm-config35 llvm-config`
+TARGET_TRIPLE=`$LLVM_CONFIG --host-target`
+
+if (echo $TARGET_TRIPLE | grep -q "x86_64-"); then
+    if (echo $TARGET_TRIPLE | grep -q "linux-"); then
+        if (echo $TARGET_TRIPLE | grep -q "gnu"); then
+            TRIPLE=x86_64-linux-gnu
+        elif (echo $TARGET_TRIPLE | grep -q "musl"); then
+            TRIPLE=x86_64-linux-musl
+        fi
+    elif (echo $TARGET_TRIPLE | grep -q "darwin"); then
+        TRIPLE=x86_64-macosx-darwin
+    elif (echo $TARGET_TRIPLE | grep -q "freebsd"); then
+        TRIPLE=x86_64-portbld-freebsd
+    fi
+elif (echo $TARGET_TRIPLE | egrep -q "(i[3456]86)-"); then
+    if (echo $TARGET_TRIPLE | grep -q "linux-"); then
+        if (echo $TARGET_TRIPLE | grep -q "gnu"); then
+            TRIPLE=i686-linux-gnu
+        elif (echo $TARGET_TRIPLE | grep -q "musl"); then
+            TRIPLE=i686-linux-musl
+        fi
+    #elif (echo $TARGET_TRIPLE | grep -q "darwin"); then
+    #    TRIPLE=i686-macosx-darwin
+    #elif (echo $TARGET_TRIPLE | grep -q "freebsd"); then
+    #    TRIPLE=i686-portbld-freebsd
+    fi
+fi
+
+##############################################################################
+
 SCRIPT_PATH="$(realpath "$0")"
 SCRIPT_ROOT="$(dirname "$SCRIPT_PATH")"
 CRYSTAL_ROOT="$(dirname "$SCRIPT_ROOT")"
 CRYSTAL_DIR="$CRYSTAL_ROOT/.build"
 
-export CRYSTAL_PATH=$CRYSTAL_ROOT/src:libs
+export CRYSTAL_PATH=$CRYSTAL_ROOT/src:$CRYSTAL_ROOT/src/lib_c/$TRIPLE:libs
 
 if [ -x "$CRYSTAL_DIR/crystal" ]
 then
