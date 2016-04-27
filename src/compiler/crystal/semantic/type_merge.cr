@@ -250,28 +250,4 @@ module Crystal
       common.try &.virtual_type!
     end
   end
-
-  class TupleInstanceType
-    def common_ancestor(other)
-      if other.is_a?(TupleInstanceType) && self.size == other.size
-        # We try to find the common ancestor of a tuple type with another tuple
-        # type by either using the tuple's type if it's common to both tuples,
-        # or by using the common ancestor (for example when merging
-        # Foo and Bar < Foo we get Foo+). We don't merge unrelated types
-        # (merging {Int32} and {String} will give {Int32} | {String}, not {Int32 | String})
-        result_types = tuple_types.map_with_index do |self_tuple_type, index|
-          other_tuple_type = other.tuple_types[index]
-          if self_tuple_type == other_tuple_type
-            self_tuple_type
-          else
-            ancestor = self_tuple_type.common_ancestor(other_tuple_type)
-            return nil unless ancestor
-            ancestor.virtual_type
-          end
-        end
-        return program.tuple_of(result_types)
-      end
-      nil
-    end
-  end
 end

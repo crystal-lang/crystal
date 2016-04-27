@@ -110,37 +110,4 @@ describe "Code gen: tuple" do
       {1, 1}.my_size
       )).to_i.should eq(2)
   end
-
-  it "allows tuple covariance" do
-    run(%(
-      class Obj
-        def initialize
-          @tuple = {Foo.new}
-        end
-
-        def tuple=(@tuple)
-        end
-
-        def tuple
-          @tuple
-        end
-      end
-
-      class Foo
-        def bar
-          21
-        end
-      end
-
-      class Bar < Foo
-        def bar
-          42
-        end
-      end
-
-      obj = Obj.new
-      obj.tuple = {Bar.new}
-      obj.tuple[0].bar
-      )).to_i.should eq(42)
-  end
 end

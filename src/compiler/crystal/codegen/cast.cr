@@ -99,18 +99,6 @@ class Crystal::CodeGenVisitor
     assign_distinct target_pointer, target_type, value_type.typedef, value
   end
 
-  def assign_distinct(target_pointer, target_type : TupleInstanceType, value_type : TupleInstanceType, value)
-    index = 0
-    target_type.tuple_types.zip(value_type.tuple_types) do |target_tuple_type, value_tuple_type|
-      target_ptr = gep target_pointer, 0, index
-      value_ptr = gep value, 0, index
-      loaded_value = load value_ptr
-      assign(target_ptr, target_tuple_type, value_tuple_type, loaded_value)
-      index += 1
-    end
-    value
-  end
-
   def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
     raise "Bug: trying to assign #{target_type} <- #{value_type}"
   end
@@ -332,12 +320,6 @@ class Crystal::CodeGenVisitor
 
   def upcast_distinct(value, to_type : EnumType, from_type : Type)
     value
-  end
-
-  def upcast_distinct(value, to_type : TupleInstanceType, from_type : TupleInstanceType)
-    target_ptr = alloca llvm_type(to_type)
-    assign(target_ptr, to_type, from_type, value)
-    target_ptr
   end
 
   def upcast_distinct(value, to_type : Type, from_type : Type)
