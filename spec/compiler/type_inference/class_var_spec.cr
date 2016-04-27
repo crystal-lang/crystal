@@ -301,4 +301,26 @@ describe "Type inference: class var" do
       ),
       "undefined constant Bar"
   end
+
+  it "infers in multiple assign for tuple type (1)" do
+    assert_type(%(
+      class Foo
+        def self.foo
+          @@x, @@y = Bar.method
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      class Bar
+        def self.method : {Int32, Bool}
+          {1, true}
+        end
+      end
+
+      Foo.x
+      )) { nilable int32 }
+  end
 end

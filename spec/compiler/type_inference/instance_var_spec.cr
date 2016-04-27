@@ -2615,6 +2615,28 @@ describe "Type inference: instance var" do
       "Can't infer the type of instance variable '@x' of Foo"
   end
 
+  it "infers in multiple assign for tuple type (1)" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x, @y = Bar.method
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar
+        def self.method : {Int32, Bool}
+          {1, true}
+        end
+      end
+
+      Foo.new.x
+      )) { int32 }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

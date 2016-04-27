@@ -628,4 +628,17 @@ describe "Global inference" do
       ),
       "undefined constant Bar"
   end
+
+  it "infers in multiple assign for tuple type (1)" do
+    assert_type(%(
+      class Bar
+        def self.method : {Int32, Bool}
+          {1, true}
+        end
+      end
+
+      $x, $y = Bar.method
+      $x
+      )) { int32 }
+  end
 end

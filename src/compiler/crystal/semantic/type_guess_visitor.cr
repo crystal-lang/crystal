@@ -199,6 +199,40 @@ module Crystal
             add_to_initialize_info(target.name)
           end
         end
+
+        # If it's something like
+        #
+        # ```
+        # @x, @y = exp
+        # ```
+        #
+        # and we can guess the type of `exp` and it's a tuple type,
+        # we can guess the type of @x and @y
+        if node.values.size == 1 &&
+           node.targets.any? { |t| t.is_a?(InstanceVar) || t.is_a?(ClassVar) || t.is_a?(Global) }
+          type = guess_type(node.values.first)
+          if type.is_a?(TupleInstanceType) && type.size >= node.targets.size
+            node.targets.zip(type.tuple_types) do |target, tuple_type|
+              case target
+              when InstanceVar
+                owner_vars = @guessed_instance_vars[current_type] ||= {} of String => InstanceVarTypeInfo
+                add_instance_var_type_info(owner_vars, target.name, tuple_type)
+              when ClassVar
+                owner = class_var_owner(target)
+
+                # If the class variable already exists no need to guess its type
+                next if owner.class_vars[target.name]?
+
+                owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
+                add_type_info(owner_vars, target.name, tuple_type)
+              when Global
+                next if @mod.global_vars[target.name]?
+
+                add_type_info(@globals, target.name, tuple_type)
+              end
+            end
+          end
+        end
       end
     end
 
