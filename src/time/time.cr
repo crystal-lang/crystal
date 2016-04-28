@@ -587,16 +587,23 @@ struct Time
 
   private def self.compute_offset(second)
     LibC.tzset
-    if LibC.daylight == 0
-      # current TZ doesn't have any DST, neither in past, present or future
-      offset = -LibC.timezone.to_i64 / 60
-    else
+    offset = nil
+
+    {% if LibC.methods.includes?("daylight".id) %}
+      if LibC.daylight == 0
+        # current TZ doesn't have any DST, neither in past, present or future
+        offset = -LibC.timezone.to_i64
+      end
+    {% end %}
+
+    unless offset
       # current TZ may have DST, either in past, present or future
       ret = LibC.localtime_r(pointerof(second), out tm)
       raise Errno.new("localtime_r") if ret.null?
-      offset = tm.tm_gmtoff.to_i64 / 60
+      offset = tm.tm_gmtoff.to_i64
     end
-    offset * Span::TicksPerMinute
+
+    offset / 60 * Span::TicksPerMinute
   end
 
   private def self.compute_second_and_tenth_microsecond

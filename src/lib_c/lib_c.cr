@@ -22,5 +22,3 @@ lib LibC
 
   $environ : Char**
 end
-
-require "./primitives"
