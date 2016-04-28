@@ -478,7 +478,7 @@ class Array(T)
     self[*range_to_index_and_count(range)] = values
   end
 
-  # Returns all elements that are within the given range
+  # Returns all elements that are within the given range.
   #
   # Negative indices count backward from the end of the array (-1 is the last
   # element). Additionally, an empty array is returned when the starting index
@@ -646,7 +646,7 @@ class Array(T)
     Array(T).new(size) { |i| @buffer[i].clone as T }
   end
 
-  # Returns a copy of self with all ` elements removed.
+  # Returns a copy of self with all `nil` elements removed.
   #
   # ```
   # ["a", nil, "b", nil, "c", nil].compact # => ["a", "b", "c"]
@@ -655,7 +655,7 @@ class Array(T)
     compact_map &.itself
   end
 
-  # Removes all ` elements from `self`.
+  # Removes all `nil` elements from `self`.
   #
   # ```
   # ary = ["a", nil, "b", nil, "c"]
@@ -1130,7 +1130,7 @@ class Array(T)
     end
   end
 
-  # Returns the last element of `self` if it's not empty, or `.
+  # Returns the last element of `self` if it's not empty, or `nil`.
   #
   # ```
   # ([1, 2, 3]).last?   # => 1
@@ -1164,7 +1164,7 @@ class Array(T)
   end
 
   # Modifies `self`, keeping only the elements in the collection for which the
-  # passed block returns *true*. Returns ` if no changes were made.
+  # passed block returns *true*. Returns `nil` if no changes were made.
   #
   # See also `Array#select`
   def select!
@@ -1172,7 +1172,7 @@ class Array(T)
   end
 
   # Modifies `self`, deleting the elements in the collection for which the
-  # passed block returns *true*. Returns ` if no changes were made.
+  # passed block returns *true*. Returns `nil` if no changes were made.
   #
   # See also `Array#reject`
   def reject!
@@ -1333,7 +1333,7 @@ class Array(T)
 
   # Returns a new Array that is a one-dimensional flattening of self (recursively).
   #
-  # That is, for every element that is an array, extract its elements into the new array
+  # That is, for every element that is an array, extract its elements into the new array.
   #
   # ```
   # s = [1, 2, 3]         # => [1, 2, 3]
@@ -1532,7 +1532,7 @@ class Array(T)
   # ```
   # a = ["a", "b"]
   # a.push("c") # => ["a", "b", "c"]
-  # a.push(1)   # => Errors, because the array only accepts String
+  # a.push(1)   # => Errors, because the array only accepts String.
   #
   # a = ["a", "b"] of (Int32 | String)
   # a.push("c") # => ["a", "b", "c"]
@@ -1971,7 +1971,7 @@ class Array(T)
   # ```
   # a = ["a", "b"]
   # a.unshift("c") # => ["c", a", "b"]
-  # a.unshift(1)   # => Errors, because the array only accepts String
+  # a.unshift(1)   # => Errors, because the array only accepts String.
   #
   # a = ["a", "b"] of (Int32 | String)
   # a.unshift("c") # => ["c", "a", "b"]
