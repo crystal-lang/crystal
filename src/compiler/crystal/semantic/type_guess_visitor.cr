@@ -1258,6 +1258,9 @@ module Crystal
     end
 
     def visit(node : TypeDeclaration)
+      if value = node.value
+        process_assign(node.var, value)
+      end
       false
     end
 

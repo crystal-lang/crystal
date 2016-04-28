@@ -30,4 +30,12 @@ describe "Code gen: global" do
       $foo.to_i
       )).to_i.should eq(0)
   end
+
+  it "declares and initializes" do
+    run(%(
+      $x : Int32 = 42
+      $x : Int32 = 84
+      $x
+      )).to_i.should eq(84)
+  end
 end

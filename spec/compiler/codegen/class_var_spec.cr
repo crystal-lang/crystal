@@ -234,4 +234,18 @@ describe "Codegen: class var" do
       Foo.foo
       )).to_i.should eq(3)
   end
+
+  it "declares and initializes" do
+    run(%(
+      class Foo
+        @@x : Int32 = 42
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x
+      )).to_i.should eq(42)
+  end
 end

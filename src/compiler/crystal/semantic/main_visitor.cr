@@ -195,8 +195,14 @@ module Crystal
 
         attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
         if Attribute.any?(attributes, "ThreadLocal")
-          var = @mod.global_vars[var.name]
-          var.thread_local = true
+          global_var = @mod.global_vars[var.name]
+          global_var.thread_local = true
+        end
+
+        if value = node.value
+          type_assign(var, value, node)
+          node.bind_to(var)
+          return false
         end
       end
 
@@ -531,7 +537,7 @@ module Crystal
       node.bind_to value
 
       begin
-        var.bind_to node
+        var.bind_to value
       rescue ex : FrozenTypeException
         target.raise ex.message
       end
@@ -587,7 +593,7 @@ module Crystal
       target.bind_to var
 
       node.bind_to value
-      var.bind_to node
+      var.bind_to value
     end
 
     def type_assign(target : ClassVar, value, node)
@@ -617,7 +623,7 @@ module Crystal
       target.bind_to var
 
       node.bind_to value
-      var.bind_to node
+      var.bind_to value
     end
 
     def check_class_var_is_thread_local(target, var, attributes)

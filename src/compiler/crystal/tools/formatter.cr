@@ -2728,12 +2728,18 @@ module Crystal
 
     def visit(node : TypeDeclaration)
       accept node.var
-      skip_space_or_newline
+      skip_space
       check :":"
       next_token_skip_space_or_newline
       write " : "
       accept node.declared_type
-
+      if value = node.value
+        skip_space
+        check :"="
+        next_token_skip_space_or_newline
+        write " = "
+        accept value
+      end
       false
     end
 

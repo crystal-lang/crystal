@@ -111,6 +111,8 @@ module Crystal
       case node
       when Assign
         node.target.is_a?(ClassVar)
+      when TypeDeclaration
+        node.var.is_a?(ClassVar)
       when FileNode, Expressions, ClassDef, ModuleDef, EnumDef, Alias, Include, Extend, LibDef, Def, Macro, Call
         true
       else
@@ -208,12 +210,21 @@ module Crystal
     def visit(node : Assign)
       target = node.target as ClassVar
       value = node.value
+      type_class_var(target, value)
+      false
+    end
 
+    def visit(node : TypeDeclaration)
+      target = node.var as ClassVar
+      value = node.value
+      type_class_var(target, value) if value
+      false
+    end
+
+    def type_class_var(target, value)
       owner = class_var_owner(target)
       cvars = @class_vars[owner] ||= {} of String => ASTNode
       cvars[target.name] = value
-
-      false
     end
 
     def inside_block?

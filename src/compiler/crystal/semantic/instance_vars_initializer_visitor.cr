@@ -11,6 +11,7 @@ module Crystal
   # In this pass we check instance var initializers like:
   #
   #     @x = 1
+  #     @x : Int32 = 1
   #
   # These initializers run when an instance is created,
   # so there's no way that the main code can use them before
@@ -41,6 +42,8 @@ module Crystal
       case node
       when Assign
         node.target.is_a?(InstanceVar)
+      when TypeDeclaration
+        node.var.is_a?(InstanceVar)
       when FileNode, Expressions, ClassDef, ModuleDef, Alias, Include, Extend, LibDef, Def, Macro, Call
         true
       else
@@ -128,7 +131,18 @@ module Crystal
     def visit(node : Assign)
       target = node.target as InstanceVar
       value = node.value
+      type_instance_var(node, target, value)
+      false
+    end
 
+    def visit(node : TypeDeclaration)
+      target = node.var as InstanceVar
+      value = node.value
+      type_instance_var(node, target, value) if value
+      false
+    end
+
+    def type_instance_var(node, target, value)
       current_type = current_type()
       case current_type
       when Program, FileModule
@@ -146,7 +160,6 @@ module Crystal
         node.type = @mod.nil
         return
       end
-      false
     end
 
     def inside_block?

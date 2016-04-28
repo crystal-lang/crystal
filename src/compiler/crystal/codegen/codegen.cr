@@ -938,8 +938,16 @@ module Crystal
 
     def visit(node : TypeDeclaration)
       var = node.var
-      if var.is_a?(Var)
+      case var
+      when Var
         declare_var var
+      when Global
+        if value = node.value
+          accept value
+          ptr = get_global var.name, var.type, var.var
+          assign ptr, var.type, value.type, @last
+          return false
+        end
       end
 
       @last = llvm_nil

@@ -875,6 +875,10 @@ module Crystal
       node.var.accept self
       @str << " : "
       node.declared_type.accept self
+      if value = node.value
+        @str << " = "
+        value.accept self
+      end
       false
     end
 

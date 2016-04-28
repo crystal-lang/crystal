@@ -1348,13 +1348,15 @@ module Crystal
   class TypeDeclaration < ASTNode
     property var : ASTNode
     property declared_type : ASTNode
+    property value : ASTNode?
 
-    def initialize(@var, @declared_type)
+    def initialize(@var, @declared_type, @value = nil)
     end
 
     def accept_children(visitor)
       var.accept visitor
       declared_type.accept visitor
+      value.try &.accept visitor
     end
 
     def name_size
@@ -1374,10 +1376,10 @@ module Crystal
     end
 
     def clone_without_location
-      TypeDeclaration.new(@var.clone, @declared_type.clone)
+      TypeDeclaration.new(@var.clone, @declared_type.clone, @value.clone)
     end
 
-    def_equals_and_hash @var, @declared_type
+    def_equals_and_hash @var, @declared_type, @value
   end
 
   class UninitializedVar < ASTNode

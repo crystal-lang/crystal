@@ -655,7 +655,7 @@ describe "macro methods" do
     end
   end
 
-  describe "declare var methods" do
+  describe "type declaration methods" do
     it "executes var" do
       assert_macro "x", %({{x.var}}), [TypeDeclaration.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "some_name"
     end
@@ -666,6 +666,10 @@ describe "macro methods" do
 
     it "executes type" do
       assert_macro "x", %({{x.type}}), [TypeDeclaration.new(Var.new("some_name"), Path.new("SomeType"))] of ASTNode, "SomeType"
+    end
+
+    it "executes value" do
+      assert_macro "x", %({{x.value}}), [TypeDeclaration.new(Var.new("some_name"), Path.new("SomeType"), NumberLiteral.new(1))] of ASTNode, "1"
     end
   end
 
