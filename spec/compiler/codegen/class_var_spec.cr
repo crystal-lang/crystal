@@ -248,4 +248,22 @@ describe "Codegen: class var" do
       Foo.x
       )).to_i.should eq(42)
   end
+
+  it "doesn't use nilable type for initializer" do
+    run(%(
+      class Foo
+        @@foo : Int32?
+        @@foo = 42
+
+        @@bar : Int32?
+        @@bar = @@foo
+
+        def self.bar
+          @@bar
+        end
+      end
+
+      Foo.bar || 10
+      )).to_i.should eq(42)
+  end
 end

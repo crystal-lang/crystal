@@ -197,7 +197,11 @@ module Crystal
       last = @last
 
       class_var = initializer.owner.class_vars[initializer.name]
-      if last.constant? && !class_var.thread_local? && class_var.type == initializer.node.type
+
+      if last.constant? &&
+         !class_var.thread_local? &&
+         (class_var.type == @mod.nil || !class_var.type.includes_type?(@mod.nil)) &&
+         class_var.type == initializer.node.type
         # If a class variable starts with a constant value, we just initialize
         # it with it instead of initializing it with null and then doing an assignment
         get_global class_var_global_name(class_var), class_var.type, class_var, last
