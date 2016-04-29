@@ -33,6 +33,10 @@
 struct Float
   alias Primitive = Float32 | Float64
 
+  def -
+    self.class.zero - self
+  end
+
   def %(other)
     modulo(other)
   end
@@ -70,7 +74,7 @@ struct Float
       raise DivisionByZero.new
     else
       mod = self % other
-      return 0.0 if mod == 0.0
+      return self.class.zero if mod == 0.0
       return mod if self > 0 && other > 0
       return mod if self < 0 && other < 0
 
@@ -96,10 +100,6 @@ struct Float32
   INFINITY = 1_f32 / 0_f32
   MIN      = -INFINITY
   MAX      = INFINITY
-
-  def -
-    0.0_f32 - self
-  end
 
   def ceil
     LibM.ceil_f32(self)
@@ -148,10 +148,6 @@ struct Float64
   INFINITY = 1_f64 / 0_f64
   MIN      = -INFINITY
   MAX      = INFINITY
-
-  def -
-    0.0 - self
-  end
 
   def ceil
     LibM.ceil_f64(self)

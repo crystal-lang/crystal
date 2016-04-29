@@ -46,6 +46,11 @@ describe "Float" do
     assert { (11.5.remainder -4.0).should eq(3.5) }
     assert { (-11.5.remainder 4.0).should eq(-3.5) }
     assert { (-11.5.remainder -4.0).should eq(-3.5) }
+
+    it "preserves type" do
+      r = 1.5_f32.remainder(1)
+      typeof(r).should eq(Float32)
+    end
   end
 
   describe "round" do
@@ -123,5 +128,15 @@ describe "Float" do
     (1.0/0.0).finite?.should be_false
     (-1.0/0.0).finite?.should be_false
     (-0.0/0.0).finite?.should be_false
+  end
+
+  it "does unary -" do
+    f = -(1.5)
+    f.should eq(-1.5)
+    f.should be_a(Float64)
+
+    f = -(1.5_f32)
+    f.should eq(-1.5_f32)
+    f.should be_a(Float32)
   end
 end

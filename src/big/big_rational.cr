@@ -11,7 +11,7 @@ require "./big"
 #     r.to_s # => "-1/3"
 #
 # It is implemented under the hood with [GMP](https://gmplib.org/).
-struct BigRational
+struct BigRational < Number
   include Comparable(BigRational)
   include Comparable(Int)
   include Comparable(Float)
@@ -29,6 +29,11 @@ struct BigRational
     LibGMP.mpq_set_num(mpq, numerator.to_unsafe)
     LibGMP.mpq_set_den(mpq, denominator.to_unsafe)
     LibGMP.mpq_canonicalize(mpq)
+  end
+
+  # Creates a new BigRational with *num* as the numerator and 1 for denominator.
+  def initialize(num : Int)
+    initialize(num, 1)
   end
 
   # :nodoc:

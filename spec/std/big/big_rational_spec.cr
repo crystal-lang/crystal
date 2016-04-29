@@ -151,4 +151,8 @@ describe BigRational do
     hash = b.hash
     hash.should eq(b.to_f64.hash)
   end
+
+  it "is a number" do
+    br(10, 3).is_a?(Number).should be_true
+  end
 end
