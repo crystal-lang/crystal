@@ -39,6 +39,44 @@ end
 twice { puts "Hello!" }
 ```
 
+The difference between using `do ... end` and `{ ... }` is that `do ... end` binds to the left-most call, while `{ ... }` binds to the right-most call:
+
+```crystal
+foo bar do
+  something
+end
+
+# The above is the same as
+foo(bar) do
+  something
+end
+
+foo bar { something }
+
+# The above is the same as
+
+foo(bar { something })
+```
+
+The reason for this is to allow creating Domain Specific Languages (DSLs) using `do ... end` to have them be read as plain English:
+
+```crystal
+open file "foo.cr" do
+  something
+end
+
+# Same as:
+open(file("foo.cr")) do
+end
+```
+
+You wouldn't want the above to be:
+
+```crystal
+open(file("foo.cr") do
+end)
+```
+
 ## Overloads
 
 Two methods, one that yields and another that doesn't, are considered different overloads, as explained in the [overloading](overloading.html) section.
