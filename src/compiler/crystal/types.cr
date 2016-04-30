@@ -353,7 +353,7 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_macro"
     end
 
-    def lookup_macro(name, args_size, named_args)
+    def lookup_macro(name, args : Array, named_args)
       raise "Bug: #{self} doesn't implement lookup_macro"
     end
 
@@ -577,14 +577,14 @@ module Crystal
       [] of Def
     end
 
-    def lookup_macro(name, args_size, named_args)
+    def lookup_macro(name, args : Array, named_args)
       if macros = self.macros.try &.[name]?
-        match = macros.find &.matches?(args_size, named_args)
+        match = macros.find &.matches?(args, named_args)
         return match if match
       end
 
       instance_type.parents.try &.each do |parent|
-        parent_macro = parent.metaclass.lookup_macro(name, args_size, named_args)
+        parent_macro = parent.metaclass.lookup_macro(name, args, named_args)
         return parent_macro if parent_macro
       end
 
@@ -2867,7 +2867,7 @@ module Crystal
       type.metaclass
     end
 
-    def lookup_macro(name, args_size, named_args)
+    def lookup_macro(name, args : Array, named_args)
       nil
     end
 

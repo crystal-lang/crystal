@@ -82,4 +82,44 @@ describe "Code gen: named args" do
       a.foo 1, z: 20
       )).to_i.should eq(22)
   end
+
+  it "sends one regular argument as named argument" do
+    run(%(
+      def foo(x)
+        x
+      end
+
+      foo x: 42
+      )).to_i.should eq(42)
+  end
+
+  it "sends two regular arguments as named arguments" do
+    run(%(
+      def foo(x, y)
+        x + y
+      end
+
+      foo x: 10, y: 32
+      )).to_i.should eq(42)
+  end
+
+  it "sends two regular arguments as named arguments in inverted position (1)" do
+    run(%(
+      def foo(x, y)
+        x
+      end
+
+      foo y: 42, x: "foo"
+      )).to_string.should eq("foo")
+  end
+
+  it "sends two regular arguments as named arguments in inverted position (2)" do
+    run(%(
+      def foo(x, y)
+        y
+      end
+
+      foo y: 42, x: "foo"
+      )).to_i.should eq(42)
+  end
 end

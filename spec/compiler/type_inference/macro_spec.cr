@@ -716,4 +716,44 @@ describe "Type inference: macro" do
       end
       )) { int32 }
   end
+
+  it "errors if named arg matches splat argument" do
+    assert_error %(
+      macro foo(x, *y)
+      end
+
+      foo x: 1, y: 2
+      ),
+      "can't use named args with macros that have a splat argument"
+  end
+
+  it "doesn't allow named arg if there's a splat" do
+    assert_error %(
+      macro foo(*y, x)
+      end
+
+      foo 1, x: 2
+      ),
+      "can't use named args with macros that have a splat argument"
+  end
+
+  it "errors if missing one argument" do
+    assert_error %(
+      macro foo(x, y, z)
+      end
+
+      foo x: 1, y: 2
+      ),
+      "missing argument: z"
+  end
+
+  it "errors if missing two arguments" do
+    assert_error %(
+      macro foo(x, y, z)
+      end
+
+      foo y: 2
+      ),
+      "missing arguments: x, z"
+  end
 end

@@ -115,18 +115,41 @@ module Crystal
     end
 
     def self.match_def(signature, def_metadata, context)
-      unless (def_metadata.min_size <= signature.arg_types.size <= def_metadata.max_size) &&
-             (def_metadata.yields == !!signature.block)
+      # If yieldness isn't the same there's no match
+      if def_metadata.yields != !!signature.block
+        return nil
+      end
+
+      # If there are more positional arguments than those required, there's no match
+      # (if there's less they might be matched with named arguments)
+      if signature.arg_types.size > def_metadata.max_size
         return nil
       end
 
       a_def = def_metadata.def
       arg_types = signature.arg_types
       named_args = signature.named_args
+      splat_index = a_def.splat_index
+
+      # If there's a splat in the method and named args in the call,
+      # there's no match (it's confusing to determine what should happen)
+      if named_args && splat_index
+        return nil
+      end
+
+      # If there are named args we must check that all mandatory args
+      # are covered by positional arguments or named arguments.
+      if named_args
+        mandatory_args = BitArray.new(a_def.args.size)
+      elsif signature.arg_types.size < def_metadata.min_size
+        # Otherwise, they must be matched by positional arguments
+        return nil
+      end
+
       matched_arg_types = nil
 
       # If there's a restriction on a splat, zero splatted args don't match
-      if (splat_index = a_def.splat_index) &&
+      if splat_index &&
          a_def.args[splat_index].restriction &&
          Splat.size(a_def, arg_types) == 0
         return nil
@@ -137,6 +160,7 @@ module Crystal
         if match_arg_type
           matched_arg_types ||= [] of Type
           matched_arg_types.push match_arg_type
+          mandatory_args[arg_index] = true if mandatory_args
         else
           return nil
         end
@@ -148,15 +172,37 @@ module Crystal
         named_args.each do |named_arg|
           found_index = a_def.args.index { |arg| arg.name == named_arg.name }
           if found_index
-            # Check whether the named arg refers to an argument before the first default argument
-            if found_index < min_index
+            # A named arg can't target the splat index
+            if found_index == splat_index
               return nil
+            end
+
+            # Check whether the named arg refers to an argument that was already specified
+            if mandatory_args
+              if mandatory_args[found_index]
+                return nil
+              end
+              mandatory_args[found_index] = true
+            else
+              if found_index < min_index
+                return nil
+              end
             end
 
             unless match_arg(named_arg.value.type, a_def.args[found_index], context)
               return nil
             end
           else
+            return nil
+          end
+        end
+      end
+
+      # Check that all mandatory args were specified
+      # (either with positional arguments or with named arguments)
+      if mandatory_args
+        a_def.args.each_with_index do |arg, index|
+          if index != splat_index && !arg.default_value && !mandatory_args[index]
             return nil
           end
         end
