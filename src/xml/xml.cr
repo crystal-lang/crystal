@@ -1,8 +1,40 @@
+# The XML module allows parsing and generating [XML](https://www.w3.org/XML/) documents.
+#
+# `XML#parse` will parse xml from `String` or `io` and return xml document as an `XML:Node` which represents all kinds of xml nodes.
+#
+# Example:
+# ```
+# require "xml"
+#
+# xml = <<-XML
+#  <person id="1">
+#   <firstname>Jane</firstname>
+#   <lastname>Doe</lastname>
+#  </person>
+# XML
+#
+# document = XML.parse(xml)             # : XML::Node
+# person = document.first_element_child # : XML::Node?
+# if person
+#   puts person["id"] # "1" : String?
+#
+#   puts typeof(person.children)                       # XML::NodeSet
+#   person.children.select(&.element?).each do |child| # Select only element children
+#     puts typeof(child)                               # XML::Node
+#     puts child.name                                  # firstname : String
+#     puts child.content                               # Jane : String?
+#   end
+# end
+# ```
 module XML
+  # Parses an XML document from *string* with *options* into an `XML::Node`.
+  # See `ParserOptions.default` for default options.
   def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Node
     from_ptr LibXML.xmlReadMemory(string, string.bytesize, nil, nil, options)
   end
 
+  # Parses an XML document from *io* with *options* into an `XML::Node`.
+  # See `ParserOptions.default` for default options.
   def self.parse(io : IO, options : ParserOptions = ParserOptions.default) : Node
     from_ptr LibXML.xmlReadIO(
       ->(ctx, buffer, len) {
@@ -16,10 +48,14 @@ module XML
     )
   end
 
+  # Parses an HTML document from *string* with *options* into an `XML::Node`.
+  # See `HTMLParserOptions.default` for default options.
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     from_ptr LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options)
   end
 
+  # Parses an HTML document from *io* with *options* into an `XML::Node`.
+  # See `HTMLParserOptions.default` for default options.
   def self.parse_html(io : IO, options : HTMLParserOptions = HTMLParserOptions.default) : Node
     from_ptr LibXML.htmlReadIO(
       ->(ctx, buffer, len) {
