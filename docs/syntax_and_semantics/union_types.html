@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Visibility | Crystal Programming Language</title>
+        <title>Union types | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.3.2">
@@ -25,10 +25,10 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/inheritance.html" />
+    <link rel="next" href="../syntax_and_semantics/control_expressions.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/operators.html" />
+    <link rel="prev" href="../syntax_and_semantics/multiple_assignment.html" />
     
 
         
@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.3.10" data-basepath=".." data-revision="Sat Apr 30 2016 15:13:06 GMT+0000 (UTC)">
+    <div class="book" data-level="4.6" data-basepath=".." data-revision="Sat Apr 30 2016 15:13:06 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -556,7 +556,7 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6" data-path="syntax_and_semantics/union_types.html">
+        <li class="chapter active" data-level="4.6" data-path="syntax_and_semantics/union_types.html">
             
                 
                     <a href="../syntax_and_semantics/union_types.html">
@@ -1071,7 +1071,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="4.8.3.10" data-path="syntax_and_semantics/visibility.html">
+        <li class="chapter " data-level="4.8.3.10" data-path="syntax_and_semantics/visibility.html">
             
                 
                     <a href="../syntax_and_semantics/visibility.html">
@@ -2091,111 +2091,30 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="visibility">Visibility</h1>
-<p>Methods are public by default: the compiler will always let you invoke them. Because public is the default if there is no <code>public</code> keyword.</p>
-<p>Methods can be marked as <code>private</code> or <code>protected</code>.</p>
-<h2 id="private">private</h2>
-<p>A <code>private</code> method can only be invoked without a receiver, that is, without something before the dot:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-keyword">private</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">say</span></span>(message)
-    puts message
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">say_hello</span></span>
-    say <span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-comment"># OK, no receiver</span>
-    <span class="hljs-keyword">self</span>.say <span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-comment"># Error, self is a receiver</span>
-
-    other = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;Other&quot;</span>
-    other.say <span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-comment"># Error, other is a receiver</span>
-  <span class="hljs-keyword">end</span>
+                        <h1 id="union-types">Union types</h1>
+<p>The type of a varaible or expression can consist of multiple types. This is called a union type. For example, when assigning to a same variable inside different <a href="if.html">if</a> branches:</p>
+<pre><code class="lang-crystal"><span class="hljs-keyword">if</span> <span class="hljs-number">1</span> + <span class="hljs-number">2</span> == <span class="hljs-number">3</span>
+  a = <span class="hljs-number">1</span>
+<span class="hljs-keyword">else</span>
+  a = <span class="hljs-string">&quot;hello&quot;</span>
 <span class="hljs-keyword">end</span>
+
+a <span class="hljs-comment"># : Int32 | String</span>
 </code></pre>
-<p>Note that <code>private</code> methods are visible by subclasses:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span> <span class="hljs-inheritance">&lt; <span class="hljs-parent">Person</span></span></span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">say_bye</span></span>
-    say <span class="hljs-string">&quot;bye&quot;</span> <span class="hljs-comment"># OK</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
+<p>At the end of the if, <code>a</code> will have the <code>Int32 | String</code> type, read &quot;the union of Int32 and String&quot;. This union type is created automatically by the compiler. At runtime, <code>a</code> will of course be of one type only. This can be seen by invoking the <code>class</code> method:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># The runtime type</span>
+a.<span class="hljs-keyword">class</span> <span class="hljs-comment"># =&gt; Int32</span>
 </code></pre>
-<h2 id="protected">protected</h2>
-<p>A <code>protected</code> method can only be invoked on:</p>
-<ol>
-<li>instances of the same type as the current type</li>
-<li>instances in the same namespace (class, struct, module, etc.) as the current type</li>
-</ol>
-<pre><code class="lang-crystal"><span class="hljs-comment">### Example of 1</span>
-
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-keyword">protected</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">say</span></span>(message)
-    puts message
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">say_hello</span></span>
-    say <span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-comment"># OK, implicit self is a Person</span>
-    <span class="hljs-keyword">self</span>.say <span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-comment"># OK, self is a Person</span>
-
-    other = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;Other&quot;</span>
-    other.say <span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-comment"># OK, other is a Person</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Animal</span></span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">make_a_person_talk</span></span>
-    person = <span class="hljs-constant">Person</span>.new
-    person.say <span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-comment"># Error, person is a Person</span>
-                       <span class="hljs-comment"># but current type is an Animal</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-one_more = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;One more&quot;</span>
-one_more.say <span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-comment"># Error, one_more is a Person</span>
-                     <span class="hljs-comment"># but current type is the Program</span>
-
-<span class="hljs-comment">### Example of 2</span>
-
-<span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Namespace</span></span>
-  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span></span>
-    <span class="hljs-keyword">protected</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">foo</span></span>
-      puts <span class="hljs-string">&quot;Hello&quot;</span>
-    <span class="hljs-keyword">end</span>
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Bar</span></span>
-    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">bar</span></span>
-      <span class="hljs-comment"># Works, because Foo and Bar are under Namespace</span>
-      <span class="hljs-constant">Foo</span>.new.foo
-    <span class="hljs-keyword">end</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-constant">Namespace::Bar</span>.new.bar
+<p>The compile-time type can be seen by using <a href="typeof.html">typeof</a>:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># The compile-time type</span>
+typeof(a) <span class="hljs-comment"># =&gt; Int32 | String</span>
 </code></pre>
-<p>A <code>protected</code> class method can be invoked from an instance method and the other way around:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-keyword">protected</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">self</span></span>.say(message)
-    puts message
-  <span class="hljs-keyword">end</span>
+<p>A union can consist of an arbitrary large number of types. When invoking a method on an expression whose type is a union type, all types in the union must respond to the method, otherwise a compile-time error is given. The type of the method call is the union type of the return types of those methods.</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># to_s is defined for Int32 and String, it returns String</span>
+a.to_s <span class="hljs-comment"># =&gt; String</span>
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">say_hello</span></span>
-    <span class="hljs-constant">Person</span>.say <span class="hljs-string">&quot;hello&quot;</span> <span class="hljs-comment"># OK</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
+a + <span class="hljs-number">1</span> <span class="hljs-comment"># Error, because String#+(Int32) isn&apos;t defined</span>
 </code></pre>
-<h2 id="private-top-level-methods">Private top-level methods</h2>
-<p>A <code>private</code> top-level method is only visible in the current file.</p>
-<pre><code class="lang-crystal"><span class="hljs-comment"># In file one.cr</span>
-<span class="hljs-keyword">private</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">greet</span></span>
-  puts <span class="hljs-string">&quot;Hello&quot;</span>
-<span class="hljs-keyword">end</span>
-
-greet <span class="hljs-comment">#=&gt; &quot;Hello&quot;</span>
-
-<span class="hljs-comment"># In file two.cr</span>
-<span class="hljs-keyword">require</span> <span class="hljs-string">&quot;./one&quot;</span>
-
-greet <span class="hljs-comment"># undefined local variable or method &apos;greet&apos;</span>
-</code></pre>
-<p>This allows you to define helper methods in a file that will only be known in that file.</p>
 
                     
                     </section>
@@ -2206,10 +2125,10 @@ greet <span class="hljs-comment"># undefined local variable or method &apos;gree
         </div>
 
         
-        <a href="../syntax_and_semantics/operators.html" class="navigation navigation-prev " aria-label="Previous page: Operators"><i class="fa fa-angle-left"></i></a>
+        <a href="../syntax_and_semantics/multiple_assignment.html" class="navigation navigation-prev " aria-label="Previous page: Multiple assignment"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/inheritance.html" class="navigation navigation-next " aria-label="Next page: Inheritance"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/control_expressions.html" class="navigation navigation-next " aria-label="Next page: Control expressions"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>

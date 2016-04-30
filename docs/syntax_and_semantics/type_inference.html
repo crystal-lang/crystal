@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Instance variables type inference | Crystal Programming Language</title>
+        <title>Type inference | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.3.2">
@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.3.3" data-basepath=".." data-revision="Mon Apr 04 2016 23:37:55 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.3.3" data-basepath=".." data-revision="Sat Apr 30 2016 15:13:06 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -556,14 +556,29 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6" data-path="syntax_and_semantics/control_expressions.html">
+        <li class="chapter " data-level="4.6" data-path="syntax_and_semantics/union_types.html">
+            
+                
+                    <a href="../syntax_and_semantics/union_types.html">
+                
+                        <i class="fa fa-check"></i>
+                        
+                            <b>4.6.</b>
+                        
+                        Union types
+                    </a>
+            
+            
+        </li>
+    
+        <li class="chapter " data-level="4.7" data-path="syntax_and_semantics/control_expressions.html">
             
                 
                     <a href="../syntax_and_semantics/control_expressions.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.</b>
+                            <b>4.7.</b>
                         
                         Control expressions
                     </a>
@@ -572,14 +587,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.6.1" data-path="syntax_and_semantics/truthy_and_falsey_values.html">
+        <li class="chapter " data-level="4.7.1" data-path="syntax_and_semantics/truthy_and_falsey_values.html">
             
                 
                     <a href="../syntax_and_semantics/truthy_and_falsey_values.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.1.</b>
+                            <b>4.7.1.</b>
                         
                         Truthy and falsey values
                     </a>
@@ -587,14 +602,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.2" data-path="syntax_and_semantics/if.html">
+        <li class="chapter " data-level="4.7.2" data-path="syntax_and_semantics/if.html">
             
                 
                     <a href="../syntax_and_semantics/if.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.2.</b>
+                            <b>4.7.2.</b>
                         
                         if
                     </a>
@@ -603,14 +618,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.6.2.1" data-path="syntax_and_semantics/as_a_suffix.html">
+        <li class="chapter " data-level="4.7.2.1" data-path="syntax_and_semantics/as_a_suffix.html">
             
                 
                     <a href="../syntax_and_semantics/as_a_suffix.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.2.1.</b>
+                            <b>4.7.2.1.</b>
                         
                         As a suffix
                     </a>
@@ -618,14 +633,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.2.2" data-path="syntax_and_semantics/as_an_expression.html">
+        <li class="chapter " data-level="4.7.2.2" data-path="syntax_and_semantics/as_an_expression.html">
             
                 
                     <a href="../syntax_and_semantics/as_an_expression.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.2.2.</b>
+                            <b>4.7.2.2.</b>
                         
                         As an expression
                     </a>
@@ -633,14 +648,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.2.3" data-path="syntax_and_semantics/ternary_if.html">
+        <li class="chapter " data-level="4.7.2.3" data-path="syntax_and_semantics/ternary_if.html">
             
                 
                     <a href="../syntax_and_semantics/ternary_if.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.2.3.</b>
+                            <b>4.7.2.3.</b>
                         
                         Ternary if
                     </a>
@@ -648,14 +663,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.2.4" data-path="syntax_and_semantics/if_var.html">
+        <li class="chapter " data-level="4.7.2.4" data-path="syntax_and_semantics/if_var.html">
             
                 
                     <a href="../syntax_and_semantics/if_var.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.2.4.</b>
+                            <b>4.7.2.4.</b>
                         
                         if var
                     </a>
@@ -663,14 +678,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.2.5" data-path="syntax_and_semantics/if_varis_a.html">
+        <li class="chapter " data-level="4.7.2.5" data-path="syntax_and_semantics/if_varis_a.html">
             
                 
                     <a href="../syntax_and_semantics/if_varis_a.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.2.5.</b>
+                            <b>4.7.2.5.</b>
                         
                         if var.is_a?(...)
                     </a>
@@ -678,14 +693,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.2.6" data-path="syntax_and_semantics/if_varresponds_to.html">
+        <li class="chapter " data-level="4.7.2.6" data-path="syntax_and_semantics/if_varresponds_to.html">
             
                 
                     <a href="../syntax_and_semantics/if_varresponds_to.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.2.6.</b>
+                            <b>4.7.2.6.</b>
                         
                         if var.responds_to?(...)
                     </a>
@@ -693,14 +708,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.2.7" data-path="syntax_and_semantics/if_var_nil.html">
+        <li class="chapter " data-level="4.7.2.7" data-path="syntax_and_semantics/if_var_nil.html">
             
                 
                     <a href="../syntax_and_semantics/if_var_nil.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.2.7.</b>
+                            <b>4.7.2.7.</b>
                         
                         if var.nil?
                     </a>
@@ -708,14 +723,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.2.8" data-path="syntax_and_semantics/not.html">
+        <li class="chapter " data-level="4.7.2.8" data-path="syntax_and_semantics/not.html">
             
                 
                     <a href="../syntax_and_semantics/not.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.2.8.</b>
+                            <b>4.7.2.8.</b>
                         
                         if !
                     </a>
@@ -728,14 +743,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.3" data-path="syntax_and_semantics/unless.html">
+        <li class="chapter " data-level="4.7.3" data-path="syntax_and_semantics/unless.html">
             
                 
                     <a href="../syntax_and_semantics/unless.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.3.</b>
+                            <b>4.7.3.</b>
                         
                         unless
                     </a>
@@ -743,14 +758,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.4" data-path="syntax_and_semantics/case.html">
+        <li class="chapter " data-level="4.7.4" data-path="syntax_and_semantics/case.html">
             
                 
                     <a href="../syntax_and_semantics/case.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.4.</b>
+                            <b>4.7.4.</b>
                         
                         case
                     </a>
@@ -758,14 +773,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.5" data-path="syntax_and_semantics/while.html">
+        <li class="chapter " data-level="4.7.5" data-path="syntax_and_semantics/while.html">
             
                 
                     <a href="../syntax_and_semantics/while.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.5.</b>
+                            <b>4.7.5.</b>
                         
                         while
                     </a>
@@ -774,14 +789,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.6.5.1" data-path="syntax_and_semantics/break.html">
+        <li class="chapter " data-level="4.7.5.1" data-path="syntax_and_semantics/break.html">
             
                 
                     <a href="../syntax_and_semantics/break.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.5.1.</b>
+                            <b>4.7.5.1.</b>
                         
                         break
                     </a>
@@ -789,14 +804,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.5.2" data-path="syntax_and_semantics/next.html">
+        <li class="chapter " data-level="4.7.5.2" data-path="syntax_and_semantics/next.html">
             
                 
                     <a href="../syntax_and_semantics/next.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.5.2.</b>
+                            <b>4.7.5.2.</b>
                         
                         next
                     </a>
@@ -809,14 +824,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.6" data-path="syntax_and_semantics/until.html">
+        <li class="chapter " data-level="4.7.6" data-path="syntax_and_semantics/until.html">
             
                 
                     <a href="../syntax_and_semantics/until.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.6.</b>
+                            <b>4.7.6.</b>
                         
                         until
                     </a>
@@ -824,14 +839,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.7" data-path="syntax_and_semantics/and.html">
+        <li class="chapter " data-level="4.7.7" data-path="syntax_and_semantics/and.html">
             
                 
                     <a href="../syntax_and_semantics/and.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.7.</b>
+                            <b>4.7.7.</b>
                         
                         &amp;&amp;
                     </a>
@@ -839,14 +854,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.6.8" data-path="syntax_and_semantics/or.html">
+        <li class="chapter " data-level="4.7.8" data-path="syntax_and_semantics/or.html">
             
                 
                     <a href="../syntax_and_semantics/or.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.6.8.</b>
+                            <b>4.7.8.</b>
                         
                         ||
                     </a>
@@ -859,14 +874,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7" data-path="syntax_and_semantics/types_and_methods.html">
+        <li class="chapter " data-level="4.8" data-path="syntax_and_semantics/types_and_methods.html">
             
                 
                     <a href="../syntax_and_semantics/types_and_methods.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.</b>
+                            <b>4.8.</b>
                         
                         Types and methods
                     </a>
@@ -875,14 +890,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.7.1" data-path="syntax_and_semantics/everything_is_an_object.html">
+        <li class="chapter " data-level="4.8.1" data-path="syntax_and_semantics/everything_is_an_object.html">
             
                 
                     <a href="../syntax_and_semantics/everything_is_an_object.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.1.</b>
+                            <b>4.8.1.</b>
                         
                         Everything is an object
                     </a>
@@ -890,14 +905,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.2" data-path="syntax_and_semantics/the_program.html">
+        <li class="chapter " data-level="4.8.2" data-path="syntax_and_semantics/the_program.html">
             
                 
                     <a href="../syntax_and_semantics/the_program.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.2.</b>
+                            <b>4.8.2.</b>
                         
                         The Program
                     </a>
@@ -905,14 +920,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3" data-path="syntax_and_semantics/classes_and_methods.html">
+        <li class="chapter " data-level="4.8.3" data-path="syntax_and_semantics/classes_and_methods.html">
             
                 
                     <a href="../syntax_and_semantics/classes_and_methods.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.</b>
+                            <b>4.8.3.</b>
                         
                         Classes and methods
                     </a>
@@ -921,14 +936,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.7.3.1" data-path="syntax_and_semantics/new,_initialize_and_allocate.html">
+        <li class="chapter " data-level="4.8.3.1" data-path="syntax_and_semantics/new,_initialize_and_allocate.html">
             
                 
                     <a href="../syntax_and_semantics/new,_initialize_and_allocate.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.1.</b>
+                            <b>4.8.3.1.</b>
                         
                         new, initialize and allocate
                     </a>
@@ -936,14 +951,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.2" data-path="syntax_and_semantics/methods_and_instance_variables.html">
+        <li class="chapter " data-level="4.8.3.2" data-path="syntax_and_semantics/methods_and_instance_variables.html">
             
                 
                     <a href="../syntax_and_semantics/methods_and_instance_variables.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.2.</b>
+                            <b>4.8.3.2.</b>
                         
                         Methods and instance variables
                     </a>
@@ -951,29 +966,29 @@
             
         </li>
     
-        <li class="chapter active" data-level="4.7.3.3" data-path="syntax_and_semantics/instance_variables_type_inference.html">
+        <li class="chapter active" data-level="4.8.3.3" data-path="syntax_and_semantics/type_inference.html">
             
                 
-                    <a href="../syntax_and_semantics/instance_variables_type_inference.html">
+                    <a href="../syntax_and_semantics/type_inference.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.3.</b>
+                            <b>4.8.3.3.</b>
                         
-                        Instance variables type inference
+                        Type inference
                     </a>
             
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.4" data-path="syntax_and_semantics/overloading.html">
+        <li class="chapter " data-level="4.8.3.4" data-path="syntax_and_semantics/overloading.html">
             
                 
                     <a href="../syntax_and_semantics/overloading.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.4.</b>
+                            <b>4.8.3.4.</b>
                         
                         Overloading
                     </a>
@@ -981,14 +996,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.5" data-path="syntax_and_semantics/default_and_named_arguments.html">
+        <li class="chapter " data-level="4.8.3.5" data-path="syntax_and_semantics/default_and_named_arguments.html">
             
                 
                     <a href="../syntax_and_semantics/default_and_named_arguments.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.5.</b>
+                            <b>4.8.3.5.</b>
                         
                         Default and named arguments
                     </a>
@@ -996,14 +1011,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.6" data-path="syntax_and_semantics/splats_and_tuples.html">
+        <li class="chapter " data-level="4.8.3.6" data-path="syntax_and_semantics/splats_and_tuples.html">
             
                 
                     <a href="../syntax_and_semantics/splats_and_tuples.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.6.</b>
+                            <b>4.8.3.6.</b>
                         
                         Splats and tuples
                     </a>
@@ -1011,14 +1026,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.7" data-path="syntax_and_semantics/type_restrictions.html">
+        <li class="chapter " data-level="4.8.3.7" data-path="syntax_and_semantics/type_restrictions.html">
             
                 
                     <a href="../syntax_and_semantics/type_restrictions.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.7.</b>
+                            <b>4.8.3.7.</b>
                         
                         Type restrictions
                     </a>
@@ -1026,14 +1041,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.8" data-path="syntax_and_semantics/return_types.html">
+        <li class="chapter " data-level="4.8.3.8" data-path="syntax_and_semantics/return_types.html">
             
                 
                     <a href="../syntax_and_semantics/return_types.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.8.</b>
+                            <b>4.8.3.8.</b>
                         
                         Return types
                     </a>
@@ -1041,14 +1056,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.9" data-path="syntax_and_semantics/operators.html">
+        <li class="chapter " data-level="4.8.3.9" data-path="syntax_and_semantics/operators.html">
             
                 
                     <a href="../syntax_and_semantics/operators.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.9.</b>
+                            <b>4.8.3.9.</b>
                         
                         Operators
                     </a>
@@ -1056,14 +1071,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.10" data-path="syntax_and_semantics/visibility.html">
+        <li class="chapter " data-level="4.8.3.10" data-path="syntax_and_semantics/visibility.html">
             
                 
                     <a href="../syntax_and_semantics/visibility.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.10.</b>
+                            <b>4.8.3.10.</b>
                         
                         Visibility
                     </a>
@@ -1071,14 +1086,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.11" data-path="syntax_and_semantics/inheritance.html">
+        <li class="chapter " data-level="4.8.3.11" data-path="syntax_and_semantics/inheritance.html">
             
                 
                     <a href="../syntax_and_semantics/inheritance.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.11.</b>
+                            <b>4.8.3.11.</b>
                         
                         Inheritance
                     </a>
@@ -1087,14 +1102,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.7.3.11.1" data-path="syntax_and_semantics/virtual_and_abstract_types.html">
+        <li class="chapter " data-level="4.8.3.11.1" data-path="syntax_and_semantics/virtual_and_abstract_types.html">
             
                 
                     <a href="../syntax_and_semantics/virtual_and_abstract_types.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.11.1.</b>
+                            <b>4.8.3.11.1.</b>
                         
                         Virtual and abstract types
                     </a>
@@ -1107,14 +1122,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.12" data-path="syntax_and_semantics/class_variables.html">
+        <li class="chapter " data-level="4.8.3.12" data-path="syntax_and_semantics/class_variables.html">
             
                 
                     <a href="../syntax_and_semantics/class_variables.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.12.</b>
+                            <b>4.8.3.12.</b>
                         
                         Class variables
                     </a>
@@ -1122,14 +1137,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.3.13" data-path="syntax_and_semantics/finalize.html">
+        <li class="chapter " data-level="4.8.3.13" data-path="syntax_and_semantics/finalize.html">
             
                 
                     <a href="../syntax_and_semantics/finalize.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.3.13.</b>
+                            <b>4.8.3.13.</b>
                         
                         finalize
                     </a>
@@ -1142,14 +1157,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.4" data-path="syntax_and_semantics/modules.html">
+        <li class="chapter " data-level="4.8.4" data-path="syntax_and_semantics/modules.html">
             
                 
                     <a href="../syntax_and_semantics/modules.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.4.</b>
+                            <b>4.8.4.</b>
                         
                         Modules
                     </a>
@@ -1157,14 +1172,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.5" data-path="syntax_and_semantics/generics.html">
+        <li class="chapter " data-level="4.8.5" data-path="syntax_and_semantics/generics.html">
             
                 
                     <a href="../syntax_and_semantics/generics.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.5.</b>
+                            <b>4.8.5.</b>
                         
                         Generics
                     </a>
@@ -1172,14 +1187,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.6" data-path="syntax_and_semantics/structs.html">
+        <li class="chapter " data-level="4.8.6" data-path="syntax_and_semantics/structs.html">
             
                 
                     <a href="../syntax_and_semantics/structs.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.6.</b>
+                            <b>4.8.6.</b>
                         
                         Structs
                     </a>
@@ -1187,14 +1202,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.7" data-path="syntax_and_semantics/constants.html">
+        <li class="chapter " data-level="4.8.7" data-path="syntax_and_semantics/constants.html">
             
                 
                     <a href="../syntax_and_semantics/constants.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.7.</b>
+                            <b>4.8.7.</b>
                         
                         Constants
                     </a>
@@ -1202,14 +1217,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.8" data-path="syntax_and_semantics/enum.html">
+        <li class="chapter " data-level="4.8.8" data-path="syntax_and_semantics/enum.html">
             
                 
                     <a href="../syntax_and_semantics/enum.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.8.</b>
+                            <b>4.8.8.</b>
                         
                         Enums
                     </a>
@@ -1217,14 +1232,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.9" data-path="syntax_and_semantics/blocks_and_procs.html">
+        <li class="chapter " data-level="4.8.9" data-path="syntax_and_semantics/blocks_and_procs.html">
             
                 
                     <a href="../syntax_and_semantics/blocks_and_procs.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.9.</b>
+                            <b>4.8.9.</b>
                         
                         Blocks and Procs
                     </a>
@@ -1233,14 +1248,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.7.9.1" data-path="syntax_and_semantics/capturing_blocks.html">
+        <li class="chapter " data-level="4.8.9.1" data-path="syntax_and_semantics/capturing_blocks.html">
             
                 
                     <a href="../syntax_and_semantics/capturing_blocks.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.9.1.</b>
+                            <b>4.8.9.1.</b>
                         
                         Capturing blocks
                     </a>
@@ -1248,14 +1263,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.9.2" data-path="syntax_and_semantics/proc_literal.html">
+        <li class="chapter " data-level="4.8.9.2" data-path="syntax_and_semantics/proc_literal.html">
             
                 
                     <a href="../syntax_and_semantics/proc_literal.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.9.2.</b>
+                            <b>4.8.9.2.</b>
                         
                         Proc literal
                     </a>
@@ -1263,14 +1278,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.9.3" data-path="syntax_and_semantics/block_forwarding.html">
+        <li class="chapter " data-level="4.8.9.3" data-path="syntax_and_semantics/block_forwarding.html">
             
                 
                     <a href="../syntax_and_semantics/block_forwarding.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.9.3.</b>
+                            <b>4.8.9.3.</b>
                         
                         Block forwarding
                     </a>
@@ -1278,14 +1293,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.9.4" data-path="syntax_and_semantics/closures.html">
+        <li class="chapter " data-level="4.8.9.4" data-path="syntax_and_semantics/closures.html">
             
                 
                     <a href="../syntax_and_semantics/closures.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.9.4.</b>
+                            <b>4.8.9.4.</b>
                         
                         Closures
                     </a>
@@ -1298,14 +1313,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.7.10" data-path="syntax_and_semantics/alias.html">
+        <li class="chapter " data-level="4.8.10" data-path="syntax_and_semantics/alias.html">
             
                 
                     <a href="../syntax_and_semantics/alias.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.7.10.</b>
+                            <b>4.8.10.</b>
                         
                         alias
                     </a>
@@ -1318,14 +1333,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.8" data-path="syntax_and_semantics/type_reflection.html">
+        <li class="chapter " data-level="4.9" data-path="syntax_and_semantics/type_reflection.html">
             
                 
                     <a href="../syntax_and_semantics/type_reflection.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.8.</b>
+                            <b>4.9.</b>
                         
                         Type reflection
                     </a>
@@ -1334,14 +1349,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.8.1" data-path="syntax_and_semantics/is_a.html">
+        <li class="chapter " data-level="4.9.1" data-path="syntax_and_semantics/is_a.html">
             
                 
                     <a href="../syntax_and_semantics/is_a.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.8.1.</b>
+                            <b>4.9.1.</b>
                         
                         is_a?
                     </a>
@@ -1349,14 +1364,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.8.2" data-path="syntax_and_semantics/nil_question.html">
+        <li class="chapter " data-level="4.9.2" data-path="syntax_and_semantics/nil_question.html">
             
                 
                     <a href="../syntax_and_semantics/nil_question.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.8.2.</b>
+                            <b>4.9.2.</b>
                         
                         nil?
                     </a>
@@ -1364,14 +1379,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.8.3" data-path="syntax_and_semantics/responds_to.html">
+        <li class="chapter " data-level="4.9.3" data-path="syntax_and_semantics/responds_to.html">
             
                 
                     <a href="../syntax_and_semantics/responds_to.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.8.3.</b>
+                            <b>4.9.3.</b>
                         
                         responds_to?
                     </a>
@@ -1379,14 +1394,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.8.4" data-path="syntax_and_semantics/as.html">
+        <li class="chapter " data-level="4.9.4" data-path="syntax_and_semantics/as.html">
             
                 
                     <a href="../syntax_and_semantics/as.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.8.4.</b>
+                            <b>4.9.4.</b>
                         
                         as
                     </a>
@@ -1394,14 +1409,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.8.5" data-path="syntax_and_semantics/typeof.html">
+        <li class="chapter " data-level="4.9.5" data-path="syntax_and_semantics/typeof.html">
             
                 
                     <a href="../syntax_and_semantics/typeof.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.8.5.</b>
+                            <b>4.9.5.</b>
                         
                         typeof
                     </a>
@@ -1414,14 +1429,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.9" data-path="syntax_and_semantics/attributes.html">
+        <li class="chapter " data-level="4.10" data-path="syntax_and_semantics/attributes.html">
             
                 
                     <a href="../syntax_and_semantics/attributes.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.9.</b>
+                            <b>4.10.</b>
                         
                         Attributes
                     </a>
@@ -1429,14 +1444,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.10" data-path="syntax_and_semantics/requiring_files.html">
+        <li class="chapter " data-level="4.11" data-path="syntax_and_semantics/requiring_files.html">
             
                 
                     <a href="../syntax_and_semantics/requiring_files.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.10.</b>
+                            <b>4.11.</b>
                         
                         Requiring files
                     </a>
@@ -1444,14 +1459,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.11" data-path="syntax_and_semantics/low_level_primitives.html">
+        <li class="chapter " data-level="4.12" data-path="syntax_and_semantics/low_level_primitives.html">
             
                 
                     <a href="../syntax_and_semantics/low_level_primitives.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.11.</b>
+                            <b>4.12.</b>
                         
                         Low-level primitives
                     </a>
@@ -1460,14 +1475,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.11.1" data-path="syntax_and_semantics/pointerof.html">
+        <li class="chapter " data-level="4.12.1" data-path="syntax_and_semantics/pointerof.html">
             
                 
                     <a href="../syntax_and_semantics/pointerof.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.11.1.</b>
+                            <b>4.12.1.</b>
                         
                         pointerof
                     </a>
@@ -1475,14 +1490,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.11.2" data-path="syntax_and_semantics/sizeof.html">
+        <li class="chapter " data-level="4.12.2" data-path="syntax_and_semantics/sizeof.html">
             
                 
                     <a href="../syntax_and_semantics/sizeof.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.11.2.</b>
+                            <b>4.12.2.</b>
                         
                         sizeof
                     </a>
@@ -1490,14 +1505,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.11.3" data-path="syntax_and_semantics/instance_sizeof.html">
+        <li class="chapter " data-level="4.12.3" data-path="syntax_and_semantics/instance_sizeof.html">
             
                 
                     <a href="../syntax_and_semantics/instance_sizeof.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.11.3.</b>
+                            <b>4.12.3.</b>
                         
                         instance_sizeof
                     </a>
@@ -1505,14 +1520,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.11.4" data-path="syntax_and_semantics/declare_var.html">
+        <li class="chapter " data-level="4.12.4" data-path="syntax_and_semantics/declare_var.html">
             
                 
                     <a href="../syntax_and_semantics/declare_var.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.11.4.</b>
+                            <b>4.12.4.</b>
                         
                         Uninitialized variable declaration
                     </a>
@@ -1525,14 +1540,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.12" data-path="syntax_and_semantics/exception_handling.html">
+        <li class="chapter " data-level="4.13" data-path="syntax_and_semantics/exception_handling.html">
             
                 
                     <a href="../syntax_and_semantics/exception_handling.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.12.</b>
+                            <b>4.13.</b>
                         
                         Exception handling
                     </a>
@@ -1540,14 +1555,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.13" data-path="syntax_and_semantics/compile_time_flags.html">
+        <li class="chapter " data-level="4.14" data-path="syntax_and_semantics/compile_time_flags.html">
             
                 
                     <a href="../syntax_and_semantics/compile_time_flags.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.13.</b>
+                            <b>4.14.</b>
                         
                         Compile-time flags
                     </a>
@@ -1556,14 +1571,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.13.1" data-path="syntax_and_semantics/cross-compilation.html">
+        <li class="chapter " data-level="4.14.1" data-path="syntax_and_semantics/cross-compilation.html">
             
                 
                     <a href="../syntax_and_semantics/cross-compilation.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.13.1.</b>
+                            <b>4.14.1.</b>
                         
                         Cross-compilation
                     </a>
@@ -1576,14 +1591,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.14" data-path="syntax_and_semantics/macros.html">
+        <li class="chapter " data-level="4.15" data-path="syntax_and_semantics/macros.html">
             
                 
                     <a href="../syntax_and_semantics/macros.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.14.</b>
+                            <b>4.15.</b>
                         
                         Macros
                     </a>
@@ -1592,14 +1607,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.14.1" data-path="syntax_and_semantics/macros/macro_methods.html">
+        <li class="chapter " data-level="4.15.1" data-path="syntax_and_semantics/macros/macro_methods.html">
             
                 
                     <a href="../syntax_and_semantics/macros/macro_methods.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.14.1.</b>
+                            <b>4.15.1.</b>
                         
                         Macro methods
                     </a>
@@ -1607,14 +1622,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.14.2" data-path="syntax_and_semantics/macros/hooks.html">
+        <li class="chapter " data-level="4.15.2" data-path="syntax_and_semantics/macros/hooks.html">
             
                 
                     <a href="../syntax_and_semantics/macros/hooks.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.14.2.</b>
+                            <b>4.15.2.</b>
                         
                         Hooks
                     </a>
@@ -1622,14 +1637,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.14.3" data-path="syntax_and_semantics/macros/fresh_variables.html">
+        <li class="chapter " data-level="4.15.3" data-path="syntax_and_semantics/macros/fresh_variables.html">
             
                 
                     <a href="../syntax_and_semantics/macros/fresh_variables.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.14.3.</b>
+                            <b>4.15.3.</b>
                         
                         Fresh variables
                     </a>
@@ -1642,14 +1657,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15" data-path="syntax_and_semantics/c_bindings/index.html">
+        <li class="chapter " data-level="4.16" data-path="syntax_and_semantics/c_bindings/index.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/index.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.</b>
+                            <b>4.16.</b>
                         
                         C bindings
                     </a>
@@ -1658,14 +1673,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.15.1" data-path="syntax_and_semantics/c_bindings/lib.html">
+        <li class="chapter " data-level="4.16.1" data-path="syntax_and_semantics/c_bindings/lib.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/lib.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.1.</b>
+                            <b>4.16.1.</b>
                         
                         lib
                     </a>
@@ -1673,14 +1688,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15.2" data-path="syntax_and_semantics/c_bindings/fun.html">
+        <li class="chapter " data-level="4.16.2" data-path="syntax_and_semantics/c_bindings/fun.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/fun.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.2.</b>
+                            <b>4.16.2.</b>
                         
                         fun
                     </a>
@@ -1689,14 +1704,14 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="4.15.2.1" data-path="syntax_and_semantics/c_bindings/out.html">
+        <li class="chapter " data-level="4.16.2.1" data-path="syntax_and_semantics/c_bindings/out.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/out.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.2.1.</b>
+                            <b>4.16.2.1.</b>
                         
                         out
                     </a>
@@ -1704,14 +1719,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15.2.2" data-path="syntax_and_semantics/c_bindings/to_unsafe.html">
+        <li class="chapter " data-level="4.16.2.2" data-path="syntax_and_semantics/c_bindings/to_unsafe.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/to_unsafe.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.2.2.</b>
+                            <b>4.16.2.2.</b>
                         
                         to_unsafe
                     </a>
@@ -1724,14 +1739,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15.3" data-path="syntax_and_semantics/c_bindings/struct.html">
+        <li class="chapter " data-level="4.16.3" data-path="syntax_and_semantics/c_bindings/struct.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/struct.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.3.</b>
+                            <b>4.16.3.</b>
                         
                         struct
                     </a>
@@ -1739,14 +1754,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15.4" data-path="syntax_and_semantics/c_bindings/union.html">
+        <li class="chapter " data-level="4.16.4" data-path="syntax_and_semantics/c_bindings/union.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/union.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.4.</b>
+                            <b>4.16.4.</b>
                         
                         union
                     </a>
@@ -1754,14 +1769,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15.5" data-path="syntax_and_semantics/c_bindings/enum.html">
+        <li class="chapter " data-level="4.16.5" data-path="syntax_and_semantics/c_bindings/enum.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/enum.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.5.</b>
+                            <b>4.16.5.</b>
                         
                         enum
                     </a>
@@ -1769,14 +1784,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15.6" data-path="syntax_and_semantics/c_bindings/variables.html">
+        <li class="chapter " data-level="4.16.6" data-path="syntax_and_semantics/c_bindings/variables.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/variables.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.6.</b>
+                            <b>4.16.6.</b>
                         
                         Variables
                     </a>
@@ -1784,14 +1799,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15.7" data-path="syntax_and_semantics/c_bindings/constants.html">
+        <li class="chapter " data-level="4.16.7" data-path="syntax_and_semantics/c_bindings/constants.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/constants.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.7.</b>
+                            <b>4.16.7.</b>
                         
                         Constants
                     </a>
@@ -1799,14 +1814,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15.8" data-path="syntax_and_semantics/c_bindings/type.html">
+        <li class="chapter " data-level="4.16.8" data-path="syntax_and_semantics/c_bindings/type.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/type.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.8.</b>
+                            <b>4.16.8.</b>
                         
                         type
                     </a>
@@ -1814,14 +1829,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15.9" data-path="syntax_and_semantics/c_bindings/alias.html">
+        <li class="chapter " data-level="4.16.9" data-path="syntax_and_semantics/c_bindings/alias.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/alias.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.9.</b>
+                            <b>4.16.9.</b>
                         
                         alias
                     </a>
@@ -1829,14 +1844,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.15.10" data-path="syntax_and_semantics/c_bindings/callbacks.html">
+        <li class="chapter " data-level="4.16.10" data-path="syntax_and_semantics/c_bindings/callbacks.html">
             
                 
                     <a href="../syntax_and_semantics/c_bindings/callbacks.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.15.10.</b>
+                            <b>4.16.10.</b>
                         
                         Callbacks
                     </a>
@@ -1849,14 +1864,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.16" data-path="syntax_and_semantics/type_grammar.html">
+        <li class="chapter " data-level="4.17" data-path="syntax_and_semantics/type_grammar.html">
             
                 
                     <a href="../syntax_and_semantics/type_grammar.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.16.</b>
+                            <b>4.17.</b>
                         
                         Type grammar
                     </a>
@@ -1864,14 +1879,14 @@
             
         </li>
     
-        <li class="chapter " data-level="4.17" data-path="syntax_and_semantics/unsafe.html">
+        <li class="chapter " data-level="4.18" data-path="syntax_and_semantics/unsafe.html">
             
                 
                     <a href="../syntax_and_semantics/unsafe.html">
                 
                         <i class="fa fa-check"></i>
                         
-                            <b>4.17.</b>
+                            <b>4.18.</b>
                         
                         Unsafe code
                     </a>
@@ -2076,132 +2091,28 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="instance-variables-type-inference">Instance variables type inference</h1>
-<p>Did you notice that in all of the previous examples we never said the types of a <code>Person</code>&apos;s <code>@name</code> and <code>@age</code>? This is because the compiler inferred them for us.</p>
-<p>When we wrote:</p>
+                        <h1 id="type-inference">Type inference</h1>
+<p><strong>Note</strong>: this applies to the next version of Crystal (0.16.0). Before this version global type inference takes the whole program and all uses into account.</p>
+<p>Crystal&apos;s philosophy is to require as few type annotations as possible. However, some type annotatinos are required.</p>
+<p>Consider a class definition like this:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  getter name
-
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
     <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
-
-john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-john.name <span class="hljs-comment">#=&gt; &quot;John&quot;</span>
-john.name.size <span class="hljs-comment">#=&gt; 4</span>
 </code></pre>
-<p>Since we invoked <code>Person.new</code> with a <code>String</code> argument, the compiler makes <code>@name</code> be a <code>String</code> too.</p>
-<p>If we had invoked <code>Person.new</code> with another type, <code>@name</code> would have taken a different type:</p>
-<pre><code class="lang-crystal">one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-one.name <span class="hljs-comment">#=&gt; 1</span>
-one.name + <span class="hljs-number">2</span> <span class="hljs-comment">#=&gt; 3</span>
-</code></pre>
-<p>If you compile the previous programs with the <code>tool hierarchy</code> command, the compiler will show you a hierarchy graph with the types it inferred. In the first case:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : String
-            @age  : Int32
-</code></pre><p>In the second case:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : Int32
-            @age  : Int32
-</code></pre><p>What happens if we create two different people, one with a <code>String</code> and one with an <code>Int32</code>? Let&apos;s try it:</p>
-<pre><code class="lang-crystal">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-</code></pre>
-<p>Invoking the compiler with the <code>tool hierarchy</code> command we get:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : (String | Int32)
-            @age  : Int32
-</code></pre><p>We can see that now <code>@name</code> has a type <code>(String | Int32)</code>, which is read as a <em>union</em> of <code>String</code> and <code>Int32</code>. The compiler made <code>@name</code> have all types assigned to it.</p>
-<p>In this case, the compiler will consider any usage of <code>@name</code> as always being either a <code>String</code> or an <code>Int32</code> and will give a compile time error if a method is not found for <em>both</em> types:</p>
-<pre><code class="lang-crystal">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-
-<span class="hljs-comment"># Error: undefined method &apos;size&apos; for Int32</span>
-john.name.size
-
-<span class="hljs-comment"># Error: no overload matches &apos;String#+&apos; with types Int32</span>
-john.name + <span class="hljs-number">3</span>
-</code></pre>
-<p>The compiler will even give an error if you first use a variable assuming it has a type and later you change that type:</p>
-<pre><code class="lang-crystal">john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-john.name.size
-one = <span class="hljs-constant">Person</span>.new <span class="hljs-number">1</span>
-</code></pre>
-<p>Gives this compile-time error:</p>
-<pre><code>Error in foo.cr:14: instantiating &apos;Person:Class#new(Int32)&apos;
-
-one = Person.new 1
-             ^~~
-
-instantiating &apos;Person#initialize(Int32)&apos;
-
-in foo.cr:12: undefined method &apos;size&apos; for Int32
-
-john.name.size
-          ^~~~~~
-</code></pre><p>That is, the compiler does global type inference and tells you whenever you make a mistake in the usage of a class or method. You can go ahead and put a type restriction like <code>def initialize(@name : String)</code>, but that makes the code a bit more verbose and also less generic: everything will work just fine if you create <code>Person</code> instance with types that have the same <em>interface</em> as a <code>String</code>, as long as you use a <code>Person</code>&apos;s name like if it were a <code>String</code>.</p>
-<p>If you do want to have different <code>Person</code> types, one with <code>@name</code> being an <code>Int32</code> and one with <code>@name</code> being a <code>String</code>, you must use <a href="generics.html">generics</a>.</p>
-<h2 id="nilable-instance-variables">Nilable instance variables</h2>
-<p>If an instance variable is not assigned in all of the <code>initialize</code> defined in a class, it will be considered as also having the type <code>Nil</code>:</p>
+<p>We can quickly see that <code>@age</code> is an integer, but we don&apos;t know what&apos;s the type of <code>@name</code>. The compiler could infer its type from all uses of the <code>Person</code> class. However, doing so has a few issues:</p>
+<ul>
+<li>The type is not obvious for a human reading the code: she would also have to check all uses of <code>Person</code> to find this out.</li>
+<li>Some compiler optimizations, like having to analyze a method just once, and incremental compilation, are near impossible to do.</li>
+</ul>
+<p>As a code base grows, these issues gain more relevance: understanding a project becomes harder, and compile times become unbearable.</p>
+<p>For this reason, Crystal needs to know, in an obvious way (as obvious as to a human), the types of instance, <a href="class_variables.html">class</a> and <a href="global_variables.html">global</a> variables.</p>
+<p>There are several ways to let Crystal know this.</p>
+<h2 id="use-an-explicit-type-annotation">Use an explicit type annotation</h2>
+<p>The easiest, but probably most tedious, way is to use explicit type annotations.</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  getter name
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
-    <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">address</span></span>
-    <span class="hljs-variable">@address</span>
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">address=</span></span>(<span class="hljs-variable">@address</span>)
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-john = <span class="hljs-constant">Person</span>.new <span class="hljs-string">&quot;John&quot;</span>
-john.address = <span class="hljs-string">&quot;Argentina&quot;</span>
-</code></pre>
-<p>The hierarchy graph now shows:</p>
-<pre><code>- class Object
-  |
-  +- class Reference
-     |
-     +- class Person
-            @name : String
-            @age : Int32
-            @address : String?
-</code></pre><p>You can see <code>@address</code> is <code>String?</code>, which is a short form notation of <code>String | Nil</code>. This means that the following gives a compile time error:</p>
-<pre><code class="lang-crystal"><span class="hljs-comment"># Error: undefined method &apos;size&apos; for Nil</span>
-john.address.size
-</code></pre>
-<p>To deal with <code>Nil</code>, and generally with union types, you have several options: use an <a href="if_var.html">if var</a>, <a href="if_varis_a.html">if var.is_a?</a>, <a href="case.html">case</a> and <a href="is_a.html">is_a?</a>.</p>
-<h2 id="catch-all-initialization">Catch-all initialization</h2>
-<p>Instance variables can also be initialized outside <code>initialize</code> methods:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>This will initialize <code>@age</code> to zero in every constructor. This is useful to avoid duplication, but also to avoid the <code>Nil</code> type when reopening a class and adding instance variables to it.</p>
-<h2 id="specifying-the-types-of-instance-variables">Specifying the types of instance variables</h2>
-<p>In certain cases you want to tell the compiler to fix the type of an instance variable. You can do this with <code>:</code>:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-variable">@name</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>
   <span class="hljs-variable">@age</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
 
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
@@ -2209,8 +2120,178 @@ john.address.size
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
-<p>In this case, if we assign something that&apos;s not an <code>Int32</code> to <code>@age</code>, a compile-time error will be issued at the assignment location.</p>
-<p>Note that you still have to initialize the instance variables, either with a catch-all initializer or within an <code>initialize</code> method: there are no &quot;default&quot; values for types.</p>
+<h2 id="don-t-use-an-explicit-type-annotation">Don&apos;t use an explicit type annotation</h2>
+<p>If you omit an explicit type annotation the compiler will try to infer the type of instance, class and global variables using a bunch of syntactic rules.</p>
+<p>For a given instance/class/global variable, when a rule can be applied and a type can be guessed, the type is added to a set. When no more rules can be applied, the inferred type will be the <a href="union_types.html">union</a> of those types. Additionally, if the compiler infers that an instance variable isn&apos;t always initialized, it will also include the <a href="literals/nil.html">Nil</a> type.</p>
+<p>The rules are many, but usually the first three are most used. There&apos;s no need to remember them all. If the compiler gives an error saying that the type of an instance variable can&apos;t be inferred you can always add an explicit type annotation.</p>
+<p>The following rules only mention instance variables, but they apply to class and global variables as well. They are:</p>
+<h3 id="1-assigning-a-literal-value">1. Assigning a literal value</h3>
+<p>When a literal is assigned to an instance variable, the literal&apos;s type is added to the set. All <a href="literals.html">literals</a> have an associated type.</p>
+<p>In the following example, <code>@name</code> is inferred to be <code>String</code> and <code>@age</code> to be <code>Int32</code>.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>
+    <span class="hljs-variable">@name</span> = <span class="hljs-string">&quot;John Doe&quot;</span>
+    <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>This rule, and every following rule, will also be applied in methods other than <code>initialize</code>. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SomeObject</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">lucky_number</span></span>
+    <span class="hljs-variable">@lucky_number</span> = <span class="hljs-number">42</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>In the above case, <code>@lucky_number</code> will be inferred to be <code>Int32 | Nil</code>: <code>Int32</code> because 42 was assigned to it, and <code>Nil</code> because it wasn&apos;t assigned in all of the class&apos; initialize methods.</p>
+<h3 id="2-assigning-the-result-of-invoking-the-class-method-new">2. Assigning the result of invoking the class method <code>new</code></h3>
+<p>When an expression like <code>Type.new(...)</code> is assigned to an instance variable, the type <code>Type</code> is added to the set.</p>
+<p>In the following example, <code>@address</code> is inferred to be <code>Address</code>.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>
+    <span class="hljs-variable">@address</span> = <span class="hljs-constant">Address</span>.new(<span class="hljs-string">&quot;somewhere&quot;</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>This also is applied to generic types. Here <code>@values</code> is inferred to be <code>Array(Int32)</code>.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Something</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>
+    <span class="hljs-variable">@values</span> = <span class="hljs-constant">Array</span>(<span class="hljs-constant">Int32</span>).new
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p><strong>Note</strong>: a <code>new</code> method might be redefined by a type. In that case the inferred type will be the one returned by <code>new</code>, if it can be inferred using some of the next rules.</p>
+<h3 id="3-assigning-a-variable-that-is-a-method-argument-with-a-type-restriction">3. Assigning a variable that is a method argument with a type restriction</h3>
+<p>In the following example <code>@name</code> is inferred to be <code>String</code> because the method argument <code>name</code> has a type restriction of type <code>String</code>, and that argument is assigned to <code>@name</code>.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(name <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>)
+    <span class="hljs-variable">@name</span> = name
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Note that the name of the method argument is not important, this works as well:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(obj <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>)
+    <span class="hljs-variable">@name</span> = obj
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Using the shorter syntax to assign an instance variable from a method argument has the same effect:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Also note that the compiler doesn&apos;t check whether method argument is reassigned a different value:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(name <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>)
+    name = <span class="hljs-number">1</span>
+    <span class="hljs-variable">@name</span> = name
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>In the above case, the compiler will still infer <code>@name</code> to be <code>String</code>, and later will give a compile time error, when fully typing that method, saying that <code>Int32</code> can&apos;t be assigned to a variable of type <code>String</code>. Use an explicit type annotation if <code>@name</code> isn&apos;t supposed to be a <code>String</code>.</p>
+<h3 id="4-assigning-the-result-of-a-class-method-that-has-a-return-type-annotation">4. Assigning the result of a class method that has a return type annotation</h3>
+<p>In the following example, <code>@address</code> is inferred to be <code>Address</code>, because the class method <code>Address.unknown</code> has a return type annotation of <code>Address</code>.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>
+    <span class="hljs-variable">@address</span> = <span class="hljs-constant">Address</span>.unkown
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Address</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">self</span></span>.unknown <span class="hljs-symbol">:</span> <span class="hljs-constant">Address</span>
+    new(<span class="hljs-string">&quot;unknown&quot;</span>)
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>In fact, the above code doesn&apos;t need the return type annotation in <code>self.unknown</code>. The reason is that the compiler will also look at a class method&apos;s body and if it can apply one of the previous rules (it&apos;s a <code>new</code> method, or it&apos;s a literal, etc.) it will infer the type from that expression. So, the above can be simply written like this:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>
+    <span class="hljs-variable">@address</span> = <span class="hljs-constant">Address</span>.unkown
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Address</span></span>
+  <span class="hljs-comment"># No need for a return type annotation here</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">self</span></span>.unknown
+    new(<span class="hljs-string">&quot;unknown&quot;</span>)
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>This extra rule is very convenient because it&apos;s very common to have &quot;constructor-like&quot; class methods in addition to <code>new</code>.</p>
+<h3 id="5-assigning-a-variable-that-is-a-method-argument-with-a-default-value">5. Assigning a variable that is a method argument with a default value</h3>
+<p>In the following example, because the default value of <code>name</code> is a string literal, and it&apos;s later assigned to <code>@name</code>, <code>String</code> will be added to the set of inferred typed.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(name = <span class="hljs-string">&quot;John Doe&quot;</span>)
+    <span class="hljs-variable">@name</span> = name
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>This of course also works with the short syntax:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span> = <span class="hljs-string">&quot;John Doe&quot;</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The default value can also be a <code>Type.new(...)</code> method or a class method with a return type annotation.</p>
+<h3 id="6-assigning-the-result-of-invoking-a-lib-function">6. Assigning the result of invoking a <code>lib</code> function</h3>
+<p>Because a <a href="c_bindings/fun.html">lib function</a> must have explicit types, the compiler can use the return type when assigning it to an instance variable.</p>
+<p>In the following example <code>@age</code> is inferred to be <code>Int32</code>.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>
+    <span class="hljs-variable">@age</span> = <span class="hljs-constant">LibPerson</span>.compute_default_age
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">lib</span> <span class="hljs-title">LibPerson</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">fun</span> <span class="hljs-title">compute_default_age</span></span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h3 id="7-using-an-out-lib-expression">7. Using an <code>out</code> lib expression</h3>
+<p>Because a <a href="c_bindings/fun.html">lib function</a> must have explicit types, the compiler can use the <code>out</code> argument&apos;s type, which should be a pointer type, and use the dereferenced type as a guess.</p>
+<p>In the following example <code>@age</code> is inferred to be <code>Int32</code>.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>
+    <span class="hljs-constant">LibPerson</span>.compute_default_age(<span class="hljs-keyword">out</span> <span class="hljs-variable">@age</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">lib</span> <span class="hljs-title">LibPerson</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">fun</span> <span class="hljs-title">compute_default_age</span></span>(age_ptr <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>*)
+<span class="hljs-keyword">end</span>
+</code></pre>
+<h3 id="other-rules">Other rules</h3>
+<p>The compiler will try to be as smart as possible to require less explicit type annotations. For example, if assigning an <code>if</code> expression, type will be inferred from the <code>then</code> and <code>else</code> branches:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>
+    <span class="hljs-variable">@age</span> = some_condition ? <span class="hljs-number">1</span> <span class="hljs-symbol">:</span> <span class="hljs-number">2</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Because the <code>if</code> above (well, technically a ternary operator, but it&apos;s similar to an <code>if</code>) has integer literals, <code>@age</code> is successfully inferred to be <code>Int32</code> without requiring a redundant type annotation.</p>
+<p>Another case is <code>||</code> and <code>||=</code>:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SomeObject</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">lucky_number</span></span>
+    <span class="hljs-variable">@lucky_number</span> ||= <span class="hljs-number">42</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>In the above example <code>@lucky_number</code> will be inferred to be <code>Int32 | Nil</code>. This is very useful for lazily initialized variables.</p>
+<p>Constants will also be followed, as it&apos;s pretty simple for the compiler (and a human) to do so.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SomeObject</span></span>
+  <span class="hljs-constant">DEFAULT_LUCKY_NUMBER</span> = <span class="hljs-number">42</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@lucky_number</span> = <span class="hljs-constant">DEFAULT_LUCKY_NUMBER</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Here rule 5 (argument&apos;s default value) is used, and because the constant resolves to an integer literal, <code>@lucky_number</code> is inferred to be <code>Int32</code>.</p>
 
                     
                     </section>
