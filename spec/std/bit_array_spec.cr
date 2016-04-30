@@ -80,12 +80,13 @@ describe "BitArray" do
     end
   end
 
-  it "does to_s" do
+  it "does to_s and inspect" do
     ary = BitArray.new(8)
     ary[0] = true
     ary[2] = true
     ary[4] = true
     ary.to_s.should eq("BitArray[10101000]")
+    ary.inspect.should eq("BitArray[10101000]")
   end
 
   it "initializes with true by default" do
