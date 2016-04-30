@@ -42,7 +42,7 @@ module Crystal
 
       matches.each do |match|
         match.def.match(arg_types) do |arg, arg_index, arg_type, arg_type_index|
-          indices[arg_index] = true if arg.type? || arg.restriction
+          indices[arg_type_index] = true if arg.type? || arg.restriction
         end
       end
 

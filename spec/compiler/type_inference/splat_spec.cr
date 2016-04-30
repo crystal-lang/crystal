@@ -335,6 +335,16 @@ describe "Type inference: splat" do
       "no overload matches"
   end
 
+  it "says no overload matches on type restrictions past the splat arg" do
+    assert_error %(
+      def foo(*z, a : String, b : String)
+      end
+
+      foo(1, 2, 3, ("foo" || nil), ("bar" || nil))
+      ),
+      "no overload matches"
+  end
+
   describe Splat do
     it "without splat" do
       a_def = Def.new("foo", args: [Arg.new("x"), Arg.new("y")])
