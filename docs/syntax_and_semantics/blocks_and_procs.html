@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.7.9" data-basepath=".." data-revision="Mon Apr 04 2016 23:37:55 GMT+0000 (UTC)">
+    <div class="book" data-level="4.7.9" data-basepath=".." data-revision="Sat Apr 30 2016 14:41:54 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2105,6 +2105,35 @@ twice <span class="hljs-keyword">do</span>
 <span class="hljs-keyword">end</span>
 
 twice { puts <span class="hljs-string">&quot;Hello!&quot;</span> }
+</code></pre>
+<p>The difference between using <code>do ... end</code> and <code>{ ... }</code> is that <code>do ... end</code> binds to the left-most call, while <code>{ ... }</code> binds to the right-most call:</p>
+<pre><code class="lang-crystal">foo bar <span class="hljs-keyword">do</span>
+  something
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># The above is the same as</span>
+foo(bar) <span class="hljs-keyword">do</span>
+  something
+<span class="hljs-keyword">end</span>
+
+foo bar { something }
+
+<span class="hljs-comment"># The above is the same as</span>
+
+foo(bar { something })
+</code></pre>
+<p>The reason for this is to allow creating Domain Specific Languages (DSLs) using <code>do ... end</code> to have them be read as plain English:</p>
+<pre><code class="lang-crystal">open file <span class="hljs-string">&quot;foo.cr&quot;</span> <span class="hljs-keyword">do</span>
+  something
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-comment"># Same as:</span>
+open(file(<span class="hljs-string">&quot;foo.cr&quot;</span>)) <span class="hljs-keyword">do</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>You wouldn&apos;t want the above to be:</p>
+<pre><code class="lang-crystal">open(file(<span class="hljs-string">&quot;foo.cr&quot;</span>) <span class="hljs-keyword">do</span>
+<span class="hljs-keyword">end</span>)
 </code></pre>
 <h2 id="overloads">Overloads</h2>
 <p>Two methods, one that yields and another that doesn&apos;t, are considered different overloads, as explained in the <a href="overloading.html">overloading</a> section.</p>
