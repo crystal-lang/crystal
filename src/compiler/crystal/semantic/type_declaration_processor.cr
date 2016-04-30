@@ -487,9 +487,11 @@ module Crystal
               info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}', rendering it nilable"
             end
           when GenericClassType
-            type_vars = owner.declared_instance_vars.not_nil![name]
-            unless type_vars.any? { |type_var| has_syntax_nil?(type_var) }
-              info.def.raise "this 'initialize' doesn't initialize ancestor instance variable '#{name}', rendering it nilable"
+            type_vars = owner.declared_instance_vars.try &.[name]?
+            if type_vars
+              unless type_vars.any? { |type_var| has_syntax_nil?(type_var) }
+                info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}', rendering it nilable"
+              end
             end
           end
         end

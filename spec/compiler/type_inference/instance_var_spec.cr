@@ -1046,7 +1046,7 @@ describe "Type inference: instance var" do
         end
       end
       ),
-      "this 'initialize' doesn't initialize ancestor instance variable '@x', rendering it nilable"
+      "this 'initialize' doesn't initialize instance variable '@x', rendering it nilable"
   end
 
   it "doesn't error if not calling super but initializing all variables" do
@@ -2635,6 +2635,29 @@ describe "Type inference: instance var" do
 
       Foo.new.x
       )) { int32 }
+  end
+
+  it "says can't infer (#2536)" do
+    assert_error %(
+      require "prelude"
+
+      class A(T)
+        def initialize(@arg : T)
+          @foo = [bar]
+        end
+
+        def initialize(@arg : T)
+          yield 3
+        end
+
+        def bar
+          3
+        end
+      end
+
+      A.new(3).foo
+      ),
+      "Can't infer the type of instance variable '@foo' of A(Int32)"
   end
 
   # -----------------
