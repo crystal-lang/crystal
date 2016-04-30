@@ -1,5 +1,12 @@
 require "../../spec_helper"
 
+private macro expect_splat(e_arg, e_arg_index, e_obj, e_obj_index)
+  arg.name.should eq({{e_arg}})
+  arg_index.should eq({{e_arg_index}})
+  obj.should eq({{e_obj}})
+  obj_index.should eq({{e_obj_index}})
+end
+
 describe "Type inference: splat" do
   it "splats" do
     assert_type(%(
@@ -326,5 +333,70 @@ describe "Type inference: splat" do
       test_func(val, 1, 2, 3, 4, 5)
       ),
       "no overload matches"
+  end
+
+  describe Splat do
+    it "without splat" do
+      a_def = Def.new("foo", args: [Arg.new("x"), Arg.new("y")])
+      objs = [10, 20]
+
+      i = 0
+      Splat.before(a_def, objs) do |arg, arg_index, obj, obj_index|
+        case i
+        when 0
+          expect_splat "x", 0, 10, 0
+        when 1
+          expect_splat "y", 1, 20, 1
+        end
+        i += 1
+      end
+      i.should eq(2)
+
+      Splat.at(a_def, objs) do
+        fail "expected at_splat not to invoke the block"
+      end
+
+      Splat.after(a_def, objs) do
+        fail "expected after_splat not to invoke the block"
+      end
+    end
+
+    it "with splat" do
+      a_def = Def.new("foo", args: [Arg.new("a1"), Arg.new("a2"), Arg.new("a3"), Arg.new("a4")], splat_index: 2)
+      objs = [10, 20, 30, 40, 50, 60]
+
+      i = 0
+      Splat.before(a_def, objs) do |arg, arg_index, obj, obj_index|
+        case i
+        when 0
+          expect_splat "a1", 0, 10, 0
+        when 1
+          expect_splat "a2", 1, 20, 1
+        end
+        i += 1
+      end
+      i.should eq(2)
+
+      i = 0
+      Splat.at(a_def, objs) do |arg, arg_index, obj, obj_index|
+        case i
+        when 0
+          expect_splat "a3", 2, 30, 2
+        when 1
+          expect_splat "a3", 2, 40, 3
+        when 2
+          expect_splat "a3", 2, 50, 4
+        end
+        i += 1
+      end
+      i.should eq(3)
+
+      i = 0
+      Splat.after(a_def, objs) do |arg, arg_index, obj, obj_index|
+        expect_splat "a4", 3, 60, 5
+        i += 1
+      end
+      i.should eq(1)
+    end
   end
 end

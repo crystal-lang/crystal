@@ -20,7 +20,7 @@ class Crystal::Def
     end
 
     # If there are no named args and all unspecified default arguments are magic
-    # constants we can return outself (magic constants will be filled later)
+    # constants we can return ourself (magic constants will be filled later)
     if !named_args && !splat_index
       all_magic = true
       args_size.upto(args.size - 1) do |index|

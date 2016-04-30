@@ -156,29 +156,19 @@ module Crystal
 
       def self.new(expander, mod, scope, a_macro : Macro, call)
         vars = {} of String => ASTNode
+        splat_index = a_macro.splat_index
 
-        marg_args_size = a_macro.args.size
-        call_args_size = call.args.size
-        splat_index = a_macro.splat_index || -1
-
-        # Args before the splat argument
-        0.upto(splat_index - 1) do |index|
-          macro_arg = a_macro.args[index]
-          call_arg = call.args[index]? || macro_arg.default_value.not_nil!
-          call_arg = call_arg.expand_node(call.location) if call_arg.is_a?(MagicConstant)
-          vars[macro_arg.name] = call_arg
+        # Process regular args
+        # (skip the splat index because we need to create an array for it)
+        a_macro.match(call.args) do |macro_arg, macro_arg_index, call_arg, call_arg_index|
+          vars[macro_arg.name] = call_arg if macro_arg_index != splat_index
         end
 
-        # The splat argument
-        if splat_index == -1
-          splat_size = 0
-          offset = 0
-        else
-          splat_size = call_args_size - (marg_args_size - 1)
-          splat_size = 0 if splat_size < 0
-          offset = splat_index + splat_size
+        # Gather splat args into an array
+        if splat_index
           splat_arg = a_macro.args[splat_index]
           splat_elements = if splat_index < call.args.size
+                             splat_size = Splat.size(a_macro, call.args)
                              call.args[splat_index, splat_size]
                            else
                              [] of ASTNode
@@ -186,13 +176,15 @@ module Crystal
           vars[splat_arg.name] = ArrayLiteral.new(splat_elements)
         end
 
-        # Args after the splat argument
-        base = splat_index + 1
-        base.upto(marg_args_size - 1) do |index|
-          macro_arg = a_macro.args[index]
-          call_arg = call.args[offset + index - base]? || macro_arg.default_value.not_nil!
-          call_arg = call_arg.expand_node(call.location) if call_arg.is_a?(MagicConstant)
-          vars[macro_arg.name] = call_arg
+        # Process default values
+        a_macro.args.each do |macro_arg|
+          default_value = macro_arg.default_value
+          next unless default_value
+
+          next if vars.has_key?(macro_arg.name)
+
+          default_value = default_value.expand_node(call.location) if default_value.is_a?(MagicConstant)
+          vars[macro_arg.name] = default_value
         end
 
         # The named arguments

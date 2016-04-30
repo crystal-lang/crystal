@@ -125,17 +125,15 @@ module Crystal
       named_args = signature.named_args
       matched_arg_types = nil
 
-      splat_index = a_def.splat_index || -1
+      # If there's a restriction on a splat, zero splatted args don't match
+      if (splat_index = a_def.splat_index) &&
+         a_def.args[splat_index].restriction &&
+         Splat.size(a_def, arg_types) == 0
+        return nil
+      end
 
-      # Args before the splat argument
-      0.upto(splat_index - 1) do |index|
-        def_arg = a_def.args[index]
-        arg_type = arg_types[index]?
-
-        # Because of default argument
-        break unless arg_type
-
-        match_arg_type = match_arg(arg_type, def_arg, context)
+      a_def.match(arg_types) do |arg, arg_index, arg_type, arg_type_index|
+        match_arg_type = match_arg(arg_type, arg, context)
         if match_arg_type
           matched_arg_types ||= [] of Type
           matched_arg_types.push match_arg_type
@@ -144,50 +142,7 @@ module Crystal
         end
       end
 
-      # The splat argument
-      if splat_index == -1
-        splat_size = 0
-        offset = 0
-      else
-        splat_size = arg_types.size - (a_def.args.size - 1)
-        offset = splat_index + splat_size
-        splat_arg = def_metadata.def.args[splat_index]
-
-        # If there's a restriction on a splat, zero splatted args don't match
-        return nil if splat_arg.restriction && splat_size == 0
-
-        matched_arg_types ||= [] of Type
-        splat_size.times do |i|
-          matched_arg_type = arg_types[splat_index + i]
-
-          # Check that every splatted type matches the restriction
-          if splat_arg.restriction && !match_arg(matched_arg_type, splat_arg, context)
-            return nil
-          end
-
-          matched_arg_types.push matched_arg_type
-        end
-      end
-
-      # Args after the splat argument
-      base = splat_index + 1
-      base.upto(a_def.args.size - 1) do |index|
-        def_arg = a_def.args[index]
-        arg_type = arg_types[offset + index - base]?
-
-        # Because of default argument
-        break unless arg_type
-
-        match_arg_type = match_arg(arg_type, def_arg, context)
-        if match_arg_type
-          matched_arg_types ||= [] of Type
-          matched_arg_types.push match_arg_type
-        else
-          return nil
-        end
-      end
-
-      # Now check named args
+      # Check named args
       if named_args
         min_index = signature.arg_types.size
         named_args.each do |named_arg|
@@ -207,11 +162,9 @@ module Crystal
         end
       end
 
-      # We reuse a match contextx without free vars, but we create
+      # We reuse a match context without free vars, but we create
       # new ones when there are free vars.
-      if context.free_vars
-        context = context.clone
-      end
+      context = context.clone if context.free_vars
 
       Match.new(a_def, (matched_arg_types || arg_types), context)
     end
