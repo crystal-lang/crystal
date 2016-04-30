@@ -4,7 +4,7 @@ We can simplify our constructor by using a shorter syntax for assigning a method
 
 ```crystal
 class Person
-  def initialize(@name)
+  def initialize(@name : String)
     @age = 0
   end
 end
@@ -36,7 +36,7 @@ As a side note, we can define `become_older` inside the original `Person` defini
 
 ```crystal
 class Person
-  def initialize(@name)
+  def initialize(@name : String)
     @age = 0
   end
 end
@@ -92,3 +92,19 @@ person.age #=> 3
 ```
 
 Without arguments nor parenthesis, `previous_def` receives the same arguments as the method's arguments. Otherwise, it receives the arguments you pass to it.
+
+## Catch-all initialization
+
+Instance variables can also be initialized outside `initialize` methods:
+
+```crystal
+class Person
+  @age = 0
+
+  def initialize(@name : String)
+  end
+end
+```
+
+This will initialize `@age` to zero in every constructor. This is useful to avoid duplication, but also to avoid the `Nil` type when reopening a class and adding instance variables to it.
+

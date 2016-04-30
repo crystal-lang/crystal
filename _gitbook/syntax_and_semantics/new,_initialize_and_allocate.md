@@ -12,7 +12,7 @@ We can't do much with `person`, so lets add some concepts to it. A `Person` has 
 
 ```crystal
 class Person
-  def initialize(name)
+  def initialize(name : String)
     @name = name
     @age = 0
   end
@@ -39,13 +39,15 @@ john.age #=> 0
 peter.name #=> "Peter"
 ```
 
+(If you wonder why we needed to specify that `name` is a `String` but we didn't need to do it for `age`, check the [global type inference algorithm](type_inference.html))
+
 Note that we create a `Person` with `new` but we defined the initialization in an `initialize` method, not in a `new` method. Why is this so?
 
 The answer is that when we defined an `initialize` method Crystal defined a `new` method for us, like this:
 
 ```crystal
 class Person
-  def self.new(name)
+  def self.new(name : String)
     instance = Person.allocate
     instance.initialize(name)
     instance
