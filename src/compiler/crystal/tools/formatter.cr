@@ -425,7 +425,7 @@ module Crystal
       write @token.raw
       format_regex_modifiers if is_regex
 
-      if is_heredoc && indent_difference != 0
+      if is_heredoc && indent_difference > 0
         @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
       end
 
@@ -507,7 +507,7 @@ module Crystal
       check :DELIMITER_END
       write @token.raw
 
-      if is_heredoc && indent_difference != 0
+      if is_heredoc && indent_difference > 0
         @heredoc_fixes << HeredocFix.new(heredoc_line, @line, indent_difference)
       end
 
