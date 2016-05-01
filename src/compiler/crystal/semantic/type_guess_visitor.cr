@@ -701,6 +701,9 @@ module Crystal
         min_size <= node.args.size <= max_size
       end
 
+      # If there are no matching defs we can't guess anything
+      return if defs.empty?
+
       # If it's a "new" method without arguments, keep the first one
       # (might happen that a parent new is found here)
       if node.name == "new" && node.args.empty? && !node.named_args && !node.block

@@ -2660,6 +2660,20 @@ describe "Type inference: instance var" do
       "Can't infer the type of instance variable '@foo' of A(Int32)"
   end
 
+  it "doesn't crash when inferring from new without matches (#2538)" do
+    assert_error %(
+      class Foo
+        @@default = Foo.new
+
+        def initialize(@attr)
+        end
+      end
+
+      Foo.new("aaaa")
+      ),
+      "wrong number of arguments for 'Foo.new'"
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv
