@@ -1,3 +1,5 @@
+require "./csv"
+
 # A CSV parser. It lets you consume a CSV row by row.
 #
 # Most of the time `CSV#parse` and `CSV#each_row` are more convenient.

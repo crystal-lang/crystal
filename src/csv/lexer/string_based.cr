@@ -1,3 +1,5 @@
+require "../csv"
+
 # :nodoc:
 class CSV::Lexer::StringBased < CSV::Lexer
   def initialize(string, separator = DEFAULT_SEPARATOR, quote_char = DEFAULT_QUOTE_CHAR)
