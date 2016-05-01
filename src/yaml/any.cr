@@ -23,6 +23,8 @@
 # when the underlying value is not a String will raise: the value won't automatically
 # be converted (parsed) to a String.
 struct YAML::Any
+  include Enumerable(self)
+
   # Reads a `YAML::Any` value from the given pull parser.
   def self.new(pull : YAML::PullParser)
     case pull.kind

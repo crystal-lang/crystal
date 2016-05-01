@@ -121,4 +121,12 @@ describe JSON::Any do
     (/o+/ === JSON.parse(%("foo"))).should be_truthy
     $~[0].should eq("oo")
   end
+
+  it "is enumerable" do
+    nums = JSON.parse("[1, 2, 3]")
+    nums.each_with_index do |x, i|
+      x.should be_a(JSON::Any)
+      x.raw.should eq(i + 1)
+    end
+  end
 end

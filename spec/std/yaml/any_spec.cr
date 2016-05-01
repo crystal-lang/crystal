@@ -95,4 +95,12 @@ describe YAML::Any do
     (/o+/ === YAML.parse(%("foo"))).should be_truthy
     $~[0].should eq("oo")
   end
+
+  it "is enumerable" do
+    nums = YAML.parse("[1, 2, 3]")
+    nums.each_with_index do |x, i|
+      x.should be_a(YAML::Any)
+      x.raw.should eq((i + 1).to_s)
+    end
+  end
 end
