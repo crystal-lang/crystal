@@ -52,4 +52,10 @@ describe JSON::Parser do
   it_raises_on_parse "[0]1"
   it_raises_on_parse "[0] 1 "
   it_raises_on_parse "[\"\\u123z\"]"
+
+  it "returns raw" do
+    value = JSON.parse_raw("1")
+    value.should eq(1)
+    value.should be_a(Int64)
+  end
 end

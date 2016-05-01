@@ -52,9 +52,14 @@ module JSON
   # All valid JSON types
   alias Type = Nil | Bool | Int64 | Float64 | String | Array(Type) | Hash(String, Type)
 
-  # Parses a JSON document.
+  # Parses a JSON document as a `JSON::Any`.
   def self.parse(input : String | IO) : Any
-    Any.new Parser.new(input).parse
+    Any.new parse_raw(input)
+  end
+
+  # Parses a JSON document as a `JSON::Type`.
+  def self.parse_raw(input : String | IO) : Type
+    Parser.new(input).parse
   end
 end
 
