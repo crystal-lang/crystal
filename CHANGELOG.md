@@ -1,3 +1,38 @@
+## Next
+
+* **(breaking change)** Instance, class and global variables types must be told to the compiler, [either explicitly or through a series of syntactic rules](http://crystal-lang.org/docs/syntax_and_semantics/type_inference.html)
+* **(breaking change)** Class variables are now initialized at the beginning of the program (before "main")
+* **(breaking change)** When doing `crystal program.cr arg1 arg2 arg3`, `arg1`, `arg2` and `arg3` are considered arguments to pass to the program (not the compiler). Use `crystal run program.cr arg1 ...` to consider `arg1` a file to include in the compilation.
+* The `.crystal` directory is now created at `$HOME/cache/.crystal` or `$HOME/.crystal` (or others similar), with a fallback to the current directory
+* `crystal doc` and `crystal tool hierarchy` are now much faster. Additionally, the hierarchy tool shows types for generic types, and doesn't show instantiations anymore (wasn't very useful)
+* `!` now does type filtering (for example you can do `!x || x.bar`, assuming `x` can be `nil` and non-nil type responds to `bar`)
+* Added `@x : Int32 = 1` syntax (declaration + initialization)
+* `new`/`initialize` logic now works more as one would expect
+* Added `BigRational` (thanks @will)
+* Added `BigFloat` (thanks @Exilor)
+* Added `String#insert`
+* Added `Time::EpochConverter` and `Time::EpochMillisConverter`
+* Added `%s` (unix epoch) directive to `Time::Format`
+* `Time`: honor Dayling Saving and `ENV["TZ"]`
+* Added `HTTP::Server::Response#cookies` (thanks @jhass)
+* Added `Array#bsearch`, `Array#bsearch_index` and `Range#bsearch` (thanks @MakeNowJust)
+* Added `Range#reverse_each` iterator (thanks @omninonsense)
+* `JSON::Any`: added `as_...?` methods
+* `JSON::Any` is now `Enumerable`
+* `YAML::Any` is now `Enumerable`
+* Added `JSON.parse_raw` that returns a `JSON::Type`
+* `JSON::PullParser`: added `#read_raw` to read a JSON value as a raw string (useful for delayed parsing). Also added `String::RawConverter` to be used with `JSON.mapping`.
+* `JSON` and `YAML`: enums, `BigInt` and `BigFloat` are now serializable
+* `ENV`: allow passing `nil` as a value to delete an environment variable
+* `Hash`: allow `Array | Tuple` arguments for `#select`, `#select!`, `#reject` and `#reject!`
+* `Crypto::Subtle.constant_time_compare` now returns `Bool`, and it can compare two strings in addition to two slices (thanks #skunkworker)
+* `HTTP::Server`: reset port zero after listening (thanks @splattael)
+* Added `File#each_line` iterator
+* Fix: disallow using `out` with `Void*` pointers
+* Fixed bug in `XML::Node#namespace_scopes` (thanks @Hamdiakoguz)
+* Added docs for `INIFile` (thanks @EvanHahn)
+* Lots of bug fixes
+
 ## 0.15.0 (2016-03-31)
 
 * **(breaking change)** `!` has now its meaning hardcoded in the language. If you defined it for a type it won't be invoked as a method anymore.
