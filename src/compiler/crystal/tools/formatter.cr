@@ -1372,7 +1372,6 @@ module Crystal
     def visit(node : Macro)
       write_keyword :macro, " "
 
-      check :IDENT
       write node.name
       next_token_skip_space
 
