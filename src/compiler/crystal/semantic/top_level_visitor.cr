@@ -697,19 +697,7 @@ module Crystal
       false
     end
 
-    def visit(node : TypeOf)
-      false
-    end
-
     def visit(node : PointerOf)
-      false
-    end
-
-    def visit(node : ArrayLiteral)
-      false
-    end
-
-    def visit(node : HashLiteral)
       false
     end
 

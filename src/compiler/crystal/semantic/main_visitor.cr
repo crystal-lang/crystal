@@ -906,6 +906,12 @@ module Crystal
       prepare_call(node)
 
       if expand_macro(node)
+        # It can happen that this call is inside an ArrayLiteral or HashLiteral,
+        # was expanded but isn't bound to the expansion because the call (together
+        # with its expantion) was cloned.
+        if (expanded = node.expanded) && !node.dependencies?
+          node.bind_to(expanded)
+        end
         return false
       end
 

@@ -1294,4 +1294,30 @@ describe "Code gen: macro" do
       id({{CONST}})
       )).to_i.should eq(1)
   end
+
+  it "can use macro inside array literal" do
+    run(%(
+      require "prelude"
+
+      macro foo
+        42
+      end
+
+      ary = [foo]
+      ary[0]
+      )).to_i.should eq(42)
+  end
+
+  it "can use macro inside hash literal" do
+    run(%(
+      require "prelude"
+
+      macro foo
+        42
+      end
+
+      hash = {foo => foo}
+      hash[foo]
+      )).to_i.should eq(42)
+  end
 end
