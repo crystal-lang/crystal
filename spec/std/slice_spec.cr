@@ -149,4 +149,13 @@ describe "Slice" do
     a.should eq(b)
     a.should_not eq(c)
   end
+
+  it "does macro []" do
+    slice = Slice[1, 'a', "foo"]
+    slice.should be_a(Slice(Int32 | Char | String))
+    slice.size.should eq(3)
+    slice[0].should eq(1)
+    slice[1].should eq('a')
+    slice[2].should eq("foo")
+  end
 end

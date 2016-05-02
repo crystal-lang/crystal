@@ -127,6 +127,24 @@ describe "Number" do
     ary.should eq([1])
   end
 
+  it "creates a slice" do
+    slice = Int8.slice(1, 2, 300)
+    slice.should be_a(Slice(Int8))
+    slice.size.should eq(3)
+    slice[0].should eq(1)
+    slice[1].should eq(2)
+    slice[2].should eq(300.to_u8)
+  end
+
+  it "creates a static array" do
+    ary = Int8.static_array(1, 2, 300)
+    ary.should be_a(StaticArray(Int8, 3))
+    ary.size.should eq(3)
+    ary[0].should eq(1)
+    ary[1].should eq(2)
+    ary[2].should eq(300.to_u8)
+  end
+
   it "steps from int to float" do
     count = 0
     0.step(by: 0.1, limit: 0.3) do |x|

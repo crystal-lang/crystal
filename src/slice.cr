@@ -7,6 +7,27 @@ struct Slice(T)
   include Enumerable(T)
   include Iterable
 
+  # Create a new `Slice` with the given *args*. The type of the
+  # slice will be the union of the type of the given *args*.
+  #
+  # The slice is allocated on the heap.
+  #
+  # ```
+  # slice = Slice[1, 'a']
+  # slice[0]    # => 1
+  # slice[1]    # => 'a'
+  # slice.class # => Slice(Char | Int32)
+  # ```
+  #
+  # See also: `Number.slice`.
+  macro [](*args)
+    slice = Slice(typeof({{*args}})).new({{args.size}})
+    {% for arg, i in args %}
+      slice.to_unsafe[{{i}}] = {{arg}}
+    {% end %}
+    slice
+  end
+
   # Returns the size of this slice.
   #
   # ```

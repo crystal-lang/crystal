@@ -2,6 +2,26 @@
 struct StaticArray(T, N)
   include Enumerable(T)
 
+  # Create a new `StaticArray` with the given *args*. The type of the
+  # static array will be the union of the type of the given *args*,
+  # and its size will be the number of elements in *args*.
+  #
+  # ```
+  # ary = StaticArray[1, 'a']
+  # ary[0]    # => 1
+  # ary[1]    # => 'a'
+  # ary.class # => StaticArray(Char | Int32, 2)
+  # ```
+  #
+  # See also: `Number.static_array`.
+  macro [](*args)
+    %array = uninitialized StaticArray(typeof({{*args}}), {{args.size}})
+    {% for arg, i in args %}
+      %array.to_unsafe[{{i}}] = {{arg}}
+    {% end %}
+    %array
+  end
+
   # Creates a new static array and invokes the
   # block once for each index of the array, assigning the
   # block's value in that index.
