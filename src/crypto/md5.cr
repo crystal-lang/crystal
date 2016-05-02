@@ -1,7 +1,7 @@
 class Crypto::MD5
-  def self.hex_digest(data : String) : String
+  def self.hex_digest(data : String | Slice(UInt8)) : String
     context = Context.new
-    context.update(data.to_unsafe, data.bytesize.to_u32)
+    context.update data
     context.final
     context.hex
   end
@@ -17,6 +17,10 @@ class Crypto::MD5
       @buf[3] = 0x10325476_u32
       @in = StaticArray(UInt8, 64).new(0_u8)
       @digest = uninitialized UInt8[16]
+    end
+
+    def update(data : String | Slice(UInt8))
+      update(data.to_unsafe, data.bytesize.to_u32)
     end
 
     def update(inBuf, inLen)
