@@ -1,3 +1,5 @@
+require "punycode"
+
 class IPSocket < Socket
   # Returns the `IPAddress` for the local end of the IP socket.
   def local_address
