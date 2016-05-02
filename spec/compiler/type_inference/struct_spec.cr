@@ -30,15 +30,18 @@ describe "Type inference: struct" do
 
   it "doesn't allow struct to participate in virtual" do
     assert_type("
-      struct Foo
+      abstract struct Foo
       end
 
       struct Bar < Foo
       end
 
-      Foo.new || Bar.new
+      struct Baz < Foo
+      end
+
+      Bar.new || Baz.new
       ") do
-      union_of(types["Foo"], types["Bar"])
+      union_of(types["Bar"], types["Baz"])
     end
   end
 
@@ -136,16 +139,14 @@ describe "Type inference: struct" do
       "recursive struct Foo detected: `@bar : Bar?` -> `@foo : Foo?`"
   end
 
-  it "errors on recursive struct through inheritance (#2136)" do
+  it "can't extend struct from non-abstract struct" do
     assert_error %(
       struct A
-        struct B < A end
-
-        def initialize(@x : A::B?) end
       end
 
-      a = A.new A::B.new nil
+      struct B < A
+      end
       ),
-      "recursive struct A::B detected: `@x : A::B?`"
+      "can't extend non-abstract struct A"
   end
 end

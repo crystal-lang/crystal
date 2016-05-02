@@ -162,7 +162,7 @@ describe "type inference: alias" do
   %w(class struct).each do |type|
     it "inherits #{type} through alias" do
       assert_type(%(
-        #{type} Parent
+        abstract #{type} Parent
         end
 
         alias Alias = Parent
