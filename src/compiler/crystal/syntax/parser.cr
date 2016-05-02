@@ -3576,7 +3576,13 @@ module Crystal
         next_token
         check :":"
         next_token_skip_space_or_newline
-        value = parse_op_assign
+
+        if @token.keyword?(:out)
+          value = parse_out
+        else
+          value = parse_op_assign
+        end
+
         named_args << NamedArgument.new(name, value).at(location)
         skip_space_or_newline if allow_newline
         if @token.type == :","

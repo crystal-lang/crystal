@@ -966,27 +966,75 @@ module Crystal
       name.size
     end
 
-    def matches?(args_size, named_args)
+    def matches?(call_args, named_args)
+      call_args_size = call_args.size
       my_args_size = args.size
       min_args_size = args.index(&.default_value) || my_args_size
       max_args_size = my_args_size
+      splat_index = self.splat_index
       if splat_index
         min_args_size -= 1
         max_args_size = Int32::MAX
       end
 
-      unless min_args_size <= args_size <= max_args_size
+      # If there's a splat in the macros and named args in the call,
+      # there's no match (it's confusing to determine what should happen)
+      if named_args && splat_index
+        return nil
+      end
+
+      # If there are more positional arguments than those required, there's no match
+      # (if there's less they might be matched with named arguments)
+      if call_args_size > max_args_size
         return false
       end
 
+      # If there are named args we must check that all mandatory args
+      # are covered by positional arguments or named arguments.
+      if named_args
+        mandatory_args = BitArray.new(my_args_size)
+      elsif call_args_size < min_args_size
+        # Otherwise, they must be matched by positional arguments
+        return false
+      end
+
+      self.match(call_args) do |my_arg, my_arg_index, call_arg, call_arg_index|
+        mandatory_args[my_arg_index] = true if mandatory_args
+      end
+
+      # Check named args
       named_args.try &.each do |named_arg|
-        index = args.index { |arg| arg.name == named_arg.name }
-        if index
-          if index < args_size
-            return false
+        found_index = args.index { |arg| arg.name == named_arg.name }
+        if found_index
+          # A named arg can't target the splat index
+          if found_index == splat_index
+            return nil
+          end
+
+          # Check whether the named arg refers to an argument that was already specified
+          if mandatory_args
+            if mandatory_args[found_index]
+              return false
+            end
+
+            mandatory_args[found_index] = true
+          else
+            if found_index < call_args_size
+              return false
+            end
           end
         else
           return false
+        end
+      end
+
+      # Check that all mandatory args were specified
+      # (either with positional arguments or with named arguments)
+      if mandatory_args
+        self.args.each_with_index do |arg, index|
+          if index != splat_index && !arg.default_value && !mandatory_args[index]
+            return nil
+          end
         end
       end
 

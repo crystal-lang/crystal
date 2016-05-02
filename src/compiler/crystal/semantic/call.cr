@@ -584,7 +584,7 @@ class Crystal::Call
   end
 
   def lookup_macro
-    in_macro_target &.lookup_macro(name, args.size, named_args)
+    in_macro_target &.lookup_macro(name, args, named_args)
   end
 
   def in_macro_target

@@ -2,16 +2,19 @@ require "../types"
 
 module Crystal
   class Type
+    ONE_ARG    = [Arg.new("a1")]
+    THREE_ARGS = [Arg.new("a1"), Arg.new("a2"), Arg.new("a3")]
+
     def check_method_missing(signature)
       false
     end
 
     def lookup_method_missing
       # method_missing is actually stored in the metaclass
-      method_missing = metaclass.lookup_macro("method_missing", 1, nil)
+      method_missing = metaclass.lookup_macro("method_missing", ONE_ARG, nil)
       return method_missing if method_missing
 
-      method_missing = metaclass.lookup_macro("method_missing", 3, nil)
+      method_missing = metaclass.lookup_macro("method_missing", THREE_ARGS, nil)
       return method_missing if method_missing
 
       parents.try &.each do |parent|

@@ -64,4 +64,97 @@ describe "Type inference: named args" do
       ),
       "argument 'headers' already specified"
   end
+
+  it "sends one regular argument as named argument" do
+    assert_type(%(
+      def foo(x)
+        x
+      end
+
+      foo x: 1
+      )) { int32 }
+  end
+
+  it "sends two regular arguments as named arguments" do
+    assert_type(%(
+      def foo(x, y)
+        x + y
+      end
+
+      foo x: 1, y: 2
+      )) { int32 }
+  end
+
+  it "sends two regular arguments as named arguments in inverted position (1)" do
+    assert_type(%(
+      def foo(x, y)
+        x
+      end
+
+      foo y: 1, x: "foo"
+      )) { string }
+  end
+
+  it "sends two regular arguments as named arguments in inverted position (2)" do
+    assert_type(%(
+      def foo(x, y)
+        y
+      end
+
+      foo y: 1, x: "foo"
+      )) { int32 }
+  end
+
+  it "errors if named arg matches splat argument" do
+    assert_error %(
+      def foo(x, *y)
+      end
+
+      foo x: 1, y: 2
+      ),
+      "can't use named args with methods that have a splat argument"
+  end
+
+  it "doesn't allow named arg if there's a splat" do
+    assert_error %(
+      def foo(*y, x)
+      end
+
+      foo 1, x: 2
+      ),
+      "can't use named args with methods that have a splat argument"
+  end
+
+  it "errors if missing one argument" do
+    assert_error %(
+      def foo(x, y, z)
+      end
+
+      foo x: 1, y: 2
+      ),
+      "missing argument: z"
+  end
+
+  it "errors if missing two arguments" do
+    assert_error %(
+      def foo(x, y, z)
+      end
+
+      foo y: 2
+      ),
+      "missing arguments: x, z"
+  end
+
+  it "says no overload matches with named arg" do
+    assert_error %(
+      def foo(x, y)
+      end
+
+      def foo(x, y, z)
+      end
+
+      foo(x: 2)
+      ),
+      "no overload matches"
+  end
 end

@@ -112,6 +112,11 @@ describe "Type inference: lib" do
       "out can only be used with lib funs"
   end
 
+  it "reports error out can only be used with lib funs in named argument" do
+    assert_error "foo(x: out x)",
+      "out can only be used with lib funs"
+  end
+
   it "reports error if using out with an already declared variable" do
     assert_error %(
       lib Lib
@@ -695,5 +700,81 @@ describe "Type inference: lib" do
       end
       ),
       "fun redefinition with different signature"
+  end
+
+  it "errors if using named args with variadic function" do
+    assert_error %(
+      lib LibC
+        fun foo(x : Int32, y : UInt8, ...) : Int32
+      end
+
+      LibC.foo y: 1_u8, x: 1
+      ),
+      "can't use named args with variadic function"
+  end
+
+  it "errors if using unknown named arg" do
+    assert_error %(
+      lib LibC
+        fun foo(x : Int32, y : UInt8) : Int32
+      end
+
+      LibC.foo y: 1_u8, x: 1, z: 2
+      ),
+      "no argument named 'z'"
+  end
+
+  it "errors if argument already specified" do
+    assert_error %(
+      lib LibC
+        fun foo(x : Int32, y : UInt8) : Int32
+      end
+
+      LibC.foo 1, x: 2
+      ),
+      "argument 'x' already specified"
+  end
+
+  it "errors if missing arugment" do
+    assert_error %(
+      lib LibC
+        fun foo(x : Int32, y : UInt8) : Int32
+      end
+
+      LibC.foo x: 2
+      ),
+      "missing argument: y"
+  end
+
+  it "errors if missing arugments" do
+    assert_error %(
+      lib LibC
+        fun foo(x : Int32, y : UInt8, z: Int32) : Int32
+      end
+
+      LibC.foo y: 1_u8
+      ),
+      "missing arguments: x, z"
+  end
+
+  it "can use named args" do
+    assert_type(%(
+      lib LibC
+        fun foo(x : Int32, y : UInt8) : Int32
+      end
+
+      LibC.foo y: 1_u8, x: 1
+      )) { int32 }
+  end
+
+  it "can use out with named args" do
+    assert_type(%(
+      lib LibC
+        fun foo(x : Int32*)
+      end
+
+      LibC.foo(x: out x)
+      x
+      )) { int32 }
   end
 end
