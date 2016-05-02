@@ -295,7 +295,7 @@ struct Slice(T)
   end
 
   def to_s(io)
-    io << "["
+    io << "Slice["
     join ", ", io, &.inspect(io)
     io << "]"
   end

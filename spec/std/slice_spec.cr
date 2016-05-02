@@ -69,7 +69,7 @@ describe "Slice" do
 
   it "does to_s" do
     slice = Slice.new(4) { |i| i + 1 }
-    slice.to_s.should eq("[1, 2, 3, 4]")
+    slice.to_s.should eq("Slice[1, 2, 3, 4]")
   end
 
   it "gets pointer" do

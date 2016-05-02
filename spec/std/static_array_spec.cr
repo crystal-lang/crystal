@@ -76,7 +76,7 @@ describe "StaticArray" do
 
   it "does to_s" do
     a = StaticArray(Int32, 3).new { |i| i + 1 }
-    a.to_s.should eq("[1, 2, 3]")
+    a.to_s.should eq("StaticArray[1, 2, 3]")
   end
 
   it "shuffles" do

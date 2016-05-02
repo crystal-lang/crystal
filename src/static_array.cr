@@ -248,7 +248,7 @@ struct StaticArray(T, N)
   # array.to_s # => "[1, 2, 3]"
   # ```
   def to_s(io : IO)
-    io << "["
+    io << "StaticArray["
     join ", ", io, &.inspect(io)
     io << "]"
   end
