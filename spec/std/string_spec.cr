@@ -576,6 +576,26 @@ describe "String" do
       assert { "=".split('=', 2).should eq(["", ""]) }
     end
 
+    describe "by char" do
+      it "with yield empty" do
+        c = 0
+        "".split(',') { c += 1 }
+        c.should eq 1
+      end
+
+      it "with yield" do
+        str = [] of String
+        "foo,bar,baz,qux".split(',', 3) { |s| str << s }
+        str.join("|").should eq "foo|bar|baz,qux"
+      end
+
+      it "split_slice" do
+        str = [] of String
+        "foo,bar,baz,qux".split_slice(',', 3) { |s| str << String.new(s) }
+        str.join("|").should eq "foo|bar|baz,qux"
+      end
+    end
+
     describe "by string" do
       assert { "".split(",").should eq([""]) }
       assert { "".split(":-").should eq([""]) }
