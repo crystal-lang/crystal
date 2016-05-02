@@ -1754,8 +1754,7 @@ describe "String" do
     end
 
     it "decodes with skip" do
-      bytes = UInt8[186, 195, 140, 202, 199]
-      bytes = Slice.new(bytes.to_unsafe, bytes.size)
+      bytes = UInt8.slice(186, 195, 140, 202, 199)
       String.new(bytes, "GB2312", invalid: :skip).should eq("好是")
     end
   end

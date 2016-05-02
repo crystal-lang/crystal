@@ -79,35 +79,35 @@ describe "Char::Reader" do
   end
 
   it "errors if 0x80 <= first_byte < 0xC2" do
-    expect_raises { Char::Reader.new(String.new [0x80_u8].to_unsafe) }
-    expect_raises { Char::Reader.new(String.new [0xC1_u8].to_unsafe) }
+    expect_raises { Char::Reader.new(String.new UInt8.slice(0x80)) }
+    expect_raises { Char::Reader.new(String.new UInt8.slice(0xC1)) }
   end
 
   it "errors if (second_byte & 0xC0) != 0x80" do
-    expect_raises { Char::Reader.new(String.new [0xd0_u8, 0_u8].to_unsafe) }
+    expect_raises { Char::Reader.new(String.new UInt8.slice(0xd0, 0)) }
   end
 
   it "errors if first_byte == 0xE0 && second_byte < 0xA0" do
-    expect_raises { Char::Reader.new(String.new [0xe0_u8, 0x9F_u8, 0xA0_u8].to_unsafe) }
+    expect_raises { Char::Reader.new(String.new UInt8.slice(0xe0, 0x9F, 0xA0)) }
   end
 
   it "errors if first_byte < 0xF0 && (third_byte & 0xC0) != 0x80" do
-    expect_raises { Char::Reader.new(String.new [0xe0_u8, 0xA0_u8, 0_u8].to_unsafe) }
+    expect_raises { Char::Reader.new(String.new UInt8.slice(0xe0, 0xA0, 0)) }
   end
 
   it "errors if first_byte == 0xF0 && second_byte < 0x90" do
-    expect_raises { Char::Reader.new(String.new [0xf0_u8, 0x8F_u8, 0xA0_u8].to_unsafe) }
+    expect_raises { Char::Reader.new(String.new UInt8.slice(0xf0, 0x8F, 0xA0)) }
   end
 
   it "errors if first_byte == 0xF4 && second_byte >= 0x90" do
-    expect_raises { Char::Reader.new(String.new [0xf4_u8, 0x90_u8, 0xA0_u8].to_unsafe) }
+    expect_raises { Char::Reader.new(String.new UInt8.slice(0xf4, 0x90, 0xA0)) }
   end
 
   it "errors if first_byte < 0xF5 && (fourth_byte & 0xC0) != 0x80" do
-    expect_raises { Char::Reader.new(String.new [0xf4_u8, 0x8F_u8, 0xA0_u8, 0_u8].to_unsafe) }
+    expect_raises { Char::Reader.new(String.new UInt8.slice(0xf4, 0x8F, 0xA0, 0)) }
   end
 
   it "errors if first_byte >= 0xF5" do
-    expect_raises { Char::Reader.new(String.new [0xf5_u8, 0x8F_u8, 0xA0_u8, 0xA0_u8].to_unsafe) }
+    expect_raises { Char::Reader.new(String.new UInt8.slice(0xf5, 0x8F, 0xA0, 0xA0)) }
   end
 end
