@@ -414,7 +414,7 @@ class Crystal::CodeGenVisitor
     end
 
     if type.is_a?(VirtualType)
-      @last = cast_to @last, type
+      @last = upcast(@last, type, base_type)
     end
 
     @last

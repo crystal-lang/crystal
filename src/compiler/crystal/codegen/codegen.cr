@@ -1462,7 +1462,13 @@ module Crystal
     def llvm_self_ptr
       type = context.type
       if type.is_a?(VirtualType)
-        cast_to llvm_self, type.base_type
+        if type.struct?
+          # A virtual struct doesn't need a cast to a more generic pointer
+          # (it's the union already)
+          llvm_self
+        else
+          cast_to llvm_self, type.base_type
+        end
       else
         llvm_self
       end
@@ -1832,7 +1838,13 @@ module Crystal
       end
 
       if type.is_a?(VirtualType)
-        pointer = cast_to pointer, type.base_type
+        if type.struct?
+          # For a struct we need to cast the second part of the union to the base type
+          value_ptr = gep(pointer, 0, 1)
+          pointer = bit_cast value_ptr, llvm_type(type.base_type).pointer
+        else
+          pointer = cast_to pointer, type.base_type
+        end
       end
 
       aggregate_index pointer, index
