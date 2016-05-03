@@ -101,6 +101,33 @@ describe "Slice" do
     slice.hexstring.should eq("01020304")
   end
 
+  it "does hexdump" do
+    ascii_table = <<-EOF
+2021 2223 2425 2627 2829 2a2b 2c2d 2e2f   !"#$%&'()*+,-./
+3031 3233 3435 3637 3839 3a3b 3c3d 3e3f  0123456789:;<=>?
+4041 4243 4445 4647 4849 4a4b 4c4d 4e4f  @ABCDEFGHIJKLMNO
+5051 5253 5455 5657 5859 5a5b 5c5d 5e5f  PQRSTUVWXYZ[\\]^_
+6061 6263 6465 6667 6869 6a6b 6c6d 6e6f  `abcdefghijklmno
+7071 7273 7475 7677 7879 7a7b 7c7d 7e7f  pqrstuvwxyz{|}~.
+EOF
+
+    slice = StaticArray(UInt8, 96).new(&.to_u8.+(32)).to_slice
+    slice.hexdump.should eq(ascii_table)
+
+    ascii_table_plus = <<-EOF
+2021 2223 2425 2627 2829 2a2b 2c2d 2e2f   !"#$%&'()*+,-./
+3031 3233 3435 3637 3839 3a3b 3c3d 3e3f  0123456789:;<=>?
+4041 4243 4445 4647 4849 4a4b 4c4d 4e4f  @ABCDEFGHIJKLMNO
+5051 5253 5455 5657 5859 5a5b 5c5d 5e5f  PQRSTUVWXYZ[\\]^_
+6061 6263 6465 6667 6869 6a6b 6c6d 6e6f  `abcdefghijklmno
+7071 7273 7475 7677 7879 7a7b 7c7d 7e7f  pqrstuvwxyz{|}~.
+8081 8283 84                             .....
+EOF
+
+    plus = StaticArray(UInt8, 101).new(&.to_u8.+(32)).to_slice
+    plus.hexdump.should eq(ascii_table_plus)
+  end
+
   it "does iterator" do
     slice = Slice(Int32).new(3) { |i| i + 1 }
     iter = slice.each
