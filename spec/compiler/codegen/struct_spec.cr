@@ -349,4 +349,36 @@ describe "Code gen: struct" do
       foo.x
       )).to_i.should eq(1)
   end
+
+  it "codegens virtual struct with pointer" do
+    run(%(
+      abstract struct Foo
+      end
+
+      struct Bar < Foo
+        def initialize
+          @x = 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      struct Baz < Foo
+        def initialize
+          @x = 2
+        end
+
+        def x
+          @x
+        end
+      end
+
+      ptr = Pointer(Foo).malloc(1_u64)
+      ptr.value = Baz.new
+      ptr.value = Bar.new
+      ptr.value.x
+      )).to_i.should eq(1)
+  end
 end

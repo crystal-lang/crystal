@@ -127,7 +127,7 @@ module Crystal
       LLVM::Type.struct(type.llvm_name) do |a_struct|
         @cache[type] = a_struct
 
-        type.tuple_types.map { |tuple_type| llvm_embedded_type(tuple_type) }
+        type.tuple_types.map { |tuple_type| llvm_embedded_type(tuple_type) as LLVM::Type }
       end
     end
 
@@ -299,23 +299,27 @@ module Crystal
       end
     end
 
-    def llvm_embedded_type(type : CStructType)
+    def llvm_embedded_type(type)
+      llvm_embedded_type_impl(type.remove_indirection)
+    end
+
+    private def llvm_embedded_type_impl(type : CStructType)
       llvm_struct_type type
     end
 
-    def llvm_embedded_type(type : CUnionType)
+    private def llvm_embedded_type_impl(type : CUnionType)
       llvm_struct_type type
     end
 
-    def llvm_embedded_type(type : FunInstanceType)
+    private def llvm_embedded_type_impl(type : FunInstanceType)
       llvm_type type
     end
 
-    def llvm_embedded_type(type : PointerInstanceType)
+    private def llvm_embedded_type_impl(type : PointerInstanceType)
       llvm_type type
     end
 
-    def llvm_embedded_type(type : InstanceVarContainer)
+    private def llvm_embedded_type_impl(type : InstanceVarContainer)
       if type.struct?
         llvm_struct_type type
       else
@@ -323,19 +327,19 @@ module Crystal
       end
     end
 
-    def llvm_embedded_type(type : StaticArrayInstanceType)
+    private def llvm_embedded_type_impl(type : StaticArrayInstanceType)
       llvm_type type
     end
 
-    def llvm_embedded_type(type : NoReturnType)
+    private def llvm_embedded_type_impl(type : NoReturnType)
       LLVM::Int8
     end
 
-    def llvm_embedded_type(type : VoidType)
+    private def llvm_embedded_type_impl(type : VoidType)
       LLVM::Int8
     end
 
-    def llvm_embedded_type(type)
+    private def llvm_embedded_type_impl(type)
       llvm_type type
     end
 
