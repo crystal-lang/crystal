@@ -1521,8 +1521,8 @@ class Array(T)
     result
   end
 
-  def product(ary, &block)
-    self.each { |a| ary.each { |b| yield a, b } }
+  def product(enumerable : Enumerable(U), &block)
+    self.each { |a| enumerable.each { |b| yield a, b } }
   end
 
   # Append. Pushes one value to the end of `self`, given that the type of the value is *T*

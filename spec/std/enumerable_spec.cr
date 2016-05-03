@@ -573,6 +573,21 @@ describe "Enumerable" do
     end
   end
 
+  describe "product" do
+    assert { ([] of Int32).product.should eq(1) }
+    assert { [1, 2, 3].product.should eq(6) }
+    assert { [1, 2, 3].product(4).should eq(24) }
+    assert { [1, 2, 3].product(4.5).should eq(27) }
+    assert { (1..3).product { |x| x * 2 }.should eq(48) }
+    assert { (1..3).product(1.5) { |x| x * 2 }.should eq(72) }
+
+    it "uses zero from type" do
+      typeof([1, 2, 3].product).should eq(Int32)
+      typeof([1.5, 2.5, 3.5].product).should eq(Float64)
+      typeof([1, 2, 3].product(&.to_f)).should eq(Float64)
+    end
+  end
+
   describe "first" do
     assert { (1..3).first(1).should eq([1]) }
     assert { (1..3).first(4).should eq([1, 2, 3]) }
