@@ -241,6 +241,13 @@ struct Slice(T)
     to_s(io)
   end
 
+  # Returns a hexstring representation of this slice, assuming it's
+  # a `Slice(UInt8)`.
+  #
+  # ```
+  # slice = UInt8.slice(97, 62, 63, 8, 255)
+  # slice.hexstring # => "61626308ff"
+  # ```
   def hexstring
     self as Slice(UInt8)
 
@@ -251,6 +258,7 @@ struct Slice(T)
     end
   end
 
+  # :nodoc:
   def hexstring(buffer)
     self as Slice(UInt8)
 
@@ -264,6 +272,14 @@ struct Slice(T)
     nil
   end
 
+  # Returns a hexdump of this slice, assuming it's a `Slice(UInt8)`.
+  # This method is specially useful for debugging binary data and
+  # incoming/outgoing data in protocols.
+  #
+  # ```
+  # slice = UInt8.slice(97, 62, 63, 8, 255)
+  # slice.hexdump # => "6162 6308 ff                             abc.."
+  # ```
   def hexdump
     self as Slice(UInt8)
 
