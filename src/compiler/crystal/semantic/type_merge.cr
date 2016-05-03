@@ -178,16 +178,16 @@ module Crystal
 
   class ClassType
     def common_ancestor(other : ClassType)
+      # This discards Object, Reference and Value
       if depth <= 1
         return nil
       end
 
-      if self == other
-        return self
-      end
-
-      if struct?
+      case self
+      when program.struct, program.int, program.float
         return nil
+      when other
+        return self
       end
 
       if depth == other.depth

@@ -1,28 +1,32 @@
 require "./codegen"
 
 class Crystal::CodeGenVisitor
-  def codegen_cond(type : NilType)
+  def codegen_cond(type)
+    codegen_cond_impl(type.remove_indirection)
+  end
+
+  private def codegen_cond_impl(type : NilType)
     llvm_false
   end
 
-  def codegen_cond(type : BoolType)
+  private def codegen_cond_impl(type : BoolType)
     @last
   end
 
-  def codegen_cond(type : TypeDefType)
+  private def codegen_cond_impl(type : TypeDefType)
     codegen_cond type.typedef
   end
 
-  def codegen_cond(type : NilableType | NilableReferenceUnionType | PointerInstanceType | NilablePointerType)
+  private def codegen_cond_impl(type : NilableType | NilableReferenceUnionType | PointerInstanceType | NilablePointerType)
     not_null_pointer? @last
   end
 
-  def codegen_cond(type : NilableFunType)
+  private def codegen_cond_impl(type : NilableFunType)
     fun_ptr = extract_value @last, 0
     not_null_pointer? fun_ptr
   end
 
-  def codegen_cond(type : MixedUnionType)
+  private def codegen_cond_impl(type : MixedUnionType)
     union_types = type.expand_union_types
 
     has_nil = union_types.any? &.nil_type?
@@ -60,7 +64,7 @@ class Crystal::CodeGenVisitor
     cond
   end
 
-  def codegen_cond(type : Type)
+  private def codegen_cond_impl(type : Type)
     llvm_true
   end
 end

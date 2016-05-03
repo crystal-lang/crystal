@@ -319,4 +319,34 @@ describe "Code gen: struct" do
       foo.value
       )).to_i.should eq(123)
   end
+
+  it "codegens virtual struct" do
+    run(%(
+      abstract struct Foo
+      end
+
+      struct Bar < Foo
+        def initialize
+          @x = 1
+        end
+
+        def x
+          @x
+        end
+      end
+
+      struct Baz < Foo
+        def initialize
+          @x = 2
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Bar.new || Baz.new
+      foo.x
+      )).to_i.should eq(1)
+  end
 end

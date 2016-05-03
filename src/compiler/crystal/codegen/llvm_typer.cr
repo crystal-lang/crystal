@@ -15,7 +15,7 @@ module Crystal
     @layout : LLVM::TargetData
     @landing_pad_type : LLVM::Type
 
-    def initialize(program)
+    def initialize(@program : Program)
       @cache = TypeCache.new
       @struct_cache = TypeCache.new
       @union_value_cache = TypeCache.new
@@ -35,58 +35,59 @@ module Crystal
     end
 
     def llvm_type(type)
+      type = type.remove_indirection
       @cache[type] ||= create_llvm_type(type)
     end
 
-    def create_llvm_type(type : NoReturnType)
+    private def create_llvm_type(type : NoReturnType)
       LLVM::Void
     end
 
-    def create_llvm_type(type : VoidType)
+    private def create_llvm_type(type : VoidType)
       LLVM::Void
     end
 
-    def create_llvm_type(type : NilType)
+    private def create_llvm_type(type : NilType)
       NIL_TYPE
     end
 
-    def create_llvm_type(type : BoolType)
+    private def create_llvm_type(type : BoolType)
       LLVM::Int1
     end
 
-    def create_llvm_type(type : CharType)
+    private def create_llvm_type(type : CharType)
       LLVM::Int32
     end
 
-    def create_llvm_type(type : IntegerType)
+    private def create_llvm_type(type : IntegerType)
       LLVM::Type.int(8 * type.bytes)
     end
 
-    def create_llvm_type(type : FloatType)
+    private def create_llvm_type(type : FloatType)
       type.bytes == 4 ? LLVM::Float : LLVM::Double
     end
 
-    def create_llvm_type(type : SymbolType)
+    private def create_llvm_type(type : SymbolType)
       LLVM::Int32
     end
 
-    def create_llvm_type(type : EnumType)
+    private def create_llvm_type(type : EnumType)
       llvm_type(type.base_type)
     end
 
-    def create_llvm_type(type : FunInstanceType)
+    private def create_llvm_type(type : FunInstanceType)
       FUN_TYPE
     end
 
-    def create_llvm_type(type : CStructType)
+    private def create_llvm_type(type : CStructType)
       llvm_struct_type(type)
     end
 
-    def create_llvm_type(type : CUnionType)
+    private def create_llvm_type(type : CUnionType)
       llvm_struct_type(type)
     end
 
-    def create_llvm_type(type : InstanceVarContainer)
+    private def create_llvm_type(type : InstanceVarContainer)
       final_type = llvm_struct_type(type)
       unless type.struct?
         final_type = final_type.pointer
@@ -94,35 +95,35 @@ module Crystal
       final_type
     end
 
-    def create_llvm_type(type : MetaclassType)
+    private def create_llvm_type(type : MetaclassType)
       LLVM::Int32
     end
 
-    def create_llvm_type(type : LibType)
+    private def create_llvm_type(type : LibType)
       LLVM::Int32
     end
 
-    def create_llvm_type(type : GenericClassInstanceMetaclassType)
+    private def create_llvm_type(type : GenericClassInstanceMetaclassType)
       LLVM::Int32
     end
 
-    def create_llvm_type(type : VirtualMetaclassType)
+    private def create_llvm_type(type : VirtualMetaclassType)
       LLVM::Int32
     end
 
-    def create_llvm_type(type : PointerInstanceType)
+    private def create_llvm_type(type : PointerInstanceType)
       pointed_type = llvm_embedded_type type.element_type
       pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
       pointed_type.pointer
     end
 
-    def create_llvm_type(type : StaticArrayInstanceType)
+    private def create_llvm_type(type : StaticArrayInstanceType)
       pointed_type = llvm_embedded_type type.element_type
       pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
       pointed_type.array (type.size as NumberLiteral).value.to_i
     end
 
-    def create_llvm_type(type : TupleInstanceType)
+    private def create_llvm_type(type : TupleInstanceType)
       LLVM::Type.struct(type.llvm_name) do |a_struct|
         @cache[type] = a_struct
 
@@ -130,27 +131,27 @@ module Crystal
       end
     end
 
-    def create_llvm_type(type : NilableType)
+    private def create_llvm_type(type : NilableType)
       llvm_type type.not_nil_type
     end
 
-    def create_llvm_type(type : ReferenceUnionType)
+    private def create_llvm_type(type : ReferenceUnionType)
       TYPE_ID_POINTER
     end
 
-    def create_llvm_type(type : NilableReferenceUnionType)
+    private def create_llvm_type(type : NilableReferenceUnionType)
       TYPE_ID_POINTER
     end
 
-    def create_llvm_type(type : NilableFunType)
+    private def create_llvm_type(type : NilableFunType)
       FUN_TYPE
     end
 
-    def create_llvm_type(type : NilablePointerType)
+    private def create_llvm_type(type : NilablePointerType)
       llvm_type(type.pointer_type)
     end
 
-    def create_llvm_type(type : MixedUnionType)
+    private def create_llvm_type(type : MixedUnionType)
       LLVM::Type.struct(type.llvm_name) do |a_struct|
         @cache[type] = a_struct
 
@@ -174,50 +175,48 @@ module Crystal
       end
     end
 
-    def create_llvm_type(type : TypeDefType)
+    private def create_llvm_type(type : TypeDefType)
       llvm_type type.typedef
     end
 
-    def create_llvm_type(type : VirtualType)
+    private def create_llvm_type(type : VirtualType)
       TYPE_ID_POINTER
     end
 
-    def create_llvm_type(type : AliasType)
+    private def create_llvm_type(type : AliasType)
       llvm_type(type.remove_alias)
     end
 
-    def create_llvm_type(type : NonGenericModuleType | GenericClassType)
-      if including_type = type.including_types
-        llvm_type(including_type)
-      else
-        LLVM::Int1
-      end
+    private def create_llvm_type(type : NonGenericModuleType | GenericClassType)
+      # This can only be reached if the module or generic class don't have implementors
+      LLVM::Int1
     end
 
-    def create_llvm_type(type : Type)
+    private def create_llvm_type(type : Type)
       raise "Bug: called create_llvm_type for #{type}"
     end
 
     def llvm_struct_type(type)
+      type = type.remove_indirection
       @struct_cache[type] ||= create_llvm_struct_type(type)
     end
 
-    def create_llvm_struct_type(type : StaticArrayInstanceType)
+    private def create_llvm_struct_type(type : StaticArrayInstanceType)
       llvm_type type
     end
 
-    def create_llvm_struct_type(type : TupleInstanceType)
+    private def create_llvm_struct_type(type : TupleInstanceType)
       llvm_type type
     end
 
-    def create_llvm_struct_type(type : CStructType)
+    private def create_llvm_struct_type(type : CStructType)
       LLVM::Type.struct(type.llvm_name, type.packed) do |a_struct|
         @struct_cache[type] = a_struct
         type.vars.map { |name, var| llvm_embedded_c_type(var.type) as LLVM::Type }
       end
     end
 
-    def create_llvm_struct_type(type : CUnionType)
+    private def create_llvm_struct_type(type : CUnionType)
       LLVM::Type.struct(type.llvm_name) do |a_struct|
         @struct_cache[type] = a_struct
 
@@ -255,7 +254,7 @@ module Crystal
       end
     end
 
-    def create_llvm_struct_type(type : InstanceVarContainer)
+    private def create_llvm_struct_type(type : InstanceVarContainer)
       LLVM::Type.struct(type.llvm_name) do |a_struct|
         @struct_cache[type] = a_struct
 
@@ -284,7 +283,7 @@ module Crystal
       end
     end
 
-    def create_llvm_struct_type(type : Type)
+    private def create_llvm_struct_type(type : Type)
       raise "Bug: called llvm_struct_type for #{type}"
     end
 
