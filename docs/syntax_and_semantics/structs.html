@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.6" data-basepath=".." data-revision="Sat Apr 30 2016 15:13:06 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.6" data-basepath=".." data-revision="Tue May 03 2016 16:49:00 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1005,7 +1005,7 @@
                         
                             <b>4.8.3.5.</b>
                         
-                        Default and named arguments
+                        Default values and named arguments
                     </a>
             
             
@@ -2094,10 +2094,9 @@
                         <h1 id="structs">Structs</h1>
 <p>Instead of defining a type with <code>class</code> you can do so with <code>struct</code>:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">Point</span></span>
-  property x
-  property y
+  property x, y
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@x</span>, <span class="hljs-variable">@y</span>)
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@x</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>, <span class="hljs-variable">@y</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>)
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
@@ -2106,10 +2105,16 @@
 <li>Invoking <code>new</code> on a struct allocates it on the stack instead of the heap</li>
 <li>A struct is <a href="http://crystal-lang.org/api/Value.html" target="_blank">passed by value</a> while a class is passed by reference</li>
 <li>A struct implicitly inherits from <a href="http://crystal-lang.org/api/Struct.html" target="_blank">Struct</a>, which inherits from <a href="http://crystal-lang.org/api/Value.html" target="_blank">Value</a>. A class implicitly inherits from <a href="http://crystal-lang.org/api/Reference.html" target="_blank">Reference</a>.</li>
+<li>A struct cannot inherit a non-abstract struct.</li>
 </ul>
-<p>A struct can inherit from other structs and can also includes modules. A struct can be generic, just like a class.</p>
+<p>The last point has a reason to it: a struct has a very well defined memory layout. For example, the above <code>Point</code> struct occupies 8 bytes. If you have an array of points the points are embedded inside the array&apos;s buffer:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># The array&apos;s buffer will have each 8 bytes dedicated to each Point</span>
+ary = [] <span class="hljs-keyword">of</span> <span class="hljs-constant">Point</span>
+</code></pre>
+<p>If <code>Point</code> is inherited, an array of such type must also account for the fact that other types can be inside it, so the size of each element must grow to accomodate that. That is certainly unexpected. So, non-abstract structs can&apos;t be inherited. Abstract structs, on the other hand, will have descendants, so it&apos;s expected that an array of them will account the possibility of having multiple types inside it.</p>
+<p>A struct can also includes modules and can be generic, just like a class.</p>
 <p>A struct is mostly used for performance reasons to avoid lots of small memory allocations when passing small copies might be more efficient.</p>
-<p>So how do you choose between a struct and a class? The rule of thumb is that if no instance variable is ever reassigned, i.e. your type is immutable, you can use a struct, otherwise use a class.</p>
+<p>So how do you choose between a struct and a class? The rule of thumb is that if no instance variable is ever reassigned, i.e. your type is immutable, you could use a struct, otherwise use a class.</p>
 
                     
                     </section>

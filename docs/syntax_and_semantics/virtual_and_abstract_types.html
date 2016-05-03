@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.3.11.1" data-basepath=".." data-revision="Sat Apr 30 2016 15:13:06 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.3.11.1" data-basepath=".." data-revision="Tue May 03 2016 16:49:00 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1005,7 +1005,7 @@
                         
                             <b>4.8.3.5.</b>
                         
-                        Default and named arguments
+                        Default values and named arguments
                     </a>
             
             
@@ -2092,7 +2092,7 @@
                     <section class="normal" id="section-">
                     
                         <h1 id="virtual-and-abstract-types">Virtual and abstract types</h1>
-<p>When a variable&apos;s type combines different types under the same class hierarchy, its type becomes a <strong>virtual type</strong>. This applies to every class except for <code>Reference</code>. An example:</p>
+<p>When a variable&apos;s type combines different types under the same class hierarchy, its type becomes a <strong>virtual type</strong>. This applies to every class and struct except for <code>Reference</code>, <code>Value</code>, <code>Int</code> and <code>Float</code>. An example:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Animal</span></span>
 <span class="hljs-keyword">end</span>
 
@@ -2111,7 +2111,7 @@
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
   getter pet
 
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>, <span class="hljs-variable">@pet</span>)
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>, <span class="hljs-variable">@pet</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Animal</span>)
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
@@ -2126,10 +2126,17 @@ peter = <span class="hljs-constant">Person</span>.new <span class="hljs-string">
      +- class Person
             @name : String
             @pet : Animal+
-</code></pre><p>You can see that <code>@pet</code> is <code>Animal+</code>. The <code>+</code> means it&apos;s a virtual type: because a <code>Dog</code> and a <code>Cat</code> were assigned to <code>@pet</code>, instead of having the type be <code>Dog | Cat</code> the compiler simplified it to <code>Animal+</code>, meaning &quot;any class that inherits from <code>Animal</code>, including <code>Animal</code>&quot;.</p>
-<p>The compiler will always do this for classes under the same hierarchy: it will find the first superclass that&apos;s not <code>Reference</code> from which all types inherit from. If it can&apos;t find one, the type union remains.</p>
+</code></pre><p>You can see that <code>@pet</code> is <code>Animal+</code>. The <code>+</code> means it&apos;s a virtual type, meaning &quot;any class that inherits from <code>Animal</code>, including <code>Animal</code>&quot;.</p>
+<p>The compiler will always resolve a type union to a virtual type if they are under the same hierarchy:</p>
+<pre><code>if some_condition
+  pet = Dog.new
+else
+  pet = Cat.new
+end
+
+# pet : Animal+
+</code></pre><p>The compiler will always do this for classes and structs under the same hierarchy: it will find the first superclass from which all types inherit from (excluding <code>Reference</code>, <code>Value</code>, <code>Int</code> and <code>Float</code>). If it can&apos;t find one, the type union remains.</p>
 <p>The real reason the compiler does this is to be able to compile programs faster by not creating all kinds of different similar unions, also making the generated code smaller in size. But, on the other hand, it makes sense: classes under the same hierarchy should behave in a similar way.</p>
-<p>Note that virtual types only apply to classes, never to structs.</p>
 <p>Lets make John&apos;s pet talk:</p>
 <pre><code class="lang-crystal">john.pet.talk <span class="hljs-comment"># Error: undefined method &apos;talk&apos; for Animal</span>
 </code></pre>

@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.5" data-basepath=".." data-revision="Sat Apr 30 2016 15:13:06 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.5" data-basepath=".." data-revision="Tue May 03 2016 16:49:00 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1005,7 +1005,7 @@
                         
                             <b>4.8.3.5.</b>
                         
-                        Default and named arguments
+                        Default values and named arguments
                     </a>
             
             
@@ -2092,65 +2092,7 @@
                     <section class="normal" id="section-">
                     
                         <h1 id="generics">Generics</h1>
-<p>Instance variables&apos; types are inferred from the values assigned to them, like it was explained in <a href="instance_variables_type_inference.html">instance variables type inference</a>:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBox</span></span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@value</span>)
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">value</span></span>
-    <span class="hljs-variable">@value</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>For example, if we take the above code and add this:</p>
-<pre><code class="lang-crystal"><span class="hljs-constant">MyBox</span>.new(<span class="hljs-number">1</span>)
-</code></pre>
-<p>and then check what the compiler inferred with <code>crystal tool hierarchy file.cr</code>, we get:</p>
-<pre><code>+- class MyBox
-       @value : Int32
-</code></pre><p>If we create more boxes with more types:</p>
-<pre><code class="lang-crystal"><span class="hljs-constant">MyBox</span>.new(<span class="hljs-literal">nil</span>)
-<span class="hljs-constant">MyBox</span>.new(<span class="hljs-string">&quot;hello&quot;</span>)
-<span class="hljs-constant">MyBox</span>.new(<span class="hljs-number">1</span>)
-</code></pre>
-<p>we get:</p>
-<pre><code>+- class MyBox
-       @value : (Nil | String | Int32)
-</code></pre><p>The above makes it impossible to deal with a single box of a fixed type:</p>
-<pre><code class="lang-crystal"><span class="hljs-constant">MyBox</span>.new(<span class="hljs-number">1</span>)
-
-box = <span class="hljs-constant">MyBox</span>.new(<span class="hljs-string">&quot;hello&quot;</span>)
-box.value.size <span class="hljs-comment"># Error: undefined method &apos;size&apos; for Int32</span>
-</code></pre>
-<p>In cases like this where we want each instance to have a unique type for <code>@value</code>. This is in general necessary when dealing with a collection of objects. Imagine if all arrays and hashes had their types mixed, it would be pretty annoying to deal with them.</p>
-<p>You can make a class generic based on one or more type variables. For example:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBox</span>(<span class="hljs-title">T</span>)</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@value</span>)
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">value</span></span>
-    <span class="hljs-variable">@value</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>Then you instantiate it like this:</p>
-<pre><code class="lang-crystal"><span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">1</span>)
-
-box = <span class="hljs-constant">MyBox</span>(<span class="hljs-constant">String</span>).new(<span class="hljs-string">&quot;hello&quot;</span>)
-box.value.size <span class="hljs-comment">#=&gt; 5</span>
-</code></pre>
-<p>The above now works, because <code>MyBox</code> is now not a single type, but a family of types identified with a <code>T</code> type: <code>MyBox(Int32)</code> is a different type than <code>MyBox(String)</code>, and their <code>@value</code> variable is not shared. If we run the <code>tool hierarchy</code> command again, we get:</p>
-<pre><code>+- generic class MyBox(T)
-   |
-   +- generic class MyBox(String)
-   |      @value : String
-   |
-   +- generic class MyBox(Int32)
-          @value : Int32
-</code></pre><p>However, there&apos;s a tiny flaw in the above code. This is allowed:</p>
-<pre><code class="lang-crystal"><span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-string">&quot;hello&quot;</span>)
-</code></pre>
-<p>This is because there&apos;s nothing relating the <code>T</code> in the type with the instance variable <code>@value</code>. The fix is easy, we can use a <a href="type_restrictions.html">type restriction</a>:</p>
+<p>Generics allow to parameterize a type based on other type. Consider a Box type:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBox</span>(<span class="hljs-title">T</span>)</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@value</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">T</span>)
   <span class="hljs-keyword">end</span>
@@ -2160,45 +2102,15 @@ box.value.size <span class="hljs-comment">#=&gt; 5</span>
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
-<span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">1</span>)       <span class="hljs-comment"># OK</span>
-<span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-string">&quot;hello&quot;</span>) <span class="hljs-comment"># Error</span>
+int_box = <span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">1</span>)
+int_box.value <span class="hljs-comment"># =&gt; 1 (Int32)</span>
+
+string_box = <span class="hljs-constant">MyBox</span>(<span class="hljs-constant">String</span>).new(<span class="hljs-string">&quot;hello&quot;</span>)
+string_box.value <span class="hljs-comment"># =&gt; &quot;hello&quot; (String)</span>
+
+another_box = <span class="hljs-constant">MyBox</span>(<span class="hljs-constant">String</span>).new(<span class="hljs-number">1</span>) <span class="hljs-comment"># Error, Int32 doesn&apos;t match String</span>
 </code></pre>
-<p>The above works because when we do <code>MyBox(Int32)</code>, <code>T</code> becomes <code>Int32</code>, and when we invoke the constructor, the value passed to it must match <code>T</code>, which is <code>Int32</code>.</p>
-<p>In a way, there&apos;s still nothing relating <code>T</code> with <code>@value</code>. However, the only way to create a <code>MyBox(T)</code> instance is by passing a <code>T</code> value, that becomes <code>@value</code>&apos;s type, and that&apos;s what makes it all work.</p>
-<p>But check this:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBox</span>(<span class="hljs-title">T</span>)</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@value</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">T</span>)
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">value=</span></span>(new_value)
-    <span class="hljs-variable">@value</span> = new_value
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">value</span></span>
-    <span class="hljs-variable">@value</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-box = <span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">1</span>) <span class="hljs-comment"># OK</span>
-box.value = <span class="hljs-string">&quot;hello&quot;</span>       <span class="hljs-comment"># OK</span>
-</code></pre>
-<p>The above is perfectly valid, because there&apos;s no type restriction in the <code>value=</code> method, and so we have just &quot;broken&quot; our class. Again, the solution is to use a type restriction:</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBox</span>(<span class="hljs-title">T</span>)</span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@value</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">T</span>)
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">value=</span></span>(new_value <span class="hljs-symbol">:</span> <span class="hljs-constant">T</span>)
-    <span class="hljs-variable">@value</span> = new_value
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">value</span></span>
-    <span class="hljs-variable">@value</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-box = <span class="hljs-constant">MyBox</span>(<span class="hljs-constant">Int32</span>).new(<span class="hljs-number">1</span>) <span class="hljs-comment"># OK</span>
-box.value = <span class="hljs-string">&quot;hello&quot;</span>       <span class="hljs-comment"># Error</span>
-</code></pre>
+<p>Generics are specially useful for implementing collection types. <code>Array</code>, <code>Hash</code>, <code>Set</code> are generic type. <code>Pointer</code> too.</p>
 <p>More than one type argument is allowed:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyDictionary</span>(<span class="hljs-title">K</span>, <span class="hljs-title">V</span>)</span>
 <span class="hljs-keyword">end</span>
@@ -2206,8 +2118,8 @@ box.value = <span class="hljs-string">&quot;hello&quot;</span>       <span class
 <p>Only single letter names are allowed as names of type arguments.</p>
 <h2 id="type-variables-inference">Type variables inference</h2>
 <p>Type restrictions in a generic type&apos;s constructor are free variables when type arguments were not specified, and then are used to infer them. For example:</p>
-<pre><code class="lang-crystal"><span class="hljs-constant">MyBox</span>.new(<span class="hljs-number">1</span>)       <span class="hljs-comment">#:: MyBox(Int32)</span>
-<span class="hljs-constant">MyBox</span>.new(<span class="hljs-string">&quot;hello&quot;</span>) <span class="hljs-comment">#:: MyBox(String)</span>
+<pre><code class="lang-crystal"><span class="hljs-constant">MyBox</span>.new(<span class="hljs-number">1</span>)       <span class="hljs-comment"># : MyBox(Int32)</span>
+<span class="hljs-constant">MyBox</span>.new(<span class="hljs-string">&quot;hello&quot;</span>) <span class="hljs-comment"># : MyBox(String)</span>
 </code></pre>
 <p>In the above code we didn&apos;t have to specify the type arguments of <code>MyBox</code>, the compiler inferred them following this process:</p>
 <ul>

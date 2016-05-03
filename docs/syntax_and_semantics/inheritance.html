@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.3.11" data-basepath=".." data-revision="Sat Apr 30 2016 15:13:06 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.3.11" data-basepath=".." data-revision="Tue May 03 2016 16:49:00 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1005,7 +1005,7 @@
                         
                             <b>4.8.3.5.</b>
                         
-                        Default and named arguments
+                        Default values and named arguments
                     </a>
             
             
@@ -2095,7 +2095,7 @@
 <p>Every class except <code>Object</code>, the hierarchy root, inherits from another class (its superclass). If you don&apos;t specify one it defaults to <code>Reference</code> for classes and <code>Struct</code> for structs.</p>
 <p>A class inherits all instance variables and all instance and class methods of a superclass, including its constructors (<code>new</code> and <code>initialize</code>).</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>)
   <span class="hljs-keyword">end</span>
 
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">greet</span></span>
@@ -2111,12 +2111,12 @@ employee.greet <span class="hljs-comment"># &quot;Hi, I&apos;m John&quot;</span>
 </code></pre>
 <p>If a class defines a <code>new</code> or <code>initialize</code> then its superclass constructors are not inherited:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>)
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>)
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
 <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span> <span class="hljs-inheritance">&lt; <span class="hljs-parent">Person</span></span></span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span>, <span class="hljs-variable">@company_name</span>)
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@name</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>, <span class="hljs-variable">@company_name</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>)
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 

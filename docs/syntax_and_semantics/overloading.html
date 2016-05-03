@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.3.4" data-basepath=".." data-revision="Sat Apr 30 2016 15:13:06 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.3.4" data-basepath=".." data-revision="Tue May 03 2016 16:49:00 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1005,7 +1005,7 @@
                         
                             <b>4.8.3.5.</b>
                         
-                        Default and named arguments
+                        Default values and named arguments
                     </a>
             
             
@@ -2094,6 +2094,8 @@
                         <h1 id="overloading">Overloading</h1>
 <p>We can define a <code>become_older</code> method that accepts a number indicating the years to grow:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
+
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">become_older</span></span>
     <span class="hljs-variable">@age</span> += <span class="hljs-number">1</span>
   <span class="hljs-keyword">end</span>
@@ -2121,6 +2123,8 @@ john.age <span class="hljs-comment">#=&gt; 6</span>
 </ul>
 <p>For example, we can define four different <code>become_older</code> methods:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
+
   <span class="hljs-comment"># Increases age by one</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">become_older</span></span>
     <span class="hljs-variable">@age</span> += <span class="hljs-number">1</span>
@@ -2161,6 +2165,8 @@ person.age <span class="hljs-comment">#=&gt; 28</span>
 </code></pre>
 <p>Note that in the case of the method that yields, the compiler figured this out because there&apos;s a <code>yield</code> expression. To make this more explicit, you can add a dummy <code>&amp;block</code> argument at the end:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
+
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">become_older</span></span>(&amp;block)
     <span class="hljs-variable">@age</span> += <span class="hljs-keyword">yield</span> <span class="hljs-variable">@age</span>
   <span class="hljs-keyword">end</span>
@@ -2169,6 +2175,8 @@ person.age <span class="hljs-comment">#=&gt; 28</span>
 <p>In generated documentation the dummy <code>&amp;block</code> method will always appear, regardless of you writing it or not.</p>
 <p>Given the same number of arguments, the compiler will try to sort them by leaving the less restrictive ones to the end:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
+  <span class="hljs-variable">@age</span> = <span class="hljs-number">0</span>
+
   <span class="hljs-comment"># First, this method is defined</span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">become_older</span></span>(age)
     <span class="hljs-variable">@age</span> += age
@@ -2204,7 +2212,7 @@ person.become_older <span class="hljs-string">&quot;12&quot;</span>
         <a href="../syntax_and_semantics/type_inference.html" class="navigation navigation-prev " aria-label="Previous page: Type inference"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/default_and_named_arguments.html" class="navigation navigation-next " aria-label="Next page: Default and named arguments"><i class="fa fa-angle-right"></i></a>
+        <a href="../syntax_and_semantics/default_and_named_arguments.html" class="navigation navigation-next " aria-label="Next page: Default values and named arguments"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
