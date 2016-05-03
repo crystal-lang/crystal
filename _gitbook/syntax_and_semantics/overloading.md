@@ -4,6 +4,8 @@ We can define a `become_older` method that accepts a number indicating the years
 
 ```crystal
 class Person
+  @age = 0
+
   def become_older
     @age += 1
   end
@@ -35,6 +37,8 @@ For example, we can define four different `become_older` methods:
 
 ```crystal
 class Person
+  @age = 0
+
   # Increases age by one
   def become_older
     @age += 1
@@ -78,6 +82,8 @@ Note that in the case of the method that yields, the compiler figured this out b
 
 ```crystal
 class Person
+  @age = 0
+
   def become_older(&block)
     @age += yield @age
   end
@@ -90,6 +96,8 @@ Given the same number of arguments, the compiler will try to sort them by leavin
 
 ```crystal
 class Person
+  @age = 0
+
   # First, this method is defined
   def become_older(age)
     @age += age

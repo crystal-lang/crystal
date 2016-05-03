@@ -18,7 +18,7 @@ You can define an operator for a type like this:
 struct Vector2
   getter x, y
 
-  def initialize(@x, @y)
+  def initialize(@x : Int32, @y : Int32)
   end
 
   def +(other)

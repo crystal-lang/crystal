@@ -29,4 +29,6 @@ end
 TEN #=> 10
 ```
 
+A constant is initialized at the beginning of the program, before "main" code.
+
 If a constant is not used, its initializer is never included in the final executable.

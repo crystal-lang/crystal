@@ -60,7 +60,7 @@
            * [Methods and instance variables](syntax_and_semantics/methods_and_instance_variables.md)
            * [Type inference](syntax_and_semantics/type_inference.md)
            * [Overloading](syntax_and_semantics/overloading.md)
-           * [Default and named arguments](syntax_and_semantics/default_and_named_arguments.md)
+           * [Default values and named arguments](syntax_and_semantics/default_and_named_arguments.md)
            * [Splats and tuples](syntax_and_semantics/splats_and_tuples.md)
            * [Type restrictions](syntax_and_semantics/type_restrictions.md)
            * [Return types](syntax_and_semantics/return_types.md)

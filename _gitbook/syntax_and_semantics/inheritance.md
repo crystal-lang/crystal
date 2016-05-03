@@ -6,7 +6,7 @@ A class inherits all instance variables and all instance and class methods of a 
 
 ```crystal
 class Person
-  def initialize(@name)
+  def initialize(@name : String)
   end
 
   def greet
@@ -25,12 +25,12 @@ If a class defines a `new` or `initialize` then its superclass constructors are 
 
 ```crystal
 class Person
-  def initialize(@name)
+  def initialize(@name : String)
   end
 end
 
 class Employee < Person
-  def initialize(@name, @company_name)
+  def initialize(@name : String, @company_name : String)
   end
 end
 

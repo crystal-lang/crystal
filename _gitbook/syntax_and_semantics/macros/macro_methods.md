@@ -1,6 +1,6 @@
 # Macro methods
 
-Macro defs allow you to define a method for a class hierarchy and have that method be evaluated at the end of the type-inference phase, as a macro, where type information is known, for each concrete subtype. For example:
+Macro defs allow you to define a method for a class hierarchy and have that method be evaluated at the end of the type-inference phase, as a macro, for that type and subtype. For example:
 
 ```crystal
 class Object
@@ -10,7 +10,7 @@ class Object
 end
 
 class Person
-  def initialize(@name, @age)
+  def initialize(@name : String, @age : Int32)
   end
 end
 

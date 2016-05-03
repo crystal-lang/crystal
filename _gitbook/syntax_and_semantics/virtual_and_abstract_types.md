@@ -1,6 +1,6 @@
 # Virtual and abstract types
 
-When a variable's type combines different types under the same class hierarchy, its type becomes a **virtual type**. This applies to every class except for `Reference`. An example:
+When a variable's type combines different types under the same class hierarchy, its type becomes a **virtual type**. This applies to every class and struct except for `Reference`, `Value`, `Int` and `Float`. An example:
 
 ```crystal
 class Animal
@@ -21,7 +21,7 @@ end
 class Person
   getter pet
 
-  def initialize(@name, @pet)
+  def initialize(@name : String, @pet : Animal)
   end
 end
 
@@ -41,13 +41,23 @@ If you compile the above program with the `tool hierarchy` command you will see 
             @pet : Animal+
 ```
 
-You can see that `@pet` is `Animal+`. The `+` means it's a virtual type: because a `Dog` and a `Cat` were assigned to `@pet`, instead of having the type be `Dog | Cat` the compiler simplified it to `Animal+`, meaning "any class that inherits from `Animal`, including `Animal`".
+You can see that `@pet` is `Animal+`. The `+` means it's a virtual type, meaning "any class that inherits from `Animal`, including `Animal`".
 
-The compiler will always do this for classes under the same hierarchy: it will find the first superclass that's not `Reference` from which all types inherit from. If it can't find one, the type union remains.
+The compiler will always resolve a type union to a virtual type if they are under the same hierarchy:
+
+```
+if some_condition
+  pet = Dog.new
+else
+  pet = Cat.new
+end
+
+# pet : Animal+
+```
+
+The compiler will always do this for classes and structs under the same hierarchy: it will find the first superclass from which all types inherit from (excluding `Reference`, `Value`, `Int` and `Float`). If it can't find one, the type union remains.
 
 The real reason the compiler does this is to be able to compile programs faster by not creating all kinds of different similar unions, also making the generated code smaller in size. But, on the other hand, it makes sense: classes under the same hierarchy should behave in a similar way.
-
-Note that virtual types only apply to classes, never to structs.
 
 Lets make John's pet talk:
 

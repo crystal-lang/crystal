@@ -1,4 +1,4 @@
-# Default and named arguments
+# Default values
 
 A method can specify default values for the last arguments:
 
@@ -19,24 +19,27 @@ john.become_older 2
 john.age #=> 3
 ```
 
-To specify the values of arguments that have default values you can also use their names in the invocation:
+# Named arguments
+
+All arguments can also be specified, in addition to their position, by their name. For example:
 
 ```crystal
 john.become_older by: 5
 ```
 
-When the method has many default arguments the order of the names in the invocation doesn't matter, and some names can be omitted:
+When there are many arguments, the order of the names in the invocation don't matter, as long as all required arguments are covered:
 
 ```crystal
 def some_method(x, y = 1, z = 2, w = 3)
   # do something...
 end
 
-some_method 10 # x = 10, y = 1, z = 2, w = 3
-some_method 10, z: 10 # x = 10, y = 1, z = 10, w = 3
-some_method 10, w: 1, y: 2, z: 3 # x = 10, y = 2, z = 3, w = 1
+some_method 10                   # x: 10, y: 1, z: 2, w: 3
+some_method 10, z: 10            # x: 10, y: 1, z: 10, w: 3
+some_method 10, w: 1, y: 2, z: 3 # x: 10, y: 2, z: 3, w: 1
+some_method y: 10, x: 20         # x: 20, y: 10, z: 2, w: 3
+
+some_method y: 10                # Error, missing arugment: x
 ```
 
-Note that in the above example you can't use `x`'s name, as it doesn't have a default value.
-
-In this way, default arguments and named arguments are related to each other: when you specify default arguments you are also allowing the caller to use their names. Be wise and choose good names.
+When a method specified a splat (explained in the next section), named arguments can't be used. The reason is that understanding how arguments are matched becomes very difficult: positional arguments are easier to reason about in this case.
