@@ -288,7 +288,7 @@ module Crystal
               raise "can't change the value of self", location
             end
 
-            atomic = Var.new(atomic.name) if atomic.is_a?(Call)
+            atomic = Var.new(atomic.name).at(atomic) if atomic.is_a?(Call)
 
             next_token_skip_space_or_newline
 
