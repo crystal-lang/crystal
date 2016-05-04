@@ -11,9 +11,33 @@ end
 
 describe "Int" do
   describe "**" do
-    assert { (2 ** 2).should be_close(4, 0.0001) }
-    assert { (2 ** 2.5_f32).should be_close(5.656854249492381, 0.0001) }
-    assert { (2 ** 2.5).should be_close(5.656854249492381, 0.0001) }
+    it "with positive Int32" do
+      x = 2 ** 2
+      x.should eq(4)
+      x.should be_a(Int32)
+
+      x = 2 ** 0
+      x.should eq(1)
+      x.should be_a(Int32)
+    end
+
+    it "with positive UInt8" do
+      x = 2_u8 ** 2
+      x.should eq(4)
+      x.should be_a(UInt8)
+    end
+
+    it "raises with negative exponent" do
+      expect_raises(ArgumentError, "cannot raise an integer to a negative integer power, use floats for that") do
+        2 ** -1
+      end
+    end
+
+    describe "with float" do
+      assert { (2 ** 2.0).should be_close(4, 0.0001) }
+      assert { (2 ** 2.5_f32).should be_close(5.656854249492381, 0.0001) }
+      assert { (2 ** 2.5).should be_close(5.656854249492381, 0.0001) }
+    end
   end
 
   describe "#===(:Char)" do

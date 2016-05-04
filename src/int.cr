@@ -160,12 +160,34 @@ struct Int
     self
   end
 
-  def **(other : Int)
-    (to_f ** other)
+  # Returns the value of raising *self* to the power of *exponent*.
+  #
+  # Raises `ArgumentError` if *exponent* is negative: if this is needed,
+  # either use a float base or a float exponent.
+  #
+  # ```
+  # 2 ** 3  # => 8
+  # 2 ** 0  # => 1
+  # 2 ** -1 # ArgumentError
+  # ```
+  def **(exponent : Int) : self
+    if exponent < 0
+      raise ArgumentError.new "cannot raise an integer to a negative integer power, use floats for that"
+    end
+
+    # TODO: this can probably be optimized by not using float pow
+    self.class.new(to_f ** exponent)
   end
 
-  def **(other)
-    to_f ** other
+  # Returns the value of raising *self* to the power of *exponent*.
+  #
+  # ```
+  # 2 ** 3.0  # => 8.0
+  # 2 ** 0.0  # => 1.0
+  # 2 ** -1.0 # => 0.5
+  # ```
+  def **(exponent : Float) : Float64
+    to_f ** exponent
   end
 
   def ===(char : Char)
