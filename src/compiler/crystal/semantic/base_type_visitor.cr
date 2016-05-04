@@ -472,9 +472,9 @@ module Crystal
 
           expanded = expand_macro(hook.macro, node) do
             if call
-              @mod.expand_macro hook.macro, call, current_type.instance_type
+              @mod.expand_macro hook.macro, call, current_type.instance_type, @type_lookup
             else
-              @mod.expand_macro hook.macro.body, current_type.instance_type
+              @mod.expand_macro hook.macro.body, current_type.instance_type, @type_lookup
             end
           end
 
@@ -534,7 +534,7 @@ module Crystal
       generated_nodes = expand_macro(the_macro, node) do
         old_args = node.args
         node.args = args
-        expanded = @mod.expand_macro the_macro, node, expansion_scope
+        expanded = @mod.expand_macro the_macro, node, expansion_scope, @type_lookup
         node.args = old_args
         expanded
       end
@@ -621,7 +621,7 @@ module Crystal
       the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
 
       generated_nodes = expand_macro(the_macro, node) do
-        @mod.expand_macro node, (@scope || current_type), @free_vars
+        @mod.expand_macro node, (@scope || current_type), @type_lookup, @free_vars
       end
 
       node.expanded = generated_nodes

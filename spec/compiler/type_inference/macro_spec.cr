@@ -756,4 +756,20 @@ describe "Type inference: macro" do
       ),
       "missing arguments: x, z"
   end
+
+  it "finds generic type argument of included module" do
+    assert_type(%(
+      module Bar(T)
+        def t
+          {{ T }}
+        end
+      end
+
+      class Foo(U)
+        include Bar(U)
+      end
+
+      Foo(Int32).new.t
+      )) { int32.metaclass }
+  end
 end
