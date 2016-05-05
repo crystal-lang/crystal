@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2177,7 +2232,7 @@ on how a MemoryIO is constructed.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr" target="_blank">io/memory_io.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr" target="_blank">io/memory_io.cr</a>
     
     <br/>
   
@@ -2218,16 +2273,16 @@ on how a MemoryIO is constructed.</p>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#buffer-instance-method" class="signature"><strong>#buffer</strong></a>
+        <a href="#buffer%3APointer%28UInt8%29-instance-method" class="signature"><strong>#buffer</strong> : Pointer(UInt8)</a>
         
           <div class="summary"><p>Returns the internal buffer as a <code><a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>)</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#bytesize-instance-method" class="signature"><strong>#bytesize</strong></a>
+        <a href="#bytesize%3AInt32-instance-method" class="signature"><strong>#bytesize</strong> : Int32</a>
         
-          <div class="summary"><p>Same as <code><a href="MemoryIO.html#size-instance-method">#size</a></code>.</p></div>
+          <div class="summary"><p>Same as <code><a href="MemoryIO.html#size%3AInt32-instance-method">#size</a></code>.</p></div>
         
       </li>
     
@@ -2246,7 +2301,7 @@ on how a MemoryIO is constructed.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#closed%3F-instance-method" class="signature"><strong>#closed?</strong></a>
+        <a href="#closed%3F%3ABool-instance-method" class="signature"><strong>#closed?</strong> : Bool</a>
         
           <div class="summary"><p>Determines if this IO is closed.</p></div>
         
@@ -2295,14 +2350,14 @@ on how a MemoryIO is constructed.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#size-instance-method" class="signature"><strong>#size</strong></a>
+        <a href="#size%3AInt32-instance-method" class="signature"><strong>#size</strong> : Int32</a>
         
           <div class="summary"><p>Returns the total number of bytes in this IO.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#tell-instance-method" class="signature"><strong>#tell</strong></a>
+        <a href="#tell%3AInt32-instance-method" class="signature"><strong>#tell</strong> : Int32</a>
         
           <div class="summary"><p>Same as <code><a href="MemoryIO.html#pos-instance-method">#pos</a></code>.</p></div>
         
@@ -2674,12 +2729,12 @@ on how a MemoryIO is constructed.</p>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -2731,7 +2786,7 @@ io.print <span class="s">&quot;hi&quot;</span> <span class="c"># raises</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L71" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L67" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2754,7 +2809,7 @@ io.read <span class="c"># &#61;&gt; &quot;&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L28" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L24" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2780,7 +2835,7 @@ io.read <span class="c"># &#61;&gt; &quot;abcdef&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L51" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L47" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2790,12 +2845,12 @@ io.read <span class="c"># &#61;&gt; &quot;abcdef&quot;</span></code></pre></div>
 
   <h2>Instance Method Detail</h2>
   
-    <div class="entry-detail" id="buffer-instance-method">
+    <div class="entry-detail" id="buffer:Pointer&#40;UInt8&#41;-instance-method">
       <div class="signature">
         
-        def <strong>buffer</strong>
+        def <strong>buffer</strong> : <a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>)
 
-        <a class="method-permalink" href="#buffer-instance-method">#</a>
+        <a class="method-permalink" href="#buffer%3APointer%28UInt8%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the internal buffer as a <code><a href="Pointer.html">Pointer</a>(<a href="UInt8.html">UInt8</a>)</code>.</p></div>
@@ -2803,25 +2858,25 @@ io.read <span class="c"># &#61;&gt; &quot;abcdef&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L9" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L9" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="bytesize-instance-method">
+    <div class="entry-detail" id="bytesize:Int32-instance-method">
       <div class="signature">
         
-        def <strong>bytesize</strong>
+        def <strong>bytesize</strong> : <a href="Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#bytesize-instance-method">#</a>
+        <a class="method-permalink" href="#bytesize%3AInt32-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Same as <code><a href="MemoryIO.html#size-instance-method">#size</a></code>.</p></div>
+        <div class="doc"><p>Same as <code><a href="MemoryIO.html#size%3AInt32-instance-method">#size</a></code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L12" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L12" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2846,7 +2901,7 @@ io.gets_to_end <span class="c"># &#61;&gt; &quot;&quot;</span></code></pre></div
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L201" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2868,17 +2923,17 @@ io.gets_to_end <span class="c"># &#61;&gt; IO::Error: closed stream</span></code
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L308" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L304" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="closed?-instance-method">
+    <div class="entry-detail" id="closed?:Bool-instance-method">
       <div class="signature">
         
-        def <strong>closed?</strong>
+        def <strong>closed?</strong> : <a href="Bool.html">Bool</a>
 
-        <a class="method-permalink" href="#closed%3F-instance-method">#</a>
+        <a class="method-permalink" href="#closed%3F%3ABool-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Determines if this IO is closed.</p>
@@ -2891,7 +2946,7 @@ io.closed? <span class="c"># &#61;&gt; true</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L320" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L316" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2914,7 +2969,7 @@ io.empty? <span class="c"># &#61;&gt; false</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L219" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L215" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2937,7 +2992,7 @@ io.pos     <span class="c"># &#61;&gt; 2</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L284" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L280" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2959,7 +3014,7 @@ io.gets <span class="c"># &#61;&gt; &quot;lo&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L295" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L291" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2977,7 +3032,7 @@ io.gets <span class="c"># &#61;&gt; &quot;lo&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L76" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L72" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3000,7 +3055,7 @@ io.gets(<span class="n">2</span>) <span class="c">#&#61;&gt; &quot;he&quot;</spa
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L231" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L227" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3025,17 +3080,17 @@ io.gets(<span class="n">1</span>) <span class="c"># &#61;&gt; &quot;c&quot;</spa
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L261" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L257" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="size-instance-method">
+    <div class="entry-detail" id="size:Int32-instance-method">
       <div class="signature">
         
-        def <strong>size</strong>
+        def <strong>size</strong> : <a href="Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#size-instance-method">#</a>
+        <a class="method-permalink" href="#size%3AInt32-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the total number of bytes in this IO.</p>
@@ -3046,17 +3101,17 @@ io.size <span class="c"># &#61;&gt; 5</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L242" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L238" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="tell-instance-method">
+    <div class="entry-detail" id="tell:Int32-instance-method">
       <div class="signature">
         
-        def <strong>tell</strong>
+        def <strong>tell</strong> : <a href="Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#tell-instance-method">#</a>
+        <a class="method-permalink" href="#tell%3AInt32-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Same as <code><a href="MemoryIO.html#pos-instance-method">#pos</a></code>.</p></div>
@@ -3064,7 +3119,7 @@ io.size <span class="c"># &#61;&gt; 5</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L247" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L243" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3082,7 +3137,7 @@ io.size <span class="c"># &#61;&gt; 5</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L349" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L345" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3104,7 +3159,7 @@ io.to_s <span class="c"># &#61;&gt; &quot;123&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L331" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L327" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3128,7 +3183,7 @@ io.gets_to_end <span class="c"># &#61;&gt; &quot;aello&quot;</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L344" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L340" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3147,7 +3202,7 @@ or if it's non-resizeable and a resize is needed.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L86" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3166,7 +3221,7 @@ or if it's non-resizeable and a resize is needed.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/io/memory_io.cr#L114" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/io/memory_io.cr#L110" target="_blank">View source</a>]
         
       </div>
     </div>

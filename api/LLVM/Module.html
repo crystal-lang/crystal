@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="../BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="../BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="../BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="../Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="../Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="../Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="../String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="../Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="../Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="../Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="../Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="../Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="../Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="../Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="../Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="../Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="../Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="../Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="../Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2163,7 +2218,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr" target="_blank">llvm/module.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr" target="_blank">llvm/module.cr</a>
     
     <br/>
   
@@ -2176,7 +2231,7 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28name%29-class-method" class="signature"><strong>.new</strong>(name)</a>
+        <a href="#new%28name%3AString%29-class-method" class="signature"><strong>.new</strong>(name : String)</a>
         
       </li>
     
@@ -2213,7 +2268,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#name-instance-method" class="signature"><strong>#name</strong></a>
+        <a href="#name%3AString-instance-method" class="signature"><strong>#name</strong> : String</a>
         
       </li>
     
@@ -2243,12 +2298,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#to_unsafe-instance-method" class="signature"><strong>#to_unsafe</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unwrap-instance-method" class="signature"><strong>#unwrap</strong></a>
+        <a href="#to_unsafe%3ALibLLVM%3A%3AModuleRef-instance-method" class="signature"><strong>#to_unsafe</strong> : LibLLVM::ModuleRef</a>
         
       </li>
     
@@ -2414,12 +2464,12 @@
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="../Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="../Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="../Object.html#hash-class-method" class="tooltip">
@@ -2450,18 +2500,18 @@
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="new&#40;name&#41;-class-method">
+    <div class="entry-detail" id="new&#40;name:String&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(name)
+        def self.<strong>new</strong>(name : <a href="../String.html">String</a>)
 
-        <a class="method-permalink" href="#new%28name%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28name%3AString%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L4" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2482,7 +2532,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L15" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L13" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2498,7 +2548,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L17" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2514,7 +2564,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L74" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L72" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2530,7 +2580,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L23" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2546,23 +2596,23 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L27" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L25" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="name-instance-method">
+    <div class="entry-detail" id="name:String-instance-method">
       <div class="signature">
         
-        def <strong>name</strong>
+        def <strong>name</strong> : <a href="../String.html">String</a>
 
-        <a class="method-permalink" href="#name-instance-method">#</a>
+        <a class="method-permalink" href="#name%3AString-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L3" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L2" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2578,7 +2628,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L53" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L51" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2594,7 +2644,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L44" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2610,7 +2660,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L64" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2626,7 +2676,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L11" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L9" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2642,39 +2692,23 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L57" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L55" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="to_unsafe-instance-method">
+    <div class="entry-detail" id="to_unsafe:LibLLVM::ModuleRef-instance-method">
       <div class="signature">
         
-        def <strong>to_unsafe</strong>
+        def <strong>to_unsafe</strong> : LibLLVM::ModuleRef
 
-        <a class="method-permalink" href="#to_unsafe-instance-method">#</a>
+        <a class="method-permalink" href="#to_unsafe%3ALibLLVM%3A%3AModuleRef-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L62" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unwrap-instance-method">
-      <div class="signature">
-        
-        def <strong>unwrap</strong>
-
-        <a class="method-permalink" href="#unwrap-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L2" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L60" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2690,7 +2724,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L35" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L33" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2706,7 +2740,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/llvm/module.cr#L31" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/llvm/module.cr#L29" target="_blank">View source</a>]
         
       </div>
     </div>

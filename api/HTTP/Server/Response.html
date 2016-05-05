@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="../../BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="../../BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="../../BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="../../Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="../../Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="../../Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="../../String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="../../Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="../../Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="../../Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="../../Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="../../Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="../../Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="../../Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="../../Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="../../Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="../../Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="../../Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="../../Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2151,9 +2206,9 @@
 
   <p>The response to configure and write to in an <code><a href="../../HTTP/Server.html">HTTP::Server</a></code> handler.</p>
 
-<p>The response <code><a href="../../HTTP/Server/Response.html#status_code-instance-method">#status_code</a></code> and <code><a href="../../HTTP/Server/Response.html#headers-instance-method">#headers</a></code> must be configured before writing
+<p>The response <code><a href="../../HTTP/Server/Response.html#status_code%3AInt32-instance-method">#status_code</a></code> and <code><a href="../../HTTP/Server/Response.html#headers%3AHTTP%3A%3AHeaders-instance-method">#headers</a></code> must be configured before writing
 the response body. Once response output is written, changing the <code>status</code>
-and <code><a href="../../HTTP/Server/Response.html#headers-instance-method">#headers</a></code> properties has no effect.</p>
+and <code><a href="../../HTTP/Server/Response.html#headers%3AHTTP%3A%3AHeaders-instance-method">#headers</a></code> properties has no effect.</p>
 
 <p>The <code><a href="../../HTTP/Server.html">HTTP::Server</a>::<a href="../../HTTP/Server/Response.html">Response</a></code> is a write-only <code><a href="../../IO.html">IO</a></code>, so all <code><a href="../../IO.html">IO</a></code> methods are available
 in it.</p>
@@ -2186,7 +2241,7 @@ This is useful to implement protocol upgrades, such as websockets.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/response.cr" target="_blank">http/server/response.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/server/response.cr" target="_blank">http/server/response.cr</a>
     
     <br/>
   
@@ -2222,6 +2277,13 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#cookies-instance-method" class="signature"><strong>#cookies</strong></a>
+        
+          <div class="summary"><p>Convenience method to set cookies, see <code><a href="../../HTTP/Cookies.html">HTTP::Cookies</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#flush-instance-method" class="signature"><strong>#flush</strong></a>
         
           <div class="summary"><p>Flushes the output.</p></div>
@@ -2229,14 +2291,14 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#headers-instance-method" class="signature"><strong>#headers</strong></a>
+        <a href="#headers%3AHTTP%3A%3AHeaders-instance-method" class="signature"><strong>#headers</strong> : HTTP::Headers</a>
         
           <div class="summary"><p>The response headers (<code><a href="../../HTTP/Headers.html">HTTP::Headers</a></code>).</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#output-instance-method" class="signature"><strong>#output</strong></a>
+        <a href="#output%3AIO-instance-method" class="signature"><strong>#output</strong> : IO</a>
         
       </li>
     
@@ -2246,7 +2308,7 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#status_code-instance-method" class="signature"><strong>#status_code</strong></a>
+        <a href="#status_code%3AInt32-instance-method" class="signature"><strong>#status_code</strong> : Int32</a>
         
       </li>
     
@@ -2263,7 +2325,7 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#version-instance-method" class="signature"><strong>#version</strong></a>
+        <a href="#version%3AString-instance-method" class="signature"><strong>#version</strong> : String</a>
         
           <div class="summary"><p>The version of the HTTP::Request that created this response.</p></div>
         
@@ -2607,12 +2669,12 @@ This is useful to implement protocol upgrades, such as websockets.</p>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="../../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="../../Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="../../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="../../Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="../../Object.html#hash-class-method" class="tooltip">
@@ -2659,7 +2721,7 @@ This method must be implemented if wrapping the response output.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/response.cr#L102" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/server/response.cr#L103" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2677,7 +2739,7 @@ This method must be implemented if wrapping the response output.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/response.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/server/response.cr#L62" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2695,7 +2757,25 @@ This method must be implemented if wrapping the response output.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/response.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/server/response.cr#L57" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="cookies-instance-method">
+      <div class="signature">
+        
+        def <strong>cookies</strong>
+
+        <a class="method-permalink" href="#cookies-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Convenience method to set cookies, see <code><a href="../../HTTP/Cookies.html">HTTP::Cookies</a></code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/server/response.cr#L72" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2713,17 +2793,17 @@ This method must be implemented if wrapping the response output.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/response.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/server/response.cr#L97" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="headers-instance-method">
+    <div class="entry-detail" id="headers:HTTP::Headers-instance-method">
       <div class="signature">
         
-        def <strong>headers</strong>
+        def <strong>headers</strong> : <a href="../../HTTP/Headers.html">HTTP::Headers</a>
 
-        <a class="method-permalink" href="#headers-instance-method">#</a>
+        <a class="method-permalink" href="#headers%3AHTTP%3A%3AHeaders-instance-method">#</a>
       </div>
       
         <div class="doc"><p>The response headers (<code><a href="../../HTTP/Headers.html">HTTP::Headers</a></code>). These must be set before writing to the response.</p></div>
@@ -2731,17 +2811,17 @@ This method must be implemented if wrapping the response output.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/response.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/server/response.cr#L19" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="output-instance-method">
+    <div class="entry-detail" id="output:IO-instance-method">
       <div class="signature">
         
-        def <strong>output</strong>
+        def <strong>output</strong> : <a href="../../IO.html">IO</a>
 
-        <a class="method-permalink" href="#output-instance-method">#</a>
+        <a class="method-permalink" href="#output%3AIO-instance-method">#</a>
       </div>
       
       <br/>
@@ -2764,12 +2844,12 @@ This method must be implemented if wrapping the response output.</p></div>
       </div>
     </div>
   
-    <div class="entry-detail" id="status_code-instance-method">
+    <div class="entry-detail" id="status_code:Int32-instance-method">
       <div class="signature">
         
-        def <strong>status_code</strong>
+        def <strong>status_code</strong> : <a href="../../Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#status_code-instance-method">#</a>
+        <a class="method-permalink" href="#status_code%3AInt32-instance-method">#</a>
       </div>
       
       <br/>
@@ -2807,17 +2887,17 @@ This is useful to implement protocol upgrades, such as websockets.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/response.cr#L83" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/server/response.cr#L84" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="version-instance-method">
+    <div class="entry-detail" id="version:String-instance-method">
       <div class="signature">
         
-        def <strong>version</strong>
+        def <strong>version</strong> : <a href="../../String.html">String</a>
 
-        <a class="method-permalink" href="#version-instance-method">#</a>
+        <a class="method-permalink" href="#version%3AString-instance-method">#</a>
       </div>
       
         <div class="doc"><p>The version of the HTTP::Request that created this response.</p></div>
@@ -2825,7 +2905,7 @@ This is useful to implement protocol upgrades, such as websockets.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/response.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/server/response.cr#L22" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2843,7 +2923,7 @@ This is useful to implement protocol upgrades, such as websockets.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/server/response.cr#L71" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/server/response.cr#L67" target="_blank">View source</a>]
         
       </div>
     </div>

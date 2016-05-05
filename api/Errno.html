@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2170,7 +2225,7 @@ dealing with C libraries.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/errno.cr" target="_blank">errno.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/errno.cr" target="_blank">errno.cr</a>
     
     <br/>
   
@@ -2183,7 +2238,7 @@ dealing with C libraries.</p>
   <dl>
     
       <dt class="entry-const" id="EACCES">
-        <strong>EACCES</strong> = <code><span class="n">13</span></code>
+        <strong>EACCES</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EACCES</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2192,7 +2247,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EADDRINUSE">
-        <strong>EADDRINUSE</strong> = <code><span class="n">48</span></code>
+        <strong>EADDRINUSE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EADDRINUSE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2201,7 +2256,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EADDRNOTAVAIL">
-        <strong>EADDRNOTAVAIL</strong> = <code><span class="n">49</span></code>
+        <strong>EADDRNOTAVAIL</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EADDRNOTAVAIL</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2210,7 +2265,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EAFNOSUPPORT">
-        <strong>EAFNOSUPPORT</strong> = <code><span class="n">47</span></code>
+        <strong>EAFNOSUPPORT</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EAFNOSUPPORT</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2219,7 +2274,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EAGAIN">
-        <strong>EAGAIN</strong> = <code><span class="n">35</span></code>
+        <strong>EAGAIN</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EAGAIN</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2228,7 +2283,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EALREADY">
-        <strong>EALREADY</strong> = <code><span class="n">37</span></code>
+        <strong>EALREADY</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EALREADY</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2237,7 +2292,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EBADF">
-        <strong>EBADF</strong> = <code><span class="n">9</span></code>
+        <strong>EBADF</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EBADF</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2246,7 +2301,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EBADMSG">
-        <strong>EBADMSG</strong> = <code><span class="n">94</span></code>
+        <strong>EBADMSG</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EBADMSG</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2255,7 +2310,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EBUSY">
-        <strong>EBUSY</strong> = <code><span class="n">16</span></code>
+        <strong>EBUSY</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EBUSY</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2264,7 +2319,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ECANCELED">
-        <strong>ECANCELED</strong> = <code><span class="n">89</span></code>
+        <strong>ECANCELED</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ECANCELED</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2273,7 +2328,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ECHILD">
-        <strong>ECHILD</strong> = <code><span class="n">10</span></code>
+        <strong>ECHILD</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ECHILD</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2282,7 +2337,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ECONNABORTED">
-        <strong>ECONNABORTED</strong> = <code><span class="n">53</span></code>
+        <strong>ECONNABORTED</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ECONNABORTED</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2291,7 +2346,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ECONNREFUSED">
-        <strong>ECONNREFUSED</strong> = <code><span class="n">61</span></code>
+        <strong>ECONNREFUSED</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ECONNREFUSED</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2300,7 +2355,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ECONNRESET">
-        <strong>ECONNRESET</strong> = <code><span class="n">54</span></code>
+        <strong>ECONNRESET</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ECONNRESET</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2309,7 +2364,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EDEADLK">
-        <strong>EDEADLK</strong> = <code><span class="n">11</span></code>
+        <strong>EDEADLK</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EDEADLK</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2318,7 +2373,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EDESTADDRREQ">
-        <strong>EDESTADDRREQ</strong> = <code><span class="n">39</span></code>
+        <strong>EDESTADDRREQ</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EDESTADDRREQ</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2327,7 +2382,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EDOM">
-        <strong>EDOM</strong> = <code><span class="n">33</span></code>
+        <strong>EDOM</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EDOM</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2336,7 +2391,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EDQUOT">
-        <strong>EDQUOT</strong> = <code><span class="n">69</span></code>
+        <strong>EDQUOT</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EDQUOT</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2345,7 +2400,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EEXIST">
-        <strong>EEXIST</strong> = <code><span class="n">17</span></code>
+        <strong>EEXIST</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EEXIST</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2354,7 +2409,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EFAULT">
-        <strong>EFAULT</strong> = <code><span class="n">14</span></code>
+        <strong>EFAULT</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EFAULT</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2363,7 +2418,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EFBIG">
-        <strong>EFBIG</strong> = <code><span class="n">27</span></code>
+        <strong>EFBIG</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EFBIG</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2372,7 +2427,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EHOSTDOWN">
-        <strong>EHOSTDOWN</strong> = <code><span class="n">64</span></code>
+        <strong>EHOSTDOWN</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EHOSTDOWN</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2381,7 +2436,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EHOSTUNREACH">
-        <strong>EHOSTUNREACH</strong> = <code><span class="n">65</span></code>
+        <strong>EHOSTUNREACH</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EHOSTUNREACH</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2390,7 +2445,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EIDRM">
-        <strong>EIDRM</strong> = <code><span class="n">90</span></code>
+        <strong>EIDRM</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EIDRM</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2399,7 +2454,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EILSEQ">
-        <strong>EILSEQ</strong> = <code><span class="n">92</span></code>
+        <strong>EILSEQ</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EILSEQ</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2408,7 +2463,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EINPROGRESS">
-        <strong>EINPROGRESS</strong> = <code><span class="n">36</span></code>
+        <strong>EINPROGRESS</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EINPROGRESS</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2417,7 +2472,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EINTR">
-        <strong>EINTR</strong> = <code><span class="n">4</span></code>
+        <strong>EINTR</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EINTR</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2426,7 +2481,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EINVAL">
-        <strong>EINVAL</strong> = <code><span class="n">22</span></code>
+        <strong>EINVAL</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EINVAL</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2435,7 +2490,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EIO">
-        <strong>EIO</strong> = <code><span class="n">5</span></code>
+        <strong>EIO</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EIO</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2444,7 +2499,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EISCONN">
-        <strong>EISCONN</strong> = <code><span class="n">56</span></code>
+        <strong>EISCONN</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EISCONN</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2453,7 +2508,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EISDIR">
-        <strong>EISDIR</strong> = <code><span class="n">21</span></code>
+        <strong>EISDIR</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EISDIR</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2462,7 +2517,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ELOOP">
-        <strong>ELOOP</strong> = <code><span class="n">62</span></code>
+        <strong>ELOOP</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ELOOP</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2471,7 +2526,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EMFILE">
-        <strong>EMFILE</strong> = <code><span class="n">24</span></code>
+        <strong>EMFILE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EMFILE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2480,7 +2535,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EMLINK">
-        <strong>EMLINK</strong> = <code><span class="n">31</span></code>
+        <strong>EMLINK</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EMLINK</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2489,7 +2544,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EMSGSIZE">
-        <strong>EMSGSIZE</strong> = <code><span class="n">40</span></code>
+        <strong>EMSGSIZE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EMSGSIZE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2498,7 +2553,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EMULTIHOP">
-        <strong>EMULTIHOP</strong> = <code><span class="n">95</span></code>
+        <strong>EMULTIHOP</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EMULTIHOP</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2507,7 +2562,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENAMETOOLONG">
-        <strong>ENAMETOOLONG</strong> = <code><span class="n">63</span></code>
+        <strong>ENAMETOOLONG</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENAMETOOLONG</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2516,7 +2571,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENETDOWN">
-        <strong>ENETDOWN</strong> = <code><span class="n">50</span></code>
+        <strong>ENETDOWN</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENETDOWN</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2525,7 +2580,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENETRESET">
-        <strong>ENETRESET</strong> = <code><span class="n">52</span></code>
+        <strong>ENETRESET</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENETRESET</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2534,7 +2589,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENETUNREACH">
-        <strong>ENETUNREACH</strong> = <code><span class="n">51</span></code>
+        <strong>ENETUNREACH</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENETUNREACH</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2543,7 +2598,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENFILE">
-        <strong>ENFILE</strong> = <code><span class="n">23</span></code>
+        <strong>ENFILE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENFILE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2552,7 +2607,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOBUFS">
-        <strong>ENOBUFS</strong> = <code><span class="n">55</span></code>
+        <strong>ENOBUFS</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOBUFS</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2561,7 +2616,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENODATA">
-        <strong>ENODATA</strong> = <code><span class="n">96</span></code>
+        <strong>ENODATA</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENODATA</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2570,7 +2625,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENODEV">
-        <strong>ENODEV</strong> = <code><span class="n">19</span></code>
+        <strong>ENODEV</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENODEV</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2579,7 +2634,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOENT">
-        <strong>ENOENT</strong> = <code><span class="n">2</span></code>
+        <strong>ENOENT</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOENT</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2588,7 +2643,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOEXEC">
-        <strong>ENOEXEC</strong> = <code><span class="n">8</span></code>
+        <strong>ENOEXEC</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOEXEC</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2597,7 +2652,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOLCK">
-        <strong>ENOLCK</strong> = <code><span class="n">77</span></code>
+        <strong>ENOLCK</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOLCK</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2606,7 +2661,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOLINK">
-        <strong>ENOLINK</strong> = <code><span class="n">97</span></code>
+        <strong>ENOLINK</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOLINK</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2615,7 +2670,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOMEM">
-        <strong>ENOMEM</strong> = <code><span class="n">12</span></code>
+        <strong>ENOMEM</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOMEM</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2624,7 +2679,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOMSG">
-        <strong>ENOMSG</strong> = <code><span class="n">91</span></code>
+        <strong>ENOMSG</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOMSG</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2633,7 +2688,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOPROTOOPT">
-        <strong>ENOPROTOOPT</strong> = <code><span class="n">42</span></code>
+        <strong>ENOPROTOOPT</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOPROTOOPT</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2642,7 +2697,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOSPC">
-        <strong>ENOSPC</strong> = <code><span class="n">28</span></code>
+        <strong>ENOSPC</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOSPC</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2651,7 +2706,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOSR">
-        <strong>ENOSR</strong> = <code><span class="n">98</span></code>
+        <strong>ENOSR</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOSR</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2660,7 +2715,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOSTR">
-        <strong>ENOSTR</strong> = <code><span class="n">99</span></code>
+        <strong>ENOSTR</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOSTR</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2669,7 +2724,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOSYS">
-        <strong>ENOSYS</strong> = <code><span class="n">78</span></code>
+        <strong>ENOSYS</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOSYS</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2678,7 +2733,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOTBLK">
-        <strong>ENOTBLK</strong> = <code><span class="n">15</span></code>
+        <strong>ENOTBLK</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOTBLK</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2687,7 +2742,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOTCONN">
-        <strong>ENOTCONN</strong> = <code><span class="n">57</span></code>
+        <strong>ENOTCONN</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOTCONN</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2696,7 +2751,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOTDIR">
-        <strong>ENOTDIR</strong> = <code><span class="n">20</span></code>
+        <strong>ENOTDIR</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOTDIR</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2705,7 +2760,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOTEMPTY">
-        <strong>ENOTEMPTY</strong> = <code><span class="n">66</span></code>
+        <strong>ENOTEMPTY</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOTEMPTY</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2714,7 +2769,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOTRECOVERABLE">
-        <strong>ENOTRECOVERABLE</strong> = <code><span class="n">104</span></code>
+        <strong>ENOTRECOVERABLE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOTRECOVERABLE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2723,7 +2778,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOTSOCK">
-        <strong>ENOTSOCK</strong> = <code><span class="n">38</span></code>
+        <strong>ENOTSOCK</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOTSOCK</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2732,7 +2787,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENOTTY">
-        <strong>ENOTTY</strong> = <code><span class="n">25</span></code>
+        <strong>ENOTTY</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENOTTY</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2741,7 +2796,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ENXIO">
-        <strong>ENXIO</strong> = <code><span class="n">6</span></code>
+        <strong>ENXIO</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ENXIO</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2750,7 +2805,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EOPNOTSUPP">
-        <strong>EOPNOTSUPP</strong> = <code><span class="n">102</span></code>
+        <strong>EOPNOTSUPP</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EOPNOTSUPP</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2759,7 +2814,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EOVERFLOW">
-        <strong>EOVERFLOW</strong> = <code><span class="n">84</span></code>
+        <strong>EOVERFLOW</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EOVERFLOW</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2768,7 +2823,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EOWNERDEAD">
-        <strong>EOWNERDEAD</strong> = <code><span class="n">105</span></code>
+        <strong>EOWNERDEAD</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EOWNERDEAD</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2777,12 +2832,12 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EPERM">
-        <strong>EPERM</strong> = <code><span class="n">1</span></code>
+        <strong>EPERM</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EPERM</span></code>
       </dt>
       
     
       <dt class="entry-const" id="EPFNOSUPPORT">
-        <strong>EPFNOSUPPORT</strong> = <code><span class="n">46</span></code>
+        <strong>EPFNOSUPPORT</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EPFNOSUPPORT</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2791,7 +2846,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EPIPE">
-        <strong>EPIPE</strong> = <code><span class="n">32</span></code>
+        <strong>EPIPE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EPIPE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2800,7 +2855,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EPROTO">
-        <strong>EPROTO</strong> = <code><span class="n">100</span></code>
+        <strong>EPROTO</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EPROTO</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2809,7 +2864,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EPROTONOSUPPORT">
-        <strong>EPROTONOSUPPORT</strong> = <code><span class="n">43</span></code>
+        <strong>EPROTONOSUPPORT</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EPROTONOSUPPORT</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2818,7 +2873,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EPROTOTYPE">
-        <strong>EPROTOTYPE</strong> = <code><span class="n">41</span></code>
+        <strong>EPROTOTYPE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EPROTOTYPE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2827,7 +2882,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ERANGE">
-        <strong>ERANGE</strong> = <code><span class="n">34</span></code>
+        <strong>ERANGE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ERANGE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2836,7 +2891,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EREMOTE">
-        <strong>EREMOTE</strong> = <code><span class="n">71</span></code>
+        <strong>EREMOTE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EREMOTE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2845,7 +2900,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EROFS">
-        <strong>EROFS</strong> = <code><span class="n">30</span></code>
+        <strong>EROFS</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EROFS</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2854,7 +2909,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ESHUTDOWN">
-        <strong>ESHUTDOWN</strong> = <code><span class="n">58</span></code>
+        <strong>ESHUTDOWN</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ESHUTDOWN</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2863,7 +2918,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ESOCKTNOSUPPORT">
-        <strong>ESOCKTNOSUPPORT</strong> = <code><span class="n">44</span></code>
+        <strong>ESOCKTNOSUPPORT</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ESOCKTNOSUPPORT</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2872,7 +2927,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ESPIPE">
-        <strong>ESPIPE</strong> = <code><span class="n">29</span></code>
+        <strong>ESPIPE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ESPIPE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2881,7 +2936,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ESRCH">
-        <strong>ESRCH</strong> = <code><span class="n">3</span></code>
+        <strong>ESRCH</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ESRCH</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2890,7 +2945,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ESTALE">
-        <strong>ESTALE</strong> = <code><span class="n">70</span></code>
+        <strong>ESTALE</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ESTALE</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2899,7 +2954,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ETIME">
-        <strong>ETIME</strong> = <code><span class="n">101</span></code>
+        <strong>ETIME</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ETIME</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2908,7 +2963,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ETIMEDOUT">
-        <strong>ETIMEDOUT</strong> = <code><span class="n">60</span></code>
+        <strong>ETIMEDOUT</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ETIMEDOUT</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2917,7 +2972,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ETOOMANYREFS">
-        <strong>ETOOMANYREFS</strong> = <code><span class="n">59</span></code>
+        <strong>ETOOMANYREFS</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ETOOMANYREFS</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2926,7 +2981,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="ETXTBSY">
-        <strong>ETXTBSY</strong> = <code><span class="n">26</span></code>
+        <strong>ETXTBSY</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">ETXTBSY</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2935,7 +2990,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EUSERS">
-        <strong>EUSERS</strong> = <code><span class="n">68</span></code>
+        <strong>EUSERS</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EUSERS</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2944,7 +2999,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EWOULDBLOCK">
-        <strong>EWOULDBLOCK</strong> = <code><span class="t">EAGAIN</span></code>
+        <strong>EWOULDBLOCK</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EWOULDBLOCK</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2953,7 +3008,7 @@ dealing with C libraries.</p>
       
     
       <dt class="entry-const" id="EXDEV">
-        <strong>EXDEV</strong> = <code><span class="n">18</span></code>
+        <strong>EXDEV</strong> = <code><span class="t">LibC</span><span class="t">::</span><span class="t">EXDEV</span></code>
       </dt>
       
       <dd class="entry-const-doc">
@@ -2969,12 +3024,7 @@ dealing with C libraries.</p>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#name%3AString-class-method" class="signature"><strong>.name</strong> : String</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#value-class-method" class="signature"><strong>.value</strong></a>
+        <a href="#value%3ALibC%3A%3AInt-class-method" class="signature"><strong>.value</strong> : LibC::Int</a>
         
           <div class="summary"><p>Returns the value of libc's errno.</p></div>
         
@@ -3002,7 +3052,7 @@ dealing with C libraries.</p>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#errno-instance-method" class="signature"><strong>#errno</strong></a>
+        <a href="#errno%3AInt32-instance-method" class="signature"><strong>#errno</strong> : Int32</a>
         
           <div class="summary"><p>Returns the numeric value of errno.</p></div>
         
@@ -3024,16 +3074,16 @@ dealing with C libraries.</p>
       <span>backtrace</span>
     backtrace</a>, 
   
-    <a href="Exception.html#cause-instance-method" class="tooltip">
-      <span>cause</span>
+    <a href="Exception.html#cause%3AException%7CNil-instance-method" class="tooltip">
+      <span>cause : Exception | Nil</span>
     cause</a>, 
   
     <a href="Exception.html#inspect_with_backtrace%28io%3AIO%29-instance-method" class="tooltip">
       <span>inspect_with_backtrace(io : IO)<br/>inspect_with_backtrace</span>
     inspect_with_backtrace</a>, 
   
-    <a href="Exception.html#message-instance-method" class="tooltip">
-      <span>message</span>
+    <a href="Exception.html#message%3ANil%7CString-instance-method" class="tooltip">
+      <span>message : Nil | String</span>
     message</a>, 
   
     <a href="Exception.html#to_s%28io%3AIO%29-instance-method" class="tooltip">
@@ -3197,12 +3247,12 @@ dealing with C libraries.</p>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -3233,28 +3283,12 @@ dealing with C libraries.</p>
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="name:String-class-method">
+    <div class="entry-detail" id="value:LibC::Int-class-method">
       <div class="signature">
         
-        def self.<strong>name</strong> : <a href="String.html">String</a>
+        def self.<strong>value</strong> : <a href="LibC/Int.html">LibC::Int</a>
 
-        <a class="method-permalink" href="#name%3AString-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/class.cr#L23" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="value-class-method">
-      <div class="signature">
-        
-        def self.<strong>value</strong>
-
-        <a class="method-permalink" href="#value-class-method">#</a>
+        <a class="method-permalink" href="#value%3ALibC%3A%3AInt-class-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the value of libc's errno.</p></div>
@@ -3262,7 +3296,7 @@ dealing with C libraries.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/errno.cr#L220" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/errno.cr#L131" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3280,7 +3314,7 @@ dealing with C libraries.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/errno.cr#L233" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/errno.cr#L144" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3294,7 +3328,7 @@ dealing with C libraries.</p>
       </div>
       
         <div class="doc"><p>Creates a new Errno with the given message. The message will
-have concatenated the message denoted by <code><a href="Errno.html#value-class-method">Errno#value</a></code>.</p>
+have concatenated the message denoted by <code><a href="Errno.html#value%3ALibC%3A%3AInt-class-method">Errno#value</a></code>.</p>
 
 <p>Typical usage:</p>
 
@@ -3306,7 +3340,7 @@ have concatenated the message denoted by <code><a href="Errno.html#value-class-m
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/errno.cr#L213" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/errno.cr#L124" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3316,12 +3350,12 @@ have concatenated the message denoted by <code><a href="Errno.html#value-class-m
 
   <h2>Instance Method Detail</h2>
   
-    <div class="entry-detail" id="errno-instance-method">
+    <div class="entry-detail" id="errno:Int32-instance-method">
       <div class="signature">
         
-        def <strong>errno</strong>
+        def <strong>errno</strong> : <a href="Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#errno-instance-method">#</a>
+        <a class="method-permalink" href="#errno%3AInt32-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the numeric value of errno.</p></div>
@@ -3329,7 +3363,7 @@ have concatenated the message denoted by <code><a href="Errno.html#value-class-m
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/errno.cr#L200" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/errno.cr#L111" target="_blank">View source</a>]
         
       </div>
     </div>

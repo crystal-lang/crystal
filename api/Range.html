@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2220,7 +2275,12 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr" target="_blank">range.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr" target="_blank">range.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range/bsearch.cr" target="_blank">range/bsearch.cr</a>
     
     <br/>
   
@@ -2257,6 +2317,13 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
         <a href="#begin-instance-method" class="signature"><strong>#begin</strong></a>
         
           <div class="summary"><p>Returns the object that defines the beginning of this range.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bsearch%28%26block%29-instance-method" class="signature"><strong>#bsearch</strong>(&block)</a>
+        
+          <div class="summary"><p>By using binary search, returns the first value for which the passed block returns <code>true</code>.</p></div>
         
       </li>
     
@@ -2324,6 +2391,13 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       </li>
     
       <li class="entry-summary">
+        <a href="#reverse_each-instance-method" class="signature"><strong>#reverse_each</strong></a>
+        
+          <div class="summary"><p>Returns a reverse <code><a href="Iterator.html">Iterator</a></code> over the elements of this range.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#step%28n%3D%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%2C%26block%29-instance-method" class="signature"><strong>#step</strong>(n = <span class="n">1</span>, &block)</a>
         
           <div class="summary"><p>Iterates over this range, passing each nth element to the block.</p></div>
@@ -2340,7 +2414,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <li class="entry-summary">
         <a href="#sum%28initial%29-instance-method" class="signature"><strong>#sum</strong>(initial)</a>
         
-          <div class="summary"><p>If self is a <code><a href="Int.html">Int</a></code> range, it provides O(1) implementation, otherwise it is same as <code><a href="Enumerable.html#sum%28%26block%29-instance-method">Enumerable#sum</a></code>.</p></div>
+          <div class="summary"><p>If self is a <code><a href="Int.html">Int</a></code> range, it provides O(1) implementation, otherwise it is same as <code><a href="Enumerable.html#sum-instance-method">Enumerable#sum</a></code>.</p></div>
         
       </li>
     
@@ -2566,6 +2640,10 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <span>partition(&block)</span>
     partition</a>, 
   
+    <a href="Enumerable.html#product%28initial%3ANumber%2C%26block%29-instance-method" class="tooltip">
+      <span>product(initial : Number, &block)<br/>product<br/>product(initial : Number)<br/>product(&block)</span>
+    product</a>, 
+  
     <a href="Enumerable.html#reduce%28memo%2C%26block%29-instance-method" class="tooltip">
       <span>reduce(memo, &block)<br/>reduce(&block)</span>
     reduce</a>, 
@@ -2590,8 +2668,8 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <span>skip_while(&block)</span>
     skip_while</a>, 
   
-    <a href="Enumerable.html#sum%28initial%2C%26block%29-instance-method" class="tooltip">
-      <span>sum(initial, &block)<br/>sum(&block)<br/>sum(initial)<br/>sum</span>
+    <a href="Enumerable.html#sum-instance-method" class="tooltip">
+      <span>sum<br/>sum(initial)<br/>sum(&block)<br/>sum(initial, &block)</span>
     sum</a>, 
   
     <a href="Enumerable.html#take_while%28%26block%29-instance-method" class="tooltip">
@@ -2766,12 +2844,12 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -2818,7 +2896,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2853,7 +2931,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L229" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L238" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2874,7 +2952,35 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L62" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L62" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="bsearch&#40;&amp;block&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>bsearch</strong>(&block)
+
+        <a class="method-permalink" href="#bsearch%28%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>By using binary search, returns the first value
+for which the passed block returns <code>true</code>.</p>
+
+<p>If the block returns <code>false</code>, the finding value exists
+behind. If the block returns <code>true</code>, the finding value
+is itself or exists infront.</p>
+
+<pre><code>(<span class="n">0</span>..<span class="n">10</span>).bsearch { <span class="o">|</span>x<span class="o">|</span> x <span class="o">>=</span> <span class="n">5</span> }                       <span class="c"># &#61;&gt; 5</span>
+(<span class="n">0</span>..<span class="t">Float64</span><span class="t">::</span><span class="t">INFINITY</span>).bsearch { <span class="o">|</span>x<span class="o">|</span> x <span class="o">**</span> <span class="n">4</span> <span class="o">>=</span> <span class="n">256</span> } <span class="c"># &#61;&gt; 4</span></code></pre>
+
+<p>Returns <code>nil</code> if the block didn't return <code>true</code> for any value.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range/bsearch.cr#L84" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2892,7 +2998,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L208" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L217" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2912,7 +3018,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L90" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L90" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2932,7 +3038,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L115" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L115" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2953,7 +3059,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L100" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L100" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2974,7 +3080,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L70" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L70" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2995,7 +3101,7 @@ r.includes?(<span class="t">Xs</span>.<span class="k">new</span>(<span class="n"
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L185" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L194" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3014,7 +3120,7 @@ Returns <code>false</code> otherwise (default).</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L74" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L74" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3039,7 +3145,7 @@ Returns <code>false</code> otherwise (default).</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L199" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L208" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3060,7 +3166,27 @@ Returns <code>false</code> otherwise (default).</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L125" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L125" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="reverse_each-instance-method">
+      <div class="signature">
+        
+        def <strong>reverse_each</strong>
+
+        <a class="method-permalink" href="#reverse_each-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a reverse <code><a href="Iterator.html">Iterator</a></code> over the elements of this range.</p>
+
+<pre><code>(<span class="n">1</span>..<span class="n">3</span>).reverse_each.skip(<span class="n">1</span>).to_a <span class="c"># &#61;&gt; &#91;2, 1&#93;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L140" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3098,7 +3224,7 @@ range.step(<span class="n">3</span>) { <span class="o">|</span>x<span class="o">
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L160" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L169" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3118,7 +3244,7 @@ range.step(<span class="n">3</span>) { <span class="o">|</span>x<span class="o">
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L175" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L184" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3132,12 +3258,12 @@ range.step(<span class="n">3</span>) { <span class="o">|</span>x<span class="o">
       </div>
       
         <div class="doc"><p>If self is a <code><a href="Int.html">Int</a></code> range, it provides O(1) implementation,
-otherwise it is same as <code><a href="Enumerable.html#sum%28%26block%29-instance-method">Enumerable#sum</a></code>.</p></div>
+otherwise it is same as <code><a href="Enumerable.html#sum-instance-method">Enumerable#sum</a></code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/range.cr#L247" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/range.cr#L256" target="_blank">View source</a>]
         
       </div>
     </div>

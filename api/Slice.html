@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2180,7 +2235,7 @@ In this way, a slice is a safe alternative to Pointer.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr" target="_blank">slice.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr" target="_blank">slice.cr</a>
     
     <br/>
   
@@ -2303,12 +2358,16 @@ In this way, a slice is a safe alternative to Pointer.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#hexstring-instance-method" class="signature"><strong>#hexstring</strong></a>
+        <a href="#hexdump-instance-method" class="signature"><strong>#hexdump</strong></a>
+        
+          <div class="summary"><p>Returns a hexdump of this slice, assuming it's a <code><a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>)</code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#hexstring%28buffer%29-instance-method" class="signature"><strong>#hexstring</strong>(buffer)</a>
+        <a href="#hexstring-instance-method" class="signature"><strong>#hexstring</strong></a>
+        
+          <div class="summary"><p>Returns a hexstring representation of this slice, assuming it's a <code><a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>)</code>.</p></div>
         
       </li>
     
@@ -2376,6 +2435,18 @@ In this way, a slice is a safe alternative to Pointer.</p>
   </ul>
 
 
+
+  <h2>Macro Summary</h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#%5B%5D%28%2Aargs%29-macro" class="signature"><strong>[]</strong>(*args)</a>
+        
+          <div class="summary"><p>Create a new <code><a href="Slice.html">Slice</a></code> with the given <em>args</em>.</p></div>
+        
+      </li>
+    
+  </ul>
 
 
 
@@ -2595,6 +2666,10 @@ In this way, a slice is a safe alternative to Pointer.</p>
       <span>partition(&block)</span>
     partition</a>, 
   
+    <a href="Enumerable.html#product%28initial%3ANumber%2C%26block%29-instance-method" class="tooltip">
+      <span>product(initial : Number, &block)<br/>product<br/>product(initial : Number)<br/>product(&block)</span>
+    product</a>, 
+  
     <a href="Enumerable.html#reduce%28memo%2C%26block%29-instance-method" class="tooltip">
       <span>reduce(memo, &block)<br/>reduce(&block)</span>
     reduce</a>, 
@@ -2619,8 +2694,8 @@ In this way, a slice is a safe alternative to Pointer.</p>
       <span>skip_while(&block)</span>
     skip_while</a>, 
   
-    <a href="Enumerable.html#sum%28initial%2C%26block%29-instance-method" class="tooltip">
-      <span>sum(initial, &block)<br/>sum(&block)<br/>sum(initial)<br/>sum</span>
+    <a href="Enumerable.html#sum-instance-method" class="tooltip">
+      <span>sum<br/>sum(initial)<br/>sum(&block)<br/>sum(initial, &block)</span>
     sum</a>, 
   
     <a href="Enumerable.html#take_while%28%26block%29-instance-method" class="tooltip">
@@ -2795,12 +2870,12 @@ In this way, a slice is a safe alternative to Pointer.</p>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -2852,7 +2927,7 @@ slice <span class="c"># &#61;&gt; &#91;10, 11, 12&#93;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2877,7 +2952,7 @@ slice <span class="c"># &#61;&gt; &#91;0, 0, 0&#93;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2902,7 +2977,7 @@ slice <span class="c"># &#61;&gt; &#91;10, 10, 10&#93;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L76" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L97" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2929,7 +3004,7 @@ slice      <span class="c"># &#61;&gt; &#91;97, 98, 99&#93;</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L31" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L52" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2958,7 +3033,7 @@ slice2 <span class="c"># &#61;&gt; &#91;12, 13, 14&#93;</span></code></pre></div
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L89" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L110" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2974,7 +3049,7 @@ slice2 <span class="c"># &#61;&gt; &#91;12, 13, 14&#93;</span></code></pre></div
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L269" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L350" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3001,7 +3076,7 @@ slice[<span class="n">5</span>]  <span class="c"># &#61;&gt; IndexError</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L110" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L131" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3028,7 +3103,7 @@ slice2 <span class="c"># &#61;&gt; &#91;11, 12, 13&#93;</span></code></pre></div
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L149" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L170" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3056,7 +3131,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L128" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L149" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3072,7 +3147,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L166" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L187" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3088,7 +3163,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L162" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L183" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3104,7 +3179,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L265" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L346" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3120,7 +3195,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L213" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L234" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3136,7 +3211,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L217" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L238" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3154,7 +3229,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L180" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L201" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3170,7 +3245,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L188" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L209" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3186,7 +3261,30 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L175" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L196" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="hexdump-instance-method">
+      <div class="signature">
+        
+        def <strong>hexdump</strong>
+
+        <a class="method-permalink" href="#hexdump-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a hexdump of this slice, assuming it's a <code><a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>)</code>.
+This method is specially useful for debugging binary data and
+incoming/outgoing data in protocols.</p>
+
+<pre><code>slice <span class="o">=</span> <span class="t">UInt8</span>.slice(<span class="n">97</span>, <span class="n">62</span>, <span class="n">63</span>, <span class="n">8</span>, <span class="n">255</span>)
+slice.hexdump <span class="c"># &#61;&gt; &quot;6162 6308 ff                             abc..&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L285" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3199,26 +3297,16 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
         <a class="method-permalink" href="#hexstring-instance-method">#</a>
       </div>
       
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L225" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="hexstring&#40;buffer&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>hexstring</strong>(buffer)
+        <div class="doc"><p>Returns a hexstring representation of this slice, assuming it's
+a <code><a href="Slice.html">Slice</a>(<a href="UInt8.html">UInt8</a>)</code>.</p>
 
-        <a class="method-permalink" href="#hexstring%28buffer%29-instance-method">#</a>
-      </div>
+<pre><code>slice <span class="o">=</span> <span class="t">UInt8</span>.slice(<span class="n">97</span>, <span class="n">62</span>, <span class="n">63</span>, <span class="n">8</span>, <span class="n">255</span>)
+slice.hexstring <span class="c"># &#61;&gt; &quot;61626308ff&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L235" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L253" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3234,7 +3322,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L221" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L242" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3250,7 +3338,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L226" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3268,7 +3356,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L193" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L214" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3284,7 +3372,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L201" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L222" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3300,7 +3388,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L252" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L333" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3316,7 +3404,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L248" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L329" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3336,7 +3424,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L15" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3352,7 +3440,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L284" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L365" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3368,7 +3456,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L278" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L359" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3384,7 +3472,7 @@ slice[<span class="n">4</span>] <span class="o">=</span> <span class="n">1</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L274" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L355" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3405,13 +3493,44 @@ slice.to_unsafe[<span class="n">0</span>] <span class="c"># &#61;&gt; 10</span><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/slice.cr#L297" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L378" target="_blank">View source</a>]
         
       </div>
     </div>
   
 
 
+
+  <h2>Macro Detail</h2>
+  
+    <div class="entry-detail" id="&#91;&#93;&#40;*args&#41;-macro">
+      <div class="signature">
+        
+        macro <strong>[]</strong>(*args)
+
+        <a class="method-permalink" href="#%5B%5D%28%2Aargs%29-macro">#</a>
+      </div>
+      
+        <div class="doc"><p>Create a new <code><a href="Slice.html">Slice</a></code> with the given <em>args</em>. The type of the
+slice will be the union of the type of the given <em>args</em>.</p>
+
+<p>The slice is allocated on the heap.</p>
+
+<pre><code>slice <span class="o">=</span> <span class="t">Slice</span>[<span class="n">1</span>, <span class="s">'a'</span>]
+slice[<span class="n">0</span>]    <span class="c"># &#61;&gt; 1</span>
+slice[<span class="n">1</span>]    <span class="c"># &#61;&gt; &#39;a&#39;</span>
+slice.<span class="k">class</span> <span class="c"># &#61;&gt; Slice&#40;Char | Int32&#41;</span></code></pre>
+
+<p>See also: <code><a href="Number.html#slice%28%2Anums%29-macro">Number.slice</a></code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/slice.cr#L25" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
 
 
 </div>

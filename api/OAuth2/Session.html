@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="../BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="../BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="../BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="../Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="../Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="../Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="../String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="../Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="../Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="../Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="../Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="../Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="../Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="../Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="../Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="../Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="../Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="../Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="../Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2168,7 +2223,7 @@ an access token once its expired before executing an HTTP request.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/session.cr" target="_blank">oauth2/session.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/oauth2/session.cr" target="_blank">oauth2/session.cr</a>
     
     <br/>
   
@@ -2181,7 +2236,7 @@ an access token once its expired before executing an HTTP request.</p>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28oauth2_client%2Caccess_token%2Cexpires_at%3D%3Cspanclass%3D%22t%22%3ETime%3C%2Fspan%3E.utc_now%2C%26callback%3AOAuth2%3A%3ASession-%3E%29-class-method" class="signature"><strong>.new</strong>(oauth2_client, access_token, expires_at = <span class="t">Time</span>.utc_now, &callback : OAuth2::Session -> )</a>
+        <a href="#new%28oauth2_client%3AClient%2Caccess_token%3AAccessToken%2Cexpires_at%3D%3Cspanclass%3D%22t%22%3ETime%3C%2Fspan%3E.utc_now%2C%26callback%3AOAuth2%3A%3ASession-%3E%29-class-method" class="signature"><strong>.new</strong>(oauth2_client : Client, access_token : AccessToken, expires_at = <span class="t">Time</span>.utc_now, &callback : OAuth2::Session -> )</a>
         
           <div class="summary"><p>Creates an OAuth2::Session.</p></div>
         
@@ -2195,7 +2250,7 @@ an access token once its expired before executing an HTTP request.</p>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#access_token-instance-method" class="signature"><strong>#access_token</strong></a>
+        <a href="#access_token%3AOAuth2%3A%3AAccessToken-instance-method" class="signature"><strong>#access_token</strong> : OAuth2::AccessToken</a>
         
       </li>
     
@@ -2207,12 +2262,12 @@ an access token once its expired before executing an HTTP request.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#expires_at-instance-method" class="signature"><strong>#expires_at</strong></a>
+        <a href="#expires_at%3ATime-instance-method" class="signature"><strong>#expires_at</strong> : Time</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#oauth2_client-instance-method" class="signature"><strong>#oauth2_client</strong></a>
+        <a href="#oauth2_client%3AOAuth2%3A%3AClient-instance-method" class="signature"><strong>#oauth2_client</strong> : OAuth2::Client</a>
         
       </li>
     
@@ -2368,12 +2423,12 @@ an access token once its expired before executing an HTTP request.</p>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="../Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="../Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="../Object.html#hash-class-method" class="tooltip">
@@ -2404,12 +2459,12 @@ an access token once its expired before executing an HTTP request.</p>
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="new&#40;oauth2_client,access_token,expires_at&#61;&lt;spanclass&#61;&quot;t&quot;&gt;Time&lt;/span&gt;.utc_now,&amp;callback:OAuth2::Session-&gt;&#41;-class-method">
+    <div class="entry-detail" id="new&#40;oauth2_client:Client,access_token:AccessToken,expires_at&#61;&lt;spanclass&#61;&quot;t&quot;&gt;Time&lt;/span&gt;.utc_now,&amp;callback:OAuth2::Session-&gt;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(oauth2_client, access_token, expires_at = <span class="t">Time</span>.utc_now, &callback : <a href="../OAuth2/Session.html">OAuth2::Session</a> -> )
+        def self.<strong>new</strong>(oauth2_client : <a href="../OAuth2/Client.html">Client</a>, access_token : <a href="../OAuth2/AccessToken.html">AccessToken</a>, expires_at = <span class="t">Time</span>.utc_now, &callback : <a href="../OAuth2/Session.html">OAuth2::Session</a> -> )
 
-        <a class="method-permalink" href="#new%28oauth2_client%2Caccess_token%2Cexpires_at%3D%3Cspanclass%3D%22t%22%3ETime%3C%2Fspan%3E.utc_now%2C%26callback%3AOAuth2%3A%3ASession-%3E%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28oauth2_client%3AClient%2Caccess_token%3AAccessToken%2Cexpires_at%3D%3Cspanclass%3D%22t%22%3ETime%3C%2Fspan%3E.utc_now%2C%26callback%3AOAuth2%3A%3ASession-%3E%29-class-method">#</a>
       </div>
       
         <div class="doc"><p>Creates an OAuth2::Session.</p>
@@ -2421,7 +2476,7 @@ an access token once its expired before executing an HTTP request.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/session.cr#L16" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/oauth2/session.cr#L15" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2431,18 +2486,18 @@ an access token once its expired before executing an HTTP request.</p>
 
   <h2>Instance Method Detail</h2>
   
-    <div class="entry-detail" id="access_token-instance-method">
+    <div class="entry-detail" id="access_token:OAuth2::AccessToken-instance-method">
       <div class="signature">
         
-        def <strong>access_token</strong>
+        def <strong>access_token</strong> : <a href="../OAuth2/AccessToken.html">OAuth2::AccessToken</a>
 
-        <a class="method-permalink" href="#access_token-instance-method">#</a>
+        <a class="method-permalink" href="#access_token%3AOAuth2%3A%3AAccessToken-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/session.cr#L5" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/oauth2/session.cr#L5" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2462,39 +2517,39 @@ an access token once its expired before executing an HTTP request.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/session.cr#L22" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/oauth2/session.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="expires_at-instance-method">
+    <div class="entry-detail" id="expires_at:Time-instance-method">
       <div class="signature">
         
-        def <strong>expires_at</strong>
+        def <strong>expires_at</strong> : <a href="../Time.html">Time</a>
 
-        <a class="method-permalink" href="#expires_at-instance-method">#</a>
+        <a class="method-permalink" href="#expires_at%3ATime-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/session.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/oauth2/session.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="oauth2_client-instance-method">
+    <div class="entry-detail" id="oauth2_client:OAuth2::Client-instance-method">
       <div class="signature">
         
-        def <strong>oauth2_client</strong>
+        def <strong>oauth2_client</strong> : <a href="../OAuth2/Client.html">OAuth2::Client</a>
 
-        <a class="method-permalink" href="#oauth2_client-instance-method">#</a>
+        <a class="method-permalink" href="#oauth2_client%3AOAuth2%3A%3AClient-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/oauth2/session.cr#L4" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/oauth2/session.cr#L4" target="_blank">View source</a>]
         
       </div>
     </div>

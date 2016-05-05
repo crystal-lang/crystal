@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2163,7 +2218,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr" target="_blank">float.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr" target="_blank">float.cr</a>
     
     <br/>
   
@@ -2204,6 +2259,8 @@
     
       <li class="entry-summary">
         <a href="#new%28value%29-class-method" class="signature"><strong>.new</strong>(value)</a>
+        
+          <div class="summary"><p>Returns a <code><a href="Float32.html">Float32</a></code> by invoking <code><a href="Float32.html#to_f32-instance-method">#to_f32</a></code> on <em>value</em>.</p></div>
         
       </li>
     
@@ -2380,17 +2437,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%2B%28other%3AUInt32%29-instance-method" class="signature"><strong>#+</strong>(other : UInt32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#%2B%28other%3AUInt16%29-instance-method" class="signature"><strong>#+</strong>(other : UInt16)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%2B%28other%3AFloat32%29-instance-method" class="signature"><strong>#+</strong>(other : Float32)</a>
+        <a href="#%2B%28other%3AUInt8%29-instance-method" class="signature"><strong>#+</strong>(other : UInt8)</a>
         
       </li>
     
@@ -2400,7 +2452,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%2B%28other%3AUInt8%29-instance-method" class="signature"><strong>#+</strong>(other : UInt8)</a>
+        <a href="#%2B%28other%3AUInt32%29-instance-method" class="signature"><strong>#+</strong>(other : UInt32)</a>
         
       </li>
     
@@ -2425,12 +2477,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#%2B%28other%3AFloat64%29-instance-method" class="signature"><strong>#+</strong>(other : Float64)</a>
+        <a href="#%2B%28other%3AFloat32%29-instance-method" class="signature"><strong>#+</strong>(other : Float32)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#-%28other%3AUInt64%29-instance-method" class="signature"><strong>#-</strong>(other : UInt64)</a>
+        <a href="#%2B%28other%3AFloat64%29-instance-method" class="signature"><strong>#+</strong>(other : Float64)</a>
         
       </li>
     
@@ -2440,12 +2492,12 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#-%28other%3AFloat32%29-instance-method" class="signature"><strong>#-</strong>(other : Float32)</a>
+        <a href="#-%28other%3AUInt16%29-instance-method" class="signature"><strong>#-</strong>(other : UInt16)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#--instance-method" class="signature"><strong>#-</strong></a>
+        <a href="#-%28other%3AUInt64%29-instance-method" class="signature"><strong>#-</strong>(other : UInt64)</a>
         
       </li>
     
@@ -2455,7 +2507,7 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#-%28other%3AUInt16%29-instance-method" class="signature"><strong>#-</strong>(other : UInt16)</a>
+        <a href="#-%28other%3AFloat32%29-instance-method" class="signature"><strong>#-</strong>(other : Float32)</a>
         
       </li>
     
@@ -3000,8 +3052,12 @@
       <span>%(other)</span>
     %</a>, 
   
+    <a href="Float.html#--instance-method" class="tooltip">
+      <span>-</span>
+    -</a>, 
+  
     <a href="Float.html#%3C%3D%3E%28other%3ABigInt%29-instance-method" class="tooltip">
-      <span><=>(other : BigInt)</span>
+      <span><=>(other : BigInt)<br/><=>(other : BigRational)</span>
     <=></a>, 
   
     <a href="Float.html#days-instance-method" class="tooltip">
@@ -3109,26 +3165,60 @@
   
     
 
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  
+    <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
+      <span><(other : T)</span>
+    <</a>, 
+  
+    <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span><=(other : T)</span>
+    <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
+  
+    <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>==(other : T)</span>
+    ==</a>, 
+  
+    <a href="Comparable.html#%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span>>(other : T)</span>
+    ></a>, 
+  
+    <a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>>=(other : T)</span>
+    >=</a>
+  
+
+
+    
+
+
+  
+    
+
   <h3>Instance methods inherited from struct <code><a href="Number.html">Number</a></code></h3>
   
     <a href="Number.html#%2A%28other%3AComplex%29-instance-method" class="tooltip">
-      <span>*(other : Complex)</span>
+      <span>*(other : Complex)<br/>*(other : BigFloat)</span>
     *</a>, 
   
     <a href="Number.html#%2B-instance-method" class="tooltip">
-      <span>+<br/>+(other : Complex)</span>
+      <span>+<br/>+(other : BigFloat)<br/>+(other : Complex)</span>
     +</a>, 
   
     <a href="Number.html#-%28other%3AComplex%29-instance-method" class="tooltip">
-      <span>-(other : Complex)</span>
+      <span>-(other : Complex)<br/>-(other : BigFloat)</span>
     -</a>, 
   
     <a href="Number.html#%2F%28other%3AComplex%29-instance-method" class="tooltip">
       <span>/(other : Complex)</span>
     /</a>, 
   
-    <a href="Number.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
-      <span><=>(other)</span>
+    <a href="Number.html#%3C%3D%3E%28other%3ABigFloat%29-instance-method" class="tooltip">
+      <span><=>(other : BigFloat)<br/><=>(other)</span>
     <=></a>, 
   
     <a href="Number.html#%3D%3D%28other%3AComplex%29-instance-method" class="tooltip">
@@ -3147,8 +3237,8 @@
       <span>cis</span>
     cis</a>, 
   
-    <a href="Number.html#clamp%28min%2Cmax%29-instance-method" class="tooltip">
-      <span>clamp(min, max)<br/>clamp(range : Range)</span>
+    <a href="Number.html#clamp%28range%3ARange%29-instance-method" class="tooltip">
+      <span>clamp(range : Range)<br/>clamp(min, max)</span>
     clamp</a>, 
   
     <a href="Number.html#divmod%28number%29-instance-method" class="tooltip">
@@ -3175,6 +3265,10 @@
       <span>step(limit = <span class="n">nil</span>, by = <span class="n">1</span>)<br/>step(limit = <span class="n">nil</span>, by = <span class="n">1</span>, &block)</span>
     step</a>, 
   
+    <a href="Number.html#to_big_f-instance-method" class="tooltip">
+      <span>to_big_f</span>
+    to_big_f</a>, 
+  
     <a href="Number.html#to_c-instance-method" class="tooltip">
       <span>to_c</span>
     to_c</a>, 
@@ -3189,14 +3283,48 @@
 
   <h3>Class methods inherited from struct <code><a href="Number.html">Number</a></code></h3>
   
-    <a href="Number.html#%5B%5D%28%2Anums%29-class-method" class="tooltip">
-      <span>[](*nums)</span>
+    <a href="Number.html#%5B%5D%28%2Anums%29%3AArray%28self%29-class-method" class="tooltip">
+      <span>[](*nums) : Array(self)</span>
     []</a>, 
   
-    <a href="Number.html#zero-class-method" class="tooltip">
-      <span>zero</span>
+    <a href="Number.html#zero%3Aself-class-method" class="tooltip">
+      <span>zero : self</span>
     zero</a>
   
+
+
+  
+    
+
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  
+    <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
+      <span><(other : T)</span>
+    <</a>, 
+  
+    <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span><=(other : T)</span>
+    <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
+  
+    <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>==(other : T)</span>
+    ==</a>, 
+  
+    <a href="Comparable.html#%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span>>(other : T)</span>
+    ></a>, 
+  
+    <a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>>=(other : T)</span>
+    >=</a>
+  
+
+
+    
 
 
   
@@ -3358,12 +3486,12 @@
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -3402,10 +3530,12 @@
         <a class="method-permalink" href="#new%28value%29-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns a <code><a href="Float32.html">Float32</a></code> by invoking <code><a href="Float32.html#to_f32-instance-method">#to_f32</a></code> on <em>value</em>.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/libc.cr#L139" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L108" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3421,7 +3551,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/from_yaml.cr#L40" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/yaml/from_yaml.cr#L40" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3437,7 +3567,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/from_json.cr#L50" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/from_json.cr#L50" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3778,7 +3908,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L128" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L136" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3794,7 +3924,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L124" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L132" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3810,23 +3940,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L120" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="&#43;&#40;other:UInt32&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>+</strong>(other : <a href="UInt32.html">UInt32</a>)
-
-        <a class="method-permalink" href="#%2B%28other%3AUInt32%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L128" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3847,12 +3961,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="&#43;&#40;other:Float32&#41;-instance-method">
+    <div class="entry-detail" id="&#43;&#40;other:UInt8&#41;-instance-method">
       <div class="signature">
         
-        def <strong>+</strong>(other : <a href="Float32.html">Float32</a>)
+        def <strong>+</strong>(other : <a href="UInt8.html">UInt8</a>)
 
-        <a class="method-permalink" href="#%2B%28other%3AFloat32%29-instance-method">#</a>
+        <a class="method-permalink" href="#%2B%28other%3AUInt8%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -3879,12 +3993,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="&#43;&#40;other:UInt8&#41;-instance-method">
+    <div class="entry-detail" id="&#43;&#40;other:UInt32&#41;-instance-method">
       <div class="signature">
         
-        def <strong>+</strong>(other : <a href="UInt8.html">UInt8</a>)
+        def <strong>+</strong>(other : <a href="UInt32.html">UInt32</a>)
 
-        <a class="method-permalink" href="#%2B%28other%3AUInt8%29-instance-method">#</a>
+        <a class="method-permalink" href="#%2B%28other%3AUInt32%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -3959,12 +4073,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="&#43;&#40;other:Float64&#41;-instance-method">
+    <div class="entry-detail" id="&#43;&#40;other:Float32&#41;-instance-method">
       <div class="signature">
         
-        def <strong>+</strong>(other : <a href="Float64.html">Float64</a>)
+        def <strong>+</strong>(other : <a href="Float32.html">Float32</a>)
 
-        <a class="method-permalink" href="#%2B%28other%3AFloat64%29-instance-method">#</a>
+        <a class="method-permalink" href="#%2B%28other%3AFloat32%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -3975,12 +4089,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="-&#40;other:UInt64&#41;-instance-method">
+    <div class="entry-detail" id="&#43;&#40;other:Float64&#41;-instance-method">
       <div class="signature">
         
-        def <strong>-</strong>(other : <a href="UInt64.html">UInt64</a>)
+        def <strong>+</strong>(other : <a href="Float64.html">Float64</a>)
 
-        <a class="method-permalink" href="#-%28other%3AUInt64%29-instance-method">#</a>
+        <a class="method-permalink" href="#%2B%28other%3AFloat64%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4007,12 +4121,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="-&#40;other:Float32&#41;-instance-method">
+    <div class="entry-detail" id="-&#40;other:UInt16&#41;-instance-method">
       <div class="signature">
         
-        def <strong>-</strong>(other : <a href="Float32.html">Float32</a>)
+        def <strong>-</strong>(other : <a href="UInt16.html">UInt16</a>)
 
-        <a class="method-permalink" href="#-%28other%3AFloat32%29-instance-method">#</a>
+        <a class="method-permalink" href="#-%28other%3AUInt16%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4023,18 +4137,18 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="--instance-method">
+    <div class="entry-detail" id="-&#40;other:UInt64&#41;-instance-method">
       <div class="signature">
         
-        def <strong>-</strong>
+        def <strong>-</strong>(other : <a href="UInt64.html">UInt64</a>)
 
-        <a class="method-permalink" href="#--instance-method">#</a>
+        <a class="method-permalink" href="#-%28other%3AUInt64%29-instance-method">#</a>
       </div>
+      
+        <div class="doc"></div>
       
       <br/>
       <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L100" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4055,12 +4169,12 @@
       </div>
     </div>
   
-    <div class="entry-detail" id="-&#40;other:UInt16&#41;-instance-method">
+    <div class="entry-detail" id="-&#40;other:Float32&#41;-instance-method">
       <div class="signature">
         
-        def <strong>-</strong>(other : <a href="UInt16.html">UInt16</a>)
+        def <strong>-</strong>(other : <a href="Float32.html">Float32</a>)
 
-        <a class="method-permalink" href="#-%28other%3AUInt16%29-instance-method">#</a>
+        <a class="method-permalink" href="#-%28other%3AFloat32%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -5122,7 +5236,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L104" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L112" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5138,7 +5252,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L108" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L116" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5154,7 +5268,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L140" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L148" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5170,7 +5284,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L112" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L120" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5314,7 +5428,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L132" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L140" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5330,7 +5444,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L136" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L144" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5426,7 +5540,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/float.cr#L116" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/float.cr#L124" target="_blank">View source</a>]
         
       </div>
     </div>

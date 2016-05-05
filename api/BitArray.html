@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2189,7 +2244,7 @@ ba[<span class="n">2</span>]                 <span class="c"># &#61;&gt; true</s
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/bit_array.cr" target="_blank">bit_array.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr" target="_blank">bit_array.cr</a>
     
     <br/>
   
@@ -2204,7 +2259,7 @@ ba[<span class="n">2</span>]                 <span class="c"># &#61;&gt; true</s
       <li class="entry-summary">
         <a href="#new%28size%2Cinitial%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(size, initial : Bool = <span class="n">false</span>)</a>
         
-          <div class="summary"><p>Create a new BitArray of <code><a href="BitArray.html#size-instance-method">#size</a></code> bits.</p></div>
+          <div class="summary"><p>Create a new BitArray of <code><a href="BitArray.html#size%3AInt32-instance-method">#size</a></code> bits.</p></div>
         
       </li>
     
@@ -2237,6 +2292,13 @@ ba[<span class="n">2</span>]                 <span class="c"># &#61;&gt; true</s
       </li>
     
       <li class="entry-summary">
+        <a href="#inspect%28io%3AIO%29-instance-method" class="signature"><strong>#inspect</strong>(io : IO)</a>
+        
+          <div class="summary"><p>Creates a string representation of self.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#invert-instance-method" class="signature"><strong>#invert</strong></a>
         
           <div class="summary"><p>Inverts all bits in the array.</p></div>
@@ -2244,7 +2306,7 @@ ba[<span class="n">2</span>]                 <span class="c"># &#61;&gt; true</s
       </li>
     
       <li class="entry-summary">
-        <a href="#size-instance-method" class="signature"><strong>#size</strong></a>
+        <a href="#size%3AInt32-instance-method" class="signature"><strong>#size</strong> : Int32</a>
         
           <div class="summary"><p>The number of bits the BitArray stores</p></div>
         
@@ -2459,6 +2521,10 @@ ba[<span class="n">2</span>]                 <span class="c"># &#61;&gt; true</s
       <span>partition(&block)</span>
     partition</a>, 
   
+    <a href="Enumerable.html#product%28initial%3ANumber%2C%26block%29-instance-method" class="tooltip">
+      <span>product(initial : Number, &block)<br/>product<br/>product(initial : Number)<br/>product(&block)</span>
+    product</a>, 
+  
     <a href="Enumerable.html#reduce%28memo%2C%26block%29-instance-method" class="tooltip">
       <span>reduce(memo, &block)<br/>reduce(&block)</span>
     reduce</a>, 
@@ -2483,8 +2549,8 @@ ba[<span class="n">2</span>]                 <span class="c"># &#61;&gt; true</s
       <span>skip_while(&block)</span>
     skip_while</a>, 
   
-    <a href="Enumerable.html#sum%28initial%2C%26block%29-instance-method" class="tooltip">
-      <span>sum(initial, &block)<br/>sum(&block)<br/>sum(initial)<br/>sum</span>
+    <a href="Enumerable.html#sum-instance-method" class="tooltip">
+      <span>sum<br/>sum(initial)<br/>sum(&block)<br/>sum(initial, &block)</span>
     sum</a>, 
   
     <a href="Enumerable.html#take_while%28%26block%29-instance-method" class="tooltip">
@@ -2659,12 +2725,12 @@ ba[<span class="n">2</span>]                 <span class="c"># &#61;&gt; true</s
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -2703,7 +2769,7 @@ ba[<span class="n">2</span>]                 <span class="c"># &#61;&gt; true</s
         <a class="method-permalink" href="#new%28size%2Cinitial%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Create a new BitArray of <code><a href="BitArray.html#size-instance-method">#size</a></code> bits.</p>
+        <div class="doc"><p>Create a new BitArray of <code><a href="BitArray.html#size%3AInt32-instance-method">#size</a></code> bits.</p>
 
 <p><code>initial</code> optionally sets the starting value, true or false, for all bits
 in the array.</p></div>
@@ -2711,7 +2777,7 @@ in the array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/bit_array.cr#L29" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr#L27" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2739,7 +2805,7 @@ ba[<span class="n">3</span>] <span class="c"># &#61;&gt; false</span></code></pr
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/bit_array.cr#L40" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2762,7 +2828,7 @@ ba[<span class="n">3</span>] <span class="o">=</span> <span class="n">true</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/bit_array.cr#L51" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr#L49" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2787,7 +2853,28 @@ ba.each <span class="k">do</span> <span class="o">|</span>i<span class="o">|</sp
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/bit_array.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr#L94" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="inspect&#40;io:IO&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>inspect</strong>(io : <a href="IO.html">IO</a>)
+
+        <a class="method-permalink" href="#inspect%28io%3AIO%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Creates a string representation of self.</p>
+
+<pre><code>ba <span class="o">=</span> <span class="t">BitArray</span>.<span class="k">new</span>(<span class="n">5</span>)
+puts ba.to_s <span class="c">#&#61;&gt; &quot;BitArray&#91;00000&#93;&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr#L113" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2812,17 +2899,17 @@ ba <span class="c"># &#61;&gt; BitArray&#91;11001&#93;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/bit_array.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr#L80" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="size-instance-method">
+    <div class="entry-detail" id="size:Int32-instance-method">
       <div class="signature">
         
-        def <strong>size</strong>
+        def <strong>size</strong> : <a href="Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#size-instance-method">#</a>
+        <a class="method-permalink" href="#size%3AInt32-instance-method">#</a>
       </div>
       
         <div class="doc"><p>The number of bits the BitArray stores</p></div>
@@ -2830,7 +2917,7 @@ ba <span class="c"># &#61;&gt; BitArray&#91;11001&#93;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/bit_array.cr#L21" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2851,7 +2938,7 @@ puts ba.to_s <span class="c">#&#61;&gt; &quot;BitArray&#91;00000&#93;&quot;</spa
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/bit_array.cr#L106" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr#L104" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2871,7 +2958,7 @@ It's useful for reading and writing a bit array from a byte buffer directly.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/bit_array.cr#L117" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr#L120" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2897,7 +2984,7 @@ ba[<span class="n">3</span>] <span class="c"># &#61;&gt; true</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/bit_array.cr#L69" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/bit_array.cr#L67" target="_blank">View source</a>]
         
       </div>
     </div>

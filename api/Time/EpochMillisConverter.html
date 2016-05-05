@@ -5,7 +5,7 @@
   <meta id="repository-name" content="github.com/crystal-lang/crystal">
   <link href="../css/style.css" rel="stylesheet" type="text/css" />
   <script type="text/javascript" src="../js/doc.js"></script>
-  <title>Hash::CaseInsensitiveComparator - github.com/crystal-lang/crystal</title>
+  <title>Time::EpochMillisConverter - github.com/crystal-lang/crystal</title>
 </head>
 <body>
 
@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="../BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="../BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="../BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent open current" data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="../Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" current" data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="../Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="../Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="../String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,13 +1870,68 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="../Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="../Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="../Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="../Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="../Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="../Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="../Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="../Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class="parent open current" data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="../Time.html">Time</a>
       
         <ul>
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="../Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="../Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" current" data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="../Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2137,13 +2192,31 @@
 <div id="main-content">
 <h1 class="type-name">
 
-  <span class="kind">module</span> Hash::CaseInsensitiveComparator
+  <span class="kind">module</span> Time::EpochMillisConverter
 
 </h1>
 
 
 
 
+
+  <h2>Overview</h2>
+
+  <p>Converter to be used with <code><a href="../JSON.html#mapping%28properties%2Cstrict%3Dfalse%29-macro">JSON.mapping</a></code> and <code><a href="../YAML.html#mapping%28properties%2Cstrict%3Dfalse%29-macro">YAML.mapping</a></code>
+to serialize a <code><a href="../Time.html">Time</a></code> instance as the number of milliseconds
+since the unix epoch. See <code><a href="../Time.html#epoch_ms%28milliseconds%3AInt%29%3Aself-class-method">Time.epoch_ms</a></code>.</p>
+
+<pre><code><span class="k">require</span> <span class="s">&quot;json&quot;</span>
+
+<span class="k">class</span> <span class="t">Person</span>
+  <span class="t">JSON</span>.mapping({
+    birth_date: {<span class="k">type</span>: <span class="t">Time</span>, converter: <span class="t">Time</span><span class="t">::</span><span class="t">EpochMillisConverter</span>},
+  })
+<span class="k">end</span>
+
+person <span class="o">=</span> <span class="t">Person</span>.from_json(<span class="s">&#37;&#40;&#123;&quot;birth_date&quot;: 1459860483856&#125;&#41;</span>)
+person.birth_date <span class="c"># &#61;&gt; 2016-04-05 12:48:03 UTC</span>
+person.to_json    <span class="c"># &#61;&gt; &#37;&#40;&#123;&quot;birth_date&quot;:1459860483856&#125;&#41;</span></code></pre>
 
 
 
@@ -2161,7 +2234,17 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/hash.cr" target="_blank">hash.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/from_json.cr" target="_blank">json/from_json.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/yaml/from_yaml.cr" target="_blank">yaml/from_yaml.cr</a>
     
     <br/>
   
@@ -2174,22 +2257,17 @@
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#equals%3F%28str1%3AString%2Cstr2%3AString%29-class-method" class="signature"><strong>.equals?</strong>(str1 : String, str2 : String)</a>
+        <a href="#from_json%28value%3AJSON%3A%3APullParser%29%3ATime-class-method" class="signature"><strong>.from_json</strong>(value : JSON::PullParser) : Time</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#equals%3F%28o1%2Co2%29-class-method" class="signature"><strong>.equals?</strong>(o1, o2)</a>
+        <a href="#from_yaml%28value%3AYAML%3A%3APullParser%29%3ATime-class-method" class="signature"><strong>.from_yaml</strong>(value : YAML::PullParser) : Time</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#hash%28str%3AString%29-class-method" class="signature"><strong>.hash</strong>(str : String)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#hash%28object%29-class-method" class="signature"><strong>.hash</strong>(object)</a>
+        <a href="#to_json%28value%3ATime%2Cio%3AIO%29-class-method" class="signature"><strong>.to_json</strong>(value : Time, io : IO)</a>
         
       </li>
     
@@ -2208,66 +2286,50 @@
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="equals?&#40;str1:String,str2:String&#41;-class-method">
+    <div class="entry-detail" id="from_json&#40;value:JSON::PullParser&#41;:Time-class-method">
       <div class="signature">
         
-        def self.<strong>equals?</strong>(str1 : <a href="../String.html">String</a>, str2 : <a href="../String.html">String</a>)
+        def self.<strong>from_json</strong>(value : <a href="../JSON/PullParser.html">JSON::PullParser</a>) : <a href="../Time.html">Time</a>
 
-        <a class="method-permalink" href="#equals%3F%28str1%3AString%2Cstr2%3AString%29-class-method">#</a>
+        <a class="method-permalink" href="#from_json%28value%3AJSON%3A%3APullParser%29%3ATime-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/hash.cr#L20" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/from_json.cr#L148" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="equals?&#40;o1,o2&#41;-class-method">
+    <div class="entry-detail" id="from_yaml&#40;value:YAML::PullParser&#41;:Time-class-method">
       <div class="signature">
         
-        def self.<strong>equals?</strong>(o1, o2)
+        def self.<strong>from_yaml</strong>(value : <a href="../YAML/PullParser.html">YAML::PullParser</a>) : <a href="../Time.html">Time</a>
 
-        <a class="method-permalink" href="#equals%3F%28o1%2Co2%29-class-method">#</a>
+        <a class="method-permalink" href="#from_yaml%28value%3AYAML%3A%3APullParser%29%3ATime-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/hash.cr#L28" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/yaml/from_yaml.cr#L116" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="hash&#40;str:String&#41;-class-method">
+    <div class="entry-detail" id="to_json&#40;value:Time,io:IO&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>hash</strong>(str : <a href="../String.html">String</a>)
+        def self.<strong>to_json</strong>(value : <a href="../Time.html">Time</a>, io : <a href="../IO.html">IO</a>)
 
-        <a class="method-permalink" href="#hash%28str%3AString%29-class-method">#</a>
+        <a class="method-permalink" href="#to_json%28value%3ATime%2Cio%3AIO%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/hash.cr#L16" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="hash&#40;object&#41;-class-method">
-      <div class="signature">
-        
-        def self.<strong>hash</strong>(object)
-
-        <a class="method-permalink" href="#hash%28object%29-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/hash.cr#L24" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/to_json.cr#L319" target="_blank">View source</a>]
         
       </div>
     </div>

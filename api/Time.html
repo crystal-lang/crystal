@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent current" data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2149,65 +2204,51 @@
 
   <h2>Overview</h2>
 
-  <p>The <code><a href="Time.html">Time</a></code> library allows you to inspect, analyze, calculate, and format time. Here are some examples:</p>
+  <p><code><a href="Time.html">Time</a></code> represents an instance in time. Here are some examples:</p>
 
 <h3>Basic Usage</h3>
 
-<pre><code>time <span class="o">=</span> <span class="t">Time</span>.now
-<span class="c">#&#61;&gt; 2016-02-15 10:20:30 UTC</span>
+<pre><code>time <span class="o">=</span> <span class="t">Time</span>.now <span class="c"># &#61;&gt; 2016-02-15 10:20:30 UTC</span>
 
-time.year    <span class="c">#&#61;&gt; 2015</span>
-time.month   <span class="c">#&#61;&gt; 2</span>
-time.day     <span class="c">#&#61;&gt; 15</span>
-time.hour    <span class="c">#&#61;&gt; 10</span>
-time.minute  <span class="c">#&#61;&gt; 20</span>
-time.second  <span class="c">#&#61;&gt; 30</span>
-time.monday? <span class="c">#&#61;&gt; true</span>
+time.year    <span class="c"># &#61;&gt; 2015</span>
+time.month   <span class="c"># &#61;&gt; 2</span>
+time.day     <span class="c"># &#61;&gt; 15</span>
+time.hour    <span class="c"># &#61;&gt; 10</span>
+time.minute  <span class="c"># &#61;&gt; 20</span>
+time.second  <span class="c"># &#61;&gt; 30</span>
+time.monday? <span class="c"># &#61;&gt; true</span>
 
 <span class="c"># Creating a time instance with a date only</span>
-<span class="t">Time</span>.<span class="k">new</span>(<span class="n">2016</span>,<span class="n">2</span>,<span class="n">15</span>)
-<span class="c">#&#61;&gt; 2016-02-15 00:00:00</span>
+<span class="t">Time</span>.<span class="k">new</span>(<span class="n">2016</span>, <span class="n">2</span>, <span class="n">15</span>) <span class="c"># &#61;&gt; 2016-02-15 00:00:00</span>
 
 <span class="c"># Specifying a time</span>
-<span class="t">Time</span>.<span class="k">new</span>(<span class="n">2016</span>,<span class="n">2</span>,<span class="n">15</span>,<span class="n">10</span>,<span class="n">20</span>,<span class="n">30</span>)
-<span class="c">#&#61;&gt; 2016-02-15 10:20:30 UTC</span></code></pre>
+<span class="t">Time</span>.<span class="k">new</span>(<span class="n">2016</span>, <span class="n">2</span>, <span class="n">15</span>, <span class="n">10</span>, <span class="n">20</span>, <span class="n">30</span>) <span class="c"># &#61;&gt; 2016-02-15 10:20:30 UTC</span></code></pre>
 
 <h3>Formatting Time</h3>
 
-<p>The <code><a href="Time.html#to_s%28format%3AString%29-instance-method">#to_s</a></code> method returns a <code><a href="String.html">String</a></code> value in the assigned format.</p>
+<p>The <code><a href="Time.html#to_s%28format%3AString%29%3AString-instance-method">#to_s</a></code> method returns a <code><a href="String.html">String</a></code> value in the assigned format.</p>
 
-<pre><code><span class="t">Time</span>.now.to_s(<span class="s">&quot;&#37;Y-&#37;m-&#37;d&quot;</span>)
-<span class="c">#&#61;&gt; &quot;2015-10-12&quot;</span>
+<pre><code><span class="t">Time</span>.now.to_s(<span class="s">&quot;&#37;Y-&#37;m-&#37;d&quot;</span>) <span class="c"># &#61;&gt; &quot;2015-10-12&quot;</span></code></pre>
 
-<span class="c"># Format specifiers include but are not limited to:</span>
-<span class="o">%</span><span class="t">Y</span>  => year
-<span class="o">%</span>m  => month
-<span class="o">%</span>d  => day
-<span class="o">%</span><span class="t">H</span>  => hour
-<span class="o">%</span><span class="t">M</span>  => minute
-<span class="o">%</span><span class="t">S</span>  => second
-<span class="o">%</span><span class="t">D</span>  => date
-<span class="o">%</span>u  => weekday</code></pre>
+<p>See <code><a href="Time/Format.html">Time::Format</a></code> for all the directives.</p>
 
 <h3>Calculation</h3>
 
-<pre><code><span class="t">Time</span>.<span class="k">new</span>(<span class="n">2015</span>,<span class="n">10</span>,<span class="n">10</span>) <span class="o">-</span> <span class="n">5</span>.day
-<span class="c">#&#61;&gt; 2015-10-05 00:00:00</span>
+<pre><code><span class="t">Time</span>.<span class="k">new</span>(<span class="n">2015</span>, <span class="n">10</span>, <span class="n">10</span>) <span class="o">-</span> <span class="n">5</span>.days <span class="c"># &#61;&gt; 2015-10-05 00:00:00</span>
 
-<span class="c"># Time calculation returns a Time::Span instance,</span>
-<span class="c"># which can be analyzed with its methods.</span>
-span <span class="o">=</span> <span class="t">Time</span>.<span class="k">new</span>(<span class="n">2015</span>,<span class="n">10</span>,<span class="n">10</span>) <span class="o">-</span> <span class="t">Time</span>.<span class="k">new</span>(<span class="n">2015</span>,<span class="n">9</span>,<span class="n">10</span>)
-span.days          <span class="c">#&#61;&gt; 30</span>
-span.total_hours   <span class="c">#&#61;&gt; 720</span>
-span.total_minutes <span class="c">#&#61;&gt; 43200</span>
+<span class="c"># Time calculation returns a Time::Span instance</span>
+span <span class="o">=</span> <span class="t">Time</span>.<span class="k">new</span>(<span class="n">2015</span>, <span class="n">10</span>, <span class="n">10</span>) <span class="o">-</span> <span class="t">Time</span>.<span class="k">new</span>(<span class="n">2015</span>, <span class="n">9</span>, <span class="n">10</span>)
+span.days          <span class="c"># &#61;&gt; 30</span>
+span.total_hours   <span class="c"># &#61;&gt; 720</span>
+span.total_minutes <span class="c"># &#61;&gt; 43200</span>
 
 <span class="c"># Calculation between Time::Span instances</span>
-span_a <span class="o">=</span> <span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">3</span>,<span class="n">0</span>,<span class="n">0</span>)
-span_b <span class="o">=</span> <span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">2</span>,<span class="n">0</span>,<span class="n">0</span>)
+span_a <span class="o">=</span> <span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">3</span>, <span class="n">0</span>, <span class="n">0</span>)
+span_b <span class="o">=</span> <span class="t">Time</span><span class="t">::</span><span class="t">Span</span>.<span class="k">new</span>(<span class="n">2</span>, <span class="n">0</span>, <span class="n">0</span>)
 span <span class="o">=</span> span_a <span class="o">-</span> span_b
-span       <span class="c">#&#61;&gt; 01:00:00</span>
-span.<span class="k">class</span> <span class="c">#&#61;&gt; Time::Span</span>
-span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
+span       <span class="c"># &#61;&gt; 01:00:00</span>
+span.<span class="k">class</span> <span class="c"># &#61;&gt; Time::Span</span>
+span.hours <span class="c"># &#61;&gt; 1</span></code></pre>
 
 
 
@@ -2232,7 +2273,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr" target="_blank">time/time.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr" target="_blank">time/time.cr</a>
     
     <br/>
   
@@ -2312,22 +2353,26 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#days_in_month%28year%2Cmonth%29-class-method" class="signature"><strong>.days_in_month</strong>(year, month)</a>
+        <a href="#days_in_month%28year%2Cmonth%29%3AInt32-class-method" class="signature"><strong>.days_in_month</strong>(year, month) : Int32</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#epoch%28seconds%3AInt%29-class-method" class="signature"><strong>.epoch</strong>(seconds : Int)</a>
+        <a href="#epoch%28seconds%3AInt%29%3Aself-class-method" class="signature"><strong>.epoch</strong>(seconds : Int) : self</a>
+        
+          <div class="summary"><p>Returns a new <code><a href="Time.html">Time</a></code> instance that corresponds to the number seconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970)</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#epoch_ms%28milliseconds%3AInt%29-class-method" class="signature"><strong>.epoch_ms</strong>(milliseconds : Int)</a>
+        <a href="#epoch_ms%28milliseconds%3AInt%29%3Aself-class-method" class="signature"><strong>.epoch_ms</strong>(milliseconds : Int) : self</a>
+        
+          <div class="summary"><p>Returns a new <code><a href="Time.html">Time</a></code> instance that corresponds to the number milliseconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970)</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#leap_year%3F%28year%29-class-method" class="signature"><strong>.leap_year?</strong>(year)</a>
+        <a href="#leap_year%3F%28year%29%3ABool-class-method" class="signature"><strong>.leap_year?</strong>(year) : Bool</a>
         
       </li>
     
@@ -2344,22 +2389,24 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#new%28time%3ALibC%3A%3ATimeSpec%2Ckind%3D%3Cspanclass%3D%22t%22%3EKind%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EUnspecified%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(time : LibC::TimeSpec, kind = <span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>)</a>
+        <a href="#new%28time%3ALibC%3A%3ATimespec%2Ckind%3D%3Cspanclass%3D%22t%22%3EKind%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EUnspecified%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(time : LibC::Timespec, kind = <span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#now-class-method" class="signature"><strong>.now</strong></a>
+        <a href="#now%3Aself-class-method" class="signature"><strong>.now</strong> : self</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#parse%28time%2Cpattern%2Ckind%3D%3Cspanclass%3D%22t%22%3ETime%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EKind%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EUnspecified%3C%2Fspan%3E%29-class-method" class="signature"><strong>.parse</strong>(time, pattern, kind = <span class="t">Time</span><span class="t">::</span><span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>)</a>
+        <a href="#parse%28time%3AString%2Cpattern%3AString%2Ckind%3D%3Cspanclass%3D%22t%22%3ETime%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EKind%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EUnspecified%3C%2Fspan%3E%29%3Aself-class-method" class="signature"><strong>.parse</strong>(time : String, pattern : String, kind = <span class="t">Time</span><span class="t">::</span><span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>) : self</a>
+        
+          <div class="summary"><p>Parses a Time in the given <em>time</em> string, using the given <em>pattern</em> (see <code><a href="Time/Format.html">Time::Format</a></code>).</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#utc_now-class-method" class="signature"><strong>.utc_now</strong></a>
+        <a href="#utc_now%3Aself-class-method" class="signature"><strong>.utc_now</strong> : self</a>
         
       </li>
     
@@ -2536,19 +2583,23 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#epoch-instance-method" class="signature"><strong>#epoch</strong></a>
+        <a href="#epoch%3AInt64-instance-method" class="signature"><strong>#epoch</strong> : Int64</a>
         
-          <div class="summary"><p>Returns the number of seconds since the Epoch</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#epoch_f-instance-method" class="signature"><strong>#epoch_f</strong></a>
+          <div class="summary"><p>Returns the number of seconds since the Epoch for this time.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#epoch_ms-instance-method" class="signature"><strong>#epoch_ms</strong></a>
+        <a href="#epoch_f%3AFloat64-instance-method" class="signature"><strong>#epoch_f</strong> : Float64</a>
+        
+          <div class="summary"><p>Returns the number of seconds since the Epoch for this time, as a <code><a href="Float64.html">Float64</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#epoch_ms%3AInt64-instance-method" class="signature"><strong>#epoch_ms</strong> : Int64</a>
+        
+          <div class="summary"><p>Returns the number of milliseconds since the Epoch for this time.</p></div>
         
       </li>
     
@@ -2558,7 +2609,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#hash-instance-method" class="signature"><strong>#hash</strong></a>
+        <a href="#hash%3AInt64-instance-method" class="signature"><strong>#hash</strong> : Int64</a>
         
       </li>
     
@@ -2642,12 +2693,16 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s%28format%3AString%29-instance-method" class="signature"><strong>#to_s</strong>(format : String)</a>
+        <a href="#to_s%28format%3AString%29%3AString-instance-method" class="signature"><strong>#to_s</strong>(format : String) : String</a>
+        
+          <div class="summary"><p>Formats this time using the given format (see <code><a href="Time/Format.html">Time::Format</a></code>).</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#to_s%28format%3AString%2Cio%3AIO%29-instance-method" class="signature"><strong>#to_s</strong>(format : String, io : IO)</a>
+        
+          <div class="summary"><p>Formats this time using the given format (see <code><a href="Time/Format.html">Time::Format</a></code>) into the given <em>io</em>.</p></div>
         
       </li>
     
@@ -2880,12 +2935,12 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -2916,66 +2971,77 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="days_in_month&#40;year,month&#41;-class-method">
+    <div class="entry-detail" id="days_in_month&#40;year,month&#41;:Int32-class-method">
       <div class="signature">
         
-        def self.<strong>days_in_month</strong>(year, month)
+        def self.<strong>days_in_month</strong>(year, month) : <a href="Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#days_in_month%28year%2Cmonth%29-class-method">#</a>
+        <a class="method-permalink" href="#days_in_month%28year%2Cmonth%29%3AInt32-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L315" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L305" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="epoch&#40;seconds:Int&#41;-class-method">
+    <div class="entry-detail" id="epoch&#40;seconds:Int&#41;:self-class-method">
       <div class="signature">
         
-        def self.<strong>epoch</strong>(seconds : <a href="Int.html">Int</a>)
+        def self.<strong>epoch</strong>(seconds : <a href="Int.html">Int</a>) : self
 
-        <a class="method-permalink" href="#epoch%28seconds%3AInt%29-class-method">#</a>
+        <a class="method-permalink" href="#epoch%28seconds%3AInt%29%3Aself-class-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns a new <code><a href="Time.html">Time</a></code> instance that corresponds to the number
+seconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970)</p>
+
+<pre><code><span class="t">Time</span>.epoch(<span class="n">981173106</span>) <span class="c"># &#61;&gt; 2001-02-03 04:05:06 UTC</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L166" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L149" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="epoch_ms&#40;milliseconds:Int&#41;-class-method">
+    <div class="entry-detail" id="epoch_ms&#40;milliseconds:Int&#41;:self-class-method">
       <div class="signature">
         
-        def self.<strong>epoch_ms</strong>(milliseconds : <a href="Int.html">Int</a>)
+        def self.<strong>epoch_ms</strong>(milliseconds : <a href="Int.html">Int</a>) : self
 
-        <a class="method-permalink" href="#epoch_ms%28milliseconds%3AInt%29-class-method">#</a>
+        <a class="method-permalink" href="#epoch_ms%28milliseconds%3AInt%29%3Aself-class-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns a new <code><a href="Time.html">Time</a></code> instance that corresponds to the number
+milliseconds elapsed since the unix epoch (00:00:00 UTC on 1 January 1970)</p>
+
+<pre><code>time <span class="o">=</span> <span class="t">Time</span>.epoch_ms(<span class="n">981173106789</span>) <span class="c"># &#61;&gt; 2001-02-03 04:05:06 UTC</span>
+time.millisecond                   <span class="c"># &#61;&gt; 789</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L170" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L160" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="leap_year?&#40;year&#41;-class-method">
+    <div class="entry-detail" id="leap_year?&#40;year&#41;:Bool-class-method">
       <div class="signature">
         
-        def self.<strong>leap_year?</strong>(year)
+        def self.<strong>leap_year?</strong>(year) : <a href="Bool.html">Bool</a>
 
-        <a class="method-permalink" href="#leap_year%3F%28year%29-class-method">#</a>
+        <a class="method-permalink" href="#leap_year%3F%28year%29%3ABool-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L328" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L318" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2996,7 +3062,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L536" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L551" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3012,71 +3078,76 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L518" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L536" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="new&#40;time:LibC::TimeSpec,kind&#61;&lt;spanclass&#61;&quot;t&quot;&gt;Kind&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;::&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;Unspecified&lt;/span&gt;&#41;-class-method">
+    <div class="entry-detail" id="new&#40;time:LibC::Timespec,kind&#61;&lt;spanclass&#61;&quot;t&quot;&gt;Kind&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;::&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;Unspecified&lt;/span&gt;&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(time : LibC::TimeSpec, kind = <span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>)
+        def self.<strong>new</strong>(time : LibC::Timespec, kind = <span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>)
 
-        <a class="method-permalink" href="#new%28time%3ALibC%3A%3ATimeSpec%2Ckind%3D%3Cspanclass%3D%22t%22%3EKind%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EUnspecified%3C%2Fspan%3E%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28time%3ALibC%3A%3ATimespec%2Ckind%3D%3Cspanclass%3D%22t%22%3EKind%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EUnspecified%3C%2Fspan%3E%29-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L162" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L139" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="now-class-method">
+    <div class="entry-detail" id="now:self-class-method">
       <div class="signature">
         
-        def self.<strong>now</strong>
+        def self.<strong>now</strong> : self
 
-        <a class="method-permalink" href="#now-class-method">#</a>
+        <a class="method-permalink" href="#now%3Aself-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L229" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="parse&#40;time,pattern,kind&#61;&lt;spanclass&#61;&quot;t&quot;&gt;Time&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;::&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;Kind&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;::&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;Unspecified&lt;/span&gt;&#41;-class-method">
+    <div class="entry-detail" id="parse&#40;time:String,pattern:String,kind&#61;&lt;spanclass&#61;&quot;t&quot;&gt;Time&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;::&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;Kind&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;::&lt;/span&gt;&lt;spanclass&#61;&quot;t&quot;&gt;Unspecified&lt;/span&gt;&#41;:self-class-method">
       <div class="signature">
         
-        def self.<strong>parse</strong>(time, pattern, kind = <span class="t">Time</span><span class="t">::</span><span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>)
+        def self.<strong>parse</strong>(time : <a href="String.html">String</a>, pattern : <a href="String.html">String</a>, kind = <span class="t">Time</span><span class="t">::</span><span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>) : self
 
-        <a class="method-permalink" href="#parse%28time%2Cpattern%2Ckind%3D%3Cspanclass%3D%22t%22%3ETime%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EKind%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EUnspecified%3C%2Fspan%3E%29-class-method">#</a>
+        <a class="method-permalink" href="#parse%28time%3AString%2Cpattern%3AString%2Ckind%3D%3Cspanclass%3D%22t%22%3ETime%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EKind%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EUnspecified%3C%2Fspan%3E%29%3Aself-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Parses a Time in the given <em>time</em> string, using the given <em>pattern</em> (see
+<code><a href="Time/Format.html">Time::Format</a></code>).</p>
+
+<pre><code><span class="t">Time</span>.parse(<span class="s">&quot;2016-04-05&quot;</span>, <span class="s">&quot;&#37;F&quot;</span>) <span class="c"># &#61;&gt; 2016-04-05 00:00:00</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L354" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="utc_now:self-class-method">
+      <div class="signature">
+        
+        def self.<strong>utc_now</strong> : self
+
+        <a class="method-permalink" href="#utc_now%3Aself-class-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L351" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="utc_now-class-method">
-      <div class="signature">
-        
-        def self.<strong>utc_now</strong>
-
-        <a class="method-permalink" href="#utc_now-class-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L233" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L223" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3092,7 +3163,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L524" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L541" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3108,7 +3179,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L147" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L124" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3124,7 +3195,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L138" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L115" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3140,7 +3211,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L134" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L111" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3161,7 +3232,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L182" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L172" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3177,7 +3248,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L174" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L164" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3193,7 +3264,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L178" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L168" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3209,7 +3280,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L186" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L176" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3225,7 +3296,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L221" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L211" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3241,7 +3312,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L225" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L215" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3257,7 +3328,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L301" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L291" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3273,7 +3344,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L212" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L202" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3289,7 +3360,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L395" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L413" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3305,7 +3376,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L396" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L414" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3321,7 +3392,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L397" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L415" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3337,7 +3408,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L394" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L412" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3353,7 +3424,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L393" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L411" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3369,7 +3440,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L392" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L410" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3385,7 +3456,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L399" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L417" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3401,7 +3472,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L391" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L409" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3417,7 +3488,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L445" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L463" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3433,7 +3504,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L446" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L464" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3449,7 +3520,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L447" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L465" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3465,7 +3536,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L434" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L452" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3481,7 +3552,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L420" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L438" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3497,7 +3568,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L410" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L428" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3513,7 +3584,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L436" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L454" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3529,7 +3600,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L408" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L426" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3545,7 +3616,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L448" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L466" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3561,7 +3632,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L241" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L231" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3577,7 +3648,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L253" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L243" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3593,7 +3664,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L277" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L267" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3609,57 +3680,68 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L282" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L272" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="epoch-instance-method">
+    <div class="entry-detail" id="epoch:Int64-instance-method">
       <div class="signature">
         
-        def <strong>epoch</strong>
+        def <strong>epoch</strong> : <a href="Int64.html">Int64</a>
 
-        <a class="method-permalink" href="#epoch-instance-method">#</a>
+        <a class="method-permalink" href="#epoch%3AInt64-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the number of seconds since the Epoch</p></div>
+        <div class="doc"><p>Returns the number of seconds since the Epoch for this time.</p>
+
+<pre><code><span class="t">Time</span>.<span class="k">new</span>(<span class="n">2016</span>, <span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>).epoch <span class="c"># &#61;&gt; 1451714645</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L356" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L363" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="epoch_f-instance-method">
+    <div class="entry-detail" id="epoch_f:Float64-instance-method">
       <div class="signature">
         
-        def <strong>epoch_f</strong>
+        def <strong>epoch_f</strong> : <a href="Float64.html">Float64</a>
 
-        <a class="method-permalink" href="#epoch_f-instance-method">#</a>
+        <a class="method-permalink" href="#epoch_f%3AFloat64-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns the number of seconds since the Epoch for this time,
+as a <code><a href="Float64.html">Float64</a></code>.</p>
+
+<pre><code><span class="t">Time</span>.<span class="k">new</span>(<span class="n">2016</span>, <span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">678</span>).epoch_f <span class="c"># &#61;&gt; 1.45171e&#43;09</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L364" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L382" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="epoch_ms-instance-method">
+    <div class="entry-detail" id="epoch_ms:Int64-instance-method">
       <div class="signature">
         
-        def <strong>epoch_ms</strong>
+        def <strong>epoch_ms</strong> : <a href="Int64.html">Int64</a>
 
-        <a class="method-permalink" href="#epoch_ms-instance-method">#</a>
+        <a class="method-permalink" href="#epoch_ms%3AInt64-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns the number of milliseconds since the Epoch for this time.</p>
+
+<pre><code><span class="t">Time</span>.<span class="k">new</span>(<span class="n">2016</span>, <span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">678</span>).epoch_ms <span class="c"># &#61;&gt; 1451714645678</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L360" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L372" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3675,23 +3757,23 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L450" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L468" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="hash-instance-method">
+    <div class="entry-detail" id="hash:Int64-instance-method">
       <div class="signature">
         
-        def <strong>hash</strong>
+        def <strong>hash</strong> : <a href="Int64.html">Int64</a>
 
-        <a class="method-permalink" href="#hash-instance-method">#</a>
+        <a class="method-permalink" href="#hash%3AInt64-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L311" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L301" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3707,7 +3789,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L257" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L247" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3723,7 +3805,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L336" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L326" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3741,7 +3823,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L287" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L277" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3759,7 +3841,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L297" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L287" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3775,7 +3857,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L269" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L259" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3791,7 +3873,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L261" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L251" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3807,7 +3889,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L450" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L468" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3823,7 +3905,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L249" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L239" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3839,7 +3921,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L450" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L468" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3855,7 +3937,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L265" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L255" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3871,7 +3953,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L450" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L468" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3887,7 +3969,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L450" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L468" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3903,7 +3985,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L237" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L227" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3919,7 +4001,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L273" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L263" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3935,23 +4017,27 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L376" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L394" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="to_s&#40;format:String&#41;-instance-method">
+    <div class="entry-detail" id="to_s&#40;format:String&#41;:String-instance-method">
       <div class="signature">
         
-        def <strong>to_s</strong>(format : <a href="String.html">String</a>)
+        def <strong>to_s</strong>(format : <a href="String.html">String</a>) : <a href="String.html">String</a>
 
-        <a class="method-permalink" href="#to_s%28format%3AString%29-instance-method">#</a>
+        <a class="method-permalink" href="#to_s%28format%3AString%29%3AString-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Formats this time using the given format (see <code><a href="Time/Format.html">Time::Format</a></code>).</p>
+
+<pre><code><span class="t">Time</span>.now.to_s(<span class="s">&quot;&#37;F&quot;</span>) <span class="c"># &#61;&gt; &quot;2016-04-05&quot;</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L343" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L338" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3964,10 +4050,13 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
         <a class="method-permalink" href="#to_s%28format%3AString%2Cio%3AIO%29-instance-method">#</a>
       </div>
       
+        <div class="doc"><p>Formats this time using the given format (see <code><a href="Time/Format.html">Time::Format</a></code>)
+into the given <em>io</em>.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L347" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L344" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3983,7 +4072,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L368" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L386" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3999,7 +4088,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L450" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L468" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4017,7 +4106,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L292" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L282" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4033,7 +4122,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L450" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L468" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4049,7 +4138,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L245" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L235" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4070,7 +4159,7 @@ span.hours <span class="c">#&#61;&gt; 1</span></code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/time.cr#L384" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/time.cr#L402" target="_blank">View source</a>]
         
       </div>
     </div>

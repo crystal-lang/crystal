@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2204,7 +2259,7 @@
       
     
       <dt class="entry-const" id="STDERR">
-        <strong>STDERR</strong> = <code>(<span class="t">IO</span><span class="t">::</span><span class="t">FileDescriptor</span>.<span class="k">new</span>(<span class="n">2</span>, (<span class="t">LibC</span>.isatty(<span class="n">2</span>)) <span class="o">==</span> <span class="n">0</span>)).tap(<span class="o">&</span>.flush_on_newline <span class="o">=</span> <span class="n">true</span>)</code>
+        <strong>STDERR</strong> = <code>(<span class="t">IO</span><span class="t">::</span><span class="t">FileDescriptor</span>.<span class="k">new</span>(<span class="n">2</span>, blocking: (<span class="t">LibC</span>.isatty(<span class="n">2</span>)) <span class="o">==</span> <span class="n">0</span>)).tap(<span class="o">&</span>.flush_on_newline <span class="o">=</span> <span class="n">true</span>)</code>
       </dt>
       
     
@@ -2214,7 +2269,7 @@
       
     
       <dt class="entry-const" id="STDOUT">
-        <strong>STDOUT</strong> = <code>(<span class="t">IO</span><span class="t">::</span><span class="t">FileDescriptor</span>.<span class="k">new</span>(<span class="n">1</span>, (<span class="t">LibC</span>.isatty(<span class="n">1</span>)) <span class="o">==</span> <span class="n">0</span>)).tap(<span class="o">&</span>.flush_on_newline <span class="o">=</span> <span class="n">true</span>)</code>
+        <strong>STDOUT</strong> = <code>(<span class="t">IO</span><span class="t">::</span><span class="t">FileDescriptor</span>.<span class="k">new</span>(<span class="n">1</span>, blocking: (<span class="t">LibC</span>.isatty(<span class="n">1</span>)) <span class="o">==</span> <span class="n">0</span>)).tap(<span class="o">&</span>.flush_on_newline <span class="o">=</span> <span class="n">true</span>)</code>
       </dt>
       
     
@@ -2609,7 +2664,7 @@ The special <code>$?</code> variable is set to a <code><a href="Process/Status.h
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/process/run.cr#L275" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/process/run.cr#L277" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2628,7 +2683,7 @@ then calling <code><a href="toplevel.html#exit%28status%3D%3Cspanclass%3D%22n%22
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L152" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L150" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2659,7 +2714,7 @@ exit</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L135" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L133" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2675,7 +2730,7 @@ exit</code></pre>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/exception.cr#L4" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/exception.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2699,7 +2754,7 @@ d.cancel</code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/concurrent/future.cr#L131" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/concurrent/future.cr#L127" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2720,7 +2775,7 @@ to the invoking environment.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L143" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L141" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2736,7 +2791,7 @@ to the invoking environment.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/process/process.cr#L121" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/process/process.cr#L97" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2752,7 +2807,7 @@ to the invoking environment.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/process/process.cr#L117" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/process/process.cr#L93" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2775,7 +2830,7 @@ f.get <span class="c">#&#61;&gt; String</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/concurrent/future.cr#L142" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/concurrent/future.cr#L138" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2791,7 +2846,7 @@ f.get <span class="c">#&#61;&gt; String</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/fiber/fiber.cr#L2" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/fiber/fiber.cr#L4" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2809,7 +2864,7 @@ f.get <span class="c">#&#61;&gt; String</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L29" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L31" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2833,7 +2888,7 @@ spawn { maybe_use_computation(l) }</code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/concurrent/future.cr#L154" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/concurrent/future.cr#L150" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2859,7 +2914,7 @@ that starts with 0.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L20" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L22" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2875,7 +2930,7 @@ that starts with 0.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/main.cr#L26" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/main.cr#L26" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2894,7 +2949,7 @@ by a newline. Returns <em>objects</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L84" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2913,7 +2968,7 @@ by a newline. Returns <em>object</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L74" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L76" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2931,7 +2986,7 @@ by a newline. Returns <em>object</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L39" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2949,7 +3004,7 @@ by a newline. Returns <em>object</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L51" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L53" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2967,7 +3022,7 @@ by a newline. Returns <em>object</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L48" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2985,7 +3040,7 @@ by a newline. Returns <em>object</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L68" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L70" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3001,7 +3056,7 @@ by a newline. Returns <em>object</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/raise.cr#L108" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/raise.cr#L107" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3017,7 +3072,7 @@ by a newline. Returns <em>object</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/raise.cr#L99" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/raise.cr#L98" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3035,7 +3090,7 @@ by a newline. Returns <em>object</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/random.cr#L153" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/random.cr#L153" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3053,7 +3108,7 @@ by a newline. Returns <em>object</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/random.cr#L148" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/random.cr#L148" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3071,7 +3126,7 @@ by a newline. Returns <em>object</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L34" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L36" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3092,7 +3147,7 @@ fibers might start their execution.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/concurrent/concurrent.cr#L8" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/concurrent/concurrent.cr#L8" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3113,7 +3168,7 @@ fibers might start their execution.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/concurrent/concurrent.cr#L20" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/concurrent/concurrent.cr#L20" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3133,7 +3188,7 @@ fibers might start their execution.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/concurrent/concurrent.cr#L27" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/concurrent/concurrent.cr#L27" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3175,7 +3230,7 @@ spawn <span class="k">do</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/concurrent/concurrent.cr#L58" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/concurrent/concurrent.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3193,7 +3248,7 @@ spawn <span class="k">do</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L61" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L63" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3211,7 +3266,7 @@ spawn <span class="k">do</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/kernel.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/kernel.cr#L58" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3248,7 +3303,7 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/process/run.cr#L260" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/process/run.cr#L262" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3264,7 +3319,7 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/colorize.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/colorize.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3280,7 +3335,7 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/colorize.cr#L86" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/colorize.cr#L86" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3303,7 +3358,7 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/macros.cr#L72" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/macros.cr#L72" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3319,7 +3374,7 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/intrinsics.cr#L21" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/intrinsics.cr#L21" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3335,7 +3390,7 @@ its argument list.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/concurrent/concurrent.cr#L130" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/concurrent/concurrent.cr#L130" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3358,7 +3413,7 @@ pp [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/macros.cr#L66" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/macros.cr#L66" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3411,7 +3466,7 @@ person.full_name <span class="c"># &#61;&gt; &quot;John Doe&quot;</span></code><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/macros.cr#L43" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/macros.cr#L43" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3427,7 +3482,7 @@ person.full_name <span class="c"># &#61;&gt; &quot;John Doe&quot;</span></code><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/main.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/main.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3470,7 +3525,7 @@ the same local variable, while in the second example copies of
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/concurrent/concurrent.cr#L94" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/concurrent/concurrent.cr#L94" target="_blank">View source</a>]
         
       </div>
     </div>

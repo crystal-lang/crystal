@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2202,17 +2257,12 @@ need to define <code>to_json(<a href="IO.html">IO</a>)</code> for custom objects
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr" target="_blank">json/any.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/json.cr" target="_blank">json/json.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/json.cr" target="_blank">json/json.cr</a>
-    
-    <br/>
-  
-    
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/mapping.cr" target="_blank">json/mapping.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/mapping.cr" target="_blank">json/mapping.cr</a>
     
     <br/>
   
@@ -2227,7 +2277,14 @@ need to define <code>to_json(<a href="IO.html">IO</a>)</code> for custom objects
       <li class="entry-summary">
         <a href="#parse%28input%3AString%7CIO%29%3AAny-class-method" class="signature"><strong>.parse</strong>(input : String | IO) : Any</a>
         
-          <div class="summary"><p>Parses a JSON document.</p></div>
+          <div class="summary"><p>Parses a JSON document as a <code><a href="JSON/Any.html">JSON::Any</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#parse_raw%28input%3AString%7CIO%29%3AType-class-method" class="signature"><strong>.parse_raw</strong>(input : String | IO) : Type</a>
+        
+          <div class="summary"><p>Parses a JSON document as a <code><a href="JSON/Type.html">JSON::Type</a></code>.</p></div>
         
       </li>
     
@@ -2266,12 +2323,30 @@ need to define <code>to_json(<a href="IO.html">IO</a>)</code> for custom objects
         <a class="method-permalink" href="#parse%28input%3AString%7CIO%29%3AAny-class-method">#</a>
       </div>
       
-        <div class="doc"><p>Parses a JSON document.</p></div>
+        <div class="doc"><p>Parses a JSON document as a <code><a href="JSON/Any.html">JSON::Any</a></code>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/json.cr#L56" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/json.cr#L56" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="parse_raw&#40;input:String|IO&#41;:Type-class-method">
+      <div class="signature">
+        
+        def self.<strong>parse_raw</strong>(input : <a href="String.html">String</a> | <a href="IO.html">IO</a>) : <a href="JSON/Type.html">Type</a>
+
+        <a class="method-permalink" href="#parse_raw%28input%3AString%7CIO%29%3AType-class-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Parses a JSON document as a <code><a href="JSON/Type.html">JSON::Type</a></code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/json.cr#L61" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2326,7 +2401,7 @@ that accepts a <code><a href="JSON/PullParser.html">JSON::PullParser</a></code> 
 
 <p>The value can also be another hash literal with the following options:</p>
 
-<ul><li><strong>type</strong>: (required) the single type described above (you can use <code><a href="JSON/Any.html">JSON::Any</a></code> too)</li><li><strong>key</strong>: the property name in the JSON document (as opposed to the property name in the Crystal code)</li><li><strong>nilable</strong>: if true, the property can be <code><a href="Nil.html">Nil</a></code></li><li><strong>default</strong>: value to use if the property is missing in the JSON document, or if it's <code>null</code> and <code>nilable</code> was not set to <code>true</code>. If the default value creates a new instance of an object (for example <code>[1, 2, 3]</code> or <code>SomeObject.new</code>), a different instance will be used each time a JSON document is parsed.</li><li><strong>emit_null</strong>: if true, emits a <code>null</code> value for nilable properties (by default nulls are not emitted)</li><li><strong>converter</strong>: specify an alternate type for parsing and generation. The converter must define <code>from_json(<a href="JSON/PullParser.html">JSON::PullParser</a>)</code> and <code>to_json(value, <a href="IO.html">IO</a>)</code> as class methods.</li></ul>
+<ul><li><strong>type</strong>: (required) the single type described above (you can use <code><a href="JSON/Any.html">JSON::Any</a></code> too)</li><li><strong>key</strong>: the property name in the JSON document (as opposed to the property name in the Crystal code)</li><li><strong>nilable</strong>: if true, the property can be <code><a href="Nil.html">Nil</a></code></li><li><strong>default</strong>: value to use if the property is missing in the JSON document, or if it's <code>null</code> and <code>nilable</code> was not set to <code>true</code>. If the default value creates a new instance of an object (for example <code>[1, 2, 3]</code> or <code>SomeObject.new</code>), a different instance will be used each time a JSON document is parsed.</li><li><strong>emit_null</strong>: if true, emits a <code>null</code> value for nilable properties (by default nulls are not emitted)</li><li><strong>converter</strong>: specify an alternate type for parsing and generation. The converter must define <code>from_json(<a href="JSON/PullParser.html">JSON::PullParser</a>)</code> and <code>to_json(value, <a href="IO.html">IO</a>)</code> as class methods. Examples of converters are <code><a href="Time/Format.html">Time::Format</a></code> and <code><a href="Time/EpochConverter.html">Time::EpochConverter</a></code> for <code><a href="Time.html">Time</a></code>.</li></ul>
 
 <p>The mapping also automatically defines Crystal properties (getters and setters) for each
 of the keys. It doesn't define a constructor accepting those arguments, but you can provide
@@ -2346,7 +2421,7 @@ are silently ignored.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/mapping.cr#L59" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/mapping.cr#L59" target="_blank">View source</a>]
         
       </div>
     </div>

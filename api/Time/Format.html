@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="../BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="../BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="../BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="../Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="../Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="../Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="../String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="../Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="../Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="../Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="../Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="../Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="../Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="../Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="../Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent open current" data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="../Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="../Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="../Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="../Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2147,6 +2202,18 @@
 
 
 
+  <h2>Overview</h2>
+
+  <p>Specifies the format to convert a <code><a href="../Time.html">Time</a></code> to and from a <code><a href="../String.html">String</a></code>.</p>
+
+<p>The pattern of a format is a String with directives. Directives
+being with a percent (%) character. Any text not listed as a directive
+will be passed/parsed through the output/input string.</p>
+
+<p>The directives are:</p>
+
+<ul><li><strong>%a</strong>: short day name (Sun, Mon, Tue, ...)</li><li><strong>%^a</strong>: short day name, upcase (SUN, MON, TUE, ...)</li><li><strong>%A</strong>: day name (Sunday, Monday, Tuesday, ...)</li><li><strong>%^A</strong>: day name, upcase (SUNDAY, MONDAY, TUESDAY, ...)</li><li><strong>%b</strong>: short month name (Jan, Feb, Mar, ...)</li><li><strong>%^b</strong>: short month name, upcase (JAN, FEB, MAR, ...)</li><li><strong>%B</strong>: month name (January, February, March, ...)</li><li><strong>%^B</strong>: month name, upcase (JANUARY, FEBRUARY, MARCH, ...)</li><li><strong>%c</strong>: date and time (Tue Apr  5 10:26:19 2016)</li><li><strong>%C</strong>: year divided by 100</li><li><strong>%d</strong>: day of month, zero padded (01, 02, ...)</li><li><strong>%-d</strong>: day of month (1, 2, ..., 31)</li><li><strong>%D</strong>: date (04/05/16)</li><li><strong>%e</strong>: day of month, blank padded (" 1", " 2", ..., "10", "11", ...)</li><li><strong>%F</strong>: ISO 8601 date (2016-04-05)</li><li><strong>%h</strong>: (same as %b) short month name (Jan, Feb, Mar, ...)</li><li><strong>%H</strong>: hour of the day, 24-hour clock, zero padded (00, 01, ..., 24)</li><li><strong>%I</strong>: hour of the day, 12-hour clock, zero padded (00, 01, ..., 12)</li><li><strong>%j</strong>: day of year, zero padded (001, 002, ..., 365)</li><li><strong>%k</strong>: hour of the day, 24-hour clock, blank padded (" 0", " 1", ..., "24")</li><li><strong>%l</strong>: hour of the day, 12-hour clock, blank padded (" 0", " 1", ..., "12")</li><li><strong>%L</strong>: milliseconds, zero padded (000, 001, ..., 999)</li><li><strong>%m</strong>: month number, zero padded (01, 02, ..., 12)</li><li><strong>%_m</strong>: month number, blank padded (" 1", " 2", ..., "12")</li><li><strong>%-m</strong>: month number (1, 2, ..., 12)</li><li><strong>%M</strong>: minute, zero padded (00, 01, 02, ..., 59)</li><li><strong>%p</strong>: am-pm (lowercase)</li><li><strong>%P</strong>: AM-PM (uppercase)</li><li><strong>%r</strong>: 12-hour time (03:04:05 AM)</li><li><strong>%R</strong>: 24-hour time (13:04)</li><li><strong>%s</strong>: seconds since unix epoch (see <code><a href="../Time.html#epoch%28seconds%3AInt%29%3Aself-class-method">Time.epoch</a></code>)</li><li><strong>%S</strong>: seconds, zero padded (00, 01, ..., 59)</li><li><strong>%T</strong>: 24-hour time (13:04:05)</li><li><strong>%u</strong>: day of week (Monday is 1, 1..7)</li><li><strong>%w</strong>: day of week (Sunday is 0, 0..6)</li><li><strong>%x</strong>: (same as %D) date (04/05/16)</li><li><strong>%X</strong>: (same as %T) 24-hour time (13:04:05)</li><li><strong>%y</strong>: year modulo 100</li><li><strong>%Y</strong>: year, zero padded</li><li><strong>%z</strong>: time zone as hour and minute offset from UTC (+0900)</li><li><strong>%:z</strong>: time zone as hour and minute offset from UTC with a colon (+09:00)</li><li><strong>%::z</strong>: time zone as hour, minute and second offset from UTC with a colon (+09:00:00)</li></ul>
+
 
 
 
@@ -2163,37 +2230,37 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/format.cr" target="_blank">time/format.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/format.cr" target="_blank">time/format.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/format/pattern.cr" target="_blank">time/format/pattern.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/format/pattern.cr" target="_blank">time/format/pattern.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/format/formatter.cr" target="_blank">time/format/formatter.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/format/formatter.cr" target="_blank">time/format/formatter.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/format/parser.cr" target="_blank">time/format/parser.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/format/parser.cr" target="_blank">time/format/parser.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/from_json.cr" target="_blank">json/from_json.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/from_json.cr" target="_blank">json/from_json.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/from_yaml.cr" target="_blank">yaml/from_yaml.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/yaml/from_yaml.cr" target="_blank">yaml/from_yaml.cr</a>
     
     <br/>
   
@@ -2209,6 +2276,10 @@
         <strong>ISO_8601_DATE</strong> = <code><span class="k">new</span>(<span class="s">&quot;&#37;F&quot;</span>)</code>
       </dt>
       
+      <dd class="entry-const-doc">
+        <p>The ISO 8601 date format. This is just <code>"%F"</code>.</p>
+      </dd>
+      
     
   </dl>
 
@@ -2219,6 +2290,8 @@
     
       <li class="entry-summary">
         <a href="#new%28pattern%3AString%2Ckind%3D%3Cspanclass%3D%22t%22%3ETime%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EKind%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EUnspecified%3C%2Fspan%3E%29-class-method" class="signature"><strong>.new</strong>(pattern : String, kind = <span class="t">Time</span><span class="t">::</span><span class="t">Kind</span><span class="t">::</span><span class="t">Unspecified</span>)</a>
+        
+          <div class="summary"><p>Creates a new Time::Format with the given <em>pattern</em>.</p></div>
         
       </li>
     
@@ -2232,10 +2305,14 @@
       <li class="entry-summary">
         <a href="#format%28time%3ATime%2Cio%3AIO%29-instance-method" class="signature"><strong>#format</strong>(time : Time, io : IO)</a>
         
+          <div class="summary"><p>Formats a Time into the given <em>io</em>.</p></div>
+        
       </li>
     
       <li class="entry-summary">
-        <a href="#format%28time%3ATime%29-instance-method" class="signature"><strong>#format</strong>(time : Time)</a>
+        <a href="#format%28time%3ATime%29%3AString-instance-method" class="signature"><strong>#format</strong>(time : Time) : String</a>
+        
+          <div class="summary"><p>Turns a Time into a String.</p></div>
         
       </li>
     
@@ -2250,12 +2327,16 @@
       </li>
     
       <li class="entry-summary">
-        <a href="#parse%28string%2Ckind%3D%40kind%29-instance-method" class="signature"><strong>#parse</strong>(string, kind = @kind)</a>
+        <a href="#parse%28string%2Ckind%3D%40kind%29%3ATime-instance-method" class="signature"><strong>#parse</strong>(string, kind = @kind) : Time</a>
+        
+          <div class="summary"><p>Parses a string into a Time.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#pattern-instance-method" class="signature"><strong>#pattern</strong></a>
+        <a href="#pattern%3AString-instance-method" class="signature"><strong>#pattern</strong> : String</a>
+        
+          <div class="summary"><p>Returns the string pattern of this format.</p></div>
         
       </li>
     
@@ -2422,12 +2503,12 @@
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="../Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="../Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="../Object.html#hash-class-method" class="tooltip">
@@ -2466,10 +2547,13 @@
         <a class="method-permalink" href="#new%28pattern%3AString%2Ckind%3D%3Cspanclass%3D%22t%22%3ETime%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EKind%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3E%3A%3A%3C%2Fspan%3E%3Cspanclass%3D%22t%22%3EUnspecified%3C%2Fspan%3E%29-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Creates a new Time::Format with the given <em>pattern</em>. The given time
+<em>kind</em> will be used when parsing a Time and no time zone is found in it.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/format.cr#L10" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/format.cr#L64" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2487,26 +2571,30 @@
         <a class="method-permalink" href="#format%28time%3ATime%2Cio%3AIO%29-instance-method">#</a>
       </div>
       
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/format.cr#L25" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="format&#40;time:Time&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>format</strong>(time : <a href="../Time.html">Time</a>)
-
-        <a class="method-permalink" href="#format%28time%3ATime%29-instance-method">#</a>
-      </div>
+        <div class="doc"><p>Formats a Time into the given <em>io</em>.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/format.cr#L19" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/format.cr#L82" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="format&#40;time:Time&#41;:String-instance-method">
+      <div class="signature">
+        
+        def <strong>format</strong>(time : <a href="../Time.html">Time</a>) : <a href="../String.html">String</a>
+
+        <a class="method-permalink" href="#format%28time%3ATime%29%3AString-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Turns a Time into a String.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/format.cr#L75" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2522,7 +2610,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/from_json.cr#L124" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/from_json.cr#L135" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2538,39 +2626,43 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/from_yaml.cr#L94" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/yaml/from_yaml.cr#L103" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="parse&#40;string,kind&#61;&#64;kind&#41;-instance-method">
+    <div class="entry-detail" id="parse&#40;string,kind&#61;&#64;kind&#41;:Time-instance-method">
       <div class="signature">
         
-        def <strong>parse</strong>(string, kind = @kind)
+        def <strong>parse</strong>(string, kind = @kind) : <a href="../Time.html">Time</a>
 
-        <a class="method-permalink" href="#parse%28string%2Ckind%3D%40kind%29-instance-method">#</a>
+        <a class="method-permalink" href="#parse%28string%2Ckind%3D%40kind%29%3ATime-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Parses a string into a Time.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/format.cr#L13" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/format.cr#L68" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="pattern-instance-method">
+    <div class="entry-detail" id="pattern:String-instance-method">
       <div class="signature">
         
-        def <strong>pattern</strong>
+        def <strong>pattern</strong> : <a href="../String.html">String</a>
 
-        <a class="method-permalink" href="#pattern-instance-method">#</a>
+        <a class="method-permalink" href="#pattern%3AString-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns the string pattern of this format.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/format.cr#L7" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/format.cr#L60" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2586,7 +2678,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/to_json.cr#L278" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/to_json.cr#L267" target="_blank">View source</a>]
         
       </div>
     </div>

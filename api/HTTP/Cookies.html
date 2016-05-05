@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="../BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="../BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="../BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="../Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="../Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="../Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="../String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="../Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="../Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="../Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="../Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="../Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="../Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="../Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="../Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="../Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="../Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="../Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="../Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2175,7 +2230,7 @@ a HTTP request or response.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr" target="_blank">http/cookie.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr" target="_blank">http/cookie.cr</a>
     
     <br/>
   
@@ -2188,7 +2243,7 @@ a HTTP request or response.</p>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#from_headers%28headers%29-class-method" class="signature"><strong>.from_headers</strong>(headers)</a>
+        <a href="#from_headers%28headers%29%3Aself-class-method" class="signature"><strong>.from_headers</strong>(headers) : self</a>
         
           <div class="summary"><p>Create a new instance by parsing the <code><a href="../HTTP/Cookie.html">Cookie</a></code> and <code><a href="../Set.html">Set</a>-<a href="../HTTP/Cookie.html">Cookie</a></code> headers in the given <code><a href="../HTTP/Headers.html">HTTP::Headers</a></code>.</p></div>
         
@@ -2223,16 +2278,16 @@ a HTTP request or response.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%5B%5D%3D%28key%2Cvalue%3AString%29-instance-method" class="signature"><strong>#[]=</strong>(key, value : String)</a>
+        <a href="#%5B%5D%3D%28key%2Cvalue%3ACookie%29-instance-method" class="signature"><strong>#[]=</strong>(key, value : Cookie)</a>
         
-          <div class="summary"><p>Set a new cookie in the collection with a string value.</p></div>
+          <div class="summary"><p>Set a new cookie in the collection to the given <code><a href="../HTTP/Cookie.html">HTTP::Cookie</a></code> instance.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%5B%5D%3D%28key%2Cvalue%3ACookie%29-instance-method" class="signature"><strong>#[]=</strong>(key, value : Cookie)</a>
+        <a href="#%5B%5D%3D%28key%2Cvalue%3AString%29-instance-method" class="signature"><strong>#[]=</strong>(key, value : String)</a>
         
-          <div class="summary"><p>Set a new cookie in the collection to the given <code><a href="../HTTP/Cookie.html">HTTP::Cookie</a></code> instance.</p></div>
+          <div class="summary"><p>Set a new cookie in the collection with a string value.</p></div>
         
       </li>
     
@@ -2265,9 +2320,23 @@ a HTTP request or response.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#each%28%26block%3AT-%3E_%29-instance-method" class="signature"><strong>#each</strong>(&block : T -> _)</a>
+        <a href="#each%28%26block%3ACookie-%3E%29-instance-method" class="signature"><strong>#each</strong>(&block : Cookie -> )</a>
         
           <div class="summary"><p>Yields each <code><a href="../HTTP/Cookie.html">HTTP::Cookie</a></code> in the collection.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#empty%3F-instance-method" class="signature"><strong>#empty?</strong></a>
+        
+          <div class="summary"><p>Whether the collection contains any cookies.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#fill_from_headers%28headers%29-instance-method" class="signature"><strong>#fill_from_headers</strong>(headers)</a>
+        
+          <div class="summary"><p>Filling cookies by parsing the <code><a href="../HTTP/Cookie.html">Cookie</a></code> and <code><a href="../Set.html">Set</a>-<a href="../HTTP/Cookie.html">Cookie</a></code> headers in the given <code><a href="../HTTP/Headers.html">HTTP::Headers</a></code>.</p></div>
         
       </li>
     
@@ -2473,6 +2542,10 @@ a HTTP request or response.</p>
       <span>partition(&block)</span>
     partition</a>, 
   
+    <a href="../Enumerable.html#product%28initial%3ANumber%2C%26block%29-instance-method" class="tooltip">
+      <span>product(initial : Number, &block)<br/>product<br/>product(initial : Number)<br/>product(&block)</span>
+    product</a>, 
+  
     <a href="../Enumerable.html#reduce%28memo%2C%26block%29-instance-method" class="tooltip">
       <span>reduce(memo, &block)<br/>reduce(&block)</span>
     reduce</a>, 
@@ -2497,8 +2570,8 @@ a HTTP request or response.</p>
       <span>skip_while(&block)</span>
     skip_while</a>, 
   
-    <a href="../Enumerable.html#sum%28initial%2C%26block%29-instance-method" class="tooltip">
-      <span>sum(initial, &block)<br/>sum(&block)<br/>sum(initial)<br/>sum</span>
+    <a href="../Enumerable.html#sum-instance-method" class="tooltip">
+      <span>sum<br/>sum(initial)<br/>sum(&block)<br/>sum(initial, &block)</span>
     sum</a>, 
   
     <a href="../Enumerable.html#take_while%28%26block%29-instance-method" class="tooltip">
@@ -2667,12 +2740,12 @@ a HTTP request or response.</p>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="../Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="../Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="../Object.html#hash-class-method" class="tooltip">
@@ -2703,12 +2776,12 @@ a HTTP request or response.</p>
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="from_headers&#40;headers&#41;-class-method">
+    <div class="entry-detail" id="from_headers&#40;headers&#41;:self-class-method">
       <div class="signature">
         
-        def self.<strong>from_headers</strong>(headers)
+        def self.<strong>from_headers</strong>(headers) : self
 
-        <a class="method-permalink" href="#from_headers%28headers%29-class-method">#</a>
+        <a class="method-permalink" href="#from_headers%28headers%29%3Aself-class-method">#</a>
       </div>
       
         <div class="doc"><p>Create a new instance by parsing the <code><a href="../HTTP/Cookie.html">Cookie</a></code> and <code><a href="../Set.html">Set</a>-<a href="../HTTP/Cookie.html">Cookie</a></code>
@@ -2719,7 +2792,7 @@ headers in the given <code><a href="../HTTP/Headers.html">HTTP::Headers</a></cod
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L120" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L137" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2737,7 +2810,7 @@ headers in the given <code><a href="../HTTP/Headers.html">HTTP::Headers</a></cod
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L141" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L161" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2763,7 +2836,7 @@ with the same name if present.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L205" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L225" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2783,29 +2856,7 @@ with the same name if present.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L176" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="&#91;&#93;&#61;&#40;key,value:String&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>[]=</strong>(key, value : <a href="../String.html">String</a>)
-
-        <a class="method-permalink" href="#%5B%5D%3D%28key%2Cvalue%3AString%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Set a new cookie in the collection with a string value.
-This creates a never expiring, insecure, not HTTP only cookie with
-no explicit domain restriction and the path <code>/</code>.</p>
-
-<pre><code>request.cookies[<span class="s">&quot;foo&quot;</span>] <span class="o">=</span> <span class="s">&quot;bar&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L152" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L196" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2827,7 +2878,29 @@ instance. The name attribute must match the given <em>key</em>, else
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L163" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L183" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="&#91;&#93;&#61;&#40;key,value:String&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>[]=</strong>(key, value : <a href="../String.html">String</a>)
+
+        <a class="method-permalink" href="#%5B%5D%3D%28key%2Cvalue%3AString%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Set a new cookie in the collection with a string value.
+This creates a never expiring, insecure, not HTTP only cookie with
+no explicit domain restriction and the path <code>/</code>.</p>
+
+<pre><code>request.cookies[<span class="s">&quot;foo&quot;</span>] <span class="o">=</span> <span class="s">&quot;bar&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L172" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2849,7 +2922,7 @@ request.cookies[<span class="s">&quot;foo&quot;</span>]?.try <span class="o">&</
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L187" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L207" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2869,7 +2942,7 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L224" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L249" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2889,7 +2962,7 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L234" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L259" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2907,17 +2980,17 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L217" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L237" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="each&#40;&amp;block:T-&gt;_&#41;-instance-method">
+    <div class="entry-detail" id="each&#40;&amp;block:Cookie-&gt;&#41;-instance-method">
       <div class="signature">
         
-        def <strong>each</strong>(&block : <a href="../HTTP/Cookie.html">T</a> -> _)
+        def <strong>each</strong>(&block : <a href="../HTTP/Cookie.html">Cookie</a> -> )
 
-        <a class="method-permalink" href="#each%28%26block%3AT-%3E_%29-instance-method">#</a>
+        <a class="method-permalink" href="#each%28%26block%3ACookie-%3E%29-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Yields each <code><a href="../HTTP/Cookie.html">HTTP::Cookie</a></code> in the collection.</p></div>
@@ -2925,7 +2998,44 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L210" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L230" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="empty?-instance-method">
+      <div class="signature">
+        
+        def <strong>empty?</strong>
+
+        <a class="method-permalink" href="#empty%3F-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Whether the collection contains any cookies.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L242" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="fill_from_headers&#40;headers&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>fill_from_headers</strong>(headers)
+
+        <a class="method-permalink" href="#fill_from_headers%28headers%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Filling cookies by parsing the <code><a href="../HTTP/Cookie.html">Cookie</a></code> and <code><a href="../Set.html">Set</a>-<a href="../HTTP/Cookie.html">Cookie</a></code>
+headers in the given <code><a href="../HTTP/Headers.html">HTTP::Headers</a></code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L143" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2945,7 +3055,7 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L195" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L215" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2963,7 +3073,7 @@ given <code>HTTP::Header</code> instance and returns it. Removes any existing
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L244" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L269" target="_blank">View source</a>]
         
       </div>
     </div>

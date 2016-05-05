@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2209,7 +2264,7 @@ zeros.first(<span class="n">3</span>).to_a <span class="c"># &#61;&gt; &#91;0, 0
 
 <p>The standard library provides iterators for many classes, like <code><a href="Array.html">Array</a></code>, <code><a href="Hash.html">Hash</a></code>, <code><a href="Range.html">Range</a></code>, <code><a href="String.html">String</a></code> and <code><a href="IO.html">IO</a></code>.
 Usually to get an iterator you invoke a method that would usually yield elements to a block,
-but without passing a block: <code><a href="Array.html#each-instance-method">Array#each</a></code>, <code><a href="Array.html#each_index-instance-method">Array#each_index</a></code>, <code><a href="Hash.html#each%28%26block%29-instance-method">Hash#each</a></code>, <code><a href="String.html#each_char-instance-method">String#each_char</a></code>,
+but without passing a block: <code><a href="Array.html#each%28%26block%29-instance-method">Array#each</a></code>, <code><a href="Array.html#each_index-instance-method">Array#each_index</a></code>, <code><a href="Hash.html#each-instance-method">Hash#each</a></code>, <code><a href="String.html#each_char-instance-method">String#each_char</a></code>,
 <code><a href="IO.html#each_line%28%2Aargs%29-instance-method">IO#each_line</a></code>, etc.</p>
 
 
@@ -2244,7 +2299,7 @@ but without passing a block: <code><a href="Array.html#each-instance-method">Arr
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr" target="_blank">iterator.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr" target="_blank">iterator.cr</a>
     
     <br/>
   
@@ -2338,13 +2393,6 @@ but without passing a block: <code><a href="Array.html#each-instance-method">Arr
         <a href="#first%28n%3AInt%29-instance-method" class="signature"><strong>#first</strong>(n : Int)</a>
         
           <div class="summary"><p>Returns an iterator that only returns the first n elements of the initial iterator.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#flatten-instance-method" class="signature"><strong>#flatten</strong></a>
-        
-          <div class="summary"><p>Returns an iterator that flattens nested iterators into a single iterator whose type is the union of the simple types of all of the nested iterators (and their nested iterators, and so on).</p></div>
         
       </li>
     
@@ -2662,6 +2710,10 @@ but without passing a block: <code><a href="Array.html#each-instance-method">Arr
       <span>partition(&block)</span>
     partition</a>, 
   
+    <a href="Enumerable.html#product%28initial%3ANumber%2C%26block%29-instance-method" class="tooltip">
+      <span>product(initial : Number, &block)<br/>product<br/>product(initial : Number)<br/>product(&block)</span>
+    product</a>, 
+  
     <a href="Enumerable.html#reduce%28memo%2C%26block%29-instance-method" class="tooltip">
       <span>reduce(memo, &block)<br/>reduce(&block)</span>
     reduce</a>, 
@@ -2686,8 +2738,8 @@ but without passing a block: <code><a href="Array.html#each-instance-method">Arr
       <span>skip_while(&block)</span>
     skip_while</a>, 
   
-    <a href="Enumerable.html#sum%28initial%2C%26block%29-instance-method" class="tooltip">
-      <span>sum(initial, &block)<br/>sum(&block)<br/>sum(initial)<br/>sum</span>
+    <a href="Enumerable.html#sum-instance-method" class="tooltip">
+      <span>sum<br/>sum(initial)<br/>sum(&block)<br/>sum(initial, &block)</span>
     sum</a>, 
   
     <a href="Enumerable.html#take_while%28%26block%29-instance-method" class="tooltip">
@@ -2728,7 +2780,7 @@ but without passing a block: <code><a href="Array.html#each-instance-method">Arr
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L133" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L131" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2744,7 +2796,7 @@ but without passing a block: <code><a href="Array.html#each-instance-method">Arr
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L111" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L111" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2762,7 +2814,7 @@ but without passing a block: <code><a href="Array.html#each-instance-method">Arr
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L107" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L107" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2793,7 +2845,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L168" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L164" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2818,7 +2870,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L213" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L205" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2842,7 +2894,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L246" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L235" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2871,7 +2923,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; &quot;a&quot;</span
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L292" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L277" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2900,7 +2952,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L329" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L312" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2916,7 +2968,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L366" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L345" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2938,7 +2990,7 @@ iter.each {<span class="o">|</span>x<span class="o">|</span> print x, <span clas
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L376" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L355" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2963,7 +3015,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L393" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L372" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2987,34 +3039,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L797" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="flatten-instance-method">
-      <div class="signature">
-        
-        def <strong>flatten</strong>
-
-        <a class="method-permalink" href="#flatten-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns an iterator that flattens nested iterators into a single iterator
-whose type is the union of the simple types of all of the nested iterators
-(and their nested iterators, and so on).</p>
-
-<pre><code>iter <span class="o">=</span> [(<span class="n">1</span>..<span class="n">2</span>).each, (<span class="s">'a'</span>..<span class="s">'b'</span>).each].each.flatten
-iter.<span class="k">next</span> <span class="c"># &#61;&gt; 1</span>
-iter.<span class="k">next</span> <span class="c"># &#61;&gt; 2</span>
-iter.<span class="k">next</span> <span class="c"># &#61;&gt; &#39;a&#39;</span>
-iter.<span class="k">next</span> <span class="c"># &#61;&gt; &#39;b&#39;</span>
-iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INSTANCE</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L408" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L751" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3044,7 +3069,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L502" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L483" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3069,7 +3094,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L542" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L519" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3088,7 +3113,7 @@ are no more elements.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L153" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L149" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3111,7 +3136,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L570" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L544" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3129,7 +3154,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L156" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L152" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3153,7 +3178,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L603" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L574" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3176,7 +3201,7 @@ iter.<span class="k">next</span> <span class="c"># -&gt; Iterator::Stop::INSTANC
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L635" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L603" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3201,7 +3226,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L676" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L640" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3226,7 +3251,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L719" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L679" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3251,7 +3276,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L761" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L718" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3269,7 +3294,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L102" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L102" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3293,7 +3318,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L838" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L788" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3322,7 +3347,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L885" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L831" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3347,7 +3372,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L928" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L871" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3371,7 +3396,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L915" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L858" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3395,7 +3420,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L971" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L910" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3419,7 +3444,7 @@ iter.<span class="k">next</span> <span class="c"># &#61;&gt; Iterator::Stop::INS
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L1008" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L943" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3446,7 +3471,7 @@ iter.next # => Iterator::Stop::INSTANCE</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/iterator.cr#L1040" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/iterator.cr#L972" target="_blank">View source</a>]
         
       </div>
     </div>

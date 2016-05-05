@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2163,7 +2218,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr" target="_blank">int.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr" target="_blank">int.cr</a>
     
     <br/>
   
@@ -2194,6 +2249,8 @@
     
       <li class="entry-summary">
         <a href="#new%28value%29-class-method" class="signature"><strong>.new</strong>(value)</a>
+        
+          <div class="summary"><p>Returns an <code><a href="Int64.html">Int64</a></code> by invoking <code><a href="Int64.html#to_i64-instance-method">#to_i64</a></code> on <em>value</em>.</p></div>
         
       </li>
     
@@ -2901,32 +2958,32 @@
 
   <h3>Instance methods inherited from struct <code><a href="Int.html">Int</a></code></h3>
   
-    <a href="Int.html#%25%28other%3AInt%29-instance-method" class="tooltip">
-      <span>%(other : Int)<br/>%(other : BigInt) : BigInt</span>
+    <a href="Int.html#%25%28other%3ABigInt%29%3ABigInt-instance-method" class="tooltip">
+      <span>%(other : BigInt) : BigInt<br/>%(other : Int)</span>
     %</a>, 
   
     <a href="Int.html#%26%28other%3AUInt16%29-instance-method" class="tooltip">
-      <span>&(other : UInt16)<br/>&(other : UInt8)<br/>&(other : UInt64)<br/>&(other : UInt32)<br/>&(other : Int32)<br/>&(other : Int64)<br/>&(other : Int8)<br/>&(other : Int16)</span>
+      <span>&(other : UInt16)<br/>&(other : UInt8)<br/>&(other : UInt64)<br/>&(other : UInt32)<br/>&(other : Int16)<br/>&(other : Int8)<br/>&(other : Int64)<br/>&(other : Int32)</span>
     &</a>, 
   
-    <a href="Int.html#%2A%28other%3ABigInt%29%3ABigInt-instance-method" class="tooltip">
-      <span>*(other : BigInt) : BigInt</span>
+    <a href="Int.html#%2A%28other%3ABigRational%29-instance-method" class="tooltip">
+      <span>*(other : BigRational)<br/>*(other : BigInt) : BigInt</span>
     *</a>, 
   
-    <a href="Int.html#%2A%2A%28other%3AInt%29-instance-method" class="tooltip">
-      <span>**(other : Int)<br/>**(other)</span>
+    <a href="Int.html#%2A%2A%28exponent%3AInt%29%3Aself-instance-method" class="tooltip">
+      <span>**(exponent : Int) : self<br/>**(exponent : Float) : Float64</span>
     **</a>, 
   
     <a href="Int.html#%2B%28other%3ABigInt%29%3ABigInt-instance-method" class="tooltip">
-      <span>+(other : BigInt) : BigInt</span>
+      <span>+(other : BigInt) : BigInt<br/>+(other : BigRational)</span>
     +</a>, 
   
-    <a href="Int.html#-%28other%3ABigInt%29%3ABigInt-instance-method" class="tooltip">
-      <span>-(other : BigInt) : BigInt</span>
+    <a href="Int.html#-%28other%3ABigRational%29-instance-method" class="tooltip">
+      <span>-(other : BigRational)<br/>-(other : BigInt) : BigInt</span>
     -</a>, 
   
     <a href="Int.html#%2F%28other%3ABigInt%29%3ABigInt-instance-method" class="tooltip">
-      <span>/(other : BigInt) : BigInt<br/>/(x : Int)</span>
+      <span>/(other : BigInt) : BigInt<br/>/(x : Int)<br/>/(other : BigRational)</span>
     /</a>, 
   
     <a href="Int.html#%3C%3C%28count%3AInt%29-instance-method" class="tooltip">
@@ -2934,7 +2991,7 @@
     <<</a>, 
   
     <a href="Int.html#%3C%3D%3E%28other%3ABigInt%29-instance-method" class="tooltip">
-      <span><=>(other : BigInt)</span>
+      <span><=>(other : BigInt)<br/><=>(other : BigRational)</span>
     <=></a>, 
   
     <a href="Int.html#%3D%3D%3D%28char%3AChar%29-instance-method" class="tooltip">
@@ -2945,8 +3002,8 @@
       <span>>>(count : Int)</span>
     >></a>, 
   
-    <a href="Int.html#%5E%28other%3AUInt32%29-instance-method" class="tooltip">
-      <span>^(other : UInt32)<br/>^(other : UInt16)<br/>^(other : UInt8)<br/>^(other : Int32)<br/>^(other : Int16)<br/>^(other : Int64)<br/>^(other : Int8)<br/>^(other : UInt64)</span>
+    <a href="Int.html#%5E%28other%3AUInt64%29-instance-method" class="tooltip">
+      <span>^(other : UInt64)<br/>^(other : Int16)<br/>^(other : UInt32)<br/>^(other : Int64)<br/>^(other : Int32)<br/>^(other : UInt16)<br/>^(other : UInt8)<br/>^(other : Int8)</span>
     ^</a>, 
   
     <a href="Int.html#abs-instance-method" class="tooltip">
@@ -3073,17 +3130,21 @@
       <span>succ</span>
     succ</a>, 
   
-    <a href="Int.html#times-instance-method" class="tooltip">
-      <span>times<br/>times(&block : self -> )</span>
+    <a href="Int.html#times%28%26block%3Aself-%3E%29-instance-method" class="tooltip">
+      <span>times(&block : self -> )<br/>times</span>
     times</a>, 
   
-    <a href="Int.html#to%28n%29-instance-method" class="tooltip">
-      <span>to(n)<br/>to(n, &block : self -> )</span>
+    <a href="Int.html#to%28n%2C%26block%3Aself-%3E%29-instance-method" class="tooltip">
+      <span>to(n, &block : self -> )<br/>to(n)</span>
     to</a>, 
   
     <a href="Int.html#to_big_i%3ABigInt-instance-method" class="tooltip">
       <span>to_big_i : BigInt</span>
     to_big_i</a>, 
+  
+    <a href="Int.html#to_big_r-instance-method" class="tooltip">
+      <span>to_big_r</span>
+    to_big_r</a>, 
   
     <a href="Int.html#to_io%28io%3AIO%2Cformat%3AIO%3A%3AByteFormat%29-instance-method" class="tooltip">
       <span>to_io(io : IO, format : IO::ByteFormat)</span>
@@ -3093,8 +3154,8 @@
       <span>to_json(io)</span>
     to_json</a>, 
   
-    <a href="Int.html#to_s%28base%3AInt%2Cio%3AIO%2Cupcase%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method" class="tooltip">
-      <span>to_s(base : Int, io : IO, upcase : Bool = <span class="n">false</span>)<br/>to_s(base : Int, upcase : Bool = <span class="n">false</span>)<br/>to_s<br/>to_s(io : IO)</span>
+    <a href="Int.html#to_s%28io%3AIO%29-instance-method" class="tooltip">
+      <span>to_s(io : IO)<br/>to_s<br/>to_s(base : Int, io : IO, upcase : Bool = <span class="n">false</span>)<br/>to_s(base : Int, upcase : Bool = <span class="n">false</span>)</span>
     to_s</a>, 
   
     <a href="Int.html#trunc-instance-method" class="tooltip">
@@ -3102,19 +3163,19 @@
     trunc</a>, 
   
     <a href="Int.html#unsafe_div%28other%3AInt8%29-instance-method" class="tooltip">
-      <span>unsafe_div(other : Int8)<br/>unsafe_div(other : UInt8)<br/>unsafe_div(other : UInt16)<br/>unsafe_div(other : UInt64)<br/>unsafe_div(other : UInt32)<br/>unsafe_div(other : Int64)<br/>unsafe_div(other : Int16)<br/>unsafe_div(other : Int32)</span>
+      <span>unsafe_div(other : Int8)<br/>unsafe_div(other : UInt32)<br/>unsafe_div(other : UInt64)<br/>unsafe_div(other : UInt16)<br/>unsafe_div(other : Int64)<br/>unsafe_div(other : UInt8)<br/>unsafe_div(other : Int16)<br/>unsafe_div(other : Int32)</span>
     unsafe_div</a>, 
   
-    <a href="Int.html#unsafe_mod%28other%3AInt32%29-instance-method" class="tooltip">
-      <span>unsafe_mod(other : Int32)<br/>unsafe_mod(other : UInt16)<br/>unsafe_mod(other : UInt32)<br/>unsafe_mod(other : UInt8)<br/>unsafe_mod(other : Int64)<br/>unsafe_mod(other : Int16)<br/>unsafe_mod(other : Int8)<br/>unsafe_mod(other : UInt64)</span>
+    <a href="Int.html#unsafe_mod%28other%3AInt64%29-instance-method" class="tooltip">
+      <span>unsafe_mod(other : Int64)<br/>unsafe_mod(other : Int32)<br/>unsafe_mod(other : UInt8)<br/>unsafe_mod(other : UInt64)<br/>unsafe_mod(other : UInt32)<br/>unsafe_mod(other : UInt16)<br/>unsafe_mod(other : Int8)<br/>unsafe_mod(other : Int16)</span>
     unsafe_mod</a>, 
   
-    <a href="Int.html#unsafe_shl%28other%3AUInt8%29-instance-method" class="tooltip">
-      <span>unsafe_shl(other : UInt8)<br/>unsafe_shl(other : Int16)<br/>unsafe_shl(other : Int8)<br/>unsafe_shl(other : UInt16)<br/>unsafe_shl(other : UInt32)<br/>unsafe_shl(other : UInt64)<br/>unsafe_shl(other : Int32)<br/>unsafe_shl(other : Int64)</span>
+    <a href="Int.html#unsafe_shl%28other%3AUInt16%29-instance-method" class="tooltip">
+      <span>unsafe_shl(other : UInt16)<br/>unsafe_shl(other : UInt8)<br/>unsafe_shl(other : UInt64)<br/>unsafe_shl(other : UInt32)<br/>unsafe_shl(other : Int16)<br/>unsafe_shl(other : Int8)<br/>unsafe_shl(other : Int32)<br/>unsafe_shl(other : Int64)</span>
     unsafe_shl</a>, 
   
-    <a href="Int.html#unsafe_shr%28other%3AUInt64%29-instance-method" class="tooltip">
-      <span>unsafe_shr(other : UInt64)<br/>unsafe_shr(other : UInt16)<br/>unsafe_shr(other : UInt8)<br/>unsafe_shr(other : Int64)<br/>unsafe_shr(other : Int32)<br/>unsafe_shr(other : Int8)<br/>unsafe_shr(other : Int16)<br/>unsafe_shr(other : UInt32)</span>
+    <a href="Int.html#unsafe_shr%28other%3AInt64%29-instance-method" class="tooltip">
+      <span>unsafe_shr(other : Int64)<br/>unsafe_shr(other : UInt8)<br/>unsafe_shr(other : UInt16)<br/>unsafe_shr(other : Int16)<br/>unsafe_shr(other : Int8)<br/>unsafe_shr(other : Int32)<br/>unsafe_shr(other : UInt32)<br/>unsafe_shr(other : UInt64)</span>
     unsafe_shr</a>, 
   
     <a href="Int.html#upto%28n%2C%26block%3Aself-%3E%29-instance-method" class="tooltip">
@@ -3137,8 +3198,8 @@
       <span>years</span>
     years</a>, 
   
-    <a href="Int.html#%7C%28other%3AInt8%29-instance-method" class="tooltip">
-      <span>|(other : Int8)<br/>|(other : UInt32)<br/>|(other : Int32)<br/>|(other : Int64)<br/>|(other : UInt16)<br/>|(other : UInt8)<br/>|(other : UInt64)<br/>|(other : Int16)</span>
+    <a href="Int.html#%7C%28other%3AUInt16%29-instance-method" class="tooltip">
+      <span>|(other : UInt16)<br/>|(other : UInt8)<br/>|(other : UInt64)<br/>|(other : UInt32)<br/>|(other : Int8)<br/>|(other : Int16)<br/>|(other : Int64)<br/>|(other : Int32)</span>
     |</a>, 
   
     <a href="Int.html#~-instance-method" class="tooltip">
@@ -3194,26 +3255,60 @@
   
     
 
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  
+    <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
+      <span><(other : T)</span>
+    <</a>, 
+  
+    <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span><=(other : T)</span>
+    <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
+  
+    <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>==(other : T)</span>
+    ==</a>, 
+  
+    <a href="Comparable.html#%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span>>(other : T)</span>
+    ></a>, 
+  
+    <a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>>=(other : T)</span>
+    >=</a>
+  
+
+
+    
+
+
+  
+    
+
   <h3>Instance methods inherited from struct <code><a href="Number.html">Number</a></code></h3>
   
     <a href="Number.html#%2A%28other%3AComplex%29-instance-method" class="tooltip">
-      <span>*(other : Complex)</span>
+      <span>*(other : Complex)<br/>*(other : BigFloat)</span>
     *</a>, 
   
     <a href="Number.html#%2B-instance-method" class="tooltip">
-      <span>+<br/>+(other : Complex)</span>
+      <span>+<br/>+(other : BigFloat)<br/>+(other : Complex)</span>
     +</a>, 
   
     <a href="Number.html#-%28other%3AComplex%29-instance-method" class="tooltip">
-      <span>-(other : Complex)</span>
+      <span>-(other : Complex)<br/>-(other : BigFloat)</span>
     -</a>, 
   
     <a href="Number.html#%2F%28other%3AComplex%29-instance-method" class="tooltip">
       <span>/(other : Complex)</span>
     /</a>, 
   
-    <a href="Number.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
-      <span><=>(other)</span>
+    <a href="Number.html#%3C%3D%3E%28other%3ABigFloat%29-instance-method" class="tooltip">
+      <span><=>(other : BigFloat)<br/><=>(other)</span>
     <=></a>, 
   
     <a href="Number.html#%3D%3D%28other%3AComplex%29-instance-method" class="tooltip">
@@ -3232,8 +3327,8 @@
       <span>cis</span>
     cis</a>, 
   
-    <a href="Number.html#clamp%28min%2Cmax%29-instance-method" class="tooltip">
-      <span>clamp(min, max)<br/>clamp(range : Range)</span>
+    <a href="Number.html#clamp%28range%3ARange%29-instance-method" class="tooltip">
+      <span>clamp(range : Range)<br/>clamp(min, max)</span>
     clamp</a>, 
   
     <a href="Number.html#divmod%28number%29-instance-method" class="tooltip">
@@ -3260,6 +3355,10 @@
       <span>step(limit = <span class="n">nil</span>, by = <span class="n">1</span>)<br/>step(limit = <span class="n">nil</span>, by = <span class="n">1</span>, &block)</span>
     step</a>, 
   
+    <a href="Number.html#to_big_f-instance-method" class="tooltip">
+      <span>to_big_f</span>
+    to_big_f</a>, 
+  
     <a href="Number.html#to_c-instance-method" class="tooltip">
       <span>to_c</span>
     to_c</a>, 
@@ -3274,14 +3373,48 @@
 
   <h3>Class methods inherited from struct <code><a href="Number.html">Number</a></code></h3>
   
-    <a href="Number.html#%5B%5D%28%2Anums%29-class-method" class="tooltip">
-      <span>[](*nums)</span>
+    <a href="Number.html#%5B%5D%28%2Anums%29%3AArray%28self%29-class-method" class="tooltip">
+      <span>[](*nums) : Array(self)</span>
     []</a>, 
   
-    <a href="Number.html#zero-class-method" class="tooltip">
-      <span>zero</span>
+    <a href="Number.html#zero%3Aself-class-method" class="tooltip">
+      <span>zero : self</span>
     zero</a>
   
+
+
+  
+    
+
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  
+    <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
+      <span><(other : T)</span>
+    <</a>, 
+  
+    <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span><=(other : T)</span>
+    <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
+  
+    <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>==(other : T)</span>
+    ==</a>, 
+  
+    <a href="Comparable.html#%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span>>(other : T)</span>
+    ></a>, 
+  
+    <a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>>=(other : T)</span>
+    >=</a>
+  
+
+
+    
 
 
   
@@ -3443,12 +3576,12 @@
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -3487,10 +3620,12 @@
         <a class="method-permalink" href="#new%28value%29-class-method">#</a>
       </div>
       
+        <div class="doc"><p>Returns an <code><a href="Int64.html">Int64</a></code> by invoking <code><a href="Int64.html#to_i64-instance-method">#to_i64</a></code> on <em>value</em>.</p></div>
+      
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/libc.cr#L119" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L538" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3506,7 +3641,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/from_yaml.cr#L30" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/yaml/from_yaml.cr#L30" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3522,7 +3657,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/from_json.cr#L44" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/from_json.cr#L44" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4071,7 +4206,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L500" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L542" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5031,7 +5166,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L504" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L546" target="_blank">View source</a>]
         
       </div>
     </div>

@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="../BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="../BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="../BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="../Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="../Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="../Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="../String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="../Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="../Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="../Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="../Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="../Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="../Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="../Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="../Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="../Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="../Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="../Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="../Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2152,15 +2207,15 @@
   <p>A Char::Reader allows iterating a String by Chars.</p>
 
 <p>As soon as you instantiate a Char::Reader it will decode the first
-char in the String, which can be accessed by invoking <code><a href="../Char/Reader.html#current_char-instance-method">#current_char</a></code>.
-At this point <code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code>, the current position in the string, will equal zero.
+char in the String, which can be accessed by invoking <code><a href="../Char/Reader.html#current_char%3AChar-instance-method">#current_char</a></code>.
+At this point <code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code>, the current position in the string, will equal zero.
 Successive calls to <code><a href="../Char/Reader.html#next_char-instance-method">#next_char</a></code> return the next chars in the string,
-advancing <code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code>.</p>
+advancing <code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code>.</p>
 
-<p>Note that the null character '\0' will be returned in <code><a href="../Char/Reader.html#current_char-instance-method">#current_char</a></code> when
+<p>Note that the null character '\0' will be returned in <code><a href="../Char/Reader.html#current_char%3AChar-instance-method">#current_char</a></code> when
 the end is reached (as well as when the string is empty). Thus, <code><a href="../Char/Reader.html#has_next%3F-instance-method">#has_next?</a></code>
-will return <code>false</code> only when <code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code> is equal to the string's bytesize, in which
-case <code><a href="../Char/Reader.html#current_char-instance-method">#current_char</a></code> will always be '\0'.</p>
+will return <code>false</code> only when <code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code> is equal to the string's bytesize, in which
+case <code><a href="../Char/Reader.html#current_char%3AChar-instance-method">#current_char</a></code> will always be '\0'.</p>
 
 
 
@@ -2185,7 +2240,7 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr" target="_blank">char/reader.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr" target="_blank">char/reader.cr</a>
     
     <br/>
   
@@ -2198,7 +2253,7 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#new%28string%29-class-method" class="signature"><strong>.new</strong>(string)</a>
+        <a href="#new%28string%3AString%29-class-method" class="signature"><strong>.new</strong>(string : String)</a>
         
           <div class="summary"><p>Creates a reader with the specified <em>string</em></p></div>
         
@@ -2212,14 +2267,14 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#current_char-instance-method" class="signature"><strong>#current_char</strong></a>
+        <a href="#current_char%3AChar-instance-method" class="signature"><strong>#current_char</strong> : Char</a>
         
           <div class="summary"><p>Returns the current character.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#current_char_width-instance-method" class="signature"><strong>#current_char_width</strong></a>
+        <a href="#current_char_width%3AInt32-instance-method" class="signature"><strong>#current_char_width</strong> : Int32</a>
         
           <div class="summary"><p>Returns the size of the current_char (in bytes) as if it were encoded in UTF-8.</p></div>
         
@@ -2228,7 +2283,7 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
       <li class="entry-summary">
         <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
         
-          <div class="summary"><p>Yields successive characters from <code><a href="../Char/Reader.html#string-instance-method">#string</a></code> starting from <code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code>.</p></div>
+          <div class="summary"><p>Yields successive characters from <code><a href="../Char/Reader.html#string%3AString-instance-method">#string</a></code> starting from <code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code>.</p></div>
         
       </li>
     
@@ -2242,19 +2297,19 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
       <li class="entry-summary">
         <a href="#next_char-instance-method" class="signature"><strong>#next_char</strong></a>
         
-          <div class="summary"><p>Reads the next character in the string, <code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code> is incremented.</p></div>
+          <div class="summary"><p>Reads the next character in the string, <code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code> is incremented.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#peek_next_char-instance-method" class="signature"><strong>#peek_next_char</strong></a>
         
-          <div class="summary"><p>Returns the next character in the <code><a href="../Char/Reader.html#string-instance-method">#string</a></code> without incrementing <code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code>.</p></div>
+          <div class="summary"><p>Returns the next character in the <code><a href="../Char/Reader.html#string%3AString-instance-method">#string</a></code> without incrementing <code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#pos-instance-method" class="signature"><strong>#pos</strong></a>
+        <a href="#pos%3AInt32-instance-method" class="signature"><strong>#pos</strong> : Int32</a>
         
           <div class="summary"><p>Returns the position of the current character.</p></div>
         
@@ -2263,12 +2318,12 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
       <li class="entry-summary">
         <a href="#pos%3D%28pos%29-instance-method" class="signature"><strong>#pos=</strong>(pos)</a>
         
-          <div class="summary"><p>Sets <code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code> to <em>pos</em>.</p></div>
+          <div class="summary"><p>Sets <code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code> to <em>pos</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#string-instance-method" class="signature"><strong>#string</strong></a>
+        <a href="#string%3AString-instance-method" class="signature"><strong>#string</strong> : String</a>
         
           <div class="summary"><p>Returns the reader's String.</p></div>
         
@@ -2462,6 +2517,10 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
       <span>partition(&block)</span>
     partition</a>, 
   
+    <a href="../Enumerable.html#product%28initial%3ANumber%2C%26block%29-instance-method" class="tooltip">
+      <span>product(initial : Number, &block)<br/>product<br/>product(initial : Number)<br/>product(&block)</span>
+    product</a>, 
+  
     <a href="../Enumerable.html#reduce%28memo%2C%26block%29-instance-method" class="tooltip">
       <span>reduce(memo, &block)<br/>reduce(&block)</span>
     reduce</a>, 
@@ -2486,8 +2545,8 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
       <span>skip_while(&block)</span>
     skip_while</a>, 
   
-    <a href="../Enumerable.html#sum%28initial%2C%26block%29-instance-method" class="tooltip">
-      <span>sum(initial, &block)<br/>sum(&block)<br/>sum(initial)<br/>sum</span>
+    <a href="../Enumerable.html#sum-instance-method" class="tooltip">
+      <span>sum<br/>sum(initial)<br/>sum(&block)<br/>sum(initial, &block)</span>
     sum</a>, 
   
     <a href="../Enumerable.html#take_while%28%26block%29-instance-method" class="tooltip">
@@ -2662,12 +2721,12 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="../Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="../Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="../Object.html#hash-class-method" class="tooltip">
@@ -2698,12 +2757,12 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="new&#40;string&#41;-class-method">
+    <div class="entry-detail" id="new&#40;string:String&#41;-class-method">
       <div class="signature">
         
-        def self.<strong>new</strong>(string)
+        def self.<strong>new</strong>(string : <a href="../String.html">String</a>)
 
-        <a class="method-permalink" href="#new%28string%29-class-method">#</a>
+        <a class="method-permalink" href="#new%28string%3AString%29-class-method">#</a>
       </div>
       
         <div class="doc"><p>Creates a reader with the specified <em>string</em></p></div>
@@ -2711,7 +2770,7 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr#L53" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr#L51" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2721,12 +2780,12 @@ case <code><a href="../Char/Reader.html#current_char-instance-method">#current_c
 
   <h2>Instance Method Detail</h2>
   
-    <div class="entry-detail" id="current_char-instance-method">
+    <div class="entry-detail" id="current_char:Char-instance-method">
       <div class="signature">
         
-        def <strong>current_char</strong>
+        def <strong>current_char</strong> : <a href="../Char.html">Char</a>
 
-        <a class="method-permalink" href="#current_char-instance-method">#</a>
+        <a class="method-permalink" href="#current_char%3AChar-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the current character.</p>
@@ -2739,17 +2798,17 @@ reader.current_char <span class="c"># &#61;&gt; &#39;b&#39;</span></code></pre><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr#L28" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr#L28" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="current_char_width-instance-method">
+    <div class="entry-detail" id="current_char_width:Int32-instance-method">
       <div class="signature">
         
-        def <strong>current_char_width</strong>
+        def <strong>current_char_width</strong> : <a href="../Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#current_char_width-instance-method">#</a>
+        <a class="method-permalink" href="#current_char_width%3AInt32-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the size of the current_char (in bytes) as if it were encoded in UTF-8.</p>
@@ -2762,7 +2821,7 @@ reader.current_char_width <span class="c"># &#61;&gt; 2</span></code></pre></div
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr#L38" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr#L38" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2775,7 +2834,7 @@ reader.current_char_width <span class="c"># &#61;&gt; 2</span></code></pre></div
         <a class="method-permalink" href="#each%28%26block%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Yields successive characters from <code><a href="../Char/Reader.html#string-instance-method">#string</a></code> starting from <code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code>.</p>
+        <div class="doc"><p>Yields successive characters from <code><a href="../Char/Reader.html#string%3AString-instance-method">#string</a></code> starting from <code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code>.</p>
 
 <pre><code>reader <span class="o">=</span> <span class="t">Char</span><span class="t">::</span><span class="t">Reader</span>.<span class="k">new</span>(<span class="s">&quot;abc&quot;</span>)
 reader.next_char
@@ -2789,7 +2848,7 @@ C</code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr#L146" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr#L144" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2813,7 +2872,7 @@ reader.peek_next_char <span class="c"># &#61;&gt; &#39;\0&#39;</span></code></pr
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr#L70" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr#L68" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2827,8 +2886,8 @@ reader.peek_next_char <span class="c"># &#61;&gt; &#39;\0&#39;</span></code></pr
       </div>
       
         <div class="doc"><p>Reads the next character in the string,
-<code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code> is incremented. Raises <code><a href="../IndexError.html">IndexError</a></code> if the reader is
-at the end of the <code><a href="../Char/Reader.html#string-instance-method">#string</a></code></p>
+<code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code> is incremented. Raises <code><a href="../IndexError.html">IndexError</a></code> if the reader is
+at the end of the <code><a href="../Char/Reader.html#string%3AString-instance-method">#string</a></code></p>
 
 <pre><code>reader <span class="o">=</span> <span class="t">Char</span><span class="t">::</span><span class="t">Reader</span>.<span class="k">new</span>(<span class="s">&quot;ab&quot;</span>)
 reader.next_char <span class="c"># &#61;&gt; &#39;b&#39;</span></code></pre></div>
@@ -2836,7 +2895,7 @@ reader.next_char <span class="c"># &#61;&gt; &#39;b&#39;</span></code></pre></di
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr#L80" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2849,10 +2908,10 @@ reader.next_char <span class="c"># &#61;&gt; &#39;b&#39;</span></code></pre></di
         <a class="method-permalink" href="#peek_next_char-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the next character in the <code><a href="../Char/Reader.html#string-instance-method">#string</a></code>
-without incrementing <code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code>.
+        <div class="doc"><p>Returns the next character in the <code><a href="../Char/Reader.html#string%3AString-instance-method">#string</a></code>
+without incrementing <code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code>.
 Raises <code><a href="../IndexError.html">IndexError</a></code> if the reader is at
-the end of the <code><a href="../Char/Reader.html#string-instance-method">#string</a></code></p>
+the end of the <code><a href="../Char/Reader.html#string%3AString-instance-method">#string</a></code></p>
 
 <pre><code>reader <span class="o">=</span> <span class="t">Char</span><span class="t">::</span><span class="t">Reader</span>.<span class="k">new</span>(<span class="s">&quot;ab&quot;</span>)
 reader.peek_next_char <span class="c"># &#61;&gt; &#39;b&#39;</span>
@@ -2861,17 +2920,17 @@ reader.current_char   <span class="c"># &#61;&gt; &#39;a&#39;</span></code></pre
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr#L101" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr#L99" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="pos-instance-method">
+    <div class="entry-detail" id="pos:Int32-instance-method">
       <div class="signature">
         
-        def <strong>pos</strong>
+        def <strong>pos</strong> : <a href="../Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#pos-instance-method">#</a>
+        <a class="method-permalink" href="#pos%3AInt32-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the position of the current character.</p>
@@ -2884,7 +2943,7 @@ reader.current_char <span class="c"># &#61;&gt; 1</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr#L48" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr#L48" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2897,7 +2956,7 @@ reader.current_char <span class="c"># &#61;&gt; 1</span></code></pre></div>
         <a class="method-permalink" href="#pos%3D%28pos%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Sets <code><a href="../Char/Reader.html#pos-instance-method">#pos</a></code> to <em>pos</em>.</p>
+        <div class="doc"><p>Sets <code><a href="../Char/Reader.html#pos%3AInt32-instance-method">#pos</a></code> to <em>pos</em>.</p>
 
 <pre><code>reader <span class="o">=</span> <span class="t">Char</span><span class="t">::</span><span class="t">Reader</span>.<span class="k">new</span>(<span class="s">&quot;abc&quot;</span>)
 reader.next_char
@@ -2908,17 +2967,17 @@ reader.current_char <span class="c"># &#61;&gt; &#39;a&#39;</span></code></pre><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr#L122" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr#L120" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="string-instance-method">
+    <div class="entry-detail" id="string:String-instance-method">
       <div class="signature">
         
-        def <strong>string</strong>
+        def <strong>string</strong> : <a href="../String.html">String</a>
 
-        <a class="method-permalink" href="#string-instance-method">#</a>
+        <a class="method-permalink" href="#string%3AString-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the reader's String.</p></div>
@@ -2926,7 +2985,7 @@ reader.current_char <span class="c"># &#61;&gt; &#39;a&#39;</span></code></pre><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/char/reader.cr#L18" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/char/reader.cr#L18" target="_blank">View source</a>]
         
       </div>
     </div>

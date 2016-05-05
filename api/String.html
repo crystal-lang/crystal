@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2226,7 +2281,7 @@ b <span class="o">=</span> <span class="n">2</span>
 
 <p>This ends up invoking <code><a href="Object.html#to_s%28io%3AIO%29-instance-method">Object#to_s(IO)</a></code> on each expression enclosed by <code>#{...}</code>.</p>
 
-<p>If you need to dynamically build a string, use <code><a href="String.html#build%28capacity%3D%3Cspanclass%3D%22n%22%3E64%3C%2Fspan%3E%2C%26block%29-class-method">String#build</a></code> or <code><a href="MemoryIO.html">MemoryIO</a></code>.</p>
+<p>If you need to dynamically build a string, use <code><a href="String.html#build%28capacity%3D%3Cspanclass%3D%22n%22%3E64%3C%2Fspan%3E%2C%26block%29%3Aself-class-method">String#build</a></code> or <code><a href="MemoryIO.html">MemoryIO</a></code>.</p>
 
 
 
@@ -2251,22 +2306,27 @@ b <span class="o">=</span> <span class="n">2</span>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr" target="_blank">string.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr" target="_blank">string.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_int.cr" target="_blank">big/big_int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_float.cr" target="_blank">big/big_float.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/yaml/to_yaml.cr" target="_blank">yaml/to_yaml.cr</a>
     
     <br/>
   
@@ -2279,7 +2339,7 @@ b <span class="o">=</span> <span class="n">2</span>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#build%28capacity%3D%3Cspanclass%3D%22n%22%3E64%3C%2Fspan%3E%2C%26block%29-class-method" class="signature"><strong>.build</strong>(capacity = <span class="n">64</span>, &block)</a>
+        <a href="#build%28capacity%3D%3Cspanclass%3D%22n%22%3E64%3C%2Fspan%3E%2C%26block%29%3Aself-class-method" class="signature"><strong>.build</strong>(capacity = <span class="n">64</span>, &block) : self</a>
         
           <div class="summary"><p>Builds a String by creating a <code><a href="String/Builder.html">String::Builder</a></code> with the given initial capacity, yielding it to the block and finally getting a String out of it.</p></div>
         
@@ -2512,7 +2572,7 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#bytesize-instance-method" class="signature"><strong>#bytesize</strong></a>
+        <a href="#bytesize%3AInt32-instance-method" class="signature"><strong>#bytesize</strong> : Int32</a>
         
           <div class="summary"><p>Returns the number of bytes in this string.</p></div>
         
@@ -2655,12 +2715,12 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#dump-instance-method" class="signature"><strong>#dump</strong></a>
+        <a href="#dump%28io%29-instance-method" class="signature"><strong>#dump</strong>(io)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#dump%28io%29-instance-method" class="signature"><strong>#dump</strong>(io)</a>
+        <a href="#dump-instance-method" class="signature"><strong>#dump</strong></a>
         
       </li>
     
@@ -2724,16 +2784,16 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#each_line-instance-method" class="signature"><strong>#each_line</strong></a>
+        <a href="#each_line%28%26block%29-instance-method" class="signature"><strong>#each_line</strong>(&block)</a>
         
-          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> which yields each line of this string (see <code><a href="String.html#each_line-instance-method">String#each_line</a></code>).</p></div>
+          <div class="summary"><p>Splits the string after each newline and yields each line to a block.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#each_line%28%26block%29-instance-method" class="signature"><strong>#each_line</strong>(&block)</a>
+        <a href="#each_line-instance-method" class="signature"><strong>#each_line</strong></a>
         
-          <div class="summary"><p>Splits the string after each newline and yields each line to a block.</p></div>
+          <div class="summary"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> which yields each line of this string (see <code><a href="String.html#each_line%28%26block%29-instance-method">String#each_line</a></code>).</p></div>
         
       </li>
     
@@ -2762,16 +2822,9 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#gsub%28pattern%3ARegex%2Chash%3AHash%28String%2C_%29%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, hash : Hash(String, _))</a>
+        <a href="#gsub%28string%3AString%2C%26block%29-instance-method" class="signature"><strong>#gsub</strong>(string : String, &block)</a>
         
-          <div class="summary"><p>Returns a string where all occurrences of the given <em>pattern</em> are replaced with a <em>hash</em> of replacements.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#gsub%28char%3AChar%2Creplacement%29-instance-method" class="signature"><strong>#gsub</strong>(char : Char, replacement)</a>
-        
-          <div class="summary"><p>Returns a string where all occurrences of the given char are replaced with the given <em>replacement</em>.</p></div>
+          <div class="summary"><p>Returns a string where all occurrences of the given <em>string</em> are replaced with the block's value.</p></div>
         
       </li>
     
@@ -2783,16 +2836,9 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#gsub%28hash%3AHash%28Char%2C_%29%29-instance-method" class="signature"><strong>#gsub</strong>(hash : Hash(Char, _))</a>
+        <a href="#gsub%28char%3AChar%2Creplacement%29-instance-method" class="signature"><strong>#gsub</strong>(char : Char, replacement)</a>
         
-          <div class="summary"><p>Returns a string where all chars in the given hash are replaced by the corresponding <em>hash</em> values.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#gsub%28pattern%3ARegex%2Creplacement%2Cbackreferences%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, replacement, backreferences = <span class="n">true</span>)</a>
-        
-          <div class="summary"><p>Returns a string where all occurrences of the given <em>pattern</em> are replaced with the given <em>replacement</em>.</p></div>
+          <div class="summary"><p>Returns a string where all occurrences of the given char are replaced with the given <em>replacement</em>.</p></div>
         
       </li>
     
@@ -2804,9 +2850,23 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#gsub%28string%3AString%2C%26block%29-instance-method" class="signature"><strong>#gsub</strong>(string : String, &block)</a>
+        <a href="#gsub%28hash%3AHash%28Char%2C_%29%29-instance-method" class="signature"><strong>#gsub</strong>(hash : Hash(Char, _))</a>
         
-          <div class="summary"><p>Returns a string where all occurrences of the given <em>string</em> are replaced with the block's value.</p></div>
+          <div class="summary"><p>Returns a string where all chars in the given hash are replaced by the corresponding <em>hash</em> values.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gsub%28pattern%3ARegex%2Chash%3AHash%28String%2C_%29%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, hash : Hash(String, _))</a>
+        
+          <div class="summary"><p>Returns a string where all occurrences of the given <em>pattern</em> are replaced with a <em>hash</em> of replacements.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#gsub%28pattern%3ARegex%2Creplacement%2Cbackreferences%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#gsub</strong>(pattern : Regex, replacement, backreferences = <span class="n">true</span>)</a>
+        
+          <div class="summary"><p>Returns a string where all occurrences of the given <em>pattern</em> are replaced with the given <em>replacement</em>.</p></div>
         
       </li>
     
@@ -2839,6 +2899,13 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
+        <a href="#index%28search%3AString%2Coffset%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#index</strong>(search : String, offset = <span class="n">0</span>)</a>
+        
+          <div class="summary"><p>Returns the index of <em>search</em> in the string, or <code>nil</code> if the string is not present.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#index%28search%3AChar%2Coffset%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#index</strong>(search : Char, offset = <span class="n">0</span>)</a>
         
           <div class="summary"><p>Returns the index of <em>search</em> in the string, or <code>nil</code> if the string is not present.</p></div>
@@ -2846,9 +2913,16 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#index%28search%3AString%2Coffset%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#index</strong>(search : String, offset = <span class="n">0</span>)</a>
+        <a href="#insert%28index%3AInt%2Cother%3AString%29-instance-method" class="signature"><strong>#insert</strong>(index : Int, other : String)</a>
         
-          <div class="summary"><p>Returns the index of <em>search</em> in the string, or <code>nil</code> if the string is not present.</p></div>
+          <div class="summary"><p>Returns a new String that results of inserting <em>other</em> in <em>self</em> at <em>index</em>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#insert%28index%3AInt%2Cother%3AChar%29-instance-method" class="signature"><strong>#insert</strong>(index : Int, other : Char)</a>
+        
+          <div class="summary"><p>Returns a new String that results of inserting <em>other</em> in <em>self</em> at <em>index</em>.</p></div>
         
       </li>
     
@@ -2887,16 +2961,16 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#match%28regex%3ARegex%2Cpos%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#match</strong>(regex : Regex, pos = <span class="n">0</span>)</a>
+        <a href="#match%28regex%3ARegex%2Cpos%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%2C%26block%29-instance-method" class="signature"><strong>#match</strong>(regex : Regex, pos = <span class="n">0</span>, &block)</a>
         
-          <div class="summary"><p>Finds match of <em>regex</em>, starting at <em>pos</em>.</p></div>
+          <div class="summary"><p>Searches the string for <em>regex</em> starting at <em>pos</em>, yielding the match if there is one.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#match%28regex%3ARegex%2Cpos%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%2C%26block%29-instance-method" class="signature"><strong>#match</strong>(regex : Regex, pos = <span class="n">0</span>, &block)</a>
+        <a href="#match%28regex%3ARegex%2Cpos%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#match</strong>(regex : Regex, pos = <span class="n">0</span>)</a>
         
-          <div class="summary"><p>Searches the string for <em>regex</em> starting at <em>pos</em>, yielding the match if there is one.</p></div>
+          <div class="summary"><p>Finds match of <em>regex</em>, starting at <em>pos</em>.</p></div>
         
       </li>
     
@@ -2910,14 +2984,14 @@ b <span class="o">=</span> <span class="n">2</span>
       <li class="entry-summary">
         <a href="#rindex%28search%3AString%2Coffset%3Dsize%3Cspanclass%3D%22o%22%3E-%3C%2Fspan%3Esearch.size%29-instance-method" class="signature"><strong>#rindex</strong>(search : String, offset = size <span class="o">-</span> search.size)</a>
         
-          <div class="summary"><p>Returns the index of <em>last</em> appearance of <em>c</em> in the string, If <code>offset</code> is present, it defines the position to <em>end</em> the search (characters beyond that point will be ignored).</p></div>
+          <div class="summary"><p>Returns the index of the <em>last</em> appearance of <em>c</em> in the string, If <code>offset</code> is present, it defines the position to <em>end</em> the search (characters beyond this point are ignored).</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#rindex%28search%3AChar%2Coffset%3Dsize%3Cspanclass%3D%22o%22%3E-%3C%2Fspan%3E%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#rindex</strong>(search : Char, offset = size <span class="o">-</span> <span class="n">1</span>)</a>
         
-          <div class="summary"><p>Returns the index of <em>last</em> appearance of <em>c</em> in the string, If <code>offset</code> is present, it defines the position to <em>end</em> the search (characters beyond that point will be ignored).</p></div>
+          <div class="summary"><p>Returns the index of the <em>last</em> appearance of <em>c</em> in the string, If <code>offset</code> is present, it defines the position to <em>end</em> the search (characters beyond this point are ignored).</p></div>
         
       </li>
     
@@ -2936,16 +3010,16 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#scan%28pattern%3AString%2C%26block%29-instance-method" class="signature"><strong>#scan</strong>(pattern : String, &block)</a>
+        <a href="#scan%28pattern%3ARegex%29-instance-method" class="signature"><strong>#scan</strong>(pattern : Regex)</a>
         
-          <div class="summary"><p>Searches the string for instances of <em>pattern</em>, yielding the matched string for each match.</p></div>
+          <div class="summary"><p>Searches the string for instances of <em>pattern</em>, returning an array of <code><a href="Regex/MatchData.html">Regex::MatchData</a></code> for each match.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#scan%28pattern%3ARegex%2C%26block%29-instance-method" class="signature"><strong>#scan</strong>(pattern : Regex, &block)</a>
+        <a href="#scan%28pattern%3AString%2C%26block%29-instance-method" class="signature"><strong>#scan</strong>(pattern : String, &block)</a>
         
-          <div class="summary"><p>Searches the string for instances of <em>pattern</em>, yielding a <code><a href="Regex/MatchData.html">Regex::MatchData</a></code> for each match.</p></div>
+          <div class="summary"><p>Searches the string for instances of <em>pattern</em>, yielding the matched string for each match.</p></div>
         
       </li>
     
@@ -2957,9 +3031,9 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#scan%28pattern%3ARegex%29-instance-method" class="signature"><strong>#scan</strong>(pattern : Regex)</a>
+        <a href="#scan%28pattern%3ARegex%2C%26block%29-instance-method" class="signature"><strong>#scan</strong>(pattern : Regex, &block)</a>
         
-          <div class="summary"><p>Searches the string for instances of <em>pattern</em>, returning an array of <code><a href="Regex/MatchData.html">Regex::MatchData</a></code> for each match.</p></div>
+          <div class="summary"><p>Searches the string for instances of <em>pattern</em>, yielding a <code><a href="Regex/MatchData.html">Regex::MatchData</a></code> for each match.</p></div>
         
       </li>
     
@@ -2967,6 +3041,20 @@ b <span class="o">=</span> <span class="n">2</span>
         <a href="#size-instance-method" class="signature"><strong>#size</strong></a>
         
           <div class="summary"><p>Returns the number of unicode codepoints in this string.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#split%28separator%3AString%2Climit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#split</strong>(separator : String, limit = <span class="n">nil</span>)</a>
+        
+          <div class="summary"><p>Makes an array by splitting the string on <em>separator</em> (and removing instances of <em>separator</em>).</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#split%28separator%3ARegex%2Climit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#split</strong>(separator : Regex, limit = <span class="n">nil</span>)</a>
+        
+          <div class="summary"><p>Makes an array by splitting the string on <em>separator</em> (and removing instances of <em>separator</em>).</p></div>
         
       </li>
     
@@ -2981,20 +3069,6 @@ b <span class="o">=</span> <span class="n">2</span>
         <a href="#split%28separator%3AChar%2Climit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#split</strong>(separator : Char, limit = <span class="n">nil</span>)</a>
         
           <div class="summary"><p>Makes an array by splitting the string on the given character <em>separator</em> (and removing that character).</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#split%28separator%3ARegex%2Climit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#split</strong>(separator : Regex, limit = <span class="n">nil</span>)</a>
-        
-          <div class="summary"><p>Makes an array by splitting the string on <em>separator</em> (and removing instances of <em>separator</em>).</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#split%28separator%3AString%2Climit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#split</strong>(separator : String, limit = <span class="n">nil</span>)</a>
-        
-          <div class="summary"><p>Makes an array by splitting the string on <em>separator</em> (and removing instances of <em>separator</em>).</p></div>
         
       </li>
     
@@ -3027,12 +3101,12 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#starts_with%3F%28char%3AChar%29-instance-method" class="signature"><strong>#starts_with?</strong>(char : Char)</a>
+        <a href="#starts_with%3F%28str%3AString%29-instance-method" class="signature"><strong>#starts_with?</strong>(str : String)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#starts_with%3F%28str%3AString%29-instance-method" class="signature"><strong>#starts_with?</strong>(str : String)</a>
+        <a href="#starts_with%3F%28char%3AChar%29-instance-method" class="signature"><strong>#starts_with?</strong>(char : Char)</a>
         
       </li>
     
@@ -3040,6 +3114,20 @@ b <span class="o">=</span> <span class="n">2</span>
         <a href="#strip-instance-method" class="signature"><strong>#strip</strong></a>
         
           <div class="summary"><p>Returns a new string with leading and trailing whitespace removed.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sub%28pattern%3ARegex%2Chash%3AHash%28String%2C_%29%29-instance-method" class="signature"><strong>#sub</strong>(pattern : Regex, hash : Hash(String, _))</a>
+        
+          <div class="summary"><p>Returns a string where the first occurrences of the given <em>pattern</em> is replaced with the matching entry from the <em>hash</em> of replacements.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sub%28char%3AChar%2Creplacement%29-instance-method" class="signature"><strong>#sub</strong>(char : Char, replacement)</a>
+        
+          <div class="summary"><p>Returns a string where the first occurrence of <em>char</em> is replaced by <em>replacement</em>.</p></div>
         
       </li>
     
@@ -3065,13 +3153,6 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#sub%28pattern%3ARegex%2Creplacement%2Cbackreferences%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#sub</strong>(pattern : Regex, replacement, backreferences = <span class="n">true</span>)</a>
-        
-          <div class="summary"><p>Returns a string where the first occurrence of <em>pattern</em> is replaced by <em>replacement</em></p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#sub%28hash%3AHash%28Char%2C_%29%29-instance-method" class="signature"><strong>#sub</strong>(hash : Hash(Char, _))</a>
         
           <div class="summary"><p>Returns a string where the first char in the string matching a key in the given <em>hash</em> is replaced by the corresponding hash value.</p></div>
@@ -3086,16 +3167,9 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#sub%28char%3AChar%2Creplacement%29-instance-method" class="signature"><strong>#sub</strong>(char : Char, replacement)</a>
+        <a href="#sub%28pattern%3ARegex%2Creplacement%2Cbackreferences%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#sub</strong>(pattern : Regex, replacement, backreferences = <span class="n">true</span>)</a>
         
-          <div class="summary"><p>Returns a string where the first occurrence of <em>char</em> is replaced by <em>replacement</em>.</p></div>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#sub%28pattern%3ARegex%2Chash%3AHash%28String%2C_%29%29-instance-method" class="signature"><strong>#sub</strong>(pattern : Regex, hash : Hash(String, _))</a>
-        
-          <div class="summary"><p>Returns a string where the first occurrences of the given <em>pattern</em> is replaced with the matching entry from the <em>hash</em> of replacements.</p></div>
+          <div class="summary"><p>Returns a string where the first occurrence of <em>pattern</em> is replaced by <em>replacement</em></p></div>
         
       </li>
     
@@ -3103,6 +3177,11 @@ b <span class="o">=</span> <span class="n">2</span>
         <a href="#succ-instance-method" class="signature"><strong>#succ</strong></a>
         
           <div class="summary"><p>Returns the successor of the string.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_big_f-instance-method" class="signature"><strong>#to_big_f</strong></a>
         
       </li>
     
@@ -3149,16 +3228,16 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_i16%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method" class="signature"><strong>#to_i16</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)</a>
+        <a href="#to_i16%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29%3AInt16-instance-method" class="signature"><strong>#to_i16</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : Int16</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an Int16 or the block's value.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an Int16.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#to_i16%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29%3AInt16-instance-method" class="signature"><strong>#to_i16</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : Int16</a>
+        <a href="#to_i16%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method" class="signature"><strong>#to_i16</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an Int16.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an Int16 or the block's value.</p></div>
         
       </li>
     
@@ -3170,14 +3249,14 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_i32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29%3AInt32-instance-method" class="signature"><strong>#to_i32</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : Int32</a>
+        <a href="#to_i32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method" class="signature"><strong>#to_i32</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)</a>
         
           <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#to_i32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method" class="signature"><strong>#to_i32</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)</a>
+        <a href="#to_i32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29%3AInt32-instance-method" class="signature"><strong>#to_i32</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : Int32</a>
         
           <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code>.</p></div>
         
@@ -3245,12 +3324,12 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
+        <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s%28io%29-instance-method" class="signature"><strong>#to_s</strong>(io)</a>
+        <a href="#to_s-instance-method" class="signature"><strong>#to_s</strong></a>
         
       </li>
     
@@ -3281,16 +3360,16 @@ b <span class="o">=</span> <span class="n">2</span>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_u32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29%3AUInt32-instance-method" class="signature"><strong>#to_u32</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : UInt32</a>
+        <a href="#to_u32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method" class="signature"><strong>#to_u32</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an UInt32.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an UInt32 or the block's value.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#to_u32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method" class="signature"><strong>#to_u32</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)</a>
+        <a href="#to_u32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29%3AUInt32-instance-method" class="signature"><strong>#to_u32</strong>(base : Int = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : UInt32</a>
         
-          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an UInt32 or the block's value.</p></div>
+          <div class="summary"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an UInt32.</p></div>
         
       </li>
     
@@ -3587,12 +3666,12 @@ b <span class="o">=</span> <span class="n">2</span>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -3623,12 +3702,12 @@ b <span class="o">=</span> <span class="n">2</span>
 
   <h2>Class Method Detail</h2>
   
-    <div class="entry-detail" id="build&#40;capacity&#61;&lt;spanclass&#61;&quot;n&quot;&gt;64&lt;/span&gt;,&amp;block&#41;-class-method">
+    <div class="entry-detail" id="build&#40;capacity&#61;&lt;spanclass&#61;&quot;n&quot;&gt;64&lt;/span&gt;,&amp;block&#41;:self-class-method">
       <div class="signature">
         
-        def self.<strong>build</strong>(capacity = <span class="n">64</span>, &block)
+        def self.<strong>build</strong>(capacity = <span class="n">64</span>, &block) : self
 
-        <a class="method-permalink" href="#build%28capacity%3D%3Cspanclass%3D%22n%22%3E64%3C%2Fspan%3E%2C%26block%29-class-method">#</a>
+        <a class="method-permalink" href="#build%28capacity%3D%3Cspanclass%3D%22n%22%3E64%3C%2Fspan%3E%2C%26block%29%3Aself-class-method">#</a>
       </div>
       
         <div class="doc"><p>Builds a String by creating a <code><a href="String/Builder.html">String::Builder</a></code> with the given initial capacity, yielding
@@ -3644,7 +3723,7 @@ str <span class="c"># &#61;&gt; &quot;hello 1&quot;</span></code></pre></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L237" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L233" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3666,7 +3745,7 @@ count will be lazily computed.</p>
 capacity given to this String. In the future this method might check that the returned
 bytesize is less or equal than the capacity, making it a safe method.</p>
 
-<p>If you need to build a String where the maximum capacity is unknown, use <code><a href="String.html#build%28capacity%3D%3Cspanclass%3D%22n%22%3E64%3C%2Fspan%3E%2C%26block%29-class-method">String#build</a></code>.</p>
+<p>If you need to build a String where the maximum capacity is unknown, use <code><a href="String.html#build%28capacity%3D%3Cspanclass%3D%22n%22%3E64%3C%2Fspan%3E%2C%26block%29%3Aself-class-method">String#build</a></code>.</p>
 
 <pre><code>str <span class="o">=</span> <span class="t">String</span>.<span class="k">new</span>(<span class="n">4</span>) <span class="k">do</span> <span class="o">|</span>buffer<span class="o">|</span>
   buffer[<span class="n">0</span>] <span class="o">=</span> <span class="s">'a'</span>.ord.to_u8
@@ -3681,7 +3760,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L214" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L210" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3697,7 +3776,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/from_json.cr#L72" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/from_json.cr#L72" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3713,7 +3792,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/from_yaml.cr#L36" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/yaml/from_yaml.cr#L36" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3742,7 +3821,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L185" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L181" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3769,7 +3848,7 @@ slice[<span class="n">1</span>] <span class="o">=</span> <span class="n">195_u8<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L144" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L140" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3801,7 +3880,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L167" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L163" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3828,7 +3907,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L128" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L124" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3853,7 +3932,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2857" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2908" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3874,7 +3953,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1814" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1874" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3895,7 +3974,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1771" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1838" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3916,7 +3995,7 @@ However, when iterating it or indexing it, an <code><a href="InvalidByteSequence
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1786" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1853" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3947,7 +4026,7 @@ the shorter one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1692" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1759" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3963,7 +4042,7 @@ the shorter one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1670" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1737" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3990,7 +4069,7 @@ If unsuccessful, it returns <code>nil</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1761" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1828" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4017,7 +4096,7 @@ If unsuccessful, it returns <code>nil</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1754" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1821" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4033,7 +4112,7 @@ If unsuccessful, it returns <code>nil</code>.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L724" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L720" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4060,7 +4139,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L639" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L635" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4076,7 +4155,7 @@ counting from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L732" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L728" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4102,7 +4181,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L661" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L657" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4118,7 +4197,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L728" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L724" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4144,7 +4223,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L623" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L619" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4160,7 +4239,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L719" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L715" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4176,7 +4255,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L715" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L711" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4192,7 +4271,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L711" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L707" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4208,7 +4287,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L707" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L703" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4224,7 +4303,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2886" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2937" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4240,7 +4319,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L740" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L736" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4256,7 +4335,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L736" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L732" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4272,7 +4351,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L795" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L791" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4288,7 +4367,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L803" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L799" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4304,7 +4383,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L799" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L795" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4320,7 +4399,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1937" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1997" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4336,7 +4415,7 @@ from the end of the string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1928" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1988" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4351,13 +4430,13 @@ from the end of the string.</p>
       
         <div class="doc"><p>Returns the char index of a byte index, or nil if out of bounds.</p>
 
-<p>It is valid to pass <code><a href="String.html#bytesize-instance-method">#bytesize</a></code> to <em>index</em>, and in this case the answer
+<p>It is valid to pass <code><a href="String.html#bytesize%3AInt32-instance-method">#bytesize</a></code> to <em>index</em>, and in this case the answer
 will be the size of this string.</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1975" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2039" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4373,7 +4452,7 @@ will be the size of this string.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L757" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L753" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4389,7 +4468,7 @@ will be the size of this string.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L783" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L779" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4410,17 +4489,17 @@ will be the size of this string.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2705" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2763" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="bytesize-instance-method">
+    <div class="entry-detail" id="bytesize:Int32-instance-method">
       <div class="signature">
         
-        def <strong>bytesize</strong>
+        def <strong>bytesize</strong> : <a href="Int32.html">Int32</a>
 
-        <a class="method-permalink" href="#bytesize-instance-method">#</a>
+        <a class="method-permalink" href="#bytesize%3AInt32-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the number of bytes in this string.</p>
@@ -4431,7 +4510,7 @@ will be the size of this string.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L249" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L245" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4451,7 +4530,7 @@ will be the size of this string.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2327" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2395" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4472,7 +4551,7 @@ subsequent letter converted to lowercase.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L850" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L846" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4488,7 +4567,7 @@ subsequent letter converted to lowercase.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L791" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L787" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4514,7 +4593,7 @@ will be the bytesize of this string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1963" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2023" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4534,7 +4613,7 @@ will be the bytesize of this string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2625" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2683" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4554,7 +4633,7 @@ will be the bytesize of this string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2950" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L3013" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4575,7 +4654,7 @@ will be the bytesize of this string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L899" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L895" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4602,7 +4681,7 @@ will remove \n, \r, and \r\n).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L876" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L872" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4623,7 +4702,7 @@ will remove \n, \r, and \r\n).</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L913" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L909" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4651,7 +4730,7 @@ Applying chop to an empty string returns an empty string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L934" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L930" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4667,7 +4746,7 @@ Applying chop to an empty string returns an empty string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L787" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L783" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4687,7 +4766,7 @@ Applying chop to an empty string returns an empty string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2663" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2721" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4719,7 +4798,7 @@ case-insensitive way.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1717" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1784" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4740,7 +4819,7 @@ returns the number of times the block returned a truthy value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1553" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1620" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4760,7 +4839,7 @@ returns the number of times the block returned a truthy value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1566" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1633" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4780,7 +4859,7 @@ in this string that match the given set.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1573" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1640" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4802,7 +4881,7 @@ block returned a truthy value removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1584" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1651" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4822,7 +4901,7 @@ block returned a truthy value removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1597" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1664" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4844,7 +4923,7 @@ all characters that match the given set removed.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1608" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1675" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4865,23 +4944,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L822" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="dump-instance-method">
-      <div class="signature">
-        
-        def <strong>dump</strong>
-
-        <a class="method-permalink" href="#dump-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2727" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L818" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4897,7 +4960,23 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2733" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2791" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="dump-instance-method">
+      <div class="signature">
+        
+        def <strong>dump</strong>
+
+        <a class="method-permalink" href="#dump-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2785" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4913,7 +4992,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2745" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2803" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4929,7 +5008,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2739" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2797" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4954,7 +5033,7 @@ bytes.<span class="k">next</span> <span class="c"># &#61;&gt; 131</span></code><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2695" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2753" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4976,7 +5055,7 @@ bytes.<span class="k">next</span> <span class="c"># &#61;&gt; 131</span></code><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2678" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2736" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4999,7 +5078,7 @@ chars.<span class="k">next</span> <span class="c"># &#61;&gt; &#39;☃&#39;</spa
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2599" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2657" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5021,7 +5100,7 @@ chars.<span class="k">next</span> <span class="c"># &#61;&gt; &#39;☃&#39;</spa
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2578" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2636" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5044,7 +5123,7 @@ chars.<span class="k">next</span> <span class="c"># &#61;&gt; &#39;☃&#39;</spa
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2611" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2669" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5067,7 +5146,7 @@ codepoints.<span class="k">next</span> <span class="c"># &#61;&gt; 9731</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2654" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2712" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5089,25 +5168,7 @@ codepoints.<span class="k">next</span> <span class="c"># &#61;&gt; 9731</span></
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2640" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="each_line-instance-method">
-      <div class="signature">
-        
-        def <strong>each_line</strong>
-
-        <a class="method-permalink" href="#each_line-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> which yields each line of this string (see <code><a href="String.html#each_line-instance-method">String#each_line</a></code>).</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2257" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2698" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5135,7 +5196,25 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2243" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2311" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_line-instance-method">
+      <div class="signature">
+        
+        def <strong>each_line</strong>
+
+        <a class="method-permalink" href="#each_line-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns an <code><a href="Iterator.html">Iterator</a></code> which yields each line of this string (see <code><a href="String.html#each_line%28%26block%29-instance-method">String#each_line</a></code>).</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2325" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5153,7 +5232,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1666" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1733" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5178,7 +5257,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L958" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L954" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5194,7 +5273,7 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2828" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2886" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5210,7 +5289,114 @@ haiku.each_line <span class="k">do</span> <span class="o">|</span>stanza<span cl
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2823" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2881" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="gsub&#40;string:String,&amp;block&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>gsub</strong>(string : <a href="String.html">String</a>, &block)
+
+        <a class="method-permalink" href="#gsub%28string%3AString%2C%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a string where all occurrences of the given <em>string</em> are replaced
+with the block's value.</p>
+
+<pre><code><span class="s">&quot;hello yellow&quot;</span>.gsub(<span class="s">&quot;ll&quot;</span>) { <span class="s">&quot;dd&quot;</span> } <span class="c"># &#61;&gt; &quot;heddo yeddow&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1540" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="gsub&#40;&amp;block:Char-&gt;_&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>gsub</strong>(&block : <a href="Char.html">Char</a> -> _)
+
+        <a class="method-permalink" href="#gsub%28%26block%3AChar-%3E_%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a string where each character yielded to the given block
+is replaced by the block's return value.</p>
+
+<pre><code><span class="s">&quot;hello&quot;</span>.gsub { <span class="o">|</span>x<span class="o">|</span> (x.ord <span class="o">+</span> <span class="n">1</span>).chr } <span class="c"># &#61;&gt; &quot;ifmmp&quot;</span>
+<span class="s">&quot;hello&quot;</span>.gsub { <span class="s">&quot;hi&quot;</span> }                <span class="c"># &#61;&gt; &quot;hihihihihi&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1426" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="gsub&#40;char:Char,replacement&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>gsub</strong>(char : <a href="Char.html">Char</a>, replacement)
+
+        <a class="method-permalink" href="#gsub%28char%3AChar%2Creplacement%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a string where all occurrences of the given char are
+replaced with the given <em>replacement</em>.</p>
+
+<pre><code><span class="s">&quot;hello&quot;</span>.gsub(<span class="s">'l'</span>, <span class="s">&quot;lo&quot;</span>)      <span class="c"># &#61;&gt; &quot;heloloo&quot;</span>
+<span class="s">&quot;hello world&quot;</span>.gsub(<span class="s">'o'</span>, <span class="s">'a'</span>) <span class="c"># &#61;&gt; &quot;hella warld&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1441" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="gsub&#40;string:String,replacement&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>gsub</strong>(string : <a href="String.html">String</a>, replacement)
+
+        <a class="method-permalink" href="#gsub%28string%3AString%2Creplacement%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a string where all occurrences of the given <em>string</em> are replaced
+with the given <em>replacement</em>.</p>
+
+<pre><code><span class="s">&quot;hello yellow&quot;</span>.gsub(<span class="s">&quot;ll&quot;</span>, <span class="s">&quot;dd&quot;</span>) <span class="c"># &#61;&gt; &quot;heddo yeddow&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1530" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="gsub&#40;hash:Hash&#40;Char,_&#41;&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>gsub</strong>(hash : <a href="Hash.html">Hash</a>(<a href="Char.html">Char</a>, _))
+
+        <a class="method-permalink" href="#gsub%28hash%3AHash%28Char%2C_%29%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a string where all chars in the given hash are replaced
+by the corresponding <em>hash</em> values.</p>
+
+<pre><code><span class="s">&quot;hello&quot;</span>.gsub({<span class="s">'e'</span> => <span class="s">'a'</span>, <span class="s">'l'</span> => <span class="s">'d'</span>}) <span class="c"># &#61;&gt; &quot;haddo&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1575" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5235,72 +5421,7 @@ not included in the returned string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1451" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="gsub&#40;char:Char,replacement&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>gsub</strong>(char : <a href="Char.html">Char</a>, replacement)
-
-        <a class="method-permalink" href="#gsub%28char%3AChar%2Creplacement%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns a string where all occurrences of the given char are
-replaced with the given <em>replacement</em>.</p>
-
-<pre><code><span class="s">&quot;hello&quot;</span>.gsub(<span class="s">'l'</span>, <span class="s">&quot;lo&quot;</span>)      <span class="c"># &#61;&gt; &quot;heloloo&quot;</span>
-<span class="s">&quot;hello world&quot;</span>.gsub(<span class="s">'o'</span>, <span class="s">'a'</span>) <span class="c"># &#61;&gt; &quot;hella warld&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1374" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="gsub&#40;&amp;block:Char-&gt;_&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>gsub</strong>(&block : <a href="Char.html">Char</a> -> _)
-
-        <a class="method-permalink" href="#gsub%28%26block%3AChar-%3E_%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns a string where each character yielded to the given block
-is replaced by the block's return value.</p>
-
-<pre><code><span class="s">&quot;hello&quot;</span>.gsub { <span class="o">|</span>x<span class="o">|</span> (x.ord <span class="o">+</span> <span class="n">1</span>).chr } <span class="c"># &#61;&gt; &quot;ifmmp&quot;</span>
-<span class="s">&quot;hello&quot;</span>.gsub { <span class="s">&quot;hi&quot;</span> }                <span class="c"># &#61;&gt; &quot;hihihihihi&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1359" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="gsub&#40;hash:Hash&#40;Char,_&#41;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>gsub</strong>(hash : <a href="Hash.html">Hash</a>(<a href="Char.html">Char</a>, _))
-
-        <a class="method-permalink" href="#gsub%28hash%3AHash%28Char%2C_%29%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns a string where all chars in the given hash are replaced
-by the corresponding <em>hash</em> values.</p>
-
-<pre><code><span class="s">&quot;hello&quot;</span>.gsub({<span class="s">'e'</span> => <span class="s">'a'</span>, <span class="s">'l'</span> => <span class="s">'d'</span>}) <span class="c"># &#61;&gt; &quot;haddo&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1508" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1518" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5349,49 +5470,7 @@ in <em>pattern</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1433" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="gsub&#40;string:String,replacement&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>gsub</strong>(string : <a href="String.html">String</a>, replacement)
-
-        <a class="method-permalink" href="#gsub%28string%3AString%2Creplacement%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns a string where all occurrences of the given <em>string</em> are replaced
-with the given <em>replacement</em>.</p>
-
-<pre><code><span class="s">&quot;hello yellow&quot;</span>.gsub(<span class="s">&quot;ll&quot;</span>, <span class="s">&quot;dd&quot;</span>) <span class="c"># &#61;&gt; &quot;heddo yeddow&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1463" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="gsub&#40;string:String,&amp;block&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>gsub</strong>(string : <a href="String.html">String</a>, &block)
-
-        <a class="method-permalink" href="#gsub%28string%3AString%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns a string where all occurrences of the given <em>string</em> are replaced
-with the block's value.</p>
-
-<pre><code><span class="s">&quot;hello yellow&quot;</span>.gsub(<span class="s">&quot;ll&quot;</span>) { <span class="s">&quot;dd&quot;</span> } <span class="c"># &#61;&gt; &quot;heddo yeddow&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1473" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1500" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5412,7 +5491,7 @@ by the block value's value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1388" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1455" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5432,7 +5511,7 @@ the whole thing.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1299" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1366" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5452,7 +5531,7 @@ the whole thing.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2864" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2915" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5473,31 +5552,7 @@ the whole thing.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1989" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="index&#40;search:Char,offset&#61;&lt;spanclass&#61;&quot;n&quot;&gt;0&lt;/span&gt;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>index</strong>(search : <a href="Char.html">Char</a>, offset = <span class="n">0</span>)
-
-        <a class="method-permalink" href="#index%28search%3AChar%2Coffset%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns the index of <em>search</em> in the string, or <code>nil</code> if the string is not present.
-If <code>offset</code> is present, it defines the position to start the search.</p>
-
-<pre><code><span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'o'</span>)    <span class="c"># &#61;&gt; 4</span>
-<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'Z'</span>)    <span class="c"># &#61;&gt; nil</span>
-<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;o&quot;</span>, <span class="n">5</span>) <span class="c"># &#61;&gt; 8</span>
-<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;H&quot;</span>, <span class="n">2</span>) <span class="c"># &#61;&gt; nil</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1850" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2057" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5521,7 +5576,93 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1864" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1924" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="index&#40;search:Char,offset&#61;&lt;spanclass&#61;&quot;n&quot;&gt;0&lt;/span&gt;&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>index</strong>(search : <a href="Char.html">Char</a>, offset = <span class="n">0</span>)
+
+        <a class="method-permalink" href="#index%28search%3AChar%2Coffset%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns the index of <em>search</em> in the string, or <code>nil</code> if the string is not present.
+If <code>offset</code> is present, it defines the position to start the search.</p>
+
+<pre><code><span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'o'</span>)    <span class="c"># &#61;&gt; 4</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'Z'</span>)    <span class="c"># &#61;&gt; nil</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;o&quot;</span>, <span class="n">5</span>) <span class="c"># &#61;&gt; 8</span>
+<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;H&quot;</span>, <span class="n">2</span>) <span class="c"># &#61;&gt; nil</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1910" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="insert&#40;index:Int,other:String&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>insert</strong>(index : <a href="Int.html">Int</a>, other : <a href="String.html">String</a>)
+
+        <a class="method-permalink" href="#insert%28index%3AInt%2Cother%3AString%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a new String that results of inserting <em>other</em> in <em>self</em> at <em>index</em>.
+Negative indices count from the end of the string, and insert <strong>after</strong>
+the given index.</p>
+
+<p>Raises <code><a href="IndexError.html">IndexError</a></code> if the index is out of bounds.</p>
+
+<pre><code><span class="s">&quot;abcd&quot;</span>.insert(<span class="n">0</span>, <span class="s">&quot;FOO&quot;</span>)  <span class="c"># &#61;&gt; &quot;FOOabcd&quot;</span>
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">3</span>, <span class="s">&quot;FOO&quot;</span>)  <span class="c"># &#61;&gt; &quot;abcFOOd&quot;</span>
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">4</span>, <span class="s">&quot;FOO&quot;</span>)  <span class="c"># &#61;&gt; &quot;abcdFOO&quot;</span>
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">-3</span>, <span class="s">&quot;FOO&quot;</span>) <span class="c"># &#61;&gt; &quot;abFOOcd&quot;</span>
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">-1</span>, <span class="s">&quot;FOO&quot;</span>) <span class="c"># &#61;&gt; &quot;abcdFOO&quot;</span>
+
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">5</span>, <span class="s">&quot;FOO&quot;</span>)  <span class="c"># raises IndexError</span>
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">-6</span>, <span class="s">&quot;FOO&quot;</span>) <span class="c"># raises IndexError</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1028" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="insert&#40;index:Int,other:Char&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>insert</strong>(index : <a href="Int.html">Int</a>, other : <a href="Char.html">Char</a>)
+
+        <a class="method-permalink" href="#insert%28index%3AInt%2Cother%3AChar%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a new String that results of inserting <em>other</em> in <em>self</em> at <em>index</em>.
+Negative indices count from the end of the string, and insert <strong>after</strong>
+the given index.</p>
+
+<p>Raises <code><a href="IndexError.html">IndexError</a></code> if the index is out of bounds.</p>
+
+<pre><code><span class="s">&quot;abcd&quot;</span>.insert(<span class="n">0</span>, <span class="s">'X'</span>)  <span class="c"># &#61;&gt; &quot;Xabcd&quot;</span>
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">3</span>, <span class="s">'X'</span>)  <span class="c"># &#61;&gt; &quot;abcXd&quot;</span>
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">4</span>, <span class="s">'X'</span>)  <span class="c"># &#61;&gt; &quot;abcdX&quot;</span>
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">-3</span>, <span class="s">'X'</span>) <span class="c"># &#61;&gt; &quot;abXcd&quot;</span>
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">-1</span>, <span class="s">'X'</span>) <span class="c"># &#61;&gt; &quot;abcdX&quot;</span>
+
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">5</span>, <span class="s">'X'</span>)  <span class="c"># raises IndexError</span>
+<span class="s">&quot;abcd&quot;</span>.insert(<span class="n">-6</span>, <span class="s">'X'</span>) <span class="c"># raises IndexError</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L997" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5537,7 +5678,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2709" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2767" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5553,7 +5694,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2721" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2779" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5569,7 +5710,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2715" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2773" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5585,7 +5726,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2222" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2290" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5607,7 +5748,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2377" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2445" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5628,25 +5769,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1028" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="match&#40;regex:Regex,pos&#61;&lt;spanclass&#61;&quot;n&quot;&gt;0&lt;/span&gt;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>match</strong>(regex : <a href="Regex.html">Regex</a>, pos = <span class="n">0</span>)
-
-        <a class="method-permalink" href="#match%28regex%3ARegex%2Cpos%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Finds match of <em>regex</em>, starting at <em>pos</em>.</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2497" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1095" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5674,7 +5797,25 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2516" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2574" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="match&#40;regex:Regex,pos&#61;&lt;spanclass&#61;&quot;n&quot;&gt;0&lt;/span&gt;&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>match</strong>(regex : <a href="Regex.html">Regex</a>, pos = <span class="n">0</span>)
+
+        <a class="method-permalink" href="#match%28regex%3ARegex%2Cpos%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Finds match of <em>regex</em>, starting at <em>pos</em>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2555" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5695,7 +5836,7 @@ If <code>offset</code> is present, it defines the position to start the search.<
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2354" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2422" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5708,19 +5849,19 @@ If <code>offset</code> is present, it defines the position to start the search.<
         <a class="method-permalink" href="#rindex%28search%3AString%2Coffset%3Dsize%3Cspanclass%3D%22o%22%3E-%3C%2Fspan%3Esearch.size%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the index of <em>last</em> appearance of <em>c</em> in the string,
+        <div class="doc"><p>Returns the index of the <em>last</em> appearance of <em>c</em> in the string,
 If <code>offset</code> is present, it defines the position to <em>end</em> the search
-(characters beyond that point will be ignored).</p>
+(characters beyond this point are ignored).</p>
 
-<pre><code><span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'o'</span>)    <span class="c"># &#61;&gt; 8</span>
-<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'Z'</span>)    <span class="c"># &#61;&gt; nil</span>
-<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;o&quot;</span>, <span class="n">5</span>) <span class="c"># &#61;&gt; 4</span>
-<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;H&quot;</span>, <span class="n">2</span>) <span class="c"># &#61;&gt; nil</span></code></pre></div>
+<pre><code><span class="s">&quot;Hello, World&quot;</span>.rindex(<span class="s">'o'</span>)    <span class="c"># &#61;&gt; 8</span>
+<span class="s">&quot;Hello, World&quot;</span>.rindex(<span class="s">'Z'</span>)    <span class="c"># &#61;&gt; nil</span>
+<span class="s">&quot;Hello, World&quot;</span>.rindex(<span class="s">&quot;o&quot;</span>, <span class="n">5</span>) <span class="c"># &#61;&gt; 4</span>
+<span class="s">&quot;Hello, World&quot;</span>.rindex(<span class="s">&quot;H&quot;</span>, <span class="n">2</span>) <span class="c"># &#61;&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1910" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1970" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5733,19 +5874,19 @@ If <code>offset</code> is present, it defines the position to <em>end</em> the s
         <a class="method-permalink" href="#rindex%28search%3AChar%2Coffset%3Dsize%3Cspanclass%3D%22o%22%3E-%3C%2Fspan%3E%3Cspanclass%3D%22n%22%3E1%3C%2Fspan%3E%29-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Returns the index of <em>last</em> appearance of <em>c</em> in the string,
+        <div class="doc"><p>Returns the index of the <em>last</em> appearance of <em>c</em> in the string,
 If <code>offset</code> is present, it defines the position to <em>end</em> the search
-(characters beyond that point will be ignored).</p>
+(characters beyond this point are ignored).</p>
 
-<pre><code><span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'o'</span>)    <span class="c"># &#61;&gt; 8</span>
-<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">'Z'</span>)    <span class="c"># &#61;&gt; nil</span>
-<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;o&quot;</span>, <span class="n">5</span>) <span class="c"># &#61;&gt; 4</span>
-<span class="s">&quot;Hello, World&quot;</span>.index(<span class="s">&quot;H&quot;</span>, <span class="n">2</span>) <span class="c"># &#61;&gt; nil</span></code></pre></div>
+<pre><code><span class="s">&quot;Hello, World&quot;</span>.rindex(<span class="s">'o'</span>)    <span class="c"># &#61;&gt; 8</span>
+<span class="s">&quot;Hello, World&quot;</span>.rindex(<span class="s">'Z'</span>)    <span class="c"># &#61;&gt; nil</span>
+<span class="s">&quot;Hello, World&quot;</span>.rindex(<span class="s">&quot;o&quot;</span>, <span class="n">5</span>) <span class="c"># &#61;&gt; 4</span>
+<span class="s">&quot;Hello, World&quot;</span>.rindex(<span class="s">&quot;H&quot;</span>, <span class="n">2</span>) <span class="c"># &#61;&gt; nil</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1894" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1954" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5767,7 +5908,7 @@ If <code>offset</code> is present, it defines the position to <em>end</em> the s
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2388" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2456" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5788,63 +5929,7 @@ If <code>offset</code> is present, it defines the position to <em>end</em> the s
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1012" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="scan&#40;pattern:String,&amp;block&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>scan</strong>(pattern : <a href="String.html">String</a>, &block)
-
-        <a class="method-permalink" href="#scan%28pattern%3AString%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Searches the string for instances of <em>pattern</em>,
-yielding the matched string for each match.</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2551" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="scan&#40;pattern:Regex,&amp;block&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>scan</strong>(pattern : <a href="Regex.html">Regex</a>, &block)
-
-        <a class="method-permalink" href="#scan%28pattern%3ARegex%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Searches the string for instances of <em>pattern</em>, yielding a <code><a href="Regex/MatchData.html">Regex::MatchData</a></code> for each match.</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2524" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="scan&#40;pattern:String&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>scan</strong>(pattern : <a href="String.html">String</a>)
-
-        <a class="method-permalink" href="#scan%28pattern%3AString%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Searches the string for instances of <em>pattern</em>,
-returning an array of the matched string for each match.</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2563" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1079" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5863,7 +5948,63 @@ returning an array of <code><a href="Regex/MatchData.html">Regex::MatchData</a><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2541" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2599" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="scan&#40;pattern:String,&amp;block&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>scan</strong>(pattern : <a href="String.html">String</a>, &block)
+
+        <a class="method-permalink" href="#scan%28pattern%3AString%2C%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Searches the string for instances of <em>pattern</em>,
+yielding the matched string for each match.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2609" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="scan&#40;pattern:String&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>scan</strong>(pattern : <a href="String.html">String</a>)
+
+        <a class="method-permalink" href="#scan%28pattern%3AString%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Searches the string for instances of <em>pattern</em>,
+returning an array of the matched string for each match.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2621" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="scan&#40;pattern:Regex,&amp;block&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>scan</strong>(pattern : <a href="Regex.html">Regex</a>, &block)
+
+        <a class="method-permalink" href="#scan%28pattern%3ARegex%2C%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Searches the string for instances of <em>pattern</em>, yielding a <code><a href="Regex/MatchData.html">Regex::MatchData</a></code> for each match.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2582" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5884,7 +6025,62 @@ returning an array of <code><a href="Regex/MatchData.html">Regex::MatchData</a><
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2878" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2929" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="split&#40;separator:String,limit&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>split</strong>(separator : <a href="String.html">String</a>, limit = <span class="n">nil</span>)
+
+        <a class="method-permalink" href="#split%28separator%3AString%2Climit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Makes an array by splitting the string on <em>separator</em> (and removing instances of <em>separator</em>).</p>
+
+<p>If <em>limit</em> is present, the array will be limited to <em>limit</em> items and
+the final item will contain the remainder of the string.</p>
+
+<p>If <em>separator</em> is an empty string (<code>""</code>), the string will be separated into one-character strings.</p>
+
+<pre><code>long_river_name <span class="o">=</span> <span class="s">&quot;Mississippi&quot;</span>
+long_river_name.split(<span class="s">&quot;ss&quot;</span>) <span class="c"># &#61;&gt; &#91;&quot;Mi&quot;, &quot;i&quot;, &quot;ippi&quot;&#93;</span>
+long_river_name.split(<span class="s">&quot;i&quot;</span>)  <span class="c"># &#61;&gt; &#91;&quot;M&quot;, &quot;ss&quot;, &quot;ss&quot;, &quot;pp&quot;&#93;</span>
+long_river_name.split(<span class="s">&quot;&quot;</span>)   <span class="c"># &#61;&gt; &#91;&quot;M&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;p&quot;, &quot;p&quot;, &quot;i&quot;&#93;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2176" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="split&#40;separator:Regex,limit&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>split</strong>(separator : <a href="Regex.html">Regex</a>, limit = <span class="n">nil</span>)
+
+        <a class="method-permalink" href="#split%28separator%3ARegex%2Climit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Makes an array by splitting the string on <em>separator</em> (and removing instances of <em>separator</em>).</p>
+
+<p>If <em>limit</em> is present, the array will be limited to <em>limit</em> items and
+the final item will contain the remainder of the string.</p>
+
+<p>If <em>separator</em> is an empty regex (<code>//</code>), the string will be separated into one-character strings.</p>
+
+<pre><code>long_river_name <span class="o">=</span> <span class="s">&quot;Mississippi&quot;</span>
+long_river_name.split(<span class="s">/s&#43;/</span>) <span class="c"># &#61;&gt; &#91;&quot;Mi&quot;, &quot;i&quot;, &quot;ippi&quot;&#93;</span>
+long_river_name.split(<span class="s">//</span>)   <span class="c"># &#61;&gt; &#91;&quot;M&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;p&quot;, &quot;p&quot;, &quot;i&quot;&#93;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2224" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5913,7 +6109,7 @@ old_pond.split(<span class="n">3</span>) <span class="c"># &#61;&gt; &#91;&quot;
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2007" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2075" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5937,62 +6133,7 @@ with the entire remainder added to the last string.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2067" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="split&#40;separator:Regex,limit&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>split</strong>(separator : <a href="Regex.html">Regex</a>, limit = <span class="n">nil</span>)
-
-        <a class="method-permalink" href="#split%28separator%3ARegex%2Climit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Makes an array by splitting the string on <em>separator</em> (and removing instances of <em>separator</em>).</p>
-
-<p>If <em>limit</em> is present, the array will be limited to <em>limit</em> items and
-the final item will contain the remainder of the string.</p>
-
-<p>If <em>separator</em> is an empty regex (<code>//</code>), the string will be separated into one-character strings.</p>
-
-<pre><code>long_river_name <span class="o">=</span> <span class="s">&quot;Mississippi&quot;</span>
-long_river_name.split(<span class="s">/s&#43;/</span>) <span class="c"># &#61;&gt; &#91;&quot;Mi&quot;, &quot;i&quot;, &quot;ippi&quot;&#93;</span>
-long_river_name.split(<span class="s">//</span>)   <span class="c"># &#61;&gt; &#91;&quot;M&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;p&quot;, &quot;p&quot;, &quot;i&quot;&#93;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2156" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="split&#40;separator:String,limit&#61;&lt;spanclass&#61;&quot;n&quot;&gt;nil&lt;/span&gt;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>split</strong>(separator : <a href="String.html">String</a>, limit = <span class="n">nil</span>)
-
-        <a class="method-permalink" href="#split%28separator%3AString%2Climit%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Makes an array by splitting the string on <em>separator</em> (and removing instances of <em>separator</em>).</p>
-
-<p>If <em>limit</em> is present, the array will be limited to <em>limit</em> items and
-the final item will contain the remainder of the string.</p>
-
-<p>If <em>separator</em> is an empty string (<code>""</code>), the string will be separated into one-character strings.</p>
-
-<pre><code>long_river_name <span class="o">=</span> <span class="s">&quot;Mississippi&quot;</span>
-long_river_name.split(<span class="s">&quot;ss&quot;</span>) <span class="c"># &#61;&gt; &#91;&quot;Mi&quot;, &quot;i&quot;, &quot;ippi&quot;&#93;</span>
-long_river_name.split(<span class="s">&quot;i&quot;</span>)  <span class="c"># &#61;&gt; &#91;&quot;M&quot;, &quot;ss&quot;, &quot;ss&quot;, &quot;pp&quot;&#93;</span>
-long_river_name.split(<span class="s">&quot;&quot;</span>)   <span class="c"># &#61;&gt; &#91;&quot;M&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;s&quot;, &quot;s&quot;, &quot;i&quot;, &quot;p&quot;, &quot;p&quot;, &quot;i&quot;&#93;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2108" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2135" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6012,7 +6153,7 @@ long_river_name.split(<span class="s">&quot;&quot;</span>)   <span class="c"># &
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1636" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1703" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6036,7 +6177,7 @@ block returned a truthy value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1621" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1688" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6062,7 +6203,7 @@ they match the given set.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1651" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1718" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6083,23 +6224,7 @@ that were the same as the previous one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1661" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="starts_with?&#40;char:Char&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>starts_with?</strong>(char : <a href="Char.html">Char</a>)
-
-        <a class="method-permalink" href="#starts_with%3F%28char%3AChar%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2815" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1728" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6115,7 +6240,23 @@ that were the same as the previous one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2810" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2868" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="starts_with?&#40;char:Char&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>starts_with?</strong>(char : <a href="Char.html">Char</a>)
+
+        <a class="method-permalink" href="#starts_with%3F%28char%3AChar%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2873" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6136,7 +6277,52 @@ that were the same as the previous one.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L991" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1058" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sub&#40;pattern:Regex,hash:Hash&#40;String,_&#41;&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>sub</strong>(pattern : <a href="Regex.html">Regex</a>, hash : <a href="Hash.html">Hash</a>(<a href="String.html">String</a>, _))
+
+        <a class="method-permalink" href="#sub%28pattern%3ARegex%2Chash%3AHash%28String%2C_%29%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a string where the first occurrences of the given <em>pattern</em> is replaced
+with the matching entry from the <em>hash</em> of replacements. If the first match
+is not included in the <em>hash</em>, nothing is replaced.</p>
+
+<pre><code><span class="s">&quot;hello&quot;</span>.sub(<span class="s">/&#40;he|l|o&#41;/</span>, {<span class="s">&quot;he&quot;</span>: <span class="s">&quot;ha&quot;</span>, <span class="s">&quot;l&quot;</span>: <span class="s">&quot;la&quot;</span>}) <span class="c"># &#61;&gt; &quot;hallo&quot;</span>
+<span class="s">&quot;hello&quot;</span>.sub(<span class="s">/&#40;he|l|o&#41;/</span>, {<span class="s">&quot;l&quot;</span>: <span class="s">&quot;la&quot;</span>})             <span class="c"># &#61;&gt; &quot;hello&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1282" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sub&#40;char:Char,replacement&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>sub</strong>(char : <a href="Char.html">Char</a>, replacement)
+
+        <a class="method-permalink" href="#sub%28char%3AChar%2Creplacement%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a string where the first occurrence of <em>char</em> is replaced by
+<em>replacement</em>.</p>
+
+<pre><code><span class="s">&quot;hello&quot;</span>.sub(<span class="s">'l'</span>, <span class="s">&quot;lo&quot;</span>)      <span class="c"># &#61;&gt; &quot;helolo&quot;</span>
+<span class="s">&quot;hello world&quot;</span>.sub(<span class="s">'o'</span>, <span class="s">'a'</span>) <span class="c"># &#61;&gt; &quot;hella world&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1194" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6158,7 +6344,7 @@ block and replaced by its return value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1109" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1176" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6179,7 +6365,7 @@ the block's return value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1154" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1221" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6200,7 +6386,49 @@ with the block's value.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1241" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1308" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sub&#40;hash:Hash&#40;Char,_&#41;&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>sub</strong>(hash : <a href="Hash.html">Hash</a>(<a href="Char.html">Char</a>, _))
+
+        <a class="method-permalink" href="#sub%28hash%3AHash%28Char%2C_%29%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a string where the first char in the string matching a key in the
+given <em>hash</em> is replaced by the corresponding hash value.</p>
+
+<pre><code><span class="s">&quot;hello&quot;</span>.sub({<span class="s">'a'</span> => <span class="s">'b'</span>, <span class="s">'l'</span> => <span class="s">'d'</span>}) <span class="c"># &#61;&gt; &quot;hedlo&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1325" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sub&#40;string:String,replacement&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>sub</strong>(string : <a href="String.html">String</a>, replacement)
+
+        <a class="method-permalink" href="#sub%28string%3AString%2Creplacement%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a string where the first occurrences of the given <em>string</em> is replaced
+with the given <em>replacement</em>.</p>
+
+<pre><code><span class="s">&quot;hello yellow&quot;</span>.sub(<span class="s">&quot;ll&quot;</span>, <span class="s">&quot;dd&quot;</span>) <span class="c"># &#61;&gt; &quot;heddo yellow&quot;</span></code></pre></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1298" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6249,94 +6477,7 @@ in <em>pattern</em>.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1199" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="sub&#40;hash:Hash&#40;Char,_&#41;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>sub</strong>(hash : <a href="Hash.html">Hash</a>(<a href="Char.html">Char</a>, _))
-
-        <a class="method-permalink" href="#sub%28hash%3AHash%28Char%2C_%29%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns a string where the first char in the string matching a key in the
-given <em>hash</em> is replaced by the corresponding hash value.</p>
-
-<pre><code><span class="s">&quot;hello&quot;</span>.sub({<span class="s">'a'</span> => <span class="s">'b'</span>, <span class="s">'l'</span> => <span class="s">'d'</span>}) <span class="c"># &#61;&gt; &quot;hedlo&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1258" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="sub&#40;string:String,replacement&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>sub</strong>(string : <a href="String.html">String</a>, replacement)
-
-        <a class="method-permalink" href="#sub%28string%3AString%2Creplacement%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns a string where the first occurrences of the given <em>string</em> is replaced
-with the given <em>replacement</em>.</p>
-
-<pre><code><span class="s">&quot;hello yellow&quot;</span>.sub(<span class="s">&quot;ll&quot;</span>, <span class="s">&quot;dd&quot;</span>) <span class="c"># &#61;&gt; &quot;heddo yellow&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1231" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="sub&#40;char:Char,replacement&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>sub</strong>(char : <a href="Char.html">Char</a>, replacement)
-
-        <a class="method-permalink" href="#sub%28char%3AChar%2Creplacement%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns a string where the first occurrence of <em>char</em> is replaced by
-<em>replacement</em>.</p>
-
-<pre><code><span class="s">&quot;hello&quot;</span>.sub(<span class="s">'l'</span>, <span class="s">&quot;lo&quot;</span>)      <span class="c"># &#61;&gt; &quot;helolo&quot;</span>
-<span class="s">&quot;hello world&quot;</span>.sub(<span class="s">'o'</span>, <span class="s">'a'</span>) <span class="c"># &#61;&gt; &quot;hella world&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1127" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="sub&#40;pattern:Regex,hash:Hash&#40;String,_&#41;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>sub</strong>(pattern : <a href="Regex.html">Regex</a>, hash : <a href="Hash.html">Hash</a>(<a href="String.html">String</a>, _))
-
-        <a class="method-permalink" href="#sub%28pattern%3ARegex%2Chash%3AHash%28String%2C_%29%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Returns a string where the first occurrences of the given <em>pattern</em> is replaced
-with the matching entry from the <em>hash</em> of replacements. If the first match
-is not included in the <em>hash</em>, nothing is replaced.</p>
-
-<pre><code><span class="s">&quot;hello&quot;</span>.sub(<span class="s">/&#40;he|l|o&#41;/</span>, {<span class="s">&quot;he&quot;</span>: <span class="s">&quot;ha&quot;</span>, <span class="s">&quot;l&quot;</span>: <span class="s">&quot;la&quot;</span>}) <span class="c"># &#61;&gt; &quot;hallo&quot;</span>
-<span class="s">&quot;hello&quot;</span>.sub(<span class="s">/&#40;he|l|o&#41;/</span>, {<span class="s">&quot;l&quot;</span>: <span class="s">&quot;la&quot;</span>})             <span class="c"># &#61;&gt; &quot;hello&quot;</span></code></pre></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1215" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1266" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6366,7 +6507,23 @@ there is no carry, adding an additional character if necessary.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2449" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2507" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_big_f-instance-method">
+      <div class="signature">
+        
+        def <strong>to_big_f</strong>
+
+        <a class="method-permalink" href="#to_big_f-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_float.cr#L216" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6386,7 +6543,7 @@ there is no carry, adding an additional character if necessary.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/big_int/big_int.cr#L385" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_int.cr#L388" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6411,7 +6568,7 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L594" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L590" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6434,7 +6591,7 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L603" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L599" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6452,7 +6609,7 @@ Extraneous characters past the end of a valid number are ignored. If there is no
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L608" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L604" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6474,7 +6631,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L311" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L307" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6521,25 +6678,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L287" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="to_i16&#40;base:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;10&lt;/span&gt;,whitespace&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;,underscore&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,prefix&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,strict&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;,&amp;block&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>to_i16</strong>(base : <a href="Int.html">Int</a> = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
-
-        <a class="method-permalink" href="#to_i16%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an Int16 or the block's value.</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L356" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L283" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6557,7 +6696,25 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L346" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L342" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_i16&#40;base:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;10&lt;/span&gt;,whitespace&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;,underscore&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,prefix&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,strict&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;,&amp;block&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>to_i16</strong>(base : <a href="Int.html">Int</a> = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>, &block)
+
+        <a class="method-permalink" href="#to_i16%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an Int16 or the block's value.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L352" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6575,25 +6732,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L351" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="to_i32&#40;base:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;10&lt;/span&gt;,whitespace&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;,underscore&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,prefix&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,strict&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;&#41;:Int32-instance-method">
-      <div class="signature">
-        
-        def <strong>to_i32</strong>(base : <a href="Int.html">Int</a> = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int32.html">Int32</a>
-
-        <a class="method-permalink" href="#to_i32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29%3AInt32-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code>.</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L376" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L347" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6611,7 +6750,25 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L386" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L382" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_i32&#40;base:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;10&lt;/span&gt;,whitespace&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;,underscore&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,prefix&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,strict&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;&#41;:Int32-instance-method">
+      <div class="signature">
+        
+        def <strong>to_i32</strong>(base : <a href="Int.html">Int</a> = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="Int32.html">Int32</a>
+
+        <a class="method-permalink" href="#to_i32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29%3AInt32-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code>.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L372" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6629,7 +6786,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L381" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L377" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6647,7 +6804,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L416" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L412" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6665,7 +6822,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L406" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L402" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6683,7 +6840,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L411" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L407" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6701,7 +6858,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L316" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L312" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6719,7 +6876,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L326" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L322" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6737,7 +6894,7 @@ or if the resulting integer doesn't fit an Int32, an ArgumentError is raised.</p
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L321" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L317" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6761,7 +6918,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L300" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L296" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6777,23 +6934,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/to_json.cr#L183" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="to_s-instance-method">
-      <div class="signature">
-        
-        def <strong>to_s</strong>
-
-        <a class="method-permalink" href="#to_s-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2927" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/to_json.cr#L172" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6809,7 +6950,23 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2931" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2982" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_s-instance-method">
+      <div class="signature">
+        
+        def <strong>to_s</strong>
+
+        <a class="method-permalink" href="#to_s-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2978" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6825,7 +6982,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2923" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2974" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6843,7 +7000,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L371" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L367" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6861,7 +7018,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L361" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L357" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6879,25 +7036,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L366" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="to_u32&#40;base:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;10&lt;/span&gt;,whitespace&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;,underscore&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,prefix&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,strict&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;&#41;:UInt32-instance-method">
-      <div class="signature">
-        
-        def <strong>to_u32</strong>(base : <a href="Int.html">Int</a> = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="UInt32.html">UInt32</a>
-
-        <a class="method-permalink" href="#to_u32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29%3AUInt32-instance-method">#</a>
-      </div>
-      
-        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an UInt32.</p></div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L391" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L362" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6915,7 +7054,25 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L401" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L397" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_u32&#40;base:Int&#61;&lt;spanclass&#61;&quot;n&quot;&gt;10&lt;/span&gt;,whitespace&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;,underscore&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,prefix&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;,strict&#61;&lt;spanclass&#61;&quot;n&quot;&gt;true&lt;/span&gt;&#41;:UInt32-instance-method">
+      <div class="signature">
+        
+        def <strong>to_u32</strong>(base : <a href="Int.html">Int</a> = <span class="n">10</span>, whitespace = <span class="n">true</span>, underscore = <span class="n">false</span>, prefix = <span class="n">false</span>, strict = <span class="n">true</span>) : <a href="UInt32.html">UInt32</a>
+
+        <a class="method-permalink" href="#to_u32%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%29%3AUInt32-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Same as <code><a href="String.html#to_i%28base%3AInt%3D%3Cspanclass%3D%22n%22%3E10%3C%2Fspan%3E%2Cwhitespace%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2Cunderscore%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cprefix%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cstrict%3D%3Cspanclass%3D%22n%22%3Etrue%3C%2Fspan%3E%2C%26block%29-instance-method">#to_i</a></code> but returns an UInt32.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L387" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6933,7 +7090,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L396" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L392" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6951,7 +7108,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L431" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L427" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6969,7 +7126,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L421" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L417" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -6987,7 +7144,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L426" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L422" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7005,7 +7162,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L341" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L337" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7023,7 +7180,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L331" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L327" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7041,7 +7198,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L336" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L332" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7057,7 +7214,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2935" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2986" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7073,7 +7230,7 @@ of this string, or if the resulting integer doesn't fit an Int32.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/yaml/to_yaml.cr#L83" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/yaml/to_yaml.cr#L78" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7097,7 +7254,7 @@ the rest.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L1063" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L1130" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7119,7 +7276,7 @@ the rest.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2268" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2336" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7135,7 +7292,7 @@ the rest.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L812" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L808" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7151,7 +7308,7 @@ the rest.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2943" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2994" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7167,7 +7324,7 @@ the rest.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L2939" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L2990" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7188,7 +7345,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L836" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L832" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -7211,7 +7368,7 @@ counterpart.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/string.cr#L464" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/string.cr#L460" target="_blank">View source</a>]
         
       </div>
     </div>

@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="../BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="../BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="../BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="../Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="../Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="../Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="../String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="../Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="../Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="../Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="../Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="../Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="../Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="../Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="../Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="../Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="../Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="../Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="../Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2168,7 +2223,7 @@ access and modification of them.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr" target="_blank">http/cookie.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr" target="_blank">http/cookie.cr</a>
     
     <br/>
   
@@ -2198,7 +2253,7 @@ access and modification of them.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#domain-instance-method" class="signature"><strong>#domain</strong></a>
+        <a href="#domain%3ANil%7CString-instance-method" class="signature"><strong>#domain</strong> : Nil | String</a>
         
       </li>
     
@@ -2208,7 +2263,12 @@ access and modification of them.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#expires-instance-method" class="signature"><strong>#expires</strong></a>
+        <a href="#expired%3F-instance-method" class="signature"><strong>#expired?</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#expires%3ATime%7CNil-instance-method" class="signature"><strong>#expires</strong> : Time | Nil</a>
         
       </li>
     
@@ -2218,7 +2278,7 @@ access and modification of them.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#extension-instance-method" class="signature"><strong>#extension</strong></a>
+        <a href="#extension%3ANil%7CString-instance-method" class="signature"><strong>#extension</strong> : Nil | String</a>
         
       </li>
     
@@ -2233,7 +2293,7 @@ access and modification of them.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#http_only-instance-method" class="signature"><strong>#http_only</strong></a>
+        <a href="#http_only%3ABool-instance-method" class="signature"><strong>#http_only</strong> : Bool</a>
         
       </li>
     
@@ -2243,7 +2303,7 @@ access and modification of them.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#name-instance-method" class="signature"><strong>#name</strong></a>
+        <a href="#name%3AString-instance-method" class="signature"><strong>#name</strong> : String</a>
         
       </li>
     
@@ -2253,7 +2313,7 @@ access and modification of them.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#path-instance-method" class="signature"><strong>#path</strong></a>
+        <a href="#path%3AString-instance-method" class="signature"><strong>#path</strong> : String</a>
         
       </li>
     
@@ -2263,7 +2323,7 @@ access and modification of them.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#secure-instance-method" class="signature"><strong>#secure</strong></a>
+        <a href="#secure%3ABool-instance-method" class="signature"><strong>#secure</strong> : Bool</a>
         
       </li>
     
@@ -2283,7 +2343,7 @@ access and modification of them.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#value-instance-method" class="signature"><strong>#value</strong></a>
+        <a href="#value%3AString-instance-method" class="signature"><strong>#value</strong> : String</a>
         
       </li>
     
@@ -2444,12 +2504,12 @@ access and modification of them.</p>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="../Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="../Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="../Object.html#hash-class-method" class="tooltip">
@@ -2491,7 +2551,7 @@ access and modification of them.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L18" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L18" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2515,12 +2575,12 @@ access and modification of them.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="domain-instance-method">
+    <div class="entry-detail" id="domain:Nil|String-instance-method">
       <div class="signature">
         
-        def <strong>domain</strong>
+        def <strong>domain</strong> : <a href="../Nil.html">Nil</a> | <a href="../String.html">String</a>
 
-        <a class="method-permalink" href="#domain-instance-method">#</a>
+        <a class="method-permalink" href="#domain%3ANil%7CString-instance-method">#</a>
       </div>
       
       <br/>
@@ -2543,12 +2603,28 @@ access and modification of them.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="expires-instance-method">
+    <div class="entry-detail" id="expired?-instance-method">
       <div class="signature">
         
-        def <strong>expires</strong>
+        def <strong>expired?</strong>
 
-        <a class="method-permalink" href="#expires-instance-method">#</a>
+        <a class="method-permalink" href="#expired%3F-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L45" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="expires:Time|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>expires</strong> : <a href="../Time.html">Time</a> | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#expires%3ATime%7CNil-instance-method">#</a>
       </div>
       
       <br/>
@@ -2571,12 +2647,12 @@ access and modification of them.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="extension-instance-method">
+    <div class="entry-detail" id="extension:Nil|String-instance-method">
       <div class="signature">
         
-        def <strong>extension</strong>
+        def <strong>extension</strong> : <a href="../Nil.html">Nil</a> | <a href="../String.html">String</a>
 
-        <a class="method-permalink" href="#extension-instance-method">#</a>
+        <a class="method-permalink" href="#extension%3ANil%7CString-instance-method">#</a>
       </div>
       
       <br/>
@@ -2613,12 +2689,12 @@ access and modification of them.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="http_only-instance-method">
+    <div class="entry-detail" id="http_only:Bool-instance-method">
       <div class="signature">
         
-        def <strong>http_only</strong>
+        def <strong>http_only</strong> : <a href="../Bool.html">Bool</a>
 
-        <a class="method-permalink" href="#http_only-instance-method">#</a>
+        <a class="method-permalink" href="#http_only%3ABool-instance-method">#</a>
       </div>
       
       <br/>
@@ -2641,12 +2717,12 @@ access and modification of them.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="name-instance-method">
+    <div class="entry-detail" id="name:String-instance-method">
       <div class="signature">
         
-        def <strong>name</strong>
+        def <strong>name</strong> : <a href="../String.html">String</a>
 
-        <a class="method-permalink" href="#name-instance-method">#</a>
+        <a class="method-permalink" href="#name%3AString-instance-method">#</a>
       </div>
       
       <br/>
@@ -2669,12 +2745,12 @@ access and modification of them.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="path-instance-method">
+    <div class="entry-detail" id="path:String-instance-method">
       <div class="signature">
         
-        def <strong>path</strong>
+        def <strong>path</strong> : <a href="../String.html">String</a>
 
-        <a class="method-permalink" href="#path-instance-method">#</a>
+        <a class="method-permalink" href="#path%3AString-instance-method">#</a>
       </div>
       
       <br/>
@@ -2697,12 +2773,12 @@ access and modification of them.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="secure-instance-method">
+    <div class="entry-detail" id="secure:Bool-instance-method">
       <div class="signature">
         
-        def <strong>secure</strong>
+        def <strong>secure</strong> : <a href="../Bool.html">Bool</a>
 
-        <a class="method-permalink" href="#secure-instance-method">#</a>
+        <a class="method-permalink" href="#secure%3ABool-instance-method">#</a>
       </div>
       
       <br/>
@@ -2736,7 +2812,7 @@ access and modification of them.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2752,17 +2828,17 @@ access and modification of them.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/http/cookie.cr#L26" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/http/cookie.cr#L26" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="value-instance-method">
+    <div class="entry-detail" id="value:String-instance-method">
       <div class="signature">
         
-        def <strong>value</strong>
+        def <strong>value</strong> : <a href="../String.html">String</a>
 
-        <a class="method-permalink" href="#value-instance-method">#</a>
+        <a class="method-permalink" href="#value%3AString-instance-method">#</a>
       </div>
       
       <br/>

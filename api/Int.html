@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2155,7 +2210,7 @@
 being able to represent numbers of 8, 16, 32 and 64 bits respectively.
 There are four unsigned integer types: <code><a href="UInt8.html">UInt8</a></code>, <code><a href="UInt16.html">UInt16</a></code>, <code><a href="UInt32.html">UInt32</a></code> and <code><a href="UInt64.html">UInt64</a></code>.</p>
 
-<p>An integer literal is an optional <code><a href="Int.html#%2B%28other%3ABigInt%29%3ABigInt-instance-method">#+</a></code> or <code><a href="Int.html#-%28other%3ABigInt%29%3ABigInt-instance-method">#-</a></code> sign, followed by
+<p>An integer literal is an optional <code><a href="Int.html#%2B%28other%3ABigInt%29%3ABigInt-instance-method">#+</a></code> or <code><a href="Int.html#-%28other%3ABigRational%29-instance-method">#-</a></code> sign, followed by
 a sequence of digits and underscores, optionally followed by a suffix.
 If no suffix is present, the literal's type is the lowest between <code><a href="Int32.html">Int32</a></code>, <code><a href="Int64.html">Int64</a></code> and <code><a href="UInt64.html">UInt64</a></code>
 in which the number fits:</p>
@@ -2206,6 +2261,8 @@ in which the number fits:</p>
   
     <li class="other-type"><a href="Comparable.html">Comparable(BigInt)</a></li>
   
+    <li class="other-type"><a href="Comparable.html">Comparable(BigRational)</a></li>
+  
   </ul>
 
 
@@ -2243,27 +2300,32 @@ in which the number fits:</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr" target="_blank">int.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr" target="_blank">int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr" target="_blank">time/span.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr" target="_blank">time/span.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr" target="_blank">time/span.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr" target="_blank">time/span.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/big_int/big_int.cr" target="_blank">big_int/big_int.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_int.cr" target="_blank">big/big_int.cr</a>
     
     <br/>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_rational.cr" target="_blank">big/big_rational.cr</a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/to_json.cr" target="_blank">json/to_json.cr</a>
     
     <br/>
   
@@ -2290,12 +2352,12 @@ in which the number fits:</p>
   <ul class="list-summary">
     
       <li class="entry-summary">
-        <a href="#%25%28other%3AInt%29-instance-method" class="signature"><strong>#%</strong>(other : Int)</a>
+        <a href="#%25%28other%3ABigInt%29%3ABigInt-instance-method" class="signature"><strong>#%</strong>(other : BigInt) : BigInt</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%25%28other%3ABigInt%29%3ABigInt-instance-method" class="signature"><strong>#%</strong>(other : BigInt) : BigInt</a>
+        <a href="#%25%28other%3AInt%29-instance-method" class="signature"><strong>#%</strong>(other : Int)</a>
         
       </li>
     
@@ -2320,12 +2382,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%26%28other%3AInt32%29-instance-method" class="signature"><strong>#&</strong>(other : Int32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%26%28other%3AInt64%29-instance-method" class="signature"><strong>#&</strong>(other : Int64)</a>
+        <a href="#%26%28other%3AInt16%29-instance-method" class="signature"><strong>#&</strong>(other : Int16)</a>
         
       </li>
     
@@ -2335,7 +2392,17 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%26%28other%3AInt16%29-instance-method" class="signature"><strong>#&</strong>(other : Int16)</a>
+        <a href="#%26%28other%3AInt64%29-instance-method" class="signature"><strong>#&</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%26%28other%3AInt32%29-instance-method" class="signature"><strong>#&</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2A%28other%3ABigRational%29-instance-method" class="signature"><strong>#*</strong>(other : BigRational)</a>
         
       </li>
     
@@ -2345,17 +2412,31 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%2A%2A%28other%3AInt%29-instance-method" class="signature"><strong>#**</strong>(other : Int)</a>
+        <a href="#%2A%2A%28exponent%3AInt%29%3Aself-instance-method" class="signature"><strong>#**</strong>(exponent : Int) : self</a>
+        
+          <div class="summary"><p>Returns the value of raising <em>self</em> to the power of <em>exponent</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#%2A%2A%28other%29-instance-method" class="signature"><strong>#**</strong>(other)</a>
+        <a href="#%2A%2A%28exponent%3AFloat%29%3AFloat64-instance-method" class="signature"><strong>#**</strong>(exponent : Float) : Float64</a>
+        
+          <div class="summary"><p>Returns the value of raising <em>self</em> to the power of <em>exponent</em>.</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#%2B%28other%3ABigInt%29%3ABigInt-instance-method" class="signature"><strong>#+</strong>(other : BigInt) : BigInt</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%2B%28other%3ABigRational%29-instance-method" class="signature"><strong>#+</strong>(other : BigRational)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#-%28other%3ABigRational%29-instance-method" class="signature"><strong>#-</strong>(other : BigRational)</a>
         
       </li>
     
@@ -2375,6 +2456,11 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#%2F%28other%3ABigRational%29-instance-method" class="signature"><strong>#/</strong>(other : BigRational)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#%3C%3C%28count%3AInt%29-instance-method" class="signature"><strong>#<<</strong>(count : Int)</a>
         
           <div class="summary"><p>Returns the result of shifting this number's bits <em>count</em> positions to the left.</p></div>
@@ -2383,6 +2469,11 @@ in which the number fits:</p>
     
       <li class="entry-summary">
         <a href="#%3C%3D%3E%28other%3ABigInt%29-instance-method" class="signature"><strong>#<=></strong>(other : BigInt)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%3C%3D%3E%28other%3ABigRational%29-instance-method" class="signature"><strong>#<=></strong>(other : BigRational)</a>
         
       </li>
     
@@ -2399,7 +2490,27 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#%5E%28other%3AUInt64%29-instance-method" class="signature"><strong>#^</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%3AInt16%29-instance-method" class="signature"><strong>#^</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#%5E%28other%3AUInt32%29-instance-method" class="signature"><strong>#^</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%3AInt64%29-instance-method" class="signature"><strong>#^</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%5E%28other%3AInt32%29-instance-method" class="signature"><strong>#^</strong>(other : Int32)</a>
         
       </li>
     
@@ -2414,27 +2525,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%5E%28other%3AInt32%29-instance-method" class="signature"><strong>#^</strong>(other : Int32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%5E%28other%3AInt16%29-instance-method" class="signature"><strong>#^</strong>(other : Int16)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%5E%28other%3AInt64%29-instance-method" class="signature"><strong>#^</strong>(other : Int64)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#%5E%28other%3AInt8%29-instance-method" class="signature"><strong>#^</strong>(other : Int8)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%5E%28other%3AUInt64%29-instance-method" class="signature"><strong>#^</strong>(other : UInt64)</a>
         
       </li>
     
@@ -2603,17 +2694,12 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#times-instance-method" class="signature"><strong>#times</strong></a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#times%28%26block%3Aself-%3E%29-instance-method" class="signature"><strong>#times</strong>(&block : self -> )</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#to%28n%29-instance-method" class="signature"><strong>#to</strong>(n)</a>
+        <a href="#times-instance-method" class="signature"><strong>#times</strong></a>
         
       </li>
     
@@ -2623,9 +2709,21 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#to%28n%29-instance-method" class="signature"><strong>#to</strong>(n)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#to_big_i%3ABigInt-instance-method" class="signature"><strong>#to_big_i</strong> : BigInt</a>
         
           <div class="summary"><p>Returns a BigInt representing this integer.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_big_r-instance-method" class="signature"><strong>#to_big_r</strong></a>
+        
+          <div class="summary"><p>Returns a BigRational representing this integer.</p></div>
         
       </li>
     
@@ -2642,12 +2740,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s%28base%3AInt%2Cio%3AIO%2Cupcase%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#to_s</strong>(base : Int, io : IO, upcase : Bool = <span class="n">false</span>)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#to_s%28base%3AInt%2Cupcase%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#to_s</strong>(base : Int, upcase : Bool = <span class="n">false</span>)</a>
+        <a href="#to_s%28io%3AIO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
         
       </li>
     
@@ -2657,7 +2750,12 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#to_s%28io%3AIO%29-instance-method" class="signature"><strong>#to_s</strong>(io : IO)</a>
+        <a href="#to_s%28base%3AInt%2Cio%3AIO%2Cupcase%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#to_s</strong>(base : Int, io : IO, upcase : Bool = <span class="n">false</span>)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#to_s%28base%3AInt%2Cupcase%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method" class="signature"><strong>#to_s</strong>(base : Int, upcase : Bool = <span class="n">false</span>)</a>
         
       </li>
     
@@ -2672,12 +2770,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_div%28other%3AUInt8%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt8)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_div%28other%3AUInt16%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt16)</a>
+        <a href="#unsafe_div%28other%3AUInt32%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt32)</a>
         
       </li>
     
@@ -2687,12 +2780,17 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_div%28other%3AUInt32%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt32)</a>
+        <a href="#unsafe_div%28other%3AUInt16%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt16)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#unsafe_div%28other%3AInt64%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_div%28other%3AUInt8%29-instance-method" class="signature"><strong>#unsafe_div</strong>(other : UInt8)</a>
         
       </li>
     
@@ -2707,17 +2805,12 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#unsafe_mod%28other%3AInt64%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#unsafe_mod%28other%3AInt32%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_mod%28other%3AUInt16%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt16)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_mod%28other%3AUInt32%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt32)</a>
         
       </li>
     
@@ -2727,12 +2820,17 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_mod%28other%3AInt64%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int64)</a>
+        <a href="#unsafe_mod%28other%3AUInt64%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt64)</a>
         
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_mod%28other%3AInt16%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int16)</a>
+        <a href="#unsafe_mod%28other%3AUInt32%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_mod%28other%3AUInt16%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt16)</a>
         
       </li>
     
@@ -2742,12 +2840,27 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_mod%28other%3AUInt64%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : UInt64)</a>
+        <a href="#unsafe_mod%28other%3AInt16%29-instance-method" class="signature"><strong>#unsafe_mod</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%3AUInt16%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt16)</a>
         
       </li>
     
       <li class="entry-summary">
         <a href="#unsafe_shl%28other%3AUInt8%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%3AUInt64%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shl%28other%3AUInt32%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt32)</a>
         
       </li>
     
@@ -2762,21 +2875,6 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_shl%28other%3AUInt16%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt16)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_shl%28other%3AUInt32%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_shl%28other%3AUInt64%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : UInt64)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#unsafe_shl%28other%3AInt32%29-instance-method" class="signature"><strong>#unsafe_shl</strong>(other : Int32)</a>
         
       </li>
@@ -2787,12 +2885,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_shr%28other%3AUInt64%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : UInt64)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_shr%28other%3AUInt16%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : UInt16)</a>
+        <a href="#unsafe_shr%28other%3AInt64%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : Int64)</a>
         
       </li>
     
@@ -2802,17 +2895,7 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#unsafe_shr%28other%3AInt64%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : Int64)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_shr%28other%3AInt32%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : Int32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#unsafe_shr%28other%3AInt8%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : Int8)</a>
+        <a href="#unsafe_shr%28other%3AUInt16%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : UInt16)</a>
         
       </li>
     
@@ -2822,7 +2905,22 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#unsafe_shr%28other%3AInt8%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shr%28other%3AInt32%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#unsafe_shr%28other%3AUInt32%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#unsafe_shr%28other%3AUInt64%29-instance-method" class="signature"><strong>#unsafe_shr</strong>(other : UInt64)</a>
         
       </li>
     
@@ -2857,26 +2955,6 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#%7C%28other%3AInt8%29-instance-method" class="signature"><strong>#|</strong>(other : Int8)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%7C%28other%3AUInt32%29-instance-method" class="signature"><strong>#|</strong>(other : UInt32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%7C%28other%3AInt32%29-instance-method" class="signature"><strong>#|</strong>(other : Int32)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
-        <a href="#%7C%28other%3AInt64%29-instance-method" class="signature"><strong>#|</strong>(other : Int64)</a>
-        
-      </li>
-    
-      <li class="entry-summary">
         <a href="#%7C%28other%3AUInt16%29-instance-method" class="signature"><strong>#|</strong>(other : UInt16)</a>
         
       </li>
@@ -2892,7 +2970,27 @@ in which the number fits:</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#%7C%28other%3AUInt32%29-instance-method" class="signature"><strong>#|</strong>(other : UInt32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%3AInt8%29-instance-method" class="signature"><strong>#|</strong>(other : Int8)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#%7C%28other%3AInt16%29-instance-method" class="signature"><strong>#|</strong>(other : Int16)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%3AInt64%29-instance-method" class="signature"><strong>#|</strong>(other : Int64)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#%7C%28other%3AInt32%29-instance-method" class="signature"><strong>#|</strong>(other : Int32)</a>
         
       </li>
     
@@ -2945,26 +3043,60 @@ in which the number fits:</p>
   
     
 
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  
+    <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
+      <span><(other : T)</span>
+    <</a>, 
+  
+    <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span><=(other : T)</span>
+    <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
+  
+    <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>==(other : T)</span>
+    ==</a>, 
+  
+    <a href="Comparable.html#%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span>>(other : T)</span>
+    ></a>, 
+  
+    <a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>>=(other : T)</span>
+    >=</a>
+  
+
+
+    
+
+
+  
+    
+
   <h3>Instance methods inherited from struct <code><a href="Number.html">Number</a></code></h3>
   
     <a href="Number.html#%2A%28other%3AComplex%29-instance-method" class="tooltip">
-      <span>*(other : Complex)</span>
+      <span>*(other : Complex)<br/>*(other : BigFloat)</span>
     *</a>, 
   
     <a href="Number.html#%2B-instance-method" class="tooltip">
-      <span>+<br/>+(other : Complex)</span>
+      <span>+<br/>+(other : BigFloat)<br/>+(other : Complex)</span>
     +</a>, 
   
     <a href="Number.html#-%28other%3AComplex%29-instance-method" class="tooltip">
-      <span>-(other : Complex)</span>
+      <span>-(other : Complex)<br/>-(other : BigFloat)</span>
     -</a>, 
   
     <a href="Number.html#%2F%28other%3AComplex%29-instance-method" class="tooltip">
       <span>/(other : Complex)</span>
     /</a>, 
   
-    <a href="Number.html#%3C%3D%3E%28other%29-instance-method" class="tooltip">
-      <span><=>(other)</span>
+    <a href="Number.html#%3C%3D%3E%28other%3ABigFloat%29-instance-method" class="tooltip">
+      <span><=>(other : BigFloat)<br/><=>(other)</span>
     <=></a>, 
   
     <a href="Number.html#%3D%3D%28other%3AComplex%29-instance-method" class="tooltip">
@@ -2983,8 +3115,8 @@ in which the number fits:</p>
       <span>cis</span>
     cis</a>, 
   
-    <a href="Number.html#clamp%28min%2Cmax%29-instance-method" class="tooltip">
-      <span>clamp(min, max)<br/>clamp(range : Range)</span>
+    <a href="Number.html#clamp%28range%3ARange%29-instance-method" class="tooltip">
+      <span>clamp(range : Range)<br/>clamp(min, max)</span>
     clamp</a>, 
   
     <a href="Number.html#divmod%28number%29-instance-method" class="tooltip">
@@ -3011,6 +3143,10 @@ in which the number fits:</p>
       <span>step(limit = <span class="n">nil</span>, by = <span class="n">1</span>)<br/>step(limit = <span class="n">nil</span>, by = <span class="n">1</span>, &block)</span>
     step</a>, 
   
+    <a href="Number.html#to_big_f-instance-method" class="tooltip">
+      <span>to_big_f</span>
+    to_big_f</a>, 
+  
     <a href="Number.html#to_c-instance-method" class="tooltip">
       <span>to_c</span>
     to_c</a>, 
@@ -3025,14 +3161,48 @@ in which the number fits:</p>
 
   <h3>Class methods inherited from struct <code><a href="Number.html">Number</a></code></h3>
   
-    <a href="Number.html#%5B%5D%28%2Anums%29-class-method" class="tooltip">
-      <span>[](*nums)</span>
+    <a href="Number.html#%5B%5D%28%2Anums%29%3AArray%28self%29-class-method" class="tooltip">
+      <span>[](*nums) : Array(self)</span>
     []</a>, 
   
-    <a href="Number.html#zero-class-method" class="tooltip">
-      <span>zero</span>
+    <a href="Number.html#zero%3Aself-class-method" class="tooltip">
+      <span>zero : self</span>
     zero</a>
   
+
+
+  
+    
+
+  <h3>Instance methods inherited from module <code><a href="Comparable.html">Comparable(T)</a></code></h3>
+  
+    <a href="Comparable.html#%3C%28other%3AT%29-instance-method" class="tooltip">
+      <span><(other : T)</span>
+    <</a>, 
+  
+    <a href="Comparable.html#%3C%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span><=(other : T)</span>
+    <=</a>, 
+  
+    <a href="Comparable.html#%3C%3D%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span><=>(other : T)</span>
+    <=></a>, 
+  
+    <a href="Comparable.html#%3D%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>==(other : T)</span>
+    ==</a>, 
+  
+    <a href="Comparable.html#%3E%28other%3AT%29-instance-method" class="tooltip">
+      <span>>(other : T)</span>
+    ></a>, 
+  
+    <a href="Comparable.html#%3E%3D%28other%3AT%29-instance-method" class="tooltip">
+      <span>>=(other : T)</span>
+    >=</a>
+  
+
+
+    
 
 
   
@@ -3194,12 +3364,12 @@ in which the number fits:</p>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -3245,7 +3415,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L362" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L384" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3254,22 +3424,6 @@ in which the number fits:</p>
 
 
   <h2>Instance Method Detail</h2>
-  
-    <div class="entry-detail" id="&#37;&#40;other:Int&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>%</strong>(other : <a href="Int.html">Int</a>)
-
-        <a class="method-permalink" href="#%25%28other%3AInt%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L79" target="_blank">View source</a>]
-        
-      </div>
-    </div>
   
     <div class="entry-detail" id="&#37;&#40;other:BigInt&#41;:BigInt-instance-method">
       <div class="signature">
@@ -3282,7 +3436,23 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/big_int/big_int.cr#L358" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_int.cr#L361" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="&#37;&#40;other:Int&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>%</strong>(other : <a href="Int.html">Int</a>)
+
+        <a class="method-permalink" href="#%25%28other%3AInt%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L79" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3351,28 +3521,12 @@ in which the number fits:</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="&amp;&#40;other:Int32&#41;-instance-method">
+    <div class="entry-detail" id="&amp;&#40;other:Int16&#41;-instance-method">
       <div class="signature">
         
-        def <strong>&</strong>(other : <a href="Int32.html">Int32</a>)
+        def <strong>&</strong>(other : <a href="Int16.html">Int16</a>)
 
-        <a class="method-permalink" href="#%26%28other%3AInt32%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="&amp;&#40;other:Int64&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>&</strong>(other : <a href="Int64.html">Int64</a>)
-
-        <a class="method-permalink" href="#%26%28other%3AInt64%29-instance-method">#</a>
+        <a class="method-permalink" href="#%26%28other%3AInt16%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -3399,18 +3553,50 @@ in which the number fits:</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="&amp;&#40;other:Int16&#41;-instance-method">
+    <div class="entry-detail" id="&amp;&#40;other:Int64&#41;-instance-method">
       <div class="signature">
         
-        def <strong>&</strong>(other : <a href="Int16.html">Int16</a>)
+        def <strong>&</strong>(other : <a href="Int64.html">Int64</a>)
 
-        <a class="method-permalink" href="#%26%28other%3AInt16%29-instance-method">#</a>
+        <a class="method-permalink" href="#%26%28other%3AInt64%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
       
       <br/>
       <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="&amp;&#40;other:Int32&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>&</strong>(other : <a href="Int32.html">Int32</a>)
+
+        <a class="method-permalink" href="#%26%28other%3AInt32%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="*&#40;other:BigRational&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>*</strong>(other : <a href="BigRational.html">BigRational</a>)
+
+        <a class="method-permalink" href="#%2A%28other%3ABigRational%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_rational.cr#L217" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3426,39 +3612,54 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/big_int/big_int.cr#L350" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_int.cr#L353" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="**&#40;other:Int&#41;-instance-method">
+    <div class="entry-detail" id="**&#40;exponent:Int&#41;:self-instance-method">
       <div class="signature">
         
-        def <strong>**</strong>(other : <a href="Int.html">Int</a>)
+        def <strong>**</strong>(exponent : <a href="Int.html">Int</a>) : self
 
-        <a class="method-permalink" href="#%2A%2A%28other%3AInt%29-instance-method">#</a>
+        <a class="method-permalink" href="#%2A%2A%28exponent%3AInt%29%3Aself-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns the value of raising <em>self</em> to the power of <em>exponent</em>.</p>
+
+<p>Raises <code><a href="ArgumentError.html">ArgumentError</a></code> if <em>exponent</em> is negative: if this is needed,
+either use a float base or a float exponent.</p>
+
+<pre><code><span class="n">2</span> <span class="o">**</span> <span class="n">3</span>  <span class="c"># &#61;&gt; 8</span>
+<span class="n">2</span> <span class="o">**</span> <span class="n">0</span>  <span class="c"># &#61;&gt; 1</span>
+<span class="n">2</span> <span class="o">**</span> <span class="n">-1</span> <span class="c"># ArgumentError</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L163" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L173" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="**&#40;other&#41;-instance-method">
+    <div class="entry-detail" id="**&#40;exponent:Float&#41;:Float64-instance-method">
       <div class="signature">
         
-        def <strong>**</strong>(other)
+        def <strong>**</strong>(exponent : <a href="Float.html">Float</a>) : <a href="Float64.html">Float64</a>
 
-        <a class="method-permalink" href="#%2A%2A%28other%29-instance-method">#</a>
+        <a class="method-permalink" href="#%2A%2A%28exponent%3AFloat%29%3AFloat64-instance-method">#</a>
       </div>
+      
+        <div class="doc"><p>Returns the value of raising <em>self</em> to the power of <em>exponent</em>.</p>
+
+<pre><code><span class="n">2</span> <span class="o">**</span> <span class="n">3.0</span>  <span class="c"># &#61;&gt; 8.0</span>
+<span class="n">2</span> <span class="o">**</span> <span class="n">0.0</span>  <span class="c"># &#61;&gt; 1.0</span>
+<span class="n">2</span> <span class="o">**</span> <span class="n">-1.0</span> <span class="c"># &#61;&gt; 0.5</span></code></pre></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L167" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L189" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3474,7 +3675,39 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/big_int/big_int.cr#L333" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_int.cr#L336" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="&#43;&#40;other:BigRational&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>+</strong>(other : <a href="BigRational.html">BigRational</a>)
+
+        <a class="method-permalink" href="#%2B%28other%3ABigRational%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_rational.cr#L205" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="-&#40;other:BigRational&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>-</strong>(other : <a href="BigRational.html">BigRational</a>)
+
+        <a class="method-permalink" href="#-%28other%3ABigRational%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_rational.cr#L209" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3490,7 +3723,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/big_int/big_int.cr#L337" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_int.cr#L340" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3506,7 +3739,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/big_int/big_int.cr#L354" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_int.cr#L357" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3522,7 +3755,23 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L67" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L67" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="/&#40;other:BigRational&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>/</strong>(other : <a href="BigRational.html">BigRational</a>)
+
+        <a class="method-permalink" href="#%2F%28other%3ABigRational%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_rational.cr#L213" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3547,7 +3796,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L133" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L133" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3563,7 +3812,23 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/big_int/big_int.cr#L329" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_int.cr#L332" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="&lt;&#61;&gt;&#40;other:BigRational&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong><=></strong>(other : <a href="BigRational.html">BigRational</a>)
+
+        <a class="method-permalink" href="#%3C%3D%3E%28other%3ABigRational%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_rational.cr#L201" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3579,7 +3844,7 @@ in which the number fits:</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L171" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L193" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3607,7 +3872,39 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L112" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L112" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="^&#40;other:UInt64&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>^</strong>(other : <a href="UInt64.html">UInt64</a>)
+
+        <a class="method-permalink" href="#%5E%28other%3AUInt64%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="^&#40;other:Int16&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>^</strong>(other : <a href="Int16.html">Int16</a>)
+
+        <a class="method-permalink" href="#%5E%28other%3AInt16%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
         
       </div>
     </div>
@@ -3618,6 +3915,38 @@ Also known as arithmetic right shift.</p>
         def <strong>^</strong>(other : <a href="UInt32.html">UInt32</a>)
 
         <a class="method-permalink" href="#%5E%28other%3AUInt32%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="^&#40;other:Int64&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>^</strong>(other : <a href="Int64.html">Int64</a>)
+
+        <a class="method-permalink" href="#%5E%28other%3AInt64%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="^&#40;other:Int32&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>^</strong>(other : <a href="Int32.html">Int32</a>)
+
+        <a class="method-permalink" href="#%5E%28other%3AInt32%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -3660,76 +3989,12 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="^&#40;other:Int32&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>^</strong>(other : <a href="Int32.html">Int32</a>)
-
-        <a class="method-permalink" href="#%5E%28other%3AInt32%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="^&#40;other:Int16&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>^</strong>(other : <a href="Int16.html">Int16</a>)
-
-        <a class="method-permalink" href="#%5E%28other%3AInt16%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="^&#40;other:Int64&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>^</strong>(other : <a href="Int64.html">Int64</a>)
-
-        <a class="method-permalink" href="#%5E%28other%3AInt64%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
     <div class="entry-detail" id="^&#40;other:Int8&#41;-instance-method">
       <div class="signature">
         
         def <strong>^</strong>(other : <a href="Int8.html">Int8</a>)
 
         <a class="method-permalink" href="#%5E%28other%3AInt8%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="^&#40;other:UInt64&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>^</strong>(other : <a href="UInt64.html">UInt64</a>)
-
-        <a class="method-permalink" href="#%5E%28other%3AUInt64%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -3751,7 +4016,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L143" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L143" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3775,7 +4040,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L184" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L206" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3791,7 +4056,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L147" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L147" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3823,7 +4088,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L292" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L292" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3839,7 +4104,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L296" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L296" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3855,7 +4120,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L196" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L218" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3871,7 +4136,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L255" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L277" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3887,7 +4152,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L246" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L268" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3903,7 +4168,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L200" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L222" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3919,7 +4184,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L75" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L75" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3935,7 +4200,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L151" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L151" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3951,7 +4216,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L188" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L210" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3967,7 +4232,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L208" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L230" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3983,7 +4248,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L300" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L300" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3999,7 +4264,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L304" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L304" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4015,7 +4280,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L192" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L214" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4031,7 +4296,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L324" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L324" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4047,7 +4312,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L328" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L328" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4063,7 +4328,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L308" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L308" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4079,7 +4344,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L312" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L312" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4095,7 +4360,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L274" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L296" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4111,7 +4376,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L372" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L372" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4127,7 +4392,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L376" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L376" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4143,7 +4408,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L204" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L226" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4164,7 +4429,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L372" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L394" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4180,7 +4445,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L216" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L238" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4196,7 +4461,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L90" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L90" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4212,7 +4477,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L155" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L155" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4228,7 +4493,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L316" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L316" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4244,7 +4509,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L320" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L320" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4260,23 +4525,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L212" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="times-instance-method">
-      <div class="signature">
-        
-        def <strong>times</strong>
-
-        <a class="method-permalink" href="#times-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L229" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L234" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4292,23 +4541,23 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L220" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L242" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="to&#40;n&#41;-instance-method">
+    <div class="entry-detail" id="times-instance-method">
       <div class="signature">
         
-        def <strong>to</strong>(n)
+        def <strong>times</strong>
 
-        <a class="method-permalink" href="#to%28n%29-instance-method">#</a>
+        <a class="method-permalink" href="#times-instance-method">#</a>
       </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L270" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L251" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4324,7 +4573,23 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L259" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L281" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to&#40;n&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>to</strong>(n)
+
+        <a class="method-permalink" href="#to%28n%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L292" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4342,7 +4607,25 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/big_int/big_int.cr#L363" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_int.cr#L366" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_big_r-instance-method">
+      <div class="signature">
+        
+        def <strong>to_big_r</strong>
+
+        <a class="method-permalink" href="#to_big_r-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Returns a BigRational representing this integer.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/big/big_rational.cr#L197" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4362,7 +4645,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L355" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L377" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4378,55 +4661,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/to_json.cr#L171" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="to_s&#40;base:Int,io:IO,upcase:Bool&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>to_s</strong>(base : <a href="Int.html">Int</a>, io : <a href="IO.html">IO</a>, upcase : <a href="Bool.html">Bool</a> = <span class="n">false</span>)
-
-        <a class="method-permalink" href="#to_s%28base%3AInt%2Cio%3AIO%2Cupcase%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L309" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="to_s&#40;base:Int,upcase:Bool&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>to_s</strong>(base : <a href="Int.html">Int</a>, upcase : <a href="Bool.html">Bool</a> = <span class="n">false</span>)
-
-        <a class="method-permalink" href="#to_s%28base%3AInt%2Cupcase%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L293" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="to_s-instance-method">
-      <div class="signature">
-        
-        def <strong>to_s</strong>
-
-        <a class="method-permalink" href="#to_s-instance-method">#</a>
-      </div>
-      
-      <br/>
-      <div>
-        
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L285" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/to_json.cr#L160" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4442,7 +4677,55 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L289" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L311" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_s-instance-method">
+      <div class="signature">
+        
+        def <strong>to_s</strong>
+
+        <a class="method-permalink" href="#to_s-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L307" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_s&#40;base:Int,io:IO,upcase:Bool&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>to_s</strong>(base : <a href="Int.html">Int</a>, io : <a href="IO.html">IO</a>, upcase : <a href="Bool.html">Bool</a> = <span class="n">false</span>)
+
+        <a class="method-permalink" href="#to_s%28base%3AInt%2Cio%3AIO%2Cupcase%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L331" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="to_s&#40;base:Int,upcase:Bool&#61;&lt;spanclass&#61;&quot;n&quot;&gt;false&lt;/span&gt;&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>to_s</strong>(base : <a href="Int.html">Int</a>, upcase : <a href="Bool.html">Bool</a> = <span class="n">false</span>)
+
+        <a class="method-permalink" href="#to_s%28base%3AInt%2Cupcase%3ABool%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L315" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4458,7 +4741,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L159" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L159" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -4469,54 +4752,6 @@ Also known as arithmetic right shift.</p>
         def <strong>unsafe_div</strong>(other : <a href="Int8.html">Int8</a>)
 
         <a class="method-permalink" href="#unsafe_div%28other%3AInt8%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unsafe_div&#40;other:UInt8&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_div</strong>(other : <a href="UInt8.html">UInt8</a>)
-
-        <a class="method-permalink" href="#unsafe_div%28other%3AUInt8%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unsafe_div&#40;other:UInt16&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_div</strong>(other : <a href="UInt16.html">UInt16</a>)
-
-        <a class="method-permalink" href="#unsafe_div%28other%3AUInt16%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unsafe_div&#40;other:UInt64&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_div</strong>(other : <a href="UInt64.html">UInt64</a>)
-
-        <a class="method-permalink" href="#unsafe_div%28other%3AUInt64%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4543,12 +4778,60 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
+    <div class="entry-detail" id="unsafe_div&#40;other:UInt64&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_div</strong>(other : <a href="UInt64.html">UInt64</a>)
+
+        <a class="method-permalink" href="#unsafe_div%28other%3AUInt64%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="unsafe_div&#40;other:UInt16&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_div</strong>(other : <a href="UInt16.html">UInt16</a>)
+
+        <a class="method-permalink" href="#unsafe_div%28other%3AUInt16%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
     <div class="entry-detail" id="unsafe_div&#40;other:Int64&#41;-instance-method">
       <div class="signature">
         
         def <strong>unsafe_div</strong>(other : <a href="Int64.html">Int64</a>)
 
         <a class="method-permalink" href="#unsafe_div%28other%3AInt64%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="unsafe_div&#40;other:UInt8&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_div</strong>(other : <a href="UInt8.html">UInt8</a>)
+
+        <a class="method-permalink" href="#unsafe_div%28other%3AUInt8%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4591,44 +4874,28 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
+    <div class="entry-detail" id="unsafe_mod&#40;other:Int64&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="Int64.html">Int64</a>)
+
+        <a class="method-permalink" href="#unsafe_mod%28other%3AInt64%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
     <div class="entry-detail" id="unsafe_mod&#40;other:Int32&#41;-instance-method">
       <div class="signature">
         
         def <strong>unsafe_mod</strong>(other : <a href="Int32.html">Int32</a>)
 
         <a class="method-permalink" href="#unsafe_mod%28other%3AInt32%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unsafe_mod&#40;other:UInt16&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_mod</strong>(other : <a href="UInt16.html">UInt16</a>)
-
-        <a class="method-permalink" href="#unsafe_mod%28other%3AUInt16%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unsafe_mod&#40;other:UInt32&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_mod</strong>(other : <a href="UInt32.html">UInt32</a>)
-
-        <a class="method-permalink" href="#unsafe_mod%28other%3AUInt32%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4655,12 +4922,12 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="unsafe_mod&#40;other:Int64&#41;-instance-method">
+    <div class="entry-detail" id="unsafe_mod&#40;other:UInt64&#41;-instance-method">
       <div class="signature">
         
-        def <strong>unsafe_mod</strong>(other : <a href="Int64.html">Int64</a>)
+        def <strong>unsafe_mod</strong>(other : <a href="UInt64.html">UInt64</a>)
 
-        <a class="method-permalink" href="#unsafe_mod%28other%3AInt64%29-instance-method">#</a>
+        <a class="method-permalink" href="#unsafe_mod%28other%3AUInt64%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4671,12 +4938,28 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="unsafe_mod&#40;other:Int16&#41;-instance-method">
+    <div class="entry-detail" id="unsafe_mod&#40;other:UInt32&#41;-instance-method">
       <div class="signature">
         
-        def <strong>unsafe_mod</strong>(other : <a href="Int16.html">Int16</a>)
+        def <strong>unsafe_mod</strong>(other : <a href="UInt32.html">UInt32</a>)
 
-        <a class="method-permalink" href="#unsafe_mod%28other%3AInt16%29-instance-method">#</a>
+        <a class="method-permalink" href="#unsafe_mod%28other%3AUInt32%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="unsafe_mod&#40;other:UInt16&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_mod</strong>(other : <a href="UInt16.html">UInt16</a>)
+
+        <a class="method-permalink" href="#unsafe_mod%28other%3AUInt16%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4703,12 +4986,28 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="unsafe_mod&#40;other:UInt64&#41;-instance-method">
+    <div class="entry-detail" id="unsafe_mod&#40;other:Int16&#41;-instance-method">
       <div class="signature">
         
-        def <strong>unsafe_mod</strong>(other : <a href="UInt64.html">UInt64</a>)
+        def <strong>unsafe_mod</strong>(other : <a href="Int16.html">Int16</a>)
 
-        <a class="method-permalink" href="#unsafe_mod%28other%3AUInt64%29-instance-method">#</a>
+        <a class="method-permalink" href="#unsafe_mod%28other%3AInt16%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="unsafe_shl&#40;other:UInt16&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="UInt16.html">UInt16</a>)
+
+        <a class="method-permalink" href="#unsafe_shl%28other%3AUInt16%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4725,6 +5024,38 @@ Also known as arithmetic right shift.</p>
         def <strong>unsafe_shl</strong>(other : <a href="UInt8.html">UInt8</a>)
 
         <a class="method-permalink" href="#unsafe_shl%28other%3AUInt8%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="unsafe_shl&#40;other:UInt64&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="UInt64.html">UInt64</a>)
+
+        <a class="method-permalink" href="#unsafe_shl%28other%3AUInt64%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="unsafe_shl&#40;other:UInt32&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_shl</strong>(other : <a href="UInt32.html">UInt32</a>)
+
+        <a class="method-permalink" href="#unsafe_shl%28other%3AUInt32%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4767,54 +5098,6 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="unsafe_shl&#40;other:UInt16&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_shl</strong>(other : <a href="UInt16.html">UInt16</a>)
-
-        <a class="method-permalink" href="#unsafe_shl%28other%3AUInt16%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unsafe_shl&#40;other:UInt32&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_shl</strong>(other : <a href="UInt32.html">UInt32</a>)
-
-        <a class="method-permalink" href="#unsafe_shl%28other%3AUInt32%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unsafe_shl&#40;other:UInt64&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_shl</strong>(other : <a href="UInt64.html">UInt64</a>)
-
-        <a class="method-permalink" href="#unsafe_shl%28other%3AUInt64%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
     <div class="entry-detail" id="unsafe_shl&#40;other:Int32&#41;-instance-method">
       <div class="signature">
         
@@ -4847,28 +5130,12 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="unsafe_shr&#40;other:UInt64&#41;-instance-method">
+    <div class="entry-detail" id="unsafe_shr&#40;other:Int64&#41;-instance-method">
       <div class="signature">
         
-        def <strong>unsafe_shr</strong>(other : <a href="UInt64.html">UInt64</a>)
+        def <strong>unsafe_shr</strong>(other : <a href="Int64.html">Int64</a>)
 
-        <a class="method-permalink" href="#unsafe_shr%28other%3AUInt64%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unsafe_shr&#40;other:UInt16&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_shr</strong>(other : <a href="UInt16.html">UInt16</a>)
-
-        <a class="method-permalink" href="#unsafe_shr%28other%3AUInt16%29-instance-method">#</a>
+        <a class="method-permalink" href="#unsafe_shr%28other%3AInt64%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4895,44 +5162,12 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
-    <div class="entry-detail" id="unsafe_shr&#40;other:Int64&#41;-instance-method">
+    <div class="entry-detail" id="unsafe_shr&#40;other:UInt16&#41;-instance-method">
       <div class="signature">
         
-        def <strong>unsafe_shr</strong>(other : <a href="Int64.html">Int64</a>)
+        def <strong>unsafe_shr</strong>(other : <a href="UInt16.html">UInt16</a>)
 
-        <a class="method-permalink" href="#unsafe_shr%28other%3AInt64%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unsafe_shr&#40;other:Int32&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_shr</strong>(other : <a href="Int32.html">Int32</a>)
-
-        <a class="method-permalink" href="#unsafe_shr%28other%3AInt32%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="unsafe_shr&#40;other:Int8&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>unsafe_shr</strong>(other : <a href="Int8.html">Int8</a>)
-
-        <a class="method-permalink" href="#unsafe_shr%28other%3AInt8%29-instance-method">#</a>
+        <a class="method-permalink" href="#unsafe_shr%28other%3AUInt16%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4959,12 +5194,60 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
+    <div class="entry-detail" id="unsafe_shr&#40;other:Int8&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="Int8.html">Int8</a>)
+
+        <a class="method-permalink" href="#unsafe_shr%28other%3AInt8%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="unsafe_shr&#40;other:Int32&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="Int32.html">Int32</a>)
+
+        <a class="method-permalink" href="#unsafe_shr%28other%3AInt32%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
     <div class="entry-detail" id="unsafe_shr&#40;other:UInt32&#41;-instance-method">
       <div class="signature">
         
         def <strong>unsafe_shr</strong>(other : <a href="UInt32.html">UInt32</a>)
 
         <a class="method-permalink" href="#unsafe_shr%28other%3AUInt32%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="unsafe_shr&#40;other:UInt64&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>unsafe_shr</strong>(other : <a href="UInt64.html">UInt64</a>)
+
+        <a class="method-permalink" href="#unsafe_shr%28other%3AUInt64%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -4986,7 +5269,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L233" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L255" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5002,7 +5285,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L242" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L264" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5018,7 +5301,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L284" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L284" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5034,7 +5317,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L288" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L288" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5050,7 +5333,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L380" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L380" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5066,71 +5349,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/time/span.cr#L384" target="_blank">View source</a>]
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="|&#40;other:Int8&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>|</strong>(other : <a href="Int8.html">Int8</a>)
-
-        <a class="method-permalink" href="#%7C%28other%3AInt8%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="|&#40;other:UInt32&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>|</strong>(other : <a href="UInt32.html">UInt32</a>)
-
-        <a class="method-permalink" href="#%7C%28other%3AUInt32%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="|&#40;other:Int32&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>|</strong>(other : <a href="Int32.html">Int32</a>)
-
-        <a class="method-permalink" href="#%7C%28other%3AInt32%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
-        
-      </div>
-    </div>
-  
-    <div class="entry-detail" id="|&#40;other:Int64&#41;-instance-method">
-      <div class="signature">
-        
-        def <strong>|</strong>(other : <a href="Int64.html">Int64</a>)
-
-        <a class="method-permalink" href="#%7C%28other%3AInt64%29-instance-method">#</a>
-      </div>
-      
-        <div class="doc"></div>
-      
-      <br/>
-      <div>
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/time/span.cr#L384" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -5183,12 +5402,76 @@ Also known as arithmetic right shift.</p>
       </div>
     </div>
   
+    <div class="entry-detail" id="|&#40;other:UInt32&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>|</strong>(other : <a href="UInt32.html">UInt32</a>)
+
+        <a class="method-permalink" href="#%7C%28other%3AUInt32%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="|&#40;other:Int8&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>|</strong>(other : <a href="Int8.html">Int8</a>)
+
+        <a class="method-permalink" href="#%7C%28other%3AInt8%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
     <div class="entry-detail" id="|&#40;other:Int16&#41;-instance-method">
       <div class="signature">
         
         def <strong>|</strong>(other : <a href="Int16.html">Int16</a>)
 
         <a class="method-permalink" href="#%7C%28other%3AInt16%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="|&#40;other:Int64&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>|</strong>(other : <a href="Int64.html">Int64</a>)
+
+        <a class="method-permalink" href="#%7C%28other%3AInt64%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc"></div>
+      
+      <br/>
+      <div>
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="|&#40;other:Int32&#41;-instance-method">
+      <div class="signature">
+        
+        def <strong>|</strong>(other : <a href="Int32.html">Int32</a>)
+
+        <a class="method-permalink" href="#%7C%28other%3AInt32%29-instance-method">#</a>
       </div>
       
         <div class="doc"></div>
@@ -5210,7 +5493,7 @@ Also known as arithmetic right shift.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/int.cr#L63" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/int.cr#L63" target="_blank">View source</a>]
         
       </div>
     </div>

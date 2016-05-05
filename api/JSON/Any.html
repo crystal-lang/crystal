@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="../BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="../BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="../BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="../Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="../Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="../Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="../String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="../Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="../Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="../Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="../Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="../Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="../Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="../Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="../Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="../Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="../Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="../Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="../Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2167,6 +2222,13 @@ be converted (parsed) to a String.</p>
 
 
 
+  <h2>Included Modules</h2>
+  <ul class="other-types-list">
+  
+    <li class="other-type"><a href="../Enumerable.html">Enumerable(self)</a></li>
+  
+  </ul>
+
 
 
 
@@ -2179,7 +2241,7 @@ be converted (parsed) to a String.</p>
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr" target="_blank">json/any.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr" target="_blank">json/any.cr</a>
     
     <br/>
   
@@ -2262,7 +2324,21 @@ be converted (parsed) to a String.</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#as_a%3F%3AArray%28Type%29%7CNil-instance-method" class="signature"><strong>#as_a?</strong> : Array(Type) | Nil</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Array.html">Array</a></code>, and returns its value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#as_bool%3ABool-instance-method" class="signature"><strong>#as_bool</strong> : Bool</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Bool.html">Bool</a></code>, and returns its value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_bool%3F%3ABool%7CNil-instance-method" class="signature"><strong>#as_bool?</strong> : Bool | Nil</a>
         
           <div class="summary"><p>Checks that the underlying value is <code><a href="../Bool.html">Bool</a></code>, and returns its value.</p></div>
         
@@ -2283,7 +2359,28 @@ be converted (parsed) to a String.</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#as_f32%3F%3AFloat32%7CNil-instance-method" class="signature"><strong>#as_f32?</strong> : Float32 | Nil</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Float.html">Float</a></code>, and returns its value as an <code><a href="../Float32.html">Float32</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_f%3F%3AFloat64%7CNil-instance-method" class="signature"><strong>#as_f?</strong> : Float64 | Nil</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Float.html">Float</a></code>, and returns its value as an <code><a href="../Float64.html">Float64</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#as_h%3AHash%28String%2CType%29-instance-method" class="signature"><strong>#as_h</strong> : Hash(String, Type)</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Hash.html">Hash</a></code>, and returns its value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_h%3F%3AHash%28String%2CType%29%7CNil-instance-method" class="signature"><strong>#as_h?</strong> : Hash(String, Type) | Nil</a>
         
           <div class="summary"><p>Checks that the underlying value is <code><a href="../Hash.html">Hash</a></code>, and returns its value.</p></div>
         
@@ -2304,6 +2401,20 @@ be converted (parsed) to a String.</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#as_i64%3F%3AInt64%7CNil-instance-method" class="signature"><strong>#as_i64?</strong> : Int64 | Nil</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Int.html">Int</a></code>, and returns its value as an <code><a href="../Int64.html">Int64</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#as_i%3F%3AInt32%7CNil-instance-method" class="signature"><strong>#as_i?</strong> : Int32 | Nil</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../Int.html">Int</a></code>, and returns its value as an <code><a href="../Int32.html">Int32</a></code>.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#as_nil%3ANil-instance-method" class="signature"><strong>#as_nil</strong> : Nil</a>
         
           <div class="summary"><p>Checks that the underlying value is <code><a href="../Nil.html">Nil</a></code>, and returns <code>nil</code>.</p></div>
@@ -2318,6 +2429,13 @@ be converted (parsed) to a String.</p>
       </li>
     
       <li class="entry-summary">
+        <a href="#as_s%3F%3AString%7CNil-instance-method" class="signature"><strong>#as_s?</strong> : String | Nil</a>
+        
+          <div class="summary"><p>Checks that the underlying value is <code><a href="../String.html">String</a></code>, and returns its value.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#each%28%26block%29-instance-method" class="signature"><strong>#each</strong>(&block)</a>
         
           <div class="summary"><p>Assumes the underlying value is an <code><a href="../Array.html">Array</a></code> or <code><a href="../Hash.html">Hash</a></code> and yields each of the elements or key/values, always as <code><a href="../JSON/Any.html">JSON::Any</a></code>.</p></div>
@@ -2325,7 +2443,7 @@ be converted (parsed) to a String.</p>
       </li>
     
       <li class="entry-summary">
-        <a href="#raw-instance-method" class="signature"><strong>#raw</strong></a>
+        <a href="#raw%3AJSON%3A%3AType-instance-method" class="signature"><strong>#raw</strong> : JSON::Type</a>
         
           <div class="summary"><p>Returns the raw underlying value, a <code><a href="../JSON/Type.html">JSON::Type</a></code>.</p></div>
         
@@ -2345,6 +2463,240 @@ be converted (parsed) to a String.</p>
 
 
 <div class="methods-inherited">
+  
+    
+
+  <h3>Instance methods inherited from module <code><a href="../Enumerable.html">Enumerable(T)</a></code></h3>
+  
+    <a href="../Enumerable.html#all%3F-instance-method" class="tooltip">
+      <span>all?<br/>all?(&block)</span>
+    all?</a>, 
+  
+    <a href="../Enumerable.html#any%3F-instance-method" class="tooltip">
+      <span>any?<br/>any?(&block)</span>
+    any?</a>, 
+  
+    <a href="../Enumerable.html#compact_map%28%26block%29-instance-method" class="tooltip">
+      <span>compact_map(&block)</span>
+    compact_map</a>, 
+  
+    <a href="../Enumerable.html#count%28item%29-instance-method" class="tooltip">
+      <span>count(item)<br/>count(&block)</span>
+    count</a>, 
+  
+    <a href="../Enumerable.html#cycle%28%26block%29-instance-method" class="tooltip">
+      <span>cycle(&block)<br/>cycle(n, &block)</span>
+    cycle</a>, 
+  
+    <a href="../Enumerable.html#each%28%26block%3AT-%3E_%29-instance-method" class="tooltip">
+      <span>each(&block : T -> _)</span>
+    each</a>, 
+  
+    <a href="../Enumerable.html#each_cons%28count%3AInt%2C%26block%29-instance-method" class="tooltip">
+      <span>each_cons(count : Int, &block)</span>
+    each_cons</a>, 
+  
+    <a href="../Enumerable.html#each_slice%28count%3AInt%2C%26block%29-instance-method" class="tooltip">
+      <span>each_slice(count : Int, &block)</span>
+    each_slice</a>, 
+  
+    <a href="../Enumerable.html#each_with_index%28offset%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%2C%26block%29-instance-method" class="tooltip">
+      <span>each_with_index(offset = <span class="n">0</span>, &block)</span>
+    each_with_index</a>, 
+  
+    <a href="../Enumerable.html#each_with_object%28obj%2C%26block%29-instance-method" class="tooltip">
+      <span>each_with_object(obj, &block)</span>
+    each_with_object</a>, 
+  
+    <a href="../Enumerable.html#find%28if_none%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%2C%26block%29-instance-method" class="tooltip">
+      <span>find(if_none = <span class="n">nil</span>, &block)</span>
+    find</a>, 
+  
+    <a href="../Enumerable.html#first-instance-method" class="tooltip">
+      <span>first<br/>first(count : Int)</span>
+    first</a>, 
+  
+    <a href="../Enumerable.html#first%3F-instance-method" class="tooltip">
+      <span>first?</span>
+    first?</a>, 
+  
+    <a href="../Enumerable.html#flat_map%28%26block%3AT-%3EArray%28U%29%29-instance-method" class="tooltip">
+      <span>flat_map(&block : T -> Array(U))</span>
+    flat_map</a>, 
+  
+    <a href="../Enumerable.html#grep%28pattern%29-instance-method" class="tooltip">
+      <span>grep(pattern)</span>
+    grep</a>, 
+  
+    <a href="../Enumerable.html#group_by%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>group_by(&block : T -> U)</span>
+    group_by</a>, 
+  
+    <a href="../Enumerable.html#in_groups_of%28size%3AInt%2Cfilled_up_with%3AU%3D%3Cspanclass%3D%22n%22%3Enil%3C%2Fspan%3E%2C%26block%29-instance-method" class="tooltip">
+      <span>in_groups_of(size : Int, filled_up_with : U = <span class="n">nil</span>, &block)<br/>in_groups_of(size : Int, filled_up_with : U = <span class="n">nil</span>)</span>
+    in_groups_of</a>, 
+  
+    <a href="../Enumerable.html#includes%3F%28obj%29-instance-method" class="tooltip">
+      <span>includes?(obj)</span>
+    includes?</a>, 
+  
+    <a href="../Enumerable.html#index%28obj%29-instance-method" class="tooltip">
+      <span>index(obj)<br/>index(&block)</span>
+    index</a>, 
+  
+    <a href="../Enumerable.html#index_by%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>index_by(&block : T -> U)</span>
+    index_by</a>, 
+  
+    <a href="../Enumerable.html#join%28separator%3D%3Cspanclass%3D%22s%22%3E%26quot%3B%26quot%3B%3C%2Fspan%3E%29-instance-method" class="tooltip">
+      <span>join(separator = <span class="s">&quot;&quot;</span>)<br/>join(separator, io, &block)<br/>join(separator = <span class="s">&quot;&quot;</span>, &block)<br/>join(separator, io)</span>
+    join</a>, 
+  
+    <a href="../Enumerable.html#map%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>map(&block : T -> U)</span>
+    map</a>, 
+  
+    <a href="../Enumerable.html#map_with_index%28%26block%3AT%2CInt32-%3EU%29-instance-method" class="tooltip">
+      <span>map_with_index(&block : T, Int32 -> U)</span>
+    map_with_index</a>, 
+  
+    <a href="../Enumerable.html#max-instance-method" class="tooltip">
+      <span>max</span>
+    max</a>, 
+  
+    <a href="../Enumerable.html#max%3F-instance-method" class="tooltip">
+      <span>max?</span>
+    max?</a>, 
+  
+    <a href="../Enumerable.html#max_by%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>max_by(&block : T -> U)</span>
+    max_by</a>, 
+  
+    <a href="../Enumerable.html#max_by%3F%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>max_by?(&block : T -> U)</span>
+    max_by?</a>, 
+  
+    <a href="../Enumerable.html#max_of%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>max_of(&block : T -> U)</span>
+    max_of</a>, 
+  
+    <a href="../Enumerable.html#max_of%3F%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>max_of?(&block : T -> U)</span>
+    max_of?</a>, 
+  
+    <a href="../Enumerable.html#min-instance-method" class="tooltip">
+      <span>min</span>
+    min</a>, 
+  
+    <a href="../Enumerable.html#min%3F-instance-method" class="tooltip">
+      <span>min?</span>
+    min?</a>, 
+  
+    <a href="../Enumerable.html#min_by%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>min_by(&block : T -> U)</span>
+    min_by</a>, 
+  
+    <a href="../Enumerable.html#min_by%3F%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>min_by?(&block : T -> U)</span>
+    min_by?</a>, 
+  
+    <a href="../Enumerable.html#min_of%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>min_of(&block : T -> U)</span>
+    min_of</a>, 
+  
+    <a href="../Enumerable.html#min_of%3F%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>min_of?(&block : T -> U)</span>
+    min_of?</a>, 
+  
+    <a href="../Enumerable.html#minmax-instance-method" class="tooltip">
+      <span>minmax</span>
+    minmax</a>, 
+  
+    <a href="../Enumerable.html#minmax%3F-instance-method" class="tooltip">
+      <span>minmax?</span>
+    minmax?</a>, 
+  
+    <a href="../Enumerable.html#minmax_by%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>minmax_by(&block : T -> U)</span>
+    minmax_by</a>, 
+  
+    <a href="../Enumerable.html#minmax_by%3F%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>minmax_by?(&block : T -> U)</span>
+    minmax_by?</a>, 
+  
+    <a href="../Enumerable.html#minmax_of%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>minmax_of(&block : T -> U)</span>
+    minmax_of</a>, 
+  
+    <a href="../Enumerable.html#minmax_of%3F%28%26block%3AT-%3EU%29-instance-method" class="tooltip">
+      <span>minmax_of?(&block : T -> U)</span>
+    minmax_of?</a>, 
+  
+    <a href="../Enumerable.html#none%3F%28%26block%29-instance-method" class="tooltip">
+      <span>none?(&block)<br/>none?</span>
+    none?</a>, 
+  
+    <a href="../Enumerable.html#one%3F%28%26block%29-instance-method" class="tooltip">
+      <span>one?(&block)</span>
+    one?</a>, 
+  
+    <a href="../Enumerable.html#partition%28%26block%29-instance-method" class="tooltip">
+      <span>partition(&block)</span>
+    partition</a>, 
+  
+    <a href="../Enumerable.html#product%28initial%3ANumber%2C%26block%29-instance-method" class="tooltip">
+      <span>product(initial : Number, &block)<br/>product<br/>product(initial : Number)<br/>product(&block)</span>
+    product</a>, 
+  
+    <a href="../Enumerable.html#reduce%28memo%2C%26block%29-instance-method" class="tooltip">
+      <span>reduce(memo, &block)<br/>reduce(&block)</span>
+    reduce</a>, 
+  
+    <a href="../Enumerable.html#reject%28%26block%3AT-%3E%29-instance-method" class="tooltip">
+      <span>reject(&block : T -> )</span>
+    reject</a>, 
+  
+    <a href="../Enumerable.html#select%28%26block%3AT-%3E%29-instance-method" class="tooltip">
+      <span>select(&block : T -> )</span>
+    select</a>, 
+  
+    <a href="../Enumerable.html#size-instance-method" class="tooltip">
+      <span>size</span>
+    size</a>, 
+  
+    <a href="../Enumerable.html#skip%28count%3AInt%29-instance-method" class="tooltip">
+      <span>skip(count : Int)</span>
+    skip</a>, 
+  
+    <a href="../Enumerable.html#skip_while%28%26block%29-instance-method" class="tooltip">
+      <span>skip_while(&block)</span>
+    skip_while</a>, 
+  
+    <a href="../Enumerable.html#sum-instance-method" class="tooltip">
+      <span>sum<br/>sum(initial)<br/>sum(&block)<br/>sum(initial, &block)</span>
+    sum</a>, 
+  
+    <a href="../Enumerable.html#take_while%28%26block%29-instance-method" class="tooltip">
+      <span>take_while(&block)</span>
+    take_while</a>, 
+  
+    <a href="../Enumerable.html#to_a-instance-method" class="tooltip">
+      <span>to_a</span>
+    to_a</a>, 
+  
+    <a href="../Enumerable.html#to_h-instance-method" class="tooltip">
+      <span>to_h</span>
+    to_h</a>, 
+  
+    <a href="../Enumerable.html#to_set-instance-method" class="tooltip">
+      <span>to_set</span>
+    to_set</a>
+  
+
+
+    
+
+
   
     
 
@@ -2496,12 +2848,12 @@ be converted (parsed) to a String.</p>
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="../Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="../Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="../Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="../Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="../Object.html#hash-class-method" class="tooltip">
@@ -2545,7 +2897,7 @@ be converted (parsed) to a String.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L18" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L20" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2563,7 +2915,7 @@ be converted (parsed) to a String.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L51" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L53" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2586,7 +2938,7 @@ be converted (parsed) to a String.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L192" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L234" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2604,7 +2956,7 @@ be converted (parsed) to a String.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L197" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L239" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2624,7 +2976,7 @@ Raises if the underlying value is not a Hash.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L98" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2644,7 +2996,7 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L71" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2664,7 +3016,7 @@ Raises if the underlying value is not a Hash.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L108" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L110" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2684,7 +3036,7 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L83" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L85" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2702,7 +3054,25 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L172" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L204" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_a?:Array&#40;Type&#41;|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>as_a?</strong> : <a href="../Array.html">Array</a>(<a href="../JSON/Type.html">Type</a>) | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#as_a%3F%3AArray%28Type%29%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Array.html">Array</a></code>, and returns its value. Returns nil otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L209" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2720,7 +3090,25 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L142" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L144" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_bool?:Bool|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>as_bool?</strong> : <a href="../Bool.html">Bool</a> | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#as_bool%3F%3ABool%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Bool.html">Bool</a></code>, and returns its value. Returns nil otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L149" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2738,7 +3126,7 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L157" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L174" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2756,7 +3144,43 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L162" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L184" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_f32?:Float32|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>as_f32?</strong> : <a href="../Float32.html">Float32</a> | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#as_f32%3F%3AFloat32%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Float.html">Float</a></code>, and returns its value as an <code><a href="../Float32.html">Float32</a></code>. Returns nil otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L189" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_f?:Float64|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>as_f?</strong> : <a href="../Float64.html">Float64</a> | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#as_f%3F%3AFloat64%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Float.html">Float</a></code>, and returns its value as an <code><a href="../Float64.html">Float64</a></code>. Returns nil otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L179" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2774,7 +3198,25 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L177" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L214" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_h?:Hash&#40;String,Type&#41;|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>as_h?</strong> : <a href="../Hash.html">Hash</a>(<a href="../String.html">String</a>, <a href="../JSON/Type.html">Type</a>) | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#as_h%3F%3AHash%28String%2CType%29%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Hash.html">Hash</a></code>, and returns its value. Returns nil otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L219" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2792,7 +3234,7 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L147" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L154" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2810,7 +3252,43 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L152" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L164" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_i64?:Int64|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>as_i64?</strong> : <a href="../Int64.html">Int64</a> | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#as_i64%3F%3AInt64%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Int.html">Int</a></code>, and returns its value as an <code><a href="../Int64.html">Int64</a></code>. Returns nil otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L169" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_i?:Int32|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>as_i?</strong> : <a href="../Int32.html">Int32</a> | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#as_i%3F%3AInt32%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../Int.html">Int</a></code>, and returns its value as an <code><a href="../Int32.html">Int32</a></code>. Returns nil otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L159" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2828,7 +3306,7 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L137" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L139" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2846,7 +3324,25 @@ Raises if the underlying value is not an Array.</p></div>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L167" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L194" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="as_s?:String|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>as_s?</strong> : <a href="../String.html">String</a> | <a href="../Nil.html">Nil</a>
+
+        <a class="method-permalink" href="#as_s%3F%3AString%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc"><p>Checks that the underlying value is <code><a href="../String.html">String</a></code>, and returns its value. Returns nil otherwise.</p></div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L199" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2866,17 +3362,17 @@ Raises if the underlying value is not an <code><a href="../Array.html">Array</a>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L121" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L123" target="_blank">View source</a>]
         
       </div>
     </div>
   
-    <div class="entry-detail" id="raw-instance-method">
+    <div class="entry-detail" id="raw:JSON::Type-instance-method">
       <div class="signature">
         
-        def <strong>raw</strong>
+        def <strong>raw</strong> : <a href="../JSON/Type.html">JSON::Type</a>
 
-        <a class="method-permalink" href="#raw-instance-method">#</a>
+        <a class="method-permalink" href="#raw%3AJSON%3A%3AType-instance-method">#</a>
       </div>
       
         <div class="doc"><p>Returns the raw underlying value, a <code><a href="../JSON/Type.html">JSON::Type</a></code>.</p></div>
@@ -2884,7 +3380,7 @@ Raises if the underlying value is not an <code><a href="../Array.html">Array</a>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L48" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L50" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2904,7 +3400,7 @@ Raises if the underlying value is not an <code><a href="../Array.html">Array</a>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/json/any.cr#L57" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/json/any.cr#L59" target="_blank">View source</a>]
         
       </div>
     </div>

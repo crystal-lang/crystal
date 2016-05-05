@@ -100,8 +100,18 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigFloat" data-name="bigfloat">
+      <a href="BigFloat.html">BigFloat</a>
+      
+    </li>
+  
   <li class=" " data-id="github.com/crystal-lang/crystal/BigInt" data-name="bigint">
       <a href="BigInt.html">BigInt</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/BigRational" data-name="bigrational">
+      <a href="BigRational.html">BigRational</a>
       
     </li>
   
@@ -465,23 +475,8 @@
       
     </li>
   
-  <li class="parent " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
+  <li class=" " data-id="github.com/crystal-lang/crystal/Hash" data-name="hash(k, v)">
       <a href="Hash.html">Hash</a>
-      
-        <ul>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/CaseInsensitiveComparator" data-name="hash::caseinsensitivecomparator">
-      <a href="Hash/CaseInsensitiveComparator.html">CaseInsensitiveComparator</a>
-      
-    </li>
-  
-  <li class=" " data-id="github.com/crystal-lang/crystal/Hash/StandardComparator" data-name="hash::standardcomparator">
-      <a href="Hash/StandardComparator.html">StandardComparator</a>
-      
-    </li>
-  
-</ul>
-
       
     </li>
   
@@ -1830,6 +1825,11 @@
       
     </li>
   
+  <li class=" " data-id="github.com/crystal-lang/crystal/String/RawConverter" data-name="string::rawconverter">
+      <a href="String/RawConverter.html">RawConverter</a>
+      
+    </li>
+  
 </ul>
 
       
@@ -1870,6 +1870,51 @@
       
     </li>
   
+  <li class="parent " data-id="github.com/crystal-lang/crystal/Termios" data-name="termios">
+      <a href="Termios.html">Termios</a>
+      
+        <ul>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/AttributeSelection" data-name="termios::attributeselection">
+      <a href="Termios/AttributeSelection.html">AttributeSelection</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/BaudRate" data-name="termios::baudrate">
+      <a href="Termios/BaudRate.html">BaudRate</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/ControlMode" data-name="termios::controlmode">
+      <a href="Termios/ControlMode.html">ControlMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/InputMode" data-name="termios::inputmode">
+      <a href="Termios/InputMode.html">InputMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LineControl" data-name="termios::linecontrol">
+      <a href="Termios/LineControl.html">LineControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/LocalMode" data-name="termios::localmode">
+      <a href="Termios/LocalMode.html">LocalMode</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Termios/OutputMode" data-name="termios::outputmode">
+      <a href="Termios/OutputMode.html">OutputMode</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
   <li class="parent " data-id="github.com/crystal-lang/crystal/Time" data-name="time">
       <a href="Time.html">Time</a>
       
@@ -1877,6 +1922,16 @@
   
   <li class=" " data-id="github.com/crystal-lang/crystal/Time/DayOfWeek" data-name="time::dayofweek">
       <a href="Time/DayOfWeek.html">DayOfWeek</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochConverter" data-name="time::epochconverter">
+      <a href="Time/EpochConverter.html">EpochConverter</a>
+      
+    </li>
+  
+  <li class=" " data-id="github.com/crystal-lang/crystal/Time/EpochMillisConverter" data-name="time::epochmillisconverter">
+      <a href="Time/EpochMillisConverter.html">EpochMillisConverter</a>
       
     </li>
   
@@ -2172,7 +2227,7 @@
   <h2>Defined in:</h2>
   
     
-      <a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr" target="_blank">socket/socket.cr</a>
+      <a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr" target="_blank">socket/socket.cr</a>
     
     <br/>
   
@@ -2209,14 +2264,14 @@
       <li class="entry-summary">
         <a href="#close_read-instance-method" class="signature"><strong>#close_read</strong></a>
         
-          <div class="summary"><p>Calls shutdown(2) with SHUT_READ</p></div>
+          <div class="summary"><p>Calls shutdown(2) with SHUT_RD</p></div>
         
       </li>
     
       <li class="entry-summary">
         <a href="#close_write-instance-method" class="signature"><strong>#close_write</strong></a>
         
-          <div class="summary"><p>Calls shutdown(2) with SHUT_WRITE</p></div>
+          <div class="summary"><p>Calls shutdown(2) with SHUT_WR</p></div>
         
       </li>
     
@@ -2319,16 +2374,16 @@
       <span>close_on_exec?</span>
     close_on_exec?</a>, 
   
-    <a href="IO/FileDescriptor.html#closed%3F-instance-method" class="tooltip">
-      <span>closed?</span>
+    <a href="IO/FileDescriptor.html#closed%3F%3ABool-instance-method" class="tooltip">
+      <span>closed? : Bool</span>
     closed?</a>, 
   
     <a href="IO/FileDescriptor.html#fcntl%28cmd%2Carg%3D%3Cspanclass%3D%22n%22%3E0%3C%2Fspan%3E%29-instance-method" class="tooltip">
       <span>fcntl(cmd, arg = <span class="n">0</span>)</span>
     fcntl</a>, 
   
-    <a href="IO/FileDescriptor.html#fd-instance-method" class="tooltip">
-      <span>fd</span>
+    <a href="IO/FileDescriptor.html#fd%3AInt32-instance-method" class="tooltip">
+      <span>fd : Int32</span>
     fd</a>, 
   
     <a href="IO/FileDescriptor.html#finalize-instance-method" class="tooltip">
@@ -2343,8 +2398,8 @@
       <span>pos=(value)</span>
     pos=</a>, 
   
-    <a href="IO/FileDescriptor.html#read_timed_out-instance-method" class="tooltip">
-      <span>read_timed_out</span>
+    <a href="IO/FileDescriptor.html#read_timed_out%3ABool-instance-method" class="tooltip">
+      <span>read_timed_out : Bool</span>
     read_timed_out</a>, 
   
     <a href="IO/FileDescriptor.html#read_timed_out%3D%28read_timed_out%3ABool%29-instance-method" class="tooltip">
@@ -2379,8 +2434,8 @@
       <span>tty?</span>
     tty?</a>, 
   
-    <a href="IO/FileDescriptor.html#write_timed_out-instance-method" class="tooltip">
-      <span>write_timed_out</span>
+    <a href="IO/FileDescriptor.html#write_timed_out%3ABool-instance-method" class="tooltip">
+      <span>write_timed_out : Bool</span>
     write_timed_out</a>, 
   
     <a href="IO/FileDescriptor.html#write_timed_out%3D%28write_timed_out%3ABool%29-instance-method" class="tooltip">
@@ -2401,8 +2456,8 @@
       <span>fcntl(fd, cmd, arg = <span class="n">0</span>)</span>
     fcntl</a>, 
   
-    <a href="IO/FileDescriptor.html#new%28fd%2Cblocking%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cedge_triggerable%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-class-method" class="tooltip">
-      <span>new(fd, blocking = <span class="n">false</span>, edge_triggerable = <span class="n">false</span>)</span>
+    <a href="IO/FileDescriptor.html#new%28fd%3AInt32%2Cblocking%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%2Cedge_triggerable%3D%3Cspanclass%3D%22n%22%3Efalse%3C%2Fspan%3E%29-class-method" class="tooltip">
+      <span>new(fd : Int32, blocking = <span class="n">false</span>, edge_triggerable = <span class="n">false</span>)</span>
     new</a>
   
 
@@ -2797,12 +2852,12 @@
       <span>cast(other) : self</span>
     cast</a>, 
   
-    <a href="Object.html#from_json%28string_or_io%29-class-method" class="tooltip">
-      <span>from_json(string_or_io)</span>
+    <a href="Object.html#from_json%28string_or_io%29%3Aself-class-method" class="tooltip">
+      <span>from_json(string_or_io) : self</span>
     from_json</a>, 
   
-    <a href="Object.html#from_yaml%28string%3AString%29-class-method" class="tooltip">
-      <span>from_yaml(string : String)</span>
+    <a href="Object.html#from_yaml%28string%3AString%29%3Aself-class-method" class="tooltip">
+      <span>from_yaml(string : String) : self</span>
     from_yaml</a>, 
   
     <a href="Object.html#hash-class-method" class="tooltip">
@@ -2844,7 +2899,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L117" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L121" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2865,7 +2920,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L186" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L190" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2881,7 +2936,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L182" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L186" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2894,12 +2949,12 @@
         <a class="method-permalink" href="#close_read-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Calls shutdown(2) with SHUT_READ</p></div>
+        <div class="doc"><p>Calls shutdown(2) with SHUT_RD</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L137" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L141" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2912,12 +2967,12 @@
         <a class="method-permalink" href="#close_write-instance-method">#</a>
       </div>
       
-        <div class="doc"><p>Calls shutdown(2) with SHUT_WRITE</p></div>
+        <div class="doc"><p>Calls shutdown(2) with SHUT_WR</p></div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L142" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L146" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2935,7 +2990,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L235" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L231" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2951,7 +3006,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L152" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L156" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2967,7 +3022,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L194" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L198" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2983,7 +3038,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L190" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L194" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -2999,7 +3054,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L198" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L202" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3024,7 +3079,7 @@ Int => enable SO_LINGER and set timeout to Int seconds.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L220" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L216" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3040,7 +3095,7 @@ Int => enable SO_LINGER and set timeout to Int seconds.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L165" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L169" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3056,7 +3111,7 @@ Int => enable SO_LINGER and set timeout to Int seconds.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L169" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L173" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3072,7 +3127,7 @@ Int => enable SO_LINGER and set timeout to Int seconds.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L178" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L182" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3088,7 +3143,7 @@ Int => enable SO_LINGER and set timeout to Int seconds.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L174" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L178" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3104,7 +3159,7 @@ Int => enable SO_LINGER and set timeout to Int seconds.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L156" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L160" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3120,7 +3175,7 @@ Int => enable SO_LINGER and set timeout to Int seconds.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L160" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L164" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -3138,7 +3193,7 @@ Int => enable SO_LINGER and set timeout to Int seconds.</p>
       <br/>
       <div>
         
-          [<a href="https://github.com/crystal-lang/crystal/blob/e5285e4ddf5802886007cb4bf511f162dcedfda1/src/socket/socket.cr#L243" target="_blank">View source</a>]
+          [<a href="https://github.com/crystal-lang/crystal/blob/fc89c1aeaa7ce2443ac2f3c10a5adcf96bef23ec/src/socket/socket.cr#L239" target="_blank">View source</a>]
         
       </div>
     </div>
