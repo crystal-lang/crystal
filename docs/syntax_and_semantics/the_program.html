@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.2" data-basepath=".." data-revision="Tue May 03 2016 16:49:00 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.2" data-basepath=".." data-revision="Thu May 05 2016 11:32:00 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2157,7 +2157,44 @@ add(<span class="hljs-number">2</span>)
 <p>Parentheses in method invocations are optional:</p>
 <pre><code class="lang-crystal">add <span class="hljs-number">1</span>, <span class="hljs-number">2</span> <span class="hljs-comment"># same as add(1, 2)</span>
 </code></pre>
+<h2 id="main-code">Main code</h2>
+<p>Main code, the code that is run when you compile and run a program, can be written directly in a source file without the need to put it in a special &quot;main&quot; method:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># This is a program that prints &quot;Hello Crystal!&quot;</span>
+puts <span class="hljs-string">&quot;Hello Crystal!&quot;</span>
+</code></pre>
+<p>Main code can also be inside type declarations:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># This is a program that prints &quot;Hello&quot;</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Hello</span></span>
+  <span class="hljs-comment"># &apos;self&apos; here is the Hello class</span>
+  puts <span class="hljs-keyword">self</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Note, however, that constants and class variable initialization is not considered &quot;main&quot; code, and happens before it:</p>
+<pre><code class="lang-crystal">puts <span class="hljs-string">&quot;Hello Crystal!&quot;</span>
 
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Hello</span></span>
+  <span class="hljs-comment"># These two initializations happen before the &apos;puts&apos; above</span>
+  <span class="hljs-variable">@@numbers</span> = <span class="hljs-keyword">begin</span>
+    puts <span class="hljs-string">&quot;Initializing @@numbers&quot;</span>
+    [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>]
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-constant">NUMBERS</span> = <span class="hljs-keyword">begin</span>
+    puts <span class="hljs-string">&quot;Initializing NUMBERS&quot;</span>
+    [<span class="hljs-number">3</span>, <span class="hljs-number">4</span>]
+  <span class="hljs-keyword">end</span>
+
+  puts <span class="hljs-variable">@@numbers</span>
+  puts <span class="hljs-constant">NUMBERS</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Output:</p>
+<pre><code>Initializing @@numbers
+Initializing NUMBERS
+Hello Crystal!
+[1, 2]
+[3, 4]
+</code></pre>
                     
                     </section>
                 
