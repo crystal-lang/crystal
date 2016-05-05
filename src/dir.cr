@@ -1,40 +1,6 @@
-lib LibC
-  type Dir = Void*
-
-  ifdef darwin
-    struct DirEntry
-      d_ino : Int32
-      reclen : UInt16
-      type : UInt8
-      namelen : UInt8
-      name : UInt8[1024]
-    end
-  elsif linux
-    struct DirEntry
-      d_ino : UInt64
-      d_off : Int64
-      reclen : UInt16
-      type : UInt8
-      name : UInt8[256]
-    end
-  end
-
-  fun getcwd(buffer : UInt8*, size : SizeT) : UInt8*
-  fun chdir = chdir(path : UInt8*) : Int
-  fun opendir(name : UInt8*) : Dir*
-  fun closedir(dir : Dir*) : Int
-
-  fun mkdir(path : UInt8*, mode : LibC::ModeT) : Int
-  fun rmdir(path : UInt8*) : Int
-
-  ifdef darwin
-    fun readdir(dir : Dir*) : DirEntry*
-  elsif linux
-    fun readdir = readdir64(dir : Dir*) : DirEntry*
-  end
-
-  fun rewinddir(dir : Dir*)
-end
+require "c/dirent"
+require "c/unistd"
+require "c/sys/stat"
 
 # Objects of class Dir are directory streams representing directories in the underlying file system.
 # They provide a variety of ways to list directories and their contents. See also `File`.
@@ -111,7 +77,7 @@ class Dir
     Errno.value = 0
     ent = LibC.readdir(@dir)
     if ent
-      String.new(ent.value.name.to_unsafe)
+      String.new(ent.value.d_name.to_unsafe)
     elsif Errno.value != 0
       raise Errno.new("readdir")
     else

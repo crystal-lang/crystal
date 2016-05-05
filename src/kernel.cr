@@ -1,3 +1,5 @@
+require "c/unistd"
+
 STDIN  = IO::FileDescriptor.new(0, blocking: LibC.isatty(0) == 0)
 STDOUT = (IO::FileDescriptor.new(1, blocking: LibC.isatty(1) == 0)).tap { |f| f.flush_on_newline = true }
 STDERR = (IO::FileDescriptor.new(2, blocking: LibC.isatty(2) == 0)).tap { |f| f.flush_on_newline = true }

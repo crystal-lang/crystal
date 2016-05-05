@@ -1,3 +1,5 @@
+require "c/fcntl"
+
 # An IO over a file descriptor.
 class IO::FileDescriptor
   include Buffered
@@ -58,26 +60,26 @@ class IO::FileDescriptor
   end
 
   def blocking
-    fcntl(LibC::FCNTL::F_GETFL) & LibC::O_NONBLOCK == 0
+    fcntl(LibC::F_GETFL) & LibC::O_NONBLOCK == 0
   end
 
   def blocking=(value)
-    flags = fcntl(LibC::FCNTL::F_GETFL)
+    flags = fcntl(LibC::F_GETFL)
     if value
       flags &= ~LibC::O_NONBLOCK
     else
       flags |= LibC::O_NONBLOCK
     end
-    fcntl(LibC::FCNTL::F_SETFL, flags)
+    fcntl(LibC::F_SETFL, flags)
   end
 
   def close_on_exec?
-    flags = fcntl(LibC::FCNTL::F_GETFD)
+    flags = fcntl(LibC::F_GETFD)
     (flags & LibC::FD_CLOEXEC) == LibC::FD_CLOEXEC
   end
 
   def close_on_exec=(arg : Bool)
-    fcntl(LibC::FCNTL::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
+    fcntl(LibC::F_SETFD, arg ? LibC::FD_CLOEXEC : 0)
     arg
   end
 
@@ -207,7 +209,7 @@ class IO::FileDescriptor
   private def unbuffered_read(slice : Slice(UInt8))
     count = slice.size
     loop do
-      bytes_read = LibC.read(@fd, slice.pointer(count), count)
+      bytes_read = LibC.read(@fd, slice.pointer(count) as Void*, count)
       if bytes_read != -1
         return bytes_read
       end
@@ -228,7 +230,7 @@ class IO::FileDescriptor
     count = slice.size
     total = count
     loop do
-      bytes_written = LibC.write(@fd, slice.pointer(count), count)
+      bytes_written = LibC.write(@fd, slice.pointer(count) as Void*, count)
       if bytes_written != -1
         count -= bytes_written
         return total if count == 0

@@ -1,82 +1,74 @@
-lib LibC
-  alias SigT = Int32 ->
+require "c/signal"
+require "c/stdio"
+require "c/unistd"
 
-  fun signal(sig : Int, handler : SigT) : SigT
-end
-
-ifdef darwin
+ifdef linux
   enum Signal
-    HUP    =  1
-    INT    =  2
-    QUIT   =  3
-    ILL    =  4
-    TRAP   =  5
-    IOT    =  6
-    ABRT   =  6
-    EMT    =  7
-    FPE    =  8
-    KILL   =  9
-    BUS    = 10
-    SEGV   = 11
-    SYS    = 12
-    PIPE   = 13
-    ALRM   = 15
-    TERM   = 15
-    URG    = 16
-    STOP   = 17
-    TSTP   = 18
-    CONT   = 19
-    CHLD   = 20
-    CLD    = 20
-    TTIN   = 21
-    TTOU   = 22
-    IO     = 23
-    XCPU   = 24
-    XFSZ   = 25
-    VTALRM = 26
-    PROF   = 27
-    WINCH  = 28
-    INFO   = 29
-    USR1   = 30
-    USR2   = 31
+    HUP    = LibC::SIGHUP
+    INT    = LibC::SIGINT
+    QUIT   = LibC::SIGQUIT
+    ILL    = LibC::SIGILL
+    TRAP   = LibC::SIGTRAP
+    IOT    = LibC::SIGIOT
+    ABRT   = LibC::SIGABRT
+    FPE    = LibC::SIGFPE
+    KILL   = LibC::SIGKILL
+    BUS    = LibC::SIGBUS
+    SEGV   = LibC::SIGSEGV
+    SYS    = LibC::SIGSYS
+    PIPE   = LibC::SIGPIPE
+    ALRM   = LibC::SIGALRM
+    TERM   = LibC::SIGTERM
+    URG    = LibC::SIGURG
+    STOP   = LibC::SIGSTOP
+    TSTP   = LibC::SIGTSTP
+    CONT   = LibC::SIGCONT
+    CHLD   = LibC::SIGCHLD
+    TTIN   = LibC::SIGTTIN
+    TTOU   = LibC::SIGTTOU
+    IO     = LibC::SIGIO
+    XCPU   = LibC::SIGXCPU
+    XFSZ   = LibC::SIGXFSZ
+    VTALRM = LibC::SIGVTALRM
+    USR1   = LibC::SIGUSR1
+    USR2   = LibC::SIGUSR2
+    WINCH  = LibC::SIGWINCH
+
+    PWR    = LibC::SIGPWR
+    STKFLT = LibC::SIGSTKFLT
+    UNUSED = LibC::SIGUNUSED
   end
 else
   enum Signal
-    HUP    =  1
-    INT    =  2
-    QUIT   =  3
-    ILL    =  4
-    TRAP   =  5
-    ABRT   =  6
-    IOT    =  6
-    BUS    =  7
-    FPE    =  8
-    KILL   =  9
-    USR1   = 10
-    SEGV   = 11
-    USR2   = 12
-    PIPE   = 13
-    ALRM   = 14
-    TERM   = 15
-    STKFLT = 16
-    CLD    = 17
-    CHLD   = 17
-    CONT   = 18
-    STOP   = 19
-    TSTP   = 20
-    TTIN   = 21
-    TTOU   = 22
-    URG    = 23
-    XCPU   = 24
-    XFSZ   = 25
-    VTALRM = 26
-    PROF   = 27
-    WINCH  = 28
-    POLL   = 29
-    IO     = 29
-    PWR    = 30
-    SYS    = 31
-    UNUSED = 31
+    HUP    = LibC::SIGHUP
+    INT    = LibC::SIGINT
+    QUIT   = LibC::SIGQUIT
+    ILL    = LibC::SIGILL
+    TRAP   = LibC::SIGTRAP
+    IOT    = LibC::SIGIOT
+    ABRT   = LibC::SIGABRT
+    FPE    = LibC::SIGFPE
+    KILL   = LibC::SIGKILL
+    BUS    = LibC::SIGBUS
+    SEGV   = LibC::SIGSEGV
+    SYS    = LibC::SIGSYS
+    PIPE   = LibC::SIGPIPE
+    ALRM   = LibC::SIGALRM
+    TERM   = LibC::SIGTERM
+    URG    = LibC::SIGURG
+    STOP   = LibC::SIGSTOP
+    TSTP   = LibC::SIGTSTP
+    CONT   = LibC::SIGCONT
+    CHLD   = LibC::SIGCHLD
+    TTIN   = LibC::SIGTTIN
+    TTOU   = LibC::SIGTTOU
+    IO     = LibC::SIGIO
+    XCPU   = LibC::SIGXCPU
+    XFSZ   = LibC::SIGXFSZ
+    VTALRM = LibC::SIGVTALRM
+    USR1   = LibC::SIGUSR1
+    USR2   = LibC::SIGUSR2
+    WINCH  = LibC::SIGWINCH
   end
 end
 

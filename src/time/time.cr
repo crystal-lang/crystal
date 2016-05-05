@@ -1,38 +1,5 @@
-lib LibC
-  struct TimeZone
-    tz_minuteswest : Int
-    tz_dsttime : Int
-  end
-
-  struct Tm
-    tm_sec : Int
-    tm_min : Int
-    tm_hour : Int
-    tm_mday : Int
-    tm_mon : Int
-    tm_year : Int
-    tm_wday : Int
-    tm_yday : Int
-    tm_isdst : Int
-    tm_gmtoff : Long
-    tm_zone : Char*
-  end
-
-  fun gettimeofday(tp : TimeVal*, tzp : TimeZone*) : Int
-  fun localtime_r(clock : TimeT*, result : Tm*) : Tm*
-
-  ifdef linux
-    alias ClockIdT = Int
-
-    CLOCK_REALTIME = 0
-
-    fun clock_gettime(clk_id : ClockIdT, tp : TimeSpec*) : Int
-  end
-
-  fun tzset : Void
-  $timezone : Int
-  $daylight : Int
-end
+require "c/sys/time"
+require "c/time"
 
 # `Time` represents an instance in time. Here are some examples:
 #
@@ -169,7 +136,7 @@ struct Time
     @encoded |= kind.value << KindShift
   end
 
-  def self.new(time : LibC::TimeSpec, kind = Kind::Unspecified)
+  def self.new(time : LibC::Timespec, kind = Kind::Unspecified)
     new(UnixEpoch + time.tv_sec.to_i64 * Span::TicksPerSecond + (time.tv_nsec.to_i64 * 0.01).to_i64, kind)
   end
 
@@ -620,16 +587,23 @@ struct Time
 
   private def self.compute_offset(second)
     LibC.tzset
-    if LibC.daylight == 0
-      # current TZ doesn't have any DST, neither in past, present or future
-      offset = -LibC.timezone.to_i64 / 60
-    else
+    offset = nil
+
+    {% if LibC.methods.includes?("daylight".id) %}
+      if LibC.daylight == 0
+        # current TZ doesn't have any DST, neither in past, present or future
+        offset = -LibC.timezone.to_i64
+      end
+    {% end %}
+
+    unless offset
       # current TZ may have DST, either in past, present or future
       ret = LibC.localtime_r(pointerof(second), out tm)
       raise Errno.new("localtime_r") if ret.null?
-      offset = tm.tm_gmtoff.to_i64 / 60
+      offset = tm.tm_gmtoff.to_i64
     end
-    offset * Span::TicksPerMinute
+
+    offset / 60 * Span::TicksPerMinute
   end
 
   private def self.compute_second_and_tenth_microsecond

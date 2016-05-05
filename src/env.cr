@@ -1,9 +1,4 @@
-lib LibC
-  $environ : Char**
-  fun getenv(name : Char*) : Char*?
-  fun setenv(name : Char*, value : Char*, overwrite : Int) : Int
-  fun unsetenv(name : Char*) : Int
-end
+require "c/stdlib"
 
 # `ENV` is a hash-like accessor for environment variables.
 #

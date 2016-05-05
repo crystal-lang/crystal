@@ -59,11 +59,16 @@ class UDPSocket < IPSocket
   # server.bind "localhost", 1234
   # ```
   def bind(host, port, dns_timeout = nil)
-    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |ai|
+    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |addrinfo|
       self.reuse_address = true
 
-      if LibC.bind(fd, ai.addr, ai.addrlen) != 0
-        next false if ai.next
+      ifdef freebsd
+        ret = LibC.bind(fd, addrinfo.ai_addr as LibC::Sockaddr*, addrinfo.ai_addrlen)
+      else
+        ret = LibC.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
+      end
+      unless ret == 0
+        next false if addrinfo.ai_next
         raise Errno.new("Error binding UDP socket at #{host}:#{port}")
       end
 
@@ -78,9 +83,9 @@ class UDPSocket < IPSocket
   # client.connect "localhost", 1234
   # ```
   def connect(host, port, dns_timeout = nil, connect_timeout = nil)
-    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |ai|
-      if err = nonblocking_connect host, port, ai, timeout: connect_timeout
-        next false if ai.next
+    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |addrinfo|
+      if err = nonblocking_connect host, port, addrinfo, timeout: connect_timeout
+        next false if addrinfo.ai_next
         raise err
       end
 
@@ -111,7 +116,7 @@ class UDPSocket < IPSocket
 
   def send(slice : Slice(UInt8), addr : IPAddress)
     sockaddr = addr.sockaddr
-    bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::SockAddr*, addr.addrlen)
+    bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::Sockaddr*, addr.addrlen)
     if bytes_sent != -1
       return bytes_sent
     end
@@ -121,10 +126,10 @@ class UDPSocket < IPSocket
 
   def receive(slice : Slice(UInt8)) : {Int32, IPAddress}
     loop do
-      sockaddr = uninitialized LibC::SockAddrIn6
-      addrlen = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
+      sockaddr = uninitialized LibC::SockaddrIn6
+      addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
 
-      bytes_read = LibC.recvfrom(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::SockAddr*, pointerof(addrlen))
+      bytes_read = LibC.recvfrom(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::Sockaddr*, pointerof(addrlen))
       if bytes_read != -1
         return {
           bytes_read.to_i32,

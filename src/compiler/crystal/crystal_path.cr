@@ -8,8 +8,34 @@ module Crystal
 
     @crystal_path : Array(String)
 
-    def initialize(path = CrystalPath.default_path)
+    def initialize(path = CrystalPath.default_path, target_triple = LLVM.default_target_triple)
       @crystal_path = path.split(':').reject &.empty?
+      add_target_path(target_triple)
+    end
+
+    private def add_target_path(target_triple = LLVM.default_target_triple)
+      triple = target_triple.split('-')
+      triple.delete(triple[1]) if triple.size == 4 # skip vendor
+
+      if %w(i386 i486 i586).includes?(triple[0])
+        triple[0] = "i686"
+      end
+
+      target = if triple.any?(&.includes?("macosx"))
+                 {triple[0], "macosx", "darwin"}.join('-')
+               elsif triple.any?(&.includes?("freebsd"))
+                 {triple[0], triple[1], "freebsd"}.join('-')
+               else
+                 triple.join('-')
+               end
+
+      @crystal_path.each do |path|
+        _path = File.join(path, "lib_c", target)
+        if Dir.exists?(_path)
+          @crystal_path << _path unless @crystal_path.includes?(_path)
+          return
+        end
+      end
     end
 
     def find(filename, relative_to = nil)

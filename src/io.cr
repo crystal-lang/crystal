@@ -1,66 +1,9 @@
-lib LibC
-  enum FCNTL
-    F_GETFD = 1
-    F_SETFD = 2
-    F_GETFL = 3
-    F_SETFL = 4
-  end
-
-  FD_CLOEXEC = 1
-
-  ifdef linux
-    O_RDONLY   = 0o0000000
-    O_WRONLY   = 0o0000001
-    O_RDWR     = 0o0000002
-    O_APPEND   = 0o0002000
-    O_CREAT    = 0o0000100
-    O_TRUNC    = 0o0001000
-    O_NONBLOCK = 0o0004000
-    O_CLOEXEC  = 0o2000000
-  elsif darwin
-    O_RDONLY   =    0x0000
-    O_WRONLY   =    0x0001
-    O_RDWR     =    0x0002
-    O_APPEND   =    0x0008
-    O_CREAT    =    0x0200
-    O_TRUNC    =    0x0400
-    O_NONBLOCK =    0x0004
-    O_CLOEXEC  = 0x1000000
-  end
-
-  S_IRWXU = 0o000700 # RWX mask for owner
-  S_IRUSR = 0o000400 # R for owner
-  S_IWUSR = 0o000200 # W for owner
-  S_IXUSR = 0o000100 # X for owner
-  S_IRWXG = 0o000070 # RWX mask for group
-  S_IRGRP = 0o000040 # R for group
-  S_IWGRP = 0o000020 # W for group
-  S_IXGRP = 0o000010 # X for group
-  S_IRWXO = 0o000007 # RWX mask for other
-  S_IROTH = 0o000004 # R for other
-  S_IWOTH = 0o000002 # W for other
-  S_IXOTH = 0o000001 # X for other
-
-  EWOULDBLOCK = 140
-  EAGAIN      =  11
-
-  fun fcntl(fd : Int, cmd : FCNTL, ...) : Int
-  fun getchar : Int
-  fun putchar(c : Int) : Int
-  fun puts(str : Char*) : Int
-  fun printf(str : Char*, ...) : Int
-  fun execl(path : Char*, arg0 : Char*, ...) : Int
-  fun waitpid(pid : PidT, stat_loc : Int*, options : Int) : PidT
-  fun open(path : Char*, oflag : Int, ...) : Int
-  fun dup2(fd : Int, fd2 : Int) : Int
-  fun read(fd : Int, buffer : Char*, nbyte : SizeT) : SSizeT
-  fun write(fd : Int, buffer : Char*, nbyte : SizeT) : SSizeT
-  fun pipe(filedes : Int[2]*) : Int
-  fun select(nfds : Int, readfds : Void*, writefds : Void*, errorfds : Void*, timeout : TimeVal*) : Int
-  fun lseek(fd : Int, offset : OffT, whence : Int) : OffT
-  fun close(fd : Int) : Int
-  fun isatty(fd : Int) : Int
-end
+require "c/fcntl"
+require "c/stdio"
+require "c/sys/select"
+require "c/sys/wait"
+require "c/errno"
+require "c/unistd"
 
 # The IO module is the basis for all input and output in Crystal.
 #
@@ -182,15 +125,19 @@ module IO
         usec = 0
       end
 
-      timeout = LibC::TimeVal.new
+      timeout = LibC::Timeval.new
       timeout.tv_sec = sec
-      timeout.tv_usec = LibC::UsecT.new(usec)
+      timeout.tv_usec = LibC::SusecondsT.new(usec)
       timeout_ptr = pointerof(timeout)
     else
-      timeout_ptr = Pointer(LibC::TimeVal).null
+      timeout_ptr = Pointer(LibC::Timeval).null
     end
 
-    ret = LibC.select(nfds, read_fdset, write_fdset, error_fdset, timeout_ptr)
+    readfds_ptr = pointerof(read_fdset) as LibC::FdSet*
+    writefds_ptr = pointerof(write_fdset) as LibC::FdSet*
+    errorfds_ptr = pointerof(error_fdset) as LibC::FdSet*
+
+    ret = LibC.select(nfds, readfds_ptr, writefds_ptr, errorfds_ptr, timeout_ptr)
     case ret
     when 0 # Timeout
       nil
@@ -266,7 +213,8 @@ module IO
   # reader.gets # => "world"
   # ```
   def self.pipe(read_blocking = false, write_blocking = false)
-    if LibC.pipe(out pipe_fds) != 0
+    pipe_fds = uninitialized StaticArray(LibC::Int, 2)
+    if LibC.pipe(pipe_fds) != 0
       raise Errno.new("Could not create pipe")
     end
 

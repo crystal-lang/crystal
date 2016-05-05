@@ -2,12 +2,12 @@ require "./ip_socket"
 
 class TCPSocket < IPSocket
   def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
-    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP, timeout: dns_timeout) do |ai|
-      super(create_socket(ai.family, ai.socktype, ai.protocol))
+    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP, timeout: dns_timeout) do |addrinfo|
+      super(create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol))
 
-      if err = nonblocking_connect host, port, ai, timeout: connect_timeout
+      if err = nonblocking_connect host, port, addrinfo, timeout: connect_timeout
         close
-        next false if ai.next
+        next false if addrinfo.ai_next
         raise err
       end
 
@@ -39,11 +39,21 @@ class TCPSocket < IPSocket
 
   # The amount of time in seconds the connection must be idle before sending keepalive probes.
   def tcp_keepalive_idle
-    getsockopt LibC::TCP_KEEPIDLE, 0, level: LibC::IPPROTO_TCP
+    optname = ifdef darwin
+      LibC::TCP_KEEPALIVE
+    else
+      LibC::TCP_KEEPIDLE
+    end
+    getsockopt optname, 0, level: LibC::IPPROTO_TCP
   end
 
   def tcp_keepalive_idle=(val : Int)
-    setsockopt LibC::TCP_KEEPIDLE, val, level: LibC::IPPROTO_TCP
+    optname = ifdef darwin
+      LibC::TCP_KEEPALIVE
+    else
+      LibC::TCP_KEEPIDLE
+    end
+    setsockopt optname, val, level: LibC::IPPROTO_TCP
     val
   end
 

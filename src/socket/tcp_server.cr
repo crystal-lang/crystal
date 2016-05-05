@@ -2,23 +2,23 @@ require "./tcp_socket"
 
 class TCPServer < TCPSocket
   def initialize(host, port, backlog = 128)
-    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP) do |ai|
-      sock = create_socket(ai.family, ai.socktype, ai.protocol)
+    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP) do |addrinfo|
+      sock = create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol)
       super sock
 
       self.reuse_address = true
 
-      if LibC.bind(sock, ai.addr as LibC::SockAddr*, ai.addrlen) != 0
+      if LibC.bind(sock, addrinfo.ai_addr as LibC::Sockaddr*, addrinfo.ai_addrlen) != 0
         errno = Errno.new("Error binding TCP server at #{host}:#{port}")
         LibC.close(sock)
-        next false if ai.next
+        next false if addrinfo.ai_next
         raise errno
       end
 
       if LibC.listen(sock, backlog) != 0
         errno = Errno.new("Error listening TCP server at #{host}:#{port}")
         LibC.close(sock)
-        next false if ai.next
+        next false if addrinfo.ai_next
         raise errno
       end
 
@@ -50,9 +50,9 @@ class TCPServer < TCPSocket
 
   def accept
     loop do
-      client_addr = uninitialized LibC::SockAddrIn6
-      client_addr_len = LibC::SocklenT.new(sizeof(LibC::SockAddrIn6))
-      client_fd = LibC.accept(fd, pointerof(client_addr) as LibC::SockAddr*, pointerof(client_addr_len))
+      client_addr = uninitialized LibC::SockaddrIn6
+      client_addr_len = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
+      client_fd = LibC.accept(fd, pointerof(client_addr) as LibC::Sockaddr*, pointerof(client_addr_len))
       if client_fd == -1
         if Errno.value == Errno::EAGAIN
           wait_readable

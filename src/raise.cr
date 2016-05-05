@@ -1,3 +1,6 @@
+require "c/stdio"
+require "c/stdlib"
+
 # :nodoc:
 struct LEBReader
   def initialize(@data : UInt8*)
