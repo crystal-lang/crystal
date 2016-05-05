@@ -757,6 +757,17 @@ describe "Type inference: macro" do
       "missing arguments: x, z"
   end
 
+  it "doesn't include arguments with default values in missing arguments error" do
+    assert_error %(
+
+      macro foo(x, z, y = 1)
+      end
+
+      foo(x: 1)
+      ),
+      "missing argument: z"
+  end
+
   it "finds generic type argument of included module" do
     assert_type(%(
       module Bar(T)

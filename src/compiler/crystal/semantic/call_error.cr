@@ -330,9 +330,12 @@ class Crystal::Call
 
     missing_args = [] of String
     mandatory_args.each_with_index do |value, index|
-      unless value
-        missing_args << a_def.args[index].name
-      end
+      next if value
+
+      arg = a_def.args[index]
+      next if arg.default_value
+
+      missing_args << arg.name
     end
 
     case missing_args.size

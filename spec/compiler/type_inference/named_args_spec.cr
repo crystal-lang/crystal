@@ -145,6 +145,17 @@ describe "Type inference: named args" do
       "missing arguments: x, z"
   end
 
+  it "doesn't include arguments with default values in missing arguments error" do
+    assert_error %(
+
+      def foo(x, z, y = 1)
+      end
+
+      foo(x: 1)
+      ),
+      "missing argument: z"
+  end
+
   it "says no overload matches with named arg" do
     assert_error %(
       def foo(x, y)
