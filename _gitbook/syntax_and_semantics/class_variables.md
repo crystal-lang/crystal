@@ -26,7 +26,36 @@ Class variables can be read and written from class methods or instance methods.
 
 Their type is inferred using the [global type inference algorithm](type_inference.html).
 
-If a class variable is assigned at the class level, like in the example above, that initialization happens as soon as the program starts, before "main" code.
+If a class variable is assigned at the class level, like in the example above, that initialization happens as soon as the program starts, before "main" code:
+
+```crystal
+# This assignment happens before the initialization of Foo's @@value
+ENV["HOME"] = "."
+
+class Foo
+  @@value = ENV["HOME"]
+
+  def self.value
+    @@value
+  end
+end
+
+Foo.value # probably not "."
+```
+
+In those cases the best thing is to lazily initialize the class variable:
+
+```crystal
+ENV["HOME"] = "."
+
+class Foo
+  def self.value
+    @@value ||= ENV["HOME"]
+  end
+end
+
+Foo.value # "."
+```
 
 Class variables are always associated to a single type and are not inherited:
 

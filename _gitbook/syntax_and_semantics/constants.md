@@ -29,6 +29,31 @@ end
 TEN #=> 10
 ```
 
-A constant is initialized at the beginning of the program, before "main" code.
+A constant is initialized at the beginning of the program, before "main" code:
+
+```crystal
+# This assignment happens before the initialization of Foo::VALUE
+ENV["HOME"] = "."
+
+class Foo
+  VALUE = ENV["HOME"]
+end
+
+Foo::VALUE # probably not "."
+```
+
+In those cases the best thing is to lazily initialize a class variable:
+
+```crystal
+ENV["HOME"] = "."
+
+class Foo
+  def self.value
+    @@value ||= ENV["HOME"]
+  end
+end
+
+Foo.value # "."
+```
 
 If a constant is not used, its initializer is never included in the final executable.
