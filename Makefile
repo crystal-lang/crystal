@@ -24,7 +24,7 @@ all: crystal
 spec: all_spec
 	$(O)/all_spec
 doc:
-	$(BUILD_PATH) ./bin/crystal doc docs/main.cr
+	$(BUILD_PATH) ./bin/crystal doc src/docs_main.cr
 
 crystal: $(O)/crystal
 all_spec: $(O)/all_spec

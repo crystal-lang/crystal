@@ -15,7 +15,7 @@ struct Char
   # '\u007f'.ord # => 127
   # '☃'.ord      # => 9731
   # ```
+  @[Primitive(:cast)]
   def ord : Int32
-    1
   end
 end

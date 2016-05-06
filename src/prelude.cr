@@ -1,4 +1,5 @@
 require "intrinsics"
+require "primitives"
 require "reflect"
 require "lib_c"
 require "macros"

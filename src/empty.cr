@@ -1,3 +1,5 @@
+require "primitives"
+
 lib LibCrystalMain
   @[Raises]
   fun __crystal_main(argc : Int32, argv : UInt8**)
