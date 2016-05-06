@@ -2674,6 +2674,50 @@ describe "Type inference: instance var" do
       "wrong number of arguments for 'Foo.new'"
   end
 
+  it "guesses inside macro if" do
+    assert_type(%(
+      {% if true %}
+        class Foo
+          def initialize
+            @x = 1
+          end
+
+          def x
+            @x
+          end
+        end
+      {% end %}
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "guesses inside macro expression" do
+    assert_type(%(
+      {{ "class Foo; def initialize; @x = 1; end; def x; @x; end; end".id }}
+
+      Foo.new.x
+      )) { int32 }
+  end
+
+  it "guesses inside macro for" do
+    assert_type(%(
+      {% for name in %w(Foo) %}
+        class {{name.id}}
+          def initialize
+            @x = 1
+          end
+
+          def x
+            @x
+          end
+        end
+      {% end %}
+
+      Foo.new.x
+      )) { int32 }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv
