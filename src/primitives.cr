@@ -284,7 +284,6 @@ end
     end
   {% end %}
 
-
   {% for int in ints %}
     struct {{int.id}}
       # Returns a `Char` that has the unicode codepoint of *self*.
@@ -340,7 +339,6 @@ end
         @[Primitive(:binary)]
         def unsafe_mod(other : {{int2.id}}) : self
         end
-
       {% end %}
 
       {% for float in floats %}
