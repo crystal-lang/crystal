@@ -498,6 +498,10 @@ module Crystal::Macros
     # Similar to `Array#[]`, but returns `NilLiteral` on out of bounds.
     def [](index : NumberLiteral) : ASTNode
     end
+
+    # Similar to `Array#+`.
+    def +(other : ArrayLiteral) : ArrayLiteral
+    end
   end
 
   # A hash literal.

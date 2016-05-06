@@ -510,6 +510,10 @@ describe "macro methods" do
       assert_macro "", %({{ [1, 2, 3].includes?(1) }}), [] of ASTNode, %(true)
       assert_macro "", %({{ [1, 2, 3].includes?(4) }}), [] of ASTNode, %(false)
     end
+
+    it "executes +" do
+      assert_macro "", %({{ [1, 2] + [3, 4, 5] }}), [] of ASTNode, %([1, 2, 3, 4, 5])
+    end
   end
 
   describe "hash methods" do

@@ -508,6 +508,13 @@ module Crystal
         else
           wrong_number_of_arguments "ArrayLiteral##{method}", args.size, 1
         end
+      when "+"
+        interpret_one_arg_method(method, args) do |arg|
+          unless arg.is_a?(ArrayLiteral)
+            arg.raise "argument to `ArrayLiteral#+` must be an array, not #{arg.class_desc}:\n\n#{arg}"
+          end
+          ArrayLiteral.new(elements + arg.elements)
+        end
       else
         super
       end
