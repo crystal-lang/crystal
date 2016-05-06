@@ -164,4 +164,10 @@ lib LibCrypto
   fun md5 = MD5(data : UInt8*, lengh : LibC::SizeT, md : UInt8*) : UInt8*
 
   fun pkcs5_pbkdf2_hmac_sha1 = PKCS5_PBKDF2_HMAC_SHA1(pass : LibC::Char*, passlen : LibC::Int, salt : UInt8*, saltlen : LibC::Int, iter : LibC::Int, keylen : LibC::Int, out : UInt8*) : LibC::Int
+
+  NID_X9_62_prime256v1 = 415
+
+  alias EC_KEY = Void*
+  fun ec_key_new_by_curve_name = EC_KEY_new_by_curve_name(nid : Int) : EC_KEY
+  fun ec_key_free = EC_KEY_free(key : EC_KEY)
 end
