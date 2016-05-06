@@ -73,7 +73,6 @@ module Crystal
       end
 
       int.add_def Def.new("chr", body: cast)
-      char.add_def Def.new("ord", body: cast)
       symbol.add_def Def.new("to_i", body: cast)
     end
 

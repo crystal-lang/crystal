@@ -18,6 +18,10 @@ describe "Code gen: primitives" do
     run("'a'").to_i.should eq('a'.ord)
   end
 
+  it "codegens char ord" do
+    run("'a'.ord").to_i.should eq('a'.ord)
+  end
+
   it "codegens f32" do
     run("2.5_f32").to_f32.should eq(2.5_f32)
   end
@@ -75,7 +79,7 @@ describe "Code gen: primitives" do
     run("
 
       __LINE__
-      ").to_i.should eq(3)
+      ", inject_primitives: false).to_i.should eq(3)
   end
 
   it "codeges crystal_type_id with union type" do

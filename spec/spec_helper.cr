@@ -25,8 +25,8 @@ record InferTypeResult,
   node : ASTNode,
   type : Type
 
-def assert_type(str, flags = nil)
-  result = infer_type_result(str, flags)
+def assert_type(str, flags = nil, inject_primitives = true)
+  result = infer_type_result(str, flags, inject_primitives: inject_primitives)
   program = result.program
   expected_type = with program yield program
   result.type.should eq(expected_type)
@@ -34,6 +34,7 @@ def assert_type(str, flags = nil)
 end
 
 def infer_type(code : String, wants_doc = false)
+  code = inject_primitives(code)
   infer_type parse(code, wants_doc: wants_doc), wants_doc: wants_doc
 end
 
@@ -45,7 +46,8 @@ def infer_type(node : ASTNode, wants_doc = false)
   InferTypeResult.new(program, node, node.type)
 end
 
-def infer_type_result(str, flags = nil)
+def infer_type_result(str, flags = nil, inject_primitives = true)
+  str = inject_primitives(str) if inject_primitives
   program = Program.new
   program.flags = flags if flags
   input = parse str
@@ -84,6 +86,7 @@ def assert_expand_third(from : String, to)
 end
 
 def assert_after_cleanup(before, after)
+  # before = inject_primitives(before)
   node = Parser.parse(before)
   result = infer_type node
   result.node.to_s.strip.should eq(after.strip)
@@ -102,7 +105,8 @@ def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile =
   end
 end
 
-def assert_error(str, message)
+def assert_error(str, message, inject_primitives = true)
+  str = inject_primitives(str) if inject_primitives
   nodes = parse str
   expect_raises TypeException, message do
     infer_type nodes
@@ -137,6 +141,7 @@ def parse(string, wants_doc = false)
 end
 
 def codegen(code)
+  code = inject_primitives(code)
   node = parse code
   result = infer_type node
   result.program.codegen result.node, single_module: false
@@ -163,7 +168,9 @@ class Crystal::SpecRunOutput
   end
 end
 
-def run(code, filename = nil)
+def run(code, filename = nil, inject_primitives = true)
+  code = inject_primitives(code) if inject_primitives
+
   # Code that requires the prelude doesn't run in LLVM's MCJIT
   # because of missing linked functions (which are available
   # in the current executable!), so instead we compile
@@ -210,4 +217,8 @@ def test_c(c_code, crystal_code)
     File.delete(c_filename)
     File.delete(o_filename)
   end
+end
+
+private def inject_primitives(code)
+  %(require "primitives"\n) + code
 end

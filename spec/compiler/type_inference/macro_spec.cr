@@ -111,7 +111,8 @@ describe "Type inference: macro" do
       end
 
       bar
-    }, "Error in line 7: expected 'bar' to return Foo(String), not Foo(Int32)"
+    }, "Error in line 7: expected 'bar' to return Foo(String), not Foo(Int32)",
+      inject_primitives: false
   end
 
   it "allows union return types for macro def" do
@@ -642,7 +643,8 @@ describe "Type inference: macro" do
 
       foo
     ),
-      "Error in line 6: expanding macro"
+      "Error in line 6: expanding macro",
+      inject_primitives: false
   end
 
   it "show macro trace in errors (2)" do
@@ -651,7 +653,8 @@ describe "Type inference: macro" do
         Bar
       {% end %}
     ),
-      "Error in line 2: expanding macro"
+      "Error in line 2: expanding macro",
+      inject_primitives: false
   end
 
   it "errors if using macro that is defined later" do

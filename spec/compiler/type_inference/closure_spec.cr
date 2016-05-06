@@ -107,7 +107,7 @@ describe "Type inference: closure" do
           x
         end
       end
-      ") { int32 }
+      ", inject_primitives: false) { int32 }
     node = result.node as Expressions
     call = node[1] as Call
     block = call.block.not_nil!
@@ -442,7 +442,7 @@ describe "Type inference: closure" do
   it "passes #227" do
     result = assert_type(%(
       ->{ a = 1; ->{ a } }
-      )) { fun_of(fun_of(int32)) }
+      ), inject_primitives: false) { fun_of(fun_of(int32)) }
     fn = result.node as FunLiteral
     fn.def.closure.should be_false
   end

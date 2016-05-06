@@ -8,7 +8,7 @@ describe "Code gen: magic constants" do
       end
 
       foo
-      )).to_i.should eq(6)
+      ), inject_primitives: false).to_i.should eq(6)
   end
 
   it "does __FILE__" do
@@ -43,7 +43,7 @@ describe "Code gen: magic constants" do
 
       a = 1 || "hello"
       foo(a)
-      )).to_i.should eq(11)
+      ), inject_primitives: false).to_i.should eq(11)
   end
 
   it "does __LINE__ when specifying one default arg with __FILE__" do
@@ -53,7 +53,7 @@ describe "Code gen: magic constants" do
       end
 
       foo 1, "hello"
-      )).to_i.should eq(6)
+      ), inject_primitives: false).to_i.should eq(6)
   end
 
   it "does __LINE__ when specifying one normal default arg" do
@@ -63,7 +63,7 @@ describe "Code gen: magic constants" do
       end
 
       foo 1, 20
-      )).to_i.should eq(26)
+      ), inject_primitives: false).to_i.should eq(26)
   end
 
   it "does __LINE__ when specifying one middle argument" do
@@ -73,7 +73,7 @@ describe "Code gen: magic constants" do
       end
 
       foo 1, z: 20
-      )).to_i.should eq(26)
+      ), inject_primitives: false).to_i.should eq(26)
   end
 
   it "does __LINE__ in macro" do
@@ -83,7 +83,7 @@ describe "Code gen: magic constants" do
       end
 
       foo
-      )).to_i.should eq(6)
+      ), inject_primitives: false).to_i.should eq(6)
   end
 
   it "does __FILE__ in macro" do

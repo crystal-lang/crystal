@@ -25,6 +25,10 @@ describe "Type inference: primitives" do
     assert_type("'a'") { char }
   end
 
+  it "types char ord" do
+    assert_type("'a'.ord") { int32 }
+  end
+
   it "types a symbol" do
     assert_type(":foo") { symbol }
   end
