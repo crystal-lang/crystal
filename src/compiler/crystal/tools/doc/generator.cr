@@ -6,7 +6,6 @@ class Crystal::Doc::Generator
   def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
-    @is_crystal_repository = false
     @repo_name = ""
     compute_repository
   end
@@ -114,10 +113,6 @@ class Crystal::Doc::Generator
   end
 
   def must_include?(a_def : Crystal::Def)
-    if @is_crystal_repository && (body = a_def.body).is_a?(Crystal::Primitive)
-      doc = Primitive.doc(a_def, body)
-      return !nodoc?(doc)
-    end
     return false if nodoc?(a_def)
 
     must_include? a_def.location
@@ -253,8 +248,6 @@ class Crystal::Doc::Generator
 
     @repository = "https://github.com/#{user}/#{repo}/blob/#{rev}"
     @repo_name = "github.com/#{user}/#{repo}"
-
-    @is_crystal_repository ||= (user == "crystal-lang" && repo == "crystal")
   end
 
   def source_link(node)

@@ -58,22 +58,26 @@ describe "Code gen: magic constants" do
 
   it "does __LINE__ when specifying one normal default arg" do
     run(%(
+      require "primitives"
+
       def foo(x, z = 10, line = __LINE__)
         z + line
       end
 
       foo 1, 20
-      ), inject_primitives: false).to_i.should eq(26)
+      ), inject_primitives: false).to_i.should eq(28)
   end
 
   it "does __LINE__ when specifying one middle argument" do
     run(%(
+      require "primitives"
+
       def foo(x, line = __LINE__, z = 1)
         z + line
       end
 
       foo 1, z: 20
-      ), inject_primitives: false).to_i.should eq(26)
+      ), inject_primitives: false).to_i.should eq(28)
   end
 
   it "does __LINE__ in macro" do

@@ -47,8 +47,8 @@ describe "cleanup" do
   end
 
   it "keeps then of if with responds_to? that is always true" do
-    assert_after_cleanup "a = 1; if a.responds_to?(:\"+\"); 2; end",
-      "a = 1\n2"
+    assert_after_cleanup "struct Int; def +(other); end; end; a = 1; if a.responds_to?(:\"+\"); 2; end",
+      "struct Int\n  def +(other)\n  end\nend\na = 1\n2"
   end
 
   it "errors if assigning var to itself" do

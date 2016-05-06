@@ -20,13 +20,7 @@ class Crystal::Doc::Method
   end
 
   def doc
-    body = @def.body
-    doc = @def.doc
-    if !doc && body.is_a?(Crystal::Primitive)
-      Primitive.doc @def, body
-    else
-      doc
-    end
+    @def.doc
   end
 
   def source_link

@@ -1878,8 +1878,6 @@ module Crystal
         node.type = mod.uint64
       when "object_crystal_type_id"
         node.type = mod.int32
-      when "symbol_hash"
-        node.type = mod.int32
       when "symbol_to_s"
         node.type = mod.string
       when "class"

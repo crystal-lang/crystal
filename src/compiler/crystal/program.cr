@@ -169,8 +169,6 @@ module Crystal
       @literal_expander = LiteralExpander.new self
       @macro_expander = MacroExpander.new self
       @nil_var = Var.new("<nil_var>", nil_t)
-
-      define_primitives
     end
 
     private def crystal_path

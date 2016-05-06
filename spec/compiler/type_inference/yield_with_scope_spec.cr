@@ -26,26 +26,30 @@ describe "Type inference: yield with scope" do
   end
 
   it "infer type of block body with yield scope" do
-    input = parse "
+    input = parse %(
+      require "primitives"
+
       def foo; with 1 yield; end
 
       foo do
         to_i64
       end
-    "
+    )
     result = infer_type input
     mod, input = result.program, result.node as Expressions
     (input.last as Call).block.not_nil!.body.type.should eq(mod.int64)
   end
 
   it "infer type of block body with yield scope and arguments" do
-    input = parse "
+    input = parse %(
+      require "primitives"
+
       def foo; with 1 yield 1.5; end
 
       foo do |f|
         to_i64 + f
       end
-    "
+    )
     result = infer_type input
     mod, input = result.program, result.node as Expressions
     (input.last as Call).block.not_nil!.body.type.should eq(mod.float64)

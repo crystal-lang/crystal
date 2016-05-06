@@ -90,7 +90,17 @@ describe "Type inference: def" do
   end
 
   it "do not use body for the def type" do
-    input = parse "def foo; if 1 == 2; return 0; end; end; foo"
+    input = parse %(
+      require "primitives"
+
+      def foo
+        if 1 == 2
+          return 0
+        end
+      end
+
+      foo
+      )
     result = infer_type input
     mod, input = result.program, result.node as Expressions
 

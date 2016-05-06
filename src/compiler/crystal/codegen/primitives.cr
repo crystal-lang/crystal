@@ -57,8 +57,6 @@ class Crystal::CodeGenVisitor
               codegen_primitive_object_id node, target_def, call_args
             when "object_crystal_type_id"
               codegen_primitive_object_crystal_type_id node, target_def, call_args
-            when "symbol_hash"
-              codegen_primitive_symbol_hash node, target_def, call_args
             when "symbol_to_s"
               codegen_primitive_symbol_to_s node, target_def, call_args
             when "class"
@@ -591,10 +589,6 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_symbol_to_s(node, target_def, call_args)
     load(gep @llvm_mod.globals[SYMBOL_TABLE_NAME], int(0), call_args[0])
-  end
-
-  def codegen_primitive_symbol_hash(node, target_def, call_args)
-    call_args[0]
   end
 
   def codegen_primitive_class(node, target_def, call_args)
