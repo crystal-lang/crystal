@@ -4,7 +4,7 @@ describe "Code gen: splat" do
   it "splats" do
     run(%(
       struct Tuple
-        def size; {{@type.size}}; end
+        def size; {{T.size}}; end
       end
 
       def foo(*args)
@@ -18,7 +18,7 @@ describe "Code gen: splat" do
   it "splats with another arg" do
     run(%(
       struct Tuple
-        def size; {{@type.size}}; end
+        def size; {{T.size}}; end
       end
 
       def foo(x, *args)
@@ -32,7 +32,7 @@ describe "Code gen: splat" do
   it "splats with two other args" do
     run(%(
       struct Tuple
-        def size; {{@type.size}}; end
+        def size; {{T.size}}; end
       end
 
       def foo(x, *args, z)
@@ -57,7 +57,7 @@ describe "Code gen: splat" do
   it "splats without args" do
     run(%(
       struct Tuple
-        def size; {{@type.size}}; end
+        def size; {{T.size}}; end
       end
 
       def foo(*args)
@@ -71,7 +71,7 @@ describe "Code gen: splat" do
   it "splats with default value" do
     run(%(
       struct Tuple
-        def size; {{@type.size}}; end
+        def size; {{T.size}}; end
       end
 
       def foo(x = 100, *args)
@@ -85,7 +85,7 @@ describe "Code gen: splat" do
   it "splats with default value (2)" do
     run(%(
       struct Tuple
-        def size; {{@type.size}}; end
+        def size; {{T.size}}; end
       end
 
       def foo(x, y = 100, *args)
@@ -99,7 +99,7 @@ describe "Code gen: splat" do
   it "splats with default value (3)" do
     run(%(
       struct Tuple
-        def size; {{@type.size}}; end
+        def size; {{T.size}}; end
       end
 
       def foo(x, y = 100, *args)

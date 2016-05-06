@@ -256,7 +256,7 @@ end
 struct Tuple
   def to_json(io)
     io.json_array do |array|
-      {% for i in 0...@type.size %}
+      {% for i in 0...T.size %}
         array << self[{{i}}]
       {% end %}
     end

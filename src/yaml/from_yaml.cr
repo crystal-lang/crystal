@@ -81,7 +81,7 @@ def Tuple.new(pull : YAML::PullParser)
   {% if true %}
     pull.read_sequence_start
     value = Tuple.new(
-      {% for i in 0...@type.size %}
+      {% for i in 0...T.size %}
         (self[{{i}}].new(pull)),
       {% end %}
     )
