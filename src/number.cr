@@ -2,6 +2,8 @@
 struct Number
   include Comparable(Number)
 
+  alias Primitive = Int::Primitive | Float::Primitive
+
   def self.zero : self
     new(0)
   end
