@@ -36,7 +36,7 @@ class Class
   #     typeof(number)             # => (String | Int32)
   #     typeof(klass.cast(number)) # => Int32
   #
-  macro def cast(other) : self
+  def cast(other) : self
     other as self
   end
 

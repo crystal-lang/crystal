@@ -325,7 +325,7 @@ struct Enum
   # Color.from_value(2) # => Color::Blue
   # Color.from_value(3) # => Exception
   # ```
-  macro def self.from_value(value) : self
+  def self.from_value(value) : self
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
   end
 
