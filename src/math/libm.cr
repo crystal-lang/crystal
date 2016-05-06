@@ -1,4 +1,4 @@
-@[Link("m")] ifdef linux
+@[Link("m")] ifdef linux || freebsd
 lib LibM
   # ## To be uncommented once LLVM is updated
   # LLVM binary operations
