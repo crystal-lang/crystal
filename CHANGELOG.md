@@ -8,7 +8,7 @@
 * **(breaking change)** `Int#**(Int)` now returns an integer, and raises if the argument is negative. Use a float base or exponent for negative exponents to work.
 * **(breaking change)** `Slice#to_s` and `StaticArray#to_s` now include their type name in the output
 * Support for FreeBSD and musl libc has landed (thanks @ysbaddaden)
-* The `.crystal` directory is now created at `$HOME/cache/.crystal` or `$HOME/.crystal` (or others similar), with a fallback to the current directory
+* The `.crystal` directory is now created at `$HOME/.cache/crystal` or `$HOME/.crystal` (or others similar), with a fallback to the current directory
 * `crystal doc` and `crystal tool hierarchy` are now much faster. Additionally, the hierarchy tool shows types for generic types, and doesn't show instantiations anymore (wasn't very useful)
 * `!` now does type filtering (for example you can do `!x || x.bar`, assuming `x` can be `nil` and the non-nil type responds to `bar`)
 * Named arguments can now match any argument, even if they don't have a default value. Make sure to read the [docs](http://crystal-lang.org/docs/syntax_and_semantics/default_and_named_arguments.html)
