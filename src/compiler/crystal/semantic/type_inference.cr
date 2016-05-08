@@ -25,11 +25,11 @@ module Crystal
     def infer_type(node, stats = false)
       infer_type_top_level(node, stats: stats)
 
-      Crystal.timing("Semantic (ivars initializers)", stats) do
-        visit_instance_vars_initializers(node)
-      end
       Crystal.timing("Semantic (cvars initializers)", stats) do
         visit_class_vars_initializers(node)
+      end
+      Crystal.timing("Semantic (ivars initializers)", stats) do
+        visit_instance_vars_initializers(node)
       end
       result = Crystal.timing("Semantic (main)", stats) do
         visit_main(node)
