@@ -366,9 +366,13 @@ describe "Parser" do
   it_parses "foo &.[0] = 1", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Var.new("__arg0"), "[]=", 0.int32, 1.int32)))
   it_parses "foo(&.is_a?(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), "T".path)))
   it_parses "foo(&.responds_to?(:foo))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], RespondsTo.new(Var.new("__arg0"), "foo")))
-  it_parses "foo(&.as(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Cast.new(Var.new("__arg0"), "T".path)))
   it_parses "foo &.each {\n}", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
   it_parses "foo &.each do\nend", Call.new(nil, "foo", block: Block.new(["__arg0".var], Call.new("__arg0".var, "each", block: Block.new)))
+
+  it_parses "foo(&.as(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Cast.new(Var.new("__arg0"), "T".path)))
+  it_parses "foo(&.as(T).bar)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Cast.new(Var.new("__arg0"), "T".path), "bar")))
+  it_parses "foo &.as(T)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Cast.new(Var.new("__arg0"), "T".path)))
+  it_parses "foo &.as(T).bar", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Cast.new(Var.new("__arg0"), "T".path), "bar")))
 
   it_parses "foo.[0]", Call.new("foo".call, "[]", 0.int32)
   it_parses "foo.[0] = 1", Call.new("foo".call, "[]=", [0.int32, 1.int32] of ASTNode)
@@ -974,6 +978,8 @@ describe "Parser" do
   it_parses "foo.bar.as(Bar)", Cast.new(Call.new("foo".call, "bar"), "Bar".path)
   it_parses "call(foo.as Bar, Baz)", Call.new(nil, "call", args: [Cast.new("foo".call, "Bar".path), "Baz".path])
 
+  it_parses "as(Bar)", Cast.new(Var.new("self"), "Bar".path)
+
   it_parses "typeof(1)", TypeOf.new([1.int32] of ASTNode)
 
   it_parses "puts ~1", Call.new(nil, "puts", Call.new(1.int32, "~"))
@@ -1141,7 +1147,7 @@ describe "Parser" do
   it_parses "return 1.bar do\nend", Return.new(Call.new(1.int32, "bar", block: Block.new))
 
   %w(begin nil true false yield with abstract def macro require case if ifdef unless include extend class struct module enum while
-    until return next break lib fun alias pointerof sizeof instance_sizeof typeof private protected asm end do else elsif when rescue ensure as).each do |keyword|
+    until return next break lib fun alias pointerof sizeof instance_sizeof typeof private protected asm end do else elsif when rescue ensure).each do |keyword|
     it_parses "#{keyword} : Int32", TypeDeclaration.new(keyword.var, "Int32".path)
     it_parses "property #{keyword} : Int32", Call.new(nil, "property", TypeDeclaration.new(keyword.var, "Int32".path))
   end

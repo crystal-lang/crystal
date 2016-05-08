@@ -752,6 +752,15 @@ module Crystal
       atomic
     end
 
+    def parse_atomic_method_suffix_special(call, location)
+      case @token.type
+      when :".", :"[", :"[]"
+        parse_atomic_method_suffix(call, location)
+      else
+        call
+      end
+    end
+
     def parse_single_arg
       if @token.type == :"*"
         next_token_skip_space
@@ -1385,12 +1394,16 @@ module Crystal
 
         if @token.value == :is_a?
           call = parse_is_a(obj).at(location)
+          call = parse_atomic_method_suffix_special(call, location)
         elsif @token.value == :as
           call = parse_as(obj).at(location)
+          call = parse_atomic_method_suffix_special(call, location)
         elsif @token.value == :responds_to?
           call = parse_responds_to(obj).at(location)
+          call = parse_atomic_method_suffix_special(call, location)
         elsif @token.value == :nil?
           call = parse_nil?(obj).at(location)
+          call = parse_atomic_method_suffix_special(call, location)
         elsif @token.type == :"["
           call = parse_atomic_method_suffix obj, location
 
@@ -3268,6 +3281,9 @@ module Crystal
       when :is_a?
         obj = Var.new("self").at(location)
         return parse_is_a(obj)
+      when :as
+        obj = Var.new("self").at(location)
+        return parse_as(obj)
       when :responds_to?
         obj = Var.new("self").at(location)
         return parse_responds_to(obj)
