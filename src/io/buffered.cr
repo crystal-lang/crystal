@@ -9,7 +9,7 @@ module IO::Buffered
 
   BUFFER_SIZE = 8192
 
-  @in_buffer_rem = Slice.new(Pointer(UInt8).null, 0)
+  @in_buffer_rem = Slice(UInt8).new(Pointer(UInt8).null, 0)
   @out_count = 0
   @sync = false
   @flush_on_newline = false

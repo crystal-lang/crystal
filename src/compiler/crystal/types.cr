@@ -916,6 +916,10 @@ module Crystal
       true
     end
 
+    def known_instance_vars
+      @known_instance_vars ||= Set(String).new
+    end
+
     def declare_instance_var(name, var_type : Type)
       @including_types.try &.each do |type|
         case type
@@ -1470,7 +1474,11 @@ module Crystal
       @including_types
     end
 
-    getter declared_instance_var : Hash(String, Array(TypeVar))?
+    def known_instance_vars
+      @known_instance_vars ||= Set(String).new
+    end
+
+    getter declared_instance_vars : Hash(String, Array(TypeVar))?
 
     def declare_instance_var(name, type_var : TypeVar)
       declare_instance_var(name, [type_var] of TypeVar)
@@ -1522,6 +1530,10 @@ module Crystal
 
     def new_generic_instance(program, generic_type, type_vars)
       GenericClassInstanceType.new program, generic_type, type_vars
+    end
+
+    def known_instance_vars
+      @known_instance_vars ||= Set(String).new
     end
 
     getter declared_instance_vars : Hash(String, Array(TypeVar))?

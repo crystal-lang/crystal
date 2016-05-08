@@ -867,7 +867,7 @@ describe "Type inference: class" do
         def f(arg)
         end
 
-        @a = ->f(String)
+        @a  : Proc(String, Nil) = ->f(String)
       end
       )) { |mod| mod.nil }
   end

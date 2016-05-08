@@ -641,7 +641,7 @@ describe "Code gen: class" do
         def f(arg)
         end
 
-        @a = ->f(String)
+        @a : Proc(String, Nil) = ->f(String)
       end
       ))
   end

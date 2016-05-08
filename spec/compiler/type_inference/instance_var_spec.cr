@@ -2718,6 +2718,74 @@ describe "Type inference: instance var" do
       )) { int32 }
   end
 
+  it "can't infer type from initializer" do
+    assert_error %(
+      class Foo
+        @x = 1 + 2
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      ),
+      "Can't infer the type of instance variable '@x' of Foo"
+  end
+
+  it "can't infer type from initializer in non-generic module" do
+    assert_error %(
+      module Moo
+        @x = 1 + 2
+
+        def x
+          @x
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      Foo.new.x
+      ),
+      "Can't infer the type of instance variable '@x' of Moo"
+  end
+
+  it "can't infer type from initializer in generic module type" do
+    assert_error %(
+      module Moo(T)
+        @x = 1 + 2
+
+        def x
+          @x
+        end
+      end
+
+      class Foo
+        include Moo(Int32)
+      end
+
+      Foo.new.x
+      ),
+      "Can't infer the type of instance variable '@x' of Moo(T)"
+  end
+
+  it "can't infer type from initializer in generic class type" do
+    assert_error %(
+      class Foo(T)
+        @x = 1 + 2
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32).new.x
+      ),
+      "Can't infer the type of instance variable '@x' of Foo(T)"
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

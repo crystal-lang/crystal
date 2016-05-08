@@ -35,7 +35,7 @@ describe "Code gen: type declaration" do
   it "codegens initialize instance var with var declaration" do
     run("
       class Foo
-        @x = begin
+        @x : Int32 = begin
           a = 1
           a
         end

@@ -147,13 +147,33 @@ module Crystal
       case current_type
       when Program, FileModule
         node.raise "can't use instance variables at the top level"
-      when ClassType, NonGenericModuleType
+      when ClassType, NonGenericModuleType, GenericModuleType
         meta_vars = MetaVars.new
         ivar_visitor = MainVisitor.new(mod, meta_vars: meta_vars)
         ivar_visitor.scope = current_type
 
         unless current_type.is_a?(GenericType)
           value.accept ivar_visitor
+        end
+
+        case current_type
+        when NonGenericModuleType
+          unless current_type.known_instance_vars.includes?(target.name)
+            ivar_visitor.undefined_instance_variable(current_type, target)
+          end
+        when GenericModuleType
+          unless current_type.known_instance_vars.includes?(target.name)
+            ivar_visitor.undefined_instance_variable(current_type, target)
+          end
+        when GenericClassType
+          unless current_type.known_instance_vars.includes?(target.name)
+            ivar_visitor.undefined_instance_variable(current_type, target)
+          end
+        else
+          ivar = current_type.lookup_instance_var?(target.name)
+          unless ivar
+            ivar_visitor.undefined_instance_variable(current_type, target)
+          end
         end
 
         current_type.add_instance_var_initializer(target.name, value, meta_vars)

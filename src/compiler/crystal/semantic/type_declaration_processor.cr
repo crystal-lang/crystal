@@ -210,6 +210,7 @@ module Crystal
         end
       when NonGenericModuleType
         # Transfer this declaration to including types, recursively
+        owner.known_instance_vars << name
         owner.raw_including_types.try &.each do |including_type|
           process_owner_instance_var_declaration(including_type, name, type_decl)
         end
@@ -223,8 +224,10 @@ module Crystal
           end
         end
 
+        owner.known_instance_vars << name
         owner.declare_instance_var(name, type_decl.type)
       when GenericModuleType
+        owner.known_instance_vars << name
         owner.declare_instance_var(name, type_decl.type)
         check_non_nilable_for_generic_module(owner, name, type_decl)
       end
@@ -233,10 +236,12 @@ module Crystal
     private def check_non_nilable_for_generic_module(owner, name, type_decl)
       case owner
       when GenericModuleType
+        owner.known_instance_vars << name
         owner.inherited.try &.each do |inherited|
           check_non_nilable_for_generic_module(inherited, name, type_decl)
         end
       when NonGenericModuleType
+        owner.known_instance_vars << name
         owner.raw_including_types.try &.each do |inherited|
           check_non_nilable_for_generic_module(inherited, name, type_decl)
         end
@@ -292,6 +297,7 @@ module Crystal
         declare_meta_type_var(owner.instance_vars, owner, name, type)
       when NonGenericModuleType
         # Transfer this guess to including types, recursively
+        owner.known_instance_vars << name
         owner.raw_including_types.try &.each do |including_type|
           process_owner_guessed_instance_var_declaration(including_type, name, type_info)
         end
@@ -305,12 +311,14 @@ module Crystal
           return
         end
 
+        owner.known_instance_vars << name
         owner.declare_instance_var(name, type_info.type_vars.uniq)
       when GenericModuleType
         if nilable_instance_var?(owner, name)
           type_info.type_vars << @program.nil
         end
 
+        owner.known_instance_vars << name
         owner.declare_instance_var(name, type_info.type_vars.uniq)
       end
     end
