@@ -297,7 +297,7 @@ describe "Parser" do
     it_parses "f.x #{op}= 2", Call.new("f".call, "x=", Call.new(Call.new("f".call, "x"), op, 2.int32))
   end
 
-  ["/", "<", "<=", "==", "!=", "=~", "!~", ">", ">=", "+", "-", "*", "/", "!", "~", "%", "&", "|", "^", "**", "==="].each do |op|
+  ["/", "<", "<=", "==", "!=", "=~", "!~", ">", ">=", "+", "-", "*", "/", "~", "%", "&", "|", "^", "**", "==="].each do |op|
     it_parses "def #{op}; end;", Def.new(op)
   end
 
@@ -1203,6 +1203,12 @@ describe "Parser" do
     assert_syntax_error "foo.#{name}()"
     assert_syntax_error "foo &.#{name}"
     assert_syntax_error "foo &.#{name}()"
+  end
+
+  %w(! is_a? as responds_to? nil?).each do |name|
+    assert_syntax_error "def #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
+    assert_syntax_error "def self.#{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
+    assert_syntax_error "macro #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
   end
 
   describe "end locations" do

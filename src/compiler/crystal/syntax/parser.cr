@@ -2435,8 +2435,10 @@ module Crystal
       name_column_number = @token.column_number
 
       if @token.type == :IDENT
+        check_valid_def_name
         name = @token.value.to_s
       else
+        check_valid_def_op_name
         name = @token.type.to_s
       end
       next_token_skip_space
@@ -2790,7 +2792,9 @@ module Crystal
       if @token.type == :CONST
         receiver = parse_ident
       elsif @token.type == :IDENT
+        check_valid_def_name
         name = @token.value.to_s
+
         next_token
         if @token.type == :"="
           name = "#{name}="
@@ -2799,7 +2803,9 @@ module Crystal
           skip_space
         end
       else
+        check_valid_def_op_name
         name = @token.type.to_s
+
         next_token_skip_space
       end
 
@@ -2817,7 +2823,9 @@ module Crystal
         next_token_skip_space
 
         if @token.type == :IDENT
+          check_valid_def_name
           name = @token.value.to_s
+
           name_column_number = @token.column_number
           next_token
           if @token.type == :"="
@@ -2828,7 +2836,9 @@ module Crystal
           end
         else
           check DefOrMacroCheck2
+          check_valid_def_op_name
           name = @token.type.to_s
+
           name_column_number = @token.column_number
           next_token_skip_space
         end
@@ -2959,6 +2969,18 @@ module Crystal
       set_visibility node
       node.end_location = end_location
       node
+    end
+
+    def check_valid_def_name
+      if {:is_a?, :as, :responds_to?, :nil?}.includes?(@token.value)
+        raise "'#{@token.value}' is a pseudo-method and can't be redefined", @token
+      end
+    end
+
+    def check_valid_def_op_name
+      if @token.type == :"!"
+        raise "'!' is a pseudo-method and can't be redefined", @token
+      end
     end
 
     def compute_block_arg_yields(block_arg)
