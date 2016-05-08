@@ -302,6 +302,32 @@ struct Tuple
     {% end %}
   end
 
+  # Returns a tuple that contains *self*'s elements followed by *other*'s elements.
+  #
+  # ```
+  # t1 = {1, 2}
+  # t2 = {"foo", "bar"}
+  # t3 = t1 + t2
+  # t3         # => {1, 2, "foo", "bar"}
+  # typeof(t3) # => Tuple(Int32, Int32, String, String)
+  # ```
+  def +(other : Tuple)
+    plus_implementation(other)
+  end
+
+  private def plus_implementation(other : U)
+    {% begin %}
+      Tuple.new(
+        {% for i in 0...@type.size %}
+          self[{{i}}],
+        {% end %}
+        {% for i in 0...U.size %}
+          other[{{i}}],
+        {% end %}
+      )
+    {% end %}
+  end
+
   # Returns true if this tuple is empty.
   #
   # ```
