@@ -420,7 +420,7 @@ module Crystal
       end
 
       def resolve(node : Path)
-        if node.names.size == 1 && (match = @free_vars.try &.[node.names.first])
+        if node.names.size == 1 && (match = @free_vars.try &.[node.names.first]?)
           matched_type = match
         else
           matched_type = @type_lookup.lookup_type(node)

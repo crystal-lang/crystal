@@ -1380,4 +1380,16 @@ describe "Code gen: macro" do
       (Bar.new || Foo.new).foo_m
       )).to_i.should eq(2)
   end
+
+  it "uses tuple T in method with free vars" do
+    run(%(
+      struct Tuple
+        def foo(x : U)
+          {{T.size}}
+        end
+      end
+
+      {1, 3}.foo(1)
+      )).to_i.should eq(2)
+  end
 end
