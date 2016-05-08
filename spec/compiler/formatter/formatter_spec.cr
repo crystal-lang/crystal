@@ -429,8 +429,11 @@ describe Crystal::Formatter do
   assert_format "@[Foo]\ndef foo\nend"
   assert_format "@[Foo(\n  1,\n)]"
 
-  assert_format "1   as   Int32", "1 as Int32"
-  assert_format "foo.bar  as   Int32", "foo.bar as Int32"
+  assert_format "1   as   Int32", "1.as(Int32)"
+  assert_format "foo.bar  as   Int32", "foo.bar.as(Int32)"
+
+  assert_format "1.as   Int32", "1.as Int32"
+  assert_format "foo.bar. as   Int32", "foo.bar.as Int32"
 
   assert_format "1 .. 2", "1..2"
   assert_format "1 ... 2", "1...2"
@@ -810,9 +813,13 @@ describe Crystal::Formatter do
 
   assert_format "@foo : Int32 # comment\n\ndef foo\nend"
 
-  assert_format "a &.b as C"
-  assert_format "a &.b.c as C"
-  assert_format "a(&.b.c as C)"
+  assert_format "a &.b as C", "a &.b.as(C)"
+  assert_format "a &.b.c as C", "a &.b.c.as(C)"
+  assert_format "a(&.b.c as C)", "a(&.b.c.as(C))"
+
+  assert_format "a &.b.as(C)"
+  assert_format "a &.b.c.as(C)"
+  assert_format "a(&.b.c.as(C))"
 
   assert_format "foo : self?"
   assert_format "foo : self? | A"
