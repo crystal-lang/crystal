@@ -264,7 +264,7 @@ describe "Type inference: generic class" do
       end
 
       Foo(Int32).new
-      )) { types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar) }
+      )) { generic_class "Foo", int32 }
   end
 
   it "inherits class methods from generic class" do
@@ -419,7 +419,7 @@ describe "Type inference: generic class" do
       end
 
       Bar(Float32).new
-    )) { types["Bar"].as(GenericClassType).instantiate([float32] of TypeVar) }
+    )) { generic_class "Bar", float32 }
   end
 
   it "initializes instance variable of generic type using type var (#961)" do
@@ -436,7 +436,7 @@ describe "Type inference: generic class" do
       end
 
       Foo(Int32).new.bar
-      )) { types["Bar"].as(GenericClassType).instantiate([int32] of TypeVar) }
+      )) { generic_class "Bar", int32 }
   end
 
   it "errors if passing integer literal to Proc as generic argument (#1120)" do

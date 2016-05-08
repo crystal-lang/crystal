@@ -28,9 +28,7 @@ describe "Type inference: class" do
       f = Foo(Int32).new
       f.set
       f
-    ") do
-      types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar)
-    end
+    ") { generic_class "Foo", int32 }
     mod = result.program
     type = result.node.type.as(GenericClassInstanceType)
     type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
@@ -153,9 +151,7 @@ describe "Type inference: class" do
       end
 
       Foo(Int32 | Float64).new
-      ") do
-      types["Foo"].as(GenericClassType).instantiate([union_of(int32, float64)] of TypeVar)
-    end
+      ") { generic_class "Foo", union_of(int32, float64) }
   end
 
   it "types class and subclass as one type" do
@@ -209,9 +205,7 @@ describe "Type inference: class" do
       end
 
       b = Box.new(10)
-      ") do
-      types["Box"].as(GenericClassType).instantiate([int32] of TypeVar)
-    end
+      ") { generic_class "Box", int32 }
     mod = result.program
     type = result.node.type.as(GenericClassInstanceType)
     type.type_vars["T"].type.should eq(mod.int32)
@@ -228,9 +222,7 @@ describe "Type inference: class" do
 
       b1 = Box.new(1, 10)
       b2 = Box.new(1, false)
-      ") do
-      types["Box"].as(GenericClassType).instantiate([bool] of TypeVar)
-    end
+      ") { generic_class "Box", bool }
     mod = result.program
     type = result.node.type.as(GenericClassInstanceType)
     type.type_vars["T"].type.should eq(mod.bool)
@@ -316,9 +308,7 @@ describe "Type inference: class" do
 
       Reference.new
       Foo(Int32).new
-      ") do
-      types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar)
-    end
+      ") { generic_class "Foo", int32 }
   end
 
   it "errors when wrong arguments for new" do
@@ -418,9 +408,7 @@ describe "Type inference: class" do
       end
 
       Foo(1).new
-      ") do
-      types["Foo"].as(GenericClassType).instantiate([NumberLiteral.new(1)] of TypeVar)
-    end
+      ") { generic_class "Foo", 1.int32 }
   end
 
   it "uses number type var in class method" do
@@ -447,9 +435,7 @@ describe "Type inference: class" do
       end
 
       Bar.coco.new
-      ") do
-      types["Foo"].as(GenericClassType).instantiate([types["Bar"]] of TypeVar)
-    end
+      ") { generic_class "Foo", types["Bar"] }
   end
 
   it "uses self as type var" do
@@ -467,9 +453,7 @@ describe "Type inference: class" do
       end
 
       Baz.coco.new
-      ") do
-      types["Foo"].as(GenericClassType).instantiate([types["Baz"]] of TypeVar)
-    end
+      ") { generic_class "Foo", types["Baz"] }
   end
 
   it "infers generic type after instance was created with explicit type" do
@@ -754,7 +738,7 @@ describe "Type inference: class" do
       end
 
       Foo.new(0)
-      )) { types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar) }
+      )) { generic_class "Foo", int32 }
   end
 
   it "doesn't error on new on abstract virtual type class" do

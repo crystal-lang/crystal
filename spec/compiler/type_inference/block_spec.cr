@@ -109,9 +109,7 @@ describe "Block inference" do
       end
 
       bar { |x| x.foo }
-      ") do
-      types["Foo"].as(GenericClassType).instantiate([float64] of TypeVar)
-    end
+      ") { generic_class "Foo", float64 }
     mod = result.program
     type = result.node.type.as(GenericClassInstanceType)
     type.type_vars["T"].type.should eq(mod.float64)
@@ -133,9 +131,7 @@ describe "Block inference" do
       a = foo(1) do |x|
         10.5
       end
-      ") do
-      types["Foo"].as(GenericClassType).instantiate([float64] of TypeVar)
-    end
+      ") { generic_class "Foo", float64 }
   end
 
   it "reports error if yields a type that's not that one in the block specification" do
@@ -244,9 +240,7 @@ describe "Block inference" do
       end
 
       foo { Foo(Float64).new }
-      ") do
-      types["Foo"].as(GenericClassType).instantiate([float64] of TypeVar)
-    end
+      ") { generic_class "Foo", float64 }
   end
 
   it "infers type of block with generic type" do

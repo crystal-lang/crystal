@@ -229,10 +229,7 @@ describe "Restrictions" do
       end
 
       foo(Foo(Int32).new || Foo(Float64).new)
-      )) { union_of(
-      types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar),
-      types["Foo"].as(GenericClassType).instantiate([float64] of TypeVar),
-    ) }
+      )) { union_of(generic_class("Foo", int32), generic_class("Foo", float64)) }
   end
 
   it "should not let GenericChild(Base) pass as a GenericBase(Child) (#1294)" do

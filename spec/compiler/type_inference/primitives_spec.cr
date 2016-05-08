@@ -83,7 +83,7 @@ describe "Type inference: primitives" do
       x = foo 1, 'a'
       y = foo 'a', 1
       x
-      )) { types["Hash"].as(GenericClassType).instantiate([int32, char] of TypeVar) }
+      )) { generic_class "Hash", int32, char }
   end
 
   it "computes correct hash value type if it's a function literal (#320)" do
@@ -91,10 +91,7 @@ describe "Type inference: primitives" do
       require "prelude"
 
       {"foo" => ->{ true }}
-      )) do
-      (types["Hash"].as(GenericClassType))
-        .instantiate([string, fun_of(bool)] of TypeVar)
-    end
+      )) { generic_class "Hash", string, fun_of(bool) }
   end
 
   it "extends from Number and doesn't find + method" do

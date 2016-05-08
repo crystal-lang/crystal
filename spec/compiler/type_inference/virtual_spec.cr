@@ -616,11 +616,7 @@ describe "Type inference: virtual" do
       end
 
       Bar(Foo).new
-      ") {
-      foo = types["Foo"]
-      bar = types["Bar"].as(GenericClassType)
-      bar.instantiate([foo.virtual_type] of TypeVar)
-    }
+      ") { generic_class "Bar", types["Foo"].virtual_type }
   end
 
   it "uses virtual type as generic type if class is abstract even in union" do
@@ -635,11 +631,7 @@ describe "Type inference: virtual" do
       end
 
       Bar(Foo | Int32).new
-      ") {
-      foo = types["Foo"]
-      bar = types["Bar"].as(GenericClassType)
-      bar.instantiate([union_of(foo.virtual_type, int32)] of TypeVar)
-    }
+      ") { generic_class "Bar", union_of(types["Foo"].virtual_type, int32) }
   end
 
   it "automatically does virtual for generic type if there are subclasses" do

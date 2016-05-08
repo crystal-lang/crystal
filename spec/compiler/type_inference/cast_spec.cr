@@ -136,7 +136,7 @@ describe "Type inference: cast" do
 
       foo = Foo(Int32).new
       foo as Foo
-      )) { types["Foo"].as(GenericClassType).instantiate([int32] of ASTNode | Type) }
+      )) { generic_class "Foo", int32 }
   end
 
   it "casts to base class making it virtual (1)" do

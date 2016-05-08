@@ -285,9 +285,7 @@ describe "Type inference: def overload" do
       end
 
       foo 1
-    ") {
-      types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar)
-    }
+    ") { generic_class "Foo", int32 }
   end
 
   it "can call overload with generic restriction" do

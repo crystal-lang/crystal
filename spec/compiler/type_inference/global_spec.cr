@@ -207,7 +207,7 @@ describe "Global inference" do
 
       $x = Foo(Int32).new
       $x
-      )) { types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar) }
+      )) { generic_class "Foo", int32 }
   end
 
   it "infers type from as" do
@@ -534,7 +534,7 @@ describe "Global inference" do
       $x = Foo(Int32).new
       $x = Foo(typeof(foo)).new
       $x
-      )) { types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar) }
+      )) { generic_class "Foo", int32 }
   end
 
   it "infers type of global reference" do

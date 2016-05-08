@@ -1711,7 +1711,7 @@ describe "Type inference: instance var" do
       end
 
       Bar.new.x
-      )) { types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar) }
+      )) { generic_class "Foo", int32 }
   end
 
   it "infers type from custom hash literal" do
@@ -1759,7 +1759,7 @@ describe "Type inference: instance var" do
       end
 
       Bar.new.x
-      )) { types["Foo"].as(GenericClassType).instantiate([int32, string] of TypeVar) }
+      )) { generic_class "Foo", int32, string }
   end
 
   it "infers type from custom array literal in generic" do
@@ -2220,7 +2220,7 @@ describe "Type inference: instance var" do
       end
 
       Foo.new.bar
-      )) { types["Bar"].as(GenericClassType).instantiate([int32] of TypeVar) }
+      )) { generic_class "Bar", int32 }
   end
 
   it "infers from generic class method that has type annotation, without instantiating" do
@@ -2371,7 +2371,7 @@ describe "Type inference: instance var" do
       end
 
       Baz.new.x
-      )) { types["Bar"].as(GenericClassType).instantiate([int32] of TypeVar) }
+      )) { generic_class "Bar", int32 }
   end
 
   it "guesses from new on abstract class" do

@@ -40,9 +40,7 @@ describe "Type inference: union" do
       end
 
       foo(1 || 'a')
-    ") do
-      types["Bar"].as(GenericClassType).instantiate([union_of(int32, char)] of TypeVar)
-    end
+    ") { generic_class "Bar", union_of(int32, char) }
   end
 
   it "supports ifdef inside union" do

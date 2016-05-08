@@ -4,51 +4,51 @@ describe "macro methods" do
   describe "node methods" do
     describe "stringify" do
       it "expands macro with stringify call on string" do
-        assert_macro "x", "{{x.stringify}}", [StringLiteral.new("hello")] of ASTNode, "\"\\\"hello\\\"\""
+        assert_macro "x", "{{x.stringify}}", ["hello".string] of ASTNode, "\"\\\"hello\\\"\""
       end
 
       it "expands macro with stringify call on symbol" do
-        assert_macro "x", "{{x.stringify}}", [SymbolLiteral.new("hello")] of ASTNode, %(":hello")
+        assert_macro "x", "{{x.stringify}}", ["hello".symbol] of ASTNode, %(":hello")
       end
 
       it "expands macro with stringify call on call" do
-        assert_macro "x", "{{x.stringify}}", [Call.new(nil, "hello")] of ASTNode, %("hello")
+        assert_macro "x", "{{x.stringify}}", ["hello".call] of ASTNode, %("hello")
       end
 
       it "expands macro with stringify call on number" do
-        assert_macro "x", "{{x.stringify}}", [NumberLiteral.new(1)] of ASTNode, %("1")
+        assert_macro "x", "{{x.stringify}}", [1.int32] of ASTNode, %("1")
       end
     end
 
     describe "symbolize" do
       it "expands macro with symbolize call on string" do
-        assert_macro "x", "{{x.symbolize}}", [StringLiteral.new("hello")] of ASTNode, ":\"\\\"hello\\\"\""
+        assert_macro "x", "{{x.symbolize}}", ["hello".string] of ASTNode, ":\"\\\"hello\\\"\""
       end
 
       it "expands macro with symbolize call on symbol" do
-        assert_macro "x", "{{x.symbolize}}", [SymbolLiteral.new("hello")] of ASTNode, ":\":hello\""
+        assert_macro "x", "{{x.symbolize}}", ["hello".symbol] of ASTNode, ":\":hello\""
       end
 
       it "expands macro with symbolize call on id" do
-        assert_macro "x", "{{x.id.symbolize}}", [StringLiteral.new("hello")] of ASTNode, ":hello"
+        assert_macro "x", "{{x.id.symbolize}}", ["hello".string] of ASTNode, ":hello"
       end
     end
 
     describe "id" do
       it "expands macro with id call on string" do
-        assert_macro "x", "{{x.id}}", [StringLiteral.new("hello")] of ASTNode, "hello"
+        assert_macro "x", "{{x.id}}", ["hello".string] of ASTNode, "hello"
       end
 
       it "expands macro with id call on symbol" do
-        assert_macro "x", "{{x.id}}", [SymbolLiteral.new("hello")] of ASTNode, "hello"
+        assert_macro "x", "{{x.id}}", ["hello".symbol] of ASTNode, "hello"
       end
 
       it "expands macro with id call on call" do
-        assert_macro "x", "{{x.id}}", [Call.new(nil, "hello")] of ASTNode, "hello"
+        assert_macro "x", "{{x.id}}", ["hello".call] of ASTNode, "hello"
       end
 
       it "expands macro with id call on number" do
-        assert_macro "x", "{{x.id}}", [NumberLiteral.new(1)] of ASTNode, %(1)
+        assert_macro "x", "{{x.id}}", [1.int32] of ASTNode, %(1)
       end
     end
 
@@ -86,15 +86,15 @@ describe "macro methods" do
       end
 
       it "executes class_name" do
-        assert_macro "x", "{{x.class_name}}", [StringLiteral.new("hello")] of ASTNode, "\"StringLiteral\""
+        assert_macro "x", "{{x.class_name}}", ["hello".string] of ASTNode, "\"StringLiteral\""
       end
 
       it "executes class_name" do
-        assert_macro "x", "{{x.class_name}}", [SymbolLiteral.new("hello")] of ASTNode, "\"SymbolLiteral\""
+        assert_macro "x", "{{x.class_name}}", ["hello".symbol] of ASTNode, "\"SymbolLiteral\""
       end
 
       it "executes class_name" do
-        assert_macro "x", "{{x.class_name}}", [NumberLiteral.new(1)] of ASTNode, "\"NumberLiteral\""
+        assert_macro "x", "{{x.class_name}}", [1.int32] of ASTNode, "\"NumberLiteral\""
       end
 
       it "executes class_name" do
@@ -343,31 +343,31 @@ describe "macro methods" do
 
   describe "symbol methods" do
     it "forwards methods to string" do
-      assert_macro "x", %({{x.ends_with?("llo")}}), [SymbolLiteral.new("hello")] of ASTNode, %(true)
-      assert_macro "x", %({{x.ends_with?("tro")}}), [SymbolLiteral.new("hello")] of ASTNode, %(false)
-      assert_macro "x", %({{x.starts_with?("hel")}}), [SymbolLiteral.new("hello")] of ASTNode, %(true)
+      assert_macro "x", %({{x.ends_with?("llo")}}), ["hello".symbol] of ASTNode, %(true)
+      assert_macro "x", %({{x.ends_with?("tro")}}), ["hello".symbol] of ASTNode, %(false)
+      assert_macro "x", %({{x.starts_with?("hel")}}), ["hello".symbol] of ASTNode, %(true)
       assert_macro "x", %({{x.chomp}}), [SymbolLiteral.new("hello\n")] of ASTNode, %(:hello)
-      assert_macro "x", %({{x.upcase}}), [SymbolLiteral.new("hello")] of ASTNode, %(:HELLO)
+      assert_macro "x", %({{x.upcase}}), ["hello".symbol] of ASTNode, %(:HELLO)
     end
   end
 
   describe "and methods" do
     it "executes left" do
-      assert_macro "x", %({{x.left}}), [And.new(NumberLiteral.new(1), NumberLiteral.new(2))] of ASTNode, %(1)
+      assert_macro "x", %({{x.left}}), [And.new(1.int32, 2.int32)] of ASTNode, %(1)
     end
 
     it "executes right" do
-      assert_macro "x", %({{x.right}}), [And.new(NumberLiteral.new(1), NumberLiteral.new(2))] of ASTNode, %(2)
+      assert_macro "x", %({{x.right}}), [And.new(1.int32, 2.int32)] of ASTNode, %(2)
     end
   end
 
   describe "or methods" do
     it "executes left" do
-      assert_macro "x", %({{x.left}}), [Or.new(NumberLiteral.new(1), NumberLiteral.new(2))] of ASTNode, %(1)
+      assert_macro "x", %({{x.left}}), [Or.new(1.int32, 2.int32)] of ASTNode, %(1)
     end
 
     it "executes right" do
-      assert_macro "x", %({{x.right}}), [Or.new(NumberLiteral.new(1), NumberLiteral.new(2))] of ASTNode, %(2)
+      assert_macro "x", %({{x.right}}), [Or.new(1.int32, 2.int32)] of ASTNode, %(2)
     end
   end
 
@@ -414,7 +414,7 @@ describe "macro methods" do
     end
 
     it "executes map with arg" do
-      assert_macro "x", %({{x.map { |e| e.id }}}), [ArrayLiteral.new([Call.new(nil, "hello")] of ASTNode)] of ASTNode, "[hello]"
+      assert_macro "x", %({{x.map { |e| e.id }}}), [ArrayLiteral.new(["hello".call] of ASTNode)] of ASTNode, "[hello]"
     end
 
     it "executes select" do
@@ -475,7 +475,7 @@ describe "macro methods" do
     end
 
     it "creates an array literal with a var" do
-      assert_macro "x", %({% a = [x] %}{{a[0]}}), [NumberLiteral.new(1)] of ASTNode, "1"
+      assert_macro "x", %({% a = [x] %}{{a[0]}}), [1.int32] of ASTNode, "1"
     end
 
     it "executes sort with numbers" do
@@ -551,7 +551,7 @@ describe "macro methods" do
     end
 
     it "creates a hash literal with a var" do
-      assert_macro "x", %({% a = {a: x} %}{{a[:a]}}), [NumberLiteral.new(1)] of ASTNode, "1"
+      assert_macro "x", %({% a = {a: x} %}{{a[:a]}}), [1.int32] of ASTNode, "1"
     end
 
     it "executes to_a" do
@@ -573,7 +573,7 @@ describe "macro methods" do
     end
 
     it "creates a tuple literal with a var" do
-      assert_macro "x", %({% a = {x} %}{{a[0]}}), [NumberLiteral.new(1)] of ASTNode, "1"
+      assert_macro "x", %({% a = {x} %}{{a[0]}}), [1.int32] of ASTNode, "1"
     end
   end
 
@@ -593,17 +593,17 @@ describe "macro methods" do
 
   describe "block methods" do
     it "executes body" do
-      assert_macro "x", %({{x.body}}), [Block.new(body: NumberLiteral.new(1))] of ASTNode, "1"
+      assert_macro "x", %({{x.body}}), [Block.new(body: 1.int32)] of ASTNode, "1"
     end
 
     it "executes args" do
-      assert_macro "x", %({{x.args}}), [Block.new([Var.new("x"), Var.new("y")])] of ASTNode, "[x, y]"
+      assert_macro "x", %({{x.args}}), [Block.new(["x".var, "y".var])] of ASTNode, "[x, y]"
     end
   end
 
   describe "expressions methods" do
     it "executes expressions" do
-      assert_macro "x", %({{x.body.expressions[0]}}), [Block.new(body: Expressions.new([Call.new(nil, "some_call"), Call.new(nil, "some_other_call")] of ASTNode))] of ASTNode, "some_call"
+      assert_macro "x", %({{x.body.expressions[0]}}), [Block.new(body: Expressions.new(["some_call".call, "some_other_call".call] of ASTNode))] of ASTNode, "some_call"
     end
   end
 
@@ -673,7 +673,7 @@ describe "macro methods" do
     end
 
     it "executes value" do
-      assert_macro "x", %({{x.value}}), [TypeDeclaration.new(Var.new("some_name"), Path.new("SomeType"), NumberLiteral.new(1))] of ASTNode, "1"
+      assert_macro "x", %({{x.value}}), [TypeDeclaration.new(Var.new("some_name"), Path.new("SomeType"), 1.int32)] of ASTNode, "1"
     end
   end
 
@@ -683,7 +683,7 @@ describe "macro methods" do
     end
 
     it "executes body" do
-      assert_macro "x", %({{x.body}}), [Def.new("some_def", body: NumberLiteral.new(1))] of ASTNode, "1"
+      assert_macro "x", %({{x.body}}), [Def.new("some_def", body: 1.int32)] of ASTNode, "1"
     end
 
     it "executes args" do
@@ -702,60 +702,60 @@ describe "macro methods" do
 
   describe "call methods" do
     it "executes name" do
-      assert_macro "x", %({{x.name}}), [Call.new(nil, "some_call")] of ASTNode, "some_call"
+      assert_macro "x", %({{x.name}}), ["some_call".call] of ASTNode, "some_call"
     end
 
     it "executes args" do
-      assert_macro "x", %({{x.args}}), [Call.new(nil, "some_call", [NumberLiteral.new(1), NumberLiteral.new(3)] of ASTNode)] of ASTNode, "[1, 3]"
+      assert_macro "x", %({{x.args}}), [Call.new(nil, "some_call", [1.int32, 3.int32] of ASTNode)] of ASTNode, "[1, 3]"
     end
 
     it "executes receiver" do
-      assert_macro "x", %({{x.receiver}}), [Call.new(NumberLiteral.new(1), "some_call")] of ASTNode, "1"
+      assert_macro "x", %({{x.receiver}}), [Call.new(1.int32, "some_call")] of ASTNode, "1"
     end
 
     it "executes block" do
-      assert_macro "x", %({{x.block}}), [Call.new(NumberLiteral.new(1), "some_call", block: Block.new)] of ASTNode, "do\nend"
+      assert_macro "x", %({{x.block}}), [Call.new(1.int32, "some_call", block: Block.new)] of ASTNode, "do\nend"
     end
 
     it "executes named args" do
-      assert_macro "x", %({{x.named_args}}), [Call.new(NumberLiteral.new(1), "some_call", named_args: [NamedArgument.new("a", NumberLiteral.new(1)), NamedArgument.new("b", NumberLiteral.new(2))])] of ASTNode, "[a: 1, b: 2]"
+      assert_macro "x", %({{x.named_args}}), [Call.new(1.int32, "some_call", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])] of ASTNode, "[a: 1, b: 2]"
     end
 
     it "executes named args name" do
-      assert_macro "x", %({{x.named_args[0].name}}), [Call.new(NumberLiteral.new(1), "some_call", named_args: [NamedArgument.new("a", NumberLiteral.new(1)), NamedArgument.new("b", NumberLiteral.new(2))])] of ASTNode, "a"
+      assert_macro "x", %({{x.named_args[0].name}}), [Call.new(1.int32, "some_call", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])] of ASTNode, "a"
     end
 
     it "executes named args value" do
-      assert_macro "x", %({{x.named_args[0].value}}), [Call.new(NumberLiteral.new(1), "some_call", named_args: [NamedArgument.new("a", NumberLiteral.new(1)), NamedArgument.new("b", NumberLiteral.new(2))])] of ASTNode, "1"
+      assert_macro "x", %({{x.named_args[0].value}}), [Call.new(1.int32, "some_call", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])] of ASTNode, "1"
     end
   end
 
   describe "arg methods" do
     it "executes name" do
-      assert_macro "x", %({{x.name}}), [Arg.new("some_arg")] of ASTNode, "some_arg"
+      assert_macro "x", %({{x.name}}), ["some_arg".arg] of ASTNode, "some_arg"
     end
 
     it "executes default_value" do
-      assert_macro "x", %({{x.default_value}}), [Arg.new("some_arg", default_value: NumberLiteral.new(1))] of ASTNode, "1"
+      assert_macro "x", %({{x.default_value}}), ["some_arg".arg(default_value: 1.int32)] of ASTNode, "1"
     end
 
     it "executes restriction" do
-      assert_macro "x", %({{x.restriction}}), [Arg.new("some_arg", restriction: Path.new("T"))] of ASTNode, "T"
+      assert_macro "x", %({{x.restriction}}), ["some_arg".arg(restriction: "T".path)] of ASTNode, "T"
     end
   end
 
   describe "cast methods" do
     it "executes obj" do
-      assert_macro "x", %({{x.obj}}), [Cast.new(Call.new(nil, "x"), Path.new(["Int32"]))] of ASTNode, "x"
+      assert_macro "x", %({{x.obj}}), [Cast.new("x".call, "Int32".path)] of ASTNode, "x"
     end
 
     it "executes to" do
-      assert_macro "x", %({{x.to}}), [Cast.new(Call.new(nil, "x"), Path.new(["Int32"]))] of ASTNode, "Int32"
+      assert_macro "x", %({{x.to}}), [Cast.new("x".call, "Int32".path)] of ASTNode, "Int32"
     end
   end
 
   describe "case methods" do
-    case_node = Case.new(NumberLiteral.new(1), [When.new([NumberLiteral.new(2), NumberLiteral.new(3)] of ASTNode, NumberLiteral.new(4))], NumberLiteral.new(5))
+    case_node = Case.new(1.int32, [When.new([2.int32, 3.int32] of ASTNode, 4.int32)], 5.int32)
 
     it "executes cond" do
       assert_macro "x", %({{x.cond}}), [case_node] of ASTNode, "1"
@@ -780,17 +780,17 @@ describe "macro methods" do
 
   describe "assign methods" do
     it "executes target" do
-      assert_macro "x", %({{x.target}}), [Assign.new(Var.new("foo"), NumberLiteral.new(2))] of ASTNode, "foo"
+      assert_macro "x", %({{x.target}}), [Assign.new("foo".var, 2.int32)] of ASTNode, "foo"
     end
 
     it "executes value" do
-      assert_macro "x", %({{x.value}}), [Assign.new(Var.new("foo"), NumberLiteral.new(2))] of ASTNode, "2"
+      assert_macro "x", %({{x.value}}), [Assign.new("foo".var, 2.int32)] of ASTNode, "2"
     end
   end
 
   describe "splat methods" do
     it "executes exp" do
-      assert_macro "x", %({{x.exp}}), [Splat.new(NumberLiteral.new(2))] of ASTNode, "2"
+      assert_macro "x", %({{x.exp}}), [2.int32.splat] of ASTNode, "2"
     end
   end
 

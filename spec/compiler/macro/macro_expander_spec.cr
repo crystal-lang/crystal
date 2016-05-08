@@ -6,15 +6,15 @@ describe "MacroExpander" do
   end
 
   it "expands macro with string sustitution" do
-    assert_macro "x", "{{x}}", [StringLiteral.new("hello")] of ASTNode, %("hello")
+    assert_macro "x", "{{x}}", ["hello".string] of ASTNode, %("hello")
   end
 
   it "expands macro with symbol sustitution" do
-    assert_macro "x", "{{x}}", [SymbolLiteral.new("hello")] of ASTNode, ":hello"
+    assert_macro "x", "{{x}}", ["hello".symbol] of ASTNode, ":hello"
   end
 
   it "expands macro with argument-less call sustitution" do
-    assert_macro "x", "{{x}}", [Call.new(nil, "hello")] of ASTNode, "hello"
+    assert_macro "x", "{{x}}", ["hello".call] of ASTNode, "hello"
   end
 
   it "expands macro with boolean" do
@@ -62,7 +62,7 @@ describe "MacroExpander" do
   end
 
   it "expands macro with var sustitution" do
-    assert_macro "x", "{{x}}", [Var.new("hello")] of ASTNode, "hello"
+    assert_macro "x", "{{x}}", ["hello".var] of ASTNode, "hello"
   end
 
   it "expands macro with or (1)" do
@@ -70,7 +70,7 @@ describe "MacroExpander" do
   end
 
   it "expands macro with or (2)" do
-    assert_macro "x", "{{x || 1}}", [Var.new("hello")] of ASTNode, "hello"
+    assert_macro "x", "{{x || 1}}", ["hello".var] of ASTNode, "hello"
   end
 
   it "expands macro with and (1)" do
@@ -78,7 +78,7 @@ describe "MacroExpander" do
   end
 
   it "expands macro with and (2)" do
-    assert_macro "x", "{{x && 1}}", [Var.new("hello")] of ASTNode, "1"
+    assert_macro "x", "{{x && 1}}", ["hello".var] of ASTNode, "1"
   end
 
   describe "if" do
@@ -105,11 +105,11 @@ describe "MacroExpander" do
 
   describe "for" do
     it "expands macro with for over array literal" do
-      assert_macro "x", "{%for e in x %}{{e}}{%end%}", [ArrayLiteral.new([Var.new("hello"), Var.new("world")] of ASTNode)] of ASTNode, "helloworld"
+      assert_macro "x", "{%for e in x %}{{e}}{%end%}", [ArrayLiteral.new(["hello".var, "world".var] of ASTNode)] of ASTNode, "helloworld"
     end
 
     it "expands macro with for over array literal with index" do
-      assert_macro "x", "{%for e, i in x%}{{e}}{{i}}{%end%}", [ArrayLiteral.new([Var.new("hello"), Var.new("world")] of ASTNode)] of ASTNode, "hello0world1"
+      assert_macro "x", "{%for e, i in x%}{{e}}{{i}}{%end%}", [ArrayLiteral.new(["hello".var, "world".var] of ASTNode)] of ASTNode, "hello0world1"
     end
 
     it "expands macro with for over embedded array literal" do
@@ -117,15 +117,15 @@ describe "MacroExpander" do
     end
 
     it "expands macro with for over hash literal" do
-      assert_macro "x", "{%for k, v in x%}{{k}}{{v}}{%end%}", [HashLiteral.new([HashLiteral::Entry.new(Var.new("a"), Var.new("c")), HashLiteral::Entry.new(Var.new("b"), Var.new("d"))])] of ASTNode, "acbd"
+      assert_macro "x", "{%for k, v in x%}{{k}}{{v}}{%end%}", [HashLiteral.new([HashLiteral::Entry.new("a".var, "c".var), HashLiteral::Entry.new("b".var, "d".var)])] of ASTNode, "acbd"
     end
 
     it "expands macro with for over hash literal with index" do
-      assert_macro "x", "{%for k, v, i in x%}{{k}}{{v}}{{i}}{%end%}", [HashLiteral.new([HashLiteral::Entry.new(Var.new("a"), Var.new("c")), HashLiteral::Entry.new(Var.new("b"), Var.new("d"))])] of ASTNode, "ac0bd1"
+      assert_macro "x", "{%for k, v, i in x%}{{k}}{{v}}{{i}}{%end%}", [HashLiteral.new([HashLiteral::Entry.new("a".var, "c".var), HashLiteral::Entry.new("b".var, "d".var)])] of ASTNode, "ac0bd1"
     end
 
     it "expands macro with for over tuple literal" do
-      assert_macro "x", "{%for e, i in x%}{{e}}{{i}}{%end%}", [TupleLiteral.new([Var.new("a"), Var.new("b")] of ASTNode)] of ASTNode, "a0b1"
+      assert_macro "x", "{%for e, i in x%}{{e}}{{i}}{%end%}", [TupleLiteral.new(["a".var, "b".var] of ASTNode)] of ASTNode, "a0b1"
     end
 
     it "expands macro with for over range literal" do
@@ -133,11 +133,11 @@ describe "MacroExpander" do
     end
 
     it "expands macro with for over range literal, evaluating elements" do
-      assert_macro "x, y", "{%for e in x..y %}{{e}}{%end%}", [NumberLiteral.new(3), NumberLiteral.new(6)] of ASTNode, "3456"
+      assert_macro "x, y", "{%for e in x..y %}{{e}}{%end%}", [3.int32, 6.int32] of ASTNode, "3456"
     end
 
     it "expands macro with for over range literal, evaluating elements (exclusive)" do
-      assert_macro "x, y", "{%for e in x...y %}{{e}}{%end%}", [NumberLiteral.new(3), NumberLiteral.new(6)] of ASTNode, "345"
+      assert_macro "x, y", "{%for e in x...y %}{{e}}{%end%}", [3.int32, 6.int32] of ASTNode, "345"
     end
   end
 
