@@ -13,14 +13,4 @@ struct Value
   def ==(other)
     false
   end
-
-  # Returns false.
-  def !
-    false
-  end
-
-  # Returns false.
-  def nil?
-    false
-  end
 end

@@ -32,16 +32,6 @@ class Reference
     false
   end
 
-  # Returns false: a reference is never nil.
-  def nil?
-    false
-  end
-
-  # Returns false: a reference is always truthy.
-  def !
-    false
-  end
-
   # Returns this reference's `object_id` as the hash value.
   def hash
     object_id

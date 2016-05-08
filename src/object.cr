@@ -1,8 +1,5 @@
 # Object is the base type of all Crystal objects.
 class Object
-  # Boolean-negates this object.
-  abstract def !
-
   # Returns true if this object is equal to `other`.
   #
   # Subclasses override this method to provide class-specific meaning.

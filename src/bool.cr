@@ -5,16 +5,6 @@
 # false # A Bool that is false
 # ```
 struct Bool
-  # Negates this boolean.
-  #
-  # ```
-  # !true  # => false
-  # !false # => true
-  # ```
-  def !
-    self ? false : true
-  end
-
   # Bitwise OR. Returns `true` if this bool or *other* is `true`, otherwise returns `false`.
   #
   # ```

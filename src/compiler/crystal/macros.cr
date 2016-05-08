@@ -131,27 +131,6 @@ module Crystal::Macros
     def !=(other : ASTNode) : BoolLiteral
     end
 
-    # Returns true if this node is *falsey*, and false if it's *truthy*.
-    def ! : BoolLiteral
-    end
-
-    # Tests if this node is of a specific type. For example:
-    #
-    # ```
-    # macro test(node)
-    #   {% if node.is_a?(NumberLiteral) %}
-    #     puts "Got a number literal"
-    #   {% else %}
-    #     puts "Didn't get a number literal"
-    #   {% end %}
-    # end
-    #
-    # test 1    # => prints "Got a number literal"
-    # test "hi" # => prints "Didn't get a number literal"
-    # ```
-    def is_a?(name) : BoolLiteral
-    end
-
     # Gives a compile-time error with the given message. This will
     # highlight this node in the error message.
     def raise(message) : NoReturn

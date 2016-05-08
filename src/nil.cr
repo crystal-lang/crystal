@@ -67,16 +67,6 @@ struct Nil
     false
   end
 
-  # Returns true.
-  def nil?
-    true
-  end
-
-  # Returns true.
-  def !
-    true
-  end
-
   # Returns zero.
   def hash
     0

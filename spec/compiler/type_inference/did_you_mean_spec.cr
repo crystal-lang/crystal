@@ -104,7 +104,7 @@ describe "Type inference: did you mean" do
   it "doesn't suggest for operator" do
     nodes = parse %(
       class Foo
-        def !
+        def +
         end
       end
 
