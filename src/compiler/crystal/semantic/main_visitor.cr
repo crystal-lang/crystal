@@ -1362,7 +1362,7 @@ module Crystal
       nil
     end
 
-    def visit(node : Cast)
+    def visit(node : Cast | NilableCast)
       node.obj.accept self
 
       @in_type_args += 1

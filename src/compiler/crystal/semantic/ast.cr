@@ -537,12 +537,6 @@ module Crystal
     property? upcast : Bool
     @upcast = false
 
-    def self.apply(node : ASTNode, type : Type)
-      cast = Cast.new(node, Var.new("cast", type))
-      cast.set_type(type)
-      cast
-    end
-
     def update(from = nil)
       to_type = to.type
 
@@ -575,6 +569,49 @@ module Crystal
 
         self.type = filtered_type
       end
+    end
+  end
+
+  class NilableCast
+    property? upcast : Bool
+    @upcast = false
+
+    @non_nilable_type : Type?
+    getter! non_nilable_type
+
+    def update(from = nil)
+      to_type = to.type
+
+      obj_type = obj.type?
+
+      # If we don't know what type we are casting from, leave it as nilable to_type
+      unless obj_type
+        @non_nilable_type = non_nilable_type = to_type.virtual_type
+
+        self.type = to_type.program.nilable(non_nilable_type)
+        return
+      end
+
+      filtered_type = obj_type.filter_by(to_type)
+
+      # If the filtered type didn't change it means that an
+      # upcast is being made, for example:
+      #
+      #   1 as Int32 | Float64
+      #   Bar.new as Foo # where Bar < Foo
+      if obj_type == filtered_type && obj_type != to_type && !to_type.is_a?(GenericClassType)
+        filtered_type = to_type.virtual_type
+        @upcast = true
+      end
+
+      # If we don't have a matching type, leave it as the to_type:
+      # later (in after type inference) we will check again.
+      filtered_type ||= to_type.virtual_type
+
+      @non_nilable_type = filtered_type
+
+      # The final type is nilable
+      self.type = filtered_type.program.nilable(filtered_type)
     end
   end
 

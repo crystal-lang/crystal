@@ -221,6 +221,17 @@ describe "Global inference" do
       )) { int32 }
   end
 
+  it "infers type from as?" do
+    assert_type(%(
+      def foo
+        1
+      end
+
+      $x = foo.as?(Int32)
+      $x
+      )) { nilable int32 }
+  end
+
   it "infers type from static array type declaration" do
     assert_type(%(
       $x : Int8[3]?

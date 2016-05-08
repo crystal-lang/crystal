@@ -622,9 +622,17 @@ module Crystal
             return check_ident_or_keyword(:alias, start)
           end
         when 's'
-          if peek_next_char == 'm'
+          peek = peek_next_char
+          case peek
+          when 'm'
             next_char
             return check_ident_or_keyword(:asm, start)
+          when '?'
+            next_char
+            next_char
+            @token.type = :IDENT
+            @token.value = :as?
+            return @token
           else
             return check_ident_or_keyword(:as, start)
           end

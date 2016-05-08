@@ -1062,6 +1062,46 @@ module Crystal
       false
     end
 
+    def visit(node : NilableCast)
+      request_value do
+        accept node.obj
+      end
+
+      last_value = @last
+
+      obj_type = node.obj.type
+      to_type = node.to.type
+
+      resulting_type = node.type
+      non_nilable_type = node.non_nilable_type
+
+      if node.upcast?
+        @last = upcast last_value, non_nilable_type, obj_type
+        @last = upcast @last, resulting_type, non_nilable_type
+      elsif obj_type != non_nilable_type
+        type_id = type_id last_value, obj_type
+        cmp = match_type_id obj_type, non_nilable_type, type_id
+
+        Phi.open(self, node, @needs_value) do |phi|
+          matches_block, doesnt_match_block = new_blocks "matches", "doesnt_match"
+          cond cmp, matches_block, doesnt_match_block
+
+          position_at_end doesnt_match_block
+          @last = upcast llvm_nil, resulting_type, @mod.nil
+          phi.add @last, resulting_type
+
+          position_at_end matches_block
+          @last = downcast last_value, non_nilable_type, obj_type, true
+          @last = upcast @last, resulting_type, non_nilable_type
+          phi.add @last, resulting_type, last: true
+        end
+      else
+        @last = upcast last_value, resulting_type, obj_type
+      end
+
+      false
+    end
+
     def type_cast_exception_call(to_type)
       ex = Call.new(Path.global("TypeCastError"), "new", StringLiteral.new("cast to #{to_type} failed"))
       call = Call.global("raise", ex)

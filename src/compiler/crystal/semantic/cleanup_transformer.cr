@@ -766,6 +766,21 @@ module Crystal
       node
     end
 
+    def transform(node : NilableCast)
+      node = super
+
+      obj_type = node.obj.type?
+      return node unless obj_type
+
+      to_type = node.to.type
+
+      if obj_type.no_return?
+        node.type = @program.no_return
+      end
+
+      node
+    end
+
     def transform(node : FunDef)
       node_body = node.body
       return node unless node_body

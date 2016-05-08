@@ -1916,6 +1916,30 @@ module Crystal
     def_equals_and_hash @obj, @to
   end
 
+  # obj.as?(to)
+  class NilableCast < ASTNode
+    property obj
+    property to
+
+    def initialize(@obj : ASTNode, @to : ASTNode)
+    end
+
+    def accept_children(visitor)
+      @obj.accept visitor
+      @to.accept visitor
+    end
+
+    def clone_without_location
+      NilableCast.new(@obj.clone, @to.clone)
+    end
+
+    def end_location
+      @end_location || @to.end_location
+    end
+
+    def_equals_and_hash @obj, @to
+  end
+
   # typeof(exp, exp, ...)
   class TypeOf < ASTNode
     property expressions : Array(ASTNode)

@@ -484,6 +484,12 @@ module Crystal
       node
     end
 
+    def transform(node : NilableCast)
+      node.obj = node.obj.transform(self)
+      node.to = node.to.transform(self)
+      node
+    end
+
     def transform(node : TypeDeclaration)
       node.var = node.var.transform(self)
       node.declared_type = node.declared_type.transform(self)

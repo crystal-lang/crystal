@@ -260,6 +260,11 @@ describe "Parser" do
   it_parses "foo &.as(T)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Cast.new(Var.new("__arg0"), "T".path)))
   it_parses "foo &.as(T).bar", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(Cast.new(Var.new("__arg0"), "T".path), "bar")))
 
+  it_parses "foo(&.as?(T))", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], NilableCast.new(Var.new("__arg0"), "T".path)))
+  it_parses "foo(&.as?(T).bar)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(NilableCast.new(Var.new("__arg0"), "T".path), "bar")))
+  it_parses "foo &.as?(T)", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], NilableCast.new(Var.new("__arg0"), "T".path)))
+  it_parses "foo &.as?(T).bar", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], Call.new(NilableCast.new(Var.new("__arg0"), "T".path), "bar")))
+
   it_parses "foo.[0]", Call.new("foo".call, "[]", 0.int32)
   it_parses "foo.[0] = 1", Call.new("foo".call, "[]=", [0.int32, 1.int32] of ASTNode)
 
@@ -866,6 +871,10 @@ describe "Parser" do
 
   it_parses "as(Bar)", Cast.new(Var.new("self"), "Bar".path)
 
+  it_parses "1.as? Bar", NilableCast.new(1.int32, "Bar".path)
+  it_parses "1.as?(Bar)", NilableCast.new(1.int32, "Bar".path)
+  it_parses "as?(Bar)", NilableCast.new(Var.new("self"), "Bar".path)
+
   it_parses "typeof(1)", TypeOf.new([1.int32] of ASTNode)
 
   it_parses "puts ~1", Call.new(nil, "puts", Call.new(1.int32, "~"))
@@ -1205,7 +1214,7 @@ describe "Parser" do
     assert_syntax_error "foo &.#{name}()"
   end
 
-  %w(! is_a? as responds_to? nil?).each do |name|
+  %w(! is_a? as as? responds_to? nil?).each do |name|
     assert_syntax_error "def #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
     assert_syntax_error "def self.#{name}; end", "'#{name}' is a pseudo-method and can't be redefined"
     assert_syntax_error "macro #{name}; end", "'#{name}' is a pseudo-method and can't be redefined"

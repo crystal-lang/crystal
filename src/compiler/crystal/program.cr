@@ -251,10 +251,16 @@ module Crystal
     end
 
     def nilable(type)
+      # Nil | Nil # => Nil
+      return self.nil if type == self.nil
+
       union_of self.nil, type
     end
 
     def union_of(type1, type2)
+      # T | T # => T
+      return type1 if type1 == type2
+
       union_of([type1, type2] of Type).not_nil!
     end
 

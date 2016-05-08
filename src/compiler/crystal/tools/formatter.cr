@@ -2387,6 +2387,14 @@ module Crystal
             clear_object(body)
             accept body
           end
+        when NilableCast
+          if body.obj.is_a?(Var)
+            call = Call.new(nil, "as?", args: [body.to] of ASTNode)
+            accept call
+          else
+            clear_object(body)
+            accept body
+          end
         else
           raise "Bug: expected Call, IsA or RespondsTo as &. argument, at #{node.location}, not #{body.class}"
         end
@@ -2406,6 +2414,8 @@ module Crystal
       when RespondsTo
         clear_object(node.obj)
       when Cast
+        clear_object(node.obj)
+      when NilableCast
         clear_object(node.obj)
       end
     end
@@ -2982,6 +2992,28 @@ module Crystal
         skip_space
         accept node.to
         write ")"
+      end
+      false
+    end
+
+    def visit(node : NilableCast)
+      accept node.obj
+      skip_space
+      check :"."
+      write "."
+      next_token_skip_space_or_newline
+      write_keyword :as?
+      skip_space
+      if @token.type == :"("
+        write_token :"("
+        skip_space_or_newline
+        accept node.to
+        skip_space_or_newline
+        write_token :")"
+      else
+        skip_space
+        write " "
+        accept node.to
       end
       false
     end

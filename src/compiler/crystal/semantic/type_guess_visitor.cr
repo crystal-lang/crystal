@@ -753,6 +753,11 @@ module Crystal
       lookup_type?(node.to)
     end
 
+    def guess_type(node : NilableCast)
+      type = lookup_type?(node.to)
+      type ? @mod.nilable(type) : nil
+    end
+
     def guess_type(node : UninitializedVar)
       lookup_type?(node.declared_type)
     end
@@ -1328,6 +1333,11 @@ module Crystal
     end
 
     def visit(node : Cast)
+      node.obj.accept self
+      false
+    end
+
+    def visit(node : NilableCast)
       node.obj.accept self
       false
     end

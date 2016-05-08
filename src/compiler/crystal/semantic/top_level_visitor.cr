@@ -681,6 +681,10 @@ module Crystal
       false
     end
 
+    def visit(node : NilableCast)
+      false
+    end
+
     def visit(node : IsA)
       false
     end

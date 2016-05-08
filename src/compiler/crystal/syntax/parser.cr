@@ -563,10 +563,14 @@ module Crystal
         when :IDENT
           if @token.keyword?(:as)
             check_void_value atomic, location
-
             next_token_skip_space
             to = parse_single_type(allow_commas: false)
             atomic = Cast.new(atomic, to).at(location)
+          elsif @token.keyword?(:as?)
+            check_void_value atomic, location
+            next_token_skip_space
+            to = parse_single_type(allow_commas: false)
+            atomic = NilableCast.new(atomic, to).at(location)
           else
             break
           end
@@ -617,6 +621,8 @@ module Crystal
             atomic = parse_is_a(atomic).at(location)
           elsif @token.value == :as
             atomic = parse_as(atomic).at(location)
+          elsif @token.value == :as?
+            atomic = parse_as?(atomic).at(location)
           elsif @token.value == :responds_to?
             atomic = parse_responds_to(atomic).at(location)
           elsif @token.value == :nil?
@@ -787,7 +793,7 @@ module Crystal
       IsA.new(atomic, type)
     end
 
-    def parse_as(atomic)
+    def parse_as(atomic, klass = Cast)
       next_token_skip_space
 
       if @token.type == :"("
@@ -800,7 +806,11 @@ module Crystal
         type = parse_single_type(allow_commas: false)
       end
 
-      Cast.new(atomic, type)
+      klass.new(atomic, type)
+    end
+
+    def parse_as?(atomic)
+      parse_as atomic, klass: NilableCast
     end
 
     def parse_responds_to(atomic)
@@ -1397,6 +1407,9 @@ module Crystal
           call = parse_atomic_method_suffix_special(call, location)
         elsif @token.value == :as
           call = parse_as(obj).at(location)
+          call = parse_atomic_method_suffix_special(call, location)
+        elsif @token.value == :as?
+          call = parse_as?(obj).at(location)
           call = parse_atomic_method_suffix_special(call, location)
         elsif @token.value == :responds_to?
           call = parse_responds_to(obj).at(location)
@@ -2972,7 +2985,7 @@ module Crystal
     end
 
     def check_valid_def_name
-      if {:is_a?, :as, :responds_to?, :nil?}.includes?(@token.value)
+      if {:is_a?, :as, :as?, :responds_to?, :nil?}.includes?(@token.value)
         raise "'#{@token.value}' is a pseudo-method and can't be redefined", @token
       end
     end
@@ -3306,6 +3319,9 @@ module Crystal
       when :as
         obj = Var.new("self").at(location)
         return parse_as(obj)
+      when :as?
+        obj = Var.new("self").at(location)
+        return parse_as?(obj)
       when :responds_to?
         obj = Var.new("self").at(location)
         return parse_responds_to(obj)
