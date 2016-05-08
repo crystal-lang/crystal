@@ -95,7 +95,7 @@ struct Enum
         found = false
         {% for member in @type.constants %}
           {% if member.stringify != "All" %}
-            if {{member}}.value != 0 && (value & {{member}}.value) == {{member}}.value
+            if {{@type}}::{{member}}.value != 0 && (value & {{@type}}::{{member}}.value) == {{@type}}::{{member}}.value
               io << ", " if found
               io << {{member.stringify}}
               found = true
@@ -131,7 +131,7 @@ struct Enum
     {% else %}
       case value
       {% for member in @type.constants %}
-      when {{member}}.value
+      when {{@type}}::{{member}}.value
         {{member.stringify}}
       {% end %}
       else
@@ -294,9 +294,9 @@ struct Enum
   # ```
   macro def self.values : Array(self)
     {% if @type.has_attribute?("Flags") %}
-      {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" } }}
+      {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map { |e| "#{@type}::#{e.id}".id } }}
     {% else %}
-      {{ @type.constants }}
+      {{ @type.constants.map { |e| "#{@type}::#{e.id}".id } }}
     {% end %}
   end
 
@@ -311,7 +311,7 @@ struct Enum
   # ```
   macro def self.from_value?(value) : self | Nil
     {% for member in @type.constants %}
-      return {{member}} if {{member}}.value == value
+      return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
     {% end %}
     nil
   end
@@ -364,7 +364,7 @@ struct Enum
       case string.camelcase
       {% for member in @type.constants %}
         when {{member.stringify.camelcase}}
-          {{member}}
+          {{@type}}::{{member}}
       {% end %}
       else
         nil

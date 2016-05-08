@@ -36,7 +36,7 @@ module Crystal
     end
 
     def visit(node : TypeNode)
-      node.type.to_s(@str)
+      node.type.devirtualize.to_s(@str)
       false
     end
   end

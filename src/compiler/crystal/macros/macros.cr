@@ -1,55 +1,11 @@
 module Crystal
   class Program
-    def push_def_macro(a_def)
-      def_macros << a_def
-    end
-
     def expand_macro(a_macro : Macro, call : Call, scope : Type, type_lookup : Type?)
       macro_expander.expand a_macro, call, scope, type_lookup || scope
     end
 
     def expand_macro(node : ASTNode, scope : Type, type_lookup : Type?, free_vars = nil)
       macro_expander.expand node, scope, type_lookup || scope, free_vars
-    end
-
-    def expand_macro_defs
-      until def_macros.empty?
-        def_macro = def_macros.pop
-        expand_macro_def def_macro
-      end
-    end
-
-    def expand_macro_def(target_def)
-      the_macro = Macro.new("macro_#{target_def.object_id}", [] of Arg, target_def.body).at(target_def)
-
-      owner = target_def.owner
-
-      case owner
-      when VirtualType
-        owner = owner.base_type
-      when VirtualMetaclassType
-        owner = owner.instance_type.base_type.metaclass
-      end
-
-      vars = MetaVars.new
-      target_def.args.each do |arg|
-        vars[arg.name] = MetaVar.new(arg.name, arg.type)
-      end
-      vars["self"] = MetaVar.new("self", owner) unless owner.is_a?(Program)
-      target_def.vars = vars
-
-      expected_type = target_def.type
-
-      type_visitor = MainVisitor.new(@program, vars, target_def)
-      type_visitor.scope = owner
-      type_visitor.types << owner
-      target_def.body = normalize(target_def.body)
-      type_visitor.accept target_def.body
-      target_def.bind_to target_def.body
-
-      unless target_def.type.covariant?(expected_type)
-        target_def.raise "expected '#{target_def.name}' to return #{expected_type}, not #{target_def.type}"
-      end
     end
 
     def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false, inside_type = false, inside_exp = false)

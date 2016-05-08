@@ -24,7 +24,6 @@ module Crystal
     getter! requires : Set(String)
     getter! temp_var_counter : Int32
     getter! crystal_path : CrystalPath
-    getter! def_macros : Array(Def)
     getter! unions : Hash(Array(UInt64), Type)
     getter! file_modules : Hash(String, FileModule)
     getter! string_pool
@@ -47,7 +46,6 @@ module Crystal
       @requires = Set(String).new
       @temp_var_counter = 0
       @vars = MetaVars.new
-      @def_macros = [] of Def
       @splat_expansions = {} of UInt64 => Type
       @initialized_global_vars = Set(String).new
       @file_modules = {} of String => FileModule

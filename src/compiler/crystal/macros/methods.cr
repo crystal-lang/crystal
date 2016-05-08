@@ -778,7 +778,7 @@ module Crystal
       when "union_types"
         interpret_argless_method(method, args) { TypeNode.union_types(type) }
       when "name"
-        interpret_argless_method(method, args) { MacroId.new(type.to_s) }
+        interpret_argless_method(method, args) { MacroId.new(type.devirtualize.to_s) }
       when "type_vars"
         interpret_argless_method(method, args) { TypeNode.type_vars(type) }
       when "instance_vars"

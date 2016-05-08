@@ -1358,4 +1358,26 @@ describe "Code gen: macro" do
       foo y: "foo", x: 2
       )).to_i.should eq(6)
   end
+
+  it "stringifies type without virtual marker" do
+    run(%(
+      class Foo
+        macro def foo_m : Int32
+          {{ @type }}.foo
+        end
+
+        def self.foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.foo
+          2
+        end
+      end
+
+      (Bar.new || Foo.new).foo_m
+      )).to_i.should eq(2)
+  end
 end

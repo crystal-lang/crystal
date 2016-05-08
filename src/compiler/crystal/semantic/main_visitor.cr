@@ -5,15 +5,8 @@ module Crystal
     def visit_main(node)
       node.accept MainVisitor.new(self)
 
-      loop do
-        expand_macro_defs
-        fix_empty_types node
-        node = cleanup node
-
-        # The above might have produced more macro def expansions,
-        # so we need to take care of these too
-        break if def_macros.empty?
-      end
+      fix_empty_types node
+      node = cleanup node
 
       node
     end
