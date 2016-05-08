@@ -360,14 +360,16 @@ struct Enum
   # Color.parse?("Yellow") # => nil
   # ```
   macro def self.parse?(string) : self?
-    case string.camelcase
-    {% for member in @type.constants %}
-      when {{member.stringify.camelcase}}
-        {{member}}
+    {% begin %}
+      case string.camelcase
+      {% for member in @type.constants %}
+        when {{member.stringify.camelcase}}
+          {{member}}
+      {% end %}
+      else
+        nil
+      end
     {% end %}
-    else
-      nil
-    end
   end
 
   # Convenience macro to create an *or*ed enum from the given members.

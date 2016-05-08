@@ -2922,54 +2922,40 @@ module Crystal
         end
       end
 
-      if is_macro_def
-        check :":"
+      if @token.type == :":"
         next_token_skip_space
         return_type = parse_single_type
         end_location = return_type.end_location
-
-        if is_abstract
-          body = Nop.new
-        else
-          if @token.keyword?(:end)
-            body = Expressions.new
-            next_token_skip_space
-          else
-            body, end_location = parse_macro_body(name_line_number, name_column_number)
-          end
-        end
       else
-        if @token.type == :":"
-          next_token_skip_space
-          return_type = parse_single_type
-          end_location = return_type.end_location
+        if is_macro_def
+          raise "expected ':'", @token
         end
+      end
 
-        if is_abstract
-          body = Nop.new
+      if is_abstract
+        body = Nop.new
+      else
+        slash_is_regex!
+        skip_statement_end
+
+        end_location = token_end_location
+
+        if @token.keyword?(:end)
+          body = Expressions.from(extra_assigns)
+          next_token_skip_space
         else
-          slash_is_regex!
-          skip_statement_end
-
-          end_location = token_end_location
-
-          if @token.keyword?(:end)
-            body = Expressions.from(extra_assigns)
-            next_token_skip_space
-          else
-            body = parse_expressions
-            if extra_assigns.size > 0
-              exps = [] of ASTNode
-              exps.concat extra_assigns
-              if body.is_a?(Expressions)
-                exps.concat body.expressions
-              else
-                exps.push body
-              end
-              body = Expressions.from exps
+          body = parse_expressions
+          if extra_assigns.size > 0
+            exps = [] of ASTNode
+            exps.concat extra_assigns
+            if body.is_a?(Expressions)
+              exps.concat body.expressions
+            else
+              exps.push body
             end
-            body, end_location = parse_exception_handler body, implicit: true
+            body = Expressions.from exps
           end
+          body, end_location = parse_exception_handler body, implicit: true
         end
       end
 

@@ -1183,26 +1183,22 @@ module Crystal
         accept node.return_type.not_nil!
       end
 
-      if node.macro_def?
-        format_macro_body node
-      else
-        body = node.body
+      body = node.body
 
-        if to_skip > 0
-          body = node.body
-          if body.is_a?(Expressions)
-            body.expressions = body.expressions[to_skip..-1]
-            if body.expressions.empty?
-              body = Nop.new
-            end
-          else
+      if to_skip > 0
+        body = node.body
+        if body.is_a?(Expressions)
+          body.expressions = body.expressions[to_skip..-1]
+          if body.expressions.empty?
             body = Nop.new
           end
+        else
+          body = Nop.new
         end
+      end
 
-        unless node.abstract?
-          format_nested_with_end body
-        end
+      unless node.abstract?
+        format_nested_with_end body
       end
 
       @inside_def -= 1

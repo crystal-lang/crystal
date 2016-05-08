@@ -31,12 +31,6 @@ module Crystal
         owner = owner.instance_type.base_type.metaclass
       end
 
-      begin
-        expanded_macro = @program.expand_macro target_def.body, owner, owner
-      rescue ex : Crystal::Exception
-        target_def.raise "expanding macro", ex
-      end
-
       vars = MetaVars.new
       target_def.args.each do |arg|
         vars[arg.name] = MetaVar.new(arg.name, arg.type)
@@ -44,21 +38,14 @@ module Crystal
       vars["self"] = MetaVar.new("self", owner) unless owner.is_a?(Program)
       target_def.vars = vars
 
-      arg_names = target_def.args.map(&.name)
-
-      generated_nodes = parse_macro_source(expanded_macro, the_macro, target_def, arg_names.to_set) do |parser|
-        parser.parse_to_def(target_def)
-      end
-
       expected_type = target_def.type
 
       type_visitor = MainVisitor.new(@program, vars, target_def)
       type_visitor.scope = owner
       type_visitor.types << owner
-      generated_nodes.accept type_visitor
-
-      target_def.body = generated_nodes
-      target_def.bind_to generated_nodes
+      target_def.body = normalize(target_def.body)
+      type_visitor.accept target_def.body
+      target_def.bind_to target_def.body
 
       unless target_def.type.covariant?(expected_type)
         target_def.raise "expected '#{target_def.name}' to return #{expected_type}, not #{target_def.type}"
