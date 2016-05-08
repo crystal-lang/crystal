@@ -634,6 +634,7 @@ describe "Parser" do
 
   it_parses "macro def foo : String; 1; end", Def.new("foo", body: 1.int32, return_type: "String".path, macro_def: true)
   it_parses "macro def foo(x) : String; 1; end", Def.new("foo", ["x".arg], 1.int32, return_type: "String".path, macro_def: true)
+  it_parses "macro def foo; 1; end", Def.new("foo", body: 1.int32, macro_def: true)
 
   it_parses "macro foo;bar{% begin %}body{% end %}baz;end", Macro.new("foo", [] of Arg, Expressions.from(["bar".macro_literal, MacroIf.new(true.bool, "body".macro_literal), "baz;".macro_literal] of ASTNode))
 
@@ -1084,8 +1085,6 @@ describe "Parser" do
   assert_syntax_error "foo {1, 2}", "unexpected token: }"
   assert_syntax_error "pointerof(self)", "can't take pointerof(self)"
   assert_syntax_error "def foo 1; end"
-
-  assert_syntax_error "macro def foo(x); 1; end"
 
   assert_syntax_error "{x: [] of Int32,\n}\n1.foo(", "unterminated call", 3, 6
 

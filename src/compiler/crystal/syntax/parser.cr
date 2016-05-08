@@ -2926,10 +2926,6 @@ module Crystal
         next_token_skip_space
         return_type = parse_single_type
         end_location = return_type.end_location
-      else
-        if is_macro_def
-          raise "expected ':'", @token
-        end
       end
 
       if is_abstract

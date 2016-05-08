@@ -286,11 +286,9 @@ module Crystal
 
             base_type_matches.each do |base_type_match|
               if base_type_match.def.macro_def?
-                # We need to copy each submatch if it's a macro (has a return_type)
+                # We need to copy each submatch if it's a macro def
                 full_subtype_matches = subtype_lookup.lookup_matches(signature, subtype_virtual_lookup, subtype_virtual_lookup)
                 full_subtype_matches.each do |full_subtype_match|
-                  next unless full_subtype_match.def.return_type
-
                   cloned_def = full_subtype_match.def.clone
                   cloned_def.macro_owner = full_subtype_match.def.macro_owner
                   cloned_def.owner = subtype_lookup
