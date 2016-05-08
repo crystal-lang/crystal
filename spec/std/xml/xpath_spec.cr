@@ -20,7 +20,7 @@ module XML
     it "finds nodes" do
       doc = doc()
 
-      nodes = doc.xpath("//people/person") as NodeSet
+      nodes = doc.xpath("//people/person").as(NodeSet)
       nodes.size.should eq(2)
 
       nodes[0].name.should eq("person")
@@ -36,7 +36,7 @@ module XML
     it "finds string" do
       doc = doc()
 
-      id = doc.xpath("string(//people/person[1]/@id)") as String
+      id = doc.xpath("string(//people/person[1]/@id)").as(String)
       id.should eq("1")
 
       id = doc.xpath_string("string(//people/person[1]/@id)")
@@ -46,7 +46,7 @@ module XML
     it "finds number" do
       doc = doc()
 
-      count = doc.xpath("count(//people/person)") as Float64
+      count = doc.xpath("count(//people/person)").as(Float64)
       count.should eq(2)
 
       count = doc.xpath_float("count(//people/person)")
@@ -56,7 +56,7 @@ module XML
     it "finds boolean" do
       doc = doc()
 
-      id = doc.xpath("boolean(//people/person[1]/@id)") as Bool
+      id = doc.xpath("boolean(//people/person[1]/@id)").as(Bool)
       id.should be_true
 
       id = doc.xpath_bool("boolean(//people/person[1]/@id)")
@@ -75,7 +75,7 @@ module XML
         <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
         </feed>
         ))
-      nodes = doc.xpath("//atom:feed", namespaces: {"atom": "http://www.w3.org/2005/Atom"}) as NodeSet
+      nodes = doc.xpath("//atom:feed", namespaces: {"atom": "http://www.w3.org/2005/Atom"}).as(NodeSet)
       nodes.size.should eq(1)
       nodes[0].name.should eq("feed")
       ns = nodes[0].namespace.not_nil!
@@ -89,7 +89,7 @@ module XML
         <feed xmlns="http://www.w3.org/2005/Atom" xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/">
         </feed>
         ))
-      nodes = doc.xpath("//xmlns:feed", namespaces: doc.root.not_nil!.namespaces) as NodeSet
+      nodes = doc.xpath("//xmlns:feed", namespaces: doc.root.not_nil!.namespaces).as(NodeSet)
       nodes.size.should eq(1)
       nodes[0].name.should eq("feed")
       ns = nodes[0].namespace.not_nil!
@@ -105,7 +105,7 @@ module XML
           <person id="2"/>
         </feed>
         ))
-      nodes = doc.xpath("//feed/person[@id=$value]", variables: {"value": 2}) as NodeSet
+      nodes = doc.xpath("//feed/person[@id=$value]", variables: {"value": 2}).as(NodeSet)
       nodes.size.should eq(1)
       nodes[0]["id"].should eq("2")
     end

@@ -205,8 +205,8 @@ describe "Type inference: lib" do
       LibC.foo(1)
       ") { float64 }
     mod = result.program
-    lib_type = mod.types["LibC"] as LibType
-    foo = lib_type.lookup_first_def("foo", false) as External
+    lib_type = mod.types["LibC"].as(LibType)
+    foo = lib_type.lookup_first_def("foo", false).as(External)
     foo.real_name.should eq("bar")
   end
 
@@ -435,7 +435,7 @@ describe "Type inference: lib" do
 
       LibSDL.init(0_u32)
       ))
-    sdl = result.program.types["LibSDL"] as LibType
+    sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_attributes.not_nil!
     attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
@@ -496,7 +496,7 @@ describe "Type inference: lib" do
 
       LibSDL.init(0_u32)
       ))
-    sdl = result.program.types["LibSDL"] as LibType
+    sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_attributes.not_nil!
     attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
@@ -516,7 +516,7 @@ describe "Type inference: lib" do
 
       LibSDL.init(0_u32)
       ))
-    sdl = result.program.types["LibSDL"] as LibType
+    sdl = result.program.types["LibSDL"].as(LibType)
     attrs = sdl.link_attributes.not_nil!
     attrs.size.should eq(1)
     attrs[0].lib.should eq("SDL")

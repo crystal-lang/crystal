@@ -73,9 +73,9 @@ module Crystal
         @nested_block_visitor.not_nil!.accept(node)
         args = [NumberLiteral.new(location.line_number)] of ASTNode
         if node.is_a?(TupleLiteral)
-          args << ArrayLiteral.new(node.elements.map { |e| StringLiteral.new(e.to_s) as ASTNode })
+          args << ArrayLiteral.new(node.elements.map { |e| StringLiteral.new(e.to_s).as(ASTNode) })
         end
-        Call.new(Global.new("$p"), "i", args, Block.new([] of Var, node as ASTNode))
+        Call.new(Global.new("$p"), "i", args, Block.new([] of Var, node.as(ASTNode)))
       else
         node
       end
@@ -192,7 +192,7 @@ module Crystal
     end
 
     def transform(node : Expressions)
-      node.expressions = node.expressions.map(&.transform(self) as ASTNode).to_a
+      node.expressions = node.expressions.map(&.transform(self).as(ASTNode)).to_a
       node
     end
 

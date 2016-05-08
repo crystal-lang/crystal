@@ -69,7 +69,7 @@ describe "Lexer: location" do
   end
 
   it "assigns correct loc location to node" do
-    exps = Parser.parse(%[(#<loc:"foo.txt",2,3>1 + 2)]) as Expressions
+    exps = Parser.parse(%[(#<loc:"foo.txt",2,3>1 + 2)]).as(Expressions)
     node = exps.expressions.first
     location = node.location.not_nil!
     location.line_number.should eq(2)
@@ -78,8 +78,8 @@ describe "Lexer: location" do
   end
 
   it "parses var/call right after loc (#491)" do
-    exps = Parser.parse(%[(#<loc:"foo.txt",2,3>msg)]) as Expressions
-    exp = exps.expressions.first as Call
+    exps = Parser.parse(%[(#<loc:"foo.txt",2,3>msg)]).as(Expressions)
+    exp = exps.expressions.first.as(Call)
     exp.name.should eq("msg")
   end
 

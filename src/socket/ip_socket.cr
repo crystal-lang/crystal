@@ -3,7 +3,7 @@ class IPSocket < Socket
     sockaddr = uninitialized LibC::SockaddrIn6
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
 
-    if LibC.getsockname(fd, pointerof(sockaddr) as LibC::Sockaddr*, pointerof(addrlen)) != 0
+    if LibC.getsockname(fd, pointerof(sockaddr).as(LibC::Sockaddr*), pointerof(addrlen)) != 0
       raise Errno.new("getsockname")
     end
 
@@ -14,7 +14,7 @@ class IPSocket < Socket
     sockaddr = uninitialized LibC::SockaddrIn6
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
 
-    if LibC.getpeername(fd, pointerof(sockaddr) as LibC::Sockaddr*, pointerof(addrlen)) != 0
+    if LibC.getpeername(fd, pointerof(sockaddr).as(LibC::Sockaddr*), pointerof(addrlen)) != 0
       raise Errno.new("getpeername")
     end
 
@@ -55,7 +55,7 @@ class IPSocket < Socket
 
     # may fire immediately or on the next event loop
     req = Scheduler.create_dns_request(host, port.to_s, pointerof(hints), dns_req) do |err, addr, data|
-      dreq = data as DnsRequestCbArg
+      dreq = data.as(DnsRequestCbArg)
 
       if err == 0
         dreq.value = addr

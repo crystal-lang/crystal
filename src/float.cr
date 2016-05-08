@@ -147,7 +147,7 @@ struct Float32
 
   def hash
     n = self
-    (pointerof(n) as Int32*).value
+    pointerof(n).as(Int32*).value
   end
 end
 
@@ -206,6 +206,6 @@ struct Float64
 
   def hash
     n = self
-    (pointerof(n) as Int64*).value
+    pointerof(n).as(Int64*).value
   end
 end

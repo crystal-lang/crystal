@@ -280,7 +280,7 @@ module Crystal
     end
 
     def self.map(values)
-      new(values.map { |value| (yield value) as ASTNode })
+      new(values.map { |value| (yield value).as(ASTNode) })
     end
 
     def accept_children(visitor)

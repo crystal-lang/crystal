@@ -643,7 +643,7 @@ class Array(T)
   # puts ary2 # => [[1, 2], [3, 4], [7, 8]]
   # ```
   def clone
-    Array(T).new(size) { |i| @buffer[i].clone as T }
+    Array(T).new(size) { |i| @buffer[i].clone.as(T) }
   end
 
   # Returns a copy of self with all `nil` elements removed.

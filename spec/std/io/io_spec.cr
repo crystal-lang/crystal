@@ -14,7 +14,7 @@ class SimpleMemoryIO
   @max_read : Int32?
 
   def initialize(capacity = 64, @max_read = nil)
-    @buffer = GC.malloc_atomic(capacity.to_u32) as UInt8*
+    @buffer = GC.malloc_atomic(capacity.to_u32).as(UInt8*)
     @bytesize = 0
     @capacity = capacity
     @pos = 0

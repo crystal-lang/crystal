@@ -102,7 +102,7 @@ class Hash(K, V)
   def fetch(key)
     fetch(key) do
       if (block = @block) && key.is_a?(K)
-        block.call(self, key as K)
+        block.call(self, key.as(K))
       else
         raise KeyError.new "Missing hash key: #{key.inspect}"
       end

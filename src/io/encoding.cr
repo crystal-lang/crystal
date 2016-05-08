@@ -59,10 +59,10 @@ module IO
 
     def initialize(@encoding_options : EncodingOptions)
       @iconv = Iconv.new(encoding_options.name, "UTF-8", encoding_options.invalid)
-      @buffer = Slice(UInt8).new((GC.malloc_atomic(BUFFER_SIZE) as UInt8*), BUFFER_SIZE)
+      @buffer = Slice(UInt8).new((GC.malloc_atomic(BUFFER_SIZE).as(UInt8*)), BUFFER_SIZE)
       @in_buffer = @buffer.to_unsafe
       @in_buffer_left = LibC::SizeT.new(0)
-      @out_buffer = Slice(UInt8).new((GC.malloc_atomic(OUT_BUFFER_SIZE) as UInt8*), OUT_BUFFER_SIZE)
+      @out_buffer = Slice(UInt8).new((GC.malloc_atomic(OUT_BUFFER_SIZE).as(UInt8*)), OUT_BUFFER_SIZE)
       @out_slice = Slice(UInt8).new(Pointer(UInt8).null, 0)
       @last_errno = 0
       @closed = false

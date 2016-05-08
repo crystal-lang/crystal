@@ -90,8 +90,8 @@ module GC
   end
 
   def self.add_finalizer(object : T)
-    LibGC.register_finalizer_ignore_self(object as Void*,
-      ->(obj, data) { (obj as T).finalize },
+    LibGC.register_finalizer_ignore_self(object.as(Void*),
+      ->(obj, data) { obj.as(T).finalize },
       nil, nil, nil)
     nil
   end

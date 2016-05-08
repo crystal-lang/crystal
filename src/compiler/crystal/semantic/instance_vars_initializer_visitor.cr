@@ -129,14 +129,14 @@ module Crystal
     end
 
     def visit(node : Assign)
-      target = node.target as InstanceVar
+      target = node.target.as(InstanceVar)
       value = node.value
       type_instance_var(node, target, value)
       false
     end
 
     def visit(node : TypeDeclaration)
-      target = node.var as InstanceVar
+      target = node.var.as(InstanceVar)
       value = node.value
       type_instance_var(node, target, value) if value
       false

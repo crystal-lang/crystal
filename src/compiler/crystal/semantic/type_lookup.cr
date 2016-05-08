@@ -93,7 +93,7 @@ module Crystal
           if type_var.is_a?(Path) && type_var.names.size == 1
             the_type = @root.lookup_type(type_var)
             if the_type.is_a?(ASTNode)
-              next the_type as TypeVar
+              next the_type.as(TypeVar)
             end
           end
 
@@ -104,7 +104,7 @@ module Crystal
           Crystal.check_type_allowed_in_generics(type_var, type, "can't use #{type} as a generic type argument")
 
           type.virtual_type
-        end as TypeVar
+        end.as(TypeVar)
       end
 
       begin

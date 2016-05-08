@@ -181,7 +181,7 @@ module Crystal
       end
 
       NumberLiteral.new(bin_op(op, args) { |me, other|
-        other_kind = (args.first as NumberLiteral).kind
+        other_kind = args.first.as(NumberLiteral).kind
         if other_kind == :f32 || other_kind == :f64
           raise "argument to NumberLiteral##{op} can't be float literal: #{self}"
         end
@@ -849,7 +849,7 @@ module Crystal
           end
         end
       elsif type.is_a?(GenericType)
-        ArrayLiteral.map((type as GenericType).type_vars) do |type_var|
+        ArrayLiteral.map(type.as(GenericType).type_vars) do |type_var|
           MacroId.new(type_var)
         end
       else
@@ -902,7 +902,7 @@ module Crystal
     end
 
     def self.constants(type)
-      names = type.types.map { |name, member_type| MacroId.new(name) as ASTNode }
+      names = type.types.map { |name, member_type| MacroId.new(name).as(ASTNode) }
       ArrayLiteral.new names
     end
 

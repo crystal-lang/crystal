@@ -9,7 +9,7 @@ struct LLVM::ParameterCollection
   def to_a
     param_size = size()
     Array(LLVM::Value).build(param_size) do |buffer|
-      LibLLVM.get_params(@function, buffer as LibLLVM::ValueRef*)
+      LibLLVM.get_params(@function, buffer.as(LibLLVM::ValueRef*))
       param_size
     end
   end
@@ -34,7 +34,7 @@ struct LLVM::ParameterCollection
   def types
     param_size = size()
     Array(LLVM::Type).build(param_size) do |buffer|
-      LibLLVM.get_param_types(@function.function_type, buffer as LibLLVM::TypeRef*)
+      LibLLVM.get_param_types(@function.function_type, buffer.as(LibLLVM::TypeRef*))
       param_size
     end
   end

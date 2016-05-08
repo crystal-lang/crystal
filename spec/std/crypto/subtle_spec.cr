@@ -11,7 +11,7 @@ describe "Subtle" do
     ]
 
     data.each do |test|
-      Crypto::Subtle.constant_time_compare(test["a"] as Slice(Int32), test["b"] as Slice(Int32)).should eq(test["result"])
+      Crypto::Subtle.constant_time_compare(test["a"].as(Slice(Int32)), test["b"].as(Slice(Int32))).should eq(test["result"])
     end
   end
 

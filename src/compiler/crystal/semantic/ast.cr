@@ -490,7 +490,7 @@ module Crystal
     end
 
     def grew?(old_type, new_type)
-      new_type = new_type as PointerInstanceType
+      new_type = new_type.as(PointerInstanceType)
       element_type = new_type.element_type
       type_includes?(element_type, old_type)
     end
@@ -606,7 +606,7 @@ module Crystal
     end
 
     def return_type
-      (@type as FunInstanceType).return_type
+      @type.as(FunInstanceType).return_type
     end
   end
 
@@ -652,7 +652,7 @@ module Crystal
           end
         end
 
-        type_var as TypeVar
+        type_var.as(TypeVar)
       end
 
       begin
@@ -676,7 +676,7 @@ module Crystal
     def update(from = nil)
       return unless elements.all? &.type?
 
-      types = elements.map { |exp| exp.type as TypeVar }
+      types = elements.map { |exp| exp.type.as(TypeVar) }
       tuple_type = mod.tuple_of types
 
       if generic_type_too_nested?(tuple_type.generic_nest)

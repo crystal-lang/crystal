@@ -210,13 +210,13 @@ class String
   def self.new(capacity : Int)
     check_capacity_in_bounds(capacity)
 
-    str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32) as UInt8*
-    buffer = (str as String).to_unsafe
+    str = GC.malloc_atomic((capacity + HEADER_SIZE + 1).to_u32).as(UInt8*)
+    buffer = str.as(String).to_unsafe
     bytesize, size = yield buffer
-    str_header = str as {Int32, Int32, Int32}*
+    str_header = str.as({Int32, Int32, Int32}*)
     str_header.value = {TYPE_ID, bytesize.to_i, size.to_i}
     buffer[bytesize] = 0_u8
-    str as String
+    str.as(String)
   end
 
   # Builds a String by creating a `String::Builder` with the given initial capacity, yielding
@@ -1878,7 +1878,7 @@ class String
       return ""
     elsif bytesize == 1
       return String.new(times) do |buffer|
-        Intrinsics.memset(buffer as Void*, to_unsafe[0], times, 0, false)
+        Intrinsics.memset(buffer.as(Void*), to_unsafe[0], times, 0, false)
         {times, times}
       end
     end
@@ -2472,7 +2472,7 @@ class String
       end
 
       if count == 1
-        Intrinsics.memset(buffer as Void*, char.ord.to_u8, difference.to_u32, 0_u32, false)
+        Intrinsics.memset(buffer.as(Void*), char.ord.to_u8, difference.to_u32, 0_u32, false)
         buffer += difference
       else
         difference.times do

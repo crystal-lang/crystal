@@ -24,7 +24,7 @@ class Scheduler
 
   def self.create_resume_event(fiber)
     @@eb.new_event(-1, LibEvent2::EventFlags::None, fiber) do |s, flags, data|
-      (data as Fiber).resume
+      data.as(Fiber).resume
     end
   end
 
@@ -32,7 +32,7 @@ class Scheduler
     flags = LibEvent2::EventFlags::Write
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
     event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|
-      fd_io = data as IO::FileDescriptor
+      fd_io = data.as(IO::FileDescriptor)
       if flags.includes?(LibEvent2::EventFlags::Write)
         fd_io.resume_write
       elsif flags.includes?(LibEvent2::EventFlags::Timeout)
@@ -47,7 +47,7 @@ class Scheduler
     flags = LibEvent2::EventFlags::Read
     flags |= LibEvent2::EventFlags::Persist | LibEvent2::EventFlags::ET if edge_triggered
     event = @@eb.new_event(io.fd, flags, io) do |s, flags, data|
-      fd_io = data as IO::FileDescriptor
+      fd_io = data.as(IO::FileDescriptor)
       if flags.includes?(LibEvent2::EventFlags::Read)
         fd_io.resume_read
       elsif flags.includes?(LibEvent2::EventFlags::Timeout)
@@ -61,7 +61,7 @@ class Scheduler
   def self.create_signal_event(signal : Signal, chan)
     flags = LibEvent2::EventFlags::Signal | LibEvent2::EventFlags::Persist
     event = @@eb.new_event(Int32.new(signal.to_i), flags, chan) do |s, flags, data|
-      ch = data as Channel::Buffered(Signal)
+      ch = data.as(Channel::Buffered(Signal))
       sig = Signal.new(s)
       ch.send sig
     end

@@ -132,7 +132,7 @@ module Crystal
         defs = obj_type.defs.try &.[node.name]?
         # There should be only one, if there is any
         defs.try &.each do |metadata|
-          external = metadata.def as External
+          external = metadata.def.as(External)
           fun_def = external.fun_def?
           next unless fun_def
 
@@ -302,7 +302,7 @@ module Crystal
       if existing
         # Accept the value in case there are assigns there
         value.accept self
-        return existing.type as Type
+        return existing.type.as(Type)
       end
 
       # For non-generic class we can solve the type now
@@ -342,7 +342,7 @@ module Crystal
       # If there is already a type restriction, skip
       existing = @explicit_instance_vars[owner]?.try &.[target.name]?
       if existing
-        return existing.type as Type
+        return existing.type.as(Type)
       end
 
       # For non-generic class we can solve the type now
@@ -373,7 +373,7 @@ module Crystal
       # If there is already a type restriction, skip
       existing = @explicit_instance_vars[owner]?.try &.[target.name]?
       if existing
-        return existing.type as Type
+        return existing.type.as(Type)
       end
 
       owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
@@ -662,7 +662,7 @@ module Crystal
       defs = obj_type.defs.try &.[node.name]?
       # There should be only one, if there is any
       defs.try &.each do |metadata|
-        external = metadata.def as External
+        external = metadata.def.as(External)
         if def_return_type = external.fun_def?.try &.return_type
           return_type = TypeLookup.lookup(obj_type, def_return_type)
           return return_type if return_type

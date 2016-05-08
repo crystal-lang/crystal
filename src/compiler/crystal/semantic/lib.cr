@@ -4,7 +4,7 @@ class Crystal::Call
 
     old_target_defs = @target_defs
 
-    external = obj_type.lookup_first_def(name, false) as External?
+    external = obj_type.lookup_first_def(name, false).as(External?)
     raise "undefined fun '#{name}' for #{obj_type}" unless external
 
     check_lib_call_named_args(external)

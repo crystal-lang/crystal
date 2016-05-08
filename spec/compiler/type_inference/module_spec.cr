@@ -216,7 +216,7 @@ describe "Type inference: module" do
 
       Bar(Int32).new.foo
       ") {
-      baz = types["Baz"] as GenericClassType
+      baz = types["Baz"].as(GenericClassType)
       baz.instantiate([int32] of ASTNode | Type).metaclass
     }
   end
@@ -238,7 +238,7 @@ describe "Type inference: module" do
 
       Bar(Int32).new.foo
       ") {
-      bar = types["Bar"] as GenericClassType
+      bar = types["Bar"].as(GenericClassType)
       bar.instantiate([int32] of ASTNode | Type).metaclass
     }
   end

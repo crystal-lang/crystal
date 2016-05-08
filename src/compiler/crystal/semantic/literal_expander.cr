@@ -121,8 +121,8 @@ module Crystal
       if of = node.of
         type_vars = [of.key, of.value] of ASTNode
       else
-        typeof_key = TypeOf.new(node.entries.map { |x| x.key.clone as ASTNode }).at(node)
-        typeof_value = TypeOf.new(node.entries.map { |x| x.value.clone as ASTNode }).at(node)
+        typeof_key = TypeOf.new(node.entries.map { |x| x.key.clone.as(ASTNode) }).at(node)
+        typeof_value = TypeOf.new(node.entries.map { |x| x.value.clone.as(ASTNode) }).at(node)
         type_vars = [typeof_key, typeof_value] of ASTNode
       end
 
@@ -565,7 +565,7 @@ module Crystal
         obj = cond.obj
         case obj
         when ImplicitObj
-          implicit_call = cond.clone as Call
+          implicit_call = cond.clone.as(Call)
           implicit_call.obj = temp_var.clone
           return implicit_call
         when Path

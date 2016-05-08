@@ -120,14 +120,14 @@ module Crystal
     private def create_llvm_type(type : StaticArrayInstanceType)
       pointed_type = llvm_embedded_type type.element_type
       pointed_type = LLVM::Int8 if pointed_type == LLVM::Void
-      pointed_type.array (type.size as NumberLiteral).value.to_i
+      pointed_type.array type.size.as(NumberLiteral).value.to_i
     end
 
     private def create_llvm_type(type : TupleInstanceType)
       LLVM::Type.struct(type.llvm_name) do |a_struct|
         @cache[type] = a_struct
 
-        type.tuple_types.map { |tuple_type| llvm_embedded_type(tuple_type) as LLVM::Type }
+        type.tuple_types.map { |tuple_type| llvm_embedded_type(tuple_type).as(LLVM::Type) }
       end
     end
 
@@ -212,7 +212,7 @@ module Crystal
     private def create_llvm_struct_type(type : CStructType)
       LLVM::Type.struct(type.llvm_name, type.packed) do |a_struct|
         @struct_cache[type] = a_struct
-        type.vars.map { |name, var| llvm_embedded_c_type(var.type) as LLVM::Type }
+        type.vars.map { |name, var| llvm_embedded_c_type(var.type).as(LLVM::Type) }
       end
     end
 
@@ -386,13 +386,13 @@ module Crystal
     end
 
     def fun_type(type : FunInstanceType)
-      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) as LLVM::Type }
+      arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type).as(LLVM::Type) }
       LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
     end
 
     def closure_context_type(vars, parent_llvm_type, self_type)
       LLVM::Type.struct("closure") do |a_struct|
-        elems = vars.map { |var| llvm_type(var.type) as LLVM::Type }
+        elems = vars.map { |var| llvm_type(var.type).as(LLVM::Type) }
         elems << parent_llvm_type.pointer if parent_llvm_type
         elems << llvm_type(self_type) if self_type
         elems

@@ -4,7 +4,7 @@ describe "Global inference" do
   it "infers type of global assign" do
     node = parse "$foo = 1"
     result = infer_type node
-    mod, node = result.program, result.node as Assign
+    mod, node = result.program, result.node.as(Assign)
 
     node.type.should eq(mod.int32)
     node.target.type.should eq(mod.int32)
@@ -14,10 +14,10 @@ describe "Global inference" do
   it "infers type of global assign with union" do
     nodes = parse "$foo = 1; $foo = 'a'"
     result = infer_type nodes
-    mod, node = result.program, result.node as Expressions
+    mod, node = result.program, result.node.as(Expressions)
 
-    (node[0] as Assign).target.type.should eq(mod.union_of(mod.int32, mod.char))
-    (node[1] as Assign).target.type.should eq(mod.union_of(mod.int32, mod.char))
+    node[0].as(Assign).target.type.should eq(mod.union_of(mod.int32, mod.char))
+    node[1].as(Assign).target.type.should eq(mod.union_of(mod.int32, mod.char))
   end
 
   it "errors when reading undefined global variables" do
@@ -207,7 +207,7 @@ describe "Global inference" do
 
       $x = Foo(Int32).new
       $x
-      )) { (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar) }
+      )) { types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar) }
   end
 
   it "infers type from as" do
@@ -534,7 +534,7 @@ describe "Global inference" do
       $x = Foo(Int32).new
       $x = Foo(typeof(foo)).new
       $x
-      )) { (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar) }
+      )) { types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar) }
   end
 
   it "infers type of global reference" do

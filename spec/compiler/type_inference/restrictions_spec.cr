@@ -230,8 +230,8 @@ describe "Restrictions" do
 
       foo(Foo(Int32).new || Foo(Float64).new)
       )) { union_of(
-      (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar),
-      (types["Foo"] as GenericClassType).instantiate([float64] of TypeVar),
+      types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar),
+      types["Foo"].as(GenericClassType).instantiate([float64] of TypeVar),
     ) }
   end
 

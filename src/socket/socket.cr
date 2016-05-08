@@ -47,14 +47,14 @@ class Socket < IO::FileDescriptor
     def initialize(sockaddr : LibC::SockaddrIn6, addrlen : LibC::SocklenT)
       case addrlen
       when LibC::SocklenT.new(sizeof(LibC::SockaddrIn))
-        sockaddrin = (pointerof(sockaddr) as LibC::SockaddrIn*).value
+        sockaddrin = pointerof(sockaddr).as(LibC::SockaddrIn*).value
         addr = sockaddrin.sin_addr
         @family = Family::INET
-        @address = inet_ntop(family.value, pointerof(addr) as Void*, addrlen)
+        @address = inet_ntop(family.value, pointerof(addr).as(Void*), addrlen)
       when LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
         addr6 = sockaddr.sin6_addr
         @family = Family::INET6
-        @address = inet_ntop(family.value, pointerof(addr6) as Void*, addrlen)
+        @address = inet_ntop(family.value, pointerof(addr6).as(Void*), addrlen)
       else
         raise ArgumentError.new("Unsupported address family")
       end
@@ -67,14 +67,14 @@ class Socket < IO::FileDescriptor
 
       case family
       when Family::INET
-        sockaddrin = (pointerof(sockaddrin6) as LibC::SockaddrIn*).value
+        sockaddrin = pointerof(sockaddrin6).as(LibC::SockaddrIn*).value
         addr = sockaddrin.sin_addr
-        LibC.inet_pton(family.value, address, pointerof(addr) as Void*)
+        LibC.inet_pton(family.value, address, pointerof(addr).as(Void*))
         sockaddrin.sin_addr = addr
-        sockaddrin6 = (pointerof(sockaddrin) as LibC::SockaddrIn6*).value
+        sockaddrin6 = pointerof(sockaddrin).as(LibC::SockaddrIn6*).value
       when Family::INET6
         addr6 = sockaddrin6.sin6_addr
-        LibC.inet_pton(family.value, address, pointerof(addr6) as Void*)
+        LibC.inet_pton(family.value, address, pointerof(addr6).as(Void*))
         sockaddrin6.sin6_addr = addr6
       end
 
@@ -95,7 +95,7 @@ class Socket < IO::FileDescriptor
     end
 
     private def inet_ntop(af : Int, src : Void*, len : LibC::SocklenT)
-      dest = GC.malloc_atomic(addrlen.to_u32) as UInt8*
+      dest = GC.malloc_atomic(addrlen.to_u32).as(UInt8*)
       if LibC.inet_ntop(af, src, dest, len).null?
         raise Errno.new("Failed to convert IP address")
       end
@@ -230,7 +230,7 @@ class Socket < IO::FileDescriptor
   # returns the modified optval
   def getsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
-    ret = LibC.getsockopt(fd, level, optname, (pointerof(optval) as Void*), pointerof(optsize))
+    ret = LibC.getsockopt(fd, level, optname, (pointerof(optval).as(Void*)), pointerof(optsize))
     raise Errno.new("getsockopt") if ret == -1
     optval
   end
@@ -238,7 +238,7 @@ class Socket < IO::FileDescriptor
   # optval is restricted to Int32 until sizeof works on variables
   def setsockopt(optname, optval, level = LibC::SOL_SOCKET)
     optsize = LibC::SocklenT.new(sizeof(typeof(optval)))
-    ret = LibC.setsockopt(fd, level, optname, (pointerof(optval) as Void*), optsize)
+    ret = LibC.setsockopt(fd, level, optname, (pointerof(optval).as(Void*)), optsize)
     raise Errno.new("setsockopt") if ret == -1
     ret
   end
@@ -257,7 +257,7 @@ class Socket < IO::FileDescriptor
   private def nonblocking_connect(host, port, addrinfo, timeout = nil)
     loop do
       ifdef freebsd
-        ret = LibC.connect(@fd, addrinfo.ai_addr as LibC::Sockaddr*, addrinfo.ai_addrlen)
+        ret = LibC.connect(@fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
       else
         ret = LibC.connect(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
       end

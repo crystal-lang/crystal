@@ -836,7 +836,7 @@ module Crystal
         node.raise "can't use class variables in generic types"
       end
 
-      scope as ClassVarContainer
+      scope.as(ClassVarContainer)
     end
 
     def lookup_class_var(node)

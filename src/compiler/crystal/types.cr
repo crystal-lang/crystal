@@ -701,7 +701,7 @@ module Crystal
         if existing_defs = defs[a_def.name]?
           existing = existing_defs.first?
           if existing
-            existing = existing.def as External
+            existing = existing.def.as(External)
             unless existing.compatible_with?(a_def)
               a_def.raise "fun redefinition with different signature (was #{existing})"
             end
@@ -1343,7 +1343,7 @@ module Crystal
           index.upto(type_vars.size - 1) do |second_index|
             types << type_vars[second_index]
           end
-          tuple_type = program.tuple.instantiate(types) as TupleInstanceType
+          tuple_type = program.tuple.instantiate(types).as(TupleInstanceType)
           instance_type_vars[name] = tuple_type.var
         else
           type_var = type_vars[index]
@@ -2674,7 +2674,7 @@ module Crystal
     end
 
     def fun_type
-      @union_types.last.remove_typedef as FunInstanceType
+      @union_types.last.remove_typedef.as(FunInstanceType)
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
@@ -2696,7 +2696,7 @@ module Crystal
     end
 
     def pointer_type
-      @union_types.last.remove_typedef as PointerInstanceType
+      @union_types.last.remove_typedef.as(PointerInstanceType)
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)

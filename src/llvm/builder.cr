@@ -34,8 +34,8 @@ class LLVM::Builder
   def phi(type, incoming_blocks : Array(LLVM::BasicBlock), incoming_values : Array(LLVM::Value), name = "")
     phi_node = LibLLVM.build_phi self, type, name
     LibLLVM.add_incoming phi_node,
-      (incoming_values.to_unsafe as LibLLVM::ValueRef*),
-      (incoming_blocks.to_unsafe as LibLLVM::BasicBlockRef*),
+      (incoming_values.to_unsafe.as(LibLLVM::ValueRef*)),
+      (incoming_blocks.to_unsafe.as(LibLLVM::BasicBlockRef*)),
       incoming_blocks.size
     Value.new phi_node
   end
@@ -50,7 +50,7 @@ class LLVM::Builder
   end
 
   def call(func, args : Array(LLVM::Value), name : String = "")
-    Value.new LibLLVM.build_call(self, func, (args.to_unsafe as LibLLVM::ValueRef*), args.size, name)
+    Value.new LibLLVM.build_call(self, func, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, name)
   end
 
   def alloca(type, name = "")
@@ -139,7 +139,7 @@ class LLVM::Builder
   end
 
   def invoke(fn, args : Array(LLVM::Value), a_then, a_catch, name = "")
-    Value.new LibLLVM.build_invoke self, fn, (args.to_unsafe as LibLLVM::ValueRef*), args.size, a_then, a_catch, name
+    Value.new LibLLVM.build_invoke self, fn, (args.to_unsafe.as(LibLLVM::ValueRef*)), args.size, a_then, a_catch, name
   end
 
   def switch(value, otherwise, cases)

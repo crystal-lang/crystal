@@ -6,7 +6,7 @@ class Crystal::CodeGenVisitor
 
     if ptrof = node.ptrof
       output = node.output.not_nil!
-      output_type = llvm_type((ptrof.type as PointerInstanceType).element_type)
+      output_type = llvm_type(ptrof.type.as(PointerInstanceType).element_type)
       constraints << output.constraint
     else
       output_type = LLVM::Void

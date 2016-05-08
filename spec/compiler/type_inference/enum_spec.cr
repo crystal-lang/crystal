@@ -265,7 +265,7 @@ describe "Type inference: enum" do
 
       SomeFacts::AppleLover
       ))
-    enum_type = result.program.types["SomeFacts"] as EnumType
+    enum_type = result.program.types["SomeFacts"].as(EnumType)
     enum_type.has_attribute?("Flags").should be_true
   end
 end

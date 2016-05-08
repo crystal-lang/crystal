@@ -38,11 +38,11 @@ module LLVM
   end
 
   def self.array(type, values : Array(LLVM::Value)) : Value
-    Value.new LibLLVM.const_array(type, (values.to_unsafe as LibLLVM::ValueRef*), values.size)
+    Value.new LibLLVM.const_array(type, (values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
   end
 
   def self.struct(values : Array(LLVM::Value), packed = false) : Value
-    Value.new LibLLVM.const_struct((values.to_unsafe as LibLLVM::ValueRef*), values.size, packed ? 1 : 0)
+    Value.new LibLLVM.const_struct((values.to_unsafe.as(LibLLVM::ValueRef*)), values.size, packed ? 1 : 0)
   end
 
   def self.string(string) : Value

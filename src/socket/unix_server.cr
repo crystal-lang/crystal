@@ -14,7 +14,7 @@ class UNIXServer < UNIXSocket
     end
     addr.sun_path.to_unsafe.copy_from(path.to_unsafe, path.bytesize + 1)
 
-    if LibC.bind(sock, (pointerof(addr) as LibC::Sockaddr*), sizeof(LibC::SockaddrUn)) != 0
+    if LibC.bind(sock, (pointerof(addr).as(LibC::Sockaddr*)), sizeof(LibC::SockaddrUn)) != 0
       LibC.close(sock)
       raise Errno.new("Error binding UNIX server at #{path}")
     end

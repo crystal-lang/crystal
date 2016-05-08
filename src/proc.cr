@@ -91,7 +91,7 @@
 struct Proc
   def self.new(pointer : Void*, closure_data : Void*)
     func = {pointer, closure_data}
-    ptr = pointerof(func) as self*
+    ptr = pointerof(func).as(self*)
     ptr.value
   end
 
@@ -109,7 +109,7 @@ struct Proc
 
   private def internal_representation
     func = self
-    ptr = pointerof(func) as {Void*, Void*}*
+    ptr = pointerof(func).as({Void*, Void*}*)
     ptr.value
   end
 

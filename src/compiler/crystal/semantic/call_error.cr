@@ -117,7 +117,7 @@ class Crystal::Call
 
         # Check if it's an instance variable that was never assigned a value
         if obj.is_a?(InstanceVar)
-          scope = scope as InstanceVarContainer
+          scope = scope.as(InstanceVarContainer)
           ivar = scope.lookup_instance_var(obj.name)
           deps = ivar.dependencies?
           if deps && deps.size == 1 && deps.first.same?(mod.nil_var)

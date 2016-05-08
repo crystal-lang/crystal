@@ -37,7 +37,7 @@ class Class
   #     typeof(klass.cast(number)) # => Int32
   #
   def cast(other) : self
-    other as self
+    other.as(self)
   end
 
   # Returns the union type of `self` and `other`.

@@ -63,7 +63,7 @@ class UDPSocket < IPSocket
       self.reuse_address = true
 
       ifdef freebsd
-        ret = LibC.bind(fd, addrinfo.ai_addr as LibC::Sockaddr*, addrinfo.ai_addrlen)
+        ret = LibC.bind(fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
       else
         ret = LibC.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
       end
@@ -98,7 +98,7 @@ class UDPSocket < IPSocket
   end
 
   def send(slice : Slice(UInt8))
-    bytes_sent = LibC.send(fd, (slice.to_unsafe as Void*), slice.size, 0)
+    bytes_sent = LibC.send(fd, (slice.to_unsafe.as(Void*)), slice.size, 0)
     if bytes_sent != -1
       return bytes_sent
     end
@@ -116,7 +116,7 @@ class UDPSocket < IPSocket
 
   def send(slice : Slice(UInt8), addr : IPAddress)
     sockaddr = addr.sockaddr
-    bytes_sent = LibC.sendto(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::Sockaddr*, addr.addrlen)
+    bytes_sent = LibC.sendto(fd, (slice.to_unsafe.as(Void*)), slice.size, 0, pointerof(sockaddr).as(LibC::Sockaddr*), addr.addrlen)
     if bytes_sent != -1
       return bytes_sent
     end
@@ -129,7 +129,7 @@ class UDPSocket < IPSocket
       sockaddr = uninitialized LibC::SockaddrIn6
       addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
 
-      bytes_read = LibC.recvfrom(fd, (slice.to_unsafe as Void*), slice.size, 0, pointerof(sockaddr) as LibC::Sockaddr*, pointerof(addrlen))
+      bytes_read = LibC.recvfrom(fd, (slice.to_unsafe.as(Void*)), slice.size, 0, pointerof(sockaddr).as(LibC::Sockaddr*), pointerof(addrlen))
       if bytes_read != -1
         return {
           bytes_read.to_i32,

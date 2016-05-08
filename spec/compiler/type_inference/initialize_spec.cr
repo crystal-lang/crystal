@@ -78,7 +78,7 @@ describe "Type inference: initialize" do
     ")
     result = infer_type node
     mod = result.program
-    foo = mod.types["Foo"] as NonGenericClassType
+    foo = mod.types["Foo"].as(NonGenericClassType)
     foo.instance_vars["@baz"].type.should eq(mod.types["Baz"])
     foo.instance_vars["@another"].type.should eq(mod.int32)
   end

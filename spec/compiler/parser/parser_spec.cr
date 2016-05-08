@@ -130,7 +130,7 @@ end
 private def assert_end_location(source, line_number = 1, column_number = source.size, file = __FILE__, line = __LINE__)
   it "gets corrects end location for #{source.inspect}", file, line do
     parser = Parser.new("#{source}; 1")
-    node = (parser.parse as Expressions).expressions[0]
+    node = parser.parse.as(Expressions).expressions[0]
     end_loc = node.end_location.not_nil!
     end_loc.line_number.should eq(line_number)
     end_loc.column_number.should eq(column_number)
@@ -1387,7 +1387,7 @@ describe "Parser" do
 
     it "gets corrects end location for var" do
       parser = Parser.new("foo = 1\nfoo; 1")
-      node = (parser.parse as Expressions).expressions[1]
+      node = parser.parse.as(Expressions).expressions[1]
       end_loc = node.end_location.not_nil!
       end_loc.line_number.should eq(2)
       end_loc.column_number.should eq(3)
@@ -1395,7 +1395,7 @@ describe "Parser" do
 
     it "gets corrects end location for block with { ... }" do
       parser = Parser.new("foo { 1 + 2 }; 1")
-      node = (parser.parse as Expressions).expressions[0] as Call
+      node = parser.parse.as(Expressions).expressions[0].as(Call)
       block = node.block.not_nil!
       end_loc = block.end_location.not_nil!
       end_loc.line_number.should eq(1)
@@ -1405,7 +1405,7 @@ describe "Parser" do
 
     it "gets corrects end location for block with do ... end" do
       parser = Parser.new("foo do\n  1 + 2\nend; 1")
-      node = (parser.parse as Expressions).expressions[0] as Call
+      node = parser.parse.as(Expressions).expressions[0].as(Call)
       block = node.block.not_nil!
       end_loc = block.end_location.not_nil!
       end_loc.line_number.should eq(3)
@@ -1421,13 +1421,13 @@ describe "Parser" do
 
         1 + 'a'
         ))
-      node = (parser.parse as Expressions).expressions[1]
+      node = parser.parse.as(Expressions).expressions[1]
       loc = node.location.not_nil!
       loc.line_number.should eq(6)
     end
 
     it "gets correct location with \r\n (#1558)" do
-      nodes = Parser.parse("class Foo\r\nend\r\n\r\n1") as Expressions
+      nodes = Parser.parse("class Foo\r\nend\r\n\r\n1").as(Expressions)
       loc = nodes.last.location.not_nil!
       loc.line_number.should eq(4)
       loc.column_number.should eq(1)
@@ -1435,7 +1435,7 @@ describe "Parser" do
 
     it "sets location of enum method" do
       parser = Parser.new("enum Foo; A; def bar; end; end")
-      node = (parser.parse as EnumDef).members[1] as Def
+      node = parser.parse.as(EnumDef).members[1].as(Def)
       loc = node.location.not_nil!
       loc.line_number.should eq(1)
       loc.column_number.should eq(14)

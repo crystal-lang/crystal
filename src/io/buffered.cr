@@ -280,10 +280,10 @@ module IO::Buffered
   end
 
   private def in_buffer
-    @in_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32) as UInt8*
+    @in_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32).as(UInt8*)
   end
 
   private def out_buffer
-    @out_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32) as UInt8*
+    @out_buffer ||= GC.malloc_atomic(BUFFER_SIZE.to_u32).as(UInt8*)
   end
 end

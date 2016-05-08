@@ -150,11 +150,11 @@ module Crystal
     delegate llvm_c_return_type, llvm_typer
 
     def llvm_fun_type(type)
-      llvm_typer.fun_type(type as FunInstanceType)
+      llvm_typer.fun_type(type.as(FunInstanceType))
     end
 
     def llvm_closure_type(type)
-      llvm_typer.closure_type(type as FunInstanceType)
+      llvm_typer.closure_type(type.as(FunInstanceType))
     end
 
     def llvm_size(type)

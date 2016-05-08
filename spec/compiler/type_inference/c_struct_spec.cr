@@ -5,7 +5,7 @@ describe "Type inference: struct" do
     result = assert_type("lib LibFoo; struct Bar; x : Int32; y : Float64; end; end; LibFoo::Bar") { types["LibFoo"].types["Bar"].metaclass }
     mod = result.program
 
-    bar = mod.types["LibFoo"].types["Bar"] as CStructType
+    bar = mod.types["LibFoo"].types["Bar"].as(CStructType)
     bar.vars["x"].type.should eq(mod.int32)
     bar.vars["y"].type.should eq(mod.float64)
   end
@@ -255,7 +255,7 @@ describe "Type inference: struct" do
         end
       end
       ))
-    foo_struct = result.program.types["LibFoo"].types["Struct"] as CStructType
+    foo_struct = result.program.types["LibFoo"].types["Struct"].as(CStructType)
     foo_struct.packed.should be_true
   end
 

@@ -83,7 +83,7 @@ describe "Type inference: primitives" do
       x = foo 1, 'a'
       y = foo 'a', 1
       x
-      )) { (types["Hash"] as GenericClassType).instantiate([int32, char] of TypeVar) }
+      )) { types["Hash"].as(GenericClassType).instantiate([int32, char] of TypeVar) }
   end
 
   it "computes correct hash value type if it's a function literal (#320)" do
@@ -92,7 +92,7 @@ describe "Type inference: primitives" do
 
       {"foo" => ->{ true }}
       )) do
-      (types["Hash"] as GenericClassType)
+      (types["Hash"].as(GenericClassType))
         .instantiate([string, fun_of(bool)] of TypeVar)
     end
   end

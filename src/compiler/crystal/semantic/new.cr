@@ -129,7 +129,7 @@ module Crystal
 
     def fill_body_from_initialize(instance_type)
       if instance_type.is_a?(GenericClassType)
-        generic_type_args = instance_type.type_vars.map { |type_var| Path.new(type_var) as ASTNode }
+        generic_type_args = instance_type.type_vars.map { |type_var| Path.new(type_var).as(ASTNode) }
         new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
         alloc = Call.new(new_generic, "allocate")
       else
@@ -143,7 +143,7 @@ module Crystal
       #    GC.add_finalizer x if x.responds_to? :finalize
       #    x
       var = Var.new("_")
-      new_vars = args.map { |arg| Var.new(arg.name) as ASTNode }
+      new_vars = args.map { |arg| Var.new(arg.name).as(ASTNode) }
 
       if splat_index = self.splat_index
         new_vars[splat_index] = Splat.new(new_vars[splat_index])
@@ -156,7 +156,7 @@ module Crystal
       # that yields those arguments.
       if block_args_count = self.yields
         block_args = Array.new(block_args_count) { |i| Var.new("_arg#{i}") }
-        vars = Array.new(block_args_count) { |i| Var.new("_arg#{i}") as ASTNode }
+        vars = Array.new(block_args_count) { |i| Var.new("_arg#{i}").as(ASTNode) }
         init.block = Block.new(block_args, Yield.new(vars))
       end
 

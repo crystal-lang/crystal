@@ -3,7 +3,7 @@ require "c/sys/mman"
 @[NoInline]
 fun get_stack_top : Void*
   dummy = uninitialized Int32
-  pointerof(dummy) as Void*
+  pointerof(dummy).as(Void*)
 end
 
 class Fiber
@@ -37,16 +37,16 @@ class Fiber
     # @stack_top will be the stack pointer on the initial call to `resume`
     ifdef x86_64
       # In x86-64, the context switch push/pop 7 registers
-      @stack_top = (stack_ptr - 7) as Void*
+      @stack_top = (stack_ptr - 7).as(Void*)
 
       stack_ptr[0] = fiber_main.pointer # Initial `resume` will `ret` to this address
-      stack_ptr[-1] = self as Void*     # This will be `pop` into %rdi (first argument)
+      stack_ptr[-1] = self.as(Void*)    # This will be `pop` into %rdi (first argument)
     elsif i686
       # In IA32, the context switch push/pops 4 registers.
       # Add two more to store the argument of `fiber_main`
-      @stack_top = (stack_ptr - 6) as Void*
+      @stack_top = (stack_ptr - 6).as(Void*)
 
-      stack_ptr[0] = self as Void*       # First argument passed on the stack
+      stack_ptr[0] = self.as(Void*)      # First argument passed on the stack
       stack_ptr[-1] = Pointer(Void).null # Empty space to keep the stack alignment (16 bytes)
       stack_ptr[-2] = fiber_main.pointer # Initial `resume` will `ret` to this address
     else
@@ -101,7 +101,7 @@ class Fiber
       io.puts "Unhandled exception:"
       ex.inspect_with_backtrace io
     end
-    LibC.write(2, pointerof(msg) as Void*, msg.bytesize)
+    LibC.write(2, pointerof(msg).as(Void*), msg.bytesize)
   ensure
     @@stack_pool << @stack
 

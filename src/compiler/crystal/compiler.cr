@@ -105,7 +105,7 @@ module Crystal
       timing("Parse") do
         nodes = sources.map do |source|
           program.add_to_requires source.filename
-          parse(program, source) as ASTNode
+          parse(program, source).as(ASTNode)
         end
         node = Expressions.from(nodes)
 

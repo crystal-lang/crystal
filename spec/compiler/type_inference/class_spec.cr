@@ -2,11 +2,11 @@ require "../../spec_helper"
 
 describe "Type inference: class" do
   it "types Const#allocate" do
-    assert_type("class Foo; end; Foo.allocate") { types["Foo"] as NonGenericClassType }
+    assert_type("class Foo; end; Foo.allocate") { types["Foo"].as(NonGenericClassType) }
   end
 
   it "types Const#new" do
-    assert_type("class Foo; end; Foo.new") { types["Foo"] as NonGenericClassType }
+    assert_type("class Foo; end; Foo.new") { types["Foo"].as(NonGenericClassType) }
   end
 
   it "types Const#new#method" do
@@ -29,10 +29,10 @@ describe "Type inference: class" do
       f.set
       f
     ") do
-      (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar)
+      types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar)
     end
     mod = result.program
-    type = result.node.type as GenericClassInstanceType
+    type = result.node.type.as(GenericClassInstanceType)
     type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
   end
 
@@ -48,7 +48,7 @@ describe "Type inference: class" do
       f.set
       f
     ") do
-      foo = types["Foo"] as GenericClassType
+      foo = types["Foo"].as(GenericClassType)
       foo_i32 = foo.instantiate([int32] of TypeVar)
       foo_foo_i32 = foo.instantiate([foo_i32] of TypeVar)
     end
@@ -70,14 +70,14 @@ describe "Type inference: class" do
       g
     "
     result = infer_type input
-    mod, node = result.program, result.node as Expressions
-    foo = mod.types["Foo"] as GenericClassType
+    mod, node = result.program, result.node.as(Expressions)
+    foo = mod.types["Foo"].as(GenericClassType)
 
     node[1].type.should eq(foo.instantiate([mod.int32] of TypeVar))
-    (node[1].type as InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
+    node[1].type.as(InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
 
     node[3].type.should eq(foo.instantiate([mod.float64] of TypeVar))
-    (node[3].type as InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.float64))
+    node[3].type.as(InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.float64))
   end
 
   it "types instance variable on getter" do
@@ -99,9 +99,9 @@ describe "Type inference: class" do
       g = Foo(Float64).new
       g.set 2.5
       g.get
-    ") as Expressions
+    ").as(Expressions)
     result = infer_type input
-    mod, node = result.program, result.node as Expressions
+    mod, node = result.program, result.node.as(Expressions)
 
     node[3].type.should eq(mod.union_of(mod.nil, mod.int32))
     input.last.type.should eq(mod.union_of(mod.nil, mod.float64))
@@ -122,10 +122,10 @@ describe "Type inference: class" do
       n = Node.new
       n.add
       n
-    ") as Expressions
+    ").as(Expressions)
     result = infer_type input
-    mod, input = result.program, result.node as Expressions
-    node = mod.types["Node"] as NonGenericClassType
+    mod, input = result.program, result.node.as(Expressions)
+    node = mod.types["Node"].as(NonGenericClassType)
 
     node.lookup_instance_var("@next").type.should eq(mod.union_of(mod.nil, node))
     input.last.type.should eq(node)
@@ -154,7 +154,7 @@ describe "Type inference: class" do
 
       Foo(Int32 | Float64).new
       ") do
-      (types["Foo"] as GenericClassType).instantiate([union_of(int32, float64)] of TypeVar)
+      types["Foo"].as(GenericClassType).instantiate([union_of(int32, float64)] of TypeVar)
     end
   end
 
@@ -210,10 +210,10 @@ describe "Type inference: class" do
 
       b = Box.new(10)
       ") do
-      (types["Box"] as GenericClassType).instantiate([int32] of TypeVar)
+      types["Box"].as(GenericClassType).instantiate([int32] of TypeVar)
     end
     mod = result.program
-    type = result.node.type as GenericClassInstanceType
+    type = result.node.type.as(GenericClassInstanceType)
     type.type_vars["T"].type.should eq(mod.int32)
     type.instance_vars["@value"].type.should eq(mod.int32)
   end
@@ -229,10 +229,10 @@ describe "Type inference: class" do
       b1 = Box.new(1, 10)
       b2 = Box.new(1, false)
       ") do
-      (types["Box"] as GenericClassType).instantiate([bool] of TypeVar)
+      types["Box"].as(GenericClassType).instantiate([bool] of TypeVar)
     end
     mod = result.program
-    type = result.node.type as GenericClassInstanceType
+    type = result.node.type.as(GenericClassInstanceType)
     type.type_vars["T"].type.should eq(mod.bool)
     type.instance_vars["@value"].type.should eq(mod.bool)
   end
@@ -248,10 +248,10 @@ describe "Type inference: class" do
       end
 
       Foo::Bar.new(1)
-      ") as Expressions
+      ").as(Expressions)
     result = infer_type nodes
     mod = result.program
-    type = nodes.last.type as GenericClassInstanceType
+    type = nodes.last.type.as(GenericClassInstanceType)
     type.type_vars["T"].type.should eq(mod.int32)
     type.instance_vars["@x"].type.should eq(mod.int32)
   end
@@ -317,7 +317,7 @@ describe "Type inference: class" do
       Reference.new
       Foo(Int32).new
       ") do
-      (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar)
+      types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar)
     end
   end
 
@@ -360,7 +360,7 @@ describe "Type inference: class" do
       ")
     result = infer_type input
     mod = result.program
-    mod.types["Foo"].types["Bar"] as NonGenericClassType
+    mod.types["Foo"].types["Bar"].as(NonGenericClassType)
   end
 
   it "doesn't lookup type in parents' containers, and lookups and in program" do
@@ -419,7 +419,7 @@ describe "Type inference: class" do
 
       Foo(1).new
       ") do
-      (types["Foo"] as GenericClassType).instantiate([NumberLiteral.new(1)] of TypeVar)
+      types["Foo"].as(GenericClassType).instantiate([NumberLiteral.new(1)] of TypeVar)
     end
   end
 
@@ -448,7 +448,7 @@ describe "Type inference: class" do
 
       Bar.coco.new
       ") do
-      (types["Foo"] as GenericClassType).instantiate([types["Bar"]] of TypeVar)
+      types["Foo"].as(GenericClassType).instantiate([types["Bar"]] of TypeVar)
     end
   end
 
@@ -468,7 +468,7 @@ describe "Type inference: class" do
 
       Baz.coco.new
       ") do
-      (types["Foo"] as GenericClassType).instantiate([types["Baz"]] of TypeVar)
+      types["Foo"].as(GenericClassType).instantiate([types["Baz"]] of TypeVar)
     end
   end
 
@@ -754,7 +754,7 @@ describe "Type inference: class" do
       end
 
       Foo.new(0)
-      )) { (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar) }
+      )) { types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar) }
   end
 
   it "doesn't error on new on abstract virtual type class" do

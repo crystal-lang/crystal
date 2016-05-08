@@ -261,7 +261,7 @@ module Crystal
 
       if node.created_new_type
         node.resolved_type.types.each_value do |const|
-          (const as Const).initialized = true
+          const.as(Const).initialized = true
         end
       end
 
@@ -290,7 +290,7 @@ module Crystal
       end
 
       if named_args = node.named_args
-        named_args.map! { |named_arg| named_arg.transform(self) as NamedArgument }
+        named_args.map! { |named_arg| named_arg.transform(self).as(NamedArgument) }
       end
       # ~~~
 
@@ -829,7 +829,7 @@ module Crystal
     end
 
     def transform(node : StructDef)
-      type = node.type as CStructType
+      type = node.type.as(CStructType)
       if type.vars.empty?
         node.raise "empty structs are disallowed"
       end
@@ -837,7 +837,7 @@ module Crystal
     end
 
     def transform(node : UnionDef)
-      type = node.type as CUnionType
+      type = node.type.as(CUnionType)
       if type.vars.empty?
         node.raise "empty unions are disallowed"
       end

@@ -21,8 +21,8 @@ describe "Type inference: closure" do
 
   it "marks variable as closured in def" do
     result = assert_type("def foo; x = 1; -> { x }; 1; end; foo") { int32 }
-    node = result.node as Expressions
-    call = node.expressions.last as Call
+    node = result.node.as(Expressions)
+    call = node.expressions.last.as(Call)
     target_def = call.target_def
     var = target_def.vars.not_nil!["x"]
     var.closured.should be_true
@@ -40,8 +40,8 @@ describe "Type inference: closure" do
         1
       end
       ") { int32 }
-    node = result.node as Expressions
-    call = node.expressions.last as Call
+    node = result.node.as(Expressions)
+    call = node.expressions.last.as(Call)
     block = call.block.not_nil!
     var = block.vars.not_nil!["x"]
     var.closured.should be_true
@@ -108,8 +108,8 @@ describe "Type inference: closure" do
         end
       end
       ", inject_primitives: false) { int32 }
-    node = result.node as Expressions
-    call = node[1] as Call
+    node = result.node.as(Expressions)
+    call = node[1].as(Call)
     block = call.block.not_nil!
     var = block.vars.not_nil!["x"]
     var.closured.should be_false
@@ -126,8 +126,8 @@ describe "Type inference: closure" do
       Foo.new.foo
       1
     ") { int32 }
-    node = result.node as Expressions
-    call = node.expressions[-2] as Call
+    node = result.node.as(Expressions)
+    call = node.expressions[-2].as(Call)
     target_def = call.target_def
     var = target_def.vars.not_nil!["self"]
     var.closured.should be_false
@@ -147,8 +147,8 @@ describe "Type inference: closure" do
       Foo.new.foo
       1
     ") { int32 }
-    node = result.node as Expressions
-    call = node.expressions[-2] as Call
+    node = result.node.as(Expressions)
+    call = node.expressions[-2].as(Call)
     call.target_def.self_closured.should be_true
   end
 
@@ -163,8 +163,8 @@ describe "Type inference: closure" do
       Foo.new.foo
       1
     ") { int32 }
-    node = result.node as Expressions
-    call = node.expressions[-2] as Call
+    node = result.node.as(Expressions)
+    call = node.expressions[-2].as(Call)
     call.target_def.self_closured.should be_true
   end
 
@@ -182,8 +182,8 @@ describe "Type inference: closure" do
       Foo.new.foo
       1
     ") { int32 }
-    node = result.node as Expressions
-    call = node.expressions[-2] as Call
+    node = result.node.as(Expressions)
+    call = node.expressions[-2].as(Call)
     call.target_def.self_closured.should be_true
   end
 
@@ -201,8 +201,8 @@ describe "Type inference: closure" do
       Foo.new.foo
       1
     ") { int32 }
-    node = result.node as Expressions
-    call = node.expressions[-2] as Call
+    node = result.node.as(Expressions)
+    call = node.expressions[-2].as(Call)
     call.target_def.self_closured.should be_true
   end
 
@@ -221,8 +221,8 @@ describe "Type inference: closure" do
       Foo.new.foo
       1
     ") { int32 }
-    node = result.node as Expressions
-    call = node.expressions[-2] as Call
+    node = result.node.as(Expressions)
+    call = node.expressions[-2].as(Call)
     call.target_def.self_closured.should be_true
   end
 
@@ -443,7 +443,7 @@ describe "Type inference: closure" do
     result = assert_type(%(
       ->{ a = 1; ->{ a } }
       ), inject_primitives: false) { fun_of(fun_of(int32)) }
-    fn = result.node as FunLiteral
+    fn = result.node.as(FunLiteral)
     fn.def.closure.should be_false
   end
 
@@ -456,7 +456,7 @@ describe "Type inference: closure" do
       a = 1
       ->{ ->{ foo { a } } }
       )) { fun_of(fun_of(int32)) }
-    fn = (result.node as Expressions).last as FunLiteral
+    fn = result.node.as(Expressions).last.as(FunLiteral)
     fn.def.closure.should be_true
   end
 
@@ -470,10 +470,10 @@ describe "Type inference: closure" do
 
       Foo.new.foo
       )) { fun_of(fun_of(types["Foo"])) }
-    call = (result.node as Expressions).last as Call
+    call = result.node.as(Expressions).last.as(Call)
     a_def = call.target_def
     a_def.self_closured.should be_true
-    fn = (a_def.body as FunLiteral)
+    fn = (a_def.body.as(FunLiteral))
     fn.def.closure.should be_true
   end
 

@@ -210,7 +210,7 @@ module Crystal
 
         if superclass.is_a?(InheritedGenericClass)
           superclass.extending_class = type
-          (superclass.extended_class as GenericClassType).add_inherited(type)
+          superclass.extended_class.as(GenericClassType).add_inherited(type)
         end
 
         scope.types[name] = type
@@ -479,7 +479,7 @@ module Crystal
 
       if @lib_def_pass == 1
         if node.has_attribute?("Packed")
-          (type as CStructType).packed = true
+          type.as(CStructType).packed = true
         end
       end
 
@@ -630,7 +630,7 @@ module Crystal
 
       var_type = check_primitive_like node.type_spec
 
-      type = current_type as LibType
+      type = current_type.as(LibType)
       type.add_var node.name, var_type, (node.real_name || node.name), node.attributes
 
       false
@@ -899,7 +899,7 @@ module Crystal
       type = current_type.types[node.name]?
       if type
         yield type
-        type = type as CStructOrUnionType
+        type = type.as(CStructOrUnionType)
         unless type.vars.empty?
           node.raise "#{node.name} is already defined"
         end

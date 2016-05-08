@@ -68,7 +68,7 @@ module Event
     end
 
     def new_event(s : Int32, flags : LibEvent2::EventFlags, data, &callback : LibEvent2::Callback)
-      event = LibEvent2.event_new(@base, s, flags, callback, data as Void*)
+      event = LibEvent2.event_new(@base, s, flags, callback, data.as(Void*))
       Event.new(event)
     end
 
@@ -94,7 +94,7 @@ module Event
     end
 
     def getaddrinfo(nodename, servname, hints, data, &callback : LibEvent2::DnsGetAddrinfoCallback)
-      request = LibEvent2.evdns_getaddrinfo(@dns_base, nodename, servname, hints, callback, data as Void*)
+      request = LibEvent2.evdns_getaddrinfo(@dns_base, nodename, servname, hints, callback, data.as(Void*))
       GetAddrInfoRequest.new request if request
     end
 

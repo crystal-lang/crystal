@@ -23,6 +23,6 @@ struct IO::FdSet
   end
 
   def to_unsafe
-    pointerof(@fdset) as Void*
+    pointerof(@fdset).as(Void*)
   end
 end

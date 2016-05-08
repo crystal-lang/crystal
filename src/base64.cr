@@ -150,7 +150,7 @@ module Base64
     cstr = data.pointer(size)
     endcstr = cstr + size - size % 3
     while cstr < endcstr
-      n = Intrinsics.bswap32((cstr as UInt32*).value)
+      n = Intrinsics.bswap32(cstr.as(UInt32*).value)
       yield bytes[(n >> 26) & 63]
       yield bytes[(n >> 20) & 63]
       yield bytes[(n >> 14) & 63]

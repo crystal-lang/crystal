@@ -17,7 +17,7 @@ struct LEBReader
   end
 
   def read_uint32
-    value = (@data as UInt32*).value
+    value = @data.as(UInt32*).value
     @data += 4
     value
   end

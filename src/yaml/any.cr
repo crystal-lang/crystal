@@ -142,22 +142,22 @@ struct YAML::Any
 
   # Checks that the underlying value is `Nil`, and returns `nil`. Raises otherwise.
   def as_nil : Nil
-    @raw as Nil
+    @raw.as(Nil)
   end
 
   # Checks that the underlying value is `String`, and returns its value. Raises otherwise.
   def as_s : String
-    @raw as String
+    @raw.as(String)
   end
 
   # Checks that the underlying value is `Array`, and returns its value. Raises otherwise.
   def as_a : Array(Type)
-    @raw as Array
+    @raw.as(Array)
   end
 
   # Checks that the underlying value is `Hash`, and returns its value. Raises otherwise.
   def as_h : Hash(Type, Type)
-    @raw as Hash
+    @raw.as(Hash)
   end
 
   # :nodoc:

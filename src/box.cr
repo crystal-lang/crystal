@@ -16,12 +16,12 @@ class Box(T)
 
   # Creates a Box for an object and returns it as a Void*.
   def self.box(object) : Void*
-    new(object) as Void*
+    new(object).as(Void*)
   end
 
   # Unboxes a Void* into an object of type T. Note that for this you must
   # specify T: `Box(T).unbox(data)`.
   def self.unbox(pointer : Void*) : T
-    (pointer as self).object
+    pointer.as(self).object
   end
 end

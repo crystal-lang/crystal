@@ -76,12 +76,12 @@ def assert_expand(from_nodes : ASTNode, to)
 end
 
 def assert_expand_second(from : String, to)
-  node = (Parser.parse(from) as Expressions)[1]
+  node = (Parser.parse(from).as(Expressions))[1]
   assert_expand node, to
 end
 
 def assert_expand_third(from : String, to)
-  node = (Parser.parse(from) as Expressions)[2]
+  node = (Parser.parse(from).as(Expressions))[2]
   assert_expand node, to
 end
 
@@ -125,7 +125,7 @@ end
 
 def assert_macro_internal(program, sub_node, macro_args, macro_body, expected)
   macro_def = "macro foo(#{macro_args});#{macro_body};end"
-  a_macro = Parser.parse(macro_def) as Macro
+  a_macro = Parser.parse(macro_def).as(Macro)
 
   call = Call.new(nil, "", sub_node)
   result = program.expand_macro a_macro, call, program, program
@@ -177,7 +177,7 @@ def run(code, filename = nil, inject_primitives = true)
   # the program and run it, printing the last
   # expression and using that to compare the result.
   if code.includes?(%(require "prelude"))
-    ast = Parser.parse(code) as Expressions
+    ast = Parser.parse(code).as(Expressions)
     last = ast.expressions.last
     assign = Assign.new(Var.new("__tempvar"), last)
     call = Call.new(nil, "print", Var.new("__tempvar"))

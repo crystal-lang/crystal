@@ -884,7 +884,7 @@ module Crystal
         @wants_regex = false
         node_and_next_token NumberLiteral.new(@token.value.to_s, @token.number_kind)
       when :CHAR
-        node_and_next_token CharLiteral.new(@token.value as Char)
+        node_and_next_token CharLiteral.new(@token.value.as(Char))
       when :STRING, :DELIMITER_START
         parse_delimiter
       when :STRING_ARRAY_START
@@ -1426,7 +1426,7 @@ module Crystal
             raise "Bug: #{call} should be a call"
           end
 
-          call = call as Call
+          call = call.as(Call)
 
           if @token.type == :"="
             next_token_skip_space
@@ -1791,7 +1791,7 @@ module Crystal
       else
         if needs_heredoc_indent_removed?(delimiter_state)
           pieces = remove_heredoc_indent(pieces, delimiter_state.heredoc_indent)
-          string = pieces.join { |piece| (piece as StringLiteral).value }
+          string = pieces.join { |piece| piece.as(StringLiteral).value }
         else
           string = pieces.map(&.value).join
         end
@@ -2326,7 +2326,7 @@ module Crystal
     def parse_when_expression(cond)
       if cond && @token.type == :"."
         next_token
-        call = parse_var_or_call(force_call: true) as Call
+        call = parse_var_or_call(force_call: true).as(Call)
         call.obj = ImplicitObj.new
         call
       else

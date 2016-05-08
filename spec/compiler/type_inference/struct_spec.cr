@@ -7,7 +7,7 @@ describe "Type inference: struct" do
       end
       Foo
       ") do
-      str = types["Foo"] as NonGenericClassType
+      str = types["Foo"].as(NonGenericClassType)
       str.struct?.should be_true
       str.metaclass
     end
@@ -19,7 +19,7 @@ describe "Type inference: struct" do
       end
       Foo(Int32)
       ") do
-      str = types["Foo"] as GenericClassType
+      str = types["Foo"].as(GenericClassType)
       str.struct?.should be_true
 
       str_inst = str.instantiate([int32] of TypeVar)

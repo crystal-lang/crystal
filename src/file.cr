@@ -317,7 +317,7 @@ class File < IO::FileDescriptor
   def self.real_path(path) : String
     real_path_ptr = LibC.realpath(path, nil)
     raise Errno.new("Error resolving real path of #{path}") unless real_path_ptr
-    String.new(real_path_ptr).tap { LibC.free(real_path_ptr as Void*) }
+    String.new(real_path_ptr).tap { LibC.free(real_path_ptr.as(Void*)) }
   end
 
   # Creates a new link (also known as a hard link) to an existing file.

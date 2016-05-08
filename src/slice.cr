@@ -251,7 +251,7 @@ struct Slice(T)
   # slice.hexstring # => "61626308ff"
   # ```
   def hexstring
-    self as Slice(UInt8)
+    self.as(Slice(UInt8))
 
     str_size = size * 2
     String.new(str_size) do |buffer|
@@ -262,7 +262,7 @@ struct Slice(T)
 
   # :nodoc:
   def hexstring(buffer)
-    self as Slice(UInt8)
+    self.as(Slice(UInt8))
 
     offset = 0
     each do |v|
@@ -283,7 +283,7 @@ struct Slice(T)
   # slice.hexdump # => "6162 6308 ff                             abc.."
   # ```
   def hexdump
-    self as Slice(UInt8)
+    self.as(Slice(UInt8))
 
     full_lines, leftover = size.divmod(16)
     if leftover == 0
@@ -349,7 +349,7 @@ struct Slice(T)
 
   def ==(other : self)
     return false if bytesize != other.bytesize
-    return LibC.memcmp(to_unsafe as Void*, other.to_unsafe as Void*, bytesize) == 0
+    return LibC.memcmp(to_unsafe.as(Void*), other.to_unsafe.as(Void*), bytesize) == 0
   end
 
   def to_slice

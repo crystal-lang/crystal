@@ -246,7 +246,7 @@ module Crystal
     end
 
     def tuple_of(types)
-      type_vars = types.map { |type| type as TypeVar }
+      type_vars = types.map { |type| type.as(TypeVar) }
       tuple.instantiate(type_vars)
     end
 
@@ -318,7 +318,7 @@ module Crystal
     end
 
     def fun_of(types : Array)
-      type_vars = types.map { |type| type as TypeVar }
+      type_vars = types.map { |type| type.as(TypeVar) }
       proc.instantiate(type_vars)
     end
 

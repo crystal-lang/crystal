@@ -18,7 +18,7 @@ class OAuth2::AccessToken
         })
 
       access_token = AccessToken.from_json(json)
-      access_token = access_token as Bearer
+      access_token = access_token.as(Bearer)
       access_token.token_type.should eq("Bearer")
       access_token.access_token.should eq(token_value)
       access_token.expires_in.should eq(expires_in)
@@ -59,7 +59,7 @@ class OAuth2::AccessToken
         })
 
       access_token = AccessToken.from_json(json)
-      access_token = access_token as Mac
+      access_token = access_token.as(Mac)
       access_token.token_type.should eq("Mac")
       access_token.access_token.should eq(token_value)
       access_token.expires_in.should eq(expires_in)
@@ -79,7 +79,7 @@ class OAuth2::AccessToken
         "mac_key":"N-ATggO2ywqylWgIi3QZn40jWJmL2f9h6ZOGd3jqcxU"
         })
       access_token = AccessToken.from_json(json)
-      access_token = access_token as Mac
+      access_token = access_token.as(Mac)
       access_token.refresh_token.should be_nil
     end
 

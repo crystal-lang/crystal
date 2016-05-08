@@ -190,7 +190,7 @@ module Crystal
 
     def restrict(other : Union, context)
       types = other.types.compact_map do |ident|
-        restrict(ident, context) as Type?
+        restrict(ident, context).as(Type?)
       end
       types.size > 0 ? program.type_merge_union_of(types) : nil
     end
@@ -329,7 +329,7 @@ module Crystal
 
     def restrict_type_or_fun_or_generic(other, context)
       types = union_types.compact_map do |type|
-        type.restrict(other, context) as Type?
+        type.restrict(other, context).as(Type?)
       end
       program.type_merge_union_of(types)
     end
@@ -353,7 +353,7 @@ module Crystal
       generic_class = context.type_lookup.lookup_type other.name
       return super unless generic_class == self.generic_class
 
-      generic_class = generic_class as GenericClassType
+      generic_class = generic_class.as(GenericClassType)
 
       if generic_class.type_vars.size != other.type_vars.size
         other.wrong_number_of "type vars", generic_class, other.type_vars.size, generic_class.type_vars.size
@@ -406,7 +406,7 @@ module Crystal
       generic_class = context.type_lookup.lookup_type other.name
       return super unless generic_class == self.generic_class
 
-      generic_class = generic_class as TupleType
+      generic_class = generic_class.as(TupleType)
       return nil unless other.type_vars.size == tuple_types.size
 
       tuple_types.zip(other.type_vars) do |tuple_type, type_var|
@@ -431,7 +431,7 @@ module Crystal
       generic_module = context.type_lookup.lookup_type other.name
       return nil unless generic_module == @module
 
-      generic_module = generic_module as GenericModuleType
+      generic_module = generic_module.as(GenericModuleType)
       return nil unless generic_module.type_vars.size == @module.type_vars.size
 
       @module.type_vars.zip(other.type_vars) do |module_type_var, other_type_var|
@@ -473,7 +473,7 @@ module Crystal
       generic_class = context.type_lookup.lookup_type other.name
       return nil unless generic_class == @extended_class
 
-      generic_class = generic_class as GenericClassType
+      generic_class = generic_class.as(GenericClassType)
       return nil unless generic_class.type_vars.size == type_vars.size
 
       type_vars.zip(other.type_vars) do |class_type_var, other_type_var|
@@ -505,7 +505,7 @@ module Crystal
         self
       elsif other.is_a?(UnionType)
         types = other.union_types.compact_map do |t|
-          restrict(t, context) as Type?
+          restrict(t, context).as(Type?)
         end
         program.type_merge types
       elsif other.is_a?(VirtualType)
@@ -520,7 +520,7 @@ module Crystal
           self
         else
           types = base_type.subclasses.compact_map do |subclass|
-            subclass.virtual_type.restrict(other, context) as Type?
+            subclass.virtual_type.restrict(other, context).as(Type?)
           end
           program.type_merge_union_of types
         end
@@ -531,7 +531,7 @@ module Crystal
 
     def restrict(other : Generic, context)
       types = base_type.subclasses.compact_map do |subclass|
-        subclass.virtual_type.restrict(other, context) as Type?
+        subclass.virtual_type.restrict(other, context).as(Type?)
       end
       program.type_merge_union_of types
     end

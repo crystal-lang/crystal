@@ -217,8 +217,8 @@ describe "Type inference: exception" do
       n
       )) { no_return }
     mod = result.program
-    eh = (result.node as Expressions).expressions[-1]
-    call_p_n = (eh as ExceptionHandler).ensure.not_nil! as Call
+    eh = result.node.as(Expressions).expressions[-1]
+    call_p_n = eh.as(ExceptionHandler).ensure.not_nil!.as(Call)
     call_p_n.args.first.type.should eq(mod.union_of(mod.int32, mod.nil))
   end
 
@@ -235,8 +235,8 @@ describe "Type inference: exception" do
       n
       )) { no_return }
     mod = result.program
-    eh = (result.node as Expressions).expressions[-1]
-    call_p_n = (eh as ExceptionHandler).ensure.not_nil! as Call
+    eh = result.node.as(Expressions).expressions[-1]
+    call_p_n = eh.as(ExceptionHandler).ensure.not_nil!.as(Call)
     call_p_n.args.first.type.should eq(mod.union_of(mod.int32, mod.nil))
   end
 
@@ -267,7 +267,7 @@ describe "Type inference: exception" do
 
   it "marks fun literal as raises" do
     result = assert_type("->{ 1 }.call", inject_primitives: false) { int32 }
-    call = result.node as Call
+    call = result.node.as(Call)
     call.target_def.raises.should be_true
   end
 

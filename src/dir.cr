@@ -103,7 +103,7 @@ class Dir
   # Returns the current working directory.
   def self.current : String
     if dir = LibC.getcwd(nil, 0)
-      String.new(dir).tap { LibC.free(dir as Void*) }
+      String.new(dir).tap { LibC.free(dir.as(Void*)) }
     else
       raise Errno.new("getcwd")
     end

@@ -16,7 +16,7 @@ lib LibReadline
 end
 
 private def malloc_match(match)
-  match_ptr = LibC.malloc(match.bytesize + 1) as UInt8*
+  match_ptr = LibC.malloc(match.bytesize + 1).as(UInt8*)
   match_ptr.copy_from(match.to_unsafe, match.bytesize)
   match_ptr[match.bytesize] = 0_u8
   match_ptr
@@ -41,7 +41,7 @@ module Readline
     line = LibReadline.readline(prompt)
     if line
       LibReadline.add_history(line) if add_history
-      String.new(line).tap { LibC.free(line as Void*) }
+      String.new(line).tap { LibC.free(line.as(Void*)) }
     else
       nil
     end
@@ -128,7 +128,7 @@ module Readline
 
     # We *must* to create the results using malloc (readline later frees that).
     # We create an extra result for the first element.
-    result = LibC.malloc(sizeof(UInt8*) * (matches.size + 2)) as UInt8**
+    result = LibC.malloc(sizeof(UInt8*) * (matches.size + 2)).as(UInt8**)
     matches.each_with_index do |match, i|
       result[i + 1] = malloc_match(match)
     end

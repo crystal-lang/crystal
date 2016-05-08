@@ -1659,10 +1659,10 @@ describe "Type inference: instance var" do
       end
       ))
 
-    foo = result.program.types["Foo"] as NonGenericClassType
+    foo = result.program.types["Foo"].as(NonGenericClassType)
     foo.instance_vars["@x"].type.should eq(result.program.int32)
 
-    bar = result.program.types["Bar"] as NonGenericClassType
+    bar = result.program.types["Bar"].as(NonGenericClassType)
     bar.instance_vars.empty?.should be_true
   end
 
@@ -1711,7 +1711,7 @@ describe "Type inference: instance var" do
       end
 
       Bar.new.x
-      )) { (types["Foo"] as GenericClassType).instantiate([int32] of TypeVar) }
+      )) { types["Foo"].as(GenericClassType).instantiate([int32] of TypeVar) }
   end
 
   it "infers type from custom hash literal" do
@@ -1759,7 +1759,7 @@ describe "Type inference: instance var" do
       end
 
       Bar.new.x
-      )) { (types["Foo"] as GenericClassType).instantiate([int32, string] of TypeVar) }
+      )) { types["Foo"].as(GenericClassType).instantiate([int32, string] of TypeVar) }
   end
 
   it "infers type from custom array literal in generic" do
@@ -2220,7 +2220,7 @@ describe "Type inference: instance var" do
       end
 
       Foo.new.bar
-      )) { (types["Bar"] as GenericClassType).instantiate([int32] of TypeVar) }
+      )) { types["Bar"].as(GenericClassType).instantiate([int32] of TypeVar) }
   end
 
   it "infers from generic class method that has type annotation, without instantiating" do
@@ -2371,7 +2371,7 @@ describe "Type inference: instance var" do
       end
 
       Baz.new.x
-      )) { (types["Bar"] as GenericClassType).instantiate([int32] of TypeVar) }
+      )) { types["Bar"].as(GenericClassType).instantiate([int32] of TypeVar) }
   end
 
   it "guesses from new on abstract class" do
@@ -2737,7 +2737,7 @@ describe "Type inference: instance var" do
 
     mod = result.program
 
-    foo = mod.types["Foo"] as NonGenericClassType
+    foo = mod.types["Foo"].as(NonGenericClassType)
     foo.instance_vars["@x"].type.should eq(mod.int32)
   end
 
@@ -2752,7 +2752,7 @@ describe "Type inference: instance var" do
 
       Foo(Int32).new(1)
       ") do
-      foo = types["Foo"] as GenericClassType
+      foo = types["Foo"].as(GenericClassType)
       foo_i32 = foo.instantiate([int32] of TypeVar)
       foo_i32.lookup_instance_var("@x").type.should eq(int32)
       foo_i32
@@ -2774,7 +2774,7 @@ describe "Type inference: instance var" do
       end
 
       f") do
-      foo = types["Foo"] as GenericClassType
+      foo = types["Foo"].as(GenericClassType)
       foo_i32 = foo.instantiate([int32] of TypeVar)
       foo_i32.lookup_instance_var("@x").type.should eq(int32)
       foo_i32

@@ -101,7 +101,7 @@ class Crystal::CodeGenVisitor
     # Then magic constants (__LINE__, __FILE__, __DIR__)
     node.args.size.upto(target_def.args.size - 1) do |index|
       arg = target_def.args[index]
-      default_value = arg.default_value as MagicConstant
+      default_value = arg.default_value.as(MagicConstant)
       location = node.location
       case default_value.name
       when :__LINE__
@@ -302,7 +302,7 @@ class Crystal::CodeGenVisitor
     end
 
     # Reuse this call for each dispatch branch
-    call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}") as ASTNode }, node.block).at(node)
+    call = Call.new(node_obj ? Var.new("%self") : nil, node.name, node.args.map_with_index { |arg, i| Var.new("%arg#{i}").as(ASTNode) }, node.block).at(node)
     call.scope = with_scope || node.scope
     call.with_scope = with_scope
     call.uses_with_scope = node.uses_with_scope?

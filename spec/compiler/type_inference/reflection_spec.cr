@@ -27,6 +27,6 @@ describe "Type inference: reflection" do
     result = infer_type input
     mod = result.program
 
-    (mod.types["Bar"].metaclass as ClassType).superclass.should eq(mod.types["Foo"].metaclass)
+    mod.types["Bar"].metaclass.as(ClassType).superclass.should eq(mod.types["Foo"].metaclass)
   end
 end

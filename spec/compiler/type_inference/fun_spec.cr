@@ -492,7 +492,7 @@ describe "Type inference: fun" do
         fun foo : Int32
       end
       ))
-    foo = result.program.types["LibFoo"].lookup_first_def("foo", nil) as External
+    foo = result.program.types["LibFoo"].lookup_first_def("foo", nil).as(External)
     foo.call_convention.should eq(LLVM::CallConvention::X86_StdCall)
   end
 

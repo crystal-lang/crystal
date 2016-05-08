@@ -12,7 +12,7 @@ class UNIXSocket < Socket
     end
     addr.sun_path.to_unsafe.copy_from(path.to_unsafe, path.bytesize + 1)
 
-    if LibC.connect(sock, (pointerof(addr) as LibC::Sockaddr*), sizeof(LibC::SockaddrUn)) != 0
+    if LibC.connect(sock, (pointerof(addr).as(LibC::Sockaddr*)), sizeof(LibC::SockaddrUn)) != 0
       LibC.close(sock)
       raise Errno.new("Error connecting to '#{path}'")
     end

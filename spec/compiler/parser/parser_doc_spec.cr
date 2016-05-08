@@ -45,15 +45,15 @@ describe "Parser doc" do
       end
       ))
     parser.wants_doc = true
-    nodes = parser.parse as Expressions
+    nodes = parser.parse.as(Expressions)
 
-    foo = nodes[0] as Def
+    foo = nodes[0].as(Def)
     foo.doc.should eq("doc 1")
 
-    bar = foo.body as Call
+    bar = foo.body.as(Call)
     bar.doc.should be_nil
 
-    baz = nodes[1] as Def
+    baz = nodes[1].as(Def)
     baz.doc.should eq("doc 3")
   end
 end

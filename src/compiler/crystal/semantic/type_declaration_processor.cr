@@ -158,7 +158,7 @@ module Crystal
     end
 
     private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation)
-      var = declare_meta_type_var(vars, owner, name, info.type as Type)
+      var = declare_meta_type_var(vars, owner, name, info.type.as(Type))
       var.location = info.location
 
       # If the variable is gueseed to be nilable because it is not initialized
@@ -276,7 +276,7 @@ module Crystal
         supervar = owner.lookup_instance_var_with_owner?(name)
         return if supervar
 
-        type = Type.merge!(type_info.type_vars.map { |t| t as Type })
+        type = Type.merge!(type_info.type_vars.map { |t| t.as(Type) })
         if nilable_instance_var?(owner, name)
           type = Type.merge!(type, @program.nil)
         end

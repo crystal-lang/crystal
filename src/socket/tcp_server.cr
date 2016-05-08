@@ -8,7 +8,7 @@ class TCPServer < TCPSocket
 
       self.reuse_address = true
 
-      if LibC.bind(sock, addrinfo.ai_addr as LibC::Sockaddr*, addrinfo.ai_addrlen) != 0
+      if LibC.bind(sock, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen) != 0
         errno = Errno.new("Error binding TCP server at #{host}:#{port}")
         LibC.close(sock)
         next false if addrinfo.ai_next
@@ -52,7 +52,7 @@ class TCPServer < TCPSocket
     loop do
       client_addr = uninitialized LibC::SockaddrIn6
       client_addr_len = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
-      client_fd = LibC.accept(fd, pointerof(client_addr) as LibC::Sockaddr*, pointerof(client_addr_len))
+      client_fd = LibC.accept(fd, pointerof(client_addr).as(LibC::Sockaddr*), pointerof(client_addr_len))
       if client_fd == -1
         if Errno.value == Errno::EAGAIN
           wait_readable

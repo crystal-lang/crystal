@@ -116,7 +116,7 @@ describe "Type inference: class var" do
       end
 
       Foo.bar
-      )) { (types["Bar"] as GenericClassType).instantiate([types["Foo"].virtual_type.metaclass] of TypeVar) }
+      )) { types["Bar"].as(GenericClassType).instantiate([types["Foo"].virtual_type.metaclass] of TypeVar) }
   end
 
   it "errors if using self as type var but there's no self" do

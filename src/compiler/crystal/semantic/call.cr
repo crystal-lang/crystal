@@ -708,7 +708,7 @@ class Crystal::Call
       fun_literal_type = fun_literal.type?
       if fun_literal_type
         block_arg_type = fun_literal_type
-        block_type = (fun_literal_type as FunInstanceType).return_type
+        block_type = fun_literal_type.as(FunInstanceType).return_type
         if output
           matched = MatchesLookup.match_arg(block_type, output, match.context)
           if !matched && !void_return_type?(match.context, output)
@@ -796,7 +796,7 @@ class Crystal::Call
   end
 
   private def check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
-    call_block_arg_types = (call_block_arg.type as FunInstanceType).arg_types
+    call_block_arg_types = call_block_arg.type.as(FunInstanceType).arg_types
     if yield_vars
       if yield_vars.size != call_block_arg_types.size
         wrong_number_of "block argument's arguments", call_block_arg_types.size, yield_vars.size
@@ -953,7 +953,7 @@ class Crystal::Call
     named_args_size = named_args.try(&.size) || 0
     (arg_types.size + named_args_size).upto(typed_def.args.size - 1) do |index|
       arg = typed_def.args[index]
-      default_value = arg.default_value as MagicConstant
+      default_value = arg.default_value.as(MagicConstant)
       case default_value.name
       when :__LINE__
         type = mod.int32

@@ -879,14 +879,14 @@ module Crystal
         node.raise "undefined fun '#{node.name}' for #{obj_type}" unless matching_fun
 
         call.args = matching_fun.args.map_with_index do |arg, i|
-          Var.new("arg#{i}", arg.type.instance_type) as ASTNode
+          Var.new("arg#{i}", arg.type.instance_type).as(ASTNode)
         end
       else
         call.args = node.args.map_with_index do |arg, i|
           arg.accept self
           arg_type = arg.type.instance_type
           MainVisitor.check_type_allowed_as_proc_argument(node, arg_type)
-          Var.new("arg#{i}", arg_type.virtual_type) as ASTNode
+          Var.new("arg#{i}", arg_type.virtual_type).as(ASTNode)
         end
       end
 
@@ -1957,7 +1957,7 @@ module Crystal
     end
 
     def visit_pointer_set(node)
-      scope = scope().remove_typedef as PointerInstanceType
+      scope = scope().remove_typedef.as(PointerInstanceType)
 
       value = @vars["value"]
 
@@ -1966,7 +1966,7 @@ module Crystal
     end
 
     def visit_pointer_get(node)
-      scope = scope().remove_typedef as PointerInstanceType
+      scope = scope().remove_typedef.as(PointerInstanceType)
 
       node.bind_to scope.var
     end
@@ -1980,7 +1980,7 @@ module Crystal
     end
 
     def visit_struct_or_union_set(node)
-      scope = @scope as CStructOrUnionType
+      scope = @scope.as(CStructOrUnionType)
 
       field_name = call.not_nil!.name[0...-1]
       expected_type = scope.vars[field_name].type
@@ -2022,12 +2022,12 @@ module Crystal
     end
 
     def visit_struct_get(node)
-      scope = @scope as CStructType
+      scope = @scope.as(CStructType)
       node.bind_to scope.vars[untyped_def.name]
     end
 
     def visit_union_get(node)
-      scope = @scope as CUnionType
+      scope = @scope.as(CUnionType)
       node.bind_to scope.vars[untyped_def.name]
     end
 
@@ -2273,9 +2273,9 @@ module Crystal
     def visit(node : TupleIndexer)
       scope = @scope
       if scope.is_a?(TupleInstanceType)
-        node.type = scope.tuple_types[node.index] as Type
+        node.type = scope.tuple_types[node.index].as(Type)
       elsif scope
-        node.type = ((scope.instance_type as TupleInstanceType).tuple_types[node.index] as Type).metaclass
+        node.type = (scope.instance_type.as(TupleInstanceType).tuple_types[node.index].as(Type)).metaclass
       end
       false
     end
@@ -2414,8 +2414,8 @@ module Crystal
           type_name = type.name.split "::"
 
           path = Path.global(type_name).at(node.location)
-          type_of_keys = TypeOf.new(node.entries.map { |x| x.key as ASTNode }).at(node.location)
-          type_of_values = TypeOf.new(node.entries.map { |x| x.value as ASTNode }).at(node.location)
+          type_of_keys = TypeOf.new(node.entries.map { |x| x.key.as(ASTNode) }).at(node.location)
+          type_of_values = TypeOf.new(node.entries.map { |x| x.value.as(ASTNode) }).at(node.location)
           generic = Generic.new(path, [type_of_keys, type_of_values] of ASTNode).at(node.location)
 
           node.name = generic
@@ -2577,7 +2577,7 @@ module Crystal
     end
 
     def lookup_var_or_instance_var(var : InstanceVar)
-      scope = @scope as InstanceVarContainer
+      scope = @scope.as(InstanceVarContainer)
       scope.lookup_instance_var(var.name)
     end
 

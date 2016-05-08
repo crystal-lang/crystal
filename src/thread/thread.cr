@@ -17,8 +17,8 @@ class Thread(T, R)
     @detached = false
     @ret = uninitialized R
     ret = LibGC.pthread_create(out th, nil, ->(data) {
-      (data as Thread(T, R)).start
-    }, self as Void*)
+      (data.as(Thread(T, R))).start
+    }, self.as(Void*))
     @th = th
 
     if ret != 0

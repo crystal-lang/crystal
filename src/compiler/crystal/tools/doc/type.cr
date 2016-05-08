@@ -156,7 +156,7 @@ class Crystal::Doc::Type
   end
 
   def alias_definition
-    alias_def = (@type as AliasType).aliased_type
+    alias_def = @type.as(AliasType).aliased_type
     alias_def
   end
 

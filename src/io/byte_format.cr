@@ -23,21 +23,21 @@ module IO::ByteFormat
   abstract def decode(int : Float64.class, io : IO)
 
   def encode(float : Float32, io : IO)
-    encode((pointerof(float) as Int32*).value, io)
+    encode(pointerof(float).as(Int32*).value, io)
   end
 
   def decode(type : Float32.class, io : IO)
     int = decode(Int32, io)
-    (pointerof(int) as Float32*).value
+    pointerof(int).as(Float32*).value
   end
 
   def encode(float : Float64, io : IO)
-    encode((pointerof(float) as Int64*).value, io)
+    encode(pointerof(float).as(Int64*).value, io)
   end
 
   def decode(type : Float64.class, io : IO)
     int = decode(Int64, io)
-    (pointerof(int) as Float64*).value
+    pointerof(int).as(Float64*).value
   end
 
   module LittleEndian

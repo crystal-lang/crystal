@@ -154,11 +154,11 @@ module Crystal
         when Bool           then int1(value ? 1 : 0)
         when LLVM::Value    then value
         when LLVM::Function then LLVM::Value.new value.unwrap
-        when Nil            then LLVM::Value.new(Pointer(Void).null as LibLLVM::ValueRef)
+        when Nil            then LLVM::Value.new(Pointer(Void).null.as(LibLLVM::ValueRef))
         else                     raise "Unsuported value type: #{value.class}"
         end
       end
-      LLVM::Value.new LibLLVM.md_node((values.to_unsafe as LibLLVM::ValueRef*), values.size)
+      LLVM::Value.new LibLLVM.md_node((values.to_unsafe.as(LibLLVM::ValueRef*)), values.size)
     end
 
     def set_current_debug_location(node : ASTNode)

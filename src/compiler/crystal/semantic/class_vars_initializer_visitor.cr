@@ -208,14 +208,14 @@ module Crystal
     end
 
     def visit(node : Assign)
-      target = node.target as ClassVar
+      target = node.target.as(ClassVar)
       value = node.value
       type_class_var(target, value)
       false
     end
 
     def visit(node : TypeDeclaration)
-      target = node.var as ClassVar
+      target = node.var.as(ClassVar)
       value = node.value
       type_class_var(target, value) if value
       false

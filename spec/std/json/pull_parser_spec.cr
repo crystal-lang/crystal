@@ -54,7 +54,7 @@ class JSON::PullParser
   def assert(hash : Hash)
     assert_object do
       hash.each do |key, value|
-        assert(key as String) do
+        assert(key.as(String)) do
           assert value
         end
       end

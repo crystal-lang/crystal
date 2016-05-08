@@ -43,7 +43,7 @@ struct CallStack
   protected def self.unwind
     callstack = [] of Void*
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
-      bt = data as typeof(callstack)
+      bt = data.as(typeof(callstack))
       ip = Pointer(Void).new(LibUnwind.get_ip(context))
       bt << ip
 
@@ -59,7 +59,7 @@ struct CallStack
       LibUnwind::ReasonCode::NO_REASON
     end
 
-    LibUnwind.backtrace(backtrace_fn, callstack as Void*)
+    LibUnwind.backtrace(backtrace_fn, callstack.as(Void*))
     callstack
   end
 
@@ -77,7 +77,7 @@ struct CallStack
 
   def self.print_backtrace
     backtrace_fn = ->(context : LibUnwind::Context, data : Void*) do
-      last_frame = data as RepeatedFrame*
+      last_frame = data.as(RepeatedFrame*)
       ip = Pointer(Void).new(LibUnwind.get_ip(context))
       if last_frame.value.ip == ip
         last_frame.value.incr
@@ -89,7 +89,7 @@ struct CallStack
     end
 
     rf = RepeatedFrame.new(Pointer(Void).null)
-    LibUnwind.backtrace(backtrace_fn, pointerof(rf) as Void*)
+    LibUnwind.backtrace(backtrace_fn, pointerof(rf).as(Void*))
     print_frame(rf)
   end
 
@@ -207,7 +207,7 @@ end
 # Raised when the type cast failed.
 #
 # ```
-# [1, "hi"][1] as Int32 # => TypeCastError: cast to Int32 failed
+# [1, "hi"][1].as(Int32) # => TypeCastError: cast to Int32 failed
 # ```
 class TypeCastError < Exception
   def initialize(message = "Type Cast error")
