@@ -2821,6 +2821,31 @@ describe "Type inference: instance var" do
       )) { types["Foo"].virtual_type! }
   end
 
+  it "doesn't complain in second part of #2575" do
+    assert_type(%(
+      class Foo
+        @a : Int32
+
+        def initialize
+          @a = 5
+        end
+
+        def initialize(b)
+          initialize
+        end
+
+        def a
+          @a
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.new.a
+      )) { int32 }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

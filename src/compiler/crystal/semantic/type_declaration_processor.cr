@@ -380,7 +380,7 @@ module Crystal
       # super or assign all of those variables
       if ancestor_non_nilable
         infos.each do |info|
-          unless info.def.calls_super
+          unless info.def.calls_super || info.def.calls_initialize
             ancestor_non_nilable.each do |name|
               # If the variable is initialized outside, it's OK
               next if initialized_outside?(owner, name)
