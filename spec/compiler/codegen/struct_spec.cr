@@ -510,4 +510,76 @@ describe "Code gen: struct" do
       foo.x
       )).to_i.should eq(84)
   end
+
+  it "codegens virtual structs union (1)" do
+    run(%(
+      abstract struct Foo
+      end
+
+      struct Bar < Foo
+        def initialize
+          @x = 42
+        end
+
+        def x
+          @x
+        end
+      end
+
+      abstract struct Foo2
+      end
+
+      struct Bar2 < Foo2
+        def initialize
+          @x = 84
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Bar.new as Foo
+      foo2 = Bar2.new as Foo2
+
+      f = foo || foo2
+      f.x
+      )).to_i.should eq(42)
+  end
+
+  it "codegens virtual structs union (2)" do
+    run(%(
+      abstract struct Foo
+      end
+
+      struct Bar < Foo
+        def initialize
+          @x = 42
+        end
+
+        def x
+          @x
+        end
+      end
+
+      abstract struct Foo2
+      end
+
+      struct Bar2 < Foo2
+        def initialize
+          @x = 84
+        end
+
+        def x
+          @x
+        end
+      end
+
+      foo = Bar.new as Foo
+      foo2 = Bar2.new as Foo2
+
+      f = foo2 || foo
+      f.x
+      )).to_i.should eq(84)
+  end
 end

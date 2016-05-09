@@ -2852,7 +2852,7 @@ module Crystal
     end
 
     def reference_like?
-      true
+      !struct?
     end
 
     def each_concrete_type
