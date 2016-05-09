@@ -2786,6 +2786,41 @@ describe "Type inference: instance var" do
       "Can't infer the type of instance variable '@x' of Foo(T)"
   end
 
+  it "infers type from self (#2575)" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = self
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { types["Foo"] }
+  end
+
+  it "infers type from self as virtual type (#2575)" do
+    assert_type(%(
+      class Foo
+        def initialize
+          @x = self
+        end
+
+        def x
+          @x
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.new.x
+      )) { types["Foo"].virtual_type! }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

@@ -763,7 +763,13 @@ module Crystal
     end
 
     def guess_type(node : Var)
-      check_var_is_self(node)
+      if node.name == "self"
+        if current_type.is_a?(NonGenericClassType)
+          return current_type.virtual_type
+        else
+          return nil
+        end
+      end
 
       if args = @args
         # Find an argument with the same name as this variable
@@ -1162,6 +1168,8 @@ module Crystal
     end
 
     def check_has_self(node)
+      return false if node.is_a?(Var)
+
       @has_self_visitor.reset
       @has_self_visitor.accept(node)
       @found_self = true if @has_self_visitor.has_self
