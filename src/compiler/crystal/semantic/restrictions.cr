@@ -355,6 +355,14 @@ module Crystal
 
       generic_class = generic_class.as(GenericClassType)
 
+      if other.named_args
+        unless generic_class.is_a?(NamedTupleType)
+          other.raise "can only instantiate NamedTuple with named arguments"
+        end
+        # We match named tuples in NamedTupleInstanceType
+        return nil
+      end
+
       if generic_class.type_vars.size != other.type_vars.size
         other.wrong_number_of "type vars", generic_class, other.type_vars.size, generic_class.type_vars.size
       end
@@ -419,6 +427,45 @@ module Crystal
 
     def restrict(other : TupleInstanceType, context)
       self == other ? self : nil
+    end
+  end
+
+  class NamedTupleInstanceType
+    def is_restriction_of?(other : NamedTupleInstanceType, owner)
+      return true if self == other || self.implements?(other)
+
+      false
+    end
+
+    def restrict(other : Generic, context)
+      generic_class = context.type_lookup.lookup_type other.name
+      return super unless generic_class == self.generic_class
+
+      other_named_args = other.named_args
+      unless other_named_args
+        other.raise "can only instantiate NamedTuple with named arguments"
+      end
+
+      # Check that the names are the same
+      other_names = other_named_args.map(&.name).sort!
+      self_names = self.names_and_types.map(&.[0]).sort!
+
+      return nil unless self_names == other_names
+
+      # Now match name by name
+      other_named_args.each do |named_arg|
+        self_type = self.name_type(named_arg.name)
+        other_type = named_arg.value
+
+        restricted = self_type.restrict(other_type, context)
+        return nil unless restricted
+      end
+
+      self
+    end
+
+    def restrict(other : NamedTupleInstanceType, context)
+      self.implements?(other) ? self : nil
     end
   end
 

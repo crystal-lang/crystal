@@ -654,48 +654,77 @@ module Crystal
     @in_type_args = false
 
     def update(from = nil)
-      type_vars_types = type_vars.map do |node|
-        if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
-          node = syntax_replacement
-        end
+      instance_type = self.instance_type
+      if instance_type.is_a?(NamedTupleType)
+        names_and_types = named_args.not_nil!.map do |named_arg|
+          node = named_arg.value
 
-        case node
-        when NumberLiteral
-          type_var = node
-        else
+          if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
+            node = syntax_replacement
+          end
+
+          if node.is_a?(NumberLiteral)
+            node.raise "can't use number as type for NamedTuple"
+          end
+
           node_type = node.type?
           return unless node_type
 
-          # If the Path points to a constant, we solve it and use it if it's a number literal
           if node.is_a?(Path) && (target_const = node.target_const)
-            value = target_const.value
-            if value.is_a?(NumberLiteral)
-              type_var = value
-            else
-              # Try to interpret the value
-              visitor = target_const.visitor
-              if visitor
-                numeric_value = visitor.interpret_enum_value(value)
-                numeric_type = node_type.program.int?(numeric_value) || raise "Bug: expected integer type, not #{numeric_value.class}"
-                type_var = NumberLiteral.new(numeric_value, numeric_type.kind)
-                type_var.set_type_from(numeric_type, from)
-              else
-                node.raise "can't use constant #{node} (value = #{value}) as generic type argument, it must be a numeric constant"
-              end
-            end
-          else
-            Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
-            type_var = node_type.virtual_type
+            node.raise "can't use constant as type for NamedTuple"
           end
+
+          Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+          node_type = node_type.virtual_type
+
+          {named_arg.name, node_type}
         end
 
-        type_var.as(TypeVar)
-      end
+        generic_type = instance_type.instantiate_named_args(names_and_types)
+      else
+        type_vars_types = type_vars.map do |node|
+          if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
+            node = syntax_replacement
+          end
 
-      begin
-        generic_type = instance_type.instantiate(type_vars_types)
-      rescue ex : Crystal::Exception
-        raise ex.message
+          case node
+          when NumberLiteral
+            type_var = node
+          else
+            node_type = node.type?
+            return unless node_type
+
+            # If the Path points to a constant, we solve it and use it if it's a number literal
+            if node.is_a?(Path) && (target_const = node.target_const)
+              value = target_const.value
+              if value.is_a?(NumberLiteral)
+                type_var = value
+              else
+                # Try to interpret the value
+                visitor = target_const.visitor
+                if visitor
+                  numeric_value = visitor.interpret_enum_value(value)
+                  numeric_type = node_type.program.int?(numeric_value) || raise "Bug: expected integer type, not #{numeric_value.class}"
+                  type_var = NumberLiteral.new(numeric_value, numeric_type.kind)
+                  type_var.set_type_from(numeric_type, from)
+                else
+                  node.raise "can't use constant #{node} (value = #{value}) as generic type argument, it must be a numeric constant"
+                end
+              end
+            else
+              Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
+              type_var = node_type.virtual_type
+            end
+          end
+
+          type_var.as(TypeVar)
+        end
+
+        begin
+          generic_type = instance_type.instantiate(type_vars_types)
+        rescue ex : Crystal::Exception
+          raise ex.message
+        end
       end
 
       if generic_type_too_nested?(generic_type.generic_nest)
@@ -721,6 +750,26 @@ module Crystal
       end
 
       self.type = tuple_type
+    end
+  end
+
+  class NamedTupleLiteral
+    property! mod : Program
+
+    def update(from = nil)
+      return unless entries.all? &.value.type?
+
+      names_and_types = entries.map do |element|
+        {element.key, element.value.type}
+      end
+
+      named_tuple_type = mod.named_tuple_of(names_and_types)
+
+      if generic_type_too_nested?(named_tuple_type.generic_nest)
+        raise "named tuple type too nested: #{named_tuple_type}"
+      end
+
+      self.type = named_tuple_type
     end
   end
 

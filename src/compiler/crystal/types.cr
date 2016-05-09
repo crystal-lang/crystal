@@ -1327,8 +1327,12 @@ module Crystal
 
   module GenericType
     getter type_vars : Array(String)
+
     property variadic : Bool
     @variadic = false
+
+    property double_variadic : Bool
+    @double_variadic = false
 
     def generic_types
       @generic_types ||= {} of Array(TypeVar) => Type
@@ -1926,6 +1930,114 @@ module Crystal
       @tuple_types.each_with_index do |tuple_type, i|
         io << ", " if i > 0
         tuple_type.to_s_with_options(io, skip_union_parens: true)
+      end
+      io << "}"
+    end
+
+    def type_desc
+      "tuple"
+    end
+  end
+
+  class NamedTupleType < GenericClassType
+    def initialize(program, container, name, superclass, type_vars, add_subclass = true)
+      super
+      @struct = true
+      @double_variadic = true
+      @instantiations = {} of Array(Tuple(String, Type)) => Type
+    end
+
+    def instantiate(type_vars)
+      raise "can't instantiate NamedTuple type yet"
+    end
+
+    def instantiate_named_args(names_and_types)
+      @instantiations[names_and_types] ||= NamedTupleInstanceType.new(program, names_and_types)
+    end
+
+    def new_generic_instance(program, generic_type, type_vars)
+      raise "Bug: NamedTupleType#new_generic_instance shouldn't be invoked"
+    end
+
+    def type_desc
+      "named tuple"
+    end
+  end
+
+  class NamedTupleInstanceType < GenericClassInstanceType
+    getter names_and_types
+
+    def initialize(program, @names_and_types : Array(Tuple(String, Type)))
+      generic_nest = 1 + (@names_and_types.empty? ? 0 : @names_and_types.max_of(&.[1].generic_nest))
+      var = Var.new("T", self)
+      var.bind_to var
+      super(program, program.named_tuple, {"T" => var} of String => ASTNode, generic_nest)
+    end
+
+    def name_index(name)
+      @names_and_types.index &.[0].==(name)
+    end
+
+    def name_type(name)
+      @names_and_types.find(&.[0].==(name)).not_nil![1]
+    end
+
+    def tuple_indexer(index)
+      indexers = @tuple_indexers ||= {} of Int32 => Def
+      tuple_indexer(indexers, index)
+    end
+
+    private def tuple_indexer(indexers, index)
+      indexers[index] ||= begin
+        indexer = Def.new("[]", [Arg.new("index")], TupleIndexer.new(index))
+        indexer.owner = self
+        indexer
+      end
+    end
+
+    def implements?(other)
+      if other.is_a?(NamedTupleInstanceType)
+        return nil unless self.size == other.size
+
+        self_names_and_types = self.names_and_types.sort_by &.[0]
+        other_names_and_types = other.names_and_types.sort_by &.[0]
+
+        self_names_and_types == other_names_and_types
+      else
+        super
+      end
+    end
+
+    def size
+      names_and_types.size
+    end
+
+    def var
+      type_vars["T"]
+    end
+
+    def primitive_like?
+      false
+    end
+
+    def reference_like?
+      false
+    end
+
+    def passed_by_value?
+      true
+    end
+
+    def allocated?
+      true
+    end
+
+    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
+      io << "{"
+      @names_and_types.each_with_index do |name_and_type, i|
+        io << ", " if i > 0
+        io << name_and_type[0] << ": "
+        name_and_type[1].to_s_with_options(io, skip_union_parens: true)
       end
       io << "}"
     end

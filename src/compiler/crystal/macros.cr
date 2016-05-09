@@ -514,6 +514,37 @@ module Crystal::Macros
     end
   end
 
+  # A named tuple literal.
+  class NamedTupleLiteral < ASTNode
+    # Similar to `NamedTuple#empty?`
+    def empty? : BoolLiteral
+    end
+
+    # Similar to `NamedTuple#keys`
+    def keys : ArrayLiteral
+    end
+
+    # Similar to `NamedTuple#size`
+    def size : NumberLiteral
+    end
+
+    # Similar to `NamedTuple#to_a`
+    def to_a : ArrayLiteral(TupleLiteral)
+    end
+
+    # Similar to `NamedTuple#values`
+    def values : ArrayLiteral
+    end
+
+    # Similar to `NamedTuple#[]`
+    def [](key : ASTNode) : ASTNode
+    end
+
+    # Adds or replaces a key.
+    def []=(key : ASTNode) : ASTNode
+    end
+  end
+
   # A range literal.
   class RangeLiteral < ASTNode
   end

@@ -263,6 +263,16 @@ struct Tuple
   end
 end
 
+struct NamedTuple
+  def to_json(io : IO)
+    io.json_object do |obj|
+      {% for key in T.keys %}
+        obj.field({{key.stringify}}, self[{{key.symbolize}}])
+      {% end %}
+    end
+  end
+end
+
 struct Time::Format
   def to_json(value : Time, io : IO)
     format(value).to_json(io)

@@ -84,7 +84,6 @@ describe Crystal::Formatter do
   assert_format "{ foo:  1 }", "{foo: 1}"
   assert_format "{ \"foo\":  1 }", "{\"foo\": 1}"
   assert_format "{ \"foo\" =>  1 }", "{\"foo\" => 1}"
-  assert_format "HTTP::Headers { foo:  1 }", "HTTP::Headers{foo: 1}"
   assert_format "{ 1   =>   2 ,\n\n   3  =>  4 }", "{1 => 2,\n\n  3 => 4}"
   assert_format "foo({\nbar: 1,\n})", "foo({\n  bar: 1,\n})"
 
@@ -93,6 +92,8 @@ describe Crystal::Formatter do
   assert_format "Foo:: Bar", "Foo::Bar"
   assert_format "::Foo:: Bar", "::Foo::Bar"
   assert_format "Foo( A , 1 )", "Foo(A, 1)"
+  assert_format "Foo( x:  Int32  )", "Foo(x: Int32)"
+  assert_format "Foo( x:  Int32  ,  y: Float64 )", "Foo(x: Int32, y: Float64)"
 
   %w(if unless ifdef).each do |keyword|
     assert_format "#{keyword} a\n2\nend", "#{keyword} a\n  2\nend"
@@ -735,7 +736,7 @@ describe Crystal::Formatter do
   assert_format "{1 => 2, 3 => 4}\n{5234234 => 234098234, 7 => 8}"
   assert_format "{\n    1 => 2, 3 => 4,\n  567 => 8910,\n}", "{\n  1 => 2, 3 => 4,\n  567 => 8910,\n}"
   assert_format "{\n  foo:    1,\n  b:      2,\n  barbaz: 3,\n}"
-  assert_format "{\n  a:     1,\n  foo => bar,\n}"
+  assert_format "{\n  a:   1,\n  foo: bar,\n}"
   assert_format "%(\n1\n)\n\n{\n    1 => 2,\n  234 => 5,\n}"
   assert_format "class Actor\n  macro inherited\nend\nend\n", "class Actor\n  macro inherited\n  end\nend"
   assert_format "class Actor\n  macro inherited\n\nend\nend\n", "class Actor\n  macro inherited\n  end\nend"

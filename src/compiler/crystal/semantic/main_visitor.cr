@@ -2268,10 +2268,19 @@ module Crystal
       false
     end
 
+    def end_visit(node : NamedTupleLiteral)
+      node.entries.each &.value.add_observer(node)
+      node.mod = @mod
+      node.update
+      false
+    end
+
     def visit(node : TupleIndexer)
       scope = @scope
       if scope.is_a?(TupleInstanceType)
         node.type = scope.tuple_types[node.index].as(Type)
+      elsif scope.is_a?(NamedTupleInstanceType)
+        node.type = scope.names_and_types[node.index][1]
       elsif scope
         node.type = (scope.instance_type.as(TupleInstanceType).tuple_types[node.index].as(Type)).metaclass
       end

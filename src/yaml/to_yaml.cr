@@ -74,6 +74,19 @@ struct Tuple
   end
 end
 
+struct NamedTuple
+  def to_yaml(yaml : YAML::Generator)
+    yaml.indented do
+      {% for key in T.keys %}
+        yaml.nl
+        {{key.symbolize}}.to_yaml(yaml)
+        yaml << ": "
+        self[{{key.symbolize}}].to_yaml(yaml)
+      {% end %}
+    end
+  end
+end
+
 class String
   def to_yaml(yaml : YAML::Generator)
     yaml << self

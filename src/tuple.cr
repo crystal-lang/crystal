@@ -1,6 +1,9 @@
 # A tuple is a fixed-size, immutable, stack-allocated sequence of values
 # of possibly different types.
 #
+# You can think of a Tuple as an immutable `Array` whose types for each position
+# are known at compile time.
+#
 # A tuple can be created with the usual `new` method or with a tuple literal:
 #
 # ```
@@ -18,7 +21,7 @@
 #
 # Indexing with an integer value that is only known at runtime will return
 # a value whose type is the union of all the types in the tuple, and might raise
-# `IndexError` .
+# `IndexError`.
 #
 # Tuples are the preferred way to return fixed-size multiple return
 # values because no memory is needed to be allocated for them:
@@ -203,6 +206,10 @@ struct Tuple
     true
   end
 
+  def ==(other)
+    false
+  end
+
   # Returns `true` if case equality holds for the elements in `self` and *other*.
   #
   # ```
@@ -275,9 +282,9 @@ struct Tuple
     size <=> other.size
   end
 
-  # returns a hash value based on this tuple's length and contents.
+  # Returns a hash value based on this tuple's length and contents.
   #
-  # see `object#hash`.
+  # See `Object#hash`.
   def hash
     hash = 31 * size
     {% for i in 0...T.size %}

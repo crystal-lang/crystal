@@ -390,6 +390,21 @@ module Crystal
       false
     end
 
+    def visit(node : NamedTupleLiteral)
+      request_value do
+        type = node.type.as(NamedTupleInstanceType)
+        struct_type = alloca llvm_type(type)
+        node.entries.each do |entry|
+          entry.value.accept self
+          index = type.name_index(entry.key).not_nil!
+          name_and_type = type.names_and_types[index]
+          assign aggregate_index(struct_type, index), name_and_type[1], entry.value.type, @last
+        end
+        @last = struct_type
+      end
+      false
+    end
+
     def visit(node : PointerOf)
       @last = case node_exp = node.exp
               when Var

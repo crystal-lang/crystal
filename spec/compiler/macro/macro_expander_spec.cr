@@ -46,7 +46,7 @@ describe "MacroExpander" do
   end
 
   it "expands macro with hash" do
-    assert_macro "", %({{{a: 1, b: 2}}}), [] of ASTNode, "{:a => 1, :b => 2}"
+    assert_macro "", %({{{:a => 1, :b => 2}}}), [] of ASTNode, "{:a => 1, :b => 2}"
   end
 
   it "expands macro with tuple" do

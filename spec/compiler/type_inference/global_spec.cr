@@ -175,6 +175,13 @@ describe "Global inference" do
       )) { tuple_of([int32, string]) }
   end
 
+  it "infers type from named tuple literal" do
+    assert_type(%(
+      $x = {x: 1, y: "foo"}
+      $x
+      )) { named_tuple_of({"x": int32, "y": string}) }
+  end
+
   it "infers type from new expression" do
     assert_type(%(
       class Foo

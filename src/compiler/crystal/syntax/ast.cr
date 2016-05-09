@@ -325,6 +325,27 @@ module Crystal
     record Entry, key : ASTNode, value : ASTNode
   end
 
+  class NamedTupleLiteral < ASTNode
+    property entries : Array(Entry)
+
+    def initialize(@entries = [] of Entry)
+    end
+
+    def accept_children(visitor)
+      @entries.each do |entry|
+        entry.value.accept visitor
+      end
+    end
+
+    def clone_without_location
+      NamedTupleLiteral.new(@entries.clone)
+    end
+
+    def_equals_and_hash @entries
+
+    record Entry, key : String, value : ASTNode
+  end
+
   class RangeLiteral < ASTNode
     property from : ASTNode
     property to : ASTNode
@@ -1373,8 +1394,9 @@ module Crystal
   class Generic < ASTNode
     property name : Path
     property type_vars : Array(ASTNode)
+    property named_args : Array(NamedArgument)?
 
-    def initialize(@name, @type_vars : Array)
+    def initialize(@name, @type_vars : Array, @named_args = nil)
     end
 
     def self.new(name, type_var : ASTNode)
@@ -1384,13 +1406,14 @@ module Crystal
     def accept_children(visitor)
       @name.accept visitor
       @type_vars.each &.accept visitor
+      @named_args.try &.each &.accept visitor
     end
 
     def clone_without_location
-      Generic.new(@name.clone, @type_vars.clone)
+      Generic.new(@name.clone, @type_vars.clone, @named_args.clone)
     end
 
-    def_equals_and_hash @name, @type_vars
+    def_equals_and_hash @name, @type_vars, @named_args
   end
 
   class TypeDeclaration < ASTNode

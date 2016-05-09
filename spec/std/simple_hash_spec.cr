@@ -10,12 +10,12 @@ describe "SimpleHash" do
       a[5].should eq(6)
       a[7].should eq(8)
 
-      a = SimpleHash{one: :two, three: :four, five: :six}
+      a = SimpleHash{:one => :two, :three => :four, :five => :six}
       a[:three].should eq(:four)
     end
 
     it "raises on a missing key" do
-      a = SimpleHash{one: :two, three: :four}
+      a = SimpleHash{:one => :two, :three => :four}
       expect_raises KeyError do
         a[:five]
       end
@@ -114,7 +114,7 @@ describe "SimpleHash" do
 
   describe "each_with_object" do
     it "passes memo, key and value into block" do
-      hash = SimpleHash{a: 'b'}
+      hash = SimpleHash{:a => 'b'}
       hash.each_with_object(:memo) do |memo, k, v|
         memo.should eq(:memo)
         k.should eq(:a)
@@ -123,7 +123,7 @@ describe "SimpleHash" do
     end
 
     it "reduces the hash to the accumulated value of memo" do
-      hash = SimpleHash{a: 'b', c: 'd', e: 'f'}
+      hash = SimpleHash{:a => 'b', :c => 'd', :e => 'f'}
       result = hash.each_with_object(SimpleHash(Char, Symbol).new) do |memo, k, v|
         memo[v] = k
       end
@@ -148,51 +148,51 @@ describe "SimpleHash" do
   end
 
   it "selects" do
-    h1 = SimpleHash{a: 1, b: 2, c: 3}
+    h1 = SimpleHash{:a => 1, :b => 2, :c => 3}
 
     h2 = h1.select { |k, v| k == :b }
-    h2.should eq(SimpleHash{b: 2})
+    h2.should eq(SimpleHash{:b => 2})
     h2.object_id.should_not eq(h1.object_id)
   end
 
   it "selects!" do
-    h1 = SimpleHash{a: 1, b: 2, c: 3}
+    h1 = SimpleHash{:a => 1, :b => 2, :c => 3}
 
     h2 = h1.select! { |k, v| k == :b }
-    h2.should eq(SimpleHash{b: 2})
+    h2.should eq(SimpleHash{:b => 2})
     h2.object_id.should eq(h1.object_id)
   end
 
   it "returns nil when using select! and no changes were made" do
-    h1 = SimpleHash{a: 1, b: 2, c: 3}
+    h1 = SimpleHash{:a => 1, :b => 2, :c => 3}
 
     h2 = h1.select! { true }
     h2.should eq(nil)
-    h1.should eq(SimpleHash{a: 1, b: 2, c: 3})
+    h1.should eq(SimpleHash{:a => 1, :b => 2, :c => 3})
   end
 
   it "rejects" do
-    h1 = SimpleHash{a: 1, b: 2, c: 3}
+    h1 = SimpleHash{:a => 1, :b => 2, :c => 3}
 
     h2 = h1.reject { |k, v| k == :b }
-    h2.should eq(SimpleHash{a: 1, c: 3})
+    h2.should eq(SimpleHash{:a => 1, :c => 3})
     h2.object_id.should_not eq(h1.object_id)
   end
 
   it "rejects!" do
-    h1 = SimpleHash{a: 1, b: 2, c: 3}
+    h1 = SimpleHash{:a => 1, :b => 2, :c => 3}
 
     h2 = h1.reject! { |k, v| k == :b }
-    h2.should eq(SimpleHash{a: 1, c: 3})
+    h2.should eq(SimpleHash{:a => 1, :c => 3})
     h2.object_id.should eq(h1.object_id)
   end
 
   it "returns nil when using reject! and no changes were made" do
-    h1 = SimpleHash{a: 1, b: 2, c: 3}
+    h1 = SimpleHash{:a => 1, :b => 2, :c => 3}
 
     h2 = h1.reject! { false }
     h2.should eq(nil)
-    h1.should eq(SimpleHash{a: 1, b: 2, c: 3})
+    h1.should eq(SimpleHash{:a => 1, :b => 2, :c => 3})
   end
 
   describe "size" do
@@ -216,7 +216,7 @@ describe "SimpleHash" do
       a = SimpleHash{1 => 2}
       a.to_s.should eq("{1 => 2}")
 
-      a = SimpleHash{one: 1, two: 2, three: 3}
+      a = SimpleHash{:one => 1, :two => 2, :three => 3}
       a.to_s.should eq("{:one => 1, :two => 2, :three => 3}")
     end
   end

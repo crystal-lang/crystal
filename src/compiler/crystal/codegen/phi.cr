@@ -4,7 +4,6 @@ class Crystal::CodeGenVisitor
   class Phi
     include LLVMBuilderHelper
 
-    getter node : ASTNode
     getter count : Int32
     getter exit_block : LLVM::BasicBlock?
 
@@ -14,7 +13,11 @@ class Crystal::CodeGenVisitor
       block.close
     end
 
-    def initialize(@codegen : CodeGenVisitor, @node : ASTNode, @needs_value : Bool)
+    def self.new(codegen : CodeGenVisitor, node : ASTNode, needs_value : Bool)
+      new codegen, node.type?, needs_value
+    end
+
+    def initialize(@codegen : CodeGenVisitor, @node_type : Type?, @needs_value : Bool)
       @phi_table = @needs_value ? LLVM::PhiTable.new : nil
       @count = 0
     end
@@ -44,11 +47,11 @@ class Crystal::CodeGenVisitor
     end
 
     def add(value, type : Type, last = false)
-      return unreachable if node.no_returns?
+      return unreachable if @node_type.try &.no_return?
 
       if @needs_value
-        unless node.type.void?
-          value = @codegen.upcast value, node.type, type
+        unless @node_type.try &.void?
+          value = @codegen.upcast value, @node_type.not_nil!, type
           @phi_table.not_nil!.add insert_block, value
         end
       end
@@ -74,7 +77,7 @@ class Crystal::CodeGenVisitor
           @codegen.last = llvm_nil
         else
           if @exit_block
-            @codegen.last = phi llvm_arg_type(@node.type), phi_table
+            @codegen.last = phi llvm_arg_type(@node_type.not_nil!), phi_table
           else
             @codegen.last = phi_table.values.first
           end

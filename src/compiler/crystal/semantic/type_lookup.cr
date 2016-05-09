@@ -74,12 +74,47 @@ module Crystal
         node.raise "#{instance_type} is not a generic class, it's a #{instance_type.type_desc}"
       end
 
-      if instance_type.variadic
+      if instance_type.is_a?(NamedTupleType)
+        named_args = node.named_args
+        unless named_args
+          node.raise "can only instantiate NamedTuple with named arguments"
+        end
+
+        names_and_types = named_args.map do |named_arg|
+          node = named_arg.value
+
+          if node.is_a?(NumberLiteral)
+            node.raise "can't use number as type for NamedTuple"
+          end
+
+          node.accept self
+          return false if !@raise && !@type
+
+          Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as a generic type argument")
+          {named_arg.name, type.virtual_type}
+        end
+
+        begin
+          @type = instance_type.instantiate_named_args(names_and_types)
+        rescue ex : Crystal::Exception
+          node.raise ex.message if @raise
+        end
+
+        return false
+      elsif instance_type.variadic
+        if node.named_args
+          node.raise "can only use named arguments with NamedTuple"
+        end
+
         min_needed = instance_type.type_vars.size - 1
         if node.type_vars.size < min_needed
           node.wrong_number_of "type vars", instance_type, node.type_vars.size, "#{min_needed}+"
         end
       else
+        if node.named_args
+          node.raise "can only use named arguments with NamedTuple"
+        end
+
         if instance_type.type_vars.size != node.type_vars.size
           node.wrong_number_of "type vars", instance_type, node.type_vars.size, instance_type.type_vars.size
         end

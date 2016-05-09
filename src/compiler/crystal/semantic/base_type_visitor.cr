@@ -158,6 +158,7 @@ module Crystal
 
       @in_type_args += 1
       node.type_vars.each &.accept self
+      node.named_args.try &.each &.value.accept self
       @in_type_args -= 1
 
       return false if node.type?
@@ -167,12 +168,24 @@ module Crystal
         node.raise "#{instance_type} is not a generic class, it's a #{instance_type.type_desc}"
       end
 
-      if instance_type.variadic
+      if instance_type.double_variadic
+        unless node.named_args
+          node.raise "can only instantiate NamedTuple with named arguments"
+        end
+      elsif instance_type.variadic
+        if node.named_args
+          node.raise "can only use named arguments with NamedTuple"
+        end
+
         min_needed = instance_type.type_vars.size - 1
         if node.type_vars.size < min_needed
           node.wrong_number_of "type vars", instance_type, node.type_vars.size, "#{min_needed}+"
         end
       else
+        if node.named_args
+          node.raise "can only use named arguments with NamedTuple"
+        end
+
         if instance_type.type_vars.size != node.type_vars.size
           node.wrong_number_of "type vars", instance_type, node.type_vars.size, instance_type.type_vars.size
         end
@@ -180,6 +193,7 @@ module Crystal
 
       node.instance_type = instance_type
       node.type_vars.each &.add_observer(node)
+      node.named_args.try &.each &.value.add_observer(node)
       node.update
 
       false

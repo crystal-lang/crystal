@@ -74,7 +74,7 @@ module Crystal
     @shebang : Bool
     @heredoc_fixes : Array(HeredocFix)
     @assign_length : Int32?
-    @current_hash : HashLiteral?
+    @current_hash : ASTNode?
 
     def initialize(source)
       @lexer = Lexer.new(source)
@@ -746,29 +746,57 @@ module Crystal
       start_column = @column
       found_in_same_line = false
 
-      if entry.key.is_a?(SymbolLiteral) && (@token.type == :IDENT || @token.type == :CONST)
-        write @token
-        next_token
+      accept entry.key
+      skip_space_or_newline
+      middle_column = @column
+      if @token.type == :":" && entry.key.is_a?(StringLiteral)
+        write ": "
         slash_is_regex!
-        write_token :":", " "
+        next_token
         middle_column = @column
         found_in_same_line ||= check_hash_info hash, entry.key, start_line, start_column, middle_column
       else
-        accept entry.key
-        skip_space_or_newline
-        middle_column = @column
-        if @token.type == :":" && entry.key.is_a?(StringLiteral)
-          write ": "
-          slash_is_regex!
-          next_token
-          middle_column = @column
-          found_in_same_line ||= check_hash_info hash, entry.key, start_line, start_column, middle_column
-        else
-          slash_is_regex!
-          write_token " ", :"=>", " "
-          found_in_same_line ||= check_hash_info hash, entry.key, start_line, start_column, middle_column
-        end
+        slash_is_regex!
+        write_token " ", :"=>", " "
+        found_in_same_line ||= check_hash_info hash, entry.key, start_line, start_column, middle_column
       end
+
+      skip_space_or_newline
+      accept entry.value
+
+      if found_in_same_line
+        @hash_in_same_line << hash.object_id
+      end
+    end
+
+    def visit(node : NamedTupleLiteral)
+      old_hash = @current_hash
+      @current_hash = node
+      format_literal_elements node.entries, :"{", :"}"
+      @current_hash = old_hash
+
+      if @hash_in_same_line.includes? node.object_id
+        @hash_infos.reject! { |info| info.id == node.object_id }
+      end
+
+      false
+    end
+
+    def accept(node : NamedTupleLiteral::Entry)
+      format_named_tuple_entry(@current_hash.not_nil!, node)
+    end
+
+    def format_named_tuple_entry(hash, entry)
+      start_line = @line
+      start_column = @column
+      found_in_same_line = false
+
+      write @token
+      next_token
+      slash_is_regex!
+      write_token :":", " "
+      middle_column = @column
+      found_in_same_line ||= check_hash_info hash, entry.key, start_line, start_column, middle_column
       skip_space_or_newline
       accept entry.value
 
@@ -929,13 +957,17 @@ module Crystal
 
       paren_count = @paren_count
 
-      node.type_vars.each_with_index do |type_var, i|
-        accept type_var
-        if @paren_count == paren_count
-          skip_space_or_newline
-          if @token.type == :","
-            write ", " unless last?(i, node.type_vars)
-            next_token_skip_space_or_newline
+      if named_args = node.named_args
+        format_named_args([] of ASTNode, named_args, @indent)
+      else
+        node.type_vars.each_with_index do |type_var, i|
+          accept type_var
+          if @paren_count == paren_count
+            skip_space_or_newline
+            if @token.type == :","
+              write ", " unless last?(i, node.type_vars)
+              next_token_skip_space_or_newline
+            end
           end
         end
       end
@@ -3739,7 +3771,7 @@ module Crystal
       @indent = old_indent
     end
 
-    def indent(indent : Int, node : ASTNode | HashLiteral::Entry)
+    def indent(indent : Int, node : ASTNode | HashLiteral::Entry | NamedTupleLiteral::Entry)
       indent(indent) { accept node }
     end
 
