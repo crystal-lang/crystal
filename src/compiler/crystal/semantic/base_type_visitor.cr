@@ -91,8 +91,10 @@ module Crystal
     end
 
     def visit(node : Fun)
+      @in_type_args += 1
       node.inputs.try &.each &.accept(self)
       node.output.try &.accept(self)
+      @in_type_args -= 1
 
       if inputs = node.inputs
         types = inputs.map &.type.instance_type.virtual_type
