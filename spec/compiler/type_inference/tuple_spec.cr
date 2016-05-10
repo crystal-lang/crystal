@@ -31,7 +31,18 @@ describe "Type inference: tuples" do
 
   it "gives error when indexing out of range" do
     assert_error "{1, 'a'}[2]",
-      "index out of bounds for tuple {Int32, Char}"
+      "index out of bounds for tuple {Int32, Char} (2 not in 0..1)"
+  end
+
+  it "gives error when indexing out of range on empty tuple" do
+    assert_error %(
+      def tuple(*args)
+        args
+      end
+
+      tuple()[0]
+      ),
+      "index '0' out of bounds for empty tuple"
   end
 
   it "can name a tuple type" do

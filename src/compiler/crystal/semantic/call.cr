@@ -444,12 +444,14 @@ class Crystal::Call
     arg = args.first
     if arg.is_a?(NumberLiteral) && arg.kind == :i32
       index = arg.value.to_i
-      if 0 <= index < instance_type.tuple_types.size
+      if 0 <= index < instance_type.size
         indexer_def = yield instance_type, index
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
+      elsif instance_type.size == 0
+        raise "index '#{arg}' out of bounds for empty tuple"
       else
-        raise "index out of bounds for tuple #{owner}"
+        raise "index out of bounds for tuple #{owner} (#{arg} not in 0..#{instance_type.size - 1})"
       end
     end
     nil
@@ -464,7 +466,7 @@ class Crystal::Call
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       else
-        raise "unknown name for named tuple #{owner}"
+        raise "missing key '#{arg.value}' for named tuple #{owner}"
       end
     end
     nil
