@@ -1,5 +1,73 @@
 require "./codegen"
 
+# Here lies the logic to cast values between different types. There are three operations:
+#
+# ## Assign
+#
+# ```
+# target_pointer : target_type <- value : value_type
+# ```
+#
+# This happens when we store a value inside a variable (a variable is represented as
+# pointer to the real value).
+#
+# If the type of the target and value are the same we can simply store the value inside
+# the pointer.
+#
+# Otherwise, it's the case of a value having a "smaller" type than the variable's type,
+# for example when assigning an Int32 into a union of Int32 | String, or when assigning
+# a Bar into a Foo, with Bar < Foo, etc. In those cases we need to do some extra stuff,
+# for example store the value's type id in the union and then the real value in the second
+# slot of a union, casted to the union's type.
+#
+# ## Upcast
+#
+# ```
+# (value : from_type).as(to_type)
+# ```
+#
+# This happens when a value is "boxed" inside a "bigger" one. For example in this method:
+#
+# ```
+# def foo
+#   condition ? 1 : nil
+# end
+# ```
+#
+# foo's type is Int32 | Nil, with one branch of the 'if' being Int32 and the other Nil.
+# In this case we need to "box" the Int32 value inside the union, and the same for Nil.
+#
+# This is different than doing an assign because we don't assign the value, we simply
+# box it. Later that value might be stored inside a value with such type, but we keep
+# it as two different operations because assigning involves fewer operations (to store
+# a value inside a union we simply store the type id and the value, instead of allocating
+# a union in the stack and the copying the union inside the final destination).
+#
+# ## Downcast
+#
+# ```
+# (value : from_type).as(to_type)
+# ```
+#
+# This happens when a value is casted from a "bigger" type to a "smaller" type. For example:
+#
+# ```
+# def foo
+#   condition ? 1 : nil
+# end
+#
+# # 1.
+# foo.as(Int32) # here a downcast happens, from `Int32 | Nil` to `Int32`
+#
+# # 2.
+# if foo.is_a?(Int32)
+#   foo # here a downcast happens, from `Int32 | Nil` to `Int32`
+# end
+# ```
+#
+# In this case we usually need to unbox a value from a union, or cast a more general
+# type into a specific type (such as when casting a Foo to a Bar, with Bar < Foo).
+
 class Crystal::CodeGenVisitor
   def assign(target_pointer, target_type, value_type, value)
     target_type = target_type.remove_indirection
