@@ -103,6 +103,13 @@ module Crystal
       node
     end
 
+    def transform(node : NamedTupleLiteral)
+      node.entries.map! do |entry|
+        NamedTupleLiteral::Entry.new(entry.key, entry.value.transform(self))
+      end
+      node
+    end
+
     def transform(node : If)
       node.cond = node.cond.transform(self)
       node.then = node.then.transform(self)

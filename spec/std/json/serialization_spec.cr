@@ -154,7 +154,7 @@ describe "JSON serialization" do
     end
 
     it "does for Hash with non-string keys" do
-      {foo: 1, bar: 2}.to_json.should eq(%({"foo":1,"bar":2}))
+      {:foo => 1, :bar => 2}.to_json.should eq(%({"foo":1,"bar":2}))
     end
 
     it "does for Hash with newlines" do
@@ -163,6 +163,10 @@ describe "JSON serialization" do
 
     it "does for Tuple" do
       {1, "hello"}.to_json.should eq(%([1,"hello"]))
+    end
+
+    it "does for NamedTuple" do
+      {x: 1, y: "hello"}.to_json.should eq(%({"x":1,"y":"hello"}))
     end
 
     it "does for Enum" do

@@ -688,10 +688,15 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)
     type = context.type
-    if type.is_a?(TupleInstanceType)
+    case type
+    when TupleInstanceType
       index = node.as(TupleIndexer).index
       ptr = aggregate_index call_args[0], index
       to_lhs ptr, type.tuple_types[index]
+    when NamedTupleInstanceType
+      index = node.as(TupleIndexer).index
+      ptr = aggregate_index call_args[0], index
+      to_lhs ptr, type.names_and_types[index][1]
     else
       type = (type.instance_type.as(TupleInstanceType))
       index = node.as(TupleIndexer).index

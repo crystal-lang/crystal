@@ -104,6 +104,9 @@ module Crystal
       types["Tuple"] = tuple = @tuple = TupleType.new self, self, "Tuple", value, ["T"]
       tuple.allowed_in_generics = false
 
+      types["NamedTuple"] = named_tuple = @named_tuple = NamedTupleType.new self, self, "NamedTuple", value, ["T"]
+      named_tuple.allowed_in_generics = false
+
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
       static_array.declare_instance_var("@buffer", Path.new("T"))
@@ -248,6 +251,15 @@ module Crystal
       tuple.instantiate(type_vars)
     end
 
+    def named_tuple_of(hash : Hash(String, Type))
+      names_and_types = hash.map { |k, v| {k, v.as(Type)} }
+      named_tuple_of(names_and_types)
+    end
+
+    def named_tuple_of(names_and_types : Array)
+      named_tuple.instantiate_named_args(names_and_types)
+    end
+
     def nilable(type)
       # Nil | Nil # => Nil
       return self.nil if type == self.nil
@@ -363,7 +375,7 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64
                      uint8 uint16 uint32 uint64 float float32 float64 string symbol pointer array static_array
-                     exception tuple proc enum range regex) %}
+                     exception tuple named_tuple proc enum range regex) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end

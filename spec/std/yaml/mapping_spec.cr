@@ -233,10 +233,10 @@ describe "YAML mapping" do
     yaml = YAMLWithAny.from_yaml("obj: hello")
     yaml.obj.as_s.should eq("hello")
 
-    yaml = YAMLWithAny.from_yaml({obj: %w(foo bar)}.to_yaml)
+    yaml = YAMLWithAny.from_yaml({:obj => %w(foo bar)}.to_yaml)
     yaml.obj[1].as_s.should eq("bar")
 
-    yaml = YAMLWithAny.from_yaml({obj: {foo: :bar}}.to_yaml)
+    yaml = YAMLWithAny.from_yaml({:obj => {:foo => :bar}}.to_yaml)
     yaml.obj["foo"].as_s.should eq("bar")
   end
 

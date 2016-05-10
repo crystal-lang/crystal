@@ -577,6 +577,71 @@ module Crystal
     end
   end
 
+  class NamedTupleLiteral
+    def interpret(method, args, block, interpreter)
+      case method
+      when "empty?"
+        interpret_argless_method(method, args) { BoolLiteral.new(entries.empty?) }
+      when "keys"
+        interpret_argless_method(method, args) { ArrayLiteral.map(entries) { |entry| MacroId.new(entry.key) } }
+      when "size"
+        interpret_argless_method(method, args) { NumberLiteral.new(entries.size) }
+      when "to_a"
+        interpret_argless_method(method, args) do
+          ArrayLiteral.map(entries) { |entry| TupleLiteral.new([MacroId.new(entry.key), entry.value] of ASTNode) }
+        end
+      when "values"
+        interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
+      when "[]"
+        case args.size
+        when 1
+          key = args.first
+
+          case key
+          when SymbolLiteral
+            key = key.value
+          when MacroId
+            key = key.value
+          else
+            return NilLiteral.new
+          end
+
+          entry = entries.find &.key.==(key)
+          entry.try(&.value) || NilLiteral.new
+        else
+          wrong_number_of_arguments "NamedTupleLiteral#[]", args.size, 1
+        end
+      when "[]="
+        case args.size
+        when 2
+          key, value = args
+
+          case key
+          when SymbolLiteral
+            key = key.value
+          when MacroId
+            key = key.value
+          else
+            raise "expected 'NamedTupleLiteral#[]=' first argument to be a SymbolLiteral or MacroId, not #{key.class_desc}"
+          end
+
+          index = entries.index &.key.==(key)
+          if index
+            entries[index] = NamedTupleLiteral::Entry.new(key, value)
+          else
+            entries << NamedTupleLiteral::Entry.new(key, value)
+          end
+
+          value
+        else
+          wrong_number_of_arguments "NamedTupleLiteral#[]=", args.size, 2
+        end
+      else
+        super
+      end
+    end
+  end
+
   class TupleLiteral
     def interpret(method, args, block, interpreter)
       case method
@@ -820,10 +885,43 @@ module Crystal
       when "size"
         interpret_argless_method(method, args) do
           type = type.instance_type
-          if type.is_a?(TupleInstanceType)
+          case type
+          when TupleInstanceType
             NumberLiteral.new(type.tuple_types.size)
+          when NamedTupleInstanceType
+            NumberLiteral.new(type.names_and_types.size)
           else
-            raise "undefined method 'size' for TypeNode of type #{type} (must be a tuple type)"
+            raise "undefined method 'size' for TypeNode of type #{type} (must be a tuple or named tuple type)"
+          end
+        end
+      when "keys"
+        interpret_argless_method(method, args) do
+          type = type.instance_type
+          if type.is_a?(NamedTupleInstanceType)
+            ArrayLiteral.map(type.names_and_types) { |name_and_type| MacroId.new(name_and_type[0]) }
+          else
+            raise "undefined method 'keys' for TypeNode of type #{type} (must be a named tuple type)"
+          end
+        end
+      when "[]"
+        interpret_one_arg_method(method, args) do |arg|
+          type = type.instance_type
+          if type.is_a?(NamedTupleInstanceType)
+            case arg
+            when SymbolLiteral
+              key = arg.value
+            when MacroId
+              key = arg.value
+            else
+              return NilLiteral.new
+            end
+            index = type.name_index(key)
+            unless index
+              return NilLiteral.new
+            end
+            TypeNode.new(type.names_and_types[index][1])
+          else
+            raise "undefined method '[]' for TypeNode of type #{type} (must be a named tuple type)"
           end
         end
       when "class"

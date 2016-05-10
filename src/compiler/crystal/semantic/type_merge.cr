@@ -250,4 +250,10 @@ module Crystal
       common.try &.virtual_type!
     end
   end
+
+  class NamedTupleInstanceType
+    def common_ancestor(other : NamedTupleInstanceType)
+      self.implements?(other) ? self : nil
+    end
+  end
 end

@@ -132,6 +132,18 @@ module Crystal
       false
     end
 
+    def visit(node : NamedTupleLiteral)
+      @str << "{"
+      node.entries.each_with_index do |entry, i|
+        @str << ", " if i > 0
+        @str << entry.key
+        @str << ": "
+        entry.value.accept self
+      end
+      @str << "}"
+      false
+    end
+
     def visit(node : NilLiteral)
       @str << decorate_singleton(node, "nil")
     end
@@ -760,11 +772,26 @@ module Crystal
       end
 
       node.name.accept self
+
+      printed_arg = false
+
       @str << "("
       node.type_vars.each_with_index do |var, i|
         @str << ", " if i > 0
         var.accept self
+        printed_arg = true
       end
+
+      if named_args = node.named_args
+        named_args.each do |named_arg, i|
+          @str << ", " if printed_arg
+          @str << named_arg.name
+          @str << ": "
+          named_arg.value.accept self
+          printed_arg = true
+        end
+      end
+
       @str << ")"
       false
     end

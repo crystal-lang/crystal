@@ -58,7 +58,7 @@ module JSON
   # are silently ignored.
   macro mapping(properties, strict = false)
     {% for key, value in properties %}
-      {% properties[key] = {type: value} unless value.is_a?(HashLiteral) %}
+      {% properties[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
 
     {% for key, value in properties %}

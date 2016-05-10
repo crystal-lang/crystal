@@ -226,29 +226,17 @@ module Crystal
         exp = @last
         case exp
         when ArrayLiteral
-          visit_macro_for_single_iterable node, exp
+          visit_macro_for_array_like node, exp
         when TupleLiteral
-          visit_macro_for_single_iterable node, exp
+          visit_macro_for_array_like node, exp
         when HashLiteral
-          key_var = node.vars[0]
-          value_var = node.vars[1]?
-          index_var = node.vars[2]?
-
-          exp.entries.each_with_index do |entry, i|
-            @vars[key_var.name] = entry.key
-            if value_var
-              @vars[value_var.name] = entry.value
-            end
-            if index_var
-              @vars[index_var.name] = NumberLiteral.new(i)
-            end
-
-            node.body.accept self
+          visit_macro_for_hash_like(node, exp, exp.entries) do |entry|
+            {entry.key, entry.value}
           end
-
-          @vars.delete key_var.name
-          @vars.delete value_var.name if value_var
-          @vars.delete index_var.name if index_var
+        when NamedTupleLiteral
+          visit_macro_for_hash_like(node, exp, exp.entries) do |entry|
+            {MacroId.new(entry.key), entry.value}
+          end
         when RangeLiteral
           exp.from.accept self
           from = @last
@@ -284,6 +272,15 @@ module Crystal
 
           @vars.delete element_var.name
           @vars.delete index_var.name if index_var
+        when TypeNode
+          type = exp.type
+          unless type.is_a?(NamedTupleInstanceType)
+            exp.raise "can't interate TypeNode of type #{type}, only named tuple types"
+          end
+
+          visit_macro_for_hash_like(node, exp, type.names_and_types) do |name_and_type|
+            {MacroId.new(name_and_type[0]), TypeNode.new(name_and_type[1])}
+          end
         else
           node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"
         end
@@ -291,7 +288,7 @@ module Crystal
         false
       end
 
-      def visit_macro_for_single_iterable(node, exp)
+      def visit_macro_for_array_like(node, exp)
         element_var = node.vars[0]
         index_var = node.vars[1]?
 
@@ -304,6 +301,26 @@ module Crystal
         end
 
         @vars.delete element_var.name
+        @vars.delete index_var.name if index_var
+      end
+
+      def visit_macro_for_hash_like(node, exp, entries)
+        key_var = node.vars[0]
+        value_var = node.vars[1]?
+        index_var = node.vars[2]?
+
+        entries.each_with_index do |entry, i|
+          key, value = yield entry, value_var
+
+          @vars[key_var.name] = key
+          @vars[value_var.name] = value if value_var
+          @vars[index_var.name] = NumberLiteral.new(i) if index_var
+
+          node.body.accept self
+        end
+
+        @vars.delete key_var.name
+        @vars.delete value_var.name if value_var
         @vars.delete index_var.name if index_var
       end
 
@@ -656,6 +673,14 @@ module Crystal
         @last =
           HashLiteral.new(node.entries.map do |entry|
             HashLiteral::Entry.new(accept(entry.key), accept(entry.value))
+          end).at(node)
+        false
+      end
+
+      def visit(node : NamedTupleLiteral)
+        @last =
+          NamedTupleLiteral.new(node.entries.map do |entry|
+            NamedTupleLiteral::Entry.new(entry.key, accept(entry.value))
           end).at(node)
         false
       end

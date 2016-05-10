@@ -518,6 +518,49 @@ describe "macro methods" do
 
   describe "hash methods" do
     it "executes size" do
+      assert_macro "", %({{{:a => 1, :b => 3}.size}}), [] of ASTNode, "2"
+    end
+
+    it "executes empty?" do
+      assert_macro "", %({{{:a => 1}.empty?}}), [] of ASTNode, "false"
+    end
+
+    it "executes []" do
+      assert_macro "", %({{{:a => 1}[:a]}}), [] of ASTNode, "1"
+    end
+
+    it "executes [] not found" do
+      assert_macro "", %({{{:a => 1}[:b]}}), [] of ASTNode, "nil"
+    end
+
+    it "executes keys" do
+      assert_macro "", %({{{:a => 1, :b => 2}.keys}}), [] of ASTNode, "[:a, :b]"
+    end
+
+    it "executes values" do
+      assert_macro "", %({{{:a => 1, :b => 2}.values}}), [] of ASTNode, "[1, 2]"
+    end
+
+    it "executes is_a?" do
+      assert_macro "", %({{{:a => 1}.is_a?(HashLiteral)}}), [] of ASTNode, "true"
+      assert_macro "", %({{{:a => 1}.is_a?(RangeLiteral)}}), [] of ASTNode, "false"
+    end
+
+    it "executes []=" do
+      assert_macro "", %({% a = {} of Nil => Nil; a[1] = 2 %}{{a[1]}}), [] of ASTNode, "2"
+    end
+
+    it "creates a hash literal with a var" do
+      assert_macro "x", %({% a = {:a => x} %}{{a[:a]}}), [1.int32] of ASTNode, "1"
+    end
+
+    it "executes to_a" do
+      assert_macro "", %({{{:a => 1, :b => 3}.to_a}}), [] of ASTNode, "[{:a, 1}, {:b, 3}]"
+    end
+  end
+
+  describe "named literal methods" do
+    it "executes size" do
       assert_macro "", %({{{a: 1, b: 3}.size}}), [] of ASTNode, "2"
     end
 
@@ -534,7 +577,7 @@ describe "macro methods" do
     end
 
     it "executes keys" do
-      assert_macro "", %({{{a: 1, b: 2}.keys}}), [] of ASTNode, "[:a, :b]"
+      assert_macro "", %({{{a: 1, b: 2}.keys}}), [] of ASTNode, "[a, b]"
     end
 
     it "executes values" do
@@ -542,7 +585,7 @@ describe "macro methods" do
     end
 
     it "executes is_a?" do
-      assert_macro "", %({{{a: 1}.is_a?(HashLiteral)}}), [] of ASTNode, "true"
+      assert_macro "", %({{{a: 1}.is_a?(NamedTupleLiteral)}}), [] of ASTNode, "true"
       assert_macro "", %({{{a: 1}.is_a?(RangeLiteral)}}), [] of ASTNode, "false"
     end
 
@@ -550,12 +593,12 @@ describe "macro methods" do
       assert_macro "", %({% a = {} of Nil => Nil; a[1] = 2 %}{{a[1]}}), [] of ASTNode, "2"
     end
 
-    it "creates a hash literal with a var" do
+    it "creates a named tuple literal with a var" do
       assert_macro "x", %({% a = {a: x} %}{{a[:a]}}), [1.int32] of ASTNode, "1"
     end
 
     it "executes to_a" do
-      assert_macro "", %({{{a: 1, b: 3}.to_a}}), [] of ASTNode, "[{:a, 1}, {:b, 3}]"
+      assert_macro "", %({{{a: 1, b: 3}.to_a}}), [] of ASTNode, "[{a, 1}, {b, 3}]"
     end
   end
 

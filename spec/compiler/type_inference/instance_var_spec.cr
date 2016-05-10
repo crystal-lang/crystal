@@ -2821,6 +2821,25 @@ describe "Type inference: instance var" do
       )) { types["Foo"].virtual_type! }
   end
 
+  it "declares as named tuple" do
+    assert_type(%(
+      class Foo
+        @x : NamedTuple(x: Int32, y: Char)
+
+        def initialize
+          a = {x: 1, y: 'a'}
+          @x = a
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { named_tuple_of({"x": int32, "y": char}) }
+  end
+
   it "doesn't complain in second part of #2575" do
     assert_type(%(
       class Foo

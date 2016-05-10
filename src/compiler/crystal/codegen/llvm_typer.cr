@@ -131,6 +131,14 @@ module Crystal
       end
     end
 
+    private def create_llvm_type(type : NamedTupleInstanceType)
+      LLVM::Type.struct(type.llvm_name) do |a_struct|
+        @cache[type] = a_struct
+
+        type.names_and_types.map { |name_and_type| llvm_embedded_type(name_and_type[1]).as(LLVM::Type) }
+      end
+    end
+
     private def create_llvm_type(type : NilableType)
       llvm_type type.not_nil_type
     end
@@ -206,6 +214,10 @@ module Crystal
     end
 
     private def create_llvm_struct_type(type : TupleInstanceType)
+      llvm_type type
+    end
+
+    private def create_llvm_struct_type(type : NamedTupleInstanceType)
       llvm_type type
     end
 

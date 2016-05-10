@@ -580,6 +580,23 @@ module Crystal
       end
     end
 
+    def guess_type(node : NamedTupleLiteral)
+      names_and_types = nil
+      node.entries.each do |entry|
+        element_type = guess_type(entry.value)
+        return nil unless element_type
+
+        names_and_types ||= [] of {String, Type}
+        names_and_types << {entry.key, element_type}
+      end
+
+      if names_and_types
+        mod.named_tuple_of(names_and_types)
+      else
+        nil
+      end
+    end
+
     def guess_type(node : Call)
       guess_type_call_lib_out(node)
 

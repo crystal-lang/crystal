@@ -2075,9 +2075,11 @@ module Crystal
         next_token_skip_space
         new_hash_literal([] of HashLiteral::Entry, line, column, end_location)
       else
-        if hash_symbol_key?
-          first_key = SymbolLiteral.new(@token.value.to_s)
-          next_token
+        if named_tuple_start?
+          unless allow_of
+            raise "can't use named tuple syntax for Hash-like literal", @token
+          end
+          return parse_named_tuple(location)
         else
           first_key = parse_op_assign
           case @token.type
@@ -2126,17 +2128,12 @@ module Crystal
           end
 
           while @token.type != :"}"
-            if hash_symbol_key?
-              key = SymbolLiteral.new(@token.value.to_s)
-              next_token
+            key = parse_op_assign
+            skip_space_or_newline
+            if @token.type == :":" && key.is_a?(StringLiteral)
+              # Nothing: it's a string key
             else
-              key = parse_op_assign
-              skip_space_or_newline
-              if @token.type == :":" && key.is_a?(StringLiteral)
-                # Nothing: it's a string key
-              else
-                check :"=>"
-              end
+              check :"=>"
             end
             slash_is_regex!
             next_token_skip_space_or_newline
@@ -2160,7 +2157,7 @@ module Crystal
       new_hash_literal entries, line, column, end_location, allow_of: allow_of
     end
 
-    def hash_symbol_key?
+    def named_tuple_start?
       (@token.type == :IDENT || @token.type == :CONST) && current_char == ':' && peek_next_char != ':'
     end
 
@@ -2204,6 +2201,55 @@ module Crystal
       end
 
       HashLiteral.new(entries, of).at_end(end_location)
+    end
+
+    def parse_named_tuple(location)
+      key = @token.value.to_s
+      next_token
+
+      slash_is_regex!
+      next_token_skip_space
+
+      first_value = parse_op_assign
+      skip_space_or_newline
+
+      end_location = nil
+
+      entries = [] of NamedTupleLiteral::Entry
+      entries << NamedTupleLiteral::Entry.new(key, first_value)
+
+      if @token.type == :","
+        next_token_skip_space_or_newline
+      end
+
+      while @token.type != :"}"
+        unless named_tuple_start?
+          raise "expected '}' or named tuple name, not #{@token}", @token
+        end
+
+        key = @token.value.to_s
+
+        if entries.any? { |entry| entry.key == key }
+          raise "duplicated key: #{key}", @token
+        end
+
+        next_token
+
+        slash_is_regex!
+        next_token_skip_space
+
+        value = parse_op_assign
+        skip_space_or_newline
+
+        entries << NamedTupleLiteral::Entry.new(key, value)
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        end
+      end
+      end_location = token_end_location
+      next_token_skip_space
+
+      NamedTupleLiteral.new(entries).at(location).at_end(end_location)
     end
 
     def parse_require
@@ -3756,19 +3802,67 @@ module Crystal
       if allow_type_vars && @token.type == :"("
         next_token_skip_space
 
-        types = parse_types allow_primitives: true
-        if types.empty?
-          raise "must specify at least one type var"
+        if named_tuple_start?
+          types = [] of ASTNode
+          named_args = parse_type_named_args(:")")
+        else
+          types = parse_types allow_primitives: true
+          if types.empty?
+            raise "must specify at least one type var"
+          end
+          named_args = nil
         end
 
         check :")"
-        const = Generic.new(const, types).at(location)
+        const = Generic.new(const, types, named_args).at(location)
         const.end_location = token_end_location
 
         next_token_skip_space
       end
 
       const
+    end
+
+    def parse_type_named_args(end_token)
+      named_args = [] of NamedArgument
+
+      name = @token.value.to_s
+      next_token
+      next_token_skip_space
+
+      first_type = parse_single_type(allow_commas: false)
+      skip_space_or_newline
+
+      named_args << NamedArgument.new(name, first_type)
+
+      if @token.type == :","
+        next_token_skip_space_or_newline
+      end
+
+      while @token.type != end_token
+        unless named_tuple_start?
+          raise "expected '#{end_token}' or named argument, not #{@token}", @token
+        end
+
+        name = @token.value.to_s
+
+        if named_args.any? { |arg| arg.name == name }
+          raise "duplicated key: #{name}", @token
+        end
+
+        next_token
+        next_token_skip_space
+
+        type = parse_single_type(allow_commas: false)
+        skip_space_or_newline
+
+        named_args << NamedArgument.new(name, type)
+        if @token.type == :","
+          next_token_skip_space_or_newline
+        end
+      end
+
+      named_args
     end
 
     def parse_types(allow_primitives = false)
@@ -3883,16 +3977,27 @@ module Crystal
         case @token.type
         when :"{"
           next_token_skip_space_or_newline
-          type = parse_type(allow_primitives)
+
+          if named_tuple_start?
+            named_args = parse_type_named_args(:"}")
+          else
+            type = parse_type(allow_primitives)
+          end
+
           check :"}"
           next_token_skip_space
-          case type
-          when Array
-            type = make_tuple_type(type)
-          when ASTNode
-            type = make_tuple_type([type] of ASTNode)
+
+          if named_args
+            type = make_named_tuple_type(named_args)
           else
-            raise "Bug"
+            case type
+            when Array
+              type = make_tuple_type(type)
+            when ASTNode
+              type = make_tuple_type([type] of ASTNode)
+            else
+              raise "Bug"
+            end
           end
         when :"("
           next_token_skip_space_or_newline
@@ -4052,6 +4157,10 @@ module Crystal
 
     def make_tuple_type(types)
       Generic.new(Path.global("Tuple"), types)
+    end
+
+    def make_named_tuple_type(named_args)
+      Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: named_args)
     end
 
     def parse_visibility_modifier(modifier)

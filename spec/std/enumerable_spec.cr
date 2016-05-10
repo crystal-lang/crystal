@@ -632,11 +632,11 @@ describe "Enumerable" do
     it "for tuples" do
       hash = Tuple.new({:a, 1}, {:c, 2}).to_h
       hash.should be_a(Hash(Symbol, Int32))
-      hash.should eq({a: 1, c: 2})
+      hash.should eq({:a => 1, :c => 2})
     end
 
     it "for array" do
-      [[:a, :b], [:c, :d]].to_h.should eq({a: :b, c: :d})
+      [[:a, :b], [:c, :d]].to_h.should eq({:a => :b, :c => :d})
     end
   end
 end
