@@ -61,6 +61,20 @@ describe "type inference: alias" do
     union_types[1].should eq(mod.int32)
   end
 
+  it "allows defining recursive fun aliases" do
+    result = assert_type(%(
+      alias Alias = Alias -> Alias
+      1
+      )) { int32 }
+
+    mod = result.program
+
+    a = mod.types["Alias"].as(AliasType)
+    aliased_type = a.aliased_type.as(FunInstanceType)
+
+    aliased_type.should eq(mod.fun_of(a, a))
+  end
+
   it "allows recursive array with alias" do
     assert_type(%(
       alias Type = Nil | Pointer(Type)
