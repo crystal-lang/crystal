@@ -1901,6 +1901,22 @@ module Crystal
       end
     end
 
+    def implements?(other : Type)
+      return true if self == other
+
+      if other.is_a?(TupleInstanceType)
+        return false unless self.size == other.size
+
+        tuple_types.zip(other.tuple_types) do |self_tuple_type, other_tuple_type|
+          return false unless self_tuple_type.implements?(other_tuple_type)
+        end
+
+        return true
+      end
+
+      super
+    end
+
     def var
       type_vars["T"]
     end

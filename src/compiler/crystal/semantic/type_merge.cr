@@ -251,6 +251,17 @@ module Crystal
     end
   end
 
+  class TupleInstanceType
+    def common_ancestor(other : TupleInstanceType)
+      return nil unless self.size == other.size
+
+      result_types = tuple_types.map_with_index do |self_tuple_type, index|
+        Type.merge!(self_tuple_type, other.tuple_types[index]) as Type
+      end
+      program.tuple_of(result_types)
+    end
+  end
+
   class NamedTupleInstanceType
     def common_ancestor(other : NamedTupleInstanceType)
       self.implements?(other) ? self : nil

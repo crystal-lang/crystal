@@ -110,4 +110,162 @@ describe "Code gen: tuple" do
       {1, 1}.my_size
       )).to_i.should eq(2)
   end
+
+  it "allows tuple covariance" do
+    run(%(
+       class Obj
+         def initialize
+           @tuple = {Foo.new}
+         end
+
+         def tuple=(@tuple)
+         end
+
+         def tuple
+           @tuple
+         end
+       end
+
+       class Foo
+         def bar
+           21
+         end
+       end
+
+       class Bar < Foo
+         def bar
+           42
+         end
+       end
+
+       obj = Obj.new
+       obj.tuple = {Bar.new}
+       obj.tuple[0].bar
+       )).to_i.should eq(42)
+  end
+
+  it "merges two tuple types of same size (1)" do
+    run(%(
+       def foo
+         if 1 == 2
+           {"foo", 10}
+         else
+           {"foo", nil}
+         end
+       end
+
+       val = foo[1]
+       val || 20
+       )).to_i.should eq(20)
+  end
+
+  it "merges two tuple types of same size (2)" do
+    run(%(
+       def foo
+         if 1 == 1
+           {"foo", 10}
+         else
+           {"foo", nil}
+         end
+       end
+
+       val = foo[1]
+       val || 20
+       )).to_i.should eq(10)
+  end
+
+  it "assigns tuple to compatible tuple" do
+    run(%(
+      ptr = Pointer({Int32 | String, Bool | Char}).malloc(1_u64)
+
+      # Here the compiler should cast each value
+      ptr.value = {42, 'x'}
+
+      val = ptr.value[0]
+      val.as?(Int32) || 10
+      )).to_i.should eq(42)
+  end
+
+  it "upcasts tuple inside compatible tuple" do
+    run(%(
+      def foo
+        if 1 == 2
+          {"hello", false}
+        else
+          {42, 'x'}
+        end
+      end
+
+      val = foo[0]
+      val.as?(Int32) || 10
+      )).to_i.should eq(42)
+  end
+
+  it "assigns tuple union to compatible tuple" do
+    run(%(
+      tup1 = {"hello", false}
+      tup2 = {3}
+      tup3 = {42, 'x'}
+
+      ptr = Pointer(typeof(tup1, tup2, tup3)).malloc(1_u64)
+      ptr.value = tup3
+      val = ptr.value[0]
+      val.as?(Int32) || 10
+      )).to_i.should eq(42)
+  end
+
+  it "upcasts tuple union to compatible tuple" do
+    run(%(
+      def foo
+        if 1 == 2
+          {"hello", false} || {3}
+        else
+          {42, 'x'}
+        end
+      end
+
+      val = foo[0]
+      val.as?(Int32) || 10
+      )).to_i.should eq(42)
+  end
+
+  it "assigns tuple inside union to union with compatible tuple" do
+    run(%(
+      tup1 = {"hello", false}
+      tup2 = {3}
+
+      union1 = tup1 || tup2
+
+      tup3 = {42, 'x'}
+      tup4 = {4}
+
+      union2 = tup3 || tup4
+
+      ptr = Pointer(typeof(union1, union2)).malloc(1_u64)
+      ptr.value = union2
+      val = ptr.value[0]
+      val.as?(Int32) || 10
+      )).to_i.should eq(42)
+  end
+
+  it "upcasts tuple inside union to union with compatible tuple" do
+    run(%(
+      def foo
+        if 1 == 2
+          tup1 = {"hello", false}
+          tup2 = {3}
+          union1 = tup1 || tup2
+          union1
+        else
+          tup3 = {42, 'x'}
+          tup4 = {4}
+          union2 = tup3 || tup4
+          union2
+        end
+      end
+
+      val = foo[0]
+      val.as?(Int32) || 10
+      )).to_i.should eq(42)
+  end
 end
