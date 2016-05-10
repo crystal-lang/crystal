@@ -2018,7 +2018,12 @@ module Crystal
         self_names_and_types = self.names_and_types.sort_by &.[0]
         other_names_and_types = other.names_and_types.sort_by &.[0]
 
-        self_names_and_types == other_names_and_types
+        self_names_and_types.zip(other_names_and_types) do |self_name_and_type, other_name_and_type|
+          return nil unless self_name_and_type[0] == other_name_and_type[0]
+          return nil unless self_name_and_type[1].implements?(other_name_and_type[1])
+        end
+
+        self
       else
         super
       end

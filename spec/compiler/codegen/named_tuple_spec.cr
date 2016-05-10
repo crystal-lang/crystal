@@ -179,4 +179,67 @@ describe "Code gen: named tuple" do
       foo[:x]
       )).to_i.should eq(42)
   end
+
+  it "allows named tuple covariance" do
+    run(%(
+       class Obj
+         def initialize
+           @tuple = {foo: Foo.new}
+         end
+
+         def tuple=(@tuple)
+         end
+
+         def tuple
+           @tuple
+         end
+       end
+
+       class Foo
+         def bar
+           21
+         end
+       end
+
+       class Bar < Foo
+         def bar
+           42
+         end
+       end
+
+       obj = Obj.new
+       obj.tuple = {foo: Bar.new}
+       obj.tuple[:foo].bar
+       )).to_i.should eq(42)
+  end
+
+  it "merges two named tuple types with same keys but different types (1)" do
+    run(%(
+       def foo
+         if 1 == 2
+           {x: "foo", y: 10}
+         else
+           {y: nil, x: "foo"}
+         end
+       end
+
+       val = foo[:y]
+       val || 20
+       )).to_i.should eq(20)
+  end
+
+  it "merges two named tuple types with same keys but different types (2)" do
+    run(%(
+       def foo
+         if 1 == 1
+           {x: "foo", y: 10}
+         else
+           {y: nil, x: "foo"}
+         end
+       end
+
+       val = foo[:y]
+       val || 20
+       )).to_i.should eq(10)
+  end
 end

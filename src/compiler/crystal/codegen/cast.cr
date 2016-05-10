@@ -247,7 +247,8 @@ class Crystal::CodeGenVisitor
     value_type.names_and_types.each_with_index do |name_and_type, index|
       value_at_index = load aggregate_index(value, index)
       target_index = target_type.name_index(name_and_type[0]).not_nil!
-      assign aggregate_index(target_pointer, target_index), name_and_type[1], name_and_type[1], value_at_index
+      target_index_type = target_type.name_type(name_and_type[0])
+      assign aggregate_index(target_pointer, target_index), target_index_type, name_and_type[1], value_at_index
     end
   end
 
@@ -536,7 +537,8 @@ class Crystal::CodeGenVisitor
     from_type.names_and_types.each_with_index do |name_and_type, index|
       value_at_index = load aggregate_index(value, index)
       target_index = to_type.name_index(name_and_type[0]).not_nil!
-      assign aggregate_index(struct_type, target_index), name_and_type[1], name_and_type[1], value_at_index
+      target_index_type = to_type.name_type(name_and_type[0])
+      assign aggregate_index(struct_type, target_index), target_index_type, name_and_type[1], value_at_index
     end
     struct_type
   end
