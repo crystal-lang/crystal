@@ -105,6 +105,16 @@ describe "Type inference: named args" do
       )) { int32 }
   end
 
+  it "errors if named arg matches single splat argument" do
+    assert_error %(
+      def foo(*y)
+      end
+
+      foo x: 1, y: 2
+      ),
+      "can't use named args with methods that have a splat argument"
+  end
+
   it "errors if named arg matches splat argument" do
     assert_error %(
       def foo(x, *y)

@@ -23,6 +23,21 @@
 # a value whose type is the union of all the types in the named tuple,
 # and might raise `KeyError`.
 struct NamedTuple
+  # Creates a named tuple that will contain the given arguments.
+  #
+  # This method is useful in macros and generic code because with it you can
+  # creates empty named tuples, something that you can't do with a tuple literal.
+  #
+  # ```
+  # NamedTuple.new(name: "Crystal", year: 2011) #=> {name: "Crystal", year: 2011}
+  # NamedTuple.new                  #=> {}
+  #
+  # {}                         # syntax error
+  # ```
+  # def self.new(**options)
+  #   options
+  # end
+
   # Returns the value for the given *key*, if there's such key, otherwise raises `KeyError`.
   #
   # ```

@@ -1302,6 +1302,10 @@ module Crystal
       node.bind_to node.exp
     end
 
+    def end_visit(node : DoubleSplat)
+      node.bind_to node.exp
+    end
+
     def visit(node : Underscore)
       if @in_type_args == 0
         node.raise "can't read from _"

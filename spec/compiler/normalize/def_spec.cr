@@ -161,4 +161,34 @@ describe "Normalize: def" do
     other_def = a_def.expand_default_arguments(Program.new, 1, ["line"])
     other_def.to_s.should eq("def foo:line(x, line, file = __FILE__)\n  yield x, file, line\nend")
   end
+
+  it "expands with single splat and named arguments" do
+    a_def = parse("def foo(*args); args; end").as(Def)
+    other_def = a_def.expand_default_arguments(Program.new, 0, ["x", "y"])
+    other_def.to_s.should eq("def foo:x:y(x, y)\n  args = { {x: x, y: y} }\n  args\nend")
+  end
+
+  it "expands a def with double splat and no args" do
+    a_def = parse("def foo(**options); options; end").as(Def)
+    other_def = a_def.expand_default_arguments(Program.new, 0)
+    other_def.to_s.should eq("def foo\n  options = {}\n  options\nend")
+  end
+
+  it "expands a def with double splat and two named args" do
+    a_def = parse("def foo(**options); options; end").as(Def)
+    other_def = a_def.expand_default_arguments(Program.new, 0, ["x", "y"])
+    other_def.to_s.should eq("def foo:x:y(x, y)\n  options = {x: x, y: y}\n  options\nend")
+  end
+
+  it "expands a def with double splat and two named args and regular args" do
+    a_def = parse("def foo(y, **options); y + options; end").as(Def)
+    other_def = a_def.expand_default_arguments(Program.new, 0, ["x", "y", "z"])
+    other_def.to_s.should eq("def foo:x:y:z(x, y, z)\n  options = {x: x, z: z}\n  y + options\nend")
+  end
+
+  it "expands a def with splat and double splat" do
+    a_def = parse("def foo(*args, **options); args + options; end").as(Def)
+    other_def = a_def.expand_default_arguments(Program.new, 2, ["x", "y"])
+    other_def.to_s.should eq("def foo:x:y(__temp_1, __temp_2, x, y)\n  args = {__temp_1, __temp_2}\n  options = {x: x, y: y}\n  args + options\nend")
+  end
 end

@@ -1756,10 +1756,17 @@ module Crystal
     end
 
     def visit(node : Splat)
-      write_token :"*"
+      visit_splat node, :"*"
+    end
+
+    def visit(node : DoubleSplat)
+      visit_splat node, :"**"
+    end
+
+    def visit_splat(node, token)
+      write_token token
       skip_space_or_newline
       accept node.exp
-
       false
     end
 

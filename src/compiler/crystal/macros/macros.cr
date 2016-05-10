@@ -100,6 +100,7 @@ module Crystal
       def self.new(expander, mod, scope : Type, type_lookup : Type, a_macro : Macro, call)
         vars = {} of String => ASTNode
         splat_index = a_macro.splat_index
+        double_splat = a_macro.double_splat
 
         # Process regular args
         # (skip the splat index because we need to create an array for it)
@@ -116,7 +117,32 @@ module Crystal
                            else
                              [] of ASTNode
                            end
-          vars[splat_arg.name] = ArrayLiteral.new(splat_elements)
+
+          # If there are named arguments, put them there too as a separate named tuple literal,
+          # but only if there's no double splat
+          if !double_splat && (named_args = call.named_args)
+            named_tuple_elems = named_args.map do |named_arg|
+              NamedTupleLiteral::Entry.new(named_arg.name, named_arg.value)
+            end
+            splat_elements << NamedTupleLiteral.new(named_tuple_elems)
+          end
+
+          vars[splat_arg.name] = TupleLiteral.new(splat_elements)
+        end
+
+        # The double splat argument
+        if double_splat
+          named_tuple_elems = [] of NamedTupleLiteral::Entry
+          if named_args = call.named_args
+            named_args.each do |named_arg|
+              # Skip an argument that's already there as a positional argument
+              next if a_macro.args.any? &.name.==(named_arg.name)
+
+              named_tuple_elems << NamedTupleLiteral::Entry.new(named_arg.name, named_arg.value)
+            end
+          end
+
+          vars[double_splat] = NamedTupleLiteral.new(named_tuple_elems)
         end
 
         # Process default values

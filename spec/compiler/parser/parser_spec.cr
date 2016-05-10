@@ -199,6 +199,15 @@ describe "Parser" do
   assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
   assert_syntax_error "def foo(var = x : Int); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
 
+  it_parses "def foo(**args)\n1\nend", Def.new("foo", body: 1.int32, double_splat: "args")
+  it_parses "def foo(x, **args)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args")
+  it_parses "def foo(x, **args, &block)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args", block_arg: "block".arg, yields: 0)
+  it_parses "def foo(**args)\nargs\nend", Def.new("foo", body: "args".var, double_splat: "args")
+
+  assert_syntax_error "def foo(**args, **args2)"
+
+  it_parses "macro foo(**args)\n1\nend", Macro.new("foo", body: MacroLiteral.new("1\n"), double_splat: "args")
+
   it_parses "abstract def foo", Def.new("foo", abstract: true)
   it_parses "abstract def foo; 1", [Def.new("foo", abstract: true), 1.int32]
   it_parses "abstract def foo\n1", [Def.new("foo", abstract: true), 1.int32]
@@ -945,6 +954,18 @@ describe "Parser" do
   it_parses "foo[*baz]", Call.new("foo".call, "[]", "baz".call.splat)
   it_parses "foo[*baz] = 1", Call.new("foo".call, "[]=", ["baz".call.splat, 1.int32] of ASTNode)
 
+  it_parses "foo **bar", Call.new(nil, "foo", DoubleSplat.new("bar".call))
+  it_parses "foo(**bar)", Call.new(nil, "foo", DoubleSplat.new("bar".call))
+
+  it_parses "foo 1, **bar", Call.new(nil, "foo", [1.int32, DoubleSplat.new("bar".call)])
+  it_parses "foo(1, **bar)", Call.new(nil, "foo", [1.int32, DoubleSplat.new("bar".call)])
+
+  it_parses "foo 1, **bar, &block", Call.new(nil, "foo", args: [1.int32, DoubleSplat.new("bar".call)], block_arg: "block".call)
+  it_parses "foo(1, **bar, &block)", Call.new(nil, "foo", args: [1.int32, DoubleSplat.new("bar".call)], block_arg: "block".call)
+
+  # assert_syntax_error "foo **bar, 1"
+  # assert_syntax_error "foo(**bar, 1)"
+
   it_parses "private def foo; end", VisibilityModifier.new(Visibility::Private, Def.new("foo"))
   it_parses "protected def foo; end", VisibilityModifier.new(Visibility::Protected, Def.new("foo"))
 
@@ -1111,6 +1132,11 @@ describe "Parser" do
   assert_syntax_error "def foo(x, x); end", "duplicated argument name: x", 1, 12
   assert_syntax_error "class Foo(T, T); end", "duplicated type var name: T", 1, 14
   assert_syntax_error "->(x : Int32, x : Int32) {}", "duplicated argument name: x", 1, 15
+
+  assert_syntax_error "def foo(*x, **x); end", "duplicated argument name: x"
+  assert_syntax_error "def foo(*x, &x); end", "duplicated argument name: x"
+  assert_syntax_error "def foo(**x, &x); end", "duplicated argument name: x"
+  assert_syntax_error "def foo(x, **x); end", "duplicated argument name: x"
 
   assert_syntax_error "Set {1, 2, 3} of Int32"
   assert_syntax_error "Hash {foo: 1} of Int32 => Int32"

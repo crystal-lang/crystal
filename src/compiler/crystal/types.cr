@@ -522,11 +522,17 @@ module Crystal
     end
   end
 
+  record NamedArgumentType, name : String, type : Type do
+    def self.from_args(named_args : Array(NamedArgument)?)
+      named_args.try &.map { |named_arg| new(named_arg.name, named_arg.value.type) }
+    end
+  end
+
   record CallSignature,
     name : String,
     arg_types : Array(Type),
     block : Block?,
-    named_args : Array(NamedArgument)?
+    named_args : Array(NamedArgumentType)?
 
   module MatchesLookup
     def lookup_first_def(name, block)
@@ -733,7 +739,7 @@ module Crystal
     def_object_id : UInt64,
     arg_types : Array(Type),
     block_type : Type?,
-    named_args : Array({String, Type})?
+    named_args : Array(NamedArgumentType)?
 
   module DefInstanceContainer
     def def_instances

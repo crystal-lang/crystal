@@ -603,20 +603,142 @@ describe "macro methods" do
   end
 
   describe "tuple methods" do
-    it "executes size" do
-      assert_macro "", %({{{1, 2, 3}.size}}), [] of ASTNode, "3"
-    end
-
-    it "executes empty?" do
-      assert_macro "", %({{{1, 2, 3}.empty?}}), [] of ASTNode, "false"
+    it "executes index 0" do
+      assert_macro "", %({{ {1, 2, 3}[0] }}), [] of ASTNode, "1"
     end
 
     it "executes index 1" do
-      assert_macro "", %({{{1, 2, 3}[1]}}), [] of ASTNode, "2"
+      assert_macro "", %({{ {1, 2, 3}[1] }}), [] of ASTNode, "2"
+    end
+
+    it "executes index out of bounds" do
+      assert_macro "", %({{ {1, 2, 3}[3] }}), [] of ASTNode, "nil"
+    end
+
+    it "executes size" do
+      assert_macro "", %({{ {1, 2, 3}.size }}), [] of ASTNode, "3"
+    end
+
+    it "executes empty?" do
+      assert_macro "", %({{ {1, 2, 3}.empty? }}), [] of ASTNode, "false"
+    end
+
+    it "executes join" do
+      assert_macro "", %({{ {1, 2, 3}.join ", " }}), [] of ASTNode, %("1, 2, 3")
+    end
+
+    it "executes join with strings" do
+      assert_macro "", %({{ {"a", "b"}.join ", " }}), [] of ASTNode, %("a, b")
+    end
+
+    it "executes map" do
+      assert_macro "", %({{ {1, 2, 3}.map { |e| e == 2 } }}), [] of ASTNode, "{false, true, false}"
+    end
+
+    it "executes map with constants" do
+      assert_macro "x", %({{x.map { |e| e.id }}}), [TupleLiteral.new([Path.new("Foo"), Path.new("Bar")] of ASTNode)] of ASTNode, "{Foo, Bar}"
+    end
+
+    it "executes map with arg" do
+      assert_macro "x", %({{x.map { |e| e.id }}}), [TupleLiteral.new(["hello".call] of ASTNode)] of ASTNode, "{hello}"
+    end
+
+    it "executes select" do
+      assert_macro "", %({{ {1, 2, 3}.select { |e| e == 1 } }}), [] of ASTNode, "{1}"
+    end
+
+    it "executes reject" do
+      assert_macro "", %({{ {1, 2, 3}.reject { |e| e == 1 } }}), [] of ASTNode, "{2, 3}"
+    end
+
+    it "executes find (finds)" do
+      assert_macro "", %({{ {1, 2, 3}.find { |e| e == 2 } }}), [] of ASTNode, "2"
+    end
+
+    it "executes find (doesn't find)" do
+      assert_macro "", %({{ {1, 2, 3}.find { |e| e == 4 } }}), [] of ASTNode, "nil"
+    end
+
+    it "executes any? (true)" do
+      assert_macro "", %({{ {1, 2, 3}.any? { |e| e == 1 } }}), [] of ASTNode, "true"
+    end
+
+    it "executes any? (false)" do
+      assert_macro "", %({{ {1, 2, 3}.any? { |e| e == 4 } }}), [] of ASTNode, "false"
+    end
+
+    it "executes all? (true)" do
+      assert_macro "", %({{ {1, 1, 1}.all? { |e| e == 1 } }}), [] of ASTNode, "true"
+    end
+
+    it "executes all? (false)" do
+      assert_macro "", %({{ {1, 2, 1}.all? { |e| e == 1 } }}), [] of ASTNode, "false"
+    end
+
+    it "executes first" do
+      assert_macro "", %({{ {1, 2, 3}.first }}), [] of ASTNode, "1"
+    end
+
+    it "executes last" do
+      assert_macro "", %({{ {1, 2, 3}.last }}), [] of ASTNode, "3"
+    end
+
+    it "executes argify" do
+      assert_macro "", %({{ {1, 2, 3}.argify }}), [] of ASTNode, "1, 2, 3"
+    end
+
+    it "executes argify with symbols and strings" do
+      assert_macro "", %({{ {:foo, "hello", 3}.argify }}), [] of ASTNode, %(:foo, "hello", 3)
+    end
+
+    it "executes argify with splat" do
+      assert_macro "", %({{ *{1, 2, 3} }}), [] of ASTNode, "1, 2, 3"
+    end
+
+    it "executes is_a?" do
+      assert_macro "", %({{ {1, 2, 3}.is_a?(TupleLiteral) }}), [] of ASTNode, "true"
+      assert_macro "", %({{ {1, 2, 3}.is_a?(ArrayLiteral) }}), [] of ASTNode, "false"
     end
 
     it "creates a tuple literal with a var" do
       assert_macro "x", %({% a = {x} %}{{a[0]}}), [1.int32] of ASTNode, "1"
+    end
+
+    it "executes sort with numbers" do
+      assert_macro "", %({{ {3, 2, 1}.sort }}), [] of ASTNode, "{1, 2, 3}"
+    end
+
+    it "executes sort with strings" do
+      assert_macro "", %({{ {"c", "b", "a"}.sort }}), [] of ASTNode, %({"a", "b", "c"})
+    end
+
+    it "executes sort with ids" do
+      assert_macro "", %({{ {"c".id, "b".id, "a".id}.sort }}), [] of ASTNode, %({a, b, c})
+    end
+
+    it "executes sort with ids and strings" do
+      assert_macro "", %({{ {"c".id, "b", "a".id}.sort }}), [] of ASTNode, %({a, "b", c})
+    end
+
+    it "executes uniq" do
+      assert_macro "", %({{ {1, 1, 1, 2, 3, 1, 2, 3, 4}.uniq }}), [] of ASTNode, %({1, 2, 3, 4})
+    end
+
+    it "executes unshift" do
+      assert_macro "", %({% x = {1}; x.unshift(2); %}{{x}}), [] of ASTNode, %({2, 1})
+    end
+
+    it "executes push" do
+      assert_macro "", %({% x = {1}; x.push(2); x << 3 %}{{x}}), [] of ASTNode, %({1, 2, 3})
+    end
+
+    it "executes includes?" do
+      assert_macro "", %({{ {1, 2, 3}.includes?(1) }}), [] of ASTNode, %(true)
+      assert_macro "", %({{ {1, 2, 3}.includes?(4) }}), [] of ASTNode, %(false)
+    end
+
+    it "executes +" do
+      assert_macro "", %({{ {1, 2} + {3, 4, 5} }}), [] of ASTNode, %({1, 2, 3, 4, 5})
     end
   end
 
