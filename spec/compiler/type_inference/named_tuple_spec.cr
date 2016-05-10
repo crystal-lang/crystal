@@ -27,6 +27,27 @@ describe "Type inference: named tuples" do
       )) { char }
   end
 
+  it "types nilable named tuple access (1)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t[:x]?
+      )) { int32 }
+  end
+
+  it "types nilable named tuple access (2)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t[:y]?
+      )) { char }
+  end
+
+  it "types nilable named tuple access (3)" do
+    assert_type(%(
+      t = {x: 1, y: 'a'}
+      t[:foo]?
+      )) { |mod| mod.nil }
+  end
+
   it "gives error when indexing with an unknown name" do
     assert_error "{x: 1, y: 'a'}[:z]",
       "missing key 'z' for named tuple {x: Int32, y: Char}"

@@ -15,6 +15,27 @@ describe "Code gen: named tuple" do
       )).to_i.should eq(42)
   end
 
+  it "codegens tuple nilable index (1)" do
+    run(%(
+      t = {x: 42, y: 'a'}
+      t[:x]? || 84
+      )).to_i.should eq(42)
+  end
+
+  it "codegens tuple nilable index (2)" do
+    run(%(
+      t = {x: 'a', y: 42}
+      t[:y]? || 84
+      )).to_i.should eq(42)
+  end
+
+  it "codegens tuple nilable index (3)" do
+    run(%(
+      t = {x: 'a', y: 42}
+      t[:z]? || 84
+      )).to_i.should eq(84)
+  end
+
   it "passes named tuple to def" do
     run("
       def foo(t)

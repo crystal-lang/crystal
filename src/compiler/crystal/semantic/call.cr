@@ -420,32 +420,42 @@ class Crystal::Call
   end
 
   def check_tuple_indexer(owner, def_name, args, arg_types)
-    return unless args.size == 1 && def_name == "[]"
+    return unless args.size == 1
+
+    case def_name
+    when "[]"
+      nilable = false
+    when "[]?"
+      nilable = true
+    else
+      return
+    end
 
     if owner.is_a?(TupleInstanceType)
       # Check tuple indexer
-      tuple_indexer_helper(args, arg_types, owner, owner) do |instance_type, index|
+      tuple_indexer_helper(args, arg_types, owner, owner, nilable) do |instance_type, index|
         instance_type.tuple_indexer(index)
       end
     elsif owner.metaclass? && (instance_type = owner.instance_type).is_a?(TupleInstanceType)
       # Check tuple metaclass indexer
-      tuple_indexer_helper(args, arg_types, owner, instance_type) do |instance_type, index|
+      tuple_indexer_helper(args, arg_types, owner, instance_type, nilable) do |instance_type, index|
         instance_type.tuple_metaclass_indexer(index)
       end
     elsif owner.is_a?(NamedTupleInstanceType)
       # Check named tuple inexer
-      named_tuple_indexer_helper(args, arg_types, owner, owner) do |instance_type, index|
+      named_tuple_indexer_helper(args, arg_types, owner, owner, nilable) do |instance_type, index|
         instance_type.tuple_indexer(index)
       end
     end
   end
 
-  def tuple_indexer_helper(args, arg_types, owner, instance_type)
+  def tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
     arg = args.first
     if arg.is_a?(NumberLiteral) && arg.kind == :i32
       index = arg.value.to_i
-      if 0 <= index < instance_type.size
-        indexer_def = yield instance_type, index
+      in_bounds = (0 <= index < instance_type.size)
+      if nilable || in_bounds
+        indexer_def = yield instance_type, (in_bounds ? index : -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       elsif instance_type.size == 0
@@ -457,12 +467,13 @@ class Crystal::Call
     nil
   end
 
-  def named_tuple_indexer_helper(args, arg_types, owner, instance_type)
+  def named_tuple_indexer_helper(args, arg_types, owner, instance_type, nilable)
     arg = args.first
     if arg.is_a?(SymbolLiteral)
       name = arg.value
-      if index = instance_type.name_index(name)
-        indexer_def = yield instance_type, index
+      index = index = instance_type.name_index(name)
+      if index || nilable
+        indexer_def = yield instance_type, (index || -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
         return Matches.new([indexer_match] of Match, true)
       else

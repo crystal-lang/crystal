@@ -21,6 +21,18 @@ describe "Type inference: tuples" do
     assert_type("{1, 'a'}[1]") { char }
   end
 
+  it "types tuple [0]?" do
+    assert_type("{1, 'a'}[0]?") { int32 }
+  end
+
+  it "types tuple [1]?" do
+    assert_type("{1, 'a'}[1]?") { char }
+  end
+
+  it "types tuple [2]?" do
+    assert_type("{1, 'a'}[2]?") { |mod| mod.nil }
+  end
+
   it "types tuple metaclass [0]" do
     assert_type("{1, 'a'}.class[0]") { int32.metaclass }
   end

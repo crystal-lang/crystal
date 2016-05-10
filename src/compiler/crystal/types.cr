@@ -1895,7 +1895,8 @@ module Crystal
 
     private def tuple_indexer(indexers, index)
       indexers[index] ||= begin
-        indexer = Def.new("[]", [Arg.new("index")], TupleIndexer.new(index))
+        body = index == -1 ? NilLiteral.new : TupleIndexer.new(index)
+        indexer = Def.new("[]", [Arg.new("index")], body)
         indexer.owner = self
         indexer
       end
@@ -2005,7 +2006,8 @@ module Crystal
 
     private def tuple_indexer(indexers, index)
       indexers[index] ||= begin
-        indexer = Def.new("[]", [Arg.new("index")], TupleIndexer.new(index))
+        body = index == -1 ? NilLiteral.new : TupleIndexer.new(index)
+        indexer = Def.new("[]", [Arg.new("index")], body)
         indexer.owner = self
         indexer
       end

@@ -13,6 +13,18 @@ describe "Code gen: tuple" do
     run("{true, 3}[1]").to_i.should eq(3)
   end
 
+  it "codegens tuple [0]?" do
+    run("{42, 'a'}[0]? || 84").to_i.should eq(42)
+  end
+
+  it "codegens tuple [1]?" do
+    run("{'a', 42}[1]? || 84").to_i.should eq(42)
+  end
+
+  it "codegens tuple [2]?" do
+    run("{'a', 42}[2]? || 84").to_i.should eq(84)
+  end
+
   it "passed tuple to def" do
     run("
       def foo(t)
