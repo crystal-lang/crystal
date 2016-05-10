@@ -410,6 +410,12 @@ module Crystal
   end
 
   class TupleInstanceType
+    def is_restriction_of?(other : TupleInstanceType, owner)
+      return true if self == other || self.implements?(other)
+
+      false
+    end
+
     def restrict(other : Generic, context)
       generic_class = context.type_lookup.lookup_type other.name
       return super unless generic_class == self.generic_class
@@ -426,7 +432,7 @@ module Crystal
     end
 
     def restrict(other : TupleInstanceType, context)
-      self == other ? self : nil
+      self.implements?(other) ? self : nil
     end
   end
 

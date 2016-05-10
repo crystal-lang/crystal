@@ -108,10 +108,14 @@ class Crystal::CodeGenVisitor
     # It might happen that some types inside the union `value_type` are not inside `target_type`,
     # for example with named tuple of same keys with different order. In that case we need cast
     # those value to the correct type before finally storing them in the target union.
-    if value_type.union_types.any? { |vt| vt.is_a?(NamedTupleInstanceType) && !target_type.union_types.any? &.==(vt) }
-      # Compute the values that need a cast
-      types_needing_cast = value_type.union_types.select { |vt| vt.is_a?(NamedTupleInstanceType) && !target_type.union_types.any? &.==(vt) }
+    needs_union_value_cast = value_type.union_types.any? do |vt|
+      needs_value_cast_inside_union?(vt, target_type)
+    end
 
+    if needs_union_value_cast # Compute the values that need a cast
+      types_needing_cast = value_type.union_types.select do |vt|
+        needs_value_cast_inside_union?(vt, target_type)
+      end
       # Fetch the value's type id
       value_type_id = type_id(value, value_type)
 
@@ -148,6 +152,11 @@ class Crystal::CodeGenVisitor
     end
   end
 
+  def needs_value_cast_inside_union?(value_type, union_type)
+    return false unless value_type.is_a?(TupleInstanceType) || value_type.is_a?(NamedTupleInstanceType)
+    !union_type.union_types.any? &.==(value_type)
+  end
+
   def assign_distinct_union_types(target_pointer, target_type, value_type, value)
     casted_value = cast_to_pointer value, target_type
     store load(casted_value), target_pointer
@@ -171,7 +180,7 @@ class Crystal::CodeGenVisitor
 
   def assign_distinct(target_pointer, target_type : MixedUnionType, value_type : Type, value)
     case value_type
-    when NamedTupleInstanceType
+    when TupleInstanceType, NamedTupleInstanceType
       # It might happen that `value_type` is not of the union but it's compatible with one of them.
       # We need to first cast the value to the compatible type and then store it in the value.
       unless target_type.union_types.any? &.==(value_type)
@@ -222,11 +231,24 @@ class Crystal::CodeGenVisitor
     assign_distinct target_pointer, target_type, value_type.typedef, value
   end
 
+  def assign_distinct(target_pointer, target_type : TupleInstanceType, value_type : TupleInstanceType, value)
+    index = 0
+    target_type.tuple_types.zip(value_type.tuple_types) do |target_tuple_type, value_tuple_type|
+      target_ptr = gep target_pointer, 0, index
+      value_ptr = gep value, 0, index
+      loaded_value = load value_ptr
+      assign(target_ptr, target_tuple_type, value_tuple_type, loaded_value)
+      index += 1
+    end
+    value
+  end
+
   def assign_distinct(target_pointer, target_type : NamedTupleInstanceType, value_type : NamedTupleInstanceType, value)
     value_type.names_and_types.each_with_index do |name_and_type, index|
       value_at_index = load aggregate_index(value, index)
       target_index = target_type.name_index(name_and_type[0]).not_nil!
-      assign aggregate_index(target_pointer, target_index), name_and_type[1], name_and_type[1], value_at_index
+      target_index_type = target_type.name_type(name_and_type[0])
+      assign aggregate_index(target_pointer, target_index), target_index_type, name_and_type[1], value_at_index
     end
   end
 
@@ -425,9 +447,15 @@ class Crystal::CodeGenVisitor
     # It might happen that some types inside the union `from_type` are not inside `to_type`,
     # for example with named tuple of same keys with different order. In that case we need cast
     # those value to the correct type before finally storing them in the target union.
-    if from_type.union_types.any? { |vt| vt.is_a?(NamedTupleInstanceType) && !to_type.union_types.any? &.==(vt) }
+    needs_union_value_cast = from_type.union_types.any? do |vt|
+      needs_value_cast_inside_union?(vt, to_type)
+    end
+
+    if needs_union_value_cast
       # Compute the values that need a cast
-      types_needing_cast = from_type.union_types.select { |vt| vt.is_a?(NamedTupleInstanceType) && !to_type.union_types.any? &.==(vt) }
+      types_needing_cast = from_type.union_types.select do |vt|
+        needs_value_cast_inside_union?(vt, to_type)
+      end
 
       # Fetch the value's type id
       from_type_id = type_id(value, from_type)
@@ -481,7 +509,7 @@ class Crystal::CodeGenVisitor
     # It might happen that from_type is not of the union but it's compatible with one of them.
     # We need to first cast the value to the compatible type and to to_type
     case from_type
-    when NamedTupleInstanceType
+    when TupleInstanceType, NamedTupleInstanceType
       unless to_type.union_types.any? &.==(from_type)
         compatible_type = to_type.union_types.find { |ut| from_type.implements?(ut) }.not_nil!
         value = upcast(value, compatible_type, from_type)
@@ -498,12 +526,19 @@ class Crystal::CodeGenVisitor
     value
   end
 
+  def upcast_distinct(value, to_type : TupleInstanceType, from_type : TupleInstanceType)
+    target_ptr = alloca llvm_type(to_type)
+    assign(target_ptr, to_type, from_type, value)
+    target_ptr
+  end
+
   def upcast_distinct(value, to_type : NamedTupleInstanceType, from_type : NamedTupleInstanceType)
     struct_type = alloca llvm_type(to_type)
     from_type.names_and_types.each_with_index do |name_and_type, index|
       value_at_index = load aggregate_index(value, index)
       target_index = to_type.name_index(name_and_type[0]).not_nil!
-      assign aggregate_index(struct_type, target_index), name_and_type[1], name_and_type[1], value_at_index
+      target_index_type = to_type.name_type(name_and_type[0])
+      assign aggregate_index(struct_type, target_index), target_index_type, name_and_type[1], value_at_index
     end
     struct_type
   end

@@ -251,9 +251,39 @@ module Crystal
     end
   end
 
+  class TupleInstanceType
+    def common_ancestor(other : TupleInstanceType)
+      return nil unless self.size == other.size
+
+      result_types = tuple_types.map_with_index do |self_tuple_type, index|
+        Type.merge!(self_tuple_type, other.tuple_types[index]).as(Type)
+      end
+      program.tuple_of(result_types)
+    end
+  end
+
   class NamedTupleInstanceType
     def common_ancestor(other : NamedTupleInstanceType)
-      self.implements?(other) ? self : nil
+      return nil if self.size != other.size
+
+      self_names_and_types = self.names_and_types.sort_by &.[0]
+      other_names_and_types = other.names_and_types.sort_by &.[0]
+
+      # First check if the names are the same
+      self_names_and_types.zip(other_names_and_types) do |self_name_and_type, other_name_and_type|
+        return nil unless self_name_and_type[0] == other_name_and_type[0]
+      end
+
+      # If the names are the same we now merge the types for each key
+      # Note: we use self's order to preserve the order of the tuple on the left hand side
+      merged_names_and_types = self.names_and_types.map_with_index do |self_name_and_type, i|
+        name = self_name_and_type[0]
+        other_type = other.name_type(name)
+        merged_type = Type.merge!(self_name_and_type[1], other_type).as(Type)
+        {name, merged_type}
+      end
+
+      program.named_tuple_of(merged_names_and_types)
     end
   end
 end

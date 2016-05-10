@@ -165,4 +165,77 @@ describe "Type inference: named tuples" do
       ptr.value
       )) { union_of(named_tuple_of({"x": int32}), named_tuple_of({"x": int32, "y": string})) }
   end
+
+  it "allows tuple covariance" do
+    assert_type(%(
+      class Obj
+        def initialize
+          @tuple = {foo: Foo.new}
+        end
+
+        def tuple=(@tuple)
+        end
+
+        def tuple
+          @tuple
+        end
+      end
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      obj = Obj.new
+      obj.tuple = {foo: Bar.new}
+      obj.tuple
+      )) { named_tuple_of({"foo": types["Foo"].virtual_type!}) }
+  end
+
+  it "merges two named tuple with same keys but different types" do
+    assert_type(%(
+      def foo
+        if 1 == 2
+          {x: "foo", y: 1}
+        else
+          {y: nil, x: 'a'}
+        end
+      end
+
+      foo
+      )) { named_tuple_of({"x": union_of(char, string), "y": nilable(int32)}) }
+  end
+
+  it "accept named tuple in type restriction" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(x : {foo: Foo})
+        x
+      end
+
+      foo({foo: Bar.new})
+      )) { named_tuple_of({"foo": types["Bar"]}) }
+  end
+
+  it "accepts named tuple covariance in array" do
+    assert_type(%(
+      require "prelude"
+
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      a = [] of {x: Foo, y: Foo}
+      a << {x: Bar.new, y: Bar.new}
+      a[0]
+      )) { named_tuple_of({"x": types["Foo"].virtual_type!, "y": types["Foo"].virtual_type!}) }
+  end
 end
