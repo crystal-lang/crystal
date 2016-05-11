@@ -1054,15 +1054,14 @@ module Crystal
     def check_lib_call(node, obj_type)
       return unless obj_type.is_a?(LibType)
 
-      method = nil
+      # Error quickly if we can't find a fun
+      method = obj_type.lookup_first_def(node.name, false)
+      node.raise "undefined fun '#{node.name}' for #{obj_type}" unless method
 
       node.args.each_with_index do |arg, index|
         case arg
         when FunLiteral
           next unless arg.def.args.any? { |def_arg| !def_arg.restriction && !def_arg.type? }
-
-          method ||= obj_type.lookup_first_def(node.name, false)
-          return unless method
 
           check_lib_call_arg(method, index) do |method_arg_type|
             arg.def.args.each_with_index do |def_arg, def_arg_index|
@@ -1073,9 +1072,6 @@ module Crystal
           end
         when FunPointer
           next unless arg.args.empty?
-
-          method ||= obj_type.lookup_first_def(node.name, false)
-          return unless method
 
           check_lib_call_arg(method, index) do |method_arg_type|
             method_arg_type.arg_types.each do |arg_type|

@@ -2899,6 +2899,22 @@ describe "Type inference: instance var" do
       )) { int32 }
   end
 
+  it "errors if can't find lib call, before erroring on instance var (#2579)" do
+    assert_error %(
+      lib LibFoo
+      end
+
+      class Foo
+        def initialize
+          LibFoo.nope(out @foo)
+        end
+      end
+
+      Foo.new
+      ),
+      "undefined fun 'nope' for LibFoo"
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv
