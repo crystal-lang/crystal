@@ -317,8 +317,7 @@ module Crystal
           printed_arg = false
           node.args.each_with_index do |arg, i|
             @str << ", " if printed_arg
-            arg_needs_parens = arg.is_a?(Cast)
-            in_parenthesis(arg_needs_parens) { arg.accept self }
+            arg.accept self
             printed_arg = true
           end
           if named_args = node.named_args
@@ -1142,20 +1141,23 @@ module Crystal
     end
 
     def visit(node : Cast)
-      accept_with_maybe_begin_end node.obj
-      @str << " "
-      @str << keyword("as")
-      @str << " "
-      node.to.accept self
-      false
+      visit_cast node, "as"
     end
 
     def visit(node : NilableCast)
+      visit_cast node, "as?"
+    end
+
+    def visit_cast(node, keyword)
+      need_parens = need_parens(node.obj)
+      @str << "(" if need_parens
       accept_with_maybe_begin_end node.obj
-      @str << " "
-      @str << keyword("as?")
-      @str << " "
+      @str << ")" if need_parens
+      @str << "."
+      @str << keyword(keyword)
+      @str << "("
       node.to.accept self
+      @str << ")"
       false
     end
 
