@@ -208,7 +208,7 @@ describe Playground::AgentInstrumentorTransformer do
     end), <<-CR
     class Foo
       def initialize
-        @x = $p.i(4) { 3 }
+        @x = $p.i(4) { 3 }.as(typeof(3))
       end
       def bar(x)
         x = $p.i(7) { x + x }
@@ -237,8 +237,8 @@ describe Playground::AgentInstrumentorTransformer do
     end), <<-CR
     class Foo
       def initialize
-        @x = $p.i(4) { 3 }
-        @@x = $p.i(5) { 4 }
+        @x = $p.i(4) { 3 }.as(typeof(3))
+        @@x = $p.i(5) { 4 }.as(typeof(4))
       end
       def bar
         $p.i(8) { @x }
@@ -262,7 +262,7 @@ describe Playground::AgentInstrumentorTransformer do
       def initialize(x, y)
         @x = x
         @y = y
-        @z = $p.i(4) { @x + @y }
+        @z = $p.i(4) { @x + @y }.as(typeof(@x + @y))
       end
     end
     CR
@@ -312,7 +312,7 @@ describe Playground::AgentInstrumentorTransformer do
     class Bar
       class Foo
         def initialize
-          @x = $p.i(5) { 3 }
+          @x = $p.i(5) { 3 }.as(typeof(3))
         end
       end
     end
@@ -398,7 +398,7 @@ describe Playground::AgentInstrumentorTransformer do
       class Baz
         class Foo
           def initialize
-            @x = $p.i(6) { 3 }
+            @x = $p.i(6) { 3 }.as(typeof(3))
           end
         end
       end

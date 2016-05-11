@@ -68,14 +68,16 @@ module Crystal
       ast.transform self.new(collector.names)
     end
 
-    private def instrument(node)
+    private def instrument(node, add_as_typeof = false)
       if (location = node.location) && location.line_number != ignore_line
         @nested_block_visitor.not_nil!.accept(node)
         args = [NumberLiteral.new(location.line_number)] of ASTNode
         if node.is_a?(TupleLiteral)
           args << ArrayLiteral.new(node.elements.map { |e| StringLiteral.new(e.to_s).as(ASTNode) })
         end
-        Call.new(Global.new("$p"), "i", args, Block.new([] of Var, node.as(ASTNode)))
+        call = Call.new(Global.new("$p"), "i", args, Block.new([] of Var, node.as(ASTNode)))
+        call = Cast.new(call, TypeOf.new([node.clone] of ASTNode)) if add_as_typeof
+        call
       else
         node
       end
@@ -84,7 +86,7 @@ module Crystal
     def transform(node : Assign)
       # constants are Path, avoid instrumenting those assignments
       unless node.target.is_a?(Path)
-        node.value = instrument(node.value)
+        node.value = instrument(node.value, add_as_typeof: !node.target.is_a?(Var))
       end
       node
     end
