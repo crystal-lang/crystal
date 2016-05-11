@@ -239,10 +239,22 @@ module Crystal
       end
 
       output_filename = File.expand_path(output_filename)
+      lflags = lib_flags
+
+      if (cfiles = program.cfiles) && (cfiles.any?)
+        timing("Codegen (c files)") do
+          cfiles.each do |cfile|
+            if path = cfile.path
+              unit = CFileUnit.new(self, path, cfile.flags, output_dir).compile
+              lflags += " #{unit.object_name} "
+            end
+          end
+        end
+      end
 
       timing("Codegen (linking)") do
         Dir.cd(output_dir) do
-          system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lib_flags}), object_names
+          system %(#{CC} -o "#{output_filename}" "${@}" #{@link_flags} #{lflags}), object_names
         end
       end
     end
@@ -324,7 +336,7 @@ module Crystal
       end
     end
 
-    private def system(command, args = nil)
+    def system(command, args = nil)
       puts "#{command} #{args.join " "}" if verbose?
 
       ::system(command, args)
@@ -349,6 +361,58 @@ module Crystal
       obj.colorize.toggle(@color)
     end
 
+    class CFileUnit
+      @path : String
+      @base_name : String
+
+      def initialize(@compiler : Compiler, @path : String, @flags : String?, @output_dir : String)
+        @path = File.expand_path(@path)
+        name = CompilationUnit.clean_unit_name(@path)
+        postfix = @compiler.release? ? "release" : ""
+        @base_name = File.expand_path(File.join(@output_dir, "#{name}_#{postfix}"))
+        @output_filename = "#{@base_name}.o"
+        @output_ts = "#{@base_name}.ts"
+      end
+
+      def compile
+        unless changed?
+          return self
+        end
+
+        flags = @compiler.release? ? "-O2" : ""
+        @compiler.system %(#{CC} -o "#{@output_filename}" "${@}" -c #{flags} #{@flags}), [@path]
+        write_ts
+
+        self
+      end
+
+      def object_name
+        @output_filename
+      end
+
+      def changed?
+        real_ts != ts
+      end
+
+      def real_ts
+        if File.exists?(@path)
+          File.stat(@path).ctime.epoch_ms
+        end
+      end
+
+      def ts
+        if File.exists?(@output_ts)
+          File.read(@output_ts).to_i64
+        end
+      end
+
+      def write_ts
+        if rt = real_ts
+          File.open(@output_ts, "w") { |f| f.puts(rt.to_s) }
+        end
+      end
+    end
+
     class CompilationUnit
       getter compiler : Compiler
       getter llvm_mod : LLVM::Module
@@ -359,7 +423,11 @@ module Crystal
 
       def initialize(@compiler, type_name, @llvm_mod, @output_dir, @bc_flags_changed)
         type_name = "_main" if type_name == ""
-        @name = type_name.gsub do |char|
+        @name = CompilationUnit.clean_unit_name(type_name)
+      end
+
+      def self.clean_unit_name(name)
+        name = name.gsub do |char|
           case char
           when 'a'..'z', 'A'..'Z', '0'..'9', '_'
             char
@@ -368,10 +436,12 @@ module Crystal
           end
         end
 
-        if @name.size > 50
+        if name.size > 50
           # 17 chars from name + 1 (dash) + 32 (md5) = 50
-          @name = "#{@name[0..16]}-#{Crypto::MD5.hex_digest(@name)}"
+          name = "#{name[0..16]}-#{Crypto::MD5.hex_digest(name)}"
         end
+
+        name
       end
 
       def write_bitcode

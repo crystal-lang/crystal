@@ -2208,6 +2208,7 @@ module Crystal
 
   class LibType < ModuleType
     getter link_attributes : Array(LinkAttribute)?
+    getter cfiles : Array(CFile)?
     property? used : Bool
 
     def initialize(program, container, name)
@@ -2220,6 +2221,15 @@ module Crystal
         my_link_attributes = @link_attributes ||= [] of LinkAttribute
         link_attributes.each do |attr|
           my_link_attributes << attr unless my_link_attributes.includes?(attr)
+        end
+      end
+    end
+
+    def add_cfiles(cfiles)
+      if cfiles
+        my_cfiles = @cfiles ||= [] of CFile
+        cfiles.each do |attr|
+          my_cfiles << attr unless my_cfiles.includes?(attr)
         end
       end
     end

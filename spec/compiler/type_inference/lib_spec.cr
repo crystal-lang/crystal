@@ -397,6 +397,79 @@ describe "Type inference: lib" do
       )) { int32 }
   end
 
+  it "errors if missing cfile arguments" do
+    assert_error %(
+      @[CFile]
+      lib LibFoo
+      end
+      ),
+      "missing cfile arguments: must at least specify a path"
+  end
+
+  it "errors if first argument is not a string" do
+    assert_error %(
+      @[CFile(1)]
+      lib LibFoo
+      end
+      ),
+      "'path' cfile argument must be a String"
+  end
+
+  it "errors if second argument is not a string" do
+    assert_error %(
+      @[CFile("foo", 1)]
+      lib LibFoo
+      end
+      ),
+      "'flags' cfile argument must be a String"
+  end
+
+  it "errors if third argument is not a bool" do
+    assert_error %(
+      @[CFile("foo", "bar", 1)]
+      lib LibFoo
+      end
+      ),
+      "wrong number of cfile arguments (given 3, expected 1..2)"
+  end
+
+  it "errors if unknown named arg" do
+    assert_error %(
+      @[CFile(boo: "bar")]
+      lib LibFoo
+      end
+      ),
+      "unknown cfile argument: 'boo' (valid arguments are 'path', 'flags')"
+  end
+
+  it "errors if path already specified with positional argument" do
+    assert_error %(
+      @[CFile("foo", path: "bar")]
+      lib LibFoo
+      end
+      ),
+      "'path' cfile argument already specified"
+  end
+
+  it "errors if path named arg is not a String" do
+    assert_error %(
+      @[CFile(path: 1)]
+      lib LibFoo
+      end
+      ),
+      "'path' cfile argument must be a String"
+  end
+
+  it "clears attributes after lib" do
+    assert_type(%(
+      @[CFile("foo")]
+      lib LibFoo
+        fun foo
+      end
+      1
+      )) { int32 }
+  end
+
   it "errors if lib fun call is part of dispatch" do
     assert_error %(
       lib LibFoo
@@ -440,6 +513,25 @@ describe "Type inference: lib" do
     attrs.size.should eq(2)
     attrs[0].lib.should eq("SDL")
     attrs[1].lib.should eq("SDLMain")
+  end
+
+  it "correctly attached cfiles flags if there's an ifdef" do
+    result = infer_type(%(
+      @[CFile("1.c")]
+      @[CFile("2.c", "-O3")]
+      @[CFile("3.c", "-I/some/dir")] ifdef some_flag
+      lib LibBla
+        fun bla(a : Int32) : Int32
+      end
+
+      LibBla.bla(0)
+      ))
+    libt = result.program.types["LibBla"].as(LibType)
+    attrs = libt.cfiles.not_nil!
+    attrs.size.should eq(2)
+    attrs[0].path.should eq("1.c")
+    attrs[1].path.should eq("2.c")
+    attrs[1].flags.should eq("-O3")
   end
 
   it "supports forward references (#399)" do
@@ -520,6 +612,27 @@ describe "Type inference: lib" do
     attrs = sdl.link_attributes.not_nil!
     attrs.size.should eq(1)
     attrs[0].lib.should eq("SDL")
+  end
+
+  it "reopens lib and adds more cfile attributes" do
+    result = infer_type(%(
+      @[CFile("1.c")]
+      lib LibBla
+        fun bla(a : Int32) : Int32
+      end
+
+      @[CFile("2.c", "-O3")]
+      lib LibBla
+      end
+
+      LibBla.bla(0)
+      ))
+    libt = result.program.types["LibBla"].as(LibType)
+    attrs = libt.cfiles.not_nil!
+    attrs.size.should eq(2)
+    attrs[0].path.should eq("1.c")
+    attrs[1].path.should eq("2.c")
+    attrs[1].flags.should eq("-O3")
   end
 
   it "errors if using void as argument (related to #508)" do

@@ -1,0 +1,6 @@
+@[CFile("#{__DIR__}/cfile.c")]
+lib Sample
+  fun bla(a : Int32) : Int32
+end
+
+puts Sample.bla(1)

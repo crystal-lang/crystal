@@ -12,6 +12,14 @@ module Crystal
     end
   end
 
+  struct CFile
+    getter path : String?
+    getter flags : String?
+
+    def initialize(@path = nil, @flags = nil)
+    end
+  end
+
   class Program
     def lib_flags
       library_path = ["/usr/lib", "/usr/local/lib"]
@@ -47,6 +55,12 @@ module Crystal
     def link_attributes
       attrs = [] of LinkAttribute
       add_link_attributes @types, attrs
+      attrs
+    end
+
+    def cfiles
+      attrs = [] of CFile
+      add_cfiles @types, attrs
       attrs
     end
 
@@ -87,6 +101,18 @@ module Crystal
         end
 
         add_link_attributes type.types?, attrs
+      end
+    end
+
+    private def add_cfiles(types, attrs)
+      types.try &.each_value do |type|
+        next if type.is_a?(AliasType) || type.is_a?(TypeDefType)
+
+        if type.is_a?(LibType) && type.used? && (cfiles = type.cfiles)
+          attrs.concat cfiles
+        end
+
+        add_cfiles type.types?, attrs
       end
     end
   end
