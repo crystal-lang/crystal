@@ -1,6 +1,13 @@
 require "spec"
 require "benchmark"
 
+# Make sure this compiles (#2578)
+typeof(begin
+  Benchmark.bm do |b|
+    b.report("Here") { puts "Yes" }
+  end
+end)
+
 describe Benchmark::IPS::Job do
   it "generally works" do
     # test several things to avoid running a benchmark over and over again in

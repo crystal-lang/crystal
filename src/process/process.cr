@@ -86,7 +86,7 @@ class Process
   def self.times : Tms
     hertz = LibC.sysconf(LibC::SC_CLK_TCK).to_f
     LibC.times(out tms)
-    Tms.new(tms.utime / hertz, tms.stime / hertz, tms.cutime / hertz, tms.cstime / hertz)
+    Tms.new(tms.tms_utime / hertz, tms.tms_stime / hertz, tms.tms_cutime / hertz, tms.tms_cstime / hertz)
   end
 end
 
