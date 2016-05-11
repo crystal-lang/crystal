@@ -673,7 +673,7 @@ module Crystal
           current_element = current_element.key
         end
 
-        if prefix == :"{" && i == 0 && !wrote_newline && (current_element.is_a?(TupleLiteral) || current_element.is_a?(HashLiteral))
+        if prefix == :"{" && i == 0 && !wrote_newline && (current_element.is_a?(TupleLiteral) || current_element.is_a?(NamedTupleLiteral) || current_element.is_a?(HashLiteral))
           write " "
           write_space_at_end = true
         end
