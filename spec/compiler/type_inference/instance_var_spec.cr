@@ -2865,6 +2865,40 @@ describe "Type inference: instance var" do
       )) { int32 }
   end
 
+  it "guesses from as.(typeof(...))" do
+    assert_type(%(
+      class Foo
+        def initialize(x : Int32)
+          a = 1
+          @x = a.as(typeof(x))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(1).x
+      )) { int32 }
+  end
+
+  it "guesses from as.(typeof(...)) in generic type" do
+    assert_type(%(
+      class Foo(T)
+        def initialize(x : Int32)
+          a = 1
+          @x = a.as(typeof(x))
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Float64).new(1).x
+      )) { int32 }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv
