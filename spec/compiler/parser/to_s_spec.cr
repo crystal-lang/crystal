@@ -56,4 +56,8 @@ describe "ASTNode#to_s" do
   expect_to_s "1.responds_to?(:to_s)"
   expect_to_s "1.responds_to?(:\"&&\")"
   expect_to_s "macro foo(x, *y)\nend"
+  expect_to_s "{ {1, 2, 3} }"
+  expect_to_s "{ {1 => 2} }"
+  expect_to_s "{ {1, 2, 3} => 4 }"
+  expect_to_s "{ {foo: 2} }"
 end

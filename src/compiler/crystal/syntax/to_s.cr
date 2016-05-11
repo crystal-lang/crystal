@@ -113,13 +113,21 @@ module Crystal
         @str << " "
       end
 
+      space = false
       @str << "{"
+
       node.entries.each_with_index do |entry, i|
         @str << ", " if i > 0
+
+        space = i == 0 && entry.key.is_a?(TupleLiteral) || entry.key.is_a?(NamedTupleLiteral) || entry.key.is_a?(HashLiteral)
+        @str << " " if space
+
         entry.key.accept self
         @str << " => "
         entry.value.accept self
       end
+
+      @str << " " if space
       @str << "}"
       if of = node.of
         @str << " "
@@ -890,10 +898,15 @@ module Crystal
 
     def visit(node : TupleLiteral)
       @str << "{"
+
+      first = node.elements.first?
+      space = first.is_a?(TupleLiteral) || first.is_a?(NamedTupleLiteral) || first.is_a?(HashLiteral)
+      @str << " " if space
       node.elements.each_with_index do |exp, i|
         @str << ", " if i > 0
         exp.accept self
       end
+      @str << " " if space
       @str << "}"
       false
     end
