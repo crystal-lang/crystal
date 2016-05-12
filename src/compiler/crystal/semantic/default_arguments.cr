@@ -21,7 +21,7 @@ class Crystal::Def
 
     # If there are no named args and all unspecified default arguments are magic
     # constants we can return ourself (magic constants will be filled later)
-    if !named_args && !splat_index
+    if !named_args && !splat_index && !double_splat
       all_magic = true
       args_size.upto(args.size - 1) do |index|
         unless args[index].default_value.is_a?(MagicConstant)
@@ -34,9 +34,10 @@ class Crystal::Def
       end
     end
 
-    retain_body = yields || splat_index || assigns_special_var || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
+    retain_body = yields || splat_index || double_splat || assigns_special_var || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
 
-    splat_index = splat_index() || -1
+    splat_index = self.splat_index || -1
+    double_splat = self.double_splat
 
     new_args = [] of Arg
 
@@ -140,8 +141,32 @@ class Crystal::Def
         splat_size.times do |i|
           tuple_args << Var.new(splat_names[i])
         end
+
+        # If there are named args and just a single splat argument,
+        # it's the case of named args matching a splat
+        # (don't do this if there's a double splat)
+        if !double_splat && named_args && splat_index == 0 && self.args.size == 1
+          entries = named_args.map_with_index do |named_arg, i|
+            NamedTupleLiteral::Entry.new(named_arg, Var.new(named_arg))
+          end
+          tuple_args << NamedTupleLiteral.new(entries)
+        end
+
         tuple = TupleLiteral.new(tuple_args)
         new_body << Assign.new(Var.new(args[splat_index].name), tuple)
+      end
+
+      # Double splat argument
+      if double_splat
+        named_tuple_entries = [] of NamedTupleLiteral::Entry
+        named_args.try &.each do |named_arg|
+          # Don't put here regular arguments
+          next if args.any? &.name.==(named_arg)
+
+          named_tuple_entries << NamedTupleLiteral::Entry.new(named_arg, Var.new(named_arg))
+        end
+        named_tuple = NamedTupleLiteral.new(named_tuple_entries)
+        new_body << Assign.new(Var.new(double_splat), named_tuple)
       end
 
       new_body.push body

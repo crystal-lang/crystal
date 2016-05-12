@@ -579,17 +579,25 @@ module Crystal
         @str << "."
       end
       @str << def_name(node.name)
-      if node.args.size > 0 || node.block_arg
+      if node.args.size > 0 || node.block_arg || node.double_splat
         @str << "("
+        printed_arg = false
         node.args.each_with_index do |arg, i|
-          @str << ", " if i > 0
+          @str << ", " if printed_arg
           @str << "*" if node.splat_index == i
           arg.accept self
+          printed_arg = true
+        end
+        if double_splat = node.double_splat
+          @str << ", " if printed_arg
+          @str << "**"
+          @str << double_splat
         end
         if block_arg = node.block_arg
-          @str << ", " if node.args.size > 0
+          @str << ", " if printed_arg
           @str << "&"
           block_arg.accept self
+          printed_arg = true
         end
         @str << ")"
       end
@@ -611,15 +619,22 @@ module Crystal
       @str << keyword("macro")
       @str << " "
       @str << node.name.to_s
-      if node.args.size > 0 || node.block_arg
+      if node.args.size > 0 || node.block_arg || node.double_splat
         @str << "("
+        printed_arg = false
         node.args.each_with_index do |arg, i|
-          @str << ", " if i > 0
+          @str << ", " if printed_arg
           @str << "*" if i == node.splat_index
           arg.accept self
+          printed_arg = true
+        end
+        if double_splat = node.double_splat
+          @str << ", " if printed_arg
+          @str << "**" << double_splat
+          printed_arg = true
         end
         if block_arg = node.block_arg
-          @str << ", " if node.args.size > 0
+          @str << ", " if printed_arg
           @str << "&"
           block_arg.accept self
         end
@@ -810,6 +825,12 @@ module Crystal
 
     def visit(node : Splat)
       @str << "*"
+      node.exp.accept self
+      false
+    end
+
+    def visit(node : DoubleSplat)
+      @str << "**"
       node.exp.accept self
       false
     end

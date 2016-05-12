@@ -132,8 +132,14 @@ module Crystal
       splat_index = a_def.splat_index
 
       # If there's a splat in the method and named args in the call,
-      # there's no match (it's confusing to determine what should happen)
+      # there's no match (it's confusing to determine what should happen),
+      # unless there's a single argument in this call and it's the splat,
+      # and there's also a double splat.
       if named_args && splat_index
+        # If there's a restriction on the splat, named args won't match
+        if a_def.double_splat && a_def.args.size == 1 && !a_def.args[splat_index].restriction
+          return Match.new(a_def, arg_types, context)
+        end
         return nil
       end
 
@@ -189,10 +195,13 @@ module Crystal
               end
             end
 
-            unless match_arg(named_arg.value.type, a_def.args[found_index], context)
+            unless match_arg(named_arg.type, a_def.args[found_index], context)
               return nil
             end
           else
+            # If there's a double splat it's ok, the named arg will be put there
+            next if a_def.double_splat
+
             return nil
           end
         end
