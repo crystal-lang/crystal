@@ -942,9 +942,14 @@ module Crystal
       max_size = args.size
       default_value_index = args.index(&.default_value)
       min_size = default_value_index || max_size
+      splat_index = self.splat_index
       if splat_index
-        min_size -= 1 unless default_value_index
-        max_size = Int32::MAX
+        if args[splat_index].name.empty?
+          min_size = max_size = splat_index
+        else
+          min_size -= 1 unless default_value_index
+          max_size = Int32::MAX
+        end
       end
       {min_size, max_size}
     end
@@ -1001,19 +1006,20 @@ module Crystal
       splat_index = self.splat_index
 
       if splat_index
-        min_args_size -= 1
-        max_args_size = Int32::MAX
+        if args[splat_index].name.empty?
+          min_args_size = max_args_size = splat_index
+        else
+          min_args_size -= 1
+          max_args_size = Int32::MAX
+        end
       end
 
-      # If there's a splat in the macros and named args in the call,
-      # there's no match (it's confusing to determine what should happen)
-      # unless there's a single argument in this call and it's the splat,
-      # and there's also a double splat.
-      if named_args && splat_index
-        if double_splat && args.size == 1
-          return true
+      # If there are arguments past the splat index and no named args, there's no match,
+      # unless all args past it have default values
+      if splat_index && my_args_size > splat_index + 1 && !named_args
+        unless (splat_index + 1...args.size).all? { |i| args[i].default_value }
+          return false
         end
-        return false
       end
 
       # If there are more positional arguments than those required, there's no match

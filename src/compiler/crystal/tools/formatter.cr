@@ -1308,8 +1308,15 @@ module Crystal
           end
 
           to_skip += 1 if at_skip?
-          indent(prefix_size, arg)
+
+          if i == splat_index && arg.name.empty?
+            # Nothing
+          else
+            indent(prefix_size, arg)
+          end
+
           skip_space
+
           if @token.type == :","
             write "," unless last?(i, args)
             next_token

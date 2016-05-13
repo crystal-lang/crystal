@@ -95,7 +95,46 @@ module Crystal
         end
       end
 
+      # Check required named arguments
+      self_named_args = self.required_named_arguments
+      other_named_args = other.required_named_arguments
+
+      # If both have named args we must restrict name by name
+      if self_named_args && other_named_args
+        self_names = self_named_args.map(&.name)
+        other_names = other_named_args.map(&.name)
+
+        # If the names of the required named args are different, these are different overloads
+        return false if self_names != other_names
+
+        # They are the same, so we apply usual restriction checking on the args
+        self_named_args.zip(other_named_args) do |self_arg, other_arg|
+          self_restriction = self_arg.restriction
+          other_restriction = other_arg.restriction
+          return false if self_restriction == nil && other_restriction != nil
+
+          if self_restriction && other_restriction
+            return false unless self_restriction.is_restriction_of?(other_restriction, owner)
+          end
+        end
+
+        return true
+      end
+
+      # If one has required named args and the other doesn't, none is stricter than the other
+      if (self_named_args || other_named_args)
+        return false
+      end
+
       true
+    end
+
+    def required_named_arguments
+      if (splat_index = self.def.splat_index) && splat_index != self.def.args.size - 1
+        self.def.args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by &.name
+      else
+        nil
+      end
     end
   end
 

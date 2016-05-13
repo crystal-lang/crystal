@@ -886,4 +886,7 @@ describe Crystal::Formatter do
   assert_format "foo.as?(T).bar"
   assert_format "foo &.as?(T)"
   assert_format "foo &.bar.as?(T)"
+
+  assert_format "def foo(x, *, z)\nend"
+  assert_format "macro foo(x, *, z)\nend"
 end
