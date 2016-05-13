@@ -709,6 +709,28 @@ module Crystal
       false
     end
 
+    def visit(node : MultiAssign)
+      node.targets.each do |target|
+        if target.is_a?(Var)
+          @vars[target.name] = MetaVar.new(target.name)
+        end
+        target.accept self
+      end
+
+      node.values.each &.accept self
+      false
+    end
+
+    def visit(node : Rescue)
+      if name = node.name
+        @vars[name] = MetaVar.new(name)
+      end
+
+      node.body.accept self
+
+      false
+    end
+
     def visit(node : Call)
       if node.global
         node.scope = @mod

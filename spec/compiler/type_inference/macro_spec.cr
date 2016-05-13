@@ -832,4 +832,32 @@ describe "Type inference: macro" do
       foo 1, w: 'a', y: true, z: "z"
       )) { tuple_of([int32, bool, named_tuple_of({"w": char, "z": string})]) }
   end
+
+  it "declares multi-assign vars for macro" do
+    assert_type(%(
+      macro id(x, y)
+        {{x}}
+        {{y}}
+      end
+
+      a, b = 1, 2
+      id(a, b)
+      1
+      )) { int32 }
+  end
+
+  it "declares rescue variable inside for macro" do
+    assert_type(%(
+      macro id(x)
+        {{x}}
+      end
+
+      begin
+      rescue ex
+        id(ex)
+      end
+
+      1
+      )) { int32 }
+  end
 end
