@@ -500,6 +500,7 @@ module Crystal
     def transform(node : TypeDeclaration)
       node.var = node.var.transform(self)
       node.declared_type = node.declared_type.transform(self)
+      node.value = node.value.try &.transform(self)
       node
     end
 

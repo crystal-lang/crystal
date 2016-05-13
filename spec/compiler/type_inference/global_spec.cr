@@ -659,4 +659,11 @@ describe "Global inference" do
       $x
       )) { int32 }
   end
+
+  it "expands global var with declaration (#2564)" do
+    assert_type(%(
+      $x : Bool = 1 <= 2 <= 3
+      $x
+      )) { bool }
+  end
 end
