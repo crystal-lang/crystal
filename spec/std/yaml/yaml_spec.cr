@@ -76,6 +76,22 @@ describe "YAML" do
         ))
         doc["bar"].should eq({"<<": ["1"]})
       end
+
+      it "has correct line/number info (#2585)" do
+        begin
+          YAML.parse <<-YAML
+            ---
+            level_one:
+            - name: "test"
+               attributes:
+                 one: "broken"
+            YAML
+          fail "expected YAML.parse to raise"
+        rescue ex : YAML::ParseException
+          ex.line_number.should eq(3)
+          ex.column_number.should eq(3)
+        end
+      end
     end
   end
 
