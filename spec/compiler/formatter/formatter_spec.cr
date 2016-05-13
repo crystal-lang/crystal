@@ -889,4 +889,11 @@ describe Crystal::Formatter do
 
   assert_format "def foo(x, *, z)\nend"
   assert_format "macro foo(x, *, z)\nend"
+
+  assert_format "def foo(x, *, y, **z)\nend"
+  assert_format "def foo(**z)\nend"
+  assert_format "def foo(*y, **z)\nend"
+  assert_format "def foo(**z, &block)\nend"
+  assert_format "def foo(x, **z)\nend"
+  assert_format "def foo(x, **z, &block)\nend"
 end

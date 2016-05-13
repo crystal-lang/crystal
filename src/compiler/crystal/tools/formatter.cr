@@ -1238,42 +1238,47 @@ module Crystal
       false
     end
 
-    def format_def_args(node : ASTNode)
-      format_def_args node.args, node.block_arg, node.splat_index, false
+    def format_def_args(node : Def | Macro)
+      format_def_args node.args, node.block_arg, node.splat_index, false, node.double_splat
     end
 
-    def format_def_args(args : Array, block_arg, splat_index, variadic)
+    def format_def_args(args : Array, block_arg, splat_index, variadic, double_splat)
       to_skip = 0
 
       # If there are no args, remove extra "()", if any
       if args.empty?
         if @token.type == :"("
           next_token_skip_space_or_newline
+          write "(" if block_arg || double_splat || variadic
+
+          if double_splat
+            write_token :"**"
+            check :IDENT
+            write @token.value
+            next_token_skip_space_or_newline
+          end
 
           if block_arg
-            write_token "(", :"&"
+            if double_splat
+              write_token :",", " "
+              skip_space_or_newline
+            end
+            write_token :"&"
             skip_space
             to_skip += 1 if at_skip?
             accept block_arg
             skip_space_or_newline
-            write ")"
           end
 
           if variadic
             skip_space_or_newline
-            write_token "(", :"...", ")"
+            write_token :"..."
             skip_space_or_newline
           end
 
           check :")"
           next_token
-        elsif block_arg
-          skip_space_or_newline
-          write_token " ", :"&"
-          skip_space
-          to_skip += 1 if at_skip?
-          accept block_arg
-          skip_space
+          write ")" if block_arg || double_splat || variadic
         end
       else
         prefix_size = @column + 1
@@ -1336,6 +1341,18 @@ module Crystal
           end
         end
 
+        if double_splat
+          write_token ", ", :"**"
+          skip_space
+          check :IDENT
+          write double_splat
+          next_token_skip_space
+          if block_arg
+            check :","
+            next_token_skip_space_or_newline
+          end
+        end
+
         if block_arg
           write_token ", ", :"&"
           skip_space
@@ -1388,7 +1405,7 @@ module Crystal
         end
       end
 
-      format_def_args node.args, nil, nil, node.varargs
+      format_def_args node.args, nil, nil, node.varargs, nil
 
       if return_type = node.return_type
         skip_space
