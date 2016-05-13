@@ -765,3 +765,76 @@ i.ip {
     font-weight: normal;
   }
 }
+
+.sponsor {
+  position: relative;
+  clear: both;
+  margin-bottom: 30px;
+
+  .col-logo {
+    width: 160px;
+    position: relative;
+    .logo {
+      float: right;
+      margin-right: 10px;
+    }
+    img {
+      border-radius: 50%;
+      max-width: none;
+    }
+  }
+  .col-logo, .name {
+    float: left;
+  }
+  .this_month, .legend {
+    float: right;
+    clear: right;
+  }
+  .legend {
+    font-size: 13px;
+    color: #b5b5b5;
+    text-transform: uppercase;
+  }
+  a {
+    font-weight: normal;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &.level-250 {
+    img {
+      height: 150px;
+      width: 150px;
+    }
+    .name, .this_month {
+      line-height: 130px;
+      height: 70px;
+      font-size: 24px;
+    }
+    .legend {
+      margin-top: 7px;
+    }
+  }
+
+  &.level-75 {
+    img {
+      height: 75px;
+      width: 75px;
+    }
+    .name, .this_month {
+      line-height: 65px;
+      height: 35px;
+      font-size: 20px;
+    }
+    .legend {
+      margin-top: 4px;
+    }
+  }
+
+  &.level-25, &.level-10, &.level-16, &.level-15 {
+    .name, .name a {
+      font-weight: bold;
+    }
+  }
+}

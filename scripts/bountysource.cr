@@ -19,6 +19,18 @@ module BountySource
       Array(SupportLevel).from_json(response)
     end
 
+    def supporters
+      headers = HTTP::Headers{
+        "Accept":        "application/vnd.bountysource+json; version=2",
+        "Authorization": "token #{@token}",
+        "User-Agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36",
+        "Referer":       "https://salt.bountysource.com/teams/crystal-lang/admin/supporters",
+        "Origin":        "https://salt.bountysource.com",
+      }
+      response = @client.get("/supporters?order=monthly&per_page=200&team_slug=#{@team}", headers: headers).body
+      Array(Supporters).from_json(response)
+    end
+
     def user(slug)
       headers = HTTP::Headers{
         "Accept":     "application/vnd.bountysource+json; version=1",
@@ -27,6 +39,19 @@ module BountySource
       response = @client.get("/users/#{slug}?access_token=#{@token}", headers: headers).body
       User.from_json(response)
     end
+  end
+
+  class Supporters
+    JSON.mapping({
+      type:            {type: String, nilable: true},
+      id:              {type: Int64, nilable: true},
+      slug:            {type: String, nilable: true},
+      display_name:    String,
+      image_url_large: String,
+      monthly_amount:  Float64,
+      alltime_amount:  Float64,
+      created_at:      String,
+    })
   end
 
   class SupportLevel
@@ -94,7 +119,7 @@ module GitHub
   end
 end
 
-record Sponsor, name, url
+record Sponsor, name, url, logo, this_month, all_time, since
 
 token = ARGV[0]?
 unless token
@@ -112,6 +137,8 @@ team = "crystal-lang"
 bountysource = BountySource::API.new(team, token)
 
 github = GitHub::API.new
+
+supporters = bountysource.supporters
 
 support_levels = bountysource.support_levels
 support_levels.select! { |s| s.status == "active" && s.owner.display_name != "Anonymous" }
@@ -142,21 +169,54 @@ support_levels.each do |support_level|
 
   amount = support_level.amount
 
-  if !url || amount < 5
-    sponsors << Sponsor.new(name, "")
+  show_url = url && amount >= 5
+
+  url = show_url ? url.not_nil! : ""
+
+  supporter = supporters.find { |s| s.display_name == support_level.owner.display_name }
+  if supporter
+    show_logo = amount >= 75
+    logo = ""
+    if show_logo
+      HTTP::Client.get(supporter.image_url_large) do |logo_request|
+        ext = case logo_request.content_type
+              when "image/jpeg"
+                "jpg"
+              when "image/png"
+                "png"
+              else
+                raise "not implemented image type #{logo_request.content_type}"
+              end
+        logo = "/images/sponsors/#{name.downcase.gsub(/\W/, "_")}.#{ext}"
+        local_file = logo[1..-1]
+        unless File.exists?(local_file)
+          File.open(local_file, "w") do |f|
+            IO.copy logo_request.body_io, f
+          end
+        end
+      end
+    end
+
+    all_time = supporter.alltime_amount
+    since = Time.parse(supporter.created_at[0..10], "%F")
   else
-    sponsors << Sponsor.new(name, url.not_nil!)
+    raise "unable to match: #{support_level.owner.display_name} in supporters"
   end
+  sponsors << Sponsor.new(name, url, logo, amount, all_time, since)
 end
 
-sponsors.sort_by! { |s| {s.name.downcase, s.url} }.uniq!
+sponsors.sort_by! { |s| {-s.this_month, -s.all_time, s.name.downcase} }.uniq!
 
 puts "- sponsors = [nil,"
 sponsors.each do |sponsor|
-  if sponsor.url.empty?
-    puts %(              [#{sponsor.name.inspect}],)
-  else
-    puts %(              [#{sponsor.name.inspect}, #{sponsor.url.inspect}],)
-  end
+  # pp sponsor
+  data = {} of String => String | Int32
+  data["logo"] = sponsor.logo unless sponsor.logo.empty?
+  data["name"] = sponsor.name
+  data["url"] = sponsor.url unless sponsor.url.empty?
+  data["this_month"] = sponsor.this_month.to_i
+  data["all_time"] = sponsor.all_time.to_i
+  data["since"] = sponsor.since.to_s("%b %-d, %Y")
+  puts %(              #{data.to_json},)
 end
-puts "             ].compact.sort { |x, y| cmp = x.length <=> y.length; cmp == 0 ? x.dup.tap { |z| z[0] = z[0].downcase } <=> y.dup.tap { |z| z[0] = z[0].downcase } : -cmp }"
+puts "             ].compact"

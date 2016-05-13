@@ -529,3 +529,76 @@ i.ip.downg {
   color: #4C4C4C;
   font-weight: normal;
 }
+.sponsor {
+  position: relative;
+  clear: both;
+  margin-bottom: 30px;
+}
+.sponsor .col-logo {
+  width: 160px;
+  position: relative;
+}
+.sponsor .col-logo .logo {
+  float: right;
+  margin-right: 10px;
+}
+.sponsor .col-logo img {
+  border-radius: 50%;
+  max-width: none;
+}
+.sponsor .col-logo,
+.sponsor .name {
+  float: left;
+}
+.sponsor .this_month,
+.sponsor .legend {
+  float: right;
+  clear: right;
+}
+.sponsor .legend {
+  font-size: 13px;
+  color: #b5b5b5;
+  text-transform: uppercase;
+}
+.sponsor a {
+  font-weight: normal;
+}
+.sponsor a:hover {
+  text-decoration: underline;
+}
+.sponsor.level-250 img {
+  height: 150px;
+  width: 150px;
+}
+.sponsor.level-250 .name,
+.sponsor.level-250 .this_month {
+  line-height: 130px;
+  height: 70px;
+  font-size: 24px;
+}
+.sponsor.level-250 .legend {
+  margin-top: 7px;
+}
+.sponsor.level-75 img {
+  height: 75px;
+  width: 75px;
+}
+.sponsor.level-75 .name,
+.sponsor.level-75 .this_month {
+  line-height: 65px;
+  height: 35px;
+  font-size: 20px;
+}
+.sponsor.level-75 .legend {
+  margin-top: 4px;
+}
+.sponsor.level-25 .name,
+.sponsor.level-10 .name,
+.sponsor.level-16 .name,
+.sponsor.level-15 .name,
+.sponsor.level-25 .name a,
+.sponsor.level-10 .name a,
+.sponsor.level-16 .name a,
+.sponsor.level-15 .name a {
+  font-weight: bold;
+}
