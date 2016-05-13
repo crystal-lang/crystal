@@ -111,23 +111,15 @@ module Crystal
         # Gather splat args into an array
         if splat_index
           splat_arg = a_macro.args[splat_index]
-          splat_elements = if splat_index < call.args.size
-                             splat_size = Splat.size(a_macro, call.args)
-                             call.args[splat_index, splat_size]
-                           else
-                             [] of ASTNode
-                           end
-
-          # If there are named arguments, put them there too as a separate named tuple literal,
-          # but only if there's no double splat
-          if !double_splat && (named_args = call.named_args)
-            named_tuple_elems = named_args.map do |named_arg|
-              NamedTupleLiteral::Entry.new(named_arg.name, named_arg.value)
-            end
-            splat_elements << NamedTupleLiteral.new(named_tuple_elems)
+          unless splat_arg.name.empty?
+            splat_elements = if splat_index < call.args.size
+                               splat_size = Splat.size(a_macro, call.args)
+                               call.args[splat_index, splat_size]
+                             else
+                               [] of ASTNode
+                             end
+            vars[splat_arg.name] = TupleLiteral.new(splat_elements)
           end
-
-          vars[splat_arg.name] = TupleLiteral.new(splat_elements)
         end
 
         # The double splat argument

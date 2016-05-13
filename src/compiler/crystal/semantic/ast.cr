@@ -408,9 +408,6 @@ module Crystal
       Splat.at(a_def, objects) do |arg, arg_index, object, object_index|
         yield arg, arg_index, object, object_index
       end
-      Splat.after(a_def, objects) do |arg, arg_index, object, object_index|
-        yield arg, arg_index, object, object_index
-      end
     end
 
     # Yields `arg, arg_index, object, object_index` corresponding
@@ -434,47 +431,28 @@ module Crystal
     # If there are more objects than arguments in the method, they are not yielded.
     # If splat index is `nil`, all args and objects (with their indices) are yielded.
     def self.at(a_def, objects, &block)
-      splat = a_def.splat_index
-      return unless splat
+      splat_index = a_def.splat_index
+      return unless splat_index
 
-      splat_size = objects.size - (a_def.args.size - 1)
+      splat_size = Splat.size(a_def, objects, splat_index)
       splat_size.times do |i|
-        obj_index = splat + i
+        obj_index = splat_index + i
         obj = objects[obj_index]?
         break unless obj
 
-        yield a_def.args[splat], splat, obj, obj_index
-      end
-
-      nil
-    end
-
-    # Yields `arg, arg_index, object, object_index` corresponding
-    # to arguments after a def's splat index, matching the given objects.
-    # If there are more objects than arguments in the method, they are not yielded.
-    # If splat index is `nil`, all args and objects (with their indices) are yielded.
-    def self.after(a_def, objects, &block)
-      splat = a_def.splat_index
-      return unless splat
-
-      splat_size = objects.size - (a_def.args.size - 1)
-      remaining_size = objects.size - (splat + splat_size)
-      remaining_size.times do |i|
-        arg_index = splat + 1 + i
-        obj_index = splat + splat_size + i
-        obj = objects[obj_index]?
-        break unless obj
-
-        yield a_def.args[arg_index], arg_index, obj, obj_index
+        yield a_def.args[splat_index], splat_index, obj, obj_index
       end
 
       nil
     end
 
     # Returns the splat size of this def matching the given objects.
-    # Returns `nil` if this def has no splat index.
-    def self.size(a_def, objects)
-      objects.size - (a_def.args.size - 1)
+    def self.size(a_def, objects, splat_index = a_def.splat_index)
+      if splat_index
+        objects.size - splat_index
+      else
+        0
+      end
     end
   end
 

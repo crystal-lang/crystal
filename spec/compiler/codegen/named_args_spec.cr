@@ -122,4 +122,54 @@ describe "Code gen: named args" do
       foo y: 42, x: "foo"
       )).to_i.should eq(42)
   end
+
+  it "overloads based on required named args" do
+    run(%(
+      def foo(x, *, y)
+        x + y
+      end
+
+      def foo(x, *, z)
+        x * z
+      end
+
+      a = foo(10, y: 20)
+      b = foo(30, z: 40)
+      a + b
+      )).to_i.should eq(10 + 20 + 30*40)
+  end
+
+  it "overloads based on required named args, with restrictions" do
+    run(%(
+      def foo(x, *, z : Int32)
+        x + z
+      end
+
+      def foo(x, *, z : Float64)
+        x * z.to_i
+      end
+
+      a = foo(10, z: 20)
+      b = foo(30, z: 40.0)
+      a + b
+      )).to_i.should eq(10 + 20 + 30*40)
+  end
+
+  it "uses bare splat in new (2)" do
+    run(%(
+      class Foo
+        def initialize(*, y = 22)
+          @y = y
+        end
+
+        def y
+          @y
+        end
+      end
+
+      v1 = Foo.new.y
+      v2 = Foo.new(y: 20).y
+      v1 + v2
+      )).to_i.should eq(42)
+  end
 end

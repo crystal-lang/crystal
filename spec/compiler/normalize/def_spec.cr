@@ -57,26 +57,6 @@ describe "Normalize: def" do
     actual.should eq(expected)
   end
 
-  it "expands with splat with one arg after" do
-    a_def = parse("def foo(*args, x); args; end").as(Def)
-    actual = a_def.expand_default_arguments(Program.new, 3)
-    expected = parse("def foo(__temp_1, __temp_2, x)\n  args = {__temp_1, __temp_2}\n  args\nend")
-    actual.should eq(expected)
-  end
-
-  it "expands with splat with one arg after and just one argument (#1340)" do
-    a_def = parse("def foo(*args, x); args; end").as(Def)
-    actual = a_def.expand_default_arguments(Program.new, 1)
-    actual.to_s.should eq("def foo(x)\n  args = {}\n  args\nend")
-  end
-
-  it "expands with splat with one arg before and after" do
-    a_def = parse("def foo(x, *args, z); args; end").as(Def)
-    actual = a_def.expand_default_arguments(Program.new, 3)
-    expected = parse("def foo(x, __temp_1, z)\n  args = {__temp_1}\n  args\nend")
-    actual.should eq(expected)
-  end
-
   it "expands with splat and zero" do
     a_def = parse("def foo(*args); args; end").as(Def)
     actual = a_def.expand_default_arguments(Program.new, 0)
@@ -162,12 +142,6 @@ describe "Normalize: def" do
     other_def.to_s.should eq("def foo:line(x, line, file = __FILE__)\n  yield x, file, line\nend")
   end
 
-  it "expands with single splat and named arguments" do
-    a_def = parse("def foo(*args); args; end").as(Def)
-    other_def = a_def.expand_default_arguments(Program.new, 0, ["x", "y"])
-    other_def.to_s.should eq("def foo:x:y(x, y)\n  args = { {x: x, y: y} }\n  args\nend")
-  end
-
   it "expands a def with double splat and no args" do
     a_def = parse("def foo(**options); options; end").as(Def)
     other_def = a_def.expand_default_arguments(Program.new, 0)
@@ -190,5 +164,23 @@ describe "Normalize: def" do
     a_def = parse("def foo(*args, **options); args + options; end").as(Def)
     other_def = a_def.expand_default_arguments(Program.new, 2, ["x", "y"])
     other_def.to_s.should eq("def foo:x:y(__temp_1, __temp_2, x, y)\n  args = {__temp_1, __temp_2}\n  options = {x: x, y: y}\n  args + options\nend")
+  end
+
+  it "expands arg with default value after splat" do
+    a_def = parse("def foo(*args, x = 10); args + x; end").as(Def)
+    other_def = a_def.expand_default_arguments(Program.new, 0)
+    other_def.to_s.should eq("def foo\n  x = 10\n  args = {}\n  args + x\nend")
+  end
+
+  it "expands default value after splat index" do
+    a_def = parse("def foo(x, *y, z = 10); x + y + z; end").as(Def)
+    other_def = a_def.expand_default_arguments(Program.new, 3)
+    other_def.to_s.should eq("def foo(x, __temp_1, __temp_2)\n  z = 10\n  y = {__temp_1, __temp_2}\n  (x + y) + z\nend")
+  end
+
+  it "uses bare *" do
+    a_def = parse("def foo(x, *, y); x + y; end").as(Def)
+    other_def = a_def.expand_default_arguments(Program.new, 1, ["y"])
+    other_def.to_s.should eq("def foo:y(x, y)\n  x + y\nend")
   end
 end

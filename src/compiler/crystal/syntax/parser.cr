@@ -2547,6 +2547,11 @@ module Crystal
           end
           index += 1
         end
+
+        if splat_index == args.size - 1 && args.last.name.empty?
+          raise "named arguments must follow bare *", args.last.location.not_nil!
+        end
+
         next_token
       when :IDENT, :"*"
         if @token.keyword?(:end)
@@ -2967,6 +2972,11 @@ module Crystal
           end
           index += 1
         end
+
+        if splat_index == args.size - 1 && args.last.name.empty?
+          raise "named arguments must follow bare *", args.last.location.not_nil!
+        end
+
         next_token_skip_space
         if @token.type == :SYMBOL
           raise "a space is mandatory between ':' and return type", @token
@@ -3076,6 +3086,7 @@ module Crystal
 
       splat = false
       double_splat = false
+      arg_location = @token.location
 
       case @token.type
       when :"*"
@@ -3095,30 +3106,36 @@ module Crystal
         next_token_skip_space
       end
 
-      arg_location = @token.location
-      arg_name, uses_arg = parse_arg_name(arg_location, extra_assigns)
+      found_space = false
 
-      if args.any? { |arg| arg.name == arg_name }
-        raise "duplicated argument name: #{arg_name}", @token
+      if splat && (@token.type == :"," || @token.type == :")")
+        arg_name = ""
+        uses_arg = false
+        allow_restrictions = false
+      else
+        arg_location = @token.location
+        arg_name, uses_arg = parse_arg_name(arg_location, extra_assigns)
+        if args.any? { |arg| arg.name == arg_name }
+          raise "duplicated argument name: #{arg_name}", @token
+        end
+
+        if parentheses
+          next_token
+          found_space = @token.type == :SPACE || @token.type == :NEWLINE
+          skip_space_or_newline
+        else
+          next_token
+          found_space = @token.type == :SPACE
+          skip_space
+        end
+
+        if @token.type == :SYMBOL
+          raise "space required after colon in type restriction", @token
+        end
       end
 
       default_value = nil
       restriction = nil
-      found_space = false
-
-      if parentheses
-        next_token
-        found_space = @token.type == :SPACE || @token.type == :NEWLINE
-        skip_space_or_newline
-      else
-        next_token
-        found_space = @token.type == :SPACE
-        skip_space
-      end
-
-      if @token.type == :SYMBOL
-        raise "space required after colon in type restriction", @token
-      end
 
       found_colon = false
 
@@ -3134,29 +3151,23 @@ module Crystal
         found_colon = true
       end
 
-      if !splat && !double_splat
-        if @token.type == :"="
-          if found_splat || splat
-            unexpected_token
-          end
+      if @token.type == :"="
+        next_token_skip_space_or_newline
 
-          next_token_skip_space_or_newline
-
-          case @token.type
-          when :__LINE__, :__FILE__, :__DIR__
-            default_value = MagicConstant.new(@token.type).at(@token.location)
-            next_token
-          else
-            @no_type_declaration += 1
-            default_value = parse_op_assign
-            @no_type_declaration -= 1
-          end
-
-          skip_space
+        case @token.type
+        when :__LINE__, :__FILE__, :__DIR__
+          default_value = MagicConstant.new(@token.type).at(@token.location)
+          next_token
         else
-          if found_default_value && !splat
-            raise "argument must have a default value", arg_location
-          end
+          @no_type_declaration += 1
+          default_value = parse_op_assign
+          @no_type_declaration -= 1
+        end
+
+        skip_space
+      else
+        if found_default_value && !found_splat && !splat && !double_splat
+          raise "argument must have a default value", arg_location
         end
       end
 

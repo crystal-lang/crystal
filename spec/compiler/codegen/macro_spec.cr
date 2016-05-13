@@ -473,56 +473,6 @@ describe "Code gen: macro" do
       )).to_i.should eq(3)
   end
 
-  it "runs macro with arg and splat in first position (1)" do
-    run(%(
-      macro foo(*args, name)
-        {{args.size}}
-      end
-
-      foo 1, 1, 1, bar
-      )).to_i.should eq(3)
-  end
-
-  it "runs macro with arg and splat in first position (2)" do
-    run(%(
-      macro foo(*args, name)
-        {{name}}
-      end
-
-      foo 1, 1, 1, "hello"
-      )).to_string.should eq("hello")
-  end
-
-  it "runs macro with arg and splat in the middle (1)" do
-    run(%(
-      macro foo(foo, *args, name)
-        {{args.size}}
-      end
-
-      foo x, 1, 1, 1, bar
-      )).to_i.should eq(3)
-  end
-
-  it "runs macro with arg and splat in the middle (2)" do
-    run(%(
-      macro foo(foo, *args, name)
-        {{foo}}
-      end
-
-      foo "yellow", 1, 1, 1, bar
-      )).to_string.should eq("yellow")
-  end
-
-  it "runs macro with arg and splat in the middle (3)" do
-    run(%(
-      macro foo(foo, *args, name)
-        {{name}}
-      end
-
-      foo "yellow", 1, 1, 1, "cool"
-      )).to_string.should eq("cool")
-  end
-
   it "expands macro that yields" do
     run(%(
       def foo

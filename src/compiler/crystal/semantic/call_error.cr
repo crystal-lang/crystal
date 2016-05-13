@@ -153,8 +153,10 @@ class Crystal::Call
       min_size <= real_args_size <= max_size
     end
 
+    # bare_splat = splat_index && args[splat_index].name.empty?
+
     # Don't say "wrong number of arguments" when there are named args in this call
-    if defs_matching_args_size.empty? && !named_args_types
+    if defs_matching_args_size.empty? # && (!named_args_types || bare)
       all_arguments_sizes = [] of Int32
       min_splat = Int32::MAX
       defs.each do |a_def|
@@ -277,7 +279,6 @@ class Crystal::Call
   # If there's only one def that could match, and there are named
   # arguments in this call, we can give a better error message.
   def check_single_def_error_message(defs, named_args, io)
-    return false unless named_args
     return false unless defs.size == 1
 
     a_def = defs.first
@@ -292,13 +293,9 @@ class Crystal::Call
   end
 
   def check_named_args_and_splats(a_def, named_args)
-    if a_def.splat_index
-      if a_def.is_a?(Def)
-        return "can't use named args with methods that have a splat argument"
-      else
-        return "can't use named args with macros that have a splat argument"
-      end
-    end
+    splat_index = a_def.splat_index
+    return if !splat_index && !named_args
+    return if splat_index == a_def.args.size - 1
 
     # Check if some mandatory arguments are missing
     mandatory_args = BitArray.new(a_def.args.size)
@@ -306,7 +303,7 @@ class Crystal::Call
       mandatory_args[arg_index] = true
     end
 
-    named_args.each do |named_arg|
+    named_args.try &.each do |named_arg|
       found_index = a_def.args.index { |arg| arg.name == named_arg.name }
       if found_index
         mandatory_args[found_index] = true
@@ -319,6 +316,7 @@ class Crystal::Call
 
       arg = a_def.args[index]
       next if arg.default_value
+      next if arg.name.empty?
 
       missing_args << arg.name
     end
@@ -452,13 +450,13 @@ class Crystal::Call
     macros = in_macro_target &.lookup_macros(def_name)
     return unless macros
 
-    if macros.size == 1 && (named_args = @named_args)
+    if macros.size == 1
       if msg = check_named_args_and_splats(macros.first, named_args)
         raise msg
       end
     end
 
-    all_arguments_sizes = Set(Int32).new
+    all_arguments_sizes = Set(String).new
     macros.each do |a_macro|
       named_args.try &.each do |named_arg|
         index = a_macro.args.index { |arg| arg.name == named_arg.name }
@@ -471,16 +469,28 @@ class Crystal::Call
         end
       end
 
-      min_size = a_macro.args.index(&.default_value) || a_macro.args.size
-      min_size.upto(a_macro.args.size) do |args_size|
-        all_arguments_sizes << args_size
-      end
-    end
+      plus = false
 
-    if macros.size == 1 && (named_args = self.named_args)
-      a_macro = macros.first
-      if msg = check_named_args_and_splats(a_macro, named_args)
-        raise msg
+      splat_index = a_macro.splat_index
+      if splat_index
+        if a_macro.args[splat_index].name.empty?
+          min_size = max_size = splat_index
+        else
+          min_size = splat_index
+          max_size = a_macro.args.size
+          plus = true
+        end
+      else
+        min_size = a_macro.args.index(&.default_value) || a_macro.args.size
+        max_size = a_macro.args.size
+      end
+
+      if plus
+        all_arguments_sizes << "#{min_size}+"
+      else
+        min_size.upto(max_size) do |args_size|
+          all_arguments_sizes << args_size.to_s
+        end
       end
     end
 

@@ -114,6 +114,7 @@ module Crystal
 
       new_def = Def.new("new", def_args, Nop.new)
       new_def.splat_index = splat_index
+      new_def.double_splat = double_splat
       new_def.yields = yields
       new_def.visibility = Visibility::Private if visibility.private?
 
@@ -142,15 +143,34 @@ module Crystal
       #    x.initialize ..., &block
       #    GC.add_finalizer x if x.responds_to? :finalize
       #    x
-      var = Var.new("_")
-      new_vars = args.map { |arg| Var.new(arg.name).as(ASTNode) }
+      obj = Var.new("_")
 
-      if splat_index = self.splat_index
-        new_vars[splat_index] = Splat.new(new_vars[splat_index])
+      new_vars = [] of ASTNode
+      named_args = nil
+      splat_index = self.splat_index
+
+      args.each_with_index do |arg, i|
+        # This is the case of a bare splat argument
+        next if arg.name.empty?
+
+        # Check if the argument has to be passed as a named argument
+        if splat_index && i > splat_index
+          named_args ||= [] of NamedArgument
+          named_args << NamedArgument.new(arg.name, Var.new(arg.name))
+        else
+          new_var = Var.new(arg.name)
+          new_var = Splat.new(new_var) if i == splat_index
+          new_vars << new_var
+        end
       end
 
-      assign = Assign.new(var, alloc)
-      init = Call.new(var, "initialize", new_vars)
+      # Make sure to forward the double splat argument
+      if double_splat = self.double_splat
+        new_vars << DoubleSplat.new(Var.new(double_splat))
+      end
+
+      assign = Assign.new(obj, alloc)
+      init = Call.new(obj, "initialize", new_vars, named_args: named_args)
 
       # If the initialize yields, call it with a block
       # that yields those arguments.
@@ -163,8 +183,8 @@ module Crystal
       exps = Array(ASTNode).new(4)
       exps << assign
       exps << init
-      exps << Call.new(Path.global("GC"), "add_finalizer", var) if instance_type.has_finalizer?
-      exps << var
+      exps << Call.new(Path.global("GC"), "add_finalizer", obj) if instance_type.has_finalizer?
+      exps << obj
 
       # Forward block argument if any
       if uses_block_arg

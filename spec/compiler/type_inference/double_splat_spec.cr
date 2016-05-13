@@ -96,4 +96,22 @@ describe "Type inference: double splat" do
       foo 1, 'a', x: "foo", y: true
       )) { tuple_of([tuple_of([int32, char]), named_tuple_of({"x": string, "y": bool})]) }
   end
+
+  it "uses double splat in new" do
+    assert_type(%(
+      class Foo
+        @x : Int32
+
+        def initialize(**options)
+          @x = options[:x]
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(x: 1).x
+      )) { int32 }
+  end
 end

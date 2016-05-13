@@ -1,6 +1,6 @@
 require "spec"
 
-private def assert_dir_glob(*patterns, expected_result)
+private def assert_dir_glob(expected_result, *patterns)
   result = Dir[*patterns]
   result.sort.should eq(expected_result.sort)
 end
@@ -70,22 +70,20 @@ describe "Dir" do
 
   describe "glob" do
     it "tests glob with a single pattern" do
-      assert_dir_glob "#{__DIR__}/data/dir/*.txt",
-        [
-          "#{__DIR__}/data/dir/f1.txt",
-          "#{__DIR__}/data/dir/f2.txt",
-          "#{__DIR__}/data/dir/g2.txt",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+      ], "#{__DIR__}/data/dir/*.txt"
     end
 
     it "tests glob with multiple patterns" do
-      assert_dir_glob "#{__DIR__}/data/dir/*.txt", "#{__DIR__}/data/dir/subdir/*.txt",
-        [
-          "#{__DIR__}/data/dir/f1.txt",
-          "#{__DIR__}/data/dir/f2.txt",
-          "#{__DIR__}/data/dir/g2.txt",
-          "#{__DIR__}/data/dir/subdir/f1.txt",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir/f1.txt",
+      ], "#{__DIR__}/data/dir/*.txt", "#{__DIR__}/data/dir/subdir/*.txt"
     end
 
     it "tests glob with a single pattern with block" do
@@ -101,95 +99,86 @@ describe "Dir" do
     end
 
     it "tests a recursive glob" do
-      assert_dir_glob "#{__DIR__}/data/dir/**/*.txt",
-        [
-          "#{__DIR__}/data/dir/f1.txt",
-          "#{__DIR__}/data/dir/f2.txt",
-          "#{__DIR__}/data/dir/g2.txt",
-          "#{__DIR__}/data/dir/subdir/f1.txt",
-          "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir/f1.txt",
+        "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
+      ], "#{__DIR__}/data/dir/**/*.txt"
     end
 
     it "tests a recursive glob with '?'" do
-      assert_dir_glob "#{__DIR__}/data/dir/f?.tx?",
-        [
-          "#{__DIR__}/data/dir/f1.txt",
-          "#{__DIR__}/data/dir/f2.txt",
-          "#{__DIR__}/data/dir/f3.txx",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/f3.txx",
+      ], "#{__DIR__}/data/dir/f?.tx?"
     end
 
     it "tests a recursive glob with alternation" do
-      assert_dir_glob "#{__DIR__}/data/{dir,dir/subdir}/*.txt",
-        [
-          "#{__DIR__}/data/dir/f1.txt",
-          "#{__DIR__}/data/dir/f2.txt",
-          "#{__DIR__}/data/dir/g2.txt",
-          "#{__DIR__}/data/dir/subdir/f1.txt",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir/f1.txt",
+      ], "#{__DIR__}/data/{dir,dir/subdir}/*.txt"
     end
 
     it "tests a glob with recursion inside alternation" do
-      assert_dir_glob "#{__DIR__}/data/dir/{**/*.txt,**/*.txx}",
-        [
-          "#{__DIR__}/data/dir/f1.txt",
-          "#{__DIR__}/data/dir/f2.txt",
-          "#{__DIR__}/data/dir/f3.txx",
-          "#{__DIR__}/data/dir/g2.txt",
-          "#{__DIR__}/data/dir/subdir/f1.txt",
-          "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/f3.txx",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir/f1.txt",
+        "#{__DIR__}/data/dir/subdir/subdir2/f2.txt",
+      ], "#{__DIR__}/data/dir/{**/*.txt,**/*.txx}"
     end
 
     it "tests a recursive glob with nested alternations" do
-      assert_dir_glob "#{__DIR__}/data/dir/{?1.*,{f,g}2.txt}",
-        [
-          "#{__DIR__}/data/dir/f1.txt",
-          "#{__DIR__}/data/dir/f2.txt",
-          "#{__DIR__}/data/dir/g2.txt",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+      ], "#{__DIR__}/data/dir/{?1.*,{f,g}2.txt}"
     end
 
     it "tests with *" do
-      assert_dir_glob "#{__DIR__}/data/dir/*",
-        [
-          "#{__DIR__}/data/dir/f1.txt",
-          "#{__DIR__}/data/dir/f2.txt",
-          "#{__DIR__}/data/dir/f3.txx",
-          "#{__DIR__}/data/dir/g2.txt",
-          "#{__DIR__}/data/dir/subdir",
-          "#{__DIR__}/data/dir/subdir2",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/f3.txx",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir",
+        "#{__DIR__}/data/dir/subdir2",
+      ], "#{__DIR__}/data/dir/*"
     end
 
     it "tests with ** (same as *)" do
-      assert_dir_glob "#{__DIR__}/data/dir/**",
-        [
-          "#{__DIR__}/data/dir/f1.txt",
-          "#{__DIR__}/data/dir/f2.txt",
-          "#{__DIR__}/data/dir/f3.txx",
-          "#{__DIR__}/data/dir/g2.txt",
-          "#{__DIR__}/data/dir/subdir",
-          "#{__DIR__}/data/dir/subdir2",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/f3.txx",
+        "#{__DIR__}/data/dir/g2.txt",
+        "#{__DIR__}/data/dir/subdir",
+        "#{__DIR__}/data/dir/subdir2",
+      ], "#{__DIR__}/data/dir/**"
     end
 
     it "tests with */" do
-      assert_dir_glob "#{__DIR__}/data/dir/*/",
-        [
-          "#{__DIR__}/data/dir/subdir/",
-          "#{__DIR__}/data/dir/subdir2/",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/subdir/",
+        "#{__DIR__}/data/dir/subdir2/",
+      ], "#{__DIR__}/data/dir/*/"
     end
 
     it "tests glob with a single pattern with extra slashes" do
-      assert_dir_glob "#{__DIR__}////data////dir////*.txt",
-        [
-          "#{__DIR__}/data/dir/f1.txt",
-          "#{__DIR__}/data/dir/f2.txt",
-          "#{__DIR__}/data/dir/g2.txt",
-        ]
+      assert_dir_glob [
+        "#{__DIR__}/data/dir/f1.txt",
+        "#{__DIR__}/data/dir/f2.txt",
+        "#{__DIR__}/data/dir/g2.txt",
+      ], "#{__DIR__}////data////dir////*.txt"
     end
   end
 

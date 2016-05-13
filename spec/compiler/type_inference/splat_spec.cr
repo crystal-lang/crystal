@@ -332,7 +332,7 @@ describe "Type inference: splat" do
 
       test_func(val, 1, 2, 3, 4, 5)
       ),
-      "no overload matches"
+      "missing arguments: c, d"
   end
 
   it "says no overload matches on type restrictions past the splat arg" do
@@ -342,7 +342,47 @@ describe "Type inference: splat" do
 
       foo(1, 2, 3, ("foo" || nil), ("bar" || nil))
       ),
-      "no overload matches"
+      "missing arguments: a, b"
+  end
+
+  it "says missing argument because positional args don't match past splat" do
+    assert_error %(
+      def foo(x, *y, z)
+      end
+
+      foo 1, 2
+      ),
+      "missing argument: z"
+  end
+
+  it "allows default value after splat index" do
+    assert_type(%(
+      def foo(x, *y, z = 10)
+        {x, y, z}
+      end
+
+      foo 'a', true, 1.5
+      )) { tuple_of([char, tuple_of([bool, float64]), int32]) }
+  end
+
+  it "uses bare *" do
+    assert_type(%(
+      def foo(x, *, y)
+        {x, y}
+      end
+
+      foo 10, y: 'a'
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "uses bare *, doesn't let more args" do
+    assert_error %(
+      def foo(x, *, y)
+      end
+
+      foo 10, 20, y: 30
+      ),
+      "wrong number of arguments for 'foo' (given 2, expected 1)"
   end
 
   describe Splat do
@@ -364,10 +404,6 @@ describe "Type inference: splat" do
 
       Splat.at(a_def, objs) do
         fail "expected at_splat not to invoke the block"
-      end
-
-      Splat.after(a_def, objs) do
-        fail "expected after_splat not to invoke the block"
       end
     end
 
@@ -396,17 +432,12 @@ describe "Type inference: splat" do
           expect_splat "a3", 2, 40, 3
         when 2
           expect_splat "a3", 2, 50, 4
+        when 3
+          expect_splat "a3", 2, 60, 5
         end
         i += 1
       end
-      i.should eq(3)
-
-      i = 0
-      Splat.after(a_def, objs) do |arg, arg_index, obj, obj_index|
-        expect_splat "a4", 3, 60, 5
-        i += 1
-      end
-      i.should eq(1)
+      i.should eq(4)
     end
   end
 end
