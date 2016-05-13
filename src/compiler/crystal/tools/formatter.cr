@@ -120,6 +120,7 @@ module Crystal
       @shebang = @token.type == :COMMENT && @token.value.to_s.starts_with?("#!")
       @heredoc_fixes = [] of HeredocFix
       @last_is_heredoc = false
+      @last_arg_is_skip = false
     end
 
     def end_visit_any(node)
@@ -1312,12 +1313,11 @@ module Crystal
             skip_space_or_newline
           end
 
-          to_skip += 1 if at_skip?
-
-          if i == splat_index && arg.name.empty?
+          if i == splat_index && arg.external_name.empty?
             # Nothing
           else
             indent(prefix_size, arg)
+            to_skip += 1 if @last_arg_is_skip
           end
 
           skip_space
@@ -1728,6 +1728,8 @@ module Crystal
     end
 
     def visit(node : Arg)
+      @last_arg_is_skip = false
+
       restriction = node.restriction
       default_value = node.default_value
 
@@ -1738,6 +1740,18 @@ module Crystal
           return false
         end
       end
+
+      if node.external_name != node.name
+        if node.external_name.empty?
+          write "_"
+        else
+          write @token.value
+        end
+        write " "
+        next_token_skip_space_or_newline
+      end
+
+      @last_arg_is_skip = at_skip?
 
       write @token.value
       next_token

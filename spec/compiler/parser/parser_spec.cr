@@ -212,6 +212,19 @@ describe "Parser" do
 
   assert_syntax_error "def foo(**args, **args2)"
 
+  it_parses "def foo(x y); y; end", Def.new("foo", args: [Arg.new("y", external_name: "x")], body: "y".var)
+  it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
+  it_parses "def foo(x @@var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
+  assert_syntax_error "def foo(_ y); y; end"
+
+  assert_syntax_error "def foo(x x); 1; end", "when specified, external name must be different than internal name"
+  assert_syntax_error "def foo(x @x); 1; end", "when specified, external name must be different than internal name"
+  assert_syntax_error "def foo(x @@x); 1; end", "when specified, external name must be different than internal name"
+
+  assert_syntax_error "def foo(*a foo); end"
+  assert_syntax_error "def foo(**a foo); end"
+  assert_syntax_error "def foo(&a foo); end"
+
   it_parses "macro foo(**args)\n1\nend", Macro.new("foo", body: MacroLiteral.new("1\n"), double_splat: "args")
 
   assert_syntax_error "macro foo(x, *); 1; end", "named arguments must follow bare *"
@@ -1124,9 +1137,8 @@ describe "Parser" do
 
   assert_syntax_error %<{"x": [] of Int32,\n}\n1.foo(>, "unterminated call", 3, 6
 
-  assert_syntax_error "def foo(x y); end", "unexpected token: y (expected ',' or ')')"
   assert_syntax_error "def foo x y; end", "parentheses are mandatory for def arguments"
-  assert_syntax_error "macro foo(x y); end", "unexpected token: y (expected ',' or ')')"
+  assert_syntax_error "macro foo(x y z); end"
   assert_syntax_error "macro foo x y; end", "parentheses are mandatory for macro arguments"
   assert_syntax_error "macro foo *y;end", "parentheses are mandatory for macro arguments"
   assert_syntax_error %(macro foo x; 1 + 2; end), "parentheses are mandatory for macro arguments"

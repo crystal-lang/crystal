@@ -304,7 +304,7 @@ class Crystal::Call
     end
 
     named_args.try &.each do |named_arg|
-      found_index = a_def.args.index { |arg| arg.name == named_arg.name }
+      found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
       if found_index
         mandatory_args[found_index] = true
       end
@@ -316,9 +316,9 @@ class Crystal::Call
 
       arg = a_def.args[index]
       next if arg.default_value
-      next if arg.name.empty?
+      next if arg.external_name.empty?
 
-      missing_args << arg.name
+      missing_args << arg.external_name
     end
 
     case missing_args.size
@@ -393,7 +393,14 @@ class Crystal::Call
     a_def.args.each_with_index do |arg, i|
       str << ", " if printed
       str << '*' if a_def.splat_index == i
+
+      if arg.external_name != arg.name
+        str << (arg.external_name.empty? ? "_" : arg.external_name)
+        str << " "
+      end
+
       str << arg.name
+
       if arg_default = arg.default_value
         str << " = "
         str << arg.default_value

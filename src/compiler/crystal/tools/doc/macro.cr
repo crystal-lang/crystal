@@ -66,12 +66,22 @@ class Crystal::Doc::Macro
   def args_to_s(io)
     return if @macro.args.empty?
 
+    printed = false
     io << '('
+
     @macro.args.each_with_index do |arg, i|
-      io << ", " if i > 0
+      io << ", " if printed
       io << '*' if @macro.splat_index == i
       io << arg
+      printed = true
     end
+
+    if double_splat = @macro.double_splat
+      io << ", " if printed
+      io << "**"
+      io << double_splat
+    end
+
     io << ')'
   end
 

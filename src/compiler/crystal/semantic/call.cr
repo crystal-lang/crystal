@@ -1045,11 +1045,13 @@ class Crystal::Call
     end
 
     named_args_types.try &.each do |named_arg|
+      arg = typed_def.args.find { |arg| arg.external_name == named_arg.name }.not_nil!
+
       type = named_arg.type
-      var = MetaVar.new(named_arg.name, type)
+      var = MetaVar.new(arg.name, type)
       var.bind_to(var)
-      args[named_arg.name] = var
-      arg = typed_def.args.find { |arg| arg.name == named_arg.name }.not_nil!
+
+      args[arg.name] = var
       arg.type = type
     end
 

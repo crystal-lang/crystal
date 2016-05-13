@@ -300,7 +300,8 @@ module Crystal
   end
 
   class Arg
-    def initialize(@name, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, @type : Type? = nil)
+    def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil, @type : Type? = nil)
+      @external_name = external_name || @name
     end
 
     def clone_without_location

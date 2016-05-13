@@ -172,7 +172,7 @@ module Crystal
       if named_args
         min_index = signature.arg_types.size
         named_args.each do |named_arg|
-          found_index = a_def.args.index { |arg| arg.name == named_arg.name }
+          found_index = a_def.args.index { |arg| arg.external_name == named_arg.name }
           if found_index
             # A named arg can't target the splat index
             if found_index == splat_index
