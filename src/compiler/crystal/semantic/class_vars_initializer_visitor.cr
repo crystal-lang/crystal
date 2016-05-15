@@ -48,7 +48,7 @@ module Crystal
         main_visitor.scope = owner.metaclass
 
         # We want to first type the value, because it might
-        # happend that we couldn't guess a type from an expression
+        # happened that we couldn't guess a type from an expression
         # but that expression has an error: we want to signal
         # that error first.
         had_class_var = true

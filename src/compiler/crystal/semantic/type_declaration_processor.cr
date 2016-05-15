@@ -481,7 +481,7 @@ module Crystal
             if ivar
               if ivar.instance_var.type.includes_type?(@program.nil)
                 # If the variable is nilable because it was not initialized
-                # in all of the initialize methods, and it's not explictly nil,
+                # in all of the initialize methods, and it's not explicitly nil,
                 # give an error and ask to be explicit.
                 if nilable_instance_var?(owner, name)
                   raise_doesnt_explicitly_initializes(info, name, ivar)
