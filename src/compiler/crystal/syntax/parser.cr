@@ -1306,6 +1306,7 @@ module Crystal
     end
 
     SemicolonOrNewLine = [:";", :NEWLINE]
+    ConstOrDoubleColon = [:CONST, :"::"]
 
     def parse_rescue
       next_token_skip_space
@@ -1318,10 +1319,10 @@ module Crystal
 
         if @token.type == :":"
           next_token_skip_space_or_newline
-          check :CONST
+          check ConstOrDoubleColon
           types = parse_rescue_types
         end
-      when :CONST
+      when :CONST, :"::"
         types = parse_rescue_types
       end
 

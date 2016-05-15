@@ -836,8 +836,11 @@ describe "Parser" do
   it_parses "begin; 1; ensure; 2; end", ExceptionHandler.new(1.int32, ensure: 2.int32)
   it_parses "begin\n1\nensure\n2\nend", ExceptionHandler.new(1.int32, ensure: 2.int32)
   it_parses "begin; 1; rescue Foo; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".path] of ASTNode)])
+  it_parses "begin; 1; rescue ::Foo; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, [Path.global("Foo")] of ASTNode)])
   it_parses "begin; 1; rescue Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".path, "Bar".path] of ASTNode)])
+  it_parses "begin; 1; rescue ::Foo | ::Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, [Path.global("Foo"), Path.global("Bar")] of ASTNode)])
   it_parses "begin; 1; rescue ex : Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".path, "Bar".path] of ASTNode, "ex")])
+  it_parses "begin; 1; rescue ex : ::Foo | ::Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, [Path.global("Foo"), Path.global("Bar")] of ASTNode, "ex")])
   it_parses "begin; 1; rescue ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")])
   it_parses "begin; 1; rescue; 2; else; 3; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], 3.int32)
   it_parses "begin; 1; rescue ex; 2; end; ex", [ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")]), "ex".var]
