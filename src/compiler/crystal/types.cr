@@ -29,7 +29,7 @@ module Crystal
     end
 
     # An opaque id of every type. 0 for Nil, non zero for others, so we can
-    # sort types by opaque_id and have Nil in the begining.
+    # sort types by opaque_id and have Nil in the beginning.
     def opaque_id
       self.is_a?(NilType) ? 0_u64 : object_id
     end
