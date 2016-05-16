@@ -19,7 +19,7 @@ class Hash(K, V)
   end
 
   def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
-    new block
+    new block, initial_capacity: initial_capacity
   end
 
   def self.new(default_value : V, initial_capacity = nil)
