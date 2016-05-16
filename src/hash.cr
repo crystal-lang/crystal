@@ -18,8 +18,9 @@ class Hash(K, V)
     @block = block
   end
 
+  # Creates a new Hash by passing along *initial_capacity* to the initialize method
   def self.new(initial_capacity = nil, &block : (Hash(K, V), K -> V))
-    new block
+    new block, initial_capacity
   end
 
   def self.new(default_value : V, initial_capacity = nil)
