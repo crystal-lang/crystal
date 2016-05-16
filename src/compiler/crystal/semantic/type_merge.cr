@@ -222,7 +222,7 @@ module Crystal
   end
 
   class MetaclassType
-    def common_ancestor(other : MetaclassType)
+    def common_ancestor(other : MetaclassType | VirtualMetaclassType)
       if instance_type.module? || other.instance_type.module?
         nil
       else
@@ -245,7 +245,7 @@ module Crystal
   end
 
   class VirtualMetaclassType
-    def common_ancestor(other)
+    def common_ancestor(other : MetaclassType | VirtualMetaclassType)
       common = instance_type.base_type.metaclass.common_ancestor(other)
       common.try &.virtual_type!
     end
