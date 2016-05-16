@@ -594,11 +594,7 @@ i.ip.downg {
 }
 .sponsor.level-25 .name,
 .sponsor.level-10 .name,
-.sponsor.level-16 .name,
-.sponsor.level-15 .name,
 .sponsor.level-25 .name a,
-.sponsor.level-10 .name a,
-.sponsor.level-16 .name a,
-.sponsor.level-15 .name a {
+.sponsor.level-10 .name a {
   font-weight: bold;
 }

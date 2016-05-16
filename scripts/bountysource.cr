@@ -1,6 +1,8 @@
 require "http/client"
 require "json"
 
+levels = [250, 150, 75, 25, 10, 5, 1]
+
 module BountySource
   class API
     def initialize(@team : String, @token : String)
@@ -217,6 +219,7 @@ sponsors.each do |sponsor|
   data["this_month"] = sponsor.this_month.to_i
   data["all_time"] = sponsor.all_time.to_i
   data["since"] = sponsor.since.to_s("%b %-d, %Y")
+  data["level"] = levels.find { |amount| amount <= sponsor.this_month.to_i }.not_nil!
   puts %(              #{data.to_json},)
 end
 puts "             ].compact"
