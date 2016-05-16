@@ -183,4 +183,30 @@ describe "Normalize: def" do
     other_def = a_def.expand_default_arguments(Program.new, 1, ["y"])
     other_def.to_s.should eq("def foo:y(x, y)\n  x + y\nend")
   end
+
+  it "expands a def with external names (1)" do
+    a_def = parse("def foo(x y); y; end").as(Def)
+    actual = a_def.expand_default_arguments(Program.new, 0, ["x"])
+    actual.should be(a_def)
+  end
+
+  it "expands a def with external names (2)" do
+    a_def = parse("def foo(x x1, y y1); x1 + y1; end").as(Def)
+    other_def = a_def.expand_default_arguments(Program.new, 0, ["y", "x"])
+    other_def.to_s.should eq("def foo:y:x(y y1, x x1)\n  foo(x1, y1)\nend")
+  end
+
+  it "expands a def on request with default arguments (external names)" do
+    a_def = parse("def foo(x x1, y y1 = 1, z z1 = 2); x1 + y1 + z1; end").as(Def)
+    actual = a_def.expand_default_arguments(Program.new, 1)
+    expected = parse("def foo(x x1); y1 = 1; z1 = 2; foo(x1, y1, z1); end")
+    actual.should eq(expected)
+  end
+
+  it "expands a def on request with default arguments that yields (external names)" do
+    a_def = parse("def foo(x x1, y y1 = 1, z z1 = 2); yield x1 + y1 + z1; end").as(Def)
+    actual = a_def.expand_default_arguments(Program.new, 1)
+    expected = parse("def foo(x x1); y1 = 1; z1 = 2; yield x1 + y1 + z1; end")
+    actual.should eq(expected)
+  end
 end

@@ -9,7 +9,7 @@ class Crystal::Def
       all_match = true
       named_args.each_with_index do |named_arg, i|
         arg = args[args_size + i]
-        unless arg.name == named_arg
+        unless arg.external_name == named_arg
           all_match = false
           break
         end
@@ -53,7 +53,7 @@ class Crystal::Def
     end
 
     # Splat arg
-    if splat_index && !args[splat_index].name.empty?
+    if splat_index && !args[splat_index].external_name.empty?
       splat_names = [] of String
 
       splat_size = args_size - splat_index
@@ -73,7 +73,14 @@ class Crystal::Def
         named_args.each do |named_arg|
           str << ':'
           str << named_arg
-          new_args << Arg.new(named_arg)
+
+          # If a named argument matches an argument's external name, use the internal name
+          matching_arg = args.find { |arg| arg.external_name == named_arg }
+          if matching_arg
+            new_args << Arg.new(matching_arg.name, external_name: named_arg)
+          else
+            new_args << Arg.new(named_arg)
+          end
         end
       end
     else
@@ -104,12 +111,8 @@ class Crystal::Def
         # Skip if this is the splat index argument
         next if index == splat_index
 
-        # pp arg, index, splat_index, args_size
-        # pp index, args_size, splat_index
-        # next if index <= splat_index || index < args_size
-
         # But first check if we already have it in the named arguments
-        unless named_args.try &.index(arg.name)
+        unless named_args.try &.index(arg.external_name)
           default_value = arg.default_value.not_nil!
 
           # If the default value is a magic constant we add it to the expanded
@@ -172,7 +175,7 @@ class Crystal::Def
         arg = args[index]
 
         # But first check if we already have it in the named arguments
-        if named_args.try &.index(arg.name)
+        if named_args.try &.index(arg.external_name)
           new_args.push Var.new(arg.name)
         else
           default_value = arg.default_value.not_nil!
@@ -195,8 +198,6 @@ class Crystal::Def
 
       expansion.body = Expressions.new(body)
     end
-
-    # pp expansion
 
     expansion
   end

@@ -107,17 +107,25 @@ class Crystal::Doc::Method
 
     if has_args?
       io << '('
+      printed = false
       @def.args.each_with_index do |arg, i|
-        io << ", " if i > 0
+        io << ", " if printed
         io << '*' if @def.splat_index == i
         arg_to_html arg, io, links: links
+        printed = true
+      end
+      if double_splat = @def.double_splat
+        io << ", " if printed
+        io << "**"
+        io << double_splat
+        printed = true
       end
       if block_arg = @def.block_arg
-        io << ", " unless @def.args.empty?
+        io << ", " if printed
         io << '&'
         arg_to_html block_arg, io, links: links
       elsif @def.yields
-        io << ", " unless @def.args.empty?
+        io << ", " if printed
         io << "&block"
       end
       io << ')'
@@ -136,7 +144,13 @@ class Crystal::Doc::Method
   end
 
   def arg_to_html(arg : Arg, io, links = true)
+    if arg.external_name != arg.name
+      io << (arg.external_name.empty? ? "_" : arg.external_name)
+      io << " "
+    end
+
     io << arg.name
+
     if restriction = arg.restriction
       io << " : "
       node_to_html restriction, io, links: links
