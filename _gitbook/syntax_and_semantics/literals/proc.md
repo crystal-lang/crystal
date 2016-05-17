@@ -25,6 +25,28 @@ Proc(Int32, String).new { |x| x.to_s } # Proc(Int32, String)
 
 This form allows you to specify the return type and to check it against the proc's body.
 
+## The Proc type
+
+To denote a Proc type you can write:
+
+```crystal
+# A Proc accepting a single Int32 argument and returning a String
+Proc(Int32, String)
+
+# A proc accepting no arguments and returning Void
+Proc(Void)
+
+# A proc accepting two arguments (one Int32 and one String) and returning a Char
+Proc(Int32, String, Char)
+```
+
+In type restrictions, generic type arguments and other places where a type is expected, you can use a shorter syntax, as explained in the [type](type_grammar.html):
+
+```crystal
+# An array of Proc(Int32, String, Char)
+Array(Int32, String -> Char)
+```
+
 ## Invoking
 
 To invoke a Proc, you invoke the `call` method on it. The number of arguments must match the proc's type:
