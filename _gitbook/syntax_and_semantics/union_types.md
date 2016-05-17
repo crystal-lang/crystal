@@ -1,6 +1,6 @@
 # Union types
 
-The type of a varaible or expression can consist of multiple types. This is called a union type. For example, when assigning to a same variable inside different [if](if.html) branches:
+The type of a variable or expression can consist of multiple types. This is called a union type. For example, when assigning to a same variable inside different [if](if.html) branches:
 
 ```crystal
 if 1 + 2 == 3
