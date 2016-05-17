@@ -1,9 +1,37 @@
 class Crypto::MD5
-  def self.hex_digest(data : String) : String
+  # Returns a String the hexadecimal representation of the MD5 hash of *data*
+  #
+  #     Crypto::MD5.hex_digest("foo") # => "acbd18db4cc2f85cedef654fccc4a4d8"
+  def self.hex_digest(data : String | Slice(UInt8)) : String
     context = Context.new
-    context.update(data.to_unsafe, data.bytesize.to_u32)
+    context.update data
     context.final
     context.hex
+  end
+
+  # Yields a context object with an `#update(data : String | Slice(UInt8))`
+  # method available. Returns a String the hexadecimal representation of the
+  # MD5 hash all data passed in.
+  #
+  #     Crypto::MD5.hex_digest do |ctx|
+  #        ctx.update "f"
+  #        ctx.update "oo"
+  #     end                            # => "acbd18db4cc2f85cedef654fccc4a4d8"
+  def self.hex_digest : String
+    context = ContextWrapper.new
+    yield context
+    context.final
+    context.hex
+  end
+
+  # :nodoc:
+  class ContextWrapper
+    getter context : Context
+    delegate update, final, hex, context
+
+    def initialize
+      @context = Context.new
+    end
   end
 
   # :nodoc:
@@ -17,6 +45,10 @@ class Crypto::MD5
       @buf[3] = 0x10325476_u32
       @in = StaticArray(UInt8, 64).new(0_u8)
       @digest = uninitialized UInt8[16]
+    end
+
+    def update(data : String | Slice(UInt8))
+      update(data.to_unsafe, data.bytesize.to_u32)
     end
 
     def update(inBuf, inLen)
