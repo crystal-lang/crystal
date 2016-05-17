@@ -973,4 +973,14 @@ describe "Type inference: class" do
       ),
       "Can't infer the type of instance variable '@foo' of Foo"
   end
+
+  it "doesn't crash with top-level initialize (#2601)" do
+    assert_type(%(
+      def initialize
+        1
+      end
+
+      initialize
+      )) { int32 }
+  end
 end

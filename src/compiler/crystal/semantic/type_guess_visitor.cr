@@ -1326,7 +1326,7 @@ module Crystal
       @args = node.args
       @block_arg = node.block_arg
 
-      if node.name == "initialize"
+      if node.name == "initialize" && !current_type.is_a?(Program)
         initialize_info = @initialize_info = InitializeInfo.new(node)
       end
 
