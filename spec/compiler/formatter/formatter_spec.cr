@@ -900,4 +900,6 @@ describe Crystal::Formatter do
   assert_format "def foo(x y)\nend"
   assert_format "def foo(x @y)\nend"
   assert_format "def foo(x @@y)\nend"
+
+  assert_format " Array( {x:  Int32,   y:  String } )", "Array({x: Int32, y: String})"
 end
