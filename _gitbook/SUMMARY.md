@@ -65,6 +65,7 @@
            * [Splats and tuples](syntax_and_semantics/splats_and_tuples.md)
            * [Type restrictions](syntax_and_semantics/type_restrictions.md)
            * [Return types](syntax_and_semantics/return_types.md)
+           * [Method arguments](syntax_and_semantics/default_values_named_arguments_splats_tuples_and_overloading.md)
            * [Operators](syntax_and_semantics/operators.md)
            * [Visibility](syntax_and_semantics/visibility.md)
            * [Inheritance](syntax_and_semantics/inheritance.md)
