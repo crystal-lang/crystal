@@ -13,11 +13,6 @@ module OpenSSL
       super(msg)
     end
   end
-
-  LibSSL.ssl_library_init
-  LibSSL.ssl_load_error_strings
-  LibCrypto.openssl_add_all_algorithms
-  LibCrypto.err_load_crypto_strings
 end
 
 require "./bio"

@@ -42,3 +42,15 @@ lib LibSSL
   fun ssl_ctx_use_privatekey_file = SSL_CTX_use_PrivateKey_file(ctx : SSLContext, file : UInt8*, filetype : SSLFileType) : Int
   fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
 end
+
+# :nodoc:
+module OpenSSL::Init
+  # Workaround to force this initialization as soon as the program starts, before main
+  @@init = begin
+    LibSSL.ssl_library_init
+    LibSSL.ssl_load_error_strings
+    LibCrypto.openssl_add_all_algorithms
+    LibCrypto.err_load_crypto_strings
+    nil
+  end
+end

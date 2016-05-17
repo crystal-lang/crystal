@@ -252,15 +252,22 @@ lib LibXML
   fun xmlGetNsList(doc : Doc*, node : Node*) : NS**
 end
 
-LibXML.xmlGcMemSetup(
-  ->GC.free,
-  ->GC.malloc(LibC::SizeT),
-  ->GC.malloc(LibC::SizeT),
-  ->GC.realloc(Void*, LibC::SizeT),
-  ->(str) {
-    len = LibC.strlen(str)
-    copy = Pointer(UInt8).malloc(len)
-    copy.copy_from(str, len)
-    copy
-  }
-)
+# :nodoc:
+module XML::Init
+  # Workaround to force this initialization as soon as the program starts, before main
+  @@init = begin
+    LibXML.xmlGcMemSetup(
+      ->GC.free,
+      ->GC.malloc(LibC::SizeT),
+      ->GC.malloc(LibC::SizeT),
+      ->GC.realloc(Void*, LibC::SizeT),
+      ->(str) {
+        len = LibC.strlen(str)
+        copy = Pointer(UInt8).malloc(len)
+        copy.copy_from(str, len)
+        copy
+      }
+    )
+    nil
+  end
+end
