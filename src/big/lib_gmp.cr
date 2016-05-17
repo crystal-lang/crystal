@@ -167,7 +167,7 @@ lib LibGMP
 end
 
 # :nodoc:
-struct BigInt
+module BigIntInit
   # Workaround to force this initialization as soon as the program starts, before main
   @@init = begin
     LibGMP.set_memory_functions(
