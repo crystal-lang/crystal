@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.3.9" data-basepath=".." data-revision="Tue May 17 2016 17:12:34 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.3.9" data-basepath=".." data-revision="Tue May 17 2016 17:49:23 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2159,7 +2159,7 @@
   )
 <span class="hljs-keyword">end</span>
 </code></pre>
-<p>Each one of them is optional, so I a method can do without the double splat, or without the splat, or without positional arguments.</p>
+<p>Each one of them is optional, so a method can do without the double splat, without the splat, without keyword arguments and without positional arguments.</p>
 <h2 id="components-of-a-method-call">Components of a method call</h2>
 <p>A method call also has some parts:</p>
 <pre><code class="lang-crystal">foo(
@@ -2243,7 +2243,7 @@ foo <span class="hljs-symbol">y:</span> <span class="hljs-number">2</span>, <spa
 foo <span class="hljs-symbol">external_name:</span> <span class="hljs-number">1</span>
 </code></pre>
 <p>This covers two uses cases.</p>
-<p>The first use case is using keyword as named arguments:</p>
+<p>The first use case is using keywords as named arguments:</p>
 <pre><code class="lang-crystal"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">plan</span></span>(<span class="hljs-keyword">begin</span> begin_time, <span class="hljs-keyword">end</span> end_time)
   puts <span class="hljs-string">&quot;Planning bewteen <span class="hljs-subst">#{begin_time}</span> and <span class="hljs-subst">#{end_time}</span>&quot;</span>
 <span class="hljs-keyword">end</span>
