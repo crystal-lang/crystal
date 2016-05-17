@@ -166,8 +166,15 @@ lib LibGMP
   fun set_memory_functions = __gmp_set_memory_functions(malloc : SizeT -> Void*, realloc : Void*, SizeT, SizeT -> Void*, free : Void*, SizeT ->)
 end
 
-LibGMP.set_memory_functions(
-  ->(size) { GC.malloc(size) },
-  ->(ptr, old_size, new_size) { GC.realloc(ptr, new_size) },
-  ->(ptr, size) { GC.free(ptr) }
-)
+# :nodoc:
+struct BigInt::Init
+  # Workaround to force this initialization as soon as the program starts, before main
+  @@init = begin
+    LibGMP.set_memory_functions(
+      ->(size) { GC.malloc(size) },
+      ->(ptr, old_size, new_size) { GC.realloc(ptr, new_size) },
+      ->(ptr, size) { GC.free(ptr) }
+    )
+    nil
+  end
+end
