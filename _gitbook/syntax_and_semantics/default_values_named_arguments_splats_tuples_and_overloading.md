@@ -126,3 +126,42 @@ end
 foo 1, y: 2 # OK
 foo y: 2, x: 3 # OK
 ```
+
+## External names
+
+An external name can be specified for a method argument. The external name is the one used when passing an argument as a named argument, and the internal name is the one used inside the method definition:
+
+```crystal
+def foo(external_name internal_name)
+  # here we use internal_name
+end
+
+foo external_name: 1
+```
+
+This covers two uses cases.
+
+The first use case is using keyword as named arguments:
+
+```crystal
+def plan(begin begin_time, end end_time)
+  puts "Planning bewteen #{begin_time} and #{end_time}"
+end
+
+plan begin: Time.now, end: 2.days.from_now
+```
+
+The second use case is making a method argument more readable inside a method body:
+
+```crystal
+def increment(value, by)
+  # OK, but reads odd
+  value + by
+end
+
+def increment(value, by amount)
+  # Better
+  value + amount
+end
+```
+
