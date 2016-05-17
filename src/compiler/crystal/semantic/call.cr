@@ -126,8 +126,8 @@ class Crystal::Call
       when DoubleSplat
         case arg_type = arg.type
         when NamedTupleInstanceType
-          arg_type.names_and_types.each do |name_and_type|
-            name, type = name_and_type
+          arg_type.entries.each do |entry|
+            name, type = entry.name, entry.type
 
             named_args_types ||= [] of NamedArgumentType
             raise "duplicate key: #{name}" if named_args_types.any? &.name.==(name)
@@ -535,8 +535,8 @@ class Crystal::Call
           arg.raise "Bug: double splat expects a named tuple, not #{arg_type}"
         end
 
-        arg_type.names_and_types.each do |name_and_type|
-          sym = SymbolLiteral.new(name_and_type[0])
+        arg_type.entries.each do |entry|
+          sym = SymbolLiteral.new(entry.name)
           sym.type = mod.symbol
           mod.symbols.add sym.value
           tuple_indexer = Call.new(arg.exp, "[]", sym)

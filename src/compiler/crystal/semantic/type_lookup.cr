@@ -80,7 +80,7 @@ module Crystal
           node.raise "can only instantiate NamedTuple with named arguments"
         end
 
-        names_and_types = named_args.map do |named_arg|
+        entries = named_args.map do |named_arg|
           node = named_arg.value
 
           if node.is_a?(NumberLiteral)
@@ -91,11 +91,11 @@ module Crystal
           return false if !@raise && !@type
 
           Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as a generic type argument")
-          {named_arg.name, type.virtual_type}
+          NamedArgumentType.new(named_arg.name, type.virtual_type)
         end
 
         begin
-          @type = instance_type.instantiate_named_args(names_and_types)
+          @type = instance_type.instantiate_named_args(entries)
         rescue ex : Crystal::Exception
           node.raise ex.message if @raise
         end

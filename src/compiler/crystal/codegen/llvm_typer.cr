@@ -135,7 +135,7 @@ module Crystal
       LLVM::Type.struct(type.llvm_name) do |a_struct|
         @cache[type] = a_struct
 
-        type.names_and_types.map { |name_and_type| llvm_embedded_type(name_and_type[1]).as(LLVM::Type) }
+        type.entries.map { |entry| llvm_embedded_type(entry.type).as(LLVM::Type) }
       end
     end
 

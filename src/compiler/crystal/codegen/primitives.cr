@@ -696,7 +696,7 @@ class Crystal::CodeGenVisitor
     when NamedTupleInstanceType
       index = node.as(TupleIndexer).index
       ptr = aggregate_index call_args[0], index
-      to_lhs ptr, type.names_and_types[index][1]
+      to_lhs ptr, type.entries[index].type
     else
       type = (type.instance_type.as(TupleInstanceType))
       index = node.as(TupleIndexer).index

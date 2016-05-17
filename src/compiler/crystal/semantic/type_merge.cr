@@ -266,24 +266,24 @@ module Crystal
     def common_ancestor(other : NamedTupleInstanceType)
       return nil if self.size != other.size
 
-      self_names_and_types = self.names_and_types.sort_by &.[0]
-      other_names_and_types = other.names_and_types.sort_by &.[0]
+      self_entries = self.entries.sort_by &.name
+      other_entries = other.entries.sort_by &.name
 
       # First check if the names are the same
-      self_names_and_types.zip(other_names_and_types) do |self_name_and_type, other_name_and_type|
-        return nil unless self_name_and_type[0] == other_name_and_type[0]
+      self_entries.zip(other_entries) do |self_entry, other_entry|
+        return nil unless self_entry.name == other_entry.name
       end
 
       # If the names are the same we now merge the types for each key
       # Note: we use self's order to preserve the order of the tuple on the left hand side
-      merged_names_and_types = self.names_and_types.map_with_index do |self_name_and_type, i|
-        name = self_name_and_type[0]
+      merged_entries = self.entries.map_with_index do |self_entry, i|
+        name = self_entry.name
         other_type = other.name_type(name)
-        merged_type = Type.merge!(self_name_and_type[1], other_type).as(Type)
-        {name, merged_type}
+        merged_type = Type.merge!(self_entry.type, other_type).as(Type)
+        NamedArgumentType.new(name, merged_type)
       end
 
-      program.named_tuple_of(merged_names_and_types)
+      program.named_tuple_of(merged_entries)
     end
   end
 end

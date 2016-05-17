@@ -581,17 +581,17 @@ module Crystal
     end
 
     def guess_type(node : NamedTupleLiteral)
-      names_and_types = nil
+      entries = nil
       node.entries.each do |entry|
         element_type = guess_type(entry.value)
         return nil unless element_type
 
-        names_and_types ||= [] of {String, Type}
-        names_and_types << {entry.key, element_type}
+        entries ||= [] of NamedArgumentType
+        entries << NamedArgumentType.new(entry.key, element_type)
       end
 
-      if names_and_types
-        mod.named_tuple_of(names_and_types)
+      if entries
+        mod.named_tuple_of(entries)
       else
         nil
       end

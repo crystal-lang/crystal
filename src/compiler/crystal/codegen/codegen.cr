@@ -397,8 +397,7 @@ module Crystal
         node.entries.each do |entry|
           entry.value.accept self
           index = type.name_index(entry.key).not_nil!
-          name_and_type = type.names_and_types[index]
-          assign aggregate_index(struct_type, index), name_and_type[1], entry.value.type, @last
+          assign aggregate_index(struct_type, index), type.entries[index].type, entry.value.type, @last
         end
         @last = struct_type
       end

@@ -635,7 +635,7 @@ module Crystal
     def update(from = nil)
       instance_type = self.instance_type
       if instance_type.is_a?(NamedTupleType)
-        names_and_types = named_args.not_nil!.map do |named_arg|
+        entries = named_args.not_nil!.map do |named_arg|
           node = named_arg.value
 
           if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
@@ -656,10 +656,10 @@ module Crystal
           Crystal.check_type_allowed_in_generics(node, node_type, "can't use #{node_type} as generic type argument")
           node_type = node_type.virtual_type
 
-          {named_arg.name, node_type}
+          NamedArgumentType.new(named_arg.name, node_type)
         end
 
-        generic_type = instance_type.instantiate_named_args(names_and_types)
+        generic_type = instance_type.instantiate_named_args(entries)
       else
         type_vars_types = type_vars.map do |node|
           if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
@@ -738,11 +738,11 @@ module Crystal
     def update(from = nil)
       return unless entries.all? &.value.type?
 
-      names_and_types = entries.map do |element|
-        {element.key, element.value.type}
+      entries = entries.map do |element|
+        NamedArgumentType.new(element.key, element.value.type)
       end
 
-      named_tuple_type = mod.named_tuple_of(names_and_types)
+      named_tuple_type = mod.named_tuple_of(entries)
 
       if generic_type_too_nested?(named_tuple_type.generic_nest)
         raise "named tuple type too nested: #{named_tuple_type}"

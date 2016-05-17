@@ -298,8 +298,8 @@ module Crystal
             exp.raise "can't interate TypeNode of type #{type}, only named tuple types"
           end
 
-          visit_macro_for_hash_like(node, exp, type.names_and_types) do |name_and_type|
-            {MacroId.new(name_and_type[0]), TypeNode.new(name_and_type[1])}
+          visit_macro_for_hash_like(node, exp, type.entries) do |entry|
+            {MacroId.new(entry.name), TypeNode.new(entry.type)}
           end
         else
           node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"

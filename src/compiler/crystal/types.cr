@@ -1967,15 +1967,15 @@ module Crystal
       super
       @struct = true
       @double_variadic = true
-      @instantiations = {} of Array(Tuple(String, Type)) => Type
+      @instantiations = {} of Array(NamedArgumentType) => Type
     end
 
     def instantiate(type_vars)
       raise "can't instantiate NamedTuple type yet"
     end
 
-    def instantiate_named_args(names_and_types)
-      @instantiations[names_and_types] ||= NamedTupleInstanceType.new(program, names_and_types)
+    def instantiate_named_args(entries : Array(NamedArgumentType))
+      @instantiations[entries] ||= NamedTupleInstanceType.new(program, entries)
     end
 
     def new_generic_instance(program, generic_type, type_vars)
@@ -1988,21 +1988,21 @@ module Crystal
   end
 
   class NamedTupleInstanceType < GenericClassInstanceType
-    getter names_and_types
+    getter entries
 
-    def initialize(program, @names_and_types : Array(Tuple(String, Type)))
-      generic_nest = 1 + (@names_and_types.empty? ? 0 : @names_and_types.max_of(&.[1].generic_nest))
+    def initialize(program, @entries : Array(NamedArgumentType))
+      generic_nest = 1 + (@entries.empty? ? 0 : @entries.max_of(&.type.generic_nest))
       var = Var.new("T", self)
       var.bind_to var
       super(program, program.named_tuple, {"T" => var} of String => ASTNode, generic_nest)
     end
 
     def name_index(name)
-      @names_and_types.index &.[0].==(name)
+      @entries.index &.name.==(name)
     end
 
     def name_type(name)
-      @names_and_types.find(&.[0].==(name)).not_nil![1]
+      @entries.find(&.name.==(name)).not_nil!.type
     end
 
     def tuple_indexer(index)
@@ -2023,12 +2023,12 @@ module Crystal
       if other.is_a?(NamedTupleInstanceType)
         return nil unless self.size == other.size
 
-        self_names_and_types = self.names_and_types.sort_by &.[0]
-        other_names_and_types = other.names_and_types.sort_by &.[0]
+        self_entries = self.entries.sort_by &.name
+        other_entries = other.entries.sort_by &.name
 
-        self_names_and_types.zip(other_names_and_types) do |self_name_and_type, other_name_and_type|
-          return nil unless self_name_and_type[0] == other_name_and_type[0]
-          return nil unless self_name_and_type[1].implements?(other_name_and_type[1])
+        self_entries.zip(other_entries) do |self_entry, other_entry|
+          return nil unless self_entry.name == other_entry.name
+          return nil unless self_entry.type.implements?(other_entry.type)
         end
 
         self
@@ -2038,7 +2038,7 @@ module Crystal
     end
 
     def size
-      names_and_types.size
+      entries.size
     end
 
     def var
@@ -2063,10 +2063,10 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "{"
-      @names_and_types.each_with_index do |name_and_type, i|
+      @entries.each_with_index do |entry, i|
         io << ", " if i > 0
-        io << name_and_type[0] << ": "
-        name_and_type[1].to_s_with_options(io, skip_union_parens: true)
+        io << entry.name << ": "
+        entry.type.to_s_with_options(io, skip_union_parens: true)
       end
       io << "}"
     end

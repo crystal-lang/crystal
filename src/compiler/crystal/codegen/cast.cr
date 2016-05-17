@@ -244,11 +244,11 @@ class Crystal::CodeGenVisitor
   end
 
   def assign_distinct(target_pointer, target_type : NamedTupleInstanceType, value_type : NamedTupleInstanceType, value)
-    value_type.names_and_types.each_with_index do |name_and_type, index|
+    value_type.entries.each_with_index do |entry, index|
       value_at_index = load aggregate_index(value, index)
-      target_index = target_type.name_index(name_and_type[0]).not_nil!
-      target_index_type = target_type.name_type(name_and_type[0])
-      assign aggregate_index(target_pointer, target_index), target_index_type, name_and_type[1], value_at_index
+      target_index = target_type.name_index(entry.name).not_nil!
+      target_index_type = target_type.name_type(entry.name)
+      assign aggregate_index(target_pointer, target_index), target_index_type, entry.type, value_at_index
     end
   end
 
@@ -534,11 +534,11 @@ class Crystal::CodeGenVisitor
 
   def upcast_distinct(value, to_type : NamedTupleInstanceType, from_type : NamedTupleInstanceType)
     struct_type = alloca llvm_type(to_type)
-    from_type.names_and_types.each_with_index do |name_and_type, index|
+    from_type.entries.each_with_index do |entry, index|
       value_at_index = load aggregate_index(value, index)
-      target_index = to_type.name_index(name_and_type[0]).not_nil!
-      target_index_type = to_type.name_type(name_and_type[0])
-      assign aggregate_index(struct_type, target_index), target_index_type, name_and_type[1], value_at_index
+      target_index = to_type.name_index(entry.name).not_nil!
+      target_index_type = to_type.name_type(entry.name)
+      assign aggregate_index(struct_type, target_index), target_index_type, entry.type, value_at_index
     end
     struct_type
   end

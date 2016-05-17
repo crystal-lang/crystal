@@ -252,12 +252,12 @@ module Crystal
     end
 
     def named_tuple_of(hash : Hash(String, Type))
-      names_and_types = hash.map { |k, v| {k, v.as(Type)} }
-      named_tuple_of(names_and_types)
+      entries = hash.map { |k, v| NamedArgumentType.new(k, v.as(Type)) }
+      named_tuple_of(entries)
     end
 
-    def named_tuple_of(names_and_types : Array)
-      named_tuple.instantiate_named_args(names_and_types)
+    def named_tuple_of(entries : Array(NamedArgumentType))
+      named_tuple.instantiate_named_args(entries)
     end
 
     def nilable(type)

@@ -2280,7 +2280,7 @@ module Crystal
       if scope.is_a?(TupleInstanceType)
         node.type = scope.tuple_types[node.index].as(Type)
       elsif scope.is_a?(NamedTupleInstanceType)
-        node.type = scope.names_and_types[node.index][1]
+        node.type = scope.entries[node.index].type
       elsif scope
         node.type = (scope.instance_type.as(TupleInstanceType).tuple_types[node.index].as(Type)).metaclass
       end

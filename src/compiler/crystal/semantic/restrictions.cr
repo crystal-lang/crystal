@@ -493,7 +493,7 @@ module Crystal
 
       # Check that the names are the same
       other_names = other_named_args.map(&.name).sort!
-      self_names = self.names_and_types.map(&.[0]).sort!
+      self_names = self.entries.map(&.name).sort!
 
       return nil unless self_names == other_names
 

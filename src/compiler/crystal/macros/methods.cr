@@ -731,7 +731,7 @@ module Crystal
           when TupleInstanceType
             NumberLiteral.new(type.tuple_types.size)
           when NamedTupleInstanceType
-            NumberLiteral.new(type.names_and_types.size)
+            NumberLiteral.new(type.entries.size)
           else
             raise "undefined method 'size' for TypeNode of type #{type} (must be a tuple or named tuple type)"
           end
@@ -740,7 +740,7 @@ module Crystal
         interpret_argless_method(method, args) do
           type = type.instance_type
           if type.is_a?(NamedTupleInstanceType)
-            ArrayLiteral.map(type.names_and_types) { |name_and_type| MacroId.new(name_and_type[0]) }
+            ArrayLiteral.map(type.entries) { |entry| MacroId.new(entry.name) }
           else
             raise "undefined method 'keys' for TypeNode of type #{type} (must be a named tuple type)"
           end
@@ -761,7 +761,7 @@ module Crystal
             unless index
               return NilLiteral.new
             end
-            TypeNode.new(type.names_and_types[index][1])
+            TypeNode.new(type.entries[index].type)
           else
             raise "undefined method '[]' for TypeNode of type #{type} (must be a named tuple type)"
           end
