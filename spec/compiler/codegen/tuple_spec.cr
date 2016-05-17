@@ -280,4 +280,18 @@ describe "Code gen: tuple" do
       val.as?(Int32) || 10
       )).to_i.should eq(42)
   end
+
+  it "codegens union of tuple of float with tuple of tuple of float" do
+    run(%(
+      a = {1.5}
+      b = { {22.0, 20.0} }
+      c = b || a
+      v = c[0]
+      if v.is_a?(Float64)
+        10
+      else
+        v[0].to_i + v[1].to_i
+      end
+      )).to_i.should eq(42)
+  end
 end
