@@ -950,6 +950,23 @@ module Crystal
         return false
       end
 
+      # Check if it's {x: A, y: B} instead of NamedTuple(x: A, y: B)
+      if first_name == "NamedTuple" && @token.value != "NamedTuple"
+        write_token :"{"
+        skip_space_or_newline
+        named_args = node.named_args.not_nil!
+        named_args.each_with_index do |named_arg, i|
+          accept named_arg
+          skip_space_or_newline
+          if @token.type == :","
+            write ", " unless last?(i, named_args)
+            next_token_skip_space_or_newline
+          end
+        end
+        write_token :"}"
+        return false
+      end
+
       accept name
       skip_space_or_newline
 
