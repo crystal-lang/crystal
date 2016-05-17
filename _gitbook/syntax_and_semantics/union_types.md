@@ -34,3 +34,61 @@ a.to_s # => String
 
 a + 1 # Error, because String#+(Int32) isn't defined
 ```
+
+## Union types rules
+
+In the general case, when two types `T1` and `T2` are combined, the result is a union `T1 | T2`. However, there are a few cases where the resulting type is a different type.
+
+### Union of classes and structs under the same hierarchy
+
+If `T1` and `T2` are under the same hierarchy, and their nearest common ancestor `Parent` is not `Reference`, `Struct`, `Int`, `Float` nor `Value`, the resulting type is `Parent+`. This is called a virtual type, which basically means the compiler will now see the type as being `Parent` or any of its subtypes.
+
+For example:
+
+```crystal
+class Foo
+end
+
+class Bar < Foo
+end
+
+class Baz < Foo
+end
+
+bar = Bar.new
+baz = Baz.new
+
+# Here foo's type will be Bar | Baz,
+# but because both Bar and Baz inherit from Foo,
+# the resulting type is Foo+
+foo = rand < 0.5 ? bar : baz
+typeof(foo) # => Foo+
+```
+
+### Union of tuples of the same size
+
+The union of two tuples of the same size results in a tuple type that has the union of the types in each position.
+
+For example:
+
+```crystal
+t1 = {1, "hi"}   # Tuple(Int32, String)
+t2 = {true, nil} # Tuple(Bool, Nil)
+
+t3 = rand < 0.5 ? t1 : t2
+typeof(t3) # Tuple(Int32 | Bool, String | Nil)
+```
+
+### Union of named tuples with the same keys
+
+The union of two named tuples with the same keys (regardless of their order) results in a named tuple type that has the union of the types in each key. The order of the keys will be the ones from the tuple on the left hand side.
+
+For example:
+
+```crystal
+t1 = {x: 1, y: "hi"}   # Tuple(x: Int32, y: String)
+t2 = {y: true, x: nil} # Tuple(y: Bool, x: Nil)
+
+t3 = rand < 0.5 ? t1 : t2
+typeof(t3) # NamedTuple(x: Int32 | Nil, y: String | Bool)
+```

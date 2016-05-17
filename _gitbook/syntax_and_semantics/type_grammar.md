@@ -89,6 +89,20 @@ alias Int32StringTuple = Tuple(Int32, String)
 
 In regular code, `{Int32, String}` is a tuple instance containing `Int32` and `String` as its elements. This is different than the above tuple **type**.
 
+## NamedTuple
+
+```crystal
+alias Int32StringNamedTuple = {x: Int32, y: String}
+```
+
+is the same as:
+
+```crystal
+alias Int32StringNamedTuple = NamedTuple(x: Int32, y: String)
+```
+
+In regular code, `{x: Int32, y: String}` is a named tuple instance containing `Int32` and `String` for `x` and `y`. This is different than the above named tuple **type**.
+
 ## Proc
 
 ```crystal
