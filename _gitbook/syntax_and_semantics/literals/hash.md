@@ -16,14 +16,6 @@ When creating an empty hash you must always specify `K` and `V`:
 {}                   # syntax error
 ```
 
-## Symbol keys
-
-A special notation allows creating hashes with symbol keys:
-
-```crystal
-{key1: 'a', key2: 'b'} # Hash(Symbol, Char)
-```
-
 ## String keys
 
 A special notation allows creating hashes with string keys:
