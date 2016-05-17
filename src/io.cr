@@ -461,7 +461,6 @@ module IO
   end
 
   # Writes a slice of UTF-8 encoded bytes to this IO, using the current encoding.
-  @[Raises] # TODO: there's a bug in the compiler that requires this
   def write_utf8(slice : Slice(UInt8))
     if encoder = encoder()
       encoder.write(self, slice)

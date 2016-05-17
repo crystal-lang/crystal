@@ -74,22 +74,21 @@ describe "YAML serialization" do
       big.should eq(BigFloat.new("1234.567891011121314"))
     end
 
-    # TODO: uncomment after 0.15.0
-    # it "does for Enum with number" do
-    #   YAMLSpecEnum.from_yaml(%("1")).should eq(YAMLSpecEnum::One)
+    it "does for Enum with number" do
+      YAMLSpecEnum.from_yaml(%("1")).should eq(YAMLSpecEnum::One)
 
-    #   expect_raises do
-    #     YAMLSpecEnum.from_yaml(%("3"))
-    #   end
-    # end
+      expect_raises do
+        YAMLSpecEnum.from_yaml(%("3"))
+      end
+    end
 
-    # it "does for Enum with string" do
-    #   YAMLSpecEnum.from_yaml(%("One")).should eq(YAMLSpecEnum::One)
+    it "does for Enum with string" do
+      YAMLSpecEnum.from_yaml(%("One")).should eq(YAMLSpecEnum::One)
 
-    #   expect_raises do
-    #     YAMLSpecEnum.from_yaml(%("Three"))
-    #   end
-    # end
+      expect_raises do
+        YAMLSpecEnum.from_yaml(%("Three"))
+      end
+    end
 
     it "does Time::Format#from_yaml" do
       pull = YAML::PullParser.new("--- 2014-01-02\n...\n")

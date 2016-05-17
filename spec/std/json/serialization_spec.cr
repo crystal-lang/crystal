@@ -85,22 +85,21 @@ describe "JSON serialization" do
       big.should eq(BigFloat.new("1234"))
     end
 
-    # TODO: uncomment after 0.15.0
-    # it "does for Enum with number" do
-    #   JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
+    it "does for Enum with number" do
+      JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
 
-    #   expect_raises do
-    #     JSONSpecEnum.from_json("3")
-    #   end
-    # end
+      expect_raises do
+        JSONSpecEnum.from_json("3")
+      end
+    end
 
-    # it "does for Enum with string" do
-    #   JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
+    it "does for Enum with string" do
+      JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
 
-    #   expect_raises do
-    #     JSONSpecEnum.from_json(%("Three"))
-    #   end
-    # end
+      expect_raises do
+        JSONSpecEnum.from_json(%("Three"))
+      end
+    end
   end
 
   describe "to_json" do
