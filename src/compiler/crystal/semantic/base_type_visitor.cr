@@ -852,6 +852,14 @@ module Crystal
         node.raise "can't use class variables in generic types"
       end
 
+      if scope.is_a?(VirtualType)
+        node.raise "can't access class variable from a type that is #{scope.base_type.instance_type} or any of its subclasses"
+      end
+
+      if scope.is_a?(VirtualMetaclassType)
+        node.raise "can't access class variable from a type that is #{scope.base_type.instance_type} or any of its subclasses"
+      end
+
       scope.as(ClassVarContainer)
     end
 
