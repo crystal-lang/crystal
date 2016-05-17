@@ -67,6 +67,13 @@ describe "JSON serialization" do
       tuple.should be_a(Tuple(Int32, String))
     end
 
+    # TODO: uncomment after 0.16.0
+    # it "does for named tuple" do
+    #   tuple = NamedTuple(x: Int32, y: String).from_json(%({"y": "hello", "x": 1}))
+    #   tuple.should eq({x: 1, y: "hello"})
+    #   tuple.should be_a(NamedTuple(x: Int32, y: String))
+    # end
+
     it "does for BigInt" do
       big = BigInt.from_json("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)

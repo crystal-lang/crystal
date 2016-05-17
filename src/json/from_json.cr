@@ -120,6 +120,37 @@ def Tuple.new(pull : JSON::PullParser)
  {% end %}
 end
 
+def NamedTuple.new(pull : JSON::PullParser)
+  {% begin %}
+    {% for key in T.keys %}
+      %var{key.id} = nil
+    {% end %}
+
+    pull.read_object do |key|
+      case key
+        {% for key, type in T %}
+          when {{key.stringify}}
+            %var{key.id} = {{type}}.new(pull)
+        {% end %}
+      else
+        pull.skip
+      end
+    end
+
+    {% for key in T.keys %}
+      if %var{key.id}.nil?
+        raise JSON::ParseException.new("missing json attribute: {{key}}", 0, 0)
+      end
+    {% end %}
+
+    {
+      {% for key in T.keys %}
+        {{key}}: %var{key.id},
+      {% end %}
+    }
+  {% end %}
+end
+
 def Enum.new(pull : JSON::PullParser)
   case pull.kind
   when :int
