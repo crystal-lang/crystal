@@ -109,7 +109,7 @@ class CSV
   # Builds a CSV. This yields a `CSV::Builder` to the given block.
   #
   # ```
-  # CSV.build do |csv|
+  # result = CSV.build do |csv|
   #   csv.row "one", "two"
   #   csv.row "three"
   # end
