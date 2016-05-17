@@ -1,3 +1,23 @@
+## 0.17.0 (2016-05-17)
+
+* **(breaking change)** Macro defs are now parsed like regular methods. Enclose the body with `{% begin %} .. {% end %}` if you needed that behaviour
+* **(breaking change)** A union of two tuples of the same size results in a tuple with the unions of the types in each position. This only affects code that later tested a tuple's type with `is_a?`, for example `tuple.is_a?({Int32, String})`
+* **(breaking change)** Method arguments have now a different semantic. This only affects methods that had a splat argument followed by other arguments.
+* **(breaking change)** The syntax `{foo: 1, bar: 2}` now denotes a `NamedTuple`, not a `Hash` with symbol as keys. Use `{:foo => 1, :bar => 2}` instead
+* The syntax `exp as Type` is now deprecated and will be removed in the next version. Use `crystal tool format` to automatically upgrade your code
+* The compiler now gives an error when trying to define a method named `!`, `is_a?`, `responds_to?`, `nil?`, `as` or `as?`
+* Added the `NamedTuple` type
+* Added double splatting
+* Added external argument names
+* Macro defs return type is no longer mandatory
+* Added `as?`: similar to `as`, but returns `nil` when the type doesn't match
+* Added `Number::Primitive` alias
+* Added `Tuple#+(Tuple)`
+* Added `ArrayLiteral#+(ArrayLiteral)` in macros
+* `Crypto::MD5` now allows `Slice(UInt8)` and a block form (thanks @will)
+* Added docs for XML (thanks @Hamdiakoguz)
+* Many bug fixes
+
 ## 0.16.0 (2016-05-05)
 
 * **(breaking change)** Instance, class and global variables types must be told to the compiler, [either explicitly or through a series of syntactic rules](http://crystal-lang.org/docs/syntax_and_semantics/type_inference.html)
