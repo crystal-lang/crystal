@@ -1,6 +1,10 @@
 require "spec"
 
 describe "NamedTuple" do
+  it "does new" do
+    NamedTuple.new(x: 1, y: 2).should eq({x: 1, y: 2})
+  end
+
   it "gets size" do
     {a: 1, b: 3}.size.should eq(2)
   end
