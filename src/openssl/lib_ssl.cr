@@ -44,7 +44,7 @@ lib LibSSL
 end
 
 # :nodoc:
-module OpenSSL::Init
+module OpenSSLInit
   # Workaround to force this initialization as soon as the program starts, before main
   @@init = begin
     LibSSL.ssl_library_init

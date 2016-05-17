@@ -253,7 +253,7 @@ lib LibXML
 end
 
 # :nodoc:
-module XML::Init
+module XMLInit
   # Workaround to force this initialization as soon as the program starts, before main
   @@init = begin
     LibXML.xmlGcMemSetup(
