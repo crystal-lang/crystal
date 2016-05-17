@@ -88,6 +88,7 @@
        * [nil?](syntax_and_semantics/nil_question.md)
        * [responds_to?](syntax_and_semantics/responds_to.md)
        * [as](syntax_and_semantics/as.md)
+       * [as?](syntax_and_semantics/as_question.md)
        * [typeof](syntax_and_semantics/typeof.md)
    * [Attributes](syntax_and_semantics/attributes.md)
    * [Requiring files](syntax_and_semantics/requiring_files.md)
