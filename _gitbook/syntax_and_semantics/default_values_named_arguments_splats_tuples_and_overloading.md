@@ -27,7 +27,7 @@ def foo(
 end
 ```
 
-Each one of them is optional, so I a method can do without the double splat, or without the splat, or without positional arguments.
+Each one of them is optional, so a method can do without the double splat, without the splat, without keyword arguments and without positional arguments.
 
 ## Components of a method call
 
@@ -141,7 +141,7 @@ foo external_name: 1
 
 This covers two uses cases.
 
-The first use case is using keyword as named arguments:
+The first use case is using keywords as named arguments:
 
 ```crystal
 def plan(begin begin_time, end end_time)

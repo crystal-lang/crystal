@@ -55,7 +55,7 @@ sum 1, 2, 3 # Error, missing argument: initial
 sum 1, 2, 3, initial: 10 # => 16
 ```
 
-Two methods with different required named argumens overload between each other:
+Two methods with different required named arguments overload between each other:
 
 ```crystal
 def foo(*elements, x)
