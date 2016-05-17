@@ -238,13 +238,25 @@ class Crystal::Command
     col = ""
 
     loc = config.cursor_location.not_nil!.split(':')
-    if loc.size == 3
-      file, line, col = loc
+    if loc.size != 3
+      error "cursor location must be file:line:column"
+    end
+
+    file, line, col = loc
+
+    line_number = line.to_i? || 0
+    if line_number <= 0
+      error "line must be a positive integer, not #{line}"
+    end
+
+    column_number = col.to_i? || 0
+    if column_number <= 0
+      error "column must be a positive integer, not #{col}"
     end
 
     file = File.expand_path(file)
 
-    result = yield Location.new(line.to_i, col.to_i, file), config, result
+    result = yield Location.new(line_number, column_number, file), config, result
 
     case format
     when "json"
