@@ -2,7 +2,7 @@
 %html{:lang => "en"}
   %head
     %meta{:charset => "utf-8"}
-    %title Crystal
+    %title {% if page.title %}{{ page.title }}{% else %}Crystal{% endif %}
     %link{:href => "/stylesheets/stylesheet.css", :rel => "stylesheet"}
     %link{:rel => 'alternate', :type => 'application/atom+xml', :title => 'Atom 1.0', :href => '/feed.xml'}
     %link{:rel => 'icon', :href => "/images/favico.png", :type => "image/png"}

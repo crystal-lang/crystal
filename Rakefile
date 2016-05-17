@@ -1,6 +1,5 @@
-# Rake tasks to parse haml layouts, includes and index files and sass files for jekyll
+# Rake tasks to parse haml layouts, includes and index files for jekyll
 # Assumes that the haml files are in (_layouts|_includes)/_haml
-# and the less files are in css/_less
 
 namespace :haml do
   require 'haml'
@@ -36,21 +35,9 @@ namespace :haml do
   desc 'Parse haml index files'
   task :indexes do
     convert './index.haml', File.dirname('./index.haml')
-    convert_full './sponsors.haml', './sponsors/index.html'
 
     puts 'Parsed haml index files'
   end
-end
-
-desc 'Parse less files'
-task :less do
-  require 'less'
-
-  parser = Less::Parser.new filename: "stylesheet.css", paths: "stylesheets/_sass"
-  css = parser.parse(File.read("stylesheets/_sass/stylesheet.less")).to_css
-  File.open('stylesheets/stylesheet.css', 'w') { |f| f.write css }
-
-  puts 'Parsed main.sass'
 end
 
 def tidy_docs
@@ -91,4 +78,4 @@ desc 'Parse all haml items'
 task haml: ['haml:layouts', 'haml:includes', 'haml:indexes']
 
 desc 'Build all haml and sass files for deployment'
-task build: [:haml, :less, :docs]
+task build: [:haml, :docs]

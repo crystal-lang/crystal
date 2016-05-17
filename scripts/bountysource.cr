@@ -1,5 +1,6 @@
 require "http/client"
 require "json"
+require "csv"
 
 levels = [250, 150, 75, 25, 10, 5, 1]
 
@@ -209,17 +210,18 @@ end
 
 sponsors.sort_by! { |s| {-s.this_month, -s.all_time, s.name.downcase} }.uniq!
 
-puts "- sponsors = [nil,"
-sponsors.each do |sponsor|
-  # pp sponsor
-  data = {} of String => String | Int32
-  data["logo"] = sponsor.logo unless sponsor.logo.empty?
-  data["name"] = sponsor.name
-  data["url"] = sponsor.url unless sponsor.url.empty?
-  data["this_month"] = sponsor.this_month.to_i
-  data["all_time"] = sponsor.all_time.to_i
-  data["since"] = sponsor.since.to_s("%b %-d, %Y")
-  data["level"] = levels.find { |amount| amount <= sponsor.this_month.to_i }.not_nil!
-  puts %(              #{data.to_json},)
+result = CSV.build do |csv|
+  csv.row "logo", "name", "url", "this_month", "all_time", "since", "level"
+
+  sponsors.each do |sponsor|
+    csv.row (sponsor.logo unless sponsor.logo.empty?),
+      sponsor.name,
+      (sponsor.url unless sponsor.url.empty?),
+      sponsor.this_month.to_i,
+      sponsor.all_time.to_i,
+      sponsor.since.to_s("%b %-d, %Y"),
+      levels.find { |amount| amount <= sponsor.this_month.to_i }.not_nil!
+  end
 end
-puts "             ].compact"
+
+puts result

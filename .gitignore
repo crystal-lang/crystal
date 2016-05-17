@@ -4,3 +4,4 @@ _book
 vendor/bundle
 .ruby-version
 .crystal
+.sass-cache
