@@ -226,7 +226,7 @@ module Crystal
       owner = class_var_owner(target)
       cvars = @class_vars[owner] ||= {} of String => {ASTNode, ASTNode}
       existing = cvars[target.name]?
-      cvars[target.name] = {node as ASTNode, value}
+      cvars[target.name] = {node.as(ASTNode), value}
       if existing
         node_to_discard = existing[0]
         case node_to_discard
