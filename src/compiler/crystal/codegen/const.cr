@@ -162,6 +162,11 @@ class Crystal::CodeGenVisitor
       return
     end
 
+    @last = read_const_pointer(const)
+    @last = to_lhs @last, const.value.type
+  end
+
+  def read_const_pointer(const)
     if const == @mod.argc || const == @mod.argv
       global_name = const.llvm_name
       global = declare_const(const)
@@ -171,15 +176,14 @@ class Crystal::CodeGenVisitor
         global ||= @llvm_mod.globals.add(llvm_type(const.value.type), global_name)
       end
 
-      @last = to_lhs global, const.value.type
-      return
+      return global
     end
 
     read_function_name = "~#{const.llvm_name}:read"
     func = @main_mod.functions[read_function_name]? || create_read_const_function(read_function_name, const)
     func = check_main_fun read_function_name, func
     @last = call func
-    @last = to_lhs @last, const.value.type
+    @last
   end
 
   def create_read_const_function(fun_name, const)

@@ -394,4 +394,26 @@ describe "Codegen: const" do
       z
       )).to_i.should eq(10)
   end
+
+  it "gets pointerof constant inside class" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        BAR = 42
+
+        @z : Int32
+
+        def initialize
+          @z = pointerof(BAR).value
+        end
+
+        def z
+          @z
+        end
+      end
+
+      Foo.new.z
+      )).to_i.should eq(42)
+  end
 end
