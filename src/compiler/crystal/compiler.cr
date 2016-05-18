@@ -189,6 +189,8 @@ module Crystal
 
       if program.has_flag?("x86_64")
         llvm_mod.data_layout = DataLayout64
+      elsif program.has_flag?("asmjs")
+        llvm_mod.data_layout = DataLayoutJS
       else
         llvm_mod.data_layout = DataLayout32
       end
@@ -280,6 +282,8 @@ module Crystal
       unit.llvm_mod.target = target_triple
       if program.has_flag?("x86_64")
         unit.llvm_mod.data_layout = DataLayout64
+      elsif program.has_flag?("asmjs")
+        unit.llvm_mod.data_layout = DataLayoutJS
       else
         unit.llvm_mod.data_layout = DataLayout32
       end

@@ -40,6 +40,8 @@ class LLVM::TargetMachine
       ABI::X86_64.new(self)
     when /i386|i686/
       ABI::X86.new(self)
+    when /asmjs/
+      ABI::ASMJS.new(self)
     else
       raise "Unsupported ABI for target triple: #{triple}"
     end
