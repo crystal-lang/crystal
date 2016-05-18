@@ -439,6 +439,23 @@ describe "Parser" do
   it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
   it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", block: Block.new(body: 1.int32))
 
+  it_parses "foo { |a, (b, c), (d, e)| a; b; c; d; e }", Call.new(nil, "foo",
+    block: Block.new(["a".var, "__arg0".var, "__arg1".var],
+      Expressions.new([
+        Assign.new("b".var, Call.new("__arg0".var, "[]", 0.int32)),
+        Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
+        Assign.new("d".var, Call.new("__arg1".var, "[]", 0.int32)),
+        Assign.new("e".var, Call.new("__arg1".var, "[]", 1.int32)),
+        "a".var, "b".var, "c".var, "d".var, "e".var,
+      ] of ASTNode)))
+
+  it_parses "foo { |(_, c)| c }", Call.new(nil, "foo",
+    block: Block.new(["__arg0".var],
+      Expressions.new([
+        Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
+        "c".var,
+      ] of ASTNode)))
+
   it_parses "1 ? 2 : 3", If.new(1.int32, 2.int32, 3.int32)
   it_parses "1 ? a : b", If.new(1.int32, "a".call, "b".call)
   it_parses "1 ? a : b ? c : 3", If.new(1.int32, "a".call, If.new("b".call, "c".call, 3.int32))

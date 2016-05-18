@@ -902,4 +902,7 @@ describe Crystal::Formatter do
   assert_format "def foo(x @@y)\nend"
 
   assert_format " Array( {x:  Int32,   y:  String } )", "Array({x: Int32, y: String})"
+
+  assert_format "foo { | a, ( b , c ) | a + b + c }", "foo { |a, (b, c)| a + b + c }"
+  assert_format "foo { | a, ( b , c, ), | a + b + c }", "foo { |a, (b, c)| a + b + c }"
 end

@@ -3560,6 +3560,7 @@ module Crystal
 
     def parse_block2
       block_args = [] of Var
+      extra_assigns = nil
       block_body = nil
 
       next_token_skip_space
@@ -3571,6 +3572,47 @@ module Crystal
             arg_name = @token.value.to_s
           when :UNDERSCORE
             arg_name = "_"
+          when :"("
+            block_arg_name = "__arg#{@block_arg_count}"
+            @block_arg_count += 1
+
+            next_token_skip_space_or_newline
+
+            i = 0
+            while true
+              case @token.type
+              when :IDENT
+                sub_arg_name = @token.value.to_s
+              when :UNDERSCORE
+                sub_arg_name = "_"
+              else
+                raise "expecting block argument name, not #{@token.type}", @token
+              end
+
+              push_var_name sub_arg_name
+              location = @token.location
+
+              unless sub_arg_name == "_"
+                extra_assigns ||= [] of ASTNode
+                extra_assigns << Assign.new(
+                  Var.new(sub_arg_name).at(location),
+                  Call.new(Var.new(block_arg_name).at(location), "[]", NumberLiteral.new(i)).at(location)
+                ).at(location)
+              end
+
+              next_token_skip_space_or_newline
+              if @token.type == :","
+                next_token_skip_space_or_newline
+              end
+
+              if @token.type == :")"
+                break
+              end
+
+              i += 1
+            end
+
+            arg_name = block_arg_name
           else
             raise "expecting block argument name, not #{@token.type}", @token
           end
@@ -3593,6 +3635,17 @@ module Crystal
       push_vars block_args
 
       block_body = parse_expressions
+
+      if extra_assigns
+        exps = [] of ASTNode
+        exps.concat extra_assigns
+        if block_body.is_a?(Expressions)
+          exps.concat block_body.expressions
+        else
+          exps.push block_body
+        end
+        block_body = Expressions.from exps
+      end
 
       pop_def
 

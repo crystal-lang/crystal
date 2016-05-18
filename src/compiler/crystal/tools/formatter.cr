@@ -1233,22 +1233,10 @@ module Crystal
         accept node.return_type.not_nil!
       end
 
-      body = node.body
-
-      if to_skip > 0
-        body = node.body
-        if body.is_a?(Expressions)
-          body.expressions = body.expressions[to_skip..-1]
-          if body.expressions.empty?
-            body = Nop.new
-          end
-        else
-          body = Nop.new
-        end
-      end
+      remove_to_skip node, to_skip
 
       unless node.abstract?
-        format_nested_with_end body
+        format_nested_with_end node.body
       end
 
       @inside_def -= 1
@@ -2363,13 +2351,13 @@ module Crystal
       if @token.keyword?(:do)
         write " do"
         next_token_skip_space
-        format_block_args node.args
+        format_block_args node.args, node
         format_nested_with_end node.body
       elsif @token.type == :"{"
         write "," if needs_comma
         write " {"
         next_token_skip_space
-        format_block_args node.args
+        format_block_args node.args, node
         if @token.type == :NEWLINE
           format_nested node.body
           skip_space_or_newline
@@ -2510,13 +2498,53 @@ module Crystal
       end
     end
 
-    def format_block_args(args)
-      return if args.empty?
+    def format_block_args(args, node)
+      return 0 if args.empty?
+
+      to_skip = 0
 
       write_token " ", :"|"
       skip_space_or_newline
       args.each_with_index do |arg, i|
-        accept arg
+        if @token.type == :"("
+          write :"("
+          next_token_skip_space_or_newline
+
+          while true
+            case @token.type
+            when :IDENT
+              underscore = false
+            when :UNDERSCORE
+              underscore = true
+            else
+              raise "expecting block argument name, not #{@token.type}"
+            end
+
+            write @token.value
+
+            unless underscore
+              to_skip += 1
+            end
+
+            next_token_skip_space_or_newline
+            has_comma = false
+            if @token.type == :","
+              has_comma = true
+              next_token_skip_space_or_newline
+            end
+
+            if @token.type == :")"
+              next_token
+              write ")"
+              break
+            else
+              write ", "
+            end
+          end
+        else
+          accept arg
+        end
+
         skip_space_or_newline
         if @token.type == :","
           next_token_skip_space_or_newline
@@ -2526,6 +2554,22 @@ module Crystal
       skip_space_or_newline
       write_token :"|"
       skip_space
+
+      remove_to_skip node, to_skip
+    end
+
+    def remove_to_skip(node, to_skip)
+      if to_skip > 0
+        body = node.body
+        if body.is_a?(Expressions)
+          body.expressions = body.expressions[to_skip..-1]
+          if body.expressions.empty?
+            node.body = Nop.new
+          end
+        else
+          node.body = Nop.new
+        end
+      end
     end
 
     def visit(node : IsA)
