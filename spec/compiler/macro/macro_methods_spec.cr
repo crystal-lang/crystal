@@ -541,6 +541,10 @@ describe "macro methods" do
       assert_macro "", %({{{:a => 1, :b => 2}.values}}), [] of ASTNode, "[1, 2]"
     end
 
+    it "executes map" do
+      assert_macro "", %({{{:a => 1, :b => 2}.map {|k, v| k == :a && v == 1}}}), [] of ASTNode, "[true, false]"
+    end
+
     it "executes is_a?" do
       assert_macro "", %({{{:a => 1}.is_a?(HashLiteral)}}), [] of ASTNode, "true"
       assert_macro "", %({{{:a => 1}.is_a?(RangeLiteral)}}), [] of ASTNode, "false"
@@ -582,6 +586,10 @@ describe "macro methods" do
 
     it "executes values" do
       assert_macro "", %({{{a: 1, b: 2}.values}}), [] of ASTNode, "[1, 2]"
+    end
+
+    it "executes map" do
+      assert_macro "", %({{{a: 1, b: 2}.map {|k, v| k.stringify == "a" && v == 1}}}), [] of ASTNode, "[true, false]"
     end
 
     it "executes is_a?" do

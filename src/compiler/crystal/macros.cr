@@ -505,6 +505,10 @@ module Crystal::Macros
     def values : ArrayLiteral
     end
 
+    # Similar to `Hash#map`
+    def map : ArrayLiteral
+    end
+
     # Similar to `Hash#[]`
     def [](key : ASTNode) : ASTNode
     end
@@ -534,6 +538,10 @@ module Crystal::Macros
 
     # Similar to `NamedTuple#values`
     def values : ArrayLiteral
+    end
+
+    # Similar to `NamedTuple#map`
+    def map : ArrayLiteral
     end
 
     # Similar to `NamedTuple#[]`
