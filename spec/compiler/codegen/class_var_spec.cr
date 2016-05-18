@@ -266,4 +266,111 @@ describe "Codegen: class var" do
       Foo.bar || 10
       )).to_i.should eq(42)
   end
+
+  it "codegens class var with begin and vars" do
+    run("
+      class Foo
+        @@foo : Int32
+        @@foo = begin
+          a = 1
+          b = 2
+          a + b
+        end
+
+        def self.foo
+          @@foo
+        end
+      end
+
+      Foo.foo
+      ").to_i.should eq(3)
+  end
+
+  it "codegens class var with type declaration begin and vars" do
+    run("
+      class Foo
+        @@foo : Int32 = begin
+          a = 1
+          b = 2
+          a + b
+        end
+
+        def self.foo
+          @@foo
+        end
+      end
+
+      Foo.foo
+      ").to_i.should eq(3)
+  end
+
+  it "codegens class var with nilable reference type" do
+    run(%(
+      class Foo
+        @@foo : String? = nil
+
+        def self.foo
+          @@foo ||= "hello"
+        end
+      end
+
+      Foo.foo
+      )).to_string.should eq("hello")
+  end
+
+  it "initializes class var the moment it reaches it" do
+    run(%(
+      require "prelude"
+
+      ENV["FOO"] = "BAR"
+
+      class Foo
+        @@x = ENV["FOO"]
+
+        def self.x
+          @@x
+        end
+      end
+
+      w = Foo.x
+      z = Foo.x
+      z
+      )).to_string.should eq("BAR")
+  end
+
+  it "gets pointerof class var" do
+    run(%(
+      z = Foo.foo
+
+      class Foo
+        @@foo = 10
+
+        def self.foo
+          pointerof(@@foo).value
+        end
+      end
+
+      z
+      )).to_i.should eq(10)
+  end
+
+  it "gets pointerof class var complex constant" do
+    run(%(
+      z = Foo.foo
+
+      class Foo
+        @@foo : Int32
+        @@foo = begin
+          a = 10
+          a
+        end
+
+        def self.foo
+          pointerof(@@foo).value
+        end
+      end
+
+      z
+      )).to_i.should eq(10)
+  end
 end

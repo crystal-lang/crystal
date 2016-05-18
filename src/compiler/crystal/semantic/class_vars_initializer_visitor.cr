@@ -1,11 +1,15 @@
 require "./base_type_visitor"
 
 module Crystal
-  record ClassVarInitializer,
-    owner : ClassVarContainer,
-    name : String,
-    node : ASTNode,
-    meta_vars : MetaVars
+  class ClassVarInitializer
+    getter owner : ClassVarContainer,
+      name : String,
+      meta_vars : MetaVars
+    property node : ASTNode
+
+    def initialize(@owner, @name, @node, @meta_vars)
+    end
+  end
 
   class Program
     def visit_class_vars_initializers(node)
@@ -15,7 +19,12 @@ module Crystal
       # First gather them all
       class_var_initializers = [] of ClassVarInitializer
       visitor.class_vars.each do |owner, vars|
-        vars.each do |name, node|
+        vars.each do |name, assign_and_node|
+          node = assign_and_node[1]
+
+          # If the initializer is nil there's no need to initialize anything
+          next if node.is_a?(NilLiteral)
+
           meta_vars = MetaVars.new
           class_var_initializers << ClassVarInitializer.new(owner, name, node, meta_vars)
         end
@@ -25,16 +34,7 @@ module Crystal
       # so they are initialized before everything else and they are typed and can
       # be used by code that could come before them, so circular dependencies are less
       # of a problem.
-      simple_vars, complex_vars = class_var_initializers.partition do |initializer|
-        node = initializer.node
-        case node
-        when Nop, NilLiteral, BoolLiteral, NumberLiteral, CharLiteral,
-             StringLiteral, SymbolLiteral
-          true
-        else
-          false
-        end
-      end
+      simple_vars, complex_vars = class_var_initializers.partition &.node.simple_literal?
       class_var_initializers = simple_vars + complex_vars
 
       # Now type them
@@ -67,7 +67,8 @@ module Crystal
           main_visitor.undefined_class_variable(class_var, owner)
         end
 
-        owner.class_vars[name].bind_to(node)
+        class_var.bind_to(node)
+        class_var.initializer = initializer
         self.class_var_and_const_initializers << initializer
       end
 
@@ -104,7 +105,7 @@ module Crystal
     def initialize(mod)
       super(mod)
 
-      @class_vars = {} of ClassVarContainer => Hash(String, ASTNode)
+      @class_vars = {} of ClassVarContainer => Hash(String, {ASTNode, ASTNode})
     end
 
     def visit_any(node)
@@ -210,21 +211,31 @@ module Crystal
     def visit(node : Assign)
       target = node.target.as(ClassVar)
       value = node.value
-      type_class_var(target, value)
+      type_class_var(target, node, value)
       false
     end
 
     def visit(node : TypeDeclaration)
       target = node.var.as(ClassVar)
       value = node.value
-      type_class_var(target, value) if value
+      type_class_var(target, node, value) if value
       false
     end
 
-    def type_class_var(target, value)
+    def type_class_var(target, node, value)
       owner = class_var_owner(target)
-      cvars = @class_vars[owner] ||= {} of String => ASTNode
-      cvars[target.name] = value
+      cvars = @class_vars[owner] ||= {} of String => {ASTNode, ASTNode}
+      existing = cvars[target.name]?
+      cvars[target.name] = {node as ASTNode, value}
+      if existing
+        node_to_discard = existing[0]
+        case node_to_discard
+        when Assign
+          node_to_discard.discarded = true
+        when TypeDeclaration
+          node_to_discard.discarded = true
+        end
+      end
     end
 
     def inside_block?

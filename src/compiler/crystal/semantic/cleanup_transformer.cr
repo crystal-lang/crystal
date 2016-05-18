@@ -16,14 +16,10 @@ module Crystal
         cleanup_type type, transformer
       end
 
-      self.class_var_and_const_initializers.map! do |initializer|
+      self.class_var_and_const_initializers.each do |initializer|
         if initializer.is_a?(ClassVarInitializer)
-          new_node = initializer.node.transform(transformer)
-          unless new_node.same?(initializer.node)
-            initializer = ClassVarInitializer.new(initializer.owner, initializer.name, new_node, initializer.meta_vars)
-          end
+          initializer.node = initializer.node.transform(transformer)
         end
-        initializer
       end
     end
 

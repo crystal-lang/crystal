@@ -38,6 +38,9 @@ module Crystal
     # a recursive dependency.
     getter! class_var_and_const_being_typed
 
+    getter! argc : Const
+    getter! argv : Const
+
     def initialize
       super(self, self, "main")
 
@@ -154,8 +157,8 @@ module Crystal
       argv_primitive = Primitive.new(:argv)
       argv_primitive.type = pointer_of(pointer_of(uint8))
 
-      types["ARGC_UNSAFE"] = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", argc_primitive
-      types["ARGV_UNSAFE"] = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", argv_primitive
+      types["ARGC_UNSAFE"] = @argc = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", argc_primitive
+      types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", argv_primitive
 
       # Make sure to initialize ARGC and ARGV as soon as the program starts
       class_var_and_const_initializers << argc_unsafe
