@@ -25,16 +25,7 @@ module Crystal
       # so they are initialized before everything else and they are typed and can
       # be used by code that could come before them, so circular dependencies are less
       # of a problem.
-      simple_vars, complex_vars = class_var_initializers.partition do |initializer|
-        node = initializer.node
-        case node
-        when Nop, NilLiteral, BoolLiteral, NumberLiteral, CharLiteral,
-             StringLiteral, SymbolLiteral
-          true
-        else
-          false
-        end
-      end
+      simple_vars, complex_vars = class_var_initializers.partition &.node.simple_literal?
       class_var_initializers = simple_vars + complex_vars
 
       # Now type them

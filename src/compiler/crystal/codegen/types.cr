@@ -46,5 +46,13 @@ module Crystal
 
   class Const
     property initializer : LLVM::Value?
+
+    def initialized_llvm_name
+      "#{llvm_name}:init"
+    end
+
+    def simple?
+      value.simple_literal?
+    end
   end
 end

@@ -241,6 +241,16 @@ module Crystal
 
       MethodTraceException.new(owner, owner_trace, nil_reason)
     end
+
+    def simple_literal?
+      case self
+      when Nop, NilLiteral, BoolLiteral, NumberLiteral, CharLiteral,
+           StringLiteral, SymbolLiteral
+        true
+      else
+        false
+      end
+    end
   end
 
   class Var
