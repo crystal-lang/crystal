@@ -31,6 +31,20 @@ describe "Type inference: external/internal" do
       )) { int32 }
   end
 
+  it "overloads based on external name (#2610)" do
+    assert_type(%(
+      def foo(*, bar foo)
+        1
+      end
+
+      def foo(*, baz foo)
+        2
+      end
+
+      foo(bar: 1) + foo(baz: 1)
+      )) { int32 }
+  end
+
   context "macros" do
     it "can call with external name and use with internal" do
       assert_type(%(

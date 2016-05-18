@@ -101,8 +101,8 @@ module Crystal
 
       # If both have named args we must restrict name by name
       if self_named_args && other_named_args
-        self_names = self_named_args.map(&.name)
-        other_names = other_named_args.map(&.name)
+        self_names = self_named_args.map(&.external_name)
+        other_names = other_named_args.map(&.external_name)
 
         # If the names of the required named args are different, these are different overloads
         return false if self_names != other_names
@@ -131,7 +131,7 @@ module Crystal
 
     def required_named_arguments
       if (splat_index = self.def.splat_index) && splat_index != self.def.args.size - 1
-        self.def.args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by &.name
+        self.def.args[splat_index + 1..-1].select { |arg| !arg.default_value }.sort_by &.external_name
       else
         nil
       end
