@@ -1,3 +1,11 @@
+## 0.17.1 (2016-05-18)
+
+* Constants and class vars are no longer initialized before "main". Now their initialization order goes along with "main", similar to how it works in Ruby (much more intuitive)
+* Added syntax for unpacking block arguments: `foo { |(x, y)| ... }`
+* Added `NamedTupleLiteral#map` and `HashLiteral#map` in macros (thanks @jhass)
+* Fixed wrong codgen for tuples/named tuples merge with pass-by-value types
+* Formatter: fixed incorrect format for named tuple type
+
 ## 0.17.0 (2016-05-17)
 
 * **(breaking change)** Macro defs are now parsed like regular methods. Enclose the body with `{% begin %} .. {% end %}` if you needed that behaviour
