@@ -414,9 +414,7 @@ module Crystal
               when Path
                 # Make sure the constant is initialized before taking a pointer of it
                 const = node_exp.target_const.not_nil!
-                global = declare_const(const)
-                initialize_const(const)
-                global
+                read_const_pointer(const)
               when ReadInstanceVar
                 node_exp.obj.accept self
                 instance_var_ptr (node_exp.obj.type), node_exp.name, @last
