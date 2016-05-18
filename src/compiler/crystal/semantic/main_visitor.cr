@@ -177,9 +177,10 @@ module Crystal
         end
 
         attributes = check_valid_attributes node, ValidClassVarAttributes, "class variable"
+        class_var = lookup_class_var(var)
+        var.var = class_var
         if Attribute.any?(attributes, "ThreadLocal")
-          var = lookup_class_var(var)
-          var.thread_local = true
+          class_var.thread_local = true
         end
       when Global
         if @untyped_def

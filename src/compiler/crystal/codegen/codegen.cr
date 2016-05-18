@@ -188,31 +188,17 @@ module Crystal
       @mod.class_var_and_const_initializers.each do |initializer|
         case initializer
         when Const
-          initialize_simple_const(initializer) if initializer.simple?
+          next unless initializer.simple?
+
+          initialize_simple_const(initializer)
         when ClassVarInitializer
-          initialize_class_var(initializer) # if initializer.node.simple_literal?
+          next unless initializer.node.simple_literal?
+
+          class_var = initializer.owner.class_vars[initializer.name]
+          next if class_var.thread_local?
+
+          initialize_class_var(initializer)
         end
-      end
-    end
-
-    def initialize_class_var(initializer)
-      alloca_vars initializer.meta_vars
-
-      accept initializer.node
-      last = @last
-
-      class_var = initializer.owner.class_vars[initializer.name]
-
-      if last.constant? &&
-         !class_var.thread_local? &&
-         (class_var.type == @mod.nil || !class_var.type.includes_type?(@mod.nil)) &&
-         class_var.type == initializer.node.type
-        # If a class variable starts with a constant value, we just initialize
-        # it with it instead of initializing it with null and then doing an assignment
-        get_global class_var_global_name(class_var), class_var.type, class_var, last
-      else
-        global = get_global class_var_global_name(class_var), class_var.type, class_var
-        assign global, class_var.type, initializer.node.type, last
       end
     end
 
@@ -418,12 +404,14 @@ module Crystal
               when InstanceVar
                 instance_var_ptr (context.type.remove_typedef.as(InstanceVarContainer)), node_exp.name, llvm_self_ptr
               when ClassVar
+                # Make sure the class var is initializer before taking a pointer of it
+                if node_exp.var.initializer
+                  initialize_class_var(node_exp)
+                end
                 get_global class_var_global_name(node_exp.var), node_exp.type, node_exp.var
               when Global
                 get_global node_exp.name, node_exp.type, node_exp.var
               when Path
-                # accept(node_exp)
-
                 # Make sure the constant is initialized before taking a pointer of it
                 const = node_exp.target_const.not_nil!
                 global = declare_const(const)
@@ -815,6 +803,8 @@ module Crystal
     end
 
     def visit(node : Assign)
+      return false if node.discarded?
+
       target, value = node.target, node.value
 
       case target
@@ -835,6 +825,10 @@ module Crystal
       # This means it's an instance variable initialize of a generic type,
       # or a class variable initializer
       unless target_type
+        if target.is_a?(ClassVar)
+          # This is the case of a class var initializer
+          initialize_class_var(target)
+        end
         return false
       end
 
@@ -965,11 +959,9 @@ module Crystal
       ptr = load indirection_ptr
     end
 
-    def class_var_global_name(node)
-      "#{node.owner}#{node.name.gsub('@', ':')}"
-    end
-
     def visit(node : TypeDeclaration)
+      return false if node.discarded?
+
       var = node.var
       case var
       when Var
@@ -981,6 +973,9 @@ module Crystal
           assign ptr, var.type, value.type, @last
           return false
         end
+      when ClassVar
+        # This is the case of a class var initializer
+        initialize_class_var(var)
       end
 
       @last = llvm_nil
@@ -1021,7 +1016,7 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      read_global class_var_global_name(node.var), node.type, node.var
+      read_class_var(node)
     end
 
     def read_global(name, type, real_var)

@@ -849,6 +849,9 @@ module Crystal
     property? thread_local : Bool
     @thread_local = false
 
+    # The (optional) initial value of a class variable
+    property initializer : ClassVarInitializer?
+
     def kind
       case name[0]
       when '@'
@@ -1038,5 +1041,33 @@ module Crystal
 
   class Asm
     property ptrof : PointerOf?
+  end
+
+  class Assign
+    # Whether a class variable assignment needs to be skipped
+    # because it was replaced with another initializer
+    #
+    # ```
+    # class Foo
+    #   @@x = 1 # This will never execute
+    #   @@x = 2
+    # end
+    # ```
+    property? discarded : Bool
+    @discarded = false
+  end
+
+  class TypeDeclaration
+    # Whether a class variable assignment needs to be skipped
+    # because it was replaced with another initializer
+    #
+    # ```
+    # class Foo
+    #   @@x : Int32 = 1 # This will never execute
+    #   @@x : Int32 = 2
+    # end
+    # ```
+    property? discarded : Bool
+    @discarded = false
   end
 end
