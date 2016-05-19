@@ -351,6 +351,10 @@ module Crystal
     property? captured_block : Bool
     @captured_block = false
 
+    # Is this a `new` method that was expanded from an initialize?
+    property? new : Bool
+    @new = false
+
     @macro_owner : Type?
 
     def macro_owner=(@macro_owner)
