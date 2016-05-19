@@ -1,3 +1,7 @@
+## 0.17.2 (2016-05-18)
+
+* Fixed crash when using pointerof of constant
+
 ## 0.17.1 (2016-05-18)
 
 * Constants and class vars are no longer initialized before "main". Now their initialization order goes along with "main", similar to how it works in Ruby (much more intuitive)
