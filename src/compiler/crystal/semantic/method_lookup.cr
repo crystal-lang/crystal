@@ -130,6 +130,7 @@ module Crystal
       arg_types = signature.arg_types
       named_args = signature.named_args
       splat_index = a_def.splat_index
+      splat_restriction = a_def.args[splat_index].restriction if splat_index
       double_splat = a_def.double_splat
       double_splat_restriction = double_splat.try &.restriction
 
@@ -159,13 +160,31 @@ module Crystal
         return nil
       end
 
+      splat_arg_types = nil
+
       a_def.match(arg_types) do |arg, arg_index, arg_type, arg_type_index|
+        # Don't match argument against splat restriction
+        if arg_index == splat_index && splat_restriction.is_a?(Splat)
+          splat_arg_types ||= [] of Type
+          splat_arg_types << arg_type
+          next
+        end
+
         match_arg_type = match_arg(arg_type, arg, context)
         if match_arg_type
           matched_arg_types ||= [] of Type
           matched_arg_types.push match_arg_type
           mandatory_args[arg_index] = true if mandatory_args
         else
+          return nil
+        end
+      end
+
+      # Match splat arguments against splat restriction
+      if splat_arg_types && splat_restriction.is_a?(Splat)
+        tuple_type = context.owner.program.tuple_of(splat_arg_types)
+        value = match_arg(tuple_type, splat_restriction.exp, context)
+        unless value
           return nil
         end
       end

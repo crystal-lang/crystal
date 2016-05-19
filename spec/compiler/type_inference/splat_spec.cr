@@ -385,6 +385,28 @@ describe "Type inference: splat" do
       "wrong number of arguments for 'foo' (given 2, expected 1)"
   end
 
+  it "uses splat restriction" do
+    assert_type(%(
+      def foo(*args : *T)
+        T
+      end
+
+      foo 1, 'a', false
+      )) { tuple_of([int32, char, bool]).metaclass }
+  end
+
+  it "uses splat restriction with concrete type" do
+    assert_error %(
+      struct Tuple(T)
+        def self.foo(*args : *T)
+        end
+      end
+
+      Tuple(Int32, Char).foo(1, true)
+      ),
+      "no overload matches"
+  end
+
   describe Splat do
     it "without splat" do
       a_def = Def.new("foo", args: [Arg.new("x"), Arg.new("y")])

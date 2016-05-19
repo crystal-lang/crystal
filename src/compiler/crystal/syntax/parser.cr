@@ -3147,7 +3147,14 @@ module Crystal
         next_token_skip_space_or_newline
 
         location = @token.location
+        splat_restriction = false
+        if splat && @token.type == :"*"
+          splat_restriction = true
+          next_token
+        end
+
         restriction = parse_single_type
+        restriction = Splat.new(restriction).at(location) if splat_restriction
         found_colon = true
       end
 
