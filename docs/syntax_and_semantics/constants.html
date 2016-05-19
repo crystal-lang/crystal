@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.7" data-basepath=".." data-revision="Tue May 17 2016 17:12:34 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.7" data-basepath=".." data-revision="Thu May 19 2016 13:04:08 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2159,28 +2159,6 @@
 
 <span class="hljs-constant">TEN</span> <span class="hljs-comment">#=&gt; 10</span>
 </code></pre>
-<p>A constant is initialized at the beginning of the program, before &quot;main&quot; code:</p>
-<pre><code class="lang-crystal"><span class="hljs-comment"># This assignment happens before the initialization of Foo::VALUE</span>
-<span class="hljs-constant">ENV</span>[<span class="hljs-string">&quot;HOME&quot;</span>] = <span class="hljs-string">&quot;.&quot;</span>
-
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span></span>
-  <span class="hljs-constant">VALUE</span> = <span class="hljs-constant">ENV</span>[<span class="hljs-string">&quot;HOME&quot;</span>]
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-constant">Foo::VALUE</span> <span class="hljs-comment"># probably not &quot;.&quot;</span>
-</code></pre>
-<p>In those cases the best thing is to lazily initialize a class variable:</p>
-<pre><code class="lang-crystal"><span class="hljs-constant">ENV</span>[<span class="hljs-string">&quot;HOME&quot;</span>] = <span class="hljs-string">&quot;.&quot;</span>
-
-<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Foo</span></span>
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">self</span></span>.value
-    <span class="hljs-variable">@@value</span> ||= <span class="hljs-constant">ENV</span>[<span class="hljs-string">&quot;HOME&quot;</span>]
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-
-<span class="hljs-constant">Foo</span>.value <span class="hljs-comment"># &quot;.&quot;</span>
-</code></pre>
-<p>If a constant is not used, its initializer is never included in the final executable.</p>
 
                     
                     </section>

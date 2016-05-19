@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.9" data-basepath=".." data-revision="Tue May 17 2016 17:12:34 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.9" data-basepath=".." data-revision="Thu May 19 2016 13:04:08 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2417,6 +2417,22 @@ twice <span class="hljs-keyword">do</span> |i|
 <span class="hljs-constant">Foo</span>.new.yield_with_self { one } <span class="hljs-comment"># =&gt; 1</span>
 <span class="hljs-constant">Foo</span>.new.yield_normally { one }  <span class="hljs-comment"># =&gt; &quot;one&quot;</span>
 </code></pre>
+<h2 id="unpacking-block-arguments">Unpacking block arguments</h2>
+<p>A block argument can specify sub-arguments enclosed in parentheses:</p>
+<pre><code class="lang-crystal">array = [{<span class="hljs-number">1</span>, <span class="hljs-string">&quot;one&quot;</span>}, {<span class="hljs-number">2</span>, <span class="hljs-string">&quot;two&quot;</span>}]
+array.each <span class="hljs-keyword">do</span> |(number, word)|
+  puts <span class="hljs-string">&quot;<span class="hljs-subst">#{number}</span>: <span class="hljs-subst">#{word}</span>&quot;</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>The above is simply syntax sugar of this:</p>
+<pre><code class="lang-crystal">array = [{<span class="hljs-number">1</span>, <span class="hljs-string">&quot;one&quot;</span>}, {<span class="hljs-number">2</span>, <span class="hljs-string">&quot;two&quot;</span>}]
+array.each <span class="hljs-keyword">do</span> |arg|
+  number = arg[<span class="hljs-number">0</span>]
+  word = arg[<span class="hljs-number">1</span>]
+  puts <span class="hljs-string">&quot;<span class="hljs-subst">#{number}</span>: <span class="hljs-subst">#{word}</span>&quot;</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>That means that any type that responds to <code>[]</code> with integers can be unpacked in a block argument.</p>
 <h2 id="performance">Performance</h2>
 <p>When using blocks with <code>yield</code>, the blocks are <strong>always</strong> inlined: no closures, calls or function pointers are involved. This means that this:</p>
 <pre><code class="lang-crystal"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">twice</span></span>
