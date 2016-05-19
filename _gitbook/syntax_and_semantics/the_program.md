@@ -101,35 +101,3 @@ class Hello
   puts self
 end
 ```
-
-Note, however, that constants and class variable initialization is not considered "main" code, and happens before it:
-
-```crystal
-puts "Hello Crystal!"
-
-class Hello
-  # These two initializations happen before the 'puts' above
-  @@numbers = begin
-    puts "Initializing @@numbers"
-    [1, 2]
-  end
-
-  NUMBERS = begin
-    puts "Initializing NUMBERS"
-    [3, 4]
-  end
-
-  puts @@numbers
-  puts NUMBERS
-end
-```
-
-Output:
-
-```
-Initializing @@numbers
-Initializing NUMBERS
-Hello Crystal!
-[1, 2]
-[3, 4]
-```
