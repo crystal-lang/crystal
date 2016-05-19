@@ -411,6 +411,16 @@ describe "Global inference" do
       )) { nilable fun_of(int32, int32) }
   end
 
+  it "infers from block argument without restriction" do
+    assert_type(%(
+      def foo(&block)
+        $x = block
+      end
+
+      $x
+      )) { nilable fun_of(void) }
+  end
+
   it "infers type from !" do
     assert_type(%(
       $x = !1
