@@ -160,4 +160,26 @@ describe "Type inference: double splat" do
       {x1, x2}
       )) { tuple_of([string, bool]) }
   end
+
+  it "uses double splat restriction" do
+    assert_type(%(
+      def foo(**options : **T)
+        T
+      end
+
+      foo x: 1, y: 'a'
+      )) { named_tuple_of({"x" => int32, "y" => char}).metaclass }
+  end
+
+  it "uses double splat restriction with concrete type" do
+    assert_error %(
+      struct NamedTuple(T)
+        def self.foo(**options : **T)
+        end
+      end
+
+      NamedTuple(x: Int32, y: Char).foo(x: 1, y: true)
+      ),
+      "no overload matches"
+  end
 end
