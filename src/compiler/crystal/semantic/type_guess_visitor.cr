@@ -834,6 +834,9 @@ module Crystal
         if restriction
           type = lookup_type?(restriction)
           return type if type
+        else
+          # If there's no restriction it means it's a `-> Void` proc
+          return @mod.fun_of([@mod.void] of Type)
         end
       end
 
