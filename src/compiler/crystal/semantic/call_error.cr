@@ -153,10 +153,8 @@ class Crystal::Call
       min_size <= real_args_size <= max_size
     end
 
-    # bare_splat = splat_index && args[splat_index].name.empty?
-
     # Don't say "wrong number of arguments" when there are named args in this call
-    if defs_matching_args_size.empty? # && (!named_args_types || bare)
+    if defs_matching_args_size.empty?
       all_arguments_sizes = [] of Int32
       min_splat = Int32::MAX
       defs.each do |a_def|
@@ -512,7 +510,7 @@ class Crystal::Call
         if found_index < min_size
           raise "argument '#{named_arg.name}' already specified"
         end
-      else
+      elsif !a_def.double_splat
         similar_name = Levenshtein.find(named_arg.name, a_def.args.select(&.default_value).map(&.name))
 
         msg = String.build do |str|

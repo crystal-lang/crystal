@@ -1259,9 +1259,8 @@ module Crystal
 
           if double_splat
             write_token :"**"
-            check :IDENT
-            write @token.value
-            next_token_skip_space_or_newline
+            double_splat.accept self
+            skip_space_or_newline
           end
 
           if block_arg

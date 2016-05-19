@@ -126,6 +126,17 @@ module Crystal
         return false
       end
 
+      self_double_splat_restriction = self.def.double_splat.try &.restriction
+      other_double_splat_restriction = other.def.double_splat.try &.restriction
+
+      if self_double_splat_restriction && other_double_splat_restriction
+        return false unless self_double_splat_restriction.is_restriction_of?(other_double_splat_restriction, owner)
+      elsif self_double_splat_restriction
+        true
+      elsif other_double_splat_restriction
+        false
+      end
+
       true
     end
 

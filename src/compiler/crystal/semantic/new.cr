@@ -114,7 +114,7 @@ module Crystal
 
       new_def = Def.new("new", def_args, Nop.new)
       new_def.splat_index = splat_index
-      new_def.double_splat = double_splat
+      new_def.double_splat = double_splat.clone
       new_def.yields = yields
       new_def.visibility = Visibility::Private if visibility.private?
       new_def.new = true
@@ -167,7 +167,7 @@ module Crystal
 
       # Make sure to forward the double splat argument
       if double_splat = self.double_splat
-        new_vars << DoubleSplat.new(Var.new(double_splat))
+        new_vars << DoubleSplat.new(Var.new(double_splat.name))
       end
 
       assign = Assign.new(obj, alloc)
