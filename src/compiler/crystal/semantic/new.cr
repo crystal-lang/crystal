@@ -117,6 +117,7 @@ module Crystal
       new_def.double_splat = double_splat
       new_def.yields = yields
       new_def.visibility = Visibility::Private if visibility.private?
+      new_def.new = true
 
       # Forward block argument if any
       if uses_block_arg
@@ -217,6 +218,58 @@ module Crystal
 
     def self.argless_initialize
       Def.new("initialize", body: Nop.new)
+    end
+
+    def expand_new_default_arguments(instance_type, args_size, named_args)
+      def_args = [] of Arg
+      splat_index = nil
+
+      i = 0
+      args_size.times do
+        def_args << Arg.new("__arg#{i}")
+        i += 1
+      end
+
+      if named_args
+        def_args << Arg.new("")
+        splat_index = i
+        i += 1
+
+        name = String.build do |str|
+          str << "new"
+          named_args.each do |named_arg|
+            str << ":"
+            str << named_arg
+            def_args << Arg.new(named_arg)
+            i += 1
+          end
+        end
+      else
+        name = "new"
+      end
+
+      expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index)
+      expansion.yields = yields
+      expansion.visibility = Visibility::Private if visibility.private?
+      if uses_block_arg
+        block_arg = block_arg.not_nil!
+        expansion.block_arg = block_arg.clone
+        expansion.uses_block_arg = true
+      end
+      expansion.fill_body_from_initialize(instance_type)
+
+      if owner = self.owner?
+        expansion.owner = owner
+      end
+
+      # Remove the splat index: we just needed it so that named arguments
+      # are passed as named arguments to the initialize call
+      if splat_index
+        expansion.splat_index = nil
+        expansion.args.delete_at(splat_index)
+      end
+
+      expansion
     end
   end
 end

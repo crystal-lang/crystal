@@ -57,6 +57,17 @@ module Crystal
     end
 
     def visit(node : Var)
+      # Check for an argument that mathces this var, and see
+      # if it has a default value. If so, we do a `self` check
+      # to make sure `self` isn't used
+      if args = @args
+        # Find an argument with the same name as this variable
+        arg = args.find { |arg| arg.name == node.name }
+        if arg && (default_value = arg.default_value)
+          check_has_self(default_value)
+        end
+      end
+
       check_var_is_self(node)
     end
 

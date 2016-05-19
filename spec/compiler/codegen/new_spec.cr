@@ -263,4 +263,107 @@ describe "Code gen: new" do
       Tuple.new.size
       )).to_i.should eq(0)
   end
+
+  it "evaluates initialize default value at the instance scope (1) (#731)" do
+    run(%(
+      class Foo
+        @x : Int32
+
+        def initialize(@x = bar)
+        end
+
+        def x
+          @x
+        end
+
+        def bar
+          42
+        end
+      end
+
+      Foo.new.x
+      )).to_i.should eq(42)
+  end
+
+  it "evaluates initialize default value at the instance scope (2) (#731)" do
+    run(%(
+      class Foo
+        @x : Int32
+
+        def initialize(@x = bar, @y = 2)
+        end
+
+        def x
+          @x
+        end
+
+        def y
+          @y
+        end
+
+        def bar
+          20
+        end
+      end
+
+      foo = Foo.new(y: 22)
+      foo.x + foo.y
+      )).to_i.should eq(42)
+  end
+
+  it "evaluates initialize default value at the instance scope (3) (#731)" do
+    run(%(
+      class Foo
+        @x : Int32
+
+        def initialize(@x = bar)
+          yield 10, 12
+        end
+
+        def x
+          @x
+        end
+
+        def bar
+          20
+        end
+      end
+
+      total = 0
+      foo = Foo.new do |a, b|
+        total += a
+        total += b
+      end
+      total += foo.x
+      total
+      )).to_i.should eq(42)
+  end
+
+  it "evaluates initialize default value at the instance scope (4) (#731)" do
+    run(%(
+      class Foo
+        @x : Int32
+
+        def initialize(@x = bar, &@block : -> Int32)
+        end
+
+        def x
+          @x
+        end
+
+        def bar
+          22
+        end
+
+        def block
+          @block
+        end
+      end
+
+      foo = Foo.new do
+        20
+      end
+      foo.x + foo.block.call
+      )).to_i.should eq(42)
+  end
 end
