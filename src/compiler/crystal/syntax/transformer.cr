@@ -145,6 +145,10 @@ module Crystal
         node.receiver = receiver.transform(self)
       end
 
+      if double_splat = node.double_splat
+        node.double_splat = double_splat.transform(self)
+      end
+
       if block_arg = node.block_arg
         node.block_arg = block_arg.transform(self)
       end
@@ -154,6 +158,10 @@ module Crystal
 
     def transform(node : Macro)
       transform_many node.args
+
+      if double_splat = node.double_splat
+        node.double_splat = double_splat.transform(self)
+      end
 
       if block_arg = node.block_arg
         node.block_arg = block_arg.transform(self)

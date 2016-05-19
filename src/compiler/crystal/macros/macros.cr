@@ -134,7 +134,7 @@ module Crystal
             end
           end
 
-          vars[double_splat] = NamedTupleLiteral.new(named_tuple_elems)
+          vars[double_splat.name] = NamedTupleLiteral.new(named_tuple_elems)
         end
 
         # Process default values

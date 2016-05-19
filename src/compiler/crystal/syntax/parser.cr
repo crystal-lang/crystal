@@ -2531,8 +2531,8 @@ module Crystal
             splat_index = index
             found_splat = true
           end
-          if extras_double_splat = extras.double_splat
-            double_splat = extras_double_splat
+          if extras.double_splat
+            double_splat = args.pop
             found_double_splat = double_splat
           end
           if block_arg = extras.block_arg
@@ -2955,9 +2955,9 @@ module Crystal
             splat_index = index
             found_splat = true
           end
-          if extras_double_splat = extras.double_splat
-            double_splat = extras_double_splat
-            found_double_splat = extras_double_splat
+          if extras.double_splat
+            double_splat = args.pop
+            found_double_splat = double_splat
           end
           if block_arg = extras.block_arg
             compute_block_arg_yields block_arg
@@ -3073,16 +3073,16 @@ module Crystal
       block_arg : Arg?,
       default_value : Bool,
       splat : Bool,
-      double_splat : String?
+      double_splat : Bool
 
     def parse_arg(args, extra_assigns, parentheses, found_default_value, found_splat, found_double_splat, allow_restrictions)
       if @token.type == :"&"
         next_token_skip_space_or_newline
         block_arg = parse_block_arg(extra_assigns)
-        if args.any?(&.name.==(block_arg.name)) || found_double_splat == block_arg.name
+        if args.any?(&.name.==(block_arg.name)) || (found_double_splat && found_double_splat.name == block_arg.name)
           raise "duplicated argument name: #{block_arg.name}", block_arg.location.not_nil!
         end
-        return ArgExtras.new(block_arg, false, false, nil)
+        return ArgExtras.new(block_arg, false, false, false)
       end
 
       splat = false
@@ -3105,7 +3105,6 @@ module Crystal
         end
 
         double_splat = true
-        allow_restrictions = false
         allow_external_name = false
         next_token_skip_space
       end
@@ -3184,17 +3183,11 @@ module Crystal
 
       raise "Bug: arg_name is nil" unless arg_name
 
-      if double_splat
-        double_splat = arg_name
-        push_var_name double_splat
-      else
-        arg = Arg.new(arg_name, default_value, restriction, external_name: external_name).at(arg_location)
-        args << arg
-        push_var arg
-        double_splat = nil
-      end
+      arg = Arg.new(arg_name, default_value, restriction, external_name: external_name).at(arg_location)
+      args << arg
+      push_var arg
 
-      ArgExtras.new(nil, !!default_value, splat, double_splat)
+      ArgExtras.new(nil, !!default_value, splat, !!double_splat)
     end
 
     def parse_block_arg(extra_assigns)

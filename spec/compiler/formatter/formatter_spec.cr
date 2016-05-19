@@ -896,6 +896,7 @@ describe Crystal::Formatter do
   assert_format "def foo(**z, &block)\nend"
   assert_format "def foo(x, **z)\nend"
   assert_format "def foo(x, **z, &block)\nend"
+  assert_format "def foo(**z : Foo)\nend"
 
   assert_format "def foo(x y)\nend"
   assert_format "def foo(x @y)\nend"

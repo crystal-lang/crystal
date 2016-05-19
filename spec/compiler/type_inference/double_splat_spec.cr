@@ -114,4 +114,50 @@ describe "Type inference: double splat" do
       Foo.new(x: 1).x
       )) { int32 }
   end
+
+  it "uses restriction on double splat, doesn't match with empty named tuple" do
+    assert_error %(
+      def foo(**options : Int32)
+      end
+
+      foo
+      ),
+      "no overload matches"
+  end
+
+  it "uses restriction on double splat, doesn't match with empty named tuple (2)" do
+    assert_error %(
+      def foo(x, **options : Int32)
+      end
+
+      foo x: 1
+      ),
+      "wrong number of arguments"
+  end
+
+  it "uses restriction on double splat, means all types must be that type" do
+    assert_error %(
+      def foo(**options : Int32)
+      end
+
+      foo x: 1, y: 'a'
+      ),
+      "no overload matches"
+  end
+
+  it "overloads based on double splat restriction" do
+    assert_type(%(
+      def foo(**options : Int32)
+        true
+      end
+
+      def foo(**options : Char)
+        "foo"
+      end
+
+      x1 = foo x: 'a', y: 'b'
+      x2 = foo x: 1, y: 2
+      {x1, x2}
+      )) { tuple_of([string, bool]) }
+  end
 end

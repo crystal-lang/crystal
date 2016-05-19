@@ -130,6 +130,8 @@ module Crystal
       arg_types = signature.arg_types
       named_args = signature.named_args
       splat_index = a_def.splat_index
+      double_splat = a_def.double_splat
+      double_splat_restriction = double_splat.try &.restriction
 
       # If there are arguments past the splat index and no named args, there's no match,
       # unless all args past it have default values
@@ -168,6 +170,8 @@ module Crystal
         end
       end
 
+      found_unmatched_named_arg = false
+
       # Check named args
       if named_args
         min_index = signature.arg_types.size
@@ -196,7 +200,17 @@ module Crystal
             end
           else
             # If there's a double splat it's ok, the named arg will be put there
-            next if a_def.double_splat
+            if a_def.double_splat
+              # If there's a restrction on the double splat, check that it matches
+              if double_splat_restriction
+                unless match_arg(named_arg.type, double_splat_restriction, context)
+                  return nil
+                end
+              end
+
+              found_unmatched_named_arg = true
+              next
+            end
 
             return nil
           end
@@ -211,6 +225,11 @@ module Crystal
             return nil
           end
         end
+      end
+
+      # If there's a restriction on a double splat, zero matching named arguments don't matc
+      if double_splat && double_splat.restriction && !found_unmatched_named_arg
+        return nil
       end
 
       # We reuse a match context without free vars, but we create

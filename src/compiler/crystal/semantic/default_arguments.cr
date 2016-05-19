@@ -155,7 +155,7 @@ class Crystal::Def
           named_tuple_entries << NamedTupleLiteral::Entry.new(named_arg, Var.new(named_arg))
         end
         named_tuple = NamedTupleLiteral.new(named_tuple_entries)
-        new_body << Assign.new(Var.new(double_splat), named_tuple)
+        new_body << Assign.new(Var.new(double_splat.name), named_tuple)
       end
 
       new_body.push body
