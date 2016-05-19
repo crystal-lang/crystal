@@ -3148,13 +3148,17 @@ module Crystal
 
         location = @token.location
         splat_restriction = false
-        if splat && @token.type == :"*"
+        if (splat && @token.type == :"*") || (double_splat && @token.type == :"**")
           splat_restriction = true
           next_token
         end
 
         restriction = parse_single_type
-        restriction = Splat.new(restriction).at(location) if splat_restriction
+
+        if splat_restriction
+          restriction = splat ? Splat.new(restriction) : DoubleSplat.new(restriction)
+          restriction.at(location)
+        end
         found_colon = true
       end
 
