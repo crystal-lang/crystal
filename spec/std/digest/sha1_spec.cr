@@ -9,9 +9,7 @@ describe Digest::SHA1 do
     {"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", "84983e441c3bd26ebaae4aa1f95129e5e54670f1", "hJg+RBw70m66rkqh+VEp5eVGcPE="},
     {"a", "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8", "hvfkN/qlp/zhXR3cuerq6jd2Z7g="},
     {"0123456701234567012345670123456701234567012345670123456701234567", "e0c094e867ef46c350ef54a7f59dd60bed92ae83", "4MCU6GfvRsNQ71Sn9Z3WC+2SroM="},
-  ].each do |tuple|
-    string, hexdigest, base64digest = tuple
-
+  ].each do |(string, hexdigest, base64digest)|
     it "does digest for #{string.inspect}" do
       bytes = Digest::SHA1.digest(string)
       bytes.to_slice.hexstring.should eq(hexdigest)

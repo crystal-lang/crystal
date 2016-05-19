@@ -617,8 +617,7 @@ class Crystal::CodeGenVisitor
       current_block = insert_block
 
       cases = {} of LLVM::Value => LLVM::BasicBlock
-      id_to_metaclass.each do |tuple|
-        type_id, metaclass_id = tuple
+      id_to_metaclass.each do |(type_id, metaclass_id)|
         block = new_block "type_#{type_id}"
         cases[int32(type_id)] = block
         position_at_end block

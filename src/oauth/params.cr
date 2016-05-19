@@ -18,11 +18,11 @@ struct OAuth::Params
 
   def to_s(io : IO)
     @params.sort_by! &.[0]
-    @params.each_with_index do |tuple, i|
+    @params.each_with_index do |(key, value), i|
       io << "%26" if i > 0
-      URI.escape tuple[0], io
+      URI.escape key, io
       io << "%3D"
-      URI.escape tuple[1], io
+      URI.escape value, io
     end
   end
 end

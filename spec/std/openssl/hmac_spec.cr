@@ -14,9 +14,9 @@ describe OpenSSL::HMAC do
     {:sha384, "3d10d391bee2364df2c55cf605759373e1b5a4ca9355d8f3fe42970471eca2e422a79271a0e857a69923839015877fc6"},
     {:sha512, "114682914c5d017dfe59fdc804118b56a3a652a0b8870759cf9e792ed7426b08197076bf7d01640b1b0684df79e4b67e37485669e8ce98dbab60445f0db94fce"},
     {:ripemd160, "20d23140503df606c91bda9293f1ad4a23afe509"},
-  ].each do |tuple|
-    it "computes #{tuple[0]}" do
-      OpenSSL::HMAC.hexdigest(tuple[0], "foo", "bar").should eq(tuple[1])
+  ].each do |(algorithm, expected)|
+    it "computes #{algorithm}" do
+      OpenSSL::HMAC.hexdigest(algorithm, "foo", "bar").should eq(expected)
     end
   end
 end

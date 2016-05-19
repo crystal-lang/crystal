@@ -317,8 +317,8 @@ class Crystal::Command
         options << "-l" << locations.first[1]
       end
     else
-      locations.each do |loc|
-        options << "--location" << "#{loc[0]}:#{loc[1]}"
+      locations.each do |(file, line)|
+        options << "--location" << "#{file}:#{line}"
       end
     end
 

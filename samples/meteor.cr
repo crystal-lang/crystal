@@ -26,25 +26,24 @@ def bm(mask, offset) # bit mask
 end
 
 def transform(piece, all)
-  i = MyIterator.new piece, &.map { |yx| {yx[1] + yx[0], -yx[0]} }
+  i = MyIterator.new piece, &.map { |(y, x)| {x + y, -y} }
   rots = i.first(all ? 6 : 3)
   res = rots.flat_map do |cur_piece|
-    i2 = MyIterator.new cur_piece, &.map { |yx| {yx[1], yx[0]} }
+    i2 = MyIterator.new cur_piece, &.map { |(y, x)| {x, y} }
     i2.first(2)
   end
 
   res.map do |cur_piece|
     dy, dx = cur_piece.min
-    cur_piece.map do |yx|
-      {yx[0] - dy, yx[1] - dx}
+    cur_piece.map do |(y, x)|
+      {y - dy, x - dx}
     end
   end
 end
 
 def mask(dy, dx, id, p)
   m = bo(50 + id)
-  p.each do |p1|
-    y, x = p1
+  p.each do |(y, x)|
     x2 = x + dx + (y + (dy % 2)) / 2
     return if x2 < 0 || x2 > 4
     y2 = y + dy

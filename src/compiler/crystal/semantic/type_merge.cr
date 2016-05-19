@@ -5,7 +5,7 @@ module Crystal
     def type_merge(types : Array(Type?))
       # Merging two types is the most common case, so we optimize it
       if types.size == 2
-        first, second = types[0], types[1]
+        first, second = types
         did_merge, merged_type = type_merge_two(first, second)
         return merged_type if did_merge
       end

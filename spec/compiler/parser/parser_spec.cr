@@ -493,8 +493,7 @@ describe "Parser" do
 
   it_parses "x = 2; foo do bar x end", [Assign.new("x".var, 2.int32), Call.new(nil, "foo", block: Block.new(body: Call.new(nil, "bar", "x".var)))] of ASTNode
 
-  { {"break", Break}, {"return", Return}, {"next", Next} }.each do |tuple|
-    keyword, klass = tuple
+  { {"break", Break}, {"return", Return}, {"next", Next} }.each do |(keyword, klass)|
     it_parses "#{keyword}", klass.new
     it_parses "#{keyword};", klass.new
     it_parses "#{keyword} 1", klass.new(1.int32)
