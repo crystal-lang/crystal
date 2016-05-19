@@ -2520,7 +2520,7 @@ module Crystal
               raise "expecting block argument name, not #{@token.type}"
             end
 
-            write @token.value
+            write(underscore ? "_" : @token.value)
 
             unless underscore
               to_skip += 1
