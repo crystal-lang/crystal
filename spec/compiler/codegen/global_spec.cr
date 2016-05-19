@@ -38,4 +38,24 @@ describe "Code gen: global" do
       $x
       )).to_i.should eq(84)
   end
+
+  it "doesn't crash on global declaration (#2619)" do
+    run(%(
+      struct Foo
+        def initialize(@value : Int32)
+        end
+
+        def value
+          @value
+        end
+      end
+
+      $one : Foo = Foo.new(42)
+
+      def foo
+      end
+
+      $one.value
+      )).to_i.should eq(42)
+  end
 end
