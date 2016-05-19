@@ -966,7 +966,10 @@ module Crystal
         declare_var var
       when Global
         if value = node.value
-          accept value
+          request_value do
+            accept value
+          end
+
           ptr = get_global var.name, var.type, var.var
           assign ptr, var.type, value.type, @last
           return false
