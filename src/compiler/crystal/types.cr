@@ -1974,7 +1974,7 @@ module Crystal
       raise "can't instantiate NamedTuple type yet"
     end
 
-    def instantiate_named_args(names_and_types)
+    def instantiate_named_args(names_and_types : Array(Tuple(String, Type)))
       @instantiations[names_and_types] ||= NamedTupleInstanceType.new(program, names_and_types)
     end
 

@@ -224,8 +224,8 @@ module Crystal
               # If there's a restrction on the double splat, check that it matches
               if double_splat_restriction
                 if double_splat_restriction.is_a?(DoubleSplat)
-                  double_splat_entries ||= [] of NamedArgumentType
-                  double_splat_entries << named_arg
+                  double_splat_entries ||= [] of Tuple(String, Type)
+                  double_splat_entries << {named_arg.name, named_arg.type}
                 else
                   unless match_arg(named_arg.type, double_splat_restriction, context)
                     return nil
