@@ -1,5 +1,4 @@
 ---
-layout: post
 title: Good bye Ruby Thursday
 thumbnail: :)
 summary: Bootstraped the compiler

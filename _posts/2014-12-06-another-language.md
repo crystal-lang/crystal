@@ -1,5 +1,4 @@
 ---
-layout: post
 title: Another language
 summary: What if...
 thumbnail: ??

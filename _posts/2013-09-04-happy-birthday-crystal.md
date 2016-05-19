@@ -1,5 +1,4 @@
 ---
-layout: post
 title: Happy birthday, Crystal!
 thumbnail: h!
 summary: Crystal is one year old

@@ -1,5 +1,4 @@
 ---
-layout: post
 title: The future of Crystal
 summary: A short story
 thumbnail: 🎄
