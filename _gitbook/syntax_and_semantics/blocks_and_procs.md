@@ -382,6 +382,30 @@ Foo.new.yield_with_self { one } # => 1
 Foo.new.yield_normally { one }  # => "one"
 ```
 
+## Unpacking block arguments
+
+A block argument can specify sub-arguments enclosed in parentheses:
+
+```crystal
+array = [{1, "one"}, {2, "two"}]
+array.each do |(number, word)|
+  puts "#{number}: #{word}"
+end
+```
+
+The above is simply syntax sugar of this:
+
+```crystal
+array = [{1, "one"}, {2, "two"}]
+array.each do |arg|
+  number = arg[0]
+  word = arg[1]
+  puts "#{number}: #{word}"
+end
+```
+
+That means that any type that responds to `[]` with integers can be unpacked in a block argument.
+
 ## Performance
 
 When using blocks with `yield`, the blocks are **always** inlined: no closures, calls or function pointers are involved. This means that this:
