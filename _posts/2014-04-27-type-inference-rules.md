@@ -1,5 +1,4 @@
 ---
-layout: post
 title: Type inference rules
 summary: Part 2 of the type inference series
 thumbnail: T

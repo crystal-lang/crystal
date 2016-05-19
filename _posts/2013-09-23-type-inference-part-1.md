@@ -1,5 +1,4 @@
 ---
-layout: post
 title: Type inference (part 1)
 thumbnail: x=
 summary: How type inference works

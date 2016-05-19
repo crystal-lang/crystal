@@ -1,5 +1,4 @@
 ---
-layout: post
 title: It's a typeof magic
 summary: It's magic!
 thumbnail: t

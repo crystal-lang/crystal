@@ -1,5 +1,26 @@
-name: Crystal Programming Language
-description: Crystal Programming Language's blog
+name: The Crystal Programming Language
+description: A compiled language with Ruby like syntax and type inference
 url: http://crystal-lang.org
+logo: /images/crystal-h.png
+defaults:
+  -
+    scope:
+      path: ""
+      type: pages
+    values:
+      image: /images/icon.png
+      layout: default
+  -
+    scope:
+      path: ""
+      type: posts
+    values:
+      image: /images/icon.png
+      layout: post
+twitter:
+  username: CrystalLanguage
+
 highlighter: rouge
 markdown: kramdown
+gems:
+  - jekyll-seo-tag

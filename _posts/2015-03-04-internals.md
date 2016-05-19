@@ -1,5 +1,4 @@
 ---
-layout: post
 title: Internals
 summary: Memory representation
 thumbnail: 0x

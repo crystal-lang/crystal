@@ -1,5 +1,4 @@
 ---
-layout: post
 title: Buenos Aires Crystal Meetup
 summary: First meetup in Argentina
 thumbnail: m
