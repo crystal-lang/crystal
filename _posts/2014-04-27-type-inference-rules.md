@@ -349,7 +349,7 @@ construct is needed. All is made with the logic explained so far.
 
 ### Type filters
 
-Now, what if we want to execute a method on a varaible whose type is ```Int32``` or ```Nil```,
+Now, what if we want to execute a method on a variable whose type is ```Int32``` or ```Nil```,
 but only if that variable is ```Int32```. If it's ```Nil```, we don't want to do anything.
 
 We can't use ```not_nil!```, because that will raise a runtime exception when nil.
