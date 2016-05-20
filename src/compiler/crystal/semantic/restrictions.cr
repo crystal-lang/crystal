@@ -441,7 +441,19 @@ module Crystal
     end
 
     def restrict_type_var(type_var, other_type_var, context)
-      unless type_var.is_a?(NumberLiteral)
+      if type_var.is_a?(NumberLiteral)
+        case other_type_var
+        when NumberLiteral
+          if type_var == other_type_var
+            return type_var
+          end
+        when Path
+          if other_type_var.names.size == 1
+            context.set_free_var(other_type_var.names.first, type_var)
+            return type_var
+          end
+        end
+      else
         type_var = type_var.type? || type_var
       end
 

@@ -94,4 +94,38 @@ describe "Type inference: static array" do
       ),
       "can't instantiate StaticArray(T, N) with N = Int32 (N must be an integer)"
   end
+
+  it "can match N type argument of static array (#1203)" do
+    assert_type(%(
+      def fn(a : StaticArray(T, N))
+        N
+      end
+
+      n = uninitialized StaticArray(Int32, 10)
+      fn(n)
+      )) { int32 }
+  end
+
+  it "can match number type argument of static array (#1203)" do
+    assert_type(%(
+      def fn(a : StaticArray(T, 10))
+        10
+      end
+
+      n = uninitialized StaticArray(Int32, 10)
+      fn(n)
+      )) { int32 }
+  end
+
+  it "doesn't match other number type argument of static array (#1203)" do
+    assert_error %(
+      def fn(a : StaticArray(T, 11))
+        10
+      end
+
+      n = uninitialized StaticArray(Int32, 10)
+      fn(n)
+      ),
+      "no overload matches"
+  end
 end

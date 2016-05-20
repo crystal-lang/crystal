@@ -519,4 +519,15 @@ describe "Code gen: def" do
       foo
       )).to_i.should eq(123 * 2 + 456)
   end
+
+  it "can match N type argument of static array (#1203)" do
+    run(%(
+      def fn(a : StaticArray(T, N))
+        N
+      end
+
+      n = uninitialized StaticArray(Int32, 10)
+      fn(n)
+      )).to_i.should eq(10)
+  end
 end

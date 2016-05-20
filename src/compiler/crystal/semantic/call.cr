@@ -916,7 +916,7 @@ class Crystal::Call
 
     def visit(node : Path)
       if node.names.size == 1 && @context.free_vars
-        if type = @context.get_free_var(node.names.first)
+        if (type = @context.get_free_var(node.names.first)).is_a?(Type)
           @type = type
           return
         end
