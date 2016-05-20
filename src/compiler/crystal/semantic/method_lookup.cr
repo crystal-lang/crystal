@@ -153,19 +153,21 @@ module Crystal
 
       matched_arg_types = nil
 
-      # If there's a restriction on a splat, zero splatted args don't match
-      if splat_index &&
-         a_def.args[splat_index].restriction &&
+      # If there's a restriction on a splat (that's not a splat restriction),
+      # zero splatted args don't match
+      if splat_index && splat_restriction &&
+         !splat_restriction.is_a?(Splat) &&
          Splat.size(a_def, arg_types) == 0
         return nil
       end
 
-      splat_arg_types = nil
+      if splat_restriction.is_a?(Splat)
+        splat_arg_types = [] of Type
+      end
 
       a_def.match(arg_types) do |arg, arg_index, arg_type, arg_type_index|
         # Don't match argument against splat restriction
-        if arg_index == splat_index && splat_restriction.is_a?(Splat)
-          splat_arg_types ||= [] of Type
+        if arg_index == splat_index && splat_arg_types
           splat_arg_types << arg_type
           next
         end
@@ -190,7 +192,10 @@ module Crystal
       end
 
       found_unmatched_named_arg = false
-      double_splat_entries = nil
+
+      if double_splat_restriction.is_a?(DoubleSplat)
+        double_splat_entries = [] of Tuple(String, Type)
+      end
 
       # Check named args
       if named_args
@@ -223,8 +228,7 @@ module Crystal
             if a_def.double_splat
               # If there's a restrction on the double splat, check that it matches
               if double_splat_restriction
-                if double_splat_restriction.is_a?(DoubleSplat)
-                  double_splat_entries ||= [] of Tuple(String, Type)
+                if double_splat_entries
                   double_splat_entries << {named_arg.name, named_arg.type}
                 else
                   unless match_arg(named_arg.type, double_splat_restriction, context)
@@ -262,7 +266,8 @@ module Crystal
       end
 
       # If there's a restriction on a double splat, zero matching named arguments don't matc
-      if double_splat && double_splat.restriction && !found_unmatched_named_arg
+      if double_splat && double_splat_restriction &&
+         !double_splat_restriction.is_a?(DoubleSplat) && !found_unmatched_named_arg
         return nil
       end
 

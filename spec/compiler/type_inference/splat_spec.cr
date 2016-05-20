@@ -395,6 +395,16 @@ describe "Type inference: splat" do
       )) { tuple_of([int32, char, bool]).metaclass }
   end
 
+  it "uses splat restriction, matches empty" do
+    assert_type(%(
+      def foo(*args : *T)
+        T
+      end
+
+      foo
+      )) { tuple_of([] of Type).metaclass }
+  end
+
   it "uses splat restriction with concrete type" do
     assert_error %(
       struct Tuple(T)
