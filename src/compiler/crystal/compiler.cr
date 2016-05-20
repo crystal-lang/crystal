@@ -38,6 +38,7 @@ module Crystal
     property? wants_doc : Bool
     property emit : Array(String)?
     property original_output_filename : String?
+    property? cleanup : Bool?
 
     @target_machine : LLVM::TargetMachine?
     @pass_manager_builder : LLVM::PassManagerBuilder?
@@ -56,6 +57,7 @@ module Crystal
       @verbose = false
       @wants_doc = false
       @flags = [] of String
+      @cleanup = true
     end
 
     def compile(source : Source, output_filename)
@@ -180,7 +182,7 @@ module Crystal
         codegen program, units, lib_flags, output_filename, output_dir
       end
 
-      cache_dir.cleanup
+      cache_dir.cleanup if @cleanup
     end
 
     private def cross_compile(program, units, lib_flags, output_filename)
