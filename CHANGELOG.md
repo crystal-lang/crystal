@@ -1,3 +1,14 @@
+## 0.17.3 (2016-05-20)
+
+* Fixed: multiple macro runs executions didn't work well (#2624)
+* Fixed incorrect formatting of underscore in unpacked block arguments
+* Fixed wrong codegen for global variable assignment in type declaration (#2619)
+* Fixed initialize default arguments where evaluated at the class scope (#731)
+* The type guesser can now infer a block type from `def initialize(&@block)`
+* Allow type restriction in double splat argument (similar to restriction in single splat)
+* Allow splat restriction in splat argument (useful for `Tuple.new`)
+* Allow double splat restriction in double splat argument (useful for `NamedTuple.new`)
+
 ## 0.17.2 (2016-05-18)
 
 * Fixed crash when using pointerof of constant

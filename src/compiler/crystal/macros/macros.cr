@@ -85,6 +85,12 @@ module Crystal
       # the subsequent times will make program execution faster.
       compiler.release = true
 
+      # Don't cleanup old directories after compiling: it might happen
+      # that in doing so we remove the directory associated with the current
+      # compilation (for example if we have more than 10 macro runs, the current
+      # directory will be the oldest).
+      compiler.cleanup = false
+
       safe_filename = filename.gsub(/[^a-zA-Z\_\-\.]/, "_")
 
       tempfile_path = @mod.new_tempfile("macro-run-#{safe_filename}")
