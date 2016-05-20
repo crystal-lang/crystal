@@ -103,7 +103,7 @@ module Crystal
     class MacroVisitor < Visitor
       getter last : ASTNode
       getter yields : Hash(String, ASTNode)?
-      property free_vars : Hash(String, Type)?
+      property free_vars : Hash(String, TypeVar)?
 
       def self.new(expander, mod, scope : Type, type_lookup : Type, a_macro : Macro, call)
         vars = {} of String => ASTNode
