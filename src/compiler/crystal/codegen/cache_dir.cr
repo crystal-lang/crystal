@@ -41,14 +41,11 @@ module Crystal
     end
 
     # Keeps the 10 most recently used directories in the cache,
-    # and removes all others. This also removes non-directory
-    # files inside the cache directory (temporary executables
-    # resulting from `crystal run` or `run` macro calls).
+    # and removes all others.
     def cleanup
       dir = compute_dir
       entries = gather_cache_entries(dir)
       cleanup_dirs(entries)
-      cleanup_files(entries)
     end
 
     # Returns a filename that has prepended the cache directory.
@@ -114,12 +111,6 @@ module Crystal
         .reverse!
         .skip(10)
         .each { |name| `rm -rf "#{name}"` rescue nil }
-    end
-
-    private def cleanup_files(entries)
-      entries
-        .select { |dir| File.file?(dir) }
-        .each { |name| File.delete(name) rescue nil }
     end
 
     private def gather_cache_entries(dir)

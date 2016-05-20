@@ -86,7 +86,9 @@ module Crystal
       compiler.release = true
 
       safe_filename = filename.gsub(/[^a-zA-Z\_\-\.]/, "_")
-      tempfile_path = Crystal.tempfile("macro-run-#{safe_filename}")
+
+      tempfile_path = @mod.new_tempfile("macro-run-#{safe_filename}")
+
       compiler.compile Compiler::Source.new(filename, source), tempfile_path
 
       tempfile_path
