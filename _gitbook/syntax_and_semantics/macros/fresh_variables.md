@@ -27,7 +27,7 @@ dont_update_x # outputs 1
 x #=> 0
 ```
 
-Using `%x` in the above example we declare a variable whose name is guaranteed not to conflict with local varaibles in the current scope.
+Using `%x` in the above example we declare a variable whose name is guaranteed not to conflict with local variables in the current scope.
 
 Additionally, you can declare fresh variables related to some other AST node using `%var{key1, key2, ..., keyN}`. For example:
 
