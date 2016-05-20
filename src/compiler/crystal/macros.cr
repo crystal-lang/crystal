@@ -1092,8 +1092,26 @@ module Crystal::Macros
     def abstract? : BoolLiteral
     end
 
+    # Returns true if this type is a union type, false otherwise.
+    #
+    # See also: `union_types`.
+    def union? : BoolLiteral
+    end
+
+    # Returns the types comforming a union type, if this is a union type.
+    # Gives a compile error otherwise.
+    #
+    # See also: `union?`.
+    def union_types : ArrayLiteral(TypeNode)
+    end
+
     # Returns the fully qualified name of this type.
     def name : MacroId
+    end
+
+    # Returns the type variables of the generic type. If the type is not
+    # generic, an empty array is returned.
+    def type_vars : ArrayLiteral(TypeNode)
     end
 
     # Returns the instance variables of this type.
@@ -1109,11 +1127,17 @@ module Crystal::Macros
     end
 
     # Returns all subclasses of this type.
-    def subclasses : ArrayLiteral(TypeNode)
+    def all_subclasses : ArrayLiteral(TypeNode)
     end
 
     # Returns the constants and types defined by this type.
-    def subclasses : ArrayLiteral(MacroId)
+    def constants : ArrayLiteral(MacroId)
+    end
+
+    # Returns true if this type has a constant. For example `DEFAULT_OPTIONS`
+    # (the name you pass to this method is "DEFAULT_OPTIONS" or :DEFAULT_OPTIONS
+    # in this cases).
+    def has_constant?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
     # Returns the instance methods defined by this type, without including
@@ -1127,33 +1151,19 @@ module Crystal::Macros
     def has_attribute?(name : StringLiteral | SymbolLiteral) : BoolLiteral
     end
 
-    # Returns true if this type has a constant. For example `DEFAULT_OPTIONS`
-    # (the name you pass to this method is "DEFAULT_OPTIONS" or :DEFAULT_OPTIONS
-    # in this cases).
-    def has_constant?(name : StringLiteral | SymbolLiteral) : BoolLiteral
-    end
-
     # Returns the number of elements in this tuple type or tuple metaclass type.
     # Gives a compile error if this is not one of those types.
     def size : NumberLiteral
     end
 
-    # Returns true if this type is a union type, false otherwise.
-    #
-    # See also: `union_types`.
-    def union? : BoolLiteral
+    # Returns the keys in this named tuple type.
+    # Gives a compile error if this is not a named tuple type.
+    def keys : ArrayLiteral(MacroId)
     end
 
-    # Returns the types comforming a union type, if this is a union type.
-    # Gives a compile error otherwise.
-    #
-    # See also: `union?`.
-    def union_types : ArrayLiteral(TypeNode)
-    end
-
-    # Returns the type variables of the generic type. If the type is not
-    # generic, an empty array is returned.
-    def type_vars : ArrayLiteral(TypeNode)
+    # Returns the type for the given key in this named tuple type.
+    # Gives a compile error if this is not a named tuple type.
+    def [](key : SymbolLiteral | MacroId) : TypeNode | NilLiteral
     end
 
     # Returns the class of this type. With this you can, for example, obtain class
