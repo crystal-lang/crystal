@@ -28,6 +28,12 @@ lib LibCrypto
   EVP_MAX_KEY_LENGTH = 32
   EVP_MAX_IV_LENGTH  = 16
 
+  EVP_CTRL_GCM_GET_TAG = 0x10
+  EVP_CTRL_GCM_SET_TAG = 0x11
+  EVP_CTRL_CCM_GET_TAG = EVP_CTRL_GCM_GET_TAG
+  EVP_CTRL_CCM_SET_TAG = EVP_CTRL_GCM_SET_TAG
+  EVP_GCM_TLS_TAG_LEN  = 16
+
   CTRL_PUSH  =  6
   CTRL_POP   =  7
   CTRL_FLUSH = 11
@@ -136,6 +142,7 @@ lib LibCrypto
   fun evp_cipherfinal_ex = EVP_CipherFinal_ex(ctx : EVP_CIPHER_CTX, out : UInt8*, outl : Int32*) : Int32
   fun evp_cipher_ctx_set_padding = EVP_CIPHER_CTX_set_padding(ctx : EVP_CIPHER_CTX, padding : Int32) : Int32
   fun evp_cipher_ctx_cipher = EVP_CIPHER_CTX_cipher(ctx : EVP_CIPHER_CTX) : EVP_CIPHER
+  fun evp_cipher_ctx_ctrl = EVP_CIPHER_CTX_ctrl(ctx : EVP_CIPHER_CTX, type : Int32, arg : Int32, ptr : Void*)
 
   fun hmac = HMAC(evp : EVP_MD, key : Char*, key_len : Int,
                   d : Char*, n : SizeT, md : Char*, md_len : UInt*) : Char*

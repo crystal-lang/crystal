@@ -24,6 +24,29 @@ class OpenSSL::Cipher
     cipherinit enc: 0
   end
 
+  ifdef linux
+    def tag
+      tag = Slice(UInt8).new(LibCrypto::EVP_GCM_TLS_TAG_LEN)
+      LibCrypto.evp_cipher_ctx_ctrl(
+        @ctx,
+        LibCrypto::EVP_CTRL_GCM_GET_TAG,
+        tag.size,
+        tag.pointer(tag.size).as(Void*)
+      )
+      tag
+    end
+
+    def tag=(tag : (Slice(UInt8) | String))
+      slice = tag.to_slice
+      LibCrypto.evp_cipher_ctx_ctrl(
+        @ctx,
+        LibCrypto::EVP_CTRL_GCM_SET_TAG,
+        slice.size,
+        slice.pointer(slice.size).as(Void*)
+      )
+    end
+  end
+
   def key=(key)
     raise ArgumentError.new "key length too short: wanted #{key_len}, got #{key.bytesize}" if key.bytesize < key_len
     cipherinit key: key
