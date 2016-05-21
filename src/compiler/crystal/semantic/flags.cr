@@ -22,6 +22,8 @@ class Crystal::Program
     set.add "darwin" if set.any?(&.starts_with?("macosx"))
     set.add "freebsd" if set.any?(&.starts_with?("freebsd"))
     set.add "i686" if set.any? { |flag| %w(i586 i486 i386).includes?(flag) }
+    set.add "javascript" if set.any?(&.starts_with?("asmjs"))
+    aet.add "js" if set.any?(&)?(&.starts_with?("asmjs"))
     set
   end
 
