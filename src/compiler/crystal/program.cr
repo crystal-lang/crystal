@@ -29,6 +29,13 @@ module Crystal
     getter! string_pool
     @flags : Set(String)?
 
+    # The cache directory where temporary files are placed.
+    setter cache_dir : String?
+
+    # Temporary files generates by macro runs that need to be
+    # deleted after compilation finishes.
+    getter! tempfiles : Array(String)
+
     # Here we store class var initializers and constants, in the
     # order that they are used. They will be initialized as soon
     # as the program starts, before the main code.
@@ -37,6 +44,9 @@ module Crystal
     # The list of class vars and const being typed, to check
     # a recursive dependency.
     getter! class_var_and_const_being_typed
+
+    getter! argc : Const
+    getter! argv : Const
 
     def initialize
       super(self, self, "main")
@@ -56,6 +66,7 @@ module Crystal
       @string_pool = StringPool.new
       @class_var_and_const_initializers = [] of ClassVarInitializer | Const
       @class_var_and_const_being_typed = [] of MetaTypeVar | Const
+      @tempfiles = [] of String
 
       types = @types = {} of String => Type
 
@@ -154,8 +165,8 @@ module Crystal
       argv_primitive = Primitive.new(:argv)
       argv_primitive.type = pointer_of(pointer_of(uint8))
 
-      types["ARGC_UNSAFE"] = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", argc_primitive
-      types["ARGV_UNSAFE"] = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", argv_primitive
+      types["ARGC_UNSAFE"] = @argc = argc_unsafe = Const.new self, self, "ARGC_UNSAFE", argc_primitive
+      types["ARGV_UNSAFE"] = @argv = argv_unsafe = Const.new self, self, "ARGV_UNSAFE", argv_primitive
 
       # Make sure to initialize ARGC and ARGV as soon as the program starts
       class_var_and_const_initializers << argc_unsafe
@@ -174,6 +185,16 @@ module Crystal
 
     private def crystal_path
       @crystal_path ||= CrystalPath.new(target_triple: target_machine.triple)
+    end
+
+    def new_tempfile(basename)
+      filename = if cache_dir = @cache_dir
+                   File.join(cache_dir, basename)
+                 else
+                   Crystal.tempfile(basename)
+                 end
+      tempfiles << filename
+      filename
     end
 
     def add_def(node : Def)
@@ -252,12 +273,12 @@ module Crystal
     end
 
     def named_tuple_of(hash : Hash(String, Type))
-      names_and_types = hash.map { |k, v| {k, v.as(Type)} }
-      named_tuple_of(names_and_types)
+      entries = hash.map { |k, v| NamedArgumentType.new(k, v.as(Type)) }
+      named_tuple_of(entries)
     end
 
-    def named_tuple_of(names_and_types : Array)
-      named_tuple.instantiate_named_args(names_and_types)
+    def named_tuple_of(entries : Array(NamedArgumentType))
+      named_tuple.instantiate_named_args(entries)
     end
 
     def nilable(type)

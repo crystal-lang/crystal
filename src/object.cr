@@ -619,12 +619,12 @@ class Object
     setter {{*names}}
   end
 
-  # Delegate methods to to_object.
+  # Delegate *method* to *to_object*.
   #
   # Syntax is: delegate method1, [method2, ..., ], to_object
   #
   # Note that due to current language limitations this is only useful
-  # when neither named arguments nor blocks are involved.
+  # when no blocks are involved.
   #
   # ```
   # class StringWrapper
@@ -642,15 +642,25 @@ class Object
   # wrapper.empty?         # => false
   # wrapper.capitalize     # => "Hello"
   # ```
-  macro delegate(method, *other_methods, to_object)
-    def {{method.id}}(*args)
-      {{to_object.id}}.{{method.id}}(*args)
-    end
-
-    {% for name, index in other_methods %}
-      def {{name.id}}(*args)
-        {{to_object.id}}.{{name.id}}(*args)
+  macro delegate(method, required, *others)
+    {% if others.empty? %}
+      def {{method.id}}(*args)
+        {{required.id}}.{{method.id}}(*args)
       end
+    {% else %}
+      def {{method.id}}(*args)
+        {{others[-1].id}}.{{method.id}}(*args)
+      end
+
+      def {{required.id}}(*args)
+        {{others[-1].id}}.{{required.id}}(*args)
+      end
+
+      {% for i in 0...others.size - 1 %}
+        def {{others[i].id}}(*args)
+          {{others[-1].id}}.{{others[i].id}}(*args)
+        end
+      {% end %}
     {% end %}
   end
 

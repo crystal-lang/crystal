@@ -120,6 +120,7 @@ module Crystal
       @shebang = @token.type == :COMMENT && @token.value.to_s.starts_with?("#!")
       @heredoc_fixes = [] of HeredocFix
       @last_is_heredoc = false
+      @last_arg_is_skip = false
     end
 
     def end_visit_any(node)
@@ -949,6 +950,23 @@ module Crystal
         return false
       end
 
+      # Check if it's {x: A, y: B} instead of NamedTuple(x: A, y: B)
+      if first_name == "NamedTuple" && @token.value != "NamedTuple"
+        write_token :"{"
+        skip_space_or_newline
+        named_args = node.named_args.not_nil!
+        named_args.each_with_index do |named_arg, i|
+          accept named_arg
+          skip_space_or_newline
+          if @token.type == :","
+            write ", " unless last?(i, named_args)
+            next_token_skip_space_or_newline
+          end
+        end
+        write_token :"}"
+        return false
+      end
+
       accept name
       skip_space_or_newline
 
@@ -1215,22 +1233,10 @@ module Crystal
         accept node.return_type.not_nil!
       end
 
-      body = node.body
-
-      if to_skip > 0
-        body = node.body
-        if body.is_a?(Expressions)
-          body.expressions = body.expressions[to_skip..-1]
-          if body.expressions.empty?
-            body = Nop.new
-          end
-        else
-          body = Nop.new
-        end
-      end
+      remove_to_skip node, to_skip
 
       unless node.abstract?
-        format_nested_with_end body
+        format_nested_with_end node.body
       end
 
       @inside_def -= 1
@@ -1238,42 +1244,46 @@ module Crystal
       false
     end
 
-    def format_def_args(node : ASTNode)
-      format_def_args node.args, node.block_arg, node.splat_index, false
+    def format_def_args(node : Def | Macro)
+      format_def_args node.args, node.block_arg, node.splat_index, false, node.double_splat
     end
 
-    def format_def_args(args : Array, block_arg, splat_index, variadic)
+    def format_def_args(args : Array, block_arg, splat_index, variadic, double_splat)
       to_skip = 0
 
       # If there are no args, remove extra "()", if any
       if args.empty?
         if @token.type == :"("
           next_token_skip_space_or_newline
+          write "(" if block_arg || double_splat || variadic
+
+          if double_splat
+            write_token :"**"
+            double_splat.accept self
+            skip_space_or_newline
+          end
 
           if block_arg
-            write_token "(", :"&"
+            if double_splat
+              write_token :",", " "
+              skip_space_or_newline
+            end
+            write_token :"&"
             skip_space
             to_skip += 1 if at_skip?
             accept block_arg
             skip_space_or_newline
-            write ")"
           end
 
           if variadic
             skip_space_or_newline
-            write_token "(", :"...", ")"
+            write_token :"..."
             skip_space_or_newline
           end
 
           check :")"
           next_token
-        elsif block_arg
-          skip_space_or_newline
-          write_token " ", :"&"
-          skip_space
-          to_skip += 1 if at_skip?
-          accept block_arg
-          skip_space
+          write ")" if block_arg || double_splat || variadic
         end
       else
         prefix_size = @column + 1
@@ -1307,9 +1317,15 @@ module Crystal
             skip_space_or_newline
           end
 
-          to_skip += 1 if at_skip?
-          indent(prefix_size, arg)
+          if i == splat_index && arg.external_name.empty?
+            # Nothing
+          else
+            indent(prefix_size, arg)
+            to_skip += 1 if @last_arg_is_skip
+          end
+
           skip_space
+
           if @token.type == :","
             write "," unless last?(i, args)
             next_token
@@ -1326,6 +1342,18 @@ module Crystal
               write " " unless last?(i, args)
             end
             skip_space_or_newline
+          end
+        end
+
+        if double_splat
+          write_token ", ", :"**"
+          skip_space
+          check :IDENT
+          write double_splat
+          next_token_skip_space
+          if block_arg
+            check :","
+            next_token_skip_space_or_newline
           end
         end
 
@@ -1381,7 +1409,7 @@ module Crystal
         end
       end
 
-      format_def_args node.args, nil, nil, node.varargs
+      format_def_args node.args, nil, nil, node.varargs, nil
 
       if return_type = node.return_type
         skip_space
@@ -1704,6 +1732,8 @@ module Crystal
     end
 
     def visit(node : Arg)
+      @last_arg_is_skip = false
+
       restriction = node.restriction
       default_value = node.default_value
 
@@ -1714,6 +1744,18 @@ module Crystal
           return false
         end
       end
+
+      if node.external_name != node.name
+        if node.external_name.empty?
+          write "_"
+        else
+          write @token.value
+        end
+        write " "
+        next_token_skip_space_or_newline
+      end
+
+      @last_arg_is_skip = at_skip?
 
       write @token.value
       next_token
@@ -2308,13 +2350,13 @@ module Crystal
       if @token.keyword?(:do)
         write " do"
         next_token_skip_space
-        format_block_args node.args
+        format_block_args node.args, node
         format_nested_with_end node.body
       elsif @token.type == :"{"
         write "," if needs_comma
         write " {"
         next_token_skip_space
-        format_block_args node.args
+        format_block_args node.args, node
         if @token.type == :NEWLINE
           format_nested node.body
           skip_space_or_newline
@@ -2455,13 +2497,53 @@ module Crystal
       end
     end
 
-    def format_block_args(args)
-      return if args.empty?
+    def format_block_args(args, node)
+      return 0 if args.empty?
+
+      to_skip = 0
 
       write_token " ", :"|"
       skip_space_or_newline
       args.each_with_index do |arg, i|
-        accept arg
+        if @token.type == :"("
+          write :"("
+          next_token_skip_space_or_newline
+
+          while true
+            case @token.type
+            when :IDENT
+              underscore = false
+            when :UNDERSCORE
+              underscore = true
+            else
+              raise "expecting block argument name, not #{@token.type}"
+            end
+
+            write(underscore ? "_" : @token.value)
+
+            unless underscore
+              to_skip += 1
+            end
+
+            next_token_skip_space_or_newline
+            has_comma = false
+            if @token.type == :","
+              has_comma = true
+              next_token_skip_space_or_newline
+            end
+
+            if @token.type == :")"
+              next_token
+              write ")"
+              break
+            else
+              write ", "
+            end
+          end
+        else
+          accept arg
+        end
+
         skip_space_or_newline
         if @token.type == :","
           next_token_skip_space_or_newline
@@ -2471,6 +2553,22 @@ module Crystal
       skip_space_or_newline
       write_token :"|"
       skip_space
+
+      remove_to_skip node, to_skip
+    end
+
+    def remove_to_skip(node, to_skip)
+      if to_skip > 0
+        body = node.body
+        if body.is_a?(Expressions)
+          body.expressions = body.expressions[to_skip..-1]
+          if body.expressions.empty?
+            node.body = Nop.new
+          end
+        else
+          node.body = Nop.new
+        end
+      end
     end
 
     def visit(node : IsA)

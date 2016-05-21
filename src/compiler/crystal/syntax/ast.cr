@@ -835,12 +835,15 @@ module Crystal
   class Arg < ASTNode
     include SpecialVar
 
+    # The internal name
     property name : String
+    property external_name : String
     property default_value : ASTNode?
     property restriction : ASTNode?
     property doc : String?
 
-    def initialize(@name, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil)
+    def initialize(@name : String, @default_value : ASTNode? = nil, @restriction : ASTNode? = nil, external_name : String? = nil)
+      @external_name = external_name || @name
     end
 
     def accept_children(visitor)
@@ -853,10 +856,10 @@ module Crystal
     end
 
     def clone_without_location
-      Arg.new @name, @default_value.clone, @restriction.clone
+      Arg.new @name, @default_value.clone, @restriction.clone, @external_name.clone
     end
 
-    def_equals_and_hash name, default_value, restriction
+    def_equals_and_hash name, default_value, restriction, external_name
   end
 
   class Fun < ASTNode
@@ -896,7 +899,7 @@ module Crystal
     property receiver : ASTNode?
     property name : String
     property args : Array(Arg)
-    property double_splat : String?
+    property double_splat : Arg?
     property body : ASTNode
     property block_arg : Arg?
     property? macro_def : Bool
@@ -929,6 +932,7 @@ module Crystal
     def accept_children(visitor)
       @receiver.try &.accept visitor
       @args.each &.accept visitor
+      @double_splat.try &.accept visitor
       @block_arg.try &.accept visitor
       @return_type.try &.accept visitor
       @body.accept visitor
@@ -942,9 +946,14 @@ module Crystal
       max_size = args.size
       default_value_index = args.index(&.default_value)
       min_size = default_value_index || max_size
+      splat_index = self.splat_index
       if splat_index
-        min_size -= 1 unless default_value_index
-        max_size = Int32::MAX
+        if args[splat_index].name.empty?
+          min_size = max_size = splat_index
+        else
+          min_size -= 1 unless default_value_index
+          max_size = Int32::MAX
+        end
       end
       {min_size, max_size}
     end
@@ -954,7 +963,7 @@ module Crystal
     end
 
     def clone_without_location
-      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @yields, @abstract, @splat_index, @double_splat)
+      a_def = Def.new(@name, @args.clone, @body.clone, @receiver.clone, @block_arg.clone, @return_type.clone, @macro_def, @yields, @abstract, @splat_index, @double_splat.clone)
       a_def.calls_super = calls_super
       a_def.calls_initialize = calls_initialize
       a_def.calls_previous_def = calls_previous_def
@@ -971,7 +980,7 @@ module Crystal
     property name : String
     property args : Array(Arg)
     property body : ASTNode
-    property double_splat : String?
+    property double_splat : Arg?
     property block_arg : Arg?
     property name_column_number : Int32
     property splat_index : Int32?
@@ -986,6 +995,7 @@ module Crystal
     def accept_children(visitor)
       @args.each &.accept visitor
       @body.accept visitor
+      @double_splat.try &.accept visitor
       @block_arg.try &.accept visitor
     end
 
@@ -1001,19 +1011,20 @@ module Crystal
       splat_index = self.splat_index
 
       if splat_index
-        min_args_size -= 1
-        max_args_size = Int32::MAX
+        if args[splat_index].external_name.empty?
+          min_args_size = max_args_size = splat_index
+        else
+          min_args_size -= 1
+          max_args_size = Int32::MAX
+        end
       end
 
-      # If there's a splat in the macros and named args in the call,
-      # there's no match (it's confusing to determine what should happen)
-      # unless there's a single argument in this call and it's the splat,
-      # and there's also a double splat.
-      if named_args && splat_index
-        if double_splat && args.size == 1
-          return true
+      # If there are arguments past the splat index and no named args, there's no match,
+      # unless all args past it have default values
+      if splat_index && my_args_size > splat_index + 1 && !named_args
+        unless (splat_index + 1...args.size).all? { |i| args[i].default_value }
+          return false
         end
-        return false
       end
 
       # If there are more positional arguments than those required, there's no match
@@ -1037,7 +1048,7 @@ module Crystal
 
       # Check named args
       named_args.try &.each do |named_arg|
-        found_index = args.index { |arg| arg.name == named_arg.name }
+        found_index = args.index { |arg| arg.external_name == named_arg.name }
         if found_index
           # A named arg can't target the splat index
           if found_index == splat_index
@@ -1078,7 +1089,7 @@ module Crystal
     end
 
     def clone_without_location
-      Macro.new(@name, @args.clone, @body.clone, @block_arg.clone, @splat_index, @double_splat)
+      Macro.new(@name, @args.clone, @body.clone, @block_arg.clone, @splat_index, @double_splat.clone)
     end
 
     def_equals_and_hash @name, @args, @body, @block_arg, @splat_index, @double_splat

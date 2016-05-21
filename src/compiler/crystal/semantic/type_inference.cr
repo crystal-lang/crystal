@@ -36,6 +36,7 @@ module Crystal
       end
       Crystal.timing("Semantic (cleanup)", stats) do
         cleanup_types
+        cleanup_files
       end
       Crystal.timing("Semantic (recursive struct check)", stats) do
         check_recursive_structs

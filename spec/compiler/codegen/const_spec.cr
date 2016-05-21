@@ -329,4 +329,91 @@ describe "Codegen: const" do
       x
       )).to_i.should eq(3)
   end
+
+  it "initializes const the moment it reaches it" do
+    run(%(
+      $x = 10
+      FOO = begin
+        a = $x
+        a
+      end
+      w = FOO
+      z = FOO
+      z
+      )).to_i.should eq(10)
+  end
+
+  it "initializes const when read" do
+    run(%(
+      $x = 10
+      z = FOO
+      FOO = begin
+        a = $x
+        a
+      end
+      z
+      )).to_i.should eq(10)
+  end
+
+  it "initializes simple const" do
+    run(%(
+      FOO = 10
+      FOO
+      )).to_i.should eq(10)
+  end
+
+  it "initializes simple const via another const" do
+    run(%(
+      BAR = 10
+      FOO = BAR
+      FOO
+      )).to_i.should eq(10)
+  end
+
+  it "initializes ARGC_UNSAFE" do
+    run(%(
+      ARGC_UNSAFE
+      )).to_i.should eq(0)
+  end
+
+  it "gets pointerof constant" do
+    run(%(
+      z = pointerof(FOO).value
+      FOO = 10
+      z
+      )).to_i.should eq(10)
+  end
+
+  it "gets pointerof complex constant" do
+    run(%(
+      z = pointerof(FOO).value
+      FOO = begin
+        a = 10
+        a
+      end
+      z
+      )).to_i.should eq(10)
+  end
+
+  it "gets pointerof constant inside class" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        BAR = 42
+
+        @z : Int32
+
+        def initialize
+          @z = pointerof(BAR).value
+        end
+
+        def z
+          @z
+        end
+      end
+
+      Foo.new.z
+      )).to_i.should eq(42)
+  end
 end

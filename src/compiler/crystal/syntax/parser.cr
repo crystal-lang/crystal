@@ -1306,6 +1306,7 @@ module Crystal
     end
 
     SemicolonOrNewLine = [:";", :NEWLINE]
+    ConstOrDoubleColon = [:CONST, :"::"]
 
     def parse_rescue
       next_token_skip_space
@@ -1318,10 +1319,10 @@ module Crystal
 
         if @token.type == :":"
           next_token_skip_space_or_newline
-          check :CONST
+          check ConstOrDoubleColon
           types = parse_rescue_types
         end
-      when :CONST
+      when :CONST, :"::"
         types = parse_rescue_types
       end
 
@@ -2530,8 +2531,8 @@ module Crystal
             splat_index = index
             found_splat = true
           end
-          if extras_double_splat = extras.double_splat
-            double_splat = extras_double_splat
+          if extras.double_splat
+            double_splat = args.pop
             found_double_splat = double_splat
           end
           if block_arg = extras.block_arg
@@ -2547,6 +2548,11 @@ module Crystal
           end
           index += 1
         end
+
+        if splat_index == args.size - 1 && args.last.name.empty?
+          raise "named arguments must follow bare *", args.last.location.not_nil!
+        end
+
         next_token
       when :IDENT, :"*"
         if @token.keyword?(:end)
@@ -2949,9 +2955,9 @@ module Crystal
             splat_index = index
             found_splat = true
           end
-          if extras_double_splat = extras.double_splat
-            double_splat = extras_double_splat
-            found_double_splat = extras_double_splat
+          if extras.double_splat
+            double_splat = args.pop
+            found_double_splat = double_splat
           end
           if block_arg = extras.block_arg
             compute_block_arg_yields block_arg
@@ -2967,6 +2973,11 @@ module Crystal
           end
           index += 1
         end
+
+        if splat_index == args.size - 1 && args.last.name.empty?
+          raise "named arguments must follow bare *", args.last.location.not_nil!
+        end
+
         next_token_skip_space
         if @token.type == :SYMBOL
           raise "a space is mandatory between ':' and return type", @token
@@ -3062,20 +3073,22 @@ module Crystal
       block_arg : Arg?,
       default_value : Bool,
       splat : Bool,
-      double_splat : String?
+      double_splat : Bool
 
     def parse_arg(args, extra_assigns, parentheses, found_default_value, found_splat, found_double_splat, allow_restrictions)
       if @token.type == :"&"
         next_token_skip_space_or_newline
         block_arg = parse_block_arg(extra_assigns)
-        if args.any?(&.name.==(block_arg.name)) || found_double_splat == block_arg.name
+        if args.any?(&.name.==(block_arg.name)) || (found_double_splat && found_double_splat.name == block_arg.name)
           raise "duplicated argument name: #{block_arg.name}", block_arg.location.not_nil!
         end
-        return ArgExtras.new(block_arg, false, false, nil)
+        return ArgExtras.new(block_arg, false, false, false)
       end
 
       splat = false
       double_splat = false
+      arg_location = @token.location
+      allow_external_name = true
 
       case @token.type
       when :"*"
@@ -3084,6 +3097,7 @@ module Crystal
         end
 
         splat = true
+        allow_external_name = false
         next_token_skip_space
       when :"**"
         if found_double_splat
@@ -3091,34 +3105,37 @@ module Crystal
         end
 
         double_splat = true
-        allow_restrictions = false
+        allow_external_name = false
         next_token_skip_space
       end
 
-      arg_location = @token.location
-      arg_name, uses_arg = parse_arg_name(arg_location, extra_assigns)
+      found_space = false
 
-      if args.any? { |arg| arg.name == arg_name }
-        raise "duplicated argument name: #{arg_name}", @token
+      if splat && (@token.type == :"," || @token.type == :")")
+        arg_name = ""
+        uses_arg = false
+        allow_restrictions = false
+      else
+        arg_location = @token.location
+        arg_name, external_name, found_space, uses_arg = parse_arg_name(arg_location, extra_assigns, allow_external_name: allow_external_name)
+
+        args.each do |arg|
+          if arg.name == arg_name
+            raise "duplicated argument name: #{arg_name}", arg_location
+          end
+
+          if arg.external_name == external_name
+            raise "duplicated argument external name: #{external_name}", arg_location
+          end
+        end
+
+        if @token.type == :SYMBOL
+          raise "space required after colon in type restriction", @token
+        end
       end
 
       default_value = nil
       restriction = nil
-      found_space = false
-
-      if parentheses
-        next_token
-        found_space = @token.type == :SPACE || @token.type == :NEWLINE
-        skip_space_or_newline
-      else
-        next_token
-        found_space = @token.type == :SPACE
-        skip_space
-      end
-
-      if @token.type == :SYMBOL
-        raise "space required after colon in type restriction", @token
-      end
 
       found_colon = false
 
@@ -3130,33 +3147,38 @@ module Crystal
         next_token_skip_space_or_newline
 
         location = @token.location
+        splat_restriction = false
+        if (splat && @token.type == :"*") || (double_splat && @token.type == :"**")
+          splat_restriction = true
+          next_token
+        end
+
         restriction = parse_single_type
+
+        if splat_restriction
+          restriction = splat ? Splat.new(restriction) : DoubleSplat.new(restriction)
+          restriction.at(location)
+        end
         found_colon = true
       end
 
-      if !splat && !double_splat
-        if @token.type == :"="
-          if found_splat || splat
-            unexpected_token
-          end
+      if @token.type == :"="
+        next_token_skip_space_or_newline
 
-          next_token_skip_space_or_newline
-
-          case @token.type
-          when :__LINE__, :__FILE__, :__DIR__
-            default_value = MagicConstant.new(@token.type).at(@token.location)
-            next_token
-          else
-            @no_type_declaration += 1
-            default_value = parse_op_assign
-            @no_type_declaration -= 1
-          end
-
-          skip_space
+        case @token.type
+        when :__LINE__, :__FILE__, :__DIR__
+          default_value = MagicConstant.new(@token.type).at(@token.location)
+          next_token
         else
-          if found_default_value && !splat
-            raise "argument must have a default value", arg_location
-          end
+          @no_type_declaration += 1
+          default_value = parse_op_assign
+          @no_type_declaration -= 1
+        end
+
+        skip_space
+      else
+        if found_default_value && !found_splat && !splat && !double_splat
+          raise "argument must have a default value", arg_location
         end
       end
 
@@ -3172,25 +3194,17 @@ module Crystal
 
       raise "Bug: arg_name is nil" unless arg_name
 
-      if double_splat
-        double_splat = arg_name
-        push_var_name double_splat
-      else
-        arg = Arg.new(arg_name, default_value, restriction).at(arg_location)
-        args << arg
-        push_var arg
-        double_splat = nil
-      end
+      arg = Arg.new(arg_name, default_value, restriction, external_name: external_name).at(arg_location)
+      args << arg
+      push_var arg
 
-      ArgExtras.new(nil, !!default_value, splat, double_splat)
+      ArgExtras.new(nil, !!default_value, splat, !!double_splat)
     end
 
     def parse_block_arg(extra_assigns)
       name_location = @token.location
-      arg_name, uses_arg = parse_arg_name(name_location, extra_assigns)
+      arg_name, external_name, found_space, uses_arg = parse_arg_name(name_location, extra_assigns, allow_external_name: false)
       @uses_block_arg = true if uses_arg
-
-      next_token_skip_space_or_newline
 
       inputs = nil
       output = nil
@@ -3212,13 +3226,32 @@ module Crystal
       block_arg
     end
 
-    def parse_arg_name(location, extra_assigns)
+    def parse_arg_name(location, extra_assigns, allow_external_name)
+      do_next_token = true
+
+      if allow_external_name && @token.type == :IDENT
+        external_name = @token.type == :IDENT ? @token.value.to_s : ""
+        next_token
+        found_space = @token.type == :SPACE || @token.type == :NEWLINE
+        skip_space
+        do_next_token = false
+      end
+
       case @token.type
       when :IDENT
         arg_name = @token.value.to_s
+        if arg_name == external_name
+          raise "when specified, external name must be different than internal name", @token
+        end
+
         uses_arg = false
+        do_next_token = true
       when :INSTANCE_VAR
         arg_name = @token.value.to_s[1..-1]
+        if arg_name == external_name
+          raise "when specified, external name must be different than internal name", @token
+        end
+
         ivar = InstanceVar.new(@token.value.to_s).at(location)
         var = Var.new(arg_name).at(location)
         assign = Assign.new(ivar, var).at(location)
@@ -3228,8 +3261,13 @@ module Crystal
           raise "can't use @instance_variable here"
         end
         uses_arg = true
+        do_next_token = true
       when :CLASS_VAR
         arg_name = @token.value.to_s[2..-1]
+        if arg_name == external_name
+          raise "when specified, external name must be different than internal name", @token
+        end
+
         cvar = ClassVar.new(@token.value.to_s).at(location)
         var = Var.new(arg_name).at(location)
         assign = Assign.new(cvar, var).at(location)
@@ -3239,11 +3277,23 @@ module Crystal
           raise "can't use @@class_var here"
         end
         uses_arg = true
+        do_next_token = true
       else
-        raise "unexpected token: #{@token}"
+        if external_name
+          arg_name = external_name
+        else
+          raise "unexpected token: #{@token}"
+        end
       end
 
-      {arg_name, uses_arg}
+      if do_next_token
+        next_token
+        found_space = @token.type == :SPACE || @token.type == :NEWLINE
+      end
+
+      skip_space_or_newline
+
+      {arg_name, external_name, found_space, uses_arg}
     end
 
     def parse_if(check_end = true)
@@ -3514,6 +3564,7 @@ module Crystal
 
     def parse_block2
       block_args = [] of Var
+      extra_assigns = nil
       block_body = nil
 
       next_token_skip_space
@@ -3525,6 +3576,47 @@ module Crystal
             arg_name = @token.value.to_s
           when :UNDERSCORE
             arg_name = "_"
+          when :"("
+            block_arg_name = "__arg#{@block_arg_count}"
+            @block_arg_count += 1
+
+            next_token_skip_space_or_newline
+
+            i = 0
+            while true
+              case @token.type
+              when :IDENT
+                sub_arg_name = @token.value.to_s
+              when :UNDERSCORE
+                sub_arg_name = "_"
+              else
+                raise "expecting block argument name, not #{@token.type}", @token
+              end
+
+              push_var_name sub_arg_name
+              location = @token.location
+
+              unless sub_arg_name == "_"
+                extra_assigns ||= [] of ASTNode
+                extra_assigns << Assign.new(
+                  Var.new(sub_arg_name).at(location),
+                  Call.new(Var.new(block_arg_name).at(location), "[]", NumberLiteral.new(i)).at(location)
+                ).at(location)
+              end
+
+              next_token_skip_space_or_newline
+              if @token.type == :","
+                next_token_skip_space_or_newline
+              end
+
+              if @token.type == :")"
+                break
+              end
+
+              i += 1
+            end
+
+            arg_name = block_arg_name
           else
             raise "expecting block argument name, not #{@token.type}", @token
           end
@@ -3547,6 +3639,17 @@ module Crystal
       push_vars block_args
 
       block_body = parse_expressions
+
+      if extra_assigns
+        exps = [] of ASTNode
+        exps.concat extra_assigns
+        if block_body.is_a?(Expressions)
+          exps.concat block_body.expressions
+        else
+          exps.push block_body
+        end
+        block_body = Expressions.from exps
+      end
 
       pop_def
 

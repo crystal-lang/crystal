@@ -85,8 +85,16 @@ module Crystal
       # the subsequent times will make program execution faster.
       compiler.release = true
 
+      # Don't cleanup old directories after compiling: it might happen
+      # that in doing so we remove the directory associated with the current
+      # compilation (for example if we have more than 10 macro runs, the current
+      # directory will be the oldest).
+      compiler.cleanup = false
+
       safe_filename = filename.gsub(/[^a-zA-Z\_\-\.]/, "_")
-      tempfile_path = Crystal.tempfile("macro-run-#{safe_filename}")
+
+      tempfile_path = @mod.new_tempfile("macro-run-#{safe_filename}")
+
       compiler.compile Compiler::Source.new(filename, source), tempfile_path
 
       tempfile_path
@@ -95,7 +103,7 @@ module Crystal
     class MacroVisitor < Visitor
       getter last : ASTNode
       getter yields : Hash(String, ASTNode)?
-      property free_vars : Hash(String, Type)?
+      property free_vars : Hash(String, TypeVar)?
 
       def self.new(expander, mod, scope : Type, type_lookup : Type, a_macro : Macro, call)
         vars = {} of String => ASTNode
@@ -111,23 +119,15 @@ module Crystal
         # Gather splat args into an array
         if splat_index
           splat_arg = a_macro.args[splat_index]
-          splat_elements = if splat_index < call.args.size
-                             splat_size = Splat.size(a_macro, call.args)
-                             call.args[splat_index, splat_size]
-                           else
-                             [] of ASTNode
-                           end
-
-          # If there are named arguments, put them there too as a separate named tuple literal,
-          # but only if there's no double splat
-          if !double_splat && (named_args = call.named_args)
-            named_tuple_elems = named_args.map do |named_arg|
-              NamedTupleLiteral::Entry.new(named_arg.name, named_arg.value)
-            end
-            splat_elements << NamedTupleLiteral.new(named_tuple_elems)
+          unless splat_arg.name.empty?
+            splat_elements = if splat_index < call.args.size
+                               splat_size = Splat.size(a_macro, call.args)
+                               call.args[splat_index, splat_size]
+                             else
+                               [] of ASTNode
+                             end
+            vars[splat_arg.name] = TupleLiteral.new(splat_elements)
           end
-
-          vars[splat_arg.name] = TupleLiteral.new(splat_elements)
         end
 
         # The double splat argument
@@ -136,13 +136,13 @@ module Crystal
           if named_args = call.named_args
             named_args.each do |named_arg|
               # Skip an argument that's already there as a positional argument
-              next if a_macro.args.any? &.name.==(named_arg.name)
+              next if a_macro.args.any? &.external_name.==(named_arg.name)
 
               named_tuple_elems << NamedTupleLiteral::Entry.new(named_arg.name, named_arg.value)
             end
           end
 
-          vars[double_splat] = NamedTupleLiteral.new(named_tuple_elems)
+          vars[double_splat.name] = NamedTupleLiteral.new(named_tuple_elems)
         end
 
         # Process default values
@@ -158,7 +158,9 @@ module Crystal
 
         # The named arguments
         call.named_args.try &.each do |named_arg|
-          vars[named_arg.name] = named_arg.value
+          arg = a_macro.args.find { |arg| arg.external_name == named_arg.name }
+          arg_name = arg.try(&.name) || named_arg.name
+          vars[arg_name] = named_arg.value
         end
 
         # The block arg
@@ -304,8 +306,8 @@ module Crystal
             exp.raise "can't interate TypeNode of type #{type}, only named tuple types"
           end
 
-          visit_macro_for_hash_like(node, exp, type.names_and_types) do |name_and_type|
-            {MacroId.new(name_and_type[0]), TypeNode.new(name_and_type[1])}
+          visit_macro_for_hash_like(node, exp, type.entries) do |entry|
+            {MacroId.new(entry.name), TypeNode.new(entry.type)}
           end
         else
           node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"

@@ -27,8 +27,7 @@ def do_work(in_filenames, output_filename, ignore_case)
   end
 
   entries = counts.to_a.sort_by! &.[0]
-  entries.each do |entry|
-    word, count = entry
+  entries.each do |(word, count)|
     out_file.puts "#{count}\t#{word}"
   end
 end

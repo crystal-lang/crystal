@@ -29,20 +29,6 @@ describe "Code gen: splat" do
       )).to_i.should eq(12)
   end
 
-  it "splats with two other args" do
-    run(%(
-      struct Tuple
-        def size; {{T.size}}; end
-      end
-
-      def foo(x, *args, z)
-        x + args.size + z
-      end
-
-      foo 10, 2, 20
-      )).to_i.should eq(31)
-  end
-
   it "splats on call" do
     run(%(
       def foo(x, y)

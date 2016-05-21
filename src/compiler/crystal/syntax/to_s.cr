@@ -591,7 +591,7 @@ module Crystal
         if double_splat = node.double_splat
           @str << ", " if printed_arg
           @str << "**"
-          @str << double_splat
+          double_splat.accept self
         end
         if block_arg = node.block_arg
           @str << ", " if printed_arg
@@ -630,7 +630,8 @@ module Crystal
         end
         if double_splat = node.double_splat
           @str << ", " if printed_arg
-          @str << "**" << double_splat
+          @str << "**"
+          double_splat.accept self
           printed_arg = true
         end
         if block_arg = node.block_arg
@@ -731,6 +732,10 @@ module Crystal
     end
 
     def visit(node : Arg)
+      if node.external_name != node.name
+        @str << (node.external_name.empty? ? "_" : node.external_name)
+        @str << " "
+      end
       if node.name
         @str << decorate_arg(node, node.name)
       else

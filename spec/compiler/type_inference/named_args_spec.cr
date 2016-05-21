@@ -112,7 +112,7 @@ describe "Type inference: named args" do
 
       foo x: 1, y: 2
       ),
-      "can't use named args with methods that have a splat argument"
+      "no argument named 'x'"
   end
 
   it "errors if named arg matches splat argument" do
@@ -122,17 +122,17 @@ describe "Type inference: named args" do
 
       foo x: 1, y: 2
       ),
-      "can't use named args with methods that have a splat argument"
+      "wrong number of arguments for 'foo' (given 0, expected 1+)"
   end
 
-  it "doesn't allow named arg if there's a splat" do
-    assert_error %(
+  it "allows named arg if there's a splat" do
+    assert_type(%(
       def foo(*y, x)
+        { x, y }
       end
 
-      foo 1, x: 2
-      ),
-      "can't use named args with methods that have a splat argument"
+      foo 1, x: 'a'
+      )) { tuple_of([char, tuple_of([int32])]) }
   end
 
   it "errors if missing one argument" do
@@ -176,6 +176,61 @@ describe "Type inference: named args" do
 
       foo(x: 2)
       ),
-      "no overload matches"
+      "wrong number of arguments for 'foo' (given 0, expected 2..3)"
+  end
+
+  it "gives correct error message for missing args after *" do
+    assert_error %(
+      def foo(*, x, y)
+      end
+
+      foo
+      ),
+      "missing arguments: x, y"
+  end
+
+  it "overloads based on required named args" do
+    assert_type(%(
+      def foo(x, *, y)
+        1
+      end
+
+      def foo(x, *, z)
+        'a'
+      end
+
+      a = foo(1, y: 2)
+      b = foo(1, z: 2)
+
+      {a, b}
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "overloads based on required named args, with restrictions" do
+    assert_type(%(
+      def foo(x, *, z : Int32)
+        1
+      end
+
+      def foo(x, *, z : Float64)
+        'a'
+      end
+
+      a = foo(1, z: 1)
+      b = foo(1, z: 1.5)
+
+      {a, b}
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "uses bare splat in new" do
+    assert_type(%(
+      class Foo
+        def initialize(*, y = nil)
+        end
+      end
+
+      Foo.new
+      )) { types["Foo"] }
   end
 end

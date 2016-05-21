@@ -34,9 +34,9 @@ struct NamedTuple
   #
   # {}                         # syntax error
   # ```
-  # def self.new(**options)
-  #   options
-  # end
+  def self.new(**options)
+    options
+  end
 
   # Returns the value for the given *key*, if there's such key, otherwise raises `KeyError`.
   #

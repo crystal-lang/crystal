@@ -67,6 +67,12 @@ describe "JSON serialization" do
       tuple.should be_a(Tuple(Int32, String))
     end
 
+    it "does for named tuple" do
+      tuple = NamedTuple(x: Int32, y: String).from_json(%({"y": "hello", "x": 1}))
+      tuple.should eq({x: 1, y: "hello"})
+      tuple.should be_a(NamedTuple(x: Int32, y: String))
+    end
+
     it "does for BigInt" do
       big = BigInt.from_json("123456789123456789123456789123456789123456789")
       big.should be_a(BigInt)
@@ -85,22 +91,21 @@ describe "JSON serialization" do
       big.should eq(BigFloat.new("1234"))
     end
 
-    # TODO: uncomment after 0.15.0
-    # it "does for Enum with number" do
-    #   JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
+    it "does for Enum with number" do
+      JSONSpecEnum.from_json("1").should eq(JSONSpecEnum::One)
 
-    #   expect_raises do
-    #     JSONSpecEnum.from_json("3")
-    #   end
-    # end
+      expect_raises do
+        JSONSpecEnum.from_json("3")
+      end
+    end
 
-    # it "does for Enum with string" do
-    #   JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
+    it "does for Enum with string" do
+      JSONSpecEnum.from_json(%("One")).should eq(JSONSpecEnum::One)
 
-    #   expect_raises do
-    #     JSONSpecEnum.from_json(%("Three"))
-    #   end
-    # end
+      expect_raises do
+        JSONSpecEnum.from_json(%("Three"))
+      end
+    end
   end
 
   describe "to_json" do

@@ -392,7 +392,7 @@ module Crystal
 
   class ArrayLiteral
     def interpret(method, args, block, interpreter)
-      value = intepret_array_of_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
+      value = intepret_array_or_tuple_method(self, ArrayLiteral, method, args, block, interpreter)
       value || super
     end
   end
@@ -412,6 +412,19 @@ module Crystal
         end
       when "values"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
+      when "map"
+        interpret_argless_method(method, args) {
+          raise "map expects a block" unless block
+
+          block_arg_key = block.args[0]?
+          block_arg_value = block.args[1]?
+
+          ArrayLiteral.map(entries) do |entry|
+            interpreter.define_var(block_arg_key.name, entry.key) if block_arg_key
+            interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
+            interpreter.accept block.body
+          end
+        }
       when "[]"
         case args.size
         when 1
@@ -458,6 +471,19 @@ module Crystal
         end
       when "values"
         interpret_argless_method(method, args) { ArrayLiteral.map entries, &.value }
+      when "map"
+        interpret_argless_method(method, args) {
+          raise "map expects a block" unless block
+
+          block_arg_key = block.args[0]?
+          block_arg_value = block.args[1]?
+
+          ArrayLiteral.map(entries) do |entry|
+            interpreter.define_var(block_arg_key.name, MacroId.new(entry.key)) if block_arg_key
+            interpreter.define_var(block_arg_value.name, entry.value) if block_arg_value
+            interpreter.accept block.body
+          end
+        }
       when "[]"
         case args.size
         when 1
@@ -510,7 +536,7 @@ module Crystal
 
   class TupleLiteral
     def interpret(method, args, block, interpreter)
-      value = intepret_array_of_tuple_method(self, TupleLiteral, method, args, block, interpreter)
+      value = intepret_array_or_tuple_method(self, TupleLiteral, method, args, block, interpreter)
       value || super
     end
   end
@@ -731,7 +757,7 @@ module Crystal
           when TupleInstanceType
             NumberLiteral.new(type.tuple_types.size)
           when NamedTupleInstanceType
-            NumberLiteral.new(type.names_and_types.size)
+            NumberLiteral.new(type.entries.size)
           else
             raise "undefined method 'size' for TypeNode of type #{type} (must be a tuple or named tuple type)"
           end
@@ -740,7 +766,7 @@ module Crystal
         interpret_argless_method(method, args) do
           type = type.instance_type
           if type.is_a?(NamedTupleInstanceType)
-            ArrayLiteral.map(type.names_and_types) { |name_and_type| MacroId.new(name_and_type[0]) }
+            ArrayLiteral.map(type.entries) { |entry| MacroId.new(entry.name) }
           else
             raise "undefined method 'keys' for TypeNode of type #{type} (must be a named tuple type)"
           end
@@ -761,7 +787,7 @@ module Crystal
             unless index
               return NilLiteral.new
             end
-            TypeNode.new(type.names_and_types[index][1])
+            TypeNode.new(type.entries[index].type)
           else
             raise "undefined method '[]' for TypeNode of type #{type} (must be a named tuple type)"
           end
@@ -1006,7 +1032,7 @@ module Crystal
   end
 end
 
-private def intepret_array_of_tuple_method(object, klass, method, args, block, interpreter)
+private def intepret_array_or_tuple_method(object, klass, method, args, block, interpreter)
   case method
   when "any?"
     object.interpret_argless_method(method, args) do

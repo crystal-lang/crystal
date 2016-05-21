@@ -461,7 +461,6 @@ module IO
   end
 
   # Writes a slice of UTF-8 encoded bytes to this IO, using the current encoding.
-  @[Raises] # TODO: there's a bug in the compiler that requires this
   def write_utf8(slice : Slice(UInt8))
     if encoder = encoder()
       encoder.write(self, slice)
@@ -707,7 +706,7 @@ module IO
   end
 
   # Reads an instance of the given *type* from this IO using the specified *format*.
-  # This ends up invoking `type.to_io(self, forma)`, so any type defining a `to_io`
+  # This ends up invoking `type.from_io(self, forma)`, so any type defining a `from_io`
   # method can be read in this way.
   #
   # See `Int#from_io` and `Float#from_io`.

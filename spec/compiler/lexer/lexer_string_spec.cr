@@ -132,12 +132,12 @@ describe "Lexer string" do
     tester.string_should_end_correctly
   end
 
-  [['(', ')'], ['[', ']'], ['{', '}'], ['<', '>']].each do |pair|
-    it "lexes simple string with nested %#{pair[0]}" do
-      lexer = Lexer.new("%#{pair[0]}hello #{pair[0]}world#{pair[1]}#{pair[1]}")
+  [['(', ')'], ['[', ']'], ['{', '}'], ['<', '>']].each do |(left, right)|
+    it "lexes simple string with nested %#{left}" do
+      lexer = Lexer.new("%#{left}hello #{left}world#{right}#{right}")
       tester = LexerObjects::Strings.new(lexer)
 
-      tester.string_should_be_delimited_by(pair[0], pair[1])
+      tester.string_should_be_delimited_by(left, right)
       tester.next_string_token_should_be("hello ")
       tester.next_string_token_should_be_opening
       tester.next_string_token_should_be("world")

@@ -5,11 +5,11 @@ class Crystal::Def
     # If the named arguments cover all arguments with a default value and
     # they come in the same order, we can safely return this def without
     # needing a useless indirection.
-    if named_args && args_size + named_args.size == args.size
+    if !splat_index && named_args && args_size + named_args.size == args.size
       all_match = true
       named_args.each_with_index do |named_arg, i|
         arg = args[args_size + i]
-        unless arg.name == named_arg
+        unless arg.external_name == named_arg
           all_match = false
           break
         end
@@ -36,39 +36,35 @@ class Crystal::Def
 
     retain_body = yields || splat_index || double_splat || assigns_special_var || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
 
-    splat_index = self.splat_index || -1
+    splat_index = self.splat_index
     double_splat = self.double_splat
 
     new_args = [] of Arg
 
     # Args before splat index
-    if splat_index == -1
-      before_size = 0
+    if splat_index
+      before_splat_size = Math.min(args_size, splat_index)
     else
-      before_size = Math.min(args_size, splat_index)
-      before_size.times do |index|
-        new_args << args[index].clone
-      end
+      before_splat_size = args_size
+    end
+
+    before_splat_size.times do |index|
+      new_args << args[index].clone
     end
 
     # Splat arg
-    if splat_index == -1
-      splat_size = 0
-    else
+    if splat_index && !args[splat_index].external_name.empty?
       splat_names = [] of String
-      splat_size = args_size - (args.size - 1)
+
+      splat_size = args_size - splat_index
       splat_size = 0 if splat_size < 0
       splat_size.times do |index|
         splat_name = program.new_temp_var_name
         splat_names << splat_name
         new_args << Arg.new(splat_name)
       end
-    end
-
-    base = splat_index + 1
-    after_size = args_size - before_size - splat_size
-    after_size.times do |i|
-      new_args << args[base + i].clone
+    else
+      splat_size = 0
     end
 
     if named_args
@@ -77,7 +73,14 @@ class Crystal::Def
         named_args.each do |named_arg|
           str << ':'
           str << named_arg
-          new_args << Arg.new(named_arg)
+
+          # If a named argument matches an argument's external name, use the internal name
+          matching_arg = args.find { |arg| arg.external_name == named_arg }
+          if matching_arg
+            new_args << Arg.new(matching_arg.name, external_name: named_arg)
+          else
+            new_args << Arg.new(named_arg)
+          end
         end
       end
     else
@@ -100,19 +103,16 @@ class Crystal::Def
       new_body = [] of ASTNode
       body = self.body.clone
 
-      # Default values
-      if splat_index == -1
-        end_index = args.size - 1
-      else
-        end_index = Math.min(args_size, splat_index - 1)
-      end
-
       # Declare variables that are not covered
-      args_size.upto(end_index) do |index|
-        arg = args[index]
+      args.each_with_index do |arg, index|
+        # Skip if the argument is covered by a positional argument
+        next if index < args_size && !(splat_index && index > splat_index)
+
+        # Skip if this is the splat index argument
+        next if index == splat_index
 
         # But first check if we already have it in the named arguments
-        unless named_args.try &.index(arg.name)
+        unless named_args.try &.index(arg.external_name)
           default_value = arg.default_value.not_nil!
 
           # If the default value is a magic constant we add it to the expanded
@@ -136,22 +136,11 @@ class Crystal::Def
       end
 
       # Splat argument
-      if splat_names
+      if splat_names && splat_index
         tuple_args = [] of ASTNode
         splat_size.times do |i|
           tuple_args << Var.new(splat_names[i])
         end
-
-        # If there are named args and just a single splat argument,
-        # it's the case of named args matching a splat
-        # (don't do this if there's a double splat)
-        if !double_splat && named_args && splat_index == 0 && self.args.size == 1
-          entries = named_args.map_with_index do |named_arg, i|
-            NamedTupleLiteral::Entry.new(named_arg, Var.new(named_arg))
-          end
-          tuple_args << NamedTupleLiteral.new(entries)
-        end
-
         tuple = TupleLiteral.new(tuple_args)
         new_body << Assign.new(Var.new(args[splat_index].name), tuple)
       end
@@ -166,7 +155,7 @@ class Crystal::Def
           named_tuple_entries << NamedTupleLiteral::Entry.new(named_arg, Var.new(named_arg))
         end
         named_tuple = NamedTupleLiteral.new(named_tuple_entries)
-        new_body << Assign.new(Var.new(double_splat), named_tuple)
+        new_body << Assign.new(Var.new(double_splat.name), named_tuple)
       end
 
       new_body.push body
@@ -186,7 +175,7 @@ class Crystal::Def
         arg = args[index]
 
         # But first check if we already have it in the named arguments
-        if named_args.try &.index(arg.name)
+        if named_args.try &.index(arg.external_name)
           new_args.push Var.new(arg.name)
         else
           default_value = arg.default_value.not_nil!

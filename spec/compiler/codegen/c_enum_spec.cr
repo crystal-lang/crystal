@@ -30,17 +30,17 @@ describe "Code gen: c enum" do
     {"10 | 3", 11},
     {"(1 + 2) * 3", 9},
     {"10 % 3", 1},
-  ].each do |test_case|
-    it "codegens enum with #{test_case[0]} " do
+  ].each do |(code, expected)|
+    it "codegens enum with #{code} " do
       run("
         lib LibFoo
           enum Bar
-            X = #{test_case[0]}
+            X = #{code}
           end
         end
 
         LibFoo::Bar::X
-        ").to_i.should eq(test_case[1])
+        ").to_i.should eq(expected)
     end
   end
 

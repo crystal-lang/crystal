@@ -5,6 +5,21 @@ lib LibYAML
   PARSER_SIZE = 480
   type Parser = Void*
 
+  # The struct of yaml_parser_s is internal, yet some libraries (like Ruby's psych)
+  # access some of its data for getting the line/column information of an error.
+  # Here we replicate only part of this data. When we need it, we cast a Parser*
+  # to this type, so we don't need to have the correct size of the Parser struct,
+  # but only define some members at the beginning.
+  struct InternalParser
+    error : Int
+    problem : LibC::Char*
+    problem_offset : LibC::SizeT
+    problem_value : Int
+    problem_mark : Mark
+    context : LibC::Char*
+    context_mark : Mark
+  end
+
   struct VersionDirective
     major : Int
     minor : Int

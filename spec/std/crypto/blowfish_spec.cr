@@ -40,9 +40,7 @@ describe "Crypto::Blowfish" do
   ]
 
   it "encrypt and decrypt pair" do
-    vectors.each_with_index do |vector, index|
-      key, text, cipher = vector
-
+    vectors.each_with_index do |(key, text, cipher), index|
       bf = Crypto::Blowfish.new(16)
       bf.expand_key(key)
 

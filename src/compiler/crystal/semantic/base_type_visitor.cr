@@ -3,7 +3,7 @@ module Crystal
     getter mod : Program
     property types : Array(Type)
 
-    @free_vars : Hash(String, Type)?
+    @free_vars : Hash(String, TypeVar)?
     @type_lookup : Type?
     @scope : Type?
     @typed_def : Def?
@@ -395,10 +395,14 @@ module Crystal
 
     def resolve_ident?(node : Path, create_modules_if_missing = false)
       free_vars = @free_vars
-      if free_vars && !node.global && (type = free_vars[node.names.first]?)
-        target_type = type
-        if node.names.size > 1
-          target_type = lookup_type target_type, node.names[1..-1], node
+      if free_vars && !node.global && (type_var = free_vars[node.names.first]?)
+        if type_var.is_a?(Type)
+          target_type = type_var
+          if node.names.size > 1
+            target_type = lookup_type target_type, node.names[1..-1], node
+          end
+        else
+          target_type = type_var
         end
       else
         base_lookup = node.global ? mod : (@type_lookup || @scope || @types.last)
@@ -850,6 +854,14 @@ module Crystal
 
       if scope.is_a?(GenericClassType) || scope.is_a?(GenericModuleType)
         node.raise "can't use class variables in generic types"
+      end
+
+      if scope.is_a?(VirtualType)
+        node.raise "can't access class variable from a type that is #{scope.base_type.instance_type} or any of its subclasses"
+      end
+
+      if scope.is_a?(VirtualMetaclassType)
+        node.raise "can't access class variable from a type that is #{scope.base_type.instance_type} or any of its subclasses"
       end
 
       scope.as(ClassVarContainer)

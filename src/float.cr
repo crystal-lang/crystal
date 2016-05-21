@@ -99,10 +99,10 @@ struct Float
 end
 
 struct Float32
-  NAN      = 0_f32 / 0_f32
-  INFINITY = 1_f32 / 0_f32
-  MIN      = -INFINITY
-  MAX      = INFINITY
+  NAN      = (0_f32 / 0_f32).as Float32
+  INFINITY = (1_f32 / 0_f32).as Float32
+  MIN      = (-INFINITY).as Float32
+  MAX      = INFINITY.as Float32
 
   # Returns a `Float32` by invoking `to_f32` on *value*.
   def self.new(value)
@@ -152,10 +152,10 @@ struct Float32
 end
 
 struct Float64
-  NAN      = 0_f64 / 0_f64
-  INFINITY = 1_f64 / 0_f64
-  MIN      = -INFINITY
-  MAX      = INFINITY
+  NAN      = (0_f64 / 0_f64).as Float64
+  INFINITY = (1_f64 / 0_f64).as Float64
+  MIN      = (-INFINITY).as Float64
+  MAX      = INFINITY.as Float64
 
   # Returns a `Float64` by invoking `to_f64` on *value*.
   def Float64.new(value)

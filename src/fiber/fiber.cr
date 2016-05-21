@@ -9,12 +9,8 @@ end
 class Fiber
   STACK_SIZE = 8 * 1024 * 1024
 
-  @@first_fiber : Fiber?
-  @@first_fiber = nil
-
-  @@last_fiber : Fiber?
-  @@last_fiber = nil
-
+  @@first_fiber : Fiber? = nil
+  @@last_fiber : Fiber? = nil
   @@stack_pool = [] of Void*
 
   @stack : Void*
@@ -63,7 +59,7 @@ class Fiber
   end
 
   def initialize
-    @proc = Fiber.proc { }
+    @proc = Proc(Void).new { }
     @stack = Pointer(Void).null
     @stack_top = get_stack_top
     @stack_bottom = LibGC.stackbottom
@@ -199,16 +195,10 @@ class Fiber
 
   # TODO: Boehm GC doesn't scan thread local vars, so we can't use it yet
   # @[ThreadLocal]
-  @@current : Fiber
-  @@current = root
+  @@current : Fiber = root
 
   def self.current : self
     @@current
-  end
-
-  # TODO: we could do `Proc(Void).new {}`, but that currently types it as `Proc(Nil)`
-  protected def self.proc(&block : ->)
-    block
   end
 
   @@prev_push_other_roots = LibGC.get_push_other_roots

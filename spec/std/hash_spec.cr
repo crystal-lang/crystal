@@ -714,8 +714,20 @@ describe "Hash" do
     items.uniq.size
   end
 
-  # Check that Hash can be created with an initial capacity
-  typeof(Hash(Int32, Int32).new(initial_capacity: 1234))
-  typeof(Hash(Int32, Int32).new(0, initial_capacity: 1234))
-  typeof(Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 0 })
+  it "creates with initial capacity" do
+    hash = Hash(Int32, Int32).new(initial_capacity: 1234)
+    hash.@buckets_size.should eq(1234)
+  end
+
+  it "creates with initial capacity and default value" do
+    hash = Hash(Int32, Int32).new(default_value: 3, initial_capacity: 1234)
+    hash[1].should eq(3)
+    hash.@buckets_size.should eq(1234)
+  end
+
+  it "creates with initial capacity and block" do
+    hash = Hash(Int32, Int32).new(initial_capacity: 1234) { |h, k| h[k] = 3 }
+    hash[1].should eq(3)
+    hash.@buckets_size.should eq(1234)
+  end
 end

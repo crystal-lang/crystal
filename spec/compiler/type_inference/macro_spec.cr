@@ -733,7 +733,7 @@ describe "Type inference: macro" do
 
       foo x: 1, y: 2
       ),
-      "can't use named args with macros that have a splat argument"
+      "no argument named 'x'"
   end
 
   it "errors if named arg matches splat argument" do
@@ -743,17 +743,27 @@ describe "Type inference: macro" do
 
       foo x: 1, y: 2
       ),
-      "can't use named args with macros that have a splat argument"
+      "wrong number of arguments for macro 'foo' (given 0, expected 1+)"
   end
 
-  it "doesn't allow named arg if there's a splat" do
+  it "says missing argument because positional args don't match past splat" do
     assert_error %(
-      macro foo(*y, x)
+      macro foo(x, *y, z)
       end
 
-      foo 1, x: 2
+      foo 1, 2
       ),
-      "can't use named args with macros that have a splat argument"
+      "missing argument: z"
+  end
+
+  it "allows named args after splat" do
+    assert_type(%(
+      macro foo(*y, x)
+        { {{y}}, {{x}} }
+      end
+
+      foo 1, x: 'a'
+      )) { tuple_of([tuple_of([int32]), char]) }
   end
 
   it "errors if missing one argument" do
@@ -831,5 +841,73 @@ describe "Type inference: macro" do
 
       foo 1, w: 'a', y: true, z: "z"
       )) { tuple_of([int32, bool, named_tuple_of({"w": char, "z": string})]) }
+  end
+
+  it "declares multi-assign vars for macro" do
+    assert_type(%(
+      macro id(x, y)
+        {{x}}
+        {{y}}
+      end
+
+      a, b = 1, 2
+      id(a, b)
+      1
+      )) { int32 }
+  end
+
+  it "declares rescue variable inside for macro" do
+    assert_type(%(
+      macro id(x)
+        {{x}}
+      end
+
+      begin
+      rescue ex
+        id(ex)
+      end
+
+      1
+      )) { int32 }
+  end
+
+  it "matches with default value after splat" do
+    assert_type(%(
+      macro foo(x, *y, z = true)
+        { {{x}}, {{y}}, {{z}} }
+      end
+
+      foo 1, 'a'
+      )) { tuple_of([int32, tuple_of([char]), bool]) }
+  end
+
+  it "uses bare *" do
+    assert_type(%(
+      macro foo(x, *, y)
+        { {{x}}, {{y}} }
+      end
+
+      foo 10, y: 'a'
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "uses bare *, doesn't let more args" do
+    assert_error %(
+      macro foo(x, *, y)
+      end
+
+      foo 10, 20, y: 30
+      ),
+      "wrong number of arguments for macro 'foo' (given 2, expected 1)"
+  end
+
+  it "uses bare *, doesn't let more args" do
+    assert_error %(
+      def foo(x, *, y)
+      end
+
+      foo 10, 20, y: 30
+      ),
+      "wrong number of arguments for 'foo' (given 2, expected 1)"
   end
 end

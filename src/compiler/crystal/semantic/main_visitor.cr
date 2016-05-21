@@ -177,9 +177,10 @@ module Crystal
         end
 
         attributes = check_valid_attributes node, ValidClassVarAttributes, "class variable"
+        class_var = lookup_class_var(var)
+        var.var = class_var
         if Attribute.any?(attributes, "ThreadLocal")
-          var = lookup_class_var(var)
-          var.thread_local = true
+          class_var.thread_local = true
         end
       when Global
         if @untyped_def
@@ -2280,7 +2281,7 @@ module Crystal
       if scope.is_a?(TupleInstanceType)
         node.type = scope.tuple_types[node.index].as(Type)
       elsif scope.is_a?(NamedTupleInstanceType)
-        node.type = scope.names_and_types[node.index][1]
+        node.type = scope.entries[node.index].type
       elsif scope
         node.type = (scope.instance_type.as(TupleInstanceType).tuple_types[node.index].as(Type)).metaclass
       end

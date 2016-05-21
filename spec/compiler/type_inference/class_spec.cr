@@ -973,4 +973,50 @@ describe "Type inference: class" do
       ),
       "Can't infer the type of instance variable '@foo' of Foo"
   end
+
+  it "doesn't crash with top-level initialize (#2601)" do
+    assert_type(%(
+      def initialize
+        1
+      end
+
+      initialize
+      )) { int32 }
+  end
+
+  it "error when using class var on virtual type" do
+    assert_error %(
+      class Foo
+        @@a = 1
+
+        def a
+          @@a
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      (Bar.new as Foo).a
+      ),
+      "can't access class variable from a type that is Foo or any of its subclasses"
+  end
+
+  it "error when using class var on virtual metaclass type" do
+    assert_error %(
+      class Foo
+        @@a = 1
+
+        def self.a
+          @@a
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      (Bar.new as Foo).class.a
+      ),
+      "can't access class variable from a type that is Foo or any of its subclasses"
+  end
 end

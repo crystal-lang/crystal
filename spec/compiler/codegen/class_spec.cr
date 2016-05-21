@@ -745,4 +745,47 @@ describe "Code gen: class" do
       foo.x
       )).to_i.should eq(42)
   end
+
+  it "codegens virtual metaclass union bug (#2597)" do
+    run(%(
+
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Foo1 < Foo
+        def self.foo
+          2
+        end
+      end
+
+      class Foo2 < Foo
+        def self.foo
+          3
+        end
+      end
+
+      class Bar
+        @foo : Foo.class
+
+        def initialize
+          @foo = if 1 == 1
+                   Foo1
+                 elsif 1 == 2
+                   Foo2
+                 else
+                   Foo
+                 end
+        end
+
+        def foo
+          @foo
+        end
+      end
+
+      Bar.new.foo.foo
+      )).to_i.should eq(2)
+  end
 end

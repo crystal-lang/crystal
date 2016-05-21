@@ -132,8 +132,7 @@ describe "Char" do
   it "does to_i with base 36" do
     letters = ('0'..'9').each.chain(('a'..'z').each).chain(('A'..'Z').each)
     nums = (0..9).each.chain((10..35).each).chain((10..35).each)
-    letters.zip(nums).each do |tuple|
-      letter, num = tuple
+    letters.zip(nums).each do |(letter, num)|
       letter.to_i(36).should eq(num)
     end
   end

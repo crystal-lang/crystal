@@ -39,6 +39,7 @@ module Crystal
     property? wants_doc : Bool
     property emit : Array(String)?
     property original_output_filename : String?
+    property? cleanup : Bool?
 
     @target_machine : LLVM::TargetMachine?
     @pass_manager_builder : LLVM::PassManagerBuilder?
@@ -57,6 +58,7 @@ module Crystal
       @verbose = false
       @wants_doc = false
       @flags = [] of String
+      @cleanup = true
     end
 
     def compile(source : Source, output_filename)
@@ -64,7 +66,7 @@ module Crystal
     end
 
     def compile(sources : Array(Source), output_filename)
-      program = new_program
+      program = new_program(sources)
       node, original_node = parse program, sources
       node = program.infer_type node, @stats
       codegen program, node, sources, output_filename unless @no_codegen
@@ -76,14 +78,15 @@ module Crystal
     end
 
     def type_top_level(sources : Array(Source))
-      program = new_program
+      program = new_program(sources)
       node, original_node = parse program, sources
       node = program.infer_type_top_level(node, @stats)
       Result.new program, node, original_node
     end
 
-    private def new_program
+    private def new_program(sources)
       program = Program.new
+      program.cache_dir = CacheDir.instance.directory_for(sources)
       program.target_machine = target_machine
       if cross_compile_flags = @cross_compile_flags
         program.flags = cross_compile_flags
@@ -168,8 +171,6 @@ module Crystal
         output_dir = cache_dir.directory_for(sources)
       end
 
-      cache_dir.cleanup
-
       bc_flags_changed = check_bc_flags_changed output_dir
 
       units = llvm_modules.map do |type_name, llvm_mod|
@@ -181,6 +182,8 @@ module Crystal
       else
         codegen program, units, lib_flags, output_filename, output_dir
       end
+
+      cache_dir.cleanup if @cleanup
     end
 
     private def cross_compile(program, units, lib_flags, output_filename)

@@ -196,17 +196,40 @@ describe "Parser" do
   it_parses "def foo(@@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
   it_parses "def foo(&@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: Arg.new("block"), yields: 0)
 
+  it_parses "def foo(x, *args, y = 2); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32)], body: 1.int32, splat_index: 1)
+  it_parses "def foo(x, *args, y = 2, w, z = 3); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32), "w".arg, Arg.new("z", default_value: 3.int32)], body: 1.int32, splat_index: 1)
+  it_parses "def foo(x, *, y); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1)
+  assert_syntax_error "def foo(x, *); 1; end", "named arguments must follow bare *"
+
   assert_syntax_error "def foo(var = 1 : Int32); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
   assert_syntax_error "def foo(var = x : Int); end", "the syntax for an argument with a default value V and type T is `arg : T = V`"
 
-  it_parses "def foo(**args)\n1\nend", Def.new("foo", body: 1.int32, double_splat: "args")
-  it_parses "def foo(x, **args)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args")
-  it_parses "def foo(x, **args, &block)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args", block_arg: "block".arg, yields: 0)
-  it_parses "def foo(**args)\nargs\nend", Def.new("foo", body: "args".var, double_splat: "args")
+  it_parses "def foo(**args)\n1\nend", Def.new("foo", body: 1.int32, double_splat: "args".arg)
+  it_parses "def foo(x, **args)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args".arg)
+  it_parses "def foo(x, **args, &block)\n1\nend", Def.new("foo", body: 1.int32, args: ["x".arg], double_splat: "args".arg, block_arg: "block".arg, yields: 0)
+  it_parses "def foo(**args)\nargs\nend", Def.new("foo", body: "args".var, double_splat: "args".arg)
+  it_parses "def foo(x = 1, **args)\n1\nend", Def.new("foo", body: 1.int32, args: [Arg.new("x", default_value: 1.int32)], double_splat: "args".arg)
+  it_parses "def foo(**args : Foo)\n1\nend", Def.new("foo", body: 1.int32, double_splat: Arg.new("args", restriction: "Foo".path))
+  it_parses "def foo(**args : **Foo)\n1\nend", Def.new("foo", body: 1.int32, double_splat: Arg.new("args", restriction: DoubleSplat.new("Foo".path)))
 
   assert_syntax_error "def foo(**args, **args2)"
 
-  it_parses "macro foo(**args)\n1\nend", Macro.new("foo", body: MacroLiteral.new("1\n"), double_splat: "args")
+  it_parses "def foo(x y); y; end", Def.new("foo", args: [Arg.new("y", external_name: "x")], body: "y".var)
+  it_parses "def foo(x @var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@var".instance_var, "var".var)] of ASTNode)
+  it_parses "def foo(x @@var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
+  assert_syntax_error "def foo(_ y); y; end"
+
+  assert_syntax_error "def foo(x x); 1; end", "when specified, external name must be different than internal name"
+  assert_syntax_error "def foo(x @x); 1; end", "when specified, external name must be different than internal name"
+  assert_syntax_error "def foo(x @@x); 1; end", "when specified, external name must be different than internal name"
+
+  assert_syntax_error "def foo(*a foo); end"
+  assert_syntax_error "def foo(**a foo); end"
+  assert_syntax_error "def foo(&a foo); end"
+
+  it_parses "macro foo(**args)\n1\nend", Macro.new("foo", body: MacroLiteral.new("1\n"), double_splat: "args".arg)
+
+  assert_syntax_error "macro foo(x, *); 1; end", "named arguments must follow bare *"
 
   it_parses "abstract def foo", Def.new("foo", abstract: true)
   it_parses "abstract def foo; 1", [Def.new("foo", abstract: true), 1.int32]
@@ -418,6 +441,23 @@ describe "Parser" do
   it_parses "foo { |a, b| 1 }", Call.new(nil, "foo", block: Block.new(["a".var, "b".var], 1.int32))
   it_parses "1.foo do; 1; end", Call.new(1.int32, "foo", block: Block.new(body: 1.int32))
 
+  it_parses "foo { |a, (b, c), (d, e)| a; b; c; d; e }", Call.new(nil, "foo",
+    block: Block.new(["a".var, "__arg0".var, "__arg1".var],
+      Expressions.new([
+        Assign.new("b".var, Call.new("__arg0".var, "[]", 0.int32)),
+        Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
+        Assign.new("d".var, Call.new("__arg1".var, "[]", 0.int32)),
+        Assign.new("e".var, Call.new("__arg1".var, "[]", 1.int32)),
+        "a".var, "b".var, "c".var, "d".var, "e".var,
+      ] of ASTNode)))
+
+  it_parses "foo { |(_, c)| c }", Call.new(nil, "foo",
+    block: Block.new(["__arg0".var],
+      Expressions.new([
+        Assign.new("c".var, Call.new("__arg0".var, "[]", 1.int32)),
+        "c".var,
+      ] of ASTNode)))
+
   it_parses "1 ? 2 : 3", If.new(1.int32, 2.int32, 3.int32)
   it_parses "1 ? a : b", If.new(1.int32, "a".call, "b".call)
   it_parses "1 ? a : b ? c : 3", If.new(1.int32, "a".call, If.new("b".call, "c".call, 3.int32))
@@ -455,8 +495,7 @@ describe "Parser" do
 
   it_parses "x = 2; foo do bar x end", [Assign.new("x".var, 2.int32), Call.new(nil, "foo", block: Block.new(body: Call.new(nil, "bar", "x".var)))] of ASTNode
 
-  { {"break", Break}, {"return", Return}, {"next", Next} }.each do |tuple|
-    keyword, klass = tuple
+  { {"break", Break}, {"return", Return}, {"next", Next} }.each do |(keyword, klass)|
     it_parses "#{keyword}", klass.new
     it_parses "#{keyword};", klass.new
     it_parses "#{keyword} 1", klass.new(1.int32)
@@ -828,8 +867,11 @@ describe "Parser" do
   it_parses "begin; 1; ensure; 2; end", ExceptionHandler.new(1.int32, ensure: 2.int32)
   it_parses "begin\n1\nensure\n2\nend", ExceptionHandler.new(1.int32, ensure: 2.int32)
   it_parses "begin; 1; rescue Foo; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".path] of ASTNode)])
+  it_parses "begin; 1; rescue ::Foo; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, [Path.global("Foo")] of ASTNode)])
   it_parses "begin; 1; rescue Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".path, "Bar".path] of ASTNode)])
+  it_parses "begin; 1; rescue ::Foo | ::Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, [Path.global("Foo"), Path.global("Bar")] of ASTNode)])
   it_parses "begin; 1; rescue ex : Foo | Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, ["Foo".path, "Bar".path] of ASTNode, "ex")])
+  it_parses "begin; 1; rescue ex : ::Foo | ::Bar; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, [Path.global("Foo"), Path.global("Bar")] of ASTNode, "ex")])
   it_parses "begin; 1; rescue ex; 2; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")])
   it_parses "begin; 1; rescue; 2; else; 3; end", ExceptionHandler.new(1.int32, [Rescue.new(2.int32)], 3.int32)
   it_parses "begin; 1; rescue ex; 2; end; ex", [ExceptionHandler.new(1.int32, [Rescue.new(2.int32, nil, "ex")]), "ex".var]
@@ -943,6 +985,7 @@ describe "Parser" do
 
   it_parses "def foo(x = 1, *y); 1; end", Def.new("foo", [Arg.new("x", 1.int32), Arg.new("y")], 1.int32, splat_index: 1)
   it_parses "def foo(x, *y : Int32); 1; end", Def.new("foo", [Arg.new("x"), Arg.new("y", restriction: "Int32".path)], 1.int32, splat_index: 1)
+  it_parses "def foo(*y : *T); 1; end", Def.new("foo", [Arg.new("y", restriction: "T".path.splat)], 1.int32, splat_index: 0)
 
   it_parses "foo *bar", Call.new(nil, "foo", "bar".call.splat)
   it_parses "foo(*bar)", Call.new(nil, "foo", "bar".call.splat)
@@ -1116,9 +1159,8 @@ describe "Parser" do
 
   assert_syntax_error %<{"x": [] of Int32,\n}\n1.foo(>, "unterminated call", 3, 6
 
-  assert_syntax_error "def foo(x y); end", "unexpected token: y (expected ',' or ')')"
   assert_syntax_error "def foo x y; end", "parentheses are mandatory for def arguments"
-  assert_syntax_error "macro foo(x y); end", "unexpected token: y (expected ',' or ')')"
+  assert_syntax_error "macro foo(x y z); end"
   assert_syntax_error "macro foo x y; end", "parentheses are mandatory for macro arguments"
   assert_syntax_error "macro foo *y;end", "parentheses are mandatory for macro arguments"
   assert_syntax_error %(macro foo x; 1 + 2; end), "parentheses are mandatory for macro arguments"
@@ -1126,7 +1168,6 @@ describe "Parser" do
 
   assert_syntax_error "1 2", "unexpected token: 2"
   assert_syntax_error "macro foo(*x, *y); end", "unexpected token: *"
-  assert_syntax_error "def foo(*x, y = 1); end", "unexpected token: ="
 
   assert_syntax_error "foo x: 1, x: 1", "duplicated named argument: x", 1, 11
   assert_syntax_error "def foo(x, x); end", "duplicated argument name: x", 1, 12

@@ -1,8 +1,6 @@
 struct SimpleHash(K, V)
-  record Entry(K, V), key : K, value : V
-
   def initialize
-    @values = [] of Entry(K, V)
+    @values = [] of {key: K, value: V}
   end
 
   def initialize(@values)
@@ -20,8 +18,8 @@ struct SimpleHash(K, V)
 
   def fetch(key)
     @values.each do |entry|
-      if entry.key == key
-        return entry.value
+      if entry[:key] == key
+        return entry[:value]
       end
     end
     yield key
@@ -29,23 +27,23 @@ struct SimpleHash(K, V)
 
   def []=(key : K, value : V)
     @values.each_with_index do |entry, i|
-      if entry.key == key
-        @values[i] = Entry.new(key, value)
+      if entry[:key] == key
+        @values[i] = {key: key, value: value}
         return value
       end
     end
 
-    @values.push(Entry.new(key, value))
+    @values.push({key: key, value: value})
     value
   end
 
   def has_key?(key)
-    @values.any? { |entry| entry.key == key }
+    @values.any? { |entry| entry[:key] == key }
   end
 
   def delete(key)
     @values.each_with_index do |entry, index|
-      if entry.key == key
+      if entry[:key] == key
         return @values.delete_at(index)
       end
     end
@@ -58,7 +56,7 @@ struct SimpleHash(K, V)
 
   def each
     @values.each do |entry|
-      yield entry.key, entry.value
+      yield entry[:key], entry[:value]
     end
   end
 
@@ -87,11 +85,11 @@ struct SimpleHash(K, V)
   end
 
   def keys
-    @values.map { |entry| entry.key }
+    @values.map &.[:key]
   end
 
   def values
-    @values.map { |entry| entry.value }
+    @values.map &.[:value]
   end
 
   # Returns a new hash consisting of entries for which the block returns false.
@@ -145,9 +143,9 @@ struct SimpleHash(K, V)
   def to_s(io : IO)
     io << '{'
     @values.each_with_index do |entry, index|
-      entry.key.inspect(io)
+      entry[:key].inspect(io)
       io << " => "
-      entry.value.inspect(io)
+      entry[:value].inspect(io)
       io << ", " if index < @values.size - 1
     end
     io << '}'

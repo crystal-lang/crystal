@@ -69,6 +69,8 @@ enum XML::ParserOptions
   # Store big lines numbers in text PSVI field
   BIG_LINES = 4194304
 
+  # Returns default options for parsing XML documents.
+  # Default flags are: `RECOVER` | `NOERROR` | `NOWARNING` | `NONET`
   def self.default : self
     RECOVER | NOERROR | NOWARNING | NONET
   end
