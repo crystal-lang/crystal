@@ -11,8 +11,11 @@ require "struct"
 require "proc"
 require "thread"
 require "gc"
-# require "gc/null"
-require "gc/boehm"
+ifdef asmjs
+  require "gc/null"
+else
+  require "gc/boehm"
+end
 require "class"
 require "comparable"
 require "enumerable"
