@@ -221,9 +221,9 @@ module Crystal
     end
 
     private def define_crystal_constant(name, value)
-      crystal.types[name] = const = Const.new self, self, name, value
+      crystal.types[name] = const = Const.new self, crystal, name, value
       const.locations << Location.new(0, 0, __FILE__)
-      class_var_and_const_initializers << const
+      const.initialized = true
     end
 
     def new_tempfile(basename)

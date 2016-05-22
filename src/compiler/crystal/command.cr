@@ -173,7 +173,7 @@ class Crystal::Command
     vars = {
       "CRYSTAL_CACHE_DIR": CacheDir.instance.dir,
       "CRYSTAL_PATH":      CrystalPath.default_path,
-      "CRYSTAL_VERSION":   Config.path || "",
+      "CRYSTAL_VERSION":   Config.version || "",
     }
 
     if ARGV.empty?
