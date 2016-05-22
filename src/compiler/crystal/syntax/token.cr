@@ -34,29 +34,34 @@ module Crystal
       nest : Char | String,
       :end,
       open_count : Int32,
-      heredoc_indent : Int32 do
+      heredoc_indent : Int32,
+      allow_escapes : Bool do
       @end : Char | String
     end
 
     struct DelimiterState
       def self.default
-        DelimiterState.new(:string, '\0', '\0', 0, 0)
+        DelimiterState.new(:string, '\0', '\0', 0, 0, true)
       end
 
       def self.new(kind, nest, the_end)
-        new kind, nest, the_end, 0, 0
+        new kind, nest, the_end, 0, 0, true
       end
 
-      def self.new(kind, nest, the_end, open_count)
-        new kind, nest, the_end, open_count, 0
+      def self.new(kind, nest, the_end, allow_escapes : Bool)
+        new kind, nest, the_end, 0, 0, allow_escapes
+      end
+
+      def self.new(kind, nest, the_end, open_count : Int32)
+        new kind, nest, the_end, open_count, 0, true
       end
 
       def with_open_count_delta(delta)
-        DelimiterState.new(@kind, @nest, @end, @open_count + delta, @heredoc_indent)
+        DelimiterState.new(@kind, @nest, @end, @open_count + delta, @heredoc_indent, @allow_escapes)
       end
 
       def with_heredoc_indent(indent)
-        DelimiterState.new(@kind, @nest, @end, @open_count, indent)
+        DelimiterState.new(@kind, @nest, @end, @open_count, indent, @allow_escapes)
       end
     end
 

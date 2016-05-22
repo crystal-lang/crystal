@@ -1913,20 +1913,26 @@ module Crystal
       current_line = MemoryIO.new
       remove_indent = true
       new_pieces = [] of ASTNode
-      pieces.each do |piece|
+      previous_line_number = 0
+      pieces.each_with_index do |piece, i|
         value = piece.value
+        line_number = piece.line_number
+        this_piece_is_in_new_line = line_number != previous_line_number
+        next_piece_is_in_new_line = i == pieces.size - 1 || pieces[i + 1].line_number != line_number
         if value.is_a?(String)
           if value == "\n" || value == "\r\n"
             current_line << value
-            line = current_line.to_s
-            line = remove_heredoc_from_line(line, indent, piece.line_number - 1) if remove_indent
-            new_pieces << StringLiteral.new(line)
-            current_line.clear
-            remove_indent = true
+            if this_piece_is_in_new_line || next_piece_is_in_new_line
+              line = current_line.to_s
+              line = remove_heredoc_from_line(line, indent, line_number - 1) if remove_indent
+              new_pieces << StringLiteral.new(line)
+              current_line.clear
+              remove_indent = true
+            end
           elsif (slash_n = value.starts_with?("\n")) || value.starts_with?("\r\n")
             current_line << (slash_n ? "\n" : "\r\n")
             line = current_line.to_s
-            line = remove_heredoc_from_line(line, indent, piece.line_number - 1) if remove_indent
+            line = remove_heredoc_from_line(line, indent, line_number - 1) if remove_indent
             new_pieces << StringLiteral.new(line)
             current_line.clear
             remove_indent = true
@@ -1938,7 +1944,7 @@ module Crystal
           if remove_indent
             line = current_line.to_s
             if (line.size < indent) || !line.each_char.first(indent).all?(&.whitespace?)
-              raise "heredoc line must have an indent greater or equal than #{indent}", piece.line_number, 1
+              raise "heredoc line must have an indent greater or equal than #{indent}", line_number, 1
             else
               line = line[indent..-1]
             end
@@ -1956,6 +1962,7 @@ module Crystal
             new_pieces << value
           end
         end
+        previous_line_number = line_number
       end
       unless current_line.empty?
         line = current_line.to_s
