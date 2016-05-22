@@ -1648,6 +1648,8 @@ module Crystal
     end
 
     def next_string_token(delimiter_state)
+      @token.line_number = @line_number
+
       start = current_pos
       string_end = delimiter_state.end
       string_nest = delimiter_state.nest
