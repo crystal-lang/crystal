@@ -140,12 +140,20 @@ module Crystal
             next_char :"<<="
           when '-'
             here = MemoryIO.new(20)
+            has_single_quote = false
+            found_closing_single_quote = false
 
-            unless ident_start?(next_char)
+            char = next_char
+            if char == '\''
+              has_single_quote = true
+              char = next_char
+            end
+
+            unless ident_start?(char)
               raise "heredoc identifier starts with invalid character"
             end
 
-            here << current_char
+            here << char
             while true
               char = next_char
               case
@@ -164,12 +172,24 @@ module Crystal
               when char == '\0'
                 raise "unexpected EOF on heredoc identifier"
               else
-                raise "invalid character #{char.inspect} for heredoc identifier"
+                if char == '\'' && has_single_quote
+                  found_closing_single_quote = true
+                  peek = peek_next_char
+                  if peek != '\r' && peek != '\n'
+                    raise "expecting '\\n' or '\\r' after closing single quote"
+                  end
+                else
+                  raise "invalid character #{char.inspect} for heredoc identifier"
+                end
               end
             end
 
+            if has_single_quote && !found_closing_single_quote
+              raise "expecting closing single quote"
+            end
+
             here = here.to_s
-            delimited_pair :heredoc, here, here, start
+            delimited_pair :heredoc, here, here, start, allow_escapes: !has_single_quote
           else
             @token.type = :"<<"
           end
@@ -265,6 +285,22 @@ module Crystal
             start_char = next_char
             next_char :SYMBOL_ARRAY_START
             @token.delimiter_state = Token::DelimiterState.new(:symbol_array, start_char, closing_char(start_char))
+          else
+            @token.type = :"%"
+          end
+        when 'q'
+          case peek_next_char
+          when '(', '{', '[', '<'
+            next_char
+            delimited_pair :string, current_char, closing_char, start, allow_escapes: false
+          else
+            @token.type = :"%"
+          end
+        when 'Q'
+          case peek_next_char
+          when '(', '{', '[', '<'
+            next_char
+            delimited_pair :string, current_char, closing_char, start
           else
             @token.type = :"%"
           end
@@ -1635,68 +1671,80 @@ module Crystal
         @token.value = string_nest.to_s
         @token.delimiter_state = @token.delimiter_state.with_open_count_delta(+1)
       when '\\'
-        if delimiter_state.kind == :regex
-          char = next_char
-          next_char
-          @token.type = :STRING
-          @token.value = "\\#{char}"
-        else
-          case char = next_char
-          when 'b'
-            string_token_escape_value "\u{8}"
-          when 'n'
-            string_token_escape_value "\n"
-          when 'r'
-            string_token_escape_value "\r"
-          when 't'
-            string_token_escape_value "\t"
-          when 'v'
-            string_token_escape_value "\v"
-          when 'f'
-            string_token_escape_value "\f"
-          when 'e'
-            string_token_escape_value "\e"
-          when 'u'
-            value = consume_string_unicode_escape
+        if delimiter_state.allow_escapes
+          if delimiter_state.kind == :regex
+            char = next_char
             next_char
             @token.type = :STRING
-            @token.value = value
-          when '0', '1', '2', '3', '4', '5', '6', '7'
-            char_value = consume_octal_escape(char)
-            next_char
-            @token.type = :STRING
-            @token.value = char_value.chr.to_s
-          when '\n'
-            @line_number += 1
-            @token.line_number = @line_number
-
-            # Skip until the next non-whitespace char
-            while true
-              char = next_char
-              case char
-              when '\0'
-                raise_unterminated_quoted string_end
-              when '\n'
-                @line_number += 1
-                @token.line_number = @line_number
-              when .whitespace?
-                # Continue
-              else
-                break
-              end
-            end
-            next_string_token delimiter_state
+            @token.value = "\\#{char}"
           else
-            @token.type = :STRING
-            @token.value = current_char.to_s
-            next_char
+            case char = next_char
+            when 'b'
+              string_token_escape_value "\u{8}"
+            when 'n'
+              string_token_escape_value "\n"
+            when 'r'
+              string_token_escape_value "\r"
+            when 't'
+              string_token_escape_value "\t"
+            when 'v'
+              string_token_escape_value "\v"
+            when 'f'
+              string_token_escape_value "\f"
+            when 'e'
+              string_token_escape_value "\e"
+            when 'u'
+              value = consume_string_unicode_escape
+              next_char
+              @token.type = :STRING
+              @token.value = value
+            when '0', '1', '2', '3', '4', '5', '6', '7'
+              char_value = consume_octal_escape(char)
+              next_char
+              @token.type = :STRING
+              @token.value = char_value.chr.to_s
+            when '\n'
+              @line_number += 1
+              @token.line_number = @line_number
+
+              # Skip until the next non-whitespace char
+              while true
+                char = next_char
+                case char
+                when '\0'
+                  raise_unterminated_quoted string_end
+                when '\n'
+                  @line_number += 1
+                  @token.line_number = @line_number
+                when .whitespace?
+                  # Continue
+                else
+                  break
+                end
+              end
+              next_string_token delimiter_state
+            else
+              @token.type = :STRING
+              @token.value = current_char.to_s
+              next_char
+            end
           end
+        else
+          @token.type = :STRING
+          @token.value = current_char.to_s
+          next_char
         end
       when '#'
-        if peek_next_char == '{'
-          next_char
-          next_char
-          @token.type = :INTERPOLATION_START
+        if delimiter_state.allow_escapes
+          if peek_next_char == '{'
+            next_char
+            next_char
+            @token.type = :INTERPOLATION_START
+          else
+            next_char
+            @token.type = :STRING
+            @token.value = "#"
+          end
         else
           next_char
           @token.type = :STRING
@@ -2233,10 +2281,10 @@ module Crystal
       @token.value = value
     end
 
-    def delimited_pair(kind, string_nest, string_end, start)
+    def delimited_pair(kind, string_nest, string_end, start, allow_escapes = true)
       next_char
       @token.type = :DELIMITER_START
-      @token.delimiter_state = Token::DelimiterState.new(kind, string_nest, string_end)
+      @token.delimiter_state = Token::DelimiterState.new(kind, string_nest, string_end, allow_escapes)
       set_token_raw_from_start(start)
     end
 

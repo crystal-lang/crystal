@@ -53,6 +53,10 @@ describe "Parser" do
   it_parses %(""), "".string
   it_parses %("hello \\\n     world"), "hello world".string
 
+  it_parses %(%Q{hello \\n world}), "hello \n world".string
+  it_parses %(%q{hello \\n world}), "hello \\n world".string
+  it_parses %(%q{hello \#{foo} world}), "hello \#{foo} world".string
+
   [":foo", ":foo!", ":foo?", ":\"foo\"", ":かたな", ":+", ":-", ":*", ":/", ":==", ":<", ":<=", ":>",
     ":>=", ":!", ":!=", ":=~", ":!~", ":&", ":|", ":^", ":~", ":**", ":>>", ":<<", ":%", ":[]", ":[]?",
     ":[]=", ":<=>", ":==="].each do |symbol|
@@ -1062,6 +1066,9 @@ describe "Parser" do
   assert_syntax_error "<<-HERE\n   One\n  \#{1}\n wrong\#{1}\n  HERE", "heredoc line must have an indent greater or equal than 2", 4, 1
   assert_syntax_error "<<-HERE\n One\n  \#{1}\n  HERE", "heredoc line must have an indent greater or equal than 2", 2, 1
   assert_syntax_error %("foo" "bar")
+
+  it_parses "<<-'HERE'\n  hello \\n world\n  \#{1}\n  HERE", StringLiteral.new("hello \\n world\n\#{1}")
+  assert_syntax_error "<<-'HERE\n", "expecting closing single quote"
 
   it_parses "enum Foo; A\nB, C\nD = 1; end", EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)
   it_parses "enum Foo; A = 1, B; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)
