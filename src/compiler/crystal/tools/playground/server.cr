@@ -321,7 +321,7 @@ module Crystal::Playground
         context.response.headers["Content-Type"] = "application/javascript"
         context.response.puts %(Environment = {})
 
-        context.response.puts %(Environment.version = #{("Crystal " + Crystal.version_string).inspect})
+        context.response.puts %(Environment.version = #{Crystal::Config.description.inspect})
 
         defaultSource = <<-CR
           def find_string(text, word)

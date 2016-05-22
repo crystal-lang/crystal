@@ -3,7 +3,7 @@ require "./config"
 module Crystal
   struct CrystalPath
     def self.default_path
-      ENV["CRYSTAL_PATH"]? || Crystal::Config::PATH
+      ENV["CRYSTAL_PATH"]? || Crystal::Config.path
     end
 
     @crystal_path : Array(String)
