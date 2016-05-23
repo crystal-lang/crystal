@@ -123,6 +123,12 @@ there's no more room for discussion. We'll anyway close the issue after some day
 If something is missing from the language it might be that it's not yet implemented
 (the language is still very young) or that it was purposely left out. If in doubt, just ask.
 
+## Additional requirements
+### OS X users
+
+If you have errors, when you run `make spec` or `bin/crystal spec/all_spec.cr`, such as: `library not found for ...`,
+install using HomeBrew additional dependencies: `brew install gmp bdw-gc`
+
 ## Contributing to this guide
 
 If this guide is not clear and it needs improvements, please send pull requests against it. Thanks! :-)
