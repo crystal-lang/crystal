@@ -5,7 +5,8 @@ require "../types"
 module Crystal
   class Program
     def cleanup(node)
-      node = node.transform(CleanupTransformer.new(self))
+      transformer = CleanupTransformer.new(self)
+      node = transformer.transform_loop(node)
       puts node if ENV["AFTER"]? == "1"
       node
     end
@@ -18,7 +19,7 @@ module Crystal
 
       self.class_var_and_const_initializers.each do |initializer|
         if initializer.is_a?(ClassVarInitializer)
-          initializer.node = initializer.node.transform(transformer)
+          initializer.node = transformer.transform_loop(initializer.node)
         end
       end
     end
@@ -38,7 +39,7 @@ module Crystal
 
     def cleanup_single_type(type, transformer)
       type.instance_vars_initializers.try &.each do |initializer|
-        initializer.value = initializer.value.transform(transformer)
+        initializer.value = transformer.transform_loop(initializer.value)
       end
     end
 
@@ -64,6 +65,19 @@ module Crystal
       @def_nest_count = 0
       @last_is_truthy = false
       @last_is_falsey = false
+      @changed = false
+    end
+
+    def transform_loop(node)
+      # We keep transforming the node as long as this produced a change
+      # (this might trigger recalculations and changed that would
+      # need to be transformed too)
+      loop do
+        @changed = false
+        node = node.transform(self)
+        break unless @changed
+      end
+      node
     end
 
     def after_transform(node)
@@ -388,6 +402,7 @@ module Crystal
                 # a result the type changed. In that case we need to rebind the
                 # def to the new body, unbinding it from the previous one.
                 if new_type != old_type
+                  @changed = true
                   target_def.unbind_from old_body
                   target_def.bind_to target_def.body
                 end
@@ -399,6 +414,7 @@ module Crystal
         end
 
         if changed
+          @changed = true
           node.unbind_from node.target_defs
           node.target_defs = allocated_defs
           node.bind_to allocated_defs
@@ -753,7 +769,7 @@ module Crystal
           node.raise "can't cast #{obj_type} to #{to_type}"
         end
       elsif obj_type.no_return?
-        node.type = @program.no_return
+        rebind_type node, @program.no_return
       else
         resulting_type = obj_type.filter_by(to_type)
         unless resulting_type
@@ -777,7 +793,7 @@ module Crystal
       to_type = node.to.type
 
       if obj_type.no_return?
-        node.type = @program.no_return
+        rebind_type node, @program.no_return
       end
 
       node
@@ -869,16 +885,22 @@ module Crystal
     end
 
     def rebind_node(node, dependency)
-      node.unbind_from node.dependencies?
-      if dependency
-        if dependency.type?
-          node.bind_to dependency
-        else
-          node.set_type(nil)
-        end
-      else
-        node.bind_to @program.nil_var
+      if node.type? != dependency.type?
+        @changed = true
       end
+
+      node.unbind_from node.dependencies?
+      if dependency.type?
+        node.bind_to dependency
+      else
+        node.set_type(nil)
+      end
+    end
+
+    def rebind_type(node, type)
+      node.unbind_from node.dependencies?
+      @changed = node.type? != type
+      node.type = type
     end
 
     @false_literal : BoolLiteral?
