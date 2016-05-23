@@ -285,7 +285,7 @@ class Crystal::Doc::Generator
     filename[@base_dir.size..-1]
   end
 
-  record RelativeLocation, filename : String, url : String?
+  record RelativeLocation, filename : String, line_number : Int32, url : String?
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)
@@ -303,7 +303,7 @@ class Crystal::Doc::Generator
       filename = filename[1..-1] if filename.starts_with? File::SEPARATOR
       filename = filename[4..-1] if filename.starts_with? SRC_SEP
 
-      locations << RelativeLocation.new(filename, url)
+      locations << RelativeLocation.new(filename, location.line_number, url)
     end
     locations
   end

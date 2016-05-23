@@ -330,30 +330,17 @@ module Crystal
     property! original_owner : Type
     property vars : MetaVars?
     property yield_vars : Array(Var)?
-
-    getter raises : Bool
-    @raises = false
-
-    property closure : Bool
-    @closure = false
-
-    property self_closured : Bool
-    @self_closured = false
-
+    getter raises = false
+    property closure = false
+    property self_closured = false
     property previous : DefWithMetadata?
     property next : Def?
-
     getter special_vars : Set(String)?
-
-    property block_nest : Int32
-    @block_nest = 0
-
-    property? captured_block : Bool
-    @captured_block = false
+    property block_nest = 0
+    property? captured_block = false
 
     # Is this a `new` method that was expanded from an initialize?
-    property? new : Bool
-    @new = false
+    property? new = false
 
     @macro_owner : Type?
 
@@ -503,8 +490,7 @@ module Crystal
   end
 
   class TypeOf
-    property in_type_args : Bool
-    @in_type_args = false
+    property in_type_args = false
 
     def map_type(type)
       @in_type_args ? type : type.metaclass
@@ -527,8 +513,7 @@ module Crystal
   end
 
   class Cast
-    property? upcast : Bool
-    @upcast = false
+    property? upcast = false
 
     def update(from = nil)
       to_type = to.type
@@ -566,11 +551,8 @@ module Crystal
   end
 
   class NilableCast
-    property? upcast : Bool
-    @upcast = false
-
-    @non_nilable_type : Type?
-    getter! non_nilable_type
+    property? upcast = false
+    getter! non_nilable_type : Type
 
     def update(from = nil)
       to_type = to.type
@@ -613,9 +595,7 @@ module Crystal
   end
 
   class FunLiteral
-    property force_void : Bool
-    @force_void = false
-
+    property force_void = false
     property expected_return_type : Type?
 
     def update(from = nil)
@@ -643,8 +623,7 @@ module Crystal
   class Generic
     property! instance_type : GenericClassType
     property scope : Type?
-    property in_type_args : Bool
-    @in_type_args = false
+    property in_type_args = false
 
     def update(from = nil)
       instance_type = self.instance_type
@@ -786,7 +765,7 @@ module Crystal
 
     # True if we need to mark this variable as nilable
     # if this variable is read.
-    property nil_if_read : Bool
+    property nil_if_read = false
 
     # This is the context of the variable: who allocates it.
     # It can either be the Program (for top level variables),
@@ -795,15 +774,12 @@ module Crystal
 
     # A variable is closured if it's used in a FunLiteral context
     # where it wasn't created.
-    property closured : Bool
+    property closured = false
 
     # Is this metavar assigned a value?
-    property assigned_to : Bool
+    property assigned_to = false
 
     def initialize(@name : String, @type : Type? = nil)
-      @nil_if_read = false
-      @closured = false
-      @assigned_to = false
     end
 
     # True if this variable belongs to the given context
@@ -850,8 +826,7 @@ module Crystal
 
     # Is this variable thread local? Only applicable
     # to global and class variables.
-    property? thread_local : Bool
-    @thread_local = false
+    property? thread_local = false
 
     # The (optional) initial value of a class variable
     property initializer : ClassVarInitializer?
@@ -904,15 +879,12 @@ module Crystal
   end
 
   class Block
-    property visited : Bool
+    property visited = false
     property scope : Type?
     property vars : MetaVars?
     property after_vars : MetaVars?
     property context : Def | NonGenericModuleType | Nil
     property fun_literal : ASTNode?
-
-    @visited = false
-    @break : Var?
 
     def break
       @break ||= Var.new("%break")
@@ -920,9 +892,7 @@ module Crystal
   end
 
   class While
-    property has_breaks : Bool
-    @has_breaks = false
-
+    property has_breaks = false
     property break_vars : Array(MetaVars)?
   end
 
@@ -981,8 +951,7 @@ module Crystal
     include RuntimeInitializable
 
     property! resolved_type : ClassType
-    property created_new_type : Bool
-    @created_new_type = false
+    property created_new_type = false
   end
 
   class ModuleDef
@@ -1010,19 +979,14 @@ module Crystal
   end
 
   class External
-    property dead : Bool
-    @dead = false
-
-    property used : Bool
-    @used = false
-
+    property dead = false
+    property used = false
     property call_convention : LLVM::CallConvention?
   end
 
   class EnumDef
     property! resolved_type : EnumType
-    property created_new_type : Bool
-    @created_new_type = false
+    property created_new_type = false
   end
 
   class Yield
@@ -1057,8 +1021,7 @@ module Crystal
     #   @@x = 2
     # end
     # ```
-    property? discarded : Bool
-    @discarded = false
+    property? discarded = false
   end
 
   class TypeDeclaration
@@ -1071,7 +1034,6 @@ module Crystal
     #   @@x : Int32 = 2
     # end
     # ```
-    property? discarded : Bool
-    @discarded = false
+    property? discarded = false
   end
 end

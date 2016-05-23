@@ -9,12 +9,8 @@ class Crystal::Call
   property! parent_visitor : MainVisitor?
   property target_defs : Array(Def)?
   property expanded : ASTNode?
-
-  property? uses_with_scope : Bool
-  @uses_with_scope = false
-
-  getter? raises : Bool
-  @raises = false
+  property? uses_with_scope = false
+  getter? raises = false
 
   def mod
     scope.program

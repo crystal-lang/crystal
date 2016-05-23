@@ -2468,8 +2468,7 @@ module Crystal
   end
 
   class CStructType < CStructOrUnionType
-    property packed : Bool
-    @packed = false
+    property packed = false
 
     def add_var(var)
       @vars[var.name] = var
