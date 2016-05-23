@@ -168,4 +168,17 @@ describe "Type inference: return" do
       test
       )) { types["Bar"] }
   end
+
+  it "can use free var in return type (#2492)" do
+    assert_type(%(
+      def self.demo(a : A, &block : A -> B) : B
+        block.call(a)
+      end
+
+      z = demo(1) do |x|
+        x.to_f
+      end
+      z
+      )) { float64 }
+  end
 end
