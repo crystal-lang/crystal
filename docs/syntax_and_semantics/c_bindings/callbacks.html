@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.16.10" data-basepath="../.." data-revision="Tue May 17 2016 17:12:34 GMT+0000 (UTC)">
+    <div class="book" data-level="4.16.10" data-basepath="../.." data-revision="Mon May 23 2016 21:52:57 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2163,6 +2163,39 @@
 <pre><code class="lang-crystal"><span class="hljs-comment"># Same as callback(NULL) in C</span>
 <span class="hljs-constant">X</span>.callback <span class="hljs-literal">nil</span>
 </code></pre>
+<h3 id="passing-a-closure-to-a-c-function">Passing a closure to a C function</h3>
+<p>Most of the time a C function that allows setting a callback also provide an argument for custom data. This custom data is then sent as an argument to the callback. For example, suppose a C function that invokes a callback at every tick, passing that tick:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">lib</span> <span class="hljs-title">LibTicker</span></span>
+  <span class="hljs-function"><span class="hljs-keyword">fun</span> <span class="hljs-title">on_tick</span></span>(callback <span class="hljs-symbol">:</span> (<span class="hljs-constant">Int32</span>, <span class="hljs-constant">Void</span>* -&gt;), data <span class="hljs-symbol">:</span> <span class="hljs-constant">Void</span>*)
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>To properly define a wrapper for this function we must send the Proc as the callback data, and then convert that callback data to the Proc and finally invoke it.</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">module</span> <span class="hljs-title">Ticker</span></span>
+  <span class="hljs-comment"># The callback for the user doesn&apos;t have a Void*</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">self</span></span>.on_tick(&amp;callback <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span> -&gt;)
+    <span class="hljs-comment"># We must save this in Crystal-land so the GC doesn&apos;t collect it (*)</span>
+    <span class="hljs-variable">@@callback</span> = callback
+
+    <span class="hljs-comment"># Since Proc is a {Void*, Void*}, we can&apos;t turn that into a Void*, so we</span>
+    <span class="hljs-comment"># &quot;box&quot; it: we allocate memory and store the Proc there</span>
+    boxed_data = <span class="hljs-constant">Box</span>.box(callback)
+
+    <span class="hljs-comment"># We pass a callback that doesn&apos;t form a closure, and pass the boxed_data as</span>
+    <span class="hljs-comment"># the callback data</span>
+    <span class="hljs-constant">LibTicker</span>.on_tick(-&gt;(tick, data) {
+      <span class="hljs-comment"># Now we turn data back into the Proc, using Box.unbox</span>
+      data_as_callback = <span class="hljs-constant">Box</span>(typeof(callback)).unbox(data)
+      <span class="hljs-comment"># And finally invoke the user&apos;s callback</span>
+      data_as_callback.call(tick)
+    }, boxed_data)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Ticker</span>.on_tick <span class="hljs-keyword">do</span> |tick|
+  puts tick
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Note that we save the callback in <code>@@callback</code>. The reason is that if we don&apos;t do it, and our code doesn&apos;t reference it anymore, the GC will collect it. The C library will of course store the callback, but Crystal&apos;s GC has no way of knowing that.</p>
 <h2 id="raises-attribute">Raises attribute</h2>
 <p>If a C function executes a user-provided callback that might raise, it must be annotated with the <code>@[Raises]</code> attribute.</p>
 <p>The compiler infers this attribute for a method if it invokes a method that is marked as <code>@[Raises]</code> or raises (recursively).</p>
