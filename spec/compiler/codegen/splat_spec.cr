@@ -119,4 +119,27 @@ describe "Code gen: splat" do
       foo.x + foo.y
       )).to_i.should eq(3)
   end
+
+  it "does #2407" do
+    codegen(%(
+      lib LibC
+        fun exit(Int32) : NoReturn
+      end
+
+      def some
+        yield(1 || (LibC.exit(1); ""))
+      end
+
+      def foo(*objects)
+        bar *objects
+      end
+
+      def bar(objects)
+      end
+
+      some do |value|
+        foo value
+      end
+      ))
+  end
 end
