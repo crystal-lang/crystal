@@ -442,6 +442,14 @@ describe Iterator do
       iter.rewind
       iter.next.should eq({1, 10})
     end
+
+    it "does with_index with a block" do
+      y = -1
+      (1..3).each.with_index do |n, i|
+        i.should eq y+1
+        y = i
+      end
+    end
   end
 
   describe "with object" do
