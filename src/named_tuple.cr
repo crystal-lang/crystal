@@ -383,6 +383,23 @@ struct NamedTuple
     {% end %}
   end
 
+  # Returns a named tuple that contains *self*'s elements followed by *other*'s elements.
+  #
+  # ```
+  # tuple1 = {name: "Crystal"}
+  # tuple2 = {year: 2011}
+  # tuple3 = tuple1 + tuple2
+  # tuple3         # => {name: "Crystal", year: 2011}
+  # typeof(tuple3) # => {name: String, year: Int32}
+  # ```
+  def +(other : U)
+    identity(**self, **other)
+  end
+
+  private def identity(**options)
+    options
+  end
+
   private def first_key_internal
     i = 0
     keys[i]
