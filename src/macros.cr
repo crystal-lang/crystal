@@ -4,8 +4,7 @@
 # in the same order as declared. The struct only provides getters,
 # not setters, making it immutable by default.
 #
-# The properties must be type declarations, making the generated
-# struct only accept the given types.
+# The properties can be type declarations or assignments.
 #
 # You can pass a block to this macro, that will be inserted inside
 # the struct definition.
@@ -29,9 +28,36 @@
 # person = Person.new "John", "Doe"
 # person.full_name # => "John Doe"
 # ```
+#
+# An example with type declarations and default values:
+#
+# ```
+# record Point, x : Int32 = 0, y : Int32 = 0
+#
+# Point.new      # => Point(@x=0, @y=0)
+# Point.new y: 2 # => Point(@x=0, @y=2)
+# ```
+#
+# An example with assignments (in this case the compiler must be able to
+# infer the types from the default values):
+#
+# ```
+# record Point, x = 0, y = 0
+#
+# Point.new      # => Point(@x=0, @y=0)
+# Point.new y: 2 # => Point(@x=0, @y=2)
+# ```
 macro record(name, *properties)
   struct {{name.id}}
-    getter {{*properties}}
+    {% for property in properties %}
+      {% if property.is_a?(Assign) %}
+        getter {{property.target.id}}
+      {% elsif property.is_a?(TypeDeclaration) %}
+        getter {{property.var}} : {{property.type}}
+      {% else %}
+        getter :{{property.id}}
+      {% end %}
+    {% end %}
 
     def initialize({{
                      *properties.map do |field|
@@ -44,9 +70,14 @@ macro record(name, *properties)
 
     def clone
       {{name.id}}.new({{
-                        *properties.map do |field|
-                          (field = field.var if field.is_a?(TypeDeclaration))
-                          "@#{field.id}.clone".id
+                        *properties.map do |property|
+                          if property.is_a?(Assign)
+                            "@#{property.target.id}.clone".id
+                          elsif property.is_a?(TypeDeclaration)
+                            "@#{property.var.id}.clone".id
+                          else
+                            "@#{property.id}.clone".id
+                          end
                         end
                       }})
     end
