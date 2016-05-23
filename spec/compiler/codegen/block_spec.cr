@@ -1342,4 +1342,18 @@ describe "Code gen: block" do
       end
       )).to_string.should eq("foo")
   end
+
+  it "yields inside yield (#682)" do
+    run(%(
+      def foo
+        yield(1, (yield 3))
+      end
+
+      a = 0
+      foo do |x|
+        a += x
+      end
+      a
+      )).to_i.should eq(4)
+  end
 end

@@ -1237,13 +1237,23 @@ module Crystal
       end
 
       # First accept all yield expressions and assign them to block vars
-      request_value do
-        node.exps.each_with_index do |exp, i|
-          accept exp
+      unless node.exps.empty?
+        exp_values = Array(LLVM::Value).new(node.exps.size)
 
+        # We first accept the expressions and store the values, without
+        # assigning them to the block vars yet because we might have
+        # a nested yield that would override a block argument's value
+        node.exps.each_with_index do |exp, i|
+          request_value do
+            accept exp
+          end
+          exp_values << @last
+        end
+
+        node.exps.each_with_index do |exp, i|
           if arg = block.args[i]?
             block_var = block_context.vars[arg.name]
-            assign block_var.pointer, block_var.type, exp.type, @last
+            assign block_var.pointer, block_var.type, exp.type, exp_values[i]
           end
         end
       end
