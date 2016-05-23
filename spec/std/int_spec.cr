@@ -189,6 +189,18 @@ describe "Int" do
     assert { UInt64::MAX.bit(64).should eq(0) }
   end
 
+  describe "[index : Range(Int, Int)]" do
+    it "returns an array of bits for range indicies" do
+      a   = -15_i8
+      arr = a[0...8]
+      arr.should eq([1, 1, 1, 1, 0, 0, 0, 1])
+    end
+
+    it "raises on a negative range" do
+      expect_raises { 1[-1..1] }
+    end
+  end
+
   describe "divmod" do
     assert { 5.divmod(3).should eq({1, 2}) }
   end

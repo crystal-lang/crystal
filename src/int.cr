@@ -87,6 +87,21 @@ struct Int
     end
   end
 
+  # Returns an array containing the bits of this integer
+  # corresponding to the indicies of the range given.
+  #
+  # ```
+  # bits = 14[0...8] #=> [0, 0, 0, 0, 1, 1, 1, 0]
+  # bits = 14[0...4] #=> [1, 1, 1, 0]
+  # ```
+  def [](range : Range(Int, Int))
+    if range.begin < 0
+      raise ArgumentError.new "Invalid range: #{range}"
+    end
+
+    range.map { |i| bit(i) }.reverse
+  end
+
   def remainder(other : Int)
     if other == 0
       raise DivisionByZero.new
