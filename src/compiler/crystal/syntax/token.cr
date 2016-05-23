@@ -32,11 +32,10 @@ module Crystal
     record DelimiterState,
       kind : Symbol,
       nest : Char | String,
-      :end,
+      end : Char | String,
       open_count : Int32,
       heredoc_indent : Int32,
       allow_escapes : Bool do
-      @end : Char | String
     end
 
     struct DelimiterState

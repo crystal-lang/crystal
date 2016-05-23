@@ -55,9 +55,7 @@ module Crystal
 
     property is_initialize : Bool
 
-    @unreachable : Bool
     @unreachable = false
-
     @is_initialize = false
 
     @while_stack : Array(While)
