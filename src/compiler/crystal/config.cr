@@ -30,14 +30,8 @@ module Crystal
       {tag, sha}
     end
 
-    def self.full_date
-      {{ `date -u`.stringify.chomp }}
-    end
-
     def self.date
-      string = full_date
-      time = Time.parse(string, "%a %b %d %H:%M:%S UTC %Y")
-      time.to_s("%Y-%m-%d")
+      {{ `date "+%Y-%m-%d"`.stringify.chomp }}
     end
   end
 end
