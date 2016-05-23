@@ -393,11 +393,7 @@ struct NamedTuple
   # typeof(tuple3) # => {name: String, year: Int32}
   # ```
   def +(other : U)
-    identity(**self, **other)
-  end
-
-  private def identity(**options)
-    options
+    self.class.new(**self, **other)
   end
 
   private def first_key_internal
