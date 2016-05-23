@@ -435,7 +435,8 @@ class Crystal::Call
       self_type = match_owner.instance_type
       root_type = self_type.ancestors.find(&.instance_of?(match.def.owner.instance_type)) || self_type
     end
-    return_type = TypeLookup.lookup(root_type, typed_def_return_type, match_owner.instance_type).virtual_type
+    type_lookup = MatchTypeLookup.new(self, match.context)
+    return_type = type_lookup.lookup_node_type(typed_def_return_type)
     typed_def.freeze_type = return_type
     typed_def.type = return_type if return_type.no_return?
   end
@@ -922,7 +923,7 @@ class Crystal::Call
     end
 
     def visit(node : Self)
-      @type = @context.owner
+      @type = @context.owner.instance_type
       false
     end
 

@@ -357,24 +357,6 @@ describe "Type inference: macro" do
       "can't define def inside def"
   end
 
-  it "uses typeof(self.method) in macro def" do
-    assert_type(%(
-      class Foo
-        macro def foo : typeof(self.bar)
-          bar
-        end
-      end
-
-      class Bar < Foo
-        def bar
-          1.5
-        end
-      end
-
-      Bar.new.foo
-      )) { float64 }
-  end
-
   it "gives precise location info when doing yield inside macro" do
     assert_error %(
       macro foo
