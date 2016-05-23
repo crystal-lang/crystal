@@ -527,6 +527,8 @@ module Crystal
           execute_debug
         when "env"
           execute_env(node)
+        when "now"
+          execute_now(node)
         when "puts", "p"
           execute_puts(node)
         when "pp"
@@ -555,6 +557,37 @@ module Crystal
           @last = env_value ? StringLiteral.new(env_value) : NilLiteral.new
         else
           node.wrong_number_of_arguments "macro call 'env'", node.args.size, 1
+        end
+      end
+
+      def execute_now(node)
+        case node.args.size
+        when 1
+          node.args[0].accept self
+          format = @last.to_macro_id
+          utc = false
+
+          if named_args = node.named_args
+            utc_arg = named_args.find &.name.==("utc")
+            if utc_arg
+              utc_arg.value.accept self
+              utc = @last.truthy?
+            end
+          end
+        when 2
+          node.args[0].accept self
+          format = @last.to_macro_id
+          node.args[1].accept self
+          utc = @last.truthy?
+        else
+          node.wrong_number_of_arguments "macro call 'now'", node.args.size, 1
+        end
+
+        begin
+          time = utc ? Time.utc_now : Time.now
+          @last = StringLiteral.new(time.to_s(format))
+        rescue ex
+          node.raise ex.message
         end
       end
 
