@@ -74,6 +74,7 @@ module Crystal
       # need to be transformed too)
       loop do
         @changed = false
+        @transformed.clear
         node = node.transform(self)
         break unless @changed
       end

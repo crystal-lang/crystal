@@ -382,12 +382,10 @@ module Crystal
     end
 
     def visit_read_instance_var(node)
+      node.visitor = self
       node.obj.accept self
-
-      obj_type = node.obj.type
-      var = lookup_instance_var(node, obj_type)
-      node.bind_to var
-      var
+      node.obj.add_observer node
+      node.update
     end
 
     def visit(node : ClassVar)
@@ -2048,7 +2046,8 @@ module Crystal
                 node_exp.raise "can't take address of #{node_exp}"
               end
             when ReadInstanceVar
-              visit_read_instance_var node_exp
+              visit_read_instance_var(node_exp)
+              node_exp
             else
               node_exp.raise "can't take address of #{node_exp}"
             end

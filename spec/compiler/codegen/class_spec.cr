@@ -788,4 +788,56 @@ describe "Code gen: class" do
       Bar.new.foo.foo
       )).to_i.should eq(2)
   end
+
+  it "doesn't crash on #1216" do
+    codegen(%(
+      class A
+        def initialize(@ivar : Int32)
+          meth
+        end
+
+        def meth
+          r = self.class.new(5)
+          r.@ivar
+        end
+      end
+
+      A.new(6)
+      ))
+  end
+
+  it "doesn't crash on #1216 with pointerof" do
+    codegen(%(
+      class A
+        def initialize(@ivar : Int32)
+          meth
+        end
+
+        def meth
+          r = self.class.new(5)
+          pointerof(r.@ivar)
+        end
+      end
+
+      A.new(6)
+      ))
+  end
+
+  it "doesn't crash on #1216 (reduced)" do
+    codegen(%(
+      class Foo
+        def foo
+          crash.foo
+        end
+      end
+
+      def crash
+        x = Foo.allocate
+        x.foo
+        x
+      end
+
+      crash
+      ))
+  end
 end

@@ -745,6 +745,20 @@ module Crystal
     end
   end
 
+  class ReadInstanceVar
+    property! visitor : MainVisitor
+    property var : MetaTypeVar?
+
+    def update(from = nil)
+      obj_type = obj.type?
+      return unless obj_type
+
+      var = visitor.lookup_instance_var(self, obj_type)
+      @var = var
+      self.type = var.type
+    end
+  end
+
   class Not
     def update(from = nil)
       exp_type = exp.type?
