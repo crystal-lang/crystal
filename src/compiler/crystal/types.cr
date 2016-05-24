@@ -163,6 +163,17 @@ module Crystal
       false
     end
 
+    def allows_instance_vars?
+      case self
+      when program.object, program.value,
+           program.number, program.int, program.float,
+           PrimitiveType, program.reference
+        false
+      else
+        true
+      end
+    end
+
     def lookup_new_in_ancestors=(value)
       raise "Bug: #{self} doesn't implement lookup_new_in_ancestors="
     end

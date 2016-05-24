@@ -25,9 +25,10 @@ module Crystal
   class Match
     getter def : Def
     getter arg_types : Array(Type)
+    getter named_arg_types : Array(NamedArgumentType)?
     getter context : MatchContext
 
-    def initialize(@def, @arg_types, @context)
+    def initialize(@def, @arg_types, @context, @named_arg_types = nil)
     end
   end
 

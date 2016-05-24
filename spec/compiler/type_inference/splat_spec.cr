@@ -382,7 +382,7 @@ describe "Type inference: splat" do
 
       foo 10, 20, y: 30
       ),
-      "wrong number of arguments for 'foo' (given 2, expected 1)"
+      "no overload matches"
   end
 
   it "uses splat restriction" do

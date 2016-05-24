@@ -3004,6 +3004,65 @@ describe "Type inference: instance var" do
       )) { generic_class "Bar", int32 }
   end
 
+  %w(Object Reference).each do |type|
+    it "errors if declaring var in #{type}" do
+      assert_error %(
+        class #{type}
+          @x : Int32?
+        end
+        ),
+        "can't declare instance variables in #{type}"
+    end
+  end
+
+  %w(Value Number Int Float Int32).each do |type|
+    it "errors if declaring var in #{type}" do
+      assert_error %(
+        struct #{type}
+          @x : Int32?
+        end
+        ),
+        "can't declare instance variables in #{type}"
+    end
+  end
+
+  it "errors if declaring instance variable in module included in Object" do
+    assert_error %(
+      module Moo
+        @x : Int32?
+      end
+
+      class Object
+        include Moo
+      end
+      ),
+      "can't declare instance variables in Object"
+  end
+
+  it "errors if adds instance variable to Object via guess" do
+    assert_error %(
+      class Object
+        def foo(@foo : Int32)
+        end
+      end
+      ),
+      "can't declare instance variables in Object"
+  end
+
+  it "errors if adds instance variable to Object via guess via included module" do
+    assert_error %(
+      module Moo
+        def foo(@foo : Int32)
+        end
+      end
+
+      class Object
+        include Moo
+      end
+      ),
+      "can't declare instance variables in Object"
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

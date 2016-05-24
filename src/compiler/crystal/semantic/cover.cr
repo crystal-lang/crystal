@@ -3,18 +3,18 @@ require "../types"
 
 module Crystal
   struct Cover
-    getter arg_types : Array(Type)
+    getter signature : CallSignature
     getter matches : Array(Match)
 
-    def self.create(arg_types, matches)
+    def self.create(signature, matches)
       if matches
-        matches.empty? ? false : Cover.new(arg_types, matches)
+        matches.empty? ? false : Cover.new(signature, matches)
       else
         false
       end
     end
 
-    def initialize(@arg_types, @matches)
+    def initialize(@signature, @matches)
     end
 
     def all?
@@ -30,47 +30,87 @@ module Crystal
     end
 
     private def compute_cover
+      args_size = signature.arg_types.size
+      named_args_size = signature.named_args.try(&.size) || 0
+      all_args_size = args_size + named_args_size
+
       cover = BitArray.new(cover_size)
-      cover_arg_types = arg_types.map(&.cover)
+      cover_arg_types = Array(Type | Array(Type) | Nil).new(all_args_size)
+
+      signature.arg_types.each do |arg_type|
+        cover_arg_types.push(arg_type.cover)
+      end
+      signature.named_args.try &.each do |named_arg|
+        cover_arg_types.push(named_arg.type.cover)
+      end
+
       matches.each { |match| mark_cover(match, cover, cover_arg_types) }
+
       {cover, cover_arg_types}
     end
 
     private def compute_fast_cover
+      args_size = signature.arg_types.size
+      named_args_size = signature.named_args.try(&.size) || 0
+      all_args_size = args_size + named_args_size
+
       # Check which arg indices of the matches have types or type restrictions
-      indices = BitArray.new(arg_types.size)
+      indices = BitArray.new(all_args_size)
 
       matches.each do |match|
-        match.def.match(arg_types) do |arg, arg_index, arg_type, arg_type_index|
+        match.def.match(signature.arg_types) do |arg, arg_index, arg_type, arg_type_index|
           indices[arg_type_index] = true if arg.type? || arg.restriction
+        end
+
+        signature.named_args.try &.each_with_index do |named_arg, i|
+          arg = match.def.args.find(&.name.==(named_arg.name))
+          if arg && (arg.type? || arg.restriction)
+            indices[args_size + i] = true
+          end
         end
       end
 
       cover = BitArray.new(cover_size(indices))
-      cover_arg_types = arg_types.map_with_index do |arg_type, i|
-        indices[i] ? arg_type.cover : nil
+      cover_arg_types = Array(Type | Array(Type) | Nil).new(all_args_size)
+
+      i = 0
+      signature.arg_types.each do |arg_type|
+        cover_arg_types.push(indices[i] ? arg_type.cover : nil)
+        i += 1
       end
+      signature.named_args.try &.each do |named_arg|
+        cover_arg_types.push(indices[i] ? named_arg.type.cover : nil)
+        i += 1
+      end
+
       matches.each { |match| mark_cover(match, cover, cover_arg_types, indices) }
+
       cover
     end
 
     private def cover_size
-      arg_types.reduce(1) do |num, type|
-        num * type.cover_size
+      size = 1
+      signature.arg_types.each do |type|
+        size *= type.cover_size
       end
+      signature.named_args.try &.each do |named_arg|
+        size *= named_arg.type.cover_size
+      end
+      size
     end
 
     private def cover_size(indices)
+      size = 1
       i = 0
-      arg_types.reduce(1) do |num, type|
-        if indices[i]
-          val = num * type.cover_size
-        else
-          val = num
-        end
+      signature.arg_types.each do |type|
+        size *= type.cover_size if indices[i]
         i += 1
-        val
       end
+      signature.named_args.try &.each do |named_arg|
+        size *= named_arg.type.cover_size if indices[i]
+        i += 1
+      end
+      size
     end
 
     private def mark_cover(match, cover, cover_arg_types, indices = nil, index = 0, position = 0, multiplier = 1)
@@ -85,7 +125,12 @@ module Crystal
       end
 
       arg_type = cover_arg_types[index]
-      match_arg_type = match.arg_types[index]
+
+      if index < signature.arg_types.size
+        match_arg_type = match.arg_types[index]
+      else
+        match_arg_type = match.named_arg_types.not_nil![index - signature.arg_types.size].type
+      end
 
       match_arg_type.each_cover do |match_arg_type2|
         match_arg_type2_cover = match_arg_type2.cover

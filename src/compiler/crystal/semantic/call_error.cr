@@ -154,7 +154,7 @@ class Crystal::Call
     end
 
     # Don't say "wrong number of arguments" when there are named args in this call
-    if defs_matching_args_size.empty?
+    if defs_matching_args_size.empty? && !named_args_types
       all_arguments_sizes = [] of Int32
       min_splat = Int32::MAX
       defs.each do |a_def|
@@ -259,10 +259,18 @@ class Crystal::Call
             msg << "\nCouldn't find overloads for these types:"
             missing.each_with_index do |missing_types|
               if uniq_arg_names
-                msg << "\n - #{full_name(owner, def_name)}(#{missing_types.map_with_index { |missing_type, i| "#{uniq_arg_names[i]? || "_"} : #{missing_type}" }.join ", "}"
+                signature_names = missing_types.map_with_index do |missing_type, i|
+                  if i >= arg_types.size && (named_arg = named_args_types.try &.[i - arg_types.size]?)
+                    "#{named_arg.name} : #{missing_type}"
+                  else
+                    "#{uniq_arg_names[i]? || "_"} : #{missing_type}"
+                  end
+                end
+                signature_args = signature_names.join ", "
               else
-                msg << "\n - #{full_name(owner, def_name)}(#{missing_types.join ", "}"
+                signature_args = missing_types.join ", "
               end
+              msg << "\n - #{full_name(owner, def_name)}(#{signature_args}"
               msg << ", &block" if block
               msg << ")"
             end

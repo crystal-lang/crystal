@@ -42,14 +42,14 @@ module Crystal
             # we are done. We don't just compare types with ==, there is a special case:
             # a function type with return T can be transpass a restriction of a function
             # with with the same arguments but which returns Void.
-            if signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
+            if !signature.named_args && signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
               return Matches.new(matches_array, true, owner)
             end
           end
         end
       end
 
-      Matches.new(matches_array, Cover.create(signature.arg_types, matches_array), owner)
+      Matches.new(matches_array, Cover.create(signature, matches_array), owner)
     end
 
     def lookup_matches_with_modules(signature, owner = self, type_lookup = self, matches_array = nil)
@@ -77,7 +77,7 @@ module Crystal
         end
       end
 
-      Matches.new(matches_array, Cover.create(signature.arg_types, matches_array), owner, false)
+      Matches.new(matches_array, Cover.create(signature, matches_array), owner, false)
     end
 
     def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
@@ -152,6 +152,7 @@ module Crystal
       end
 
       matched_arg_types = nil
+      matched_named_arg_types = nil
 
       # If there's a restriction on a splat (that's not a splat restriction),
       # zero splatted args don't match
@@ -185,8 +186,8 @@ module Crystal
       # Match splat arguments against splat restriction
       if splat_arg_types && splat_restriction.is_a?(Splat)
         tuple_type = context.owner.program.tuple_of(splat_arg_types)
-        value = match_arg(tuple_type, splat_restriction.exp, context)
-        unless value
+        match_arg_type = match_arg(tuple_type, splat_restriction.exp, context)
+        unless match_arg_type
           return nil
         end
       end
@@ -220,22 +221,32 @@ module Crystal
               end
             end
 
-            unless match_arg(named_arg.type, a_def.args[found_index], context)
+            match_arg_type = match_arg(named_arg.type, a_def.args[found_index], context)
+            unless match_arg_type
               return nil
             end
+
+            matched_named_arg_types ||= [] of NamedArgumentType
+            matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
           else
             # If there's a double splat it's ok, the named arg will be put there
             if a_def.double_splat
+              match_arg_type = named_arg.type
+
               # If there's a restrction on the double splat, check that it matches
               if double_splat_restriction
                 if double_splat_entries
                   double_splat_entries << named_arg
                 else
-                  unless match_arg(named_arg.type, double_splat_restriction, context)
+                  match_arg_type = match_arg(named_arg.type, double_splat_restriction, context)
+                  unless match_arg_type
                     return nil
                   end
                 end
               end
+
+              matched_named_arg_types ||= [] of NamedArgumentType
+              matched_named_arg_types << NamedArgumentType.new(named_arg.name, match_arg_type)
 
               found_unmatched_named_arg = true
               next
@@ -275,7 +286,7 @@ module Crystal
       # new ones when there are free vars.
       context = context.clone if context.free_vars
 
-      Match.new(a_def, (matched_arg_types || arg_types), context)
+      Match.new(a_def, (matched_arg_types || arg_types), context, matched_named_arg_types)
     end
 
     def self.match_arg(arg_type, arg : Arg, context : MatchContext)
@@ -362,13 +373,13 @@ module Crystal
                   changes << Change.new(subtype_lookup, cloned_def)
 
                   new_subtype_matches ||= [] of Match
-                  new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.type_lookup, full_subtype_match.context.free_vars))
+                  new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.type_lookup, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
                 end
               end
             end
 
             if new_subtype_matches
-              subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature.arg_types, new_subtype_matches))
+              subtype_matches = Matches.new(new_subtype_matches, Cover.create(signature, new_subtype_matches))
             end
           end
 
