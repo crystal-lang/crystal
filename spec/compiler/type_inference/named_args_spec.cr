@@ -122,7 +122,7 @@ describe "Type inference: named args" do
 
       foo x: 1, y: 2
       ),
-      "wrong number of arguments for 'foo' (given 0, expected 1+)"
+      "no overload matches"
   end
 
   it "allows named arg if there's a splat" do
@@ -176,7 +176,7 @@ describe "Type inference: named args" do
 
       foo(x: 2)
       ),
-      "wrong number of arguments for 'foo' (given 0, expected 2..3)"
+      "no overload matches"
   end
 
   it "gives correct error message for missing args after *" do

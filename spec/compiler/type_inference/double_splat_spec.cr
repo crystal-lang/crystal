@@ -132,7 +132,7 @@ describe "Type inference: double splat" do
 
       foo x: 1
       ),
-      "wrong number of arguments"
+      "no overload matches"
   end
 
   it "uses restriction on double splat, means all types must be that type" do

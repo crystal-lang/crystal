@@ -625,7 +625,7 @@ class Crystal::Call
 
     signature = CallSignature.new(previous.name, arg_types, block, named_args_types)
     context = MatchContext.new(scope, scope)
-    match = Match.new(previous, arg_types, context)
+    match = Match.new(previous, arg_types, context, named_args_types)
     matches = Matches.new([match] of Match, true)
 
     unless MatchesLookup.match_def(signature, previous_item, context)
