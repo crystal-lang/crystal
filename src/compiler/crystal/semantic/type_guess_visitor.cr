@@ -249,7 +249,7 @@ module Crystal
               case target
               when InstanceVar
                 owner_vars = @guessed_instance_vars[current_type] ||= {} of String => InstanceVarTypeInfo
-                add_instance_var_type_info(owner_vars, target.name, tuple_type)
+                add_instance_var_type_info(owner_vars, target.name, tuple_type, target)
               when ClassVar
                 owner = class_var_owner(target)
 
@@ -312,6 +312,10 @@ module Crystal
         value = process_assign_instance_var_on_generic(owner, target, value)
       end
 
+      unless current_type.allows_instance_vars?
+        target.raise "can't declare instance variables in #{current_type}"
+      end
+
       add_to_initialize_info(target.name)
 
       value
@@ -342,7 +346,7 @@ module Crystal
       type = guess_type(value)
       if type
         owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
-        add_instance_var_type_info(owner_vars, target.name, type)
+        add_instance_var_type_info(owner_vars, target.name, type, target)
       end
       type
     end
@@ -365,7 +369,7 @@ module Crystal
       if type_vars
         owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
         type_vars.each do |type_var|
-          add_instance_var_type_info(owner_vars, target.name, type_var)
+          add_instance_var_type_info(owner_vars, target.name, type_var, target)
         end
       end
       type_vars
@@ -382,7 +386,7 @@ module Crystal
       type = lookup_type?(value)
       if type
         owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
-        add_instance_var_type_info(owner_vars, target.name, type)
+        add_instance_var_type_info(owner_vars, target.name, type, target)
       end
       type
     end
@@ -397,7 +401,7 @@ module Crystal
       type_vars = [value] of TypeVar
       owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
       type_vars.each do |type_var|
-        add_instance_var_type_info(owner_vars, target.name, type_var)
+        add_instance_var_type_info(owner_vars, target.name, type_var, target)
       end
       type_vars
     end
@@ -410,7 +414,7 @@ module Crystal
       end
 
       owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
-      add_instance_var_type_info(owner_vars, target.name, type)
+      add_instance_var_type_info(owner_vars, target.name, type, target)
     end
 
     def process_lib_out_on_generic(owner, target, type)
@@ -423,7 +427,7 @@ module Crystal
       type_vars = [type] of TypeVar
       owner_vars = @guessed_instance_vars[owner] ||= {} of String => InstanceVarTypeInfo
       type_vars.each do |type_var|
-        add_instance_var_type_info(owner_vars, target.name, type_var)
+        add_instance_var_type_info(owner_vars, target.name, type_var, target)
       end
       type_vars
     end
@@ -441,10 +445,10 @@ module Crystal
       end
     end
 
-    def add_instance_var_type_info(vars, name, type_var)
+    def add_instance_var_type_info(vars, name, type_var, node)
       info = vars[name]?
       unless info
-        info = InstanceVarTypeInfo.new
+        info = InstanceVarTypeInfo.new(node.location.not_nil!)
         info.type_vars << type_var
         info.outside_def = true if @outside_def
         vars[name] = info

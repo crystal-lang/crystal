@@ -55,8 +55,9 @@ module Crystal
     class InstanceVarTypeInfo
       getter type_vars
       property outside_def
+      getter location
 
-      def initialize
+      def initialize(@location : Location)
         @type_vars = [] of TypeVar
         @outside_def = false
       end
@@ -155,7 +156,11 @@ module Crystal
       node
     end
 
-    private def declare_meta_type_var(vars, owner, name, type : Type)
+    private def declare_meta_type_var(vars, owner, name, type : Type, location : Location? = nil, instance_var = false)
+      if instance_var && location && !owner.allows_instance_vars?
+        raise_cant_declare_instance_var(owner, location)
+      end
+
       remove_error owner, name
 
       var = MetaTypeVar.new(name)
@@ -173,7 +178,11 @@ module Crystal
       declare_meta_type_var(vars, owner, name, type)
     end
 
-    private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation)
+    private def declare_meta_type_var(vars, owner, name, info : TypeDeclarationWithLocation, instance_var = false)
+      if instance_var && !owner.allows_instance_vars?
+        raise_cant_declare_instance_var(owner, info.location)
+      end
+
       var = declare_meta_type_var(vars, owner, name, info.type.as(Type))
       var.location = info.location
 
@@ -187,6 +196,10 @@ module Crystal
       end
 
       var
+    end
+
+    private def raise_cant_declare_instance_var(owner, location)
+      raise TypeException.new("can't declare instance variables in #{owner}", location)
     end
 
     private def process_instance_vars_declarations
@@ -222,7 +235,7 @@ module Crystal
             raise TypeException.new("instance variable '#{name}' of #{supervar.owner}, with #{owner} < #{supervar.owner}, is already declared as #{supervar.instance_var.type}", type_decl.location)
           end
         else
-          declare_meta_type_var(owner.instance_vars, owner, name, type_decl)
+          declare_meta_type_var(owner.instance_vars, owner, name, type_decl, instance_var: true)
         end
       when NonGenericModuleType
         # Transfer this declaration to including types, recursively
@@ -315,7 +328,7 @@ module Crystal
           return
         end
 
-        declare_meta_type_var(owner.instance_vars, owner, name, type)
+        declare_meta_type_var(owner.instance_vars, owner, name, type, type_info.location, instance_var: true)
       when NonGenericModuleType
         # Transfer this guess to including types, recursively
         owner.known_instance_vars << name

@@ -117,6 +117,10 @@ module Crystal
     end
 
     def declare_instance_var(node, var)
+      unless current_type.allows_instance_vars?
+        node.raise "can't declare instance variables in #{current_type}"
+      end
+
       case owner = current_type
       when NonGenericClassType
         declare_instance_var_on_non_generic(owner, node, var)
