@@ -204,7 +204,7 @@ describe "Global inference" do
       $x = Foo.new
       $x
       ),
-      "Can't infer the type of global variable '$x'"
+      "can't use Foo(T) as the type of global variable $x, use a more specific type"
   end
 
   it "infers type from new expression of generic" do
@@ -675,5 +675,16 @@ describe "Global inference" do
       $x : Bool = 1 <= 2 <= 3
       $x
       )) { bool }
+  end
+
+  it "errors when using Class (#2605)" do
+    assert_error %(
+      class Foo
+        def foo(klass : Class)
+          $class = klass
+        end
+      end
+      ),
+      "can't use Class as the type of global variable $class, use a more specific type"
   end
 end

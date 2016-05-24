@@ -26,6 +26,13 @@ module Crystal
       end
     end
 
+    # Captures an error related to a type that can't be used
+    # for an instance/class/global variable. The node is used
+    # to give the error at its location.
+    record Error,
+      node : ASTNode,
+      type : Type
+
     # The types we guess for instance types can be nodes or types.
     # In the case of a generic type we might have:
     #
@@ -92,38 +99,43 @@ module Crystal
       # but a superclass does initialize it. It's only an error if the explicit/guessed
       # type is not nilable itself.
       @nilable_instance_vars = {} of Type => Hash(String, InitializeInfo)
+
+      # Errors related to types like Class, Int and Reference used for
+      # instance variables. These are gathered by the guesser, and later
+      # removed if an explicit type is found (in remove_error).
+      @errors = {} of Type => Hash(String, Error)
     end
 
     def process(node)
       # First check type declarations
-      visitor = TypeDeclarationVisitor.new(@program, @explicit_instance_vars)
-      node.accept visitor
+      type_decl_visitor = TypeDeclarationVisitor.new(@program, @explicit_instance_vars)
+      node.accept type_decl_visitor
 
       # Use the last type found for global variables to declare them
-      visitor.globals.each do |name, type|
+      type_decl_visitor.globals.each do |name, type|
         declare_meta_type_var(@program.global_vars, @program, name, type)
       end
 
       # Use the last type found for class variables to declare them
-      visitor.class_vars.each do |owner, vars|
+      type_decl_visitor.class_vars.each do |owner, vars|
         vars.each do |name, type|
           declare_meta_type_var(owner.class_vars, owner, name, type)
         end
       end
 
-      # Now use several syntactic rules to infer the types of
+      # Then use several syntactic rules to infer the types of
       # variables that don't have an explicit type set
-      visitor = TypeGuessVisitor.new(@program, @explicit_instance_vars,
-        @guessed_instance_vars, @initialize_infos, @instance_vars_outside)
-      node.accept visitor
+      type_guess_visitor = TypeGuessVisitor.new(@program, @explicit_instance_vars,
+        @guessed_instance_vars, @initialize_infos, @instance_vars_outside, @errors)
+      node.accept type_guess_visitor
 
       # Process global variables
-      visitor.globals.each do |name, info|
+      type_guess_visitor.globals.each do |name, info|
         declare_meta_type_var(@program.global_vars, @program, name, info)
       end
 
       # Process class variables
-      visitor.class_vars.each do |owner, vars|
+      type_guess_visitor.class_vars.each do |owner, vars|
         vars.each do |name, info|
           declare_meta_type_var(owner.class_vars, owner, name, info)
         end
@@ -138,10 +150,14 @@ module Crystal
       # give an error
       check_nilable_instance_vars
 
+      check_errors
+
       node
     end
 
     private def declare_meta_type_var(vars, owner, name, type : Type)
+      remove_error owner, name
+
       var = MetaTypeVar.new(name)
       var.owner = owner
       var.type = type
@@ -211,6 +227,7 @@ module Crystal
       when NonGenericModuleType
         # Transfer this declaration to including types, recursively
         owner.known_instance_vars << name
+        remove_error owner, name
         owner.raw_including_types.try &.each do |including_type|
           process_owner_instance_var_declaration(including_type, name, type_decl)
         end
@@ -226,9 +243,11 @@ module Crystal
 
         owner.known_instance_vars << name
         owner.declare_instance_var(name, type_decl.type)
+        remove_error owner, name
       when GenericModuleType
         owner.known_instance_vars << name
         owner.declare_instance_var(name, type_decl.type)
+        remove_error owner, name
         check_non_nilable_for_generic_module(owner, name, type_decl)
       end
     end
@@ -237,11 +256,13 @@ module Crystal
       case owner
       when GenericModuleType
         owner.known_instance_vars << name
+        remove_error owner, name
         owner.inherited.try &.each do |inherited|
           check_non_nilable_for_generic_module(inherited, name, type_decl)
         end
       when NonGenericModuleType
         owner.known_instance_vars << name
+        remove_error owner, name
         owner.raw_including_types.try &.each do |inherited|
           check_non_nilable_for_generic_module(inherited, name, type_decl)
         end
@@ -298,6 +319,7 @@ module Crystal
       when NonGenericModuleType
         # Transfer this guess to including types, recursively
         owner.known_instance_vars << name
+        remove_error owner, name
         owner.raw_including_types.try &.each do |including_type|
           process_owner_guessed_instance_var_declaration(including_type, name, type_info)
         end
@@ -313,6 +335,7 @@ module Crystal
 
         owner.known_instance_vars << name
         owner.declare_instance_var(name, type_info.type_vars.uniq)
+        remove_error owner, name
       when GenericModuleType
         if nilable_instance_var?(owner, name)
           type_info.type_vars << @program.nil
@@ -320,6 +343,7 @@ module Crystal
 
         owner.known_instance_vars << name
         owner.declare_instance_var(name, type_info.type_vars.uniq)
+        remove_error owner, name
       end
     end
 
@@ -501,6 +525,25 @@ module Crystal
                 info.def.raise "this 'initialize' doesn't initialize instance variable '#{name}', rendering it nilable"
               end
             end
+          end
+        end
+      end
+    end
+
+    private def remove_error(type, name)
+      @errors[type]?.try &.delete(name)
+    end
+
+    private def check_errors
+      @errors.each do |type, entries|
+        entries.each do |name, error|
+          case name
+          when .starts_with?("$")
+            error.node.raise "can't use #{error.type} as the type of global variable #{name}, use a more specific type"
+          when .starts_with?("@@")
+            error.node.raise "can't use #{error.type} as the type of class variable #{name} of #{type}, use a more specific type"
+          when .starts_with?("@")
+            error.node.raise "can't use #{error.type} as the type of instance variable #{name} of #{type}, use a more specific type"
           end
         end
       end
