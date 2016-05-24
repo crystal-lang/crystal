@@ -15,6 +15,11 @@ module Crystal::Macros
   def env(name) : StringLiteral | NilLiteral
   end
 
+  # Returns `Time.now` (or `Time.utc_now`) formatted with the given *format*,
+  # as specified by `Time::Format`.
+  def now(format, utc = false) : StringLiteral
+  end
+
   # Prints an AST node at compile-time. Useful for debugging macros.
   def puts(expression) : Nop
   end

@@ -1342,4 +1342,23 @@ describe "Code gen: macro" do
       {1, 3}.foo(1)
       )).to_i.should eq(2)
   end
+
+  it "executes now" do
+    run(%(
+      {{ now("%Y-%m-%d") }}
+      )).to_string.should eq(Time.now.to_s("%Y-%m-%d"))
+  end
+
+  it "executes now utc" do
+    run(%(
+      {{ now("%Y-%m-%d", utc: true) }}
+      )).to_string.should eq(Time.utc_now.to_s("%Y-%m-%d"))
+  end
+
+  it "gives error on wrong number of arguments for now" do
+    assert_error %(
+      {{ now() }}
+      ),
+      "wrong number of arguments"
+  end
 end
