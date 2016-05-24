@@ -323,4 +323,14 @@ describe "Type inference: class var" do
       Foo.x
       )) { nilable int32 }
   end
+
+  it "errors when using Class (#2605)" do
+    assert_error %(
+      class Foo
+        def foo(@@class : Class)
+        end
+      end
+      ),
+      "can't use Class as the type of class variable @@class of Foo, use a more specific type"
+  end
 end

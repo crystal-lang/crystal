@@ -156,6 +156,7 @@ module Crystal
       if inputs = node.inputs
         inputs.each do |input|
           input.accept self
+          return false if !@raise && !@type
 
           Crystal.check_type_allowed_in_generics(input, type, "can't use #{type} as proc argument")
 

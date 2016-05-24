@@ -7,10 +7,12 @@ module Crystal
     alias TypeDeclarationWithLocation = TypeDeclarationProcessor::TypeDeclarationWithLocation
     alias InitializeInfo = TypeDeclarationProcessor::InitializeInfo
     alias InstanceVarTypeInfo = TypeDeclarationProcessor::InstanceVarTypeInfo
+    alias Error = TypeDeclarationProcessor::Error
 
     getter globals
     getter class_vars
     getter initialize_infos
+    getter errors
 
     class TypeInfo
       property type
@@ -24,11 +26,17 @@ module Crystal
     @args : Array(Arg)?
     @block_arg : Arg?
 
+    # Before checking types, we set this to nil.
+    # Afterwards, this is non-nil if an error was found
+    # (a type like Class or Reference is used)
+    @error : Error?
+
     def initialize(mod,
                    @explicit_instance_vars : Hash(Type, Hash(String, TypeDeclarationWithLocation)),
                    @guessed_instance_vars : Hash(Type, Hash(String, InstanceVarTypeInfo)),
                    @initialize_infos : Hash(Type, Array(InitializeInfo)),
-                   @instance_vars_outside : Hash(Type, Array(String)))
+                   @instance_vars_outside : Hash(Type, Array(String)),
+                   @errors : Hash(Type, Hash(String, Error)))
       super(mod)
 
       @globals = {} of String => TypeInfo
@@ -74,6 +82,8 @@ module Crystal
     def visit(node : UninitializedVar)
       var = node.var
       if var.is_a?(InstanceVar)
+        @error = nil
+
         add_to_initialize_info(var.name)
 
         case owner = current_type
@@ -178,24 +188,36 @@ module Crystal
     def process_assign(target, value)
       check_has_self(value)
 
-      case target
-      when Global
-        process_assign_global(target, value)
-      when ClassVar
-        process_assign_class_var(target, value)
-      when InstanceVar
-        process_assign_instance_var(target, value)
-      when Path
-        # Don't guess anything from constant values
-        false
-      else
-        # Process the right hand side in case there's an assignment there too
-        value.accept self
-        nil
+      @error = nil
+
+      result =
+        case target
+        when Global
+          process_assign_global(target, value)
+        when ClassVar
+          process_assign_class_var(target, value)
+        when InstanceVar
+          process_assign_instance_var(target, value)
+        when Path
+          # Don't guess anything from constant values
+          false
+        else
+          # Process the right hand side in case there's an assignment there too
+          value.accept self
+          nil
+        end
+
+      if error = @error
+        errors = @errors[current_type] ||= {} of String => Error
+        errors[target.to_s] ||= error
       end
+
+      result
     end
 
     def process_multi_assign(node : MultiAssign)
+      @error = nil
+
       if node.targets.size == node.values.size
         node.targets.zip(node.values) do |target, value|
           process_assign(target, value)
@@ -482,7 +504,7 @@ module Crystal
             return type.instantiate([Type.merge!(element_types)] of TypeVar)
           end
         else
-          return check_allowed_in_generics(type)
+          return check_allowed_in_generics(node, type)
         end
       elsif node_of = node.of
         type = lookup_type?(node_of)
@@ -520,7 +542,7 @@ module Crystal
             return type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar)
           end
         else
-          return check_allowed_in_generics(type)
+          return check_allowed_in_generics(node, type)
         end
       elsif node_of = node.of
         key_type = lookup_type?(node_of.key)
@@ -1042,6 +1064,9 @@ module Crystal
         if arg
           # If the argument has a restriction, guess the type from it
           if restriction = arg.restriction
+            # Lookup type, to check for non-allowed types
+            lookup_type?(restriction)
+            return nil if @error
             return [restriction] of TypeVar
           end
 
@@ -1056,6 +1081,9 @@ module Crystal
       if (block_arg = @block_arg) && block_arg.name == node.name
         restriction = block_arg.restriction
         if restriction
+          # Lookup type, to check for non-allowed types
+          lookup_type?(restriction)
+          return nil if @error
           return [restriction] of TypeVar
         end
       end
@@ -1127,7 +1155,7 @@ module Crystal
             return [type.instantiate([Type.merge!(element_types)] of TypeVar)] of TypeVar
           end
         else
-          type = check_allowed_in_generics(type)
+          type = check_allowed_in_generics(node, type)
           if type
             return [type] of TypeVar
           end
@@ -1155,7 +1183,7 @@ module Crystal
             return [type.instantiate([Type.merge!(key_types), Type.merge!(value_types)] of TypeVar)] of TypeVar
           end
         else
-          type = check_allowed_in_generics(type)
+          type = check_allowed_in_generics(node, type)
           if type
             return [type] of TypeVar
           end
@@ -1224,27 +1252,27 @@ module Crystal
 
     def lookup_type?(node, root = current_type)
       type = TypeLookup.lookup?(root, node, allow_typeof: false)
-      check_allowed_in_generics(type)
+      check_allowed_in_generics(node, type)
     end
 
     def lookup_type_no_check?(node)
       TypeLookup.lookup?(current_type, node, allow_typeof: false)
     end
 
-    def check_allowed_in_generics(type)
+    def check_allowed_in_generics(node, type)
       # Types such as Object, Int, etc., are not allowed in generics
       # and as variables types, so we disallow them.
       if type && !type.allowed_in_generics?
-        # However, Reference is allowed for variables.
-        if type == @mod.reference
-          return type
-        else
-          return nil
-        end
+        @error = Error.new(node, type)
+        return nil
       end
 
       case type
-      when GenericClassType, GenericModuleType
+      when GenericClassType
+        @error = Error.new(node, type)
+        nil
+      when GenericModuleType
+        @error = Error.new(node, type)
         nil
       when NonGenericClassType
         type.virtual_type

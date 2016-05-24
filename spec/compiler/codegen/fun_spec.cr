@@ -486,9 +486,12 @@ describe "Code gen: fun" do
 
   it "codegens fun that references struct (bug)" do
     run(%(
+      class Ref
+      end
+
       class Context
         def initialize
-          @x = Reference.new
+          @x = Ref.new
         end
 
         def run

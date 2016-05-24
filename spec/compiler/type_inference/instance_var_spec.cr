@@ -2915,6 +2915,95 @@ describe "Type inference: instance var" do
       "undefined fun 'nope' for LibFoo"
   end
 
+  it "errors when using Class (#2605)" do
+    assert_error %(
+      class Foo
+        def initialize(@class : Class)
+        end
+      end
+      ),
+      "can't use Class as the type of instance variable @class of Foo, use a more specific type"
+  end
+
+  it "errors when using Class in generic type" do
+    assert_error %(
+      class Foo(T)
+        def initialize(@class : Class)
+        end
+      end
+      ),
+      "can't use Class as the type of instance variable @class of Foo(T), use a more specific type"
+  end
+
+  it "doesn't error when using Class but specifying type" do
+    assert_type(%(
+      class Foo
+        @x : Foo.class
+
+        def initialize(@x : Class)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new(Foo).x
+      )) { types["Foo"].metaclass }
+  end
+
+  it "doesn't error when using generic because guessed elsewhere" do
+    assert_type(%(
+      class Foo
+        @x = Bar(Int32).new
+
+        def initialize
+        end
+
+        def x
+          @x = Bar.new(1)
+          @x
+        end
+      end
+
+      class Bar(T)
+        def initialize
+        end
+
+        def initialize(x : T)
+        end
+      end
+
+      Foo.new.x
+      )) { generic_class "Bar", int32 }
+  end
+
+  it "doesn't error when using generic in generic type because guessed elsewhere" do
+    assert_type(%(
+      class Foo(T)
+        @x = Bar(Int32).new
+
+        def initialize
+        end
+
+        def x
+          @x = Bar.new(1)
+          @x
+        end
+      end
+
+      class Bar(T)
+        def initialize
+        end
+
+        def initialize(x : T)
+        end
+      end
+
+      Foo(Int32).new.x
+      )) { generic_class "Bar", int32 }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv
