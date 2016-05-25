@@ -907,4 +907,6 @@ describe Crystal::Formatter do
   assert_format "foo { | a, ( b , c ) | a + b + c }", "foo { |a, (b, c)| a + b + c }"
   assert_format "foo { | a, ( b , c, ), | a + b + c }", "foo { |a, (b, c)| a + b + c }"
   assert_format "foo { | a, ( _ , c ) | a + c }", "foo { |a, (_, c)| a + c }"
+
+  assert_format "def foo\n  {{@type}}\nend"
 end

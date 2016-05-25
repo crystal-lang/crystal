@@ -1202,7 +1202,11 @@ module Crystal
       @inside_def += 1
 
       write_keyword :abstract, " " if node.abstract?
-      write_keyword :macro, " " if node.macro_def?
+
+      if node.macro_def? && @token.keyword?(:macro)
+        write_keyword :macro, " "
+      end
+
       write_keyword :def, " ", skip_space_or_newline: false
 
       if receiver = node.receiver
