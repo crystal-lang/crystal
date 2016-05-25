@@ -118,6 +118,24 @@ class JSONWithRaw
   })
 end
 
+class JSONWithRoot
+  JSON.mapping({
+    result: {type: Array(JSONPerson), root: "heroes"},
+  })
+end
+
+class JSONWithNilableRoot
+  JSON.mapping({
+    result: {type: Array(JSONPerson), root: "heroes", nilable: true},
+  })
+end
+
+class JSONWithNilableRootEmitNull
+  JSON.mapping({
+    result: {type: Array(JSONPerson), root: "heroes", nilable: true, emit_null: true},
+  })
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -348,5 +366,27 @@ describe "JSON mapping" do
     json = JSONWithRaw.from_json(string)
     json.value.should eq(%([null,true,false,{"x":[1,1.5]}]))
     json.to_json.should eq(string)
+  end
+
+  it "parses with root" do
+    json = %({"result":{"heroes":[{"name":"Batman"}]}})
+    result = JSONWithRoot.from_json(json)
+    result.result.should be_a(Array(JSONPerson))
+    result.result.first.name.should eq "Batman"
+    result.to_json.should eq(json)
+  end
+
+  it "parses with nilable root" do
+    json = %({"result":null})
+    result = JSONWithNilableRoot.from_json(json)
+    result.result.should be_nil
+    result.to_json.should eq("{}")
+  end
+
+  it "parses with nilable root and emit null" do
+    json = %({"result":null})
+    result = JSONWithNilableRootEmitNull.from_json(json)
+    result.result.should be_nil
+    result.to_json.should eq(json)
   end
 end

@@ -107,6 +107,11 @@ describe "JSON serialization" do
         JSONSpecEnum.from_json(%("Three"))
       end
     end
+
+    it "deserializes with root" do
+      Int32.from_json(%({"foo": 1}), root: "foo").should eq(1)
+      Array(Int32).from_json(%({"foo": [1, 2]}), root: "foo").should eq([1, 2])
+    end
   end
 
   describe "to_json" do
