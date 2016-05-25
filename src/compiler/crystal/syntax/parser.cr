@@ -25,6 +25,7 @@ module Crystal
       @calls_initialize = false
       @calls_previous_def = false
       @uses_block_arg = false
+      @is_macro_def = false
       @assigns_special_var = false
       @def_nest = 0
       @type_nest = 0
@@ -1089,6 +1090,9 @@ module Crystal
       when :CONST
         parse_ident_or_literal
       when :INSTANCE_VAR
+        if @in_macro_expression && @token.value == "@type"
+          @is_macro_def = true
+        end
         new_node_check_type_declaration InstanceVar
       when :CLASS_VAR
         new_node_check_type_declaration ClassVar
@@ -2458,6 +2462,7 @@ module Crystal
       @uses_block_arg = false
       @assigns_special_var = false
       @block_arg_name = nil
+      @is_macro_def = false
       a_def
     end
 
@@ -2468,6 +2473,7 @@ module Crystal
       @uses_block_arg = false
       @block_arg_name = nil
       @assigns_special_var = false
+      @is_macro_def = false
     end
 
     def parse_macro
@@ -3048,7 +3054,7 @@ module Crystal
       @doc_enabled = !!@wants_doc
       pop_def
 
-      node = Def.new name, args, body, receiver, block_arg, return_type, is_macro_def, @yields, is_abstract, splat_index, double_splat: double_splat
+      node = Def.new name, args, body, receiver, block_arg, return_type, (is_macro_def || @is_macro_def), @yields, is_abstract, splat_index, double_splat: double_splat
       node.name_column_number = name_column_number
       set_visibility node
       node.end_location = end_location

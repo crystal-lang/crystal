@@ -1342,4 +1342,19 @@ describe "Code gen: macro" do
       {1, 3}.foo(1)
       )).to_i.should eq(2)
   end
+
+  it "implicitly marks method as macro def when using @type" do
+    run(%(
+      class Foo
+        def method
+          {{@type.stringify}}
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      (Bar.new as Foo).method
+      )).to_string.should eq("Bar")
+  end
 end
