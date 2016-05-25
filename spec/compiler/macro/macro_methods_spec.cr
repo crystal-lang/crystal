@@ -339,6 +339,16 @@ describe "macro methods" do
       assert_macro "x", %({{x.chomp}}), [MacroId.new("hello\n")] of ASTNode, %(hello)
       assert_macro "x", %({{x.upcase}}), [MacroId.new("hello")] of ASTNode, %(HELLO)
     end
+
+    it "compares with string" do
+      assert_macro "x", %({{x == "foo"}}), [MacroId.new("foo")] of ASTNode, %(true)
+      assert_macro "x", %({{"foo" == x}}), [MacroId.new("foo")] of ASTNode, %(true)
+    end
+
+    it "compares with symbol" do
+      assert_macro "x", %({{x == :foo}}), [MacroId.new("foo")] of ASTNode, %(true)
+      assert_macro "x", %({{:foo == x}}), [MacroId.new("foo")] of ASTNode, %(true)
+    end
   end
 
   describe "symbol methods" do

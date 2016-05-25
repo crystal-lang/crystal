@@ -25,9 +25,13 @@ module Crystal
           raise arg.to_s
         end
       when "=="
-        BoolLiteral.new(self == args.first)
+        interpret_one_arg_method(method, args) do |arg|
+          BoolLiteral.new(self == arg)
+        end
       when "!="
-        BoolLiteral.new(self != args.first)
+        interpret_one_arg_method(method, args) do |arg|
+          BoolLiteral.new(self != arg)
+        end
       when "!"
         BoolLiteral.new(!truthy?)
       else
@@ -224,6 +228,13 @@ module Crystal
   class StringLiteral
     def interpret(method, args, block, interpreter)
       case method
+      when "==", "!="
+        case arg = args.first?
+        when MacroId
+          return BoolLiteral.new(@value == arg.value)
+        else
+          return super
+        end
       when "[]"
         interpret_one_arg_method(method, args) do |arg|
           case arg
@@ -670,7 +681,16 @@ module Crystal
   class MacroId
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify", "class_name", "symbolize"
+      when "==", "!="
+        case arg = args.first?
+        when StringLiteral
+          return BoolLiteral.new(@value == arg.value)
+        when SymbolLiteral
+          return BoolLiteral.new(@value == arg.value)
+        else
+          return super
+        end
+      when "stringify", "class_name", "symbolize"
         return super
       end
 
@@ -689,7 +709,14 @@ module Crystal
   class SymbolLiteral
     def interpret(method, args, block, interpreter)
       case method
-      when "==", "!=", "stringify", "class_name", "symbolize"
+      when "==", "!="
+        case arg = args.first?
+        when MacroId
+          return BoolLiteral.new(@value == arg.value)
+        else
+          return super
+        end
+      when "stringify", "class_name", "symbolize"
         return super
       end
 
