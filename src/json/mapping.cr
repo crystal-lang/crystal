@@ -41,6 +41,7 @@ module JSON
   # * **default**: value to use if the property is missing in the JSON document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a JSON document is parsed.
   # * **emit_null**: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
+  # * **root**: assume the value is inside a JSON object with a given key (see `Object.from_json(string_or_io, root)`)
   #
   # The mapping also automatically defines Crystal properties (getters and setters) for each
   # of the keys. It doesn't define a constructor accepting those arguments, but you can provide
@@ -84,8 +85,13 @@ module JSON
         {% for key, value in properties %}
           when {{value[:key] || key.id.stringify}}
             %found{key.id} = true
+
             %var{key.id} =
               {% if value[:nilable] || value[:default] != nil %} %pull.read_null_or { {% end %}
+
+              {% if value[:root] %}
+                %pull.on_key!({{value[:root]}}) do
+              {% end %}
 
               {% if value[:converter] %}
                 {{value[:converter]}}.from_json(%pull)
@@ -93,7 +99,12 @@ module JSON
                 {{value[:type]}}.new(%pull)
               {% end %}
 
+              {% if value[:root] %}
+                end
+              {% end %}
+
             {% if value[:nilable] || value[:default] != nil %} } {% end %}
+
         {% end %}
         else
           {% if strict %}
@@ -137,6 +148,17 @@ module JSON
           {% end %}
 
             json.field({{value[:key] || key.id.stringify}}) do
+              {% if value[:root] %}
+                {% if value[:emit_null] %}
+                  if _{{key.id}}.is_a?(Nil)
+                    nil.to_json(io)
+                  else
+                {% end %}
+
+                io.json_object do |json|
+                  json.field({{value[:root]}}) do
+              {% end %}
+
               {% if value[:converter] %}
                 if _{{key.id}}
                   {{ value[:converter] }}.to_json(_{{key.id}}, io)
@@ -145,6 +167,14 @@ module JSON
                 end
               {% else %}
                 _{{key.id}}.to_json(io)
+              {% end %}
+
+              {% if value[:root] %}
+                {% if value[:emit_null] %}
+                  end
+                {% end %}
+                  end
+                end
               {% end %}
             end
 
