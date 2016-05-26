@@ -4,19 +4,19 @@ thumbnail: H
 author: bcardiff
 ---
 
-At the end of 2014 a [first draft](https://github.com/manastech/heroku-buildpack-crystal/commit/b364f9115706a2a1c97ff40bd44aef1cf73e6288) of a heroku buildpack for crystal was createad. This was great. Being able to run crystal apps in [Heroku](heroku.com) stack was charm idea.
+At the end of 2014 a [first draft](https://github.com/manastech/heroku-buildpack-crystal/commit/b364f9115706a2a1c97ff40bd44aef1cf73e6288) of a [Heroku](//heroku.com) buildpack for crystal was createad. This was truly great. Being able to run crystal apps in the Heroku stack was charm idea.
 
-While we continue to develop the language, the tools, and the standard library; the community grew. Many where interesed in trying their Crystal powered web apps in Heroku. The [network graph](https://github.com/crystal-lang/heroku-buildpack-crystal/network) at github for the buildpack is quite big, specially for just a bunch of bash scripts!
+While we continued to develop the language, the tools, and the standard library, the community around Crystal grew. Many were interested in trying their Crystal-powered web apps in Heroku. The [network graph](https://github.com/crystal-lang/heroku-buildpack-crystal/network) at github for the buildpack is quite big, especially for just a bunch of bash scripts!
 
-Honestly is was because of some flaws of the approach to keep the buildpack up to date with the latest release of crystal. That is now solved. Yeay!
+However, due to some flaws in the approach, the buildpack failed to stay up to date with the latest versions of Crystal; but that is now solved!  Yay!
 
-While efforts to be develop web frameworks continues nowadays, we wanted to share the very basic steps to use the crystal buildpack to deploy a dependency free web application in Heroku.
+While efforts to develop web frameworks continue nowadays, we wanted to share the very basic steps to use the Crystal buildpack to deploy a web application in Heroku without the need for any additional dependencies.
 
 # Create a Crystal project
 
 This assumes you already have [crystal installed](http://crystal-lang.org/docs/installation/).
 
-Use `crystal init` to create the app.
+Use `crystal init app` to create the app.
 
 <pre class="code">
 $ crystal init app heroku101
@@ -45,7 +45,7 @@ version: 0.1.0
 ...
 </pre>
 
-To create a simple http server edit the `src/heroku101.cr` file with the following content.
+To create a simple http server edit the `src/heroku101.cr` file and add the following content:
 
 {% highlight ruby %}
 # file: src/heroku101.cr
@@ -63,8 +63,6 @@ puts "Listening on http://#{bind}:#{port}"
 server.listen
 {% endhighlight ruby %}
 
-Binding to `"0.0.0.0"` will enable the process to receive requests from other than localhost.
-
 To build and run the program:
 
 <pre class="code">
@@ -72,13 +70,13 @@ $ crystal src/heroku101.cr
 Listening on http://0.0.0.0:8080
 </pre>
 
-Open your browser at [http://0.0.0.0:8080](http://0.0.0.0:8080) or find your local ip and try it from other device.
+Open your browser at [http://0.0.0.0:8080](http://0.0.0.0:8080).
 
 To stop the server just terminate the process by pressing `Ctrl+C`.
 
 # Herokufy it
 
-Right now the project knows nothing of Heroku. A Heroku application needs to be registered. The easiest way is to use the [Heroku toolbelt](https://toolbelt.heroku.com/)
+Right now the project knows nothing about Heroku. To get started, a Heroku application needs first to be registered. The easiest way to do this is via the [Heroku toolbelt](https://toolbelt.heroku.com/):
 
 <pre class="code">
 $ heroku create --buildpack https://github.com/crystal-lang/heroku-buildpack-crystal.git
@@ -89,9 +87,9 @@ https://sleepy-thicket-16179.herokuapp.com/ | https://git.heroku.com/sleepy-thic
 
 The above command will generate a random app name. Check the [docs](https://devcenter.heroku.com/articles/creating-apps) to give your app a name from the beginning.
 
-Before deploying, a thing needs to be changed. Heroku randomly assigns a port number to be used by the app. Thanks to be buildpack, this will be informed in `--port` option when running the application.
+Before deploying, we need to make a small change. Heroku randomly assigns a port number to be used by the app. Thanks to be buildpack, this will be informed in a `--port` option when running the application.
 
-So, add a `require "option_parser"` at the beginning of `src/heroku101.cr` and override the `port` variable default with
+So, add a `require "option_parser"` at the beginning of `src/heroku101.cr` and override the `port` variable default with:
 
 {% highlight ruby %}
 OptionParser.parse! do |opts|
@@ -133,7 +131,7 @@ $ crystal src/heroku101.cr -- --port 9090
 Listening on http://0.0.0.0:9090
 </pre>
 
-Or build an optimised release locally and execute it after
+Or build an optimised release locally and execute it via:
 
 <pre class="code">
 $ crystal build src/heroku101.cr --release
@@ -147,7 +145,7 @@ Listening on http://0.0.0.0:9090
 
 # Deploy!
 
-When you are ready to go live with your app just deploy the usual way `git push heroku master`.
+When you are ready to go live with your app just deploy it the usual way with `git push heroku master`.
 
 <pre class="code">
 $ git push heroku master
@@ -183,18 +181,19 @@ To https://git.heroku.com/sleepy-thicket-16179.git
 The buildpack will:
 
 1. Install the latest crystal release.
-2. Compile the main source file in release mode.
-3. Run the web server process with `--port` option.
+2. Install project dependencies via shards.
+3. Compile the main source file in release mode.
+4. Run the web server process with `--port` option.
 
-# Other crystal version
+# Specify the crystal version
 
-If you want to use other than the latest crystal version, create a `.crystal-version` file with the desired version.
+If you want to use a different Crystal version, create a `.crystal-version` file with the desired version, following [crenv](https://github.com/pine/crenv)’s convention.
 
 <pre class="code">
 $ echo '0.17.1' > .crystal-version
 </pre>
 
-Add commit the changes of `.crystal-version` and deploy.
+Commit the changes in `.crystal-version` and deploy.
 
 <pre class="code">
 $ git push heroku master
@@ -214,14 +213,15 @@ remote: -----> Compiling src/heroku101.cr (auto-detected from shard.yml)
 ...
 </pre>
 
-You will notice the `(0.17.1 due to .crystal-version file)` legend.
+You will now notice the `(0.17.1 due to .crystal-version file)` legend.
 
-Whenever you are ready to upgrade the crystal version, update the content of the file or just remove it and deploy again.
+Whenever you are ready to upgrade to the latest crystal version, update the content of the file or just remove it and deploy again.
 
-## Give me the code!
+## Show me the code!
 
 Find all the sample source code used at
 [https://github.com/bcardiff/sample-crystal-heroku101](https://github.com/bcardiff/sample-crystal-heroku101).
 
-To contribute to crystal buildpack, just [fork it](https://github.com/crystal-lang/heroku-buildpack-crystal).
+To contribute to crystal buildpack, just [fork it](https://github.com/crystal-lang/heroku-buildpack-crystal). Contributions are welcome!
+
 
