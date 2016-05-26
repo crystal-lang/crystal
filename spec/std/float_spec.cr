@@ -83,9 +83,42 @@ describe "Float" do
   end
 
   describe "to_s" do
-    it "does to_s for f32 and f64" do
+    it "does to_s for f64" do
       12.34.to_s.should eq("12.34")
-      12.34_f64.to_s.should eq("12.34")
+      1.2.to_s.should eq("1.2")
+      1.23.to_s.should eq("1.23")
+      1.234.to_s.should eq("1.234")
+      0.65000000000000002.to_s.should eq("0.65")
+      1.234001.to_s.should eq("1.234001")
+      1.23499.to_s.should eq("1.23499")
+      1.23499999999999.to_s.should eq("1.235")
+      1.2345.to_s.should eq("1.2345")
+      1.23456.to_s.should eq("1.23456")
+      1.234567.to_s.should eq("1.234567")
+      1.2345678.to_s.should eq("1.2345678")
+      1.23456789.to_s.should eq("1.23456789")
+      1.234567891.to_s.should eq("1.234567891")
+      1.2345678911.to_s.should eq("1.2345678911")
+      1.2345678912.to_s.should eq("1.2345678912")
+      1.23456789123.to_s.should eq("1.23456789123")
+      9525365.25.to_s.should eq("9525365.25")
+      12.9999.to_s.should eq("12.9999")
+      12.999999999999.to_s.should eq("13.0")
+      1.0.to_s.should eq("1.0")
+    end
+
+    it "does to_s for f32" do
+      12.34_f32.to_s.should eq("12.34")
+      1.2_f32.to_s.should eq("1.2")
+      1.23_f32.to_s.should eq("1.23")
+      1.234_f32.to_s.should eq("1.234")
+      0.65000000000000002_f32.to_s.should eq("0.65")
+      # 1.234001_f32.to_s.should eq("1.234001")
+      1.23499_f32.to_s.should eq("1.23499")
+      1.23499999999999_f32.to_s.should eq("1.235")
+      1.2345_f32.to_s.should eq("1.2345")
+      1.23456_f32.to_s.should eq("1.23456")
+      # 9525365.25_f32.to_s.should eq("9525365.25")
     end
   end
 
