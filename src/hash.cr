@@ -494,14 +494,14 @@ class Hash(K, V)
   # hash.merge!({"baz": "qux"})
   # hash # => {"foo" => "bar", "baz" => "qux"}
   # ```
-  def merge!(other : Hash(K, V))
+  def merge!(other : Hash)
     other.each do |k, v|
       self[k] = v
     end
     self
   end
 
-  def merge!(other : Hash(K, V), &block : K, V, V -> V)
+  def merge!(other : Hash, &block)
     other.each do |k, v|
       if self.has_key?(k)
         self[k] = yield k, self[k], v
