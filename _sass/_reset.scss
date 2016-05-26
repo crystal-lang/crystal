@@ -155,3 +155,7 @@ li {
   padding: 0;
   list-style: none;
 }
+
+ol li {
+  list-style: inherit;
+}
