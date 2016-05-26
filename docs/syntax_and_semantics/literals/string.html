@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.2.6" data-basepath="../.." data-revision="Tue May 17 2016 17:12:34 GMT+0000 (UTC)">
+    <div class="book" data-level="4.2.6" data-basepath="../.." data-revision="Thu May 26 2016 18:56:56 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2224,6 +2224,16 @@ b = <span class="hljs-number">2</span>
 <span class="hljs-string">&quot;sum = <span class="hljs-subst">#{a + b}</span>&quot;</span>        <span class="hljs-comment"># &quot;sum = 3&quot;</span>
 </code></pre>
 <p>This ends up invoking <code>Object#to_s(IO)</code> on each expression enclosed by <code>#{...}</code>.</p>
+<h2 id="without-interpolation-nor-escapes">Without interpolation nor escapes</h2>
+<p>To create a String without interpolation nor escapes use <code>%q</code>:</p>
+<pre><code class="lang-crystal"><span class="hljs-variable">%q</span>(hello \n <span class="hljs-comment">#{world}) # =&gt; &quot;hello \\n \#{world}&quot;</span>
+</code></pre>
+<p>Delimiters for <code>%q(...)</code> can also be <code>{}</code>, <code>[]</code> and <code>&lt;&gt;</code>.</p>
+<p>Heredoc without interpolation nor escapes is also possible, simply enclose the heredoc delimiter in single quotes:</p>
+<pre><code class="lang-crystal">&lt;&lt;-<span class="hljs-string">&apos;HERE&apos;</span>
+hello \n <span class="hljs-comment">#{world}</span>
+<span class="hljs-constant">HERE</span>
+</code></pre>
 
                     
                     </section>
