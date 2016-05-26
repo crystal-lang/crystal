@@ -128,3 +128,21 @@ b = 2
 ```
 
 This ends up invoking `Object#to_s(IO)` on each expression enclosed by `#{...}`.
+
+## Without interpolation nor escapes
+
+To create a String without interpolation nor escapes use `%q`:
+
+```crystal
+%q(hello \n #{world}) # => "hello \\n \#{world}"
+```
+
+Delimiters for `%q(...)` can also be `{}`, `[]` and `<>`.
+
+Heredoc without interpolation nor escapes is also possible, simply enclose the heredoc delimiter in single quotes:
+
+```crystal
+<<-'HERE'
+hello \n #{world}
+HERE
+```
