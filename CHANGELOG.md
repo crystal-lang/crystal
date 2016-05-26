@@ -1,3 +1,16 @@
+## 0.17.4 (2016-05-26)
+
+* Added string literals without interpolations nor escapes: `%q{...}` and `<<-'HEREDOC'`. Also added `%Q{...}` with the same meaning as `%{...}`.
+* A method that uses `@type` inside a macro expression is now automatically detected as being a `macro def`
+* `Float64#to_s` now produces a more accurate output
+* Added `Crystal::VERSION` and other compiler-metadata constants
+* Added `Object.from_json(string_or_io, root)` and a `root` option to `JSON.mapping`
+* Added `System.hostname` (thanks @miketheman)
+* The `property`, `getter` and `setter` macros now also accept assignments (`property x = 0`)
+* The `record` macro now also accepts assignments (`record Point, x = 0, y = 0`)
+* Comparison in macros between `MacroId` and `StringLiteral` or `SymbolLiteral` now work as expected (compares the `id` representation)
+* Some bug fixes
+
 ## 0.17.3 (2016-05-20)
 
 * Fixed: multiple macro runs executions didn't work well (#2624)
