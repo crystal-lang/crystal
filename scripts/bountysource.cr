@@ -122,7 +122,7 @@ module GitHub
   end
 end
 
-record Sponsor, name, url, logo, this_month, all_time, since
+record Sponsor, name : String, url : String, logo : String, this_month : Float64, all_time : Float64, since : Time
 
 token = ARGV[0]?
 unless token
