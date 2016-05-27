@@ -526,3 +526,45 @@ i.ip {
     }
   }
 }
+
+section.sponsors {
+  background-color: $grayLight;
+  padding: 20px 80px;
+
+  h1 {
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .sponsors-list {
+    text-align: center;
+    a {
+      display: inline-block;
+      width: 180px;
+      margin: 5px 10px;
+      color: #b5b5b5;
+    }
+
+    img {
+      width: 160px;
+      border-radius: 50%;
+      max-width: none;
+      margin: 4px;
+
+      -webkit-filter: grayscale(100%);
+      filter: grayscale(100%);
+    }
+  }
+
+  .footer {
+    @include clearfix;
+  }
+
+  .all-sponsors {
+    color: #b5b5b5;
+    float: right;
+    font-weight: normal;
+  }
+}
