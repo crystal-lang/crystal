@@ -4132,7 +4132,7 @@ module Crystal
         if types.size == 1
           types.first
         else
-          Union.new types
+          Union.new(types).at(types.first.location)
         end
       elsif types.size == 1
         types.first
@@ -4143,13 +4143,14 @@ module Crystal
 
     def parse_type_with_suffix(types, allow_primitives)
       if @token.type == :IDENT && @token.value == "self?"
-        type = Self.new
-        type = Union.new([type, Path.global("Nil")] of ASTNode)
+        type = Self.new.at(@token.location)
+        type = Union.new([type, Path.global("Nil")] of ASTNode).at(@token.location)
         next_token_skip_space
       elsif @token.keyword?(:self)
-        type = Self.new
+        type = Self.new.at(@token.location)
         next_token_skip_space
       else
+        location = @token.location
         case @token.type
         when :"{"
           next_token_skip_space_or_newline
@@ -4164,13 +4165,13 @@ module Crystal
           next_token_skip_space
 
           if named_args
-            type = make_named_tuple_type(named_args)
+            type = make_named_tuple_type(named_args).at(location)
           else
             case type
             when Array
-              type = make_tuple_type(type)
+              type = make_tuple_type(type).at(location)
             when ASTNode
-              type = make_tuple_type([type] of ASTNode)
+              type = make_tuple_type([type] of ASTNode).at(location)
             else
               raise "Bug"
             end
@@ -4221,24 +4222,24 @@ module Crystal
       while true
         case @token.type
         when :"?"
-          type = Union.new([type, Path.global("Nil")] of ASTNode)
+          type = Union.new([type, Path.global("Nil")] of ASTNode).at(type.location)
           next_token_skip_space
         when :"*"
-          type = make_pointer_type(type)
+          type = make_pointer_type(type).at(type.location)
           next_token_skip_space
         when :"**"
-          type = make_pointer_type(make_pointer_type(type))
+          type = make_pointer_type(make_pointer_type(type)).at(type.location)
           next_token_skip_space
         when :"["
           next_token_skip_space
           size = parse_single_type allow_primitives: true
           check :"]"
           next_token_skip_space
-          type = make_static_array_type(type, size)
+          type = make_static_array_type(type, size).at(type.location)
         when :"."
           next_token
           check_ident :class
-          type = Metaclass.new(type)
+          type = Metaclass.new(type).at(type.location)
           next_token_skip_space
         else
           break
