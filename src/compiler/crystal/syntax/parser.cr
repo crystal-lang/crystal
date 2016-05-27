@@ -2232,32 +2232,38 @@ module Crystal
 
       if @token.type == :","
         next_token_skip_space_or_newline
+
+        while @token.type != :"}"
+          unless named_tuple_start?
+            raise "expected '}' or named tuple name, not #{@token}", @token
+          end
+
+          key = @token.value.to_s
+
+          if entries.any? { |entry| entry.key == key }
+            raise "duplicated key: #{key}", @token
+          end
+
+          next_token
+
+          slash_is_regex!
+          next_token_skip_space
+
+          value = parse_op_assign
+          skip_space
+
+          entries << NamedTupleLiteral::Entry.new(key, value)
+          if @token.type == :","
+            next_token_skip_space_or_newline
+          else
+            break
+          end
+        end
       end
 
-      while @token.type != :"}"
-        unless named_tuple_start?
-          raise "expected '}' or named tuple name, not #{@token}", @token
-        end
+      skip_space_or_newline
+      check :"}"
 
-        key = @token.value.to_s
-
-        if entries.any? { |entry| entry.key == key }
-          raise "duplicated key: #{key}", @token
-        end
-
-        next_token
-
-        slash_is_regex!
-        next_token_skip_space
-
-        value = parse_op_assign
-        skip_space_or_newline
-
-        entries << NamedTupleLiteral::Entry.new(key, value)
-        if @token.type == :","
-          next_token_skip_space_or_newline
-        end
-      end
       end_location = token_end_location
       next_token_skip_space
 

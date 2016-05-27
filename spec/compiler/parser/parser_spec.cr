@@ -1306,6 +1306,9 @@ describe "Parser" do
   assert_syntax_error "Foo{one: :two, three: :four}", "can't use named tuple syntax for Hash-like literal"
   assert_syntax_error "{one: :two, three: :four} of Symbol => Symbol"
 
+  assert_syntax_error "{foo: 1\nbar: 2}"
+  assert_syntax_error "{foo: 1, bar: 2\nbaz: 3}"
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"
