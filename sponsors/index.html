@@ -15,9 +15,9 @@ layout: default
       {% capture sponsor_class %}level-{{sp.level}} sponsor{% endcapture %}
       <dt class="{{sponsor_class}}">
         <div class="col-logo">
-          {% if sp.logo != "" %}
+          {% if sp.logo %}
             <div class="logo">
-              {% if sp.url != "" %}
+              {% if sp.url %}
                 <a href="{{sp.url}}" target="_blank">
                   <img src="{{sp.logo}}" />
                 </a>
@@ -30,7 +30,7 @@ layout: default
           {% endif %}
         </div>
         <div class="name">
-          {% if sp.url != "" %}
+          {% if sp.url %}
             <a href="{{sp.url}}" target="_blank">
               {{sp.name}}
             </a>
