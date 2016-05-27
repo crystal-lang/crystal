@@ -77,7 +77,7 @@ struct Tuple
   #
   # {}                         # syntax error
   # ```
-  def self.new(*args)
+  def self.new(*args : *T)
     args
   end
 

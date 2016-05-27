@@ -34,7 +34,7 @@ struct NamedTuple
   #
   # {}                         # syntax error
   # ```
-  def self.new(**options)
+  def self.new(**options : **T)
     options
   end
 
