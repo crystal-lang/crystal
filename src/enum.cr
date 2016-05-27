@@ -87,7 +87,7 @@ struct Enum
   include Comparable(self)
 
   # Appends a String representation of this enum member to the given IO. See `to_s`.
-  macro def to_s(io : IO) : Nil
+  def to_s(io : IO) : Nil
     {% if @type.has_attribute?("Flags") %}
       if value == 0
         io << "None"
@@ -125,7 +125,7 @@ struct Enum
   #
   # Color.new(10).to_s # => "10"
   # ```
-  macro def to_s : String
+  def to_s : String
     {% if @type.has_attribute?("Flags") %}
       String.build { |io| to_s(io) }
     {% else %}
@@ -279,7 +279,7 @@ struct Enum
   # ```
   # Color.names # => ["Red", "Green", "Blue"]
   # ```
-  macro def self.names : Array(String)
+  def self.names : Array(String)
     {% if @type.has_attribute?("Flags") %}
       {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map &.stringify }}
     {% else %}
@@ -292,7 +292,7 @@ struct Enum
   # ```
   # Color.values # => [Color::Red, Color::Green, Color::Blue]
   # ```
-  macro def self.values : Array(self)
+  def self.values : Array(self)
     {% if @type.has_attribute?("Flags") %}
       {{ @type.constants.select { |e| e.stringify != "None" && e.stringify != "All" }.map { |e| "#{@type}::#{e.id}".id } }}
     {% else %}
@@ -309,7 +309,7 @@ struct Enum
   # Color.from_value?(2) # => Color::Blue
   # Color.from_value?(3) # => nil
   # ```
-  macro def self.from_value?(value) : self | Nil
+  def self.from_value?(value) : self | Nil
     {% for member in @type.constants %}
       return {{@type}}::{{member}} if {{@type}}::{{member}}.value == value
     {% end %}
@@ -329,7 +329,7 @@ struct Enum
     from_value?(value) || raise "Unknown enum #{self} value: #{value}"
   end
 
-  # macro def self.to_h : Hash(String, self)
+  # def self.to_h : Hash(String, self)
   #   {
   #     {% for member in @type.constants %}
   #       {{member.stringify}} => {{member}},
@@ -359,7 +359,7 @@ struct Enum
   # Color.parse?("BLUE")   # => Color::Blue
   # Color.parse?("Yellow") # => nil
   # ```
-  macro def self.parse?(string) : self?
+  def self.parse?(string) : self?
     {% begin %}
       case string.camelcase
       {% for member in @type.constants %}

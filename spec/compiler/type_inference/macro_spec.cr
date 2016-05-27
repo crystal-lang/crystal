@@ -291,7 +291,7 @@ describe "Type inference: macro" do
           @foo
         end
 
-        macro def ivars_size : Int32
+        def ivars_size : Int32
           {{@type.instance_vars.size}}
         end
       end
@@ -666,7 +666,7 @@ describe "Type inference: macro" do
       end
 
       class Foo
-        macro def method(x : Problem) : Int32
+        def method(x : Problem) : Int32
           {% for ivar in @type.instance_vars %}
             @{{ivar.id}}.method(x)
           {% end %}

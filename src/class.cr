@@ -20,7 +20,7 @@ class Class
   # ```
   # String.name # => "String"
   # ```
-  macro def name : String
+  def name : String
     {{ @type.name.stringify }}
   end
 

@@ -74,7 +74,7 @@ module Crystal
       false
     end
 
-    macro def class_desc : String
+    def class_desc : String
       {{@type.name.split("::").last.id.stringify}}
     end
   end

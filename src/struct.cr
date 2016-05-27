@@ -63,7 +63,7 @@ struct Struct
   # p1 == p2 # => true
   # p1 == p3 # => false
   # ```
-  macro def ==(other : self) : Bool
+  def ==(other : self) : Bool
     {% for ivar in @type.instance_vars %}
       return false unless @{{ivar.id}} == other.@{{ivar.id}}
     {% end %}
@@ -73,7 +73,7 @@ struct Struct
   # Returns a hash value based on this struct's instance variables hash values.
   #
   # See `Object#hash`
-  macro def hash : Int32
+  def hash : Int32
     hash = 0
     {% for ivar in @type.instance_vars %}
       hash = 31 * hash + @{{ivar.id}}.hash.to_i32
@@ -94,7 +94,7 @@ struct Struct
   # p1.to_s    # "Point(@x=1, @y=2)"
   # p1.inspect # "Point(@x=1, @y=2)"
   # ```
-  macro def inspect(io : IO) : Nil
+  def inspect(io : IO) : Nil
     io << {{@type.name.id.stringify}} << "("
     {% for ivar, i in @type.instance_vars %}
       {% if i > 0 %}

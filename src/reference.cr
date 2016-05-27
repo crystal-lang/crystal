@@ -37,7 +37,7 @@ class Reference
     object_id
   end
 
-  macro def inspect(io : IO) : Nil
+  def inspect(io : IO) : Nil
     io << "#<" << {{@type.name.id.stringify}} << ":0x"
     object_id.to_s(16, io)
 

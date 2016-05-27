@@ -573,7 +573,7 @@ describe "Code gen: class" do
   it "notifies superclass recursively on inheritance (#576)" do
     run(%(
       class Class
-        macro def name : String
+        def name : String
           {{ @type.name.stringify }}
         end
 

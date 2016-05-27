@@ -127,7 +127,7 @@ describe "Code gen: macro" do
         1
       end
 
-      macro def foo : Int32
+      def foo : Int32
         {% begin %}
           bar_{{ "baz".id }}
         {% end %}
@@ -153,7 +153,7 @@ describe "Code gen: macro" do
         def initialize(@x : Int32)
         end
 
-        macro def to_s : String
+        def to_s : String
           {{ @type.instance_vars.first.stringify }}
         end
       end
@@ -166,7 +166,7 @@ describe "Code gen: macro" do
   it "expands def macro with @type.instance_vars with subclass" do
     run(%(
       class Reference
-        macro def to_s : String
+        def to_s : String
           {{ @type.instance_vars.last.stringify }}
         end
       end
@@ -188,7 +188,7 @@ describe "Code gen: macro" do
   it "expands def macro with @type.instance_vars with virtual" do
     run(%(
       class Reference
-        macro def to_s : String
+        def to_s : String
           {{ @type.instance_vars.last.stringify }}
         end
       end
@@ -213,7 +213,7 @@ describe "Code gen: macro" do
         def initialize(@x : Int32)
         end
 
-        macro def to_s : String
+        def to_s : String
           {{@type.name.stringify}}
         end
       end
@@ -242,7 +242,7 @@ describe "Code gen: macro" do
   it "expands def macro with @type.name with virtual" do
     run(%(
       class Reference
-        macro def to_s : String
+        def to_s : String
           {{ @type.name.stringify }}
         end
       end
@@ -260,7 +260,7 @@ describe "Code gen: macro" do
   it "expands def macro with @type.name with virtual (2)" do
     run(%(
       class Reference
-        macro def to_s : String
+        def to_s : String
           {{ @type.name.stringify }}
         end
       end
@@ -278,7 +278,7 @@ describe "Code gen: macro" do
   it "allows overriding macro definition when redefining base class" do
     run(%(
       class Foo
-        macro def inspect : String
+        def inspect : String
           {{@type.name.stringify}}
         end
       end
@@ -350,7 +350,7 @@ describe "Code gen: macro" do
   it "expands @type.name in virtual metaclass (1)" do
     run(%(
       class Class
-        macro def to_s : String
+        def to_s : String
           {{ @type.name.stringify }}
         end
       end
@@ -371,7 +371,7 @@ describe "Code gen: macro" do
   it "expands @type.name in virtual metaclass (2)" do
     run(%(
       class Class
-        macro def to_s : String
+        def to_s : String
           {{ @type.name.stringify }}
         end
       end
@@ -510,7 +510,7 @@ describe "Code gen: macro" do
   it "can refer to @type" do
     run(%(
       class Foo
-        macro def foo : String
+        def foo : String
           {{@type.name.stringify}}
         end
       end
@@ -591,7 +591,7 @@ describe "Code gen: macro" do
     run(%(
       require "prelude"
       class Foo(T, K)
-        macro def self.foo : String
+        def self.foo : String
           {{ @type.type_vars.map(&.stringify) }}.join("-")
         end
       end
@@ -628,7 +628,7 @@ describe "Code gen: macro" do
   it "gets correct class name when there are classes in the middle" do
     run(%(
       class Foo
-        macro def class_desc : String
+        def class_desc : String
           {{@type.name.stringify}}
         end
       end
@@ -776,7 +776,7 @@ describe "Code gen: macro" do
           1
         end
 
-        macro def first_method_name : String
+        def first_method_name : String
           {{ @type.methods.map(&.name.stringify).first }}
         end
       end
@@ -788,7 +788,7 @@ describe "Code gen: macro" do
   it "copies base macro def to sub-subtype even after it was copied to a subtype (#448)" do
     run(%(
       class Object
-        macro def class_name : String
+        def class_name : String
           {{@type.name.stringify}}
         end
       end
@@ -836,7 +836,7 @@ describe "Code gen: macro" do
           $runnables << self
         end
 
-        macro def self.run : Nil
+        def self.run : Nil
           $x << {{@type.name.stringify}}
           nil
         end
@@ -869,7 +869,7 @@ describe "Code gen: macro" do
           bar
         end
 
-        macro def bar : String
+        def bar : String
           {{@type.name.stringify}}
         end
       end
@@ -1312,7 +1312,7 @@ describe "Code gen: macro" do
   it "stringifies type without virtual marker" do
     run(%(
       class Foo
-        macro def foo_m : Int32
+        def foo_m : Int32
           {{ @type }}.foo
         end
 
