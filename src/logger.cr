@@ -78,6 +78,7 @@ class Logger
     @mutex = Mutex.new
   end
 
+  # Calls the *close* method on the object passed to `initialize`
   def close
     return if @closed
     @closed = true
@@ -90,24 +91,35 @@ class Logger
   {% for name in Severity.constants %}
     {{name.id}} = Severity::{{name.id}}
 
+    # Returns `true` if the logger's current severity is lower or equal to `{{name.id}}`.
     def {{name.id.downcase}}?
       level <= Severity::{{name.id}}
     end
 
+    # Logs *message* if the logger's current severity is lower or equal to `{{name.id}}`.
+    # *progname* overrides a default progname set in this logger.
     def {{name.id.downcase}}(message, progname = nil)
       log(Severity::{{name.id}}, message, progname)
     end
 
+    # Logs the message as returned from the given block if the logger's current severity
+    # is lower or equal to `{{name.id}}`. The block is not run if the severity is higher.
+    # *progname* overrides a default progname set in this logger.
     def {{name.id.downcase}}(progname = nil)
       log(Severity::{{name.id}}, progname) { yield }
     end
   {% end %}
 
+  # Logs *message* if *severity* is higher or equal with the logger's current
+  # severity. *progname* overrides a default progname set in this logger.
   def log(severity, message, progname = nil)
     return if severity < level
     write(severity, Time.now, progname || @progname, message)
   end
 
+  # Logs the message as returned from the given block if *severity*
+  # is higher or equal with the loggers current severity. The block is not run
+  # if *severity* is lower. *progname* overrides a default progname set in this logger.
   def log(severity, progname = nil)
     return if severity < level
     write(severity, Time.now, progname || @progname, yield)
