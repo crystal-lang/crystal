@@ -37,7 +37,7 @@ class Markdown::Parser
       return render_code
     end
 
-    if is_horizontal_rule? line
+    if horizontal_rule? line
       return render_horizontal_rule
     end
 
@@ -570,7 +570,7 @@ class Markdown::Parser
     return true
   end
 
-  def is_horizontal_rule?(line)
+  def horizontal_rule?(line)
     non_space_char = nil
     count = 1
 

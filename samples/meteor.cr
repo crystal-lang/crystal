@@ -81,7 +81,7 @@ def make_masks
   res
 end
 
-def is_board_unfeasible(board : UInt64, masks : Masks)
+def board_unfeasible?(board : UInt64, masks : Masks)
   coverable = board
 
   (0...50).select { |i| bm(board, i) == 0 }.each do |i|
@@ -101,7 +101,7 @@ def filter_masks(masks : Masks)
   masks.map do |p|
     p.map do |p2|
       p2.select do |m|
-        !is_board_unfeasible(m, masks)
+        !board_unfeasible?(m, masks)
       end
     end
   end

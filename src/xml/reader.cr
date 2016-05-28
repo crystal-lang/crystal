@@ -33,7 +33,7 @@ struct XML::Reader
     String.new(LibXML.xmlTextReaderConstName(@reader))
   end
 
-  def is_empty_element?
+  def empty_element?
     LibXML.xmlTextReaderIsEmptyElement(@reader) == 1
   end
 

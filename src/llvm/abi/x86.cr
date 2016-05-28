@@ -28,7 +28,7 @@ class LLVM::ABI::X86 < LLVM::ABI
       # http://www.angelcode.com/dev/callconv/callconv.html
       # Clang's ABI handling is in lib/CodeGen/TargetInfo.cpp
 
-      if is_osx || is_windows
+      if osx? || windows?
         case target_data.abi_size(rty)
         when 1 then ret_ty = ret_value(rty, LLVM::Int8)
         when 2 then ret_ty = ret_value(rty, LLVM::Int16)

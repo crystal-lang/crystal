@@ -1,5 +1,5 @@
 # :nodoc:
-struct IO::FdSet
+struct IO::FDSet
   NFDBITS = sizeof(Int32) * 8
 
   def self.from_ios(ios)
@@ -18,7 +18,7 @@ struct IO::FdSet
     @fdset[io.fd / NFDBITS] |= 1 << (io.fd % NFDBITS)
   end
 
-  def is_set(io)
+  def set?(io)
     @fdset[io.fd / NFDBITS] & 1 << (io.fd % NFDBITS) != 0
   end
 
