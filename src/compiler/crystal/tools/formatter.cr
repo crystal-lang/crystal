@@ -704,9 +704,11 @@ module Crystal
             next_needs_indent = true
             has_newlines = true
           else
-            unless last || found_comment
+            if !last && !found_comment
               write " "
               next_needs_indent = false
+            elsif found_comment
+              next_needs_indent = true
             end
           end
         end
