@@ -588,8 +588,8 @@ describe "Type inference: generic class" do
         end
       end
 
-      fooA = ClsA.new
-      fooA.c.pos
+      foo = ClsA.new
+      foo.c.pos
       )) { int64 }
   end
 

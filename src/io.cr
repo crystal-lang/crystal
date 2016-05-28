@@ -112,9 +112,9 @@ module IO
     end
     nfds += 1
 
-    read_fdset = FdSet.from_ios(read_ios)
-    write_fdset = FdSet.from_ios(write_ios)
-    error_fdset = FdSet.from_ios(error_ios)
+    read_fdset = FDSet.from_ios(read_ios)
+    write_fdset = FDSet.from_ios(write_ios)
+    error_fdset = FDSet.from_ios(error_ios)
 
     if timeout_sec
       sec = LibC::TimeT.new(timeout_sec)
@@ -146,13 +146,13 @@ module IO
     else
       ios = [] of IO
       read_ios.try &.each do |io|
-        ios << io if read_fdset.is_set(io)
+        ios << io if read_fdset.set?(io)
       end
       write_ios.try &.each do |io|
-        ios << io if write_fdset.is_set(io)
+        ios << io if write_fdset.set?(io)
       end
       error_ios.try &.each do |io|
-        ios << io if error_fdset.is_set(io)
+        ios << io if error_fdset.set?(io)
       end
       ios
     end
