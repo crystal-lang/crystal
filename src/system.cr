@@ -1,4 +1,4 @@
-require "c/sys/socket"
+require "c/unistd"
 
 module System
   # Returns the hostname
