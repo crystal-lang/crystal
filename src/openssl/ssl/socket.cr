@@ -7,7 +7,7 @@ class OpenSSL::SSL::Socket
 
   getter? closed : Bool
 
-  def initialize(io, mode = :client, context = Context.default, @sync_close : Bool = false)
+  def initialize(io, mode = :client, context = Context.default, @sync_close : Bool = false, hostname : String? = nil)
     @closed = false
     @ssl = LibSSL.ssl_new(context)
     unless @ssl
@@ -17,17 +17,29 @@ class OpenSSL::SSL::Socket
     LibSSL.ssl_set_bio(@ssl, @bio, @bio)
 
     if mode == :client
+      self.hostname = hostname if hostname
       ret = LibSSL.ssl_connect(@ssl)
       unless ret == 1
         raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
       end
     else
+      raise ArgumentError.new("hostname has no meaning in server mode") if hostname
       ret = LibSSL.ssl_accept(@ssl)
       unless ret == 1
         raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
       end
     end
+  end
 
+  # Calling this for server or after connect has no effect
+  private def hostname=(hostname : String)
+    # Macro from OpenSSL: SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
+    LibSSL.ssl_ctrl(
+      @ssl,
+      LibSSL::SSLCtrl::SET_TLSEXT_HOSTNAME,
+      LibSSL::TLSExt::NAMETYPE_host_name,
+      hostname.to_unsafe.as(Pointer(Void))
+    )
   end
 
   def finalize

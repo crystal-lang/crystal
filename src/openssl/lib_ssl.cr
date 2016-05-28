@@ -3,6 +3,7 @@ require "./lib_crypto"
 @[Link("ssl")]
 lib LibSSL
   alias Int = LibC::Int
+  alias Long = LibC::Long
 
   type SSLMethod = Void*
   type SSLContext = Void*
@@ -23,6 +24,14 @@ lib LibSSL
     ZERO_RETURN      = 6
     WANT_CONNECT     = 7
     WANT_ACCEPT      = 8
+  end
+
+  enum SSLCtrl : Int
+    SET_TLSEXT_HOSTNAME = 55
+  end
+
+  enum TLSExt : Long
+    NAMETYPE_host_name = 0
   end
 
   fun ssl_load_error_strings = SSL_load_error_strings
@@ -54,6 +63,7 @@ lib LibSSL
   fun ssl_ctx_use_certificate_chain_file = SSL_CTX_use_certificate_chain_file(ctx : SSLContext, file : UInt8*) : Int
   fun ssl_ctx_use_privatekey_file = SSL_CTX_use_PrivateKey_file(ctx : SSLContext, file : UInt8*, filetype : SSLFileType) : Int
   fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
+  fun ssl_ctrl = SSL_ctrl(handle : SSL, cmd : Int, larg : Long, parg : Void*) : Long
 end
 
 LibSSL.ssl_library_init
