@@ -78,6 +78,7 @@ class Logger
     @mutex = Mutex.new
   end
 
+  # Close the logging device
   def close
     return if @closed
     @closed = true
@@ -103,11 +104,14 @@ class Logger
     end
   {% end %}
 
+  # Log a message if the given severity is high enough
   def log(severity, message, progname = nil)
     return if severity < level
     write(severity, Time.now, progname || @progname, message)
   end
 
+  # Log a message if the given severity is high enough. The given code block
+  # is called to get a message string.
   def log(severity, progname = nil)
     return if severity < level
     write(severity, Time.now, progname || @progname, yield)
