@@ -10,14 +10,24 @@ class OpenSSL::SSL::Socket
   def initialize(io, mode = :client, context = Context.default, @sync_close : Bool = false)
     @closed = false
     @ssl = LibSSL.ssl_new(context)
+    unless @ssl
+      raise OpenSSL::Error.new("SSL_new")
+    end
     @bio = BIO.new(io)
     LibSSL.ssl_set_bio(@ssl, @bio, @bio)
 
     if mode == :client
-      LibSSL.ssl_connect(@ssl)
+      ret = LibSSL.ssl_connect(@ssl)
+      unless ret == 1
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
+      end
     else
-      LibSSL.ssl_accept(@ssl)
+      ret = LibSSL.ssl_accept(@ssl)
+      unless ret == 1
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+      end
     end
+
   end
 
   def finalize
@@ -29,14 +39,21 @@ class OpenSSL::SSL::Socket
 
     count = slice.size
     return 0 if count == 0
-    LibSSL.ssl_read(@ssl, slice.pointer(count), count)
+    LibSSL.ssl_read(@ssl, slice.pointer(count), count).tap do |bytes|
+      unless bytes > 0
+        raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+      end
+    end
   end
 
   def write(slice : Slice(UInt8))
     check_open
 
     count = slice.size
-    LibSSL.ssl_write(@ssl, slice.pointer(count), count)
+    bytes = LibSSL.ssl_write(@ssl, slice.pointer(count), count)
+    unless bytes > 0
+      raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_write")
+    end
     nil
   end
 
@@ -49,7 +66,12 @@ class OpenSSL::SSL::Socket
     @closed = true
 
     begin
-      while LibSSL.ssl_shutdown(@ssl) == 0; end
+      loop do
+        ret = LibSSL.ssl_shutdown(@ssl)
+        break if ret == 1
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
+        # ret == 0, retry
+      end
     rescue IO::Error
     ensure
       @bio.io.close if @sync_close

@@ -13,7 +13,20 @@ lib LibSSL
     ASN1 = 2
   end
 
+  enum SSLError : Int
+    NONE             = 0
+    SSL              = 1
+    WANT_READ        = 2
+    WANT_WRITE       = 3
+    WANT_X509_LOOKUP = 4
+    SYSCALL          = 5
+    ZERO_RETURN      = 6
+    WANT_CONNECT     = 7
+    WANT_ACCEPT      = 8
+  end
+
   fun ssl_load_error_strings = SSL_load_error_strings
+  fun ssl_get_error = SSL_get_error(handle : SSL, ret : Int) : SSLError
   fun ssl_library_init = SSL_library_init
   fun sslv23_method = SSLv23_method : SSLMethod
   fun ssl_ctx_new = SSL_CTX_new(method : SSLMethod) : SSLContext
