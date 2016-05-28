@@ -44,7 +44,6 @@ lib LibC
   fun accept(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*) : Int
   fun bind(x0 : Int, x1 : Sockaddr*, x2 : SocklenT) : Int
   fun connect(x0 : Int, x1 : Sockaddr*, x2 : SocklenT) : Int
-  fun gethostname(name : Char*, len : SizeT) : Int
   fun getpeername(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*) : Int
   fun getsockname(x0 : Int, x1 : Sockaddr*, x2 : SocklenT*) : Int
   fun getsockopt(x0 : Int, x1 : Int, x2 : Int, x3 : Void*, x4 : SocklenT*) : Int
