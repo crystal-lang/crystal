@@ -11,12 +11,12 @@
 
 class BasicBlock
   def initialize(@name : Int32)
-    @inEdges = [] of BasicBlock
-    @outEdges = [] of BasicBlock
+    @in_edges = [] of BasicBlock
+    @out_edges = [] of BasicBlock
   end
 
-  property :inEdges
-  property :outEdges
+  property :in_edges
+  property :out_edges
 
   def to_s(io)
     io << "BB#"
@@ -28,128 +28,128 @@ struct BasicBlockEdge
   @from : BasicBlock
   @to : BasicBlock
 
-  def initialize(cfg, fromName, toName)
-    @from = cfg.createNode(fromName)
-    @to = cfg.createNode(toName)
-    @from.outEdges << @to
-    @to.inEdges << @from
+  def initialize(cfg, from_name, to_name)
+    @from = cfg.create_node(from_name)
+    @to = cfg.create_node(to_name)
+    @from.out_edges << @to
+    @to.in_edges << @from
   end
 
-  def self.add(cfg, fromName, toName)
-    edge = new(cfg, fromName, toName)
-    cfg.addEdge(edge)
+  def self.add(cfg, from_name, to_name)
+    edge = new(cfg, from_name, to_name)
+    cfg.add_edge(edge)
   end
 end
 
 class CFG
   def initialize
-    @basicBlockMap = {} of Int32 => BasicBlock
-    @edgeList = [] of BasicBlockEdge
+    @basic_block_map = {} of Int32 => BasicBlock
+    @edge_list = [] of BasicBlockEdge
   end
 
-  property startNode : BasicBlock?
-  property :basicBlockMap
+  property start_node : BasicBlock?
+  property :basic_block_map
 
-  def createNode(name)
-    node = (@basicBlockMap[name] ||= BasicBlock.new(name))
-    @startNode ||= node
+  def create_node(name)
+    node = (@basic_block_map[name] ||= BasicBlock.new(name))
+    @start_node ||= node
     node
   end
 
-  def addEdge(edge)
-    @edgeList << edge
+  def add_edge(edge)
+    @edge_list << edge
   end
 
-  def getNumNodes
-    @basicBlockMap.size
+  def num_nodes
+    @basic_block_map.size
   end
 end
 
 class SimpleLoop
   def initialize
-    @basicBlocks = Set(BasicBlock).new
+    @basic_blocks = Set(BasicBlock).new
     @children = Set(SimpleLoop).new
     @parent = nil
     @header = nil
 
-    @isRoot = false
-    @isReducible = true
+    @root = false
+    @reducible = true
     @counter = 0
-    @nestingLevel = 0
-    @depthLevel = 0
+    @nesting_level = 0
+    @depth_level = 0
   end
 
   property :counter
-  property :isReducible
-  property :isRoot
-  property :parent
-  property :depthLevel
+  property? :reducible
+  property? :root
+  getter :parent
+  property :depth_level
   property :children
-  property :nestingLevel
+  getter :nesting_level
 
-  def addNode(bb)
-    @basicBlocks.add(bb)
+  def add_node(bb)
+    @basic_blocks.add(bb)
   end
 
-  def addChildLoop(l)
+  def add_child_loop(l)
     @children.add(l)
   end
 
-  def setParent(parent : SimpleLoop)
+  def parent=(parent : SimpleLoop)
     @parent = parent
-    parent.addChildLoop(self)
+    parent.add_child_loop(self)
   end
 
-  def setHeader(bb : BasicBlock)
-    @basicBlocks.add(bb)
+  def header=(bb : BasicBlock)
+    @basic_blocks.add(bb)
     @header = bb
   end
 
-  def setNestingLevel(level)
-    @nestingLevel = level
-    @isRoot = true if level == 0
+  def nesting_level=(level)
+    @nesting_level = level
+    @root = true if level == 0
   end
 end
 
-$loopCounter = 0
+$loop_counter = 0
 
 class LSG
   @root : SimpleLoop
 
   def initialize
     @loops = [] of SimpleLoop
-    @root = createNewLoop
-    @root.setNestingLevel(0)
-    addLoop(@root)
+    @root = create_new_loop
+    @root.nesting_level = 0
+    add_loop(@root)
   end
 
-  def createNewLoop
+  def create_new_loop
     s = SimpleLoop.new
-    s.counter = $loopCounter += 1
+    s.counter = $loop_counter += 1
     s
   end
 
-  def addLoop(l)
+  def add_loop(l)
     @loops << l
   end
 
-  def calculateNestingLevel
+  def calculate_nesting_level
     @loops.each do |liter|
-      liter.setParent(@root) if !liter.isRoot && liter.parent == nil
+      liter.parent = @root if !liter.root? && liter.parent == nil
     end
 
-    calculateNestingLevelRec(@root, 0)
+    calculate_nesting_level_rec(@root, 0)
   end
 
-  def calculateNestingLevelRec(l, depth)
-    l.depthLevel = depth
+  def calculate_nesting_level_rec(l, depth)
+    l.depth_level = depth
     l.children.each do |liter|
-      calculateNestingLevelRec(liter, depth + 1)
-      l.setNestingLevel(Math.max(l.nestingLevel, 1 + liter.nestingLevel))
+      calculate_nesting_level_rec(liter, depth + 1)
+      l.nesting_level = Math.max(l.nesting_level, 1 + liter.nesting_level)
     end
   end
 
-  def getNumLoops
+  def num_loops
     @loops.size
   end
 end
@@ -159,37 +159,37 @@ class UnionFindNode
     @parent = nil
     @bb = nil
     @l = nil
-    @dfsNumber = 0
+    @dfs_number = 0
   end
 
-  def initNode(bb, dfsNumber)
+  def init_node(bb, dfs_number)
     @parent = self
     @bb = bb
-    @dfsNumber = dfsNumber
+    @dfs_number = dfs_number
   end
 
   property bb : BasicBlock?
   property parent : self?
-  property dfsNumber : Int32
+  property dfs_number : Int32
   property l : SimpleLoop?
 
-  def findSet
-    nodeList = [] of UnionFindNode
+  def find_set
+    node_list = [] of UnionFindNode
 
     node = self
     while node != node.parent
       parent = node.parent.not_nil!
-      nodeList << node if parent != parent.parent
+      node_list << node if parent != parent.parent
       node = parent
     end
 
-    nodeList.each { |iter| iter.parent = node.parent }
+    node_list.each { |iter| iter.parent = node.parent }
 
     node
   end
 
-  def union(unionFindNode)
-    @parent = unionFindNode
+  def union(union_find_node)
+    @parent = union_find_node
   end
 end
 
@@ -211,32 +211,32 @@ class HavlakLoopFinder
   def initialize(@cfg : CFG, @lsg : LSG)
   end
 
-  def isAncestor(w, v, last)
+  def ancestor?(w, v, last)
     w <= v <= last[w]
   end
 
-  def dfs(currentNode, nodes, number, last, current)
-    nodes[current].initNode(currentNode, current)
-    number[currentNode] = current
+  def dfs(current_node, nodes, number, last, current)
+    nodes[current].init_node(current_node, current)
+    number[current_node] = current
 
     lastid = current
-    currentNode.outEdges.each do |target|
+    current_node.out_edges.each do |target|
       if number[target] == UNVISITED
         lastid = dfs(target, nodes, number, last, lastid + 1)
       end
     end
 
-    last[number[currentNode]] = lastid
+    last[number[current_node]] = lastid
     lastid
   end
 
-  def findLoops
-    startNode = @cfg.startNode
-    return 0 unless startNode
-    size = @cfg.getNumNodes
+  def find_loops
+    start_node = @cfg.start_node
+    return 0 unless start_node
+    size = @cfg.num_nodes
 
-    nonBackPreds = Array.new(size) { Set(Int32).new }
-    backPreds = Array.new(size) { Array(Int32).new }
+    non_back_preds = Array.new(size) { Set(Int32).new }
+    back_preds = Array.new(size) { Array(Int32).new }
     number = {} of BasicBlock => Int32
     header = Array.new(size, 0)
     types = Array.new(size, 0)
@@ -248,8 +248,8 @@ class HavlakLoopFinder
     #   - depth-first traversal and numbering.
     #   - unreached BB's are marked as dead.
     #
-    @cfg.basicBlockMap.each_value { |v| number[v] = UNVISITED }
-    dfs(startNode, nodes, number, last, 0)
+    @cfg.basic_block_map.each_value { |v| number[v] = UNVISITED }
+    dfs(start_node, nodes, number, last, 0)
 
     # Step b:
     #   - iterate over all nodes.
@@ -258,22 +258,22 @@ class HavlakLoopFinder
     #   from non-descendants (following Tarjan).
     #
     #   - check incoming edges 'v' and add them to either
-    #     - the list of backedges (backPreds) or
-    #     - the list of non-backedges (nonBackPreds)
+    #     - the list of backedges (back_preds) or
+    #     - the list of non-backedges (non_back_preds)
     #
     size.times do |w|
       header[w] = 0
       types[w] = BB_NONHEADER
 
-      nodeW = nodes[w].bb
-      if nodeW
-        nodeW.inEdges.each do |nodeV|
+      node_w = nodes[w].bb
+      if node_w
+        node_w.in_edges.each do |nodeV|
           v = number[nodeV]
           if v != UNVISITED
-            if isAncestor(w, v, last)
-              backPreds[w] << v
+            if ancestor?(w, v, last)
+              back_preds[w] << v
             else
-              nonBackPreds[w].add(v)
+              non_back_preds[w].add(v)
             end
           end
         end
@@ -299,30 +299,30 @@ class HavlakLoopFinder
     #
     (size - 1).downto(0) do |w|
       # this is 'P' in Havlak's paper
-      nodePool = [] of UnionFindNode
+      node_pool = [] of UnionFindNode
 
-      nodeW = nodes[w].bb
-      if nodeW # dead BB
+      node_w = nodes[w].bb
+      if node_w # dead BB
 
         # Step d:
-        backPreds[w].each do |v|
+        back_preds[w].each do |v|
           if v != w
-            nodePool << nodes[v].findSet
+            node_pool << nodes[v].find_set
           else
             types[w] = BB_SELF
           end
         end
 
-        # Copy nodePool to workList.
+        # Copy node_pool to work_list.
         #
-        workList = nodePool.dup
+        work_list = node_pool.dup
 
-        types[w] = BB_REDUCIBLE if nodePool.size != 0
+        types[w] = BB_REDUCIBLE if node_pool.size != 0
 
         # work the list...
         #
-        while !workList.empty?
-          x = workList.shift
+        while !work_list.empty?
+          x = work_list.shift
 
           # Step e:
           #
@@ -336,20 +336,20 @@ class HavlakLoopFinder
           # The algorithm has degenerated. Break and
           # return in this case.
           #
-          nonBackSize = nonBackPreds[x.dfsNumber].size
-          return 0 if nonBackSize > MAXNONBACKPREDS
+          non_back_size = non_back_preds[x.dfs_number].size
+          return 0 if non_back_size > MAXNONBACKPREDS
 
-          nonBackPreds[x.dfsNumber].each do |iter|
+          non_back_preds[x.dfs_number].each do |iter|
             y = nodes[iter]
-            ydash = y.findSet
+            ydash = y.find_set
 
-            if !isAncestor(w, ydash.dfsNumber, last)
+            if !ancestor?(w, ydash.dfs_number, last)
               types[w] = BB_IRREDUCIBLE
-              nonBackPreds[w].add(ydash.dfsNumber)
+              non_back_preds[w].add(ydash.dfs_number)
             else
-              if ydash.dfsNumber != w && !nodePool.includes?(ydash)
-                workList << ydash
-                nodePool << ydash
+              if ydash.dfs_number != w && !node_pool.includes?(ydash)
+                work_list << ydash
+                node_pool << ydash
               end
             end
           end
@@ -358,49 +358,49 @@ class HavlakLoopFinder
         # Collapse/Unionize nodes in a SCC to a single node
         # For every SCC found, create a loop descriptor and link it in.
         #
-        if (nodePool.size > 0) || (types[w] == BB_SELF)
-          l = @lsg.createNewLoop
+        if (node_pool.size > 0) || (types[w] == BB_SELF)
+          l = @lsg.create_new_loop
 
-          l.setHeader(nodeW)
-          l.isReducible = types[w] != BB_IRREDUCIBLE
+          l.header = node_w
+          l.reducible = types[w] != BB_IRREDUCIBLE
 
           # At this point, one can set attributes to the loop, such as:
           #
           # the bottom node:
-          #    iter  = backPreds(w).begin();
+          #    iter  = back_preds(w).begin();
           #    loop bottom is: nodes(iter).node;
           #
           # the number of backedges:
-          #    backPreds(w).size()
+          #    back_preds(w).size()
           #
           # whether this loop is reducible:
           #    types(w) != BB_IRREDUCIBLE
           #
           nodes[w].l = l
 
-          nodePool.each do |node|
+          node_pool.each do |node|
             # Add nodes to loop descriptor.
-            header[node.dfsNumber] = w
+            header[node.dfs_number] = w
             node.union(nodes[w])
 
             # Nested loops are not added, but linked together.
             if node_l = node.l
-              node_l.setParent(l)
+              node_l.parent = l
             else
-              l.addNode(node.bb.not_nil!)
+              l.add_node(node.bb.not_nil!)
             end
           end
 
-          @lsg.addLoop(l)
+          @lsg.add_loop(l)
         end
       end
     end
 
-    @lsg.getNumLoops
+    @lsg.num_loops
   end
 end
 
-def buildDiamond(start)
+def build_diamond(start)
   bb0 = start
   BasicBlockEdge.add($cfg, bb0, bb0 + 1)
   BasicBlockEdge.add($cfg, bb0, bb0 + 2)
@@ -409,28 +409,28 @@ def buildDiamond(start)
   bb0 + 3
 end
 
-def buildConnect(_start, _end)
+def build_connect(_start, _end)
   BasicBlockEdge.add($cfg, _start, _end)
 end
 
-def buildStraight(start, n)
+def build_straight(start, n)
   n.times do |i|
-    buildConnect(start + i, start + i + 1)
+    build_connect(start + i, start + i + 1)
   end
   start + n
 end
 
-def buildBaseLoop(from)
-  header = buildStraight(from, 1)
-  diamond1 = buildDiamond(header)
-  d11 = buildStraight(diamond1, 1)
-  diamond2 = buildDiamond(d11)
-  footer = buildStraight(diamond2, 1)
-  buildConnect(diamond2, d11)
-  buildConnect(diamond1, header)
+def build_base_loop(from)
+  header = build_straight(from, 1)
+  diamond1 = build_diamond(header)
+  d11 = build_straight(diamond1, 1)
+  diamond2 = build_diamond(d11)
+  footer = build_straight(diamond2, 1)
+  build_connect(diamond2, d11)
+  build_connect(diamond1, header)
 
-  buildConnect(footer, from)
-  buildStraight(footer, 1)
+  build_connect(footer, from)
+  build_straight(footer, 1)
 end
 
 $cfg = CFG.new
@@ -439,46 +439,46 @@ puts "Welcome to LoopTesterApp, Crystal edition"
 
 puts "Constructing Simple CFG..."
 
-$cfg.createNode(0) # top
-buildBaseLoop(0)
-$cfg.createNode(1) # bottom
-buildConnect(0, 2)
+$cfg.create_node(0) # top
+build_base_loop(0)
+$cfg.create_node(1) # bottom
+build_connect(0, 2)
 
 # execute loop recognition 15000 times to force compilation
 puts "15000 dummy loops"
 15000.times do
-  HavlakLoopFinder.new($cfg, LSG.new).findLoops
+  HavlakLoopFinder.new($cfg, LSG.new).find_loops
 end
 
 puts "Constructing CFG..."
 n = 2
 
 10.times do |parlooptrees|
-  $cfg.createNode(n + 1)
-  buildConnect(2, n + 1)
+  $cfg.create_node(n + 1)
+  build_connect(2, n + 1)
   n = n + 1
   100.times do |i|
     top = n
-    n = buildStraight(n, 1)
-    25.times { n = buildBaseLoop(n) }
+    n = build_straight(n, 1)
+    25.times { n = build_base_loop(n) }
 
-    bottom = buildStraight(n, 1)
-    buildConnect(n, top)
+    bottom = build_straight(n, 1)
+    build_connect(n, top)
     n = bottom
   end
 
-  buildConnect(n, 1)
+  build_connect(n, 1)
 end
 
 puts "Performing Loop Recognition\n1 Iteration"
-loops = HavlakLoopFinder.new($cfg, LSG.new).findLoops
+loops = HavlakLoopFinder.new($cfg, LSG.new).find_loops
 
 puts "Another 50 iterations..."
 
 sum = 0
 50.times do |i|
   print "."
-  sum += HavlakLoopFinder.new($cfg, LSG.new).findLoops
+  sum += HavlakLoopFinder.new($cfg, LSG.new).find_loops
 end
 
 puts "\nFound #{loops} loops (including artificial root node) (#{sum})\n"
