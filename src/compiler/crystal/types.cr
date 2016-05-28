@@ -186,7 +186,7 @@ module Crystal
       false
     end
 
-    def is_implicitly_converted_in_c_to?(expected_type)
+    def implicitly_converted_in_c_to?(expected_type)
       case self
       when NilType
         # nil will be sent as pointer
@@ -245,7 +245,7 @@ module Crystal
       end
     end
 
-    def is_subclass_of?(type)
+    def subclass_of?(type)
       self == type
     end
 
@@ -660,8 +660,8 @@ module Crystal
       defs = (@defs ||= {} of String => Array(DefWithMetadata))
       list = defs[a_def.name] ||= [] of DefWithMetadata
       list.each_with_index do |ex_item, i|
-        if item.is_restriction_of?(ex_item, self)
-          if ex_item.is_restriction_of?(item, self)
+        if item.restriction_of?(ex_item, self)
+          if ex_item.restriction_of?(item, self)
             list[i] = item
             a_def.previous = ex_item
             ex_item.def.next = a_def
@@ -1026,8 +1026,8 @@ module Crystal
       end
     end
 
-    def is_subclass_of?(type)
-      super || superclass.try &.is_subclass_of?(type)
+    def subclass_of?(type)
+      super || superclass.try &.subclass_of?(type)
     end
 
     def add_def(a_def)
@@ -1187,7 +1187,7 @@ module Crystal
 
     def covariant?(other_type)
       other_type = other_type.base_type if other_type.is_a?(VirtualType)
-      is_subclass_of?(other_type) || super
+      subclass_of?(other_type) || super
     end
 
     def add_instance_var_initializer(name, value, meta_vars)
@@ -1718,8 +1718,8 @@ module Crystal
       @metaclass ||= GenericClassInstanceMetaclassType.new(program, self)
     end
 
-    def is_subclass_of?(type)
-      super || generic_class.is_subclass_of?(type)
+    def subclass_of?(type)
+      super || generic_class.subclass_of?(type)
     end
 
     def implements?(other_type)
@@ -2980,7 +2980,7 @@ module Crystal
     delegate :abstract?, base_type
     delegate allocated?, base_type
     delegate :"allocated=", base_type
-    delegate is_subclass_of?, base_type
+    delegate subclass_of?, base_type
     delegate implements?, base_type
     delegate covariant?, base_type
     delegate ancestors, base_type

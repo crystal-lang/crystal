@@ -291,10 +291,10 @@ module Crystal
         @str << decorate_call(node, "=")
         @str << " "
         node.args[1].accept self
-      elsif node_obj && !is_alpha_or_underscore(node.name) && node.args.size == 0
+      elsif node_obj && !alpha_or_underscore?(node.name) && node.args.size == 0
         @str << decorate_call(node, node.name)
         in_parenthesis(need_parens, node_obj)
-      elsif node_obj && !is_alpha_or_underscore(node.name) && node.args.size == 1
+      elsif node_obj && !alpha_or_underscore?(node.name) && node.args.size == 1
         in_parenthesis(need_parens, node_obj)
 
         @str << " "
@@ -382,7 +382,7 @@ module Crystal
       when Call
         case obj.args.size
         when 0
-          !is_alpha_or_underscore(obj.name)
+          !alpha_or_underscore?(obj.name)
         else
           true
         end
@@ -474,11 +474,11 @@ module Crystal
       str
     end
 
-    def is_alpha(string)
+    def alpha?(string)
       string[0].alpha?
     end
 
-    def is_alpha_or_underscore(string)
+    def alpha_or_underscore?(string)
       string[0].alpha? || string[0] == '_'
     end
 

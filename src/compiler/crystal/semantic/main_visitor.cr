@@ -1988,7 +1988,7 @@ module Crystal
       unaliased_type = expected_type.remove_alias
 
       return if actual_type.compatible_with?(unaliased_type)
-      return if actual_type.is_implicitly_converted_in_c_to?(unaliased_type)
+      return if actual_type.implicitly_converted_in_c_to?(unaliased_type)
 
       case unaliased_type
       when IntegerType
@@ -2090,7 +2090,7 @@ module Crystal
         types = node_types.map do |type|
           type.accept self
           instance_type = type.type.instance_type
-          unless instance_type.is_subclass_of?(@mod.exception)
+          unless instance_type.subclass_of?(@mod.exception)
             type.raise "#{type} is not a subclass of Exception"
           end
           instance_type

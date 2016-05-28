@@ -62,7 +62,7 @@ module Crystal
     end
 
     def parse_expressions_internal
-      if is_end_token
+      if end_token?
         return Nop.new
       end
 
@@ -71,7 +71,7 @@ module Crystal
       slash_is_regex!
       skip_statement_end
 
-      if is_end_token
+      if end_token?
         return exp
       end
 
@@ -81,7 +81,7 @@ module Crystal
       loop do
         exps << parse_multi_assign
         skip_statement_end
-        break if is_end_token
+        break if end_token?
       end
 
       Expressions.from(exps)
@@ -99,7 +99,7 @@ module Crystal
       when :NEWLINE, :";"
         return last
       else
-        if is_end_token
+        if end_token?
           return last
         else
           unexpected_token
@@ -113,7 +113,7 @@ module Crystal
       assign_index = -1
 
       while @token.type == :","
-        if assign_index == -1 && is_multi_assign_middle?(last)
+        if assign_index == -1 && multi_assign_middle?(last)
           assign_index = i
         end
 
@@ -124,7 +124,7 @@ module Crystal
         skip_space
       end
 
-      if assign_index == -1 && is_multi_assign_middle?(last)
+      if assign_index == -1 && multi_assign_middle?(last)
         assign_index = i
       end
 
@@ -158,7 +158,7 @@ module Crystal
       parse_expression_suffix multi, @token.location
     end
 
-    def is_multi_assign_middle?(exp)
+    def multi_assign_middle?(exp)
       case exp
       when Assign
         true
@@ -234,7 +234,7 @@ module Crystal
         when :")", :",", :";", :"%}", :"}}", :NEWLINE, :EOF
           break
         else
-          if is_end_token
+          if end_token?
             break
           else
             unexpected_token
@@ -3480,7 +3480,7 @@ module Crystal
         name = @token.type.to_s
       end
 
-      is_var = is_var?(name)
+      is_var = var?(name)
 
       @wants_regex = false
       next_token
@@ -3796,7 +3796,7 @@ module Crystal
       args = [] of ASTNode
       end_location = nil
 
-      while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :")" && @token.type != :":" && !is_end_token
+      while @token.type != :NEWLINE && @token.type != :";" && @token.type != :EOF && @token.type != :")" && @token.type != :":" && !end_token?
         if call_block_arg_follows?
           return parse_call_block_arg(args, false)
         end
@@ -4565,7 +4565,7 @@ module Crystal
       expressions = [] of ASTNode
       while true
         skip_statement_end
-        break if is_end_token
+        break if end_token?
         expressions << parse_lib_body_exp
       end
       expressions
@@ -4977,7 +4977,7 @@ module Crystal
       node
     end
 
-    def is_end_token
+    def end_token?
       case @token.type
       when :"}", :"]", :"%}", :EOF
         return true
@@ -5127,7 +5127,7 @@ module Crystal
       unexpected_token
     end
 
-    def is_var?(name)
+    def var?(name)
       return true if @in_macro_expression
 
       name = name.to_s
