@@ -192,4 +192,14 @@ describe "Type inference: double splat" do
       ),
       "no overload matches"
   end
+
+  it "matches named args producing an empty double splat (#2678)" do
+    assert_type(%(
+      def test(x, **kwargs)
+        kwargs
+      end
+
+      test(x: 7)
+      )) { named_tuple_of({} of String => Type) }
+  end
 end

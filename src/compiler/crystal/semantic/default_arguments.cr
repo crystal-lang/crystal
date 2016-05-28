@@ -5,7 +5,7 @@ class Crystal::Def
     # If the named arguments cover all arguments with a default value and
     # they come in the same order, we can safely return this def without
     # needing a useless indirection.
-    if !splat_index && named_args && args_size + named_args.size == args.size
+    if !splat_index && !double_splat && named_args && args_size + named_args.size == args.size
       all_match = true
       named_args.each_with_index do |named_arg, i|
         arg = args[args_size + i]
