@@ -1,7 +1,8 @@
 require "c/sys/mman"
 
+# :nodoc:
 @[NoInline]
-fun get_stack_top : Void*
+fun _fiber_get_stack_top : Void*
   dummy = uninitialized Int32
   pointerof(dummy).as(Void*)
 end
@@ -61,7 +62,7 @@ class Fiber
   def initialize
     @proc = Proc(Void).new { }
     @stack = Pointer(Void).null
-    @stack_top = get_stack_top
+    @stack_top = _fiber_get_stack_top
     @stack_bottom = LibGC.stackbottom
 
     @@first_fiber = @@last_fiber = self
