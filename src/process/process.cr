@@ -13,7 +13,11 @@ class Process
     LibC.getpid
   end
 
-  def self.getpgid(pid : Int32) : LibC::PidT
+  def self.pgid : LibC::PidT
+    pgid(0)
+  end
+
+  def self.pgid(pid : Int32) : LibC::PidT
     ret = LibC.getpgid(pid)
     raise Errno.new(ret) if ret < 0
     ret

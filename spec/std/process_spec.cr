@@ -154,8 +154,9 @@ describe Process do
 
   it "gets the pgid of a process id" do
     process = fork { loop { } }
-    Process.getpgid(process.pid).should be_a(Int32)
+    Process.pgid(process.pid).should be_a(Int32)
     process.kill(Signal::KILL)
+    Process.pgid.should eq(Process.pgid(Process.pid))
   end
 
   it "can link processes together" do
