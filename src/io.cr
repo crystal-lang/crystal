@@ -706,7 +706,9 @@ module IO
   end
 
   # Reads an instance of the given *type* from this IO using the specified *format*.
-  # This ends up invoking `type.from_io(self, forma)`, so any type defining a `from_io`
+  #
+  # This ends up invoking `type.from_io(self, format)`, so any type defining a
+  # `from_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)`
   # method can be read in this way.
   #
   # See `Int#from_io` and `Float#from_io`.
