@@ -1,4 +1,6 @@
-.PHONY: all spec crystal doc clean
+.PHONY: all spec std_spec compiler_spec doc crystal \
+	all_spec all_compiler_spec all_std_spec \
+	llvm_ext libcrystal deps clean
 
 -include Makefile.local # for optional local options e.g. threads
 
