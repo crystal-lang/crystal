@@ -187,10 +187,16 @@ class HTTP::Server
       until @wants_close
         begin
           request = HTTP::Request.from_io(io)
-        rescue
+        rescue e
+          STDERR.puts "Bug: Unhandled exception while parsing request"
+          e.inspect_with_backtrace(STDERR)
+        end
+
+        unless request
+          response.respond_with_error("Bad Request", 400)
+          response.close
           return
         end
-        break unless request
 
         response.version = request.version
         response.reset
@@ -209,6 +215,11 @@ class HTTP::Server
 
         break unless request.keep_alive?
       end
+    rescue e
+      response.respond_with_error
+      response.close
+      STDERR.puts "Unhandled exception while computing response, make sure to catch all your exceptions"
+      e.inspect_with_backtrace(STDERR)
     ensure
       io.close if must_close
     end
