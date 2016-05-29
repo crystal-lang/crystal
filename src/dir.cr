@@ -151,7 +151,7 @@ class Dir
   # Returns true if the given path exists and is a directory
   def self.exists?(path) : Bool
     if LibC.stat(path.check_no_null_byte, out stat) != 0
-      if Errno.value == Errno::ENOENT
+      if Errno.value == Errno::ENOENT || Errno.value == Errno::ENOTDIR
         return false
       else
         raise Errno.new("stat")
