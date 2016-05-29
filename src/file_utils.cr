@@ -63,8 +63,8 @@ module FileUtils
       Dir.open(src_path) do |dir|
         dir.each do |entry|
           if entry != "." && entry != ".."
-            src = src_path + File::SEPARATOR + entry
-            dest = dest_path + File::SEPARATOR + entry
+            src = File.join(src_path, entry)
+            dest = File.join(dest_path, entry)
             cp_r(src, dest)
           end
         end
@@ -85,7 +85,7 @@ module FileUtils
       Dir.open(path) do |dir|
         dir.each do |entry|
           if entry != "." && entry != ".."
-            src = path + File::SEPARATOR + entry
+            src = File.join(path, entry)
             rm_r(src)
           end
         end
