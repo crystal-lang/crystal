@@ -23,7 +23,7 @@ class JSON::Lexer::IOBased < JSON::Lexer
     @buffer << current_char
   end
 
-  private def number_end
-    @token.raw_value = @buffer.to_s
+  private def number_string
+    @buffer.to_s
   end
 end

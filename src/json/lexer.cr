@@ -27,7 +27,7 @@ abstract class JSON::Lexer
   private abstract def current_char
   private abstract def number_start
   private abstract def append_number_char
-  private abstract def number_end
+  private abstract def number_string
 
   def next_token
     skip_whitespace
@@ -209,6 +209,7 @@ abstract class JSON::Lexer
 
     integer = 0_i64
     negative = false
+    digits = 0
 
     if current_char == '-'
       append_number_char
@@ -222,9 +223,9 @@ abstract class JSON::Lexer
       next_char
       case current_char
       when '.'
-        consume_float(negative, integer)
+        consume_float(negative, integer, digits)
       when 'e', 'E'
-        consume_exponent(negative, integer.to_f64)
+        consume_exponent(negative, integer.to_f64, digits)
       when '0'..'9'
         unexpected_char
       else
@@ -233,6 +234,7 @@ abstract class JSON::Lexer
         number_end
       end
     when '1'..'9'
+      digits = 1
       append_number_char
       integer = (current_char - '0').to_i64
       char = next_char
@@ -240,14 +242,15 @@ abstract class JSON::Lexer
         append_number_char
         integer *= 10
         integer += char - '0'
+        digits += 1
         char = next_char
       end
 
       case char
       when '.'
-        consume_float(negative, integer)
+        consume_float(negative, integer, digits)
       when 'e', 'E'
-        consume_exponent(negative, integer.to_f64)
+        consume_exponent(negative, integer.to_f64, digits)
       else
         @token.type = :INT
         @token.int_value = negative ? -integer : integer
@@ -258,7 +261,7 @@ abstract class JSON::Lexer
     end
   end
 
-  private def consume_float(negative, integer)
+  private def consume_float(negative, integer, digits)
     append_number_char
     divisor = 1_u64
     char = next_char
@@ -272,15 +275,20 @@ abstract class JSON::Lexer
     float = integer.to_f64 / divisor
 
     if char == 'e' || char == 'E'
-      consume_exponent(negative, float)
+      consume_exponent(negative, float, digits)
     else
       @token.type = :FLOAT
-      @token.float_value = negative ? -float : float
+      # If there's a chance of overflow, we parse the raw string
+      if digits >= 18
+        @token.float_value = number_string.to_f64
+      else
+        @token.float_value = negative ? -float : float
+      end
       number_end
     end
   end
 
-  private def consume_exponent(negative, float)
+  private def consume_exponent(negative, float, digits)
     append_number_char
     exponent = 0
     negative_exponent = false
@@ -310,7 +318,13 @@ abstract class JSON::Lexer
 
     exponent = -exponent if negative_exponent
     float *= (10_f64 ** exponent)
-    @token.float_value = negative ? -float : float
+
+    # If there's a chance of overflow, we parse the raw string
+    if digits >= 18
+      @token.float_value = number_string.to_f64
+    else
+      @token.float_value = negative ? -float : float
+    end
 
     number_end
   end
@@ -323,6 +337,10 @@ abstract class JSON::Lexer
   private def next_char(token_type)
     @token.type = token_type
     next_char
+  end
+
+  private def number_end
+    @token.raw_value = number_string
   end
 
   private def unexpected_char(char = current_char)

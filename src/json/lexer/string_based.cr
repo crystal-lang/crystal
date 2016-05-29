@@ -70,7 +70,7 @@ class JSON::Lexer::StringBased < JSON::Lexer
     # Nothing
   end
 
-  private def number_end
-    @token.raw_value = string_range(@number_start, current_pos)
+  private def number_string
+    string_range(@number_start, current_pos)
   end
 end
