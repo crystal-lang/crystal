@@ -12,6 +12,10 @@ class HTTP::LogHandler < HTTP::Handler
     elapsed_text = elapsed_text(elapsed)
 
     @io.puts "#{context.request.method} #{context.request.resource} - #{context.response.status_code} (#{elapsed_text})"
+  rescue e
+    @io.puts "#{context.request.method} #{context.request.resource} - Unhandled exception:"
+    e.inspect_with_backtrace(@io)
+    raise e
   end
 
   private def elapsed_text(elapsed)
