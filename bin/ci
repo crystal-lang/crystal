@@ -71,6 +71,9 @@ prepare_build() {
 with_build_env() {
   command="$1"
 
+  # Ensure non GMT timezone
+  export TZ="America/New_York"
+
   on_linux verify_linux_environment
   on_linux docker run \
     --rm \
