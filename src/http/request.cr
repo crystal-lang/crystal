@@ -54,8 +54,10 @@ class HTTP::Request
   def self.from_io(io)
     request_line = io.gets
     return unless request_line
+    parts = request_line.split
+    return unless parts.size == 3
 
-    method, resource, http_version = request_line.split
+    method, resource, http_version = parts
     HTTP.parse_headers_and_body(io) do |headers, body|
       return new method, resource, headers, body.try &.gets_to_end, http_version
     end
