@@ -504,7 +504,7 @@ class HTTP::Client
 
     ifdef !without_openssl
       if @ssl
-        ssl_socket = OpenSSL::SSL::Socket.new(socket, sync_close: true)
+        ssl_socket = OpenSSL::SSL::Socket.new(socket, sync_close: true, hostname: @host)
         @socket = socket = ssl_socket
       end
     end

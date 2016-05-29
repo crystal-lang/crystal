@@ -7,17 +7,39 @@ class OpenSSL::SSL::Socket
 
   getter? closed : Bool
 
-  def initialize(io, mode = :client, context = Context.default, @sync_close : Bool = false)
+  def initialize(io, mode = :client, context = Context.default, @sync_close : Bool = false, hostname : String? = nil)
     @closed = false
     @ssl = LibSSL.ssl_new(context)
+    unless @ssl
+      raise OpenSSL::Error.new("SSL_new")
+    end
     @bio = BIO.new(io)
     LibSSL.ssl_set_bio(@ssl, @bio, @bio)
 
     if mode == :client
-      LibSSL.ssl_connect(@ssl)
+      self.hostname = hostname if hostname
+      ret = LibSSL.ssl_connect(@ssl)
+      unless ret == 1
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
+      end
     else
-      LibSSL.ssl_accept(@ssl)
+      raise ArgumentError.new("hostname has no meaning in server mode") if hostname
+      ret = LibSSL.ssl_accept(@ssl)
+      unless ret == 1
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+      end
     end
+  end
+
+  # Calling this for server or after connect has no effect
+  private def hostname=(hostname : String)
+    # Macro from OpenSSL: SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
+    LibSSL.ssl_ctrl(
+      @ssl,
+      LibSSL::SSLCtrl::SET_TLSEXT_HOSTNAME,
+      LibSSL::TLSExt::NAMETYPE_host_name,
+      hostname.to_unsafe.as(Pointer(Void))
+    )
   end
 
   def finalize
@@ -29,14 +51,21 @@ class OpenSSL::SSL::Socket
 
     count = slice.size
     return 0 if count == 0
-    LibSSL.ssl_read(@ssl, slice.pointer(count), count)
+    LibSSL.ssl_read(@ssl, slice.pointer(count), count).tap do |bytes|
+      unless bytes > 0
+        raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_read")
+      end
+    end
   end
 
   def write(slice : Slice(UInt8))
     check_open
 
     count = slice.size
-    LibSSL.ssl_write(@ssl, slice.pointer(count), count)
+    bytes = LibSSL.ssl_write(@ssl, slice.pointer(count), count)
+    unless bytes > 0
+      raise OpenSSL::SSL::Error.new(@ssl, bytes, "SSL_write")
+    end
     nil
   end
 
@@ -49,7 +78,12 @@ class OpenSSL::SSL::Socket
     @closed = true
 
     begin
-      while LibSSL.ssl_shutdown(@ssl) == 0; end
+      loop do
+        ret = LibSSL.ssl_shutdown(@ssl)
+        break if ret == 1
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
+        # ret == 0, retry
+      end
     rescue IO::Error
     ensure
       @bio.io.close if @sync_close
