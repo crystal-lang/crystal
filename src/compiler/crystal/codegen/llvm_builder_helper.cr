@@ -139,7 +139,11 @@ module Crystal
     end
 
     def cast_to_pointer(value, type)
-      bit_cast value, llvm_type(type).pointer
+      if type.void?
+        bit_cast value, LLVM::Int8.pointer
+      else
+        bit_cast value, llvm_type(type).pointer
+      end
     end
 
     delegate llvm_type, llvm_typer

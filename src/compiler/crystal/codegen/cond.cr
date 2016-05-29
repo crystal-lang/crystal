@@ -9,6 +9,10 @@ class Crystal::CodeGenVisitor
     llvm_false
   end
 
+  private def codegen_cond_impl(type : VoidType)
+    llvm_false
+  end
+
   private def codegen_cond_impl(type : BoolType)
     @last
   end
