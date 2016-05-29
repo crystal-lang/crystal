@@ -69,13 +69,19 @@ class HTTP::Client
   # ```
   getter port : Int32
 
-  # Returns whether this client is using SSL.
+  # If this client uses SSL, returns its `OpenSSL::SSL::Context`, raises otherwise.
+  #
+  # Changes made after the initial request will have no effect.
   #
   # ```
   # client = HTTP::Client.new "www.example.com", ssl: true
-  # client.ssl? # => true
+  # client.ssl # => #<OpenSSL::SSL::Context ...>
   # ```
-  getter? ssl : Bool
+  ifdef without_openssl
+    getter! ssl : Nil
+  else
+    getter! ssl : OpenSSL::SSL::Context?
+  end
 
   # Whether automatic compression/decompression is enabled.
   property? compress : Bool
@@ -93,16 +99,32 @@ class HTTP::Client
   # Creates a new HTTP client with the given *host*, *port* and *ssl*
   # configurations. If no port is given, the default one will
   # be used depending on the *ssl* arguments: 80 for if *ssl* is `false`,
-  # 443 if *ssl* is `true`.
-  def initialize(@host, port = nil, @ssl = false)
-    ifdef without_openssl
-      if @ssl
+  # 443 if *ssl* is truthy. If *ssl* is `true` a new `OpenSSL::SSL::Context` will
+  # be used, else the given one. In any case the active context can be accessed through `ssl`.
+  ifdef without_openssl
+    def initialize(@host, port = nil, ssl : Bool = false)
+      @ssl = nil
+      if ssl
         raise "HTTP::Client ssl is disabled because `-D without_openssl` was passed at compile time"
       end
-    end
 
-    @port = (port || (ssl ? 443 : 80)).to_i
-    @compress = true
+      @port = (port || (@ssl ? 443 : 80)).to_i
+      @compress = true
+    end
+  else
+    def initialize(@host, port = nil, ssl : Bool | OpenSSL::SSL::Context = false)
+      @ssl = case ssl
+             when true
+               OpenSSL::SSL::Context.new_for_client
+             when OpenSSL::SSL::Context
+               ssl
+             when false
+               nil
+             end
+
+      @port = (port || (@ssl ? 443 : 80)).to_i
+      @compress = true
+    end
   end
 
   # Creates a new HTTP client from a URI. Parses the *host*, *port*,
@@ -120,10 +142,14 @@ class HTTP::Client
   # This constructor will *ignore* any path or query segments in the URI
   # as those will need to be passed to the client when a request is made.
   #
+  # If *ssl* is given it will be used, if not a new SSL context will be created.
+  # If *ssl* is given and *uri* is a HTTP URI, `ArgumentError` is raised.
+  # In any case the active context can be accessed through `ssl`.
+  #
   # This constructor will raise an exception if any scheme but HTTP or HTTPS
   # is used.
-  def self.new(uri : URI)
-    ssl = ssl_flag(uri)
+  def self.new(uri : URI, ssl = nil)
+    ssl = ssl_flag(uri, ssl)
     host = validate_host(uri)
     new(host, uri.port, ssl)
   end
@@ -296,8 +322,8 @@ class HTTP::Client
     # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-agent": "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil) : HTTP::Client::Response
-      exec {{method.upcase}}, url, headers, body
+    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, ssl = nil) : HTTP::Client::Response
+      exec {{method.upcase}}, url, headers, body, ssl
     end
 
     # Executes a {{method.id.upcase}} request and yields the response to the block.
@@ -308,8 +334,8 @@ class HTTP::Client
     #   response.body_io.gets #=> "..."
     # end
     # ```
-    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil)
-      exec {{method.upcase}}, url, headers, body do |response|
+    def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, ssl = nil)
+      exec {{method.upcase}}, url, headers, body, ssl do |response|
         yield response
       end
     end
@@ -351,8 +377,8 @@ class HTTP::Client
   # ```
   # response = HTTP::Client.post_form "http://www.example.com", "foo=bar"
   # ```
-  def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil) : HTTP::Client::Response
-    exec(url) do |client, path|
+  def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil, ssl = nil) : HTTP::Client::Response
+    exec(url, ssl) do |client, path|
       client.post_form(path, form, headers)
     end
   end
@@ -455,8 +481,8 @@ class HTTP::Client
   # response = HTTP::Client.exec "GET", "http://www.example.com"
   # response.body # => "..."
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil) : HTTP::Client::Response
-    exec(url) do |client, path|
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, ssl = nil) : HTTP::Client::Response
+    exec(url, ssl) do |client, path|
       client.exec method, path, headers, body
     end
   end
@@ -469,8 +495,8 @@ class HTTP::Client
   #   response.body_io.gets # => "..."
   # end
   # ```
-  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil)
-    exec(url) do |client, path|
+  def self.exec(method, url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, ssl = nil)
+    exec(url, ssl) do |client, path|
       client.exec(method, path, headers, body) do |response|
         yield response
       end
@@ -503,8 +529,8 @@ class HTTP::Client
     @socket = socket
 
     ifdef !without_openssl
-      if @ssl
-        ssl_socket = OpenSSL::SSL::Socket.new(socket, sync_close: true, hostname: @host)
+      if ssl = @ssl
+        ssl_socket = OpenSSL::SSL::Socket.new(socket, context: ssl, sync_close: true, hostname: @host)
         @socket = socket = ssl_socket
       end
     end
@@ -520,7 +546,7 @@ class HTTP::Client
     end
   end
 
-  private def self.exec(string : String)
+  private def self.exec(string : String, ssl = nil)
     uri = URI.parse(string)
 
     unless uri.scheme && uri.host
@@ -528,22 +554,42 @@ class HTTP::Client
       uri = URI.parse("http://#{string}")
     end
 
-    exec(uri) do |client, path|
+    exec(uri, ssl) do |client, path|
       yield client, path
     end
   end
 
-  protected def self.ssl_flag(uri)
-    scheme = uri.scheme
-    case scheme
-    when nil
-      raise ArgumentError.new("missing scheme: #{uri}")
-    when "http"
-      false
-    when "https"
-      true
-    else
-      raise ArgumentError.new "Unsupported scheme: #{scheme}"
+  ifdef without_openssl
+    protected def self.ssl_flag(uri, context : Nil)
+      scheme = uri.scheme
+      case scheme
+      when nil
+        raise ArgumentError.new("missing scheme: #{uri}")
+      when "http"
+        false
+      when "https"
+        true
+      else
+        raise ArgumentError.new "Unsupported scheme: #{scheme}"
+      end
+    end
+  else
+    protected def self.ssl_flag(uri, context : OpenSSL::SSL::Context?)
+      scheme = uri.scheme
+      case {scheme, context}
+      when {nil, _}
+        raise ArgumentError.new("missing scheme: #{uri}")
+      when {"http", nil}
+        false
+      when {"http", OpenSSL::SSL::Context}
+        raise ArgumentError.new("SSL context given for HTTP URI")
+      when {"https", nil}
+        true
+      when {"https", OpenSSL::SSL::Context}
+        context
+      else
+        raise ArgumentError.new "Unsupported scheme: #{scheme}"
+      end
     end
   end
 
@@ -554,8 +600,8 @@ class HTTP::Client
     raise ArgumentError.new %(Request URI must have host (URI is: #{uri}))
   end
 
-  private def self.exec(uri : URI)
-    ssl = ssl_flag(uri)
+  private def self.exec(uri : URI, ssl = nil)
+    ssl = ssl_flag(uri, ssl)
     host = validate_host(uri)
 
     port = uri.port
