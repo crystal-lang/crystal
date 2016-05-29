@@ -158,7 +158,7 @@ ifdef linux
   fun main(argc : Int32, argv : UInt8**) : Int32
     return LibSDL.main(argc, argv)
   end
-else
+elsif darwin
   redefine_main(SDL_main) do |main|
     {{main}}
   end
