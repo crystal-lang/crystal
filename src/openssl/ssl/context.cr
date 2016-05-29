@@ -1,8 +1,4 @@
 class OpenSSL::SSL::Context
-  def self.default : self
-    @@default ||= new
-  end
-
   # Generates a new SSL context.
   #
   # By default it defaults to the `SSLv23_method` which actually means that

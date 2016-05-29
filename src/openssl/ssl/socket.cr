@@ -7,7 +7,7 @@ class OpenSSL::SSL::Socket
 
   getter? closed : Bool
 
-  def initialize(io, mode = :client, context = Context.default, @sync_close : Bool = false, hostname : String? = nil)
+  def initialize(io, mode = :client, context = Context.new, @sync_close : Bool = false, hostname : String? = nil)
     @closed = false
     @ssl = LibSSL.ssl_new(context)
     unless @ssl
@@ -111,7 +111,7 @@ class OpenSSL::SSL::Socket
     end
   end
 
-  def self.open_client(io, context = Context.default)
+  def self.open_client(io, context = Context.new)
     ssl_sock = new(io, :client, context)
     begin
       yield ssl_sock
