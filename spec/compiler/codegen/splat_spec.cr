@@ -142,4 +142,23 @@ describe "Code gen: splat" do
       end
       ))
   end
+
+  it "evaluates splat argument just once (#2677)" do
+    run(%(
+      $a = 0
+
+      def data
+        $a += 1
+        {$a, $a, $a}
+      end
+
+      def test(x, y, z)
+        x + y + z
+      end
+
+      v = test(*data)
+
+      $a
+      )).to_i.should eq(1)
+  end
 end

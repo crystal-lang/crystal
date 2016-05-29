@@ -910,6 +910,15 @@ module Crystal
         return false
       end
 
+      # If the call has splats or double splats, and any of them are
+      # not variables, instance variables or global variables,
+      # we replace this call with a separate one that declares temporary
+      # variables with this splat expressions, so we don't evaluate them
+      # twice (#2677)
+      if call_needs_splat_expansion?(node)
+        return replace_call_splats(node)
+      end
+
       obj = node.obj
       args = node.args
       block_arg = node.block_arg
@@ -985,6 +994,68 @@ module Crystal
       end
       node.with_scope = with_scope
       node.parent_visitor = self
+    end
+
+    def call_needs_splat_expansion?(node)
+      node.args.each do |arg|
+        case arg
+        when Splat
+          exp = arg.exp
+        when DoubleSplat
+          exp = arg.exp
+        else
+          next
+        end
+
+        case exp
+        when Var, InstanceVar, ClassVar, Global
+          next
+        end
+
+        return true
+      end
+
+      false
+    end
+
+    def replace_call_splats(node)
+      expanded = node.clone
+
+      exps = [] of ASTNode
+      expanded.args.each do |arg|
+        case arg
+        when Splat
+          exp = arg.exp
+        when DoubleSplat
+          exp = arg.exp
+        else
+          next
+        end
+
+        case exp
+        when Var, InstanceVar, ClassVar, Global
+          next
+        end
+
+        temp_var = @mod.new_temp_var.at(arg.location)
+        assign = Assign.new(temp_var, exp).at(arg.location)
+        exps << assign
+        case arg
+        when Splat
+          arg.exp = temp_var.clone.at(arg.location)
+        when DoubleSplat
+          arg.exp = temp_var.clone.at(arg.location)
+        else
+          next
+        end
+      end
+
+      exps << expanded
+      expansion = Expressions.from(exps)
+      expansion.accept self
+      node.expanded = expansion
+      node.bind_to(expanded)
+      return false
     end
 
     # If it's a super call inside an initialize we treat
