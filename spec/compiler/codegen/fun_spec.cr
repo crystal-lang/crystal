@@ -687,4 +687,27 @@ describe "Code gen: fun" do
       end
       )).to_i.should eq(42)
   end
+
+  it "assigns non-void proc to void proc (#2672)" do
+    run(%(
+      $x = 0
+
+      class Foo
+        @action : ->
+
+        def initialize
+          @action = ->{ $x += 1 }
+          1
+        end
+
+        def action
+          @action
+        end
+      end
+
+      Foo.new.action.call
+
+      $x
+      )).to_i.should eq(1)
+  end
 end

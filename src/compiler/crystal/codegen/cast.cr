@@ -253,6 +253,11 @@ class Crystal::CodeGenVisitor
     end
   end
 
+  def assign_distinct(target_pointer, target_type : FunInstanceType, value_type : FunInstanceType, value)
+    # Cast of a non-void proc to a void proc
+    store to_rhs(value, target_type), target_pointer
+  end
+
   def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
     raise "Bug: trying to assign #{target_type} <- #{value_type}"
   end

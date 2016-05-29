@@ -3063,6 +3063,24 @@ describe "Type inference: instance var" do
       "can't declare instance variables in Object"
   end
 
+  it "unifies Void proc with non-Void proc (#2672)" do
+    assert_type(%(
+      class Foo
+        @action : ->
+
+        def initialize
+          @action = -> { }
+        end
+
+        def action
+          @action
+        end
+      end
+
+      Foo.new.action
+      )) { fun_of(void) }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

@@ -3178,6 +3178,15 @@ module Crystal
       false
     end
 
+    def implements?(other : Type)
+      if other.is_a?(FunInstanceType)
+        if other.return_type.void? && arg_types == other.arg_types
+          return true
+        end
+      end
+      super
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "("
       size = fun_types.size

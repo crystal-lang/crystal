@@ -251,6 +251,22 @@ module Crystal
     end
   end
 
+  class FunInstanceType
+    def common_ancestor(other : FunInstanceType)
+      if other == self
+        return self
+      end
+
+      if return_type.void? && arg_types == other.arg_types
+        self
+      elsif other.return_type.void? && arg_types == other.arg_types
+        other
+      else
+        nil
+      end
+    end
+  end
+
   class TupleInstanceType
     def common_ancestor(other : TupleInstanceType)
       return nil unless self.size == other.size
