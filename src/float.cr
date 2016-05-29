@@ -139,16 +139,36 @@ struct Float32
 
   def to_s
     String.new(22) do |buffer|
-      LibC.snprintf(buffer, 22, "%g", to_f64)
-      len = LibC.strlen(buffer)
+      len = to_s_internal(buffer)
       {len, len}
     end
   end
 
   def to_s(io : IO)
     chars = StaticArray(UInt8, 22).new(0_u8)
-    LibC.snprintf(chars, 22, "%g", to_f64)
-    io.write_utf8 chars.to_slice[0, LibC.strlen(chars)]
+    len = to_s_internal(chars.to_unsafe)
+    io.write_utf8 chars.to_slice[0, len]
+  end
+
+  private def to_s_internal(buffer)
+    LibC.snprintf(buffer, 22, "%g", to_f64)
+    len = LibC.strlen(buffer)
+
+    # If it's "inf", return "Infinity"
+    if buffer[0] === 'i'
+      buffer.copy_from("Infinity".to_unsafe, 8)
+      len = 8
+      return len
+    end
+
+    # If it's "-inf", return "-inf"
+    if len >= 2 && buffer[1] === 'i'
+      buffer.copy_from("-Infinity".to_unsafe, 9)
+      len = 9
+      return len
+    end
+
+    len
   end
 
   def hash
@@ -197,25 +217,34 @@ struct Float64
   end
 
   def to_s
-    String.new(22) do |buffer|
+    String.new(28) do |buffer|
       len = to_s_internal(buffer)
       {len, len}
     end
   end
 
   def to_s(io : IO)
-    chars = StaticArray(UInt8, 22).new(0_u8)
+    chars = StaticArray(UInt8, 28).new(0_u8)
     len = to_s_internal(chars.to_unsafe)
     io.write_utf8 chars.to_slice[0, len]
   end
 
   private def to_s_internal(buffer)
-    LibC.snprintf(buffer, 22, "%.17g", self)
+    LibC.snprintf(buffer, 28, "%.17g", self)
     len = LibC.strlen(buffer)
     slice = Slice.new(buffer, len)
 
-    # If this is in scientific notation, return immediately
-    if slice.index('e'.ord.to_u8)
+    # If it's "inf", return "Infinity"
+    if buffer[0] === 'i'
+      buffer.copy_from("Infinity".to_unsafe, 8)
+      len = 8
+      return len
+    end
+
+    # If it's "-inf", return "-inf"
+    if len >= 2 && buffer[1] === 'i'
+      buffer.copy_from("-Infinity".to_unsafe, 9)
+      len = 9
       return len
     end
 
@@ -225,17 +254,28 @@ struct Float64
     # (and probably inefficient) algorithm, but a good
     # one is much longer and harder to do: we can probably
     # do that later.
-    index = slice.index('.'.ord.to_u8)
+    dot_index = slice.index('.'.ord.to_u8)
 
-    # If there's no dot add ".0" to it, if there's enough size
-    unless index
-      if len < 21
+    # If there's no dot add ".0" to it
+    unless dot_index
+      # Check if we have an 'e'
+      e_index = slice.index('e'.ord.to_u8)
+
+      # If there's an "e", we must move it to the right
+      if e_index
+        (buffer + e_index).move_to(buffer + e_index + 2, len - e_index)
+        buffer[e_index] = '.'.ord.to_u8
+        buffer[e_index + 1] = '0'.ord.to_u8
+      else
         buffer[len] = '.'.ord.to_u8
         buffer[len + 1] = '0'.ord.to_u8
-        len += 2
       end
+      len += 2
       return len
     end
+
+    original_len = len
+    index = dot_index
 
     # Also return if the dot is the last char (shouldn't happen)
     return len if index + 1 == len
@@ -251,13 +291,14 @@ struct Float64
     max_run_byte = 0_u8 # the byte of the last run
     max_run_start = -1  # the index where the maximum run starts
     max_run_end = -1    # the index where the maximum run ends
+    e_index = nil
 
     while index < len
       byte = slice.to_unsafe[index]
 
       if byte == run_byte
         this_run += 1
-        if this_run > max_run
+        if this_run >= max_run
           max_run = this_run
           max_run_byte = byte
           max_run_start = last_run_start
@@ -268,6 +309,15 @@ struct Float64
         last_run_byte = byte
         last_run_start = index
         this_run = 1
+        if this_run >= max_run
+          max_run = this_run
+          max_run_byte = byte
+          max_run_start = index
+          max_run_end = index
+        end
+      elsif byte === 'e'
+        e_index = index
+        break
       else
         run_byte = 0_u8
         this_run = 0
@@ -276,10 +326,29 @@ struct Float64
       index += 1
     end
 
+    if e_index
+      # If we have an 'e', remove a sequence of 0s or 9s or
+      # any length, as long as they are near the end
+      tolerance = 1
+    else
+      # The more digits we have to the left of the dot,
+      # the less run digits we adjust
+      tolerance = case dot_index
+                  when 0..8  then 5
+                  when 9..11 then 4
+                  when    12 then 3
+                  when    13 then 2
+                  else            1
+                  end
+    end
+
+    if e_index
+      len = e_index
+    end
+
     # If the maximum run ends one or two chars before
     # the end of the string, we replace the run
-    # (only if the run is long, 5 or more chars)
-    if (len - 3 <= max_run_end < len) && max_run >= 5
+    if (len - 3 <= max_run_end < len) && max_run >= tolerance
       case max_run_byte
       when '0'
         # Just trim
@@ -314,6 +383,13 @@ struct Float64
     if slice.to_unsafe[len - 1] === '.'
       slice.to_unsafe[len] = '0'.ord.to_u8
       len += 1
+    end
+
+    # Add back the e and what's to the right of it
+    if e_index
+      e_len = original_len - e_index
+      (buffer + e_index).move_to(buffer + len, e_len)
+      len += e_len
     end
 
     len

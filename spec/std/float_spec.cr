@@ -105,8 +105,27 @@ describe "Float" do
       12.9999.to_s.should eq("12.9999")
       12.999999999999.to_s.should eq("13.0")
       1.0.to_s.should eq("1.0")
-      2e20.to_s.should eq("2e+20")
-      1e-10.to_s.should eq("1e-10")
+      2e20.to_s.should eq("2.0e+20")
+      1e-10.to_s.should eq("1.0e-10")
+      1464132168.65.to_s.should eq("1464132168.65")
+      146413216.865.to_s.should eq("146413216.865")
+      14641321.6865.to_s.should eq("14641321.6865")
+      1464132.16865.to_s.should eq("1464132.16865")
+      654329382.1.to_s.should eq("654329382.1")
+      6543293824.1.to_s.should eq("6543293824.1")
+      65432938242.1.to_s.should eq("65432938242.1")
+      654329382423.1.to_s.should eq("654329382423.1")
+      6543293824234.1.to_s.should eq("6543293824234.1")
+      65432938242345.1.to_s.should eq("65432938242345.1")
+      65432.123e20.to_s.should eq("6.5432123e+24")
+      65432.123e200.to_s.should eq("6.5432123e+204")
+      -65432.123e200.to_s.should eq("-6.5432123e+204")
+      65432.123456e20.to_s.should eq("6.5432123456e+24")
+      65432.1234567e20.to_s.should eq("6.54321234567e+24")
+      65432.12345678e20.to_s.should eq("6.543212345678e+24")
+      65432.1234567891e20.to_s.should eq("6.54321234567891e+24")
+      (1.0/0.0).to_s.should eq("Infinity")
+      (-1.0/0.0).to_s.should eq("-Infinity")
     end
 
     it "does to_s for f32" do
@@ -121,6 +140,8 @@ describe "Float" do
       1.2345_f32.to_s.should eq("1.2345")
       1.23456_f32.to_s.should eq("1.23456")
       # 9525365.25_f32.to_s.should eq("9525365.25")
+      (1.0_f32/0.0_f32).to_s.should eq("Infinity")
+      (-1.0_f32/0.0_f32).to_s.should eq("-Infinity")
     end
   end
 
