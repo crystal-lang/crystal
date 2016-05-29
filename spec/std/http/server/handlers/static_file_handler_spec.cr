@@ -27,8 +27,18 @@ describe HTTP::StaticFileHandler do
     response.body.should match(/test.txt/)
   end
 
-  it "shoult not serve not found file" do
+  it "should not serve a not found file" do
     response = handle HTTP::Request.new("GET", "/not_found_file.txt")
+    response.status_code.should eq(404)
+  end
+
+  it "should not serve a not found directory" do
+    response = handle HTTP::Request.new("GET", "/not_found_dir/")
+    response.status_code.should eq(404)
+  end
+
+  it "should not serve a file as directory" do
+    response = handle HTTP::Request.new("GET", "/test.txt/")
     response.status_code.should eq(404)
   end
 
