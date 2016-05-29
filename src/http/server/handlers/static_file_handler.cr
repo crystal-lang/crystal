@@ -28,7 +28,9 @@ class HTTP::StaticFileHandler < HTTP::Handler
       return
     end
 
-    request_path = URI.unescape(context.request.path.not_nil!)
+    original_path = context.request.path.not_nil!
+    is_dir_path = original_path.ends_with? "/"
+    request_path = URI.unescape(original_path)
 
     # File path cannot contains '\0' (NUL) because all filesystem I know
     # don't accept '\0' character as file name.
@@ -38,8 +40,19 @@ class HTTP::StaticFileHandler < HTTP::Handler
     end
 
     expanded_path = File.expand_path(request_path, "/")
+    if is_dir_path && !expanded_path.ends_with? "/"
+      expanded_path = "#{expanded_path}/"
+    end
+    is_dir_path = expanded_path.ends_with? "/"
 
     file_path = File.join(@public_dir, expanded_path)
+    is_dir = Dir.exists? file_path
+
+    if request_path != expanded_path || is_dir && !is_dir_path
+      redirect_to context, "#{expanded_path}#{is_dir && !is_dir_path ? "/" : ""}"
+      return
+    end
+
     if Dir.exists?(file_path)
       context.response.content_type = "text/html"
       directory_listing(context.response, request_path, file_path)
@@ -52,6 +65,13 @@ class HTTP::StaticFileHandler < HTTP::Handler
     else
       call_next(context)
     end
+  end
+
+  private def redirect_to(context, url)
+    context.response.status_code = 302
+
+    url = URI.escape(url) { |b| URI.unreserved?(b) || b != '/' }
+    context.response.headers.add "Location", url
   end
 
   private def mime_type(path)
@@ -69,7 +89,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
 
     def escaped_request_path
       @escaped_request_path ||= begin
-        esc_path = request_path.split('/').map { |path| URI.escape path }.join('/')
+        esc_path = URI.escape(request_path) { |b| URI.unreserved?(b) || b != '/' }
         esc_path = esc_path[0..-2] if !esc_path.empty? && esc_path[-1] == '/'
         esc_path
       end
