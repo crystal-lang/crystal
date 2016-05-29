@@ -690,8 +690,10 @@ module IO
   end
 
   # Writes the given object to this IO using the specified *format*.
-  # This ends up invoking `object.to_io(self, format)`, so any object defining
-  # a `to_io` method can be written in this way.
+  #
+  # This ends up invoking `object.to_io(self, format)`, so any object defining a
+  # `to_io(io : IO, format : IO::ByteFormat = IO::ByteFormat::SystemEndian)`
+  # method can be written in this way.
   #
   # See `Int#to_io` and `Float#to_io`.
   #
