@@ -1,6 +1,10 @@
 require "./lib_ssl"
 
 module OpenSSL
+  module SSL
+    alias VerifyMode = LibSSL::VerifyMode
+  end
+
   class Error < Exception
     getter! code : LibCrypto::ULong?
 

@@ -7,8 +7,14 @@ class OpenSSL::SSL::Socket
 
   getter? closed : Bool
 
-  def initialize(io, mode = :client, context = Context.new, @sync_close : Bool = false, hostname : String? = nil)
+  def initialize(io, mode = :client, context : Context? = nil, @sync_close : Bool = false, hostname : String? = nil)
     @closed = false
+
+    if mode != :client && mode != :server
+      raise ArgumentError.new("mode must be :client or :server, not #{mode.inspect}")
+    end
+
+    context ||= mode == :client ? Context.new_for_client : Context.new_for_server
     @ssl = LibSSL.ssl_new(context)
     unless @ssl
       raise OpenSSL::Error.new("SSL_new")
@@ -111,7 +117,7 @@ class OpenSSL::SSL::Socket
     end
   end
 
-  def self.open_client(io, context = Context.new)
+  def self.open_client(io, context = Context.new_for_client)
     ssl_sock = new(io, :client, context)
     begin
       yield ssl_sock

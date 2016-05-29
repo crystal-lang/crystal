@@ -92,7 +92,7 @@ class HTTP::Server
     property ssl : OpenSSL::SSL::Context?
 
     def self.default_ssl_context : OpenSSL::SSL::Context
-      ctx = OpenSSL::SSL::Context.new
+      ctx = OpenSSL::SSL::Context.new_for_server
       ctx.add_options(
         LibSSL::Options::ALL |
           LibSSL::Options::NO_SSLV2 |
