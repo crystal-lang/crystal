@@ -21,16 +21,27 @@ $(error Could not locate llvm-config, make sure it is installed and in your PATH
 endif
 
 all: crystal
-spec: all_spec
+
+help: ## Show this help
+	@printf '\033[34mtargets:\033[0m\n'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) |\
+		sort |\
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+spec: all_spec ## Run all specs
 	$(O)/all_spec
-std_spec: all_std_spec
+
+std_spec: all_std_spec ## Run standard library specs
 	$(O)/std_spec
-compiler_spec: all_compiler_spec
+
+compiler_spec: all_compiler_spec ## Run compiler specs
 	$(O)/compiler_spec
-doc:
+
+doc: ## Generate standard library documentation
 	$(BUILD_PATH) ./bin/crystal doc src/docs_main.cr
 
-crystal: $(O)/crystal
+crystal: $(O)/crystal ## Build the compiler
+
 all_spec: $(O)/all_spec
 all_std_spec: $(O)/std_spec
 all_compiler_spec: $(O)/compiler_spec
@@ -61,7 +72,7 @@ $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 $(LIB_CRYSTAL_TARGET): $(LIB_CRYSTAL_OBJS)
 	ar -rcs $@ $^
 
-clean:
+clean: ## Clean up built directories and files
 	rm -rf $(O)
 	rm -rf ./doc
 	rm -rf $(LLVM_EXT_OBJ)
