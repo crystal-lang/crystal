@@ -285,6 +285,17 @@ describe "Type inference: lib" do
       )) { float64 }
   end
 
+  it "allows passing double splat to LibC fun" do
+    assert_type(%(
+      lib LibC
+        fun foo(x : Int32, y : Float64) : Float64
+      end
+
+      t = {y: 2.5, x: 3}
+      LibC.foo **t
+      )) { float64 }
+  end
+
   it "errors if applying wrong attribute" do
     assert_error %(
       @[Bar]
