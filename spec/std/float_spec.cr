@@ -105,6 +105,8 @@ describe "Float" do
       12.9999.to_s.should eq("12.9999")
       12.999999999999.to_s.should eq("13.0")
       1.0.to_s.should eq("1.0")
+      2e20.to_s.should eq("2e+20")
+      1e-10.to_s.should eq("1e-10")
     end
 
     it "does to_s for f32" do

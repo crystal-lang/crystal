@@ -212,6 +212,12 @@ struct Float64
   private def to_s_internal(buffer)
     LibC.snprintf(buffer, 22, "%.17g", self)
     len = LibC.strlen(buffer)
+    slice = Slice.new(buffer, len)
+
+    # If this is in scientific notation, return immediately
+    if slice.index('e'.ord.to_u8)
+      return len
+    end
 
     # Check if we have a run of zeros or nines after
     # the decimal digit. If so, we remove them
@@ -219,7 +225,6 @@ struct Float64
     # (and probably inefficient) algorithm, but a good
     # one is much longer and harder to do: we can probably
     # do that later.
-    slice = Slice.new(buffer, len)
     index = slice.index('.'.ord.to_u8)
 
     # If there's no dot add ".0" to it, if there's enough size
