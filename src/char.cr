@@ -52,7 +52,7 @@ struct Char
   # The character representing the end of a C string.
   ZERO = '\0'
 
-  # Returns the difference of the codepoint values of this char and `other`.
+  # Returns the difference of the codepoint values of this char and *other*.
   #
   # ```
   # 'a' - 'a' # => 0
@@ -92,7 +92,7 @@ struct Char
     self - other
   end
 
-  # Returns true if this char is an ASCII digit ('0' to '9').
+  # Returns `true` if this char is an ASCII digit ('0' to '9').
   #
   # ```
   # '4'.digit? # => true
@@ -102,7 +102,7 @@ struct Char
     '0' <= self <= '9'
   end
 
-  # Returns true if this char is a lowercase ASCII letter.
+  # Returns `true` if this char is a lowercase ASCII letter.
   #
   # ```
   # 'c'.lowercase? # => true
@@ -113,7 +113,7 @@ struct Char
     'a' <= self <= 'z'
   end
 
-  # Returns true if this char is an uppercase ASCII letter.
+  # Returns `true` if this char is an uppercase ASCII letter.
   #
   # ```
   # 'H'.uppercase? # => true
@@ -124,7 +124,7 @@ struct Char
     'A' <= self <= 'Z'
   end
 
-  # Returns true if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
+  # Returns `true` if this char is an ASCII letter ('a' to 'z', 'A' to 'Z').
   #
   # ```
   # 'c'.alpha? # => true
@@ -145,7 +145,7 @@ struct Char
     alpha? || digit?
   end
 
-  # Returns true if this char is an ASCII whitespace.
+  # Returns `true` if this char is an ASCII whitespace.
   #
   # ```
   # ' '.whitespace?  # => true
@@ -156,7 +156,7 @@ struct Char
     self == ' ' || 9 <= ord <= 13
   end
 
-  # Returns true if this char is matched by the given sets.
+  # Returns `true` if this char is matched by the given *sets*.
   #
   # Each parameter defines a set, the character is matched against
   # the intersection of those, in other words it needs to
@@ -292,7 +292,7 @@ struct Char
     (ord - 1).chr
   end
 
-  # Returns true if this char is an ASCII control character.
+  # Returns `true` if this char is an ASCII control character.
   #
   # ```
   # ('\u0000'..'\u0019').each do |char|
@@ -302,14 +302,12 @@ struct Char
   # ('\u007F'..'\u009F').each do |char|
   #   char.control? # => true
   # end
-  #
-  # # false in every other case
   # ```
   def control?
     ord < 0x20 || (0x7F <= ord <= 0x9F)
   end
 
-  # Returns this Char as a String that contains a char literal as written in Crystal.
+  # Returns this char as a string that contains a char literal.
   #
   # ```
   # 'a'.inspect      # => "'a'"
@@ -329,14 +327,14 @@ struct Char
     end
   end
 
-  # Appends this Char as a String that contains a char literal as written in Crystal to the given IO.
+  # Appends this char as a string that contains a char literal to the given `IO`.
   #
   # See `#inspect`.
   def inspect(io)
     io << inspect
   end
 
-  # Returns this Char as a String that contains a char literal as written in Crystal,
+  # Returns this char as a string that contains a char literal as written in Crystal,
   # with characters with a codepoint greater than 0x79 written as `\u{...}`.
   #
   # ```
@@ -357,7 +355,7 @@ struct Char
     end
   end
 
-  # Appends this Char as a String that contains a char literal as written in Crystal to the given IO.
+  # Appends this char as a string that contains a char literal to the given `IO`.
   #
   # See `#dump`.
   def dump(io)
@@ -413,8 +411,8 @@ struct Char
     end
   end
 
-  # Returns the integer value of this char if it's an ASCII char denoting a digit in the given base,
-  # otherwise the value of `or_else`.
+  # Returns the integer value of this char if it's an ASCII char denoting a digit in *base*,
+  # otherwise the value of *or_else*.
   #
   # ```
   # '1'.to_i(16)     # => 1
@@ -427,8 +425,8 @@ struct Char
     to_i(base) { or_else }
   end
 
-  # Returns the integer value of this char if it's an ASCII char denoting a digit in the given base,
-  # otherwise the value return by the block.
+  # Returns the integer value of this char if it's an ASCII char denoting a digit in *base*,
+  # otherwise the value return by the given block.
   #
   # ```
   # '1'.to_i(16) { 20 } # => 1
@@ -451,7 +449,7 @@ struct Char
     end
   end
 
-  # Yields each of the bytes of this Char as encoded by UTF-8.
+  # Yields each of the bytes of this char as encoded by UTF-8.
   #
   # ```
   # puts "'a'"
@@ -531,7 +529,7 @@ struct Char
     end
   end
 
-  # Returns this Char bytes as encoded by UTF-8, as an `Array(UInt8)`.
+  # Returns this char bytes as encoded by UTF-8, as an `Array(UInt8)`.
   #
   # ```
   # 'a'.bytes # => [97]
@@ -545,7 +543,7 @@ struct Char
     bytes
   end
 
-  # Returns this Char as a String containing this Char as a single character.
+  # Returns this char as a string containing this char as a single character.
   #
   # ```
   # 'a'.to_s # => "a"
@@ -560,8 +558,9 @@ struct Char
     end
   end
 
-  # Appends this Char to the given IO. This appends this Char's bytes as encoded
-  # by UTF-8 to the given IO.
+  # Appends this char to the given `IO`.
+  #
+  # This appends this char's bytes as encoded by UTF-8 to the given `IO`.
   def to_s(io : IO)
     if ord <= 0x7f
       byte = ord.to_u8
@@ -577,7 +576,7 @@ struct Char
     end
   end
 
-  # Returns true if the codepoint is equal to *byte* ignoring the type
+  # Returns `true` if the codepoint is equal to *byte* ignoring the type.
   #
   # ```
   # 'c'.ord       # => 99
