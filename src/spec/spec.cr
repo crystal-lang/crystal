@@ -114,12 +114,7 @@ module Spec
 
   # :nodoc:
   def self.abort!
-    @@aborted = true
-  end
-
-  # :nodoc:
-  def self.aborted?
-    @@aborted
+    exit
   end
 
   # :nodoc:

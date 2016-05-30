@@ -8,7 +8,6 @@ module Spec::DSL
   end
 
   def it(description, file = __FILE__, line = __LINE__, &block)
-    return if Spec.aborted?
     return unless Spec.matches?(description, file, line)
 
     Spec.formatters.each(&.before_example(description))
@@ -29,7 +28,6 @@ module Spec::DSL
   end
 
   def pending(description, file = __FILE__, line = __LINE__, &block)
-    return if Spec.aborted?
     return unless Spec.matches?(description, file, line)
 
     Spec.formatters.each(&.before_example(description))
