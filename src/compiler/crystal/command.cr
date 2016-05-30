@@ -411,10 +411,9 @@ class Crystal::Command
   private def execute(output_filename, run_args)
     begin
       Process.run(output_filename, args: run_args, input: true, output: true, error: true) do |process|
-        Signal::INT.trap do
-          process.kill
-          exit
-        end
+        # Ignore the signal so we don't exit the running process
+        # (the running process can still handle this signal)
+        Signal::INT.ignore # do
       end
       status = $?
     ensure
@@ -429,6 +428,8 @@ class Crystal::Command
         STDERR.puts "Program was killed"
       when Signal::SEGV
         STDERR.puts "Program exited because of a segmentation fault (11)"
+      when Signal::INT
+        # OK, bubbled from the sub-program
       else
         STDERR.puts "Program received and didn't handle signal #{status.exit_signal} (#{status.exit_signal.value})"
       end
