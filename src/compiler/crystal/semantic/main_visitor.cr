@@ -2010,7 +2010,6 @@ module Crystal
         node.raise "can't instantiate abstract #{instance_type.type_desc} #{instance_type}"
       end
 
-      instance_type.allocated = true
       node.type = instance_type
     end
 

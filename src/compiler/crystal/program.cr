@@ -121,11 +121,9 @@ module Crystal
       types["StaticArray"] = static_array = @static_array = StaticArrayType.new self, self, "StaticArray", value, ["T", "N"]
       static_array.struct = true
       static_array.declare_instance_var("@buffer", Path.new("T"))
-      static_array.allocated = true
       static_array.allowed_in_generics = false
 
       types["String"] = string = @string = NonGenericClassType.new self, self, "String", reference
-      string.allocated = true
 
       string.declare_instance_var("@bytesize", @int32)
       string.declare_instance_var("@length", @int32)
@@ -134,7 +132,6 @@ module Crystal
       types["Class"] = klass = @class = MetaclassType.new(self, object, value, "Class")
       object.metaclass = klass
       klass.metaclass = klass
-      klass.allocated = true
       klass.allowed_in_generics = false
 
       types["Struct"] = struct_t = @struct_t = NonGenericClassType.new self, self, "Struct", value
@@ -507,7 +504,6 @@ module Crystal
     private def abstract_value_type(type)
       type.abstract = true
       type.struct = true
-      type.allocated = true
       type.allowed_in_generics = false
     end
 

@@ -278,28 +278,6 @@ describe "Type inference: macro" do
       )) { types["Bar"] }
   end
 
-  it "doesn't die on untyped instance var" do
-    assert_type(%(
-      require "prelude"
-
-      class Foo
-        def initialize
-          @foo = 1
-        end
-
-        def foo
-          @foo
-        end
-
-        def ivars_size : Int32
-          {{@type.instance_vars.size}}
-        end
-      end
-
-      ->(x : Foo) { x.foo; x.ivars_size }
-      )) { fun_of(types["Foo"], no_return) }
-  end
-
   it "errors if non-existent named arg" do
     assert_error %(
       macro foo(x = 1)

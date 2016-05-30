@@ -248,29 +248,6 @@ describe "Code gen: cast" do
       )).to_i.should_not eq(0)
   end
 
-  it "errors if casting to a non-allocated type" do
-    run(%(
-      require "prelude"
-
-      class Foo
-      end
-
-      class Bar < Foo
-      end
-
-      class Baz < Foo
-      end
-
-      foo = Foo.new || Bar.new
-
-      begin
-        foo as Baz
-      rescue ex
-        ex.message.not_nil!.includes?("can't cast to Baz because it was never instantiated")
-      end
-      )).to_b.should be_true
-  end
-
   it "casts (bug)" do
     run(%(
       require "prelude"

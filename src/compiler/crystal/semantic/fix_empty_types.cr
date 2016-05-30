@@ -66,11 +66,7 @@ module Crystal
       node.target_defs.try &.each do |target_def|
         unless @fixed.includes?(target_def.object_id)
           @fixed.add(target_def.object_id)
-
-          if !target_def.type? && target_def.owner.allocated?
-            target_def.type = @mod.no_return
-          end
-
+          target_def.type = @mod.no_return unless target_def.type?
           target_def.accept_children self
         end
       end

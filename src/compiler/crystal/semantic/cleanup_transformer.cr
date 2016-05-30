@@ -323,23 +323,14 @@ module Crystal
         block.fun_literal = fun_literal.transform(self)
       end
 
-      # Check if we have an untyped expression in this call, or an expression
-      # whose type was never allocated. Replace it with raise.
+      # Check if we have an untyped expression in this call. Replace it with raise.
       if (obj && !obj_type)
         return untyped_expression(node, "`#{obj}` has no type")
-      end
-
-      if obj && !obj.type.allocated?
-        return untyped_expression(node, "#{obj.type} in `#{obj}` was never instantiated")
       end
 
       node.args.each do |arg|
         unless arg.type?
           return untyped_expression(node, "`#{arg}` has no type")
-        end
-
-        unless arg.type.allocated?
-          return untyped_expression(node, "#{arg.type} in `#{arg}` was never instantiated")
         end
       end
 
@@ -369,7 +360,6 @@ module Crystal
 
       if target_defs = node.target_defs
         changed = false
-        allocated_defs = [] of Def
 
         if target_defs.size == 1
           if target_defs[0].is_a?(External)
@@ -382,43 +372,29 @@ module Crystal
         end
 
         target_defs.each do |target_def|
-          allocated = target_def.owner.allocated? && target_def.args.all? &.type.allocated?
-          if allocated
-            allocated_defs << target_def
+          unless @transformed.includes?(target_def.object_id)
+            @transformed.add(target_def.object_id)
 
-            unless @transformed.includes?(target_def.object_id)
-              @transformed.add(target_def.object_id)
+            node.bubbling_exception do
+              old_body = target_def.body
+              old_type = target_def.body.type?
 
-              node.bubbling_exception do
-                old_body = target_def.body
-                old_type = target_def.body.type?
+              @def_nest_count += 1
+              target_def.body = target_def.body.transform(self)
+              @def_nest_count -= 1
 
-                @def_nest_count += 1
-                target_def.body = target_def.body.transform(self)
-                @def_nest_count -= 1
+              new_type = target_def.body.type?
 
-                new_type = target_def.body.type?
-
-                # It can happen that the body of the function changed, and as
-                # a result the type changed. In that case we need to rebind the
-                # def to the new body, unbinding it from the previous one.
-                if new_type != old_type
-                  @changed = true
-                  target_def.unbind_from old_body
-                  target_def.bind_to target_def.body
-                end
+              # It can happen that the body of the function changed, and as
+              # a result the type changed. In that case we need to rebind the
+              # def to the new body, unbinding it from the previous one.
+              if new_type != old_type
+                @changed = true
+                target_def.unbind_from old_body
+                target_def.bind_to target_def.body
               end
             end
-          else
-            changed = true
           end
-        end
-
-        if changed
-          @changed = true
-          node.unbind_from node.target_defs
-          node.target_defs = allocated_defs
-          node.bind_to allocated_defs
         end
 
         if node.target_defs.not_nil!.empty?
@@ -776,10 +752,6 @@ module Crystal
         unless resulting_type
           node.raise "can't cast #{obj_type} to #{to_type}"
         end
-
-        unless to_type.allocated?
-          return build_raise "can't cast to #{to_type} because it was never instantiated"
-        end
       end
 
       node
@@ -817,27 +789,6 @@ module Crystal
 
       if node.body.no_returns?
         node.else = nil
-      end
-
-      if node_rescues = node.rescues
-        new_rescues = [] of Rescue
-
-        node_rescues.each do |a_rescue|
-          if !a_rescue.type? || a_rescue.type.allocated?
-            new_rescues << a_rescue
-          end
-        end
-
-        if new_rescues.empty?
-          if node.ensure
-            node.rescues = nil
-          else
-            rebind_node node, node.body
-            return node.body
-          end
-        else
-          node.rescues = new_rescues
-        end
       end
 
       node

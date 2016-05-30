@@ -1099,4 +1099,19 @@ describe "Code gen: exception" do
       ex.not_nil!.message.to_s
       )).to_string.should eq("foo")
   end
+
+  it "can rescue TypeCastError (#2607)" do
+    run(%(
+      require "prelude"
+
+      begin
+        (1 || "foo").as(String)
+        2
+      rescue e : TypeCastError
+        42
+      rescue e : Exception
+        0
+      end
+      )).to_i.should eq(42)
+  end
 end

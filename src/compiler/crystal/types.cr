@@ -202,14 +202,6 @@ module Crystal
       end
     end
 
-    def allocated?
-      true
-    end
-
-    def allocated=(value)
-      false
-    end
-
     def devirtualize
       self.is_a?(VirtualTypeLookup) ? self.base_type : self
     end
@@ -988,7 +980,6 @@ module Crystal
     getter depth : Int32
     property? abstract : Bool
     property? struct : Bool
-    getter? allocated : Bool
     property? allowed_in_generics : Bool
     property? lookup_new_in_ancestors : Bool
 
@@ -1002,7 +993,6 @@ module Crystal
       @subclasses = [] of Type
       @abstract = false
       @struct = false
-      @allocated = false
       @allowed_in_generics = true
       @lookup_new_in_ancestors = false
       parents.push superclass if superclass
@@ -1034,11 +1024,6 @@ module Crystal
       super
 
       a_def
-    end
-
-    def allocated=(allocated)
-      @allocated = allocated
-      superclass.try &.allocated = allocated
     end
 
     def struct?
@@ -1223,10 +1208,6 @@ module Crystal
       false
     end
 
-    def allocated?
-      true
-    end
-
     def abstract?
       false
     end
@@ -1304,10 +1285,6 @@ module Crystal
 
     def parents
       nil
-    end
-
-    def allocated?
-      true
     end
 
     def abstract?
@@ -1534,15 +1511,10 @@ module Crystal
     def initialize(program, container, name, superclass, @type_vars : Array(String), add_subclass = true)
       super(program, container, name, superclass, add_subclass)
       @variadic = false
-      @allocated = true
     end
 
     def class?
       true
-    end
-
-    def allocated=(value)
-      superclass.try &.allocated = value
     end
 
     def allowed_in_generics?
@@ -1645,12 +1617,10 @@ module Crystal
     getter generic_class : GenericClassType
     getter type_vars : Hash(String, ASTNode)
     getter subclasses : Array(Type)
-    getter? allocated : Bool
     getter generic_nest : Int32
 
     def initialize(@program, @generic_class, @type_vars, generic_nest = nil)
       @subclasses = [] of Type
-      @allocated = false
       @generic_nest = generic_nest || (1 + @type_vars.values.max_of { |node| node.type?.try(&.generic_nest) || 0 })
     end
 
@@ -1686,11 +1656,6 @@ module Crystal
     delegate type_desc, @generic_class
     delegate container, @generic_class
     delegate lookup_new_in_ancestors?, @generic_class
-
-    def allocated=(allocated)
-      @allocated = allocated
-      superclass.try { |s| s.allocated = allocated }
-    end
 
     def declare_instance_var(name, type_vars : Array(TypeVar))
       type = solve_type_vars(type_vars)
@@ -1793,10 +1758,6 @@ module Crystal
       false
     end
 
-    def allocated?
-      true
-    end
-
     def primitive_like?
       var.type.primitive_like?
     end
@@ -1837,10 +1798,6 @@ module Crystal
 
     def element_type
       var.type
-    end
-
-    def allocated?
-      true
     end
 
     def primitive_like?
@@ -1948,10 +1905,6 @@ module Crystal
     end
 
     def passed_by_value?
-      true
-    end
-
-    def allocated?
       true
     end
 
@@ -2068,10 +2021,6 @@ module Crystal
       true
     end
 
-    def allocated?
-      true
-    end
-
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "{"
       @entries.each_with_index do |entry, i|
@@ -2176,7 +2125,6 @@ module Crystal
     delegate lookup_macro, @extended_class
     delegate lookup_macros, @extended_class
     delegate has_def?, @extended_class
-    delegate :"allocated=", @extended_class
     delegate notify_subclass_added, @extended_class
     delegate has_def_without_parents?, @extended_class
     delegate add_def, @extended_class
@@ -2425,7 +2373,6 @@ module Crystal
       super(program, container, name, program.struct)
       @vars = {} of String => MetaTypeVar
       @struct = true
-      @allocated = true
     end
 
     def passed_by_value?
@@ -2587,10 +2534,6 @@ module Crystal
         end
       end
       super(@program, @program, name, super_class)
-    end
-
-    def allocated?
-      true
     end
 
     def metaclass
@@ -2978,8 +2921,6 @@ module Crystal
     delegate lookup_macros, base_type
     delegate all_instance_vars, base_type
     delegate :abstract?, base_type
-    delegate allocated?, base_type
-    delegate :"allocated=", base_type
     delegate subclass_of?, base_type
     delegate implements?, base_type
     delegate covariant?, base_type
@@ -3151,10 +3092,6 @@ module Crystal
     end
 
     def struct?
-      true
-    end
-
-    def allocated?
       true
     end
 
