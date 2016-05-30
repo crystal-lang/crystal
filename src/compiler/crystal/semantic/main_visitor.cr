@@ -2,8 +2,8 @@ require "./base_type_visitor"
 
 module Crystal
   class Program
-    def visit_main(node)
-      node.accept MainVisitor.new(self)
+    def visit_main(node, visitor = MainVisitor.new(self))
+      node.accept visitor
 
       fix_empty_types node
       node = cleanup node
