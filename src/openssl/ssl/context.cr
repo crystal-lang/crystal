@@ -1,54 +1,95 @@
-class OpenSSL::SSL::Context
-  # Generates a new SSL context with sane defaults for a client connection.
-  #
-  # By default it defaults to the `SSLv23_method` which actually means that
-  # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
-  # endpoint.
-  #
-  # Don't change the method unless you must restrict a specific protocol to be
-  # used (eg: TLSv1.2) and nothing else. You should specify options to disable
-  # specific protocols, yet allow to negotiate from various other ones. For
-  # example the following snippet will enable the TLSv1, TLSv1.1 and TLSv1.2
-  # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
-  #
-  # ```
-  # ssl_context = OpenSSL::SSL::Context.new_for_client
-  # ssl_context.options = LibSSL::Options::NO_SSLV2 | LibSSL::Options::NO_SSLV3
-  # ```
-  def self.new_for_client(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
-    new(method).tap do |context|
-      context.verify_mode = OpenSSL::SSL::VerifyMode::PEER
+abstract class OpenSSL::SSL::Context
+  class Client < Context
+    # Generates a new SSL client context with sane defaults for a client connection.
+    #
+    # By default it defaults to the `SSLv23_method` which actually means that
+    # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
+    # endpoint.
+    #
+    # Don't change the method unless you must restrict a specific protocol to be
+    # used (eg: TLSv1.2) and nothing else. You should specify options to disable
+    # specific protocols, yet allow to negotiate from various other ones. For
+    # example the following snippet will enable the TLSv1, TLSv1.1 and TLSv1.2
+    # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
+    #
+    # ```
+    # ssl_context = OpenSSL::SSL::Context::Client.new
+    # ssl_context.options = LibSSL::Options::NO_SSLV2 | LibSSL::Options::NO_SSLV3
+    # ```
+    def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+      super(method)
+      set_default_verify_paths
+      self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
+    end
+
+    # Returns a new SSL client context with only the given method set.
+    #
+    # For everything else this uses the defaults of your OpenSSL.
+    # Use this only if undoing the defaults that `new` sets is too much hassle.
+    def self.insecure(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+      super(method)
     end
   end
 
-  # Generates a new SSL context with sane defaults for a server connection.
-  #
-  # By default it defaults to the `SSLv23_method` which actually means that
-  # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
-  # endpoint.
-  #
-  # Don't change the method unless you must restrict a specific protocol to be
-  # used (eg: TLSv1.2) and nothing else. You should specify options to disable
-  # specific protocols, yet allow to negotiate from various other ones. For
-  # example the following snippet will enable the TLSv1, TLSv1.1 and TLSv1.2
-  # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
-  #
-  # ```
-  # ssl_context = OpenSSL::SSL::Context.new_for_server
-  # ssl_context.options = LibSSL::Options::NO_SSLV2 | LibSSL::Options::NO_SSLV3
-  # ```
-  def self.new_for_server(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
-    new(method)
+  class Server < Context
+    # Generates a new SSL server context with sane defaults for a server connection.
+    #
+    # By default it defaults to the `SSLv23_method` which actually means that
+    # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
+    # endpoint.
+    #
+    # Don't change the method unless you must restrict a specific protocol to be
+    # used (eg: TLSv1.2) and nothing else. You should specify options to disable
+    # specific protocols, yet allow to negotiate from various other ones. For
+    # example the following snippet will enable the TLSv1, TLSv1.1 and TLSv1.2
+    # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
+    #
+    # ```
+    # ssl_context = OpenSSL::SSL::Context::Server.new
+    # ssl_context.options = LibSSL::Options::NO_SSLV2 | LibSSL::Options::NO_SSLV3
+    # ```
+    def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+      super(method)
+      set_default_verify_paths
+    end
+
+    # Returns a new SSL server context with only the given method set.
+    #
+    # For everything else this uses the defaults of your OpenSSL.
+    # Use this only if undoing the defaults that `new` sets is too much hassle.
+    def self.insecure(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+      super(method)
+    end
   end
 
-  private def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+  protected def initialize(method : LibSSL::SSLMethod)
     @handle = LibSSL.ssl_ctx_new(method)
     raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
-    LibSSL.ssl_ctx_set_default_verify_paths(@handle)
+  end
+
+  # Overriding initialize or new in the child classes as public methods,
+  # makes it either impossible to access the parent versions or makes the parent
+  # versions public too. So to provide insecure in the child classes, we need
+  # a second constructor that we call from there without getting the
+  # overridden ones of the childs.
+  protected def _initialize_insecure(method : LibSSL::SSLMethod)
+    @handle = LibSSL.ssl_ctx_new(method)
+    raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
+  end
+
+  protected def self.insecure(method : LibSSL::SSLMethod)
+    obj = allocate
+    obj._initialize_insecure(method)
+    obj
   end
 
   def finalize
     LibSSL.ssl_ctx_free(@handle)
+  end
+
+  # Sets the default paths for `ca_certiifcates=` and `ca_certificates_path=`.
+  def set_default_verify_paths
+    LibSSL.ssl_ctx_set_default_verify_paths(@handle)
   end
 
   # Sets the path to a file containing all CA certificates, in PEM format, used to

@@ -69,18 +69,18 @@ class HTTP::Client
   # ```
   getter port : Int32
 
-  # If this client uses SSL, returns its `OpenSSL::SSL::Context`, raises otherwise.
+  # If this client uses SSL, returns its `OpenSSL::SSL::Context::Client`, raises otherwise.
   #
   # Changes made after the initial request will have no effect.
   #
   # ```
   # client = HTTP::Client.new "www.example.com", ssl: true
-  # client.ssl # => #<OpenSSL::SSL::Context ...>
+  # client.ssl # => #<OpenSSL::SSL::Context::Client ...>
   # ```
   ifdef without_openssl
     getter! ssl : Nil
   else
-    getter! ssl : OpenSSL::SSL::Context?
+    getter! ssl : OpenSSL::SSL::Context::Client?
   end
 
   # Whether automatic compression/decompression is enabled.
@@ -99,7 +99,7 @@ class HTTP::Client
   # Creates a new HTTP client with the given *host*, *port* and *ssl*
   # configurations. If no port is given, the default one will
   # be used depending on the *ssl* arguments: 80 for if *ssl* is `false`,
-  # 443 if *ssl* is truthy. If *ssl* is `true` a new `OpenSSL::SSL::Context` will
+  # 443 if *ssl* is truthy. If *ssl* is `true` a new `OpenSSL::SSL::Context::Client` will
   # be used, else the given one. In any case the active context can be accessed through `ssl`.
   ifdef without_openssl
     def initialize(@host, port = nil, ssl : Bool = false)
@@ -112,11 +112,11 @@ class HTTP::Client
       @compress = true
     end
   else
-    def initialize(@host, port = nil, ssl : Bool | OpenSSL::SSL::Context = false)
+    def initialize(@host, port = nil, ssl : Bool | OpenSSL::SSL::Context::Client = false)
       @ssl = case ssl
              when true
-               OpenSSL::SSL::Context.new_for_client
-             when OpenSSL::SSL::Context
+               OpenSSL::SSL::Context::Client.new
+             when OpenSSL::SSL::Context::Client
                ssl
              when false
                nil
@@ -530,7 +530,7 @@ class HTTP::Client
 
     ifdef !without_openssl
       if ssl = @ssl
-        ssl_socket = OpenSSL::SSL::Socket.new(socket, context: ssl, sync_close: true, hostname: @host)
+        ssl_socket = OpenSSL::SSL::Socket::Client.new(socket, context: ssl, sync_close: true, hostname: @host)
         @socket = socket = ssl_socket
       end
     end
@@ -574,18 +574,18 @@ class HTTP::Client
       end
     end
   else
-    protected def self.ssl_flag(uri, context : OpenSSL::SSL::Context?)
+    protected def self.ssl_flag(uri, context : OpenSSL::SSL::Context::Client?)
       scheme = uri.scheme
       case {scheme, context}
       when {nil, _}
         raise ArgumentError.new("missing scheme: #{uri}")
       when {"http", nil}
         false
-      when {"http", OpenSSL::SSL::Context}
+      when {"http", OpenSSL::SSL::Context::Client}
         raise ArgumentError.new("SSL context given for HTTP URI")
       when {"https", nil}
         true
-      when {"https", OpenSSL::SSL::Context}
+      when {"https", OpenSSL::SSL::Context::Client}
         context
       else
         raise ArgumentError.new "Unsupported scheme: #{scheme}"

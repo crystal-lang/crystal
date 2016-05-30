@@ -1,4 +1,56 @@
-class OpenSSL::SSL::Socket
+abstract class OpenSSL::SSL::Socket
+  class Client < Socket
+    def initialize(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
+      super(io, context, sync_close)
+
+      if hostname
+        # Macro from OpenSSL: SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
+        LibSSL.ssl_ctrl(
+          @ssl,
+          LibSSL::SSLCtrl::SET_TLSEXT_HOSTNAME,
+          LibSSL::TLSExt::NAMETYPE_host_name,
+          hostname.to_unsafe.as(Pointer(Void))
+        )
+      end
+
+      ret = LibSSL.ssl_connect(@ssl)
+      unless ret == 1
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
+      end
+    end
+
+    def self.open(io, context : Context::Client = Context::Client.new, sync_close : Bool = false, hostname : String? = nil)
+      socket = new(io, context, sync_close, hostname)
+
+      begin
+        yield socket
+      ensure
+        socket.close
+      end
+    end
+  end
+
+  class Server < Socket
+    def initialize(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+      super(io, context, sync_close)
+
+      ret = LibSSL.ssl_accept(@ssl)
+      unless ret == 1
+        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
+      end
+    end
+
+    def self.open(io, context : Context::Server = Context::Server.new, sync_close : Bool = false)
+      socket = new(io, context, sync_close)
+
+      begin
+        yield socket
+      ensure
+        socket.close
+      end
+    end
+  end
+
   include IO
 
   # If `sync_close` is true, closing this socket will
@@ -7,45 +59,15 @@ class OpenSSL::SSL::Socket
 
   getter? closed : Bool
 
-  def initialize(io, mode = :client, context : Context? = nil, @sync_close : Bool = false, hostname : String? = nil)
+  protected def initialize(io, context : Context, @sync_close : Bool = false)
     @closed = false
 
-    if mode != :client && mode != :server
-      raise ArgumentError.new("mode must be :client or :server, not #{mode.inspect}")
-    end
-
-    context ||= mode == :client ? Context.new_for_client : Context.new_for_server
     @ssl = LibSSL.ssl_new(context)
     unless @ssl
       raise OpenSSL::Error.new("SSL_new")
     end
     @bio = BIO.new(io)
     LibSSL.ssl_set_bio(@ssl, @bio, @bio)
-
-    if mode == :client
-      self.hostname = hostname if hostname
-      ret = LibSSL.ssl_connect(@ssl)
-      unless ret == 1
-        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")
-      end
-    else
-      raise ArgumentError.new("hostname has no meaning in server mode") if hostname
-      ret = LibSSL.ssl_accept(@ssl)
-      unless ret == 1
-        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_accept")
-      end
-    end
-  end
-
-  # Calling this for server or after connect has no effect
-  private def hostname=(hostname : String)
-    # Macro from OpenSSL: SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
-    LibSSL.ssl_ctrl(
-      @ssl,
-      LibSSL::SSLCtrl::SET_TLSEXT_HOSTNAME,
-      LibSSL::TLSExt::NAMETYPE_host_name,
-      hostname.to_unsafe.as(Pointer(Void))
-    )
   end
 
   def finalize
@@ -114,15 +136,6 @@ class OpenSSL::SSL::Socket
     rescue IO::Error
     ensure
       @bio.io.close if @sync_close
-    end
-  end
-
-  def self.open_client(io, context = Context.new_for_client)
-    ssl_sock = new(io, :client, context)
-    begin
-      yield ssl_sock
-    ensure
-      ssl_sock.close
     end
   end
 end

@@ -89,10 +89,10 @@ require "../common"
 # ```
 class HTTP::Server
   ifdef !without_openssl
-    property ssl : OpenSSL::SSL::Context?
+    property ssl : OpenSSL::SSL::Context::Server?
 
     def self.default_ssl_context : OpenSSL::SSL::Context
-      ctx = OpenSSL::SSL::Context.new_for_server
+      ctx = OpenSSL::SSL::Context::Server.new
       ctx.add_options(
         LibSSL::Options::ALL |
           LibSSL::Options::NO_SSLV2 |
@@ -176,7 +176,7 @@ class HTTP::Server
 
     ifdef !without_openssl
       if ssl = @ssl
-        io = OpenSSL::SSL::Socket.new(io, :server, ssl, sync_close: true)
+        io = OpenSSL::SSL::Socket::Server.new(io, ssl, sync_close: true)
       end
     end
 

@@ -61,13 +61,13 @@ module HTTP
         end
 
         it "keeps context" do
-          ctx = OpenSSL::SSL::Context.new_for_client
+          ctx = OpenSSL::SSL::Context::Client.new
           cl = Client.new(URI.parse("https://example.com"), ctx)
           cl.ssl.should be(ctx)
         end
 
         it "doesn't take context for HTTP" do
-          ctx = OpenSSL::SSL::Context.new_for_client
+          ctx = OpenSSL::SSL::Context::Client.new
           expect_raises(ArgumentError, "SSL context given") do
             Client.new(URI.parse("http://example.com"), ctx)
           end
