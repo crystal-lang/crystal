@@ -95,11 +95,11 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned
   #
   # ```
-  #     pool = StringPool.new
-  #     io = MemoryIO.new "crystal"
-  #     pool.empty? # => true
-  #     pool.get(io)
-  #     pool.empty? # => false
+  # pool = StringPool.new
+  # io = MemoryIO.new "crystal"
+  # pool.empty? # => true
+  # pool.get(io)
+  # pool.empty? # => false
   # ```
   def get(str : MemoryIO)
     get(str.buffer, str.bytesize)
@@ -111,11 +111,11 @@ class StringPool
   # Otherwise a new string is created, put in the pool and returned
   #
   # ```
-  #     pool = StringPool.new
-  #     string = "crystal"
-  #     pool.empty? # => true
-  #     pool.get(string)
-  #     pool.empty? # => false
+  # pool = StringPool.new
+  # string = "crystal"
+  # pool.empty? # => true
+  # pool.get(string)
+  # pool.empty? # => false
   # ```
   def get(str : String)
     get(str.to_unsafe, str.bytesize)
