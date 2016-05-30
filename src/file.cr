@@ -275,6 +275,15 @@ class File < IO::FileDescriptor
     end
   end
 
+  # Converts a pathname to an absolute pathname. Relative paths are
+  # referenced from the current working directory of the process unless
+  # dir is given, in which case it will be used as the starting point.
+  #
+  # ```
+  # File.expand_path("foo")               # => /home/.../foo
+  # File.expand_path("~/crystal/foo")     # => /home/crystal/foo
+  # File.expand_path("baz", "/foo/bar")   # => /foo/bar/baz
+  # ```
   def self.expand_path(path, dir = nil) : String
     path.check_no_null_byte
 
@@ -346,10 +355,16 @@ class File < IO::FileDescriptor
     (stat.st_mode & LibC::S_IFMT) == LibC::S_IFLNK
   end
 
+   # Opens the file named by filename. If a file is being created, its initial
+   # permissions may be set using the perm parameter.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil) : self
     new filename, mode, perm, encoding, invalid
   end
 
+   # Opens the file named by filename. If a file is being created, its initial
+   # permissions may be set using the perm parameter. It will be passed the opened
+   # file as an argument of the code block and the File object will automatically
+   # be closed when the block terminates.
   def self.open(filename, mode = "r", perm = DEFAULT_CREATE_MODE, encoding = nil, invalid = nil)
     file = File.new filename, mode, perm, encoding, invalid
     begin
@@ -476,6 +491,11 @@ class File < IO::FileDescriptor
     stat(filename.check_no_null_byte).size
   end
 
+  # Renames the given file to the new name.
+  #
+  # ```
+  # File.rename("afile", "afile.cr")  # => 0
+  # ```
   def self.rename(old_filename, new_filename)
     code = LibC.rename(old_filename.check_no_null_byte, new_filename.check_no_null_byte)
     if code != 0
