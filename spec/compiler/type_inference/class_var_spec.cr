@@ -333,4 +333,13 @@ describe "Type inference: class var" do
       ),
       "can't use Class as the type of class variable @@class of Foo, use a more specific type"
   end
+
+  it "gives correct error when trying to use Int as a class variable type" do
+    assert_error %(
+      class Foo
+        @@x : Int
+      end
+      ),
+      "can't use Int as the type of a class variable yet, use a more specific type"
+  end
 end

@@ -834,14 +834,14 @@ module Crystal
       type
     end
 
-    def check_declare_var_type(node, declared_type)
+    def check_declare_var_type(node, declared_type, variable_kind)
       type = declared_type.instance_type
 
       if type.is_a?(GenericClassType)
         node.raise "can't declare variable of generic non-instantiated type #{type}"
       end
 
-      Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as a Proc argument type")
+      Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as the type of #{variable_kind}")
 
       declared_type
     end

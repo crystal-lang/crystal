@@ -147,7 +147,7 @@ module Crystal
     def declare_instance_var_on_non_generic(owner, node, var)
       # For non-generic types we can solve the type now
       var_type = lookup_type(node.declared_type)
-      var_type = check_declare_var_type(node, var_type)
+      var_type = check_declare_var_type(node, var_type, "an instance variable")
       owner_vars = @instance_vars[owner] ||= {} of String => TypeDeclarationWithLocation
       type_decl = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!)
       owner_vars[var.name] = type_decl
@@ -162,16 +162,16 @@ module Crystal
 
     def declare_class_var(node, var)
       owner = class_var_owner(node)
-      var_type = lookup_type(node.declared_type).virtual_type
-      var_type = check_declare_var_type(node, var_type)
+      var_type = lookup_type(node.declared_type)
+      var_type = check_declare_var_type(node, var_type, "a class variable")
       owner_vars = @class_vars[owner] ||= {} of String => Type
-      owner_vars[var.name] = var_type
+      owner_vars[var.name] = var_type.virtual_type
     end
 
     def declare_global_var(node, var)
-      var_type = lookup_type(node.declared_type).virtual_type
-      var_type = check_declare_var_type(node, var_type)
-      @globals[var.name] = var_type
+      var_type = lookup_type(node.declared_type)
+      var_type = check_declare_var_type(node, var_type, "a global variable")
+      @globals[var.name] = var_type.virtual_type
     end
 
     def visit(node : Def)

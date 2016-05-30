@@ -3081,6 +3081,15 @@ describe "Type inference: instance var" do
       )) { fun_of(void) }
   end
 
+  it "gives correct error when trying to use Int as an instance variable type" do
+    assert_error %(
+      class Foo
+        @x : Int
+      end
+      ),
+      "can't use Int as the type of an instance variable yet, use a more specific type"
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

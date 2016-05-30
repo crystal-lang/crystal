@@ -687,4 +687,11 @@ describe "Global inference" do
       ),
       "can't use Class as the type of global variable $class, use a more specific type"
   end
+
+  it "gives correct error when trying to use Int as a global variable type" do
+    assert_error %(
+      $x : Int
+      ),
+      "can't use Int as the type of a global variable yet, use a more specific type"
+  end
 end
