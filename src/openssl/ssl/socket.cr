@@ -79,10 +79,31 @@ class OpenSSL::SSL::Socket
 
     begin
       loop do
-        ret = LibSSL.ssl_shutdown(@ssl)
-        break if ret == 1
-        raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
-        # ret == 0, retry
+        begin
+          ret = LibSSL.ssl_shutdown(@ssl)
+          break if ret == 1
+          raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_shutdown") if ret < 0
+        rescue e : Errno
+          case e.errno
+          when 0
+            # OpenSSL claimed an underlying syscall failed, but that didn't set any error state,
+            # assume we're done
+            break
+          when Errno::EAGAIN
+            # Ignore, shutdown did not complete yet
+          else
+            raise e
+          end
+        rescue e : OpenSSL::SSL::Error
+          case e.error
+          when .want_read?, .want_write?
+            # Ignore, shutdown did not complete yet
+          else
+            raise e
+          end
+        end
+
+        # ret == 0, retry, shutdown is not complete yet
       end
     rescue IO::Error
     ensure
