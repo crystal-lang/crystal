@@ -153,19 +153,14 @@ class Object
 
   # Returns a shallow copy of this object.
   #
-  # Object returns self, but subclasses override this method to provide
-  # specific dup behaviour.
-  def dup
-    self
-  end
-
-  # Returns a deep copy of this object.
+  # As a convention, `clone` is the method used to create a deep copy of
+  # an object, but this logic isn't defined generically for every type
+  # because cycles could be involved, and the clone logic might not need
+  # to clone everything.
   #
-  # Object returns self, but subclasses override this method to provide
-  # specific clone behaviour.
-  def clone
-    self
-  end
+  # Many types in the standard library, like `Array`, `Hash`, `Set` and
+  # `Deque`, and all primitive types, define `dup` and `clone`.
+  abstract def dup
 
   # Defines getter methods for each of the given arguments.
   #
@@ -1024,6 +1019,7 @@ class Object
   end
 
   # Forwards missing methods to delegate.
+  #
   # ```
   # class StringWrapper
   #   def initialize(@string)
@@ -1039,6 +1035,24 @@ class Object
   macro forward_missing_to(delegate)
     macro method_missing(name, args, block)
       {{delegate}}.\{{name.id}}(\{{*args}}) \{{block}}
+    end
+  end
+
+  # Defines a `clone` method that returns a copy of this
+  # object with all instance variables cloned (`clone` is
+  # in turn invoked on them).
+  macro def_clone
+    # Returns a copy of `self` with all instance variables cloned.
+    def clone
+      clone = \{{@type}}.allocate
+      clone.initialize_copy(self)
+      clone
+    end
+
+    protected def initialize_copy(other)
+      \{% for ivar in @type.instance_vars %}
+        @\{{ivar.id}} = other.@\{{ivar.id}}.clone
+      \{% end %}
     end
   end
 end

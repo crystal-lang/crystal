@@ -32,6 +32,18 @@ class Reference
     false
   end
 
+  # Returns a shallow copy of this object.
+  #
+  # This allocates a new object and copies the contents of
+  # `self` into it.
+  def dup
+    {% begin %}
+      dup = {{@type}}.allocate
+      dup.as(Void*).copy_from(self.as(Void*), instance_sizeof({{@type}}))
+      dup
+    {% end %}
+  end
+
   # Returns this reference's `object_id` as the hash value.
   def hash
     object_id

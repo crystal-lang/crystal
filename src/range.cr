@@ -270,6 +270,11 @@ struct Range(B, E)
     end
   end
 
+  # Returns a new Range with `begin` and `end` cloned.
+  def clone
+    Range.new(@begin.clone, @end.clone, @exclusive)
+  end
+
   # :nodoc:
   class ItemIterator(B, E)
     include Iterator(B)

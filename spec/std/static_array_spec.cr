@@ -124,4 +124,11 @@ describe "StaticArray" do
     a[1].should eq(4)
     a[2].should eq(3)
   end
+
+  it "clones" do
+    a = StaticArray(Array(Int32), 1).new { |i| [1] }
+    b = a.clone
+    b[0].should eq(a[0])
+    b[0].should_not be(a[0])
+  end
 end

@@ -54,4 +54,12 @@ class Class
   def to_s(io)
     io << name
   end
+
+  def dup
+    self
+  end
+
+  def clone
+    self
+  end
 end

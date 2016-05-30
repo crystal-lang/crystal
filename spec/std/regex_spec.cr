@@ -132,4 +132,14 @@ describe "Regex" do
       Regex.union(/skiing/i, /sledding/).should eq(/skiing/i + /sledding/)
     end
   end
+
+  it "dups" do
+    regex = /foo/
+    regex.dup.should be(regex)
+  end
+
+  it "clones" do
+    regex = /foo/
+    regex.clone.should be(regex)
+  end
 end

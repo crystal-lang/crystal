@@ -183,6 +183,10 @@ struct BigFloat < Float
     (expptr - length).times { io << 0 } if expptr > 0
   end
 
+  def clone
+    self
+  end
+
   private def mpf
     pointerof(@mpf)
   end

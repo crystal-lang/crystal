@@ -307,6 +307,10 @@ struct BigInt < Int
     self
   end
 
+  def clone
+    self
+  end
+
   private def check_division_by_zero(value)
     if value == 0
       raise DivisionByZero.new

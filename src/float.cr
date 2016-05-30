@@ -175,6 +175,10 @@ struct Float32
     n = self
     pointerof(n).as(Int32*).value
   end
+
+  def clone
+    self
+  end
 end
 
 struct Float64
@@ -398,5 +402,9 @@ struct Float64
   def hash
     n = self
     pointerof(n).as(Int64*).value
+  end
+
+  def clone
+    self
   end
 end

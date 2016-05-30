@@ -272,4 +272,8 @@ describe "Char" do
     'a'.control?.should be_false
     '\u0019'.control?.should be_true
   end
+
+  describe "clone" do
+    assert { 'a'.clone.should eq('a') }
+  end
 end

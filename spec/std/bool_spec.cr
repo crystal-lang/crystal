@@ -36,4 +36,9 @@ describe "Bool" do
     assert { true.to_s.should eq("true") }
     assert { false.to_s.should eq("false") }
   end
+
+  describe "clone" do
+    assert { true.clone.should be_true }
+    assert { false.clone.should be_false }
+  end
 end

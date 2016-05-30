@@ -56,14 +56,36 @@ describe "Set" do
   end
 
   describe "dup" do
-    it "creates an independent copy" do
-      set1 = Set{1, 2, 3}
+    it "creates a dup" do
+      set1 = Set{[1, 2]}
       set2 = set1.dup
 
-      set1 << 4
-      set2 << 5
+      set1.should eq(set2)
+      set1.should_not be(set2)
 
-      set2.should eq(Set{1, 2, 3, 5})
+      set1.to_a.first.should be(set2.to_a.first)
+
+      set1 << [3]
+      set2 << [4]
+
+      set2.should eq(Set{[1, 2], [4]})
+    end
+  end
+
+  describe "clone" do
+    it "creates a clone" do
+      set1 = Set{[1, 2]}
+      set2 = set1.clone
+
+      set1.should eq(set2)
+      set1.should_not be(set2)
+
+      set1.to_a.first.should_not be(set2.to_a.first)
+
+      set1 << [3]
+      set2 << [4]
+
+      set2.should eq(Set{[1, 2], [4]})
     end
   end
 

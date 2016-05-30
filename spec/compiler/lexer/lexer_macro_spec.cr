@@ -22,7 +22,7 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_EXPRESSION_START)
 
-    token_before_expression = token.clone
+    token_before_expression = token.dup
 
     token = lexer.next_token
     token.type.should eq(:IDENT)
@@ -51,7 +51,7 @@ describe "Lexer macro" do
       token = lexer.next_macro_token(token.macro_state, false)
       token.type.should eq(:MACRO_EXPRESSION_START)
 
-      token_before_expression = token.clone
+      token_before_expression = token.dup
 
       token = lexer.next_token
       token.type.should eq(:IDENT)
@@ -88,7 +88,7 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_EXPRESSION_START)
 
-    token_before_expression = token.clone
+    token_before_expression = token.dup
 
     token = lexer.next_token
     token.type.should eq(:IDENT)
@@ -120,7 +120,7 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_EXPRESSION_START)
 
-    token_before_expression = token.clone
+    token_before_expression = token.dup
 
     token = lexer.next_token
     token.type.should eq(:IDENT)
@@ -148,7 +148,7 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_EXPRESSION_START)
 
-    token_before_expression = token.clone
+    token_before_expression = token.dup
 
     token = lexer.next_token
     token.type.should eq(:IDENT)
@@ -206,8 +206,6 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_EXPRESSION_START)
 
-    token_before_expression = token.clone
-
     token = lexer.next_token
     token.type.should eq(:IDENT)
     token.value.should eq("var")
@@ -221,7 +219,7 @@ describe "Lexer macro" do
     token.type.should eq(:MACRO_LITERAL)
     token.value.should eq("\n")
 
-    token = lexer.next_macro_token(token_before_expression.macro_state, false)
+    token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_END)
   end
 
@@ -366,7 +364,7 @@ describe "Lexer macro" do
     token = lexer.next_macro_token(token.macro_state, false)
     token.type.should eq(:MACRO_EXPRESSION_START)
 
-    token_before_expression = token.clone
+    token_before_expression = token.dup
     token_before_expression.macro_state.comment.should be_true
 
     token = lexer.next_token

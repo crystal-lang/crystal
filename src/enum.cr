@@ -372,6 +372,10 @@ struct Enum
     {% end %}
   end
 
+  def clone
+    self
+  end
+
   # Convenience macro to create an *or*ed enum from the given members.
   #
   # ```

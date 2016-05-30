@@ -212,6 +212,10 @@ struct Complex
     Complex.new(@real / other, @imag / other)
   end
 
+  def clone
+    self
+  end
+
   # Returns the number 0 in complex form
   def self.zero : Complex
     new 0, 0

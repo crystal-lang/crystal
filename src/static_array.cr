@@ -253,6 +253,15 @@ struct StaticArray(T, N)
     io << "]"
   end
 
+  # Returns a new StaticArray where each element is cloned from elements in `self`.
+  def clone
+    array = uninitialized self
+    N.times do |i|
+      array.to_unsafe[i] = to_unsafe[i].clone
+    end
+    array
+  end
+
   private def check_index_out_of_bounds(index)
     index += size if index < 0
     unless 0 <= index < size

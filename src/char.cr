@@ -587,4 +587,8 @@ struct Char
   def ===(byte : Int)
     ord === byte
   end
+
+  def clone
+    self
+  end
 end

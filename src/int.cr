@@ -492,6 +492,10 @@ struct Int8
   def popcount
     Intrinsics.popcount8(self)
   end
+
+  def clone
+    self
+  end
 end
 
 struct Int16
@@ -509,6 +513,10 @@ struct Int16
 
   def popcount
     Intrinsics.popcount16(self)
+  end
+
+  def clone
+    self
   end
 end
 
@@ -528,6 +536,10 @@ struct Int32
   def popcount
     Intrinsics.popcount32(self)
   end
+
+  def clone
+    self
+  end
 end
 
 struct Int64
@@ -545,6 +557,10 @@ struct Int64
 
   def popcount
     Intrinsics.popcount64(self)
+  end
+
+  def clone
+    self
   end
 end
 
@@ -564,6 +580,10 @@ struct UInt8
   def popcount
     Intrinsics.popcount8(self)
   end
+
+  def clone
+    self
+  end
 end
 
 struct UInt16
@@ -581,6 +601,10 @@ struct UInt16
 
   def popcount
     Intrinsics.popcount16(self)
+  end
+
+  def clone
+    self
   end
 end
 
@@ -600,6 +624,10 @@ struct UInt32
   def popcount
     Intrinsics.popcount32(self)
   end
+
+  def clone
+    self
+  end
 end
 
 struct UInt64
@@ -617,5 +645,9 @@ struct UInt64
 
   def popcount
     Intrinsics.popcount64(self)
+  end
+
+  def clone
+    self
   end
 end

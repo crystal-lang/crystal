@@ -21,4 +21,8 @@ describe Symbol do
     b = "[:+, :-, :*, :/, :==, :<, :<=, :>, :>=, :!, :!=, :=~, :!~, :&, :|, :^, :~, :**, :>>, :<<, :%, :[], :<=>, :===, :[]?, :[]=]"
     a.inspect.should eq(b)
   end
+
+  describe "clone" do
+    assert { :foo.clone.should eq(:foo) }
+  end
 end

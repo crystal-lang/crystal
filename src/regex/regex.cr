@@ -502,4 +502,12 @@ class Regex
     io << source
     io << ")"
   end
+
+  def dup
+    self
+  end
+
+  def clone
+    self
+  end
 end
