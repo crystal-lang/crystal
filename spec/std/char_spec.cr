@@ -260,4 +260,16 @@ describe "Char" do
     ('酒'.ord).should eq(37202)
     ('酒' === 37202).should be_true
   end
+
+  it "does digit?" do
+    'c'.digit?.should be_false
+    '1'.digit?.should be_true
+    '/'.digit?.should be_false
+  end
+
+  it "does control?" do
+    'ù'.control?.should be_false
+    'a'.control?.should be_false
+    '\u0019'.control?.should be_true
+  end
 end

@@ -577,6 +577,14 @@ struct Char
     end
   end
 
+  # Returns true if the codepoint is equal to *byte* ignoring the type
+  #
+  # ```
+  # 'c'.ord       # => 99
+  # 'c' === 99_u8 # => true
+  # 'c' === 99    # => true
+  # 'z' === 99    # => false
+  # ```
   def ===(byte : Int)
     ord === byte
   end
