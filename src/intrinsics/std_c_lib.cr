@@ -21,14 +21,17 @@ module Intrinsics::StdCLib
 
   end
 
+  @[AlwaysInline]
   def memcpy(dest, src, len, align, is_volatile)
     Lib.memcpy(dest, src, len, align, is_volatile)
   end
 
+  @[AlwaysInline]
   def memmove(dest, src, len, align, is_volatile)
     Lib.memmove(dest, src, len, align, is_volatile)
   end
 
+  @[AlwaysInline]
   def memset(dest, src, len, align, is_volatile)
     Lib.memset(dest, src, len, align, is_volatile)
   end
