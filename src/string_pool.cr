@@ -1,54 +1,73 @@
-# A String pool is a collection of Strings.
-# It allows a runtime to save memory by preserving String in a pool.
-# We can reuse instance of common String instead of creating a new String.
+# A string pool is a collection of strings.
+# It allows a runtime to save memory by preserving strings in a pool, allowing to
+# reuse an instance of a common string instead of creating a new one.
 #
-#
-#   require "string_pool"
-#   pool = StringPool.new
-
+# ```
+# require "string_pool"
+# pool = StringPool.new
+# a = "foo" + "bar"
+# b = "foo" + "bar"
+# a.object_id # => 136294360
+# b.object_id # => 136294336
+# a = pool.get(a)
+# b = pool.get(b)
+# a.object_id # => 136294312
+# b.object_id # => 136294312
+# ```
 class StringPool
   # Returns the size
   #
-  #     pool = StringPool.new
-  #     pool.size # => 0
+  # ```
+  # pool = StringPool.new
+  # pool.size # => 0
+  # ```
   getter size : Int32
 
-  # Creates a new empty StringPool
+  # Creates a new empty string pool.
   def initialize
     @buckets = Array(Array(String)?).new(11, nil)
     @size = 0
   end
 
-  # Returns true if the String Pool has no element otherwise returns false
+  # Returns `true` if the String Pool has no element otherwise returns `false`.
   #
-  #     pool = StringPool.new
-  #     pool.empty? # => true
-  #     pool.get("crystal")
-  #     pool.empty? # => false
+  # ```
+  # pool = StringPool.new
+  # pool.empty? # => true
+  # pool.get("crystal")
+  # pool.empty? # => false
+  # ```
   def empty?
     @size == 0
   end
 
   # Returns a string with the contents of the given slice.
+  #
   # If a string with those contents was already present in the pool, that one is returned.
   # Otherwise a new string is created, put in the pool and returned.
   #
-  #     ptr = Pointer.malloc(9) {|i| ('a'.ord + i).to_u8 }
-  #
-  #     pool = StringPool.new
-  #     slice = Slice.new(ptr, 3)
-  #     pool.empty? # => true
-  #     pool.get(slice)
-  #     pool.empty? # => false
+  # ```
+  # pool = StringPool.new
+  # ptr = Pointer.malloc(9) { |i| ('a'.ord + i).to_u8 }
+  # slice = Slice.new(ptr, 3)
+  # pool.empty? # => true
+  # pool.get(slice)
+  # pool.empty? # => false
+  #  ```
   def get(slice : Slice(UInt8))
     get slice.pointer(slice.size), slice.size
   end
 
-  # Returns the already present String object, with the specified number *len* and the UInt8* *str*, if it is present in the pool, else the string is added to the StringPool
+  # Returns a string with the contents given by the pointer *str* of size *len*.
   #
-  #     pool = StringPool.new
-  #     pool.get("hey".to_unsafe, 3)
-  #     pool.size # => 1
+  # If a string with those contents was already present in the pool, that one is returned.
+  # Otherwise a new string is created, put in the pool and returned.
+  #
+  # ```
+  # pool = StringPool.new
+  # pool.get("hey".to_unsafe, 3)
+  # pool.size # => 1
+  # ```
   def get(str : UInt8*, len)
     rehash if @size > 5 * @buckets.size
 
@@ -70,34 +89,42 @@ class StringPool
     entry
   end
 
-  # Returns a string with the contents of the given memoryIO.
+  # Returns a string with the contents of the given `MemoryIO`.
+  #
   # If a string with those contents was already present in the pool, that one is returned.
   # Otherwise a new string is created, put in the pool and returned
   #
+  # ```
   #     pool = StringPool.new
   #     io = MemoryIO.new "crystal"
   #     pool.empty? # => true
   #     pool.get(io)
   #     pool.empty? # => false
+  # ```
   def get(str : MemoryIO)
     get(str.buffer, str.bytesize)
   end
 
   # Returns a string with the contents of the given string.
+  #
   # If a string with those contents was already present in the pool, that one is returned.
   # Otherwise a new string is created, put in the pool and returned
   #
+  # ```
   #     pool = StringPool.new
   #     string = "crystal"
   #     pool.empty? # => true
   #     pool.get(string)
   #     pool.empty? # => false
+  # ```
   def get(str : String)
     get(str.to_unsafe, str.bytesize)
   end
 
-  # Rebuilds the hash based on the current hash values for each key.
-  # If values of key objects have changed since they were inserted.
+  # Rebuilds the hash based on the current hash values for each key,
+  # if values of key objects have changed since they were inserted.
+  #
+  # Call this method if you modified a string submitted to the pool.
   def rehash
     new_size = calculate_new_size(@size)
     old_buckets = @buckets
