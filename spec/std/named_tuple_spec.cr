@@ -5,6 +5,50 @@ describe "NamedTuple" do
     NamedTuple.new(x: 1, y: 2).should eq({x: 1, y: 2})
   end
 
+  it "does NamedTuple.from" do
+    t = NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :bar => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    t = NamedTuple(foo: Int32, bar: Int32).from({"foo" => 1, "bar" => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    expect_raises ArgumentError do
+      NamedTuple(foo: Int32, bar: Int32).from({:foo => 1})
+    end
+
+    expect_raises KeyError do
+      NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :baz => 2})
+    end
+
+    expect_raises(TypeCastError, /cast to Int32 failed/) do
+      NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :bar => "foo"})
+    end
+  end
+
+  it "does NamedTuple#from" do
+    t = {foo: Int32, bar: Int32}.from({:foo => 1, :bar => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    t = {foo: Int32, bar: Int32}.from({"foo" => 1, "bar" => 2})
+    t.should eq({foo: 1, bar: 2})
+    t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
+
+    expect_raises ArgumentError do
+      {foo: Int32, bar: Int32}.from({:foo => 1})
+    end
+
+    expect_raises KeyError do
+      {foo: Int32, bar: Int32}.from({:foo => 1, :baz => 2})
+    end
+
+    expect_raises(TypeCastError, /cast to Int32 failed/) do
+      {foo: Int32, bar: Int32}.from({:foo => 1, :bar => "foo"})
+    end
+  end
+
   it "gets size" do
     {a: 1, b: 3}.size.should eq(2)
   end

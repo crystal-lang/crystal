@@ -141,8 +141,37 @@ describe "Tuple" do
     u[1].should_not be(r2)
   end
 
-  it "does Tuple#new" do
+  it "does Tuple.new" do
     Tuple.new(1, 2, 3).should eq({1, 2, 3})
+    Tuple.new([1, 2, 3]).should eq({[1, 2, 3]})
+  end
+
+  it "does Tuple.from" do
+    t = Tuple(Int32, Float64).from([1_i32, 2.0_f64])
+    t.should eq({1_i32, 2.0_f64})
+    t.class.should eq(Tuple(Int32, Float64))
+
+    expect_raises ArgumentError do
+      Tuple(Int32).from([1, 2])
+    end
+
+    expect_raises(TypeCastError, /cast to Int32 failed/) do
+      Tuple(Int32, String).from(["foo", 1])
+    end
+  end
+
+  it "does Tuple#from" do
+    t = {Int32, Float64}.from([1_i32, 2.0_f64])
+    t.should eq({1_i32, 2.0_f64})
+    t.class.should eq(Tuple(Int32, Float64))
+
+    expect_raises ArgumentError do
+      {Int32}.from([1, 2])
+    end
+
+    expect_raises(TypeCastError, /cast to Int32 failed/) do
+      {Int32, String}.from(["foo", 1])
+    end
   end
 
   it "clones empty tuple" do
