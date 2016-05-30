@@ -96,6 +96,7 @@ fun __crystal_get_exception(unwind_ex : LibUnwind::Exception*) : UInt64
 end
 
 def raise(ex : Exception) : NoReturn
+  ex.callstack = CallStack.new
   unwind_ex = Pointer(LibUnwind::Exception).malloc
   unwind_ex.value.exception_class = LibC::SizeT.zero
   unwind_ex.value.exception_cleanup = LibC::SizeT.zero

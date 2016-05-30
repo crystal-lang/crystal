@@ -143,15 +143,17 @@ end
 class Exception
   getter message : String?
   getter cause : Exception?
+  property callstack : CallStack?
 
-  def initialize(message : String? = nil, cause : Exception? = nil)
-    @message = message
-    @cause = cause
-    @callstack = CallStack.new
+  def initialize(@message : String? = nil, @cause : Exception? = nil)
   end
 
   def backtrace
-    @callstack.printable_backtrace
+    self.backtrace?.not_nil!
+  end
+
+  def backtrace?
+    @callstack.try &.printable_backtrace
   end
 
   def to_s(io : IO)
@@ -166,7 +168,7 @@ class Exception
 
   def inspect_with_backtrace(io : IO)
     io << @message << " (" << self.class << ")\n"
-    backtrace.each do |frame|
+    backtrace.try &.each do |frame|
       io.puts frame
     end
     io.flush
