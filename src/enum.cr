@@ -376,7 +376,7 @@ struct Enum
     self
   end
 
-  # Convenience macro to create an *or*ed enum from the given members.
+  # Convenience macro to create a combined enum (combines given members using `|` (or) logical operator)
   #
   # ```
   # IOMode.flags(Read, Write) # => IOMode::Read | IOMode::Write
