@@ -392,6 +392,9 @@ module Crystal
 
     def fun_of(types : Array)
       type_vars = types.map { |type| type.as(TypeVar) }
+      unless type_vars.empty?
+        type_vars[-1] = self.nil if type_vars[-1].is_a?(VoidType)
+      end
       proc.instantiate(type_vars)
     end
 
@@ -400,6 +403,7 @@ module Crystal
       nodes.each do |node|
         type_vars << node.type
       end
+      return_type = self.nil if return_type.void?
       type_vars << return_type
       proc.instantiate(type_vars)
     end

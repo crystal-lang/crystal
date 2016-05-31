@@ -226,22 +226,6 @@ describe "Type inference: lib" do
       ", "argument 'x' of 'LibC#foo' must be Int32, not Foo (nor Char returned by 'Foo#to_unsafe')"
   end
 
-  it "error if passing nil to pointer through to_unsafe" do
-    assert_error "
-      lib LibC
-        fun foo(x : Void*) : Int32
-      end
-
-      class Foo
-        def to_unsafe
-          nil
-        end
-      end
-
-      LibC.foo Foo.new
-      ", "argument 'x' of 'LibC#foo' must be Pointer(Void), not Foo (nor Nil returned by 'Foo#to_unsafe')"
-  end
-
   it "error if passing non primitive type as varargs" do
     assert_error "
       lib LibC
@@ -787,5 +771,35 @@ describe "Type inference: lib" do
       LibC.foo(x: out x)
       x
       )) { int32 }
+  end
+
+  it "types fun returning nothing as nil" do
+    assert_type(%(
+      lib LibFoo
+        fun foo
+      end
+
+      LibFoo.foo
+      )) { |mod| mod.nil }
+  end
+
+  it "types fun returning void as nil" do
+    assert_type(%(
+      lib LibFoo
+        fun foo : Void
+      end
+
+      LibFoo.foo
+      )) { |mod| mod.nil }
+  end
+
+  it "types fun returning nil as nil" do
+    assert_type(%(
+      lib LibFoo
+        fun foo : Nil
+      end
+
+      LibFoo.foo
+      )) { |mod| mod.nil }
   end
 end

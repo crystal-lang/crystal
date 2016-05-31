@@ -721,7 +721,7 @@ describe "Block inference" do
       foo do
         1
       end
-      )) { void }
+      )) { |mod| mod.nil }
   end
 
   it "ignores void return type (2) (#427)" do

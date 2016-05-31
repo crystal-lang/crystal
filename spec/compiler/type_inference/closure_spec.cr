@@ -317,7 +317,7 @@ describe "Type inference: closure" do
       foo do |x|
         x.to_f
       end
-      ") { void }
+      ") { |mod| mod.nil }
   end
 
   it "errors when transforming block to fun literal if type mismatch" do

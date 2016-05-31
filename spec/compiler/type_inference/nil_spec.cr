@@ -142,4 +142,24 @@ describe "Type inference: nil" do
       1
       ") { int32 }
   end
+
+  it "doesn't check return type for nil" do
+    assert_type(%(
+      def foo : Nil
+        1
+      end
+
+      foo
+      )) { |mod| mod.nil }
+  end
+
+  it "doesn't check return type for void" do
+    assert_type(%(
+      def foo : Void
+        1
+      end
+
+      foo
+      )) { |mod| mod.nil }
+  end
 end

@@ -214,7 +214,7 @@ class Crystal::Call
 
     implicit_call_type = implicit_call.type?
     if implicit_call_type
-      if implicit_call_type.compatible_with?(expected_type)
+      if implicit_call_type.compatible_with?(expected_type) || implicit_call_type.implicitly_converted_in_c_to?(expected_type)
         self.args[index] = implicit_call
       else
         arg_name = lib_arg_name(typed_def_arg, index)

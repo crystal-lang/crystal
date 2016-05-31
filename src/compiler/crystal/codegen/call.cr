@@ -68,13 +68,17 @@ class Crystal::CodeGenVisitor
 
     # First self.
     if owner.passed_as_self?
-      if obj && obj.type.passed_as_self?
-        call_args << downcast(@last, target_def.owner, obj.type, true)
+      if owner.nil_type?
+        call_args << llvm_nil
       else
-        if node.uses_with_scope? && (yield_scope = context.vars["%scope"]?)
-          call_args << downcast(yield_scope.pointer, target_def.owner, node.with_scope.not_nil!, true)
+        if obj && obj.type.passed_as_self?
+          call_args << downcast(@last, target_def.owner, obj.type, true)
         else
-          call_args << llvm_self(owner)
+          if node.uses_with_scope? && (yield_scope = context.vars["%scope"]?)
+            call_args << downcast(yield_scope.pointer, target_def.owner, node.with_scope.not_nil!, true)
+          else
+            call_args << llvm_self(owner)
+          end
         end
       end
     end
@@ -88,6 +92,7 @@ class Crystal::CodeGenVisitor
         call_arg = int8(0)
       else
         call_arg = @last
+        call_arg = llvm_nil if arg.type.nil_type?
         call_arg = downcast(call_arg, def_arg.type, arg.type, true)
       end
       call_args << call_arg
@@ -165,6 +170,7 @@ class Crystal::CodeGenVisitor
           def_arg = target_def.args[i]?
 
           call_arg = @last
+          call_arg = llvm_nil if arg.type.nil_type?
 
           if def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
             # Nil to pointer

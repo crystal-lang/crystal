@@ -173,7 +173,7 @@ class Crystal::CodeGenVisitor
       end
       llvm_arg_type
     end
-    llvm_return_type = llvm_type(target_def.type)
+    llvm_return_type = llvm_return_type(target_def.type)
 
     if is_closure
       llvm_args_types.insert(0, LLVM::VoidPointer)

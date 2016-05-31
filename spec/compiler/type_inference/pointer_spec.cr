@@ -129,4 +129,37 @@ describe "Type inference: pointer" do
       ),
       "use `null?`"
   end
+
+  it "can assign nil to void pointer" do
+    assert_type(%(
+      ptr = Pointer(Void).malloc(1_u64)
+      ptr.value = ptr.value
+      )) { |mod| mod.nil }
+  end
+
+  it "can pass any pointer to something expecting void* in lib call" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Void*) : Float64
+      end
+
+      LibFoo.foo(Pointer(Int32).malloc(1_u64))
+      )) { float64 }
+  end
+
+  it "can pass any pointer to something expecting void* in lib call, with to_unsafe" do
+    assert_type(%(
+      lib LibFoo
+        fun foo(x : Void*) : Float64
+      end
+
+      class Foo
+        def to_unsafe
+          Pointer(Int32).malloc(1_u64)
+        end
+      end
+
+      LibFoo.foo(Foo.new)
+      )) { float64 }
+  end
 end

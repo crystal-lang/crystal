@@ -1202,11 +1202,12 @@ module Crystal
       end
 
       expected_return_type = fun_type.return_type
+      expected_return_type = @mod.nil if expected_return_type.void?
 
       fun_def = Def.new("->", fun_args, block.body)
       fun_literal = FunLiteral.new(fun_def).at(node.location)
       fun_literal.expected_return_type = expected_return_type
-      fun_literal.force_void = true if expected_return_type.void?
+      fun_literal.force_nil = true if expected_return_type.nil_type?
       fun_literal.accept self
 
       node.bind_to fun_literal
@@ -2023,6 +2024,12 @@ module Crystal
 
     def visit_pointer_set(node)
       scope = scope().remove_typedef.as(PointerInstanceType)
+
+      # We don't want to change the value of Pointer(Void) to include Nil (Nil passes as Void)
+      if scope.element_type.void?
+        node.type = @mod.nil
+        return
+      end
 
       value = @vars["value"]
 

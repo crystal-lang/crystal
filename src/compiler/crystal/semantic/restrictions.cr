@@ -204,6 +204,11 @@ module Crystal
         return self
       end
 
+      # Allow Nil to match Void (useful for `Pointer(Void)#value=`)
+      if nil_type? && other.void?
+        return self
+      end
+
       if parents.try &.any? &.restriction_of?(other, context.owner)
         return self
       end
@@ -777,7 +782,7 @@ module Crystal
 
       if return_type == other_return_type
         # Ok
-      elsif other_return_type.void?
+      elsif other_return_type.nil_type?
         # Ok, can cast fun to void
       elsif return_type.no_return?
         # Ok, NoReturn can be "cast" to anything

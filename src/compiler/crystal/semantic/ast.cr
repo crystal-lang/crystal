@@ -386,6 +386,15 @@ module Crystal
         yield arg, arg_index, object, object_index
       end
     end
+
+    def map_type(type)
+      # If the return type is nil, our type is nil
+      if freeze_type.try &.nil_type?
+        freeze_type
+      else
+        type
+      end
+    end
   end
 
   class Macro
@@ -595,7 +604,7 @@ module Crystal
   end
 
   class FunLiteral
-    property force_void = false
+    property force_nil = false
     property expected_return_type : Type?
 
     def update(from = nil)
@@ -603,10 +612,10 @@ module Crystal
       return unless self.def.type?
 
       types = self.def.args.map &.type
-      return_type = @force_void ? self.def.type.program.void : self.def.type
+      return_type = @force_nil ? self.def.type.program.nil : self.def.type
 
       expected_return_type = @expected_return_type
-      if expected_return_type && !expected_return_type.void? && !return_type.implements?(expected_return_type)
+      if expected_return_type && !expected_return_type.nil_type? && !return_type.implements?(expected_return_type)
         raise "expected block to return #{expected_return_type.devirtualize}, not #{return_type}"
       end
 
