@@ -1,40 +1,121 @@
-class OpenSSL::SSL::Context
-  def self.default : self
-    @@default ||= new
+abstract class OpenSSL::SSL::Context
+  class Client < Context
+    # Generates a new SSL client context with sane defaults for a client connection.
+    #
+    # By default it defaults to the `SSLv23_method` which actually means that
+    # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
+    # endpoint.
+    #
+    # Don't change the method unless you must restrict a specific protocol to be
+    # used (eg: TLSv1.2) and nothing else. You should specify options to disable
+    # specific protocols, yet allow to negotiate from various other ones. For
+    # example the following snippet will enable the TLSv1, TLSv1.1 and TLSv1.2
+    # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
+    #
+    # ```
+    # ssl_context = OpenSSL::SSL::Context::Client.new
+    # ssl_context.options = LibSSL::Options::NO_SSLV2 | LibSSL::Options::NO_SSLV3
+    # ```
+    def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+      super(method)
+      set_default_verify_paths
+      self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
+    end
+
+    # Returns a new SSL client context with only the given method set.
+    #
+    # For everything else this uses the defaults of your OpenSSL.
+    # Use this only if undoing the defaults that `new` sets is too much hassle.
+    def self.insecure(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+      super(method)
+    end
   end
 
-  # Generates a new SSL context.
-  #
-  # By default it defaults to the `SSLv23_method` which actually means that
-  # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
-  # endpoint.
-  #
-  # Don't change the method unless you must restrict a specific protocol to be
-  # used (eg: TLSv1.2) and nothing else. You should specify options to disable
-  # specific protocols, yet allow to negotiate from various other ones. For
-  # example the following snippet will enable the TLSv1, TLSv1.1 and TLSv1.2
-  # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
-  #
-  # ```
-  # ssl_context = OpenSSL::SSL::Context.new
-  # ssl_context.options = LibSSL::Options::NO_SSLV2 | LibSSL::Options::NO_SSLV3
-  # ```
-  def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+  class Server < Context
+    # Generates a new SSL server context with sane defaults for a server connection.
+    #
+    # By default it defaults to the `SSLv23_method` which actually means that
+    # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
+    # endpoint.
+    #
+    # Don't change the method unless you must restrict a specific protocol to be
+    # used (eg: TLSv1.2) and nothing else. You should specify options to disable
+    # specific protocols, yet allow to negotiate from various other ones. For
+    # example the following snippet will enable the TLSv1, TLSv1.1 and TLSv1.2
+    # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
+    #
+    # ```
+    # ssl_context = OpenSSL::SSL::Context::Server.new
+    # ssl_context.options = LibSSL::Options::NO_SSLV2 | LibSSL::Options::NO_SSLV3
+    # ```
+    def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+      super(method)
+      set_default_verify_paths
+    end
+
+    # Returns a new SSL server context with only the given method set.
+    #
+    # For everything else this uses the defaults of your OpenSSL.
+    # Use this only if undoing the defaults that `new` sets is too much hassle.
+    def self.insecure(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
+      super(method)
+    end
+  end
+
+  protected def initialize(method : LibSSL::SSLMethod)
     @handle = LibSSL.ssl_ctx_new(method)
     raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
+  end
+
+  # Overriding initialize or new in the child classes as public methods,
+  # makes it either impossible to access the parent versions or makes the parent
+  # versions public too. So to provide insecure in the child classes, we need
+  # a second constructor that we call from there without getting the
+  # overridden ones of the childs.
+  protected def _initialize_insecure(method : LibSSL::SSLMethod)
+    @handle = LibSSL.ssl_ctx_new(method)
+    raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
+  end
+
+  protected def self.insecure(method : LibSSL::SSLMethod)
+    obj = allocate
+    obj._initialize_insecure(method)
+    obj
   end
 
   def finalize
     LibSSL.ssl_ctx_free(@handle)
   end
 
-  # Specify the path to the certificate chain file to use.
+  # Sets the default paths for `ca_certiifcates=` and `ca_certificates_path=`.
+  def set_default_verify_paths
+    LibSSL.ssl_ctx_set_default_verify_paths(@handle)
+  end
+
+  # Sets the path to a file containing all CA certificates, in PEM format, used to
+  # validate the peers certificate.
+  def ca_certificates=(file_path : String)
+    ret = LibSSL.ssl_ctx_load_verify_locations(@handle, file_path, nil)
+    raise OpenSSL::Error.new("SSL_CTX_load_verify_locations") unless ret == 1
+  end
+
+  # Sets the path to a directory containing all CA certificates used to
+  # validate the peers certificate. The certificates should be in PEM format
+  # and the `c_rehash(1)` utility must have been run in the directory.
+  def ca_certificates_path=(dir_path : String)
+    ret = LibSSL.ssl_ctx_load_verify_locations(@handle, nil, dir_path)
+    raise OpenSSL::Error.new("SSL_CTX_load_verify_locations") unless ret == 1
+  end
+
+  # Specify the path to the certificate chain file to use. In server mode this
+  # is presented to the client, in client mode this used as client certificate.
   def certificate_chain=(file_path)
     ret = LibSSL.ssl_ctx_use_certificate_chain_file(@handle, file_path)
     raise OpenSSL::Error.new("SSL_CTX_use_certificate_chain_file") unless ret == 1
   end
 
   # Specify the path to the private key to use. The key must in PEM format.
+  # The key must correspond to the entity certificate set by `certificate_chain=`.
   def private_key=(file_path)
     ret = LibSSL.ssl_ctx_use_privatekey_file(@handle, file_path, LibSSL::SSLFileType::PEM)
     raise OpenSSL::Error.new("SSL_CTX_use_PrivateKey_file") unless ret == 1
@@ -115,6 +196,16 @@ class OpenSSL::SSL::Context
     proto[0] = protocol.bytesize.to_u8
     protocol.to_slice.copy_to(proto.to_unsafe + 1, protocol.bytesize)
     self.alpn_protocol = proto
+  end
+
+  # Returns the current verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
+  def verify_mode
+    LibSSL.ssl_ctx_get_verify_mode(@handle)
+  end
+
+  # Sets the verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
+  def verify_mode=(mode : OpenSSL::SSL::VerifyMode)
+    LibSSL.ssl_ctx_set_verify(@handle, mode, nil)
   end
 
   private def alpn_protocol=(protocol : Slice(UInt8))

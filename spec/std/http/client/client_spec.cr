@@ -48,26 +48,47 @@ module HTTP
 
     describe "from URI" do
       it "has sane defaults" do
-        cl = Client.new(URI.parse("http://demo.com"))
-        cl.ssl?.should be_false
+        cl = Client.new(URI.parse("http://example.com"))
+        cl.ssl?.should be_nil
         cl.port.should eq(80)
       end
 
-      it "detects ssl" do
-        cl = Client.new(URI.parse("https://demo.com"))
-        cl.ssl?.should be_true
-        cl.port.should eq(443)
-      end
+      ifdef !without_openssl
+        it "detects ssl" do
+          cl = Client.new(URI.parse("https://example.com"))
+          cl.ssl?.should be_truthy
+          cl.port.should eq(443)
+        end
 
-      it "allows for specified ports" do
-        cl = Client.new(URI.parse("https://demo.com:9999"))
-        cl.ssl?.should be_true
-        cl.port.should eq(9999)
+        it "keeps context" do
+          ctx = OpenSSL::SSL::Context::Client.new
+          cl = Client.new(URI.parse("https://example.com"), ctx)
+          cl.ssl.should be(ctx)
+        end
+
+        it "doesn't take context for HTTP" do
+          ctx = OpenSSL::SSL::Context::Client.new
+          expect_raises(ArgumentError, "SSL context given") do
+            Client.new(URI.parse("http://example.com"), ctx)
+          end
+        end
+
+        it "allows for specified ports" do
+          cl = Client.new(URI.parse("https://example.com:9999"))
+          cl.ssl?.should be_truthy
+          cl.port.should eq(9999)
+        end
+      else
+        it "raises when trying to activate SSL" do
+          expect_raises do
+            Client.new "example.org", 443, ssl: true
+          end
+        end
       end
 
       it "raises error if not http schema" do
         expect_raises(ArgumentError, "Unsupported scheme: ssh") do
-          Client.new(URI.parse("ssh://demo.com"))
+          Client.new(URI.parse("ssh://example.com"))
         end
       end
 

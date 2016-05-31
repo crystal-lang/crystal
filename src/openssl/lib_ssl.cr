@@ -10,6 +10,10 @@ lib LibSSL
   type SSLMethod = Void*
   type SSLContext = Void*
   type SSL = Void*
+  type X509StoreContext = Void*
+
+  alias ALPNCallback = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
+  alias VerifyCallback = (Int, X509StoreContext) -> Int
 
   enum SSLFileType
     PEM  = 1
@@ -28,6 +32,14 @@ lib LibSSL
     WANT_ACCEPT      = 8
   end
 
+  @[Flags]
+  enum VerifyMode : Int
+    NONE                 = 0
+    PEER                 = 1
+    FAIL_IF_NO_PEER_CERT = 2
+    CLIENT_ONCE          = 4
+  end
+
   enum SSLCtrl : Int
     SET_TLSEXT_HOSTNAME = 55
   end
@@ -35,42 +47,6 @@ lib LibSSL
   enum TLSExt : Long
     NAMETYPE_host_name = 0
   end
-
-  fun sslv23_method = SSLv23_method : SSLMethod
-  fun tlsv1_method = TLSv1_method : SSLMethod
-  fun tlsv1_1_method = TLSv1_1_method : SSLMethod
-  fun tlsv1_2_method = TLSv1_2_method : SSLMethod
-
-  fun ssl_load_error_strings = SSL_load_error_strings
-  fun ssl_get_error = SSL_get_error(handle : SSL, ret : Int) : SSLError
-  fun ssl_library_init = SSL_library_init
-  fun ssl_ctx_new = SSL_CTX_new(method : SSLMethod) : SSLContext
-  fun ssl_ctx_free = SSL_CTX_free(context : SSLContext)
-
-  @[Raises]
-  fun ssl_new = SSL_new(context : SSLContext) : SSL
-
-  @[Raises]
-  fun ssl_connect = SSL_connect(handle : SSL) : Int
-
-  @[Raises]
-  fun ssl_accept = SSL_accept(handle : SSL) : Int
-
-  @[Raises]
-  fun ssl_write = SSL_write(handle : SSL, text : UInt8*, length : Int) : Int
-
-  @[Raises]
-  fun ssl_read = SSL_read(handle : SSL, buffer : UInt8*, read_size : Int) : Int
-
-  @[Raises]
-  fun ssl_shutdown = SSL_shutdown(handle : SSL) : Int
-
-  fun ssl_free = SSL_free(handle : SSL)
-  fun ssl_ctx_set_cipher_list = SSL_CTX_set_cipher_list(ctx : SSLContext, ciphers : Char*) : Int
-  fun ssl_ctx_use_certificate_chain_file = SSL_CTX_use_certificate_chain_file(ctx : SSLContext, file : UInt8*) : Int
-  fun ssl_ctx_use_privatekey_file = SSL_CTX_use_PrivateKey_file(ctx : SSLContext, file : UInt8*, filetype : SSLFileType) : Int
-  fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
-  fun ssl_ctrl = SSL_ctrl(handle : SSL, cmd : Int, larg : Long, parg : Void*) : Long
 
   # SSL_CTRL_SET_TMP_RSA = 2
   # SSL_CTRL_SET_TMP_DH = 3
@@ -134,8 +110,6 @@ lib LibSSL
     SEND_FALLBACK_SCSV         = 0x00000080
   end
 
-  fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
-
   OPENSSL_NPN_UNSUPPORTED = 0
   OPENSSL_NPN_NEGOTIATED  = 1
   OPENSSL_NPN_NO_OVERLAP  = 2
@@ -145,9 +119,50 @@ lib LibSSL
   SSL_TLSEXT_ERR_ALERT_FATAL   = 2
   SSL_TLSEXT_ERR_NOACK         = 3
 
-  alias ALPN_CB = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
-  fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPN_CB, arg : Void*) : Void
+  fun sslv23_method = SSLv23_method : SSLMethod
+  fun tlsv1_method = TLSv1_method : SSLMethod
+  fun tlsv1_1_method = TLSv1_1_method : SSLMethod
+  fun tlsv1_2_method = TLSv1_2_method : SSLMethod
+
+  fun ssl_load_error_strings = SSL_load_error_strings
+  fun ssl_get_error = SSL_get_error(handle : SSL, ret : Int) : SSLError
+  fun ssl_library_init = SSL_library_init
+  fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
+  fun ssl_ctrl = SSL_ctrl(handle : SSL, cmd : Int, larg : Long, parg : Void*) : Long
+  fun ssl_free = SSL_free(handle : SSL)
+
+  @[Raises]
+  fun ssl_new = SSL_new(context : SSLContext) : SSL
+
+  @[Raises]
+  fun ssl_connect = SSL_connect(handle : SSL) : Int
+
+  @[Raises]
+  fun ssl_accept = SSL_accept(handle : SSL) : Int
+
+  @[Raises]
+  fun ssl_write = SSL_write(handle : SSL, text : UInt8*, length : Int) : Int
+
+  @[Raises]
+  fun ssl_read = SSL_read(handle : SSL, buffer : UInt8*, read_size : Int) : Int
+
+  @[Raises]
+  fun ssl_shutdown = SSL_shutdown(handle : SSL) : Int
+
+  fun ssl_ctx_new = SSL_CTX_new(method : SSLMethod) : SSLContext
+  fun ssl_ctx_free = SSL_CTX_free(context : SSLContext)
+  fun ssl_ctx_set_cipher_list = SSL_CTX_set_cipher_list(ctx : SSLContext, ciphers : Char*) : Int
+  fun ssl_ctx_use_certificate_chain_file = SSL_CTX_use_certificate_chain_file(ctx : SSLContext, file : UInt8*) : Int
+  fun ssl_ctx_use_privatekey_file = SSL_CTX_use_PrivateKey_file(ctx : SSLContext, file : UInt8*, filetype : SSLFileType) : Int
+  fun ssl_ctx_get_verify_mode = SSL_CTX_get_verify_mode(ctx : SSLContext) : VerifyMode
+  fun ssl_ctx_set_verify = SSL_CTX_set_verify(ctx : SSLContext, mode : VerifyMode, callback : VerifyCallback)
+  fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
   fun ssl_select_next_proto = SSL_select_next_proto(output : Char**, output_len : Char*, input : Char*, input_len : Int, client : Char*, client_len : Int) : Int
+  fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPNCallback, arg : Void*) : Void
+  fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
+
+  @[Raises]
+  fun ssl_ctx_load_verify_locations = SSL_CTX_load_verify_locations(ctx : SSLContext, ca_file : UInt8*, ca_path : UInt8*) : Int
 end
 
 LibSSL.ssl_library_init

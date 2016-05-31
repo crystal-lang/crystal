@@ -231,7 +231,14 @@ class HTTP::WebSocket::Protocol
     socket = TCPSocket.new(host, port)
 
     ifdef !without_openssl
-      socket = OpenSSL::SSL::Socket.new(socket, sync_close: true) if ssl
+      if ssl
+        if ssl.is_a?(Bool) # true, but we want to get rid of the union
+          context = OpenSSL::SSL::Context::Client.new
+        else
+          context = ssl
+        end
+        socket = OpenSSL::SSL::Socket::Client.new(socket, context: context, sync_close: true)
+      end
     end
 
     headers = HTTP::Headers.new
