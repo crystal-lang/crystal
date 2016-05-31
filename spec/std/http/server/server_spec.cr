@@ -169,6 +169,19 @@ module HTTP
         response.close
         io.to_s.should eq("HTTP/1.1 200 OK\r\nContent-Length: 5\r\nSet-Cookie: Bar=Foo; path=/\r\n\r\nHello")
       end
+
+      it "responds with an error" do
+        io = MemoryIO.new
+        response = Response.new(io)
+        response.content_type = "text/html"
+        response.respond_with_error
+        io.to_s.should eq("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n1a\r\n500 Internal Server Error\n\r\n")
+
+        io = MemoryIO.new
+        response = Response.new(io)
+        response.respond_with_error("Bad Request", 400)
+        io.to_s.should eq("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nTransfer-Encoding: chunked\r\n\r\n10\r\n400 Bad Request\n\r\n")
+      end
     end
   end
 
