@@ -275,4 +275,18 @@ describe XML do
     doc = XML.parse(xml_str)
     doc.root.to_s.should eq("<person>\n  <name>たろう</name>\n</person>")
   end
+
+  describe "escape" do
+    it "does not change a safe string" do
+      str = XML.escape("safe_string")
+
+      str.should eq("safe_string")
+    end
+
+    it "escapes dangerous characters from a string" do
+      str = XML.escape("< & >")
+
+      str.should eq("&lt; &amp; &gt;")
+    end
+  end
 end

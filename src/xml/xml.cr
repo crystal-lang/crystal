@@ -27,6 +27,18 @@
 # end
 # ```
 module XML
+  SUBSTITUTIONS = {
+    '>' => "&gt;",
+    '<' => "&lt;",
+    '"' => "&quot;",
+    ''' => "&apos;",
+    '&' => "&amp;",
+  }
+
+  def self.escape(string : String)
+    string.gsub(SUBSTITUTIONS)
+  end
+
   # Parses an XML document from *string* with *options* into an `XML::Node`.
   # See `ParserOptions.default` for default options.
   def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Node
