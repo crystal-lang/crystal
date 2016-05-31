@@ -696,7 +696,7 @@ module Crystal
                 block_arg = call_args.block_arg
                 named_args = call_args.named_args
               else
-                args = block = block_arg = nil
+                args = block = block_arg = named_args = nil
               end
             end
 
