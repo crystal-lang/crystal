@@ -2975,6 +2975,14 @@ class String
     Slice.new(to_unsafe, bytesize)
   end
 
+  def clone
+    self
+  end
+
+  def dup
+    self
+  end
+
   def to_s
     self
   end

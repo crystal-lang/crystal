@@ -223,4 +223,9 @@ describe "BigInt" do
     hash.should eq(5)
     typeof(hash).should eq(UInt64)
   end
+
+  it "clones" do
+    x = 1.to_big_i
+    x.clone.should eq(x)
+  end
 end

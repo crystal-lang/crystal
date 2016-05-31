@@ -431,4 +431,10 @@ describe "Int" do
       end
     end
   end
+
+  it "clones" do
+    [1_u8, 2_u16, 3_u32, 4_u64, 5_i8, 6_i16, 7_i32, 8_i64].each do |value|
+      value.clone.should eq(value)
+    end
+  end
 end

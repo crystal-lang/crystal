@@ -55,4 +55,8 @@ struct Bool
   def to_s(io)
     io << to_s
   end
+
+  def clone
+    self
+  end
 end

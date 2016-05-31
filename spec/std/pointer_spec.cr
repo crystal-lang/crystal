@@ -245,4 +245,9 @@ describe "Pointer" do
     (!Pointer(Int32).null).should be_true
     (!Pointer(Int32).new(123)).should be_false
   end
+
+  it "clones" do
+    ptr = Pointer(Int32).new(123)
+    ptr.clone.should eq(ptr)
+  end
 end

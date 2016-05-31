@@ -111,4 +111,8 @@ describe Enum do
     SpecEnum.parse?("Two").should eq(SpecEnum::Two)
     SpecEnum.parse?("Four").should be_nil
   end
+
+  it "clones" do
+    SpecEnum::One.clone.should eq(SpecEnum::One)
+  end
 end

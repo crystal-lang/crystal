@@ -172,6 +172,10 @@ struct BigRational < Number
     to_s io
   end
 
+  def clone
+    self
+  end
+
   private def mpq
     pointerof(@mpq)
   end

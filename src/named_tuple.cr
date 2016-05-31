@@ -407,11 +407,6 @@ struct NamedTuple
     {% end %}
   end
 
-  # Returns *self*.
-  def dup
-    self
-  end
-
   # Returns a named tuple with the same keys but with cloned values, using the `clone` method.
   def clone
     {% begin %}

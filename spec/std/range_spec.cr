@@ -355,4 +355,12 @@ describe "Range" do
       (1...2).step(1).to_a.should eq([1])
     end
   end
+
+  it "clones" do
+    range = [1]..[2]
+    clone = range.clone
+    clone.should eq(range)
+    clone.begin.should_not be(range.begin)
+    clone.end.should_not be(range.end)
+  end
 end

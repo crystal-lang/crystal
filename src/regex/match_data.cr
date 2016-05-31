@@ -209,6 +209,14 @@ class Regex
       io << ">"
     end
 
+    def dup
+      self
+    end
+
+    def clone
+      self
+    end
+
     private def check_index_out_of_bounds(index)
       raise IndexError.new unless valid_group?(index)
     end

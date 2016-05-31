@@ -195,4 +195,9 @@ describe "Float" do
     f.should eq(-1.5_f32)
     f.should be_a(Float32)
   end
+
+  it "clones" do
+    1.0.clone.should eq(1.0)
+    1.0_f32.clone.should eq(1.0_f32)
+  end
 end

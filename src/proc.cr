@@ -129,6 +129,10 @@ struct Proc
     object_id.hash
   end
 
+  def clone
+    self
+  end
+
   def to_s(io)
     io << "#<"
     io << {{@type.name.stringify}}

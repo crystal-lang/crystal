@@ -234,6 +234,15 @@ struct Set(T)
     Set(T).new.merge(self)
   end
 
+  # Returns a new set with all of the elements cloned.
+  def clone
+    clone = Set(T).new
+    each do |element|
+      clone << element.clone
+    end
+    clone
+  end
+
   # Returns the elements as an array
   #
   #     Set.new([1,5]).to_a  # => [1,5]

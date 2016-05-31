@@ -22,4 +22,12 @@ describe Class do
     (Int32 | Char).should eq(typeof(1, 'a'))
     (Int32 | Char | Float64).should eq(typeof(1, 'a', 1.0))
   end
+
+  it "dups" do
+    Int32.dup.should eq(Int32)
+  end
+
+  it "clones" do
+    Int32.clone.should eq(Int32)
+  end
 end

@@ -332,11 +332,6 @@ struct Tuple
     hash
   end
 
-  # Returns self.
-  def dup
-    self
-  end
-
   # Returns a tuple containing cloned elements of this tuple using the `clone` method.
   def clone
     {% if true %}

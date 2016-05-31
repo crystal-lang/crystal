@@ -60,4 +60,9 @@ describe "Proc" do
     func2 = ->{ 1 }
     func2.should_not eq(func)
   end
+
+  it "clones" do
+    func = ->{ 1 }
+    func.clone.should eq(func)
+  end
 end

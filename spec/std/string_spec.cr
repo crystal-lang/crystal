@@ -1789,4 +1789,16 @@ describe "String" do
     "barbar".insert(0, "foo").size.should eq(9)
     "ともだち".insert(0, "ねこ").size.should eq(6)
   end
+
+  it "dups" do
+    string = "foo"
+    dup = string.dup
+    string.should be(dup)
+  end
+
+  it "clones" do
+    string = "foo"
+    clone = string.clone
+    string.should be(clone)
+  end
 end

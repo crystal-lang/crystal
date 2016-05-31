@@ -18,7 +18,7 @@ module Crystal
     end
 
     def clone
-      MatchContext.new(@owner, @type_lookup, @free_vars.clone)
+      MatchContext.new(@owner, @type_lookup, @free_vars.dup)
     end
   end
 

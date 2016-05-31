@@ -79,4 +79,8 @@ struct Symbol
     end
     false
   end
+
+  def clone
+    self
+  end
 end

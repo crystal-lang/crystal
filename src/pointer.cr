@@ -468,4 +468,8 @@ struct Pointer(T)
     ptr = self.as(Pointer(Void))
     Intrinsics.memset(self.as(Void*), 0_u8, (count * sizeof(T)).to_u32, 0_u32, false)
   end
+
+  def clone
+    self
+  end
 end
