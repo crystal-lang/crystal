@@ -159,7 +159,7 @@ class HTTP::Server
   def listen
     server = bind
     until @wants_close
-      spawn handle_client(server.accept)
+      spawn handle_client(server.accept?)
     end
   end
 
@@ -172,6 +172,9 @@ class HTTP::Server
   end
 
   private def handle_client(io)
+    # nil means the server was closed
+    return unless io
+
     io.sync = false
 
     ifdef !without_openssl

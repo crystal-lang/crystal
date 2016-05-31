@@ -39,6 +39,22 @@ class TCPServer < TCPSocket
     end
   end
 
+  # Accepts an incoming connection, yields it to the given
+  # block, and then closes the conneciton. Returns the
+  # value of the block.
+  #
+  # If the server is closed after invoking this method,
+  # `IO::Error` (closed stream) is raised.
+  #
+  # ```
+  # require "socket"
+  #
+  # server = TCPServer.new(2202)
+  #
+  # server.accept do |socket|
+  #   socket.puts Time.now
+  # end
+  # ```
   def accept
     sock = accept
     begin
@@ -48,12 +64,77 @@ class TCPServer < TCPSocket
     end
   end
 
-  def accept
+  # Accepts an incoming connection, yields it to the given
+  # block, and then closes the conneciton. Returns the
+  # value of the block, or `nil` if the server is closed
+  # after invoking this method.
+  #
+  # ```
+  # require "socket"
+  #
+  # server = TCPServer.new(2202)
+  #
+  # server.accept? do |socket|
+  #   socket.puts Time.now
+  # end
+  # ```
+  def accept?
+    sock = accept?
+    return unless sock
+
+    begin
+      yield sock
+    ensure
+      sock.close
+    end
+  end
+
+  # Accepts an incoming connection.
+  #
+  # If the server is closed after invoking this method,
+  # `IO::Error` (closed stream) is raised.
+  #
+  # ```
+  # require "socket"
+  #
+  # server = TCPServer.new(2202)
+  #
+  # socket = server.accept
+  # socket.puts Time.now
+  # socket.close
+  # ```
+  def accept : TCPSocket
+    accept? || raise IO::Error.new("closed stream")
+  end
+
+  # Accepts an incoming connection.
+  #
+  # If the server is closed after invoking this method,
+  # `nil` is returned.
+  #
+  # ```
+  # require "socket"
+  #
+  # server = TCPServer.new(2202)
+  #
+  # socket = server.accept?
+  # if socket
+  #   socket.puts Time.now
+  #   socket.close
+  # else
+  #   # This might happen if another fiber closes the server
+  #   # (can't happen in this example)
+  #   puts "server was closed"
+  # end
+  # ```
+  def accept? : TCPSocket?
     loop do
       client_addr = uninitialized LibC::SockaddrIn6
       client_addr_len = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
       client_fd = LibC.accept(fd, pointerof(client_addr).as(LibC::Sockaddr*), pointerof(client_addr_len))
       if client_fd == -1
+        return nil if closed?
+
         if Errno.value == Errno::EAGAIN
           wait_readable
         else

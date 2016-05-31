@@ -198,6 +198,17 @@ module HTTP
       server.close
       server.port.should eq(0)
     end
+
+    it "doesn't raise on accept after close #2692" do
+      server = Server.new("0.0.0.0", 0) { }
+
+      spawn do
+        server.close
+        sleep 0.001
+      end
+
+      server.listen
+    end
   end
 
   typeof(begin
