@@ -582,4 +582,28 @@ describe "Code gen: struct" do
       f.x
       )).to_i.should eq(84)
   end
+
+  it "can cast virtual struct to specific struct" do
+    run(%(
+       require "prelude"
+
+       abstract struct Foo
+       end
+
+       struct Bar < Foo
+         def foo
+           1
+         end
+       end
+
+       struct Baz < Foo
+         def foo
+           2
+         end
+       end
+
+       x = Bar.new || Baz.new
+       x.as(Bar).foo
+       )).to_i.should eq(1)
+  end
 end

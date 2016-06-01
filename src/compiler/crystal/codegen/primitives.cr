@@ -601,7 +601,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_class_with_type(type : VirtualType, value)
-    type_id = load value
+    type_id = type_id(value, type)
     metaclass_fun_name = "~metaclass"
     func = @main_mod.functions[metaclass_fun_name]? || create_metaclass_fun(metaclass_fun_name)
     func = check_main_fun metaclass_fun_name, func
