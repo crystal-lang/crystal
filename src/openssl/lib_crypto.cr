@@ -212,6 +212,8 @@ lib LibCrypto
   end
 
   fun x509_verify_param_lookup = X509_VERIFY_PARAM_lookup(name : UInt8*) : X509VerifyParam
+  fun x509_verify_param_set1_host = X509_VERIFY_PARAM_set1_host(param : X509VerifyParam, name : UInt8*, len : SizeT) : Int
+  fun x509_verify_param_set1_ip_asc = X509_VERIFY_PARAM_set1_ip_asc(param : X509VerifyParam, ip : UInt8*) : Int
   fun x509_verify_param_set_flags = X509_VERIFY_PARAM_set_flags(param : X509VerifyParam, flags : X509VerifyFlags) : Int
 end
 {% end %}

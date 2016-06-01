@@ -127,6 +127,7 @@ lib LibSSL
   fun ssl_get_error = SSL_get_error(handle : SSL, ret : Int) : SSLError
   fun ssl_library_init = SSL_library_init
   fun ssl_set_bio = SSL_set_bio(handle : SSL, rbio : LibCrypto::Bio*, wbio : LibCrypto::Bio*)
+  fun ssl_select_next_proto = SSL_select_next_proto(output : Char**, output_len : Char*, input : Char*, input_len : Int, client : Char*, client_len : Int) : Int
   fun ssl_ctrl = SSL_ctrl(handle : SSL, cmd : Int, larg : Long, parg : Void*) : Long
   fun ssl_free = SSL_free(handle : SSL)
 
@@ -156,7 +157,6 @@ lib LibSSL
   fun ssl_ctx_get_verify_mode = SSL_CTX_get_verify_mode(ctx : SSLContext) : VerifyMode
   fun ssl_ctx_set_verify = SSL_CTX_set_verify(ctx : SSLContext, mode : VerifyMode, callback : VerifyCallback)
   fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
-  fun ssl_select_next_proto = SSL_select_next_proto(output : Char**, output_len : Char*, input : Char*, input_len : Int, client : Char*, client_len : Int) : Int
   fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
 
   @[Raises]
@@ -178,6 +178,7 @@ lib LibSSL
   alias ALPNCallback = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
   alias X509VerifyParam = LibCrypto::X509VerifyParam
 
+  fun ssl_get0_param = SSL_get0_param(handle : SSL) : X509VerifyParam
   fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPNCallback, arg : Void*) : Void
   fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
   fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
