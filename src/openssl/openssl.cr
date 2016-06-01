@@ -1,10 +1,6 @@
 require "./lib_ssl"
 
 module OpenSSL
-  module SSL
-    alias VerifyMode = LibSSL::VerifyMode
-  end
-
   class Error < Exception
     getter! code : LibCrypto::ULong?
 
@@ -26,34 +22,41 @@ module OpenSSL
     end
   end
 
-  class SSL::Error < OpenSSL::Error
-    getter error : LibSSL::SSLError
+  module SSL
+    alias Modes = LibSSL::Modes
+    alias Options = LibSSL::Options
+    alias VerifyMode = LibSSL::VerifyMode
+    alias ErrorType = LibSSL::SSLError
 
-    def initialize(ssl : LibSSL::SSL, return_code : LibSSL::Int, func = nil)
-      @error = LibSSL.ssl_get_error(ssl, return_code)
+    class Error < OpenSSL::Error
+      getter error : ErrorType
 
-      case @error
-      when .none?
-        message = "Raised erroneously"
-      when .syscall?
-        @code, message = fetch_error_details
-        if @code == 0
-          case return_code
-          when 0
-            message = "Unexpected EOF"
-          when -1
-            raise Errno.new(func || "OpenSSL")
-          else
-            message = "Unknown error"
+      def initialize(ssl : LibSSL::SSL, return_code : LibSSL::Int, func = nil)
+        @error = LibSSL.ssl_get_error(ssl, return_code)
+
+        case @error
+        when .none?
+          message = "Raised erroneously"
+        when .syscall?
+          @code, message = fetch_error_details
+          if @code == 0
+            case return_code
+            when 0
+              message = "Unexpected EOF"
+            when -1
+              raise Errno.new(func || "OpenSSL")
+            else
+              message = "Unknown error"
+            end
           end
+        when .ssl?
+          @code, message = fetch_error_details
+        else
+          message = @error.to_s
         end
-      when .ssl?
-        @code, message = fetch_error_details
-      else
-        message = @error.to_s
-      end
 
-      super(func ? "#{func}: #{message}" : message, true)
+        super(func ? "#{func}: #{message}" : message, true)
+      end
     end
   end
 end

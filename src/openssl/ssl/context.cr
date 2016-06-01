@@ -1,4 +1,49 @@
 abstract class OpenSSL::SSL::Context
+  # The list of secure ciphers (intermediate security) as of May 2016 as per
+  # https://wiki.mozilla.org/Security/Server_Side_TLS
+  CIPHERS = %w(
+    ECDHE-ECDSA-CHACHA20-POLY1305
+    ECDHE-RSA-CHACHA20-POLY1305
+    ECDHE-ECDSA-AES128-GCM-SHA256
+    ECDHE-RSA-AES128-GCM-SHA256
+    ECDHE-ECDSA-AES256-GCM-SHA384
+    ECDHE-RSA-AES256-GCM-SHA384
+    DHE-RSA-AES128-GCM-SHA256
+    DHE-RSA-AES256-GCM-SHA384
+    ECDHE-ECDSA-AES128-SHA256
+    ECDHE-RSA-AES128-SHA256
+    ECDHE-ECDSA-AES128-SHA
+    ECDHE-RSA-AES256-SHA384
+    ECDHE-RSA-AES128-SHA
+    ECDHE-ECDSA-AES256-SHA384
+    ECDHE-ECDSA-AES256-SHA
+    ECDHE-RSA-AES256-SHA
+    DHE-RSA-AES128-SHA256
+    DHE-RSA-AES128-SHA
+    DHE-RSA-AES256-SHA256
+    DHE-RSA-AES256-SHA
+    ECDHE-ECDSA-DES-CBC3-SHA
+    ECDHE-RSA-DES-CBC3-SHA
+    EDH-RSA-DES-CBC3-SHA
+    AES128-GCM-SHA256
+    AES256-GCM-SHA384
+    AES128-SHA256
+    AES256-SHA256
+    AES128-SHA
+    AES256-SHA
+    DES-CBC3-SHA
+    !RC4
+    !aNULL
+    !eNULL
+    !LOW
+    !3DES
+    !MD5
+    !EXP
+    !PSK
+    !SRP
+    !DSS
+  ).join(' ')
+
   class Client < Context
     # Generates a new SSL client context with sane defaults for a client connection.
     #
@@ -14,11 +59,11 @@ abstract class OpenSSL::SSL::Context
     #
     # ```
     # ssl_context = OpenSSL::SSL::Context::Client.new
-    # ssl_context.options = LibSSL::Options::NO_SSLV2 | LibSSL::Options::NO_SSLV3
+    # ssl_context.options = OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3
     # ```
     def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
       super(method)
-      set_default_verify_paths
+
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
     end
 
@@ -46,11 +91,12 @@ abstract class OpenSSL::SSL::Context
     #
     # ```
     # ssl_context = OpenSSL::SSL::Context::Server.new
-    # ssl_context.options = LibSSL::Options::NO_SSLV2 | LibSSL::Options::NO_SSLV3
+    # ssl_context.options = OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3
     # ```
     def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
       super(method)
-      set_default_verify_paths
+
+      add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
     end
 
     # Returns a new SSL server context with only the given method set.
@@ -65,6 +111,23 @@ abstract class OpenSSL::SSL::Context
   protected def initialize(method : LibSSL::SSLMethod)
     @handle = LibSSL.ssl_ctx_new(method)
     raise OpenSSL::Error.new("SSL_CTX_new") if @handle.null?
+
+    set_default_verify_paths
+
+    add_options(OpenSSL::SSL::Options.flags(
+      ALL,
+      NO_SSLV2,
+      NO_SSLV3,
+      NO_SESSION_RESUMPTION_ON_RENEGOTIATION,
+      SINGLE_ECDH_USE,
+      SINGLE_DH_USE
+    ))
+
+    add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+
+    self.ciphers = CIPHERS
+
+    set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
   end
 
   # Overriding initialize or new in the child classes as public methods,
@@ -109,14 +172,14 @@ abstract class OpenSSL::SSL::Context
 
   # Specify the path to the certificate chain file to use. In server mode this
   # is presented to the client, in client mode this used as client certificate.
-  def certificate_chain=(file_path)
+  def certificate_chain=(file_path : String)
     ret = LibSSL.ssl_ctx_use_certificate_chain_file(@handle, file_path)
     raise OpenSSL::Error.new("SSL_CTX_use_certificate_chain_file") unless ret == 1
   end
 
   # Specify the path to the private key to use. The key must in PEM format.
   # The key must correspond to the entity certificate set by `certificate_chain=`.
-  def private_key=(file_path)
+  def private_key=(file_path : String)
     ret = LibSSL.ssl_ctx_use_privatekey_file(@handle, file_path, LibSSL::SSLFileType::PEM)
     raise OpenSSL::Error.new("SSL_CTX_use_PrivateKey_file") unless ret == 1
   end
@@ -139,22 +202,22 @@ abstract class OpenSSL::SSL::Context
 
   # Returns the current modes set on the SSL context.
   def modes
-    LibSSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, 0, nil)
+    OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, 0, nil)
   end
 
   # Adds modes to the SSL context.
-  def add_modes(mode : LibSSL::Modes)
-    LibSSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, mode, nil)
+  def add_modes(mode : OpenSSL::SSL::Modes)
+    OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, mode, nil)
   end
 
   # Removes modes from the SSL context.
-  def remove_modes(mode : LibSSL::Modes)
-    LibSSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_MODE, mode, nil)
+  def remove_modes(mode : OpenSSL::SSL::Modes)
+    OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_MODE, mode, nil)
   end
 
   # Returns the current options set on the SSL context.
   def options
-    LibSSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
+    OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
   end
 
   # Adds options to the SSL context.
@@ -162,23 +225,23 @@ abstract class OpenSSL::SSL::Context
   # Example:
   # ```
   # ssl_context.add_options(
-  #   LibSSL::Options::ALL |        # various workarounds
-  #     LibSSL::Options::NO_SSLV2 | # disable overly deprecated SSLv2
-  #     LibSSL::Options::NO_SSLV3   # disable deprecated SSLv3
+  #   OpenSSL::SSL::Options::ALL |        # various workarounds
+  #     OpenSSL::SSL::Options::NO_SSLV2 | # disable overly deprecated SSLv2
+  #     OpenSSL::SSL::Options::NO_SSLV3   # disable deprecated SSLv3
   # )
   # ```
-  def add_options(options : LibSSL::Options)
-    LibSSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
+  def add_options(options : OpenSSL::SSL::Options)
+    OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
   end
 
   # Removes options from the SSL context.
   #
   # Example:
   # ```
-  # ssl_context.remove_options(LibSSL::SSL_OP_NO_SSLV3)
+  # ssl_context.remove_options(OpenSSL::SSL::NO_SSLV3)
   # ```
-  def remove_options(options : LibSSL::Options)
-    LibSSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
+  def remove_options(options : OpenSSL::SSL::Options)
+    OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
   end
 
   @alpn_protocol : Pointer(Void)?

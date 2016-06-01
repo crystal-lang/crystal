@@ -90,26 +90,6 @@ require "../common"
 class HTTP::Server
   ifdef !without_openssl
     property ssl : OpenSSL::SSL::Context::Server?
-
-    def self.default_ssl_context : OpenSSL::SSL::Context
-      ctx = OpenSSL::SSL::Context::Server.new
-      ctx.add_options(
-        LibSSL::Options::ALL |
-          LibSSL::Options::NO_SSLV2 |
-          LibSSL::Options::NO_SSLV3 |
-          LibSSL::Options::NO_SESSION_RESUMPTION_ON_RENEGOTIATION |
-          LibSSL::Options::SINGLE_ECDH_USE |
-          LibSSL::Options::SINGLE_DH_USE |
-          LibSSL::Options::CIPHER_SERVER_PREFERENCE
-      )
-      ctx.add_modes(
-        LibSSL::Modes::AUTO_RETRY |
-          LibSSL::Modes::RELEASE_BUFFERS
-      )
-      ctx.ciphers = HTTP::SSL_CIPHERS
-      ctx.set_tmp_ecdh_key(curve: LibCrypto::NID_X9_62_prime256v1)
-      ctx
-    end
   end
 
   @wants_close = false
