@@ -92,14 +92,17 @@ struct Char
     self - other
   end
 
-  # Returns `true` if this char is an ASCII digit ('0' to '9').
+  # Returns `true` if this char is an ASCII digit in specified base.
+  #
+  # Base can be from 0 to 36 with digits from '0' to '9' and 'a' to 'z' or 'A' to 'Z'.
   #
   # ```
-  # '4'.digit? # => true
-  # 'z'.digit? # => false
+  # '4'.digit?     # => true
+  # 'z'.digit?     # => false
+  # 'z'.digit?(36) # => true
   # ```
-  def digit?
-    '0' <= self <= '9'
+  def digit?(base : Int = 10)
+    !!to_i(base) { false }
   end
 
   # Returns `true` if this char is a lowercase ASCII letter.
@@ -154,6 +157,18 @@ struct Char
   # ```
   def whitespace?
     self == ' ' || 9 <= ord <= 13
+  end
+
+  # Returns `true` if this char is an ASCII hex digit ('0' to '9', 'a' to 'z', 'A' to 'Z').
+  #
+  # ```
+  # '5'.hex? # => true
+  # 'a'.hex? # => true
+  # 'F'.hex? # => true
+  # 'g'.hex? # => false
+  # ```
+  def hex?
+    digit? 16
   end
 
   # Returns `true` if this char is matched by the given *sets*.
@@ -435,10 +450,10 @@ struct Char
   # 'z'.to_i(16) { 20 } # => 20
   # ```
   def to_i(base)
-    raise ArgumentError.new "invalid base #{base}" unless 2 <= base <= 36
+    raise ArgumentError.new "invalid base #{base}, expected 2 to 36" unless 2 <= base <= 36
 
     ord = ord()
-    if ord < 256
+    if 0 <= ord < 256
       digit = String::CHAR_TO_DIGIT.to_unsafe[ord]
       if digit == -1 || digit >= base
         return yield
