@@ -940,7 +940,7 @@ describe "Block inference" do
     assert_error %(
       yield
       ),
-      "can't yield outside a method"
+      "can't use `yield` outside a method"
   end
 
   it "rebinds yield -> block arguments" do

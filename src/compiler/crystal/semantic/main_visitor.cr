@@ -650,13 +650,20 @@ module Crystal
     end
 
     def visit(node : Yield)
-      if @fun_literal_context
-        node.raise "can't yield from function literal"
-      end
-
       call = @call
       unless call
-        node.raise "can't yield outside a method"
+        node.raise "can't use `yield` outside a method"
+      end
+
+      if ctx = @fun_literal_context
+        node.raise <<-MSG
+          can't use `yield` inside a proc literal or captured block
+
+          Make sure to read the whole docs section about blocks and procs,
+          including "Capturing blocks" and "Block forwarding":
+
+          http://crystal-lang.org/docs/syntax_and_semantics/blocks_and_procs.html
+          MSG
       end
 
       block = call.block || node.raise("no block given")
