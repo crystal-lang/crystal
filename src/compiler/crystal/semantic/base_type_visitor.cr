@@ -530,6 +530,8 @@ module Crystal
         end
         return false unless macro_scope.is_a?(Type)
 
+        macro_scope = macro_scope.remove_alias
+
         the_macro = macro_scope.metaclass.lookup_macro(node.name, node.args, node.named_args)
       when Nil
         return false if node.name == "super" || node.name == "previous_def"

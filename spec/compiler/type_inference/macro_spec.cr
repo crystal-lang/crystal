@@ -870,4 +870,18 @@ describe "Type inference: macro" do
       ),
       "no overload matches"
   end
+
+  it "finds macro through alias (#2706)" do
+    assert_type(%(
+      module Moo
+        macro bar
+          1
+        end
+      end
+
+      alias Foo = Moo
+
+      Foo.bar
+      )) { int32 }
+  end
 end
