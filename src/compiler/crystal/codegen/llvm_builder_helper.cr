@@ -148,6 +148,7 @@ module Crystal
     delegate llvm_embedded_type, llvm_typer
     delegate llvm_c_type, llvm_typer
     delegate llvm_c_return_type, llvm_typer
+    delegate llvm_return_type, llvm_typer
 
     def llvm_fun_type(type)
       llvm_typer.fun_type(type.as(FunInstanceType))

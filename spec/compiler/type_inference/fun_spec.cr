@@ -129,7 +129,7 @@ describe "Type inference: fun" do
       end
 
       foo ->(x : Int32) { x.to_f }
-      ") { void }
+      ") { |mod| mod.nil }
   end
 
   it "has fun literal as restriction and errors if output is different" do
@@ -457,7 +457,7 @@ describe "Type inference: fun" do
       f = foo { |f| f.bar }
       Foo.new
       f
-      )) { fun_of(types["Foo"], void) }
+      )) { |mod| fun_of(types["Foo"], mod.nil) }
   end
 
   it "gives correct error message when fun return type is incorrect (#219)" do
@@ -805,6 +805,6 @@ describe "Type inference: fun" do
   it "sets proc type as void if explicitly told so, when using new" do
     assert_type(%(
       Proc(Int32, Void).new { 1 }
-      )) { fun_of(int32, void) }
+      )) { |mod| fun_of(int32, mod.nil) }
   end
 end

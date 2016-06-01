@@ -192,11 +192,14 @@ module Crystal
         # nil will be sent as pointer
         expected_type.pointer? || expected_type.fun?
       when FunInstanceType
-        # fun will be cast to return void
-        expected_type.is_a?(FunInstanceType) && expected_type.return_type == program.void && expected_type.arg_types == self.arg_types
+        # fun will be cast to return nil
+        expected_type.is_a?(FunInstanceType) && expected_type.return_type == program.nil && expected_type.arg_types == self.arg_types
       when NilablePointerType
         # nilable pointer is just a pointer
         self.pointer_type == expected_type
+      when PointerInstanceType
+        # any pointer matches a void*
+        expected_type.is_a?(PointerInstanceType) && expected_type.element_type.void?
       else
         false
       end
@@ -2743,6 +2746,10 @@ module Crystal
     end
 
     def reference_like?
+      true
+    end
+
+    def primitive_like?
       true
     end
 

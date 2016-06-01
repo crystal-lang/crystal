@@ -387,8 +387,20 @@ module Crystal
       llvm_type(type)
     end
 
+    def llvm_c_return_type(type : NilType)
+      LLVM::Void
+    end
+
     def llvm_c_return_type(type)
       llvm_c_type(type)
+    end
+
+    def llvm_return_type(type : NilType)
+      LLVM::Void
+    end
+
+    def llvm_return_type(type)
+      llvm_type(type)
     end
 
     def closure_type(type : FunInstanceType)

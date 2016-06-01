@@ -68,7 +68,7 @@ describe "Type inference: primitives" do
       end
 
       LibFoo.foo == 1
-      ), "undefined method '==' for Void"
+      ), "undefined method '==' for Nil"
   end
 
   it "correctly types first hash from type vars (bug)" do

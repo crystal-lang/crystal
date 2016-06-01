@@ -229,8 +229,9 @@ module Crystal
           node_return_type.accept self
         end
         return_type = check_primitive_like(node_return_type)
+        return_type = @mod.nil if return_type.void?
       else
-        return_type = @mod.void
+        return_type = @mod.nil
       end
 
       external = node.external?
@@ -268,7 +269,7 @@ module Crystal
 
         inferred_return_type = @mod.type_merge([node_body.type?, external.type?])
 
-        if return_type && return_type != @mod.void && inferred_return_type != return_type
+        if return_type && return_type != @mod.nil && inferred_return_type != return_type
           node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
         end
 

@@ -428,6 +428,10 @@ class Crystal::CodeGenVisitor
 
   def codegen_primitive_pointer_set(node, target_def, call_args)
     type = context.type.remove_typedef.as(PointerInstanceType)
+
+    # Assinging to a Pointer(Void) has no effect
+    return llvm_nil if type.element_type.void?
+
     value = call_args[1]
     assign call_args[0], type.element_type, node.type, value
     value

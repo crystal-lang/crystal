@@ -116,7 +116,7 @@ module Crystal
       @llvm_typer = LLVMTyper.new(@mod)
       @llvm_id = LLVMId.new(@mod)
       @main_ret_type = node.type
-      ret_type = @llvm_typer.llvm_type(node.type)
+      ret_type = @llvm_typer.llvm_return_type(node.type)
       @main = @llvm_mod.functions.add(MAIN_NAME, [LLVM::Int32, LLVM::VoidPointer.pointer], ret_type)
       @main.linkage = LLVM::Linkage::Internal unless expose_crystal_main
 
@@ -430,8 +430,8 @@ module Crystal
       # If we don't care about a fun literal's return type then we mark the associated
       # def as returning void. This can't be done in the type inference phase because
       # of bindings and type propagation.
-      if node.force_void
-        node.def.set_type @mod.void
+      if node.force_nil
+        node.def.set_type @mod.nil
       else
         # Use fun literal's type, which might have a broader type then the body
         # (for example, return type: Int32 | String, body: String)
@@ -543,6 +543,8 @@ module Crystal
     def codegen_return(type : Type)
       method_type = context.return_type.not_nil!
       if method_type.void?
+        ret
+      elsif method_type.nil_type?
         ret
       elsif method_type.no_return?
         unreachable

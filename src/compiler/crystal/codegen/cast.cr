@@ -325,6 +325,11 @@ class Crystal::CodeGenVisitor
     value
   end
 
+  def downcast_distinct(value, to_type : PointerInstanceType, from_type : PointerInstanceType)
+    # cast of a pointer being cast to Void*
+    bit_cast value, LLVM::VoidPointer
+  end
+
   def downcast_distinct(value, to_type : TypeDefType, from_type : NilablePointerType)
     downcast_distinct value, to_type.typedef, from_type
   end

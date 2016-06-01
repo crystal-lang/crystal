@@ -50,7 +50,7 @@ class Crystal::CodeGenVisitor
       return unreachable if @node_type.try &.no_return?
 
       if @needs_value
-        unless @node_type.try &.void?
+        unless @node_type.try(&.void?) || @node_type.try(&.nil_type?)
           value = @codegen.upcast value, @node_type.not_nil!, type
           @phi_table.not_nil!.add insert_block, value
         end
