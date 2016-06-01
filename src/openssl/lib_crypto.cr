@@ -1,4 +1,4 @@
-@[Link("crypto")]
+@[Link(ldflags: "`pkg-config --libs libcrypto || echo -n -lcrypto`")]
 lib LibCrypto
   alias Char = LibC::Char
   alias Int = LibC::Int
@@ -171,3 +171,47 @@ lib LibCrypto
   fun ec_key_new_by_curve_name = EC_KEY_new_by_curve_name(nid : Int) : EC_KEY
   fun ec_key_free = EC_KEY_free(key : EC_KEY)
 end
+
+{% if `(pkg-config --atleast-version=1.0.2 libcrypto && echo -n true) || echo -n false` == "true" %}
+lib LibCrypto
+  OPENSSL_102 = true
+end
+{% else %}
+lib LibCrypto
+  OPENSSL_102 = false
+end
+{% end %}
+
+{% if LibCrypto::OPENSSL_102 %}
+lib LibCrypto
+  type X509VerifyParam = Void*
+
+  @[Flags]
+  enum X509VerifyFlags : ULong
+    CB_ISSUER_CHECK      =      0x1
+    USE_CHECK_TIME       =      0x2
+    CRL_CHECK            =      0x4
+    CRL_CHECK_ALL        =      0x8
+    IGNORE_CRITICAL      =     0x10
+    X509_STRICT          =     0x20
+    ALLOW_PROXY_CERTS    =     0x40
+    POLICY_CHECK         =     0x80
+    EXPLICIT_POLICY      =    0x100
+    INHIBIT_ANY          =    0x200
+    INHIBIT_MAP          =    0x400
+    NOTIFY_POLICY        =    0x800
+    EXTENDED_CRL_SUPPORT =   0x1000
+    USE_DELTAS           =   0x2000
+    CHECK_SS_SIGNATURE   =   0x4000
+    TRUSTED_FIRST        =   0x8000
+    SUITEB_128_LOS_ONLY  =  0x10000
+    SUITEB_192_LOS       =  0x20000
+    SUITEB_128_LOS       =  0x30000
+    PARTIAL_CHAIN        =  0x80000
+    NO_ALT_CHAINS        = 0x100000
+  end
+
+  fun x509_verify_param_lookup = X509_VERIFY_PARAM_lookup(name : UInt8*) : X509VerifyParam
+  fun x509_verify_param_set_flags = X509_VERIFY_PARAM_set_flags(param : X509VerifyParam, flags : X509VerifyFlags) : Int
+end
+{% end %}

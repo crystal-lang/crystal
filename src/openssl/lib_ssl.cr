@@ -1,6 +1,6 @@
 require "./lib_crypto"
 
-@[Link("ssl")]
+@[Link(ldflags: "`pkg-config --libs libssl || echo -n -lssl -lcrypto`")]
 lib LibSSL
   alias Int = LibC::Int
   alias Char = LibC::Char
@@ -12,7 +12,6 @@ lib LibSSL
   type SSL = Void*
   type X509StoreContext = Void*
 
-  alias ALPNCallback = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
   alias VerifyCallback = (Int, X509StoreContext) -> Int
 
   enum SSLFileType
@@ -158,12 +157,32 @@ lib LibSSL
   fun ssl_ctx_set_verify = SSL_CTX_set_verify(ctx : SSLContext, mode : VerifyMode, callback : VerifyCallback)
   fun ssl_ctx_set_default_verify_paths = SSL_CTX_set_default_verify_paths(ctx : SSLContext) : Int
   fun ssl_select_next_proto = SSL_select_next_proto(output : Char**, output_len : Char*, input : Char*, input_len : Int, client : Char*, client_len : Int) : Int
-  fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPNCallback, arg : Void*) : Void
   fun ssl_ctx_ctrl = SSL_CTX_ctrl(ctx : SSLContext, cmd : Int, larg : ULong, parg : Void*) : ULong
 
   @[Raises]
   fun ssl_ctx_load_verify_locations = SSL_CTX_load_verify_locations(ctx : SSLContext, ca_file : UInt8*, ca_path : UInt8*) : Int
 end
+
+{% if `(pkg-config --atleast-version=1.0.2 libssl && echo -n true) || echo -n false` == "true" %}
+lib LibSSL
+  OPENSSL_102 = true
+end
+{% else %}
+lib LibSSL
+  OPENSSL_102 = false
+end
+{% end %}
+
+{% if LibSSL::OPENSSL_102 && LibCrypto::OPENSSL_102 %}
+lib LibSSL
+  alias ALPNCallback = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
+  alias X509VerifyParam = LibCrypto::X509VerifyParam
+
+  fun ssl_ctx_set_alpn_select_cb = SSL_CTX_set_alpn_select_cb(ctx : SSLContext, cb : ALPNCallback, arg : Void*) : Void
+  fun ssl_ctx_get0_param = SSL_CTX_get0_param(ctx : SSLContext) : X509VerifyParam
+  fun ssl_ctx_set1_param = SSL_CTX_set1_param(ctx : SSLContext, param : X509VerifyParam) : Int
+end
+{% end %}
 
 LibSSL.ssl_library_init
 LibSSL.ssl_load_error_strings

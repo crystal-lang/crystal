@@ -65,6 +65,9 @@ abstract class OpenSSL::SSL::Context
       super(method)
 
       self.verify_mode = OpenSSL::SSL::VerifyMode::PEER
+      {% if LibSSL::OPENSSL_102 %}
+      self.default_verify_param = "ssl_client"
+      {% end %}
     end
 
     # Returns a new SSL client context with only the given method set.
@@ -97,6 +100,9 @@ abstract class OpenSSL::SSL::Context
       super(method)
 
       add_options(OpenSSL::SSL::Options::CIPHER_SERVER_PREFERENCE)
+      {% if LibSSL::OPENSSL_102 %}
+      self.default_verify_param = "ssl_server"
+      {% end %}
     end
 
     # Returns a new SSL server context with only the given method set.
@@ -244,6 +250,18 @@ abstract class OpenSSL::SSL::Context
     OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
   end
 
+  # Returns the current verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
+  def verify_mode
+    LibSSL.ssl_ctx_get_verify_mode(@handle)
+  end
+
+  # Sets the verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
+  def verify_mode=(mode : OpenSSL::SSL::VerifyMode)
+    LibSSL.ssl_ctx_set_verify(@handle, mode, nil)
+  end
+
+  {% if LibSSL::OPENSSL_102 %}
+
   @alpn_protocol : Pointer(Void)?
 
   # Specifies an ALPN protocol to negotiate with the remote endpoint. This is
@@ -261,15 +279,26 @@ abstract class OpenSSL::SSL::Context
     self.alpn_protocol = proto
   end
 
-  # Returns the current verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
-  def verify_mode
-    LibSSL.ssl_ctx_get_verify_mode(@handle)
+  # Set this context verify param to the default one of the given name.
+  #
+  # Depending on the OpenSSL version, the available defaults are
+  # default, pkcs7, smime_sign, ssl_client and ssl_server
+  def default_verify_param=(name : String)
+    param = LibCrypto.x509_verify_param_lookup(name)
+    raise ArgumentError.new("#{name} is an unsupported default verify param") unless param
+    ret = LibSSL.ssl_ctx_set1_param(@handle, param)
+    raise OpenSSL::Error.new("SSL_CTX_set1_param") unless ret == 1
   end
 
-  # Sets the verify mode. See the `SSL_CTX_set_verify(3)` manpage for more details.
-  def verify_mode=(mode : OpenSSL::SSL::VerifyMode)
-    LibSSL.ssl_ctx_set_verify(@handle, mode, nil)
+  # Sets the given `OpenSSL::X509VerifyFlags` in this context, additionally to
+  # the already set ones.
+  def add_x509_verify_flags(flags : OpenSSL::X509VerifyFlags)
+    param = LibSSL.ssl_ctx_get0_param(@handle)
+    ret = LibCrypto.x509_verify_param_set_flags(param, flags)
+    raise OpenSSL::Error.new("X509_VERIFY_PARAM_set_flags)") unless ret == 1
   end
+
+  {% end %}
 
   private def alpn_protocol=(protocol : Slice(UInt8))
     alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {

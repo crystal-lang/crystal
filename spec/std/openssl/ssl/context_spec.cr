@@ -124,9 +124,10 @@ describe OpenSSL::SSL::Context do
     ssl_context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
   end
 
-  pending "alpn_protocol=" do
-    # requires OpenSSL 1.0.2+
+  {% if LibSSL::OPENSSL_102 %}
+  it "alpn_protocol=" do
     ssl_context = OpenSSL::SSL::Context::Client.insecure
     ssl_context.alpn_protocol = "h2"
   end
+  {% end %}
 end
