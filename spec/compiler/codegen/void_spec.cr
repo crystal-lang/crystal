@@ -87,4 +87,38 @@ describe "Code gen: void" do
       bar LibC.foo
     ))
   end
+
+  it "uses ||=" do
+    codegen(%(
+      lib LibFoo
+        fun foo
+      end
+
+      a = LibFoo.foo
+      a ||= 2
+      a
+      ))
+  end
+
+  it "uses void return type" do
+    codegen(%(
+      def foo : Void
+      end
+
+      foo
+      ))
+  end
+
+  it "is falsey" do
+    run(%(
+      def foo : Void
+      end
+
+      if foo
+        10
+      else
+        42
+      end
+      )).to_i.should eq(42)
+  end
 end

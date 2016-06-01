@@ -1307,9 +1307,13 @@ module Crystal
     end
   end
 
-  class VoidType < EmptyType
+  class VoidType < PrimitiveType
     def primitive_like?
       true
+    end
+
+    def passed_as_self?
+      false
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)

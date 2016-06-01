@@ -76,6 +76,12 @@ module Crystal
       all_types = Array(Type).new(objects.size)
       objects.each { |obj| add_type all_types, yield(obj) }
       all_types.reject! &.no_return? if all_types.size > 1
+
+      if all_types.any? &.void?
+        all_types.clear
+        all_types << self.void
+      end
+
       all_types
     end
 

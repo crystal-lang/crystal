@@ -438,7 +438,7 @@ class Crystal::Call
     type_lookup = MatchTypeLookup.new(self, match.context)
     return_type = type_lookup.lookup_node_type(typed_def_return_type)
     typed_def.freeze_type = return_type
-    typed_def.type = return_type if return_type.no_return?
+    typed_def.type = return_type if return_type.no_return? || return_type.void?
   end
 
   def check_tuple_indexer(owner, def_name, args, arg_types)

@@ -258,6 +258,10 @@ class Crystal::CodeGenVisitor
     store to_rhs(value, target_type), target_pointer
   end
 
+  def assign_distinct(target_pointer, target_type : VoidType, value_type, value)
+    # Assigning to void has no effect
+  end
+
   def assign_distinct(target_pointer, target_type : Type, value_type : Type, value)
     raise "Bug: trying to assign #{target_type} <- #{value_type}"
   end
@@ -390,6 +394,8 @@ class Crystal::CodeGenVisitor
   def upcast(value, to_type, from_type)
     from_type = from_type.remove_indirection
     to_type = to_type.remove_indirection
+
+    return value if to_type.void?
 
     if to_type != from_type
       value = upcast_distinct(value, to_type, from_type)

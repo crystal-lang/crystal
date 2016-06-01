@@ -386,6 +386,15 @@ module Crystal
         yield arg, arg_index, object, object_index
       end
     end
+
+    def map_type(type)
+      # If the return type is void, our type is void
+      if freeze_type.try &.void?
+        freeze_type
+      else
+        type
+      end
+    end
   end
 
   class Macro

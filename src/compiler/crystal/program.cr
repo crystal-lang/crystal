@@ -84,7 +84,7 @@ module Crystal
       abstract_value_type(number)
 
       types["NoReturn"] = @no_return = NoReturnType.new self
-      types["Void"] = @void = VoidType.new self
+      types["Void"] = void = @void = VoidType.new self, self, "Void", value, 1
       types["Nil"] = nil_t = @nil = NilType.new self, self, "Nil", value, 1
       types["Bool"] = @bool = BoolType.new self, self, "Bool", value, 1
       types["Char"] = @char = CharType.new self, self, "Char", value, 4
@@ -183,6 +183,15 @@ module Crystal
       @nil_var = Var.new("<nil_var>", nil_t)
 
       define_crystal_constants
+      define_void_methods
+    end
+
+    # These are needed because Void couldn't be reopened before 0.18.0.
+    # TODO Remove after releasing 0.18.0
+    private def define_void_methods
+      void.add_def Def.new("hash", body: NumberLiteral.new(0))
+      void.add_def Def.new("to_s", args: [Arg.new("io")], body: Call.new(Var.new("io"), "<<", StringLiteral.new("void")))
+      void.add_def Def.new("to_s", body: StringLiteral.new("void"))
     end
 
     private def crystal_path
