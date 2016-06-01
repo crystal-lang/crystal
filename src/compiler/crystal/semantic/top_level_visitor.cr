@@ -564,6 +564,14 @@ module Crystal
             if default_value = member.default_value
               counter = interpret_enum_value(default_value, enum_base_type)
             end
+
+            if default_value.is_a?(Crystal::NumberLiteral)
+              enum_base_kind = enum_base_type.kind
+              if (enum_base_kind == :i32) && (enum_base_kind != default_value.kind)
+                default_value.raise "enum value must be an Int32"
+              end
+            end
+
             all_value |= counter
             const_value = NumberLiteral.new(counter, enum_base_type.kind)
             member.default_value = const_value

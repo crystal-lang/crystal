@@ -43,4 +43,9 @@ describe "Type inference: c enum" do
     assert_error "lib LibFoo; enum Bar : Float32; X; end; end; LibFoo::Bar::X",
       "enum base type must be an integer type"
   end
+
+  it "errors if enum value is different from default (Int32) (#194)" do
+    assert_error "lib LibFoo; enum Bar; X = 0x00000001_u32; end; end; LibFoo::Bar::X",
+      "enum value must be an Int32"
+  end
 end
