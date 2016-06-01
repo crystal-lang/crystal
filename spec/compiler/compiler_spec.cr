@@ -25,4 +25,17 @@ describe "Compiler" do
       `#{tempfile.path}`.should eq("Hello!")
     end
   end
+
+  it "compile c file" do
+    Dir.cd "#{__DIR__}/data/" do
+      tempfile = Tempfile.new "compiler_spec_output"
+      tempfile.close
+
+      Crystal::Command.run ["build", "#{__DIR__}/data/cfile", "-o", tempfile.path]
+
+      File.exists?(tempfile.path).should be_true
+
+      `#{tempfile.path}`.should eq("12\n")
+    end
+  end
 end

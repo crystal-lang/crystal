@@ -440,7 +440,7 @@ module Crystal
     def visit(node : LibDef)
       check_outside_block_or_exp node, "declare lib"
 
-      link_attributes = process_link_attributes
+      link_attributes, cfiles = process_attributes
 
       type = current_type.types[node.name]?
       if type
@@ -452,6 +452,7 @@ module Crystal
       node.resolved_type = type
 
       type.add_link_attributes(link_attributes)
+      type.add_cfiles(cfiles)
 
       pushing_type(type) do
         @lib_def_pass = 1
@@ -789,25 +790,30 @@ module Crystal
       @inside_block > 0
     end
 
-    def process_link_attributes
+    def process_attributes
       attributes = @attributes
-      return unless attributes
+      return {nil, nil} unless attributes
 
-      link_attributes = attributes.map do |attr|
-        link_attribute_from_node(attr)
+      link_attributes = [] of LinkAttribute
+      cfiles = [] of CFile
+      attributes.each do |attr|
+        case attr.name
+        when "Link"
+          link_attributes << link_attribute_from_node(attr)
+        when "CFile"
+          cfiles << cfile_from_node(attr)
+        else
+          attr.raise "illegal attribute for lib, valid attributes are: Link, CFile"
+        end
       end
       @attributes = nil
-      link_attributes
+      {link_attributes, cfiles}
     end
 
     def link_attribute_from_node(attr)
       name = attr.name
       args = attr.args
       named_args = attr.named_args
-
-      if name != "Link"
-        attr.raise "illegal attribute for lib, valid attributes are: Link"
-      end
 
       if args.empty? && !named_args
         attr.raise "missing link arguments: must at least specify a library name"
@@ -890,6 +896,65 @@ module Crystal
       end
 
       LinkAttribute.new(lib_name, lib_ldflags, lib_static, lib_framework)
+    end
+
+    def cfile_from_node(attr)
+      args = attr.args
+      named_args = attr.named_args
+
+      if args.empty? && !named_args
+        attr.raise "missing cfile arguments: must at least specify a path"
+      end
+
+      name = nil
+      flags = nil
+      count = 0
+
+      args.each do |arg|
+        case count
+        when 0
+          unless arg.is_a?(StringLiteral)
+            arg.raise "'path' cfile argument must be a String"
+          end
+          name = arg.value
+        when 1
+          unless arg.is_a?(StringLiteral)
+            arg.raise "'flags' cfile argument must be a String"
+          end
+          flags = arg.value
+        else
+          attr.wrong_number_of "cfile arguments", args.size, "1..2"
+        end
+
+        count += 1
+      end
+
+      named_args.try &.each do |named_arg|
+        value = named_arg.value
+
+        case named_arg.name
+        when "path"
+          if count > 0
+            named_arg.raise "'path' cfile argument already specified"
+          end
+          unless value.is_a?(StringLiteral)
+            named_arg.raise "'path' cfile argument must be a String"
+          end
+          name = value.value
+        when "flags"
+          if count > 1
+            named_arg.raise "'flags' cfile argument already specified"
+          end
+          unless value.is_a?(StringLiteral)
+            named_arg.raise "'flags' cfile argument must be a String"
+          end
+          flags = value.value
+        else
+          named_arg.raise "unknown cfile argument: '#{named_arg.name}' (valid arguments are 'path', 'flags')"
+        end
+      end
+
+      CFile.new(name, flags)
     end
 
     def include_in(current_type, node, kind)
