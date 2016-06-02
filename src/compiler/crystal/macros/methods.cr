@@ -9,6 +9,8 @@ module Crystal
         interpret_debug
       when "env"
         interpret_env(node)
+      when "flag?"
+        interpret_flag?(node)
       when "puts", "p"
         interpret_puts(node)
       when "pp"
@@ -37,6 +39,16 @@ module Crystal
         @last = env_value ? StringLiteral.new(env_value) : NilLiteral.new
       else
         node.wrong_number_of_arguments "macro call 'env'", node.args.size, 1
+      end
+    end
+
+    def interpret_flag?(node)
+      if node.args.size == 1
+        node.args[0].accept self
+        flag = @last.to_macro_id
+        @last = BoolLiteral.new(@mod.has_flag?(flag))
+      else
+        node.wrong_number_of_arguments "macro call 'flag?'", node.args.size, 1
       end
     end
 

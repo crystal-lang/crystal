@@ -231,12 +231,13 @@ def assert_error(str, message, inject_primitives = true)
   end
 end
 
-def assert_macro(macro_args, macro_body, call_args, expected)
-  assert_macro(macro_args, macro_body, expected) { call_args }
+def assert_macro(macro_args, macro_body, call_args, expected, flags = nil)
+  assert_macro(macro_args, macro_body, expected, flags) { call_args }
 end
 
-def assert_macro(macro_args, macro_body, expected)
+def assert_macro(macro_args, macro_body, expected, flags = nil)
   program = Program.new
+  program.flags = flags if flags
   sub_node = yield program
   assert_macro_internal program, sub_node, macro_args, macro_body, expected
 end

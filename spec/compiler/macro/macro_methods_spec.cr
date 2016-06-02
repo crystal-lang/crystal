@@ -989,4 +989,14 @@ describe "macro methods" do
       assert_macro "", %({{env("FOO")}}), [] of ASTNode, %(nil)
     end
   end
+
+  describe "flag?" do
+    it "has flag" do
+      assert_macro "", %({{flag?(:foo)}}), [] of ASTNode, %(true), flags: "foo"
+    end
+
+    it "doesn't have flag" do
+      assert_macro "", %({{flag?(:foo)}}), [] of ASTNode, %(false)
+    end
+  end
 end
