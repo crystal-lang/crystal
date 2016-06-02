@@ -4,7 +4,10 @@ You've decided to contribute to Crystal. Excellent!
 
 ## What's needed right now
 
-These are the most important things in need right now:
+You can find a list of tasks that we consider suitable for a first time contribution at
+the [newcomer label](https://github.com/crystal-lang/crystal/labels/newcomer).
+
+Furthermore these are the most important general things in need right now:
 
 * Documenting the language
 * Documenting the standard library
