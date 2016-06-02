@@ -7,7 +7,7 @@ class Crystal::Command
 
     Command:
         init                     generate a new project
-        build                    compile program
+        compile                  compile program
         deps                     install project dependencies
         docs                     generate documentation
         env                      print Crystal environment information
@@ -52,9 +52,9 @@ class Crystal::Command
       when "init".starts_with?(command)
         options.shift
         init
-      when "build".starts_with?(command)
+      when "build".starts_with?(command), "compile".starts_with?(command)
         options.shift
-        build
+        compile
       when "play".starts_with?(command)
         options.shift
         playground
@@ -150,8 +150,8 @@ class Crystal::Command
     Init.run(options)
   end
 
-  private def build
-    config = create_compiler "build"
+  private def compile
+    config = create_compiler "compile"
     config.compile
   end
 
