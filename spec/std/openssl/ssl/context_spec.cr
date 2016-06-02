@@ -4,10 +4,10 @@ require "openssl"
 describe OpenSSL::SSL::Context do
   it "new for client" do
     ssl_context = OpenSSL::SSL::Context::Client.new
-    ssl_context.options.should eq(OpenSSL::SSL::Options.flags(
+    ssl_context.options.should eq(OpenSSL::SSL.options_flags(
       ALL, NO_SSLV2, NO_SSLV3, NO_SESSION_RESUMPTION_ON_RENEGOTIATION, SINGLE_ECDH_USE, SINGLE_DH_USE
     ))
-    ssl_context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+    ssl_context.modes.should eq(OpenSSL::SSL.modes_flags(AUTO_RETRY, RELEASE_BUFFERS))
     ssl_context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::PEER)
 
     OpenSSL::SSL::Context::Client.new(LibSSL.tlsv1_method)
@@ -15,10 +15,10 @@ describe OpenSSL::SSL::Context do
 
   it "new for server" do
     ssl_context = OpenSSL::SSL::Context::Server.new
-    ssl_context.options.should eq(OpenSSL::SSL::Options.flags(
+    ssl_context.options.should eq(OpenSSL::SSL.options_flags(
       ALL, NO_SSLV2, NO_SSLV3, NO_SESSION_RESUMPTION_ON_RENEGOTIATION, SINGLE_ECDH_USE, SINGLE_DH_USE, CIPHER_SERVER_PREFERENCE
     ))
-    ssl_context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+    ssl_context.modes.should eq(OpenSSL::SSL.modes_flags(AUTO_RETRY, RELEASE_BUFFERS))
     ssl_context.verify_mode.should eq(OpenSSL::SSL::VerifyMode::NONE)
 
     OpenSSL::SSL::Context::Server.new(LibSSL.tlsv1_method)
@@ -81,39 +81,39 @@ describe OpenSSL::SSL::Context do
     ssl_context = OpenSSL::SSL::Context::Client.new
     ssl_context.remove_options(ssl_context.options) # reset
     ssl_context.add_options(OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
-    ssl_context.add_options(OpenSSL::SSL::Options.flags(NO_SSLV2, NO_SSLV3))
-               .should eq(OpenSSL::SSL::Options.flags(ALL, NO_SSLV2, NO_SSLV3))
+    ssl_context.add_options(OpenSSL::SSL.options_flags(NO_SSLV2, NO_SSLV3))
+               .should eq(OpenSSL::SSL.options_flags(ALL, NO_SSLV2, NO_SSLV3))
   end
 
   it "removes options" do
     ssl_context = OpenSSL::SSL::Context::Client.insecure
-    ssl_context.add_options(OpenSSL::SSL::Options.flags(ALL, NO_SSLV2))
+    ssl_context.add_options(OpenSSL::SSL.options_flags(ALL, NO_SSLV2))
     ssl_context.remove_options(OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::NO_SSLV2)
   end
 
   it "returns options" do
     ssl_context = OpenSSL::SSL::Context::Client.insecure
-    ssl_context.add_options(OpenSSL::SSL::Options.flags(ALL, NO_SSLV2))
-    ssl_context.options.should eq(OpenSSL::SSL::Options.flags(ALL, NO_SSLV2))
+    ssl_context.add_options(OpenSSL::SSL.options_flags(ALL, NO_SSLV2))
+    ssl_context.options.should eq(OpenSSL::SSL.options_flags(ALL, NO_SSLV2))
   end
 
   it "adds modes" do
     ssl_context = OpenSSL::SSL::Context::Client.insecure
     ssl_context.add_modes(OpenSSL::SSL::Modes::AUTO_RETRY).should eq(OpenSSL::SSL::Modes::AUTO_RETRY)
     ssl_context.add_modes(OpenSSL::SSL::Modes::RELEASE_BUFFERS)
-               .should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+               .should eq(OpenSSL::SSL.modes_flags(AUTO_RETRY, RELEASE_BUFFERS))
   end
 
   it "removes modes" do
     ssl_context = OpenSSL::SSL::Context::Client.insecure
-    ssl_context.add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+    ssl_context.add_modes(OpenSSL::SSL.modes_flags(AUTO_RETRY, RELEASE_BUFFERS))
     ssl_context.remove_modes(OpenSSL::SSL::Modes::AUTO_RETRY).should eq(OpenSSL::SSL::Modes::RELEASE_BUFFERS)
   end
 
   it "returns modes" do
     ssl_context = OpenSSL::SSL::Context::Client.insecure
-    ssl_context.add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
-    ssl_context.modes.should eq(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
+    ssl_context.add_modes(OpenSSL::SSL.modes_flags(AUTO_RETRY, RELEASE_BUFFERS))
+    ssl_context.modes.should eq(OpenSSL::SSL.modes_flags(AUTO_RETRY, RELEASE_BUFFERS))
   end
 
   it "sets the verify mode" do
