@@ -129,10 +129,13 @@ module Crystal
       @in_is_a = old_in_is_a
 
       if @in_is_a
-        node.type = @mod.type_merge_union_of(types)
+        type = @mod.type_merge_union_of(types)
       else
-        node.type = @mod.type_merge(types)
+        type = @mod.type_merge(types)
       end
+
+      type = @in_type_args > 0 ? type : type.try &.metaclass
+      node.type = type
 
       false
     end

@@ -999,6 +999,13 @@ module Crystal
     end
 
     def visit(node : Union)
+      if @token.type == :CONST && @token.value == "Union"
+        write "Union"
+        next_token_skip_space
+        format_literal_elements node.types, :"(", :")"
+        return false
+      end
+
       if @token.type == :IDENT && @token.value == "self?" && node.types.size == 2 &&
          node.types.any?(&.is_a?(Self)) &&
          node.types.any? { |t| t.to_s == "::Nil" }

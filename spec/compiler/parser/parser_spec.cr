@@ -1142,6 +1142,8 @@ describe "Parser" do
 
   it_parses "Foo.foo(count: 3).bar { }", Call.new(Call.new("Foo".path, "foo", named_args: [NamedArgument.new("count", 3.int32)]), "bar", block: Block.new)
 
+  it_parses "Union(X, Y)", Union.new(["X".path, "Y".path] of ASTNode)
+
   assert_syntax_error "return do\nend", "unexpected token: do"
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|

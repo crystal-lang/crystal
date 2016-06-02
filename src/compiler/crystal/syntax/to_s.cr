@@ -21,6 +21,7 @@ module Crystal
       @inside_macro = 0
       @inside_lib = false
       @inside_struct_or_union = false
+      @inside_type_expression = false
     end
 
     def visit(node : Nop)
@@ -603,7 +604,9 @@ module Crystal
       end
       if return_type = node.return_type
         @str << " : "
-        return_type.accept self
+        inside_type_expression do
+          return_type.accept self
+        end
       end
       newline
 
@@ -743,7 +746,9 @@ module Crystal
       end
       if restriction = node.restriction
         @str << " : "
-        restriction.accept self
+        inside_type_expression do
+          restriction.accept self
+        end
       end
       if default_value = node.default_value
         @str << " = "
@@ -841,10 +846,16 @@ module Crystal
     end
 
     def visit(node : Union)
+      @str << "Union(" unless @inside_type_expression
       node.types.each_with_index do |ident, i|
-        @str << " | " if i > 0
+        if @inside_type_expression
+          @str << " | " if i > 0
+        else
+          @str << ", " if i > 0
+        end
         ident.accept self
       end
+      @str << ")" unless @inside_type_expression
       false
     end
 
@@ -940,7 +951,9 @@ module Crystal
     def visit(node : TypeDeclaration)
       node.var.accept self
       @str << " : "
-      node.declared_type.accept self
+      inside_type_expression do
+        node.declared_type.accept self
+      end
       if value = node.value
         @str << " = "
         value.accept self
@@ -951,7 +964,9 @@ module Crystal
     def visit(node : UninitializedVar)
       node.var.accept self
       @str << " = uninitialized "
-      node.declared_type.accept self
+      inside_type_expression do
+        node.declared_type.accept self
+      end
       false
     end
 
@@ -1086,7 +1101,9 @@ module Crystal
       @str << " "
       @str << node.name.to_s
       @str << " = "
-      node.type_spec.accept self
+      inside_type_expression do
+        node.type_spec.accept self
+      end
       false
     end
 
@@ -1154,7 +1171,9 @@ module Crystal
     def visit(node : SizeOf)
       @str << keyword("sizeof")
       @str << "("
-      node.exp.accept(self)
+      inside_type_expression do
+        node.exp.accept(self)
+      end
       @str << ")"
       false
     end
@@ -1162,7 +1181,9 @@ module Crystal
     def visit(node : InstanceSizeOf)
       @str << keyword("instance_sizeof")
       @str << "("
-      node.exp.accept(self)
+      inside_type_expression do
+        node.exp.accept(self)
+      end
       @str << ")"
       false
     end
@@ -1173,7 +1194,9 @@ module Crystal
         @str << ".nil?"
       else
         @str << ".is_a?("
-        node.const.accept self
+        inside_type_expression do
+          node.const.accept self
+        end
         @str << ")"
       end
       false
@@ -1195,7 +1218,9 @@ module Crystal
       @str << "."
       @str << keyword(keyword)
       @str << "("
-      node.to.accept self
+      inside_type_expression do
+        node.to.accept self
+      end
       @str << ")"
       false
     end
@@ -1310,7 +1335,9 @@ module Crystal
       @str << " "
       @str << node.name
       @str << " = "
-      node.value.accept self
+      inside_type_expression do
+        node.value.accept self
+      end
       false
     end
 
@@ -1474,6 +1501,12 @@ module Crystal
       @inside_macro += 1
       yield
       @inside_macro -= 1
+    end
+
+    def inside_type_expression
+      @inside_type_expression = true
+      yield
+      @inside_type_expression = false
     end
 
     def to_s

@@ -626,6 +626,11 @@ module Crystal
       false
     end
 
+    def visit(node : Union)
+      @last = type_id(node.type)
+      false
+    end
+
     def visit(node : Include)
       node.runtime_initializers.try &.each &.accept self
 

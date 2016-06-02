@@ -58,4 +58,10 @@ describe "Type inference: union" do
       LibC::Foo.new.a
       ), flags: "some_flag") { int32 }
   end
+
+  it "types union" do
+    assert_type(%(
+      Union(Int32, String)
+      )) { union_of(int32, string).metaclass }
+  end
 end

@@ -17,7 +17,9 @@ module Crystal
         TypeNode.new(type).accept(self)
       elsif restriction = node.restriction
         @str << " : "
-        restriction.accept self
+        inside_type_expression do
+          restriction.accept self
+        end
       end
       if default_value = node.default_value
         @str << " = "
