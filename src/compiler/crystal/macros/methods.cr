@@ -1,6 +1,148 @@
 require "../semantic/ast"
+require "./macros"
 
 module Crystal
+  class MacroExpander::MacroVisitor
+    def interpret_top_level_call(node)
+      case node.name
+      when "debug"
+        interpret_debug
+      when "env"
+        interpret_env(node)
+      when "puts", "p"
+        interpret_puts(node)
+      when "pp"
+        interpret_pp(node)
+      when "system", "`"
+        interpret_system(node)
+      when "raise"
+        interpret_raise(node)
+      when "run"
+        interpret_run(node)
+      else
+        node.raise "undefined macro method: '#{node.name}'"
+      end
+    end
+
+    def interpret_debug
+      puts @str
+      @last = Nop.new
+    end
+
+    def interpret_env(node)
+      if node.args.size == 1
+        node.args[0].accept self
+        cmd = @last.to_macro_id
+        env_value = ENV[cmd]?
+        @last = env_value ? StringLiteral.new(env_value) : NilLiteral.new
+      else
+        node.wrong_number_of_arguments "macro call 'env'", node.args.size, 1
+      end
+    end
+
+    def interpret_puts(node)
+      node.args.each do |arg|
+        arg.accept self
+        puts @last
+      end
+
+      @last = Nop.new
+    end
+
+    def interpret_pp(node)
+      node.args.each do |arg|
+        arg.accept self
+        print arg
+        print " = "
+        puts @last
+      end
+
+      @last = Nop.new
+    end
+
+    def interpret_system(node)
+      cmd = node.args.map do |arg|
+        arg.accept self
+        @last.to_macro_id
+      end
+      cmd = cmd.join " "
+
+      result = `#{cmd}`
+      if $?.success?
+        @last = MacroId.new(result)
+      elsif result.empty?
+        node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}"
+      else
+        node.raise "error executing command: #{cmd}, got exit status #{$?.exit_code}:\n\n#{result}\n"
+      end
+    end
+
+    def interpret_raise(node)
+      msg = node.args.map do |arg|
+        arg.accept self
+        @last.to_macro_id
+      end
+      msg = msg.join " "
+
+      node.raise "can't expand macro: #{msg}"
+    end
+
+    def interpret_run(node)
+      if node.args.size == 0
+        node.wrong_number_of_arguments "macro call 'run'", 0, "1+"
+      end
+
+      node.args.first.accept self
+      filename = @last.to_macro_id
+      original_filanme = filename
+
+      # Support absolute paths
+      if filename.starts_with?("/")
+        filename = "#{filename}.cr" unless filename.ends_with?(".cr")
+
+        if File.exists?(filename)
+          unless File.file?(filename)
+            node.raise "error executing macro run: '#{filename}' is not a file"
+          end
+        else
+          node.raise "error executing macro run: can't find file '#{filename}'"
+        end
+      else
+        begin
+          relative_to = @location.try &.original_filename
+          found_filenames = @mod.find_in_path(filename, relative_to)
+        rescue ex
+          node.raise "error executing macro run: #{ex.message}"
+        end
+
+        unless found_filenames
+          node.raise "error executing macro run: can't find file '#{filename}'"
+        end
+
+        if found_filenames.size > 1
+          node.raise "error executing macro run: '#{filename}' is a directory"
+        end
+
+        filename = found_filenames.first
+      end
+
+      run_args = [] of String
+      node.args.each_with_index do |arg, i|
+        next if i == 0
+
+        arg.accept self
+        run_args << @last.to_macro_id
+      end
+
+      success, result = @expander.run(filename, run_args)
+      if success
+        @last = MacroId.new(result)
+      else
+        node.raise "Error executing run: #{original_filanme} #{run_args.map(&.inspect).join " "}\n\nGot:\n\n#{result}\n"
+      end
+    end
+  end
+
   class ASTNode
     def to_macro_id
       to_s
