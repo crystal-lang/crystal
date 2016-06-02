@@ -13,6 +13,24 @@ abstract class OpenSSL::SSL::Socket
         )
       end
 
+      {% if LibSSL::OPENSSL_102 %}
+      if hostname
+        param = LibSSL.ssl_get0_param(@ssl)
+
+        if hostname.match(/^(?:[0-9]{1,3}\.[0-9\.]+[0-9]{1,3}|[0-9a-fA-F]{1,4}:[0-9a-fA-F:]+[0-9a-fA-F]{1,4})$/)
+          # Enable verification for OpenSSL 1.0.2
+          unless LibCrypto.x509_verify_param_set1_ip_asc(param, hostname) == 1
+            raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_ip_asc")
+          end
+        else
+          # Enable verification for OpenSSL 1.0.2
+          unless LibCrypto.x509_verify_param_set1_host(param, hostname, 0) == 1
+            raise OpenSSL::Error.new("X509_VERIFY_PARAM_set1_host")
+          end
+        end
+      end
+      {% end %}
+
       ret = LibSSL.ssl_connect(@ssl)
       unless ret == 1
         raise OpenSSL::SSL::Error.new(@ssl, ret, "SSL_connect")

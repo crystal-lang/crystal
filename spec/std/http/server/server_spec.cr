@@ -31,10 +31,6 @@ module HTTP
     end
 
     describe Response do
-      it "creates default ssl context" do
-        HTTP::Server.default_ssl_context.should be_a(OpenSSL::SSL::Context::Server)
-      end
-
       it "closes" do
         io = MemoryIO.new
         response = Response.new(io)
