@@ -819,4 +819,30 @@ describe "Type inference: lib" do
       LibFoo.foo
       )) { |mod| mod.nil }
   end
+
+  it "can use macros inside lib" do
+    assert_type(%(
+      lib LibFoo
+        {% begin %}
+          fun foo : Int32
+        {% end %}
+      end
+
+      LibFoo.foo
+      )) { int32 }
+  end
+
+  it "can use macros inside struct" do
+    assert_type(%(
+      lib LibFoo
+        struct Foo
+          {% begin %}
+            x : Int32
+          {% end %}
+        end
+      end
+
+      LibFoo::Foo.new.x
+      )) { int32 }
+  end
 end
