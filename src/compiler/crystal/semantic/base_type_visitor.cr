@@ -571,17 +571,24 @@ module Crystal
       true
     end
 
-    def expand_macro(the_macro, node)
+    def expand_macro(the_macro, node, mode = nil)
       begin
         expanded_macro = yield
       rescue ex : Crystal::Exception
         node.raise "expanding macro", ex
       end
 
+      mode ||= if @lib_def_pass > 0
+                 MacroExpansionMode::Lib
+               else
+                 MacroExpansionMode::Normal
+               end
+
       generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
         inside_def: !!@typed_def,
         inside_type: !current_type.is_a?(Program),
         inside_exp: @exp_nest > 0,
+        mode: mode,
       )
 
       if node_doc = node.doc
@@ -633,7 +640,7 @@ module Crystal
       expand_inline_macro node
     end
 
-    def expand_inline_macro(node)
+    def expand_inline_macro(node, mode = nil)
       if expanded = node.expanded
         begin
           expanded.accept self
@@ -645,7 +652,7 @@ module Crystal
 
       the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
 
-      generated_nodes = expand_macro(the_macro, node) do
+      generated_nodes = expand_macro(the_macro, node, mode: mode) do
         @mod.expand_macro node, (@scope || current_type), @type_lookup, @free_vars
       end
 

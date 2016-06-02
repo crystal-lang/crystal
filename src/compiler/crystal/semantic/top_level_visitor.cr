@@ -1002,6 +1002,12 @@ module Crystal
         false
       end
 
+      def visit(node : MacroIf | MacroFor | MacroExpression)
+        @type_inference.expand_inline_macro(node, mode: MacroExpansionMode::StructOrUnion)
+        node.expanded.not_nil!.accept self
+        false
+      end
+
       def visit(node : ASTNode)
         true
       end

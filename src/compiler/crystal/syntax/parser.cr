@@ -872,19 +872,9 @@ module Crystal
       when :"{"
         parse_hash_or_tuple_literal
       when :"{{"
-        macro_exp = parse_macro_expression
-        check_macro_expression_end
-        next_token
-        MacroExpression.new(macro_exp)
+        parse_percent_macro_expression
       when :"{%"
-        macro_control = parse_macro_control(@line_number, @column_number)
-        if macro_control
-          check :"%}"
-          next_token_skip_space
-          macro_control
-        else
-          unexpected_token_in_atomic
-        end
+        parse_percent_macro_control
       when :"::"
         parse_ident_or_global_call
       when :"->"
@@ -2693,6 +2683,13 @@ module Crystal
       end
     end
 
+    def parse_percent_macro_expression
+      macro_exp = parse_macro_expression
+      check_macro_expression_end
+      next_token
+      MacroExpression.new(macro_exp)
+    end
+
     def parse_macro_expression
       next_token_skip_space_or_newline
       parse_expression_inside_macro
@@ -2703,6 +2700,17 @@ module Crystal
 
       next_token
       check :"}"
+    end
+
+    def parse_percent_macro_control
+      macro_control = parse_macro_control(@line_number, @column_number)
+      if macro_control
+        check :"%}"
+        next_token_skip_space
+        macro_control
+      else
+        unexpected_token_in_atomic
+      end
     end
 
     def parse_macro_control(start_line, start_column, macro_state = Token::MacroState.default)
@@ -3405,9 +3413,9 @@ module Crystal
     def parse_ifdef_body(mode)
       case mode
       when :lib
-        parse_lib_body
+        parse_lib_body_expressions
       when :struct_or_union
-        parse_struct_or_union_body
+        parse_struct_or_union_body_expressions
       else
         parse_expressions
       end
@@ -4553,7 +4561,7 @@ module Crystal
       name_column_number = @token.column_number
       next_token_skip_statement_end
 
-      body = parse_lib_body
+      body = parse_lib_body_expressions
 
       check_ident :end
       next_token_skip_space
@@ -4562,6 +4570,11 @@ module Crystal
     end
 
     def parse_lib_body
+      next_token_skip_statement_end
+      Expressions.from(parse_lib_body_expressions)
+    end
+
+    private def parse_lib_body_expressions
       expressions = [] of ASTNode
       while true
         skip_statement_end
@@ -4630,6 +4643,10 @@ module Crystal
 
         skip_statement_end
         ExternalVar.new(name, type, real_name)
+      when :"{{"
+        parse_percent_macro_expression
+      when :"{%"
+        parse_percent_macro_control
       else
         unexpected_token
       end
@@ -4813,7 +4830,7 @@ module Crystal
       next_token_skip_space_or_newline
       name = check_const
       next_token_skip_statement_end
-      body = parse_struct_or_union_body
+      body = parse_struct_or_union_body_expressions
       check_ident :end
       next_token_skip_space
 
@@ -4821,6 +4838,11 @@ module Crystal
     end
 
     def parse_struct_or_union_body
+      next_token_skip_statement_end
+      Expressions.from(parse_struct_or_union_body_expressions)
+    end
+
+    private def parse_struct_or_union_body_expressions
       exps = [] of ASTNode
 
       while true
@@ -4843,6 +4865,10 @@ module Crystal
           else
             parse_struct_or_union_fields exps
           end
+        when :"{{"
+          exps << parse_percent_macro_expression
+        when :"{%"
+          exps << parse_percent_macro_control
         when :";", :NEWLINE
           skip_statement_end
         else
