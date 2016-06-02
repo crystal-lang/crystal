@@ -517,6 +517,23 @@ describe "Type inference: lib" do
     attrs[0].lib.should eq("SDL")
   end
 
+  it "gathers link attributes from macro expression" do
+    result = infer_type(%(
+      {% begin %}
+        @[Link("SDL")]
+      {% end %}
+      lib LibSDL
+        fun init = SDL_Init : Int32
+      end
+
+      LibSDL.init
+      ))
+    sdl = result.program.types["LibSDL"].as(LibType)
+    attrs = sdl.link_attributes.not_nil!
+    attrs.size.should eq(1)
+    attrs[0].lib.should eq("SDL")
+  end
+
   it "errors if using void as argument (related to #508)" do
     assert_error %(
       lib LibFoo

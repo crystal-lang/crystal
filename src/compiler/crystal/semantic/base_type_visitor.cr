@@ -332,6 +332,8 @@ module Crystal
           unless node.expanded
             @attributes = nil
           end
+        when MacroExpression, MacroIf, MacroFor
+          # Don't clear attributes that were generating with macros
         else
           @attributes = nil
         end
