@@ -2,7 +2,10 @@
 # macros need to be defined before they are used.
 # A first compiler pass gathers all classes and methods, removing the
 # requirement to place these in load order.
-# When adding new files, use alpha-sort when possible.
+#
+# When adding new files, use alpha-sort when possible. Make sure
+# to also add them to `docs_main.cr` if their content need to
+# appear in the API docs.
 
 # This list requires ordered statements
 require "lib_c"
