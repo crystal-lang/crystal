@@ -1,7 +1,6 @@
 require "spec"
 
 describe "UUID" do
-
   it "can be built from strings" do
     UUID.new("c20335c3-7f46-4126-aae9-f665434ad12b").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
     UUID.new("c20335c37f464126aae9f665434ad12b").should eq("c20335c3-7f46-4126-aae9-f665434ad12b")
@@ -34,5 +33,4 @@ describe "UUID" do
     expect_raises(ArgumentError) { UUID.new == "2ab8ffc8f58749e197eda3e3d14e 06c" }
     expect_raises(ArgumentError) { UUID.new == "2ab8ffc8f58749e197eda3e3d14e-76c" }
   end
-
 end
