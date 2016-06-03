@@ -4004,7 +4004,12 @@ module Crystal
         end
 
         check :")"
-        const = Generic.new(const, types, named_args).at(location)
+
+        if !global && !named_args && names.size == 1 && names.first == "Union"
+          const = Union.new(types).at(location)
+        else
+          const = Generic.new(const, types, named_args).at(location)
+        end
         const.end_location = token_end_location
 
         next_token_skip_space

@@ -192,4 +192,10 @@ describe "Code gen: union type" do
       )).to_string
     (str == "(Int32 | Float64)" || str == "(Float64 | Int32)").should be_true
   end
+
+  it "codegens union" do
+    codegen(%(
+      Union(Int32, String)
+      ))
+  end
 end
