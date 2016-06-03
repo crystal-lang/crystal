@@ -303,5 +303,6 @@ describe JSON::PullParser do
     assert_raw %("hello")
     assert_raw %([1,"hello",true,false,null,[1,2,3]])
     assert_raw %({"foo":[1,2,{"bar":[1,"hello",true,false,1.5]}]})
+    assert_raw %({"foo":"bar"})
   end
 end

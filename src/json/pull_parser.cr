@@ -167,8 +167,8 @@ class JSON::PullParser
       first = true
       while kind != :end_object
         io << "," unless first
-        read_object_key
         @string_value.to_json(io)
+        read_object_key
         io << ":"
         read_raw(io)
         first = false
