@@ -119,7 +119,7 @@ describe "Restrictions" do
 
       foo(1 || 1.5)
       ),
-      "can't lookup type in union (Float64 | Int32)"
+      "undefined constant T::Baz"
   end
 
   it "errors on T::Type that's a union when used from block type restriction" do
@@ -131,7 +131,7 @@ describe "Restrictions" do
 
       Foo(Int32 | Float64).foo { 1 + 2 }
       ),
-      "can't lookup type in union (Float64 | Int32)"
+      "undefined constant T::Baz"
   end
 
   it "errors if can't find type on lookup" do

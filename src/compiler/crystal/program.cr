@@ -156,6 +156,8 @@ module Crystal
       proc.variadic = true
       proc.allowed_in_generics = false
 
+      types["Union"] = @union = GenericUnionType.new self, self, "Union", value, ["T"]
+
       types["Crystal"] = crystal_module = NonGenericModuleType.new self, self, "Crystal"
       crystal_module.locations << Location.new(__LINE__ - 1, 0, __FILE__)
 
@@ -436,7 +438,7 @@ module Crystal
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64
                      uint8 uint16 uint32 uint64 float float32 float64 string symbol pointer array static_array
-                     exception tuple named_tuple proc enum range regex crystal) %}
+                     exception tuple named_tuple proc union enum range regex crystal) %}
       def {{name.id}}
         @{{name.id}}.not_nil!
       end

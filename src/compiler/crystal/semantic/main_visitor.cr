@@ -2010,8 +2010,11 @@ module Crystal
     def visit_allocate(node)
       instance_type = scope.instance_type
 
-      if instance_type.is_a?(GenericClassType)
+      case instance_type
+      when GenericClassType
         node.raise "can't create instance of generic class #{instance_type} without specifying its type vars"
+      when UnionType
+        node.raise "can't create instance of a union type"
       end
 
       if !instance_type.virtual? && instance_type.abstract?

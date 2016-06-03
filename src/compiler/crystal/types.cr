@@ -143,6 +143,10 @@ module Crystal
       self
     end
 
+    def generic_class
+      raise "Bug: #{self} doesn't implement generic_class"
+    end
+
     def includes_type?(type)
       self == type
     end
@@ -2577,7 +2581,7 @@ module Crystal
     include DefInstanceContainer
 
     getter program : Program
-    getter instance_type : GenericClassInstanceType
+    getter instance_type : Type
 
     def initialize(@program, @instance_type)
     end
@@ -2627,6 +2631,32 @@ module Crystal
     end
   end
 
+  class GenericUnionType < GenericClassType
+    def initialize(program, container, name, superclass, type_vars, add_subclass = true)
+      super
+      @variadic = true
+      @struct = true
+    end
+
+    def instantiate(type_vars)
+      types = type_vars.map do |type_var|
+        unless type_var.is_a?(Type)
+          type_var.raise "argument to Proc must be a type, not #{type_var}"
+        end
+        type_var
+      end
+      program.type_merge_union_of(types).not_nil!
+    end
+
+    def new_generic_instance(program, generic_type, type_vars)
+      raise "Bug: GenericUnionType#new_generic_instance shouldn't be invoked"
+    end
+
+    def type_desc
+      "union"
+    end
+  end
+
   # Base class for union types.
   abstract class UnionType < Type
     include MultiType
@@ -2638,7 +2668,19 @@ module Crystal
     end
 
     def parents
-      nil
+      @parents ||= [@program.value] of Type
+    end
+
+    def superclass
+      @program.value
+    end
+
+    def generic_class
+      @program.union
+    end
+
+    def metaclass
+      @metaclass ||= GenericClassInstanceMetaclassType.new(program, self)
     end
 
     def generic_nest

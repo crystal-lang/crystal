@@ -187,6 +187,20 @@ def Enum.new(pull : JSON::PullParser)
   end
 end
 
+{% if Crystal::VERSION == "0.18.0" %}
+  def Union.new(pull : JSON::PullParser)
+    string = pull.read_raw
+    \{% for type in T %}
+      begin
+        return \{{type}}.from_json(string)
+      rescue JSON::ParseException
+        # Ignore
+      end
+    \{% end %}
+    raise JSON::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
+  end
+{% end %}
+
 struct Time::Format
   def from_json(pull : JSON::PullParser)
     string = pull.read_string
