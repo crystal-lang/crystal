@@ -208,4 +208,15 @@ describe "Type inference: tuples" do
       Tuple(Int32, String).types
       )) { tuple_of([int32.metaclass, string.metaclass]) }
   end
+
+  it "can call [] on T" do
+    assert_type(%(
+      struct Tuple
+        def self.types
+          {{ T[0] }}
+        end
+      end
+      Tuple(Nil, Int32).types
+      )) { |mod| mod.nil.metaclass }
+  end
 end

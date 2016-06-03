@@ -955,7 +955,8 @@ module Crystal
       when "[]"
         interpret_one_arg_method(method, args) do |arg|
           type = type.instance_type
-          if type.is_a?(NamedTupleInstanceType)
+          case type
+          when NamedTupleInstanceType
             case arg
             when SymbolLiteral
               key = arg.value
@@ -969,8 +970,20 @@ module Crystal
               return NilLiteral.new
             end
             TypeNode.new(type.entries[index].type)
+          when TupleInstanceType
+            case arg
+            when NumberLiteral
+              index = arg.to_number.to_i
+              type = type.tuple_types[index]?
+              unless type
+                return NilLiteral.new
+              end
+              TypeNode.new(type)
+            else
+              return NilLiteral.new
+            end
           else
-            raise "undefined method '[]' for TypeNode of type #{type} (must be a named tuple type)"
+            raise "undefined method '[]' for TypeNode of type #{type} (must be a tuple or named tuple type)"
           end
         end
       when "class"
