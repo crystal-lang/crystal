@@ -83,6 +83,9 @@ module Crystal
       subtypes.try &.each do |subtype|
         next if implements_with_parents?(subtype, method, base)
 
+        # Union doesn't need a hash, dup, to_s, etc., methods because it's special
+        next if subtype == @program.union
+
         if subtype.abstract? || subtype.module?
           check_implemented_in_subtypes(base, subtype, method)
         else

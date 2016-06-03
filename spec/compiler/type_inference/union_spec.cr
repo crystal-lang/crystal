@@ -58,4 +58,86 @@ describe "Type inference: union" do
       LibC::Foo.new.a
       ), flags: "some_flag") { int32 }
   end
+
+  it "types union" do
+    assert_type(%(
+      Union(Int32, String)
+      )) { union_of(int32, string).metaclass }
+  end
+
+  it "types union of same type" do
+    assert_type(%(
+      Union(Int32, Int32, Int32)
+      )) { int32.metaclass }
+  end
+
+  it "can reopen Union" do
+    assert_type(%(
+      struct Union
+        def self.foo
+          1
+        end
+      end
+      Union(Int32, String).foo
+      )) { int32 }
+  end
+
+  it "can reopen Union and access T" do
+    assert_type(%(
+      struct Union
+        def self.types
+          T
+        end
+      end
+      Union(Int32, String).types
+      )) { tuple_of([int32, string]).metaclass }
+  end
+
+  it "can iterate T" do
+    assert_type(%(
+      struct Union
+        def self.types
+          {% begin %}
+            {
+              {% for type in T %}
+                {{type}},
+              {% end %}
+            }
+          {% end %}
+        end
+      end
+      Union(Int32, String).types
+      )) { tuple_of([int32.metaclass, string.metaclass]) }
+  end
+
+  it "errors if instantiates union" do
+    assert_error %(
+      Union(Int32, String).new
+      ),
+      "can't create instance of a union type"
+  end
+
+  it "finds method in Object" do
+    assert_type(%(
+      class Object
+        def self.foo
+          1
+        end
+      end
+
+      Union(Int32, String).foo
+      )) { int32 }
+  end
+
+  it "finds method in Value" do
+    assert_type(%(
+      struct Value
+        def self.foo
+          1
+        end
+      end
+
+      Union(Int32, String).foo
+      )) { int32 }
+  end
 end

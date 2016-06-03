@@ -342,7 +342,10 @@ module Crystal
 
   class UnionType
     def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
-      raise "can't lookup type in union #{self}"
+      if names.size == 1 && names[0] == "T"
+        return program.tuple_of(union_types)
+      end
+      program.lookup_type(names, already_looked_up, lookup_in_container)
     end
   end
 
