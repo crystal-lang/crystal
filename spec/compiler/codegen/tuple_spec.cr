@@ -294,4 +294,15 @@ describe "Code gen: tuple" do
       end
       )).to_i.should eq(42)
   end
+
+  it "provides T as a tuple literal" do
+    run(%(
+      struct Tuple
+        def self.foo
+          {{ T.class_name }}
+        end
+      end
+      Tuple(Nil, Int32).foo
+      )).to_string.should eq("TupleLiteral")
+  end
 end
