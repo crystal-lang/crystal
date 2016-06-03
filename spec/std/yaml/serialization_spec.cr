@@ -104,6 +104,12 @@ describe "YAML serialization" do
         end
       end
     end
+
+    {% if Crystal::VERSION == "0.18.0" %}
+      it "deserializes union" do
+        Array(Int32 | String).from_yaml(%([1, "hello"])).should eq([1, "hello"])
+      end
+    {% end %}
   end
 
   describe "to_yaml" do
