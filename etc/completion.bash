@@ -14,7 +14,7 @@ _crystal()
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="init build deps docs eval play run spec tool help version --help --version"
+    commands="init compile deps docs eval play run spec tool help version --help --version"
 
     case "${cmd}" in
         init)
@@ -24,7 +24,7 @@ _crystal()
                 COMPREPLY=( $(compgen -f ${cur}) )
             fi
             ;;
-        build)
+        compile)
             if [[ ${cur} == -* ]] ; then
                 local opts="--cross-compile --debug --emit --ll --link-flags --mcpu --no-color --no-codegen --prelude --release --single-module --threads --target --verbose --help"
                 COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
