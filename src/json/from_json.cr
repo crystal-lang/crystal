@@ -189,6 +189,33 @@ end
 
 {% if Crystal::VERSION == "0.18.0" %}
   def Union.new(pull : JSON::PullParser)
+    # Optimization: use fast path for primitive types
+    \{% begin %}
+      # Here we store types that are not primitive types
+      \{% non_primitives = [] of Nil %}
+
+      \{% for type, index in T %}
+        \{% if type == Nil %}
+          return pull.read_null if pull.kind == :null
+        \{% elsif type == Bool ||
+               type == Int8 || type == Int16 || type == Int32 || type == Int64 ||
+               type == UInt8 || type == UInt16 || type == UInt32 || type == UInt64 ||
+               type == Float32 || type == Float64 ||
+               type == String %}
+          value = pull.read?(\{{type}})
+          return value unless value.nil?
+        \{% else %}
+          \{% non_primitives << type %}
+        \{% end %}
+      \{% end %}
+
+      # If after traversing all the types we are left with just one
+      # non-primitive type, we can parse it directly (no need to use `read_raw`)
+      \{% if non_primitives.size == 1 %}
+        return \{{non_primitives[0]}}.new(pull)
+      \{% end %}
+    \{% end %}
+
     string = pull.read_raw
     \{% for type in T %}
       begin

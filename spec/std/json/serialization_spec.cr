@@ -116,6 +116,26 @@ describe "JSON serialization" do
       it "deserializes union" do
         Array(Int32 | String).from_json(%([1, "hello"])).should eq([1, "hello"])
       end
+
+      it "deserializes union with bool (fast path)" do
+        Union(Bool, Array(Int32)).from_json(%(true)).should be_true
+      end
+
+      {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64).map(&.id) %}
+        it "deserializes union with {{type}} (fast path)" do
+          Union({{type}}, Array(Int32)).from_json(%(#{ {{type}}::MAX })).should eq({{type}}::MAX)
+        end
+      {% end %}
+
+      it "deserializes union with Float32 (fast path)" do
+        Union(Float32, Array(Int32)).from_json(%(1)).should eq(1)
+        Union(Float32, Array(Int32)).from_json(%(1.23)).should eq(1.23_f32)
+      end
+
+      it "deserializes union with Float64 (fast path)" do
+        Union(Float64, Array(Int32)).from_json(%(1)).should eq(1)
+        Union(Float64, Array(Int32)).from_json(%(1.23)).should eq(1.23)
+      end
     {% end %}
   end
 

@@ -249,6 +249,56 @@ class JSON::PullParser
     @kind
   end
 
+  def read?(klass : Bool.class)
+    read_bool if kind == :bool
+  end
+
+  def read?(klass : Int8.class)
+    read_int.to_i8 if kind == :int
+  end
+
+  def read?(klass : Int16.class)
+    read_int.to_i16 if kind == :int
+  end
+
+  def read?(klass : Int32.class)
+    read_int.to_i32 if kind == :int
+  end
+
+  def read?(klass : Int64.class)
+    read_int.to_i64 if kind == :int
+  end
+
+  def read?(klass : UInt8.class)
+    read_int.to_u8 if kind == :int
+  end
+
+  def read?(klass : UInt16.class)
+    read_int.to_u16 if kind == :int
+  end
+
+  def read?(klass : UInt32.class)
+    read_int.to_u32 if kind == :int
+  end
+
+  def read?(klass : UInt64.class)
+    read_int.to_u64 if kind == :int
+  end
+
+  def read?(klass : Float32.class)
+    return read_int.to_f32 if kind == :int
+    return read_float.to_f32 if kind == :float
+  end
+
+  def read?(klass : Float64.class)
+    return read_int.to_f64 if kind == :int
+    return read_float.to_f64 if kind == :float
+  end
+
+  def read?(klass : String.class)
+    read_string if kind == :string
+  end
+
   private def read_next_internal
     current_kind = @kind
 

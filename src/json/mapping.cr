@@ -96,7 +96,11 @@ module JSON
               {% if value[:converter] %}
                 {{value[:converter]}}.from_json(%pull)
               {% else %}
-                {{value[:type]}}.new(%pull)
+                {% if Crystal::VERSION == "0.18.0" %}
+                  Union({{value[:type]}}).new(%pull)
+                {% else %}
+                  {{value[:type]}}.new(%pull)
+                {% end %}
               {% end %}
 
               {% if value[:root] %}
@@ -133,7 +137,7 @@ module JSON
         {% elsif value[:default] != nil %}
           @{{key.id}} = %var{key.id}.is_a?(Nil) ? {{value[:default]}} : %var{key.id}
         {% else %}
-          @{{key.id}} = %var{key.id}.not_nil!
+          @{{key.id}} = (%var{key.id}).as({{value[:type]}})
         {% end %}
       {% end %}
     end
