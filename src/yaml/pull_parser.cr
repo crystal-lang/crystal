@@ -147,6 +147,51 @@ class YAML::PullParser
     read_next
   end
 
+  def read_raw
+    case kind
+    when EventKind::SCALAR
+      self.value.not_nil!.tap { read_next }
+    when EventKind::SEQUENCE_START, EventKind::MAPPING_START
+      String.build { |io| read_raw(io) }
+    else
+      parse_exception "unexpected kind: #{kind}"
+    end
+  end
+
+  def read_raw(io)
+    case kind
+    when EventKind::SCALAR
+      self.value.not_nil!.inspect(io)
+      read_next
+    when EventKind::SEQUENCE_START
+      io << "["
+      read_next
+      first = true
+      while kind != EventKind::SEQUENCE_END
+        io << "," unless first
+        read_raw(io)
+        first = false
+      end
+      io << "]"
+      read_next
+    when EventKind::MAPPING_START
+      io << "{"
+      read_next
+      first = true
+      while kind != EventKind::MAPPING_END
+        io << "," unless first
+        read_raw(io)
+        io << ":"
+        read_raw(io)
+        first = false
+      end
+      io << "}"
+      read_next
+    else
+      parse_exception "unexpected kind: #{kind}"
+    end
+  end
+
   def skip
     case kind
     when EventKind::SCALAR

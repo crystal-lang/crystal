@@ -29,7 +29,11 @@ end
 
 {% for type in %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   def {{type.id}}.new(pull : YAML::PullParser)
-    {{type.id}}.new(pull.read_scalar)
+    begin
+      {{type.id}}.new(pull.read_scalar)
+    rescue ex
+      raise YAML::ParseException.new(ex.message.not_nil!, 0, 0)
+    end
   end
 {% end %}
 
@@ -132,6 +136,20 @@ def Enum.new(pull : YAML::PullParser)
     parse(string)
   end
 end
+
+{% if Crystal::VERSION == "0.18.0" %}
+  def Union.new(pull : YAML::PullParser)
+    string = pull.read_raw
+    \{% for type in T %}
+      begin
+        return \{{type}}.from_yaml(string)
+      rescue YAML::ParseException
+        # Ignore
+      end
+    \{% end %}
+    raise YAML::ParseException.new("couldn't parse #{self} from #{string}", 0, 0)
+  end
+{% end %}
 
 struct Time::Format
   def from_yaml(pull : YAML::PullParser)
