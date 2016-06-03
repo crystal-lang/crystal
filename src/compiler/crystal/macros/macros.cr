@@ -318,12 +318,18 @@ module Crystal
           @vars.delete index_var.name if index_var
         when TypeNode
           type = exp.type
-          unless type.is_a?(NamedTupleInstanceType)
-            exp.raise "can't interate TypeNode of type #{type}, only named tuple types"
-          end
 
-          visit_macro_for_hash_like(node, exp, type.entries) do |entry|
-            {MacroId.new(entry.name), TypeNode.new(entry.type)}
+          case type
+          when TupleInstanceType
+            visit_macro_for_array_like(node, exp, type.tuple_types) do |type|
+              TypeNode.new(type)
+            end
+          when NamedTupleInstanceType
+            visit_macro_for_hash_like(node, exp, type.entries) do |entry|
+              {MacroId.new(entry.name), TypeNode.new(entry.type)}
+            end
+          else
+            exp.raise "can't interate TypeNode of type #{type}, only tuple or named tuple types"
           end
         else
           node.exp.raise "for expression must be an array, hash or tuple literal, not #{exp.class_desc}:\n\n#{exp}"
@@ -333,11 +339,15 @@ module Crystal
       end
 
       def visit_macro_for_array_like(node, exp)
+        visit_macro_for_array_like node, exp, exp.elements, &.itself
+      end
+
+      def visit_macro_for_array_like(node, exp, entries)
         element_var = node.vars[0]
         index_var = node.vars[1]?
 
-        exp.elements.each_with_index do |element, index|
-          @vars[element_var.name] = element
+        entries.each_with_index do |element, index|
+          @vars[element_var.name] = yield element
           if index_var
             @vars[index_var.name] = NumberLiteral.new(index)
           end

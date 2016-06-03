@@ -191,4 +191,21 @@ describe "Type inference: tuples" do
       a[0]
       )) { tuple_of [types["Foo"].virtual_type!, types["Foo"].virtual_type!] }
   end
+
+  it "can iterate T" do
+    assert_type(%(
+      struct Tuple
+        def self.types
+          {% begin %}
+            {
+              {% for type in T %}
+                {{type}},
+              {% end %}
+            }
+          {% end %}
+        end
+      end
+      Tuple(Int32, String).types
+      )) { tuple_of([int32.metaclass, string.metaclass]) }
+  end
 end
