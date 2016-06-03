@@ -586,6 +586,8 @@ struct UInt8
   end
 end
 
+alias Byte = UInt8
+
 struct UInt16
   MIN =     0_u16
   MAX = 65535_u16
