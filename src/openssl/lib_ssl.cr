@@ -10,9 +10,9 @@ lib LibSSL
   type SSLMethod = Void*
   type SSLContext = Void*
   type SSL = Void*
-  type X509StoreContext = Void*
 
-  alias VerifyCallback = (Int, X509StoreContext) -> Int
+  alias VerifyCallback = (Int, LibCrypto::X509_STORE_CTX) -> Int
+  alias CertVerifyCallback = (LibCrypto::X509_STORE_CTX, Void*) -> Int
 
   enum SSLFileType
     PEM  = 1
@@ -161,6 +161,9 @@ lib LibSSL
 
   @[Raises]
   fun ssl_ctx_load_verify_locations = SSL_CTX_load_verify_locations(ctx : SSLContext, ca_file : UInt8*, ca_path : UInt8*) : Int
+
+  # hostname validation for OpenSSL <= 1.0.1
+  fun ssl_ctx_set_cert_verify_callback = SSL_CTX_set_cert_verify_callback(ctx : SSLContext, callback : CertVerifyCallback, arg : Void*)
 end
 
 {% if `(pkg-config --atleast-version=1.0.2 libssl && echo -n true) || echo -n false` == "true" %}
@@ -173,7 +176,7 @@ lib LibSSL
 end
 {% end %}
 
-{% if LibSSL::OPENSSL_102 && LibCrypto::OPENSSL_102 %}
+{% if LibSSL::OPENSSL_102 %}
 lib LibSSL
   alias ALPNCallback = (SSL, Char**, Char*, Char*, Int, Void*) -> Int
   alias X509VerifyParam = LibCrypto::X509VerifyParam
