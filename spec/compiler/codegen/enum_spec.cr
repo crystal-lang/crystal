@@ -259,4 +259,48 @@ describe "Code gen: enum" do
       Foo::All.value
       )).to_i.should eq(-1073741824)
   end
+
+  it "can use macro calls inside enum value (#424)" do
+    run(%(
+      enum Foo
+        macro bar
+          10 + 20
+        end
+
+        A = bar
+      end
+
+      Foo::A.value
+      )).to_i.should eq(30)
+  end
+
+  it "can use macro calls inside enum value, macro defined outside enum (#424)" do
+    run(%(
+      macro bar
+        10 + 20
+      end
+
+      enum Foo
+        A = bar
+      end
+
+      Foo::A.value
+      )).to_i.should eq(30)
+  end
+
+  it "can use macro calls inside enum value, with receiver (#424)" do
+    run(%(
+      module Moo
+        macro bar
+          10 + 20
+        end
+      end
+
+      enum Foo
+        A = Moo.bar
+      end
+
+      Foo::A.value
+      )).to_i.should eq(30)
+  end
 end

@@ -740,49 +740,73 @@ module Crystal
 
     def interpret_enum_value(node : Call, target_type = nil)
       obj = node.obj
-      unless obj
-        node.raise "invalid constant value"
-      end
-
-      case node.args.size
-      when 0
-        left = interpret_enum_value(obj, target_type)
-
-        case node.name
-        when "+" then +left
-        when "-"
-          case left
-          when Int8  then -left
-          when Int16 then -left
-          when Int32 then -left
-          when Int64 then -left
-          else
-            node.raise "invalid constant value"
-          end
-        when "~" then ~left
-        else
-          node.raise "invalid constant value"
+      if obj
+        if obj.is_a?(Path)
+          value = interpret_enum_value_call_macro?(node, target_type)
+          return value if value
         end
-      when 1
-        left = interpret_enum_value(obj, target_type)
-        right = interpret_enum_value(node.args.first, target_type)
 
-        case node.name
-        when "+"  then left + right
-        when "-"  then left - right
-        when "*"  then left * right
-        when "/"  then left / right
-        when "&"  then left & right
-        when "|"  then left | right
-        when "<<" then left << right
-        when ">>" then left >> right
-        when "%"  then left % right
+        case node.args.size
+        when 0
+          left = interpret_enum_value(obj, target_type)
+
+          case node.name
+          when "+" then +left
+          when "-"
+            case left
+            when Int8  then -left
+            when Int16 then -left
+            when Int32 then -left
+            when Int64 then -left
+            else
+              interpret_enum_value_call_macro(node, target_type)
+            end
+          when "~" then ~left
+          else
+            interpret_enum_value_call_macro(node, target_type)
+          end
+        when 1
+          left = interpret_enum_value(obj, target_type)
+          right = interpret_enum_value(node.args.first, target_type)
+
+          case node.name
+          when "+"  then left + right
+          when "-"  then left - right
+          when "*"  then left * right
+          when "/"  then left / right
+          when "&"  then left & right
+          when "|"  then left | right
+          when "<<" then left << right
+          when ">>" then left >> right
+          when "%"  then left % right
+          else
+            interpret_enum_value_call_macro(node, target_type)
+          end
         else
           node.raise "invalid constant value"
         end
       else
-        node.raise "invalid constant value"
+        interpret_enum_value_call_macro(node, target_type)
       end
+    end
+
+    def interpret_enum_value_call_macro(node : Call, target_type = nil)
+      interpret_enum_value_call_macro?(node, target_type) ||
+        node.raise("invalid constant value")
+    end
+
+    def interpret_enum_value_call_macro?(node : Call, target_type = nil)
+      if node.global
+        node.scope = @mod
+      else
+        node.scope = @scope || current_type.metaclass
+      end
+
+      if expand_macro(node, raise_on_missing_const: false, first_pass: true)
+        return interpret_enum_value(node.expanded.not_nil!, target_type)
+      end
+
+      nil
     end
 
     def interpret_enum_value(node : Path, target_type = nil)
@@ -790,6 +814,14 @@ module Crystal
       case type
       when Const
         interpret_enum_value(type.value, target_type)
+      else
+        node.raise "invalid constant value"
+      end
+    end
+
+    def interpret_enum_value(node : Expressions, target_type = nil)
+      if node.expressions.size == 1
+        interpret_enum_value(node.expressions.first)
       else
         node.raise "invalid constant value"
       end
