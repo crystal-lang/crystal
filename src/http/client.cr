@@ -240,6 +240,8 @@ class HTTP::Client
     self.connect_timeout = connect_timeout.total_seconds
   end
 
+  # **This method has no effect right now**
+  #
   # Set the number of seconds to wait when resolving a name, before raising an `IO::Timeout`.
   #
   # ```
@@ -255,6 +257,8 @@ class HTTP::Client
     @dns_timeout = dns_timeout.to_f
   end
 
+  # **This method has no effect right now**
+  #
   # Set the number of seconds to wait when resolving a name with a `Time::Span`, before raising an `IO::Timeout`.
   #
   # ```
