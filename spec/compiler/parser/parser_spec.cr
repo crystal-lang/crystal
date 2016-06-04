@@ -1095,6 +1095,8 @@ describe "Parser" do
   it_parses "enum Foo; {{1}}; end", EnumDef.new("Foo".path, [MacroExpression.new(1.int32)] of ASTNode)
   it_parses "enum Foo; {% if 1 %}2{% end %}; end", EnumDef.new("Foo".path, [MacroIf.new(1.int32, MacroLiteral.new("2"))] of ASTNode)
 
+  it_parses "enum Foo; macro foo;end; end", EnumDef.new("Foo".path, [Macro.new("foo", [] of Arg, Expressions.new)] of ASTNode)
+
   it_parses "1.[](2)", Call.new(1.int32, "[]", 2.int32)
   it_parses "1.[]?(2)", Call.new(1.int32, "[]?", 2.int32)
   it_parses "1.[]=(2, 3)", Call.new(1.int32, "[]=", 2.int32, 3.int32)

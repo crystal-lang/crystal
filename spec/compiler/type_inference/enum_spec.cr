@@ -290,4 +290,16 @@ describe "Type inference: enum" do
       Foo::A
       )) { types["Foo"] }
   end
+
+  it "can declare macros inside enum" do
+    assert_type(%(
+      enum Foo
+        macro bar
+          1
+        end
+      end
+
+      Foo.bar
+      )) { int32 }
+  end
 end

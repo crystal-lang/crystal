@@ -4982,8 +4982,13 @@ module Crystal
 
           def_location = @token.location
 
-          if @token.value == :def
+          case @token.value
+          when :def
             member = parse_def.at(def_location)
+            member = VisibilityModifier.new(visibility, member) if visibility
+            members << member
+          when :macro
+            member = parse_macro.at(def_location)
             member = VisibilityModifier.new(visibility, member) if visibility
             members << member
           else

@@ -647,10 +647,8 @@ module Crystal
         const_value.type = enum_type
         counter = is_flags ? counter * 2 : counter + 1
         {counter, all_value}
-      when Def, Assign, VisibilityModifier
-        member.accept self
-        {counter, all_value}
       else
+        member.accept self
         {counter, all_value}
       end
     end
