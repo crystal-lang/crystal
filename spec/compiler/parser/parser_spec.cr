@@ -1207,6 +1207,14 @@ describe "Parser" do
   assert_syntax_error "{{ {{ 1 }} }}", "can't nest macro expressions"
   assert_syntax_error "{{ {% begin %} }}", "can't nest macro expressions"
 
+  it_parses "Foo?", Crystal::Generic.new(Path.global("Union"), ["Foo".path, Path.global("Nil")] of ASTNode)
+  it_parses "Foo::Bar?", Crystal::Generic.new(Path.global("Union"), [Path.new(%w(Foo Bar)), Path.global("Nil")] of ASTNode)
+  it_parses "Foo(T)?", Crystal::Generic.new(Path.global("Union"), [Generic.new("Foo".path, ["T".path] of ASTNode), Path.global("Nil")] of ASTNode)
+  it_parses "Foo??", Crystal::Generic.new(Path.global("Union"), [
+    Crystal::Generic.new(Path.global("Union"), ["Foo".path, Path.global("Nil")] of ASTNode),
+    Path.global("Nil"),
+  ] of ASTNode)
+
   assert_syntax_error "return do\nend", "unexpected token: do"
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|
