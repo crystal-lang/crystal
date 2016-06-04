@@ -199,7 +199,7 @@ module HTTP
   def self.parse_time(time_str : String) : Time?
     DATE_PATTERNS.each do |pattern|
       begin
-        return Time.parse(time_str, pattern)
+        return Time.parse(time_str, pattern, kind: Time::Kind::Utc)
       rescue Time::Format::Error
       end
     end
