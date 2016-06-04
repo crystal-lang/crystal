@@ -25,6 +25,13 @@ describe HTTP do
     parsed_time.kind.should eq(Time::Kind::Utc)
   end
 
+  it "parses and is local (#2744)" do
+    date = "Mon, 09 Sep 2011 23:36:00 -0300"
+    parsed_time = HTTP.parse_time(date).not_nil!
+    parsed_time.kind.should eq(Time::Kind::Local)
+    parsed_time.to_s.should eq("2011-09-09 23:36:00 -0300")
+  end
+
   describe "generates RFC1123" do
     it "without time zone" do
       time = Time.new(1994, 11, 6, 8, 49, 37, 0, Time::Kind::Utc)
