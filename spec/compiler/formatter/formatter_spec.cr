@@ -929,4 +929,10 @@ describe Crystal::Formatter do
   assert_format "{ {{FOO}}, nil}", "{ {{FOO}}, nil }"
   assert_format "{ {% begin %}1{% end %}, nil }"
   assert_format "{ {% for x in 1..2 %}3{% end %}, nil }"
+
+  assert_format "String?"
+  assert_format "String???"
+  assert_format "Foo::Bar?"
+  assert_format "Foo::Bar(T, U?)?"
+  assert_format "Union(Foo::Bar?, Baz?, Qux(T, U?))"
 end
