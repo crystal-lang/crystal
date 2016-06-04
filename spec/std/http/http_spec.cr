@@ -29,7 +29,7 @@ describe HTTP do
     date = "Mon, 09 Sep 2011 23:36:00 -0300"
     parsed_time = HTTP.parse_time(date).not_nil!
     parsed_time.kind.should eq(Time::Kind::Local)
-    parsed_time.to_s.should eq("2011-09-09 23:36:00 -0300")
+    parsed_time.to_utc.to_s.should eq("2011-09-10 02:36:00 UTC")
   end
 
   describe "generates RFC1123" do
