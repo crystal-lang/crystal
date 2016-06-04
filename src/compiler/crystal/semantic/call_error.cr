@@ -90,6 +90,9 @@ class Crystal::Call
       error_msg = String.build do |msg|
         if obj && owner != mod
           msg << "undefined method '#{def_name}' for #{owner}"
+        elsif convert_to_logical_operator(def_name)
+          msg << "undefined method '#{def_name}'"
+          similar_name = convert_to_logical_operator(def_name)
         elsif args.size > 0 || has_parenthesis
           msg << "undefined method '#{def_name}'"
         else
@@ -280,6 +283,15 @@ class Crystal::Call
     end
 
     raise message, owner_trace
+  end
+
+  def convert_to_logical_operator(def_name)
+    case def_name
+    when "and"; "&&"
+    when "or" ; "||"
+    when "not"; "!"
+    else        nil
+    end
   end
 
   # If there's only one def that could match, and there are named
