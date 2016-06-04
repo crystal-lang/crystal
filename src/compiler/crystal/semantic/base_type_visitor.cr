@@ -630,14 +630,17 @@ module Crystal
 
     def visit(node : MacroExpression)
       expand_inline_macro node
+      false
     end
 
     def visit(node : MacroIf)
       expand_inline_macro node
+      false
     end
 
     def visit(node : MacroFor)
       expand_inline_macro node
+      false
     end
 
     def expand_inline_macro(node, mode = nil)
@@ -647,7 +650,7 @@ module Crystal
         rescue ex : Crystal::Exception
           node.raise "expanding macro", ex
         end
-        return false
+        return expanded
       end
 
       the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
@@ -659,7 +662,7 @@ module Crystal
       node.expanded = generated_nodes
       node.bind_to generated_nodes
 
-      false
+      generated_nodes
     end
 
     def check_valid_attributes(node, valid_attributes, desc)

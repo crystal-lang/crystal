@@ -554,47 +554,11 @@ module Crystal
 
       pushing_type(enum_type) do
         counter = is_flags ? 1 : 0
-        node.members.each do |member|
-          case member
-          when Arg
-            if existed
-              node.raise "can't reopen enum and add more constants to it"
-            end
-
-            if default_value = member.default_value
-              counter = interpret_enum_value(default_value, enum_base_type)
-            end
-
-            if default_value.is_a?(Crystal::NumberLiteral)
-              enum_base_kind = enum_base_type.kind
-              if (enum_base_kind == :i32) && (enum_base_kind != default_value.kind)
-                default_value.raise "enum value must be an Int32"
-              end
-            end
-
-            all_value |= counter
-            const_value = NumberLiteral.new(counter, enum_base_type.kind)
-            member.default_value = const_value
-            if enum_type.types.has_key?(member.name)
-              member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
-            end
-
-            define_enum_question_method(enum_type, member, is_flags)
-
-            const_member = enum_type.add_constant member
-            const_member.doc = member.doc
-            check_ditto const_member
-
-            if member_location = member.location
-              const_member.locations << member_location
-            end
-
-            const_value.type = enum_type
-            counter = is_flags ? counter * 2 : counter + 1
-          when Def, Assign, VisibilityModifier
-            member.accept self
-          end
-        end
+        counter, all_value = visit_enum_members(node, node.members, counter, all_value,
+          existed: existed,
+          enum_type: enum_type,
+          enum_base_type: enum_base_type,
+          is_flags: is_flags)
       end
 
       unless existed
@@ -619,6 +583,76 @@ module Crystal
       node.type = mod.nil
 
       false
+    end
+
+    def visit_enum_members(node, members, counter, all_value, **options)
+      members.each do |member|
+        counter, all_value =
+          visit_enum_member(node, member, counter, all_value, **options)
+      end
+      {counter, all_value}
+    end
+
+    def visit_enum_member(node, member, counter, all_value, **options)
+      case member
+      when MacroIf
+        expanded = expand_inline_macro(member, mode: MacroExpansionMode::Enum)
+        visit_enum_member(node, expanded, counter, all_value, **options)
+      when MacroExpression
+        expanded = expand_inline_macro(member, mode: MacroExpansionMode::Enum)
+        visit_enum_member(node, expanded, counter, all_value, **options)
+      when MacroFor
+        expanded = expand_inline_macro(member, mode: MacroExpansionMode::Enum)
+        visit_enum_member(node, expanded, counter, all_value, **options)
+      when Expressions
+        visit_enum_members(node, member.expressions, counter, all_value, **options)
+      when Arg
+        existed = options[:existed]
+        enum_type = options[:enum_type]
+        base_type = options[:enum_base_type]
+        is_flags = options[:is_flags]
+
+        if options[:existed]
+          node.raise "can't reopen enum and add more constants to it"
+        end
+
+        if default_value = member.default_value
+          counter = interpret_enum_value(default_value, base_type)
+        end
+
+        if default_value.is_a?(Crystal::NumberLiteral)
+          enum_base_kind = base_type.kind
+          if (enum_base_kind == :i32) && (enum_base_kind != default_value.kind)
+            default_value.raise "enum value must be an Int32"
+          end
+        end
+
+        all_value |= counter
+        const_value = NumberLiteral.new(counter, base_type.kind)
+        member.default_value = const_value
+        if enum_type.types.has_key?(member.name)
+          member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
+        end
+
+        define_enum_question_method(enum_type, member, is_flags)
+
+        const_member = enum_type.add_constant member
+        const_member.doc = member.doc
+        check_ditto const_member
+
+        if member_location = member.location
+          const_member.locations << member_location
+        end
+
+        const_value.type = enum_type
+        counter = is_flags ? counter * 2 : counter + 1
+        {counter, all_value}
+      when Def, Assign, VisibilityModifier
+        member.accept self
+        {counter, all_value}
+      else
+        {counter, all_value}
+      end
     end
 
     def define_enum_question_method(enum_type, member, is_flags)
@@ -1003,8 +1037,8 @@ module Crystal
       end
 
       def visit(node : MacroIf | MacroFor | MacroExpression)
-        @type_inference.expand_inline_macro(node, mode: MacroExpansionMode::StructOrUnion)
-        node.expanded.not_nil!.accept self
+        expanded = @type_inference.expand_inline_macro(node, mode: MacroExpansionMode::StructOrUnion)
+        expanded.accept self
         false
       end
 

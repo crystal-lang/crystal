@@ -4922,8 +4922,26 @@ module Crystal
         unexpected_token
       end
 
+      members = parse_enum_body_expressions
+
+      check_ident :end
+      next_token_skip_space
+
+      raise "Bug: EnumDef name can only be a Path" unless name.is_a?(Path)
+
+      enum_def = EnumDef.new name, members, base_type
+      enum_def.doc = doc
+      enum_def
+    end
+
+    def parse_enum_body
+      next_token_skip_statement_end
+      Expressions.from(parse_enum_body_expressions)
+    end
+
+    private def parse_enum_body_expressions
       members = [] of ASTNode
-      until @token.keyword?(:end)
+      until end_token?
         case @token.type
         when :CONST
           location = @token.location
@@ -4980,21 +4998,17 @@ module Crystal
           value = parse_op_assign
 
           members << Assign.new(class_var, value).at(class_var)
+        when :"{{"
+          members << parse_percent_macro_expression
+        when :"{%"
+          members << parse_percent_macro_control
         when :";", :NEWLINE
           skip_statement_end
         else
           unexpected_token
         end
       end
-
-      check_ident :end
-      next_token_skip_space
-
-      raise "Bug: EnumDef name can only be a Path" unless name.is_a?(Path)
-
-      enum_def = EnumDef.new name, members, base_type
-      enum_def.doc = doc
-      enum_def
+      members
     end
 
     def node_and_next_token(node)
