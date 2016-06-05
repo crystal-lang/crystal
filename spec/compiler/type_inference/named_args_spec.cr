@@ -252,4 +252,36 @@ describe "Type inference: named args" do
       Foo.foo(count: 3).bar { }
       )) { types["Bar"] }
   end
+
+  it "matches specific overload with named arguments (#2753)" do
+    assert_type(%(
+      def foo(x : Nil, y)
+        foo 1, y
+        true
+      end
+
+      def foo(x, y)
+        x + 2
+        'a'
+      end
+
+      foo nil, y: 2
+      )) { bool }
+  end
+
+  it "matches specific overload with named arguments (2) (#2753)" do
+    assert_type(%(
+      def foo(x : Nil, y, z)
+        foo 1, y, z
+        true
+      end
+
+      def foo(x, y, z)
+        x + 2
+        'a'
+      end
+
+      foo nil, z: 1, y: 2
+      )) { bool }
+  end
 end

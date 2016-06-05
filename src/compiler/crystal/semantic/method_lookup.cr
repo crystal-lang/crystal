@@ -42,7 +42,19 @@ module Crystal
             # we are done. We don't just compare types with ==, there is a special case:
             # a function type with return T can be transpass a restriction of a function
             # with with the same arguments but which returns Void.
-            if !signature.named_args && signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
+            arg_types_equal = signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
+            if (match_named_args = match.named_arg_types) && (signature_named_args = signature.named_args) &&
+               match_named_args.size == signature_named_args.size
+              match_named_args = match_named_args.sort_by &.name
+              signature_named_args = signature_named_args.sort_by &.name
+              named_arg_types_equal = match_named_args.equals?(signature_named_args) do |x, y|
+                x.name == y.name && x.type.compatible_with?(y.type)
+              end
+            else
+              named_arg_types_equal = !match.named_arg_types && !signature.named_args
+            end
+
+            if arg_types_equal && named_arg_types_equal
               return Matches.new(matches_array, true, owner)
             end
           end
