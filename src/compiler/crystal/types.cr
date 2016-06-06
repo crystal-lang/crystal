@@ -119,8 +119,8 @@ module Crystal
       self.is_a?(VirtualMetaclassType)
     end
 
-    def fun?
-      self.is_a?(FunInstanceType)
+    def proc?
+      self.is_a?(ProcInstanceType)
     end
 
     def void?
@@ -194,10 +194,10 @@ module Crystal
       case self
       when NilType
         # nil will be sent as pointer
-        expected_type.pointer? || expected_type.fun?
-      when FunInstanceType
+        expected_type.pointer? || expected_type.proc?
+      when ProcInstanceType
         # fun will be cast to return nil
-        expected_type.is_a?(FunInstanceType) && expected_type.return_type == program.nil && expected_type.arg_types == self.arg_types
+        expected_type.is_a?(ProcInstanceType) && expected_type.return_type == program.nil && expected_type.arg_types == self.arg_types
       when NilablePointerType
         # nilable pointer is just a pointer
         self.pointer_type == expected_type
@@ -2821,17 +2821,17 @@ module Crystal
   end
 
   # A union type of nil and a single function type.
-  class NilableFunType < UnionType
-    def initialize(@program, fun_type)
-      super(@program, [@program.nil, fun_type] of Type)
+  class NilableProcType < UnionType
+    def initialize(@program, proc_type)
+      super(@program, [@program.nil, proc_type] of Type)
     end
 
     def primitive_like?
       true
     end
 
-    def fun_type
-      @union_types.last.remove_typedef.as(FunInstanceType)
+    def proc_type
+      @union_types.last.remove_typedef.as(ProcInstanceType)
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
@@ -3087,7 +3087,7 @@ module Crystal
     end
   end
 
-  class FunType < GenericClassType
+  class ProcType < GenericClassType
     def initialize(program, container, name, superclass, type_vars, add_subclass = true)
       super
       @variadic = true
@@ -3105,7 +3105,7 @@ module Crystal
         end
         type_var
       end
-      instance = FunInstanceType.new(program, types)
+      instance = ProcInstanceType.new(program, types)
       generic_types[type_vars] = instance
       initialize_instance instance
       instance.after_initialize
@@ -3113,7 +3113,7 @@ module Crystal
     end
 
     def new_generic_instance(program, generic_type, type_vars)
-      raise "Bug: FunType#new_generic_instance shouldn't be invoked"
+      raise "Bug: ProcType#new_generic_instance shouldn't be invoked"
     end
 
     def type_desc
@@ -3121,25 +3121,25 @@ module Crystal
     end
   end
 
-  class FunInstanceType < GenericClassInstanceType
+  class ProcInstanceType < GenericClassInstanceType
     include DefContainer
     include DefInstanceContainer
 
     getter program : Program
-    getter fun_types : Array(Type)
+    getter proc_types : Array(Type)
 
-    def initialize(@program, @fun_types)
-      var = Var.new("T", @program.tuple_of(fun_types))
+    def initialize(@program, @proc_types)
+      var = Var.new("T", @program.tuple_of(proc_types))
       var.bind_to var
       super(program, program.proc, {"T" => var} of String => ASTNode)
 
       args = arg_types.map_with_index { |type, i| Arg.new("arg#{i}", type: type) }
 
-      fun_call = Def.new("call", args, Primitive.new(:fun_call, return_type))
-      fun_call.raises = true
+      proc_call = Def.new("call", args, Primitive.new(:proc_call, return_type))
+      proc_call.raises = true
 
-      add_def fun_call
-      add_def Def.new("arity", body: NumberLiteral.new(fun_types.size - 1))
+      add_def proc_call
+      add_def Def.new("arity", body: NumberLiteral.new(proc_types.size - 1))
     end
 
     def struct?
@@ -3147,11 +3147,11 @@ module Crystal
     end
 
     def arg_types
-      fun_types[0..-2]
+      proc_types[0..-2]
     end
 
     def return_type
-      fun_types.last
+      proc_types.last
     end
 
     def parents
@@ -3159,7 +3159,7 @@ module Crystal
     end
 
     def primitive_like?
-      fun_types.all? &.primitive_like?
+      proc_types.all? &.primitive_like?
     end
 
     def passed_by_value?
@@ -3167,7 +3167,7 @@ module Crystal
     end
 
     def implements?(other : Type)
-      if other.is_a?(FunInstanceType)
+      if other.is_a?(ProcInstanceType)
         if other.return_type.void? && arg_types == other.arg_types
           return true
         end
@@ -3177,14 +3177,14 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "("
-      size = fun_types.size
-      fun_types.each_with_index do |fun_type, i|
+      size = proc_types.size
+      proc_types.each_with_index do |type, i|
         if i == size - 1
           io << " -> "
         elsif i > 0
           io << ", "
         end
-        fun_type.to_s(io)
+        type.to_s(io)
       end
       io << ")"
     end

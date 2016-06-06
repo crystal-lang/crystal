@@ -206,16 +206,16 @@ class Crystal::CodeGenVisitor
     store value, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : NilType, value)
+  def assign_distinct(target_pointer, target_type : NilableProcType, value_type : NilType, value)
     nilable_fun = make_nilable_fun target_type
     store nilable_fun, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : FunInstanceType, value)
+  def assign_distinct(target_pointer, target_type : NilableProcType, value_type : ProcInstanceType, value)
     store value, target_pointer
   end
 
-  def assign_distinct(target_pointer, target_type : NilableFunType, value_type : TypeDefType, value)
+  def assign_distinct(target_pointer, target_type : NilableProcType, value_type : TypeDefType, value)
     assign_distinct target_pointer, target_type, value_type.typedef, value
   end
 
@@ -253,7 +253,7 @@ class Crystal::CodeGenVisitor
     end
   end
 
-  def assign_distinct(target_pointer, target_type : FunInstanceType, value_type : FunInstanceType, value)
+  def assign_distinct(target_pointer, target_type : ProcInstanceType, value_type : ProcInstanceType, value)
     # Cast of a non-void proc to a void proc
     store to_rhs(value, target_type), target_pointer
   end
@@ -313,11 +313,11 @@ class Crystal::CodeGenVisitor
     value
   end
 
-  def downcast_distinct(value, to_type : FunInstanceType, from_type : NilableFunType)
+  def downcast_distinct(value, to_type : ProcInstanceType, from_type : NilableProcType)
     value
   end
 
-  def downcast_distinct(value, to_type : TypeDefType, from_type : NilableFunType)
+  def downcast_distinct(value, to_type : TypeDefType, from_type : NilableProcType)
     downcast_distinct value, to_type.typedef, from_type
   end
 
@@ -383,7 +383,7 @@ class Crystal::CodeGenVisitor
     to_lhs value, to_type
   end
 
-  def downcast_distinct(value, to_type : FunInstanceType, from_type : FunInstanceType)
+  def downcast_distinct(value, to_type : ProcInstanceType, from_type : ProcInstanceType)
     # Nothing to do
     value
   end
@@ -426,15 +426,15 @@ class Crystal::CodeGenVisitor
     cast_to value, to_type
   end
 
-  def upcast_distinct(value, to_type : NilableFunType, from_type : NilType)
+  def upcast_distinct(value, to_type : NilableProcType, from_type : NilType)
     make_nilable_fun to_type
   end
 
-  def upcast_distinct(value, to_type : NilableFunType, from_type : FunInstanceType)
+  def upcast_distinct(value, to_type : NilableProcType, from_type : ProcInstanceType)
     value
   end
 
-  def upcast_distinct(value, to_type : NilableFunType, from_type : TypeDefType)
+  def upcast_distinct(value, to_type : NilableProcType, from_type : TypeDefType)
     upcast_distinct value, to_type, from_type.typedef
   end
 

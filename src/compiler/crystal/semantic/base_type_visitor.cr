@@ -90,7 +90,7 @@ module Crystal
       end
     end
 
-    def visit(node : Fun)
+    def visit(node : ProcNotation)
       @in_type_args += 1
       node.inputs.try &.each &.accept(self)
       node.output.try &.accept(self)
@@ -108,7 +108,7 @@ module Crystal
         types << mod.void
       end
 
-      node.type = mod.fun_of(types)
+      node.type = mod.proc_of(types)
 
       false
     end
@@ -710,7 +710,7 @@ module Crystal
         node.raise msg
       end
 
-      if type.is_a?(TypeDefType) && type.typedef.fun?
+      if type.is_a?(TypeDefType) && type.typedef.proc?
         type = type.typedef
       end
 

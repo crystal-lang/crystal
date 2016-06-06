@@ -603,7 +603,7 @@ module Crystal
     property! external : External
   end
 
-  class FunLiteral
+  class ProcLiteral
     property force_nil = false
     property expected_return_type : Type?
 
@@ -621,11 +621,11 @@ module Crystal
 
       types << (expected_return_type || return_type)
 
-      self.type = self.def.type.program.fun_of(types)
+      self.type = self.def.type.program.proc_of(types)
     end
 
     def return_type
-      @type.as(FunInstanceType).return_type
+      @type.as(ProcInstanceType).return_type
     end
   end
 
@@ -795,7 +795,7 @@ module Crystal
     # a Def or a Block.
     property context : ASTNode | NonGenericModuleType | Nil
 
-    # A variable is closured if it's used in a FunLiteral context
+    # A variable is closured if it's used in a ProcLiteral context
     # where it wasn't created.
     property closured = false
 
@@ -931,7 +931,7 @@ module Crystal
     property! target : Def
   end
 
-  class FunPointer
+  class ProcPointer
     property! call : Call
 
     def map_type(type)
@@ -940,7 +940,7 @@ module Crystal
       arg_types = call.args.map &.type
       arg_types.push call.type
 
-      call.type.program.fun_of(arg_types)
+      call.type.program.proc_of(arg_types)
     end
   end
 

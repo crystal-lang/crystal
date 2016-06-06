@@ -43,9 +43,9 @@ class Crystal::CodeGenVisitor
     builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.pointer_type)
   end
 
-  private def type_id_impl(value, type : NilableFunType)
+  private def type_id_impl(value, type : NilableProcType)
     fun_ptr = extract_value value, 0
-    builder.select null_pointer?(fun_ptr), type_id(@mod.nil), type_id(type.fun_type)
+    builder.select null_pointer?(fun_ptr), type_id(@mod.nil), type_id(type.proc_type)
   end
 
   private def type_id_impl(value, type : MixedUnionType)

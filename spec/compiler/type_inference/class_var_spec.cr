@@ -72,7 +72,7 @@ describe "Type inference: class var" do
       ") { int32 }
   end
 
-  it "types class var inside fun literal inside class" do
+  it "types class var inside proc literal inside class" do
     assert_type("
       class Foo
         @@foo = 1

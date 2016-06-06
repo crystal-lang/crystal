@@ -1665,7 +1665,7 @@ module Crystal
 
       next_token_skip_space
 
-      FunLiteral.new(Def.new("->", args, body)).at_end(end_location)
+      ProcLiteral.new(Def.new("->", args, body)).at_end(end_location)
     end
 
     def check_not_pipe_before_proc_literal_body
@@ -1746,7 +1746,7 @@ module Crystal
         types = [] of ASTNode
       end
 
-      FunPointer.new(obj, name, types)
+      ProcPointer.new(obj, name, types)
     end
 
     record Piece,
@@ -3089,7 +3089,7 @@ module Crystal
 
     def compute_block_arg_yields(block_arg)
       block_arg_restriction = block_arg.restriction
-      if block_arg_restriction.is_a?(Fun)
+      if block_arg_restriction.is_a?(ProcNotation)
         @yields = block_arg_restriction.inputs.try(&.size) || 0
       else
         @yields = 0
@@ -4123,7 +4123,7 @@ module Crystal
             return_type = type_union
           end
         end
-        Fun.new(input_types, return_type).at(location)
+        ProcNotation.new(input_types, return_type).at(location)
       else
         input_types = input_types.not_nil!
         if input_types.size == 1

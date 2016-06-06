@@ -678,7 +678,7 @@ describe "Block inference" do
       foo do |bar|
         method(bar).baz
       end
-      )) { fun_of(types["Bar"], void) }
+      )) { proc_of(types["Bar"], void) }
   end
 
   it "types bug with yield not_nil! that is never not nil" do
@@ -1080,7 +1080,7 @@ describe "Block inference" do
       end
 
       foo { 1 }
-      )) { fun_of(union_of(int32, string)) }
+      )) { proc_of(union_of(int32, string)) }
   end
 
   it "sets captured block type to that of restriction with alias" do
@@ -1091,7 +1091,7 @@ describe "Block inference" do
       end
 
       foo { 1 }
-      )) { fun_of(union_of(int32, string)) }
+      )) { proc_of(union_of(int32, string)) }
   end
 
   it "matches block with generic type and free var" do

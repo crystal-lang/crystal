@@ -200,10 +200,10 @@ class Crystal::Call
       if Conversions.to_unsafe_lookup_failed?(ex)
         arg_name = lib_arg_name(typed_def_arg, index)
 
-        if expected_type.is_a?(FunInstanceType) &&
-           actual_type.is_a?(FunInstanceType) &&
+        if expected_type.is_a?(ProcInstanceType) &&
+           actual_type.is_a?(ProcInstanceType) &&
            expected_type.arg_types == actual_type.arg_types
-          self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be a function returning #{expected_type.return_type}, not #{actual_type.return_type}"
+          self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be a Proc returning #{expected_type.return_type}, not #{actual_type.return_type}"
         else
           self_arg.raise "argument #{arg_name} of '#{full_name(obj_type)}' must be #{expected_type}, not #{actual_type}"
         end

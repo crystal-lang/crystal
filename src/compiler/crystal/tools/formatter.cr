@@ -104,7 +104,7 @@ module Crystal
       @inside_def = 0
 
       # When we parse a type, parentheses information is not stored in ASTs, unlike
-      # for an Expressions node. So when we are printing a type (Path, Fun, Union, etc.)
+      # for an Expressions node. So when we are printing a type (Path, ProcNotation, Union, etc.)
       # we increment this when we find a '(', and decrement it when we find ')', but
       # only if `paren_count > 0`: it might be the case of `def foo(x : A)`, but we don't
       # want to print that last ')' when printing the type A.
@@ -1818,7 +1818,7 @@ module Crystal
       false
     end
 
-    def visit(node : Fun)
+    def visit(node : ProcNotation)
       check_open_paren
 
       paren_count = @paren_count
@@ -3351,7 +3351,7 @@ module Crystal
       false
     end
 
-    def visit(node : FunPointer)
+    def visit(node : ProcPointer)
       write_token :"->"
       skip_space_or_newline
 
@@ -3361,7 +3361,7 @@ module Crystal
       false
     end
 
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       write_token :"->"
       skip_space_or_newline
 

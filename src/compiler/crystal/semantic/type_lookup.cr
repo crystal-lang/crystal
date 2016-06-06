@@ -151,7 +151,7 @@ module Crystal
       false
     end
 
-    def visit(node : Fun)
+    def visit(node : ProcNotation)
       types = [] of Type
       if inputs = node.inputs
         inputs.each do |input|
@@ -176,7 +176,7 @@ module Crystal
         types << program.void
       end
 
-      @type = program.fun_of(types)
+      @type = program.proc_of(types)
       false
     end
 

@@ -62,7 +62,7 @@ module Crystal
       @process_types > 0 ? super : false
     end
 
-    def visit(node : Fun)
+    def visit(node : ProcNotation)
       @process_types > 0 ? super : false
     end
 
@@ -700,7 +700,7 @@ module Crystal
       node.raise "can't apply visibility modifier"
     end
 
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       false
     end
 

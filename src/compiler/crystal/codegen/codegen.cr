@@ -423,17 +423,17 @@ module Crystal
       false
     end
 
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       fun_literal_name = fun_literal_name(node)
       is_closure = node.def.closure
 
-      # If we don't care about a fun literal's return type then we mark the associated
+      # If we don't care about a proc literal's return type then we mark the associated
       # def as returning void. This can't be done in the type inference phase because
       # of bindings and type propagation.
       if node.force_nil
         node.def.set_type @mod.nil
       else
-        # Use fun literal's type, which might have a broader type then the body
+        # Use proc literal's type, which might have a broader type then the body
         # (for example, return type: Int32 | String, body: String)
         node.def.set_type node.return_type
       end
@@ -452,7 +452,7 @@ module Crystal
       false
     end
 
-    def fun_literal_name(node : FunLiteral)
+    def fun_literal_name(node : ProcLiteral)
       location = node.location.try &.original_location
       if location && (type = node.type?)
         proc_name = true
@@ -477,7 +477,7 @@ module Crystal
       fun_literal_name
     end
 
-    def visit(node : FunPointer)
+    def visit(node : ProcPointer)
       owner = node.call.target_def.owner
       if obj = node.obj
         accept obj
@@ -1428,16 +1428,16 @@ module Crystal
       false
     end
 
-    def check_fun_is_not_closure(value, type)
-      check_fun_name = "~check_fun_is_not_closure"
-      func = @main_mod.functions[check_fun_name]? || create_check_fun_is_not_closure_fun(check_fun_name)
+    def check_proc_is_not_closure(value, type)
+      check_fun_name = "~check_proc_is_not_closure"
+      func = @main_mod.functions[check_fun_name]? || create_check_proc_is_not_closure_fun(check_fun_name)
       func = check_main_fun check_fun_name, func
       value = call func, [value] of LLVM::Value
-      bit_cast value, llvm_fun_type(type)
+      bit_cast value, llvm_proc_type(type)
     end
 
-    def create_check_fun_is_not_closure_fun(fun_name)
-      define_main_function(fun_name, [LLVMTyper::FUN_TYPE], LLVM::VoidPointer) do |func|
+    def create_check_proc_is_not_closure_fun(fun_name)
+      define_main_function(fun_name, [LLVMTyper::PROC_TYPE], LLVM::VoidPointer) do |func|
         param = func.params.first
 
         fun_ptr = extract_value param, 0

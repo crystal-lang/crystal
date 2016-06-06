@@ -1,19 +1,19 @@
 require "../../spec_helper"
 
-describe "Code gen: fun" do
-  it "call simple fun literal" do
+describe "Code gen: proc" do
+  it "call simple proc literal" do
     run("x = -> { 1 }; x.call").to_i.should eq(1)
   end
 
-  it "call fun literal with arguments" do
+  it "call proc literal with arguments" do
     run("f = ->(x : Int32) { x + 1 }; f.call(41)").to_i.should eq(42)
   end
 
-  it "call fun pointer" do
+  it "call proc pointer" do
     run("def foo; 1; end; x = ->foo; x.call").to_i.should eq(1)
   end
 
-  it "call fun pointer with args" do
+  it "call proc pointer with args" do
     run("
       def foo(x, y)
         x + y
@@ -24,7 +24,7 @@ describe "Code gen: fun" do
     ").to_i.should eq(3)
   end
 
-  it "call fun pointer of instance method" do
+  it "call proc pointer of instance method" do
     run(%(
       class Foo
         def initialize
@@ -42,7 +42,7 @@ describe "Code gen: fun" do
     )).to_i.should eq(1)
   end
 
-  it "call fun pointer of instance method that raises" do
+  it "call proc pointer of instance method that raises" do
     run(%(
       require "prelude"
       class Foo
@@ -57,7 +57,7 @@ describe "Code gen: fun" do
     )).to_i.should eq(1)
   end
 
-  it "codegens fun with another var" do
+  it "codegens proc with another var" do
     run("
       def foo(x)
         bar(x, -> {})
@@ -70,7 +70,7 @@ describe "Code gen: fun" do
       ")
   end
 
-  it "codegens fun that returns a virtual type" do
+  it "codegens proc that returns a virtual type" do
     run("
       class Foo
         def coco; 1; end
@@ -85,14 +85,14 @@ describe "Code gen: fun" do
       ").to_i.should eq(1)
   end
 
-  it "codegens fun that accepts a union and is called with a single type" do
+  it "codegens proc that accepts a union and is called with a single type" do
     run("
       f = ->(x : Int32 | Float64) { x + 1 }
       f.call(1).to_i
       ").to_i.should eq(2)
   end
 
-  it "makes sure that fun pointer is transformed after type inference" do
+  it "makes sure that proc pointer is transformed after type inference" do
     run("
       require \"prelude\"
 
@@ -144,11 +144,11 @@ describe "Code gen: fun" do
       ").to_i.should eq(12)
   end
 
-  it "call simple fun literal with return" do
+  it "call simple proc literal with return" do
     run("x = -> { return 1 }; x.call").to_i.should eq(1)
   end
 
-  it "calls fun pointer with union (passed by value) arg" do
+  it "calls proc pointer with union (passed by value) arg" do
     run("
       struct Number
         def abs; self; end
@@ -159,7 +159,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(1)
   end
 
-  it "allows passing fun type to C automatically" do
+  it "allows passing proc type to C automatically" do
     run(%(
       require "prelude"
 
@@ -177,7 +177,7 @@ describe "Code gen: fun" do
       )).to_i.should eq(1)
   end
 
-  it "allows fun pointer where self is a class" do
+  it "allows proc pointer where self is a class" do
     run("
       class A
         def self.bla
@@ -190,7 +190,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(1)
   end
 
-  it "codegens fun literal hard type inference (1)" do
+  it "codegens proc literal hard type inference (1)" do
     run(%(
       require "prelude"
 
@@ -217,7 +217,7 @@ describe "Code gen: fun" do
       )).to_i.should eq(1)
   end
 
-  it "automatically casts fun that returns something to fun that returns void" do
+  it "automatically casts proc that returns something to proc that returns void" do
     run("
       $a = 0
 
@@ -231,7 +231,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(1)
   end
 
-  it "allows fun type of enum type" do
+  it "allows proc type of enum type" do
     run("
       lib LibFoo
         enum MyEnum
@@ -245,7 +245,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(1)
   end
 
-  it "allows fun type of enum type with base type" do
+  it "allows proc type of enum type with base type" do
     run("
       lib LibFoo
         enum MyEnum : UInt16
@@ -259,7 +259,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(1)
   end
 
-  it "codegens nilable fun type (1)" do
+  it "codegens nilable proc type (1)" do
     run("
       a = 1 == 2 ? nil : ->{ 3 }
       if a
@@ -270,7 +270,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(3)
   end
 
-  it "codegens nilable fun type (2)" do
+  it "codegens nilable proc type (2)" do
     run("
       a = 1 == 1 ? nil : ->{ 3 }
       if a
@@ -281,7 +281,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(4)
   end
 
-  it "codegens nilable fun type dispatch (1)" do
+  it "codegens nilable proc type dispatch (1)" do
     run("
       def foo(x : -> U)
         x.call
@@ -296,7 +296,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(3)
   end
 
-  it "codegens nilable fun type dispatch (2)" do
+  it "codegens nilable proc type dispatch (2)" do
     run("
       def foo(x : -> U)
         x.call
@@ -311,7 +311,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(0)
   end
 
-  it "builds fun type from fun" do
+  it "builds proc type from fun" do
     codegen("
       lib LibC
         fun foo : ->
@@ -322,7 +322,7 @@ describe "Code gen: fun" do
       ")
   end
 
-  it "builds nilable fun type from fun" do
+  it "builds nilable proc type from fun" do
     codegen("
       lib LibC
         fun foo : (->)?
@@ -335,7 +335,7 @@ describe "Code gen: fun" do
       ")
   end
 
-  it "assigns nil and fun to nilable fun type" do
+  it "assigns nil and proc to nilable proc type" do
     run("
       class Foo
         def initialize
@@ -361,7 +361,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(1)
   end
 
-  it "allows invoking fun literal with smaller type" do
+  it "allows invoking proc literal with smaller type" do
     run("
       struct Nil
         def to_i
@@ -376,7 +376,7 @@ describe "Code gen: fun" do
       ").to_i.should eq(1)
   end
 
-  it "does new on fun type" do
+  it "does new on proc type" do
     run("
       alias F = Int32 -> Int32
 
@@ -456,7 +456,7 @@ describe "Code gen: fun" do
       )).to_i.should eq(1)
   end
 
-  it "codegens fun with union type that returns itself" do
+  it "codegens proc with union type that returns itself" do
     run(%(
       a = 1 || 1.5
 
@@ -466,7 +466,7 @@ describe "Code gen: fun" do
       )).to_i.should eq(1)
   end
 
-  it "codegens issue with missing byval in fun literal inside struct" do
+  it "codegens issue with missing byval in proc literal inside struct" do
     run(%(
       require "prelude"
 
@@ -484,7 +484,7 @@ describe "Code gen: fun" do
       )).to_string.should eq("bar")
   end
 
-  it "codegens fun that references struct (bug)" do
+  it "codegens proc that references struct (bug)" do
     run(%(
       class Ref
       end
@@ -533,7 +533,7 @@ describe "Code gen: fun" do
       ))
   end
 
-  it "allows using fun arg name shadowing local variable" do
+  it "allows using proc arg name shadowing local variable" do
     run(%(
       a = 1
       f = ->(a : String) { }
@@ -541,7 +541,7 @@ describe "Code gen: fun" do
       )).to_i.should eq(1)
   end
 
-  it "codegens fun that accepts array of type" do
+  it "codegens proc that accepts array of type" do
     run(%(
       require "prelude"
 
@@ -578,7 +578,7 @@ describe "Code gen: fun" do
       ))
   end
 
-  it "codegens fun to implicit self in constant (#647)" do
+  it "codegens proc to implicit self in constant (#647)" do
     run(%(
       module Foo
         def self.blah

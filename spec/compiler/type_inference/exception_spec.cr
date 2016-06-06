@@ -265,7 +265,7 @@ describe "Type inference: exception" do
     a_def.not_nil!.raises.should be_true
   end
 
-  it "marks fun literal as raises" do
+  it "marks proc literal as raises" do
     result = assert_type("->{ 1 }.call", inject_primitives: false) { int32 }
     call = result.node.as(Call)
     call.target_def.raises.should be_true

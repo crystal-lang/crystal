@@ -531,7 +531,7 @@ module Crystal
       @str << decorate_var(node, node.name)
     end
 
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       @str << "->"
       if node.def.args.size > 0
         @str << "("
@@ -550,7 +550,7 @@ module Crystal
       false
     end
 
-    def visit(node : FunPointer)
+    def visit(node : ProcPointer)
       @str << "->"
       if obj = node.obj
         obj.accept self
@@ -752,7 +752,7 @@ module Crystal
       false
     end
 
-    def visit(node : Fun)
+    def visit(node : ProcNotation)
       @str << "("
       if inputs = node.inputs
         inputs.each_with_index do |input, i|

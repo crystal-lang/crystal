@@ -21,7 +21,7 @@ class Crystal::CodeGenVisitor
     not_null_pointer? @last
   end
 
-  private def codegen_cond_impl(type : NilableFunType)
+  private def codegen_cond_impl(type : NilableProcType)
     fun_ptr = extract_value @last, 0
     not_null_pointer? fun_ptr
   end

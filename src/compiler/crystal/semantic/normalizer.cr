@@ -139,7 +139,7 @@ module Crystal
       block_arg = node.block_arg
       if !node.uses_block_arg && block_arg
         block_arg_restriction = block_arg.restriction
-        if block_arg_restriction.is_a?(Fun) && !block_arg_restriction.inputs && !block_arg_restriction.output
+        if block_arg_restriction.is_a?(ProcNotation) && !block_arg_restriction.inputs && !block_arg_restriction.output
           node.block_arg = nil
         elsif !block_arg_restriction
           node.block_arg = nil

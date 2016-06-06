@@ -353,7 +353,7 @@ class Crystal::Call
       use_cache = !block || match.def.block_arg
 
       if block && match.def.block_arg
-        if block_arg_type.is_a?(FunInstanceType)
+        if block_arg_type.is_a?(ProcInstanceType)
           block_type = block_arg_type.return_type
         end
         use_cache = false unless block_type
@@ -552,7 +552,7 @@ class Crystal::Call
 
   def replace_block_arg_with_block(block_arg)
     block_arg_type = block_arg.type
-    if block_arg_type.is_a?(FunInstanceType)
+    if block_arg_type.is_a?(ProcInstanceType)
       vars = [] of Var
       args = [] of ASTNode
       block_arg_type.arg_types.map_with_index do |type, i|
@@ -702,7 +702,7 @@ class Crystal::Call
     block_arg_restriction = block_arg.restriction
 
     # If the block spec is &block : A, B, C -> D, we solve the argument types
-    if block_arg_restriction.is_a?(Fun)
+    if block_arg_restriction.is_a?(ProcNotation)
       # If there are input types, solve them and creating the yield vars
       if inputs = block_arg_restriction.inputs
         yield_vars = inputs.map_with_index do |input, i|
@@ -717,7 +717,7 @@ class Crystal::Call
       # Otherwise, the block spec could be something like &block : Foo, and that
       # is valid too only if Foo is an alias/typedef that referes to a FunctionType
       block_arg_type = ident_lookup.lookup_node_type(block_arg_restriction).remove_typedef
-      unless block_arg_type.is_a?(FunInstanceType)
+      unless block_arg_type.is_a?(ProcInstanceType)
         block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_type}"
         return nil, nil
       end
@@ -758,14 +758,14 @@ class Crystal::Call
 
       # Check if the call has a block arg (foo &bar). If so, we need to see if the
       # passed block has the same signature as the def's block arg. We use that
-      # same FunLiteral (bar) for this call.
+      # same ProcLiteral (bar) for this call.
       fun_literal = block.fun_literal
       unless fun_literal
         if call_block_arg = self.block_arg
           check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
           fun_literal = call_block_arg
         else
-          # Otherwise, we create a FunLiteral and type it
+          # Otherwise, we create a ProcLiteral and type it
           if block.args.size > fun_args.size
             wrong_number_of "block arguments", block.args.size, fun_args.size
           end
@@ -773,7 +773,7 @@ class Crystal::Call
           a_def = Def.new("->", fun_args, block.body)
           a_def.captured_block = true
 
-          fun_literal = FunLiteral.new(a_def).at(self)
+          fun_literal = ProcLiteral.new(a_def).at(self)
           fun_literal.expected_return_type = output_type if output_type
           fun_literal.force_nil = true unless output
           fun_literal.accept parent_visitor
@@ -781,12 +781,12 @@ class Crystal::Call
         block.fun_literal = fun_literal
       end
 
-      # Now check if the FunLiteral's type (the block's type) matches the block arg specification.
+      # Now check if the ProcLiteral's type (the block's type) matches the block arg specification.
       # If not, we delay it for later and compute the type based on the block arg return type, if any.
       fun_literal_type = fun_literal.type?
       if fun_literal_type
         block_arg_type = fun_literal_type
-        block_type = fun_literal_type.as(FunInstanceType).return_type
+        block_type = fun_literal_type.as(ProcInstanceType).return_type
         if output
           matched = MatchesLookup.match_arg(block_type, output, match.context)
           if !matched && !void_return_type?(match.context, output)
@@ -794,7 +794,7 @@ class Crystal::Call
               block_type = ident_lookup.lookup_node_type(output).virtual_type
               block.type = output_type || block_type
               block.freeze_type = output_type || block_type
-              block_arg_type = mod.fun_of(fun_args, block_type)
+              block_arg_type = mod.proc_of(fun_args, block_type)
             else
               raise "expected block to return #{output}, not #{block_type}"
             end
@@ -811,14 +811,14 @@ class Crystal::Call
             output_type = mod.nil if output_type.void?
             block.type = output_type
             block.freeze_type = output_type
-            block_arg_type = mod.fun_of(fun_args, output_type)
+            block_arg_type = mod.proc_of(fun_args, output_type)
           else
             cant_infer_block_return_type
           end
         else
           block.body.type = mod.void
           block.type = mod.void
-          block_arg_type = mod.fun_of(fun_args, mod.void)
+          block_arg_type = mod.proc_of(fun_args, mod.void)
         end
       end
 
@@ -876,7 +876,7 @@ class Crystal::Call
   end
 
   private def check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
-    call_block_arg_types = call_block_arg.type.as(FunInstanceType).arg_types
+    call_block_arg_types = call_block_arg.type.as(ProcInstanceType).arg_types
     if yield_vars
       if yield_vars.size != call_block_arg_types.size
         wrong_number_of "block argument's arguments", call_block_arg_types.size, yield_vars.size
@@ -1018,7 +1018,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && body.name == "fun_call"
+    strict_check = body.is_a?(Primitive) && body.name == "proc_call"
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]

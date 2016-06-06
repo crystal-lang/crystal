@@ -1,39 +1,39 @@
 require "../../spec_helper"
 
-describe "Type inference: fun" do
-  it "types empty fun literal" do
-    assert_type("-> {}") { |mod| fun_of(mod.nil) }
+describe "Type inference: proc" do
+  it "types empty proc literal" do
+    assert_type("-> {}") { |mod| proc_of(mod.nil) }
   end
 
-  it "types int fun literal" do
-    assert_type("-> { 1 }") { fun_of(int32) }
+  it "types int proc literal" do
+    assert_type("-> { 1 }") { proc_of(int32) }
   end
 
-  it "types fun call" do
+  it "types proc call" do
     assert_type("x = -> { 1 }; x.call()") { int32 }
   end
 
-  it "types int -> int fun literal" do
-    assert_type("->(x : Int32) { x }") { fun_of(int32, int32) }
+  it "types int -> int proc literal" do
+    assert_type("->(x : Int32) { x }") { proc_of(int32, int32) }
   end
 
-  it "types int -> int fun call" do
+  it "types int -> int proc call" do
     assert_type("f = ->(x : Int32) { x }; f.call(1)") { int32 }
   end
 
-  it "types fun pointer" do
-    assert_type("def foo; 1; end; ->foo") { fun_of(int32) }
+  it "types proc pointer" do
+    assert_type("def foo; 1; end; ->foo") { proc_of(int32) }
   end
 
-  it "types fun pointer with types" do
-    assert_type("def foo(x); x; end; ->foo(Int32)") { fun_of(int32, int32) }
+  it "types proc pointer with types" do
+    assert_type("def foo(x); x; end; ->foo(Int32)") { proc_of(int32, int32) }
   end
 
-  it "types a fun pointer with generic types" do
-    assert_type("def foo(x); end; ->foo(Pointer(Int32))") { |mod| fun_of(pointer_of(int32), mod.nil) }
+  it "types a proc pointer with generic types" do
+    assert_type("def foo(x); end; ->foo(Pointer(Int32))") { |mod| proc_of(pointer_of(int32), mod.nil) }
   end
 
-  it "types fun pointer to instance method" do
+  it "types proc pointer to instance method" do
     assert_type("
       class Foo
         def initialize
@@ -47,14 +47,14 @@ describe "Type inference: fun" do
 
       foo = Foo.new
       ->foo.coco
-    ") { fun_of(int32) }
+    ") { proc_of(int32) }
   end
 
-  it "types fun type spec" do
-    assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(fun_of(int32, int64)) }
+  it "types proc type spec" do
+    assert_type("a = Pointer(Int32 -> Int64).malloc(1_u64)") { pointer_of(proc_of(int32, int64)) }
   end
 
-  it "allows passing fun type if it is typedefed" do
+  it "allows passing proc type if it is typedefed" do
     assert_type("
       lib LibC
         type Callback = Int32 -> Int32
@@ -66,12 +66,12 @@ describe "Type inference: fun" do
       ") { float64 }
   end
 
-  it "errors when using local variable with fun argument name" do
+  it "errors when using local variable with proc argument name" do
     assert_error "->(a : Int32) { }; a",
       "undefined local variable or method 'a'"
   end
 
-  it "allows implicit cast of fun to return void in LibC function" do
+  it "allows implicit cast of proc to return void in LibC function" do
     assert_type("
       lib LibC
         fun atexit(fun : -> ) : Int32
@@ -81,7 +81,7 @@ describe "Type inference: fun" do
       ") { int32 }
   end
 
-  it "passes fun pointer as block" do
+  it "passes proc pointer as block" do
     assert_type("
       def foo
         yield
@@ -92,7 +92,7 @@ describe "Type inference: fun" do
       ") { int32 }
   end
 
-  it "passes fun pointer as block with arguments" do
+  it "passes proc pointer as block with arguments" do
     assert_type("
       def foo
         yield 1
@@ -103,16 +103,16 @@ describe "Type inference: fun" do
       ") { float64 }
   end
 
-  it "binds fun literal to arguments and body" do
+  it "binds proc literal to arguments and body" do
     assert_type("
       $x = 1
       f = -> { $x }
       $x = 'a'
       f
-    ") { fun_of(union_of(int32, char)) }
+    ") { proc_of(union_of(int32, char)) }
   end
 
-  it "has fun literal as restriction and works" do
+  it "has proc literal as restriction and works" do
     assert_type("
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -122,7 +122,7 @@ describe "Type inference: fun" do
       ") { float64 }
   end
 
-  it "has fun literal as restriction and works when output not specified" do
+  it "has proc literal as restriction and works when output not specified" do
     assert_type("
       def foo(x : Int32 -> )
         x.call(1)
@@ -132,7 +132,7 @@ describe "Type inference: fun" do
       ") { |mod| mod.nil }
   end
 
-  it "has fun literal as restriction and errors if output is different" do
+  it "has proc literal as restriction and errors if output is different" do
     assert_error "
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -143,7 +143,7 @@ describe "Type inference: fun" do
       "no overload matches"
   end
 
-  it "has fun literal as restriction and errors if input is different" do
+  it "has proc literal as restriction and errors if input is different" do
     assert_error "
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -154,7 +154,7 @@ describe "Type inference: fun" do
       "no overload matches"
   end
 
-  it "has fun literal as restriction and errors if sizes are different" do
+  it "has proc literal as restriction and errors if sizes are different" do
     assert_error "
       def foo(x : Int32 -> Float64)
         x.call(1)
@@ -165,7 +165,7 @@ describe "Type inference: fun" do
       "no overload matches"
   end
 
-  it "allows passing nil as fun callback" do
+  it "allows passing nil as proc callback" do
     assert_type("
       lib LibC
         type Cb = Int32 ->
@@ -176,7 +176,7 @@ describe "Type inference: fun" do
       ") { int32 }
   end
 
-  it "disallows casting a fun type to one accepting more arguments" do
+  it "disallows casting a proc type to one accepting more arguments" do
     assert_error("
       f = ->(x : Int32) { x.to_f }
       f as (Int32, Int32 -> Float64)
@@ -184,14 +184,14 @@ describe "Type inference: fun" do
       "can't cast")
   end
 
-  it "allows casting a fun type to one with void argument" do
+  it "allows casting a proc type to one with void argument" do
     assert_type("
       f = ->(x : Int32) { x.to_f }
       f as Int32 -> Void
-      ") { fun_of [int32, void] }
+      ") { proc_of [int32, void] }
   end
 
-  it "disallows casting a fun type to one accepting less arguments" do
+  it "disallows casting a proc type to one accepting less arguments" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f as -> Float64
@@ -199,7 +199,7 @@ describe "Type inference: fun" do
       "can't cast (Int32 -> Float64) to ( -> Float64)"
   end
 
-  it "disallows casting a fun type to one accepting same size argument but different output" do
+  it "disallows casting a proc type to one accepting same size argument but different output" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f as Int32 -> Int32
@@ -207,7 +207,7 @@ describe "Type inference: fun" do
       "can't cast (Int32 -> Float64) to (Int32 -> Int32)"
   end
 
-  it "disallows casting a fun type to one accepting same size argument but different input" do
+  it "disallows casting a proc type to one accepting same size argument but different input" do
     assert_error "
       f = ->(x : Int32) { x.to_f }
       f as Float64 -> Float64
@@ -215,7 +215,7 @@ describe "Type inference: fun" do
       "can't cast (Int32 -> Float64) to (Float64 -> Float64)"
   end
 
-  it "types fun literal hard type inference (1)" do
+  it "types proc literal hard type inference (1)" do
     assert_type(%(
       require "prelude"
 
@@ -231,20 +231,20 @@ describe "Type inference: fun" do
       ->(f : Foo) do
         {Foo.new(f.x), 0}
       end
-      )) { fun_of(types["Foo"], tuple_of([types["Foo"], int32])) }
+      )) { proc_of(types["Foo"], tuple_of([types["Foo"], int32])) }
   end
 
-  it "allows implicit cast of fun to return void in non-generic restriction" do
+  it "allows implicit cast of proc to return void in non-generic restriction" do
     assert_type("
       def foo(x : ->)
         x
       end
 
       foo ->{ 1 }
-      ") { fun_of(void) }
+      ") { proc_of(void) }
   end
 
-  it "allows implicit cast of fun to return void in generic restriction" do
+  it "allows implicit cast of proc to return void in generic restriction" do
     assert_type("
       class Foo(T)
         def foo(x : T)
@@ -254,12 +254,12 @@ describe "Type inference: fun" do
 
       foo = Foo(->).new
       foo.foo ->{ 1 }
-      ") { fun_of(void) }
+      ") { proc_of(void) }
   end
 
-  it "types nil or fun type" do
-    result = assert_type("1 == 1 ? nil : ->{}") { |mod| union_of(mod.nil, mod.fun_of(mod.nil)) }
-    result.node.type.should be_a(NilableFunType)
+  it "types nil or proc type" do
+    result = assert_type("1 == 1 ? nil : ->{}") { |mod| union_of(mod.nil, mod.proc_of(mod.nil)) }
+    result.node.type.should be_a(NilableProcType)
   end
 
   it "allows passing NoReturn type for any return type (1)" do
@@ -299,34 +299,34 @@ describe "Type inference: fun" do
       s = LibC::S.new
       s.x = ->{ LibC.exit }
       s.x
-      ") { fun_of(int32) }
+      ") { proc_of(int32) }
   end
 
-  it "allows new on fun type" do
+  it "allows new on proc type" do
     assert_type("
       alias F = Int32 -> Int32
       F.new { |x| x + 1 }
-      ") { fun_of(int32, int32) }
+      ") { proc_of(int32, int32) }
   end
 
-  it "allows new on fun type that is a typedef" do
+  it "allows new on proc type that is a typedef" do
     assert_type("
       lib LibC
         type F = Int32 -> Int32
       end
 
       LibC::F.new { |x| x + 1 }
-      ") { fun_of(int32, int32) }
+      ") { proc_of(int32, int32) }
   end
 
-  it "allows new on fun type with less block args" do
+  it "allows new on proc type with less block args" do
     assert_type("
       alias F = Int32 -> Int32
       F.new { 1 }
-      ") { fun_of(int32, int32) }
+      ") { proc_of(int32, int32) }
   end
 
-  it "says wrong number of block args in new on fun type" do
+  it "says wrong number of block args in new on proc type" do
     assert_error "
       alias F = Int32 -> Int32
       F.new { |x, y| }
@@ -334,7 +334,7 @@ describe "Type inference: fun" do
       "wrong number of block arguments for (Int32 -> Int32)#new (given 2, expected 1)"
   end
 
-  it "says wrong return type in new on fun type" do
+  it "says wrong return type in new on proc type" do
     assert_error "
       alias F = Int32 -> Int32
       F.new &.to_f
@@ -342,7 +342,7 @@ describe "Type inference: fun" do
       "expected block to return Int32, not Float64"
   end
 
-  it "errors if missing argument type in fun literal" do
+  it "errors if missing argument type in proc literal" do
     assert_error "->(x) { x }",
       "function argument 'x' must have a type"
   end
@@ -390,7 +390,7 @@ describe "Type inference: fun" do
   it "allows writing a function type with Proc" do
     assert_type(%(
       Proc(Int32, Int32)
-      )) { fun_of(int32, int32).metaclass }
+      )) { proc_of(int32, int32).metaclass }
   end
 
   it "allows using Proc as restriction (1)" do
@@ -457,10 +457,10 @@ describe "Type inference: fun" do
       f = foo { |f| f.bar }
       Foo.new
       f
-      )) { |mod| fun_of(types["Foo"], mod.nil) }
+      )) { |mod| proc_of(types["Foo"], mod.nil) }
   end
 
-  it "gives correct error message when fun return type is incorrect (#219)" do
+  it "gives correct error message when proc return type is incorrect (#219)" do
     assert_error %(
       lib LibFoo
         fun bar(f : Int32 -> Int32)
@@ -468,7 +468,7 @@ describe "Type inference: fun" do
 
       LibFoo.bar ->(x) { 1.1 }
       ),
-      "argument 'f' of 'LibFoo#bar' must be a function returning Int32, not Float64"
+      "argument 'f' of 'LibFoo#bar' must be a Proc returning Int32, not Float64"
   end
 
   it "doesn't capture closured var if using typeof" do
@@ -526,7 +526,7 @@ describe "Type inference: fun" do
       "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
   end
 
-  it "types fun literal with a type that was never instantiated" do
+  it "types proc literal with a type that was never instantiated" do
     assert_type(%(
       require "prelude"
 
@@ -540,10 +540,10 @@ describe "Type inference: fun" do
       end
 
       ->(s : Foo) { s.x }
-      )) { fun_of(types["Foo"], int32) }
+      )) { proc_of(types["Foo"], int32) }
   end
 
-  it "types fun pointer with a type that was never instantiated" do
+  it "types proc pointer with a type that was never instantiated" do
     assert_type(%(
       require "prelude"
 
@@ -561,10 +561,10 @@ describe "Type inference: fun" do
       end
 
       ->foo(Foo)
-      )) { fun_of(types["Foo"], types["Foo"]) }
+      )) { proc_of(types["Foo"], types["Foo"]) }
   end
 
-  it "allows using fun arg name shadowing local variable" do
+  it "allows using proc arg name shadowing local variable" do
     assert_type(%(
       a = 1
       f = ->(a : String) { }
@@ -572,7 +572,7 @@ describe "Type inference: fun" do
       )) { int32 }
   end
 
-  it "uses array argument of fun arg (1)" do
+  it "uses array argument of proc arg (1)" do
     assert_type(%(
       require "prelude"
 
@@ -591,7 +591,7 @@ describe "Type inference: fun" do
       )) { |mod| mod.nil }
   end
 
-  it "uses array argument of fun arg (2)" do
+  it "uses array argument of proc arg (2)" do
     assert_type(%(
       require "prelude"
 
@@ -608,10 +608,10 @@ describe "Type inference: fun" do
       block = foo { |elems| elems[0] }
       elems = [Foo.new, Bar.new]
       block
-      )) { fun_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
+      )) { proc_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
   end
 
-  it "uses array argument of fun arg (3)" do
+  it "uses array argument of proc arg (3)" do
     assert_type(%(
       require "prelude"
 
@@ -632,10 +632,10 @@ describe "Type inference: fun" do
       block = foo { |elems| Bar.new((elems[0] as Bar).value) }
       elems = [Foo.new, Bar.new(1)]
       block
-      )) { fun_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
+      )) { proc_of(array_of(types["Foo"].virtual_type), types["Foo"].virtual_type) }
   end
 
-  it "uses array argument of fun arg (4)" do
+  it "uses array argument of proc arg (4)" do
     assert_error %(
       require "prelude"
 
@@ -704,7 +704,7 @@ describe "Type inference: fun" do
       end
 
       ->LibFoo.foo
-      )) { fun_of(int32, float64) }
+      )) { proc_of(int32, float64) }
   end
 
   it "allows passing union including module to proc" do
@@ -770,7 +770,7 @@ describe "Type inference: fun" do
         "as a Proc argument type"
     end
 
-    it "disallows #{type} in fun pointer" do
+    it "disallows #{type} in proc pointer" do
       assert_error %(
         def foo(x)
         end
@@ -791,7 +791,7 @@ describe "Type inference: fun" do
       )) { int32 }
   end
 
-  it "doesn't crash on constant to fun pointer" do
+  it "doesn't crash on constant to proc pointer" do
     assert_type(%(
       lib LibC
         fun foo
@@ -805,7 +805,7 @@ describe "Type inference: fun" do
   it "sets proc type as void if explicitly told so, when using new" do
     assert_type(%(
       Proc(Int32, Void).new { 1 }
-      )) { |mod| fun_of(int32, mod.nil) }
+      )) { |mod| proc_of(int32, mod.nil) }
   end
 
   it "accesses T" do

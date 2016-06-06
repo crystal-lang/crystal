@@ -862,7 +862,10 @@ module Crystal
     def_equals_and_hash name, default_value, restriction, external_name
   end
 
-  class Fun < ASTNode
+  # The Proc notation in the type grammar:
+  #
+  #    input1, input2, ..., inputN -> output
+  class ProcNotation < ASTNode
     property inputs : Array(ASTNode)?
     property output : ASTNode?
 
@@ -875,7 +878,7 @@ module Crystal
     end
 
     def clone_without_location
-      Fun.new(@inputs.clone, @output.clone)
+      ProcNotation.new(@inputs.clone, @output.clone)
     end
 
     def_equals_and_hash inputs, output
@@ -1562,7 +1565,7 @@ module Crystal
     def_equals_and_hash @body, @rescues, @else, @ensure
   end
 
-  class FunLiteral < ASTNode
+  class ProcLiteral < ASTNode
     property def : Def
 
     def initialize(@def = Def.new("->"))
@@ -1573,13 +1576,13 @@ module Crystal
     end
 
     def clone_without_location
-      FunLiteral.new(@def.clone)
+      ProcLiteral.new(@def.clone)
     end
 
     def_equals_and_hash @def
   end
 
-  class FunPointer < ASTNode
+  class ProcPointer < ASTNode
     property obj : ASTNode?
     property name : String
     property args : Array(ASTNode)
@@ -1593,7 +1596,7 @@ module Crystal
     end
 
     def clone_without_location
-      FunPointer.new(@obj.clone, @name, @args.clone)
+      ProcPointer.new(@obj.clone, @name, @args.clone)
     end
 
     def_equals_and_hash @obj, @name, @args

@@ -125,12 +125,12 @@ class Crystal::Program
     union_of([type1, type2, type3] of Type).not_nil!
   end
 
-  def fun_of(type1 : Type)
-    fun_of([type1] of Type)
+  def proc_of(type1 : Type)
+    proc_of([type1] of Type)
   end
 
-  def fun_of(type1 : Type, type2 : Type)
-    fun_of([type1, type2] of Type)
+  def proc_of(type1 : Type, type2 : Type)
+    proc_of([type1, type2] of Type)
   end
 
   def generic_class(name, *type_vars)

@@ -172,7 +172,7 @@ class Crystal::CodeGenVisitor
           call_arg = @last
           call_arg = llvm_nil if arg.type.nil_type?
 
-          if def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.fun?)
+          if def_arg && arg.type.nil_type? && (def_arg.type.pointer? || def_arg.type.proc?)
             # Nil to pointer
             call_arg = llvm_c_type(def_arg.type).null
           else
@@ -188,10 +188,10 @@ class Crystal::CodeGenVisitor
         end
       end
 
-      if arg.type.fun?
-        # Try first with the def arg type (might be a fun pointer that return void,
-        # while the argument's type a fun pointer that return something else)
-        call_arg = check_fun_is_not_closure(call_arg, def_arg.try(&.type) || arg.type)
+      if arg.type.proc?
+        # Try first with the def arg type (might be a proc pointer that return void,
+        # while the argument's type a proc pointer that return something else)
+        call_arg = check_proc_is_not_closure(call_arg, def_arg.try(&.type) || arg.type)
       end
 
       abi_arg_type = abi_info.arg_types[i]
@@ -435,7 +435,7 @@ class Crystal::CodeGenVisitor
 
     set_call_attributes node, target_def, self_type, is_closure, fun_type
 
-    if target_def.is_a?(External) && (target_def.type.fun? || target_def.type.is_a?(NilableFunType))
+    if target_def.is_a?(External) && (target_def.type.proc? || target_def.type.is_a?(NilableProcType))
       fun_ptr = bit_cast(@last, LLVM::VoidPointer)
       ctx_ptr = LLVM::VoidPointer.null
       return @last = make_fun(target_def.type, fun_ptr, ctx_ptr)

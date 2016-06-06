@@ -91,7 +91,7 @@ describe "Type inference: primitives" do
       require "prelude"
 
       {"foo" => ->{ true }}
-      )) { generic_class "Hash", string, fun_of(bool) }
+      )) { generic_class "Hash", string, proc_of(bool) }
   end
 
   it "extends from Number and doesn't find + method" do

@@ -862,7 +862,7 @@ module Crystal
           return type if type
         else
           # If there's no restriction it means it's a `-> Void` proc
-          return @mod.fun_of([@mod.void] of Type)
+          return @mod.proc_of([@mod.void] of Type)
         end
       end
 
@@ -1410,7 +1410,7 @@ module Crystal
       false
     end
 
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       node.def.body.accept self
       false
     end
@@ -1466,7 +1466,7 @@ module Crystal
       false
     end
 
-    def visit(node : Fun)
+    def visit(node : ProcNotation)
       false
     end
 

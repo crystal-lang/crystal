@@ -74,7 +74,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(1)
   end
 
-  it "accesses class var from fun literal" do
+  it "accesses class var from proc literal" do
     run("
       class Foo
         @@a = 1

@@ -68,11 +68,11 @@ describe "types to_s of" do
 
     describe "should have parens" do
       it "as return type" do
-        assert_type_to_s "( -> (Int32 | String))" { fun_of union_of(string, int32) }
+        assert_type_to_s "( -> (Int32 | String))" { proc_of union_of(string, int32) }
       end
 
       it "as arg type" do
-        assert_type_to_s "((Int32 | String) -> Int32)" { fun_of union_of(string, int32), int32 }
+        assert_type_to_s "((Int32 | String) -> Int32)" { proc_of union_of(string, int32), int32 }
       end
     end
   end

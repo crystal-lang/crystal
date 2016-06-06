@@ -298,7 +298,7 @@ module Crystal
       nil
     end
 
-    def restrict(other : Fun, context)
+    def restrict(other : ProcNotation, context)
       nil
     end
 
@@ -370,7 +370,7 @@ module Crystal
       restrict_type_or_fun_or_generic other, context
     end
 
-    def restrict(other : Fun, context)
+    def restrict(other : ProcNotation, context)
       restrict_type_or_fun_or_generic other, context
     end
 
@@ -725,23 +725,23 @@ module Crystal
     end
   end
 
-  class FunInstanceType
-    def restrict(other : Fun, context)
+  class ProcInstanceType
+    def restrict(other : ProcNotation, context)
       inputs = other.inputs
       inputs_len = inputs ? inputs.size : 0
       output = other.output
 
-      return nil if fun_types.size != inputs_len + 1
+      return nil if proc_types.size != inputs_len + 1
 
       if inputs
-        inputs.zip(fun_types) do |input, my_input|
+        inputs.zip(proc_types) do |input, my_input|
           restricted = my_input.restrict(input, context)
           return nil unless restricted == my_input
         end
       end
 
       if output
-        my_output = fun_types.last
+        my_output = proc_types.last
         if my_output.no_return?
           # Ok, NoReturn can be "cast" to anything
         else
@@ -751,30 +751,30 @@ module Crystal
 
         self
       else
-        program.fun_of(arg_types + [program.void])
+        program.proc_of(arg_types + [program.void])
       end
     end
 
-    def restrict(other : FunInstanceType, context)
+    def restrict(other : ProcInstanceType, context)
       compatible_with?(other) ? other : nil
     end
 
     def restrict(other : Generic, context)
       generic_class = context.type_lookup.lookup_type other.name
-      return super unless generic_class.is_a?(FunType)
+      return super unless generic_class.is_a?(ProcType)
 
-      return nil unless other.type_vars.size == fun_types.size
+      return nil unless other.type_vars.size == proc_types.size
 
-      fun_types.each_with_index do |fun_type, i|
+      proc_types.each_with_index do |proc_type, i|
         other_type_var = other.type_vars[i]
-        restricted = fun_type.restrict other_type_var, context
-        return nil unless restricted == fun_type
+        restricted = proc_type.restrict other_type_var, context
+        return nil unless restricted == proc_type
       end
 
       self
     end
 
-    def compatible_with?(other : FunInstanceType)
+    def compatible_with?(other : ProcInstanceType)
       arg_types = arg_types()
       return_type = return_type()
       other_arg_types = other.arg_types

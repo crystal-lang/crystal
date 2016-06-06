@@ -1874,7 +1874,7 @@ describe "Type inference: instance var" do
       end
 
       Foo.new(->(x : Node) { x }).x
-      )) { fun_of(types["Node"].virtual_type, types["Node"].virtual_type) }
+      )) { proc_of(types["Node"].virtual_type, types["Node"].virtual_type) }
   end
 
   it "uses virtual types in union" do

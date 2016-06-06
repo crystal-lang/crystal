@@ -606,7 +606,7 @@ describe "Code gen: exception" do
       )).to_i.should eq(2)
   end
 
-  it "handle exception raised by fun literal" do
+  it "handle exception raised by proc literal" do
     run(%(
       require "prelude"
 

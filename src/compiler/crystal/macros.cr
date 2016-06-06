@@ -717,7 +717,7 @@ module Crystal::Macros
     end
   end
 
-  # class Fun < ASTNode
+  # class ProcNotation < ASTNode
   # end
 
   # A method definition.
@@ -851,10 +851,10 @@ module Crystal::Macros
   # class ExceptionHandler < ASTNode
   # end
 
-  # class FunLiteral < ASTNode
+  # class ProcLiteral < ASTNode
   # end
 
-  # class FunPointer < ASTNode
+  # class ProcPointer < ASTNode
   # end
 
   # class Union < ASTNode

@@ -574,7 +574,7 @@ class Crystal::Doc::Type
     io << ")"
   end
 
-  def node_to_html(node : Fun, io, links = true)
+  def node_to_html(node : ProcNotation, io, links = true)
     if inputs = node.inputs
       inputs.join(", ", io) do |input|
         node_to_html input, io, links: links
@@ -606,7 +606,7 @@ class Crystal::Doc::Type
     end
   end
 
-  def type_to_html(type : Crystal::FunInstanceType, io, text = nil, links = true)
+  def type_to_html(type : Crystal::ProcInstanceType, io, text = nil, links = true)
     type.arg_types.join(", ", io) do |arg_type|
       type_to_html arg_type, io, links: links
     end

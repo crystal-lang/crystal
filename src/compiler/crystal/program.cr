@@ -152,7 +152,7 @@ module Crystal
       enum_t.struct = true
       enum_t.allowed_in_generics = false
 
-      types["Proc"] = proc = @proc = FunType.new self, self, "Proc", value, ["T"]
+      types["Proc"] = proc = @proc = ProcType.new self, self, "Proc", value, ["T"]
       proc.variadic = true
       proc.allowed_in_generics = false
 
@@ -358,8 +358,8 @@ module Crystal
             return NilableType.new(self, other_type)
           else
             untyped_type = other_type.remove_typedef
-            if untyped_type.fun?
-              return NilableFunType.new(self, other_type)
+            if untyped_type.proc?
+              return NilableProcType.new(self, other_type)
             elsif untyped_type.is_a?(PointerInstanceType)
               return NilablePointerType.new(self, other_type)
             end
@@ -392,7 +392,7 @@ module Crystal
       MixedUnionType.new(self, types)
     end
 
-    def fun_of(types : Array)
+    def proc_of(types : Array)
       type_vars = types.map { |type| type.as(TypeVar) }
       unless type_vars.empty?
         type_vars[-1] = self.nil if type_vars[-1].is_a?(VoidType)
@@ -400,7 +400,7 @@ module Crystal
       proc.instantiate(type_vars)
     end
 
-    def fun_of(nodes : Array(ASTNode), return_type : Type)
+    def proc_of(nodes : Array(ASTNode), return_type : Type)
       type_vars = Array(TypeVar).new(nodes.size + 1)
       nodes.each do |node|
         type_vars << node.type

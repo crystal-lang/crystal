@@ -408,7 +408,7 @@ describe "Global inference" do
       end
 
       $x
-      )) { nilable fun_of(int32, int32) }
+      )) { nilable proc_of(int32, int32) }
   end
 
   it "infers from block argument without restriction" do
@@ -418,7 +418,7 @@ describe "Global inference" do
       end
 
       $x
-      )) { nilable fun_of(void) }
+      )) { nilable proc_of(void) }
   end
 
   it "infers type from !" do

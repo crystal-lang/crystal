@@ -70,9 +70,9 @@ describe "type inference: alias" do
     mod = result.program
 
     a = mod.types["Alias"].as(AliasType)
-    aliased_type = a.aliased_type.as(FunInstanceType)
+    aliased_type = a.aliased_type.as(ProcInstanceType)
 
-    aliased_type.should eq(mod.fun_of(a, a))
+    aliased_type.should eq(mod.proc_of(a, a))
   end
 
   it "allows recursive array with alias" do
