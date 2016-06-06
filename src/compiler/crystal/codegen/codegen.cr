@@ -197,7 +197,7 @@ module Crystal
           class_var = initializer.owner.class_vars[initializer.name]
           next if class_var.thread_local?
 
-          initialize_class_var(initializer)
+          initialize_class_var(initializer.owner, initializer.name, initializer.meta_vars, initializer.node)
         end
       end
     end
@@ -407,7 +407,7 @@ module Crystal
                 if node_exp.var.initializer
                   initialize_class_var(node_exp)
                 end
-                get_global class_var_global_name(node_exp.var), node_exp.type, node_exp.var
+                get_global class_var_global_name(node_exp.var.owner, node_exp.var.name), node_exp.type, node_exp.var
               when Global
                 get_global node_exp.name, node_exp.type, node_exp.var
               when Path
@@ -842,6 +842,8 @@ module Crystal
 
       return if value.no_returns?
 
+      last = @last
+
       set_current_debug_location node if @debug
       ptr = case target
             when InstanceVar
@@ -849,7 +851,7 @@ module Crystal
             when Global
               get_global target.name, target_type, target.var
             when ClassVar
-              get_global class_var_global_name(target.var), target_type, target.var
+              read_class_var_ptr(target)
             when Var
               # Can't assign void
               return if target.type.void?
@@ -868,6 +870,8 @@ module Crystal
             else
               node.raise "Unknown assign target in codegen: #{target}"
             end
+
+      @last = last
 
       if target.is_a?(Var) && target.special_var? && !target_type.reference_like?
         # For special vars that are not reference-like, the function argument will
@@ -1018,7 +1022,7 @@ module Crystal
     end
 
     def visit(node : ClassVar)
-      read_class_var(node)
+      @last = read_class_var(node)
     end
 
     def read_global(name, type, real_var)

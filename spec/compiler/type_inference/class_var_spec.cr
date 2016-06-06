@@ -342,4 +342,79 @@ describe "Type inference: class var" do
       ),
       "can't use Int as the type of a class variable yet, use a more specific type"
   end
+
+  it "can find class var in subclass" do
+    assert_type(%(
+      class Foo
+        @@var = 1
+      end
+
+      class Bar < Foo
+        def self.var
+          @@var
+        end
+      end
+
+      Bar.var
+      )) { int32 }
+  end
+
+  it "can find class var through included module" do
+    assert_type(%(
+      module Moo
+        @@var = 1
+      end
+
+      class Bar
+        include Moo
+
+        def self.var
+          @@var
+        end
+      end
+
+      Bar.var
+      )) { int32 }
+  end
+
+  it "errors if redefining class var type in subclass" do
+    assert_error %(
+      class Foo
+        @@x : Int32
+      end
+
+      class Bar < Foo
+        @@x : Float64
+      end
+      ),
+      "class variable '@@x' of Bar is already defined as Int32 in Foo"
+  end
+
+  it "errors if redefining class var type in subclass, with guess" do
+    assert_error %(
+      class Foo
+        @@x = 1
+      end
+
+      class Bar < Foo
+        @@x = 'a'
+      end
+      ),
+      "class variable '@@x' of Bar is already defined as Int32 in Foo"
+  end
+
+  it "errors if redefining class var type in included module" do
+    assert_error %(
+      module Moo
+        @@x : Int32
+      end
+
+      class Bar
+        include Moo
+
+        @@x : Float64
+      end
+      ),
+      "class variable '@@x' of Bar is already defined as Int32 in Moo"
+  end
 end
