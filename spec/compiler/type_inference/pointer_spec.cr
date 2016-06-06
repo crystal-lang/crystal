@@ -162,4 +162,11 @@ describe "Type inference: pointer" do
       LibFoo.foo(Foo.new)
       )) { float64 }
   end
+
+  it "errors if doing Pointer.allocate" do
+    assert_error %(
+      Pointer(Int32).allocate
+      ),
+      "can't create instance of a pointer type"
+  end
 end

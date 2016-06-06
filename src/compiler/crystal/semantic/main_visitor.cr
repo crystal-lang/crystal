@@ -2015,6 +2015,8 @@ module Crystal
         node.raise "can't create instance of generic class #{instance_type} without specifying its type vars"
       when UnionType
         node.raise "can't create instance of a union type"
+      when PointerInstanceType
+        node.raise "can't create instance of a pointer type"
       end
 
       if !instance_type.virtual? && instance_type.abstract?
