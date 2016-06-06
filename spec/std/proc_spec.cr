@@ -65,4 +65,26 @@ describe "Proc" do
     func = ->{ 1 }
     func.clone.should eq(func)
   end
+
+  {% if Crystal::VERSION == "0.18.0" %}
+    it "#partial" do
+      f = ->(x : Int32, y : Int32, z : Int32) { x + y + z }
+      f.call(1, 2, 3).should eq(6)
+
+      f2 = f.partial(10)
+      f2.call(2, 3).should eq(15)
+      f2.call(2, 10).should eq(22)
+
+      f3 = f2.partial(20)
+      f3.call(3).should eq(33)
+      f3.call(10).should eq(40)
+
+      f = ->(x : String, y : Char) { x.index(y) }
+      f.call("foo", 'o').should eq(1)
+
+      f2 = f.partial("bar")
+      f2.call('a').should eq(1)
+      f2.call('r').should eq(2)
+    end
+  {% end %}
 end

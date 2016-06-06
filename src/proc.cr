@@ -95,6 +95,39 @@ struct Proc
     ptr.value
   end
 
+  # Returns a new Proc that has its first arguments fixed to the values given by *args*.
+  #
+  # See [Wikipedia, Partial application](https://en.wikipedia.org/wiki/Partial_application)
+  #
+  # ```
+  # add = ->(x : Int32, y : Int32) { x + y }
+  # add.call(1, 2) # => 3
+  #
+  # add_one = add.partial(1)
+  # add_one.call(2)  # => 3
+  # add_one.call(10) # => 11
+  #
+  # add_one_and_two = add_one.partial(2)
+  # add_one_and_two.call # => 3
+  # ```
+  def partial(*args : *U)
+    {% begin %}
+      {% remaining = (T.size - 1 - U.size) %}
+      ->(
+          {% for i in 0...remaining %}
+            arg{{i}} : {{T[i + U.size]}},
+          {% end %}
+        ) {
+        call(
+          *args,
+          {% for i in 0...remaining %}
+            arg{{i}},
+          {% end %}
+        )
+      }
+    {% end %}
+  end
+
   def pointer
     internal_representation[0]
   end
