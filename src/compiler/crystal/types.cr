@@ -2656,7 +2656,7 @@ module Crystal
         end
         type_var
       end
-      program.type_merge_union_of(types).not_nil!
+      program.type_merge(types) || program.no_return
     end
 
     def new_generic_instance(program, generic_type, type_vars)

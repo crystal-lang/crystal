@@ -437,6 +437,26 @@ describe "Type inference: splat" do
       )) { int32 }
   end
 
+  it "accesses T when empty, via module" do
+    assert_type(%(
+      module Moo(T)
+        def t
+          T
+        end
+      end
+
+      struct Tuple
+        include Moo(Union(*T))
+
+        def self.new(*args)
+          args
+        end
+      end
+
+      Tuple.new.t
+      )) { no_return.metaclass }
+  end
+
   describe Splat do
     it "without splat" do
       a_def = Def.new("foo", args: [Arg.new("x"), Arg.new("y")])
