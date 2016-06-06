@@ -120,15 +120,31 @@ module Crystal
         end
       end
 
-      type_vars = node.type_vars.map do |type_var|
-        if type_var.is_a?(NumberLiteral)
-          type_var
+      type_vars = Array(TypeVar).new(node.type_vars.size + 1)
+      node.type_vars.each do |type_var|
+        case type_var
+        when NumberLiteral
+          type_vars << type_var
+        when Splat
+          @type = nil
+          type_var.exp.accept self
+          return false if !@raise && !@type
+
+          splat_type = type
+          if splat_type.is_a?(TupleInstanceType)
+            type_vars.concat splat_type.tuple_types
+          else
+            return false if !@raise
+
+            type_var.raise "can only splat tuple type, not #{splat_type}"
+          end
         else
           # Check the case of T resolving to a number
           if type_var.is_a?(Path) && type_var.names.size == 1
             the_type = @root.lookup_type(type_var)
             if the_type.is_a?(ASTNode)
-              next the_type.as(TypeVar)
+              type_vars << the_type
+              next
             end
           end
 
@@ -138,8 +154,8 @@ module Crystal
 
           Crystal.check_type_allowed_in_generics(type_var, type, "can't use #{type} as a generic type argument")
 
-          type.virtual_type
-        end.as(TypeVar)
+          type_vars << type.virtual_type
+        end
       end
 
       begin
@@ -313,6 +329,14 @@ module Crystal
   class IncludedGenericModule
     def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       if (names.size == 1) && (m = @mapping[names[0]]?)
+        # Case of a variadic tuple
+        if m.is_a?(TupleLiteral)
+          types = m.elements.map do |element|
+            TypeLookup.lookup(@including_class, element).as(Type)
+          end
+          return program.tuple_of(types)
+        end
+
         case @including_class
         when GenericClassType, GenericModuleType
           # skip

@@ -1352,8 +1352,9 @@ module Crystal
           index.upto(type_vars.size - 1) do |second_index|
             types << type_vars[second_index]
           end
-          tuple_type = program.tuple.instantiate(types).as(TupleInstanceType)
-          instance_type_vars[name] = tuple_type.var
+          var = Var.new(name, program.tuple_of(types))
+          var.bind_to(var)
+          instance_type_vars[name] = var
         else
           type_var = type_vars[index]
           case type_var
@@ -1734,7 +1735,15 @@ module Crystal
       type_vars.each_value do |type_var|
         io << ", " if i > 0
         if type_var.is_a?(Var)
-          type_var.type.to_s_with_options(io, skip_union_parens: true)
+          if self.variadic
+            tuple = type_var.type.as(TupleInstanceType)
+            tuple.tuple_types.each_with_index do |tuple_type, j|
+              io << ", " if j > 0
+              tuple_type.to_s(io)
+            end
+          else
+            type_var.type.to_s_with_options(io, skip_union_parens: true)
+          end
         else
           type_var.to_s(io)
         end

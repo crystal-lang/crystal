@@ -210,6 +210,7 @@ module Crystal
       node.name.accept self
       if type_vars = node.type_vars
         @str << "("
+        @str << "*" if node.variadic?
         type_vars.each_with_index do |type_var, i|
           @str << ", " if i > 0
           @str << type_var.to_s
@@ -234,6 +235,7 @@ module Crystal
       node.name.accept self
       if type_vars = node.type_vars
         @str << "("
+        @str << "*" if node.variadic?
         type_vars.each_with_index do |type_var, i|
           @str << ", " if i > 0
           @str << type_var

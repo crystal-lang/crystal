@@ -1491,7 +1491,7 @@ module Crystal
       name = parse_ident allow_type_vars: false
       skip_space
 
-      type_vars = parse_type_vars
+      type_vars, variadic = parse_type_vars
 
       superclass = nil
 
@@ -1511,7 +1511,7 @@ module Crystal
 
       @type_nest -= 1
 
-      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_column_number
+      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_column_number, variadic: variadic
       class_def.doc = doc
       class_def.end_location = end_location
       class_def
@@ -1519,12 +1519,24 @@ module Crystal
 
     def parse_type_vars
       type_vars = nil
+      variadic = false
       if @token.type == :"("
         type_vars = [] of String
 
         next_token_skip_space_or_newline
+
+        if @token.type == :"*"
+          variadic = true
+          next_token
+        end
+
         while @token.type != :")"
           type_var_name = check_const
+
+          if variadic && !type_vars.empty?
+            raise "only one type variable is valid for variadic generic types"
+          end
+
           unless Parser.free_var_name?(type_var_name)
             raise "type variables can only be single letters optionally followed by a digit", @token
           end
@@ -1532,6 +1544,7 @@ module Crystal
           if type_vars.includes? type_var_name
             raise "duplicated type var name: #{type_var_name}", @token
           end
+
           type_vars.push type_var_name
 
           next_token_skip_space_or_newline
@@ -1546,7 +1559,7 @@ module Crystal
 
         next_token_skip_space
       end
-      type_vars
+      {type_vars, variadic}
     end
 
     def parse_module_def
@@ -1561,7 +1574,7 @@ module Crystal
       name = parse_ident allow_type_vars: false
       skip_space
 
-      type_vars = parse_type_vars
+      type_vars, variadic = parse_type_vars
       skip_statement_end
 
       body = parse_expressions
@@ -1574,7 +1587,7 @@ module Crystal
 
       @type_nest -= 1
 
-      module_def = ModuleDef.new name, body, type_vars, name_column_number
+      module_def = ModuleDef.new name, body, type_vars, name_column_number, variadic: variadic
       module_def.doc = doc
       module_def.end_location = end_location
       module_def
@@ -3244,7 +3257,7 @@ module Crystal
 
         location = @token.location
 
-        type_spec = parse_single_type
+        type_spec = parse_single_type(allow_splat: true)
       end
 
       block_arg = Arg.new(arg_name, restriction: type_spec).at(name_location)
@@ -3999,7 +4012,7 @@ module Crystal
           types = [] of ASTNode
           named_args = parse_type_named_args(:")")
         else
-          types = parse_types allow_primitives: true
+          types = parse_types allow_primitives: true, allow_splat: true
           if types.empty?
             raise "must specify at least one type var"
           end
@@ -4058,8 +4071,8 @@ module Crystal
       named_args
     end
 
-    def parse_types(allow_primitives = false)
-      type = parse_type(allow_primitives)
+    def parse_types(allow_primitives = false, allow_splat = false)
+      type = parse_type(allow_primitives: allow_primitives, allow_splat: allow_splat)
       case type
       when Array
         type
@@ -4070,9 +4083,9 @@ module Crystal
       end
     end
 
-    def parse_single_type(allow_primitives = false, allow_commas = true)
+    def parse_single_type(allow_primitives = false, allow_commas = true, allow_splat = false)
       location = @token.location
-      type = parse_type(allow_primitives, allow_commas: allow_commas)
+      type = parse_type(allow_primitives: allow_primitives, allow_commas: allow_commas, allow_splat: allow_splat)
       case type
       when Array
         raise "unexpected ',' in type (use parentheses to disambiguate)", location
@@ -4083,13 +4096,13 @@ module Crystal
       end
     end
 
-    def parse_type(allow_primitives, allow_commas = true)
+    def parse_type(allow_primitives, allow_commas = true, allow_splat = false)
       location = @token.location
 
       if @token.type == :"->"
         input_types = nil
       else
-        input_types = parse_type_union(allow_primitives)
+        input_types = parse_type_union(allow_primitives, allow_splat)
         input_types = [input_types] unless input_types.is_a?(Array)
         while allow_commas && @token.type == :"," && ((allow_primitives && next_comes_type_or_int) || (!allow_primitives && next_comes_type))
           next_token_skip_space_or_newline
@@ -4103,7 +4116,7 @@ module Crystal
             end
             next
           else
-            type_union = parse_type_union(allow_primitives)
+            type_union = parse_type_union(allow_primitives, allow_splat)
             if type_union.is_a?(Array)
               input_types.concat type_union
             else
@@ -4119,7 +4132,7 @@ module Crystal
         when :"=", :",", :")", :"}", :";", :NEWLINE
           return_type = nil
         else
-          type_union = parse_type_union(allow_primitives)
+          type_union = parse_type_union(allow_primitives, allow_splat)
           if type_union.is_a?(Array)
             raise "can't return more than more type", location.line_number, location.column_number
           else
@@ -4137,13 +4150,13 @@ module Crystal
       end
     end
 
-    def parse_type_union(allow_primitives)
+    def parse_type_union(allow_primitives, allow_splat)
       types = [] of ASTNode
-      parse_type_with_suffix(types, allow_primitives)
+      parse_type_with_suffix(types, allow_primitives, allow_splat)
       if @token.type == :"|"
         while @token.type == :"|"
           next_token_skip_space_or_newline
-          parse_type_with_suffix(types, allow_primitives)
+          parse_type_with_suffix(types, allow_primitives, false)
         end
 
         if types.size == 1
@@ -4158,16 +4171,23 @@ module Crystal
       end
     end
 
-    def parse_type_with_suffix(types, allow_primitives)
+    def parse_type_with_suffix(types, allow_primitives, allow_splat)
+      splat = false
+      if allow_splat && @token.type == :"*"
+        splat = true
+        next_token
+      end
+
+      location = @token.location
+
       if @token.type == :IDENT && @token.value == "self?"
-        type = Self.new.at(@token.location)
-        type = Union.new([type, Path.global("Nil")] of ASTNode).at(@token.location)
+        type = Self.new.at(location)
+        type = Union.new([type, Path.global("Nil")] of ASTNode).at(location)
         next_token_skip_space
       elsif @token.keyword?(:self)
-        type = Self.new.at(@token.location)
+        type = Self.new.at(location)
         next_token_skip_space
       else
-        location = @token.location
         case @token.type
         when :"{"
           next_token_skip_space_or_newline
@@ -4222,6 +4242,7 @@ module Crystal
         end
       end
 
+      type = Splat.new(type).at(location) if splat
       types << parse_type_suffix(type)
     end
 

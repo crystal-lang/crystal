@@ -819,4 +819,17 @@ describe "Type inference: proc" do
       ->(x : Int32) { 'a' }.t
       )) { tuple_of([int32, char]).metaclass }
   end
+
+  it "can match *T in block argument" do
+    assert_type(%(
+      struct Tuple
+        def foo(&block : *T -> U)
+          yield self[0], self[1]
+          U
+        end
+      end
+
+      {1, 'a'}.foo { |x, y| true }
+      )) { bool.metaclass }
+  end
 end

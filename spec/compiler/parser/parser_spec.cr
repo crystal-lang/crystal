@@ -200,6 +200,8 @@ describe "Parser" do
   it_parses "def foo(@@var = 1); 1; end", Def.new("foo", [Arg.new("var", 1.int32)], [Assign.new("@@var".class_var, "var".var), 1.int32] of ASTNode)
   it_parses "def foo(&@block); end", Def.new("foo", body: Assign.new("@block".instance_var, "block".var), block_arg: Arg.new("block"), yields: 0)
 
+  it_parses "def foo(a, &block : *Int -> ); end", Def.new("foo", [Arg.new("a")], block_arg: Arg.new("block", restriction: ProcNotation.new(["Int".path.splat] of ASTNode)), yields: 1)
+
   it_parses "def foo(x, *args, y = 2); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32)], body: 1.int32, splat_index: 1)
   it_parses "def foo(x, *args, y = 2, w, z = 3); 1; end", Def.new("foo", args: ["x".arg, "args".arg, Arg.new("y", default_value: 2.int32), "w".arg, Arg.new("z", default_value: 3.int32)], body: 1.int32, splat_index: 1)
   it_parses "def foo(x, *, y); 1; end", Def.new("foo", args: ["x".arg, "".arg, "y".arg], body: 1.int32, splat_index: 1)
@@ -400,6 +402,11 @@ describe "Parser" do
   it_parses "abstract class Foo; end", ClassDef.new("Foo".path, abstract: true)
   it_parses "abstract struct Foo; end", ClassDef.new("Foo".path, abstract: true, struct: true)
 
+  it_parses "module Foo(*T); end", ModuleDef.new("Foo".path, type_vars: ["T"], variadic: true)
+  it_parses "class Foo(*T); end", ClassDef.new("Foo".path, type_vars: ["T"], variadic: true)
+
+  assert_syntax_error "class Foo(*T, U)", "only one type variable is valid for variadic generic types"
+
   it_parses "struct Foo; end", ClassDef.new("Foo".path, struct: true)
 
   it_parses "Foo(T)", Generic.new("Foo".path, ["T".path] of ASTNode)
@@ -426,6 +433,8 @@ describe "Parser" do
   it_parses "Foo({x: X})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
   it_parses "Foo({x: X, y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path), NamedArgument.new("y", "Y".path)])] of ASTNode)
   assert_syntax_error "Foo({x: X, x: Y})", "duplicated key: x"
+
+  it_parses "Foo(*T)", Generic.new("Foo".path, ["T".path.splat] of ASTNode)
 
   it_parses "module Foo; end", ModuleDef.new("Foo".path)
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".path, [Def.new("foo")] of ASTNode)

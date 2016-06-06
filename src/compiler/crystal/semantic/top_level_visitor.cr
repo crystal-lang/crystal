@@ -202,6 +202,7 @@ module Crystal
         created_new_type = true
         if type_vars = node.type_vars
           type = GenericClassType.new @mod, scope, name, superclass, type_vars, false
+          type.variadic = node.variadic?
         else
           type = NonGenericClassType.new @mod, scope, name, superclass, false
         end
@@ -253,6 +254,7 @@ module Crystal
       else
         if type_vars = node.type_vars
           type = GenericModuleType.new @mod, scope, name, type_vars
+          type.variadic = true if node.variadic?
         else
           type = NonGenericModuleType.new @mod, scope, name
         end
@@ -937,11 +939,16 @@ module Crystal
           node_name.raise "#{type} is not a generic module"
         end
 
-        if type.type_vars.size != node_name.type_vars.size
+        if !type.variadic && type.type_vars.size != node_name.type_vars.size
           node_name.wrong_number_of "type vars", type, node_name.type_vars.size, type.type_vars.size
         end
 
-        mapping = Hash.zip(type.type_vars, node_name.type_vars)
+        node_name_type_vars = node_name.type_vars
+        if type.variadic
+          node_name_type_vars = [TupleLiteral.new(node_name_type_vars)] of ASTNode
+        end
+
+        mapping = Hash.zip(type.type_vars, node_name_type_vars)
         module_to_include = IncludedGenericModule.new(@mod, type, current_type, mapping)
 
         type.add_inherited(current_type)

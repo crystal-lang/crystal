@@ -705,11 +705,26 @@ class Crystal::Call
     if block_arg_restriction.is_a?(ProcNotation)
       # If there are input types, solve them and creating the yield vars
       if inputs = block_arg_restriction.inputs
-        yield_vars = inputs.map_with_index do |input, i|
-          arg_type = ident_lookup.lookup_node_type(input)
-          MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
+        yield_vars = Array(Var).new(inputs.size + 1)
+        i = 0
+        inputs.each do |input|
+          if input.is_a?(Splat)
+            tuple_type = ident_lookup.lookup_node_type(input.exp)
+            unless tuple_type.is_a?(TupleInstanceType)
+              input.raise "expected type to be a tuple type, not #{tuple_type}"
+            end
+            tuple_type.tuple_types.each do |arg_type|
+              MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
+              yield_vars << Var.new("var#{i}", arg_type.virtual_type)
+              i += 1
+            end
+          else
+            arg_type = ident_lookup.lookup_node_type(input)
+            MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
 
-          Var.new("var#{i}", arg_type.virtual_type)
+            yield_vars << Var.new("var#{i}", arg_type.virtual_type)
+            i += 1
+          end
         end
       end
       output = block_arg_restriction.output

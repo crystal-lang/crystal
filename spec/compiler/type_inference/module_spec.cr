@@ -899,4 +899,36 @@ describe "Type inference: module" do
       Baz.new.x
       )) { nilable int32 }
   end
+
+  it "declares and includes generic module" do
+    assert_type(%(
+      module Moo(*T)
+        def t
+          T
+        end
+      end
+
+      class Foo
+        include Moo(Int32, Char)
+      end
+
+      Foo.new.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "includes module with Union(T*)" do
+    assert_type(%(
+      module Foo(U)
+        def u
+          U
+        end
+      end
+
+      struct Tuple
+        include Foo(Union(*T))
+      end
+
+      {1, 'a'}.u
+      )) { union_of(int32, char).metaclass }
+  end
 end

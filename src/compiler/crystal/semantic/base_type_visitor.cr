@@ -188,8 +188,24 @@ module Crystal
           node.raise "can only use named arguments with NamedTuple"
         end
 
-        if instance_type.type_vars.size != node.type_vars.size
-          node.wrong_number_of "type vars", instance_type, node.type_vars.size, instance_type.type_vars.size
+        # Need to count type vars because there might be splats
+        type_vars_count = 0
+        knows_count = true
+        node.type_vars.each do |type_var|
+          if type_var.is_a?(Splat)
+            if type_var.type?
+              type_vars_count += type_var.type.as(TupleInstanceType).size
+            else
+              knows_count = false
+              break
+            end
+          else
+            type_vars_count += 1
+          end
+        end
+
+        if knows_count && instance_type.type_vars.size != type_vars_count
+          node.wrong_number_of "type vars", instance_type, type_vars_count, instance_type.type_vars.size
         end
       end
 

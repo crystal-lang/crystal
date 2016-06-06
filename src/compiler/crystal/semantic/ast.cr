@@ -663,7 +663,8 @@ module Crystal
 
         generic_type = instance_type.instantiate_named_args(entries)
       else
-        type_vars_types = type_vars.map do |node|
+        type_vars_types = Array(TypeVar).new(type_vars.size + 1)
+        type_vars.each do |node|
           if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
             node = syntax_replacement
           end
@@ -671,6 +672,12 @@ module Crystal
           case node
           when NumberLiteral
             type_var = node
+          when Splat
+            type = node.type?
+            return unless type.is_a?(TupleInstanceType)
+
+            type_vars_types.concat(type.tuple_types)
+            next
           else
             node_type = node.type?
             return unless node_type
@@ -698,7 +705,7 @@ module Crystal
             end
           end
 
-          type_var.as(TypeVar)
+          type_vars_types << type_var
         end
 
         begin
