@@ -28,9 +28,7 @@ class JSONPersonEmittingNull
 end
 
 class JSONWithBool
-  JSON.mapping({
-    value: {type: Bool},
-  })
+  JSON.mapping value: Bool
 end
 
 class JSONWithTime

@@ -7,17 +7,17 @@ module JSON
   # require "json"
   #
   # class Location
-  #   JSON.mapping({
+  #   JSON.mapping(
   #     lat: Float64,
   #     lng: Float64,
-  #   })
+  #   )
   # end
   #
   # class House
-  #   JSON.mapping({
-  #     address:  String,
+  #   JSON.mapping(
+  #     address: String,
   #     location: {type: Location, nilable: true},
-  #   })
+  #   )
   # end
   #
   # house = House.from_json(%({"address": "Crystal Road 1234", "location": {"lat": 12.3, "lng": 34.5}}))
@@ -28,7 +28,8 @@ module JSON
   #
   # ### Usage
   #
-  # `JSON.mapping` must receive a hash literal whose keys will define Crystal properties.
+  # `JSON.mapping` must receive a series of named arguments, or a named tuple literal, or a hash literal,
+  # whose keys will define Crystal properties.
   #
   # The value of each key can be a single type (not a union type). Primitive types (numbers, string, boolean and nil)
   # are supported, as well as custom objects which use `JSON.mapping` or define a `new` method
@@ -37,7 +38,7 @@ module JSON
   # The value can also be another hash literal with the following options:
   # * **type**: (required) the single type described above (you can use `JSON::Any` too)
   # * **key**: the property name in the JSON document (as opposed to the property name in the Crystal code)
-  # * **nilable**: if true, the property can be `Nil`
+  # * **nilable**: if true, the property can be `Nil`. Passing `T | Nil` as a type has the same effect.
   # * **default**: value to use if the property is missing in the JSON document, or if it's `null` and `nilable` was not set to `true`. If the default value creates a new instance of an object (for example `[1, 2, 3]` or `SomeObject.new`), a different instance will be used each time a JSON document is parsed.
   # * **emit_null**: if true, emits a `null` value for nilable properties (by default nulls are not emitted)
   # * **converter**: specify an alternate type for parsing and generation. The converter must define `from_json(JSON::PullParser)` and `to_json(value, IO)` as class methods. Examples of converters are `Time::Format` and `Time::EpochConverter` for `Time`.
@@ -188,5 +189,11 @@ module JSON
         {% end %}
       end
     end
+  end
+
+  # This is a convenience method to allow invoking `JSON.mapping`
+  # with named arguments instead of with a hash/named-tuple literal.
+  macro mapping(**properties)
+    ::JSON.mapping({{properties}})
   end
 end
