@@ -42,6 +42,7 @@ module XML
   # Parses an XML document from *string* with *options* into an `XML::Node`.
   # See `ParserOptions.default` for default options.
   def self.parse(string : String, options : ParserOptions = ParserOptions.default) : Node
+    raise XML::Error.new("Document is empty", 0) if string.empty?
     from_ptr LibXML.xmlReadMemory(string, string.bytesize, nil, nil, options)
   end
 
@@ -63,6 +64,7 @@ module XML
   # Parses an HTML document from *string* with *options* into an `XML::Node`.
   # See `HTMLParserOptions.default` for default options.
   def self.parse_html(string : String, options : HTMLParserOptions = HTMLParserOptions.default) : Node
+    raise XML::Error.new("Document is empty", 0) if string.empty?
     from_ptr LibXML.htmlReadMemory(string, string.bytesize, nil, nil, options)
   end
 

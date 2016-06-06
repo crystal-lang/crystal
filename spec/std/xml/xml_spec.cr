@@ -96,6 +96,12 @@ describe XML do
     person["id"].should eq("1")
   end
 
+  it "raises exception on empty string" do
+    expect_raises XML::Error, "Document is empty" do
+      XML.parse("")
+    end
+  end
+
   it "does to_s" do
     string = <<-XML
       <?xml version='1.0' encoding='UTF-8'?>\
