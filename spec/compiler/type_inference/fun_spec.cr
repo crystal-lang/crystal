@@ -807,4 +807,16 @@ describe "Type inference: fun" do
       Proc(Int32, Void).new { 1 }
       )) { |mod| fun_of(int32, mod.nil) }
   end
+
+  it "accesses T" do
+    assert_type(%(
+      struct Proc
+        def t
+          T
+        end
+      end
+
+      ->(x : Int32) { 'a' }.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
 end

@@ -1663,6 +1663,8 @@ module Crystal
     delegate type_desc, @generic_class
     delegate container, @generic_class
     delegate lookup_new_in_ancestors?, @generic_class
+    delegate variadic, @generic_class
+    delegate double_variadic, @generic_class
 
     def declare_instance_var(name, type_vars : Array(TypeVar))
       type = solve_type_vars(type_vars)
@@ -3127,7 +3129,7 @@ module Crystal
     getter fun_types : Array(Type)
 
     def initialize(@program, @fun_types)
-      var = Var.new("T", self)
+      var = Var.new("T", @program.tuple_of(fun_types))
       var.bind_to var
       super(program, program.proc, {"T" => var} of String => ASTNode)
 

@@ -508,23 +508,29 @@ module Crystal
         when Const
           matched_type.value
         when Type
-          # The T of a tuple, named tuple or union produce tuple literals
+          # If it's the T of a variadic generic type, produce tuple literals
           # or named tuple literals. The compiler has them as a type
           # (a tuple type, or a named tuple type) but the user should see
           # them as literals, and having them as a type doesn't add
           # any useful information.
-          if node.single?("T")
-            instance_type = @type_lookup.instance_type
-            case instance_type
-            when TupleInstanceType
-              return TupleLiteral.map(instance_type.tuple_types) { |t| TypeNode.new(t) }
-            when NamedTupleInstanceType
-              entries = instance_type.entries.map do |entry|
-                NamedTupleLiteral::Entry.new(entry.name, TypeNode.new(entry.type))
+          type_lookup = @type_lookup.instance_type
+          if node.names.size == 1
+            union_type = type_lookup.is_a?(UnionType) && node.names.first == "T"
+            generic_variadic = type_lookup.is_a?(GenericClassInstanceType) &&
+              (type_lookup.variadic || type_lookup.double_variadic) &&
+              type_lookup.type_vars.first_key == node.names.first
+            if generic_variadic || union_type
+              case matched_type
+              when TupleInstanceType
+                return TupleLiteral.map(matched_type.tuple_types) { |t| TypeNode.new(t) }
+              when NamedTupleInstanceType
+                entries = matched_type.entries.map do |entry|
+                  NamedTupleLiteral::Entry.new(entry.name, TypeNode.new(entry.type))
+                end
+                return NamedTupleLiteral.new(entries)
+              when UnionType
+                return TupleLiteral.map(matched_type.union_types) { |t| TypeNode.new(t) }
               end
-              return NamedTupleLiteral.new(entries)
-            when UnionType
-              return TupleLiteral.map(instance_type.union_types) { |t| TypeNode.new(t) }
             end
           end
 

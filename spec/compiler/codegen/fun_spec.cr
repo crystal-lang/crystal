@@ -687,4 +687,16 @@ describe "Code gen: fun" do
       end
       )).to_i.should eq(42)
   end
+
+  it "accesses T in macros as a TupleLiteral" do
+    run(%(
+      struct Proc
+        def t
+          {{ T.class_name }}
+        end
+      end
+
+      ->(x : Int32) { 'a' }.t
+      )).to_string.should eq("TupleLiteral")
+  end
 end
