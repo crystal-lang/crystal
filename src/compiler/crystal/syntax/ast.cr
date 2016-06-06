@@ -954,7 +954,7 @@ module Crystal
         if args[splat_index].name.empty?
           min_size = max_size = splat_index
         else
-          min_size -= 1 unless default_value_index
+          min_size -= 1 unless default_value_index && default_value_index < splat_index
           max_size = Int32::MAX
         end
       end

@@ -417,6 +417,16 @@ describe "Type inference: splat" do
       "no overload matches"
   end
 
+  it "method with splat and optional named argument matches zero args call (#2746)" do
+    assert_type(%(
+      def foo(*args, k1 = nil)
+        args
+      end
+
+      foo
+      )) { tuple_of([] of Type) }
+  end
+
   describe Splat do
     it "without splat" do
       a_def = Def.new("foo", args: [Arg.new("x"), Arg.new("y")])
