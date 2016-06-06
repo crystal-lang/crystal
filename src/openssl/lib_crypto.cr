@@ -7,6 +7,12 @@ lib LibCrypto
   alias ULong = LibC::ULong
   alias SizeT = LibC::SizeT
 
+  type X509 = Void*
+  type X509_EXTENSION = Void*
+  type X509_NAME = Void*
+  type X509_NAME_ENTRY = Void*
+  type X509_STORE_CTX = Void*
+
   struct Bio
     method : Void*
     callback : (Void*, Int, Char*, Int, Long, Long) -> Long
@@ -77,11 +83,19 @@ lib LibCrypto
   alias EVP_CIPHER_CTX = Void*
 
   alias ASN1_OBJECT = Void*
+  alias ASN1_STRING = Char*
 
-  fun obj_txt2obj = OBJ_txt2obj(s : UInt8*, no_name : Int32) : ASN1_OBJECT
-  fun obj_nid2sn = OBJ_nid2sn(n : Int32) : UInt8*
-  fun obj_obj2nid = OBJ_obj2nid(obj : ASN1_OBJECT) : Int32
+  fun obj_txt2obj = OBJ_txt2obj(s : Char*, no_name : Int) : ASN1_OBJECT
+  fun obj_nid2sn = OBJ_nid2sn(n : Int) : Char*
+  fun obj_obj2nid = OBJ_obj2nid(obj : ASN1_OBJECT) : Int
+  fun obj_ln2nid = OBJ_ln2nid(ln : Char*) : Int
+  fun obj_sn2nid = OBJ_sn2nid(sn : Char*) : Int
+
   fun asn1_object_free = ASN1_OBJECT_free(obj : ASN1_OBJECT)
+  fun asn1_string_data = ASN1_STRING_data(x : ASN1_STRING) : Char*
+  fun asn1_string_length = ASN1_STRING_length(x : ASN1_STRING) : Int
+  fun asn1_string_print = ASN1_STRING_print(out : Bio*, v : ASN1_STRING) : Int
+  fun i2t_asn1_object = i2t_ASN1_OBJECT(buf : Char*, buf_len : Int, a : ASN1_OBJECT) : Int
 
   struct EVP_MD_CTX_Struct
     digest : EVP_MD
@@ -170,6 +184,57 @@ lib LibCrypto
   alias EC_KEY = Void*
   fun ec_key_new_by_curve_name = EC_KEY_new_by_curve_name(nid : Int) : EC_KEY
   fun ec_key_free = EC_KEY_free(key : EC_KEY)
+
+  struct GENERAL_NAME
+    type : LibC::Int
+    value : ASN1_STRING
+  end
+
+  # GEN_URI  = 6
+  GEN_DNS   = 2
+  GEN_IPADD = 7
+
+  NID_undef            =  0
+  NID_commonName       = 13
+  NID_subject_alt_name = 85
+
+  fun sk_free(st : Void*)
+  fun sk_num = sk_num(x0 : Void*) : Int
+  fun sk_pop_free(st : Void*, callback : (Void*) ->)
+  fun sk_value = sk_value(x0 : Void*, x1 : Int) : Void*
+
+  fun x509_dup = X509_dup(a : X509) : X509
+  fun x509_free = X509_free(a : X509)
+  fun x509_get_subject_name = X509_get_subject_name(a : X509) : X509_NAME
+  fun x509_new = X509_new : X509
+  fun x509_set_subject_name = X509_set_subject_name(x : X509, name : X509_NAME) : Int
+  fun x509_store_ctx_get_current_cert = X509_STORE_CTX_get_current_cert(x : X509_STORE_CTX) : X509
+  fun x509_verify_cert = X509_verify_cert(x : X509_STORE_CTX) : Int
+  fun x509_add_ext = X509_add_ext(x : X509, ex : X509_EXTENSION, loc : Int) : X509_EXTENSION
+  fun x509_get_ext = X509_get_ext(x : X509, idx : Int) : X509_EXTENSION
+  fun x509_get_ext_count = X509_get_ext_count(x : X509) : Int
+  fun x509_get_ext_d2i = X509_get_ext_d2i(x : X509, nid : Int, crit : Int*, idx : Int*) : Void*
+
+  MBSTRING_UTF8 = 0x1000
+
+  fun x509_name_add_entry_by_txt = X509_NAME_add_entry_by_txt(name : X509_NAME, field : Char*, type : Int, bytes : Char*, len : Int, loc : Int, set : Int) : X509_NAME
+  fun x509_name_dup = X509_NAME_dup(a : X509_NAME) : X509_NAME
+  fun x509_name_entry_count = X509_NAME_entry_count(name : X509_NAME) : Int
+  fun x509_name_free = X509_NAME_free(a : X509_NAME)
+  fun x509_name_get_entry = X509_NAME_get_entry(name : X509_NAME, loc : Int) : X509_NAME_ENTRY
+  fun x509_name_get_index_by_nid = X509_NAME_get_index_by_NID(name : X509_NAME, nid : Int, lastpos : Int) : Int
+  fun x509_name_new = X509_NAME_new : X509_NAME
+
+  fun x509_name_entry_get_data = X509_NAME_ENTRY_get_data(ne : X509_NAME_ENTRY) : ASN1_STRING
+  fun x509_name_entry_get_object = X509_NAME_ENTRY_get_object(ne : X509_NAME_ENTRY) : ASN1_OBJECT
+
+  fun x509_extension_dup = X509_EXTENSION_dup(a : X509_EXTENSION) : X509_EXTENSION
+  fun x509_extension_free = X509_EXTENSION_free(a : X509_EXTENSION)
+  fun x509_extension_get_object = X509_EXTENSION_get_object(a : X509_EXTENSION) : ASN1_OBJECT
+  fun x509_extension_get_data = X509_EXTENSION_get_data(a : X509_EXTENSION) : ASN1_STRING
+  fun x509_extension_create_by_nid = X509_EXTENSION_create_by_NID(ex : X509_EXTENSION, nid : Int, crit : Int, data : ASN1_STRING) : X509_EXTENSION
+  fun x509v3_ext_nconf_nid = X509V3_EXT_nconf_nid(conf : Void*, ctx : Void*, ext_nid : Int, value : Char*) : X509_EXTENSION
+  fun x509v3_ext_print = X509V3_EXT_print(out : Bio*, ext : X509_EXTENSION, flag : Int, indent : Int) : Int
 end
 
 {% if `(pkg-config --atleast-version=1.0.2 libcrypto && echo -n true) || echo -n false` == "true" %}
