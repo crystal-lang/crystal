@@ -427,6 +427,16 @@ describe "Type inference: splat" do
       )) { tuple_of([] of Type) }
   end
 
+  it "method with default arguments and splat matches call with one arg (#2766)" do
+    assert_type(%(
+      def foo(a = nil, b = nil, *, c = nil)
+        a
+      end
+
+      foo(10)
+      )) { int32 }
+  end
+
   describe Splat do
     it "without splat" do
       a_def = Def.new("foo", args: [Arg.new("x"), Arg.new("y")])
