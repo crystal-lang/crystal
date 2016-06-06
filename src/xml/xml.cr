@@ -28,11 +28,11 @@
 # ```
 module XML
   SUBSTITUTIONS = {
-    '>' => "&gt;",
-    '<' => "&lt;",
-    '"' => "&quot;",
-    ''' => "&apos;",
-    '&' => "&amp;",
+    '>'  => "&gt;",
+    '<'  => "&lt;",
+    '"'  => "&quot;",
+    '\'' => "&apos;",
+    '&'  => "&amp;",
   }
 
   def self.escape(string : String)

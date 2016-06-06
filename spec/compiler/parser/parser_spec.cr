@@ -1322,6 +1322,8 @@ describe "Parser" do
   assert_syntax_error "{foo: 1\nbar: 2}"
   assert_syntax_error "{foo: 1, bar: 2\nbaz: 3}"
 
+  assert_syntax_error "'''", "invalid empty char literal"
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"
