@@ -657,8 +657,8 @@ module IO
   end
 
   # Same as `gets`, but raises `EOFError` if called at the end of this IO.
-  def read_line(*args) : String?
-    gets(*args) || raise EOFError.new
+  def read_line(*args, **options) : String?
+    gets(*args, **options) || raise EOFError.new
   end
 
   # Reads and discards *bytes_count* bytes.
@@ -754,8 +754,8 @@ module IO
   # olleh
   # dlrow
   # ```
-  def each_line(*args)
-    while line = gets(*args)
+  def each_line(*args, **options)
+    while line = gets(*args, **options)
       yield line
     end
   end
@@ -770,8 +770,8 @@ module IO
   # iter.next # => "hello\n"
   # iter.next # => "world"
   # ```
-  def each_line(*args)
-    LineIterator.new(self, args)
+  def each_line(*args, **options)
+    LineIterator.new(self, args, **options)
   end
 
   # Inovkes the given block with each `Char` in this IO.
