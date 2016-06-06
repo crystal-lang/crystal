@@ -1324,6 +1324,9 @@ describe "Parser" do
 
   assert_syntax_error "'''", "invalid empty char literal"
 
+  assert_syntax_error "def foo(*args = 1); end", "splat argument can't have default value"
+  assert_syntax_error "def foo(**args = 1); end", "double splat argument can't have default value"
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"

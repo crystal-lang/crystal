@@ -3190,6 +3190,9 @@ module Crystal
       end
 
       if @token.type == :"="
+        raise "splat argument can't have default value", @token if splat
+        raise "double splat argument can't have default value", @token if double_splat
+
         next_token_skip_space_or_newline
 
         case @token.type
