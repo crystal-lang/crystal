@@ -1324,9 +1324,9 @@ module Crystal
     property name_column_number : Int32
     property attributes : Array(Attribute)?
     property doc : String?
-    property? variadic : Bool
+    property splat_index : Int32?
 
-    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = 0, @variadic = false)
+    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = 0, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -1336,10 +1336,10 @@ module Crystal
     end
 
     def clone_without_location
-      ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @name_column_number, @variadic)
+      ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @name_column_number, @splat_index)
     end
 
-    def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct, @variadic
+    def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct, @splat_index
   end
 
   # Module definition:
@@ -1352,11 +1352,11 @@ module Crystal
     property name : Path
     property body : ASTNode
     property type_vars : Array(String)?
-    property? variadic : Bool
+    property splat_index : Int32?
     property name_column_number : Int32
     property doc : String?
 
-    def initialize(@name, body = nil, @type_vars = nil, @name_column_number = 0, @variadic = false)
+    def initialize(@name, body = nil, @type_vars = nil, @name_column_number = 0, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -1365,10 +1365,10 @@ module Crystal
     end
 
     def clone_without_location
-      ModuleDef.new(@name, @body.clone, @type_vars.clone, @name_column_number, @variadic)
+      ModuleDef.new(@name, @body.clone, @type_vars.clone, @name_column_number, @splat_index)
     end
 
-    def_equals_and_hash @name, @body, @type_vars, @variadic
+    def_equals_and_hash @name, @body, @type_vars, @splat_index
   end
 
   # While expression.

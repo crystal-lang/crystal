@@ -520,9 +520,12 @@ class Crystal::Doc::Type
     type = @type
     if type_vars = type_vars()
       io << '('
-      io << '*' if type.is_a?(GenericType) && type.variadic
       io << "**" if type.is_a?(GenericType) && type.double_variadic
-      type_vars.join(", ", io)
+      type_vars.each_with_index do |type_var, i|
+        io << ", " if i > 0
+        io << '*' if type.is_a?(GenericType) && type.splat_index == i
+        io << type_var
+      end
       io << ')'
     end
   end

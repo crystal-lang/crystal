@@ -174,7 +174,7 @@ module Crystal
         unless node.named_args
           node.raise "can only instantiate NamedTuple with named arguments"
         end
-      elsif instance_type.variadic
+      elsif instance_type.splat_index
         if node.named_args
           node.raise "can only use named arguments with NamedTuple"
         end

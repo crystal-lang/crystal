@@ -1359,8 +1359,7 @@ module Crystal
   module GenericType
     getter type_vars : Array(String)
 
-    property variadic : Bool
-    @variadic = false
+    property splat_index : Int32?
 
     property double_variadic : Bool
     @double_variadic = false
@@ -1375,18 +1374,19 @@ module Crystal
       end
 
       instance_type_vars = {} of String => ASTNode
-      last_index = self.type_vars.size - 1
+      type_var_index = 0
       self.type_vars.each_with_index do |name, index|
-        if variadic && index == last_index
+        if splat_index == index
           types = [] of TypeVar
-          index.upto(type_vars.size - 1) do |second_index|
-            types << type_vars[second_index]
+          (type_vars.size - (self.type_vars.size - 1)).times do
+            types << type_vars[type_var_index]
+            type_var_index += 1
           end
           var = Var.new(name, program.tuple_of(types))
           var.bind_to(var)
           instance_type_vars[name] = var
         else
-          type_var = type_vars[index]
+          type_var = type_vars[type_var_index]
           case type_var
           when Type
             var = Var.new(name, type_var)
@@ -1395,6 +1395,7 @@ module Crystal
           when ASTNode
             instance_type_vars[name] = type_var
           end
+          type_var_index += 1
         end
       end
 
@@ -1548,7 +1549,6 @@ module Crystal
 
     def initialize(program, container, name, superclass, @type_vars : Array(String), add_subclass = true)
       super(program, container, name, superclass, add_subclass)
-      @variadic = false
     end
 
     def class?
@@ -1694,7 +1694,7 @@ module Crystal
     delegate type_desc, @generic_class
     delegate container, @generic_class
     delegate lookup_new_in_ancestors?, @generic_class
-    delegate variadic, @generic_class
+    delegate splat_index, @generic_class
     delegate double_variadic, @generic_class
 
     def declare_instance_var(name, type_vars : Array(TypeVar))
@@ -1765,7 +1765,7 @@ module Crystal
       type_vars.each_value do |type_var|
         io << ", " if i > 0
         if type_var.is_a?(Var)
-          if self.variadic
+          if i == splat_index
             tuple = type_var.type.as(TupleInstanceType)
             tuple.tuple_types.each_with_index do |tuple_type, j|
               io << ", " if j > 0
@@ -1860,7 +1860,7 @@ module Crystal
   class TupleType < GenericClassType
     def initialize(program, container, name, superclass, type_vars, add_subclass = true)
       super
-      @variadic = true
+      @splat_index = 0
       @struct = true
     end
 
@@ -2675,7 +2675,7 @@ module Crystal
   class GenericUnionType < GenericClassType
     def initialize(program, container, name, superclass, type_vars, add_subclass = true)
       super
-      @variadic = true
+      @splat_index = 0
       @struct = true
     end
 
@@ -3167,7 +3167,7 @@ module Crystal
   class ProcType < GenericClassType
     def initialize(program, container, name, superclass, type_vars, add_subclass = true)
       super
-      @variadic = true
+      @splat_index = 0
       @struct = true
     end
 
@@ -3187,6 +3187,10 @@ module Crystal
       initialize_instance instance
       instance.after_initialize
       instance
+    end
+
+    def allowed_in_generics?
+      false
     end
 
     def new_generic_instance(program, generic_type, type_vars)

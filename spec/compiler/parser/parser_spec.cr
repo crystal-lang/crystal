@@ -402,10 +402,10 @@ describe "Parser" do
   it_parses "abstract class Foo; end", ClassDef.new("Foo".path, abstract: true)
   it_parses "abstract struct Foo; end", ClassDef.new("Foo".path, abstract: true, struct: true)
 
-  it_parses "module Foo(*T); end", ModuleDef.new("Foo".path, type_vars: ["T"], variadic: true)
-  it_parses "class Foo(*T); end", ClassDef.new("Foo".path, type_vars: ["T"], variadic: true)
-
-  assert_syntax_error "class Foo(*T, U)", "only one type variable is valid for variadic generic types"
+  it_parses "module Foo(*T); end", ModuleDef.new("Foo".path, type_vars: ["T"], splat_index: 0)
+  it_parses "class Foo(*T); end", ClassDef.new("Foo".path, type_vars: ["T"], splat_index: 0)
+  it_parses "class Foo(T, *U); end", ClassDef.new("Foo".path, type_vars: ["T", "U"], splat_index: 1)
+  assert_syntax_error "class Foo(*T, *U); end", "splat type argument already specified"
 
   it_parses "struct Foo; end", ClassDef.new("Foo".path, struct: true)
 

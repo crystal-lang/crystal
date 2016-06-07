@@ -772,4 +772,28 @@ describe "Type inference: generic class" do
       Foo(*{Int32, Char}).vars
       )) { tuple_of([int32.metaclass, char.metaclass]) }
   end
+
+  it "instantiates generic variadic class, accesses T from instance method, more args" do
+    assert_type(%(
+      class Foo(*T, R)
+        def t
+          {T, R}
+        end
+      end
+
+      Foo(Int32, Float64, Char).new.t
+      )) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
+  end
+
+  it "instantiates generic variadic class, accesses T from instance method, more args (2)" do
+    assert_type(%(
+      class Foo(A, *T, R)
+        def t
+          {A, T, R}
+        end
+      end
+
+      Foo(Int32, Float64, Char).new.t
+      )) { tuple_of([int32.metaclass, tuple_of([float64]).metaclass, char.metaclass]) }
+  end
 end

@@ -1491,7 +1491,7 @@ module Crystal
       name = parse_ident allow_type_vars: false
       skip_space
 
-      type_vars, variadic = parse_type_vars
+      type_vars, splat_index = parse_type_vars
 
       superclass = nil
 
@@ -1511,7 +1511,7 @@ module Crystal
 
       @type_nest -= 1
 
-      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_column_number, variadic: variadic
+      class_def = ClassDef.new name, body, superclass, type_vars, is_abstract, is_struct, name_column_number, splat_index: splat_index
       class_def.doc = doc
       class_def.end_location = end_location
       class_def
@@ -1519,23 +1519,20 @@ module Crystal
 
     def parse_type_vars
       type_vars = nil
-      variadic = false
+      splat_index = nil
       if @token.type == :"("
         type_vars = [] of String
 
         next_token_skip_space_or_newline
 
-        if @token.type == :"*"
-          variadic = true
-          next_token
-        end
-
+        index = 0
         while @token.type != :")"
-          type_var_name = check_const
-
-          if variadic && !type_vars.empty?
-            raise "only one type variable is valid for variadic generic types"
+          if @token.type == :"*"
+            raise "splat type argument already specified", @token if splat_index
+            splat_index = index
+            next_token
           end
+          type_var_name = check_const
 
           unless Parser.free_var_name?(type_var_name)
             raise "type variables can only be single letters optionally followed by a digit", @token
@@ -1551,6 +1548,8 @@ module Crystal
           if @token.type == :","
             next_token_skip_space_or_newline
           end
+
+          index += 1
         end
 
         if type_vars.empty?
@@ -1559,7 +1558,7 @@ module Crystal
 
         next_token_skip_space
       end
-      {type_vars, variadic}
+      {type_vars, splat_index}
     end
 
     def parse_module_def
@@ -1574,7 +1573,7 @@ module Crystal
       name = parse_ident allow_type_vars: false
       skip_space
 
-      type_vars, variadic = parse_type_vars
+      type_vars, splat_index = parse_type_vars
       skip_statement_end
 
       body = parse_expressions
@@ -1587,7 +1586,7 @@ module Crystal
 
       @type_nest -= 1
 
-      module_def = ModuleDef.new name, body, type_vars, name_column_number, variadic: variadic
+      module_def = ModuleDef.new name, body, type_vars, name_column_number, splat_index: splat_index
       module_def.doc = doc
       module_def.end_location = end_location
       module_def

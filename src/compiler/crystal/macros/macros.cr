@@ -515,11 +515,21 @@ module Crystal
           # any useful information.
           type_lookup = @type_lookup.instance_type
           if node.names.size == 1
-            union_type = type_lookup.is_a?(UnionType) && node.names.first == "T"
-            generic_variadic = type_lookup.is_a?(GenericClassInstanceType) &&
-              (type_lookup.variadic || type_lookup.double_variadic) &&
-              type_lookup.type_vars.first_key == node.names.first
-            if generic_variadic || union_type
+            case type_lookup
+            when UnionType
+              produce_tuple = node.names.first == "T"
+            when GenericClassInstanceType
+              produce_tuple = ((splat_index = type_lookup.splat_index) &&
+                type_lookup.type_vars.keys.index(node.names.first) == splat_index) ||
+                (type_lookup.double_variadic && type_lookup.type_vars.first_key == node.names.first)
+            when IncludedGenericModule
+              a_module = type_lookup.module
+              produce_tuple = (splat_index = a_module.splat_index) &&
+                type_lookup.mapping.keys.index(node.names.first) == splat_index
+            else
+              produce_tuple = false
+            end
+            if produce_tuple
               case matched_type
               when TupleInstanceType
                 return TupleLiteral.map(matched_type.tuple_types) { |t| TypeNode.new(t) }

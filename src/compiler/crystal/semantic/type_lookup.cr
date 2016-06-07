@@ -101,7 +101,7 @@ module Crystal
         end
 
         return false
-      elsif instance_type.variadic
+      elsif instance_type.splat_index
         if node.named_args
           node.raise "can only use named arguments with NamedTuple"
         end

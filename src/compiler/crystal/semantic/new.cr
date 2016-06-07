@@ -131,9 +131,9 @@ module Crystal
 
     def fill_body_from_initialize(instance_type)
       if instance_type.is_a?(GenericClassType)
-        generic_type_args = instance_type.type_vars.map do |type_var|
+        generic_type_args = instance_type.type_vars.map_with_index do |type_var, i|
           arg = Path.new(type_var).as(ASTNode)
-          arg = Splat.new(arg) if instance_type.variadic
+          arg = Splat.new(arg) if instance_type.splat_index == i
           arg
         end
         new_generic = Generic.new(Path.new(instance_type.name), generic_type_args)
