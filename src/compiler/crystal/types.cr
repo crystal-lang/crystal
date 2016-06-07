@@ -601,8 +601,13 @@ module Crystal
 
     def lookup_macro(name, args : Array, named_args)
       if macros = self.macros.try &.[name]?
-        match = macros.find &.matches?(args, named_args)
-        return match if match
+        # Lookup macros in reverse order so we find ones that
+        # override others first.
+        # TODO: macros don't really overload right now, they are
+        # just a list of macros grouped by name.
+        macros.reverse_each do |a_macro|
+          return a_macro if a_macro.matches?(args, named_args)
+        end
       end
 
       instance_type.parents.try &.each do |parent|
