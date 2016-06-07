@@ -19,6 +19,7 @@ describe OpenSSL::SSL::HostnameValidation do
       OpenSSL::SSL::HostnameValidation.validate_hostname("fe80:0:0:0:0:0:0:1", openssl_create_cert(san: "IP:fe80::1")).should eq(OpenSSL::SSL::HostnameValidation::Result::MatchFound)
       OpenSSL::SSL::HostnameValidation.validate_hostname("fe80:0:0:0:0:0:0:2", openssl_create_cert(san: "IP:fe80::1")).should eq(OpenSSL::SSL::HostnameValidation::Result::MatchNotFound)
       OpenSSL::SSL::HostnameValidation.validate_hostname("fe80:0:1", openssl_create_cert(san: "IP:fe80:0::1")).should eq(OpenSSL::SSL::HostnameValidation::Result::MatchNotFound)
+      OpenSSL::SSL::HostnameValidation.validate_hostname("fe80::0:1", openssl_create_cert(san: "IP:fe80:0::1")).should eq(OpenSSL::SSL::HostnameValidation::Result::MatchFound)
     end
 
     it "matches domains from certificate SAN entries" do
