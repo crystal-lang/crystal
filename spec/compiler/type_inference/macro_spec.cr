@@ -884,18 +884,4 @@ describe "Type inference: macro" do
       Foo.bar
       )) { int32 }
   end
-
-  it "overrides macro with splat (#2773)" do
-    assert_type(%(
-      macro foo(*args)
-        1
-      end
-
-      macro foo(*args)
-        'a'
-      end
-
-      foo
-      )) { char }
-  end
 end
