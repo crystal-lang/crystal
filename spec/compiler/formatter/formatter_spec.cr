@@ -351,11 +351,13 @@ describe Crystal::Formatter do
   assert_format "class   Foo  < \n  Bar \n\n 1  \n\nend", "class Foo < Bar\n  1\nend"
   assert_format "module Moo ( T )\nend", "module Moo(T)\nend"
   assert_format "class Foo ( T )\nend", "class Foo(T)\nend"
+  assert_format "class Foo ( *T, U )\nend", "class Foo(*T, U)\nend"
   assert_format "abstract  class Foo\nend", "abstract class Foo\nend"
   assert_format "class Foo;end", "class Foo; end"
   assert_format "class Foo; 1; end", "class Foo\n  1\nend"
   assert_format "module Foo;end", "module Foo; end"
   assert_format "module Foo; 1; end", "module Foo\n  1\nend"
+  assert_format "module Foo ( U, *T ); 1; end", "module Foo(U, *T)\n  1\nend"
   assert_format "enum Foo;end", "enum Foo; end"
   assert_format "enum Foo; A = 1; end", "enum Foo\n  A = 1\nend"
 

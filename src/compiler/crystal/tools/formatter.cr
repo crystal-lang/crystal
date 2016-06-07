@@ -2775,7 +2775,7 @@ module Crystal
       write_keyword :module, " "
 
       accept node.name
-      format_type_vars node.type_vars
+      format_type_vars node.type_vars, node.splat_index
 
       format_nested_with_end node.body
 
@@ -2787,7 +2787,7 @@ module Crystal
       write_keyword (node.struct? ? :struct : :class), " "
 
       accept node.name
-      format_type_vars node.type_vars
+      format_type_vars node.type_vars, node.splat_index
 
       if superclass = node.superclass
         skip_space_or_newline
@@ -2801,12 +2801,13 @@ module Crystal
       false
     end
 
-    def format_type_vars(type_vars)
+    def format_type_vars(type_vars, splat_index)
       if type_vars
         skip_space
         write_token :"("
         skip_space_or_newline
         type_vars.each_with_index do |type_var, i|
+          write_token :"*" if i == splat_index
           write type_var
           next_token_skip_space_or_newline
           if @token.type == :","
