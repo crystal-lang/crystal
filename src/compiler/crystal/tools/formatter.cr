@@ -2511,6 +2511,10 @@ module Crystal
       write_token " ", :"|"
       skip_space_or_newline
       args.each_with_index do |arg, i|
+        if @token.type == :"*"
+          write_token :"*"
+        end
+
         if @token.type == :"("
           write :"("
           next_token_skip_space_or_newline

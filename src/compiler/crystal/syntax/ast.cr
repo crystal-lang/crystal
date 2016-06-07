@@ -444,8 +444,9 @@ module Crystal
     property args : Array(Var)
     property body : ASTNode
     property call : Call?
+    property splat_index : Int32?
 
-    def initialize(@args = [] of Var, body = nil)
+    def initialize(@args = [] of Var, body = nil, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -455,10 +456,10 @@ module Crystal
     end
 
     def clone_without_location
-      Block.new(@args.clone, @body.clone)
+      Block.new(@args.clone, @body.clone, @splat_index)
     end
 
-    def_equals_and_hash args, body
+    def_equals_and_hash args, body, splat_index
   end
 
   # A method call.

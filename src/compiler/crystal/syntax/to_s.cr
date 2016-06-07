@@ -964,6 +964,7 @@ module Crystal
         @str << " |"
         node.args.each_with_index do |arg, i|
           @str << ", " if i > 0
+          @str << "*" if i == node.splat_index
           arg.accept self
         end
         @str << "|"

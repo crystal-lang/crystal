@@ -3608,11 +3608,21 @@ module Crystal
       block_args = [] of Var
       extra_assigns = nil
       block_body = nil
+      arg_index = 0
+      splat_index = nil
 
       next_token_skip_space
       if @token.type == :"|"
         next_token_skip_space_or_newline
         while @token.type != :"|"
+          if @token.type == :"*"
+            if splat_index
+              raise "splat block argument already specified", @token
+            end
+            splat_index = arg_index
+            next_token
+          end
+
           case @token.type
           when :IDENT
             arg_name = @token.value.to_s
@@ -3670,6 +3680,8 @@ module Crystal
           if @token.type == :","
             next_token_skip_space_or_newline
           end
+
+          arg_index += 1
         end
         next_token_skip_statement_end
       else
@@ -3700,7 +3712,7 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      Block.new(block_args, block_body).at_end(end_location)
+      Block.new(block_args, block_body, splat_index).at_end(end_location)
     end
 
     record CallArgs,

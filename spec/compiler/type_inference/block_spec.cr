@@ -1207,4 +1207,53 @@ describe "Block inference" do
       end
       )) { tuple_of([nilable(char), union_of(int32, bool)]) }
   end
+
+  it "uses splat in block argument" do
+    assert_type(%(
+      def foo
+        yield 1, 'a'
+      end
+
+      foo do |*args|
+        args
+      end
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "uses splat in block argument, many args" do
+    assert_type(%(
+      def foo
+        yield 1, 'a', true, nil, 1.5, "hello"
+      end
+
+      foo do |x, *y, z, w|
+        {x, y, z, w}
+      end
+      )) { |mod| tuple_of([int32, tuple_of([char, bool, mod.nil]), float64, string]) }
+  end
+
+  it "uses splat in block argument, but not enough yield expressions" do
+    assert_type(%(
+      def foo
+        yield 1
+      end
+
+      foo do |x, y, z, *w|
+        {x, y, z, w}
+      end
+      )) { |mod| tuple_of([int32, mod.nil, mod.nil, tuple_of([] of Type)]) }
+  end
+
+  it "errors if splat argument becomes a union" do
+    assert_error %(
+      def foo
+        yield 1
+        yield 1, 2
+      end
+
+      foo do |*args|
+      end
+      ),
+      "block splat argument must be a tuple type"
+  end
 end

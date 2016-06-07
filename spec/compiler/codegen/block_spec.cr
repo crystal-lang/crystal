@@ -1381,4 +1381,55 @@ describe "Code gen: block" do
       end
       )).to_i.should eq(1)
   end
+
+  it "uses splat in block argument" do
+    run(%(
+      def foo
+        yield 1, 2, 3
+      end
+
+      foo do |*args|
+        args[0] + args[1] + args[2]
+      end
+      )).to_i.should eq(6)
+  end
+
+  it "uses splat in block argument, many args" do
+    run(%(
+      def foo
+        yield 1, 2, 3, 4, 5, 6
+      end
+
+      foo do |x, y, *z, w|
+        ((((x + y) * z[0]) - z[1]) * z[2]) - w
+      end
+      )).to_i.should eq(((((1 + 2) * 3) - 4) * 5) - 6)
+  end
+
+  it "uses block splat argument with union types" do
+    run(%(
+      def foo
+        yield 1
+        yield 2.5
+      end
+
+      total = 0
+      foo do |*args|
+        total += args[0].to_i
+      end
+      total
+      )).to_i.should eq(3)
+  end
+
+  it "uses splat in block argument, but not enough yield expressions" do
+    run(%(
+      def foo
+        yield 42
+      end
+
+      foo do |x, y, z, *w|
+        x
+      end
+      )).to_i.should eq(42)
+  end
 end

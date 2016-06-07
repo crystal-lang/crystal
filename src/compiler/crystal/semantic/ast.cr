@@ -924,11 +924,18 @@ module Crystal
     def update(from = nil)
       # We compute all the types for each block arguments
       block_arg_types = Array(Array(Type)?).new(block.args.size, nil)
+      splat_index = block.splat_index
 
       @yields.each do |a_yield|
         i = 0
+
+        # Gather all exps types and then assign to block_arg_types.
+        # We need to do that in case of a block splat argument, we need
+        # to split and create tuple types for that case.
+        exps_types = Array(Type).new(a_yield.exps.size)
+
         a_yield.exps.each do |exp|
-          break if i >= block.args.size
+          break if !splat_index && i >= block.args.size
 
           exp_type = exp.type?
           return unless exp_type
@@ -939,31 +946,70 @@ module Crystal
             end
 
             exp_type.tuple_types.each do |tuple_type|
-              break if i >= block.args.size
+              break if !splat_index && i >= block.args.size
 
-              types = block_arg_types[i] ||= [] of Type
-              types << tuple_type
+              exps_types << tuple_type
               i += 1
             end
           else
-            types = block_arg_types[i] ||= [] of Type
-            types << exp_type
+            exps_types << exp_type
             i += 1
           end
         end
 
-        # Remaining block arguments get the Nil type
-        while i < block.args.size
-          types = block_arg_types[i] ||= [] of Type
-          types << @mod.nil
-          i += 1
+        # Now move exps_types to block_arg_types
+        if splat_index
+          # If there are less expressions than the number of block arguments, we
+          # can go from left to right, and the argument at the splat index will
+          # be the empty tuple
+          if exps_types.size < (block.args.size - 1)
+            block.args.size.times do |i|
+              types = block_arg_types[i] ||= [] of Type
+              if i == splat_index
+                types << @mod.tuple_of([] of Type)
+              else
+                types << (exps_types[i]? || @mod.nil)
+              end
+            end
+          else
+            j = 0
+            block.args.size.times do |i|
+              types = block_arg_types[i] ||= [] of Type
+              if i == splat_index
+                tuple_types = exps_types[i, exps_types.size - (block.args.size - 1)]
+                types << @mod.tuple_of(tuple_types)
+                j += tuple_types.size
+              else
+                types << exps_types[j]
+                j += 1
+              end
+            end
+          end
+        else
+          i = 0
+          exps_types.each do |exp_type|
+            types = block_arg_types[i] ||= [] of Type
+            types << exp_type
+            i += 1
+          end
+
+          # Remaining block arguments get the Nil type
+          while i < block.args.size
+            types = block_arg_types[i] ||= [] of Type
+            types << @mod.nil
+            i += 1
+          end
         end
       end
 
       block.args.each_with_index do |arg, i|
         block_arg_type = block_arg_types[i]
         if block_arg_type
-          arg.type = Type.merge(block_arg_type) || @mod.nil
+          arg_type = Type.merge(block_arg_type) || @mod.nil
+          if i == splat_index && !arg_type.is_a?(TupleInstanceType)
+            arg.raise "block splat argument must be a tuple type, not #{arg_type}"
+          end
+          arg.type = arg_type
         else
           # Skip, no type info found in this position
         end

@@ -1245,6 +1245,7 @@ module Crystal
 
       block_context = context.block_context.not_nil!
       block = context.block
+      splat_index = block.splat_index
 
       closured_vars = closured_vars(block.vars, block)
 
@@ -1262,7 +1263,7 @@ module Crystal
       # First accept all yield expressions and assign them to block vars
       i = 0
       unless node.exps.empty?
-        exp_values = Array(LLVM::Value).new(node.exps.size)
+        exp_values = Array({LLVM::Value, Type}).new(node.exps.size)
 
         # We first accept the expressions and store the values, without
         # assigning them to the block vars yet because we might have
@@ -1274,28 +1275,58 @@ module Crystal
 
           if exp.is_a?(Splat)
             tuple_type = exp.type.as(TupleInstanceType)
-            tuple_type.tuple_types.each_index do |j|
-              exp_values << codegen_tuple_indexer(tuple_type, @last, j)
+            tuple_type.tuple_types.each_with_index do |subtype, j|
+              exp_values << {codegen_tuple_indexer(tuple_type, @last, j), subtype}
             end
           else
-            exp_values << @last
+            exp_values << {@last, exp.type}
           end
         end
 
-        node.exps.each do |exp|
-          if exp.is_a?(Splat)
-            tuple_type = exp.type.as(TupleInstanceType)
-            tuple_type.tuple_types.each do |tuple_type|
-              if arg = block.args[i]?
-                block_var = block_context.vars[arg.name]
-                assign block_var.pointer, block_var.type, tuple_type, exp_values[i]
+        # Now assign exp values to block arguments
+        if splat_index
+          # If there are less expressions than the number of block arguments, we
+          # can go from left to right, and the argument at the splat index will
+          # be the empty tuple
+          if exp_values.size < (block.args.size - 1)
+            block.args.each_with_index do |arg, i|
+              block_var = block_context.vars[arg.name]
+              if i == splat_index
+                exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
+                  {tuple_type, llvm_nil}
+                end
+                exp_type = arg.type
+              elsif i < exp_values.size
+                exp_value, exp_type = exp_values[i]
+              else
+                exp_value, exp_type = llvm_nil, @mod.nil
               end
-              i += 1
+              assign block_var.pointer, block_var.type, exp_type, exp_value
             end
           else
+            j = 0
+            block.args.each_with_index do |arg, i|
+              block_var = block_context.vars[arg.name]
+              if i == splat_index
+                exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
+                  exp_value, exp_type = exp_values[j]
+                  j += 1
+                  {exp_type, exp_value}
+                end
+                exp_type = arg.type
+              else
+                exp_value, exp_type = exp_values[j]
+                j += 1
+              end
+              assign block_var.pointer, block_var.type, exp_type, exp_value
+            end
+          end
+        else
+          i = 0
+          exp_values.each do |(exp_value, exp_type)|
             if arg = block.args[i]?
               block_var = block_context.vars[arg.name]
-              assign block_var.pointer, block_var.type, exp.type, exp_values[i]
+              assign block_var.pointer, block_var.type, exp_type, exp_value
             end
             i += 1
           end
@@ -1303,11 +1334,13 @@ module Crystal
       end
 
       # Then assign nil to remaining block args
-      while i < block.args.size
-        arg = block.args[i]
-        block_var = block_context.vars[arg.name]
-        assign block_var.pointer, block_var.type, @mod.nil, llvm_nil
-        i += 1
+      unless splat_index
+        while i < block.args.size
+          arg = block.args[i]
+          block_var = block_context.vars[arg.name]
+          assign block_var.pointer, block_var.type, @mod.nil, llvm_nil
+          i += 1
+        end
       end
 
       Phi.open(self, block, @needs_value) do |phi|
