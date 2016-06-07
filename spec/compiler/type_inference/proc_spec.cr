@@ -672,7 +672,7 @@ describe "Type inference: proc" do
       f = ->(x : Array(Foo)) {}
       f.call [Bar.new]
       ),
-      "type must be Array(Foo+), not Array(Bar)"
+      "no overload matches"
   end
 
   it "allows invoking a function with a generic subtype" do
@@ -831,5 +831,24 @@ describe "Type inference: proc" do
 
       {1, 'a'}.foo { |x, y| true }
       )) { bool.metaclass }
+  end
+
+  it "says wrong number of arguments" do
+    assert_error %(
+      ->(x : Int32) { }.call
+      ),
+      "no overload matches"
+  end
+
+  it "finds method of object" do
+    assert_type(%(
+      class Object
+        def foo
+          1
+        end
+      end
+
+      ->{}.foo
+      )) { int32 }
   end
 end

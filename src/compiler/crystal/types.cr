@@ -335,11 +335,23 @@ module Crystal
       raise "Bug: #{self} doesn't implement add_def"
     end
 
-    def lookup_defs(name, lookup_ancestors_for_new = false)
+    def lookup_defs(name : String, lookup_ancestors_for_new : Bool = false)
+      all_defs = [] of Def
+      lookup_defs(name, all_defs, lookup_ancestors_for_new)
+      all_defs
+    end
+
+    def lookup_defs(name : String, all_defs : Array(Def), lookup_ancestors_for_new : Bool = false)
       raise "Bug: #{self} doesn't implement lookup_defs"
     end
 
-    def lookup_defs_without_parents(name)
+    def lookup_defs_without_parents(name : String)
+      all_defs = [] of Def
+      lookup_defs_without_parents(name, all_defs)
+      all_defs
+    end
+
+    def lookup_defs_without_parents(name : String, all_defs : Array(Def))
       raise "Bug: #{self} doesn't implement lookup_defs_without_parents"
     end
 
@@ -553,29 +565,23 @@ module Crystal
       end
     end
 
-    def lookup_defs(name, lookup_ancestors_for_new = false)
-      all_defs = [] of Def
-
+    def lookup_defs(name : String, all_defs : Array(Def), lookup_ancestors_for_new : Bool? = false)
       self.defs.try &.[name]?.try &.each do |item|
-        all_defs << item.def
+        all_defs << item.def unless all_defs.find(&.same?(item.def))
       end
 
       if lookup_ancestors_for_new || self.lookup_new_in_ancestors? ||
          !(name == "new" || name == "initialize")
         parents.try &.each do |parent|
-          all_defs.concat parent.lookup_defs(name, lookup_ancestors_for_new)
+          parent.lookup_defs(name, all_defs, lookup_ancestors_for_new)
         end
       end
-
-      all_defs
     end
 
-    def lookup_defs_without_parents(name)
-      all_defs = [] of Def
+    def lookup_defs_without_parents(name : String, all_defs : Array(Def))
       self.defs.try &.[name]?.try &.each do |item|
-        all_defs << item.def
+        all_defs << item.def unless all_defs.find(&.same?(item.def))
       end
-      all_defs
     end
 
     def lookup_defs_with_modules(name)
@@ -1312,12 +1318,10 @@ module Crystal
     def initialize(@program)
     end
 
-    def lookup_defs(name, lookup_ancestors_for_new = false)
-      [] of Def
+    def lookup_defs(name : String, all_defs : Array(Def), lookup_ancestors_for_new : Bool = false)
     end
 
-    def lookup_defs_without_parents(name)
-      [] of Def
+    def lookup_defs_without_parents(name : String, all_defs : Array(Def))
     end
 
     def parents
