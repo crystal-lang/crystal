@@ -808,16 +808,16 @@ describe "Type inference: proc" do
       )) { |mod| proc_of(int32, mod.nil) }
   end
 
-  it "accesses T" do
+  it "accesses T and R" do
     assert_type(%(
       struct Proc
         def t
-          T
+          {T, R}
         end
       end
 
       ->(x : Int32) { 'a' }.t
-      )) { tuple_of([int32, char]).metaclass }
+      )) { tuple_of([tuple_of([int32]).metaclass, char.metaclass]) }
   end
 
   it "can match *T in block argument" do

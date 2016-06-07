@@ -728,20 +728,20 @@ module Crystal
   class ProcInstanceType
     def restrict(other : ProcNotation, context)
       inputs = other.inputs
-      inputs_len = inputs ? inputs.size : 0
+      inputs_size = inputs ? inputs.size : 0
       output = other.output
 
-      return nil if proc_types.size != inputs_len + 1
+      return nil if arg_types.size != inputs_size
 
       if inputs
-        inputs.zip(proc_types) do |input, my_input|
+        inputs.zip(arg_types) do |input, my_input|
           restricted = my_input.restrict(input, context)
           return nil unless restricted == my_input
         end
       end
 
       if output
-        my_output = proc_types.last
+        my_output = self.return_type
         if my_output.no_return?
           # Ok, NoReturn can be "cast" to anything
         else
@@ -763,10 +763,10 @@ module Crystal
       generic_class = context.type_lookup.lookup_type other.name
       return super unless generic_class.is_a?(ProcType)
 
-      return nil unless other.type_vars.size == proc_types.size
+      return nil unless other.type_vars.size == arg_types.size + 1
 
-      proc_types.each_with_index do |proc_type, i|
-        other_type_var = other.type_vars[i]
+      other.type_vars.each_with_index do |other_type_var, i|
+        proc_type = arg_types[i]? || return_type
         restricted = proc_type.restrict other_type_var, context
         return nil unless restricted == proc_type
       end
@@ -775,14 +775,9 @@ module Crystal
     end
 
     def compatible_with?(other : ProcInstanceType)
-      arg_types = arg_types()
-      return_type = return_type()
-      other_arg_types = other.arg_types
-      other_return_type = other.return_type
-
-      if return_type == other_return_type
+      if return_type == other.return_type
         # Ok
-      elsif other_return_type.nil_type?
+      elsif other.return_type.nil_type?
         # Ok, can cast fun to void
       elsif return_type.no_return?
         # Ok, NoReturn can be "cast" to anything
@@ -791,9 +786,9 @@ module Crystal
       end
 
       # Disallow casting a function to another one accepting different argument count
-      return nil if arg_types.size != other_arg_types.size
+      return nil if arg_types.size != other.arg_types.size
 
-      arg_types.zip(other_arg_types) do |arg_type, other_arg_type|
+      arg_types.zip(other.arg_types) do |arg_type, other_arg_type|
         return false unless arg_type == other_arg_type
       end
 

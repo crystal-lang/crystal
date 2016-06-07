@@ -236,6 +236,19 @@ struct Pointer(T)
   end
 end
 
+struct Proc
+  # Invokes this Proc and returns the result.
+  #
+  # ```
+  # add = ->(x : Int32, y : Int32) { x + y }
+  # add.call(1, 2) # => 3
+  # ```
+  @[Primitive(:proc_call)]
+  @[Raises]
+  def call(*args : *T) : R
+  end
+end
+
 # All Number methods are defined on concrete structs (for example Int32, UInt8, etc.),
 # never on Number, Int or Float because we don't want to handle a primitive for
 # other types that could extend these types (for example BigInt): if we do that

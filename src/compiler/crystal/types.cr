@@ -3182,7 +3182,8 @@ module Crystal
         end
         type_var
       end
-      instance = ProcInstanceType.new(program, types)
+      return_type = types.pop
+      instance = ProcInstanceType.new(program, types, return_type)
       generic_types[type_vars] = instance
       initialize_instance instance
       instance.after_initialize
@@ -3203,36 +3204,22 @@ module Crystal
   end
 
   class ProcInstanceType < GenericClassInstanceType
-    include DefContainer
-    include DefInstanceContainer
-
     getter program : Program
-    getter proc_types : Array(Type)
+    getter arg_types : Array(Type)
+    getter return_type : Type
 
-    def initialize(@program, @proc_types)
-      var = Var.new("T", @program.tuple_of(proc_types))
-      var.bind_to var
-      super(program, program.proc, {"T" => var} of String => ASTNode)
+    def initialize(@program, @arg_types, @return_type)
+      t_var = Var.new("T", @program.tuple_of(@arg_types))
+      t_var.bind_to t_var
 
-      args = arg_types.map_with_index { |type, i| Arg.new("arg#{i}", type: type) }
+      r_var = Var.new("R", @return_type)
+      r_var.bind_to r_var
 
-      proc_call = Def.new("call", args, Primitive.new(:proc_call, return_type))
-      proc_call.raises = true
-
-      add_def proc_call
-      add_def Def.new("arity", body: NumberLiteral.new(proc_types.size - 1))
+      super(program, program.proc, {"T" => t_var, "R" => r_var} of String => ASTNode)
     end
 
     def struct?
       true
-    end
-
-    def arg_types
-      proc_types[0..-2]
-    end
-
-    def return_type
-      proc_types.last
     end
 
     def parents
@@ -3240,7 +3227,7 @@ module Crystal
     end
 
     def primitive_like?
-      proc_types.all? &.primitive_like?
+      arg_types.all?(&.primitive_like?) && return_type.primitive_like?
     end
 
     def passed_by_value?
@@ -3258,15 +3245,12 @@ module Crystal
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       io << "("
-      size = proc_types.size
-      proc_types.each_with_index do |type, i|
-        if i == size - 1
-          io << " -> "
-        elsif i > 0
-          io << ", "
-        end
+      arg_types.each_with_index do |type, i|
+        io << ", " if i > 0
         type.to_s(io)
       end
+      io << " -> "
+      return_type.to_s(io)
       io << ")"
     end
   end

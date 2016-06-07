@@ -648,7 +648,7 @@ class Crystal::CodeGenVisitor
     proc_type = context.type.as(ProcInstanceType)
     0.upto(target_def.args.size - 1) do |i|
       arg = args[i]
-      proc_arg_type = proc_type.proc_types[i]
+      proc_arg_type = proc_type.arg_types[i]
       target_def_arg_type = target_def.args[i].type
       args[i] = upcast arg, proc_arg_type, target_def_arg_type
     end

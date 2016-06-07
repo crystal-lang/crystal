@@ -266,8 +266,8 @@ describe "Type inference: exception" do
   end
 
   it "marks proc literal as raises" do
-    result = assert_type("->{ 1 }.call", inject_primitives: false) { int32 }
-    call = result.node.as(Call)
+    result = assert_type("->{ 1 }.call", inject_primitives: true) { int32 }
+    call = result.node.as(Expressions).last.as(Call)
     call.target_def.raises.should be_true
   end
 

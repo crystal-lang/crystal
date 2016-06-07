@@ -10,9 +10,10 @@
 # # A proc with two arguments:
 # ->(x : Int32, y : Int32) { x + y } # Proc(Int32, Int32, Int32)
 # ```
-# The types of the arguments are mandatory, except when directly sending a proc literal to a lib fun in C bindings.
 #
-# The return type is inferred from the proc's body.
+# The types of the arguments (T) are mandatory, except when directly sending a proc literal to a lib fun in C bindings.
+#
+# The return type (R) is inferred from the proc's body.
 #
 # A special new method is provided too:
 #
@@ -112,7 +113,7 @@ struct Proc
   # ```
   def partial(*args : *U)
     {% begin %}
-      {% remaining = (T.size - 1 - U.size) %}
+      {% remaining = (T.size - U.size) %}
       ->(
           {% for i in 0...remaining %}
             arg{{i}} : {{T[i + U.size]}},
@@ -126,6 +127,19 @@ struct Proc
         )
       }
     {% end %}
+  end
+
+  # Returns the number of arguments of this Proc.
+  #
+  # ```
+  # add = ->(x : Int32, y : Int32) { x + y }
+  # add.arity # => 2
+  #
+  # neg = ->(x : Int32) { -x }
+  # neg.arity # => 1
+  # ```
+  def arity
+    {{T.size}}
   end
 
   def pointer

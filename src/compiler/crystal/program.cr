@@ -152,7 +152,7 @@ module Crystal
       enum_t.struct = true
       enum_t.allowed_in_generics = false
 
-      types["Proc"] = @proc = ProcType.new self, self, "Proc", value, ["T"]
+      types["Proc"] = @proc = ProcType.new self, self, "Proc", value, ["T", "R"]
 
       types["Union"] = @union = GenericUnionType.new self, self, "Union", value, ["T"]
 

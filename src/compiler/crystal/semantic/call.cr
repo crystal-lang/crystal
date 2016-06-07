@@ -1001,6 +1001,8 @@ class Crystal::Call
   end
 
   def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types, block_arg_type, named_args_types)
+    original_untyped_def = untyped_def
+
     # If there's an argument count mismatch, or we have a splat, or a double splat, or there are
     # named arguments, we create another def that sets ups everything for the real call.
     if arg_types.size != untyped_def.args.size || untyped_def.splat_index || named_args_types || untyped_def.double_splat
@@ -1015,6 +1017,10 @@ class Crystal::Call
       else
         untyped_def = untyped_def.expand_default_arguments(mod, arg_types.size, named_args_names)
       end
+
+      # This is the case of Proc#call(*args), but could be applied to any primitive really
+      body = original_untyped_def.body
+      untyped_def.body = body.clone if body.is_a?(Primitive)
     end
 
     args_start_index = 0
@@ -1043,8 +1049,10 @@ class Crystal::Call
       args[arg.name] = var
 
       if strict_check
-        unless type.covariant?(arg.type)
-          self.args[index].raise "type must be #{arg.type}, not #{type}"
+        owner = owner.as(ProcInstanceType)
+        proc_arg_type = owner.arg_types[index]
+        unless type.covariant?(proc_arg_type)
+          self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
         end
       end
 

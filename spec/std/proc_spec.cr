@@ -67,6 +67,11 @@ describe "Proc" do
   end
 
   {% if Crystal::VERSION == "0.18.0" %}
+    it "#arity" do
+      f = ->(x : Int32, y : Int32) {}
+      f.arity.should eq(2)
+    end
+
     it "#partial" do
       f = ->(x : Int32, y : Int32, z : Int32) { x + y + z }
       f.call(1, 2, 3).should eq(6)

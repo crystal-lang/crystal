@@ -1141,7 +1141,7 @@ module Crystal
           check_lib_call_arg(method, index) do |method_arg_type|
             arg.def.args.each_with_index do |def_arg, def_arg_index|
               if !def_arg.restriction && !def_arg.type?
-                def_arg.type = method_arg_type.proc_types[def_arg_index]?
+                def_arg.type = method_arg_type.arg_types[def_arg_index]?
               end
             end
           end
@@ -1198,8 +1198,8 @@ module Crystal
         return false
       end
 
-      if block.args.size > proc_type.proc_types.size - 1
-        node.wrong_number_of "block arguments", "#{proc_type}#new", block.args.size, proc_type.proc_types.size - 1
+      if block.args.size > proc_type.arg_types.size
+        node.wrong_number_of "block arguments", "#{proc_type}#new", block.args.size, proc_type.arg_types.size
       end
 
       # We create a ->(...) { } from the block
@@ -1957,7 +1957,7 @@ module Crystal
       when "class"
         node.type = scope.metaclass
       when "proc_call"
-        # Nothing to do
+        node.type = scope.as(ProcInstanceType).return_type
       when "pointer_diff"
         node.type = mod.int64
       when "class_name"
