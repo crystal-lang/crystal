@@ -71,6 +71,31 @@ describe "Block inference" do
     ") { union_of(array_of(int32), array_of(float64)) }
   end
 
+  it "uses block arg, has nil type" do
+    assert_type(%(
+      def foo
+        yield
+      end
+
+      foo do |x|
+        x
+      end
+      )) { |mod| mod.nil }
+  end
+
+  it "yields with different types" do
+    assert_type(%(
+      def foo
+        yield 1
+        yield 'a'
+      end
+
+      foo do |x|
+        x
+      end
+      )) { union_of(int32, char) }
+  end
+
   it "break from block without value" do
     assert_type("
       def foo; yield; end
@@ -1153,5 +1178,33 @@ describe "Block inference" do
         ),
         "use a more specific type"
     end
+  end
+
+  it "yields splat" do
+    assert_type(%(
+      def foo
+        tup = {1, 'a'}
+        yield *tup
+      end
+
+      foo do |x, y|
+        {y, x}
+      end
+      )) { tuple_of([char, int32]) }
+  end
+
+  it "yields splat and non splat" do
+    assert_type(%(
+      def foo
+        tup = {1, 'a'}
+        yield *tup
+
+        yield true
+      end
+
+      foo do |x, y|
+        {y, x}
+      end
+      )) { tuple_of([nilable(char), union_of(int32, bool)]) }
   end
 end

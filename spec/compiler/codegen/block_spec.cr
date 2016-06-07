@@ -1356,4 +1356,29 @@ describe "Code gen: block" do
       a
       )).to_i.should eq(4)
   end
+
+  it "yields splat" do
+    run(%(
+      def foo
+        tup = {1, 2, 3}
+        yield *tup
+      end
+
+      foo do |x, y, z|
+        x + y + z
+      end
+      )).to_i.should eq(6)
+  end
+
+  it "yields more exps than block arg, through splat" do
+    run(%(
+      def foo
+        yield *{1, 2}
+      end
+
+      foo do |x|
+        x
+      end
+      )).to_i.should eq(1)
+  end
 end

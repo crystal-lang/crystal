@@ -1260,6 +1260,7 @@ module Crystal
       end
 
       # First accept all yield expressions and assign them to block vars
+      i = 0
       unless node.exps.empty?
         exp_values = Array(LLVM::Value).new(node.exps.size)
 
@@ -1270,22 +1271,43 @@ module Crystal
           request_value do
             accept exp
           end
-          exp_values << @last
+
+          if exp.is_a?(Splat)
+            tuple_type = exp.type.as(TupleInstanceType)
+            tuple_type.tuple_types.each_index do |j|
+              exp_values << codegen_tuple_indexer(tuple_type, @last, j)
+            end
+          else
+            exp_values << @last
+          end
         end
 
-        node.exps.each_with_index do |exp, i|
-          if arg = block.args[i]?
-            block_var = block_context.vars[arg.name]
-            assign block_var.pointer, block_var.type, exp.type, exp_values[i]
+        node.exps.each do |exp|
+          if exp.is_a?(Splat)
+            tuple_type = exp.type.as(TupleInstanceType)
+            tuple_type.tuple_types.each do |tuple_type|
+              if arg = block.args[i]?
+                block_var = block_context.vars[arg.name]
+                assign block_var.pointer, block_var.type, tuple_type, exp_values[i]
+              end
+              i += 1
+            end
+          else
+            if arg = block.args[i]?
+              block_var = block_context.vars[arg.name]
+              assign block_var.pointer, block_var.type, exp.type, exp_values[i]
+            end
+            i += 1
           end
         end
       end
 
       # Then assign nil to remaining block args
-      node.exps.size.upto(block.args.size - 1) do |i|
+      while i < block.args.size
         arg = block.args[i]
         block_var = block_context.vars[arg.name]
         assign block_var.pointer, block_var.type, @mod.nil, llvm_nil
+        i += 1
       end
 
       Phi.open(self, block, @needs_value) do |phi|

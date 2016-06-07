@@ -21,5 +21,9 @@ module Crystal
     def transform(node : TypeNode)
       node
     end
+
+    def transform(node : YieldBlockBinder)
+      node
+    end
   end
 end

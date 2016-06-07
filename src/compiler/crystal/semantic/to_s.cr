@@ -43,5 +43,9 @@ module Crystal
       node.type.devirtualize.to_s(@str)
       false
     end
+
+    def visit(node : YieldBlockBinder)
+      false
+    end
   end
 end

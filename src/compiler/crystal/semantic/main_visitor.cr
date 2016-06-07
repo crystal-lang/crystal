@@ -697,7 +697,10 @@ module Crystal
         end
       end
 
-      bind_block_args_to_yield_exps block, node
+      # We use a binder to support splats and other complex forms
+      binder = block.binder ||= YieldBlockBinder.new(@mod, block)
+      binder.add_yield(node)
+      binder.update
 
       unless block.visited
         # When we yield, we are no longer inside `untyped_def`, so we un-nest
@@ -721,19 +724,6 @@ module Crystal
 
       @type_filters = nil
       false
-    end
-
-    # We bind yield exps -> typed_def.yield_vars -> block args
-    # so when a call is recomputed we unbind the block args from the yield
-    # vars (so old instantiations don't mess the final type)
-    def bind_block_args_to_yield_exps(block, node)
-      yield_vars = typed_def.yield_vars ||= block.args.map { |block| Var.new(block.name) }
-
-      block.args.each_with_index do |arg, i|
-        yield_var = yield_vars[i]
-        yield_var.bind_to(node.exps[i]? || mod.nil_var)
-        arg.bind_to(yield_var)
-      end
     end
 
     def visit(node : Block)

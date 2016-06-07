@@ -908,6 +908,73 @@ module Crystal
     end
   end
 
+  # Ficticious node to bind yield expressions to block arguments
+  class YieldBlockBinder < ASTNode
+    getter block
+
+    def initialize(@mod : Program, @block : Block)
+      @yields = [] of Yield
+    end
+
+    def add_yield(node : Yield)
+      @yields << node
+      node.exps.each &.add_observer(self)
+    end
+
+    def update(from = nil)
+      # We compute all the types for each block arguments
+      block_arg_types = Array(Array(Type)?).new(block.args.size, nil)
+
+      @yields.each do |a_yield|
+        i = 0
+        a_yield.exps.each do |exp|
+          break if i >= block.args.size
+
+          exp_type = exp.type?
+          return unless exp_type
+
+          if exp.is_a?(Splat)
+            unless exp_type.is_a?(TupleInstanceType)
+              exp.raise "expected splat expression to be a tuple type, not #{exp_type}"
+            end
+
+            exp_type.tuple_types.each do |tuple_type|
+              break if i >= block.args.size
+
+              types = block_arg_types[i] ||= [] of Type
+              types << tuple_type
+              i += 1
+            end
+          else
+            types = block_arg_types[i] ||= [] of Type
+            types << exp_type
+            i += 1
+          end
+        end
+
+        # Remaining block arguments get the Nil type
+        while i < block.args.size
+          types = block_arg_types[i] ||= [] of Type
+          types << @mod.nil
+          i += 1
+        end
+      end
+
+      block.args.each_with_index do |arg, i|
+        block_arg_type = block_arg_types[i]
+        if block_arg_type
+          arg.type = Type.merge(block_arg_type) || @mod.nil
+        else
+          # Skip, no type info found in this position
+        end
+      end
+    end
+
+    def clone_without_location
+      self
+    end
+  end
+
   class Block
     property visited = false
     property scope : Type?
@@ -915,6 +982,7 @@ module Crystal
     property after_vars : MetaVars?
     property context : Def | NonGenericModuleType | Nil
     property fun_literal : ASTNode?
+    property binder : YieldBlockBinder?
 
     def break
       @break ||= Var.new("%break")
