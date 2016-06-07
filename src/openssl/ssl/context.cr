@@ -77,6 +77,22 @@ abstract class OpenSSL::SSL::Context
     def self.insecure(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
       super(method)
     end
+
+    # Wraps the original certificate verification to also validate the
+    # hostname against the certificate configured Subject Alternate
+    # Names or Common Name.
+    #
+    # Required for OpenSSL <= 1.0.1 only.
+    protected def set_cert_verify_callback(hostname : String)
+      LibSSL.ssl_ctx_set_cert_verify_callback(@handle, ->(x509_ctx, arg) {
+        if LibCrypto.x509_verify_cert(x509_ctx) != 0
+          cert = LibCrypto.x509_store_ctx_get_current_cert(x509_ctx)
+          HostnameValidation.validate_hostname(Box(String).unbox(arg), cert) == HostnameValidation::Result::MatchFound ? 1 : 0
+        else
+          0
+        end
+      }, Box.box(hostname))
+    end
   end
 
   class Server < Context
@@ -279,6 +295,20 @@ abstract class OpenSSL::SSL::Context
     self.alpn_protocol = proto
   end
 
+  private def alpn_protocol=(protocol : Slice(UInt8))
+    alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
+      proto = Box(Slice(UInt8)).unbox(data)
+      ret = LibSSL.ssl_select_next_proto(o, olen, proto, 2, i, ilen)
+      if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
+        LibSSL::SSL_TLSEXT_ERR_NOACK
+      else
+        LibSSL::SSL_TLSEXT_ERR_OK
+      end
+    }
+    @alpn_protocol = alpn_protocol = Box.box(protocol)
+    LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
+  end
+
   # Set this context verify param to the default one of the given name.
   #
   # Depending on the OpenSSL version, the available defaults are
@@ -299,20 +329,6 @@ abstract class OpenSSL::SSL::Context
   end
 
   {% end %}
-
-  private def alpn_protocol=(protocol : Slice(UInt8))
-    alpn_cb = ->(ssl : LibSSL::SSL, o : LibC::Char**, olen : LibC::Char*, i : LibC::Char*, ilen : LibC::Int, data : Void*) {
-      proto = Box(Slice(UInt8)).unbox(data)
-      ret = LibSSL.ssl_select_next_proto(o, olen, proto, 2, i, ilen)
-      if ret != LibSSL::OPENSSL_NPN_NEGOTIATED
-        LibSSL::SSL_TLSEXT_ERR_NOACK
-      else
-        LibSSL::SSL_TLSEXT_ERR_OK
-      end
-    }
-    @alpn_protocol = alpn_protocol = Box.box(protocol)
-    LibSSL.ssl_ctx_set_alpn_select_cb(@handle, alpn_cb, alpn_protocol)
-  end
 
   def to_unsafe
     @handle

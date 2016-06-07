@@ -273,6 +273,13 @@ class Socket < IO::FileDescriptor
       end
     end
   end
+
+  # Returns true if the string represents a valid IPv4 or IPv6 address.
+  def self.ip?(string : String)
+    addr = LibC::In6Addr.new
+    ptr = pointerof(addr).as(Void*)
+    LibC.inet_pton(LibC::AF_INET, string, ptr) > 0 || LibC.inet_pton(LibC::AF_INET6, string, ptr) > 0
+  end
 end
 
 require "./*"
