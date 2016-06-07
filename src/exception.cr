@@ -175,14 +175,6 @@ class Exception
   end
 end
 
-module Enumerable(T)
-  class EmptyError < Exception
-    def initialize(message = "Empty enumerable")
-      super(message)
-    end
-  end
-end
-
 # Raised when the given index is invalid.
 #
 # ```

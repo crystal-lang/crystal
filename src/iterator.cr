@@ -1,3 +1,5 @@
+require "./enumerable"
+
 # An Iterator allows processing sequences lazily, as opposed to `Enumerable` which processes
 # sequences eagerly and produces an `Array` in most of its methods.
 #
