@@ -801,6 +801,36 @@ module Crystal
     def class_vars
       @class_vars ||= {} of String => MetaTypeVar
     end
+
+    def class_vars?
+      @class_vars
+    end
+
+    def lookup_class_var(name)
+      lookup_class_var?(name).not_nil!
+    end
+
+    def lookup_class_var?(name)
+      class_var = @class_vars.try &.[name]?
+      return class_var if class_var
+
+      ancestors.each do |ancestor|
+        next unless ancestor.is_a?(ClassVarContainer)
+
+        class_var = ancestor.class_vars?.try &.[name]?
+        if class_var
+          var = MetaTypeVar.new(name, class_var.type)
+          var.owner = self
+          var.thread_local = class_var.thread_local?
+          var.initializer = class_var.initializer
+          var.bind_to(class_var)
+          self.class_vars[name] = var
+          return var
+        end
+      end
+
+      nil
+    end
   end
 
   module SubclassObservable
@@ -2960,6 +2990,7 @@ module Crystal
     include DefInstanceContainer
     include VirtualTypeLookup
     include InstanceVarContainer
+    include ClassVarContainer
 
     getter program : Program
     getter base_type : NonGenericClassType
@@ -3036,6 +3067,24 @@ module Crystal
       end
     end
 
+    def lookup_class_var?(name)
+      class_var = @class_vars.try &.[name]?
+      return class_var if class_var
+
+      class_var = base_type.lookup_class_var?(name)
+      if class_var
+        var = MetaTypeVar.new(name, class_var.type)
+        var.owner = self
+        var.thread_local = class_var.thread_local?
+        var.initializer = class_var.initializer
+        var.bind_to(class_var)
+        self.class_vars[name] = var
+        return var
+      end
+
+      nil
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
       base_type.to_s(io)
       io << "+"
@@ -3049,6 +3098,7 @@ module Crystal
   class VirtualMetaclassType < Type
     include DefInstanceContainer
     include VirtualTypeLookup
+    include ClassVarContainer
 
     getter program : Program
     getter instance_type : VirtualType
@@ -3088,6 +3138,24 @@ module Crystal
       instance_type.subtypes.each do |type|
         yield type.metaclass
       end
+    end
+
+    def lookup_class_var?(name)
+      class_var = @class_vars.try &.[name]?
+      return class_var if class_var
+
+      class_var = base_type.instance_type.lookup_class_var?(name)
+      if class_var
+        var = MetaTypeVar.new(name, class_var.type)
+        var.owner = self
+        var.thread_local = class_var.thread_local?
+        var.initializer = class_var.initializer
+        var.bind_to(class_var)
+        self.class_vars[name] = var
+        return var
+      end
+
+      nil
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)

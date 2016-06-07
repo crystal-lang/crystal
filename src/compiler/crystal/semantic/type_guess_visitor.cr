@@ -17,8 +17,9 @@ module Crystal
     class TypeInfo
       property type
       property outside_def
+      getter location
 
-      def initialize(@type : Type)
+      def initialize(@type : Type, @location : Location)
         @outside_def = false
       end
     end
@@ -257,11 +258,11 @@ module Crystal
                 next if owner.class_vars[target.name]?
 
                 owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
-                add_type_info(owner_vars, target.name, tuple_type)
+                add_type_info(owner_vars, target.name, tuple_type, target)
               when Global
                 next if @mod.global_vars[target.name]?
 
-                add_type_info(@globals, target.name, tuple_type)
+                add_type_info(@globals, target.name, tuple_type, target)
               end
             end
           end
@@ -277,7 +278,7 @@ module Crystal
 
       type = guess_type(value)
       if type
-        add_type_info(@globals, target.name, type)
+        add_type_info(@globals, target.name, type, target)
       end
       type
     end
@@ -293,7 +294,7 @@ module Crystal
       type = guess_type(value)
       if type
         owner_vars = @class_vars[owner] ||= {} of String => TypeInfo
-        add_type_info(owner_vars, target.name, type)
+        add_type_info(owner_vars, target.name, type, target)
       end
       type
     end
@@ -432,10 +433,10 @@ module Crystal
       type_vars
     end
 
-    def add_type_info(vars, name, type)
+    def add_type_info(vars, name, type, node)
       info = vars[name]?
       unless info
-        info = TypeInfo.new(type)
+        info = TypeInfo.new(type, node.location.not_nil!)
         info.outside_def = true if @outside_def
         vars[name] = info
       else

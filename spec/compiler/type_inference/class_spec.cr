@@ -983,40 +983,4 @@ describe "Type inference: class" do
       initialize
       )) { int32 }
   end
-
-  it "error when using class var on virtual type" do
-    assert_error %(
-      class Foo
-        @@a = 1
-
-        def a
-          @@a
-        end
-      end
-
-      class Bar < Foo
-      end
-
-      (Bar.new as Foo).a
-      ),
-      "can't access class variable from a type that is Foo or any of its subclasses"
-  end
-
-  it "error when using class var on virtual metaclass type" do
-    assert_error %(
-      class Foo
-        @@a = 1
-
-        def self.a
-          @@a
-        end
-      end
-
-      class Bar < Foo
-      end
-
-      (Bar.new as Foo).class.a
-      ),
-      "can't access class variable from a type that is Foo or any of its subclasses"
-  end
 end

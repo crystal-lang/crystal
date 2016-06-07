@@ -919,20 +919,12 @@ module Crystal
         node.raise "can't use class variables in generic types"
       end
 
-      if scope.is_a?(VirtualType)
-        node.raise "can't access class variable from a type that is #{scope.base_type.instance_type} or any of its subclasses"
-      end
-
-      if scope.is_a?(VirtualMetaclassType)
-        node.raise "can't access class variable from a type that is #{scope.base_type.instance_type} or any of its subclasses"
-      end
-
       scope.as(ClassVarContainer)
     end
 
     def lookup_class_var(node)
       class_var_owner = class_var_owner(node)
-      var = class_var_owner.class_vars[node.name]?
+      var = class_var_owner.lookup_class_var?(node.name)
       unless var
         undefined_class_variable(node, class_var_owner)
       end
