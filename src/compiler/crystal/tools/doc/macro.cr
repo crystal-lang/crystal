@@ -1,7 +1,7 @@
 require "html"
 require "uri"
-require "./item"
 require "json"
+require "./item"
 
 class Crystal::Doc::Macro
   include Item

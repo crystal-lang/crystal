@@ -1,5 +1,5 @@
-require "./item"
 require "json"
+require "./item"
 
 class Crystal::Doc::Type
   include Item
