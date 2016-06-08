@@ -348,6 +348,19 @@ class Crystal::Command
   end
 
   private def docs
+    OptionParser.parse(options) do |opts|
+      opts.banner = "Usage: crystal docs [options] [file]\n\nOptions:"
+
+      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+        output_format = f
+      end
+
+      opts.on("-h", "--help", "Show this message") do
+        puts opts
+        exit 1
+      end
+    end
+
     if options.empty?
       sources = [Compiler::Source.new("require", %(require "./src/**"))]
       included_dirs = [] of String
