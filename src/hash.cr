@@ -2,6 +2,10 @@
 #
 # See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
 class Hash(K, V)
+  {% if Crystal::VERSION == "0.18.0" %}
+    include Enumerable({K, V})
+  {% end %}
+
   getter size : Int32
   @buckets_size : Int32
   @first : Entry(K, V)?
@@ -263,15 +267,24 @@ class Hash(K, V)
   #
   # ```
   # h = {"foo" => "bar"}
+  #
   # h.each do |key, value|
   #   key   # => "foo"
   #   value # => "bar"
+  # end
+  #
+  # h.each do |key_and_value|
+  #   key_and_value # => {"foo", "bar"}
   # end
   # ```
   def each
     current = @first
     while current
-      yield current.key, current.value
+      {% if Crystal::VERSION == "0.18.0" %}
+        yield({current.key, current.value})
+      {% else %}
+        yield current.key, current.value
+      {% end %}
       current = current.fore
     end
     self
@@ -358,43 +371,45 @@ class Hash(K, V)
     ValueIterator(K, V).new(self, @first)
   end
 
-  # Calls the given block for each key-value pair and passes in the key, value, and index.
-  #
-  # ```
-  # h = {"foo" => "bar"}
-  #
-  # h.each_with_index do |key, value, index|
-  #   key   # => "foo"
-  #   value # => "bar"
-  #   index # => 0
-  # end
-  #
-  # h.each_with_index(3) do |key, value, index|
-  #   key   # => "foo"
-  #   value # => "bar"
-  #   index # => 3
-  # end
-  # ```
-  def each_with_index(offset = 0)
-    i = offset
-    each do |key, value|
-      yield key, value, i
-      i += 1
+  {% if Crystal::VERSION != "0.18.0" %}
+    # Calls the given block for each key-value pair and passes in the key, value, and index.
+    #
+    # ```
+    # h = {"foo" => "bar"}
+    #
+    # h.each_with_index do |key, value, index|
+    #   key   # => "foo"
+    #   value # => "bar"
+    #   index # => 0
+    # end
+    #
+    # h.each_with_index(3) do |key, value, index|
+    #   key   # => "foo"
+    #   value # => "bar"
+    #   index # => 3
+    # end
+    # ```
+    def each_with_index(offset = 0)
+      i = offset
+      each do |key, value|
+        yield key, value, i
+        i += 1
+      end
+      self
     end
-    self
-  end
 
-  # Iterates the given block for each element with an arbitrary object given, and returns the initially given object.
-  # ```
-  # evens = (1..10).each_with_object([] of Int32) { |i, a| a << i*2 }
-  # # => [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
-  # ```
-  def each_with_object(memo)
-    each do |k, v|
-      yield(memo, k, v)
+    # Iterates the given block for each element with an arbitrary object given, and returns the initially given object.
+    # ```
+    # evens = (1..10).each_with_object([] of Int32) { |i, a| a << i*2 }
+    # # => [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+    # ```
+    def each_with_object(memo)
+      each do |k, v|
+        yield(memo, k, v)
+      end
+      memo
     end
-    memo
-  end
+  {% end %}
 
   # Returns a new `Array` with all the keys.
   #
@@ -404,7 +419,7 @@ class Hash(K, V)
   # ```
   def keys
     keys = Array(K).new(@size)
-    each { |key| keys << key }
+    each_key { |key| keys << key }
     keys
   end
 
@@ -416,7 +431,7 @@ class Hash(K, V)
   # ```
   def values
     values = Array(V).new(@size)
-    each { |key, value| values << value }
+    each_value { |value| values << value }
     values
   end
 
@@ -443,25 +458,30 @@ class Hash(K, V)
   # h.key_index("qux") # => nil
   # ```
   def key_index(key)
-    each_with_index do |my_key, my_value, i|
+    # TODO: use each_with_index
+    i = 0
+    each do |my_key, my_value|
       return i if key == my_key
+      i += 1
     end
     nil
   end
 
-  # Returns an `Array` populated with the results of each iteration in the given block.
-  #
-  # ```
-  # h = {"foo" => "bar", "baz" => "qux"}
-  # h.map { |k, v| v } # => ["bar", "qux"]
-  # ```
-  def map(&block : K, V -> U)
-    array = Array(U).new(@size)
-    each do |k, v|
-      array.push yield k, v
+  {% if Crystal::VERSION != "0.18.0" %}
+    # Returns an `Array` populated with the results of each iteration in the given block.
+    #
+    # ```
+    # h = {"foo" => "bar", "baz" => "qux"}
+    # h.map { |k, v| v } # => ["bar", "qux"]
+    # ```
+    def map(&block : K, V -> U)
+      array = Array(U).new(@size)
+      each do |k, v|
+        array.push yield k, v
+      end
+      array
     end
-    array
-  end
+  {% end %}
 
   # Returns a new `Hash` with the keys and values of this hash and *other* combined.
   # A value in *other* takes precedence over the one in this hash.
@@ -534,9 +554,15 @@ class Hash(K, V)
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
   def reject(&block : K, V -> U)
-    each_with_object({} of K => V) do |memo, k, v|
-      memo[k] = v unless yield k, v
-    end
+    {% if Crystal::VERSION == "0.18.0" %}
+      each_with_object({} of K => V) do |(k, v), memo|
+        memo[k] = v unless yield k, v
+      end
+    {% else %}
+      each_with_object({} of K => V) do |memo, k, v|
+        memo[k] = v unless yield k, v
+      end
+    {% end %}
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather that returning a new one. Returns nil if no changes were made.
@@ -617,11 +643,13 @@ class Hash(K, V)
     hash
   end
 
-  # Returns a `Tuple` of the first key-value pair in the hash.
-  def first
-    first = @first.not_nil!
-    {first.key, first.value}
-  end
+  {% if Crystal::VERSION != "0.18.0" %}
+    # Returns a `Tuple` of the first key-value pair in the hash.
+    def first
+      first = @first.not_nil!
+      {first.key, first.value}
+    end
+  {% end %}
 
   # Returns the first key in the hash.
   def first_key

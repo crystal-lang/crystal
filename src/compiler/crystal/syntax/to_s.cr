@@ -812,7 +812,7 @@ module Crystal
       end
 
       if named_args = node.named_args
-        named_args.each do |named_arg, i|
+        named_args.each do |named_arg|
           @str << ", " if printed_arg
           @str << named_arg.name
           @str << ": "

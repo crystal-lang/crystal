@@ -3,6 +3,10 @@
 # Two headers are considered the same if their downcase representation is the same
 # (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
+  {% if Crystal::VERSION == "0.18.0" %}
+    include Enumerable({String, Array(String)})
+  {% end %}
+
   # :nodoc:
   record Key, name : String do
     forward_missing_to @name
@@ -177,9 +181,15 @@ struct HTTP::Headers
   end
 
   def each
-    @hash.each do |key, value|
-      yield key.name, value
-    end
+    {% if Crystal::VERSION == "0.18.0" %}
+      @hash.each do |key, value|
+        yield({key.name, value})
+      end
+    {% else %}
+      @hash.each do |key, value|
+        yield key.name, value
+      end
+    {% end %}
   end
 
   def get(key)
@@ -208,7 +218,9 @@ struct HTTP::Headers
 
   def to_s(io : IO)
     io << "HTTP::Headers{"
-    @hash.each_with_index do |key, values, index|
+    # TODO: use each_with_index
+    index = 0
+    @hash.each do |key, values|
       io << ", " if index > 0
       key.name.inspect(io)
       io << " => "
@@ -217,6 +229,7 @@ struct HTTP::Headers
       else
         values.inspect(io)
       end
+      index += 1
     end
     io << "}"
   end

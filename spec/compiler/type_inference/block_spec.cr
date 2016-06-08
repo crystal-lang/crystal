@@ -71,8 +71,8 @@ describe "Block inference" do
     ") { union_of(array_of(int32), array_of(float64)) }
   end
 
-  it "uses block arg, has nil type" do
-    assert_type(%(
+  it "uses block arg, too many arguments" do
+    assert_error %(
       def foo
         yield
       end
@@ -80,7 +80,8 @@ describe "Block inference" do
       foo do |x|
         x
       end
-      )) { nil_type }
+      ),
+      "too many block arguments (given 1, expected maximum 0)"
   end
 
   it "yields with different types" do
@@ -319,7 +320,7 @@ describe "Block inference" do
   end
 
   it "errors when using local variable with block argument name" do
-    assert_error "def foo; yield; end; foo { |a| }; a",
+    assert_error "def foo; yield 1; end; foo { |a| }; a",
       "undefined local variable or method 'a'"
   end
 
@@ -1189,7 +1190,7 @@ describe "Block inference" do
         tup = {1, 'a'}
         yield *tup
 
-        yield true
+        yield true, nil
       end
 
       foo do |x, y|
@@ -1223,7 +1224,7 @@ describe "Block inference" do
   end
 
   it "uses splat in block argument, but not enough yield expressions" do
-    assert_type(%(
+    assert_error %(
       def foo
         yield 1
       end
@@ -1231,7 +1232,8 @@ describe "Block inference" do
       foo do |x, y, z, *w|
         {x, y, z, w}
       end
-      )) { tuple_of([int32, nil_type, nil_type, tuple_of([] of Type)]) }
+      ),
+      "too many block arguments (given 3+, expected maximum 1+)"
   end
 
   it "errors if splat argument becomes a union" do
@@ -1260,6 +1262,19 @@ describe "Block inference" do
       )) { tuple_of([int32, char]) }
   end
 
+  it "auto-unpacks tuple, less than max" do
+    assert_type(%(
+      def foo
+        tup = {1, 'a', true}
+        yield tup
+      end
+
+      foo do |x, y|
+        {x, y}
+      end
+      )) { tuple_of([int32, char]) }
+  end
+
   it "auto-unpacks with block arg type" do
     assert_type(%(
       def foo(&block : {Int32, Int32} -> _)
@@ -1272,55 +1287,29 @@ describe "Block inference" do
       )) { int32 }
   end
 
-  it "auto-unpacks tuple, more args" do
-    assert_type(%(
+  it "doesn't auto-unpacks tuple, more args" do
+    assert_error %(
       def foo
         tup = {1, 'a'}
         yield tup, true
       end
 
       foo do |x, y, z|
-        {x, y, z}
       end
-      )) { tuple_of([int32, char, bool]) }
+      ),
+      "too many block arguments (given 3, expected maximum 2)"
   end
 
-  it "auto-unpacks tuple, more args, with block arg type" do
-    assert_type(%(
-      def foo(&block : {Int32, Char}, Bool -> _)
+  it "auto-unpacks tuple, too many args" do
+    assert_error %(
+      def foo
         tup = {1, 'a'}
-        yield tup, true
+        yield tup
       end
 
       foo do |x, y, z|
-        {x, y, z}
       end
-      )) { tuple_of([int32, char, bool]) }
-  end
-
-  it "doesn't auto-unpack if not enough arguments" do
-    assert_type(%(
-      def foo
-        tup = {1, 'a'}
-        yield tup, true
-      end
-
-      foo do |x, y|
-        {x, y}
-      end
-      )) { tuple_of([tuple_of([int32, char]), bool]) }
-  end
-
-  it "doesn't auto-unpack if not enough arguments, with block arg type" do
-    assert_type(%(
-      def foo(&block : {Int32, Char}, Bool -> _)
-        tup = {1, 'a'}
-        yield tup, true
-      end
-
-      foo do |x, y|
-        {x, y}
-      end
-      )) { tuple_of([tuple_of([int32, char]), bool]) }
+      ),
+      "too many block arguments (given 3, expected maximum 2)"
   end
 end

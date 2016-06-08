@@ -1285,76 +1285,45 @@ module Crystal
 
         # Now assign exp values to block arguments
         if splat_index
-          # If there are less expressions than the number of block arguments, we
-          # can go from left to right, and the argument at the splat index will
-          # be the empty tuple
-          if exp_values.size < (block.args.size - 1)
-            block.args.each_with_index do |arg, i|
-              block_var = block_context.vars[arg.name]
-              if i == splat_index
-                exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
-                  {tuple_type, llvm_nil}
-                end
-                exp_type = arg.type
-              elsif i < exp_values.size
-                exp_value, exp_type = exp_values[i]
-              else
-                exp_value, exp_type = llvm_nil, @mod.nil
-              end
-              assign block_var.pointer, block_var.type, exp_type, exp_value
-            end
-          else
-            j = 0
-            block.args.each_with_index do |arg, i|
-              block_var = block_context.vars[arg.name]
-              if i == splat_index
-                exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
-                  exp_value, exp_type = exp_values[j]
-                  j += 1
-                  {exp_type, exp_value}
-                end
-                exp_type = arg.type
-              else
+          j = 0
+          block.args.each_with_index do |arg, i|
+            block_var = block_context.vars[arg.name]
+            if i == splat_index
+              exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
                 exp_value, exp_type = exp_values[j]
                 j += 1
+                {exp_type, exp_value}
               end
-              assign block_var.pointer, block_var.type, exp_type, exp_value
+              exp_type = arg.type
+            else
+              exp_value, exp_type = exp_values[j]
+              j += 1
             end
+            assign block_var.pointer, block_var.type, exp_type, exp_value
           end
         else
-          exp_values.each do |(exp_value, exp_type)|
-            # Check if tuple unpacking is needed
-            if i == 0 && exp_type.is_a?(TupleInstanceType) &&
-               ((exp_values.size == 1 && block.args.size > 1) ||
-               block.args.size > exp_type.tuple_types.size)
-              exp_type.tuple_types.each do |tuple_type|
-                arg = block.args[i]?
-                if arg
-                  t_type = tuple_type
-                  t_value = codegen_tuple_indexer(exp_type, exp_value, i)
-                  block_var = block_context.vars[arg.name]
-                  assign block_var.pointer, block_var.type, t_type, t_value
-                end
-                i += 1
+          # Check if tuple unpacking is needed
+          if exp_values.size == 1 &&
+             (exp_type = exp_values.first[1]).is_a?(TupleInstanceType) &&
+             block.args.size > 1
+            exp_value = exp_values.first[0]
+            exp_type.tuple_types.each_with_index do |tuple_type, i|
+              arg = block.args[i]?
+              if arg
+                t_type = tuple_type
+                t_value = codegen_tuple_indexer(exp_type, exp_value, i)
+                block_var = block_context.vars[arg.name]
+                assign block_var.pointer, block_var.type, t_type, t_value
               end
-            else
+            end
+          else
+            exp_values.each_with_index do |(exp_value, exp_type), i|
               if arg = block.args[i]?
                 block_var = block_context.vars[arg.name]
                 assign block_var.pointer, block_var.type, exp_type, exp_value
               end
-              i += 1
             end
           end
-        end
-      end
-
-      # Then assign nil to remaining block args
-      unless splat_index
-        while i < block.args.size
-          arg = block.args[i]
-          block_var = block_context.vars[arg.name]
-          assign block_var.pointer, block_var.type, @mod.nil, llvm_nil
-          i += 1
         end
       end
 

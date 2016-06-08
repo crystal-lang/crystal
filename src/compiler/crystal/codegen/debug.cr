@@ -75,13 +75,16 @@ module Crystal
       tmp_debug_type = di_builder.temporary_md_node(LLVM::Context.global)
       debug_type_cache[type] = tmp_debug_type
 
-      ivars.each_with_index do |name, ivar, idx|
+      # TOOD: use each_with_index
+      idx = 0
+      ivars.each do |name, ivar|
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
           offset = @mod.target_machine.data_layout.offset_of_element(struct_type, idx + (type.struct? ? 0 : 1))
           size = @mod.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
           member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, offset * 8, 0, ivar_debug_type)
           element_types << member
         end
+        idx += 1
       end
 
       size = @mod.target_machine.data_layout.size_in_bits(struct_type)
