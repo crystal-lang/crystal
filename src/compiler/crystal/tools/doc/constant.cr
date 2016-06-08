@@ -28,9 +28,9 @@ class Crystal::Doc::Constant
 
   def to_json(io)
     {
-      :name  => name,
-      :value => value.to_s,
-      :doc   => doc,
+      name:  name,
+      value: value.to_s,
+      doc:   doc,
     }.to_json(io)
   end
 end
