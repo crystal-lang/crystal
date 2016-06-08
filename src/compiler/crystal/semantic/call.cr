@@ -745,9 +745,25 @@ class Crystal::Call
       output_type = mod.nil if output_type.void?
     end
 
-    # Bind block arguments to the yield vars, if any, or to nil otherwise
-    block.args.each_with_index do |arg, i|
-      arg.bind_to(yield_vars.try(&.[i]?) || mod.nil_var)
+    if yield_vars
+      i = 0
+      yield_vars.each do |yield_var|
+        yield_var_type = yield_var.type
+        # Check if tuple unpkacing is needed
+        if i == 0 && yield_var_type.is_a?(TupleInstanceType) &&
+           ((yield_vars.size == 1 && block.args.size > 1) ||
+           block.args.size > yield_var_type.tuple_types.size)
+          yield_var_type.tuple_types.each do |tuple_type|
+            arg = block.args[i]?
+            arg.type = tuple_type if arg
+            i += 1
+          end
+        else
+          arg = block.args[i]?
+          arg.bind_to(yield_var || mod.nil_var) if arg
+          i += 1
+        end
+      end
     end
 
     # If the block is used, we convert it to a function pointer

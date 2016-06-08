@@ -1432,4 +1432,43 @@ describe "Code gen: block" do
       end
       )).to_i.should eq(42)
   end
+
+  it "auto-unpacks tuple" do
+    run(%(
+      def foo
+        tup = {1, 2, 4}
+        yield tup
+      end
+
+      foo do |x, y, z|
+        (x + y) * z
+      end
+      )).to_i.should eq((1 + 2) * 4)
+  end
+
+  it "auto-unpacks tuple, more args" do
+    run(%(
+      def foo
+        tup = {1, 2}
+        yield tup, 4
+      end
+
+      foo do |x, y, z|
+        (x + y) * z
+      end
+      )).to_i.should eq((1 + 2) * 4)
+  end
+
+  it "doesn't auto-unpack if not enough args" do
+    run(%(
+      def foo
+        tup = {1, 2}
+        yield tup, 4
+      end
+
+      foo do |x, y|
+        (x[0] + x[1]) * y
+      end
+      )).to_i.should eq((1 + 2) * 4)
+  end
 end

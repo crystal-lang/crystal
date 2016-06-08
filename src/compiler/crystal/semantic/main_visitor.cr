@@ -682,24 +682,12 @@ module Crystal
       node.scope.try &.accept self
       node.exps.each &.accept self
 
-      if (yield_vars = @yield_vars) && !node.scope
-        yield_vars.each_with_index do |var, i|
-          exp = node.exps[i]?
-          if exp
-            if (exp_type = exp.type?) && !exp_type.implements?(var.type)
-              exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp_type}"
-            end
-
-            exp.freeze_type = var.type
-          elsif !var.type.nil_type?
-            node.raise "missing argument ##{i + 1} of yield with type #{var.type}"
-          end
-        end
-      end
-
       # We use a binder to support splats and other complex forms
       binder = block.binder ||= YieldBlockBinder.new(@mod, block)
       binder.add_yield(node)
+      if (yield_vars = @yield_vars) && !node.scope
+        binder.yield_vars ||= yield_vars
+      end
       binder.update
 
       unless block.visited
