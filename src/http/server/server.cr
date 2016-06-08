@@ -61,11 +61,11 @@ require "../common"
 # ```
 # require "http/server"
 #
-# Server.new("127.0.0.1", 8080, [
-#   ErrorHandler.new,
-#   LogHandler.new,
-#   DeflateHandler.new,
-#   StaticFileHandler.new("."),
+# HTTP::Server.new("127.0.0.1", 8080, [
+#   HTTP::ErrorHandler.new,
+#   HTTP::LogHandler.new,
+#   HTTP::DeflateHandler.new,
+#   HTTP::StaticFileHandler.new("."),
 # ]).listen
 # ```
 #
@@ -78,8 +78,8 @@ require "../common"
 #
 # server = HTTP::Server.new("0.0.0.0", 8080,
 #   [
-#     ErrorHandler.new,
-#     LogHandler.new,
+#     HTTP::ErrorHandler.new,
+#     HTTP::LogHandler.new,
 #   ]) do |context|
 #   context.response.content_type = "text/plain"
 #   context.response.print "Hello world!"
