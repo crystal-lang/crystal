@@ -3,7 +3,7 @@ class Crystal::Doc::Generator
 
   @base_dir : String
 
-  def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
+  def initialize(@program : Program, @included_dirs : Array(String), @format = "html", @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""

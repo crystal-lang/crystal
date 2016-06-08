@@ -348,10 +348,18 @@ class Crystal::Command
   end
 
   private def docs
+    # Default output is HTML
+    output_format = "html"
+    output_dir = "./doc"
+
     OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal docs [options] [file]\n\nOptions:"
 
-      opts.on("-f html|json", "--format text|json", "Output format text (default) or json") do |f|
+      opts.on("-o DIR", "--output DIR", "Directory to output documentation files to ") do |dir|
+        output_dir = dir
+      end
+
+      opts.on("-f html|json", "--format text|json", "Output format HTML (default) or HTML") do |f|
         output_format = f
       end
 
@@ -375,7 +383,7 @@ class Crystal::Command
     compiler = Compiler.new
     compiler.wants_doc = true
     result = compiler.type_top_level sources
-    Crystal.generate_docs result.program, included_dirs
+    Crystal.generate_docs(result.program, included_dirs, output_format, output_dir)
   end
 
   private def types
