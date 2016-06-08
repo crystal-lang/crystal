@@ -351,7 +351,7 @@ class Crystal::Command
     OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal docs [options] [file]\n\nOptions:"
 
-      opts.on("-f text|json", "--format text|json", "Output format text (default) or json") do |f|
+      opts.on("-f html|json", "--format text|json", "Output format text (default) or json") do |f|
         output_format = f
       end
 
