@@ -22,15 +22,25 @@ class Crystal::Doc::Generator
       types.insert 0, program_type
     end
 
-    generate_docs program_type, types if @format == "html"
-    types.to_json(STDOUT) if @format == "json"
+    case @format
+    when "html"
+      generate_html_docs program_type, types
+    when "json"
+      generate_json_docs types
+    else
+      raise "Unknown format specified: #{@format}"
+    end
   end
 
   def program_type
     type(@program)
   end
 
-  def generate_docs(program_type, types)
+  def generate_json_docs(types)
+    types.to_json(STDOUT)
+  end
+
+  def generate_html_docs(program_type, types)
     copy_files
     generate_types_docs types, @dir, types
     generate_readme program_type, types
