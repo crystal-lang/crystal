@@ -422,3 +422,5 @@ struct Slice(T)
     end
   end
 end
+
+alias Bytes = Slice(UInt8)
