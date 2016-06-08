@@ -365,7 +365,7 @@ class Crystal::Command
 
       opts.on("-h", "--help", "Show this message") do
         puts opts
-        exit 1
+        exit
       end
     end
 
