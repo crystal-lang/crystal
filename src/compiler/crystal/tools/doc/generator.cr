@@ -23,7 +23,7 @@ class Crystal::Doc::Generator
     end
 
     generate_docs program_type, types if @format == "html"
-    File.write("#{@dir}/docs.json", types.to_json) if @format == "json"
+    types.to_json(STDOUT) if @format == "json"
   end
 
   def program_type

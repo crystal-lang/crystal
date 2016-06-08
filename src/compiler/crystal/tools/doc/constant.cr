@@ -1,4 +1,5 @@
 require "./item"
+require "json"
 
 class Crystal::Doc::Constant
   include Item
@@ -23,5 +24,13 @@ class Crystal::Doc::Constant
 
   def formatted_value
     Highlighter.highlight value.to_s
+  end
+
+  def to_json(io)
+    {
+      :name => name,
+      :value => value.to_s,
+      :doc => doc
+    }.to_json(io)
   end
 end

@@ -731,7 +731,24 @@ class Crystal::Doc::Type
   def to_json(io)
     {
       :kind => kind,
-      :name => name
+      :name => name,
+      ## :type_vars => type_vars,
+      :abstract => abstract?,
+      # :superclass => superclass,
+      # :ancestors => ancestors,
+      ## :locations => locations,
+      :types => types,
+      # :instance_methods => instance_methods,
+      # :class_methods => class_methods,
+      :macros => macros,
+      :constants => constants,
+      # :included_modules => included_modules,
+      # :extended_modules => extended_modules,
+      # :subclasses => subclasses,
+      # :including_types => including_types,
+      # :container => container,
+      :full_name => full_name,
+      :doc => doc
     }.to_json(io)
   end
 end
