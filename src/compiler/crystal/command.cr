@@ -359,7 +359,7 @@ class Crystal::Command
         output_dir = dir
       end
 
-      opts.on("-f html|json", "--format text|json", "Output format HTML (default) or HTML") do |f|
+      opts.on("-f html|json", "--format text|json", "Output format HTML (default) or JSON") do |f|
         output_format = f
       end
 

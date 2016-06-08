@@ -730,11 +730,9 @@ class Crystal::Doc::Type
 
   def to_json(io)
     {
-      kind: kind,
-      name: name,
-      # type_vars: type_vars,
-      abstract: abstract?,
-      # superclass: superclass,
+      kind:             kind,
+      name:             name,
+      abstract:         abstract?,
       ancestors:        ancestors.map(&.full_name),
       locations:        locations,
       types:            types,
@@ -746,9 +744,8 @@ class Crystal::Doc::Type
       extended_modules: extended_modules.map(&.full_name),
       subclasses:       subclasses.map(&.full_name),
       including_types:  including_types.map(&.full_name),
-      # container: container,
-      full_name: full_name,
-      doc:       doc,
+      full_name:        full_name,
+      doc:              doc,
     }.to_json(io)
   end
 end
