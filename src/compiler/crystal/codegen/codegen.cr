@@ -1322,13 +1322,28 @@ module Crystal
             end
           end
         else
-          i = 0
           exp_values.each do |(exp_value, exp_type)|
-            if arg = block.args[i]?
-              block_var = block_context.vars[arg.name]
-              assign block_var.pointer, block_var.type, exp_type, exp_value
+            # Check if tuple unpacking is needed
+            if i == 0 && exp_type.is_a?(TupleInstanceType) &&
+               ((exp_values.size == 1 && block.args.size > 1) ||
+               block.args.size > exp_type.tuple_types.size)
+              exp_type.tuple_types.each do |tuple_type|
+                arg = block.args[i]?
+                if arg
+                  t_type = tuple_type
+                  t_value = codegen_tuple_indexer(exp_type, exp_value, i)
+                  block_var = block_context.vars[arg.name]
+                  assign block_var.pointer, block_var.type, t_type, t_value
+                end
+                i += 1
+              end
+            else
+              if arg = block.args[i]?
+                block_var = block_context.vars[arg.name]
+                assign block_var.pointer, block_var.type, exp_type, exp_value
+              end
+              i += 1
             end
-            i += 1
           end
         end
       end

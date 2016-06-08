@@ -193,17 +193,7 @@ describe "Block inference" do
 
       foo {}
       ",
-      "type must be Int32, not (Float64 | Int32)"
-  end
-
-  it "doesn't report error if yields nil but nothing is yielded" do
-    assert_type("
-      def foo(&block: Int32, Nil -> )
-        yield 1
-      end
-
-      foo { |x| x }
-      ") { int32 }
+      "argument #1 of yield expected to be Int32, not (Float64 | Int32)"
   end
 
   it "reports error if missing arguments to yield" do
@@ -214,7 +204,7 @@ describe "Block inference" do
 
       foo { |x| x }
       ",
-      "missing argument #2 of yield with type Int32"
+      "wrong number of yield arguments (given 1, expected 2)"
   end
 
   it "reports error if block didn't return expected type" do
@@ -1255,5 +1245,82 @@ describe "Block inference" do
       end
       ),
       "block splat argument must be a tuple type"
+  end
+
+  it "auto-unpacks tuple" do
+    assert_type(%(
+      def foo
+        tup = {1, 'a'}
+        yield tup
+      end
+
+      foo do |x, y|
+        {x, y}
+      end
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "auto-unpacks with block arg type" do
+    assert_type(%(
+      def foo(&block : {Int32, Int32} -> _)
+        yield({1, 2})
+      end
+
+      foo do |x, y|
+        x + y
+      end
+      )) { int32 }
+  end
+
+  it "auto-unpacks tuple, more args" do
+    assert_type(%(
+      def foo
+        tup = {1, 'a'}
+        yield tup, true
+      end
+
+      foo do |x, y, z|
+        {x, y, z}
+      end
+      )) { tuple_of([int32, char, bool]) }
+  end
+
+  it "auto-unpacks tuple, more args, with block arg type" do
+    assert_type(%(
+      def foo(&block : {Int32, Char}, Bool -> _)
+        tup = {1, 'a'}
+        yield tup, true
+      end
+
+      foo do |x, y, z|
+        {x, y, z}
+      end
+      )) { tuple_of([int32, char, bool]) }
+  end
+
+  it "doesn't auto-unpack if not enough arguments" do
+    assert_type(%(
+      def foo
+        tup = {1, 'a'}
+        yield tup, true
+      end
+
+      foo do |x, y|
+        {x, y}
+      end
+      )) { tuple_of([tuple_of([int32, char]), bool]) }
+  end
+
+  it "doesn't auto-unpack if not enough arguments, with block arg type" do
+    assert_type(%(
+      def foo(&block : {Int32, Char}, Bool -> _)
+        tup = {1, 'a'}
+        yield tup, true
+      end
+
+      foo do |x, y|
+        {x, y}
+      end
+      )) { tuple_of([tuple_of([int32, char]), bool]) }
   end
 end
