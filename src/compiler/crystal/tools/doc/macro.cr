@@ -98,7 +98,7 @@ class Crystal::Doc::Macro
     {
       :name => name,
       :args => args_to_s,
-      :doc => doc
+      :doc  => doc,
     }.to_json(io)
   end
 end

@@ -732,15 +732,15 @@ class Crystal::Doc::Type
     {
       :kind => kind,
       :name => name,
-      ## :type_vars => type_vars,
+      # # :type_vars => type_vars,
       :abstract => abstract?,
       # :superclass => superclass,
       # :ancestors => ancestors,
-      ## :locations => locations,
+      # # :locations => locations,
       :types => types,
       # :instance_methods => instance_methods,
       # :class_methods => class_methods,
-      :macros => macros,
+      :macros    => macros,
       :constants => constants,
       # :included_modules => included_modules,
       # :extended_modules => extended_modules,
@@ -748,7 +748,7 @@ class Crystal::Doc::Type
       # :including_types => including_types,
       # :container => container,
       :full_name => full_name,
-      :doc => doc
+      :doc       => doc,
     }.to_json(io)
   end
 end
