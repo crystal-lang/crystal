@@ -28,7 +28,7 @@ class Crystal::Doc::Generator
     when "json"
       generate_json_docs types
     else
-      raise "Unknown format specified: #{@format}"
+      abort "Unknown format specified: #{@format}"
     end
   end
 
@@ -299,6 +299,17 @@ class Crystal::Doc::Generator
   end
 
   record RelativeLocation, filename : String, line_number : Int32, url : String?
+
+  struct RelativeLocation
+    def to_json(io)
+      {
+        filename:    @filename,
+        line_number: @line_number,
+        url:         @url,
+      }.to_json(io)
+    end
+  end
+
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)

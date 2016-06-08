@@ -728,48 +728,24 @@ class Crystal::Doc::Type
     )
   end
 
-  def included_modules_name_array
-    included_modules.map do |mod|
-      mod.full_name
-    end
-  end
-
-  def extended_modules_name_array
-    extended_modules.map do |mod|
-      mod.full_name
-    end
-  end
-
-  def subclasses_full_name_array
-    subclasses.map do |subclass|
-      subclass.full_name
-    end
-  end
-
-  def including_types_name_array
-    including_types.map do |type|
-      type.full_name
-    end
-  end
-
   def to_json(io)
     {
       kind: kind,
       name: name,
-      # # type_vars: type_vars,
+      # type_vars: type_vars,
       abstract: abstract?,
       # superclass: superclass,
-      # ancestors: ancestors,
-      # # :locations => locations,
-      types: types,
-      # instance_methods: instance_methods,
-      # class_methods: class_methods,
+      ancestors:        ancestors.map(&.full_name),
+      locations:        locations,
+      types:            types,
+      instance_methods: instance_methods,
+      class_methods:    class_methods,
       macros:           macros,
       constants:        constants,
-      included_modules: included_modules_name_array,
-      extended_modules: extended_modules_name_array,
-      subclasses:       subclasses_full_name_array,
-      including_types:  including_types_name_array,
+      included_modules: included_modules.map(&.full_name),
+      extended_modules: extended_modules.map(&.full_name),
+      subclasses:       subclasses.map(&.full_name),
+      including_types:  including_types.map(&.full_name),
       # container: container,
       full_name: full_name,
       doc:       doc,

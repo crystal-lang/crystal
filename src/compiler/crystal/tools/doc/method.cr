@@ -1,5 +1,6 @@
 require "html"
 require "uri"
+require "json"
 require "./item"
 
 class Crystal::Doc::Method
@@ -174,5 +175,16 @@ class Crystal::Doc::Method
 
   def has_args?
     !@def.args.empty? || @def.block_arg || @def.yields
+  end
+
+  def to_json(io)
+    {
+      name:     name,
+      args:     args_to_s,
+      doc:      doc,
+      prefix:   prefix,
+      abstract: abstract?,
+      kind:     kind,
+    }.to_json(io)
   end
 end
