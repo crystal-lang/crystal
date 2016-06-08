@@ -1,4 +1,5 @@
 require "./item"
+require "json"
 
 class Crystal::Doc::Type
   include Item
@@ -725,5 +726,12 @@ class Crystal::Doc::Type
         "#{name}"
       end
     )
+  end
+
+  def to_json(io)
+    {
+      :kind => kind,
+      :name => name
+    }.to_json(io)
   end
 end

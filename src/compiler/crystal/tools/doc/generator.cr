@@ -1,3 +1,5 @@
+require "json"
+
 class Crystal::Doc::Generator
   getter program : Program
 
@@ -20,7 +22,8 @@ class Crystal::Doc::Generator
       types.insert 0, program_type
     end
 
-    generate_docs program_type, types
+    generate_docs program_type, types if @format == "html"
+    File.write("#{@dir}/docs.json", types.to_json) if @format == "json"
   end
 
   def program_type
