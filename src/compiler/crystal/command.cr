@@ -355,7 +355,7 @@ class Crystal::Command
     OptionParser.parse(options) do |opts|
       opts.banner = "Usage: crystal docs [options] [file]\n\nOptions:"
 
-      opts.on("-o DIR", "--output DIR", "Directory to output documentation files to ") do |dir|
+      opts.on("-o DIR", "--output DIR", "Directory to output documentation files to (Default: ./doc)") do |dir|
         output_dir = dir
       end
 
