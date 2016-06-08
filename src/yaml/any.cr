@@ -132,7 +132,7 @@ struct YAML::Any
         yield Any.new(elem), Any.new(nil)
       end
     when Hash
-      object.each do |key, value|
+      object.each do |(key, value)|
         yield Any.new(key), Any.new(value)
       end
     else

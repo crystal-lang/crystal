@@ -20,7 +20,7 @@ class Event::SignalChildHandler
 
   def after_fork
     @pending.clear
-    @waiting.each { |pid, chan| chan.send(nil) }
+    @waiting.each { |(pid, chan)| chan.send(nil) }
     @waiting.clear
   end
 

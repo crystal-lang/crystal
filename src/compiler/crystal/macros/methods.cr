@@ -1031,7 +1031,7 @@ module Crystal
 
       all_ivars = type.all_instance_vars
       ivars = Array(ASTNode).new(all_ivars.size)
-      all_ivars.each do |name, ivar|
+      all_ivars.each do |(name, ivar)|
         # An instance var might not have a type, so we skip it
         if ivar_type = ivar.type?
           ivars.push MetaVar.new((is_struct ? name : name[1..-1]), ivar_type)
@@ -1062,7 +1062,7 @@ module Crystal
     end
 
     def self.constants(type)
-      names = type.types.map { |name, member_type| MacroId.new(name).as(ASTNode) }
+      names = type.types.map { |(name, member_type)| MacroId.new(name).as(ASTNode) }
       ArrayLiteral.new names
     end
 
@@ -1072,7 +1072,7 @@ module Crystal
 
     def self.methods(type)
       defs = [] of ASTNode
-      type.defs.try &.each do |name, metadatas|
+      type.defs.try &.each do |(name, metadatas)|
         metadatas.each do |metadata|
           defs << metadata.def
         end

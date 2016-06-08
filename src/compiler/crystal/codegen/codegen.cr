@@ -272,7 +272,7 @@ module Crystal
         dump_llvm_regex = Regex.new(env_dump)
       end
 
-      @modules.each do |name, mod|
+      @modules.each do |(name, mod)|
         if @debug
           add_compile_unit_metadata(mod, name == "" ? "main" : name)
         end
@@ -1651,7 +1651,7 @@ module Crystal
 
       in_alloca_block do
         # Allocate all variables which are not closured and don't belong to an outer closure
-        vars.each do |name, var|
+        vars.each do |(name, var)|
           next if name == "self" || context.vars[name]?
 
           var_type = var.type? || @mod.nil
@@ -1743,7 +1743,7 @@ module Crystal
     def undef_vars(vars, obj)
       return unless vars
 
-      vars.each do |name, var|
+      vars.each do |(name, var)|
         # Don't remove special vars because they are local for the entire method
         if var.belongs_to?(obj) && !var.special_var?
           context.vars.delete(name)
@@ -1755,7 +1755,7 @@ module Crystal
       vars = block.vars
       return unless vars
 
-      vars.each do |name, var|
+      vars.each do |(name, var)|
         if var.context == block && bound_to_mod_nil?(var)
           context_var = context.vars[name]
           assign context_var.pointer, context_var.type, @mod.nil, llvm_nil

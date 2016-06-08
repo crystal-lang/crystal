@@ -212,7 +212,7 @@ module HTTP
     # # item => keynote
     # ```
     def each
-      raw_params.each do |name, values|
+      raw_params.each do |(name, values)|
         values.each do |value|
           yield(name, value)
         end

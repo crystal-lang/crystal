@@ -180,7 +180,7 @@ class Crystal::Command
     }
 
     if ARGV.empty?
-      vars.each do |key, value|
+      vars.each do |(key, value)|
         puts "#{key}=#{value.inspect}"
       end
     else

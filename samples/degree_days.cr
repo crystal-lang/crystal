@@ -36,7 +36,7 @@ class DegreeDays
   end
 
   private def sum(ary)
-    ary.reduce(0) { |a, i| a + i }
+    ary.reduce(0) { |i, a| a + i }
   end
 
   private def avg(ary)

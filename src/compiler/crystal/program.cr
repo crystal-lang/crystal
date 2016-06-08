@@ -309,7 +309,7 @@ module Crystal
     end
 
     def named_tuple_of(hash : Hash(String, Type))
-      entries = hash.map { |k, v| NamedArgumentType.new(k, v.as(Type)) }
+      entries = hash.map { |(k, v)| NamedArgumentType.new(k, v.as(Type)) }
       named_tuple_of(entries)
     end
 

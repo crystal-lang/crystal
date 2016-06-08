@@ -123,7 +123,7 @@ class Process
         reopen_io(fork_error || error, STDERR, "w")
 
         ENV.clear if clear_env
-        env.try &.each do |key, val|
+        env.try &.each do |(key, val)|
           if val
             ENV[key] = val
           else

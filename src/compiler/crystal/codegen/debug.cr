@@ -55,7 +55,7 @@ module Crystal
     end
 
     def create_debug_type(type : EnumType)
-      elements = type.types.map do |name, item|
+      elements = type.types.map do |(name, item)|
         value = if item.is_a?(Const) && (value = item.value).is_a?(NumberLiteral)
                   value.value.to_i64 rescue value.value.to_u64
                 else
@@ -75,7 +75,7 @@ module Crystal
       tmp_debug_type = di_builder.temporary_md_node(LLVM::Context.global)
       debug_type_cache[type] = tmp_debug_type
 
-      ivars.each_with_index do |name, ivar, idx|
+      ivars.each_with_index do |(name, ivar), idx|
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
           offset = @mod.target_machine.data_layout.offset_of_element(struct_type, idx + (type.struct? ? 0 : 1))
           size = @mod.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))

@@ -37,7 +37,7 @@ module HTTP
       }.each do |(to, from)|
         it "builds form from #{from}" do
           encoded = Params.build do |form|
-            from.each do |key, values|
+            from.each do |(key, values)|
               values.each do |value|
                 form.add(key, value)
               end

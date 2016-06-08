@@ -363,7 +363,7 @@ class HTTP::Client
   # ```
   def post_form(path, form : Hash, headers : HTTP::Headers? = nil) : HTTP::Client::Response
     body = HTTP::Params.build do |form_builder|
-      form.each do |key, value|
+      form.each do |(key, value)|
         form_builder.add key, value
       end
     end

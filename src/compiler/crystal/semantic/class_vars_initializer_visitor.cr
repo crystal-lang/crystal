@@ -18,8 +18,8 @@ module Crystal
 
       # First gather them all
       class_var_initializers = [] of ClassVarInitializer
-      visitor.class_vars.each do |owner, vars|
-        vars.each do |name, assign_and_node|
+      visitor.class_vars.each do |(owner, vars)|
+        vars.each do |(name, assign_and_node)|
           node = assign_and_node[1]
 
           # If the initializer is nil there's no need to initialize anything

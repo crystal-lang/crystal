@@ -491,7 +491,7 @@ module Crystal
       when UnionType
         haystack.union_types.any? { |sub| type_includes?(sub, needle) }
       when GenericClassInstanceType
-        haystack.type_vars.any? { |key, sub| sub.is_a?(Var) && type_includes?(sub.type, needle) }
+        haystack.type_vars.any? { |(key, sub)| sub.is_a?(Var) && type_includes?(sub.type, needle) }
       else
         false
       end

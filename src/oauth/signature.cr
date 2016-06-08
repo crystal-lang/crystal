@@ -69,7 +69,7 @@ struct OAuth::Signature
     params.add "oauth_token", @oauth_token
     params.add "oauth_version", "1.0"
 
-    @extra_params.try &.each do |key, value|
+    @extra_params.try &.each do |(key, value)|
       params.add key, value
     end
 

@@ -160,7 +160,7 @@ module Crystal
 
       max_name_size = instance_vars.keys.max_of &.size
 
-      instance_vars.each do |name, types|
+      instance_vars.each do |(name, types)|
         print_indent
         print (@indents.last ? "|" : " ")
         if has_subtypes

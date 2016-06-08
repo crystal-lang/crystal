@@ -42,7 +42,7 @@ end
 class Hash
   def to_yaml(yaml : YAML::Generator)
     yaml.indented do
-      each do |k, v|
+      each do |(k, v)|
         yaml.nl
         k.to_yaml(yaml)
         yaml << ": "

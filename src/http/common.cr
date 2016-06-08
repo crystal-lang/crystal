@@ -124,7 +124,7 @@ module HTTP
       headers["Content-Length"] = body.bytesize.to_s
     end
 
-    headers.each do |name, values|
+    headers.each do |(name, values)|
       values.each do |value|
         io << name << ": " << value << "\r\n"
       end

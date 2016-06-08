@@ -246,7 +246,7 @@ class Hash
     end
 
     io.json_object do |object|
-      each do |key, value|
+      each do |(key, value)|
         object.field key, value
       end
     end

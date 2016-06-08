@@ -423,7 +423,7 @@ module Crystal
       end
 
       i = 0
-      type_vars.each do |name, type_var|
+      type_vars.each do |(name, type_var)|
         other_type_var = other.type_vars[i]
         restricted = restrict_type_var(type_var, other_type_var, context)
         return nil unless restricted
@@ -436,7 +436,7 @@ module Crystal
     def restrict(other : GenericClassInstanceType, context)
       return super unless generic_class == other.generic_class
 
-      type_vars.each do |name, type_var|
+      type_vars.each do |(name, type_var)|
         other_type_var = other.type_vars[name]
         restricted = restrict_type_var(type_var, other_type_var, context)
         return super unless restricted
@@ -574,7 +574,7 @@ module Crystal
     def restriction_of?(other : GenericClassInstanceType, owner)
       return nil unless extended_class == other.generic_class
 
-      mapping.each do |name, node|
+      mapping.each do |(name, node)|
         typevar_type = TypeLookup.lookup(extending_class, node)
         other_type = other.type_vars[name].type.devirtualize
         unless typevar_type.implements?(other_type)

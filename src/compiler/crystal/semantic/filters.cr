@@ -288,8 +288,8 @@ module Crystal
     end
 
     def each
-      @filters.each do |key, value|
-        yield key, value
+      @filters.each do |(key, value)|
+        yield({key, value})
       end
     end
 
@@ -299,7 +299,7 @@ module Crystal
 
     def not
       filters = TypeFilters.new
-      each do |key, value|
+      each do |(key, value)|
         filters[key] = value.not
       end
       filters

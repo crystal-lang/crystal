@@ -1581,7 +1581,7 @@ module Crystal
       declared_instance_vars = (@declared_instance_vars ||= {} of String => Array(TypeVar))
       declared_instance_vars[name] = type_vars
 
-      generic_types.each do |key, instance|
+      generic_types.each do |(key, instance)|
         instance.declare_instance_var(name, type_vars)
       end
 
@@ -1593,7 +1593,7 @@ module Crystal
     def initialize_instance(instance)
       if decl_ivars = @declared_instance_vars
         visitor = TypeLookup.new(instance)
-        decl_ivars.each do |name, type_vars|
+        decl_ivars.each do |(name, type_vars)|
           type = instance.solve_type_vars(type_vars)
 
           ivar = MetaTypeVar.new(name, type)

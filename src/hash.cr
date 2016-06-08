@@ -2,6 +2,8 @@
 #
 # See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
 class Hash(K, V)
+  include Enumerable({K, V})
+
   getter size : Int32
   @buckets_size : Int32
   @first : Entry(K, V)?
@@ -175,7 +177,7 @@ class Hash(K, V)
   # hash.key("qux") { |value| value.upcase } # => "QUX"
   # ```
   def key(value)
-    each do |k, v|
+    each do |(k, v)|
       return k if v == value
     end
     yield value
@@ -237,7 +239,7 @@ class Hash(K, V)
   # ```
   def delete_if
     keys_to_delete = [] of K
-    each do |key, value|
+    each do |(key, value)|
       keys_to_delete << key if yield(key, value)
     end
     keys_to_delete.each do |key|
@@ -263,7 +265,7 @@ class Hash(K, V)
   #
   # ```
   # h = {"foo" => "bar"}
-  # h.each do |key, value|
+  # h.each do |(key, value)|
   #   key   # => "foo"
   #   value # => "bar"
   # end
@@ -271,7 +273,7 @@ class Hash(K, V)
   def each
     current = @first
     while current
-      yield current.key, current.value
+      yield({current.key, current.value})
       current = current.fore
     end
     self
@@ -305,7 +307,7 @@ class Hash(K, V)
   # end
   # ```
   def each_key
-    each do |key, value|
+    each do |(key, value)|
       yield key
     end
   end
@@ -336,7 +338,7 @@ class Hash(K, V)
   # end
   # ```
   def each_value
-    each do |key, value|
+    each do |(key, value)|
       yield value
     end
   end
@@ -358,44 +360,6 @@ class Hash(K, V)
     ValueIterator(K, V).new(self, @first)
   end
 
-  # Calls the given block for each key-value pair and passes in the key, value, and index.
-  #
-  # ```
-  # h = {"foo" => "bar"}
-  #
-  # h.each_with_index do |key, value, index|
-  #   key   # => "foo"
-  #   value # => "bar"
-  #   index # => 0
-  # end
-  #
-  # h.each_with_index(3) do |key, value, index|
-  #   key   # => "foo"
-  #   value # => "bar"
-  #   index # => 3
-  # end
-  # ```
-  def each_with_index(offset = 0)
-    i = offset
-    each do |key, value|
-      yield key, value, i
-      i += 1
-    end
-    self
-  end
-
-  # Iterates the given block for each element with an arbitrary object given, and returns the initially given object.
-  # ```
-  # evens = (1..10).each_with_object([] of Int32) { |i, a| a << i*2 }
-  # # => [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
-  # ```
-  def each_with_object(memo)
-    each do |k, v|
-      yield(memo, k, v)
-    end
-    memo
-  end
-
   # Returns a new `Array` with all the keys.
   #
   # ```
@@ -404,7 +368,7 @@ class Hash(K, V)
   # ```
   def keys
     keys = Array(K).new(@size)
-    each { |key| keys << key }
+    each_key { |key| keys << key }
     keys
   end
 
@@ -416,22 +380,8 @@ class Hash(K, V)
   # ```
   def values
     values = Array(V).new(@size)
-    each { |key, value| values << value }
+    each_value { |value| values << value }
     values
-  end
-
-  # Returns a new `Array` of tuples populated with each key-value pair.
-  #
-  # ```
-  # h = {"foo" => "bar", "baz" => "qux"}
-  # h.to_a # => [{"foo", "bar"}, {"baz", "qux}]
-  # ```
-  def to_a
-    ary = Array({K, V}).new(@size)
-    each do |key, value|
-      ary << {key, value}
-    end
-    ary
   end
 
   # Returns the index of the given key, or `nil` when not found.
@@ -443,24 +393,10 @@ class Hash(K, V)
   # h.key_index("qux") # => nil
   # ```
   def key_index(key)
-    each_with_index do |my_key, my_value, i|
+    each_with_index do |(my_key, my_value), i|
       return i if key == my_key
     end
     nil
-  end
-
-  # Returns an `Array` populated with the results of each iteration in the given block.
-  #
-  # ```
-  # h = {"foo" => "bar", "baz" => "qux"}
-  # h.map { |k, v| v } # => ["bar", "qux"]
-  # ```
-  def map(&block : K, V -> U)
-    array = Array(U).new(@size)
-    each do |k, v|
-      array.push yield k, v
-    end
-    array
   end
 
   # Returns a new `Hash` with the keys and values of this hash and *other* combined.
@@ -495,14 +431,14 @@ class Hash(K, V)
   # hash # => {"foo" => "bar", "baz" => "qux"}
   # ```
   def merge!(other : Hash)
-    other.each do |k, v|
+    other.each do |(k, v)|
       self[k] = v
     end
     self
   end
 
   def merge!(other : Hash, &block)
-    other.each do |k, v|
+    other.each do |(k, v)|
       if self.has_key?(k)
         self[k] = yield k, self[k], v
       else
@@ -515,16 +451,16 @@ class Hash(K, V)
   # Returns a new hash consisting of entries for which the block returns true.
   # ```
   # h = {"a" => 100, "b" => 200, "c" => 300}
-  # h.select { |k, v| k > "a" } # => {"b" => 200, "c" => 300}
-  # h.select { |k, v| v < 200 } # => {"a" => 100}
+  # h.select { |(k, v)| k > "a" } # => {"b" => 200, "c" => 300}
+  # h.select { |(k, v)| v < 200 } # => {"a" => 100}
   # ```
-  def select(&block : K, V -> U)
-    reject { |k, v| !yield(k, v) }
+  def select(&block : {K, V} -> U)
+    reject { |(k, v)| !yield({k, v}) }
   end
 
   # Equivalent to `Hash#select` but makes modification on the current object rather that returning a new one. Returns nil if no changes were made
-  def select!(&block : K, V -> U)
-    reject! { |k, v| !yield(k, v) }
+  def select!(&block : {K, V} -> U)
+    reject! { |(k, v)| !yield({k, v}) }
   end
 
   # Returns a new hash consisting of entries for which the block returns false.
@@ -533,17 +469,17 @@ class Hash(K, V)
   # h.reject { |k, v| k > "a" } # => {"a" => 100}
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
-  def reject(&block : K, V -> U)
-    each_with_object({} of K => V) do |memo, k, v|
-      memo[k] = v unless yield k, v
+  def reject(&block : {K, V} -> U)
+    each_with_object({} of K => V) do |(k, v), memo|
+      memo[k] = v unless yield({k, v})
     end
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather that returning a new one. Returns nil if no changes were made.
-  def reject!(&block : K, V -> U)
+  def reject!(&block : {K, V} -> U)
     num_entries = size
-    each do |key, value|
-      delete(key) if yield(key, value)
+    each do |(key, value)|
+      delete(key) if yield({key, value})
     end
     num_entries == size ? nil : self
   end
@@ -576,7 +512,7 @@ class Hash(K, V)
   # Returns a new `Hash` with the given keys.
   #
   # ```
-  # {"a": 1, "b": 2, "c": 3, "d": 4}.select("a", "c") # => {"a": 1, "c": 3}
+  # {"a": 1, "b": 2, "c": 3, "d":}.select("a", "c") # => {"a": 1, "c": 3}
   # ```
   def select(keys : Array | Tuple)
     hash = {} of K => V
@@ -595,7 +531,7 @@ class Hash(K, V)
   # h # => {"a": 1, "c": 3}
   # ```
   def select!(keys : Array | Tuple)
-    each { |k, v| delete(k) unless keys.includes?(k) }
+    each { |(k, v)| delete(k) unless keys.includes?(k) }
     self
   end
 
@@ -615,12 +551,6 @@ class Hash(K, V)
       hash[key] = ary2[i]
     end
     hash
-  end
-
-  # Returns a `Tuple` of the first key-value pair in the hash.
-  def first
-    first = @first.not_nil!
-    {first.key, first.value}
   end
 
   # Returns the first key in the hash.
@@ -720,7 +650,7 @@ class Hash(K, V)
   # Compares with *other*. Returns *true* if all key-value pairs are the same.
   def ==(other : Hash)
     return false unless size == other.size
-    each do |key, value|
+    each do |(key, value)|
       entry = other.find_entry(key)
       return false unless entry && entry.value == value
     end
@@ -735,7 +665,7 @@ class Hash(K, V)
   # ```
   def hash
     hash = size
-    each do |key, value|
+    each do |(key, value)|
       hash += key.hash ^ value.hash
     end
     hash
@@ -751,7 +681,7 @@ class Hash(K, V)
   # ```
   def dup
     hash = Hash(K, V).new(initial_capacity: @buckets_size)
-    each do |key, value|
+    each do |(key, value)|
       hash[key] = value
     end
     hash
@@ -767,7 +697,7 @@ class Hash(K, V)
   # ```
   def clone
     hash = Hash(K, V).new(initial_capacity: @buckets_size)
-    each do |key, value|
+    each do |(key, value)|
       hash[key] = value.clone
     end
     hash
@@ -788,7 +718,7 @@ class Hash(K, V)
     executed = exec_recursive(:to_s) do
       io << "{"
       found_one = false
-      each do |key, value|
+      each do |(key, value)|
         io << ", " if found_one
         key.inspect(io)
         io << " => "
@@ -827,79 +757,10 @@ class Hash(K, V)
   # ```
   def invert
     hash = Hash(V, K).new(initial_capacity: @buckets_size)
-    self.each do |k, v|
+    self.each do |(k, v)|
       hash[v] = k
     end
     hash
-  end
-
-  # Yields all key-value pairs to the given block, and returns *true*
-  # if the block returns a truthy value for all key-value pairs, else *false*.
-  #
-  # ```
-  # hash = {
-  #   "foo":   "bar",
-  #   "hello": "world",
-  # }
-  # hash.all? { |k, v| v.is_a? String } # => true
-  # hash.all? { |k, v| v.size == 3 }    # => false
-  # ```
-  def all?
-    each do |k, v|
-      return false unless yield(k, v)
-    end
-    true
-  end
-
-  # Yields all key-value pairs to the given block, and returns *true*
-  # if the block returns a truthy value for any key-value pair, else *false*.
-  #
-  # ```
-  # hash = {
-  #   "foo":   "bar",
-  #   "hello": "world",
-  # }
-  # hash.any? { |k, v| v.is_a? Int } # => false
-  # hash.any? { |k, v| v.size == 3 } # => true
-  # ```
-  def any?
-    each do |k, v|
-      return true if yield(k, v)
-    end
-    false
-  end
-
-  # Returns *true* if a `Hash` has any key-value pair.
-  def any?
-    !empty?
-  end
-
-  # Yields all key-value pairs to the given block with a initial value *memo*,
-  # which is replaced with each returned value in iteration.
-  # Returns the last value of *memo*.
-  #
-  # ```
-  # prices = {
-  #   "apple":  5,
-  #   "lemon":  3,
-  #   "papaya": 6,
-  #   "orange": 4,
-  # }
-  #
-  # prices.reduce("apple") do |highest, item, price|
-  #   if price > prices[highest]
-  #     item
-  #   else
-  #     highest
-  #   end
-  # end
-  # # => "papaya"
-  # ```
-  def reduce(memo)
-    each do |k, v|
-      memo = yield(memo, k, v)
-    end
-    memo
   end
 
   protected def find_entry(key)

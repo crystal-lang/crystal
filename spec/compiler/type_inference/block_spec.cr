@@ -820,16 +820,16 @@ describe "Block inference" do
 
       class Hash
         def map
-          ary = Array(typeof(yield first_key, first_value)).new(@size)
-          each do |k, v|
-            ary.push yield k, v
+          ary = Array(typeof(yield({first_key, first_value}))).new(@size)
+          each do |(k, v)|
+            ary.push(yield({k, v}))
           end
           ary
         end
       end
 
       hash = {} of Int32 => Int32
-      z = hash.map {|key| key + 1 }
+      z = hash.map {|(key, value)| key + 1 }
       hash[1] = z.size
       z
       )) { array_of int32 }

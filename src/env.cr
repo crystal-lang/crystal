@@ -12,6 +12,8 @@ require "c/stdlib"
 #     # Later use that env var.
 #     puts ENV["PORT"].to_i
 module ENV
+  extend Enumerable({String, String})
+
   # Retrieves the value for environment variable named `key` as a `String`.
   # Raises `KeyError` if the named variable does not exist.
   def self.[](key : String) : String
@@ -70,14 +72,14 @@ module ENV
   # Returns an array of all the environment variable names.
   def self.keys : Array(String)
     keys = [] of String
-    each { |key, v| keys << key }
+    each { |(key, v)| keys << key }
     keys
   end
 
   # Returns an array of all the environment variable values.
   def self.values : Array(String)
     values = [] of String
-    each { |k, value| values << value }
+    each { |(k, value)| values << value }
     values
   end
 
@@ -95,7 +97,7 @@ module ENV
   # Iterates over all `KEY=VALUE` pairs of environment variables, yielding both
   # the `key` and `value`.
   #
-  #     ENV.each do |key, value|
+  #     ENV.each do |(key, value)|
   #       puts "#{key} => #{value}"
   #     end
   def self.each
@@ -106,7 +108,7 @@ module ENV
         key_value = String.new(environ_value).split('=', 2)
         key = key_value[0]
         value = key_value[1]? || ""
-        yield key, value
+        yield({key, value})
         environ_ptr += 1
       else
         break
@@ -122,7 +124,7 @@ module ENV
   def self.inspect(io)
     io << "{"
     found_one = false
-    each do |key, value|
+    each do |(key, value)|
       io << ", " if found_one
       key.inspect(io)
       io << " => "

@@ -386,7 +386,7 @@ module Enumerable(T)
     found = false
 
     each do |elem|
-      memo = found ? (yield memo, elem) : elem
+      memo = found ? (yield elem, memo) : elem
       found = true
     end
 
@@ -399,7 +399,7 @@ module Enumerable(T)
   #
   def reduce(memo)
     each do |elem|
-      memo = yield memo, elem
+      memo = yield elem, memo
     end
     memo
   end
@@ -890,7 +890,7 @@ module Enumerable(T)
   #
   #     ([] of String).sum(1) { |name| name.size } #=> 1
   def sum(initial, &block)
-    reduce(initial) { |memo, e| memo + (yield e) }
+    reduce(initial) { |e, memo| memo + (yield e) }
   end
 
   # Multiplies all the elements in the collection together.
@@ -943,7 +943,7 @@ module Enumerable(T)
   #
   #     ([] of String).product(1) { |name| name.size } #=> 1
   def product(initial : Number, &block)
-    reduce(initial) { |memo, e| memo * (yield e) }
+    reduce(initial) { |e, memo| memo * (yield e) }
   end
 
   # Returns an array with the first *count* elements in the collection.
