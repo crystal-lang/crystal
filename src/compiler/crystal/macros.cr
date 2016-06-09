@@ -571,6 +571,11 @@ module Crystal::Macros
     # Only works on ranges of `NumberLiteral`s considered as integers.
     def map : ArrayLiteral
     end
+
+    # Similar to `Enumerable#to_a` for a `Range`.
+    # Only works on ranges of `NumberLiteral`s considered as integers.
+    def to_a : ArrayLiteral
+    end
   end
 
   # A regex literal.
