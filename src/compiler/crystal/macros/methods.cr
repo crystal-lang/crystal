@@ -6,7 +6,7 @@ module Crystal
     def interpret_top_level_call(node)
       case node.name
       when "debug"
-        interpret_debug
+        interpret_debug(node)
       when "env"
         interpret_env(node)
       when "flag?"
@@ -26,8 +26,30 @@ module Crystal
       end
     end
 
-    def interpret_debug
-      puts @str
+    def interpret_debug(node)
+      if node.args.size >= 1
+        node.args.first.accept self
+        format = @last.truthy?
+      elsif named_args = node.named_args
+        format_arg = named_args.find { |arg| arg.name == "format" }
+        if format_arg
+          format_arg.value.accept self
+          format = @last.truthy?
+        end
+      else
+        format = true
+      end
+
+      if format
+        begin
+          puts Crystal::Formatter.format(@str.to_s)
+        rescue
+          puts @str
+        end
+      else
+        puts @str
+      end
+
       @last = Nop.new
     end
 

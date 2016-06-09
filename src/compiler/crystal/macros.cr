@@ -8,7 +8,10 @@ module Crystal::Macros
   # Outputs the current macro's buffer to the standard output. Useful for debugging
   # a macro to see what's being generated. Use it like `{{debug()}}`, the parenthesis
   # are mandatory.
-  def debug : Nop
+  #
+  # By default, the output is tried to be formatted using Crystal's
+  # formatter, but you can disable this by passing `false` to this method.
+  def debug(format = true) : Nop
   end
 
   # Gets the value of an environment variable at compile-time, or `nil` if it doesn't exist.
