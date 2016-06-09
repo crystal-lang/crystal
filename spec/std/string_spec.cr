@@ -1801,4 +1801,13 @@ describe "String" do
     clone = string.clone
     string.should be(clone)
   end
+
+  it "#at" do
+    "foo".at(0).should eq('f')
+    "foo".at(4) { 'x' }.should eq('x')
+
+    expect_raises(IndexError) do
+      "foo".at(4)
+    end
+  end
 end

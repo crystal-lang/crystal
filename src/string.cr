@@ -730,7 +730,7 @@ class String
   end
 
   def at(index : Int)
-    at(index) { raise IndexError }
+    at(index) { raise IndexError.new }
   end
 
   def at(index : Int)
