@@ -254,6 +254,10 @@ describe "macro methods" do
       assert_macro "", %({{"hello"[1...-2]}}), [] of ASTNode, %("el")
     end
 
+    it "executes string [Range] inclusive (computed)" do
+      assert_macro "", %({{"hello"[[1].size..-2]}}), [] of ASTNode, %("ell")
+    end
+
     it "executes string chomp" do
       assert_macro "", %({{"hello\n".chomp}}), [] of ASTNode, %("hello")
     end
@@ -527,6 +531,10 @@ describe "macro methods" do
 
     it "executes [] with range" do
       assert_macro "", %({{ [1, 2, 3, 4][1...-1] }}), [] of ASTNode, %([2, 3])
+    end
+
+    it "executes [] with computed range" do
+      assert_macro "", %({{ [1, 2, 3, 4][[1].size...-1] }}), [] of ASTNode, %([2, 3])
     end
 
     it "executes [] with two numbers" do

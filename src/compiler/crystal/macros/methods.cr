@@ -416,6 +416,9 @@ module Crystal
           case arg
           when RangeLiteral
             from, to = arg.from, arg.to
+            from = interpreter.accept(from)
+            to = interpreter.accept(to)
+
             unless from.is_a?(NumberLiteral)
               raise "range from in StringLiteral#[] must be a number, not #{from.class_desc}: #{from}"
             end
@@ -742,12 +745,12 @@ module Crystal
 
         block_arg = block.args.first?
 
-        interpret_map(method, args) do |num|
+        interpret_map(method, args, interpreter) do |num|
           interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
           interpreter.accept block.body
         end
       when "to_a"
-        interpret_map(method, args) do |num|
+        interpret_map(method, args, interpreter) do |num|
           NumberLiteral.new(num)
         end
       else
@@ -755,17 +758,20 @@ module Crystal
       end
     end
 
-    def interpret_map(method, args)
+    def interpret_map(method, args, interpreter)
       interpret_argless_method(method, args) do
-        ArrayLiteral.map(interpret_to_range) do |num|
+        ArrayLiteral.map(interpret_to_range(interpreter)) do |num|
           yield num
         end
       end
     end
 
-    def interpret_to_range
+    def interpret_to_range(interpreter)
       from = self.from
       to = self.to
+
+      from = interpreter.accept(from)
+      to = interpreter.accept(to)
 
       unless from.is_a?(NumberLiteral)
         raise "range begin must be a NumberLiteral, not #{from.class_desc}"
@@ -1394,7 +1400,7 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
         index = arg.to_number.to_i
         value = object.elements[index]? || Crystal::NilLiteral.new
       when Crystal::RangeLiteral
-        range = arg.interpret_to_range
+        range = arg.interpret_to_range(interpreter)
         begin
           klass.new(object.elements[range])
         rescue ex
@@ -1405,6 +1411,9 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
       end
     when 2
       from, to = args
+
+      from = interpreter.accept(from)
+      to = interpreter.accept(to)
 
       unless from.is_a?(Crystal::NumberLiteral)
         from.raise "expected first argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
