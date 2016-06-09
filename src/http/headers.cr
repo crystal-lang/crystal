@@ -3,6 +3,8 @@
 # Two headers are considered the same if their downcase representation is the same
 # (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
+  include Enumerable({String, Array(String)})
+
   # :nodoc:
   record Key, name : String do
     forward_missing_to @name
@@ -144,7 +146,7 @@ struct HTTP::Headers
   end
 
   def merge!(other)
-    other.each do |key, value|
+    other.each do |(key, value)|
       self[wrap(key)] = value
     end
     self
@@ -157,7 +159,7 @@ struct HTTP::Headers
   def ==(other : Hash)
     return false unless @hash.size == other.size
 
-    other.each do |key, value|
+    other.each do |(key, value)|
       this_value = @hash[wrap(key)]?
       if this_value
         case value
@@ -177,8 +179,8 @@ struct HTTP::Headers
   end
 
   def each
-    @hash.each do |key, value|
-      yield key.name, value
+    @hash.each do |(key, value)|
+      yield({key.name, value})
     end
   end
 
@@ -192,7 +194,7 @@ struct HTTP::Headers
 
   def dup
     dup = HTTP::Headers.new
-    @hash.each do |key, value|
+    @hash.each do |(key, value)|
       dup.@hash[key] = value
     end
     dup
@@ -208,7 +210,7 @@ struct HTTP::Headers
 
   def to_s(io : IO)
     io << "HTTP::Headers{"
-    @hash.each_with_index do |key, values, index|
+    @hash.each_with_index do |(key, values), index|
       io << ", " if index > 0
       key.name.inspect(io)
       io << " => "

@@ -172,7 +172,7 @@ module Crystal
 
       bc_flags_changed = check_bc_flags_changed output_dir
 
-      units = llvm_modules.map do |type_name, llvm_mod|
+      units = llvm_modules.map do |(type_name, llvm_mod)|
         CompilationUnit.new(self, type_name, llvm_mod, output_dir, bc_flags_changed)
       end
 

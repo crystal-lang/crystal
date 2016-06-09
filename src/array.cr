@@ -1058,7 +1058,7 @@ class Array(T)
   #
   # See `Object#hash`.
   def hash
-    reduce(31 * @size) do |memo, elem|
+    reduce(31 * @size) do |elem, memo|
       31 * memo + elem.hash
     end
   end
@@ -1954,7 +1954,7 @@ class Array(T)
     return self if removed == 0
 
     ptr = @buffer
-    hash.each do |k, v|
+    hash.each do |(k, v)|
       ptr.value = v
       ptr += 1
     end

@@ -144,7 +144,7 @@ class LLVM::Builder
 
   def switch(value, otherwise, cases)
     switch = LibLLVM.build_switch self, value, otherwise, cases.size
-    cases.each do |case_value, block|
+    cases.each do |(case_value, block)|
       LibLLVM.add_case switch, case_value, block
     end
     switch

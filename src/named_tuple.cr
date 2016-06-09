@@ -219,7 +219,7 @@ struct NamedTuple
   #
   # ```
   # tuple = {name: "Crystal", year: 2011}
-  # tuple.each do |key, value|
+  # tuple.each do |(key, value)|
   #   puts "#{key} = #{value}"
   # end
   # ```
@@ -232,7 +232,7 @@ struct NamedTuple
   # ```
   def each
     {% for key in T %}
-      yield {{key.symbolize}}, self[{{key.symbolize}}]
+      yield({ {{key.symbolize}}, self[{{key.symbolize}}] })
     {% end %}
     self
   end
@@ -285,7 +285,7 @@ struct NamedTuple
   #
   # ```
   # tuple = {name: "Crystal", year: 2011}
-  # tuple.each_with_index do |key, value, i|
+  # tuple.each_with_index do |(key, value), i|
   #   puts "#{i + 1}) #{key} = #{value}"
   # end
   # ```
@@ -298,8 +298,8 @@ struct NamedTuple
   # ```
   def each_with_index(offset = 0)
     i = offset
-    each do |key, value|
-      yield key, value, i
+    each do |(key, value)|
+      yield({key, value}, i)
       i += 1
     end
     self
@@ -310,12 +310,12 @@ struct NamedTuple
   #
   # ```
   # tuple = {name: "Crystal", year: 2011}
-  # tuple.map { |k, v| "#{name}: #{year}" } # => ["name: Crystal", "year: 2011"]
+  # tuple.map { |(k, v)| "#{name}: #{year}" } # => ["name: Crystal", "year: 2011"]
   # ```
   def map
-    array = Array(typeof(yield first_key_internal, first_value_internal)).new(size)
-    each do |k, v|
-      array.push yield k, v
+    array = Array(typeof(yield({first_key_internal, first_value_internal}))).new(size)
+    each do |(k, v)|
+      array.push yield({k, v})
     end
     array
   end
@@ -328,7 +328,7 @@ struct NamedTuple
   # ```
   def to_a
     ary = Array({typeof(first_key_internal), typeof(first_value_internal)}).new(size)
-    each do |key, value|
+    each do |(key, value)|
       ary << {key.as(typeof(first_key_internal)), value.as(typeof(first_value_internal))}
     end
     ary

@@ -264,7 +264,7 @@ describe "Hash" do
 
   it "maps" do
     hash = {1 => 2, 3 => 4}
-    array = hash.map { |k, v| k + v }
+    array = hash.map { |(k, v)| k + v }
     array.should eq([3, 7])
   end
 
@@ -365,7 +365,7 @@ describe "Hash" do
   it "selects" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
-    h2 = h1.select { |k, v| k == :b }
+    h2 = h1.select { |(k, v)| k == :b }
     h2.should eq({:b => 2})
     h2.should_not be(h1)
   end
@@ -373,7 +373,7 @@ describe "Hash" do
   it "selects!" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
-    h2 = h1.select! { |k, v| k == :b }
+    h2 = h1.select! { |(k, v)| k == :b }
     h2.should eq({:b => 2})
     h2.should be(h1)
   end
@@ -389,7 +389,7 @@ describe "Hash" do
   it "rejects" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
-    h2 = h1.reject { |k, v| k == :b }
+    h2 = h1.reject { |(k, v)| k == :b }
     h2.should eq({:a => 1, :c => 3})
     h2.should_not be(h1)
   end
@@ -397,7 +397,7 @@ describe "Hash" do
   it "rejects!" do
     h1 = {:a => 1, :b => 2, :c => 3}
 
-    h2 = h1.reject! { |k, v| k == :b }
+    h2 = h1.reject! { |(k, v)| k == :b }
     h2.should eq({:a => 1, :c => 3})
     h2.should be(h1)
   end
@@ -559,14 +559,14 @@ describe "Hash" do
     it "pass key, value, index values into block" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      hash.each_with_index { |k, v, i| results << k + v + i }
+      hash.each_with_index { |(k, v), i| results << k + v + i }
       results.should eq [6, 16, 23]
     end
 
     it "can be used with offset" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      hash.each_with_index(3) { |k, v, i| results << k + v + i }
+      hash.each_with_index(3) { |(k, v), i| results << k + v + i }
       results.should eq [9, 19, 26]
     end
   end
@@ -574,7 +574,7 @@ describe "Hash" do
   describe "each_with_object" do
     it "passes memo, key and value into block" do
       hash = {:a => 'b'}
-      hash.each_with_object(:memo) do |memo, k, v|
+      hash.each_with_object(:memo) do |(k, v), memo|
         memo.should eq(:memo)
         k.should eq(:a)
         v.should eq('b')
@@ -583,7 +583,7 @@ describe "Hash" do
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = hash.each_with_object({} of Char => Symbol) do |memo, k, v|
+      result = hash.each_with_object({} of Char => Symbol) do |(k, v), memo|
         memo[v] = k
       end
       result.should eq({'b' => :a, 'd' => :c, 'f' => :e})
@@ -593,7 +593,7 @@ describe "Hash" do
   describe "all?" do
     it "passes key and value into block" do
       hash = {:a => 'b'}
-      hash.all? do |k, v|
+      hash.all? do |(k, v)|
         k.should eq(:a)
         v.should eq('b')
       end
@@ -601,16 +601,16 @@ describe "Hash" do
 
     it "returns true if the block evaluates truthy for every kv pair" do
       hash = {:a => 'b', :c => 'd'}
-      result = hash.all? { |k, v| v < 'e' ? "truthy" : nil }
+      result = hash.all? { |(k, v)| v < 'e' ? "truthy" : nil }
       result.should be_true
       hash[:d] = 'e'
-      result = hash.all? { |k, v| v < 'e' ? "truthy" : nil }
+      result = hash.all? { |(k, v)| v < 'e' ? "truthy" : nil }
       result.should be_false
     end
 
     it "evaluates the block for only for as many kv pairs as necessary" do
       hash = {:a => 'b', :c => 'd'}
-      hash.all? do |k, v|
+      hash.all? do |(k, v)|
         raise Exception.new("continued iterating") if v == 'd'
         v == 'a' # this is false for the first kv pair
       end
@@ -620,7 +620,7 @@ describe "Hash" do
   describe "any?" do
     it "passes key and value into block" do
       hash = {:a => 'b'}
-      hash.any? do |k, v|
+      hash.any? do |(k, v)|
         k.should eq(:a)
         v.should eq('b')
       end
@@ -628,16 +628,16 @@ describe "Hash" do
 
     it "returns true if the block evaluates truthy for at least one kv pair" do
       hash = {:a => 'b', :c => 'd'}
-      result = hash.any? { |k, v| v > 'b' ? "truthy" : nil }
+      result = hash.any? { |(k, v)| v > 'b' ? "truthy" : nil }
       result.should be_true
       hash[:d] = 'e'
-      result = hash.any? { |k, v| v > 'e' ? "truthy" : nil }
+      result = hash.any? { |(k, v)| v > 'e' ? "truthy" : nil }
       result.should be_false
     end
 
     it "evaluates the block for only for as many kv pairs as necessary" do
       hash = {:a => 'b', :c => 'd'}
-      hash.any? do |k, v|
+      hash.any? do |(k, v)|
         raise Exception.new("continued iterating") if v == 'd'
         v == 'b' # this is true for the first kv pair
       end
@@ -657,7 +657,7 @@ describe "Hash" do
   describe "reduce" do
     it "passes memo, key and value into block" do
       hash = {:a => 'b'}
-      hash.reduce(:memo) do |memo, k, v|
+      hash.reduce(:memo) do |(k, v), memo|
         memo.should eq(:memo)
         k.should eq(:a)
         v.should eq('b')
@@ -666,7 +666,7 @@ describe "Hash" do
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = hash.reduce("") do |memo, k, v|
+      result = hash.reduce("") do |(k, v), memo|
         memo + v
       end
       result.should eq("bdf")

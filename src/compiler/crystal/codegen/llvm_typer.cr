@@ -224,7 +224,7 @@ module Crystal
     private def create_llvm_struct_type(type : CStructType)
       LLVM::Type.struct(type.llvm_name, type.packed) do |a_struct|
         @struct_cache[type] = a_struct
-        type.vars.map { |name, var| llvm_embedded_c_type(var.type).as(LLVM::Type) }
+        type.vars.map { |(name, var)| llvm_embedded_c_type(var.type).as(LLVM::Type) }
       end
     end
 
@@ -237,7 +237,7 @@ module Crystal
         max_align_type = nil
         max_align_type_size = 0
 
-        type.vars.each do |name, var|
+        type.vars.each do |(name, var)|
           var_type = var.type
           unless var_type.void?
             llvm_type = llvm_embedded_c_type(var_type)
@@ -283,7 +283,7 @@ module Crystal
           element_types.push LLVM::Int32 # For the type id
         end
 
-        ivars.each do |name, ivar|
+        ivars.each do |(name, ivar)|
           if ivar_type = ivar.type?
             element_types.push llvm_embedded_type(ivar_type)
           else

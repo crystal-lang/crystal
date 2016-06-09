@@ -27,7 +27,7 @@ describe HTTP::Headers do
   it "should retain the input casing" do
     headers = HTTP::Headers{"FOO_BAR": "bar", "Foobar-foo": "baz"}
     serialized = String.build do |io|
-      headers.each do |name, values|
+      headers.each do |(name, values)|
         io << name << ": " << values.first << ";"
       end
     end

@@ -102,7 +102,7 @@ describe "NamedTuple" do
   it "does each" do
     tup = {a: 1, b: "hello"}
     i = 0
-    tup.each do |key, value|
+    tup.each do |(key, value)|
       case i
       when 0
         key.should eq(:a)
@@ -149,7 +149,7 @@ describe "NamedTuple" do
   it "does each_with_index" do
     tup = {a: 1, b: "hello"}
     i = 0
-    tup.each_with_index do |key, value, index|
+    tup.each_with_index do |(key, value), index|
       case i
       when 0
         key.should eq(:a)
@@ -188,7 +188,7 @@ describe "NamedTuple" do
 
   it "does map" do
     tup = {a: 1, b: 'a'}
-    strings = tup.map { |k, v| "#{k.inspect}-#{v.inspect}" }
+    strings = tup.map { |(k, v)| "#{k.inspect}-#{v.inspect}" }
     strings.should eq([":a-1", ":b-'a'"])
   end
 

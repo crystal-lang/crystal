@@ -113,13 +113,13 @@ module Crystal
       node.accept type_decl_visitor
 
       # Use the last type found for global variables to declare them
-      type_decl_visitor.globals.each do |name, type|
+      type_decl_visitor.globals.each do |(name, type)|
         declare_meta_type_var(@program.global_vars, @program, name, type)
       end
 
       # Use the last type found for class variables to declare them
-      type_decl_visitor.class_vars.each do |owner, vars|
-        vars.each do |name, type|
+      type_decl_visitor.class_vars.each do |(owner, vars)|
+        vars.each do |(name, type)|
           declare_meta_type_var(owner.class_vars, owner, name, type)
         end
       end
@@ -131,13 +131,13 @@ module Crystal
       node.accept type_guess_visitor
 
       # Process global variables
-      type_guess_visitor.globals.each do |name, info|
+      type_guess_visitor.globals.each do |(name, info)|
         declare_meta_type_var(@program.global_vars, @program, name, info)
       end
 
       # Process class variables
-      type_guess_visitor.class_vars.each do |owner, vars|
-        vars.each do |name, info|
+      type_guess_visitor.class_vars.each do |(owner, vars)|
+        vars.each do |(name, info)|
           declare_meta_type_var(owner.class_vars, owner, name, info)
         end
       end
@@ -215,12 +215,12 @@ module Crystal
       owners = sort_types_by_depth(owners)
       owners.each do |owner|
         vars = @explicit_instance_vars[owner]?
-        vars.try &.each do |name, type_decl|
+        vars.try &.each do |(name, type_decl)|
           process_owner_instance_var_declaration(owner, name, type_decl)
         end
 
         vars = @guessed_instance_vars[owner]?
-        vars.try &.each do |name, type_decl|
+        vars.try &.each do |(name, type_decl)|
           process_owner_guessed_instance_var_declaration(owner, name, type_decl)
         end
       end
@@ -512,8 +512,8 @@ module Crystal
     end
 
     private def check_nilable_instance_vars
-      @nilable_instance_vars.each do |owner, vars|
-        vars.each do |name, info|
+      @nilable_instance_vars.each do |(owner, vars)|
+        vars.each do |(name, info)|
           case owner
           when NonGenericClassType
             ivar = owner.lookup_instance_var_with_owner?(name)
@@ -550,8 +550,8 @@ module Crystal
     end
 
     private def check_cant_use_type_errors
-      @errors.each do |type, entries|
-        entries.each do |name, error|
+      @errors.each do |(type, entries)|
+        entries.each do |(name, error)|
           case name
           when .starts_with?("$")
             error.node.raise "can't use #{error.type} as the type of global variable #{name}, use a more specific type"
@@ -566,8 +566,8 @@ module Crystal
 
     private def check_class_var_errors(type_decl_class_vars, guesser_class_vars)
       {type_decl_class_vars, guesser_class_vars}.each do |all_vars|
-        all_vars.each do |owner, vars|
-          vars.each do |name, info|
+        all_vars.each do |(owner, vars)|
+          vars.each do |(name, info)|
             owner_class_var = owner.lookup_class_var?(name)
             next unless owner_class_var
 

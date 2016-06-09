@@ -7,7 +7,7 @@ describe "Base64" do
     eqs = {"" => "", "a" => "YQ==\n", "ab" => "YWI=\n", "abc" => "YWJj\n",
       "abcd" => "YWJjZA==\n", "abcde" => "YWJjZGU=\n", "abcdef" => "YWJjZGVm\n",
       "abcdefg" => "YWJjZGVmZw==\n"}
-    eqs.each do |a, b|
+    eqs.each do |(a, b)|
       it "encode #{a.inspect} to #{b.inspect}" do
         Base64.encode(a).should eq(b)
       end
@@ -36,7 +36,7 @@ describe "Base64" do
       "Now is the time for all good coders\nto learn Crystal"                  => "Tm93IGlzIHRoZSB0aW1lIGZvciBhbGwgZ29vZCBjb2RlcnMKdG8gbGVhcm4g\nQ3J5c3RhbA==\n",
       "This is line one\nThis is line two\nThis is line three\nAnd so on...\n" => "VGhpcyBpcyBsaW5lIG9uZQpUaGlzIGlzIGxpbmUgdHdvClRoaXMgaXMgbGlu\nZSB0aHJlZQpBbmQgc28gb24uLi4K\n",
       "hahah⊙ⓧ⊙"                                                               => "aGFoYWjiipnik6fiipk=\n"}
-    eqs.each do |a, b|
+    eqs.each do |(a, b)|
       it "encode #{a.inspect} to #{b.inspect}" do
         Base64.encode(a).should eq(b)
       end

@@ -172,7 +172,7 @@ module Benchmark
         @ran = true
         @size = samples.size
         @mean = samples.sum.to_f / size.to_f
-        @variance = (samples.reduce(0) { |acc, i| acc + ((i - mean) ** 2) }).to_f / size.to_f
+        @variance = (samples.reduce(0) { |i, acc| acc + ((i - mean) ** 2) }).to_f / size.to_f
         @stddev = Math.sqrt(variance)
         @relative_stddev = 100.0 * (stddev / mean)
       end

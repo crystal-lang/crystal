@@ -29,7 +29,7 @@ module Crystal
         best_def = nil
         best_match = nil
         Levenshtein.find(name) do |finder|
-          defs.each do |def_name, hash|
+          defs.each do |(def_name, hash)|
             if def_name =~ SuggestableName
               hash.each do |def_with_metadata|
                 if def_with_metadata.max_size == args_size && def_with_metadata.yields == !!block && def_with_metadata.def.name != name

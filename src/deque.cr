@@ -351,7 +351,7 @@ class Deque(T)
   end
 
   def hash
-    reduce(31 * @size) do |memo, elem|
+    reduce(31 * @size) do |elem, memo|
       31 * memo + elem.hash
     end
   end

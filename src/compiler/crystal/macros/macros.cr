@@ -686,8 +686,8 @@ module Crystal
       # So, we use gsub to replace the yield values.
       value = node.value
 
-      @yields.each do |name, node|
-        value = value.gsub(name) { node.to_s }
+      @yields.each do |(name, node2)|
+        value = value.gsub(name) { node2.to_s }
       end
 
       node.value = value

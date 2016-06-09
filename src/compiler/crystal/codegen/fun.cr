@@ -100,7 +100,7 @@ class Crystal::CodeGenVisitor
 
         if @debug
           in_alloca_block do
-            context.vars.each do |name, var|
+            context.vars.each do |(name, var)|
               declare_variable(name, var.type, var.pointer, target_def)
             end
           end

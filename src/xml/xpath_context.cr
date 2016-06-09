@@ -27,7 +27,7 @@ struct XML::XPathContext
   end
 
   def register_namespaces(namespaces)
-    namespaces.each do |prefix, uri|
+    namespaces.each do |(prefix, uri)|
       register_namespace prefix, uri
     end
   end
@@ -37,7 +37,7 @@ struct XML::XPathContext
   end
 
   def register_variables(variables)
-    variables.each do |name, value|
+    variables.each do |(name, value)|
       register_variable name, value
     end
   end

@@ -89,7 +89,7 @@ module Crystal
         else
           meta_vars = @mod.vars
         end
-        vars.each do |name, var|
+        vars.each do |(name, var)|
           meta_var = new_meta_var(name)
           meta_var.bind_to(var)
           meta_vars[name] = meta_var
@@ -775,7 +775,7 @@ module Crystal
 
       # Special vars, even if only assigned inside a block,
       # must be inside the def's metavars.
-      meta_vars.each do |name, var|
+      meta_vars.each do |(name, var)|
         if var.special_var?
           define_special_var(name, var)
         end
@@ -790,7 +790,7 @@ module Crystal
 
     def bind_vars(from_vars, to_vars, ignored = nil)
       if to_vars
-        from_vars.each do |name, block_var|
+        from_vars.each do |(name, block_var)|
           unless ignored.try &.find { |arg| arg.name == name }
             to_var = to_vars[name]?
             if to_var && !to_var.same?(block_var)
@@ -952,7 +952,7 @@ module Crystal
         before_vars = MetaVars.new
         after_vars = MetaVars.new
 
-        @vars.each do |name, var|
+        @vars.each do |(name, var)|
           before_var = MetaVar.new(name)
           before_var.bind_to(var)
           before_var.nil_if_read = var.nil_if_read
@@ -1727,7 +1727,7 @@ module Crystal
 
       cond_var = get_while_cond_assign_target(cond)
 
-      while_vars.each do |name, while_var|
+      while_vars.each do |(name, while_var)|
         before_cond_var = before_cond_vars[name]?
         after_cond_var = after_cond_vars[name]?
 
@@ -1783,7 +1783,7 @@ module Crystal
       # We also need to merge types from breaks inside while.
       if all_break_vars
         all_break_vars.each do |break_vars|
-          break_vars.each do |name, break_var|
+          break_vars.each do |(name, break_var)|
             var = @vars[name]?
             unless var
               # Fix for issue #2441:
@@ -1839,7 +1839,7 @@ module Crystal
     end
 
     def filter_vars(filters)
-      filters.try &.each do |name, filter|
+      filters.try &.each do |(name, filter)|
         existing_var = @vars[name]
         filtered_var = MetaVar.new(name)
         filtered_var.bind_to(existing_var.filtered_by(yield filter))
@@ -2223,7 +2223,7 @@ module Crystal
         # Any variable introduced in the begin block is possibly nil
         # in the rescue blocks because we can't know if an exception
         # was raised before assigning any of the vars.
-        exception_handler_vars.each do |name, var|
+        exception_handler_vars.each do |(name, var)|
           unless before_body_vars[name]?
             var.nil_if_read = true
           end
@@ -2270,7 +2270,7 @@ module Crystal
 
           # Variables in the ensure block might be nil because we don't know
           # if an exception was thrown before any assignment.
-          @vars.each do |name, var|
+          @vars.each do |(name, var)|
             unless before_body_vars[name]?
               var.nil_if_read = true
             end
@@ -2288,7 +2288,7 @@ module Crystal
         # after the ensure clause, so variables don't matter. But if
         # an exception was not raised then all variables were declared
         # successfully.
-        @vars.each do |name, var|
+        @vars.each do |(name, var)|
           unless before_body_vars[name]?
             var.nil_if_read = false
           end
@@ -2320,7 +2320,7 @@ module Crystal
       after_vars = MetaVars.new
 
       all_rescue_vars.each do |rescue_vars|
-        rescue_vars.each do |name, var|
+        rescue_vars.each do |(name, var)|
           after_var = (after_vars[name] ||= new_meta_var(name))
           if var.nil_if_read || !body_vars[name]?
             after_var.bind_to(mod.nil_var)
@@ -2330,7 +2330,7 @@ module Crystal
         end
       end
 
-      body_vars.each do |name, var|
+      body_vars.each do |(name, var)|
         after_var = (after_vars[name] ||= new_meta_var(name))
         after_var.bind_to(var)
       end
@@ -2684,7 +2684,7 @@ module Crystal
     def bind_initialize_instance_vars(owner)
       names_to_remove = [] of String
 
-      @vars.each do |name, var|
+      @vars.each do |(name, var)|
         if name.starts_with? '@'
           if var.nil_if_read
             ivar = owner.lookup_instance_var(name)

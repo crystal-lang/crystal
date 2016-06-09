@@ -7,7 +7,7 @@ module Crystal
   class PrettyTypeNameJsonConverter
     def self.to_json(hash, io)
       io.json_object do |obj|
-        hash.each do |key, value|
+        hash.each do |(key, value)|
           obj.field(key) do
             io << '"'
             pretty_type_name(value, io)
@@ -141,7 +141,7 @@ module Crystal
 
       if type.is_a?(GenericType)
         type_vars = type.type_vars
-        type.generic_types.each do |type_vars_args, instanced_types|
+        type.generic_types.each do |(type_vars_args, instanced_types)|
           process_type(instanced_types) do
             type_vars.each.zip(type_vars_args.each).each do |e|
               generic_arg_name, generic_arg_type = e
@@ -167,7 +167,7 @@ module Crystal
 
       if @contexts.empty?
         @context = HashStringType.new
-        result.program.vars.each do |name, var|
+        result.program.vars.each do |(name, var)|
           add_context name, var.type
         end
         result.node.accept(self)
@@ -212,7 +212,7 @@ module Crystal
           add_context arg.name, arg.type
         end
         node.vars.try do |vars|
-          vars.each do |name, meta_var|
+          vars.each do |(name, meta_var)|
             add_context name, meta_var.type
           end
         end
@@ -226,7 +226,7 @@ module Crystal
           add_context arg.name, arg.type
         end
         node.vars.try do |vars|
-          vars.each do |_, var|
+          vars.each do |(_, var)|
             add_context var.name, var.type
           end
         end
@@ -259,12 +259,12 @@ module Crystal
         if filters
           # make a copy of the current context
           current_context = {} of String => MetaVar
-          @context.each do |name, type|
+          @context.each do |(name, type)|
             current_context[name] = MetaVar.new(name, type)
           end
 
           # restrict the whole context
-          filters.each do |name, filter|
+          filters.each do |(name, filter)|
             filtered_var = current_context[name]
             filtered_var.bind_to(current_context[name].filtered_by(filter))
             add_context name, filtered_var.type
