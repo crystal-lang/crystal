@@ -851,4 +851,24 @@ describe "Type inference: proc" do
       ->{}.foo
       )) { int32 }
   end
+
+  it "accesses T inside variadic generic" do
+    assert_type(%(
+      def foo(proc : Proc(*T, R))
+        {T, R}
+      end
+
+      foo(->(x : Int32, y : Float64) { 'a' })
+      )) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
+  end
+
+  it "accesses T inside variadic generic (2)" do
+    assert_type(%(
+      def foo(proc : Proc(*T, R))
+        {T, R}
+      end
+
+      foo(->(x : Int32) { 'a' })
+      )) { tuple_of([tuple_of([int32]).metaclass, char.metaclass]) }
+  end
 end

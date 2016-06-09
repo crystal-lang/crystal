@@ -763,7 +763,39 @@ module Crystal
       generic_class = context.type_lookup.lookup_type other.name
       return super unless generic_class.is_a?(ProcType)
 
-      return nil unless other.type_vars.size == arg_types.size + 1
+      # Consider the case of a splat in the type vars
+      splat_index = other.type_vars.index &.is_a?(Splat)
+      if splat_index
+        proc_types = arg_types + [return_type]
+
+        i = 0
+        other.type_vars.each do |type_var|
+          if type_var.is_a?(Splat)
+            count = proc_types.size - (other.type_vars.size - 1)
+            return nil unless count >= 0
+
+            arg_types = proc_types[i, count]
+            arg_types_tuple = context.type_lookup.program.tuple_of(arg_types)
+
+            restricted = arg_types_tuple.restrict(type_var.exp, context)
+            return nil unless restricted == arg_types_tuple
+
+            i += count
+          else
+            arg_type = proc_types[i]
+            restricted = arg_type.restrict(type_var, context)
+            return unless restricted == arg_type
+
+            i += 1
+          end
+        end
+
+        return self
+      end
+
+      unless other.type_vars.size == arg_types.size + 1
+        return nil
+      end
 
       other.type_vars.each_with_index do |other_type_var, i|
         proc_type = arg_types[i]? || return_type
