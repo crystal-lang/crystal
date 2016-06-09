@@ -177,10 +177,22 @@ class Crystal::Doc::Method
     !@def.args.empty? || @def.block_arg || @def.yields
   end
 
+  def args_to_json
+    @def.args.map_with_index do |arg, i|
+      {
+        name:         arg.external_name,
+        type:         arg.type?.to_s,
+        default:      arg.default_value.to_s,
+        splat:        @def.splat_index == i,
+        double_splat: @def.double_splat ? true : false,
+      }
+    end
+  end
+
   def to_json(io)
     {
       name:     name,
-      args:     args_to_s,
+      args:     args_to_json,
       doc:      doc,
       abstract: abstract?,
       yields:   @def.yields,
