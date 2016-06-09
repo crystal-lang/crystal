@@ -524,6 +524,14 @@ describe "macro methods" do
     it "executes +" do
       assert_macro "", %({{ [1, 2] + [3, 4, 5] }}), [] of ASTNode, %([1, 2, 3, 4, 5])
     end
+
+    it "executes [] with range" do
+      assert_macro "", %({{ [1, 2, 3, 4][1...-1] }}), [] of ASTNode, %([2, 3])
+    end
+
+    it "executes [] with two numbers" do
+      assert_macro "", %({{ [1, 2, 3, 4, 5][1, 3] }}), [] of ASTNode, %([2, 3, 4])
+    end
   end
 
   describe "hash methods" do

@@ -735,25 +735,28 @@ module Crystal
 
     def interpret_map(method, args)
       interpret_argless_method(method, args) do
-        from = self.from
-        to = self.to
-
-        unless from.is_a?(NumberLiteral)
-          raise "range begin must be a NumberLiteral, not #{from.class_desc}"
-        end
-
-        unless to.is_a?(NumberLiteral)
-          raise "range end must be a NumberLiteral, not #{to.class_desc}"
-        end
-
-        from = from.to_number.to_i64
-        to = to.to_number.to_i64
-
-        range = self.exclusive ? (from...to) : (from..to)
-        ArrayLiteral.map(range) do |num|
+        ArrayLiteral.map(interpret_to_range) do |num|
           yield num
         end
       end
+    end
+
+    def interpret_to_range
+      from = self.from
+      to = self.to
+
+      unless from.is_a?(NumberLiteral)
+        raise "range begin must be a NumberLiteral, not #{from.class_desc}"
+      end
+
+      unless to.is_a?(NumberLiteral)
+        raise "range end must be a NumberLiteral, not #{to.class_desc}"
+      end
+
+      from = from.to_number.to_i
+      to = to.to_number.to_i
+
+      self.exclusive ? (from...to) : (from..to)
     end
   end
 
@@ -1364,16 +1367,38 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
     case args.size
     when 1
       arg = args.first
-      unless arg.is_a?(Crystal::NumberLiteral)
-        arg.raise "argument to [] must be a number, not #{arg.class_desc}:\n\n#{arg}"
+      case arg
+      when Crystal::NumberLiteral
+        index = arg.to_number.to_i
+        value = object.elements[index]? || Crystal::NilLiteral.new
+      when Crystal::RangeLiteral
+        range = arg.interpret_to_range
+        begin
+          klass.new(object.elements[range])
+        rescue ex
+          object.raise ex.message
+        end
+      else
+        arg.raise "argument to [] must be a number or range, not #{arg.class_desc}:\n\n#{arg}"
+      end
+    when 2
+      from, to = args
+
+      unless from.is_a?(Crystal::NumberLiteral)
+        from.raise "expected first argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
       end
 
-      index = arg.to_number.to_i
-      value = object.elements[index]?
-      if value
-        value
-      else
-        Crystal::NilLiteral.new
+      unless to.is_a?(Crystal::NumberLiteral)
+        to.raise "expected second argument to RangeLiteral#[] to be a number, not #{from.class_desc}"
+      end
+
+      from = from.to_number.to_i
+      to = to.to_number.to_i
+
+      begin
+        klass.new(object.elements[from, to])
+      rescue ex
+        object.raise ex.message
       end
     else
       object.wrong_number_of_arguments "#{klass}#[]", args.size, 1
