@@ -171,12 +171,28 @@ module Crystal
       types = [] of Type
       if inputs = node.inputs
         inputs.each do |input|
-          input.accept self
-          return false if !@raise && !@type
+          if input.is_a?(Splat)
+            input.exp.accept self
+            return false if !@raise && !@type
 
-          Crystal.check_type_allowed_in_generics(input, type, "can't use #{type} as proc argument")
+            a_type = type
+            if a_type.is_a?(TupleInstanceType)
+              types.concat(a_type.tuple_types)
+            else
+              if @raise
+                input.exp.raise "can only splat tuple type, not #{a_type}"
+              else
+                return false
+              end
+            end
+          else
+            input.accept self
+            return false if !@raise && !@type
 
-          types << type.virtual_type
+            Crystal.check_type_allowed_in_generics(input, type, "can't use #{type} as proc argument")
+
+            types << type.virtual_type
+          end
         end
       end
 

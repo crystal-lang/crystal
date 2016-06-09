@@ -457,6 +457,20 @@ describe "Type inference: splat" do
       )) { no_return.metaclass }
   end
 
+  it "matches splat in geneic type" do
+    assert_type(%(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(A, *B, C))
+        {A, B, C}
+      end
+
+      foo = Foo(Int32, Char, String, Bool).new
+      method(foo)
+      )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
+  end
+
   describe Splat do
     it "without splat" do
       a_def = Def.new("foo", args: [Arg.new("x"), Arg.new("y")])

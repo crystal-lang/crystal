@@ -409,6 +409,10 @@ describe "Parser" do
   it_parses "class Foo(T, *U); end", ClassDef.new("Foo".path, type_vars: ["T", "U"], splat_index: 1)
   assert_syntax_error "class Foo(*T, *U); end", "splat type argument already specified"
 
+  it_parses "x : Foo(A, *B, C)", TypeDeclaration.new("x".var, Generic.new("Foo".path, ["A".path, "B".path.splat, "C".path] of ASTNode))
+  it_parses "x : *T -> R", TypeDeclaration.new("x".var, ProcNotation.new(["T".path.splat] of ASTNode, "R".path))
+  it_parses "def foo(x : *T -> R); end", Def.new("foo", args: [Arg.new("x", restriction: ProcNotation.new(["T".path.splat] of ASTNode, "R".path))])
+
   it_parses "struct Foo; end", ClassDef.new("Foo".path, struct: true)
 
   it_parses "Foo(T)", Generic.new("Foo".path, ["T".path] of ASTNode)

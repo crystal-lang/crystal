@@ -1108,7 +1108,7 @@ module Crystal
 
     def parse_type_declaration(var)
       next_token_skip_space_or_newline
-      var_type = parse_single_type
+      var_type = parse_single_type(allow_splat: true)
       skip_space
       if @token.type == :"="
         next_token_skip_space_or_newline
@@ -3192,7 +3192,7 @@ module Crystal
           next_token
         end
 
-        restriction = parse_single_type
+        restriction = parse_single_type(allow_splat: !splat_restriction)
 
         if splat_restriction
           restriction = splat ? Splat.new(restriction) : DoubleSplat.new(restriction)
@@ -4167,7 +4167,7 @@ module Crystal
       if @token.type == :"|"
         while @token.type == :"|"
           next_token_skip_space_or_newline
-          parse_type_with_suffix(types, allow_primitives, false)
+          parse_type_with_suffix(types, allow_primitives, allow_splat)
         end
 
         if types.size == 1
@@ -4226,7 +4226,7 @@ module Crystal
           end
         when :"("
           next_token_skip_space_or_newline
-          type = parse_type(allow_primitives)
+          type = parse_type(allow_primitives, allow_splat: allow_splat)
           check :")"
           next_token_skip_space
           case type
@@ -4352,6 +4352,9 @@ module Crystal
           return true
         when :"->"
           return true
+        when :"*"
+          next_token
+          return true if @token.type == :CONST
         when :NUMBER
           return allow_int && @token.number_kind == :i32
         when :IDENT

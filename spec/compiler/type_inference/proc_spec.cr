@@ -871,4 +871,32 @@ describe "Type inference: proc" do
       foo(->(x : Int32) { 'a' })
       )) { tuple_of([tuple_of([int32]).metaclass, char.metaclass]) }
   end
+
+  it "accesses T inside variadic generic, in proc notation" do
+    assert_type(%(
+      def foo(proc : *T -> R)
+        {T, R}
+      end
+
+      foo(->(x : Int32, y : Float64) { 'a' })
+      )) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
+  end
+
+  it "declares an instance variable with splat in proc notation" do
+    assert_type(%(
+      class Foo
+        @x : *{Int32, Char} -> String
+
+        def initialize
+          @x = ->(x : Int32, y : Char) { "a" }
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { proc_of([int32, char, string]) }
+  end
 end

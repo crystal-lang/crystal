@@ -418,6 +418,48 @@ module Crystal
         return nil
       end
 
+      # Consider the case of a splat in the type vars
+      splat_index = other.type_vars.index &.is_a?(Splat)
+      if splat_index
+        types = Array(Type).new(type_vars.size)
+        i = 0
+        type_vars.each_value do |var|
+          return nil unless var.is_a?(Var)
+
+          var_type = var.type
+          if i == self.splat_index
+            types.concat(var_type.as(TupleInstanceType).tuple_types)
+          else
+            types << var_type
+          end
+          i += 1
+        end
+
+        i = 0
+        other.type_vars.each do |type_var|
+          if type_var.is_a?(Splat)
+            count = types.size - (other.type_vars.size - 1)
+            return nil unless count >= 0
+
+            arg_types = types[i, count]
+            arg_types_tuple = context.type_lookup.program.tuple_of(arg_types)
+
+            restricted = arg_types_tuple.restrict(type_var.exp, context)
+            return nil unless restricted == arg_types_tuple
+
+            i += count
+          else
+            arg_type = types[i]
+            restricted = arg_type.restrict(type_var, context)
+            return unless restricted == arg_type
+
+            i += 1
+          end
+        end
+
+        return self
+      end
+
       if generic_class.type_vars.size != other.type_vars.size
         other.wrong_number_of "type vars", generic_class, other.type_vars.size, generic_class.type_vars.size
       end
@@ -731,12 +773,37 @@ module Crystal
       inputs_size = inputs ? inputs.size : 0
       output = other.output
 
-      return nil if arg_types.size != inputs_size
+      # Consider the case of a splat in the type vars
+      if inputs && (splat_index = inputs.index &.is_a?(Splat))
+        i = 0
+        inputs.each do |input|
+          if input.is_a?(Splat)
+            count = arg_types.size - (inputs.size - 1)
+            return nil unless count >= 0
 
-      if inputs
-        inputs.zip(arg_types) do |input, my_input|
-          restricted = my_input.restrict(input, context)
-          return nil unless restricted == my_input
+            input_arg_types = arg_types[i, count]
+            input_arg_types_tuple = context.type_lookup.program.tuple_of(input_arg_types)
+
+            restricted = input_arg_types_tuple.restrict(input.exp, context)
+            return nil unless restricted == input_arg_types_tuple
+
+            i += count
+          else
+            arg_type = arg_types[i]
+            restricted = arg_type.restrict(input, context)
+            return unless restricted == arg_type
+
+            i += 1
+          end
+        end
+      else
+        return nil if arg_types.size != inputs_size
+
+        if inputs
+          inputs.zip(arg_types) do |input, my_input|
+            restricted = my_input.restrict(input, context)
+            return nil unless restricted == my_input
+          end
         end
       end
 
