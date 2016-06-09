@@ -977,6 +977,25 @@ describe "macro methods" do
     end
   end
 
+  describe "range methods" do
+    it "executes begin" do
+      assert_macro "x", %({{x.begin}}), [RangeLiteral.new(1.int32, 2.int32, true)] of ASTNode, "1"
+    end
+
+    it "executes end" do
+      assert_macro "x", %({{x.end}}), [RangeLiteral.new(1.int32, 2.int32, true)] of ASTNode, "2"
+    end
+
+    it "executes excludes_end?" do
+      assert_macro "x", %({{x.excludes_end?}}), [RangeLiteral.new(1.int32, 2.int32, true)] of ASTNode, "true"
+    end
+
+    it "executes map" do
+      assert_macro "x", %({{x.map(&.stringify)}}), [RangeLiteral.new(1.int32, 3.int32, false)] of ASTNode, %(["1", "2", "3"])
+      assert_macro "x", %({{x.map(&.stringify)}}), [RangeLiteral.new(1.int32, 3.int32, true)] of ASTNode, %(["1", "2"])
+    end
+  end
+
   describe "env" do
     it "has key" do
       ENV["FOO"] = "foo"

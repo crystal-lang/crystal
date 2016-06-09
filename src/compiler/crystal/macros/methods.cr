@@ -706,6 +706,46 @@ module Crystal
     end
   end
 
+  class RangeLiteral
+    def interpret(method, args, block, interpreter)
+      case method
+      when "begin"
+        interpret_argless_method(method, args) { self.from }
+      when "end"
+        interpret_argless_method(method, args) { self.to }
+      when "excludes_end?"
+        interpret_argless_method(method, args) { BoolLiteral.new(self.exclusive) }
+      when "map"
+        interpret_argless_method(method, args) do
+          raise "map expects a block" unless block
+
+          from = self.from
+          to = self.to
+
+          unless from.is_a?(NumberLiteral)
+            raise "range begin must be a NumberLiteral, not #{from.class_desc}"
+          end
+
+          unless to.is_a?(NumberLiteral)
+            raise "range end must be a NumberLiteral, not #{to.class_desc}"
+          end
+
+          from = from.to_number.to_i64
+          to = to.to_number.to_i64
+          block_arg = block.args.first?
+
+          range = self.exclusive ? (from...to) : (from..to)
+          ArrayLiteral.map(range) do |num|
+            interpreter.define_var(block_arg.name, NumberLiteral.new(num)) if block_arg
+            interpreter.accept block.body
+          end
+        end
+      else
+        super
+      end
+    end
+  end
+
   class MetaVar < ASTNode
     def to_macro_id
       @name

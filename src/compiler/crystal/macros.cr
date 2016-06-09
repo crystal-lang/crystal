@@ -555,6 +555,22 @@ module Crystal::Macros
 
   # A range literal.
   class RangeLiteral < ASTNode
+    # Similar to `Range#begin`
+    def begin : ASTNode
+    end
+
+    # Similar to `Range#end`
+    def end : ASTNode
+    end
+
+    # Similar to `Range#excludes_end?`
+    def excludes_end? : ASTNode
+    end
+
+    # Similar to `Enumerable#map` for a `Range`.
+    # Only works on ranges of `NumberLiteral`s considered as integers.
+    def map : ArrayLiteral
+    end
   end
 
   # A regex literal.
