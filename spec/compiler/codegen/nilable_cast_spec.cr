@@ -63,4 +63,11 @@ describe "Code gen: nilable cast" do
       y ? 2 : 3
       )).to_i.should eq(3)
   end
+
+  it "types as? with wrong type (#2775)" do
+    run(%(
+      x = 1.as?(String)
+      x ? 10 : 20
+      )).to_i.should eq(20)
+  end
 end

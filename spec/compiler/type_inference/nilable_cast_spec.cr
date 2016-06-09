@@ -4,7 +4,13 @@ describe "Type inference: nilable cast" do
   it "types as?" do
     assert_type(%(
       1.as?(Float64)
-      )) { nilable float64 }
+      )) { |mod| mod.nil }
+  end
+
+  it "types as? with union" do
+    assert_type(%(
+      (1 || 'a').as?(Int32)
+      )) { nilable int32 }
   end
 
   it "types as? with nil" do

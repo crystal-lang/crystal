@@ -767,6 +767,20 @@ module Crystal
 
       if obj_type.no_return?
         rebind_type node, @program.no_return
+        return node
+      end
+
+      # If there's no way to cast obj to the given type,
+      # just return `obj; nil`
+      resulting_type = obj_type.filter_by(to_type)
+      unless resulting_type
+        nil_literal = NilLiteral.new
+        nil_literal.set_type(@program.nil)
+        exps = Expressions.new([node.obj, nil_literal] of ASTNode)
+        exps.set_type(@program.nil)
+        @changed = true
+        rebind_node(node, @program.nil_var)
+        return exps
       end
 
       node
