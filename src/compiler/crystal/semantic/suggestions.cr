@@ -98,33 +98,33 @@ module Crystal
   end
 
   class IncludedGenericModule
-    delegate lookup_similar_def, @module
-    delegate lookup_similar_type_name, @module
+    delegate lookup_similar_def, to: @module
+    delegate lookup_similar_type_name, to: @module
   end
 
   class InheritedGenericClass
-    delegate lookup_similar_def, @extended_class
-    delegate lookup_similar_type_name, @extended_class
+    delegate lookup_similar_def, to: @extended_class
+    delegate lookup_similar_type_name, to: @extended_class
   end
 
   class AliasType
-    delegate lookup_similar_def, aliased_type
+    delegate lookup_similar_def, to: aliased_type
   end
 
   class MetaclassType
-    delegate lookup_similar_type_name, instance_type
+    delegate lookup_similar_type_name, to: instance_type
   end
 
   class GenericClassInstanceMetaclassType
-    delegate lookup_similar_type_name, instance_type
+    delegate lookup_similar_type_name, to: instance_type
   end
 
   class VirtualType
-    delegate lookup_similar_def, base_type
-    delegate lookup_similar_type_name, base_type
+    delegate lookup_similar_def, to: base_type
+    delegate lookup_similar_type_name, to: base_type
   end
 
   class VirtualMetaclassType
-    delegate lookup_similar_type_name, instance_type
+    delegate lookup_similar_type_name, to: instance_type
   end
 end

@@ -121,7 +121,7 @@ module HTTP
     # params.has_key?("email")   # => true
     # params.has_key?("garbage") # => false
     # ```
-    delegate has_key?, raw_params
+    delegate has_key?, to: raw_params
 
     # Sets first value for specified param name.
     #

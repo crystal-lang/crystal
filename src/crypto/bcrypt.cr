@@ -92,7 +92,7 @@ class Crypto::Bcrypt
     to_s(io)
   end
 
-  delegate :to_slice, :to_s
+  delegate to_slice, to: to_s
 
   private def hash_password
     blowfish = Blowfish.new(BLOWFISH_ROUNDS)

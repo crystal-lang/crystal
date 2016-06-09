@@ -1687,19 +1687,19 @@ module Crystal
       self
     end
 
-    delegate leaf?, @generic_class
-    delegate depth, @generic_class
-    delegate defs, @generic_class
-    delegate superclass, @generic_class
-    delegate macros, @generic_class
-    delegate :abstract?, @generic_class
-    delegate struct?, @generic_class
-    delegate passed_by_value?, @generic_class
-    delegate type_desc, @generic_class
-    delegate container, @generic_class
-    delegate lookup_new_in_ancestors?, @generic_class
-    delegate splat_index, @generic_class
-    delegate double_variadic, @generic_class
+    delegate leaf?, to: @generic_class
+    delegate depth, to: @generic_class
+    delegate defs, to: @generic_class
+    delegate superclass, to: @generic_class
+    delegate macros, to: @generic_class
+    delegate :abstract?, to: @generic_class
+    delegate struct?, to: @generic_class
+    delegate passed_by_value?, to: @generic_class
+    delegate type_desc, to: @generic_class
+    delegate container, to: @generic_class
+    delegate lookup_new_in_ancestors?, to: @generic_class
+    delegate splat_index, to: @generic_class
+    delegate double_variadic, to: @generic_class
 
     def declare_instance_var(name, type_vars : Array(TypeVar))
       type = solve_type_vars(type_vars)
@@ -2103,17 +2103,17 @@ module Crystal
       @module.add_including_type type
     end
 
-    delegate container, @module
-    delegate name, @module
-    delegate defs, @module
-    delegate macros, @module
-    delegate implements?, @module
-    delegate lookup_defs, @module
-    delegate lookup_defs_with_modules, @module
-    delegate lookup_macro, @module
-    delegate lookup_macros, @module
-    delegate has_def?, @module
-    delegate metaclass, @module
+    delegate container, to: @module
+    delegate name, to: @module
+    delegate defs, to: @module
+    delegate macros, to: @module
+    delegate implements?, to: @module
+    delegate lookup_defs, to: @module
+    delegate lookup_defs_with_modules, to: @module
+    delegate lookup_macro, to: @module
+    delegate lookup_macros, to: @module
+    delegate has_def?, to: @module
+    delegate metaclass, to: @module
 
     def instance_of?(type)
       type == @module
@@ -2164,22 +2164,22 @@ module Crystal
       type == @extended_class
     end
 
-    delegate depth, @extended_class
-    delegate superclass, @extended_class
-    delegate add_subclass, @extended_class
-    delegate container, @extended_class
-    delegate name, @extended_class
-    delegate defs, @extended_class
-    delegate macros, @extended_class
-    delegate implements?, @extended_class
-    delegate lookup_defs, @extended_class
-    delegate lookup_defs_with_modules, @extended_class
-    delegate lookup_macro, @extended_class
-    delegate lookup_macros, @extended_class
-    delegate has_def?, @extended_class
-    delegate notify_subclass_added, @extended_class
-    delegate has_def_without_parents?, @extended_class
-    delegate add_def, @extended_class
+    delegate depth, to: @extended_class
+    delegate superclass, to: @extended_class
+    delegate add_subclass, to: @extended_class
+    delegate container, to: @extended_class
+    delegate name, to: @extended_class
+    delegate defs, to: @extended_class
+    delegate macros, to: @extended_class
+    delegate implements?, to: @extended_class
+    delegate lookup_defs, to: @extended_class
+    delegate lookup_defs_with_modules, to: @extended_class
+    delegate lookup_macro, to: @extended_class
+    delegate lookup_macros, to: @extended_class
+    delegate has_def?, to: @extended_class
+    delegate notify_subclass_added, to: @extended_class
+    delegate has_def_without_parents?, to: @extended_class
+    delegate add_def, to: @extended_class
 
     def lookup_instance_var?(name, create = false)
       nil
@@ -2285,11 +2285,11 @@ module Crystal
       typedef.remove_indirection
     end
 
-    delegate pointer?, typedef
-    delegate defs, typedef
-    delegate macros, typedef
-    delegate passed_by_value?, typedef
-    delegate reference_like?, typedef
+    delegate pointer?, to: typedef
+    delegate defs, to: typedef
+    delegate macros, to: typedef
+    delegate passed_by_value?, to: typedef
+    delegate reference_like?, to: typedef
 
     def parents
       # We need to repoint "self" in included generic modules to this typedef,
@@ -2334,17 +2334,17 @@ module Crystal
       @value_processed = false
     end
 
-    delegate lookup_defs, aliased_type
-    delegate lookup_defs_with_modules, aliased_type
-    delegate lookup_first_def, aliased_type
-    delegate def_instances, aliased_type
-    delegate add_def_instance, aliased_type
-    delegate lookup_def_instance, aliased_type
-    delegate lookup_macro, aliased_type
-    delegate lookup_macros, aliased_type
-    delegate cover, aliased_type
-    delegate cover_size, aliased_type
-    delegate passed_by_value?, aliased_type
+    delegate lookup_defs, to: aliased_type
+    delegate lookup_defs_with_modules, to: aliased_type
+    delegate lookup_first_def, to: aliased_type
+    delegate def_instances, to: aliased_type
+    delegate add_def_instance, to: aliased_type
+    delegate lookup_def_instance, to: aliased_type
+    delegate lookup_macro, to: aliased_type
+    delegate lookup_macros, to: aliased_type
+    delegate cover, to: aliased_type
+    delegate cover_size, to: aliased_type
+    delegate passed_by_value?, to: aliased_type
 
     def aliased_type
       aliased_type?.not_nil!
@@ -2592,9 +2592,9 @@ module Crystal
       @program.class_type
     end
 
-    delegate :abstract?, instance_type
-    delegate :generic_nest, instance_type
-    delegate :lookup_new_in_ancestors?, instance_type
+    delegate :abstract?, to: instance_type
+    delegate :generic_nest, to: instance_type
+    delegate :lookup_new_in_ancestors?, to: instance_type
 
     def class_var_owner
       instance_type
@@ -2641,13 +2641,13 @@ module Crystal
       end
     end
 
-    delegate add_def, instance_type.generic_class.metaclass
-    delegate defs, instance_type.generic_class.metaclass
-    delegate macros, instance_type.generic_class.metaclass
-    delegate type_vars, instance_type
-    delegate :abstract?, instance_type
-    delegate generic_nest, instance_type
-    delegate lookup_new_in_ancestors?, instance_type
+    delegate add_def, to: instance_type.generic_class.metaclass
+    delegate defs, to: instance_type.generic_class.metaclass
+    delegate macros, to: instance_type.generic_class.metaclass
+    delegate type_vars, to: instance_type
+    delegate :abstract?, to: instance_type
+    delegate generic_nest, to: instance_type
+    delegate lookup_new_in_ancestors?, to: instance_type
 
     def metaclass?
       true
@@ -3002,25 +3002,25 @@ module Crystal
     def initialize(@program, @base_type)
     end
 
-    delegate leaf?, base_type
-    delegate superclass, base_type
-    delegate lookup_first_def, base_type
-    delegate lookup_defs, base_type
-    delegate lookup_defs_with_modules, base_type
-    delegate lookup_instance_var, base_type
-    delegate lookup_instance_var?, base_type
-    delegate lookup_instance_var_with_owner, base_type
-    delegate lookup_instance_var_with_owner?, base_type
-    delegate index_of_instance_var, base_type
-    delegate lookup_macro, base_type
-    delegate lookup_macros, base_type
-    delegate all_instance_vars, base_type
-    delegate :abstract?, base_type
-    delegate subclass_of?, base_type
-    delegate implements?, base_type
-    delegate covariant?, base_type
-    delegate ancestors, base_type
-    delegate struct?, base_type
+    delegate leaf?, to: base_type
+    delegate superclass, to: base_type
+    delegate lookup_first_def, to: base_type
+    delegate lookup_defs, to: base_type
+    delegate lookup_defs_with_modules, to: base_type
+    delegate lookup_instance_var, to: base_type
+    delegate lookup_instance_var?, to: base_type
+    delegate lookup_instance_var_with_owner, to: base_type
+    delegate lookup_instance_var_with_owner?, to: base_type
+    delegate index_of_instance_var, to: base_type
+    delegate lookup_macro, to: base_type
+    delegate lookup_macros, to: base_type
+    delegate all_instance_vars, to: base_type
+    delegate :abstract?, to: base_type
+    delegate subclass_of?, to: base_type
+    delegate implements?, to: base_type
+    delegate covariant?, to: base_type
+    delegate ancestors, to: base_type
+    delegate struct?, to: base_type
 
     def passed_by_value?
       struct?
@@ -3118,9 +3118,9 @@ module Crystal
       instance_type.leaf?
     end
 
-    delegate base_type, instance_type
-    delegate cover, instance_type
-    delegate lookup_first_def, instance_type
+    delegate base_type, to: instance_type
+    delegate cover, to: instance_type
+    delegate lookup_first_def, to: instance_type
 
     def virtual_lookup(type)
       type.metaclass
