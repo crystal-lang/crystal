@@ -2696,6 +2696,8 @@ module Crystal
     end
 
     def parse_percent_macro_expression
+      raise "can't nest macro expressions", @token if @in_macro_expression
+
       macro_exp = parse_macro_expression
       check_macro_expression_end
       next_token
@@ -2715,6 +2717,8 @@ module Crystal
     end
 
     def parse_percent_macro_control
+      raise "can't nest macro expressions", @token if @in_macro_expression
+
       macro_control = parse_macro_control(@line_number, @column_number)
       if macro_control
         check :"%}"
