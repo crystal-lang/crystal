@@ -182,9 +182,8 @@ class Crystal::Doc::Method
       name:     name,
       args:     args_to_s,
       doc:      doc,
-      prefix:   prefix,
       abstract: abstract?,
-      kind:     kind,
+      yields:   @def.yields,
     }.to_json(io)
   end
 end
