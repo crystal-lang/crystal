@@ -7,7 +7,7 @@ describe "Type inference: method_missing" do
       end
 
       class Bar < Foo
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           2
         end
       end
@@ -23,16 +23,16 @@ describe "Type inference: method_missing" do
   it "does error in method_missing if wrong number of args" do
     assert_error %(
       class Foo
-        macro method_missing(name, args)
+        macro method_missing(call, foo)
         end
       end
-      ), "macro 'method_missing' expects 1 or 3 arguments: (call) or (name, args, block)"
+      ), "macro 'method_missing' expects 1 argument (call)"
   end
 
   it "does method missing for generic type" do
     assert_type(%(
       class Foo(T)
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           1
         end
       end

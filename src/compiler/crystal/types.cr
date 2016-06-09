@@ -692,8 +692,8 @@ module Crystal
       when "method_added"
         return add_hook :method_added, a_def, args_size: 1
       when "method_missing"
-        if a_def.args.size != 3 && a_def.args.size != 1
-          raise TypeException.new "macro 'method_missing' expects 1 or 3 arguments: (call) or (name, args, block)"
+        if a_def.args.size != 1
+          raise TypeException.new "macro 'method_missing' expects 1 argument (call)"
         end
       end
 

@@ -8,8 +8,8 @@ describe "Code gen: method_missing" do
           1
         end
 
-        macro method_missing(name, args, block)
-          {{name.id}}_something
+        macro method_missing(call)
+          {{call.name.id}}_something
         end
       end
 
@@ -20,8 +20,8 @@ describe "Code gen: method_missing" do
   it "does method_missing macro with args" do
     run(%(
       class Foo
-        macro method_missing(name, args, block)
-          {{args.join(" + ").id}}
+        macro method_missing(call)
+          {{call.args.join(" + ").id}}
         end
       end
 
@@ -38,8 +38,8 @@ describe "Code gen: method_missing" do
           yield 3
         end
 
-        macro method_missing(name, args, block)
-          {{name.id}}_something {{block}}
+        macro method_missing(call)
+          {{call.name.id}}_something {{call.block}}
         end
       end
 
@@ -58,8 +58,8 @@ describe "Code gen: method_missing" do
           1 + 2
         end
 
-        macro method_missing(name, args, block)
-          {{name.id}}_something {{block}}
+        macro method_missing(call)
+          {{call.name.id}}_something {{call.block}}
         end
       end
 
@@ -70,8 +70,8 @@ describe "Code gen: method_missing" do
   it "does method_missing macro with virtual type (1)" do
     run(%(
       class Foo
-        macro method_missing(name, args, block)
-          "{{@type.name.id}}{{name.id}}"
+        macro method_missing(call)
+          "{{@type.name.id}}{{call.name.id}}"
         end
       end
 
@@ -86,8 +86,8 @@ describe "Code gen: method_missing" do
   it "does method_missing macro with virtual type (2)" do
     run(%(
       class Foo
-        macro method_missing(name, args, block)
-          "{{@type.name.id}}{{name.id}}"
+        macro method_missing(call)
+          "{{@type.name.id}}{{call.name.id}}"
         end
       end
 
@@ -106,7 +106,7 @@ describe "Code gen: method_missing" do
           1
         end
 
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           2
         end
       end
@@ -122,13 +122,13 @@ describe "Code gen: method_missing" do
   it "does method_missing macro with virtual type (4)" do
     run(%(
       class Foo
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           1
         end
       end
 
       class Bar < Foo
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           2
         end
       end
@@ -141,19 +141,19 @@ describe "Code gen: method_missing" do
   it "does method_missing macro with virtual type (5)" do
     run(%(
       class Foo
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           1
         end
       end
 
       class Bar < Foo
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           2
         end
       end
 
       class Baz < Bar
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           3
         end
       end
@@ -169,7 +169,7 @@ describe "Code gen: method_missing" do
       end
 
       class Bar < Foo
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           2
         end
       end
@@ -191,7 +191,7 @@ describe "Code gen: method_missing" do
       end
 
       class Bar < Foo
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           2
         end
       end
@@ -210,7 +210,7 @@ describe "Code gen: method_missing" do
   it "does method_missing macro with virtual type (8)" do
     run(%(
       class Foo
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           {{@type.name.stringify}}
         end
       end
@@ -237,7 +237,7 @@ describe "Code gen: method_missing" do
       class Foo
         include Moo
 
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           2
         end
       end
@@ -253,7 +253,7 @@ describe "Code gen: method_missing" do
       end
 
       class Foo
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           2
         end
 
@@ -270,7 +270,7 @@ describe "Code gen: method_missing" do
   it "does method_missing macro with included module" do
     run("
       module Moo
-        macro method_missing(name, args, block)
+        macro method_missing(call)
           {{@type.name.stringify}}
         end
       end
@@ -286,8 +286,8 @@ describe "Code gen: method_missing" do
   it "does method_missing with assignment (bug)" do
     run(%(
       class Foo
-        macro method_missing(name, args, block)
-          x = {{args[0]}}
+        macro method_missing(call)
+          x = {{call.args[0]}}
           x
         end
       end
@@ -308,8 +308,8 @@ describe "Code gen: method_missing" do
       class Foo
         @x : Int32?
 
-        macro method_missing(name, args, block)
-          @x = {{args[0]}}
+        macro method_missing(call)
+          @x = {{call.args[0]}}
           @x
         end
       end

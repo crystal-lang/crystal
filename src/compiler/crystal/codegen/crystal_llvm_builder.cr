@@ -58,10 +58,10 @@ module Crystal
       @builder.to_unsafe
     end
 
-    macro method_missing(name, args, block)
+    macro method_missing(call)
       return llvm_nil if @end
 
-      @builder.{{name.id}}({{*args}}) {{block}}
+      @builder.{{call}}
     end
   end
 end

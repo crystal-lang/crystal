@@ -1033,8 +1033,8 @@ class Object
   # wrapper.gsub(/E/, "A") # => "HALLO"
   # ```
   macro forward_missing_to(delegate)
-    macro method_missing(name, args, block)
-      {{delegate}}.\{{name.id}}(\{{*args}}) \{{block}}
+    macro method_missing(call)
+      {{delegate}}.\{{call}}
     end
   end
 
