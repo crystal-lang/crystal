@@ -205,7 +205,7 @@ describe "Type inference: virtual" do
     var.instance_vars.size.should eq(0)
 
     base = mod.types["Base"].as(InstanceVarContainer)
-    base.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32))
+    base.instance_vars["@x"].type.should eq(mod.nilable(mod.int32))
   end
 
   it "types inspect" do
@@ -416,7 +416,7 @@ describe "Type inference: virtual" do
 
       f = Bar1.new || Bar2.new || Baz.new
       f.foo(f)
-      ") { |mod| mod.nil }
+      ") { nil_type }
   end
 
   it "checks cover in every concrete subclass 2" do
@@ -475,7 +475,7 @@ describe "Type inference: virtual" do
 
       f = Bar1.new || Bar2.new || Baz.new
       f.foo(f)
-      ") { |mod| mod.nil }
+      ") { nil_type }
   end
 
   it "checks method in every concrete subclass but method in Object" do
@@ -496,7 +496,7 @@ describe "Type inference: virtual" do
 
       f = Bar1.new || Bar2.new
       f.foo
-      ") { |mod| mod.nil }
+      ") { nil_type }
   end
 
   # it "recalculates virtual type when subclass is added" do
@@ -526,7 +526,7 @@ describe "Type inference: virtual" do
 
   #     a2 = Foo.new || Bar.new('a')
   #     b2 = coco(a2)
-  #     ") { |mod| union_of(mod.nil, int32, char) }
+  #     ") { union_of(nil_type, int32, char) }
   # end
 
   it "finds overloads of union of virtual, class and nil" do

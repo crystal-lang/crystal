@@ -38,11 +38,11 @@ describe "Type inference: primitives" do
   end
 
   it "types nil" do
-    assert_type("nil") { |mod| mod.nil }
+    assert_type("nil") { nil_type }
   end
 
   it "types nop" do
-    assert_type("") { |mod| mod.nil }
+    assert_type("") { nil_type }
   end
 
   it "types an expression" do

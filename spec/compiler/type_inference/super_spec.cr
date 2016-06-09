@@ -12,7 +12,7 @@ describe "Type inference: super" do
     mod, type = result.program, result.node.type.as(NonGenericClassType)
 
     superclass = type.superclass.as(NonGenericClassType)
-    superclass.instance_vars["@x"].type.should eq(mod.union_of(mod.nil, mod.int32))
+    superclass.instance_vars["@x"].type.should eq(mod.nilable(mod.int32))
   end
 
   it "types super without arguments but parent has arguments" do

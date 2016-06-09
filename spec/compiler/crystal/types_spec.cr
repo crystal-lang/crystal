@@ -48,7 +48,7 @@ describe "types to_s of" do
   end
 
   it "nilable type with more than two elements, Nil at the end" do
-    assert_type_to_s "(Int32 | String | Nil)" { |mod| union_of(string, int32, mod.nil) }
+    assert_type_to_s "(Int32 | String | Nil)" { union_of(string, int32, nil_type) }
   end
 
   describe "union types" do

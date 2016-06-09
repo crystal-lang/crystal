@@ -66,7 +66,7 @@ describe "Type inference: def" do
   end
 
   it "types empty body def" do
-    assert_type("def foo; end; foo") { |mod| mod.nil }
+    assert_type("def foo; end; foo") { nil_type }
   end
 
   it "types mutual infinite recursion" do
@@ -105,7 +105,7 @@ describe "Type inference: def" do
     mod, input = result.program, result.node.as(Expressions)
 
     call = input.last.as(Call)
-    call.type.should eq(mod.union_of(mod.int32, mod.nil))
+    call.type.should eq(mod.nilable(mod.int32))
     call.target_def.body.type.should eq(mod.nil)
   end
 
@@ -372,7 +372,7 @@ describe "Type inference: def" do
       end
 
       foo 1
-      )) { |mod| mod.nil.metaclass }
+      )) { nil_type.metaclass }
   end
 
   it "clones regex literal value (#2384)" do

@@ -26,7 +26,7 @@ describe "Type inference: return" do
       end
 
       bar
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "can use type var as return type (#1226)" do

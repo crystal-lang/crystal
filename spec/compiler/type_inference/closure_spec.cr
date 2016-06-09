@@ -321,7 +321,7 @@ describe "Type inference: closure" do
       foo do |x|
         x.to_f
       end
-      ") { |mod| mod.nil }
+      ") { nil_type }
   end
 
   it "errors when transforming block to proc literal if type mismatch" do

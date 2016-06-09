@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Type inference: static array" do
   it "types static array with var declaration" do
-    assert_type("x = uninitialized Char[3]") { |mod| mod.nil }
+    assert_type("x = uninitialized Char[3]") { nil_type }
   end
 
   it "types static array new" do

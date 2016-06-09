@@ -61,7 +61,7 @@ describe "Global inference" do
     assert_type(%(
       $x = nil
       $x
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "infers type from string literal" do

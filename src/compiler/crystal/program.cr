@@ -442,6 +442,10 @@ module Crystal
       end
     {% end %}
 
+    def nil_type
+      @nil.not_nil!
+    end
+
     def hash_type
       @hash_type.not_nil!
     end

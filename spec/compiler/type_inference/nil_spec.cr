@@ -2,11 +2,11 @@ require "../../spec_helper"
 
 describe "Type inference: nil" do
   it "types empty" do
-    assert_type("") { |mod| mod.nil }
+    assert_type("") { nil_type }
   end
 
   it "types nil" do
-    assert_type("nil") { |mod| mod.nil }
+    assert_type("nil") { nil_type }
   end
 
   it "can call a fun with nil for pointer" do
@@ -54,7 +54,7 @@ describe "Type inference: nil" do
       f = Foo.new
       f.bar = 1
       f.bar
-      ") { |mod| union_of(mod.nil, int32) }
+      ") { nilable int32 }
   end
 
   it "marks instance variables as nil when not in initialize 2" do
@@ -150,7 +150,7 @@ describe "Type inference: nil" do
       end
 
       foo
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "doesn't check return type for void" do
@@ -160,6 +160,6 @@ describe "Type inference: nil" do
       end
 
       foo
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 end

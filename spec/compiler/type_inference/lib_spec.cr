@@ -797,7 +797,7 @@ describe "Type inference: lib" do
       end
 
       LibFoo.foo
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "types fun returning void as nil" do
@@ -807,7 +807,7 @@ describe "Type inference: lib" do
       end
 
       LibFoo.foo
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "types fun returning nil as nil" do
@@ -817,7 +817,7 @@ describe "Type inference: lib" do
       end
 
       LibFoo.foo
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "can use macros inside lib" do

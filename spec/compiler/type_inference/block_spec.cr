@@ -7,7 +7,7 @@ describe "Block inference" do
 
       foo do
       end
-    ") { |mod| mod.nil }
+    ") { nil_type }
   end
 
   it "infer type of block body" do
@@ -80,7 +80,7 @@ describe "Block inference" do
       foo do |x|
         x
       end
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "yields with different types" do
@@ -103,7 +103,7 @@ describe "Block inference" do
       foo do
         break
       end
-    ") { |mod| mod.nil }
+    ") { nil_type }
   end
 
   it "break without value has nil type" do
@@ -112,7 +112,7 @@ describe "Block inference" do
       foo do
         break if false
       end
-    ") { |mod| union_of(mod.nil, int32) }
+    ") { nilable int32 }
   end
 
   it "infers type of block before call" do
@@ -297,7 +297,7 @@ describe "Block inference" do
         a = x
       end
       a
-      ") { |mod| union_of(types["Foo"], mod.nil) }
+      ") { nilable types["Foo"] }
   end
 
   it "error with self input type doesn't match" do
@@ -341,7 +341,7 @@ describe "Block inference" do
       end
 
       foo { }
-    ") { |mod| mod.nil }
+    ") { nil_type }
   end
 
   it "preserves type filters in block" do
@@ -414,7 +414,7 @@ describe "Block inference" do
       foo do
         next
       end
-    ") { |mod| mod.nil }
+    ") { nil_type }
   end
 
   it "does next from block with value" do
@@ -746,7 +746,7 @@ describe "Block inference" do
       foo do
         1
       end
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "ignores void return type (2) (#427)" do
@@ -1229,7 +1229,7 @@ describe "Block inference" do
       foo do |x, *y, z, w|
         {x, y, z, w}
       end
-      )) { |mod| tuple_of([int32, tuple_of([char, bool, mod.nil]), float64, string]) }
+      )) { tuple_of([int32, tuple_of([char, bool, nil_type]), float64, string]) }
   end
 
   it "uses splat in block argument, but not enough yield expressions" do
@@ -1241,7 +1241,7 @@ describe "Block inference" do
       foo do |x, y, z, *w|
         {x, y, z, w}
       end
-      )) { |mod| tuple_of([int32, mod.nil, mod.nil, tuple_of([] of Type)]) }
+      )) { tuple_of([int32, nil_type, nil_type, tuple_of([] of Type)]) }
   end
 
   it "errors if splat argument becomes a union" do

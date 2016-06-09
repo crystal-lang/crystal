@@ -63,7 +63,7 @@ describe "Type inference: ssa" do
       else
       end
       a
-      )) { |mod| union_of(mod.nil, mod.char) }
+      )) { nilable char }
   end
 
   it "types a var inside an if without definition in then" do
@@ -73,7 +73,7 @@ describe "Type inference: ssa" do
         a = 'a'
       end
       a
-      )) { |mod| union_of(mod.nil, mod.char) }
+      )) { nilable char }
   end
 
   it "types a var with an if but without change" do
@@ -153,7 +153,7 @@ describe "Type inference: ssa" do
         a = 1
       end
       a
-      )) { |mod| union_of(mod.nil, mod.int32) }
+      )) { nilable int32 }
   end
 
   it "types a var that is re-assigned in a while condition" do
@@ -222,7 +222,7 @@ describe "Type inference: ssa" do
       rescue
       end
       a
-      )) { |mod| union_of [mod.int32, mod.char, mod.nil] of Type }
+      )) { union_of [int32, char, nil_type] of Type }
   end
 
   it "types a var after begin rescue as having all possible types in begin and rescue" do
@@ -250,7 +250,7 @@ describe "Type inference: ssa" do
         b = a
       end
       b
-      )) { |mod| union_of [mod.int32, mod.char, mod.string, mod.nil] of Type }
+      )) { union_of [int32, char, string, nil_type] of Type }
   end
 
   it "types a var after begin rescue with no-return in rescue" do
@@ -277,7 +277,7 @@ describe "Type inference: ssa" do
         a = 1
       end
       a
-      )) { |mod| union_of(mod.nil, mod.int32) }
+      )) { nilable int32 }
   end
 
   it "doesn't change type to nilable inside if" do
@@ -462,7 +462,7 @@ describe "Type inference: ssa" do
       end
 
       b
-      ") { |mod| union_of(mod.nil, mod.char) }
+      ") { nilable char }
   end
 
   it "types while with break doesn't infect initial vas" do
@@ -598,7 +598,7 @@ describe "Type inference: ssa" do
         d = a
       end
       d
-      ") { |mod| union_of(mod.nil, mod.int32) }
+      ") { nilable int32 }
   end
 
   it "types re-assign inside if (bug)" do
@@ -619,7 +619,7 @@ describe "Type inference: ssa" do
         a = index
       end
       a
-      ") { |mod| union_of(mod.nil, mod.int32) }
+      ") { nilable int32 }
   end
 
   it "types re-assign inside while (bug)" do
@@ -640,7 +640,7 @@ describe "Type inference: ssa" do
         a = index
       end
       a
-      ") { |mod| union_of(mod.nil, mod.int32) }
+      ") { nilable int32 }
   end
 
   it "preserves type filters after block (bug)" do

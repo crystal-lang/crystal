@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Type inference: uninitialized" do
   it "declares as uninitialized" do
-    assert_type("a = uninitialized Int32") { |mod| mod.nil }
+    assert_type("a = uninitialized Int32") { nil_type }
   end
 
   it "declares as uninitialized and reads it" do

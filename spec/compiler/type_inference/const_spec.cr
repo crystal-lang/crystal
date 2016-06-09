@@ -231,7 +231,7 @@ describe "Type inference: const" do
       end
 
       A
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "errors on dynamic constant assignment inside block" do

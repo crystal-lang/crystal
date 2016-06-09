@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Type inference: proc" do
   it "types empty proc literal" do
-    assert_type("-> {}") { |mod| proc_of(mod.nil) }
+    assert_type("-> {}") { proc_of(nil_type) }
   end
 
   it "types int proc literal" do
@@ -30,7 +30,7 @@ describe "Type inference: proc" do
   end
 
   it "types a proc pointer with generic types" do
-    assert_type("def foo(x); end; ->foo(Pointer(Int32))") { |mod| proc_of(pointer_of(int32), mod.nil) }
+    assert_type("def foo(x); end; ->foo(Pointer(Int32))") { proc_of(pointer_of(int32), nil_type) }
   end
 
   it "types proc pointer to instance method" do
@@ -129,7 +129,7 @@ describe "Type inference: proc" do
       end
 
       foo ->(x : Int32) { x.to_f }
-      ") { |mod| mod.nil }
+      ") { nil_type }
   end
 
   it "has proc literal as restriction and errors if output is different" do
@@ -258,7 +258,7 @@ describe "Type inference: proc" do
   end
 
   it "types nil or proc type" do
-    result = assert_type("1 == 1 ? nil : ->{}") { |mod| union_of(mod.nil, mod.proc_of(mod.nil)) }
+    result = assert_type("1 == 1 ? nil : ->{}") { nilable proc_of(nil_type) }
     result.node.type.should be_a(NilableProcType)
   end
 
@@ -457,7 +457,7 @@ describe "Type inference: proc" do
       f = foo { |f| f.bar }
       Foo.new
       f
-      )) { |mod| proc_of(types["Foo"], mod.nil) }
+      )) { proc_of(types["Foo"], nil_type) }
   end
 
   it "gives correct error message when proc return type is incorrect (#219)" do
@@ -588,7 +588,7 @@ describe "Type inference: proc" do
       block = foo { |elems| elems[0] }
       elems = [Foo.new, Bar.new]
       block
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "uses array argument of proc arg (2)" do
@@ -805,7 +805,7 @@ describe "Type inference: proc" do
   it "sets proc type as void if explicitly told so, when using new" do
     assert_type(%(
       Proc(Int32, Void).new { 1 }
-      )) { |mod| proc_of(int32, mod.nil) }
+      )) { proc_of(int32, nil_type) }
   end
 
   it "accesses T and R" do

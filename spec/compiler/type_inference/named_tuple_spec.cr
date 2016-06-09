@@ -45,7 +45,7 @@ describe "Type inference: named tuples" do
     assert_type(%(
       t = {x: 1, y: 'a'}
       t[:foo]?
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "gives error when indexing with an unknown name" do

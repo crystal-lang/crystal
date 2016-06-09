@@ -2,7 +2,7 @@ require "../../spec_helper"
 
 describe "Type inference: if" do
   it "types an if without else" do
-    assert_type("if 1 == 1; 1; end") { |mod| union_of(int32, mod.nil) }
+    assert_type("if 1 == 1; 1; end") { nilable int32 }
   end
 
   it "types an if with else of same type" do
@@ -31,7 +31,7 @@ describe "Type inference: if" do
       end
 
       Foo.new.coco
-      ") { |mod| union_of(int32, mod.nil) }
+      ") { nilable int32 }
   end
 
   it "can invoke method on var that is declared on the right hand side of an and" do
@@ -39,7 +39,7 @@ describe "Type inference: if" do
       if 1 == 2 && (b = 1)
         b + 1
       end
-      ") { |mod| union_of(int32, mod.nil) }
+      ") { nilable int32 }
   end
 
   it "errors if requires inside if" do

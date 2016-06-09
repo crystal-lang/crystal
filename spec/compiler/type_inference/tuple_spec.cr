@@ -30,7 +30,7 @@ describe "Type inference: tuples" do
   end
 
   it "types tuple [2]?" do
-    assert_type("{1, 'a'}[2]?") { |mod| mod.nil }
+    assert_type("{1, 'a'}[2]?") { nil_type }
   end
 
   it "types tuple metaclass [0]" do
@@ -217,6 +217,6 @@ describe "Type inference: tuples" do
         end
       end
       Tuple(Nil, Int32).types
-      )) { |mod| mod.nil.metaclass }
+      )) { nil_type.metaclass }
   end
 end
