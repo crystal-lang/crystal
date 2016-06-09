@@ -92,4 +92,4 @@ module XML
   end
 end
 
-require "./*"
+require "./xml/*"

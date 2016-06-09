@@ -23,4 +23,4 @@ class Markdown
   end
 end
 
-require "./*"
+require "./markdown/*"

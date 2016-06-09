@@ -110,4 +110,4 @@ module ECR
   end
 end
 
-require "./lexer"
+require "./ecr/lexer"

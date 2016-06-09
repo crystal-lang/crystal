@@ -1,4 +1,4 @@
-require "./*"
+require "./yaml/*"
 
 # The YAML module provides serialization and deserialization of YAML to/from native Crystal data structures.
 #

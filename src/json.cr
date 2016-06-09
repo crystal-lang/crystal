@@ -63,4 +63,4 @@ module JSON
   end
 end
 
-require "./*"
+require "./json/*"

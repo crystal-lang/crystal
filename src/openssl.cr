@@ -1,4 +1,4 @@
-require "./lib_ssl"
+require "./openssl/lib_ssl"
 
 module OpenSSL
   class Error < Exception
@@ -76,8 +76,8 @@ module OpenSSL
   end
 end
 
-require "./bio"
-require "./ssl/*"
-require "./digest/*"
-require "./md5"
-require "./x509"
+require "./openssl/bio"
+require "./openssl/ssl/*"
+require "./openssl/digest/*"
+require "./openssl/md5"
+require "./openssl/x509/x509"

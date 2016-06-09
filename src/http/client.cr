@@ -622,5 +622,5 @@ require "openssl" ifdef !without_openssl
 require "socket"
 require "uri"
 require "base64"
-require "./response"
-require "../common"
+require "./client/response"
+require "./common"

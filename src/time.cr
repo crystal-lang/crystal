@@ -619,4 +619,4 @@ struct Time
   end
 end
 
-require "./**"
+require "./time/**"

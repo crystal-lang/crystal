@@ -102,4 +102,4 @@ def fork
   Process.fork
 end
 
-require "./*"
+require "./process/*"

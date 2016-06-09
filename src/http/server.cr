@@ -1,9 +1,9 @@
 require "openssl" ifdef !without_openssl
 require "socket"
-require "./context"
-require "./handler"
-require "./response"
-require "../common"
+require "./server/context"
+require "./server/handler"
+require "./server/response"
+require "./common"
 
 # An HTTP server.
 #

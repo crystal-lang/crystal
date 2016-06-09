@@ -1,4 +1,4 @@
-require "./**"
+require "./benchmark/**"
 
 # The Benchmark module provides methods for benchmarking Crystal code, giving
 # detailed reports on the time taken for each task.

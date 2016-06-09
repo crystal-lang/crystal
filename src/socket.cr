@@ -282,4 +282,4 @@ class Socket < IO::FileDescriptor
   end
 end
 
-require "./*"
+require "./socket/*"

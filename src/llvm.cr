@@ -1,4 +1,4 @@
-require "./**"
+require "./llvm/**"
 require "c/string"
 
 module LLVM

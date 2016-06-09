@@ -1,5 +1,5 @@
 require "fiber"
-require "./*"
+require "./concurrent/*"
 
 # Blocks the current fiber for the specified number of seconds.
 #

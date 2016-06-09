@@ -1,4 +1,4 @@
-require "../csv"
+require "csv"
 
 # :nodoc:
 class CSV::Lexer::StringBased < CSV::Lexer

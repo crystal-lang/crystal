@@ -1,5 +1,5 @@
 require "c/pthread"
-require "./*"
+require "./thread/*"
 
 # :nodoc:
 class Thread(T, R)

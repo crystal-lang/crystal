@@ -200,7 +200,7 @@ module Spec
   end
 end
 
-require "./*"
+require "./spec/*"
 
 OptionParser.parse! do |opts|
   opts.banner = "crystal spec runner"

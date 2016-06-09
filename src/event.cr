@@ -1,4 +1,4 @@
-require "./*"
+require "./event/*"
 
 # :nodoc:
 module Event

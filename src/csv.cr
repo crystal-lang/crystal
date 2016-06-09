@@ -386,4 +386,4 @@ class CSV
   end
 end
 
-require "./**"
+require "./csv/**"

@@ -1,6 +1,4 @@
-require "./lib_zlib"
-require "./deflate"
-require "./inflate"
+require "./zlib/*"
 
 # The Zlib module provides access to the [zlib library](http://zlib.net/) for
 # lossless data compression and decompression in zlib and gzip format:
