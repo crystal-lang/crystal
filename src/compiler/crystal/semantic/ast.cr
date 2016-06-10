@@ -937,39 +937,36 @@ module Crystal
         # to split and create tuple types for that case.
         exps_types = Array(Type).new(a_yield.exps.size)
 
-        # Check if there are missing yield expressions to match
-        # the (optional) block signature
-        if yield_vars && a_yield.exps.size < yield_vars.size
-          a_yield.raise "wrong number of yield arguments (given #{a_yield.exps.size}, expected #{yield_vars.size})"
-        end
-
         a_yield.exps.each do |exp|
           exp_type = exp.type?
           return unless exp_type
-
-          # Check that the expression has the type of the (optional) block signature
-          if yield_vars
-            yield_var = yield_vars[i]?
-            if yield_var && !exp_type.implements?(yield_var.type)
-              exp.raise "argument ##{i + 1} of yield expected to be #{yield_var.type}, not #{exp_type}"
-            end
-          end
-
-          break if !splat_index && i >= args_size
 
           if exp.is_a?(Splat)
             unless exp_type.is_a?(TupleInstanceType)
               exp.raise "expected splat expression to be a tuple type, not #{exp_type}"
             end
 
-            exp_type.tuple_types.each do |tuple_type|
-              break if !splat_index && i >= args_size
-
-              exps_types << tuple_type
-              i += 1
-            end
+            exps_types.concat(exp_type.tuple_types)
+            i += exp_type.tuple_types.size
           else
             exps_types << exp_type
+            i += 1
+          end
+        end
+
+        # Check if there are missing yield expressions to match
+        # the (optional) block signature, and if they match the declared types
+        if yield_vars
+          if exps_types.size < yield_vars.size
+            a_yield.raise "wrong number of yield arguments (given #{exps_types.size}, expected #{yield_vars.size})"
+          end
+
+          # Check that the types match
+          i = 0
+          yield_vars.zip(exps_types) do |yield_var, exp_type|
+            unless exp_type.implements?(yield_var.type)
+              a_yield.raise "argument ##{i + 1} of yield expected to be #{yield_var.type}, not #{exp_type}"
+            end
             i += 1
           end
         end

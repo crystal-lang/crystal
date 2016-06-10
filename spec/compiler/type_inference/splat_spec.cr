@@ -471,6 +471,19 @@ describe "Type inference: splat" do
       )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
   end
 
+  it "matches with splat" do
+    assert_type(%(
+    def foo(&block : *{Int32, Int32} -> U)
+      tup = {1, 2}
+      yield *tup
+    end
+
+    foo do |x, y|
+      {x, y}
+    end
+    )) { tuple_of([int32, int32]) }
+  end
+
   describe Splat do
     it "without splat" do
       a_def = Def.new("foo", args: [Arg.new("x"), Arg.new("y")])
