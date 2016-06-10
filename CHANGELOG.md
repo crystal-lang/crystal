@@ -1,3 +1,54 @@
+## Next
+
+* **(breaking change)** `IniFile` was renamed to `INI`, and its method `load` renamed to `parse`
+* **(breaking change)** `Process.getpgid` was renamed to `Process.pgid`
+* **(breaking change)** An `Exception`'s backtrace is now set when it's raised, not when it's created: it's `backtrace` method raises if it's not set, and there's `backtrace?` to get it as a nilable array
+* **(breaking change)** `dup` is now correctly implemented in all types. `clone` is not defined by default, but some types in the standard library do. Also check `Object#def_clone`
+* **(breaking change)** the `method_missing` macro now only accepts a single argument: a `Call` now. The form that accepted 3 arguments was removed.
+* **(breaking change)** the `delegate` macro must now be used like `delegate method1, method2, ..., methodN, to: object`
+* **(breaking change)** `Hash#each_with_index` and `Hash#each_with_object` now yield a tuple (pair) and an index, because it's now `Enumerable`. Use `do |(key, value), index|` for this.
+* **(breaking change)** `{"foo": 1}` denotes a named tuple literal now, not a hash literal. Use `{"foo" => 1}` instead. This also applies to, for example `HTTP::Headers{...}`
+* The `build` command was renamed to `compile`. The `build` command is deprecated and will be removed in a future version
+* Added a `Union` type that represents the type of a union, which can have class methods
+* Methods, procs and lib functions that are marked as returning `Void` now return `Nil`
+* Methods that are marked as returning `Nil` are not checked for a correct return type, they always return `nil` now
+* When `as` fails at runtime it now includes which type couldn't be cast
+* Macros can now be used inside `lib` and `enum` declarations
+* Macros can now be declared inside enums
+* Macro calls can now be used as enum values
+* Generic types can now include a splatted type variable. This already existed in the language (`Tuple(*T)`, `Proc(*T)`) but there was no syntax to define such types.
+* Class variables are now inherited (only their type, not their value). They are now similar to Ruby class instance variables.
+* Splats in `yield` can now be used
+* Splat in block arguments can now be used.
+* Added block auto-unpacking: if a method yields a tuple and a block specifies more then one block argument, the tuple is unpacked to these arguments
+* `Hash`, `HTTP::Headers`, `HTTP::Params` and `ENV` now include the `Enumerable` module
+* `Proc` is now `Proc(*T, R)`
+* `Tuple(*T).new` and `NamedTuple(**T).new` now correctly match the given `T` (#1828)
+* `Float64#to_s` now produces an ever more accurate output
+* `JSON` parsing now correctly handle floats with many digits
+* `JSON.mapping` and `YAML.mapping` now also accept named arguments in addition to a hash literal or named tuple literal
+* The output of `pp x` is now `x # => ...` instead of `x = ...`
+* The output of the `debug()` macro method now tries to format the code (pass `false` to disable this)
+* Added `JSON` and `YAML` parsing and mapping for unions
+* Added `FileUtils.cp_r` (thanks @Dreauw)
+* Added `Tuple.from` and `NamedTuple.from`  (thanks @jhass)
+* Added `XML.escape` (thanks @juanedi)
+* Added `HTTP::Server::Response#respond_with_error` (thanks @jhass)
+* Added `TCPServer#accept?`
+* Added optional `base` argument to `Char#digit?` and `Char#hex?` (thanks @mirek)
+* Added `flag?` macro method, similar to using `ifdef`. `ifdef` is deprecated and will be removed in a future version.
+* Added `YAML::PullParser#read_raw`
+* Added `Proc#partial`
+* Added `Socket.ip?(str)` to validate IPv4 and IPv6 addresses
+* Added `Bytes` as an alias of `Slice(UInt8)`
+* Added `RangeLiteral` macro methods: `begin`, `end`, `excludes_end?`, `map` and `to_a`
+* Added `ArrayLiteral#[range]` and `ArrayLiteral#[from, to]` in macros (applicable for `TupleLiteral` too)
+* Added `Generic` macro methods: `name`, `type_vars`, `named_args`
+* Spec: added JUnit formatter output (thanks @juanedi)
+* `HTTP::LogHandler` logs exceptions now (thanks @jhass)
+* `HTTP::ErrorHandler` does not tell the client which exception occured by default (can be enabled with a `verbose` flag) (thanks @jhass)
+* Several bug fixes
+
 ## 0.17.4 (2016-05-26)
 
 * Added string literals without interpolations nor escapes: `%q{...}` and `<<-'HEREDOC'`. Also added `%Q{...}` with the same meaning as `%{...}`.
