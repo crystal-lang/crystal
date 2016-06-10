@@ -1306,9 +1306,9 @@ module Crystal
             block_var = block_context.vars[arg.name]
             if i == splat_index
               exp_value = allocate_tuple(arg.type.as(TupleInstanceType)) do |tuple_type|
-                exp_value, exp_type = exp_values[j]
+                exp_value2, exp_type = exp_values[j]
                 j += 1
-                {exp_type, exp_value}
+                {exp_type, exp_value2}
               end
               exp_type = arg.type
             else

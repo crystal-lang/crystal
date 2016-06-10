@@ -75,7 +75,7 @@ struct Char
   # 'f' + "oo" # => "foo"
   # ```
   def +(str : String)
-    bytesize = str.bytesize + bytesize
+    bytesize = str.bytesize + self.bytesize
     String.new(bytesize) do |buffer|
       count = 0
       each_byte do |byte|

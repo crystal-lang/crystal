@@ -494,7 +494,7 @@ class Crystal::Call
     arg = args.first
     if arg.is_a?(SymbolLiteral)
       name = arg.value
-      index = index = instance_type.name_index(name)
+      index = instance_type.name_index(name)
       if index || nilable
         indexer_def = yield instance_type, (index || -1)
         indexer_match = Match.new(indexer_def, arg_types, MatchContext.new(owner, owner))
