@@ -120,8 +120,8 @@ class JSON::PrettyWriter
     @indent = 0
   end
 
-  delegate read, @io
-  delegate write, @io
+  delegate read, to: @io
+  delegate write, to: @io
 
   def json_object
     self << "{\n"

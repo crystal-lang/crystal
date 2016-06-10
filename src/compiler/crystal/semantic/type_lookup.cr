@@ -28,7 +28,7 @@ module Crystal
     def initialize(@root, @self_type, @raise = true, @allow_typeof = true)
     end
 
-    delegate program, @root
+    delegate program, to: @root
 
     def visit(node : ASTNode)
       true
@@ -440,7 +440,7 @@ module Crystal
   end
 
   class AliasType
-    delegate types, aliased_type
-    delegate types?, aliased_type
+    delegate types, to: aliased_type
+    delegate types?, to: aliased_type
   end
 end

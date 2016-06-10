@@ -82,7 +82,7 @@ module Crystal
   end
 
   class GenericClassInstanceType
-    delegate check_method_missing, @generic_class
+    delegate check_method_missing, to: @generic_class
   end
 
   class VirtualType

@@ -276,11 +276,7 @@ class Crystal::SpecRunOutput
     @output
   end
 
-  delegate to_i, @output
-  delegate to_u64, @output
-  delegate to_f, @output
-  delegate to_f32, @output
-  delegate to_f64, @output
+  delegate to_i, to_u64, to_f, to_f32, to_f64, to: @output
 
   def to_b
     @output == "true"
