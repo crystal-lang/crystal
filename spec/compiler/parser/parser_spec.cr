@@ -318,6 +318,9 @@ describe "Parser" do
   it_parses "foo(a: 1\n)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)])
   it_parses "foo(\na: 1,\n)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)])
 
+  it_parses %(foo("foo bar": 1, "baz": 2)), Call.new(nil, "foo", named_args: [NamedArgument.new("foo bar", 1.int32), NamedArgument.new("baz", 2.int32)])
+  it_parses %(foo "foo bar": 1, "baz": 2), Call.new(nil, "foo", named_args: [NamedArgument.new("foo bar", 1.int32), NamedArgument.new("baz", 2.int32)])
+
   it_parses "x.foo(a: 1, b: 2)", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
   it_parses "x.foo a: 1, b: 2 ", Call.new("x".call, "foo", named_args: [NamedArgument.new("a", 1.int32), NamedArgument.new("b", 2.int32)])
 
@@ -438,9 +441,15 @@ describe "Parser" do
   it_parses "Foo(x: U, y: V)", Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path), NamedArgument.new("y", "V".path)])
   assert_syntax_error "Foo(T, x: U)"
 
+  it_parses %(Foo("foo bar": U)), Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("foo bar", "U".path)])
+  it_parses %(Foo("foo": U, "bar": V)), Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("foo", "U".path), NamedArgument.new("bar", "V".path)])
+
   it_parses "Foo({x: X})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path)])] of ASTNode)
   it_parses "Foo({x: X, y: Y})", Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("x", "X".path), NamedArgument.new("y", "Y".path)])] of ASTNode)
   assert_syntax_error "Foo({x: X, x: Y})", "duplicated key: x"
+
+  it_parses %(Foo({"foo bar": X})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo bar", "X".path)])] of ASTNode)
+  it_parses %(Foo({"foo": X, "bar": Y})), Generic.new("Foo".path, [Generic.new(Path.global("NamedTuple"), [] of ASTNode, named_args: [NamedArgument.new("foo", "X".path), NamedArgument.new("bar", "Y".path)])] of ASTNode)
 
   it_parses "Foo(*T)", Generic.new("Foo".path, ["T".path.splat] of ASTNode)
 
@@ -821,13 +830,14 @@ describe "Parser" do
   it_parses "foo z: out x; x", [Call.new(nil, "foo", named_args: [NamedArgument.new("z", Out.new("x".var))]), "x".var]
 
   it_parses "{1 => 2, 3 => 4}", HashLiteral.new([HashLiteral::Entry.new(1.int32, 2.int32), HashLiteral::Entry.new(3.int32, 4.int32)])
-  it_parses %({"foo": 1}), HashLiteral.new([HashLiteral::Entry.new("foo".string, 1.int32)])
-  it_parses %({"foo": 1, "bar": 2}), HashLiteral.new([HashLiteral::Entry.new("foo".string, 1.int32), HashLiteral::Entry.new("bar".string, 2.int32)])
   it_parses %({A::B => 1, C::D => 2}), HashLiteral.new([HashLiteral::Entry.new(Path.new(["A", "B"]), 1.int32), HashLiteral::Entry.new(Path.new(["C", "D"]), 2.int32)])
 
   it_parses "{a: 1}", NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("a", 1.int32)])
   it_parses "{a: 1, b: 2}", NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("a", 1.int32), NamedTupleLiteral::Entry.new("b", 2.int32)])
   it_parses "{A: 1, B: 2}", NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("A", 1.int32), NamedTupleLiteral::Entry.new("B", 2.int32)])
+
+  it_parses %({"foo": 1}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", 1.int32)])
+  it_parses %({"foo": 1, "bar": 2}), NamedTupleLiteral.new([NamedTupleLiteral::Entry.new("foo", 1.int32), NamedTupleLiteral::Entry.new("bar", 2.int32)])
 
   assert_syntax_error "{a: 1, a: 2}", "duplicated key: a"
 
@@ -1338,6 +1348,8 @@ describe "Parser" do
 
   assert_syntax_error "Foo{one: :two, three: :four}", "can't use named tuple syntax for Hash-like literal"
   assert_syntax_error "{one: :two, three: :four} of Symbol => Symbol"
+  assert_syntax_error %(Hash{"foo": 1}), "can't use named tuple syntax for Hash-like literal"
+  assert_syntax_error %(Hash{"foo": 1, "bar": 2}), "can't use named tuple syntax for Hash-like literal"
 
   assert_syntax_error "{foo: 1\nbar: 2}"
   assert_syntax_error "{foo: 1, bar: 2\nbaz: 3}"

@@ -226,7 +226,7 @@ module Crystal
         end
       end
 
-      meta_vars = MetaVars{"self": MetaVar.new("self", @self_type)}
+      meta_vars = MetaVars{"self" => MetaVar.new("self", @self_type)}
       visitor = MainVisitor.new(program, meta_vars)
       node.expressions.each &.accept visitor
       @type = program.type_merge node.expressions

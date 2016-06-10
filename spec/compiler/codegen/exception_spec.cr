@@ -82,8 +82,9 @@ describe "Code gen: exception" do
 
       y = 1
       x = 1
+
       x = begin
-            y == 1 ? raise "Oh no!" : nil
+            y == 1 ? raise("Oh no!") : nil
             y = 10
           rescue
             y = 4
@@ -126,7 +127,7 @@ describe "Code gen: exception" do
       require "prelude"
 
       y = begin
-            1 > 0 ? raise "Oh no!" : 0
+            1 > 0 ? raise("Oh no!") : 0
           rescue
             2.1
           end

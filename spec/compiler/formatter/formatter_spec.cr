@@ -916,4 +916,10 @@ describe Crystal::Formatter do
   assert_format "[\n  1, 2, # foo\n  3,\n]"
   assert_format "[\n  1, 2, # foo\n  3, 4,\n]"
   assert_format "foo { |x, *y| }"
+
+  assert_format %(foo "bar": 1, "baz qux": 2)
+  assert_format %(foo("bar": 1, "baz qux": 2))
+
+  assert_format %(Foo("bar": Int32, "baz qux": Float64))
+  assert_format %(x : {"foo bar": Int32})
 end

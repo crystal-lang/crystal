@@ -24,7 +24,7 @@ describe "SimpleHash" do
 
   describe "[]?" do
     it "returns nil if the key is missing" do
-      a = SimpleHash{"one": 1, "two": 2}
+      a = SimpleHash{"one" => 1, "two" => 2}
       a["three"]?.should eq(nil)
       a[:one]?.should eq(nil)
     end
@@ -58,7 +58,7 @@ describe "SimpleHash" do
 
   describe "has_key?" do
     it "returns true if the given key is present, false otherwise" do
-      a = SimpleHash{"one": 1, "two": 2}
+      a = SimpleHash{"one" => 1, "two" => 2}
       a.has_key?("one").should be_true
       a.has_key?("two").should be_true
       a.has_key?(:one).should be_false
@@ -67,7 +67,7 @@ describe "SimpleHash" do
 
   describe "delete" do
     it "deletes the key-value pair corresponding to the given key" do
-      a = SimpleHash{"one": 1, "two": 2}
+      a = SimpleHash{"one" => 1, "two" => 2}
       a.delete("two")
       a["two"]?.should eq(nil)
       a["one"].should eq(1)
@@ -76,7 +76,7 @@ describe "SimpleHash" do
 
   describe "dup" do
     it "returns a duplicate of the SimpleHash" do
-      a = SimpleHash{"one": "1", "two": "2"}
+      a = SimpleHash{"one" => "1", "two" => "2"}
       a.should eq(a.dup)
     end
   end

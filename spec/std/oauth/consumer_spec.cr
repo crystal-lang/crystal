@@ -31,7 +31,7 @@ describe OAuth::Consumer do
 
     request_token = OAuth::RequestToken.new "request_token", "request_secret"
     consumer.get_access_token(request_token, "oauth_verifier")
-    consumer.get_access_token(request_token, "oauth_verifier", {"a": "b"})
+    consumer.get_access_token(request_token, "oauth_verifier", {"a" => "b"})
 
     access_token = OAuth::AccessToken.new "token", "secret"
 

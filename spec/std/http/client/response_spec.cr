@@ -210,31 +210,31 @@ class HTTP::Client
     end
 
     it "returns content type and no charset" do
-      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type": "text/plain"})
+      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type" => "text/plain"})
       response.content_type.should eq("text/plain")
       response.charset.should be_nil
     end
 
     it "returns content type and charset, removes semicolon" do
-      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type": "text/plain ; charset=UTF-8"})
+      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; charset=UTF-8"})
       response.content_type.should eq("text/plain")
       response.charset.should eq("UTF-8")
     end
 
     it "returns content type and no charset, other parameter (#2520)" do
-      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type": "text/plain ; colenc=U"})
+      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; colenc=U"})
       response.content_type.should eq("text/plain")
       response.charset.should be_nil
     end
 
     it "returns content type and charset, removes semicolon, with multiple parameters (#2520)" do
-      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type": "text/plain ; colenc=U ; charset=UTF-8"})
+      response = Response.new(200, "", headers: HTTP::Headers{"Content-Type" => "text/plain ; colenc=U ; charset=UTF-8"})
       response.content_type.should eq("text/plain")
       response.charset.should eq("UTF-8")
     end
 
     it "creates Response with status code 204, no body and Content-Length == 0 (#2512)" do
-      response = Response.new(204, version: "HTTP/1.0", body: "", headers: HTTP::Headers{"Content-Length": "0"})
+      response = Response.new(204, version: "HTTP/1.0", body: "", headers: HTTP::Headers{"Content-Length" => "0"})
       response.status_code.should eq(204)
       response.body.should eq("")
     end

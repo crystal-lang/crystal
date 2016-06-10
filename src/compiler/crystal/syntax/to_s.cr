@@ -144,7 +144,7 @@ module Crystal
       @str << "{"
       node.entries.each_with_index do |entry, i|
         @str << ", " if i > 0
-        @str << entry.key
+        visit_named_arg_name(entry.key)
         @str << ": "
         entry.value.accept self
       end
@@ -421,7 +421,7 @@ module Crystal
     end
 
     def visit(node : NamedArgument)
-      @str << node.name
+      visit_named_arg_name(node.name)
       @str << ": "
       node.value.accept self
       false
@@ -814,7 +814,7 @@ module Crystal
       if named_args = node.named_args
         named_args.each do |named_arg|
           @str << ", " if printed_arg
-          @str << named_arg.name
+          visit_named_arg_name(named_arg.name)
           @str << ": "
           named_arg.value.accept self
           printed_arg = true
@@ -823,6 +823,14 @@ module Crystal
 
       @str << ")"
       false
+    end
+
+    def visit_named_arg_name(name)
+      if Symbol.needs_quotes?(name)
+        name.inspect(@str)
+      else
+        @str << name
+      end
     end
 
     def visit(node : Underscore)
@@ -1342,7 +1350,7 @@ module Crystal
         if named_args = node.named_args
           @str << ", " if printed_arg
           named_args.each do |named_arg|
-            @str << named_arg.name
+            visit_named_arg_name(named_arg.name)
             @str << ": "
             named_arg.value.accept self
             printed_arg = true
