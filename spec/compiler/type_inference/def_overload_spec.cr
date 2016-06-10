@@ -819,4 +819,17 @@ describe "Type inference: def overload" do
       f(a: a, b: 2)
       )) { union_of bool, char }
   end
+
+  it "uses long name when no overload matches and name is the same (#1030)" do
+    assert_error %(
+      module A::String
+        def self.foo(a : String, b : Bool)
+          puts a if b
+        end
+      end
+
+      A::String.foo("Hello, World!", true)
+      ),
+      " - A::String.foo(a : A::String, b : Bool)"
+  end
 end
