@@ -678,22 +678,41 @@ describe "Hash" do
   end
 
   describe "reduce" do
-    it "passes memo, key and value into block" do
-      hash = {:a => 'b'}
-      hash.reduce(:memo) do |memo, k, v|
-        memo.should eq(:memo)
-        k.should eq(:a)
-        v.should eq('b')
+    {% if Crystal::VERSION == "0.18.0" %}
+      it "passes memo, key and value into block" do
+        hash = {:a => 'b'}
+        hash.reduce(:memo) do |memo, (k, v)|
+          memo.should eq(:memo)
+          k.should eq(:a)
+          v.should eq('b')
+        end
       end
-    end
 
-    it "reduces the hash to the accumulated value of memo" do
-      hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = hash.reduce("") do |memo, k, v|
-        memo + v
+      it "reduces the hash to the accumulated value of memo" do
+        hash = {:a => 'b', :c => 'd', :e => 'f'}
+        result = hash.reduce("") do |memo, (k, v)|
+          memo + v
+        end
+        result.should eq("bdf")
       end
-      result.should eq("bdf")
-    end
+    {% else %}
+      it "passes memo, key and value into block" do
+        hash = {:a => 'b'}
+        hash.reduce(:memo) do |memo, k, v|
+          memo.should eq(:memo)
+          k.should eq(:a)
+          v.should eq('b')
+        end
+      end
+
+      it "reduces the hash to the accumulated value of memo" do
+        hash = {:a => 'b', :c => 'd', :e => 'f'}
+        result = hash.reduce("") do |memo, k, v|
+          memo + v
+        end
+        result.should eq("bdf")
+      end
+    {% end %}
   end
 
   describe "reject" do

@@ -902,33 +902,35 @@ class Hash(K, V)
     !empty?
   end
 
-  # Yields all key-value pairs to the given block with a initial value *memo*,
-  # which is replaced with each returned value in iteration.
-  # Returns the last value of *memo*.
-  #
-  # ```
-  # prices = {
-  #   "apple":  5,
-  #   "lemon":  3,
-  #   "papaya": 6,
-  #   "orange": 4,
-  # }
-  #
-  # prices.reduce("apple") do |highest, item, price|
-  #   if price > prices[highest]
-  #     item
-  #   else
-  #     highest
-  #   end
-  # end
-  # # => "papaya"
-  # ```
-  def reduce(memo)
-    each do |k, v|
-      memo = yield(memo, k, v)
+  {% if Crystal::VERSION != "0.18.0" %}
+    # Yields all key-value pairs to the given block with a initial value *memo*,
+    # which is replaced with each returned value in iteration.
+    # Returns the last value of *memo*.
+    #
+    # ```
+    # prices = {
+    #   "apple":  5,
+    #   "lemon":  3,
+    #   "papaya": 6,
+    #   "orange": 4,
+    # }
+    #
+    # prices.reduce("apple") do |highest, item, price|
+    #   if price > prices[highest]
+    #     item
+    #   else
+    #     highest
+    #   end
+    # end
+    # # => "papaya"
+    # ```
+    def reduce(memo)
+      each do |k, v|
+        memo = yield(memo, k, v)
+      end
+      memo
     end
-    memo
-  end
+  {% end %}
 
   protected def find_entry(key)
     index = bucket_index key
