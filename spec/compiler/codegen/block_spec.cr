@@ -721,26 +721,6 @@ describe "Code gen: block" do
     ")
   end
 
-  it "allows yields with less arguments than in block" do
-    run("
-      struct Nil
-        def to_i
-          0
-        end
-      end
-
-      def foo
-        yield 1
-      end
-
-      a = 0
-      foo do |x, y|
-        a += x + y.to_i
-      end
-      a
-      ").to_i.should eq(1)
-  end
-
   it "codegens block with nilable type with return (1)" do
     run("
       def foo
@@ -1421,15 +1401,16 @@ describe "Code gen: block" do
       )).to_i.should eq(3)
   end
 
-  it "uses splat in block argument, but not enough yield expressions" do
+  it "auto-unpacks tuple" do
     run(%(
       def foo
-        yield 42
+        tup = {1, 2, 4}
+        yield tup
       end
 
-      foo do |x, y, z, *w|
-        x
+      foo do |x, y, z|
+        (x + y) * z
       end
-      )).to_i.should eq(42)
+      )).to_i.should eq((1 + 2) * 4)
   end
 end

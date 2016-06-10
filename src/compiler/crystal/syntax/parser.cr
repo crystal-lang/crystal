@@ -3609,6 +3609,8 @@ module Crystal
     end
 
     def parse_block2
+      location = @token.location
+
       block_args = [] of Var
       extra_assigns = nil
       block_body = nil
@@ -3716,7 +3718,7 @@ module Crystal
       end_location = token_end_location
       next_token_skip_space
 
-      Block.new(block_args, block_body, splat_index).at_end(end_location)
+      Block.new(block_args, block_body, splat_index).at(location).at_end(end_location)
     end
 
     record CallArgs,

@@ -559,14 +559,22 @@ describe "Hash" do
     it "pass key, value, index values into block" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      hash.each_with_index { |k, v, i| results << k + v + i }
+      {% if Crystal::VERSION == "0.18.0" %}
+        hash.each_with_index { |(k, v), i| results << k + v + i }
+      {% else %}
+        hash.each_with_index { |k, v, i| results << k + v + i }
+      {% end %}
       results.should eq [6, 16, 23]
     end
 
     it "can be used with offset" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      hash.each_with_index(3) { |k, v, i| results << k + v + i }
+      {% if Crystal::VERSION == "0.18.0" %}
+        hash.each_with_index(3) { |(k, v), i| results << k + v + i }
+      {% else %}
+        hash.each_with_index(3) { |k, v, i| results << k + v + i }
+      {% end %}
       results.should eq [9, 19, 26]
     end
   end
@@ -574,18 +582,33 @@ describe "Hash" do
   describe "each_with_object" do
     it "passes memo, key and value into block" do
       hash = {:a => 'b'}
-      hash.each_with_object(:memo) do |memo, k, v|
-        memo.should eq(:memo)
-        k.should eq(:a)
-        v.should eq('b')
-      end
+      {% if Crystal::VERSION == "0.18.0" %}
+        hash.each_with_object(:memo) do |(k, v), memo|
+          memo.should eq(:memo)
+          k.should eq(:a)
+          v.should eq('b')
+        end
+      {% else %}
+        hash.each_with_object(:memo) do |memo, k, v|
+          memo.should eq(:memo)
+          k.should eq(:a)
+          v.should eq('b')
+        end
+      {% end %}
     end
 
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
-      result = hash.each_with_object({} of Char => Symbol) do |memo, k, v|
-        memo[v] = k
-      end
+      result = nil
+      {% if Crystal::VERSION == "0.18.0" %}
+        result = hash.each_with_object({} of Char => Symbol) do |(k, v), memo|
+          memo[v] = k
+        end
+      {% else %}
+        result = hash.each_with_object({} of Char => Symbol) do |memo, k, v|
+          memo[v] = k
+        end
+      {% end %}
       result.should eq({'b' => :a, 'd' => :c, 'f' => :e})
     end
   end
