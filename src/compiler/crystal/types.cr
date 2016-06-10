@@ -2077,7 +2077,12 @@ module Crystal
       io << "{"
       @entries.each_with_index do |entry, i|
         io << ", " if i > 0
-        io << entry.name << ": "
+        if Symbol.needs_quotes?(entry.name)
+          entry.name.inspect(io)
+        else
+          io << entry.name
+        end
+        io << ": "
         entry.type.to_s_with_options(io, skip_union_parens: true)
       end
       io << "}"

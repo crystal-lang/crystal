@@ -793,9 +793,7 @@ module Crystal
       start_line = @line
       start_column = @column
       found_in_same_line = false
-
-      write @token
-      next_token
+      format_named_argument_name(entry.key)
       slash_is_regex!
       write_token :":", " "
       middle_column = @column
@@ -805,6 +803,15 @@ module Crystal
 
       if found_in_same_line
         @hash_in_same_line << hash.object_id
+      end
+    end
+
+    def format_named_argument_name(name)
+      if @token.type == :DELIMITER_START
+        StringLiteral.new(name).accept self
+      else
+        write @token
+        next_token
       end
     end
 
@@ -2335,8 +2342,8 @@ module Crystal
     end
 
     def visit(node : NamedArgument)
-      write node.name
-      next_token_skip_space_or_newline
+      format_named_argument_name(node.name)
+      skip_space_or_newline
       write_token :":", " "
       skip_space_or_newline
       accept node.value

@@ -138,12 +138,12 @@ describe "Hash" do
 
   describe "values_at" do
     it "returns the given keys" do
-      {"a": 1, "b": 2, "c": 3, "d": 4}.values_at("b", "a", "c").should eq({2, 1, 3})
+      {"a" => 1, "b" => 2, "c" => 3, "d" => 4}.values_at("b", "a", "c").should eq({2, 1, 3})
     end
 
     it "raises when passed an invalid key" do
       expect_raises KeyError do
-        {"a": 1}.values_at("b")
+        {"a" => 1}.values_at("b")
       end
     end
 
@@ -154,25 +154,25 @@ describe "Hash" do
 
   describe "key" do
     it "returns the first key with the given value" do
-      hash = {"foo": "bar", "baz": "qux"}
+      hash = {"foo" => "bar", "baz" => "qux"}
       hash.key("bar").should eq("foo")
       hash.key("qux").should eq("baz")
     end
 
     it "raises when no key pairs with the given value" do
       expect_raises KeyError do
-        {"foo": "bar"}.key("qux")
+        {"foo" => "bar"}.key("qux")
       end
     end
 
     describe "if block is given," do
       it "returns the first key with the given value" do
-        hash = {"foo": "bar", "baz": "bar"}
+        hash = {"foo" => "bar", "baz" => "bar"}
         hash.key("bar") { |value| value.upcase }.should eq("foo")
       end
 
       it "yields the argument if no hash key pairs with the value" do
-        hash = {"foo": "bar"}
+        hash = {"foo" => "bar"}
         hash.key("qux") { |value| value.upcase }.should eq("QUX")
       end
     end
@@ -180,13 +180,13 @@ describe "Hash" do
 
   describe "key?" do
     it "returns the first key with the given value" do
-      hash = {"foo": "bar", "baz": "qux"}
+      hash = {"foo" => "bar", "baz" => "qux"}
       hash.key?("bar").should eq("foo")
       hash.key?("qux").should eq("baz")
     end
 
     it "returns nil if no key pairs with the given value" do
-      hash = {"foo": "bar", "baz": "qux"}
+      hash = {"foo" => "bar", "baz" => "qux"}
       hash.key?("foobar").should eq nil
       hash.key?("bazqux").should eq nil
     end

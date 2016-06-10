@@ -313,6 +313,11 @@ module Crystal
       named_tuple_of(entries)
     end
 
+    def named_tuple_of(hash : NamedTuple)
+      entries = hash.map { |k, v| NamedArgumentType.new(k.to_s, v.as(Type)) }
+      named_tuple_of(entries)
+    end
+
     def named_tuple_of(entries : Array(NamedArgumentType))
       named_tuple.instantiate_named_args(entries)
     end

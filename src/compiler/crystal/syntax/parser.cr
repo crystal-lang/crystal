@@ -1206,7 +1206,7 @@ module Crystal
           next_token_skip_space_or_newline
           while @token.type != :")"
             if @token.type == :IDENT && current_char == ':'
-              named_args = parse_named_args(allow_newline: true)
+              named_args = parse_named_args(@token.location, first_name: nil, allow_newline: true)
               check :")"
               break
             else
@@ -2091,7 +2091,7 @@ module Crystal
       else
         if named_tuple_start?
           unless allow_of
-            raise "can't use named tuple syntax for Hash-like literal", @token
+            raise "can't use named tuple syntax for Hash-like literal, use '=>'", @token
           end
           return parse_named_tuple(location)
         else
@@ -2099,7 +2099,11 @@ module Crystal
           case @token.type
           when :":"
             if first_key.is_a?(StringLiteral)
-              # Nothing: it's a string key
+              # It's a named tuple
+              unless allow_of
+                raise "can't use named tuple syntax for Hash-like literal, use '=>'", @token
+              end
+              return parse_named_tuple(location, first_key.value)
             else
               check :"=>"
             end
@@ -2218,7 +2222,10 @@ module Crystal
     end
 
     def parse_named_tuple(location)
-      key = @token.value.to_s
+      parse_named_tuple(location, @token.value.to_s)
+    end
+
+    def parse_named_tuple(location, first_key)
       next_token
 
       slash_is_regex!
@@ -2230,23 +2237,29 @@ module Crystal
       end_location = nil
 
       entries = [] of NamedTupleLiteral::Entry
-      entries << NamedTupleLiteral::Entry.new(key, first_value)
+      entries << NamedTupleLiteral::Entry.new(first_key, first_value)
 
       if @token.type == :","
         next_token_skip_space_or_newline
 
         while @token.type != :"}"
-          unless named_tuple_start?
-            raise "expected '}' or named tuple name, not #{@token}", @token
+          key = @token.value.to_s
+          if named_tuple_start?
+            next_token
+          else
+            string = parse_op_assign
+            if string.is_a?(StringLiteral)
+              key = string.value
+            else
+              raise "expected '}' or named tuple name", string.location.not_nil!
+            end
           end
 
-          key = @token.value.to_s
+          check :":"
 
           if entries.any? { |entry| entry.key == key }
             raise "duplicated key: #{key}", @token
           end
-
-          next_token
 
           slash_is_regex!
           next_token_skip_space
@@ -3748,19 +3761,14 @@ module Crystal
             end
 
             if @token.type == :IDENT && current_char == ':'
-              named_args = parse_named_args(allow_newline: true)
-
-              if call_block_arg_follows?
-                return parse_call_block_arg(args, true, named_args)
-              end
-
-              check :")"
-              end_location = token_end_location
-
-              next_token_skip_space
-              return CallArgs.new args, nil, nil, named_args, false, end_location
+              return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: true)
             else
-              args << parse_call_arg
+              arg = parse_call_arg
+              if @token.type == :":" && arg.is_a?(StringLiteral)
+                return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: true)
+              else
+                args << arg
+              end
             end
 
             skip_space_or_newline
@@ -3843,19 +3851,14 @@ module Crystal
         end
 
         if @token.type == :IDENT && current_char == ':'
-          named_args = parse_named_args
-
-          if call_block_arg_follows?
-            return parse_call_block_arg(args, false, named_args: named_args)
-          end
-
-          end_location = token_end_location
-
-          skip_space
-          return CallArgs.new args, nil, nil, named_args, false, end_location
+          return parse_call_args_named_args(@token.location, args, first_name: nil, allow_newline: false)
         else
           arg = parse_call_arg
-          args << arg
+          if @token.type == :":" && arg.is_a?(StringLiteral)
+            return parse_call_args_named_args(arg.location.not_nil!, args, first_name: arg.value, allow_newline: false)
+          else
+            args << arg
+          end
           end_location = arg.end_location
         end
 
@@ -3874,17 +3877,48 @@ module Crystal
       CallArgs.new args, nil, nil, nil, false, end_location
     end
 
-    def parse_named_args(allow_newline = false)
+    def parse_call_args_named_args(location, args, first_name, allow_newline)
+      named_args = parse_named_args(location, first_name: first_name, allow_newline: allow_newline)
+
+      if call_block_arg_follows?
+        return parse_call_block_arg(args, check_paren: allow_newline, named_args: named_args)
+      end
+
+      check :")" if allow_newline
+      end_location = token_end_location
+
+      if allow_newline
+        next_token_skip_space
+      else
+        skip_space
+      end
+      return CallArgs.new args, nil, nil, named_args, false, end_location
+    end
+
+    def parse_named_args(location, first_name = nil, allow_newline = false)
       named_args = [] of NamedArgument
       while true
-        location = @token.location
-        name = @token.value.to_s
-
-        if named_args.any? { |arg| arg.name == name }
-          raise "duplicated named argument: #{name}", @token
+        if first_name
+          name = first_name
+          first_name = nil
+        else
+          if named_tuple_start?
+            name = @token.value.to_s
+            next_token
+          else
+            string = parse_op_assign
+            if string.is_a?(StringLiteral)
+              name = string.value
+            else
+              raise "expected named argument", location
+            end
+          end
         end
 
-        next_token
+        if named_args.any? { |arg| arg.name == name }
+          raise "duplicated named argument: #{name}", location
+        end
+
         check :":"
         next_token_skip_space_or_newline
 
@@ -3904,6 +3938,8 @@ module Crystal
         else
           break
         end
+
+        location = @token.location
       end
       named_args
     end
@@ -4025,7 +4061,7 @@ module Crystal
       if allow_type_vars && @token.type == :"("
         next_token_skip_space
 
-        if named_tuple_start?
+        if named_tuple_start? || @token.type == :DELIMITER_START
           types = [] of ASTNode
           named_args = parse_type_named_args(:")")
         else
@@ -4049,31 +4085,24 @@ module Crystal
     def parse_type_named_args(end_token)
       named_args = [] of NamedArgument
 
-      name = @token.value.to_s
-      next_token
-      next_token_skip_space
-
-      first_type = parse_single_type(allow_commas: false)
-      skip_space_or_newline
-
-      named_args << NamedArgument.new(name, first_type)
-
-      if @token.type == :","
-        next_token_skip_space_or_newline
-      end
-
       while @token.type != end_token
-        unless named_tuple_start?
-          raise "expected '#{end_token}' or named argument, not #{@token}", @token
+        if named_tuple_start?
+          name = @token.value.to_s
+          next_token
+        else
+          string = parse_op_assign
+          if string.is_a?(StringLiteral)
+            name = string.value
+          else
+            raise "expected '#{end_token}' or named argument", @token
+          end
         end
-
-        name = @token.value.to_s
 
         if named_args.any? { |arg| arg.name == name }
           raise "duplicated key: #{name}", @token
         end
 
-        next_token
+        check :":"
         next_token_skip_space
 
         type = parse_single_type(allow_commas: false)
@@ -4209,7 +4238,7 @@ module Crystal
         when :"{"
           next_token_skip_space_or_newline
 
-          if named_tuple_start?
+          if named_tuple_start? || @token.type == :DELIMITER_START
             named_args = parse_type_named_args(:"}")
           else
             type = parse_type(allow_primitives)

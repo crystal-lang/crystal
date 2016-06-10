@@ -14,6 +14,12 @@ describe "NamedTuple" do
     t.should eq({foo: 1, bar: 2})
     t.class.should eq(NamedTuple(foo: Int32, bar: Int32))
 
+    {% if Crystal::VERSION == "0.18.0" %}
+      t = NamedTuple("foo bar": Int32, "baz qux": Int32).from({"foo bar" => 1, "baz qux" => 2})
+      t.should eq({"foo bar": 1, "baz qux": 2})
+      t.class.should eq(NamedTuple("foo bar": Int32, "baz qux": Int32))
+    {% end %}
+
     expect_raises ArgumentError do
       NamedTuple(foo: Int32, bar: Int32).from({:foo => 1})
     end
@@ -233,6 +239,11 @@ describe "NamedTuple" do
 
     tup1[:b] << 4
     tup2[:b].should eq([1, 2, 3])
+
+    {% if Crystal::VERSION == "0.18.0" %}
+      tup2 = {"foo bar": 1}
+      tup2.clone.should eq(tup2)
+    {% end %}
   end
 
   it "does keys" do

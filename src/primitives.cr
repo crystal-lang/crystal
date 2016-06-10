@@ -85,12 +85,12 @@ struct Char
   end
 
   {% for op, desc in {
-                       "==": "equal to",
-                       "!=": "not equal to",
-                       "<":  "less than",
-                       "<=": "less than or equal to",
-                       ">":  "greater than",
-                       ">=": "greater than or equal to",
+                       "==" => "equal to",
+                       "!=" => "not equal to",
+                       "<"  => "less than",
+                       "<=" => "less than or equal to",
+                       ">"  => "greater than",
+                       ">=" => "greater than or equal to",
                      } %}
     # Returns true if *self*'s codepoint is {{desc.id}} *other*'s codepoint.
     @[Primitive(:binary)]
@@ -263,7 +263,7 @@ end
   {% ints = %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64) %}
   {% floats = %w(Float32 Float64) %}
   {% nums = %w(Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64 Float32 Float64) %}
-  {% binaries = {"+": "adding", "-": "subtracting", "*": "multiplying", "/": "dividing"} %}
+  {% binaries = {"+" => "adding", "-" => "subtracting", "*" => "multiplying", "/" => "dividing"} %}
 
   {% for num in nums %}
     struct {{num.id}}
@@ -281,12 +281,12 @@ end
 
       {% for num2 in nums %}
         {% for op, desc in {
-                             "==": "equal to",
-                             "!=": "not equal to",
-                             "<":  "less than",
-                             "<=": "less than or equal to",
-                             ">":  "greater than",
-                             ">=": "greater than or equal to",
+                             "==" => "equal to",
+                             "!=" => "not equal to",
+                             "<"  => "less than",
+                             "<=" => "less than or equal to",
+                             ">"  => "greater than",
+                             ">=" => "greater than or equal to",
                            } %}
           # Returns true if *self* is {{desc.id}} *other*.
           @[Primitive(:binary)]
