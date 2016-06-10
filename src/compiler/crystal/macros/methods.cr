@@ -1306,6 +1306,27 @@ module Crystal
       end
     end
   end
+
+  class Generic
+    def interpret(method, args, block, interpreter)
+      case method
+      when "name"
+        interpret_argless_method(method, args) { name }
+      when "type_vars"
+        interpret_argless_method(method, args) { ArrayLiteral.new(type_vars) }
+      when "named_args"
+        interpret_argless_method(method, args) do
+          if named_args = @named_args
+            NamedTupleLiteral.new(named_args.map { |arg| NamedTupleLiteral::Entry.new(arg.name, arg.value) })
+          else
+            NilLiteral.new
+          end
+        end
+      else
+        super
+      end
+    end
+  end
 end
 
 private def intepret_array_or_tuple_method(object, klass, method, args, block, interpreter)

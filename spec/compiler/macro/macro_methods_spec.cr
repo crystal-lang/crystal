@@ -993,6 +993,20 @@ describe "macro methods" do
     end
   end
 
+  describe "generic methods" do
+    it "executes name" do
+      assert_macro "x", %({{x.name}}), [Generic.new("Foo".path, ["T".path] of ASTNode)] of ASTNode, "Foo"
+    end
+
+    it "executes type_vars" do
+      assert_macro "x", %({{x.type_vars}}), [Generic.new("Foo".path, ["T".path, "U".path] of ASTNode)] of ASTNode, "[T, U]"
+    end
+
+    it "executes named_args" do
+      assert_macro "x", %({{x.named_args}}), [Generic.new("Foo".path, [] of ASTNode, named_args: [NamedArgument.new("x", "U".path), NamedArgument.new("y", "V".path)])] of ASTNode, "{x: U, y: V}"
+    end
+  end
+
   describe "range methods" do
     it "executes begin" do
       assert_macro "x", %({{x.begin}}), [RangeLiteral.new(1.int32, 2.int32, true)] of ASTNode, "1"
