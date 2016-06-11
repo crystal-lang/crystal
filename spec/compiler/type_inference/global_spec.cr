@@ -610,7 +610,7 @@ describe "Global inference" do
       $x : Int32
       $x
       ),
-      "global variable '$x' must be Int32, not Nil"
+      "global variable '$x' is read here before it was initialized, rendering it nilable, but its type is Int32"
   end
 
   it "declares global variable and reads it inside method" do
