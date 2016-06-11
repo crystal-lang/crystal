@@ -280,6 +280,17 @@ struct Char
     end
   end
 
+  # Returns the ASCII equivalent of the opposite case for this char.
+  #
+  # ```
+  # 'z'.swapcase # => 'Z'
+  # 'Z'.swapcase # => 'z'
+  # '.'.swapcase # => '.'
+  # ```
+  def swapcase
+    uppercase? ? downcase : upcase
+  end
+
   # Returns this char's codepoint.
   def hash
     ord
