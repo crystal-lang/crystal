@@ -349,9 +349,9 @@ class HTTP::Client
   # response = client.post_form "/", "foo=bar"
   # ```
   def post_form(path, form : String, headers : HTTP::Headers? = nil) : HTTP::Client::Response
-    headers ||= HTTP::Headers.new
-    headers["Content-type"] = "application/x-www-form-urlencoded"
-    post path, headers, form
+    request = new_request("POST", path, headers, form)
+    request.headers["Content-type"] = "application/x-www-form-urlencoded"
+    exec request
   end
 
   # Executes a POST with form data. The "Content-type" header is set
@@ -510,9 +510,9 @@ class HTTP::Client
   end
 
   private def new_request(method, path, headers, body)
-    headers ||= HTTP::Headers.new
-    headers["Host"] ||= host_header
-    HTTP::Request.new method, path, headers, body
+    HTTP::Request.new(method, path, headers, body).tap do |request|
+      request.headers["Host"] ||= host_header
+    end
   end
 
   private def execute_callbacks(request)
