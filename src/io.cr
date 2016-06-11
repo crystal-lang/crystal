@@ -15,7 +15,7 @@ require "c/unistd"
 # these two methods:
 #
 # * `read(slice : Slice(UInt8))`: read at most *slice.size* bytes into *slice* and return the number of bytes read
-# * `write(slice : Slice(UInt8))`: write at most *slice.size* bytes from *slice* and return the number of bytes written
+# * `write(slice : Slice(UInt8))`: write the whole *slice* into the IO
 #
 # For example, this is a simple IO on top of a `Slice(UInt8)`:
 #
