@@ -99,6 +99,8 @@ class Crystal::Command
       puts USAGE
       exit
     end
+  rescue ex : Crystal::ToolException
+    error ex.message
   rescue ex : Crystal::Exception
     ex.color = @color
     if @config.try(&.output_format) == "json"

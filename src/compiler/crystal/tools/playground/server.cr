@@ -356,13 +356,13 @@ module Crystal::Playground
     @sessions = {} of Int32 => Session
     @sessions_key = 0
 
-    property host
+    property host : String?
     property port
     property logger
     property source : Compiler::Source?
 
     def initialize
-      @host = "localhost"
+      @host = nil
       @port = 8080
       @verbose = false
       @logger = Logger.new(STDOUT)
@@ -409,7 +409,7 @@ module Crystal::Playground
         end
       end
 
-      server = HTTP::Server.new @host, @port, [
+      handlers = [
         client_ws,
         agent_ws,
         PageHandler.new("/", File.join(views_dir, "_index.html")),
@@ -421,8 +421,21 @@ module Crystal::Playground
         HTTP::StaticFileHandler.new(public_dir),
       ]
 
-      puts "Listening on http://#{@host}:#{@port}"
-      server.listen
+      host = @host
+      if host
+        server = HTTP::Server.new host, @port, handlers
+      else
+        server = HTTP::Server.new @port, handlers
+        host = "localhost"
+      end
+
+      puts "Listening on http://#{host}:#{@port}"
+
+      begin
+        server.listen
+      rescue ex
+        raise ToolException.new(ex.message)
+      end
     end
   end
 end

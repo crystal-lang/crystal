@@ -68,4 +68,30 @@ module Crystal
       end
     end
   end
+
+  class ToolException < Exception
+    def to_s_with_source(source, io)
+      io << @message
+    end
+
+    def append_to_s(source, io)
+      io << @message
+    end
+
+    def has_location?
+      false
+    end
+
+    def deepest_error_message
+      @message
+    end
+
+    def json_obj(ar, io)
+      ar.push do
+        io.json_object do |obj|
+          obj.field "message", @message
+        end
+      end
+    end
+  end
 end
