@@ -1413,4 +1413,20 @@ describe "Code gen: block" do
       end
       )).to_i.should eq((1 + 2) * 4)
   end
+
+  it "unpacks tuple but doesn't override local variables" do
+    run(%(
+      def foo
+        yield({10, 20}, {30, 40})
+      end
+
+      x = 1
+      y = 2
+      z = 3
+      w = 4
+      foo do |(x, y), (z, w)|
+      end
+      x + y + z + w
+      )).to_i.should eq(10)
+  end
 end

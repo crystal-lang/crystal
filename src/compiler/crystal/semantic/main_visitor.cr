@@ -730,15 +730,27 @@ module Crystal
 
       before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
+      arg_counter = 0
+      body_exps = node.body.as?(Expressions).try(&.expressions)
+
       meta_vars = @meta_vars.dup
       node.args.each do |arg|
-        meta_var = new_meta_var(arg.name, context: node)
-        meta_var.bind_to(arg)
-        meta_vars[arg.name] = meta_var
+        # The parser generates __argN block arguments for tuple unpacking,
+        # and they need a special treatment because they shouldn't override
+        # local variables. So we search the unpacked vars in the body.
+        if arg.name.starts_with?("__arg") && body_exps
+          while arg_counter < body_exps.size &&
+                (assign = body_exps[arg_counter]).is_a?(Assign) &&
+                (target = assign.target).is_a?(Var) &&
+                (call = assign.value).is_a?(Call) &&
+                (call_var = call.obj).is_a?(Var) &&
+                call_var.name == arg.name
+            bind_block_var(node, target, meta_vars, before_block_vars)
+            arg_counter += 1
+          end
+        end
 
-        before_block_var = new_meta_var(arg.name, context: node)
-        before_block_var.bind_to(arg)
-        before_block_vars[arg.name] = before_block_var
+        bind_block_var(node, arg, meta_vars, before_block_vars)
       end
 
       @block_nest += 1
@@ -782,6 +794,16 @@ module Crystal
       node.bind_to node.body
 
       false
+    end
+
+    def bind_block_var(node, target, meta_vars, before_block_vars)
+      meta_var = new_meta_var(target.name, context: node)
+      meta_var.bind_to(target)
+      meta_vars[target.name] = meta_var
+
+      before_block_var = new_meta_var(target.name, context: node)
+      before_block_var.bind_to(target)
+      before_block_vars[target.name] = before_block_var
     end
 
     def bind_vars(from_vars, to_vars, ignored = nil)
