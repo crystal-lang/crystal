@@ -292,6 +292,11 @@ module Crystal
         triple = @target_triple || LLVM.default_target_triple
         TargetMachine.create(triple, @mcpu || "", @release)
       end
+    rescue ex : ArgumentError
+      print colorize("Error: ").red.bold
+      print "llc: "
+      puts "#{ex.message}"
+      exit 1
     end
 
     def optimize(llvm_mod)
