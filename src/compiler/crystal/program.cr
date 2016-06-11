@@ -1,5 +1,4 @@
 require "llvm"
-require "dl"
 require "./types"
 
 module Crystal
@@ -424,19 +423,6 @@ module Crystal
 
     def find_in_path(filename, relative_to = nil)
       crystal_path.find filename, relative_to
-    end
-
-    def load_libs
-      if has_flag?("darwin")
-        ext = "dylib"
-      else
-        ext = "so"
-      end
-      link_attributes.each do |attr|
-        if libname = attr.lib
-          DL.dlopen "lib#{libname}.#{ext}"
-        end
-      end
     end
 
     {% for name in %w(object no_return value number reference void nil bool char int int8 int16 int32 int64

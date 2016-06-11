@@ -1,7 +1,7 @@
 require "c/stdio"
 require "c/string"
+require "c/dlfcn"
 require "unwind"
-require "dl"
 
 def caller
   CallStack.new.printable_backtrace
