@@ -1761,6 +1761,8 @@ module Crystal
       if node.external_name != node.name
         if node.external_name.empty?
           write "_"
+        elsif @token.type == :DELIMITER_START
+          accept StringLiteral.new(node.external_name)
         else
           write @token.value
         end

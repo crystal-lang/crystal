@@ -70,4 +70,5 @@ describe "ASTNode#to_s" do
   expect_to_s %(foo("bar baz": 2))
   expect_to_s %(Foo("bar baz": Int32))
   expect_to_s %({"foo bar": 1})
+  expect_to_s %(def foo("bar baz" qux)\nend)
 end

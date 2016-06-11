@@ -3288,9 +3288,13 @@ module Crystal
     def parse_arg_name(location, extra_assigns, allow_external_name)
       do_next_token = true
 
-      if allow_external_name && @token.type == :IDENT
-        external_name = @token.type == :IDENT ? @token.value.to_s : ""
-        next_token
+      if allow_external_name
+        if @token.type == :IDENT
+          external_name = @token.type == :IDENT ? @token.value.to_s : ""
+          next_token
+        elsif @token.type == :DELIMITER_START
+          external_name = parse_string_without_interpolation { "interpolation not allowed in external name" }
+        end
         found_space = @token.type == :SPACE || @token.type == :NEWLINE
         skip_space
         do_next_token = false

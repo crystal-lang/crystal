@@ -922,4 +922,6 @@ describe Crystal::Formatter do
 
   assert_format %(Foo("bar": Int32, "baz qux": Float64))
   assert_format %(x : {"foo bar": Int32})
+
+  assert_format %(def foo("bar baz" qux)\nend)
 end

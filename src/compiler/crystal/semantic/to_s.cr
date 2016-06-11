@@ -4,7 +4,7 @@ module Crystal
   class ToSVisitor
     def visit(node : Arg)
       if node.external_name != node.name
-        @str << (node.external_name.empty? ? "_" : node.external_name)
+        visit_named_arg_name(node.external_name)
         @str << " "
       end
       if node.name

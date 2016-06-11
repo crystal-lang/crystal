@@ -229,6 +229,8 @@ describe "Parser" do
   it_parses "def foo(x @@var); end", Def.new("foo", [Arg.new("var", external_name: "x")], [Assign.new("@@var".class_var, "var".var)] of ASTNode)
   assert_syntax_error "def foo(_ y); y; end"
 
+  it_parses %(def foo("bar qux" y); y; end), Def.new("foo", args: [Arg.new("y", external_name: "bar qux")], body: "y".var)
+
   assert_syntax_error "def foo(x x); 1; end", "when specified, external name must be different than internal name"
   assert_syntax_error "def foo(x @x); 1; end", "when specified, external name must be different than internal name"
   assert_syntax_error "def foo(x @@x); 1; end", "when specified, external name must be different than internal name"
