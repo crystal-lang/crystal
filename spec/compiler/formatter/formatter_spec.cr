@@ -961,4 +961,7 @@ describe Crystal::Formatter do
   assert_format "Union(Foo::Bar?, Baz?, Qux(T, U?))"
 
   assert_format "lib Foo\n  {% if 1 %}\n    2\n  {% end %}\nend\n\nmacro bar\n  1\nend"
+
+  assert_format %(puts(<<-FOO\n1\nFOO, 2))
+  assert_format %(puts <<-FOO\n1\nFOO, 2)
 end

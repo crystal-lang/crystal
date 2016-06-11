@@ -1817,7 +1817,8 @@ module Crystal
 
             if reached_end &&
                (current_char == '\n' || current_char == '\0' ||
-               (current_char == '\r' && peek_next_char == '\n' && next_char))
+               (current_char == '\r' && peek_next_char == '\n' && next_char) ||
+               !ident_part?(current_char))
               @token.type = :DELIMITER_END
               @token.delimiter_state = @token.delimiter_state.with_heredoc_indent(indent)
             else
