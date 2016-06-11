@@ -29,7 +29,7 @@ describe "Type inference: class var" do
 
       Foo.x
       ),
-      "class variable '@@x' of Foo must be Int32, not Nil"
+      "class variable '@@x' of Foo is read here before it was initialized, rendering it nilable, but its type is Int32"
   end
   it "types class var" do
     assert_type("

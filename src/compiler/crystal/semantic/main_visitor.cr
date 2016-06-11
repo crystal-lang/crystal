@@ -410,6 +410,10 @@ module Crystal
       end
 
       if first_time_accessing_meta_type_var?(var)
+        var_type = var.type?
+        if var_type && !var_type.includes_type?(mod.nil)
+          node.raise "class variable '#{var.name}' of #{var.owner} is read here before it was initialized, rendering it nilable, but its type is #{var_type}"
+        end
         var.bind_to mod.nil_var
       end
 
