@@ -25,7 +25,7 @@ module HTTP
   describe Client do
     typeof(Client.new("host"))
     typeof(Client.new("host", port: 8080))
-    typeof(Client.new("host", ssl: true))
+    typeof(Client.new("host", tls: true))
     typeof(Client.new(URI.new))
     typeof(Client.new(URI.parse("http://www.example.com")))
 
@@ -49,39 +49,39 @@ module HTTP
     describe "from URI" do
       it "has sane defaults" do
         cl = Client.new(URI.parse("http://example.com"))
-        cl.ssl?.should be_nil
+        cl.tls?.should be_nil
         cl.port.should eq(80)
       end
 
       ifdef !without_openssl
-        it "detects ssl" do
+        it "detects HTTPS" do
           cl = Client.new(URI.parse("https://example.com"))
-          cl.ssl?.should be_truthy
+          cl.tls?.should be_truthy
           cl.port.should eq(443)
         end
 
         it "keeps context" do
           ctx = OpenSSL::SSL::Context::Client.new
           cl = Client.new(URI.parse("https://example.com"), ctx)
-          cl.ssl.should be(ctx)
+          cl.tls.should be(ctx)
         end
 
         it "doesn't take context for HTTP" do
           ctx = OpenSSL::SSL::Context::Client.new
-          expect_raises(ArgumentError, "SSL context given") do
+          expect_raises(ArgumentError, "TLS context given") do
             Client.new(URI.parse("http://example.com"), ctx)
           end
         end
 
         it "allows for specified ports" do
           cl = Client.new(URI.parse("https://example.com:9999"))
-          cl.ssl?.should be_truthy
+          cl.tls?.should be_truthy
           cl.port.should eq(9999)
         end
       else
-        it "raises when trying to activate SSL" do
+        it "raises when trying to activate TLS" do
           expect_raises do
-            Client.new "example.org", 443, ssl: true
+            Client.new "example.org", 443, tls: true
           end
         end
       end

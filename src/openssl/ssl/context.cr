@@ -45,7 +45,7 @@ abstract class OpenSSL::SSL::Context
   ).join(' ')
 
   class Client < Context
-    # Generates a new SSL client context with sane defaults for a client connection.
+    # Generates a new TLS client context with sane defaults for a client connection.
     #
     # By default it defaults to the `SSLv23_method` which actually means that
     # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
@@ -58,8 +58,8 @@ abstract class OpenSSL::SSL::Context
     # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
     #
     # ```
-    # ssl_context = OpenSSL::SSL::Context::Client.new
-    # ssl_context.options = OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3
+    # context = OpenSSL::SSL::Context::Client.new
+    # context.options = OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3
     # ```
     def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
       super(method)
@@ -70,7 +70,7 @@ abstract class OpenSSL::SSL::Context
       {% end %}
     end
 
-    # Returns a new SSL client context with only the given method set.
+    # Returns a new TLS client context with only the given method set.
     #
     # For everything else this uses the defaults of your OpenSSL.
     # Use this only if undoing the defaults that `new` sets is too much hassle.
@@ -96,7 +96,7 @@ abstract class OpenSSL::SSL::Context
   end
 
   class Server < Context
-    # Generates a new SSL server context with sane defaults for a server connection.
+    # Generates a new TLS server context with sane defaults for a server connection.
     #
     # By default it defaults to the `SSLv23_method` which actually means that
     # OpenSSL will negotiate the TLS or SSL protocol to use with the remote
@@ -109,8 +109,8 @@ abstract class OpenSSL::SSL::Context
     # protocols but disable the deprecated SSLv2 and SSLv3 protocols:
     #
     # ```
-    # ssl_context = OpenSSL::SSL::Context::Server.new
-    # ssl_context.options = OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3
+    # context = OpenSSL::SSL::Context::Server.new
+    # context.options = OpenSSL::SSL::Options::NO_SSLV2 | OpenSSL::SSL::Options::NO_SSLV3
     # ```
     def initialize(method : LibSSL::SSLMethod = LibSSL.sslv23_method)
       super(method)
@@ -121,7 +121,7 @@ abstract class OpenSSL::SSL::Context
       {% end %}
     end
 
-    # Returns a new SSL server context with only the given method set.
+    # Returns a new TLS server context with only the given method set.
     #
     # For everything else this uses the defaults of your OpenSSL.
     # Use this only if undoing the defaults that `new` sets is too much hassle.
@@ -206,14 +206,14 @@ abstract class OpenSSL::SSL::Context
     raise OpenSSL::Error.new("SSL_CTX_use_PrivateKey_file") unless ret == 1
   end
 
-  # Specify a list of SSL ciphers to use or discard.
+  # Specify a list of TLS ciphers to use or discard.
   def ciphers=(ciphers : String)
     ret = LibSSL.ssl_ctx_set_cipher_list(@handle, ciphers)
     raise OpenSSL::Error.new("SSL_CTX_set_cipher_list") if ret == 0
     ciphers
   end
 
-  # Adds a temporary ECDH key curve to the SSL context. This is required to
+  # Adds a temporary ECDH key curve to the TLS context. This is required to
   # enable the EECDH cipher suites. By default the prime256 curve will be used.
   def set_tmp_ecdh_key(curve = LibCrypto::NID_X9_62_prime256v1)
     key = LibCrypto.ec_key_new_by_curve_name(curve)
@@ -222,31 +222,31 @@ abstract class OpenSSL::SSL::Context
     LibCrypto.ec_key_free(key)
   end
 
-  # Returns the current modes set on the SSL context.
+  # Returns the current modes set on the TLS context.
   def modes
     OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, 0, nil)
   end
 
-  # Adds modes to the SSL context.
+  # Adds modes to the TLS context.
   def add_modes(mode : OpenSSL::SSL::Modes)
     OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_MODE, mode, nil)
   end
 
-  # Removes modes from the SSL context.
+  # Removes modes from the TLS context.
   def remove_modes(mode : OpenSSL::SSL::Modes)
     OpenSSL::SSL::Modes.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_MODE, mode, nil)
   end
 
-  # Returns the current options set on the SSL context.
+  # Returns the current options set on the TLS context.
   def options
     OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, 0, nil)
   end
 
-  # Adds options to the SSL context.
+  # Adds options to the TLS context.
   #
   # Example:
   # ```
-  # ssl_context.add_options(
+  # context.add_options(
   #   OpenSSL::SSL::Options::ALL |        # various workarounds
   #     OpenSSL::SSL::Options::NO_SSLV2 | # disable overly deprecated SSLv2
   #     OpenSSL::SSL::Options::NO_SSLV3   # disable deprecated SSLv3
@@ -256,11 +256,11 @@ abstract class OpenSSL::SSL::Context
     OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_OPTIONS, options, nil)
   end
 
-  # Removes options from the SSL context.
+  # Removes options from the TLS context.
   #
   # Example:
   # ```
-  # ssl_context.remove_options(OpenSSL::SSL::NO_SSLV3)
+  # context.remove_options(OpenSSL::SSL::NO_SSLV3)
   # ```
   def remove_options(options : OpenSSL::SSL::Options)
     OpenSSL::SSL::Options.new LibSSL.ssl_ctx_ctrl(@handle, LibSSL::SSL_CTRL_CLEAR_OPTIONS, options, nil)
@@ -286,7 +286,7 @@ abstract class OpenSSL::SSL::Context
   #
   # Example:
   # ```
-  # ssl_context.alpn_protocol = "h2"
+  # context.alpn_protocol = "h2"
   # ```
   def alpn_protocol=(protocol : String)
     proto = Slice(UInt8).new(protocol.bytesize + 1)
