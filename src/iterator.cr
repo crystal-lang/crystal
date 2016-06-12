@@ -975,4 +975,53 @@ module Iterator(T)
       self
     end
   end
+
+  # Returns an iterator that returns a chunks.
+  #
+  #     iter = (1..3).chunk(&./(2))
+  #     iter.next # => {0, [1]}
+  #     iter.next # => {1, [2, 3]}
+  #     iter.next # => Iterator::Stop::INSTANCE
+  #
+  def chunk(&block : T -> U)
+    Chunk(typeof(self), T, U).new(self, &block)
+  end
+
+  # :nodoc:
+  class Chunk(I, T, U)
+    include Iterator(Tuple(U, Array(T)))
+    @iterator : I
+
+    def initialize(@iterator : Iterator(T), &@original_block : T -> U)
+      @acc = Enumerable::Chunk::Accumulator(T, U).new
+    end
+
+    def next
+      @iterator.each do |val|
+        key = @original_block.call(val)
+
+        if @acc.same_as?(key)
+          @acc.add(val)
+        else
+          tuple = @acc.fetch
+          @acc.init(key, val)
+          return tuple if tuple
+        end
+      end
+
+      if tuple = @acc.fetch
+        return tuple
+      end
+      stop
+    end
+
+    def rewind
+      @iterator.rewind
+      init_state
+    end
+
+    private def init_state
+      @acc = Enumerable::Chunk::Accumulator(T, U).new
+    end
+  end
 end
