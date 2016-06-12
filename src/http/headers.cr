@@ -40,7 +40,7 @@ struct HTTP::Headers
     end
 
     private def normalize_byte(byte)
-      char = byte.chr
+      char = byte.unsafe_chr
 
       return byte if char.lowercase? || char == '-' # Optimize the common case
       return byte + 32 if char.uppercase?
@@ -268,7 +268,7 @@ struct HTTP::Headers
     # are '\t', ' ', all US-ASCII printable characters and
     # range from '\x80' to '\xff' (but the last is obsoleted.)
     value.each_byte do |byte|
-      char = byte.chr
+      char = byte.unsafe_chr
       next if char == '\t'
       if char < ' ' || char > '\u{ff}' || char == '\u{7e}'
         raise ArgumentError.new("header content contains invalid character #{char.inspect}")

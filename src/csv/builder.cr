@@ -135,7 +135,7 @@ class CSV::Builder
 
     private def needs_quotes?(value)
       value.each_byte do |byte|
-        case byte.chr
+        case byte.unsafe_chr
         when ',', '\n', '"'
           return true
         end

@@ -299,14 +299,34 @@ end
 
   {% for int in ints %}
     struct {{int.id}}
-      # Returns a `Char` that has the unicode codepoint of *self*.
-      #
-      # ```
-      # 97.chr # => 'a'
-      # ```
-      @[Primitive(:cast)]
-      def chr : Char
-      end
+      {% if Crystal::VERSION == "0.18.0" %}
+        # Returns a `Char` that has the unicode codepoint of *self*,
+        # without checking if this integer is in the range valid for
+        # chars (`0..0x10ffff`).
+        #
+        # You should never use this method unless `chr` turns out to
+        # be a bottleneck.
+        #
+        # ```
+        # 97.unsafe_chr # => 'a'
+        # ```
+        @[Primitive(:cast)]
+        def unsafe_chr : Char
+        end
+      {% else %}
+        # Returns a `Char` that has the unicode codepoint of *self*.
+        #
+        # ```
+        # 97.chr # => 'a'
+        # ```
+        @[Primitive(:cast)]
+        def chr : Char
+        end
+
+        def unsafe_chr : Char
+          chr
+        end
+      {% end %}
 
       {% for int2 in ints %}
         {% for op, desc in binaries %}

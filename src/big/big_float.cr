@@ -178,7 +178,7 @@ struct BigFloat < Float
     length.times do |i|
       next if cstr[i] == 45 # '-'
       io << '.' if i == expptr
-      io << cstr[i].chr
+      io << cstr[i].unsafe_chr
     end
     (expptr - length).times { io << 0 } if expptr > 0
   end

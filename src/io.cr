@@ -392,16 +392,16 @@ module IO
     return nil unless first
 
     first = first.to_u32
-    return first.chr, 1 if first < 0x80
+    return first.unsafe_chr, 1 if first < 0x80
 
     second = read_utf8_masked_byte
-    return ((first & 0x1f) << 6 | second).chr, 2 if first < 0xe0
+    return ((first & 0x1f) << 6 | second).unsafe_chr, 2 if first < 0xe0
 
     third = read_utf8_masked_byte
-    return ((first & 0x0f) << 12 | (second << 6) | third).chr, 3 if first < 0xf0
+    return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3 if first < 0xf0
 
     fourth = read_utf8_masked_byte
-    return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr, 4 if first < 0xf8
+    return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4 if first < 0xf8
 
     raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
   end
@@ -628,7 +628,7 @@ module IO
 
     # One byte: use gets(Char)
     if delimiter.bytesize == 1
-      return gets(delimiter.unsafe_byte_at(0).chr)
+      return gets(delimiter.unsafe_byte_at(0).unsafe_chr)
     end
 
     # One char: use gets(Char)
