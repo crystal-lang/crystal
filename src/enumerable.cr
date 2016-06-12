@@ -74,6 +74,82 @@ module Enumerable(T)
     any? &.itself
   end
 
+  # Returns an iterator with chunks
+  #
+  #     (0..7).chunk(&./(3)).to_a => [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7]}]
+  #
+  def chunk(&block : T -> U)
+    self.each.chunk &block
+  end
+
+  # Returns an array of chunks (TODO: rewrite to use enumerator)
+  #
+  #     (0..7).chunks(&./(3)) => [{0, [0, 1, 2]}, {1, [3, 4, 5]}, {2, [6, 7]}]
+  #
+  def chunks(&block : T -> U)
+    res = [] of Tuple(U, Array(T))
+    chunks_internal(block) { |k, v| res << {k, v} }
+    res
+  end
+
+  # :nodoc:
+  module Chunk
+    record Drop
+    record Alone
+
+    # :nodoc:
+    class Accumulator(T, U)
+      def initialize
+        @key = uninitialized U
+        @initialized = false
+        @data = [] of T
+      end
+
+      def init(key, val)
+        return if key == Drop
+        @key = key
+        @data = [val]
+        @initialized = true
+      end
+
+      def add(d)
+        @data << d
+      end
+
+      def fetch
+        if @initialized
+          {@key, @data}.tap { @initialized = false }
+        end
+      end
+
+      def same_as?(key)
+        return false unless @initialized
+        return false if key == Alone || key == Drop
+        @key == key
+      end
+    end
+  end
+
+  # :nodoc:
+  private def chunks_internal(original_block : T -> U)
+    acc = Chunk::Accumulator(T, U).new
+    each do |val|
+      key = original_block.call(val)
+      if acc.same_as?(key)
+        acc.add(val)
+      else
+        if tuple = acc.fetch
+          yield(*tuple)
+        end
+        acc.init(key, val)
+      end
+    end
+
+    if tuple = acc.fetch
+      yield(*tuple)
+    end
+  end
+
   # Returns an array with the results of running the block against each element of the collection, removing `nil` values.
   #
   #     ["Alice", "Bob"].map { |name| name.match(/^A./) }         #=> [#<Regex::MatchData "Al">, nil]
