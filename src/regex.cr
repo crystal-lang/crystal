@@ -256,7 +256,7 @@ class Regex
   def self.escape(str) : String
     String.build do |result|
       str.each_byte do |byte|
-        case byte.chr
+        case byte.unsafe_chr
         when ' ', '.', '\\', '+', '*', '?', '[',
              '^', ']', '$', '(', ')', '{', '}',
              '=', '!', '<', '>', '|', ':', '-'

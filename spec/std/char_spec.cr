@@ -210,7 +210,7 @@ describe "Char" do
 
     it "raises on codepoint bigger than 0x10ffff" do
       expect_raises InvalidByteSequenceError do
-        (0x10ffff + 1).chr.bytesize
+        (0x10ffff + 1).unsafe_chr.bytesize
       end
     end
   end
@@ -261,7 +261,7 @@ describe "Char" do
 
   it "raises on codepoint bigger than 0x10ffff when doing each_byte" do
     expect_raises InvalidByteSequenceError do
-      (0x10ffff + 1).chr.each_byte { |b| }
+      (0x10ffff + 1).unsafe_chr.each_byte { |b| }
     end
   end
 

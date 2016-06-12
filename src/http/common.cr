@@ -85,7 +85,7 @@ module HTTP
 
     # Get where the header value starts (skip space)
     middle_index = colon_index + 1
-    while middle_index < bytesize && cstr[middle_index].chr.whitespace?
+    while middle_index < bytesize && cstr[middle_index].unsafe_chr.whitespace?
       middle_index += 1
     end
 

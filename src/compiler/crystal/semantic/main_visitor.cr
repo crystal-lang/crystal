@@ -2009,7 +2009,7 @@ module Crystal
         when "to_u64"                then mod.uint64
         when "to_f", "to_f64"        then mod.float64
         when "to_f32"                then mod.float32
-        when "chr"                   then mod.char
+        when "unsafe_chr", "chr"     then mod.char # TODO: remove "chr" after 0.18.0
         else
           raise "Bug: unknown cast operator #{typed_def.name}"
         end

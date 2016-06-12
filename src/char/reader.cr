@@ -104,7 +104,7 @@ struct Char
       end
 
       decode_char_at(next_pos) do |code_point, width|
-        code_point.chr
+        code_point.unsafe_chr
       end
     end
 
@@ -212,7 +212,7 @@ struct Char
       decode_char_at(@pos) do |code_point, width|
         @current_char_width = width
         @end = @pos == @string.bytesize
-        @current_char = code_point.chr
+        @current_char = code_point.unsafe_chr
       end
     end
 

@@ -72,7 +72,7 @@ class Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = level
-    while pos < bytesize && str[pos].chr.whitespace?
+    while pos < bytesize && str[pos].unsafe_chr.whitespace?
       pos += 1
     end
 
@@ -292,7 +292,7 @@ class Markdown::Parser
     str = line.to_unsafe
     pos = 0
 
-    while pos < bytesize && str[pos].chr.whitespace?
+    while pos < bytesize && str[pos].unsafe_chr.whitespace?
       pos += 1
     end
 
@@ -306,9 +306,9 @@ class Markdown::Parser
     last_is_space = true
 
     while pos < bytesize
-      case str[pos].chr
+      case str[pos].unsafe_chr
       when '*'
-        if pos + 1 < bytesize && str[pos + 1].chr == '*'
+        if pos + 1 < bytesize && str[pos + 1].unsafe_chr == '*'
           if two_stars || has_closing?('*', 2, str, (pos + 2), bytesize)
             @renderer.text line.byte_slice(cursor, pos - cursor)
             pos += 1
@@ -331,7 +331,7 @@ class Markdown::Parser
           one_star = !one_star
         end
       when '_'
-        if pos + 1 < bytesize && str[pos + 1].chr == '_'
+        if pos + 1 < bytesize && str[pos + 1].unsafe_chr == '_'
           if two_underscores || (last_is_space && has_closing?('_', 2, str, (pos + 2), bytesize))
             @renderer.text line.byte_slice(cursor, pos - cursor)
             pos += 1
@@ -401,7 +401,7 @@ class Markdown::Parser
           in_link = false
         end
       end
-      last_is_space = pos < bytesize && str[pos].chr.whitespace?
+      last_is_space = pos < bytesize && str[pos].unsafe_chr.whitespace?
       pos += 1
     end
 
@@ -419,17 +419,17 @@ class Markdown::Parser
     return false unless idx
 
     if count == 2
-      return false unless idx + 1 < bytesize && str[idx + 1].chr == char
+      return false unless idx + 1 < bytesize && str[idx + 1].unsafe_chr == char
     end
 
-    !str[idx - 1].chr.whitespace?
+    !str[idx - 1].unsafe_chr.whitespace?
   end
 
   def check_link(str, pos, bytesize)
     # We need to count nested brackets to do it right
     bracket_count = 1
     while pos < bytesize
-      case str[pos].chr
+      case str[pos].unsafe_chr
       when '['
         bracket_count += 1
       when ']'
@@ -477,7 +477,7 @@ class Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && pos < 6 && str[pos].chr == '#'
+    while pos < bytesize && pos < 6 && str[pos].unsafe_chr == '#'
       pos += 1
     end
     pos == 0 ? nil : pos
@@ -487,7 +487,7 @@ class Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && pos < 4 && str[pos].chr.whitespace?
+    while pos < bytesize && pos < 4 && str[pos].unsafe_chr.whitespace?
       pos += 1
     end
 
@@ -502,17 +502,17 @@ class Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && str[pos].chr.whitespace?
+    while pos < bytesize && str[pos].unsafe_chr.whitespace?
       pos += 1
     end
 
     return false unless pos < bytesize
-    return false unless prefix ? str[pos].chr == prefix : (str[pos].chr == '*' || str[pos].chr == '-' || str[pos].chr == '+')
+    return false unless prefix ? str[pos].unsafe_chr == prefix : (str[pos].unsafe_chr == '*' || str[pos].unsafe_chr == '-' || str[pos].unsafe_chr == '+')
 
     pos += 1
 
     return false unless pos < bytesize
-    str[pos].chr.whitespace?
+    str[pos].unsafe_chr.whitespace?
   end
 
   def previous_line_is_not_intended_and_starts_with_bullet_list_marker?(prefix)
@@ -535,19 +535,19 @@ class Markdown::Parser
     bytesize = line.bytesize
     str = line.to_unsafe
     pos = 0
-    while pos < bytesize && str[pos].chr.whitespace?
+    while pos < bytesize && str[pos].unsafe_chr.whitespace?
       pos += 1
     end
 
     return false unless pos < bytesize
-    return false unless str[pos].chr.digit?
+    return false unless str[pos].unsafe_chr.digit?
 
-    while pos < bytesize && str[pos].chr.digit?
+    while pos < bytesize && str[pos].unsafe_chr.digit?
       pos += 1
     end
 
     return false unless pos < bytesize
-    str[pos].chr == '.'
+    str[pos].unsafe_chr == '.'
   end
 
   def next_lines_empty_of_code?
