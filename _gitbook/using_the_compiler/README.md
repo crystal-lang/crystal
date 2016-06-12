@@ -92,7 +92,7 @@ $ crystal compile --help
 Usage: crystal compile [options] [programfile] [--] [arguments]
 
 Options:
-    --cross-compile flags            cross-compile
+    --cross-compile                  cross-compile
     -d, --debug                      Add symbolic debug info
     -D FLAG, --define FLAG           Define a compile-time flag
     --emit [asm|llvm-bc|llvm-ir|obj] Comma separated list of types of output for the compiler to emit
