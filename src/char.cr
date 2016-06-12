@@ -513,7 +513,7 @@ struct Char
       yield (0x80 | ((c >> 6) & 0x3f)).to_u8
       yield (0x80 | (c & 0x3f)).to_u8
     else
-      raise "Invalid char value"
+      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 
@@ -540,7 +540,7 @@ struct Char
       # 11110xxx  10xxxxxx  10xxxxxx  10xxxxxx
       4
     else
-      raise "Invalid char value"
+      raise InvalidByteSequenceError.new("Invalid char value #{dump}")
     end
   end
 
