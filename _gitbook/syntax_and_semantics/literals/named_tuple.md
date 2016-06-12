@@ -15,7 +15,7 @@ To denote a named tuple type you can write:
 NamedTuple(x: Int32, y: String)
 ```
 
-In type restrictions, generic type arguments and other places where a type is expected, you can use a shorter syntax, as explained in the [type](type_grammar.html):
+In type restrictions, generic type arguments and other places where a type is expected, you can use a shorter syntax, as explained in the [type](../type_grammar.html):
 
 ```crystal
 # An array of named tuples of x: Int32, y: String
