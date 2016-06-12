@@ -818,6 +818,10 @@ module Crystal
         end
       end
 
+      if expanded = node.expanded
+        return expanded
+      end
+
       node
     end
 

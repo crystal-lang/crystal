@@ -668,6 +668,12 @@ module Crystal
           if node.is_a?(Path) && (syntax_replacement = node.syntax_replacement)
             node = syntax_replacement
           end
+          if node.is_a?(SizeOf) && (expanded = node.expanded)
+            node = expanded
+          end
+          if node.is_a?(InstanceSizeOf) && (expanded = node.expanded)
+            node = expanded
+          end
 
           case node
           when NumberLiteral
@@ -1094,7 +1100,8 @@ module Crystal
   {% for name in %w(And Or
                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
                    Case StringInterpolation
-                   MacroExpression MacroIf MacroFor MultiAssign) %}
+                   MacroExpression MacroIf MacroFor MultiAssign
+                   SizeOf InstanceSizeOf) %}
     class {{name.id}}
       include ExpandableNode
     end

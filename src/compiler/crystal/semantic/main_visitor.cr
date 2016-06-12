@@ -2174,12 +2174,38 @@ module Crystal
       false
     end
 
-    def end_visit(node : SizeOf)
+    def visit(node : SizeOf)
+      @in_type_args += 1
+      node.exp.accept self
+      @in_type_args -= 1
+
+      # Try to resolve the sizeof right now to a number literal
+      # (useful for sizeof inside as a generic type argument, but also
+      # to make it easier for LLVM to optimize things)
+      if (type = node.exp.type?) && !node.exp.is_a?(TypeOf)
+        expanded = NumberLiteral.new(@mod.size_of(type))
+        expanded.type = @mod.int32
+        node.expanded = expanded
+      end
       node.type = @mod.int32
+      false
     end
 
-    def end_visit(node : InstanceSizeOf)
+    def visit(node : InstanceSizeOf)
+      @in_type_args += 1
+      node.exp.accept self
+      @in_type_args -= 1
+
+      # Try to resolve the instance_sizeof right now to a number literal
+      # (useful for sizeof inside as a generic type argument, but also
+      # to make it easier for LLVM to optimize things)
+      if (type = node.exp.type?) && type.instance_type.class? && !node.exp.is_a?(TypeOf)
+        expanded = NumberLiteral.new(@mod.instance_size_of(type))
+        expanded.type = @mod.int32
+        node.expanded = expanded
+      end
       node.type = @mod.int32
+      false
     end
 
     def visit(node : Rescue)

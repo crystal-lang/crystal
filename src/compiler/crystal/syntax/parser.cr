@@ -4297,8 +4297,13 @@ module Crystal
     end
 
     def parse_simple_type
-      if @token.keyword?(:typeof)
+      case @token
+      when .keyword?(:typeof)
         type = parse_typeof
+      when .keyword?(:sizeof)
+        type = parse_sizeof
+      when .keyword?(:instance_sizeof)
+        type = parse_instance_sizeof
       else
         type = parse_ident
       end
@@ -4398,7 +4403,7 @@ module Crystal
           return allow_int && @token.number_kind == :i32
         when :IDENT
           case @token.value
-          when :typeof, :self
+          when :typeof, :self, :sizeof, :instance_sizeof
             return true
           end
         when :"::"

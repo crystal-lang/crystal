@@ -455,6 +455,9 @@ describe "Parser" do
 
   it_parses "Foo(*T)", Generic.new("Foo".path, ["T".path.splat] of ASTNode)
 
+  it_parses "Foo(X, sizeof(Int32))", Generic.new("Foo".path, ["X".path, SizeOf.new("Int32".path)] of ASTNode)
+  it_parses "Foo(X, instance_sizeof(Int32))", Generic.new("Foo".path, ["X".path, InstanceSizeOf.new("Int32".path)] of ASTNode)
+
   it_parses "module Foo; end", ModuleDef.new("Foo".path)
   it_parses "module Foo\ndef foo; end; end", ModuleDef.new("Foo".path, [Def.new("foo")] of ASTNode)
   it_parses "module Foo(T); end", ModuleDef.new("Foo".path, type_vars: ["T"])

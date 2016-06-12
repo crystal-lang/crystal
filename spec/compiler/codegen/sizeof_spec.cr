@@ -81,4 +81,50 @@ describe "Code gen: sizeof" do
     # Same as the size of a byte
     run("sizeof(NoReturn)").to_i.should eq(1)
   end
+
+  it "can use sizeof in type argument (1)" do
+    run(%(
+      struct StaticArray
+        def size
+          N
+        end
+      end
+
+      x = uninitialized UInt8[sizeof(Int32)]
+      x.size
+      )).to_i.should eq(4)
+  end
+
+  it "can use sizeof in type argument (2)" do
+    run(%(
+      struct StaticArray
+        def size
+          N
+        end
+      end
+
+      x = uninitialized UInt8[sizeof(Float64)]
+      x.size
+      )).to_i.should eq(8)
+  end
+
+  it "can use instance_sizeof in type argument" do
+    run(%(
+      struct StaticArray
+        def size
+          N
+        end
+      end
+
+      class Foo
+        def initialize
+          @x = 1
+          @y = 1
+        end
+      end
+
+      x = uninitialized UInt8[instance_sizeof(Foo)]
+      x.size
+      )).to_i.should eq(12)
+  end
 end

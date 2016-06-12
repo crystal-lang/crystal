@@ -56,6 +56,20 @@ module Crystal
 
       visitor.modules
     end
+
+    def llvm_typer
+      @llvm_typer ||= LLVMTyper.new(self)
+    end
+
+    def size_of(type)
+      size = llvm_typer.size_of(llvm_typer.llvm_type(type))
+      size = 1 if size == 0
+      size
+    end
+
+    def instance_size_of(type)
+      llvm_typer.size_of(llvm_typer.llvm_struct_type(type))
+    end
   end
 
   class CodeGenVisitor < Visitor
@@ -112,7 +126,7 @@ module Crystal
       @single_module = !!single_module
       @debug = !!debug
       @abi = @mod.target_machine.abi
-      @llvm_typer = LLVMTyper.new(@mod)
+      @llvm_typer = @mod.llvm_typer
       @llvm_id = LLVMId.new(@mod)
       @main_ret_type = node.type
       ret_type = @llvm_typer.llvm_return_type(node.type)
