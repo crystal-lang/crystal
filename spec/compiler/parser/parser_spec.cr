@@ -1361,6 +1361,9 @@ describe "Parser" do
   assert_syntax_error "def foo(*args = 1); end", "splat argument can't have default value"
   assert_syntax_error "def foo(**args = 1); end", "double splat argument can't have default value"
 
+  assert_syntax_error "require 1", "expected string literal for require"
+  assert_syntax_error %(def foo("bar \#{1} qux" y); y; end), "interpolation not allowed in external name"
+
   describe "end locations" do
     assert_end_location "nil"
     assert_end_location "false"

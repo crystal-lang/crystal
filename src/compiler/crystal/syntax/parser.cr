@@ -1990,12 +1990,18 @@ module Crystal
       end
     end
 
-    def parse_string_without_interpolation
+    def parse_string_without_interpolation(context)
+      location = @token.location
+
+      unless string_literal_start?
+        raise "expected string literal for #{context}, not #{@token}"
+      end
+
       string = parse_delimiter
       if string.is_a?(StringLiteral)
         string.value
       else
-        yield
+        raise "interpolation not allowed in #{context}", location
       end
     end
 
@@ -2179,6 +2185,10 @@ module Crystal
       (@token.type == :IDENT || @token.type == :CONST) && current_char == ':' && peek_next_char != ':'
     end
 
+    def string_literal_start?
+      @token.type == :DELIMITER_START && @token.delimiter_state.kind == :string
+    end
+
     def parse_tuple(first_exp, location)
       exps = [] of ASTNode
       end_location = nil
@@ -2246,13 +2256,10 @@ module Crystal
           key = @token.value.to_s
           if named_tuple_start?
             next_token
+          elsif string_literal_start?
+            key = parse_string_without_interpolation("named tuple name")
           else
-            string = parse_op_assign
-            if string.is_a?(StringLiteral)
-              key = string.value
-            else
-              raise "expected '}' or named tuple name", string.location.not_nil!
-            end
+            raise "expected '}' or named tuple name, not #{@token}", @token
           end
 
           check :":"
@@ -2290,8 +2297,7 @@ module Crystal
       raise "can't require inside type declarations", @token if @type_nest > 0
 
       next_token_skip_space
-      check :DELIMITER_START
-      string = parse_string_without_interpolation { "interpolation not allowed in require" }
+      string = parse_string_without_interpolation("require")
 
       skip_space
 
@@ -3288,12 +3294,12 @@ module Crystal
     def parse_arg_name(location, extra_assigns, allow_external_name)
       do_next_token = true
 
-      if allow_external_name
+      if allow_external_name && (@token.type == :IDENT || string_literal_start?)
         if @token.type == :IDENT
           external_name = @token.type == :IDENT ? @token.value.to_s : ""
           next_token
-        elsif @token.type == :DELIMITER_START
-          external_name = parse_string_without_interpolation { "interpolation not allowed in external name" }
+        else
+          external_name = parse_string_without_interpolation("external name")
         end
         found_space = @token.type == :SPACE || @token.type == :NEWLINE
         skip_space
@@ -3909,13 +3915,10 @@ module Crystal
           if named_tuple_start?
             name = @token.value.to_s
             next_token
+          elsif string_literal_start?
+            name = parse_string_without_interpolation("named argument")
           else
-            string = parse_op_assign
-            if string.is_a?(StringLiteral)
-              name = string.value
-            else
-              raise "expected named argument", location
-            end
+            raise "expected named argument, not #{@token}", location
           end
         end
 
@@ -4093,13 +4096,10 @@ module Crystal
         if named_tuple_start?
           name = @token.value.to_s
           next_token
+        elsif string_literal_start?
+          name = parse_string_without_interpolation("named argument")
         else
-          string = parse_op_assign
-          if string.is_a?(StringLiteral)
-            name = string.value
-          else
-            raise "expected '#{end_token}' or named argument", @token
-          end
+          raise "expected '#{end_token}' or named argument, not #{@token}", @token
         end
 
         if named_args.any? { |arg| arg.name == name }
@@ -4447,7 +4447,7 @@ module Crystal
       next_token_skip_space
       check :"("
       next_token_skip_space_or_newline
-      text = parse_string_without_interpolation { "interpolation not allowed in asm" }
+      text = parse_string_without_interpolation("asm")
       skip_space_or_newline
 
       volatile = false
@@ -4515,7 +4515,7 @@ module Crystal
     end
 
     def parse_asm_operand
-      text = parse_string_without_interpolation { "interpolation not allowed in constraint" }
+      text = parse_string_without_interpolation("constraint")
       check :"("
       next_token_skip_space_or_newline
       exp = parse_expression
@@ -4527,7 +4527,7 @@ module Crystal
     def parse_asm_clobbers
       clobbers = [] of String
       while true
-        clobbers << parse_string_without_interpolation { "interpolation not allowed in asm clobber" }
+        clobbers << parse_string_without_interpolation("asm clobber")
         skip_space_or_newline
         if @token.type == :","
           next_token_skip_space_or_newline
@@ -4543,7 +4543,7 @@ module Crystal
       intel = false
       while true
         location = @token.location
-        option = parse_string_without_interpolation { "interpolation not allowed in asm clobber" }
+        option = parse_string_without_interpolation("asm clobber")
         skip_space_or_newline
         case option
         when "volatile"
@@ -4747,7 +4747,7 @@ module Crystal
           real_name = @token.value.to_s
           next_token_skip_space_or_newline
         when :DELIMITER_START
-          real_name = parse_string_without_interpolation { "interpolation not allowed in fun name" }
+          real_name = parse_string_without_interpolation("fun name")
           skip_space
         else
           unexpected_token
