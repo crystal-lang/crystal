@@ -105,4 +105,15 @@ describe "Type inference: while" do
       a
       )) { int32 }
   end
+
+  it "doesn't modify var's type before while" do
+    assert_type(%(
+      x = 'x'
+      x.ord
+      while 1 == 2
+        x = 1
+      end
+      x
+      )) { union_of(int32, char) }
+  end
 end
