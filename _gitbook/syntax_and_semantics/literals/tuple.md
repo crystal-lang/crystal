@@ -18,7 +18,7 @@ To denote a tuple type you can write:
 Tuple(Int32, String, Char)
 ```
 
-In type restrictions, generic type arguments and other places where a type is expected, you can use a shorter syntax, as explained in the [type](type_grammar.html):
+In type restrictions, generic type arguments and other places where a type is expected, you can use a shorter syntax, as explained in the [type](../type_grammar.html):
 
 ```crystal
 # An array of tuples of Int32, String and Char
