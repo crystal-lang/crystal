@@ -208,6 +208,7 @@ struct Char
       raise InvalidByteSequenceError.new("Unexpected byte 0x#{byte.to_s(16)} at position #{byte_position}, malformed UTF-8")
     end
 
+    @[AlwaysInline]
     private def decode_current_char
       decode_char_at(@pos) do |code_point, width|
         @current_char_width = width
