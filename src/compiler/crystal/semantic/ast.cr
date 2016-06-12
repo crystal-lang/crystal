@@ -846,6 +846,7 @@ module Crystal
       io << " (nil-if-read)" if nil_if_read
       io << " (closured)" if closured
       io << " (assigned-to)" if assigned_to
+      io << " (object id: #{object_id})"
     end
   end
 
