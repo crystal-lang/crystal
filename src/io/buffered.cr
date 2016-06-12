@@ -145,7 +145,7 @@ module IO::Buffered
       return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr, 4
     end
 
-    raise InvalidByteSequenceError.new
+    raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
   end
 
   # Buffered implementation of `IO#read(slice)`.

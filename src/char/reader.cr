@@ -159,12 +159,12 @@ struct Char
       end
 
       if first < 0xc2
-        invalid_byte_sequence
+        invalid_byte_sequence(first, pos)
       end
 
       second = byte_at(pos + 1)
       if (second & 0xc0) != 0x80
-        invalid_byte_sequence
+        invalid_byte_sequence(second, pos + 1)
       end
 
       if first < 0xe0
@@ -173,39 +173,39 @@ struct Char
 
       third = byte_at(pos + 2)
       if (third & 0xc0) != 0x80
-        invalid_byte_sequence
+        invalid_byte_sequence(third, pos + 2)
       end
 
       if first < 0xf0
         if first == 0xe0 && second < 0xa0
-          invalid_byte_sequence
+          invalid_byte_sequence(second, pos + 1)
         end
 
         return yield (first << 12) + (second << 6) + (third - 0xE2080), 3
       end
 
       if first == 0xf0 && second < 0x90
-        invalid_byte_sequence
+        invalid_byte_sequence(second, pos + 1)
       end
 
       if first == 0xf4 && second >= 0x90
-        invalid_byte_sequence
+        invalid_byte_sequence(second, pos + 1)
       end
 
       fourth = byte_at(pos + 3)
       if (fourth & 0xc0) != 0x80
-        invalid_byte_sequence
+        invalid_byte_sequence(fourth, pos + 3)
       end
 
       if first < 0xf5
         return yield (first << 18) + (second << 12) + (third << 6) + (fourth - 0x3C82080), 4
       end
 
-      invalid_byte_sequence
+      invalid_byte_sequence(first, pos)
     end
 
-    private def invalid_byte_sequence
-      raise InvalidByteSequenceError.new
+    private def invalid_byte_sequence(byte, byte_position)
+      raise InvalidByteSequenceError.new("Unexpected byte 0x#{byte.to_s(16)} at position #{byte_position}, malformed UTF-8")
     end
 
     private def decode_current_char

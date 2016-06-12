@@ -403,11 +403,11 @@ module IO
     fourth = read_utf8_masked_byte
     return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr, 4 if first < 0xf8
 
-    raise InvalidByteSequenceError.new
+    raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
   end
 
   private def read_utf8_masked_byte
-    byte = read_utf8_byte || raise "Incomplete UTF-8 byte sequence"
+    byte = read_utf8_byte || raise InvalidByteSequenceError.new("Incomplete UTF-8 byte sequence")
     (byte & 0x3f).to_u32
   end
 
