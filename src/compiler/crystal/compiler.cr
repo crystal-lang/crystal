@@ -20,7 +20,7 @@ module Crystal
       node : ASTNode,
       original_node : ASTNode
 
-    property cross_compile_flags : String?
+    property cross_compile : Bool
     property flags : Array(String)
     property? debug : Bool
     property? dump_ll : Bool
@@ -45,6 +45,7 @@ module Crystal
     @module_pass_manager : LLVM::ModulePassManager?
 
     def initialize
+      @cross_compile = false
       @debug = false
       @dump_ll = false
       @color = true
@@ -87,9 +88,6 @@ module Crystal
       program = Program.new
       program.cache_dir = CacheDir.instance.directory_for(sources)
       program.target_machine = target_machine
-      if cross_compile_flags = @cross_compile_flags
-        program.flags = cross_compile_flags
-      end
       program.flags << "release" if @release
       program.flags.merge @flags
       program.wants_doc = wants_doc?
@@ -159,12 +157,12 @@ module Crystal
       lib_flags = program.lib_flags
 
       llvm_modules = timing("Codegen (crystal)") do
-        program.codegen node, debug: @debug, single_module: @single_module || @release || @cross_compile_flags || @emit, expose_crystal_main: false
+        program.codegen node, debug: @debug, single_module: @single_module || @release || @cross_compile || @emit, expose_crystal_main: false
       end
 
       cache_dir = CacheDir.instance
 
-      if @cross_compile_flags
+      if @cross_compile
         output_dir = "."
       else
         output_dir = cache_dir.directory_for(sources)
@@ -176,7 +174,7 @@ module Crystal
         CompilationUnit.new(self, type_name, llvm_mod, output_dir, bc_flags_changed)
       end
 
-      if @cross_compile_flags
+      if @cross_compile
         cross_compile program, units, lib_flags, output_filename
       else
         codegen program, units, lib_flags, output_filename, output_dir
@@ -294,6 +292,11 @@ module Crystal
         triple = @target_triple || LLVM.default_target_triple
         TargetMachine.create(triple, @mcpu || "", @release)
       end
+    rescue ex : ArgumentError
+      print colorize("Error: ").red.bold
+      print "llc: "
+      puts "#{ex.message}"
+      exit 1
     end
 
     def optimize(llvm_mod)

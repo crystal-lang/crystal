@@ -485,8 +485,8 @@ class Crystal::Command
 
       unless no_codegen
         unless run
-          opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
-            compiler.cross_compile_flags = cross_compile
+          opts.on("--cross-compile", "cross-compile") do |cross_compile|
+            compiler.cross_compile = true
           end
         end
         opts.on("-d", "--debug", "Add symbolic debug info") do
