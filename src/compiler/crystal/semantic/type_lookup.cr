@@ -97,7 +97,7 @@ module Crystal
         begin
           @type = instance_type.instantiate_named_args(entries)
         rescue ex : Crystal::Exception
-          node.raise ex.message if @raise
+          node.raise "instantiating #{node}", inner: ex if @raise
         end
 
         return false
@@ -161,7 +161,7 @@ module Crystal
       begin
         @type = instance_type.instantiate(type_vars)
       rescue ex : Crystal::Exception
-        node.raise ex.message if @raise
+        node.raise "instantiating #{node}", inner: ex if @raise
       end
 
       false
@@ -228,7 +228,11 @@ module Crystal
 
       meta_vars = MetaVars{"self" => MetaVar.new("self", @self_type)}
       visitor = MainVisitor.new(program, meta_vars)
-      node.expressions.each &.accept visitor
+      begin
+        node.expressions.each &.accept visitor
+      rescue ex : Crystal::Exception
+        node.raise "typing typeof", inner: ex
+      end
       @type = program.type_merge node.expressions
       false
     end
@@ -252,6 +256,8 @@ module Crystal
   class Type
     def lookup_type(node : Path, lookup_in_container = true)
       (node.global ? program : self).lookup_type(node.names, lookup_in_container: lookup_in_container)
+    rescue ex : Crystal::Exception
+      raise ex
     rescue ex
       node.raise ex.message
     end

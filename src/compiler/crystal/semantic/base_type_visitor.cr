@@ -459,6 +459,8 @@ module Crystal
 
     def lookup_type(base_type, names, node, lookup_in_container = true)
       base_type.lookup_type names, lookup_in_container: lookup_in_container
+    rescue ex : Crystal::Exception
+      raise ex
     rescue ex
       node.raise ex.message
     end
