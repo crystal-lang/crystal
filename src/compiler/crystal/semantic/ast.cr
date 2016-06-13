@@ -23,7 +23,7 @@ module Crystal
     property input_observer : Call?
 
     @dirty = false
-    @propagating_no_return = false
+    @propagating_after_cleanup = false
 
     @type : Type?
 
@@ -190,7 +190,7 @@ module Crystal
     end
 
     def update(from)
-      return if @propagating_no_return
+      return if @propagating_after_cleanup
       return if @type.same? from.type?
 
       if dependencies.size == 1 || !@type
@@ -200,22 +200,42 @@ module Crystal
       end
 
       if @type.same? new_type
-        # If one dependency becomes NoReturn there's a chance that this
-        # node's dependencies depend on this node, forming a cycle. In
-        # that case, because the type didn't change, the propagation stops
-        # and that's wrong. One way to solve it is to let this node's type
-        # be NoReturn, propagate, and expect other nodes to accomodate to
-        # a type that doesn't depend on this node's type.
-        # Then, propagate normally.
-        if from.no_returns? && dependencies.size > 0
-          set_type(from.type)
+        # If we are in the cleanup phase it might happen that a dependency's
+        # type changed (from) but our type didn't. This might happen if
+        # there's a circular dependencies in nodes (while and blocks can
+        # cause this), so we basically need to recompute all types in the
+        # cycle (and depending types).
+        #
+        # To solve this, we set our type to NoReturn so observers
+        # compute their type without taking this note into account.
+        # Later, we compute our type from our dependencies and propagate
+        # types as usual.
+        #
+        # To avoid infinite recursion we use the `@propagating_after_cleanup`
+        # flag, which prevents computing and propagating types for this
+        # node while we are doing the above logic.
+        if dependencies.size > 0 && (from_type = from.type?) && from_type.program.in_cleanup_phase?
+          set_type(from_type.program.no_return)
+
+          @propagating_after_cleanup = true
           @dirty = true
-          @propagating_no_return = true
           propagate
-          @propagating_no_return = false
 
           new_type = Type.merge dependencies
+          if new_type
+            set_type_from(map_type(new_type), from)
+          else
+            unless @type
+              @propagating_after_cleanup = false
+              return
+            end
+            set_type(nil)
+          end
+
           @dirty = true
+          propagate
+          @propagating_after_cleanup = false
+          return
         else
           return
         end
