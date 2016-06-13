@@ -35,6 +35,13 @@ describe "Pointer" do
         p2[0].should eq(p1[0])
       end
     end
+
+    it "raises on negative count" do
+      p1 = Pointer.malloc(4, 0)
+      expect_raises(ArgumentError, "negative count") do
+        p1.copy_from(p1, -1)
+      end
+    end
   end
 
   describe "copy_to" do
@@ -44,6 +51,13 @@ describe "Pointer" do
       p1.copy_to(p2, 4)
       4.times do |i|
         p2[0].should eq(p1[0])
+      end
+    end
+
+    it "raises on negative count" do
+      p1 = Pointer.malloc(4, 0)
+      expect_raises(ArgumentError, "negative count") do
+        p1.copy_to(p1, -1)
       end
     end
   end
@@ -66,6 +80,13 @@ describe "Pointer" do
       p1[2].should eq(1)
       p1[3].should eq(2)
     end
+
+    it "raises on negative count" do
+      p1 = Pointer.malloc(4, 0)
+      expect_raises(ArgumentError, "negative count") do
+        p1.move_from(p1, -1)
+      end
+    end
   end
 
   describe "move_to" do
@@ -85,6 +106,13 @@ describe "Pointer" do
       p1[1].should eq(1)
       p1[2].should eq(1)
       p1[3].should eq(2)
+    end
+
+    it "raises on negative count" do
+      p1 = Pointer.malloc(4, 0)
+      expect_raises(ArgumentError, "negative count") do
+        p1.move_to(p1, -1)
+      end
     end
   end
 
