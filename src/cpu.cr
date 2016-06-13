@@ -1,4 +1,4 @@
-module CPU
+module System::CPU
   enum Vendor
     Unknown,
     Intel,
@@ -20,9 +20,11 @@ module CPU
   @@vendor_string = ""
   @@vendor = Vendor::Unknown
   @@features = Features::None
+  @@initialized = false
 
   def self.cpuid(fn : Int32, subfn : Int32 = 0)
-    buf = [0_u32, 0_u32, 0_u32, 0_u32]
+    buf = StaticArray(UInt32, 4).new
+    ptr = buf.to_unsafe.address
     asm(%(
       movl $1, %eax
       movl $2, %ecx
@@ -30,64 +32,69 @@ module CPU
       movl %eax, 0x0($0)
       movl %ebx, 0x4($0)
       movl %ecx, 0x8($0)
-      movl %edx, 0xc($0)) :: "r"(buf.to_unsafe.address), "r"(fn), "r"(subfn): "a", "b", "c", "d", "memory")
+      movl %edx, 0xc($0)) :: "r"(ptr), "r"(fn), "r"(subfn): "eax", "ebx", "ecx", "edx", "memory")
     buf
   end
 
   def self.vendor_string
+    detect_cpu_features
     @@vendor_string
   end
 
   def self.vendor
+    detect_cpu_features
     @@vendor
   end
 
   def self.intel?
-    @@vendor == Vendor::Intel
+    vendor == Vendor::Intel
   end
 
   def self.amd?
-    @@vendor == Vendor::AMD
+    vendor == Vendor::AMD
   end
 
   def self.features
+    detect_cpu_features
     @@features
   end
 
   # Helper methods
   def self.has_sse?
-    (@@features & Features::SSE) != 0
+    (features & Features::SSE) != 0
   end
 
   def self.has_sse2?
-    (@@features & Features::SSE2) != 0
+    (features & Features::SSE2) != 0
   end
 
   def self.has_sse3?
-    (@@features & Features::SSE3) != 0
+    (features & Features::SSE3) != 0
   end
 
   def self.has_ssse3?
-    (@@features & Features::SSSE3) != 0
+    (features & Features::SSSE3) != 0
   end
 
   def self.has_sse4_1?
-    (@@features & Features::SSE4_1) != 0
+    (features & Features::SSE4_1) != 0
   end
 
   def self.has_sse4_2?
-    (@@features & Features::SSE4_2) != 0
+    (features & Features::SSE4_2) != 0
   end
 
   def self.has_avx?
-    (@@features & Features::AVX) != 0
+    (features & Features::AVX) != 0
   end
 
   def self.has_avx2?
-    (@@features & Features::AVX2) != 0
+    (features & Features::AVX2) != 0
   end
 
-  private def self.detect_cpu_features
+  private def self.detect_cpu_features : Void
+    return if @@initialized
+
     vendor_slice = Slice(UInt8).new(12)
     id0 = cpuid(0)
 
@@ -123,6 +130,8 @@ module CPU
     add_feature Features::SSE4_2, id1[2], 20
     add_feature Features::AVX, id1[2], 28
     add_feature Features::AVX2, id7[1], 5
+
+    @@initialized = true
   end
 
   private def self.add_feature(feature : Features, id : UInt32, bit : Int32)
@@ -130,6 +139,4 @@ module CPU
       @@features |= feature
     end
   end
-
-  detect_cpu_features
 end
