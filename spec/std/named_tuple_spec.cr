@@ -28,7 +28,8 @@ describe "NamedTuple" do
       NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :baz => 2})
     end
 
-    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+    # TODO: simplify regex and use TypeCastError after 0.18
+    expect_raises(Exception, /cast (?:from String )?to Int32 failed/) do
       NamedTuple(foo: Int32, bar: Int32).from({:foo => 1, :bar => "foo"})
     end
   end
@@ -50,7 +51,8 @@ describe "NamedTuple" do
       {foo: Int32, bar: Int32}.from({:foo => 1, :baz => 2})
     end
 
-    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
+    # TODO: simplify regex and use TypeCastError after 0.18
+    expect_raises(Exception, /cast (?:from String )?to Int32 failed/) do
       {foo: Int32, bar: Int32}.from({:foo => 1, :bar => "foo"})
     end
   end
