@@ -23,6 +23,7 @@ module Crystal
     property input_observer : Call?
 
     @dirty = false
+    @propagating_no_return = false
 
     @type : Type?
 
@@ -189,6 +190,7 @@ module Crystal
     end
 
     def update(from)
+      return if @propagating_no_return
       return if @type.same? from.type?
 
       if dependencies.size == 1 || !@type
@@ -197,7 +199,27 @@ module Crystal
         new_type = Type.merge dependencies
       end
 
-      return if @type.same? new_type
+      if @type.same? new_type
+        # If one dependency becomes NoReturn there's a chance that this
+        # node's dependencies depend on this node, forming a cycle. In
+        # that case, because the type didn't change, the propagation stops
+        # and that's wrong. One way to solve it is to let this node's type
+        # be NoReturn, propagate, and expect other nodes to accomodate to
+        # a type that doesn't depend on this node's type.
+        # Then, propagate normally.
+        if from.no_returns? && dependencies.size > 0
+          set_type(from.type)
+          @dirty = true
+          @propagating_no_return = true
+          propagate
+          @propagating_no_return = false
+
+          new_type = Type.merge dependencies
+          @dirty = true
+        else
+          return
+        end
+      end
 
       if new_type
         set_type_from(map_type(new_type), from)
