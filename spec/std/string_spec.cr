@@ -841,6 +841,62 @@ describe "String" do
     it "ignores if backreferences: false" do
       "foo".sub(/o/, "x\\0x", backreferences: false).should eq("fx\\0xo")
     end
+
+    it "subs at index with char" do
+      string = "hello".sub(1, 'a')
+      string.should eq("hallo")
+      string.bytesize.should eq(5)
+      string.size.should eq(5)
+    end
+
+    it "subs at index with char, non-ascii" do
+      string = "あいうえお".sub(2, 'の')
+      string.should eq("あいのえお")
+      string.size.should eq(5)
+      string.bytesize.should eq("あいのえお".bytesize)
+    end
+
+    it "subs at index with string" do
+      string = "hello".sub(1, "eee")
+      string.should eq("heeello")
+      string.bytesize.should eq(7)
+      string.size.should eq(7)
+    end
+
+    it "subs at index with string, non-ascii" do
+      string = "あいうえお".sub(2, "けくこ")
+      string.should eq("あいけくこえお")
+      string.bytesize.should eq("あいけくこえお".bytesize)
+      string.size.should eq(7)
+    end
+
+    it "subs range with char" do
+      string = "hello".sub(1..2, 'a')
+      string.should eq("halo")
+      string.bytesize.should eq(4)
+      string.size.should eq(4)
+    end
+
+    it "subs range with char, non-ascii" do
+      string = "あいうえお".sub(1..2, 'け')
+      string.should eq("あけえお")
+      string.size.should eq(4)
+      string.bytesize.should eq("あけえお".bytesize)
+    end
+
+    it "subs range with string" do
+      string = "hello".sub(1..2, "eee")
+      string.should eq("heeelo")
+      string.size.should eq(6)
+      string.bytesize.should eq(6)
+    end
+
+    it "subs range with string, non-ascii" do
+      string = "あいうえお".sub(1..2, "けくこ")
+      string.should eq("あけくこえお")
+      string.size.should eq(6)
+      string.bytesize.should eq("あけくこえお".bytesize)
+    end
   end
 
   describe "gsub" do
