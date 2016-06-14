@@ -685,6 +685,8 @@ class String
       return "" if count == 0
 
       count = end_pos - start_pos
+      return self if count == bytesize
+
       String.new(count) do |buffer|
         buffer.copy_from(to_unsafe + start_pos, count)
         {count, 0}
@@ -759,6 +761,7 @@ class String
 
       count = bytesize - start if start + count > bytesize
       return "" if count == 0
+      return self if count == bytesize
 
       String.new(count) do |buffer|
         buffer.copy_from(to_unsafe + start, count)
