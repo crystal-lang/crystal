@@ -89,7 +89,7 @@ require "./common"
 # ```
 class HTTP::Server
   ifdef !without_openssl
-    property ssl : OpenSSL::SSL::Context::Server?
+    property tls : OpenSSL::SSL::Context::Server?
   end
 
   @wants_close = false
@@ -158,8 +158,8 @@ class HTTP::Server
     io.sync = false
 
     ifdef !without_openssl
-      if ssl = @ssl
-        io = OpenSSL::SSL::Socket::Server.new(io, ssl, sync_close: true)
+      if tls = @tls
+        io = OpenSSL::SSL::Socket::Server.new(io, tls, sync_close: true)
       end
     end
 
