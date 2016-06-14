@@ -8,7 +8,9 @@
 * **(breaking change)** the `delegate` macro must now be used like `delegate method1, method2, ..., methodN, to: object`
 * **(breaking change)** `Hash#each_with_index` and `Hash#each_with_object` now yield a tuple (pair) and an index, because it's now `Enumerable`. Use `do |(key, value), index|` for this.
 * **(breaking change)** `{"foo": 1}` denotes a named tuple literal now, not a hash literal. Use `{"foo" => 1}` instead. This also applies to, for example `HTTP::Headers{...}`
+* **(breaking change)** Extra block arguments now give a compile-time error. This means that methods that yield more than once, one time with N arguments and another time with M arguments, with N < M, will always give an error. To fix this, add M - N `nil` fillers on the yield side (this makes it more explicit that `nil` was intended to be a block argument value)
 * The `build` command was renamed to `compile`. The `build` command is deprecated and will be removed in a future version
+* The `--cross-compile` flag no longer takes arguments, use `--target` and `-D`
 * Added a `Union` type that represents the type of a union, which can have class methods
 * Methods, procs and lib functions that are marked as returning `Void` now return `Nil`
 * Methods that are marked as returning `Nil` are not checked for a correct return type, they always return `nil` now
@@ -21,12 +23,15 @@
 * Splats in `yield` can now be used
 * Splat in block arguments can now be used.
 * Added block auto-unpacking: if a method yields a tuple and a block specifies more then one block argument, the tuple is unpacked to these arguments
+* String literals are now allowed as external method arguments, to match named tuples and named arguments
+* `sizeof` and `instance_sizeof` can now be used as generic type arguments (mostly useful combined with `StaticArray`)
 * `Hash`, `HTTP::Headers`, `HTTP::Params` and `ENV` now include the `Enumerable` module
 * `Proc` is now `Proc(*T, R)`
 * `Tuple(*T).new` and `NamedTuple(**T).new` now correctly match the given `T` (#1828)
 * `Float64#to_s` now produces an ever more accurate output
 * `JSON` parsing now correctly handle floats with many digits
 * `JSON.mapping` and `YAML.mapping` now also accept named arguments in addition to a hash literal or named tuple literal
+* `Int#chr` now raises if the integer is out of a char's range. The old non-raising behaviour is now in `Int#unsafe_chr`.
 * The output of `pp x` is now `x # => ...` instead of `x = ...`
 * The output of the `debug()` macro method now tries to format the code (pass `false` to disable this)
 * Added `JSON` and `YAML` parsing and mapping for unions
