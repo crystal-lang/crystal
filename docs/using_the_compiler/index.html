@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="2" data-basepath=".." data-revision="Tue May 17 2016 17:12:34 GMT+0000 (UTC)">
+    <div class="book" data-level="2" data-basepath=".." data-revision="Tue Jun 14 2016 22:29:32 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2146,12 +2146,12 @@
 <p>Alternative you can use the <code>run</code> command:</p>
 <pre><code>$ crystal run some_program.cr
 </code></pre><h2 id="creating-an-executable">Creating an executable</h2>
-<p>To create an executable use the <code>build</code> command:</p>
-<pre><code>$ crystal build some_program.cr
+<p>To create an executable use the <code>compile</code> command:</p>
+<pre><code>$ crystal compile some_program.cr
 </code></pre><p>This will create a <code>some_program</code> file that you can execute:</p>
 <pre><code>$ ./some_program
 </code></pre><p><strong>Note:</strong> By default the generated executables <strong>are not fully optimized</strong>. To turn optimizations on, use the <code>--release</code> flag:</p>
-<pre><code>$ crystal build some_program.cr --release
+<pre><code>$ crystal compile some_program.cr --release
 </code></pre><p>Make sure to always use <code>--release</code> for production-ready executables and when performing benchmarks.</p>
 <p>The reason for this is that performance without full optimizations is still pretty good and provides fast compile times, so you can use the <code>crystal</code> command almost as if it were an interpreter.</p>
 <h2 id="creating-a-project-or-library">Creating a project or library</h2>
@@ -2173,25 +2173,28 @@ Initialized empty Git repository in ~/MyCoolLib/.git/
 Usage: crystal [command] [switches] [program file] [--] [arguments]
 
 Command:
-    init                     generate new crystal project
-    build                    compile program file
+    init                     generate a new project
+    compile                  compile program
     deps                     install project dependencies
     docs                     generate documentation
+    env                      print Crystal environment information
     eval                     eval code from args or standard input
-    run (default)            compile and run program file
+    play                     starts crystal playground server
+    run (default)            compile and run program
     spec                     compile and run specs (in spec directory)
     tool                     run a tool
-    --help, -h               show this help
-    --version, -v            show version
+    help, --help, -h         show this help
+    version, --version, -v   show version
 </code></pre><p>To see the available options for a particular command, use <code>--help</code> after a command:</p>
-<pre><code>$ crystal build --help
-Usage: crystal build [options] [programfile] [--] [arguments]
+<pre><code>$ crystal compile --help
+Usage: crystal compile [options] [programfile] [--] [arguments]
 
 Options:
     --cross-compile flags            cross-compile
     -d, --debug                      Add symbolic debug info
     -D FLAG, --define FLAG           Define a compile-time flag
     --emit [asm|llvm-bc|llvm-ir|obj] Comma separated list of types of output for the compiler to emit
+    -f text|json, --format text|json Output format text (default) or json
     -h, --help                       Show this message
     --ll                             Dump ll to .crystal directory
     --link-flags FLAGS               Additional flags to pass to the linker
