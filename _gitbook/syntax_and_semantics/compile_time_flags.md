@@ -1,70 +1,42 @@
 # Compile-time flags
 
-Types, methods and generally any part of your code can be conditionally defined based on some flags available at compile time. These flags are by default the result of executing `uname -m -s`, split by whitespace and lowercased.
+Types, methods and generally any part of your code can be conditionally defined based on some flags available at compile time. These flags are by default read from the hosts [LLVM Target Triple](http://llvm.org/docs/LangRef.html#target-triple), split on `-`. To get the target you can execute `llvm-config --host-target`.
 
 ```bash
-$ uname -m -s
-Darwin x86_64
+$ llvm-config --host-target
+x86_64-unknown-linux-gnu
 
-# so the flags are: darwin, x86_64
+# so the flags are: x86_64, unknown, linux, gnu
 ```
 
-Additionally, if a program is compiled with `--release`, the `release` flag will be true.
+Additionally, if a program is compiled with `--release`, the `release` flag will be set.
 
-You can test these flags with `ifdef`:
+You can test these flags with the `flag?` macro method:
 
 ```crystal
-ifdef x86_64
+{% if flag?(:x86_64) %}
   # some specific code for 64 bits platforms
-else
+{% else %}
   # some specific code for non-64 bits platforms
-end
+{% end %}
 ```
 
-You can use `&&`, `||` and `|`:
+It returns true or false, so you can use `&&` and `||` just normally:
 
 ```crystal
-ifdef linux && x86_64
+{% if flag?(:linux) && flag?(:x86_64) %}
   # some specific code for linux 64 bits
-end
+{% end %}
 ```
 
 These flags are generally used in C bindings to conditionally define types and functions. For example the very well known `size_t` type is defined like this in Crystal:
 
 ```crystal
 lib C
-  ifdef x86_64
+  {% if flag?(:x86_64) %}
     alias SizeT = UInt64
-  else
+  {% else %}
     alias SizeT = UInt32
-  end
+  {% end %}
 end
 ```
-
-**Note:** conditionally defining fields of a C struct or union is not currently supported. The whole type definition must be defined separately.
-
-```crystal
-lib C
-  struct SomeStruct
-    # Error: the next line gives a parser error
-    ifdef linux
-      some_field : Int32
-    else
-      some_field : Int64
-    end
-  end
-
-  # OK
-  ifdef linux
-    struct SomeStruct
-      some_field : Int32
-    end
-  else
-    struct SomeStruct
-      some_field : Int64
-    end
-  end
-end
-```
-
-This restriction might be lifted in the future.
