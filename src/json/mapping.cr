@@ -58,7 +58,11 @@ module JSON
   # If `strict` is true, unknown properties in the JSON
   # document will raise a parse exception. The default is `false`, so unknown properties
   # are silently ignored.
-  macro mapping(properties, strict = false)
+  #
+  # If a name is specified for `store_other_attributes_in`, attributes in the parsed JSON object
+  # that are not listed in `properties` will be stored in a property with that name,
+  # as a `Hash(String, JSON::Any)`.
+  macro mapping(properties, strict = false, store_other_attributes_in extra = nil)
     {% for key, value in properties %}
       {% properties[key] = {type: value} unless value.is_a?(HashLiteral) || value.is_a?(NamedTupleLiteral) %}
     {% end %}
@@ -75,10 +79,18 @@ module JSON
       end
     {% end %}
 
+    {% if extra %}
+      property {{extra.id}} : Hash(String, JSON::Any)
+    {% end %}
+
     def initialize(%pull : JSON::PullParser)
       {% for key, value in properties %}
         %var{key.id} = nil
         %found{key.id} = false
+      {% end %}
+
+      {% if extra %}
+        @{{extra.id}} = {} of String => JSON::Any
       {% end %}
 
       %pull.read_object do |key|
@@ -114,6 +126,8 @@ module JSON
         else
           {% if strict %}
             raise JSON::ParseException.new("unknown json attribute: #{key}", 0, 0)
+          {% elsif extra %}
+            @{{extra.id}}[key] = JSON::Any.new(%pull)
           {% else %}
             %pull.skip
           {% end %}
@@ -186,6 +200,12 @@ module JSON
           {% unless value[:emit_null] %}
             end
           {% end %}
+        {% end %}
+
+        {% if extra %}
+          @{{extra.id}}.each do |key, value|
+            json.field(key, value)
+          end
         {% end %}
       end
     end
