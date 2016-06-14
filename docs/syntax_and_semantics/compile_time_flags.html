@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.14" data-basepath=".." data-revision="Tue May 17 2016 17:12:34 GMT+0000 (UTC)">
+    <div class="book" data-level="4.14" data-basepath=".." data-revision="Tue Jun 14 2016 22:34:01 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2137,58 +2137,34 @@
                     <section class="normal" id="section-">
                     
                         <h1 id="compile-time-flags">Compile-time flags</h1>
-<p>Types, methods and generally any part of your code can be conditionally defined based on some flags available at compile time. These flags are by default the result of executing <code>uname -m -s</code>, split by whitespace and lowercased.</p>
-<pre><code class="lang-bash">$ uname -m <span class="hljs-operator">-s</span>
-Darwin x86_64
+<p>Types, methods and generally any part of your code can be conditionally defined based on some flags available at compile time. These flags are by default read from the hosts <a href="http://llvm.org/docs/LangRef.html#target-triple" target="_blank">LLVM Target Triple</a>, split on <code>-</code>. To get the target you can execute <code>llvm-config --host-target</code>.</p>
+<pre><code class="lang-bash">$ llvm-config --host-target
+x86_64-unknown-linux-gnu
 
-<span class="hljs-comment"># so the flags are: darwin, x86_64</span>
+<span class="hljs-comment"># so the flags are: x86_64, unknown, linux, gnu</span>
 </code></pre>
-<p>Additionally, if a program is compiled with <code>--release</code>, the <code>release</code> flag will be true.</p>
-<p>You can test these flags with <code>ifdef</code>:</p>
-<pre><code class="lang-crystal"><span class="hljs-keyword">ifdef</span> x86_64
+<p>Additionally, if a program is compiled with <code>--release</code>, the <code>release</code> flag will be set.</p>
+<p>You can test these flags with the <code>flag?</code> macro method:</p>
+<pre><code class="lang-crystal"><span class="hljs-expansion">{% <span class="hljs-keyword">if</span> flag?(<span class="hljs-symbol">:x86_64</span>) %}
   <span class="hljs-comment"># some specific code for 64 bits platforms</span>
-<span class="hljs-keyword">else</span>
+{% <span class="hljs-keyword">else</span> %}
   <span class="hljs-comment"># some specific code for non-64 bits platforms</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>You can use <code>&amp;&amp;</code>, <code>||</code> and <code>|</code>:</p>
-<pre><code class="lang-crystal"><span class="hljs-keyword">ifdef</span> linux &amp;&amp; x86_64
+{% <span class="hljs-keyword">end</span> %}
+</span></code></pre>
+<p>It returns true or false, so you can use <code>&amp;&amp;</code> and <code>||</code> just normally:</p>
+<pre><code class="lang-crystal"><span class="hljs-expansion">{% <span class="hljs-keyword">if</span> flag?(<span class="hljs-symbol">:linux</span>) &amp;&amp; flag?(<span class="hljs-symbol">:x86_64</span>) %}
   <span class="hljs-comment"># some specific code for linux 64 bits</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
+{% <span class="hljs-keyword">end</span> %}
+</span></code></pre>
 <p>These flags are generally used in C bindings to conditionally define types and functions. For example the very well known <code>size_t</code> type is defined like this in Crystal:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">lib</span> <span class="hljs-title">C</span></span>
-  <span class="hljs-keyword">ifdef</span> x86_64
+  <span class="hljs-expansion">{% <span class="hljs-keyword">if</span> flag?(<span class="hljs-symbol">:x86_64</span>) %}
     <span class="hljs-keyword">alias</span> <span class="hljs-constant">SizeT</span> = <span class="hljs-constant">UInt64</span>
-  <span class="hljs-keyword">else</span>
+  {% <span class="hljs-keyword">else</span> %}
     <span class="hljs-keyword">alias</span> <span class="hljs-constant">SizeT</span> = <span class="hljs-constant">UInt32</span>
-  <span class="hljs-keyword">end</span>
+  {% <span class="hljs-keyword">end</span> %}
 <span class="hljs-keyword">end</span>
-</code></pre>
-<p><strong>Note:</strong> conditionally defining fields of a C struct or union is not currently supported. The whole type definition must be defined separately.</p>
-<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">lib</span> <span class="hljs-title">C</span></span>
-  <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">SomeStruct</span></span>
-    <span class="hljs-comment"># Error: the next line gives a parser error</span>
-    <span class="hljs-keyword">ifdef</span> linux
-      some_field <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
-    <span class="hljs-keyword">else</span>
-      some_field <span class="hljs-symbol">:</span> <span class="hljs-constant">Int64</span>
-    <span class="hljs-keyword">end</span>
-  <span class="hljs-keyword">end</span>
-
-  <span class="hljs-comment"># OK</span>
-  <span class="hljs-keyword">ifdef</span> linux
-    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">SomeStruct</span></span>
-      some_field <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>
-    <span class="hljs-keyword">end</span>
-  <span class="hljs-keyword">else</span>
-    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">SomeStruct</span></span>
-      some_field <span class="hljs-symbol">:</span> <span class="hljs-constant">Int64</span>
-    <span class="hljs-keyword">end</span>
-  <span class="hljs-keyword">end</span>
-<span class="hljs-keyword">end</span>
-</code></pre>
-<p>This restriction might be lifted in the future.</p>
+</span></code></pre>
 
                     
                     </section>
