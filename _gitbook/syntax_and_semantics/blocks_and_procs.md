@@ -132,7 +132,7 @@ end
 # Output: 3
 ```
 
-A block can also specify more than the arguments yielded, and these will be `nil`:
+It's an error specifying more block arguments than those yielded:
 
 ```crystal
 def twice
@@ -140,12 +140,9 @@ def twice
   yield
 end
 
-twice do |i|
-  puts i.inspect
+twice do |i| # Error: too many block arguments
 end
 ```
-
-The above outputs "nil" twice.
 
 Each block variable has the type of every yield expression in that position. For example:
 
@@ -153,7 +150,7 @@ Each block variable has the type of every yield expression in that position. For
 def some
   yield 1, 'a'
   yield true, "hello"
-  yield 2
+  yield 2, nil
 end
 
 some do |first, second|

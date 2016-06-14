@@ -16,20 +16,12 @@ When creating an empty hash you must always specify `K` and `V`:
 {}                   # syntax error
 ```
 
-## String keys
-
-A special notation allows creating hashes with string keys:
-
-```crystal
-{"key1": 'a', "key2": 'b'} # Hash(String, Char)
-```
-
 ## Hash-like types
 
 You can use a special hash literal syntax with other types too, as long as they define an argless `new` method and a `[]=` method:
 
 ```crystal
-MyType{"foo": "bar"}
+MyType{"foo" => "bar"}
 ```
 
 If `MyType` is not generic, the above is equivalent to this:
@@ -51,5 +43,5 @@ tmp
 In the case of a generic type, the type arguments can be specified too:
 
 ```crystal
-MyType(String, String) {"foo": "bar"}
+MyType(String, String) {"foo" => "bar"}
 ```

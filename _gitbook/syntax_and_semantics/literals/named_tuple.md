@@ -21,3 +21,9 @@ In type restrictions, generic type arguments and other places where a type is ex
 # An array of named tuples of x: Int32, y: String
 Array({x: Int32, y: String})
 ```
+
+A named tuple key can also be a string literal:
+
+```crystal
+{"this is a key": 1}
+```
