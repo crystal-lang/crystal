@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/crystal-lang/crystal.svg)](https://travis-ci.org/crystal-lang/crystal)
 [![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language)
-[![Code Triagers Badge](http://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](http://www.codetriage.com/crystal-lang/crystal)
+[![Code Triagers Badge](https://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](https://www.codetriage.com/crystal-lang/crystal)
 
 ---
 
