@@ -22,10 +22,10 @@ $ crystal run some_program.cr
 
 ## Creating an executable
 
-To create an executable use the `build` command:
+To create an executable use the `compile` command:
 
 ```
-$ crystal build some_program.cr
+$ crystal compile some_program.cr
 ```
 
 This will create a `some_program` file that you can execute:
@@ -37,7 +37,7 @@ $ ./some_program
 **Note:** By default the generated executables **are not fully optimized**. To turn optimizations on, use the `--release` flag:
 
 ```
-$ crystal build some_program.cr --release
+$ crystal compile some_program.cr --release
 ```
 
 Make sure to always use `--release` for production-ready executables and when performing benchmarks.
@@ -71,29 +71,32 @@ $ crystal
 Usage: crystal [command] [switches] [program file] [--] [arguments]
 
 Command:
-    init                     generate new crystal project
-    build                    compile program file
+    init                     generate a new project
+    compile                  compile program
     deps                     install project dependencies
     docs                     generate documentation
+    env                      print Crystal environment information
     eval                     eval code from args or standard input
-    run (default)            compile and run program file
+    play                     starts crystal playground server
+    run (default)            compile and run program
     spec                     compile and run specs (in spec directory)
     tool                     run a tool
-    --help, -h               show this help
-    --version, -v            show version
+    help, --help, -h         show this help
+    version, --version, -v   show version
 ```
 
 To see the available options for a particular command, use `--help` after a command:
 
 ```
-$ crystal build --help
-Usage: crystal build [options] [programfile] [--] [arguments]
+$ crystal compile --help
+Usage: crystal compile [options] [programfile] [--] [arguments]
 
 Options:
     --cross-compile flags            cross-compile
     -d, --debug                      Add symbolic debug info
     -D FLAG, --define FLAG           Define a compile-time flag
     --emit [asm|llvm-bc|llvm-ir|obj] Comma separated list of types of output for the compiler to emit
+    -f text|json, --format text|json Output format text (default) or json
     -h, --help                       Show this message
     --ll                             Dump ll to .crystal directory
     --link-flags FLAGS               Additional flags to pass to the linker
