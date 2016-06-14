@@ -9,7 +9,7 @@ typeof(begin
 end)
 
 describe Benchmark::IPS::Job do
-  it "generally works" do
+  pending "generally works" do
     # test several things to avoid running a benchmark over and over again in
     # the specs
     j = Benchmark::IPS::Job.new(0.001, 0.001, interactive: false)
