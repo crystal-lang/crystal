@@ -1,4 +1,4 @@
-## Next
+## 0.18.0 (14-06-2016)
 
 * **(breaking change)** `IniFile` was renamed to `INI`, and its method `load` renamed to `parse`
 * **(breaking change)** `Process.getpgid` was renamed to `Process.pgid`
@@ -13,6 +13,7 @@
   with `OpenSSL::SSL::Socket::Client`, `OpenSSL::SSL::Context::Server` with `OpenSSL::SSL::Socket::Server`.
 * **(breaking change)** TLS server and client sockets now use sane defaults, including support for hostname verification for client sockets, used by default in `HTTP::Client`.
 * **(breaking change)** The `ssl` option was renamed to `tls` in `HTTP::Client`, `HTTP::Server`, `HTTP::WebSocket`, `OAuth::Consumer`, `OAuth::Signature` and `OAuth2::AccessToken`.
+* The `dns_timeout` setting in a few classes like `HTTP::Client` and `TCPSocket` is now ignored until a next version supports a non-blocking `getaddrinfo` equivalent
 * `OpenSSL::SSL::Socket::Client` supports server name indication now.
 * The `build` command was renamed to `compile`. The `build` command is deprecated and will be removed in a future version
 * The `--cross-compile` flag no longer takes arguments, use `--target` and `-D`
