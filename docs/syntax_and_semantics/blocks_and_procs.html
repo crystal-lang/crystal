@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.9" data-basepath=".." data-revision="Thu May 19 2016 13:04:08 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.9" data-basepath=".." data-revision="Tue Jun 14 2016 22:08:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2234,22 +2234,20 @@ many <span class="hljs-keyword">do</span> |x, y|
 
 <span class="hljs-comment"># Output: 3</span>
 </code></pre>
-<p>A block can also specify more than the arguments yielded, and these will be <code>nil</code>:</p>
+<p>It&apos;s an error specifying more block arguments than those yielded:</p>
 <pre><code class="lang-crystal"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">twice</span></span>
   <span class="hljs-keyword">yield</span>
   <span class="hljs-keyword">yield</span>
 <span class="hljs-keyword">end</span>
 
-twice <span class="hljs-keyword">do</span> |i|
-  puts i.inspect
+twice <span class="hljs-keyword">do</span> |i| <span class="hljs-comment"># Error: too many block arguments</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
-<p>The above outputs &quot;nil&quot; twice.</p>
 <p>Each block variable has the type of every yield expression in that position. For example:</p>
 <pre><code class="lang-crystal"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">some</span></span>
   <span class="hljs-keyword">yield</span> <span class="hljs-number">1</span>, <span class="hljs-string">&apos;a&apos;</span>
   <span class="hljs-keyword">yield</span> <span class="hljs-literal">true</span>, <span class="hljs-string">&quot;hello&quot;</span>
-  <span class="hljs-keyword">yield</span> <span class="hljs-number">2</span>
+  <span class="hljs-keyword">yield</span> <span class="hljs-number">2</span>, <span class="hljs-literal">nil</span>
 <span class="hljs-keyword">end</span>
 
 some <span class="hljs-keyword">do</span> |first, second|

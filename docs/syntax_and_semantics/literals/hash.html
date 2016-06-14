@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.2.9" data-basepath="../.." data-revision="Tue May 17 2016 17:12:34 GMT+0000 (UTC)">
+    <div class="book" data-level="4.2.9" data-basepath="../.." data-revision="Tue Jun 14 2016 22:08:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2146,13 +2146,9 @@
 <pre><code class="lang-crystal">{} <span class="hljs-keyword">of</span> <span class="hljs-constant">Int32</span> =&gt; <span class="hljs-constant">Int32</span> <span class="hljs-comment"># same as Hash(Int32, Int32).new</span>
 {}                   <span class="hljs-comment"># syntax error</span>
 </code></pre>
-<h2 id="string-keys">String keys</h2>
-<p>A special notation allows creating hashes with string keys:</p>
-<pre><code class="lang-crystal">{<span class="hljs-string">&quot;key1&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&apos;a&apos;</span>, <span class="hljs-string">&quot;key2&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&apos;b&apos;</span>} <span class="hljs-comment"># Hash(String, Char)</span>
-</code></pre>
 <h2 id="hash-like-types">Hash-like types</h2>
 <p>You can use a special hash literal syntax with other types too, as long as they define an argless <code>new</code> method and a <code>[]=</code> method:</p>
-<pre><code class="lang-crystal"><span class="hljs-constant">MyType</span>{<span class="hljs-string">&quot;foo&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&quot;bar&quot;</span>}
+<pre><code class="lang-crystal"><span class="hljs-constant">MyType</span>{<span class="hljs-string">&quot;foo&quot;</span> =&gt; <span class="hljs-string">&quot;bar&quot;</span>}
 </code></pre>
 <p>If <code>MyType</code> is not generic, the above is equivalent to this:</p>
 <pre><code class="lang-crystal">tmp = <span class="hljs-constant">MyType</span>.new
@@ -2165,7 +2161,7 @@ tmp[<span class="hljs-string">&quot;foo&quot;</span>] = <span class="hljs-string
 tmp
 </code></pre>
 <p>In the case of a generic type, the type arguments can be specified too:</p>
-<pre><code class="lang-crystal"><span class="hljs-constant">MyType</span>(<span class="hljs-constant">String</span>, <span class="hljs-constant">String</span>) {<span class="hljs-string">&quot;foo&quot;</span><span class="hljs-symbol">:</span> <span class="hljs-string">&quot;bar&quot;</span>}
+<pre><code class="lang-crystal"><span class="hljs-constant">MyType</span>(<span class="hljs-constant">String</span>, <span class="hljs-constant">String</span>) {<span class="hljs-string">&quot;foo&quot;</span> =&gt; <span class="hljs-string">&quot;bar&quot;</span>}
 </code></pre>
 
                     
