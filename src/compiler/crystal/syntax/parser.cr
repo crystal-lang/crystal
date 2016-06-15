@@ -1866,7 +1866,10 @@ module Crystal
           line_number = @token.line_number
           delimiter_state = @token.delimiter_state
           next_token_skip_space_or_newline
-          exp = parse_expression
+          exp, _ = preserve_last_call_has_parentheses do
+            @last_call_has_parentheses = true
+            parse_expression
+          end
 
           if exp.is_a?(StringLiteral)
             pieces << Piece.new(exp.value, line_number)
