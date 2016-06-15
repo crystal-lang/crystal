@@ -134,6 +134,12 @@ class JSONWithNilableRootEmitNull
   })
 end
 
+class JSONWithUnknownAttributes
+  JSON.mapping({
+    x: Int32, y: Int32,
+  }, store_other_attributes_in: extra)
+end
+
 {% if Crystal::VERSION == "0.18.0" %}
   class JSONWithNilableUnion
     JSON.mapping({
@@ -394,6 +400,17 @@ describe "JSON mapping" do
     result = JSONWithNilableRootEmitNull.from_json(json)
     result.result.should be_nil
     result.to_json.should eq(json)
+  end
+
+  it "parses with unknown attributes" do
+    json = %({"x": 1, "z": 2, "foo": [1, 2, 3], "y": 3})
+    result = JSONWithUnknownAttributes.from_json(json)
+    result.x.should eq(1)
+    result.y.should eq(3)
+    result.extra.should be_a(Hash(String, JSON::Any))
+    result.extra["z"].should eq(2)
+    result.extra["foo"].should eq([1, 2, 3])
+    result.to_json.should eq(%({"x":1,"y":3,"z":2,"foo":[1,2,3]}))
   end
 
   {% if Crystal::VERSION == "0.18.0" %}
