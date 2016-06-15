@@ -2,6 +2,7 @@ module Crystal
   abstract class BaseTypeVisitor < Visitor
     getter mod : Program
     property types : Array(Type)
+    property in_type_args
 
     @free_vars : Hash(String, TypeVar)?
     @type_lookup : Type?
@@ -16,6 +17,7 @@ module Crystal
       @attributes = nil
       @lib_def_pass = 0
       @in_type_args = 0
+      @in_generic_args = 0
       @block_nest = 0
       @in_is_a = false
     end
@@ -57,7 +59,7 @@ module Crystal
         node.target_const = type
         node.bind_to type.value
       when Type
-        if type.is_a?(AliasType) && @in_type_args == 0 && !type.aliased_type?
+        if type.is_a?(AliasType) && @in_generic_args == 0 && !type.aliased_type?
           if type.value_processed?
             node.raise "infinite recursive definition of alias #{type}"
           else
@@ -92,8 +94,10 @@ module Crystal
 
     def visit(node : ProcNotation)
       @in_type_args += 1
+      @in_generic_args += 1
       node.inputs.try &.each &.accept(self)
       node.output.try &.accept(self)
+      @in_generic_args -= 1
       @in_type_args -= 1
 
       if inputs = node.inputs
@@ -114,12 +118,14 @@ module Crystal
     end
 
     def visit(node : Union)
+      @in_type_args += 1
       node.types.each &.accept self
+      @in_type_args -= 1
 
       old_in_is_a, @in_is_a = @in_is_a, false
 
       types = node.types.map do |subtype|
-        instance_type = subtype.type.instance_type
+        instance_type = subtype.type
         unless instance_type.allowed_in_generics?
           subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
         end
@@ -159,8 +165,10 @@ module Crystal
       node.name.accept self
 
       @in_type_args += 1
+      @in_generic_args += 1
       node.type_vars.each &.accept self
       node.named_args.try &.each &.value.accept self
+      @in_generic_args -= 1
       @in_type_args -= 1
 
       return false if node.type?
