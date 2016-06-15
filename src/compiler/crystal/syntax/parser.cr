@@ -4066,7 +4066,7 @@ module Crystal
       end
 
       if allow_type_vars && @token.type == :"("
-        next_token_skip_space
+        next_token_skip_space_or_newline
 
         if named_tuple_start? || @token.type == :DELIMITER_START
           types = [] of ASTNode
@@ -4079,6 +4079,9 @@ module Crystal
           named_args = nil
         end
 
+        next_token if @token.type == :","
+
+        skip_space_or_newline
         check :")"
         const = Generic.new(const, types, named_args).at(location)
         const.end_location = token_end_location
@@ -4107,7 +4110,7 @@ module Crystal
         end
 
         check :":"
-        next_token_skip_space
+        next_token_skip_space_or_newline
 
         type = parse_single_type(allow_commas: false)
         skip_space_or_newline
@@ -4374,10 +4377,10 @@ module Crystal
 
       @temp_token.copy_from(@token)
 
-      next_token_skip_space
+      next_token_skip_space_or_newline
 
       while @token.type == :"{" || @token.type == :"("
-        next_token_skip_space
+        next_token_skip_space_or_newline
       end
 
       begin
