@@ -1115,4 +1115,57 @@ describe "Code gen: exception" do
       end
       )).to_i.should eq(42)
   end
+
+  it "can use argument in rescue (#2844)" do
+    run(%(
+      require "prelude"
+
+      def foo(exe)
+        begin
+          raise exe
+        rescue exe
+          exe
+        end
+      end
+
+      ex = Exception.new("foo")
+      ex = foo(ex)
+      ex.message.not_nil!
+      )).to_string.should eq("foo")
+  end
+
+  it "can use argument in rescue, with a different type (1) (#2844)" do
+    run(%(
+      require "prelude"
+
+      def foo(exe)
+        begin
+          raise Exception.new("foo") if 1 == 1
+          exe
+        rescue exe
+          exe
+        end
+      end
+
+      ex = foo(1).as(Exception)
+      ex.message.not_nil!
+      )).to_string.should eq("foo")
+  end
+
+  it "can use argument in rescue, with a different type (2) (#2844)" do
+    run(%(
+      require "prelude"
+
+      def foo(exe)
+        begin
+          raise Exception.new("foo") if 1 == 2
+          exe
+        rescue exe
+          exe
+        end
+      end
+
+      foo(10).as(Int32)
+      )).to_i.should eq(10)
+  end
 end

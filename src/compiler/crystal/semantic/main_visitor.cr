@@ -2240,6 +2240,7 @@ module Crystal
         var = @vars[node_name] = new_meta_var(node_name)
         meta_var = (@meta_vars[node_name] ||= new_meta_var(node_name))
         meta_var.bind_to(var)
+        meta_var.assigned_to = true
 
         if types
           unified_type = @mod.type_merge(types).not_nil!
