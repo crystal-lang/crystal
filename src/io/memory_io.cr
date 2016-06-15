@@ -70,6 +70,8 @@ class MemoryIO
 
   # See `IO#read(slice)`.
   def read(slice : Slice(UInt8))
+    check_open
+
     count = slice.size
     count = Math.min(count, @bytesize - @pos)
     slice.copy_from(@buffer + @pos, count)
@@ -199,6 +201,7 @@ class MemoryIO
   # io.gets_to_end # => ""
   # ```
   def clear
+    check_open
     check_resizeable
     @bytesize = 0
     @pos = 0
