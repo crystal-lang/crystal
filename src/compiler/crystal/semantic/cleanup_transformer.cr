@@ -323,7 +323,10 @@ module Crystal
       obj_type = obj.try &.type?
       block = node.block
 
-      if !node.type? && obj && obj_type && obj_type.module?
+      # It might happen that a call was made on a module or an abstract class
+      # and we don't know the type because there are no including classes or subclasses.
+      # In that case, turn this into an untyped expression.
+      if !node.type? && obj && obj_type && (obj_type.module? || obj_type.abstract?)
         return untyped_expression(node, "`#{node}` has no type")
       end
 
