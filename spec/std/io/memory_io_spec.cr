@@ -26,6 +26,23 @@ describe "MemoryIO" do
     io.read_byte.should be_nil
   end
 
+  it "raises if reading when closed" do
+    io = MemoryIO.new("abc")
+    io.close
+    buffer = uninitialized UInt8[3]
+    expect_raises(IO::Error, "closed stream") do
+      io.read(buffer.to_slice)
+    end
+  end
+
+  it "raises if clearing when closed" do
+    io = MemoryIO.new("abc")
+    io.close
+    expect_raises(IO::Error, "closed stream") do
+      io.clear
+    end
+  end
+
   it "appends to another buffer" do
     s1 = MemoryIO.new
     s1 << "hello"
