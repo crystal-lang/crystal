@@ -93,9 +93,12 @@ module Crystal
       last = parse_expression
       skip_space
 
+      last_is_target = multi_assign_target?(last)
+
       case @token.type
       when :","
         # Continue
+        unexpected_token unless last_is_target
       when :NEWLINE, :";"
         return last
       else
@@ -156,6 +159,21 @@ module Crystal
 
       multi = MultiAssign.new(targets, values).at(location)
       parse_expression_suffix multi, @token.location
+    end
+
+    def multi_assign_target?(exp)
+      case exp
+      when Underscore, Var, InstanceVar, ClassVar, Global, Assign
+        true
+      when Call
+        !exp.has_parenthesis && (
+          (exp.args.empty? && !exp.named_args) ||
+            (exp.name[0].alpha? && exp.name.ends_with?('=')) ||
+            exp.name == "[]" || exp.name == "[]="
+        )
+      else
+        false
+      end
     end
 
     def multi_assign_middle?(exp)
