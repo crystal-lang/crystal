@@ -225,4 +225,11 @@ describe "type inference: alias" do
       ),
       "can't use typeof inside alias declaration"
   end
+
+  it "can use .class in alias (#2835)" do
+    assert_type(%(
+      alias Foo = Int32.class | String.class
+      Foo
+      )) { union_of(int32.metaclass, string.metaclass).metaclass }
+  end
 end
