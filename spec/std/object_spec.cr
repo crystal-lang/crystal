@@ -99,15 +99,13 @@ describe Object do
       wrapper.at(0).should eq('H')
       wrapper.at(index: 1).should eq('e')
 
-      {% if Crystal::VERSION == "0.18.0" %}
-        wrapper.at(10) { 20 }.should eq(20)
+      wrapper.at(10) { 20 }.should eq(20)
 
-        matches = [] of String
-        wrapper.scan(/l/) do |match|
-          matches << match[0]
-        end
-        matches.should eq(["l", "l"])
-      {% end %}
+      matches = [] of String
+      wrapper.scan(/l/) do |match|
+        matches << match[0]
+      end
+      matches.should eq(["l", "l"])
     end
   end
 

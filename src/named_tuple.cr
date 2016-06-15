@@ -72,11 +72,7 @@ struct NamedTuple
     {% begin %}
       NamedTuple.new(
       {% for key, value in T %}
-        {% if Crystal::VERSION == "0.18.0" %}
-          {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash["{{key}}"] }),
-        {% else %}
-          {{key}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash["{{key}}"] }),
-        {% end %}
+        {{key.stringify}}: self[{{key.symbolize}}].cast(hash.fetch({{key.symbolize}}) { hash["{{key}}"] }),
       {% end %}
       )
     {% end %}
@@ -421,11 +417,7 @@ struct NamedTuple
     {% begin %}
       {
         {% for key in T %}
-          {% if Crystal::VERSION == "0.18.0" %}
-            {{key.stringify}}: self[{{key.symbolize}}].clone,
-          {% else %}
-            {{key}}: self[{{key.symbolize}}].clone,
-          {% end %}
+          {{key.stringify}}: self[{{key.symbolize}}].clone,
         {% end %}
       }
     {% end %}

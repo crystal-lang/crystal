@@ -12,9 +12,7 @@ require "c/stdlib"
 #     # Later use that env var.
 #     puts ENV["PORT"].to_i
 module ENV
-  {% if Crystal::VERSION == "0.18.0" %}
-    extend Enumerable({String, String})
-  {% end %}
+  extend Enumerable({String, String})
 
   # Retrieves the value for environment variable named `key` as a `String`.
   # Raises `KeyError` if the named variable does not exist.
@@ -110,11 +108,7 @@ module ENV
         key_value = String.new(environ_value).split('=', 2)
         key = key_value[0]
         value = key_value[1]? || ""
-        {% if Crystal::VERSION == "0.18.0" %}
-          yield({key, value})
-        {% else %}
-          yield key, value
-        {% end %}
+        yield({key, value})
         environ_ptr += 1
       else
         break

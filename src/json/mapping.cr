@@ -96,12 +96,10 @@ module JSON
 
               {% if value[:converter] %}
                 {{value[:converter]}}.from_json(%pull)
+              {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
+                {{value[:type]}}.new(%pull)
               {% else %}
-                {% if Crystal::VERSION == "0.18.0" %}
-                  Union({{value[:type]}}).new(%pull)
-                {% else %}
-                  {{value[:type]}}.new(%pull)
-                {% end %}
+                Union({{value[:type]}}).new(%pull)
               {% end %}
 
               {% if value[:root] %}
