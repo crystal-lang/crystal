@@ -155,8 +155,7 @@ describe "Tuple" do
       Tuple(Int32).from([1, 2])
     end
 
-    # TODO: simplify regex and use TypeCastError after 0.18
-    expect_raises(Exception, /cast (?:from String )?to Int32 failed/) do
+    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
       Tuple(Int32, String).from(["foo", 1])
     end
   end
@@ -170,8 +169,7 @@ describe "Tuple" do
       {Int32}.from([1, 2])
     end
 
-    # TODO: simplify regex and use TypeCastError after 0.18
-    expect_raises(Exception, /cast (?:from String )?to Int32 failed/) do
+    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
       {Int32, String}.from(["foo", 1])
     end
   end

@@ -31,18 +31,6 @@ module OpenSSL
     alias X509VerifyFlags = LibCrypto::X509VerifyFlags
     {% end %}
 
-    # TODO: remove these after 0.18.0
-
-    # :nodoc:
-    macro options_flags(*flags)
-      LibSSL::Options.flags({{*flags}})
-    end
-
-    # :nodoc:
-    macro modes_flags(*flags)
-      LibSSL::Modes.flags({{*flags}})
-    end
-
     class Error < OpenSSL::Error
       getter error : ErrorType
 

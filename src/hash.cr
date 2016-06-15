@@ -398,11 +398,8 @@ class Hash(K, V)
   # h.key_index("qux") # => nil
   # ```
   def key_index(key)
-    # TODO: use each_with_index
-    i = 0
-    each do |my_key, my_value|
-      return i if key == my_key
-      i += 1
+    each_with_index do |(my_key, my_value), index|
+      return index if key == my_key
     end
     nil
   end

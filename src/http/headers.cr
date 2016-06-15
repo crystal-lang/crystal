@@ -210,9 +210,7 @@ struct HTTP::Headers
 
   def to_s(io : IO)
     io << "HTTP::Headers{"
-    # TODO: use each_with_index
-    index = 0
-    @hash.each do |key, values|
+    @hash.each_with_index do |(key, values), index|
       io << ", " if index > 0
       key.name.inspect(io)
       io << " => "
@@ -221,7 +219,6 @@ struct HTTP::Headers
       else
         values.inspect(io)
       end
-      index += 1
     end
     io << "}"
   end
