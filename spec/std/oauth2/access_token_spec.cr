@@ -24,6 +24,14 @@ class OAuth2::AccessToken
       access_token.expires_in.should eq(expires_in)
       access_token.refresh_token.should eq(refresh_token)
       access_token.scope.should eq(scope)
+
+      access_token = AccessToken::Bearer.from_json(json)
+      access_token = access_token.as(Bearer)
+      access_token.token_type.should eq("Bearer")
+      access_token.access_token.should eq(token_value)
+      access_token.expires_in.should eq(expires_in)
+      access_token.refresh_token.should eq(refresh_token)
+      access_token.scope.should eq(scope)
     end
 
     it "dumps to json" do
@@ -59,6 +67,16 @@ class OAuth2::AccessToken
         })
 
       access_token = AccessToken.from_json(json)
+      access_token = access_token.as(Mac)
+      access_token.token_type.should eq("Mac")
+      access_token.access_token.should eq(token_value)
+      access_token.expires_in.should eq(expires_in)
+      access_token.refresh_token.should eq(refresh_token)
+      access_token.scope.should eq(scope)
+      access_token.mac_algorithm.should eq(mac_algorithm)
+      access_token.mac_key.should eq(mac_key)
+
+      access_token = AccessToken::Mac.from_json(json)
       access_token = access_token.as(Mac)
       access_token.token_type.should eq("Mac")
       access_token.access_token.should eq(token_value)
