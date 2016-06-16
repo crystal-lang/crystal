@@ -924,4 +924,7 @@ describe Crystal::Formatter do
   assert_format %(x : {"foo bar": Int32})
 
   assert_format %(def foo("bar baz" qux)\nend)
+  assert_format "{ {{FOO}}, nil}", "{ {{FOO}}, nil }"
+  assert_format "{ {% begin %}1{% end %}, nil }"
+  assert_format "{ {% for x in 1..2 %}3{% end %}, nil }"
 end
