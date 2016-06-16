@@ -1,4 +1,5 @@
 require "spec"
+require "uuid"
 
 describe "UUID" do
   it "has working zero UUID" do
