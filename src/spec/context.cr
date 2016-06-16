@@ -103,7 +103,7 @@ module Spec
       if Spec.slowest
         puts
         results = @results[:success] + @results[:fail]
-        topN = results.sort_by {|res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
+        topN = results.sort_by { |res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
         topN.each do |res|
           puts "#{res.description} : #{res.elapsed.not_nil!.to_f} sec"
         end
