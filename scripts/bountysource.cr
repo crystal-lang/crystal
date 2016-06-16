@@ -7,16 +7,16 @@ levels = [250, 150, 75, 25, 10, 5, 1]
 module BountySource
   class API
     def initialize(@team : String, @token : String)
-      @client = HTTP::Client.new("api.bountysource.com", ssl: true)
+      @client = HTTP::Client.new("api.bountysource.com", tls: true)
     end
 
     def support_levels
       headers = HTTP::Headers{
-        "Accept":        "application/vnd.bountysource+json; version=2",
-        "Authorization": "token #{@token}",
-        "User-Agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36",
-        "Referer":       "https://salt.bountysource.com/teams/crystal-lang/admin/supporters",
-        "Origin":        "https://salt.bountysource.com",
+        "Accept"        => "application/vnd.bountysource+json; version=2",
+        "Authorization" => "token #{@token}",
+        "User-Agent"    => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36",
+        "Referer"       => "https://salt.bountysource.com/teams/crystal-lang/admin/supporters",
+        "Origin"        => "https://salt.bountysource.com",
       }
       response = @client.get("/support_levels?supporters_for_team=#{@team}", headers: headers).body
       Array(SupportLevel).from_json(response)
@@ -24,11 +24,11 @@ module BountySource
 
     def supporters
       headers = HTTP::Headers{
-        "Accept":        "application/vnd.bountysource+json; version=2",
-        "Authorization": "token #{@token}",
-        "User-Agent":    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36",
-        "Referer":       "https://salt.bountysource.com/teams/crystal-lang/admin/supporters",
-        "Origin":        "https://salt.bountysource.com",
+        "Accept"        => "application/vnd.bountysource+json; version=2",
+        "Authorization" => "token #{@token}",
+        "User-Agent"    => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36",
+        "Referer"       => "https://salt.bountysource.com/teams/crystal-lang/admin/supporters",
+        "Origin"        => "https://salt.bountysource.com",
       }
       response = @client.get("/supporters?order=monthly&per_page=200&team_slug=#{@team}", headers: headers).body
       Array(Supporters).from_json(response)
@@ -36,8 +36,8 @@ module BountySource
 
     def user(slug)
       headers = HTTP::Headers{
-        "Accept":     "application/vnd.bountysource+json; version=1",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36",
+        "Accept"     => "application/vnd.bountysource+json; version=1",
+        "User-Agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36",
       }
       response = @client.get("/users/#{slug}?access_token=#{@token}", headers: headers).body
       User.from_json(response)
@@ -105,7 +105,7 @@ end
 module GitHub
   class API
     def initialize
-      @client = HTTP::Client.new("api.github.com", ssl: true)
+      @client = HTTP::Client.new("api.github.com", tls: true)
     end
 
     def user(username)
