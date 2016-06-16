@@ -81,12 +81,10 @@ with_build_env() {
     -v $(pwd):/mnt \
     -w /mnt \
     -e LIBRARY_PATH="/opt/crystal/embedded/lib/" \
-    -e CRYSTAL_CONFIG_VERSION="ci" \
     "jhass/crystal-build-$ARCH" \
     "$ARCH_CMD" /bin/bash -c "'$command'"
 
   on_osx PATH="/tmp/llvm-3.5.0-1/bin:\$PATH" \
-    CRYSTAL_CONFIG_VERSION="ci" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/bash -c "'$command'"
 
