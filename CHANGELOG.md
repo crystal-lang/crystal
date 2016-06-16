@@ -1,3 +1,9 @@
+## 0.18.1 (16-06-2016)
+
+* Spec: passing `--profile` shows the slowest 10 specs (thanks @mperham)
+* Added `StringLiteral#>` and `StringLiteral#<` in macros
+* [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.1+is%3Aclosed)
+
 ## 0.18.0 (14-06-2016)
 
 * **(breaking change)** `IniFile` was renamed to `INI`, and its method `load` renamed to `parse`
