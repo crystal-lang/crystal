@@ -9,6 +9,7 @@ module Spec
     description : String,
     file : String,
     line : Int32,
+    elapsed : Time::Span?,
     exception : Exception?
 
   # :nodoc:
@@ -30,8 +31,8 @@ module Spec
       @results[:fail].empty? && @results[:error].empty?
     end
 
-    def self.report(kind, full_description, file, line, ex = nil)
-      result = Result.new(kind, full_description, file, line, ex)
+    def self.report(kind, full_description, file, line, elapsed = nil, ex = nil)
+      result = Result.new(kind, full_description, file, line, elapsed, ex)
       @@contexts_stack.last.report(result)
     end
 
@@ -96,6 +97,15 @@ module Spec
               puts "     # #{Spec.relative_file(ex.file)}:#{ex.line}".colorize.cyan
             end
           end
+        end
+      end
+
+      if Spec.slowest
+        puts
+        results = @results[:success] + @results[:fail]
+        topN = results.sort_by {|res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
+        topN.each do |res|
+          puts "#{res.description} : #{res.elapsed.not_nil!.to_f} sec"
         end
       end
 
@@ -165,7 +175,7 @@ module Spec
     end
 
     def report(result)
-      @parent.report Result.new(result.kind, "#{@description} #{result.description}", result.file, result.line, result.exception)
+      @parent.report Result.new(result.kind, "#{@description} #{result.description}", result.file, result.line, result.elapsed, result.exception)
     end
 
     def matches?(pattern, line, locations)
