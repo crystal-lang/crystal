@@ -106,7 +106,7 @@ describe "Type inference: struct" do
 
       Test.new(Test.new(nil))
       ),
-      "recursive struct Test detected: `@test : Test?`"
+      "recursive struct Test detected: `@test : (Test | Nil)`"
   end
 
   it "errors on recursive struct inside module" do
@@ -118,7 +118,7 @@ describe "Type inference: struct" do
 
       Foo::Test.new(Foo::Test.new(nil))
       ),
-      "recursive struct Foo::Test detected: `@test : Foo::Test?`"
+      "recursive struct Foo::Test detected: `@test : (Foo::Test | Nil)`"
   end
 
   it "errors on recursive generic struct inside module" do
@@ -130,7 +130,7 @@ describe "Type inference: struct" do
 
       Foo::Test(Int32).new(Foo::Test(Int32).new(nil))
       ),
-      "recursive struct Foo::Test(Int32) detected: `@test : Foo::Test(Int32)?`"
+      "recursive struct Foo::Test(Int32) detected: `@test : (Foo::Test(Int32) | Nil)`"
   end
 
   it "errors on mutually recursive struct" do
@@ -148,7 +148,7 @@ describe "Type inference: struct" do
       Foo.new(Bar.new(nil))
       Bar.new(Foo.new(nil))
       ),
-      "recursive struct Foo detected: `@bar : Bar?` -> `@foo : Foo?`"
+      "recursive struct Foo detected: `@bar : (Bar | Nil)` -> `@foo : (Foo | Nil)`"
   end
 
   it "can't extend struct from non-abstract struct" do

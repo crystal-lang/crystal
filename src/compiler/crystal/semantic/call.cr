@@ -484,7 +484,7 @@ class Crystal::Call
       elsif instance_type.size == 0
         raise "index '#{arg}' out of bounds for empty tuple"
       else
-        raise "index out of bounds for tuple #{owner} (#{arg} not in 0..#{instance_type.size - 1})"
+        raise "index out of bounds for #{owner} (#{arg} not in 0..#{instance_type.size - 1})"
       end
     end
     nil

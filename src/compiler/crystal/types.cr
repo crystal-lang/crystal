@@ -1965,12 +1965,12 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
-      io << "{"
+      io << "Tuple("
       @tuple_types.each_with_index do |tuple_type, i|
         io << ", " if i > 0
         tuple_type.to_s_with_options(io, skip_union_parens: true)
       end
-      io << "}"
+      io << ")"
     end
 
     def type_desc
@@ -2074,7 +2074,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
-      io << "{"
+      io << "NamedTuple("
       @entries.each_with_index do |entry, i|
         io << ", " if i > 0
         if Symbol.needs_quotes?(entry.name)
@@ -2085,7 +2085,7 @@ module Crystal
         io << ": "
         entry.type.to_s_with_options(io, skip_union_parens: true)
       end
-      io << "}"
+      io << ")"
     end
 
     def type_desc
@@ -2808,15 +2808,14 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
-      # Use T? if this is a nilable type with just two types inside it
-      if @union_types.size == 2 && @union_types.last.is_a?(NilType)
-        io << @union_types.first
-        io << "?"
-        return
-      end
-
       io << "(" unless skip_union_parens
-      names = @union_types.join(" | ", io)
+      union_types = @union_types
+      # Make sure to put Nil at the end
+      if nil_type_index = @union_types.index(&.nil_type?)
+        union_types = @union_types.dup
+        union_types << union_types.delete_at(nil_type_index)
+      end
+      names = union_types.join(" | ", io)
       io << ")" unless skip_union_parens
     end
 
@@ -2843,11 +2842,6 @@ module Crystal
 
     def primitive_like?
       true
-    end
-
-    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
-      not_nil_type.to_s(io)
-      io << "?"
     end
   end
 
@@ -2881,13 +2875,6 @@ module Crystal
     def proc_type
       @union_types.last.remove_typedef.as(ProcInstanceType)
     end
-
-    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
-      io << "("
-      @union_types.last.to_s(io)
-      io << ")"
-      io << "?"
-    end
   end
 
   # A union type of nil and a single pointer type.
@@ -2902,11 +2889,6 @@ module Crystal
 
     def pointer_type
       @union_types.last.remove_typedef.as(PointerInstanceType)
-    end
-
-    def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
-      @union_types.last.to_s(io)
-      io << "?"
     end
   end
 
@@ -3253,12 +3235,11 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
-      io << "("
+      io << "Proc("
       arg_types.each_with_index do |type, i|
-        io << ", " if i > 0
         type.to_s(io)
+        io << ", "
       end
-      io << " -> "
       return_type.to_s(io)
       io << ")"
     end

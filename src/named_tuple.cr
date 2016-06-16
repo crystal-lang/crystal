@@ -47,7 +47,7 @@ struct NamedTuple
   # ```
   def self.from(hash : Hash)
     {% begin %}
-    NamedTuple.new(**{{@type.type_vars.first}}).from(hash)
+    NamedTuple.new(**{{T}}).from(hash)
     {% end %}
   end
 

@@ -40,11 +40,11 @@ describe "types to_s of" do
   end
 
   it "nilable reference type" do
-    assert_type_to_s "String?" { nilable string }
+    assert_type_to_s "(String | Nil)" { nilable string }
   end
 
   it "nilable value type" do
-    assert_type_to_s "Int32?" { nilable int32 }
+    assert_type_to_s "(Int32 | Nil)" { nilable int32 }
   end
 
   it "nilable type with more than two elements, Nil at the end" do
@@ -62,17 +62,17 @@ describe "types to_s of" do
       end
 
       it "in tuples" do
-        assert_type_to_s "{String, Int32 | String}" { tuple_of [string, union_of(string, int32)] }
+        assert_type_to_s "Tuple(String, Int32 | String)" { tuple_of [string, union_of(string, int32)] }
       end
     end
 
     describe "should have parens" do
       it "as return type" do
-        assert_type_to_s "( -> (Int32 | String))" { proc_of union_of(string, int32) }
+        assert_type_to_s "Proc((Int32 | String))" { proc_of union_of(string, int32) }
       end
 
       it "as arg type" do
-        assert_type_to_s "((Int32 | String) -> Int32)" { proc_of union_of(string, int32), int32 }
+        assert_type_to_s "Proc((Int32 | String), Int32)" { proc_of union_of(string, int32), int32 }
       end
     end
   end

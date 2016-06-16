@@ -123,7 +123,12 @@ module Crystal
         i += 1
 
         next_token_skip_space_or_newline
-        exps << (last = parse_op_assign(allow_ops: false))
+        last = parse_op_assign(allow_ops: false)
+        if assign_index == -1 && !multi_assign_target?(last)
+          unexpected_token
+        end
+
+        exps << last
         skip_space
       end
 
@@ -163,7 +168,7 @@ module Crystal
 
     def multi_assign_target?(exp)
       case exp
-      when Underscore, Var, InstanceVar, ClassVar, Global, Assign
+      when Underscore, Var, InstanceVar, ClassVar, Global, Path, Assign
         true
       when Call
         !exp.has_parenthesis && (

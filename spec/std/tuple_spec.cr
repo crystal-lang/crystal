@@ -270,7 +270,11 @@ describe "Tuple" do
 
   it "does types" do
     tuple = {1, 'a', "hello"}
-    tuple.types.to_s.should eq("{Int32, Char, String}")
+    {% if Crystal::VERSION == "0.18.0" %}
+      tuple.types.to_s.should eq("Tuple(Int32, Char, String)")
+    {% else %}
+      tuple.types.to_s.should eq("{Int32, Char, String}")
+    {% end %}
   end
 
   it "does ===" do

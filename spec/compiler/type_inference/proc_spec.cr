@@ -196,7 +196,7 @@ describe "Type inference: proc" do
       f = ->(x : Int32) { x.to_f }
       f as -> Float64
       ",
-      "can't cast (Int32 -> Float64) to ( -> Float64)"
+      "can't cast Proc(Int32, Float64) to Proc(Float64)"
   end
 
   it "disallows casting a proc type to one accepting same size argument but different output" do
@@ -204,7 +204,7 @@ describe "Type inference: proc" do
       f = ->(x : Int32) { x.to_f }
       f as Int32 -> Int32
       ",
-      "can't cast (Int32 -> Float64) to (Int32 -> Int32)"
+      "can't cast Proc(Int32, Float64) to Proc(Int32, Int32)"
   end
 
   it "disallows casting a proc type to one accepting same size argument but different input" do
@@ -212,7 +212,7 @@ describe "Type inference: proc" do
       f = ->(x : Int32) { x.to_f }
       f as Float64 -> Float64
       ",
-      "can't cast (Int32 -> Float64) to (Float64 -> Float64)"
+      "can't cast Proc(Int32, Float64) to Proc(Float64, Float64)"
   end
 
   it "types proc literal hard type inference (1)" do
@@ -331,7 +331,7 @@ describe "Type inference: proc" do
       alias F = Int32 -> Int32
       F.new { |x, y| }
       ",
-      "wrong number of block arguments for (Int32 -> Int32)#new (given 2, expected 1)"
+      "wrong number of block arguments for Proc(Int32, Int32)#new (given 2, expected 1)"
   end
 
   it "says wrong return type in new on proc type" do

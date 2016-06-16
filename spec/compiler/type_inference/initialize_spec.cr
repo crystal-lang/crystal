@@ -107,7 +107,7 @@ describe "Type inference: initialize" do
       f = Foo.new
       f.lala
       ),
-      "instance variable '@x' of Foo must be Char?, not Int32"
+      "instance variable '@x' of Foo must be (Char | Nil), not Int32"
   end
 
   it "types instance var as nilable if not always assigned" do
