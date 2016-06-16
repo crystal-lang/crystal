@@ -2,9 +2,7 @@
 #
 # See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
 class Hash(K, V)
-  {% if Crystal::VERSION.starts_with?("0.18.") %}
-    include Enumerable({K, V})
-  {% end %}
+  include Enumerable({K, V})
 
   getter size : Int32
   @buckets_size : Int32
@@ -280,11 +278,7 @@ class Hash(K, V)
   def each
     current = @first
     while current
-      {% if Crystal::VERSION.starts_with?("0.18.") %}
-        yield({current.key, current.value})
-      {% else %}
-        yield current.key, current.value
-      {% end %}
+      yield({current.key, current.value})
       current = current.fore
     end
     self
@@ -371,46 +365,6 @@ class Hash(K, V)
     ValueIterator(K, V).new(self, @first)
   end
 
-  {% if !Crystal::VERSION.starts_with?("0.18.") %}
-    # Calls the given block for each key-value pair and passes in the key, value, and index.
-    #
-    # ```
-    # h = {"foo" => "bar"}
-    #
-    # h.each_with_index do |key, value, index|
-    #   key   # => "foo"
-    #   value # => "bar"
-    #   index # => 0
-    # end
-    #
-    # h.each_with_index(3) do |key, value, index|
-    #   key   # => "foo"
-    #   value # => "bar"
-    #   index # => 3
-    # end
-    # ```
-    def each_with_index(offset = 0)
-      i = offset
-      each do |key, value|
-        yield key, value, i
-        i += 1
-      end
-      self
-    end
-
-    # Iterates the given block for each element with an arbitrary object given, and returns the initially given object.
-    # ```
-    # evens = (1..10).each_with_object([] of Int32) { |i, a| a << i*2 }
-    # # => [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
-    # ```
-    def each_with_object(memo)
-      each do |k, v|
-        yield(memo, k, v)
-      end
-      memo
-    end
-  {% end %}
-
   # Returns a new `Array` with all the keys.
   #
   # ```
@@ -466,22 +420,6 @@ class Hash(K, V)
     end
     nil
   end
-
-  {% if !Crystal::VERSION.starts_with?("0.18.") %}
-    # Returns an `Array` populated with the results of each iteration in the given block.
-    #
-    # ```
-    # h = {"foo" => "bar", "baz" => "qux"}
-    # h.map { |k, v| v } # => ["bar", "qux"]
-    # ```
-    def map(&block : K, V -> U)
-      array = Array(U).new(@size)
-      each do |k, v|
-        array.push yield k, v
-      end
-      array
-    end
-  {% end %}
 
   # Returns a new `Hash` with the keys and values of this hash and *other* combined.
   # A value in *other* takes precedence over the one in this hash.
@@ -554,15 +492,9 @@ class Hash(K, V)
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
   def reject(&block : K, V -> U)
-    {% if Crystal::VERSION.starts_with?("0.18.") %}
-      each_with_object({} of K => V) do |(k, v), memo|
-        memo[k] = v unless yield k, v
-      end
-    {% else %}
-      each_with_object({} of K => V) do |memo, k, v|
-        memo[k] = v unless yield k, v
-      end
-    {% end %}
+    each_with_object({} of K => V) do |(k, v), memo|
+      memo[k] = v unless yield k, v
+    end
   end
 
   # Equivalent to `Hash#reject`, but makes modification on the current object rather that returning a new one. Returns nil if no changes were made.
@@ -642,14 +574,6 @@ class Hash(K, V)
     end
     hash
   end
-
-  {% if !Crystal::VERSION.starts_with?("0.18.") %}
-    # Returns a `Tuple` of the first key-value pair in the hash.
-    def first
-      first = @first.not_nil!
-      {first.key, first.value}
-    end
-  {% end %}
 
   # Returns the first key in the hash.
   def first_key
@@ -901,36 +825,6 @@ class Hash(K, V)
   def any?
     !empty?
   end
-
-  {% if !Crystal::VERSION.starts_with?("0.18.") %}
-    # Yields all key-value pairs to the given block with a initial value *memo*,
-    # which is replaced with each returned value in iteration.
-    # Returns the last value of *memo*.
-    #
-    # ```
-    # prices = {
-    #   "apple":  5,
-    #   "lemon":  3,
-    #   "papaya": 6,
-    #   "orange": 4,
-    # }
-    #
-    # prices.reduce("apple") do |highest, item, price|
-    #   if price > prices[highest]
-    #     item
-    #   else
-    #     highest
-    #   end
-    # end
-    # # => "papaya"
-    # ```
-    def reduce(memo)
-      each do |k, v|
-        memo = yield(memo, k, v)
-      end
-      memo
-    end
-  {% end %}
 
   protected def find_entry(key)
     index = bucket_index key

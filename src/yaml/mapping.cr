@@ -101,16 +101,10 @@ module YAML
 
               {% if value[:converter] %}
                 {{value[:converter]}}.from_yaml(%pull)
+              {% elsif value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
+                {{value[:type]}}.new(%pull)
               {% else %}
-                {% if Crystal::VERSION.starts_with?("0.18.") %}
-                  {% if value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
-                    {{value[:type]}}.new(%pull)
-                  {% else %}
-                    Union({{value[:type]}}).new(%pull)
-                  {% end %}
-                {% else %}
-                  {{value[:type]}}.new(%pull)
-                {% end %}
+                Union({{value[:type]}}).new(%pull)
               {% end %}
 
             {% if value[:nilable] || value[:default] != nil %} } {% end %}

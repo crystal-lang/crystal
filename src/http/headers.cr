@@ -3,9 +3,7 @@
 # Two headers are considered the same if their downcase representation is the same
 # (in which `_` is the downcase version of `-`).
 struct HTTP::Headers
-  {% if Crystal::VERSION.starts_with?("0.18.") %}
-    include Enumerable({String, Array(String)})
-  {% end %}
+  include Enumerable({String, Array(String)})
 
   # :nodoc:
   record Key, name : String do
@@ -181,15 +179,9 @@ struct HTTP::Headers
   end
 
   def each
-    {% if Crystal::VERSION.starts_with?("0.18.") %}
-      @hash.each do |key, value|
-        yield({key.name, value})
-      end
-    {% else %}
-      @hash.each do |key, value|
-        yield key.name, value
-      end
-    {% end %}
+    @hash.each do |key, value|
+      yield({key.name, value})
+    end
   end
 
   def get(key)

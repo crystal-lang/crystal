@@ -934,13 +934,11 @@ class Object
         {{object.id}}.{{method.id}}(*args, **options)
       end
 
-      {% if Crystal::VERSION.starts_with?("0.18.") %}
-        def {{method.id}}(*args, **options)
-          {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
-            yield *yield_args
-          end
+      def {{method.id}}(*args, **options)
+        {{object.id}}.{{method.id}}(*args, **options) do |*yield_args|
+          yield *yield_args
         end
-      {% end %}
+      end
     {% end %}
   end
 
