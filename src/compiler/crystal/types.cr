@@ -1965,12 +1965,12 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
-      io << "{"
+      io << "Tuple("
       @tuple_types.each_with_index do |tuple_type, i|
         io << ", " if i > 0
         tuple_type.to_s_with_options(io, skip_union_parens: true)
       end
-      io << "}"
+      io << ")"
     end
 
     def type_desc
@@ -2074,7 +2074,7 @@ module Crystal
     end
 
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true)
-      io << "{"
+      io << "NamedTuple("
       @entries.each_with_index do |entry, i|
         io << ", " if i > 0
         if Symbol.needs_quotes?(entry.name)
@@ -2085,7 +2085,7 @@ module Crystal
         io << ": "
         entry.type.to_s_with_options(io, skip_union_parens: true)
       end
-      io << "}"
+      io << ")"
     end
 
     def type_desc

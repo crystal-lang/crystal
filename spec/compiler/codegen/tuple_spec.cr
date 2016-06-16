@@ -305,4 +305,23 @@ describe "Code gen: tuple" do
       Tuple(Nil, Int32).foo
       )).to_string.should eq("TupleLiteral")
   end
+
+  it "passes empty tuple and empty named tuple to a method (#2852)" do
+    codegen(%(
+      def foo(*binds)
+        baz(binds)
+      end
+
+      def bar(**binds)
+        baz(binds)
+      end
+
+      def baz(binds)
+        binds
+      end
+
+      foo
+      bar
+      ))
+  end
 end
