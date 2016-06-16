@@ -50,7 +50,7 @@ describe "Type inference: named tuples" do
 
   it "gives error when indexing with an unknown name" do
     assert_error "{x: 1, y: 'a'}[:z]",
-      "missing key 'z' for named tuple {x: Int32, y: Char}"
+      "missing key 'z' for named tuple NamedTuple(x: Int32, y: Char)"
   end
 
   it "can write generic type for NamedTuple" do

@@ -89,7 +89,7 @@ struct Tuple
   # ```
   def self.from(array : Array)
     {% begin %}
-    Tuple.new({{@type.type_vars.argify}}).from(array)
+    Tuple.new(*{{T}}).from(array)
     {% end %}
   end
 
