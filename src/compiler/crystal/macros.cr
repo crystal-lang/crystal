@@ -251,6 +251,14 @@ module Crystal::Macros
     def =~(range : RegexLiteral) : BoolLiteral
     end
 
+    # Similar to `String#>`
+    def >(other : StringLiteral | MacroId) : BoolLiteral
+    end
+
+    # Similar to `String#<`
+    def <(other : StringLiteral | MacroId) : BoolLiteral
+    end
+
     # Similar to `String#+`.
     def +(other : StringLiteral | CharLiteral) : StringLiteral
     end
