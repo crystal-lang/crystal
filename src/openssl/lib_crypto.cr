@@ -1,4 +1,4 @@
-@[Link(ldflags: "`pkg-config --libs libcrypto || printf '-lcrypto'`")]
+@[Link(ldflags: "`pkg-config --libs libcrypto || printf %s '-lcrypto'`")]
 lib LibCrypto
   alias Char = LibC::Char
   alias Int = LibC::Int
