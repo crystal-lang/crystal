@@ -310,6 +310,26 @@ describe "macro methods" do
       assert_macro "", %({{"hello" =~ /ell/}}), [] of ASTNode, %(true)
     end
 
+    it "executes string > string" do
+      assert_macro "", %({{"fooa" > "foo"}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"foo" > "fooa"}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string > macroid" do
+      assert_macro "", %({{"fooa" > "foo".id}}), [] of ASTNode, %(true)
+      assert_macro "", %({{"foo" > "fooa".id}}), [] of ASTNode, %(false)
+    end
+
+    it "executes string < string" do
+      assert_macro "", %({{"fooa" < "foo"}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"foo" < "fooa"}}), [] of ASTNode, %(true)
+    end
+
+    it "executes string < macroid" do
+      assert_macro "", %({{"fooa" < "foo".id}}), [] of ASTNode, %(false)
+      assert_macro "", %({{"foo" < "fooa".id}}), [] of ASTNode, %(true)
+    end
+
     it "executes tr" do
       assert_macro "", %({{"hello".tr("e", "o")}}), [] of ASTNode, %("hollo")
     end

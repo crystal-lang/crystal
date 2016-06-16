@@ -449,6 +449,24 @@ module Crystal
             BoolLiteral.new(false)
           end
         end
+      when ">"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when StringLiteral, MacroId
+            return BoolLiteral.new(interpret_compare(arg) > 0)
+          else
+            raise "Can't compare StringLiteral with #{arg.class_desc}"
+          end
+        end
+      when "<"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when StringLiteral, MacroId
+            return BoolLiteral.new(interpret_compare(arg) < 0)
+          else
+            raise "Can't compare StringLiteral with #{arg.class_desc}"
+          end
+        end
       when "+"
         interpret_one_arg_method(method, args) do |arg|
           case arg
