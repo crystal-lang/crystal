@@ -78,12 +78,7 @@ module Spec
     def report(result)
       print '\r'
       print_indent
-      timing = ""
-      time = result.elapsed.try &.to_f
-      if time && time > 0.01
-        timing = ": #{time}s"
-      end
-      puts Spec.color("#{@last_description}#{timing}", result.kind)
+      puts Spec.color(@last_description, result.kind)
     end
   end
 
