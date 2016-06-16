@@ -192,7 +192,7 @@ module Crystal
       types["Crystal"] = @crystal = crystal = NonGenericModuleType.new self, self, "Crystal"
       crystal.locations << Location.new(__LINE__ - 1, 0, __FILE__)
 
-      tag, sha = Crystal::Config.tag_and_sha
+      version, sha = Crystal::Config.version_and_sha
 
       if sha
         define_crystal_string_constant "BUILD_COMMIT", sha
@@ -205,7 +205,7 @@ module Crystal
       define_crystal_string_constant "DEFAULT_PATH", Crystal::Config.path
       define_crystal_string_constant "DESCRIPTION", Crystal::Config.description
       define_crystal_string_constant "PATH", Crystal::CrystalPath.default_path
-      define_crystal_string_constant "VERSION", tag
+      define_crystal_string_constant "VERSION", version
     end
 
     private def define_crystal_string_constant(name, value)
