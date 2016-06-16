@@ -407,7 +407,11 @@ module Crystal
       when "==", "!="
         case arg = args.first?
         when MacroId
-          return BoolLiteral.new(@value == arg.value)
+          if method == "=="
+            return BoolLiteral.new(@value == arg.value)
+          else
+            return BoolLiteral.new(@value != arg.value)
+          end
         else
           return super
         end
@@ -447,6 +451,24 @@ module Crystal
             BoolLiteral.new(!!(@value =~ regex))
           else
             BoolLiteral.new(false)
+          end
+        end
+      when ">"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when StringLiteral, MacroId
+            return BoolLiteral.new(interpret_compare(arg) > 0)
+          else
+            raise "Can't compare StringLiteral with #{arg.class_desc}"
+          end
+        end
+      when "<"
+        interpret_one_arg_method(method, args) do |arg|
+          case arg
+          when StringLiteral, MacroId
+            return BoolLiteral.new(interpret_compare(arg) < 0)
+          else
+            raise "Can't compare StringLiteral with #{arg.class_desc}"
           end
         end
       when "+"
@@ -920,9 +942,17 @@ module Crystal
       when "==", "!="
         case arg = args.first?
         when StringLiteral
-          return BoolLiteral.new(@value == arg.value)
+          if method == "=="
+            return BoolLiteral.new(@value == arg.value)
+          else
+            return BoolLiteral.new(@value != arg.value)
+          end
         when SymbolLiteral
-          return BoolLiteral.new(@value == arg.value)
+          if method == "=="
+            return BoolLiteral.new(@value == arg.value)
+          else
+            return BoolLiteral.new(@value != arg.value)
+          end
         else
           return super
         end
@@ -948,7 +978,11 @@ module Crystal
       when "==", "!="
         case arg = args.first?
         when MacroId
-          return BoolLiteral.new(@value == arg.value)
+          if method == "=="
+            return BoolLiteral.new(@value == arg.value)
+          else
+            return BoolLiteral.new(@value != arg.value)
+          end
         else
           return super
         end
