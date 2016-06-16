@@ -441,7 +441,7 @@ describe "Int" do
   it "#chr" do
     65.chr.should eq('A')
 
-    {% if Crystal::VERSION == "0.18.0" %}
+    {% if Crystal::VERSION.starts_with?("0.18.") %}
       expect_raises(ArgumentError, "#{0x10ffff + 1} out of char range") do
         (0x10ffff + 1).chr
       end

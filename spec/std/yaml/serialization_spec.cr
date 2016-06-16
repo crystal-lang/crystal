@@ -105,7 +105,7 @@ describe "YAML serialization" do
       end
     end
 
-    {% if Crystal::VERSION == "0.18.0" %}
+    {% if Crystal::VERSION.starts_with?("0.18.") %}
       it "deserializes union" do
         Array(Int32 | String).from_yaml(%([1, "hello"])).should eq([1, "hello"])
       end

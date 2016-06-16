@@ -12,7 +12,7 @@ require "c/stdlib"
 #     # Later use that env var.
 #     puts ENV["PORT"].to_i
 module ENV
-  {% if Crystal::VERSION == "0.18.0" %}
+  {% if Crystal::VERSION.starts_with?("0.18.") %}
     extend Enumerable({String, String})
   {% end %}
 
@@ -110,7 +110,7 @@ module ENV
         key_value = String.new(environ_value).split('=', 2)
         key = key_value[0]
         value = key_value[1]? || ""
-        {% if Crystal::VERSION == "0.18.0" %}
+        {% if Crystal::VERSION.starts_with?("0.18.") %}
           yield({key, value})
         {% else %}
           yield key, value

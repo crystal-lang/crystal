@@ -2,7 +2,7 @@
 #
 # See the [official docs](http://crystal-lang.org/docs/syntax_and_semantics/literals/hash.html) for the basics.
 class Hash(K, V)
-  {% if Crystal::VERSION == "0.18.0" %}
+  {% if Crystal::VERSION.starts_with?("0.18.") %}
     include Enumerable({K, V})
   {% end %}
 
@@ -280,7 +280,7 @@ class Hash(K, V)
   def each
     current = @first
     while current
-      {% if Crystal::VERSION == "0.18.0" %}
+      {% if Crystal::VERSION.starts_with?("0.18.") %}
         yield({current.key, current.value})
       {% else %}
         yield current.key, current.value
@@ -371,7 +371,7 @@ class Hash(K, V)
     ValueIterator(K, V).new(self, @first)
   end
 
-  {% if Crystal::VERSION != "0.18.0" %}
+  {% if !Crystal::VERSION.starts_with?("0.18.") %}
     # Calls the given block for each key-value pair and passes in the key, value, and index.
     #
     # ```
@@ -467,7 +467,7 @@ class Hash(K, V)
     nil
   end
 
-  {% if Crystal::VERSION != "0.18.0" %}
+  {% if !Crystal::VERSION.starts_with?("0.18.") %}
     # Returns an `Array` populated with the results of each iteration in the given block.
     #
     # ```
@@ -554,7 +554,7 @@ class Hash(K, V)
   # h.reject { |k, v| v < 200 } # => {"b" => 200, "c" => 300}
   # ```
   def reject(&block : K, V -> U)
-    {% if Crystal::VERSION == "0.18.0" %}
+    {% if Crystal::VERSION.starts_with?("0.18.") %}
       each_with_object({} of K => V) do |(k, v), memo|
         memo[k] = v unless yield k, v
       end
@@ -643,7 +643,7 @@ class Hash(K, V)
     hash
   end
 
-  {% if Crystal::VERSION != "0.18.0" %}
+  {% if !Crystal::VERSION.starts_with?("0.18.") %}
     # Returns a `Tuple` of the first key-value pair in the hash.
     def first
       first = @first.not_nil!
@@ -902,7 +902,7 @@ class Hash(K, V)
     !empty?
   end
 
-  {% if Crystal::VERSION != "0.18.0" %}
+  {% if !Crystal::VERSION.starts_with?("0.18.") %}
     # Yields all key-value pairs to the given block with a initial value *memo*,
     # which is replaced with each returned value in iteration.
     # Returns the last value of *memo*.

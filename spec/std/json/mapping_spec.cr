@@ -134,7 +134,7 @@ class JSONWithNilableRootEmitNull
   })
 end
 
-{% if Crystal::VERSION == "0.18.0" %}
+{% if Crystal::VERSION.starts_with?("0.18.") %}
   class JSONWithNilableUnion
     JSON.mapping({
       value: Int32 | Nil,
@@ -396,7 +396,7 @@ describe "JSON mapping" do
     result.to_json.should eq(json)
   end
 
-  {% if Crystal::VERSION == "0.18.0" %}
+  {% if Crystal::VERSION.starts_with?("0.18.") %}
     it "parses nilable union" do
       obj = JSONWithNilableUnion.from_json(%({"value": 1}))
       obj.value.should eq(1)

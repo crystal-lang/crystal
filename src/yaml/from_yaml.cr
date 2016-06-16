@@ -137,7 +137,7 @@ def Enum.new(pull : YAML::PullParser)
   end
 end
 
-{% if Crystal::VERSION == "0.18.0" %}
+{% if Crystal::VERSION.starts_with?("0.18.") %}
   def Union.new(pull : YAML::PullParser)
     string = pull.read_raw
     \{% for type in T %}

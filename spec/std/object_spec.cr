@@ -99,7 +99,7 @@ describe Object do
       wrapper.at(0).should eq('H')
       wrapper.at(index: 1).should eq('e')
 
-      {% if Crystal::VERSION == "0.18.0" %}
+      {% if Crystal::VERSION.starts_with?("0.18.") %}
         wrapper.at(10) { 20 }.should eq(20)
 
         matches = [] of String

@@ -559,7 +559,7 @@ describe "Hash" do
     it "pass key, value, index values into block" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      {% if Crystal::VERSION == "0.18.0" %}
+      {% if Crystal::VERSION.starts_with?("0.18.") %}
         hash.each_with_index { |(k, v), i| results << k + v + i }
       {% else %}
         hash.each_with_index { |k, v, i| results << k + v + i }
@@ -570,7 +570,7 @@ describe "Hash" do
     it "can be used with offset" do
       hash = {2 => 4, 5 => 10, 7 => 14}
       results = [] of Int32
-      {% if Crystal::VERSION == "0.18.0" %}
+      {% if Crystal::VERSION.starts_with?("0.18.") %}
         hash.each_with_index(3) { |(k, v), i| results << k + v + i }
       {% else %}
         hash.each_with_index(3) { |k, v, i| results << k + v + i }
@@ -582,7 +582,7 @@ describe "Hash" do
   describe "each_with_object" do
     it "passes memo, key and value into block" do
       hash = {:a => 'b'}
-      {% if Crystal::VERSION == "0.18.0" %}
+      {% if Crystal::VERSION.starts_with?("0.18.") %}
         hash.each_with_object(:memo) do |(k, v), memo|
           memo.should eq(:memo)
           k.should eq(:a)
@@ -600,7 +600,7 @@ describe "Hash" do
     it "reduces the hash to the accumulated value of memo" do
       hash = {:a => 'b', :c => 'd', :e => 'f'}
       result = nil
-      {% if Crystal::VERSION == "0.18.0" %}
+      {% if Crystal::VERSION.starts_with?("0.18.") %}
         result = hash.each_with_object({} of Char => Symbol) do |(k, v), memo|
           memo[v] = k
         end
@@ -678,7 +678,7 @@ describe "Hash" do
   end
 
   describe "reduce" do
-    {% if Crystal::VERSION == "0.18.0" %}
+    {% if Crystal::VERSION.starts_with?("0.18.") %}
       it "passes memo, key and value into block" do
         hash = {:a => 'b'}
         hash.reduce(:memo) do |memo, (k, v)|

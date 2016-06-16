@@ -299,7 +299,7 @@ end
 
   {% for int in ints %}
     struct {{int.id}}
-      {% if Crystal::VERSION == "0.18.0" %}
+      {% if Crystal::VERSION.starts_with?("0.18.") %}
         # Returns a `Char` that has the unicode codepoint of *self*,
         # without checking if this integer is in the range valid for
         # chars (`0..0x10ffff`).

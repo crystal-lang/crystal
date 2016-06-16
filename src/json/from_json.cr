@@ -187,7 +187,7 @@ def Enum.new(pull : JSON::PullParser)
   end
 end
 
-{% if Crystal::VERSION == "0.18.0" %}
+{% if Crystal::VERSION.starts_with?("0.18.") %}
   def Union.new(pull : JSON::PullParser)
     # Optimization: use fast path for primitive types
     \{% begin %}

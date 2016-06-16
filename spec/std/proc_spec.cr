@@ -5,7 +5,7 @@ describe "Proc" do
     str = MemoryIO.new
     f = ->(x : Int32) { x.to_f }
     f.to_s(str)
-    {% if Crystal::VERSION == "0.18.0" %}
+    {% if Crystal::VERSION.starts_with?("0.18.") %}
       str.to_s.should eq("#<Proc(Int32, Float64):0x#{f.pointer.address.to_s(16)}>")
     {% else %}
       str.to_s.should eq("#<(Int32 -> Float64):0x#{f.pointer.address.to_s(16)}>")
@@ -17,7 +17,7 @@ describe "Proc" do
     a = 1.5
     f = ->(x : Int32) { x + a }
     f.to_s(str)
-    {% if Crystal::VERSION == "0.18.0" %}
+    {% if Crystal::VERSION.starts_with?("0.18.") %}
       str.to_s.should eq("#<Proc(Int32, Float64):0x#{f.pointer.address.to_s(16)}:closure>")
     {% else %}
       str.to_s.should eq("#<(Int32 -> Float64):0x#{f.pointer.address.to_s(16)}:closure>")
@@ -27,7 +27,7 @@ describe "Proc" do
   it "does to_s" do
     str = MemoryIO.new
     f = ->(x : Int32) { x.to_f }
-    {% if Crystal::VERSION == "0.18.0" %}
+    {% if Crystal::VERSION.starts_with?("0.18.") %}
       f.to_s.should eq("#<Proc(Int32, Float64):0x#{f.pointer.address.to_s(16)}>")
     {% else %}
       f.to_s.should eq("#<(Int32 -> Float64):0x#{f.pointer.address.to_s(16)}>")
@@ -38,7 +38,7 @@ describe "Proc" do
     str = MemoryIO.new
     a = 1.5
     f = ->(x : Int32) { x + a }
-    {% if Crystal::VERSION == "0.18.0" %}
+    {% if Crystal::VERSION.starts_with?("0.18.") %}
       f.to_s.should eq("#<Proc(Int32, Float64):0x#{f.pointer.address.to_s(16)}:closure>")
     {% else %}
       f.to_s.should eq("#<(Int32 -> Float64):0x#{f.pointer.address.to_s(16)}:closure>")
@@ -82,7 +82,7 @@ describe "Proc" do
     func.clone.should eq(func)
   end
 
-  {% if Crystal::VERSION == "0.18.0" %}
+  {% if Crystal::VERSION.starts_with?("0.18.") %}
     it "#arity" do
       f = ->(x : Int32, y : Int32) {}
       f.arity.should eq(2)

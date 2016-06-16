@@ -60,7 +60,7 @@ struct Int
   alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64
   alias Primitive = Signed | Unsigned
 
-  {% if Crystal::VERSION == "0.18.0" %}
+  {% if Crystal::VERSION.starts_with?("0.18.") %}
     # Returns a `Char` that has the unicode codepoint of *self*.
     #
     # Raises `ArgumentError` if this integer's value doesn't fit a char's range (`0..0x10ffff`).

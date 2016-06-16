@@ -112,7 +112,7 @@ describe "JSON serialization" do
       Array(Int32).from_json(%({"foo": [1, 2]}), root: "foo").should eq([1, 2])
     end
 
-    {% if Crystal::VERSION == "0.18.0" %}
+    {% if Crystal::VERSION.starts_with?("0.18.") %}
       it "deserializes union" do
         Array(Int32 | String).from_json(%([1, "hello"])).should eq([1, "hello"])
       end

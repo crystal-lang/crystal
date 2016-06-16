@@ -102,7 +102,7 @@ module YAML
               {% if value[:converter] %}
                 {{value[:converter]}}.from_yaml(%pull)
               {% else %}
-                {% if Crystal::VERSION == "0.18.0" %}
+                {% if Crystal::VERSION.starts_with?("0.18.") %}
                   {% if value[:type].is_a?(Path) || value[:type].is_a?(Generic) %}
                     {{value[:type]}}.new(%pull)
                   {% else %}
