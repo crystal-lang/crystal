@@ -407,7 +407,11 @@ module Crystal
       when "==", "!="
         case arg = args.first?
         when MacroId
-          return BoolLiteral.new(@value == arg.value)
+          if method == "=="
+            return BoolLiteral.new(@value == arg.value)
+          else
+            return BoolLiteral.new(@value != arg.value)
+          end
         else
           return super
         end
@@ -938,9 +942,17 @@ module Crystal
       when "==", "!="
         case arg = args.first?
         when StringLiteral
-          return BoolLiteral.new(@value == arg.value)
+          if method == "=="
+            return BoolLiteral.new(@value == arg.value)
+          else
+            return BoolLiteral.new(@value != arg.value)
+          end
         when SymbolLiteral
-          return BoolLiteral.new(@value == arg.value)
+          if method == "=="
+            return BoolLiteral.new(@value == arg.value)
+          else
+            return BoolLiteral.new(@value != arg.value)
+          end
         else
           return super
         end
@@ -966,7 +978,11 @@ module Crystal
       when "==", "!="
         case arg = args.first?
         when MacroId
-          return BoolLiteral.new(@value == arg.value)
+          if method == "=="
+            return BoolLiteral.new(@value == arg.value)
+          else
+            return BoolLiteral.new(@value != arg.value)
+          end
         else
           return super
         end
