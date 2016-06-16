@@ -1,6 +1,6 @@
 require "./lib_crypto"
 
-@[Link(ldflags: "`pkg-config --libs libssl || printf '-lssl -lcrypto'`")]
+@[Link(ldflags: "`pkg-config --libs libssl || printf %s '-lssl -lcrypto'`")]
 lib LibSSL
   alias Int = LibC::Int
   alias Char = LibC::Char
