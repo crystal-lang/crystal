@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.3.3" data-basepath=".." data-revision="Thu Jun 16 2016 12:57:07 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.3.3" data-basepath=".." data-revision="Fri Jun 17 2016 19:53:28 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2239,7 +2239,7 @@
 <p>In the following example, <code>@address</code> is inferred to be <code>Address</code>, because the class method <code>Address.unknown</code> has a return type annotation of <code>Address</code>.</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>
-    <span class="hljs-variable">@address</span> = <span class="hljs-constant">Address</span>.unkown
+    <span class="hljs-variable">@address</span> = <span class="hljs-constant">Address</span>.unknown
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 
@@ -2255,7 +2255,7 @@
 <p>In fact, the above code doesn&apos;t need the return type annotation in <code>self.unknown</code>. The reason is that the compiler will also look at a class method&apos;s body and if it can apply one of the previous rules (it&apos;s a <code>new</code> method, or it&apos;s a literal, etc.) it will infer the type from that expression. So, the above can be simply written like this:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span></span>
   <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>
-    <span class="hljs-variable">@address</span> = <span class="hljs-constant">Address</span>.unkown
+    <span class="hljs-variable">@address</span> = <span class="hljs-constant">Address</span>.unknown
   <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 

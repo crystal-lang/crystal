@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.6" data-basepath=".." data-revision="Thu Jun 16 2016 12:57:07 GMT+0000 (UTC)">
+    <div class="book" data-level="4.8.6" data-basepath=".." data-revision="Fri Jun 17 2016 19:53:28 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2156,7 +2156,7 @@
 <pre><code class="lang-crystal"><span class="hljs-comment"># The array&apos;s buffer will have each 8 bytes dedicated to each Point</span>
 ary = [] <span class="hljs-keyword">of</span> <span class="hljs-constant">Point</span>
 </code></pre>
-<p>If <code>Point</code> is inherited, an array of such type must also account for the fact that other types can be inside it, so the size of each element must grow to accomodate that. That is certainly unexpected. So, non-abstract structs can&apos;t be inherited. Abstract structs, on the other hand, will have descendants, so it&apos;s expected that an array of them will account the possibility of having multiple types inside it.</p>
+<p>If <code>Point</code> is inherited, an array of such type must also account for the fact that other types can be inside it, so the size of each element must grow to accommodate that. That is certainly unexpected. So, non-abstract structs can&apos;t be inherited. Abstract structs, on the other hand, will have descendants, so it&apos;s expected that an array of them will account the possibility of having multiple types inside it.</p>
 <p>A struct can also includes modules and can be generic, just like a class.</p>
 <p>A struct is mostly used for performance reasons to avoid lots of small memory allocations when passing small copies might be more efficient.</p>
 <p>So how do you choose between a struct and a class? The rule of thumb is that if no instance variable is ever reassigned, i.e. your type is immutable, you could use a struct, otherwise use a class.</p>

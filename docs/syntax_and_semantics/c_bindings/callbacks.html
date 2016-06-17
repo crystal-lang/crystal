@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.16.10" data-basepath="../.." data-revision="Thu Jun 16 2016 12:57:07 GMT+0000 (UTC)">
+    <div class="book" data-level="4.16.10" data-basepath="../.." data-revision="Fri Jun 17 2016 19:53:28 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2199,7 +2199,7 @@
 <h2 id="raises-attribute">Raises attribute</h2>
 <p>If a C function executes a user-provided callback that might raise, it must be annotated with the <code>@[Raises]</code> attribute.</p>
 <p>The compiler infers this attribute for a method if it invokes a method that is marked as <code>@[Raises]</code> or raises (recursively).</p>
-<p>However, some C functions accept callbacks to be executed by other C functions. For example, suppose a ficticious library:</p>
+<p>However, some C functions accept callbacks to be executed by other C functions. For example, suppose a fictitious library:</p>
 <pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">lib</span> <span class="hljs-title">LibFoo</span></span>
   <span class="hljs-function"><span class="hljs-keyword">fun</span> <span class="hljs-title">store_callback</span></span>(callback <span class="hljs-symbol">:</span> -&gt;)
   <span class="hljs-function"><span class="hljs-keyword">fun</span> <span class="hljs-title">execute_callback</span></span>

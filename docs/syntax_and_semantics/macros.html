@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.15" data-basepath=".." data-revision="Thu Jun 16 2016 12:57:07 GMT+0000 (UTC)">
+    <div class="book" data-level="4.15" data-basepath=".." data-revision="Fri Jun 17 2016 19:53:28 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2196,7 +2196,7 @@ define_method <span class="hljs-symbol">:foo</span>, <span class="hljs-number">1
 </code></pre>
 <p>Note that <code>:foo</code> was the result of the interpolation, because that&apos;s what was passed to the macro. You can use the method <code>ASTNode#id</code> in these cases, where you just need an identifier.</p>
 <h2 id="macro-calls">Macro calls</h2>
-<p>You can invoke a <strong>fixed subset</strong> of methods on AST nodes at compile-time. These methods are documented in a ficticious <a href="http://crystal-lang.org/api/Crystal/Macros.html" target="_blank">Crystal::Macros</a> module.</p>
+<p>You can invoke a <strong>fixed subset</strong> of methods on AST nodes at compile-time. These methods are documented in a fictitious <a href="http://crystal-lang.org/api/Crystal/Macros.html" target="_blank">Crystal::Macros</a> module.</p>
 <p>For example, invoking <code>ASTNode#id</code> in the above example solves the problem:</p>
 <pre><code class="lang-crystal"><span class="hljs-function"><span class="hljs-keyword">macro</span> <span class="hljs-title">define_method</span></span>(name, content)
   <span class="hljs-function"><span class="hljs-keyword">def</span> {{<span class="hljs-title">name</span></span>.id}}
@@ -2292,7 +2292,7 @@ bar <span class="hljs-comment">#=&gt; 1</span>
 baz <span class="hljs-comment">#=&gt; 2</span>
 </span></code></pre>
 <p>The arguments are packed into an <code>ArrayLiteral</code> and passed to the macro.</p>
-<p>Additionaly, using <code>*</code> when interpolating an <code>ArrayLiteral</code> interpolates the elements separated by commas:</p>
+<p>Additionally, using <code>*</code> when interpolating an <code>ArrayLiteral</code> interpolates the elements separated by commas:</p>
 <pre><code class="lang-crystal"><span class="hljs-function"><span class="hljs-keyword">macro</span> <span class="hljs-title">println</span></span>(*values)
    print <span class="hljs-expansion">{{*values}}</span>, <span class="hljs-string">&apos;\n&apos;</span>
 <span class="hljs-keyword">end</span>
