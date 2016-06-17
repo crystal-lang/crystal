@@ -22,7 +22,7 @@ another_hash = typeof(hash).new #:: Hash(Int32, String)
 
 Since `typeof` doesn't actually evaluate the expression, it can be
 used on methods at compile time, such as in this example, which
-recursively forms a union type out of nested type paramters:
+recursively forms a union type out of nested type parameters:
 
 ```crystal
 class Array

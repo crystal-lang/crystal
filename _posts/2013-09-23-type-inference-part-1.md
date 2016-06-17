@@ -62,7 +62,7 @@ Once more, we show the AST nodes, the context where the variables and their type
 
 When a new type arrives to the variable in the context, this is added to the "ongoing" known types. So the union appears.
 
-There is one thing that is not shown still. *Every* ocurrence of the variables have a dependency to the context. This is shown in the following picture:
+There is one thing that is not shown still. *Every* occurrence of the variables have a dependency to the context. This is shown in the following picture:
 
 <img src="/images/type-inference/conditional-2.png" width="563" height="325" class="center"/>
 

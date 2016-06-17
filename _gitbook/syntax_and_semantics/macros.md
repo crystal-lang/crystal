@@ -79,7 +79,7 @@ Note that `:foo` was the result of the interpolation, because that's what was pa
 
 ## Macro calls
 
-You can invoke a **fixed subset** of methods on AST nodes at compile-time. These methods are documented in a ficticious [Crystal::Macros](http://crystal-lang.org/api/Crystal/Macros.html) module.
+You can invoke a **fixed subset** of methods on AST nodes at compile-time. These methods are documented in a fictitious [Crystal::Macros](http://crystal-lang.org/api/Crystal/Macros.html) module.
 
 For example, invoking `ASTNode#id` in the above example solves the problem:
 
@@ -202,7 +202,7 @@ baz #=> 2
 
 The arguments are packed into an `ArrayLiteral` and passed to the macro.
 
-Additionaly, using `*` when interpolating an `ArrayLiteral` interpolates the elements separated by commas:
+Additionally, using `*` when interpolating an `ArrayLiteral` interpolates the elements separated by commas:
 
 ```crystal
 macro println(*values)

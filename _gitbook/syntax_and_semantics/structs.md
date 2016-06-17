@@ -24,7 +24,7 @@ The last point has a reason to it: a struct has a very well defined memory layou
 ary = [] of Point
 ```
 
-If `Point` is inherited, an array of such type must also account for the fact that other types can be inside it, so the size of each element must grow to accomodate that. That is certainly unexpected. So, non-abstract structs can't be inherited. Abstract structs, on the other hand, will have descendants, so it's expected that an array of them will account the possibility of having multiple types inside it.
+If `Point` is inherited, an array of such type must also account for the fact that other types can be inside it, so the size of each element must grow to accommodate that. That is certainly unexpected. So, non-abstract structs can't be inherited. Abstract structs, on the other hand, will have descendants, so it's expected that an array of them will account the possibility of having multiple types inside it.
 
 A struct can also includes modules and can be generic, just like a class.
 

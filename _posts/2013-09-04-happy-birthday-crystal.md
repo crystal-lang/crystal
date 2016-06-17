@@ -304,7 +304,7 @@ puts foo # Prints: 1
 
 The macros getter, setter and property are implemented in a similar way, but we've
 been thinking of a more powerful and simpler way to achieve the same thing so this
-feature might dissappear.
+feature might disappear.
 
 ### Yield with scope
 
@@ -354,7 +354,7 @@ describe "Array" do
 end
 {% endhighlight ruby %}
 
-So Crystal makes it extremly easy to write tests, and at the same time gives you type safety.
+So Crystal makes it extremely easy to write tests, and at the same time gives you type safety.
 The best of both worlds.
 
 ## Roadmap

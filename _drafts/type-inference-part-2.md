@@ -14,7 +14,7 @@ def dup(x)
 end
 {% endhighlight ruby %}
 
-`dup` definition does not generates any program by itself. Only when it is called the body is analyzed. Also, each time `dup` is called it could end up calling actualy different versions of the compiled function. Wait... What? You could see every def as a _C++ template function_. At every invoke, thanks to the context information of the arguments the type inference (and the codegen later) will find or create a _typed def_. So each _typed def_ could be seen as a _C++ overload_.
+`dup` definition does not generates any program by itself. Only when it is called the body is analyzed. Also, each time `dup` is called it could end up calling actually different versions of the compiled function. Wait... What? You could see every def as a _C++ template function_. At every invoke, thanks to the context information of the arguments the type inference (and the codegen later) will find or create a _typed def_. So each _typed def_ could be seen as a _C++ overload_.
 
 A _typed def_ is an specialization of the original _def_ for a given types of arguments. The next code use `dup` both for `String` and `Int32`.
 

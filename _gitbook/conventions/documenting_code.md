@@ -144,7 +144,7 @@ entire project instead of a single file.
 ``````crystal
 # A unicorn is a **legendary animal** (see the `Legendary` module) that has been
 # described since antiquity as a beast with a large, spiraling horn projecting
-# from its forhead.
+# from its forehead.
 #
 # To create a unicorn:
 #

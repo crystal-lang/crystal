@@ -7,7 +7,7 @@ author: waj
 
 Finally Crystal will start giving some memory back to the operating system! Today we managed to fit the [Boehm-Demers-Weiser conservative garbage collector](http://www.hpl.hp.com/personal/Hans_Boehm/gc/) into the language.
 
-Although we plan to implement a more appropiate and custom garbage collector in the future, it's a really good starting point to make the language more robust and usable.
+Although we plan to implement a more appropriate and custom garbage collector in the future, it's a really good starting point to make the language more robust and usable.
 
 In order to make this collector work with Crystal we had to make sure all the allocated block pointers were properly [aligned in memory](https://github.com/crystal-lang/crystal/commit/6657d3c84c93ec0c886aa9262b2a33791e22285f). Unions and type hierarchies were using packed structs and that made some pointers "invisible" to the GC and thus many blocks still in use were being deallocated and consecuently making everything crash quite easily.
 
