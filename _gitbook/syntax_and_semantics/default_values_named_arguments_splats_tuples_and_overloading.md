@@ -145,7 +145,7 @@ The first use case is using keywords as named arguments:
 
 ```crystal
 def plan(begin begin_time, end end_time)
-  puts "Planning bewteen #{begin_time} and #{end_time}"
+  puts "Planning between #{begin_time} and #{end_time}"
 end
 
 plan begin: Time.now, end: 2.days.from_now

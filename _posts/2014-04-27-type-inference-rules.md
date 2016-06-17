@@ -243,7 +243,7 @@ the logic for variables' types is very similar to that of a ```while```.
 
 ### NoReturn
 
-There's a misterious type in Crystal called ```NoReturn```. One such example is
+There's a mysterious type in Crystal called ```NoReturn```. One such example is
 C's ```exit``` function:
 
 {% highlight ruby %}

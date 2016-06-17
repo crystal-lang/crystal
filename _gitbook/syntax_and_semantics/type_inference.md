@@ -154,7 +154,7 @@ In the following example, `@address` is inferred to be `Address`, because the cl
 ```crystal
 class Person
   def initialize
-    @address = Address.unkown
+    @address = Address.unknown
   end
 end
 
@@ -173,7 +173,7 @@ In fact, the above code doesn't need the return type annotation in `self.unknown
 ```crystal
 class Person
   def initialize
-    @address = Address.unkown
+    @address = Address.unknown
   end
 end
 

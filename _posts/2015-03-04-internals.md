@@ -363,7 +363,7 @@ entry:
 {% endhighlight llvm %}
 
 This is even harder to digest, but basically some memory is asked that will contain the value of the variable `a`, and
-the Proc recieves it and uses it. In this case the memory is asked with `malloc`, but with the regular prelude the memory
+the Proc receives it and uses it. In this case the memory is asked with `malloc`, but with the regular prelude the memory
 will be allocated by the GC and released when no longer needed.
 
 ### Class
