@@ -28,7 +28,7 @@ module Crystal
       config_version = {{env("CRYSTAL_CONFIG_VERSION")}}
       return {config_version, nil} if config_version
 
-      git_version = {{`(git describe --tags --long --always 2>/dev/null)`.stringify.chomp}}
+      git_version = {{`(git describe --tags --long --always 2>/dev/null) || true`.stringify.chomp}}
 
       # Failed git and no explicit version set: ""
       # We inherit the version of the compiler building us for now.

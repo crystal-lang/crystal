@@ -1,3 +1,7 @@
+## 0.18.2 (16-06.2016)
+
+* Fixed building Crystal from the source tarball
+
 ## 0.18.1 (16-06-2016)
 
 * Spec: passing `--profile` shows the slowest 10 specs (thanks @mperham)
