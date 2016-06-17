@@ -1,7 +1,7 @@
 require "spec"
 
 describe "JUnit Formatter" do
-  it "reports succesful results" do
+  it "reports successful results" do
     output = build_report do |f|
       f.report Spec::Result.new(:success, "should do something", "spec/some_spec.cr", 33, nil, nil)
       f.report Spec::Result.new(:success, "should do something else", "spec/some_spec.cr", 50, nil, nil)
