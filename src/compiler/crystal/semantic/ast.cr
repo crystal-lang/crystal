@@ -957,7 +957,7 @@ module Crystal
     end
   end
 
-  # Ficticious node to bind yield expressions to block arguments
+  # Fictitious node to bind yield expressions to block arguments
   class YieldBlockBinder < ASTNode
     getter block
     property yield_vars : Array(Var)?

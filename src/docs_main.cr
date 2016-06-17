@@ -1,6 +1,6 @@
 # This is the main file used for generating docs for the standard library.
 # It, for example, doesn't include API for the compiler, but does include
-# the ficticious API for the Crystal::Macros module.
+# the fictitious API for the Crystal::Macros module.
 
 require "./big/**"
 require "./compiler/crystal/macros"

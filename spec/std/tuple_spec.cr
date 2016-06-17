@@ -262,7 +262,7 @@ describe "Tuple" do
     (tuple1 <=> tuple2).should eq(0)
   end
 
-  it "does <=> with the same begining and different size" do
+  it "does <=> with the same beginning and different size" do
     tuple1 = {1, 2, 3}
     tuple2 = {1, 2}
     (tuple1 <=> tuple2).should eq(1)

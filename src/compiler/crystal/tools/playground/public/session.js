@@ -242,7 +242,7 @@ Playground.Inspector = function(session, line) {
   }.bind(this);
 
   this.dataLabels = function() {
-    // collect all data labels, in order of apperance
+    // collect all data labels, in order of appearance
     var res = []
     var resSet = {}
     for(var i = 0; i < this.messages.length; i++) {
