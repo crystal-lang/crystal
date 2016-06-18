@@ -84,14 +84,16 @@ abstract class OpenSSL::SSL::Context
     #
     # Required for OpenSSL <= 1.0.1 only.
     protected def set_cert_verify_callback(hostname : String)
+      # Keep a reference so the GC doesn't collect it after sending it to C land
+      @hostname = hostname
       LibSSL.ssl_ctx_set_cert_verify_callback(@handle, ->(x509_ctx, arg) {
         if LibCrypto.x509_verify_cert(x509_ctx) != 0
           cert = LibCrypto.x509_store_ctx_get_current_cert(x509_ctx)
-          HostnameValidation.validate_hostname(Box(String).unbox(arg), cert) == HostnameValidation::Result::MatchFound ? 1 : 0
+          HostnameValidation.validate_hostname(arg.as(String), cert) == HostnameValidation::Result::MatchFound ? 1 : 0
         else
           0
         end
-      }, Box.box(hostname))
+      }, hostname.as(Void*))
     end
   end
 
