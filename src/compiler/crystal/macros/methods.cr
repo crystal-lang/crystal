@@ -1104,6 +1104,26 @@ module Crystal
         end
       when "class"
         interpret_argless_method(method, args) { TypeNode.new(type.metaclass) }
+      when "<", "<=", ">", ">="
+        interpret_one_arg_method(method, args) do |arg|
+          unless arg.is_a?(TypeNode)
+            raise "TypeNode##{method} expects TypeNode, not #{arg.class_desc}"
+          end
+
+          self_type = self.type
+          other_type = arg.type
+          case method
+          when "<"
+            value = self_type != other_type && self_type.implements?(other_type)
+          when "<="
+            value = self_type.implements?(other_type)
+          when ">"
+            value = self_type != other_type && other_type.implements?(self_type)
+          else # ">="
+            value = other_type.implements?(self_type)
+          end
+          BoolLiteral.new(!!value)
+        end
       else
         super
       end

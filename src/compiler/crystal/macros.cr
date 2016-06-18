@@ -1202,6 +1202,24 @@ module Crystal::Macros
     # methods by invoking `type.class.methods`.
     def class : TypeNode
     end
+
+    # Returns `true` if *other* is an ancestor of `self`.
+    def <(other : TypeNode) : BoolLiteral
+    end
+
+    # Returns `true` if `self` is the same as *other* or if
+    # *other* is an ancestor of `self`.
+    def <=(other : TypeNode) : BoolLiteral
+    end
+
+    # Returns `true` if `self` is an ancestor of *other*.
+    def >(other : TypeNode) : BoolLiteral
+    end
+
+    # Returns `true` if *other* is the same as `self` or if
+    # `self` is an ancestor of *other*.
+    def >=(other : TypeNode) : BoolLiteral
+    end
   end
 
   # A binary expression like `And` and `Or`.
