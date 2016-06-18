@@ -419,10 +419,6 @@ class Crystal::Call
 
       str << arg.name
 
-      if arg_default = arg.default_value
-        str << " = "
-        str << arg.default_value
-      end
       if arg_type = arg.type?
         str << " : "
         str << arg_type
@@ -442,6 +438,10 @@ class Crystal::Call
             str << res_to_s
           end
         end
+      end
+      if arg_default = arg.default_value
+        str << " = "
+        str << arg.default_value
       end
       printed = true
     end
