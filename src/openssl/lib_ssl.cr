@@ -166,7 +166,7 @@ lib LibSSL
   fun ssl_ctx_set_cert_verify_callback = SSL_CTX_set_cert_verify_callback(ctx : SSLContext, callback : CertVerifyCallback, arg : Void*)
 end
 
-{% if `(pkg-config --atleast-version=1.0.2 libssl && echo -n true) || echo -n false` == "true" %}
+{% if `(pkg-config --atleast-version=1.0.2 libssl && printf %s true) || printf %s false` == "true" %}
 lib LibSSL
   OPENSSL_102 = true
 end
