@@ -914,6 +914,60 @@ describe "macro methods" do
         [TypeNode.new(program.string)] of ASTNode
       end
     end
+
+    it "executes ==" do
+      assert_macro("x", "{{x == Reference}}", "false") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+      assert_macro("x", "{{x == String}}", "true") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes !=" do
+      assert_macro("x", "{{x != Reference}}", "true") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+      assert_macro("x", "{{x != String}}", "false") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes <" do
+      assert_macro("x", "{{x < Reference}}", "true") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+      assert_macro("x", "{{x < String}}", "false") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes <=" do
+      assert_macro("x", "{{x <= Reference}}", "true") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+      assert_macro("x", "{{x <= String}}", "true") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
+    it "executes >" do
+      assert_macro("x", "{{x > Reference}}", "false") do |program|
+        [TypeNode.new(program.reference)] of ASTNode
+      end
+      assert_macro("x", "{{x > String}}", "true") do |program|
+        [TypeNode.new(program.reference)] of ASTNode
+      end
+    end
+
+    it "executes >=" do
+      assert_macro("x", "{{x >= Reference}}", "true") do |program|
+        [TypeNode.new(program.reference)] of ASTNode
+      end
+      assert_macro("x", "{{x >= String}}", "true") do |program|
+        [TypeNode.new(program.reference)] of ASTNode
+      end
+    end
   end
 
   describe "type declaration methods" do
