@@ -34,14 +34,14 @@ class Socket < IO::FileDescriptor
   struct IPAddress
     getter family : Family
     getter address : String
-    getter port : UInt16
+    getter port : Int32
 
-    def initialize(@family : Family, @address : String, port : Int)
+    def initialize(@family : Family, @address : String, port : Int32)
       if family != Family::INET && family != Family::INET6
         raise ArgumentError.new("Unsupported address family")
       end
 
-      @port = port.to_u16
+      @port = port
     end
 
     def initialize(sockaddr : LibC::SockaddrIn6, addrlen : LibC::SocklenT)
@@ -58,7 +58,7 @@ class Socket < IO::FileDescriptor
       else
         raise ArgumentError.new("Unsupported address family")
       end
-      @port = LibC.htons(sockaddr.sin6_port).to_u16
+      @port = LibC.ntohs(sockaddr.sin6_port).to_i32
     end
 
     def sockaddr
@@ -78,7 +78,7 @@ class Socket < IO::FileDescriptor
         sockaddrin6.sin6_addr = addr6
       end
 
-      sockaddrin6.sin6_port = LibC.ntohs(port).to_i16
+      sockaddrin6.sin6_port = LibC.htons(port)
       sockaddrin6
     end
 

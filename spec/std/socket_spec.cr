@@ -66,7 +66,7 @@ end
 
 describe Socket::IPAddress do
   it "transforms an IPv4 address into a C struct and back again" do
-    addr1 = Socket::IPAddress.new(Socket::Family::INET, "127.0.0.1", 8080.to_i16)
+    addr1 = Socket::IPAddress.new(Socket::Family::INET, "127.0.0.1", 8080)
     addr2 = Socket::IPAddress.new(addr1.sockaddr, addr1.addrlen)
 
     addr1.family.should eq(addr2.family)
@@ -76,7 +76,7 @@ describe Socket::IPAddress do
   end
 
   it "transforms an IPv6 address into a C struct and back again" do
-    addr1 = Socket::IPAddress.new(Socket::Family::INET6, "2001:db8:8714:3a90::12", 8080.to_i16)
+    addr1 = Socket::IPAddress.new(Socket::Family::INET6, "2001:db8:8714:3a90::12", 8080)
     addr2 = Socket::IPAddress.new(addr1.sockaddr, addr1.addrlen)
 
     addr1.family.should eq(addr2.family)
