@@ -444,8 +444,9 @@ module Crystal
     property args : Array(Var)
     property body : ASTNode
     property call : Call?
+    property splat_index : Int32?
 
-    def initialize(@args = [] of Var, body = nil)
+    def initialize(@args = [] of Var, body = nil, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -455,10 +456,10 @@ module Crystal
     end
 
     def clone_without_location
-      Block.new(@args.clone, @body.clone)
+      Block.new(@args.clone, @body.clone, @splat_index)
     end
 
-    def_equals_and_hash args, body
+    def_equals_and_hash args, body, splat_index
   end
 
   # A method call.
@@ -862,7 +863,10 @@ module Crystal
     def_equals_and_hash name, default_value, restriction, external_name
   end
 
-  class Fun < ASTNode
+  # The Proc notation in the type grammar:
+  #
+  #    input1, input2, ..., inputN -> output
+  class ProcNotation < ASTNode
     property inputs : Array(ASTNode)?
     property output : ASTNode?
 
@@ -875,7 +879,7 @@ module Crystal
     end
 
     def clone_without_location
-      Fun.new(@inputs.clone, @output.clone)
+      ProcNotation.new(@inputs.clone, @output.clone)
     end
 
     def_equals_and_hash inputs, output
@@ -949,9 +953,10 @@ module Crystal
       splat_index = self.splat_index
       if splat_index
         if args[splat_index].name.empty?
-          min_size = max_size = splat_index
+          min_size = {default_value_index || splat_index, splat_index}.min
+          max_size = splat_index
         else
-          min_size -= 1 unless default_value_index
+          min_size -= 1 unless default_value_index && default_value_index < splat_index
           max_size = Int32::MAX
         end
       end
@@ -1320,8 +1325,9 @@ module Crystal
     property name_column_number : Int32
     property attributes : Array(Attribute)?
     property doc : String?
+    property splat_index : Int32?
 
-    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = 0)
+    def initialize(@name, body = nil, @superclass = nil, @type_vars = nil, @abstract = false, @struct = false, @name_column_number = 0, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -1331,10 +1337,10 @@ module Crystal
     end
 
     def clone_without_location
-      ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @name_column_number)
+      ClassDef.new(@name, @body.clone, @superclass.clone, @type_vars.clone, @abstract, @struct, @name_column_number, @splat_index)
     end
 
-    def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct
+    def_equals_and_hash @name, @body, @superclass, @type_vars, @abstract, @struct, @splat_index
   end
 
   # Module definition:
@@ -1347,10 +1353,11 @@ module Crystal
     property name : Path
     property body : ASTNode
     property type_vars : Array(String)?
+    property splat_index : Int32?
     property name_column_number : Int32
     property doc : String?
 
-    def initialize(@name, body = nil, @type_vars = nil, @name_column_number = 0)
+    def initialize(@name, body = nil, @type_vars = nil, @name_column_number = 0, @splat_index = nil)
       @body = Expressions.from body
     end
 
@@ -1359,10 +1366,10 @@ module Crystal
     end
 
     def clone_without_location
-      ModuleDef.new(@name, @body.clone, @type_vars.clone, @name_column_number)
+      ModuleDef.new(@name, @body.clone, @type_vars.clone, @name_column_number, @splat_index)
     end
 
-    def_equals_and_hash @name, @body, @type_vars
+    def_equals_and_hash @name, @body, @type_vars, @splat_index
   end
 
   # While expression.
@@ -1562,7 +1569,7 @@ module Crystal
     def_equals_and_hash @body, @rescues, @else, @ensure
   end
 
-  class FunLiteral < ASTNode
+  class ProcLiteral < ASTNode
     property def : Def
 
     def initialize(@def = Def.new("->"))
@@ -1573,13 +1580,13 @@ module Crystal
     end
 
     def clone_without_location
-      FunLiteral.new(@def.clone)
+      ProcLiteral.new(@def.clone)
     end
 
     def_equals_and_hash @def
   end
 
-  class FunPointer < ASTNode
+  class ProcPointer < ASTNode
     property obj : ASTNode?
     property name : String
     property args : Array(ASTNode)
@@ -1593,7 +1600,7 @@ module Crystal
     end
 
     def clone_without_location
-      FunPointer.new(@obj.clone, @name, @args.clone)
+      ProcPointer.new(@obj.clone, @name, @args.clone)
     end
 
     def_equals_and_hash @obj, @name, @args

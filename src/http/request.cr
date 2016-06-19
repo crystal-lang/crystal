@@ -11,7 +11,8 @@ class HTTP::Request
   @query_params : Params?
   @uri : URI?
 
-  def initialize(@method : String, @resource : String, @headers : Headers = Headers.new, @body = nil, @version = "HTTP/1.1")
+  def initialize(@method : String, @resource : String, headers : Headers? = nil, @body = nil, @version = "HTTP/1.1")
+    @headers = headers.try(&.dup) || Headers.new
     if body = @body
       @headers["Content-Length"] = body.bytesize.to_s
     elsif @method == "POST" || @method == "PUT"

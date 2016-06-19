@@ -39,14 +39,14 @@ module Crystal
 
         if owner = @owner
           if owner.metaclass?
-            owner.instance_type.llvm_name(str)
+            self_type.instance_type.llvm_name(str)
             if original_owner != self_type
               str << "@"
               original_owner.instance_type.llvm_name(str)
             end
             str << "::"
           elsif !owner.is_a?(Crystal::Program)
-            owner.llvm_name(str)
+            self_type.llvm_name(str)
             if original_owner != self_type
               str << "@"
               original_owner.llvm_name(str)
@@ -63,22 +63,16 @@ module Crystal
           next_def = next_def.next
         end
 
-        needs_self_type = self_type.try &.passed_as_self?
-
-        if args.size > 0 || needs_self_type || uses_block_arg
+        if args.size > 0 || uses_block_arg
           str << "<"
-          if needs_self_type
-            self_type.not_nil!.llvm_name(str)
-          end
           if args.size > 0
-            str << ", " if needs_self_type
             args.each_with_index do |arg, i|
               str << ", " if i > 0
               arg.type.llvm_name(str)
             end
           end
           if uses_block_arg
-            str << ", " if needs_self_type || args.size > 0
+            str << ", " if args.size > 0
             str << "&"
             block_arg.not_nil!.type.llvm_name(str)
           end

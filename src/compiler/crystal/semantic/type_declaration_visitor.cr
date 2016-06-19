@@ -35,7 +35,7 @@ module Crystal
 
       # The type of class variables. The last one wins.
       # This is type => variables.
-      @class_vars = {} of ClassVarContainer => Hash(String, Type)
+      @class_vars = {} of ClassVarContainer => Hash(String, TypeDeclarationWithLocation)
     end
 
     def visit(node : ClassDef)
@@ -164,8 +164,8 @@ module Crystal
       owner = class_var_owner(node)
       var_type = lookup_type(node.declared_type)
       var_type = check_declare_var_type(node, var_type, "a class variable")
-      owner_vars = @class_vars[owner] ||= {} of String => Type
-      owner_vars[var.name] = var_type.virtual_type
+      owner_vars = @class_vars[owner] ||= {} of String => TypeDeclarationWithLocation
+      owner_vars[var.name] = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!)
     end
 
     def declare_global_var(node, var)
@@ -214,7 +214,7 @@ module Crystal
       false
     end
 
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       false
     end
 
@@ -262,7 +262,7 @@ module Crystal
       false
     end
 
-    def visit(node : Fun)
+    def visit(node : ProcNotation)
       false
     end
 

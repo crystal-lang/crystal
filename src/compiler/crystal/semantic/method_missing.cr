@@ -2,8 +2,7 @@ require "../types"
 
 module Crystal
   class Type
-    ONE_ARG    = [Arg.new("a1")]
-    THREE_ARGS = [Arg.new("a1"), Arg.new("a2"), Arg.new("a3")]
+    ONE_ARG = [Arg.new("a1")]
 
     def check_method_missing(signature)
       false
@@ -12,9 +11,6 @@ module Crystal
     def lookup_method_missing
       # method_missing is actually stored in the metaclass
       method_missing = metaclass.lookup_macro("method_missing", ONE_ARG, nil)
-      return method_missing if method_missing
-
-      method_missing = metaclass.lookup_macro("method_missing", THREE_ARGS, nil)
       return method_missing if method_missing
 
       parents.try &.each do |parent|
@@ -68,12 +64,8 @@ module Crystal
 
       a_def = Def.new(signature.name, args_nodes_names.map { |name| Arg.new(name) })
 
-      if method_missing.args.size == 1
-        call = Call.new(nil, signature.name, args: args_nodes, block: block_node.is_a?(Block) ? block_node : nil)
-        fake_call = Call.new(nil, "method_missing", [call] of ASTNode)
-      else
-        fake_call = Call.new(nil, "method_missing", [name_node, args_node, block_node] of ASTNode)
-      end
+      call = Call.new(nil, signature.name, args: args_nodes, block: block_node.is_a?(Block) ? block_node : nil)
+      fake_call = Call.new(nil, "method_missing", [call] of ASTNode)
 
       expanded_macro = program.expand_macro method_missing, fake_call, self, self
       generated_nodes = program.parse_macro_source(expanded_macro, method_missing, method_missing, args_nodes_names) do |parser|
@@ -90,7 +82,7 @@ module Crystal
   end
 
   class GenericClassInstanceType
-    delegate check_method_missing, @generic_class
+    delegate check_method_missing, to: @generic_class
   end
 
   class VirtualType

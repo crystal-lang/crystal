@@ -437,4 +437,17 @@ describe "Int" do
       value.clone.should eq(value)
     end
   end
+
+  it "#chr" do
+    65.chr.should eq('A')
+
+    expect_raises(ArgumentError, "#{0x10ffff + 1} out of char range") do
+      (0x10ffff + 1).chr
+    end
+  end
+
+  it "#unsafe_chr" do
+    65.unsafe_chr.should eq('A')
+    (0x10ffff + 1).unsafe_chr.ord.should eq(0x10ffff + 1)
+  end
 end

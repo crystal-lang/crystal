@@ -90,6 +90,9 @@ class Crystal::Call
       error_msg = String.build do |msg|
         if obj && owner != mod
           msg << "undefined method '#{def_name}' for #{owner}"
+        elsif convert_to_logical_operator(def_name)
+          msg << "undefined method '#{def_name}'"
+          similar_name = convert_to_logical_operator(def_name)
         elsif args.size > 0 || has_parenthesis
           msg << "undefined method '#{def_name}'"
         else
@@ -191,7 +194,7 @@ class Crystal::Call
           str << ")\n"
         end
         str << "Overloads are:"
-        append_matches(defs, str)
+        append_matches(defs, arg_types, str)
       end, inner: inner_exception)
     end
 
@@ -208,7 +211,7 @@ class Crystal::Call
 
         if named_args_types
           defs_matching_args_size.each do |a_def|
-            check_named_args_mismatch owner, named_args_types, a_def
+            check_named_args_mismatch owner, arg_types, named_args_types, a_def
           end
         end
       end
@@ -247,7 +250,7 @@ class Crystal::Call
       end
 
       msg << "Overloads are:"
-      append_matches(defs, msg)
+      append_matches(defs, arg_types, msg)
 
       if matches
         cover = matches.cover
@@ -280,6 +283,15 @@ class Crystal::Call
     end
 
     raise message, owner_trace
+  end
+
+  def convert_to_logical_operator(def_name)
+    case def_name
+    when "and"; "&&"
+    when "or" ; "||"
+    when "not"; "!"
+    else        nil
+    end
   end
 
   # If there's only one def that could match, and there are named
@@ -367,10 +379,10 @@ class Crystal::Call
     end
   end
 
-  def append_matches(defs, str, matched_def = nil, argument_name = nil)
+  def append_matches(defs, arg_types, str, *, matched_def = nil, argument_name = nil)
     defs.each do |a_def|
       str << "\n - "
-      append_def_full_name a_def.owner, a_def, str
+      append_def_full_name a_def.owner, a_def, arg_types, str
       if defs.size > 1 && a_def.same?(matched_def)
         str << colorize(" (trying this one)").blue
       end
@@ -380,19 +392,19 @@ class Crystal::Call
     end
   end
 
-  def def_full_name(owner, a_def)
-    Call.def_full_name(owner, a_def)
+  def def_full_name(owner, a_def, arg_types = nil)
+    Call.def_full_name(owner, a_def, arg_types = nil)
   end
 
-  def self.def_full_name(owner, a_def)
-    String.build { |io| append_def_full_name(owner, a_def, io) }
+  def self.def_full_name(owner, a_def, arg_types = nil)
+    String.build { |io| append_def_full_name(owner, a_def, arg_types, io) }
   end
 
-  def append_def_full_name(owner, a_def, str)
-    Call.append_def_full_name(owner, a_def, str)
+  def append_def_full_name(owner, a_def, arg_types, str)
+    Call.append_def_full_name(owner, a_def, arg_types, str)
   end
 
-  def self.append_def_full_name(owner, a_def, str)
+  def self.append_def_full_name(owner, a_def, arg_types, str)
     str << full_name(owner, a_def.name)
     str << '('
     printed = false
@@ -416,14 +428,19 @@ class Crystal::Call
         str << arg_type
       elsif res = arg.restriction
         str << " : "
-        if owner.is_a?(GenericClassInstanceType) && res.is_a?(Path) && res.names.size == 1
-          if type_var = owner.type_vars[res.names[0]]?
-            str << type_var.type
-          else
-            str << res
-          end
+        if owner.is_a?(GenericClassInstanceType) && res.is_a?(Path) && res.names.size == 1 &&
+           (type_var = owner.type_vars[res.names[0]]?)
+          str << type_var.type
         else
-          str << res
+          # Try to use the full name if the argument type and the call
+          # argument type have the same string representation
+          res_to_s = res.to_s
+          if (arg_type = arg_types.try &.[i]?) && arg_type.to_s == res_to_s &&
+             (matching_type = TypeLookup.lookup?(a_def.owner, res))
+            str << matching_type
+          else
+            str << res_to_s
+          end
         end
       end
       printed = true
@@ -510,7 +527,7 @@ class Crystal::Call
     wrong_number_of_arguments "macro '#{def_name}'", args.size, all_arguments_sizes.join(", ")
   end
 
-  def check_named_args_mismatch(owner, named_args, a_def)
+  def check_named_args_mismatch(owner, arg_types, named_args, a_def)
     named_args.each do |named_arg|
       found_index = a_def.args.index { |arg| arg.name == named_arg.name }
       if found_index
@@ -533,7 +550,7 @@ class Crystal::Call
 
           str << "\n"
           str << "Matches are:"
-          append_matches defs, str, matched_def: a_def, argument_name: named_arg.name
+          append_matches defs, arg_types, str, matched_def: a_def, argument_name: named_arg.name
         end
         raise msg
       end

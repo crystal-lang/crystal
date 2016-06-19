@@ -198,7 +198,7 @@ describe "Type inference: is_a?" do
       end
 
       coco
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "restricts type inside if else when used with module type" do

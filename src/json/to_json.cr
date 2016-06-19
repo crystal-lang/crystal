@@ -120,8 +120,8 @@ class JSON::PrettyWriter
     @indent = 0
   end
 
-  delegate read, @io
-  delegate write, @io
+  delegate read, to: @io
+  delegate write, to: @io
 
   def json_object
     self << "{\n"
@@ -334,7 +334,7 @@ end
 # Converter to be used with `JSON.mapping` to read the raw
 # value of a JSON object property as a String.
 #
-# It can be useful to read ints and floats without loosing precision,
+# It can be useful to read ints and floats without losing precision,
 # or to read an object and deserialize it later based on some
 # condition.
 #

@@ -131,7 +131,7 @@ describe "Type inference: NoReturn" do
       end
 
       c
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "computes NoReturn in a lazy way inside if then (#314) (5)" do
@@ -254,7 +254,7 @@ describe "Type inference: NoReturn" do
       end
 
       c
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "computes NoReturn in a lazy way inside if else (#314) (5)" do

@@ -7,7 +7,7 @@ describe "Type inference: yield with scope" do
 
       foo do
       end
-    ") { |mod| mod.nil }
+    ") { nil_type }
   end
 
   it "infer type of block body" do

@@ -227,7 +227,7 @@ describe "Type inference: nilable instance var" do
       "instance variable '@foo' was used before it was initialized in one of the 'initialize' methods, rendering it nilable"
   end
 
-  it "marks instance var as nilable if assigned inside fun literal" do
+  it "marks instance var as nilable if assigned inside proc literal" do
     assert_error %(
       class Foo
         def initialize

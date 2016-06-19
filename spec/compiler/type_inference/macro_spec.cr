@@ -567,7 +567,7 @@ describe "Type inference: macro" do
       while true
         test
       end
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "can access variable inside macro expansion (#2057)" do

@@ -146,6 +146,8 @@ struct Pointer(T)
   # ptr1[3] # => 4
   # ```
   def copy_from(source : Pointer(T), count : Int)
+    raise ArgumentError.new("negative count") if count < 0
+
     if self.class == source.class
       Intrinsics.memcpy(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
     else
@@ -158,6 +160,8 @@ struct Pointer(T)
 
   # :nodoc:
   def copy_from(source : Pointer(NoReturn), count : Int)
+    raise ArgumentError.new("negative count") if count < 0
+
     # We need this overload for cases when we have a pointer to unreachable
     # data, like when doing Tuple.new.to_a
     self
@@ -203,6 +207,8 @@ struct Pointer(T)
   # ptr1[3] # => 3
   # ```
   def move_from(source : Pointer(T), count : Int)
+    raise ArgumentError.new("negative count") if count < 0
+
     if self.class == source.class
       Intrinsics.memmove(self.as(Void*), source.as(Void*), (count * sizeof(T)).to_u32, 0_u32, false)
     else
@@ -219,6 +225,8 @@ struct Pointer(T)
 
   # :nodoc:
   def move_from(source : Pointer(NoReturn), count : Int)
+    raise ArgumentError.new("negative count") if count < 0
+
     # We need this overload for cases when we have a pointer to unreachable
     # data, like when doing Tuple.new.to_a
     self

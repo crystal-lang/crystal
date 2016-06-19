@@ -736,4 +736,64 @@ describe "Type inference: generic class" do
       ),
       "instance variable '@value' of Bar must be PluginContainer(Plugin), not PluginContainer(Foo)"
   end
+
+  it "instantiates generic variadic class, accesses T from class method" do
+    assert_type(%(
+      class Foo(*T)
+        def self.t
+          T
+        end
+      end
+
+      Foo(Int32, Char).t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "instantiates generic variadic class, accesses T from instance method" do
+    assert_type(%(
+      class Foo(*T)
+        def t
+          T
+        end
+      end
+
+      Foo(Int32, Char).new.t
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "splats generic type var" do
+    assert_type(%(
+      class Foo(X, Y)
+        def self.vars
+          {X, Y}
+        end
+      end
+
+      Foo(*{Int32, Char}).vars
+      )) { tuple_of([int32.metaclass, char.metaclass]) }
+  end
+
+  it "instantiates generic variadic class, accesses T from instance method, more args" do
+    assert_type(%(
+      class Foo(*T, R)
+        def t
+          {T, R}
+        end
+      end
+
+      Foo(Int32, Float64, Char).new.t
+      )) { tuple_of([tuple_of([int32, float64]).metaclass, char.metaclass]) }
+  end
+
+  it "instantiates generic variadic class, accesses T from instance method, more args (2)" do
+    assert_type(%(
+      class Foo(A, *T, R)
+        def t
+          {A, T, R}
+        end
+      end
+
+      Foo(Int32, Float64, Char).new.t
+      )) { tuple_of([int32.metaclass, tuple_of([float64]).metaclass, char.metaclass]) }
+  end
 end

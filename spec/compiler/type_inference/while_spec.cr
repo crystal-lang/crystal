@@ -2,17 +2,15 @@ require "../../spec_helper"
 
 describe "Type inference: while" do
   it "types while" do
-    assert_type("while 1; 1; end") { |mod| mod.nil }
+    assert_type("while 1; 1; end") { nil_type }
   end
 
   it "types while with break without value" do
-    assert_type("while true; break; end") { |mod| mod.nil }
+    assert_type("while true; break; end") { nil_type }
   end
 
   it "types while with break with value" do
-    # This is a change from the compiler written in Ruby
-    # assert_type("while true; break 1; end") { |mod| union_of(mod.nil, int32) }
-    assert_type("while true; break 1; end") { |mod| mod.nil }
+    assert_type("while true; break 1; end") { nil_type }
   end
 
   it "reports break cannot be used outside a while" do
@@ -106,5 +104,16 @@ describe "Type inference: while" do
       end
       a
       )) { int32 }
+  end
+
+  it "doesn't modify var's type before while" do
+    assert_type(%(
+      x = 'x'
+      x.ord
+      while 1 == 2
+        x = 1
+      end
+      x
+      )) { union_of(int32, char) }
   end
 end

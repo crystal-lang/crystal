@@ -42,7 +42,19 @@ module Crystal
             # we are done. We don't just compare types with ==, there is a special case:
             # a function type with return T can be transpass a restriction of a function
             # with with the same arguments but which returns Void.
-            if !signature.named_args && signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
+            arg_types_equal = signature.arg_types.equals?(match.arg_types) { |x, y| x.compatible_with?(y) }
+            if (match_named_args = match.named_arg_types) && (signature_named_args = signature.named_args) &&
+               match_named_args.size == signature_named_args.size
+              match_named_args = match_named_args.sort_by &.name
+              signature_named_args = signature_named_args.sort_by &.name
+              named_arg_types_equal = match_named_args.equals?(signature_named_args) do |x, y|
+                x.name == y.name && x.type.compatible_with?(y.type)
+              end
+            else
+              named_arg_types_equal = !match.named_arg_types && !signature.named_args
+            end
+
+            if arg_types_equal && named_arg_types_equal
               return Matches.new(matches_array, true, owner)
             end
           end
@@ -72,7 +84,12 @@ module Crystal
         my_parents.each do |parent|
           break unless parent.is_a?(IncludedGenericModule) || parent.module?
 
-          matches = parent.lookup_matches_with_modules(signature, owner, parent, matches_array)
+          # If this is a generic instance type and our parent is the generic class, use
+          # this type as the type lookup (so we can find type arguments)
+          type_lookup = parent
+          type_lookup = self if self.is_a?(GenericClassInstanceType) && type_lookup == self.generic_class
+
+          matches = parent.lookup_matches_with_modules(signature, owner, type_lookup, matches_array)
           return matches unless matches.empty?
         end
       end
@@ -102,7 +119,12 @@ module Crystal
       # and can be known by invoking `lookup_new_in_ancestors?`
       if my_parents && !(!lookup_new_in_ancestors? && is_new)
         my_parents.each do |parent|
-          matches = parent.lookup_matches(signature, owner, parent, matches_array)
+          # If this is a generic instance type and our parent is the generic class, use
+          # this type as the type lookup (so we can find type arguments)
+          type_lookup = parent
+          type_lookup = self if self.is_a?(GenericClassInstanceType) && type_lookup == self.generic_class
+
+          matches = parent.lookup_matches(signature, owner, type_lookup, matches_array)
           if matches.cover_all?
             return matches
           else
@@ -306,8 +328,8 @@ module Crystal
   end
 
   class AliasType
-    delegate lookup_matches, aliased_type
-    delegate lookup_matches_without_parents, aliased_type
+    delegate lookup_matches, to: aliased_type
+    delegate lookup_matches_without_parents, to: aliased_type
   end
 
   module VirtualTypeLookup

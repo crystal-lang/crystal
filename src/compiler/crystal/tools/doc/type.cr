@@ -520,9 +520,12 @@ class Crystal::Doc::Type
     type = @type
     if type_vars = type_vars()
       io << '('
-      io << '*' if type.is_a?(GenericType) && type.variadic
       io << "**" if type.is_a?(GenericType) && type.double_variadic
-      type_vars.join(", ", io)
+      type_vars.each_with_index do |type_var, i|
+        io << ", " if i > 0
+        io << '*' if type.is_a?(GenericType) && type.splat_index == i
+        io << type_var
+      end
       io << ')'
     end
   end
@@ -574,7 +577,7 @@ class Crystal::Doc::Type
     io << ")"
   end
 
-  def node_to_html(node : Fun, io, links = true)
+  def node_to_html(node : ProcNotation, io, links = true)
     if inputs = node.inputs
       inputs.join(", ", io) do |input|
         node_to_html input, io, links: links
@@ -606,7 +609,7 @@ class Crystal::Doc::Type
     end
   end
 
-  def type_to_html(type : Crystal::FunInstanceType, io, text = nil, links = true)
+  def type_to_html(type : Crystal::ProcInstanceType, io, text = nil, links = true)
     type.arg_types.join(", ", io) do |arg_type|
       type_to_html arg_type, io, links: links
     end

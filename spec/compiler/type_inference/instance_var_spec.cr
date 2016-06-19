@@ -1856,7 +1856,7 @@ describe "Type inference: instance var" do
       end
 
       Foo.new(nil).x
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "uses virtual types in fun" do
@@ -1874,7 +1874,7 @@ describe "Type inference: instance var" do
       end
 
       Foo.new(->(x : Node) { x }).x
-      )) { fun_of(types["Node"].virtual_type, types["Node"].virtual_type) }
+      )) { proc_of(types["Node"].virtual_type, types["Node"].virtual_type) }
   end
 
   it "uses virtual types in union" do
@@ -3213,7 +3213,7 @@ describe "Type inference: instance var" do
         end
       end
 
-      Foo.new.x") { |mod| mod.union_of(mod.types["Parent"].virtual_type!, mod.nil) }
+      Foo.new.x") { nilable types["Parent"].virtual_type! }
   end
 
   it "declares with `self`" do

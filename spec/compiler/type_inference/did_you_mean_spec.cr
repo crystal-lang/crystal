@@ -242,4 +242,23 @@ describe "Type inference: did you mean" do
       end
       ), "did you mean @@foobar"
   end
+
+  it "suggests a better alternative to logical operators (#2715)" do
+    message = "undefined method 'and'"
+    message = " (did you mean '&&'?)".colorize.yellow.bold.to_s
+    assert_error %(
+      def rand(x : Int32)
+      end
+
+      class String
+        def bytes
+          self
+        end
+      end
+
+      if "a".bytes and 1
+        1
+      end
+      ), message
+  end
 end

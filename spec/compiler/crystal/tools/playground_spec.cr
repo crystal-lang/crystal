@@ -58,12 +58,12 @@ describe Playground::Agent do
     agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"5","value_type":"Int32"}))
     x, y = 3, 4
     agent.i(1, ["x", "y"]) { {x, y} }.should eq({3, 4})
-    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"{3, 4}","value_type":"{Int32, Int32}","data":{"x":"3","y":"4"}}))
+    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"{3, 4}","value_type":"Tuple(Int32, Int32)","data":{"x":"3","y":"4"}}))
 
     agent.i(1) { nil.as(Void?) }
-    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"nil","value_type":"Void?"}))
+    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"nil","value_type":"(Void | Nil)"}))
     agent.i(1) { a_sample_void.as(Void?) }
-    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"nil","value_type":"Void?"}))
+    agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"nil","value_type":"(Void | Nil)"}))
     agent.i(1) { a_sample_void }
     agent.last_message.should eq(%({"tag":32,"type":"value","line":1,"value":"nil","value_type":"Nil"}))
   end

@@ -28,9 +28,7 @@ class JSONPersonEmittingNull
 end
 
 class JSONWithBool
-  JSON.mapping({
-    value: {type: Bool},
-  })
+  JSON.mapping value: Bool
 end
 
 class JSONWithTime
@@ -136,6 +134,12 @@ class JSONWithNilableRootEmitNull
   })
 end
 
+class JSONWithNilableUnion
+  JSON.mapping({
+    value: Int32 | Nil,
+  })
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -236,7 +240,7 @@ describe "JSON mapping" do
   it "parses json with any" do
     json = JSONWithAny.from_json(%({"name": "Hi", "any": [{"x": 1}, 2, "hey", true, false, 1.5, null]}))
     json.name.should eq("Hi")
-    json.any.raw.should eq([{"x": 1}, 2, "hey", true, false, 1.5, nil])
+    json.any.raw.should eq([{"x" => 1}, 2, "hey", true, false, 1.5, nil])
     json.to_json.should eq(%({"name":"Hi","any":[{"x":1},2,"hey",true,false,1.5,null]}))
   end
 
@@ -388,5 +392,15 @@ describe "JSON mapping" do
     result = JSONWithNilableRootEmitNull.from_json(json)
     result.result.should be_nil
     result.to_json.should eq(json)
+  end
+
+  it "parses nilable union" do
+    obj = JSONWithNilableUnion.from_json(%({"value": 1}))
+    obj.value.should eq(1)
+    obj.to_json.should eq(%({"value":1}))
+
+    obj = JSONWithNilableUnion.from_json(%({"value": null}))
+    obj.value.should be_nil
+    obj.to_json.should eq(%({}))
   end
 end

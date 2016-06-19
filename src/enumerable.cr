@@ -27,6 +27,12 @@
 # producing an `Array` as the result. For a lazy alternative refer to
 # the `Iterator` and `Iterable` modules.
 module Enumerable(T)
+  class EmptyError < Exception
+    def initialize(message = "Empty enumerable")
+      super(message)
+    end
+  end
+
   # Must yield this collection's elements to the block.
   abstract def each(&block : T -> _)
 

@@ -300,7 +300,7 @@ module Crystal
       node
     end
 
-    def transform(node : Fun)
+    def transform(node : ProcNotation)
       transform_many node.inputs
 
       if output = node.output
@@ -316,12 +316,12 @@ module Crystal
       node
     end
 
-    def transform(node : FunLiteral)
+    def transform(node : ProcLiteral)
       node.def.body = node.def.body.transform(self)
       node
     end
 
-    def transform(node : FunPointer)
+    def transform(node : ProcPointer)
       if obj = node.obj
         node.obj = obj.transform(self)
       end

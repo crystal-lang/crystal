@@ -25,7 +25,7 @@ describe "Type inference: not" do
         z = a
       end
       z
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "filters types inside if/else" do

@@ -61,8 +61,8 @@ class Crystal::CodeGenVisitor
               codegen_primitive_symbol_to_s node, target_def, call_args
             when "class"
               codegen_primitive_class node, target_def, call_args
-            when "fun_call"
-              codegen_primitive_fun_call node, target_def, call_args
+            when "proc_call"
+              codegen_primitive_proc_call node, target_def, call_args
             when "tuple_indexer_known_index"
               codegen_primitive_tuple_indexer_known_index node, target_def, call_args
             when "enum_value", "enum_new"
@@ -522,12 +522,12 @@ class Crystal::CodeGenVisitor
     field_type = scope.vars[var_name].type
 
     # Check nil to pointer
-    if node.type.nil_type? && (field_type.pointer? || field_type.fun?)
+    if node.type.nil_type? && (field_type.pointer? || field_type.proc?)
       call_arg = llvm_c_type(field_type).null
     end
 
-    if field_type.fun?
-      call_arg = check_fun_is_not_closure(call_arg, field_type)
+    if field_type.proc?
+      call_arg = check_proc_is_not_closure(call_arg, field_type)
     end
 
     value = to_rhs call_arg, field_type
@@ -538,8 +538,8 @@ class Crystal::CodeGenVisitor
 
   def union_field_ptr(field_type, pointer)
     ptr = aggregate_index pointer, 0
-    if field_type.is_a?(FunInstanceType)
-      bit_cast ptr, @llvm_typer.fun_type(field_type).pointer
+    if field_type.is_a?(ProcInstanceType)
+      bit_cast ptr, @llvm_typer.proc_type(field_type).pointer
     else
       cast_to_pointer ptr, field_type
     end
@@ -641,16 +641,16 @@ class Crystal::CodeGenVisitor
     type_id(type)
   end
 
-  def codegen_primitive_fun_call(node, target_def, call_args)
+  def codegen_primitive_proc_call(node, target_def, call_args)
     closure_ptr = call_args[0]
     args = call_args[1..-1]
 
-    fun_type = context.type.as(FunInstanceType)
+    proc_type = context.type.as(ProcInstanceType)
     0.upto(target_def.args.size - 1) do |i|
       arg = args[i]
-      fun_arg_type = fun_type.fun_types[i]
+      proc_arg_type = proc_type.arg_types[i]
       target_def_arg_type = target_def.args[i].type
-      args[i] = upcast arg, fun_arg_type, target_def_arg_type
+      args[i] = upcast arg, proc_arg_type, target_def_arg_type
     end
 
     fun_ptr = builder.extract_value closure_ptr, 0
@@ -667,14 +667,14 @@ class Crystal::CodeGenVisitor
 
     phi_value = Phi.open(self, node, @needs_value) do |phi|
       position_at_end ctx_is_null_block
-      real_fun_ptr = bit_cast fun_ptr, llvm_fun_type(context.type)
-      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, false, fun_type)
+      real_fun_ptr = bit_cast fun_ptr, llvm_proc_type(context.type)
+      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, false, proc_type)
       phi.add value, node.type
 
       position_at_end ctx_is_not_null_block
       real_fun_ptr = bit_cast fun_ptr, llvm_closure_type(context.type)
       args.insert(0, ctx_ptr)
-      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true, fun_type)
+      value = codegen_call_or_invoke(node, target_def, nil, real_fun_ptr, args, true, target_def.type, true, proc_type)
       phi.add value, node.type, true
     end
 
@@ -690,25 +690,26 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_primitive_tuple_indexer_known_index(node, target_def, call_args)
-    type = context.type
+    index = node.as(TupleIndexer).index
+    codegen_tuple_indexer(context.type, call_args[0], index)
+  end
+
+  def codegen_tuple_indexer(type, value, index)
     case type
     when TupleInstanceType
-      index = node.as(TupleIndexer).index
-      ptr = aggregate_index call_args[0], index
+      ptr = aggregate_index value, index
       to_lhs ptr, type.tuple_types[index]
     when NamedTupleInstanceType
-      index = node.as(TupleIndexer).index
-      ptr = aggregate_index call_args[0], index
+      ptr = aggregate_index value, index
       to_lhs ptr, type.entries[index].type
     else
       type = (type.instance_type.as(TupleInstanceType))
-      index = node.as(TupleIndexer).index
       type_id(type.tuple_types[index].as(Type).metaclass)
     end
   end
 
   def check_c_fun(type, value)
-    if type.fun?
+    if type.proc?
       make_fun(type, bit_cast(value, LLVM::VoidPointer), LLVM::VoidPointer.null)
     else
       value

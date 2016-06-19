@@ -21,9 +21,7 @@ class StrictYAMLPerson
 end
 
 class YAMLWithBool
-  YAML.mapping({
-    value: {type: Bool},
-  })
+  YAML.mapping value: Bool
 end
 
 class YAMLWithTime

@@ -309,6 +309,10 @@ module Crystal
       var = lookup_global_variable(node)
 
       if first_time_accessing_meta_type_var?(var)
+        var_type = var.type?
+        if var_type && !var_type.includes_type?(mod.nil)
+          node.raise "global variable '#{node.name}' is read here before it was initialized, rendering it nilable, but its type is #{var_type}"
+        end
         var.bind_to mod.nil_var
       end
 
@@ -406,6 +410,10 @@ module Crystal
       end
 
       if first_time_accessing_meta_type_var?(var)
+        var_type = var.type?
+        if var_type && !var_type.includes_type?(mod.nil)
+          node.raise "class variable '#{var.name}' of #{var.owner} is read here before it was initialized, rendering it nilable, but its type is #{var_type}"
+        end
         var.bind_to mod.nil_var
       end
 
@@ -682,22 +690,13 @@ module Crystal
       node.scope.try &.accept self
       node.exps.each &.accept self
 
+      # We use a binder to support splats and other complex forms
+      binder = block.binder ||= YieldBlockBinder.new(@mod, block)
+      binder.add_yield(node)
       if (yield_vars = @yield_vars) && !node.scope
-        yield_vars.each_with_index do |var, i|
-          exp = node.exps[i]?
-          if exp
-            if (exp_type = exp.type?) && !exp_type.implements?(var.type)
-              exp.raise "argument ##{i + 1} of yield expected to be #{var.type}, not #{exp_type}"
-            end
-
-            exp.freeze_type = var.type
-          elsif !var.type.nil_type?
-            node.raise "missing argument ##{i + 1} of yield with type #{var.type}"
-          end
-        end
+        binder.yield_vars ||= yield_vars
       end
-
-      bind_block_args_to_yield_exps block, node
+      binder.update
 
       unless block.visited
         # When we yield, we are no longer inside `untyped_def`, so we un-nest
@@ -723,19 +722,6 @@ module Crystal
       false
     end
 
-    # We bind yield exps -> typed_def.yield_vars -> block args
-    # so when a call is recomputed we unbind the block args from the yield
-    # vars (so old instantiations don't mess the final type)
-    def bind_block_args_to_yield_exps(block, node)
-      yield_vars = typed_def.yield_vars ||= block.args.map { |block| Var.new(block.name) }
-
-      block.args.each_with_index do |arg, i|
-        yield_var = yield_vars[i]
-        yield_var.bind_to(node.exps[i]? || mod.nil_var)
-        arg.bind_to(yield_var)
-      end
-    end
-
     def visit(node : Block)
       return if node.visited
 
@@ -744,15 +730,27 @@ module Crystal
 
       before_block_vars = node.vars.try(&.dup) || MetaVars.new
 
+      arg_counter = 0
+      body_exps = node.body.as?(Expressions).try(&.expressions)
+
       meta_vars = @meta_vars.dup
       node.args.each do |arg|
-        meta_var = new_meta_var(arg.name, context: node)
-        meta_var.bind_to(arg)
-        meta_vars[arg.name] = meta_var
+        # The parser generates __argN block arguments for tuple unpacking,
+        # and they need a special treatment because they shouldn't override
+        # local variables. So we search the unpacked vars in the body.
+        if arg.name.starts_with?("__arg") && body_exps
+          while arg_counter < body_exps.size &&
+                (assign = body_exps[arg_counter]).is_a?(Assign) &&
+                (target = assign.target).is_a?(Var) &&
+                (call = assign.value).is_a?(Call) &&
+                (call_var = call.obj).is_a?(Var) &&
+                call_var.name == arg.name
+            bind_block_var(node, target, meta_vars, before_block_vars)
+            arg_counter += 1
+          end
+        end
 
-        before_block_var = new_meta_var(arg.name, context: node)
-        before_block_var.bind_to(arg)
-        before_block_vars[arg.name] = before_block_var
+        bind_block_var(node, arg, meta_vars, before_block_vars)
       end
 
       @block_nest += 1
@@ -798,6 +796,16 @@ module Crystal
       false
     end
 
+    def bind_block_var(node, target, meta_vars, before_block_vars)
+      meta_var = new_meta_var(target.name, context: node)
+      meta_var.bind_to(target)
+      meta_vars[target.name] = meta_var
+
+      before_block_var = new_meta_var(target.name, context: node)
+      before_block_var.bind_to(target)
+      before_block_vars[target.name] = before_block_var
+    end
+
     def bind_vars(from_vars, to_vars, ignored = nil)
       if to_vars
         from_vars.each do |name, block_var|
@@ -811,7 +819,7 @@ module Crystal
       end
     end
 
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       return false if node.type?
 
       fun_vars = @vars.dup
@@ -819,7 +827,7 @@ module Crystal
 
       node.def.args.each do |arg|
         # It can happen that the argument has a type already,
-        # when converting a block to a fun literal
+        # when converting a block to a proc literal
         if restriction = arg.restriction
           restriction.accept self
           arg_type = restriction.type.instance_type
@@ -863,7 +871,7 @@ module Crystal
       Crystal.check_type_allowed_in_generics(node, type, "cannot be used as a Proc argument type")
     end
 
-    def visit(node : FunPointer)
+    def visit(node : ProcPointer)
       return false if node.call?
 
       obj = node.obj
@@ -1135,17 +1143,17 @@ module Crystal
 
       node.args.each_with_index do |arg, index|
         case arg
-        when FunLiteral
+        when ProcLiteral
           next unless arg.def.args.any? { |def_arg| !def_arg.restriction && !def_arg.type? }
 
           check_lib_call_arg(method, index) do |method_arg_type|
             arg.def.args.each_with_index do |def_arg, def_arg_index|
               if !def_arg.restriction && !def_arg.type?
-                def_arg.type = method_arg_type.fun_types[def_arg_index]?
+                def_arg.type = method_arg_type.arg_types[def_arg_index]?
               end
             end
           end
-        when FunPointer
+        when ProcPointer
           next unless arg.args.empty?
 
           check_lib_call_arg(method, index) do |method_arg_type|
@@ -1162,12 +1170,12 @@ module Crystal
       return unless method_arg
 
       method_arg_type = method_arg.type
-      return unless method_arg_type.is_a?(FunInstanceType)
+      return unless method_arg_type.is_a?(ProcInstanceType)
 
       yield method_arg_type
     end
 
-    # Check if it's FunType#new
+    # Check if it's ProcType#new
     def check_special_new_call(node, obj_type)
       return false unless obj_type
       return false unless obj_type.metaclass?
@@ -1176,8 +1184,8 @@ module Crystal
 
       if node.name == "new"
         case instance_type
-        when FunInstanceType
-          return special_fun_type_new_call(node, instance_type)
+        when ProcInstanceType
+          return special_proc_type_new_call(node, instance_type)
         when CStructOrUnionType
           if named_args = node.named_args
             return special_struct_or_union_new_with_named_args(node, instance_type, named_args)
@@ -1188,7 +1196,7 @@ module Crystal
       false
     end
 
-    def special_fun_type_new_call(node, fun_type)
+    def special_proc_type_new_call(node, proc_type)
       if node.args.size != 0
         return false
       end
@@ -1198,27 +1206,27 @@ module Crystal
         return false
       end
 
-      if block.args.size > fun_type.fun_types.size - 1
-        node.wrong_number_of "block arguments", "#{fun_type}#new", block.args.size, fun_type.fun_types.size - 1
+      if block.args.size > proc_type.arg_types.size
+        node.wrong_number_of "block arguments", "#{proc_type}#new", block.args.size, proc_type.arg_types.size
       end
 
       # We create a ->(...) { } from the block
-      fun_args = fun_type.arg_types.map_with_index do |arg_type, index|
+      proc_args = proc_type.arg_types.map_with_index do |arg_type, index|
         block_arg = block.args[index]?
         Arg.new(block_arg.try(&.name) || @mod.new_temp_var_name, type: arg_type)
       end
 
-      expected_return_type = fun_type.return_type
+      expected_return_type = proc_type.return_type
       expected_return_type = @mod.nil if expected_return_type.void?
 
-      fun_def = Def.new("->", fun_args, block.body)
-      fun_literal = FunLiteral.new(fun_def).at(node.location)
-      fun_literal.expected_return_type = expected_return_type
-      fun_literal.force_nil = true if expected_return_type.nil_type?
-      fun_literal.accept self
+      proc_def = Def.new("->", proc_args, block.body)
+      proc_literal = ProcLiteral.new(proc_def).at(node.location)
+      proc_literal.expected_return_type = expected_return_type
+      proc_literal.force_nil = true if expected_return_type.nil_type?
+      proc_literal.accept self
 
-      node.bind_to fun_literal
-      node.expanded = fun_literal
+      node.bind_to proc_literal
+      node.expanded = proc_literal
 
       true
     end
@@ -1693,6 +1701,16 @@ module Crystal
 
     def visit(node : While)
       old_while_vars = @while_vars
+
+      before_cond_vars_copy = @vars.dup
+
+      @vars.each do |name, var|
+        before_var = MetaVar.new(name)
+        before_var.bind_to(var)
+        before_var.nil_if_read = var.nil_if_read
+        @vars[name] = before_var
+      end
+
       before_cond_vars = @vars.dup
 
       request_type_filters do
@@ -1713,7 +1731,7 @@ module Crystal
       node.body.accept self
 
       endless_while = node.cond.true_literal?
-      merge_while_vars node.cond, endless_while, before_cond_vars, after_cond_vars, @vars, node.break_vars
+      merge_while_vars node.cond, endless_while, before_cond_vars_copy, before_cond_vars, after_cond_vars, @vars, node.break_vars
 
       @while_stack.pop
       @block = old_block
@@ -1732,7 +1750,7 @@ module Crystal
     end
 
     # Here we assign the types of variables after a while.
-    def merge_while_vars(cond, endless, before_cond_vars, after_cond_vars, while_vars, all_break_vars)
+    def merge_while_vars(cond, endless, before_cond_vars_copy, before_cond_vars, after_cond_vars, while_vars, all_break_vars)
       after_while_vars = MetaVars.new
 
       cond_var = get_while_cond_assign_target(cond)
@@ -1751,7 +1769,6 @@ module Crystal
           # If there was a previous variable, we use that type merged
           # with the last type inside the while.
         elsif before_cond_var
-          before_cond_var.bind_to(while_var)
           after_while_var = MetaVar.new(name)
 
           # If the loop is endless
@@ -1759,11 +1776,18 @@ module Crystal
             after_while_var.bind_to(while_var)
             after_while_var.nil_if_read = while_var.nil_if_read
           else
-            after_while_var.bind_to(before_cond_var)
+            # We need to bind to the variable *before* the condition, even
+            # after before the variables that are used in the condition
+            # `before_cond_vars` are modified in the while body
+            after_while_var.bind_to(before_cond_vars_copy[name])
             after_while_var.bind_to(while_var)
             after_while_var.nil_if_read = before_cond_var.nil_if_read || while_var.nil_if_read
           end
           after_while_vars[name] = after_while_var
+
+          # We must also bind the variable before the condition, because
+          # its type now must also include the type at the exit of the while
+          before_cond_var.bind_to(while_var)
 
           # Otherwise, it's a new variable inside the while: used
           # outside it must be nilable, unless the loop is endless.
@@ -1956,8 +1980,8 @@ module Crystal
         node.type = mod.string
       when "class"
         node.type = scope.metaclass
-      when "fun_call"
-        # Nothing to do
+      when "proc_call"
+        node.type = scope.as(ProcInstanceType).return_type
       when "pointer_diff"
         node.type = mod.int64
       when "class_name"
@@ -2001,7 +2025,7 @@ module Crystal
         when "to_u64"                then mod.uint64
         when "to_f", "to_f64"        then mod.float64
         when "to_f32"                then mod.float32
-        when "chr"                   then mod.char
+        when "unsafe_chr", "chr"     then mod.char # TODO: remove "chr" after 0.18.0
         else
           raise "Bug: unknown cast operator #{typed_def.name}"
         end
@@ -2015,6 +2039,8 @@ module Crystal
         node.raise "can't create instance of generic class #{instance_type} without specifying its type vars"
       when UnionType
         node.raise "can't create instance of a union type"
+      when PointerInstanceType
+        node.raise "can't create instance of a pointer type"
       end
 
       if !instance_type.virtual? && instance_type.abstract?
@@ -2164,12 +2190,38 @@ module Crystal
       false
     end
 
-    def end_visit(node : SizeOf)
+    def visit(node : SizeOf)
+      @in_type_args += 1
+      node.exp.accept self
+      @in_type_args -= 1
+
+      # Try to resolve the sizeof right now to a number literal
+      # (useful for sizeof inside as a generic type argument, but also
+      # to make it easier for LLVM to optimize things)
+      if (type = node.exp.type?) && !node.exp.is_a?(TypeOf)
+        expanded = NumberLiteral.new(@mod.size_of(type))
+        expanded.type = @mod.int32
+        node.expanded = expanded
+      end
       node.type = @mod.int32
+      false
     end
 
-    def end_visit(node : InstanceSizeOf)
+    def visit(node : InstanceSizeOf)
+      @in_type_args += 1
+      node.exp.accept self
+      @in_type_args -= 1
+
+      # Try to resolve the instance_sizeof right now to a number literal
+      # (useful for sizeof inside as a generic type argument, but also
+      # to make it easier for LLVM to optimize things)
+      if (type = node.exp.type?) && type.instance_type.class? && !node.exp.is_a?(TypeOf)
+        expanded = NumberLiteral.new(@mod.instance_size_of(type))
+        expanded.type = @mod.int32
+        node.expanded = expanded
+      end
       node.type = @mod.int32
+      false
     end
 
     def visit(node : Rescue)
@@ -2188,6 +2240,7 @@ module Crystal
         var = @vars[node_name] = new_meta_var(node_name)
         meta_var = (@meta_vars[node_name] ||= new_meta_var(node_name))
         meta_var.bind_to(var)
+        meta_var.assigned_to = true
 
         if types
           unified_type = @mod.type_merge(types).not_nil!
@@ -2606,7 +2659,7 @@ module Crystal
         # If the contexts are not the same, it might be that we are in a block
         # inside a method, or a block inside another block. We don't want
         # those cases to closure a variable. So if any context is a block
-        # we go to the block's context (a def or a fun literal) and compare
+        # we go to the block's context (a def or a proc literal) and compare
         # if those are the same to determine whether the variable is closured.
         context = context.context if context.is_a?(Block)
         var_context = var_context.context if var_context.is_a?(Block)
@@ -2615,7 +2668,7 @@ module Crystal
         if closured
           var.closured = true
 
-          # Go up and mark fun literal defs as closured until we get
+          # Go up and mark proc literal defs as closured until we get
           # to the context where the variable is defined
           visitor = self
           while visitor
@@ -2640,7 +2693,7 @@ module Crystal
 
       context.self_closured = true
 
-      # Go up and mark fun literal defs as closured until the top
+      # Go up and mark proc literal defs as closured until the top
       # (which should be when we leave the top Def)
       visitor = self
       while visitor

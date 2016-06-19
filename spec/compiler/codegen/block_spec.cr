@@ -721,26 +721,6 @@ describe "Code gen: block" do
     ")
   end
 
-  it "allows yields with less arguments than in block" do
-    run("
-      struct Nil
-        def to_i
-          0
-        end
-      end
-
-      def foo
-        yield 1
-      end
-
-      a = 0
-      foo do |x, y|
-        a += x + y.to_i
-      end
-      a
-      ").to_i.should eq(1)
-  end
-
   it "codegens block with nilable type with return (1)" do
     run("
       def foo
@@ -1355,5 +1335,98 @@ describe "Code gen: block" do
       end
       a
       )).to_i.should eq(4)
+  end
+
+  it "yields splat" do
+    run(%(
+      def foo
+        tup = {1, 2, 3}
+        yield *tup
+      end
+
+      foo do |x, y, z|
+        x + y + z
+      end
+      )).to_i.should eq(6)
+  end
+
+  it "yields more exps than block arg, through splat" do
+    run(%(
+      def foo
+        yield *{1, 2}
+      end
+
+      foo do |x|
+        x
+      end
+      )).to_i.should eq(1)
+  end
+
+  it "uses splat in block argument" do
+    run(%(
+      def foo
+        yield 1, 2, 3
+      end
+
+      foo do |*args|
+        args[0] + args[1] + args[2]
+      end
+      )).to_i.should eq(6)
+  end
+
+  it "uses splat in block argument, many args" do
+    run(%(
+      def foo
+        yield 1, 2, 3, 4, 5, 6
+      end
+
+      foo do |x, y, *z, w|
+        ((((x + y) * z[0]) - z[1]) * z[2]) - w
+      end
+      )).to_i.should eq(((((1 + 2) * 3) - 4) * 5) - 6)
+  end
+
+  it "uses block splat argument with union types" do
+    run(%(
+      def foo
+        yield 1
+        yield 2.5
+      end
+
+      total = 0
+      foo do |*args|
+        total += args[0].to_i
+      end
+      total
+      )).to_i.should eq(3)
+  end
+
+  it "auto-unpacks tuple" do
+    run(%(
+      def foo
+        tup = {1, 2, 4}
+        yield tup
+      end
+
+      foo do |x, y, z|
+        (x + y) * z
+      end
+      )).to_i.should eq((1 + 2) * 4)
+  end
+
+  it "unpacks tuple but doesn't override local variables" do
+    run(%(
+      def foo
+        yield({10, 20}, {30, 40})
+      end
+
+      x = 1
+      y = 2
+      z = 3
+      w = 4
+      foo do |(x, y), (z, w)|
+      end
+      x + y + z + w
+      )).to_i.should eq(10)
   end
 end

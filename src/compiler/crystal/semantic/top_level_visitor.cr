@@ -62,7 +62,7 @@ module Crystal
       @process_types > 0 ? super : false
     end
 
-    def visit(node : Fun)
+    def visit(node : ProcNotation)
       @process_types > 0 ? super : false
     end
 
@@ -202,6 +202,7 @@ module Crystal
         created_new_type = true
         if type_vars = node.type_vars
           type = GenericClassType.new @mod, scope, name, superclass, type_vars, false
+          type.splat_index = node.splat_index
         else
           type = NonGenericClassType.new @mod, scope, name, superclass, false
         end
@@ -253,6 +254,7 @@ module Crystal
       else
         if type_vars = node.type_vars
           type = GenericModuleType.new @mod, scope, name, type_vars
+          type.splat_index = node.splat_index
         else
           type = NonGenericModuleType.new @mod, scope, name
         end
@@ -554,47 +556,11 @@ module Crystal
 
       pushing_type(enum_type) do
         counter = is_flags ? 1 : 0
-        node.members.each do |member|
-          case member
-          when Arg
-            if existed
-              node.raise "can't reopen enum and add more constants to it"
-            end
-
-            if default_value = member.default_value
-              counter = interpret_enum_value(default_value, enum_base_type)
-            end
-
-            if default_value.is_a?(Crystal::NumberLiteral)
-              enum_base_kind = enum_base_type.kind
-              if (enum_base_kind == :i32) && (enum_base_kind != default_value.kind)
-                default_value.raise "enum value must be an Int32"
-              end
-            end
-
-            all_value |= counter
-            const_value = NumberLiteral.new(counter, enum_base_type.kind)
-            member.default_value = const_value
-            if enum_type.types.has_key?(member.name)
-              member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
-            end
-
-            define_enum_question_method(enum_type, member, is_flags)
-
-            const_member = enum_type.add_constant member
-            const_member.doc = member.doc
-            check_ditto const_member
-
-            if member_location = member.location
-              const_member.locations << member_location
-            end
-
-            const_value.type = enum_type
-            counter = is_flags ? counter * 2 : counter + 1
-          when Def, Assign, VisibilityModifier
-            member.accept self
-          end
-        end
+        counter, all_value = visit_enum_members(node, node.members, counter, all_value,
+          existed: existed,
+          enum_type: enum_type,
+          enum_base_type: enum_base_type,
+          is_flags: is_flags)
       end
 
       unless existed
@@ -619,6 +585,74 @@ module Crystal
       node.type = mod.nil
 
       false
+    end
+
+    def visit_enum_members(node, members, counter, all_value, **options)
+      members.each do |member|
+        counter, all_value =
+          visit_enum_member(node, member, counter, all_value, **options)
+      end
+      {counter, all_value}
+    end
+
+    def visit_enum_member(node, member, counter, all_value, **options)
+      case member
+      when MacroIf
+        expanded = expand_inline_macro(member, mode: MacroExpansionMode::Enum)
+        visit_enum_member(node, expanded, counter, all_value, **options)
+      when MacroExpression
+        expanded = expand_inline_macro(member, mode: MacroExpansionMode::Enum)
+        visit_enum_member(node, expanded, counter, all_value, **options)
+      when MacroFor
+        expanded = expand_inline_macro(member, mode: MacroExpansionMode::Enum)
+        visit_enum_member(node, expanded, counter, all_value, **options)
+      when Expressions
+        visit_enum_members(node, member.expressions, counter, all_value, **options)
+      when Arg
+        existed = options[:existed]
+        enum_type = options[:enum_type]
+        base_type = options[:enum_base_type]
+        is_flags = options[:is_flags]
+
+        if options[:existed]
+          node.raise "can't reopen enum and add more constants to it"
+        end
+
+        if default_value = member.default_value
+          counter = interpret_enum_value(default_value, base_type)
+        end
+
+        if default_value.is_a?(Crystal::NumberLiteral)
+          enum_base_kind = base_type.kind
+          if (enum_base_kind == :i32) && (enum_base_kind != default_value.kind)
+            default_value.raise "enum value must be an Int32"
+          end
+        end
+
+        all_value |= counter
+        const_value = NumberLiteral.new(counter, base_type.kind)
+        member.default_value = const_value
+        if enum_type.types.has_key?(member.name)
+          member.raise "enum '#{enum_type}' already contains a member named '#{member.name}'"
+        end
+
+        define_enum_question_method(enum_type, member, is_flags)
+
+        const_member = enum_type.add_constant member
+        const_member.doc = member.doc
+        check_ditto const_member
+
+        if member_location = member.location
+          const_member.locations << member_location
+        end
+
+        const_value.type = enum_type
+        counter = is_flags ? counter * 2 : counter + 1
+        {counter, all_value}
+      else
+        member.accept self
+        {counter, all_value}
+      end
     end
 
     def define_enum_question_method(enum_type, member, is_flags)
@@ -668,7 +702,7 @@ module Crystal
       node.raise "can't apply visibility modifier"
     end
 
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       false
     end
 
@@ -905,11 +939,32 @@ module Crystal
           node_name.raise "#{type} is not a generic module"
         end
 
-        if type.type_vars.size != node_name.type_vars.size
+        if !type.splat_index && type.type_vars.size != node_name.type_vars.size
           node_name.wrong_number_of "type vars", type, node_name.type_vars.size, type.type_vars.size
         end
 
-        mapping = Hash.zip(type.type_vars, node_name.type_vars)
+        node_name_type_vars = node_name.type_vars
+
+        if splat_index = type.splat_index
+          new_type_vars = Array(ASTNode).new(node_name_type_vars.size)
+          type_var_index = 0
+          type.type_vars.each_index do |index|
+            if index == splat_index
+              tuple_elements = [] of ASTNode
+              (node_name_type_vars.size - (type.type_vars.size - 1)).times do
+                tuple_elements << node_name_type_vars[type_var_index]
+                type_var_index += 1
+              end
+              new_type_vars << TupleLiteral.new(tuple_elements)
+            else
+              new_type_vars << node_name_type_vars[type_var_index]
+              type_var_index += 1
+            end
+          end
+          node_name_type_vars = new_type_vars
+        end
+
+        mapping = Hash.zip(type.type_vars, node_name_type_vars)
         module_to_include = IncludedGenericModule.new(@mod, type, current_type, mapping)
 
         type.add_inherited(current_type)
@@ -1003,8 +1058,8 @@ module Crystal
       end
 
       def visit(node : MacroIf | MacroFor | MacroExpression)
-        @type_inference.expand_inline_macro(node, mode: MacroExpansionMode::StructOrUnion)
-        node.expanded.not_nil!.accept self
+        expanded = @type_inference.expand_inline_macro(node, mode: MacroExpansionMode::StructOrUnion)
+        expanded.accept self
         false
       end
 

@@ -55,7 +55,7 @@ describe "YAML" do
           bar:
             !!str '<<': *foo
         ))
-        doc.should eq({"foo": {"hello": "world"}, "bar": {"<<": {"hello": "world"}}})
+        doc.should eq({"foo" => {"hello" => "world"}, "bar" => {"<<" => {"hello" => "world"}}})
       end
 
       it "doesn't merge empty mapping" do
@@ -64,7 +64,7 @@ describe "YAML" do
           bar:
             <<: *foo
         ))
-        doc["bar"].should eq({"<<": ""})
+        doc["bar"].should eq({"<<" => ""})
       end
 
       it "doesn't merge arrays" do
@@ -74,7 +74,7 @@ describe "YAML" do
           bar:
             <<: *foo
         ))
-        doc["bar"].should eq({"<<": ["1"]})
+        doc["bar"].should eq({"<<" => ["1"]})
       end
 
       it "has correct line/number info (#2585)" do

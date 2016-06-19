@@ -2,11 +2,11 @@
 
 [![Build Status](https://travis-ci.org/crystal-lang/crystal.svg)](https://travis-ci.org/crystal-lang/crystal)
 [![Bountysource](https://api.bountysource.com/badge/team?team_id=89730&style=raised)](https://www.bountysource.com/teams/crystal-lang/fundraisers/702-crystal-language)
-[![Code Triagers Badge](http://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](http://www.codetriage.com/crystal-lang/crystal)
+[![Code Triagers Badge](https://www.codetriage.com/crystal-lang/crystal/badges/users.svg)](https://www.codetriage.com/crystal-lang/crystal)
 
 ---
 
-![born-and-raised](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)
+[![born-and-raised](https://cloud.githubusercontent.com/assets/209371/13291809/022e2360-daf8-11e5-8be7-d02c1c8b38fb.png)](http://www.manas.com.ar)
 
 Crystal is a programming language with the following goals:
 
@@ -58,7 +58,7 @@ Both in progress:
 Community
 ---------
 
-Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang), join our IRC channel #crystal-lang at irc.freenode.net, or ask on Stack Overflow under the [crystal-lang](http://stackoverflow.com/questions/tagged/crystal-lang) tag.
+Questions or suggestions? Ask in our [Google Group](https://groups.google.com/forum/?fromgroups#!forum/crystal-lang), join our IRC channel [#crystal-lang](http://webchat.freenode.net/?channels=#crystal-lang) at chat.freenode.net, ask on our [Gitter channel](https://gitter.im/crystal-lang/crystal) or ask on Stack Overflow under the [crystal-lang](http://stackoverflow.com/questions/tagged/crystal-lang) tag.
 
 Contributing
 ---------

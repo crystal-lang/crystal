@@ -70,9 +70,9 @@ describe "type inference: alias" do
     mod = result.program
 
     a = mod.types["Alias"].as(AliasType)
-    aliased_type = a.aliased_type.as(FunInstanceType)
+    aliased_type = a.aliased_type.as(ProcInstanceType)
 
-    aliased_type.should eq(mod.fun_of(a, a))
+    aliased_type.should eq(mod.proc_of(a, a))
   end
 
   it "allows recursive array with alias" do
@@ -224,5 +224,12 @@ describe "type inference: alias" do
       alias Foo = typeof(1)
       ),
       "can't use typeof inside alias declaration"
+  end
+
+  it "can use .class in alias (#2835)" do
+    assert_type(%(
+      alias Foo = Int32.class | String.class
+      Foo
+      )) { union_of(int32.metaclass, string.metaclass).metaclass }
   end
 end

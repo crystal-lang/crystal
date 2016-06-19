@@ -51,7 +51,7 @@ describe "Type inference: splat" do
       a = {1} || {1, 2}
       foo *a
       ),
-      "splatting a union ({Int32, Int32} | {Int32}) is not yet supported"
+      "not yet supported"
   end
 
   it "errors if splatting non-tuple type" do
@@ -415,6 +415,73 @@ describe "Type inference: splat" do
       Tuple(Int32, Char).foo(1, true)
       ),
       "no overload matches"
+  end
+
+  it "method with splat and optional named argument matches zero args call (#2746)" do
+    assert_type(%(
+      def foo(*args, k1 = nil)
+        args
+      end
+
+      foo
+      )) { tuple_of([] of Type) }
+  end
+
+  it "method with default arguments and splat matches call with one arg (#2766)" do
+    assert_type(%(
+      def foo(a = nil, b = nil, *, c = nil)
+        a
+      end
+
+      foo(10)
+      )) { int32 }
+  end
+
+  it "accesses T when empty, via module" do
+    assert_type(%(
+      module Moo(T)
+        def t
+          T
+        end
+      end
+
+      struct Tuple
+        include Moo(Union(*T))
+
+        def self.new(*args)
+          args
+        end
+      end
+
+      Tuple.new.t
+      )) { no_return.metaclass }
+  end
+
+  it "matches splat in geneic type" do
+    assert_type(%(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(A, *B, C))
+        {A, B, C}
+      end
+
+      foo = Foo(Int32, Char, String, Bool).new
+      method(foo)
+      )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
+  end
+
+  it "matches with splat" do
+    assert_type(%(
+    def foo(&block : *{Int32, Int32} -> U)
+      tup = {1, 2}
+      yield *tup
+    end
+
+    foo do |x, y|
+      {x, y}
+    end
+    )) { tuple_of([int32, int32]) }
   end
 
   describe Splat do

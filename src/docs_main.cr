@@ -1,6 +1,6 @@
 # This is the main file used for generating docs for the standard library.
 # It, for example, doesn't include API for the compiler, but does include
-# the ficticious API for the Crystal::Macros module.
+# the fictitious API for the Crystal::Macros module.
 
 require "./big/**"
 require "./compiler/crystal/macros"
@@ -8,13 +8,13 @@ require "./crypto/**"
 require "./csv"
 require "./digest/**"
 require "./ecr"
-require "./event/**"
-require "./fiber/**"
+require "./event"
+require "./fiber"
 require "./gc/**"
 require "./html"
 require "./http/**"
 require "./io/**"
-require "./json/**"
+require "./json"
 require "./llvm/**"
 require "./logger"
 require "./macros"
@@ -31,7 +31,7 @@ require "./string/**"
 require "./thread/**"
 require "./time/**"
 require "./xml/**"
-require "./yaml/**"
+require "./yaml"
 require "./benchmark"
 require "./array"
 require "./bit_array"

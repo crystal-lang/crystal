@@ -262,7 +262,7 @@ describe "Tuple" do
     (tuple1 <=> tuple2).should eq(0)
   end
 
-  it "does <=> with the same begining and different size" do
+  it "does <=> with the same beginning and different size" do
     tuple1 = {1, 2, 3}
     tuple2 = {1, 2}
     (tuple1 <=> tuple2).should eq(1)
@@ -270,7 +270,7 @@ describe "Tuple" do
 
   it "does types" do
     tuple = {1, 'a', "hello"}
-    tuple.types.to_s.should eq("{Int32, Char, String}")
+    tuple.types.to_s.should eq("Tuple(Int32, Char, String)")
   end
 
   it "does ===" do

@@ -74,7 +74,7 @@ describe "Codegen: class var" do
       ").to_i.should eq(1)
   end
 
-  it "accesses class var from fun literal" do
+  it "accesses class var from proc literal" do
     run("
       class Foo
         @@a = 1
@@ -372,5 +372,129 @@ describe "Codegen: class var" do
 
       z
       )).to_i.should eq(10)
+  end
+
+  it "doesn't inherit class var value in subclass" do
+    run(%(
+      class Foo
+        @@var = 1
+
+        def self.var
+          @@var
+        end
+
+        def self.var=(@@var)
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Foo.var = 2
+
+      Bar.var
+      )).to_i.should eq(1)
+  end
+
+  it "doesn't inherit class var value in module" do
+    run(%(
+      module Moo
+        @@var = 1
+
+        def var
+          @@var
+        end
+
+        def self.var=(@@var)
+        end
+      end
+
+      class Foo
+        include Moo
+      end
+
+      Moo.var = 2
+
+      Foo.new.var
+      )).to_i.should eq(1)
+  end
+
+  it "reads class var from virtual type" do
+    run(%(
+      class Foo
+        @@var = 1
+
+        def self.var=(@@var)
+        end
+
+        def self.var
+          @@var
+        end
+
+        def var
+          @@var
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.var = 2
+
+      ptr = Pointer(Foo).malloc(1_u64)
+      ptr.value = Bar.new
+      ptr.value.var
+      )).to_i.should eq(2)
+  end
+
+  it "reads class var from virtual type metaclass" do
+    run(%(
+      class Foo
+        @@var = 1
+
+        def self.var=(@@var)
+        end
+
+        def self.var
+          @@var
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      Bar.var = 2
+
+      ptr = Pointer(Foo.class).malloc(1_u64)
+      ptr.value = Bar
+      ptr.value.var
+      )).to_i.should eq(2)
+  end
+
+  it "writes class var from virtual type" do
+    run(%(
+      class Foo
+        @@var = 1
+
+        def self.var=(@@var)
+        end
+
+        def self.var
+          @@var
+        end
+
+        def var=(@@var)
+        end
+      end
+
+      class Bar < Foo
+      end
+
+      ptr = Pointer(Foo).malloc(1_u64)
+      ptr.value = Bar.new
+      ptr.value.var = 2
+
+      Bar.var
+      )).to_i.should eq(2)
   end
 end

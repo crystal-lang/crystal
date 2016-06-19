@@ -15,7 +15,7 @@ require "c/unistd"
 # these two methods:
 #
 # * `read(slice : Slice(UInt8))`: read at most *slice.size* bytes into *slice* and return the number of bytes read
-# * `write(slice : Slice(UInt8))`: write at most *slice.size* bytes from *slice* and return the number of bytes written
+# * `write(slice : Slice(UInt8))`: write the whole *slice* into the IO
 #
 # For example, this is a simple IO on top of a `Slice(UInt8)`:
 #
@@ -392,22 +392,22 @@ module IO
     return nil unless first
 
     first = first.to_u32
-    return first.chr, 1 if first < 0x80
+    return first.unsafe_chr, 1 if first < 0x80
 
     second = read_utf8_masked_byte
-    return ((first & 0x1f) << 6 | second).chr, 2 if first < 0xe0
+    return ((first & 0x1f) << 6 | second).unsafe_chr, 2 if first < 0xe0
 
     third = read_utf8_masked_byte
-    return ((first & 0x0f) << 12 | (second << 6) | third).chr, 3 if first < 0xf0
+    return ((first & 0x0f) << 12 | (second << 6) | third).unsafe_chr, 3 if first < 0xf0
 
     fourth = read_utf8_masked_byte
-    return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).chr, 4 if first < 0xf8
+    return ((first & 0x07) << 18 | (second << 12) | (third << 6) | fourth).unsafe_chr, 4 if first < 0xf8
 
-    raise InvalidByteSequenceError.new
+    raise InvalidByteSequenceError.new("Unexpected byte 0x#{first.to_s(16)} in UTF-8 byte sequence")
   end
 
   private def read_utf8_masked_byte
-    byte = read_utf8_byte || raise "Incomplete UTF-8 byte sequence"
+    byte = read_utf8_byte || raise InvalidByteSequenceError.new("Incomplete UTF-8 byte sequence")
     (byte & 0x3f).to_u32
   end
 
@@ -628,7 +628,7 @@ module IO
 
     # One byte: use gets(Char)
     if delimiter.bytesize == 1
-      return gets(delimiter.unsafe_byte_at(0).chr)
+      return gets(delimiter.unsafe_byte_at(0).unsafe_chr)
     end
 
     # One char: use gets(Char)
@@ -657,8 +657,8 @@ module IO
   end
 
   # Same as `gets`, but raises `EOFError` if called at the end of this IO.
-  def read_line(*args) : String?
-    gets(*args) || raise EOFError.new
+  def read_line(*args, **options) : String?
+    gets(*args, **options) || raise EOFError.new
   end
 
   # Reads and discards *bytes_count* bytes.
@@ -754,8 +754,8 @@ module IO
   # olleh
   # dlrow
   # ```
-  def each_line(*args)
-    while line = gets(*args)
+  def each_line(*args, **options)
+    while line = gets(*args, **options)
       yield line
     end
   end
@@ -770,8 +770,8 @@ module IO
   # iter.next # => "hello\n"
   # iter.next # => "world"
   # ```
-  def each_line(*args)
-    LineIterator.new(self, args)
+  def each_line(*args, **options)
+    LineIterator.new(self, args, **options)
   end
 
   # Inovkes the given block with each `Char` in this IO.

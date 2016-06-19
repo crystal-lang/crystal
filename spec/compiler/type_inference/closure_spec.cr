@@ -1,11 +1,11 @@
 require "../../spec_helper"
 
 describe "Type inference: closure" do
-  it "gives error when doing yield inside fun literal" do
+  it "gives error when doing yield inside proc literal" do
     assert_error "-> { yield }", "can't use `yield` outside a method"
   end
 
-  it "gives error when doing yield inside fun literal" do
+  it "gives error when doing yield inside proc literal" do
     assert_error "def foo; -> { yield }; end; foo {}", "can't use `yield` inside a proc literal or captured block"
   end
 
@@ -230,7 +230,7 @@ describe "Type inference: closure" do
     call.target_def.self_closured.should be_true
   end
 
-  it "errors if sending closured fun literal to C" do
+  it "errors if sending closured proc literal to C" do
     assert_error %(
       lib LibC
         fun foo(callback : ->)
@@ -242,7 +242,7 @@ describe "Type inference: closure" do
       "can't send closure to C function (closured vars: a)"
   end
 
-  it "errors if sending closured fun pointer to C (1)" do
+  it "errors if sending closured proc pointer to C (1)" do
     assert_error %(
       lib LibC
         fun foo(callback : ->)
@@ -262,7 +262,7 @@ describe "Type inference: closure" do
       "can't send closure to C function (closured vars: self)"
   end
 
-  it "errors if sending closured fun pointer to C (2)" do
+  it "errors if sending closured proc pointer to C (2)" do
     assert_error %(
       lib LibC
         fun foo(callback : ->)
@@ -279,7 +279,7 @@ describe "Type inference: closure" do
       "can't send closure to C function (closured vars: self)"
   end
 
-  it "errors if sending closured fun pointer to C (3)" do
+  it "errors if sending closured proc pointer to C (3)" do
     assert_error %(
       lib LibC
         fun foo(callback : ->)
@@ -300,7 +300,7 @@ describe "Type inference: closure" do
       "can't send closure to C function (closured vars: @a)"
   end
 
-  it "transforms block to fun literal" do
+  it "transforms block to proc literal" do
     assert_type("
       def foo(&block : Int32 -> Float64)
         block.call(1)
@@ -312,7 +312,7 @@ describe "Type inference: closure" do
       ") { float64 }
   end
 
-  it "transforms block to fun literal with void type" do
+  it "transforms block to proc literal with void type" do
     assert_type("
       def foo(&block : Int32 -> )
         block.call(1)
@@ -321,10 +321,10 @@ describe "Type inference: closure" do
       foo do |x|
         x.to_f
       end
-      ") { |mod| mod.nil }
+      ") { nil_type }
   end
 
-  it "errors when transforming block to fun literal if type mismatch" do
+  it "errors when transforming block to proc literal if type mismatch" do
     assert_error "
       def foo(&block : Int32 -> Int32)
         block.call(1)
@@ -337,7 +337,7 @@ describe "Type inference: closure" do
       "expected block to return Int32, not Float64"
   end
 
-  it "transforms block to fun literal with free var" do
+  it "transforms block to proc literal with free var" do
     assert_type("
       def foo(&block : Int32 -> U)
         block.call(1)
@@ -349,7 +349,7 @@ describe "Type inference: closure" do
       ") { float64 }
   end
 
-  it "transforms block to fun literal without arguments" do
+  it "transforms block to proc literal without arguments" do
     assert_type("
       def foo(&block : -> U)
         block.call
@@ -361,7 +361,7 @@ describe "Type inference: closure" do
       ") { float64 }
   end
 
-  it "errors if giving more block args when transforming block to fun literal" do
+  it "errors if giving more block args when transforming block to proc literal" do
     assert_error "
       def foo(&block : -> U)
         block.call
@@ -374,7 +374,7 @@ describe "Type inference: closure" do
       "wrong number of block arguments (given 1, expected 0)"
   end
 
-  it "allows giving less block args when transforming block to fun literal" do
+  it "allows giving less block args when transforming block to proc literal" do
     assert_type("
       def foo(&block : Int32 -> U)
         block.call(1)
@@ -386,7 +386,7 @@ describe "Type inference: closure" do
       ") { float64 }
   end
 
-  it "allows passing block as fun literal to new and to initialize" do
+  it "allows passing block as proc literal to new and to initialize" do
     assert_type("
       class Foo
         def initialize(&block : Int32 -> Float64)
@@ -400,7 +400,7 @@ describe "Type inference: closure" do
 
       foo = Foo.new { |x| x.to_f }
       foo.block
-      ") { fun_of(int32, float64) }
+      ") { proc_of(int32, float64) }
   end
 
   it "errors if forwaring block arg doesn't match input type" do
@@ -440,14 +440,14 @@ describe "Type inference: closure" do
       end
 
       Foo(Int32).new.foo { |x| x.to_f }
-      ") { fun_of(int32, float64) }
+      ") { proc_of(int32, float64) }
   end
 
   it "passes #227" do
     result = assert_type(%(
       ->{ a = 1; ->{ a } }
-      ), inject_primitives: false) { fun_of(fun_of(int32)) }
-    fn = result.node.as(FunLiteral)
+      ), inject_primitives: false) { proc_of(proc_of(int32)) }
+    fn = result.node.as(ProcLiteral)
     fn.def.closure.should be_false
   end
 
@@ -459,8 +459,8 @@ describe "Type inference: closure" do
 
       a = 1
       ->{ ->{ foo { a } } }
-      )) { fun_of(fun_of(int32)) }
-    fn = result.node.as(Expressions).last.as(FunLiteral)
+      )) { proc_of(proc_of(int32)) }
+    fn = result.node.as(Expressions).last.as(ProcLiteral)
     fn.def.closure.should be_true
   end
 
@@ -473,11 +473,11 @@ describe "Type inference: closure" do
       end
 
       Foo.new.foo
-      )) { fun_of(fun_of(types["Foo"])) }
+      )) { proc_of(proc_of(types["Foo"])) }
     call = result.node.as(Expressions).last.as(Call)
     a_def = call.target_def
     a_def.self_closured.should be_true
-    fn = (a_def.body.as(FunLiteral))
+    fn = (a_def.body.as(ProcLiteral))
     fn.def.closure.should be_true
   end
 
@@ -492,7 +492,7 @@ describe "Type inference: closure" do
       end
 
       foo { |x| x + 1 }
-      )) { fun_of(int32, int32) }
+      )) { proc_of(int32, int32) }
   end
 
   it "says can't send closure to C with new notation" do

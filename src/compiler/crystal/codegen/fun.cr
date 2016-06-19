@@ -88,8 +88,8 @@ class Crystal::CodeGenVisitor
         end
 
         if is_closure
-          # In the case of a closure fun literal (-> { ... }), the closure_ptr is not
-          # the one of the parent context, it's the last parameter of this fun literal.
+          # In the case of a closure proc literal (-> { ... }), the closure_ptr is not
+          # the one of the parent context, it's the last parameter of this proc literal.
           closure_parent_context = old_context.clone
           closure_parent_context.closure_ptr = fun_literal_closure_ptr
           context.closure_parent_context = closure_parent_context

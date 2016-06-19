@@ -458,8 +458,32 @@ module Crystal
             char = next_char
             case char
             when '\\'
-              if peek_next_char == '"' || peek_next_char == '\\'
-                io << next_char
+              case char = next_char
+              when 'b'
+                io << "\u{8}"
+              when 'n'
+                io << "\n"
+              when 'r'
+                io << "\r"
+              when 't'
+                io << "\t"
+              when 'v'
+                io << "\v"
+              when 'f'
+                io << "\f"
+              when 'e'
+                io << "\e"
+              when 'u'
+                io << consume_string_unicode_escape
+              when '0', '1', '2', '3', '4', '5', '6', '7'
+                io << consume_octal_escape(char)
+              when '\n'
+                @line_number += 1
+                io << "\n"
+              when '\0'
+                raise "unterminated quoted symbol", line, column
+              else
+                io << char
               end
             when '"'
               break
@@ -572,6 +596,8 @@ module Crystal
           else
             @token.value = char2
           end
+        when '\''
+          raise "invalid empty char literal (did you mean '\\\''?)", line, column
         when '\0'
           raise "unterminated char literal", line, column
         else

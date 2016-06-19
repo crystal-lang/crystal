@@ -7,7 +7,7 @@ module Crystal
     end
 
     def llvm_name(io)
-      to_s io
+      to_s_with_options io, codegen: true
     end
   end
 
@@ -20,21 +20,21 @@ module Crystal
   class AliasType
     def llvm_name(io)
       io << "alias."
-      to_s io
+      to_s_with_options io, codegen: true
     end
   end
 
   class CStructType
     def llvm_name(io)
       io << "struct."
-      to_s io
+      to_s_with_options io, codegen: true
     end
   end
 
   class CUnionType
     def llvm_name(io)
       io << "union."
-      to_s io
+      to_s_with_options io, codegen: true
     end
   end
 

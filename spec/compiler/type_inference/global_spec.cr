@@ -61,7 +61,7 @@ describe "Global inference" do
     assert_type(%(
       $x = nil
       $x
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "infers type from string literal" do
@@ -408,7 +408,7 @@ describe "Global inference" do
       end
 
       $x
-      )) { nilable fun_of(int32, int32) }
+      )) { nilable proc_of(int32, int32) }
   end
 
   it "infers from block argument without restriction" do
@@ -418,7 +418,7 @@ describe "Global inference" do
       end
 
       $x
-      )) { nilable fun_of(void) }
+      )) { nilable proc_of(void) }
   end
 
   it "infers type from !" do
@@ -610,7 +610,7 @@ describe "Global inference" do
       $x : Int32
       $x
       ),
-      "global variable '$x' must be Int32, not Nil"
+      "global variable '$x' is read here before it was initialized, rendering it nilable, but its type is Int32"
   end
 
   it "declares global variable and reads it inside method" do

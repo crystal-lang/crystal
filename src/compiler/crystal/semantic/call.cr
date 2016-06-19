@@ -353,7 +353,7 @@ class Crystal::Call
       use_cache = !block || match.def.block_arg
 
       if block && match.def.block_arg
-        if block_arg_type.is_a?(FunInstanceType)
+        if block_arg_type.is_a?(ProcInstanceType)
           block_type = block_arg_type.return_type
         end
         use_cache = false unless block_type
@@ -484,7 +484,7 @@ class Crystal::Call
       elsif instance_type.size == 0
         raise "index '#{arg}' out of bounds for empty tuple"
       else
-        raise "index out of bounds for tuple #{owner} (#{arg} not in 0..#{instance_type.size - 1})"
+        raise "index out of bounds for #{owner} (#{arg} not in 0..#{instance_type.size - 1})"
       end
     end
     nil
@@ -552,7 +552,7 @@ class Crystal::Call
 
   def replace_block_arg_with_block(block_arg)
     block_arg_type = block_arg.type
-    if block_arg_type.is_a?(FunInstanceType)
+    if block_arg_type.is_a?(ProcInstanceType)
       vars = [] of Var
       args = [] of ASTNode
       block_arg_type.arg_types.map_with_index do |type, i|
@@ -702,14 +702,29 @@ class Crystal::Call
     block_arg_restriction = block_arg.restriction
 
     # If the block spec is &block : A, B, C -> D, we solve the argument types
-    if block_arg_restriction.is_a?(Fun)
+    if block_arg_restriction.is_a?(ProcNotation)
       # If there are input types, solve them and creating the yield vars
       if inputs = block_arg_restriction.inputs
-        yield_vars = inputs.map_with_index do |input, i|
-          arg_type = ident_lookup.lookup_node_type(input)
-          MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
+        yield_vars = Array(Var).new(inputs.size + 1)
+        i = 0
+        inputs.each do |input|
+          if input.is_a?(Splat)
+            tuple_type = ident_lookup.lookup_node_type(input.exp)
+            unless tuple_type.is_a?(TupleInstanceType)
+              input.raise "expected type to be a tuple type, not #{tuple_type}"
+            end
+            tuple_type.tuple_types.each do |arg_type|
+              MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
+              yield_vars << Var.new("var#{i}", arg_type.virtual_type)
+              i += 1
+            end
+          else
+            arg_type = ident_lookup.lookup_node_type(input)
+            MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
 
-          Var.new("var#{i}", arg_type.virtual_type)
+            yield_vars << Var.new("var#{i}", arg_type.virtual_type)
+            i += 1
+          end
         end
       end
       output = block_arg_restriction.output
@@ -717,7 +732,7 @@ class Crystal::Call
       # Otherwise, the block spec could be something like &block : Foo, and that
       # is valid too only if Foo is an alias/typedef that referes to a FunctionType
       block_arg_type = ident_lookup.lookup_node_type(block_arg_restriction).remove_typedef
-      unless block_arg_type.is_a?(FunInstanceType)
+      unless block_arg_type.is_a?(ProcInstanceType)
         block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_type}"
         return nil, nil
       end
@@ -730,9 +745,22 @@ class Crystal::Call
       output_type = mod.nil if output_type.void?
     end
 
-    # Bind block arguments to the yield vars, if any, or to nil otherwise
-    block.args.each_with_index do |arg, i|
-      arg.bind_to(yield_vars.try(&.[i]?) || mod.nil_var)
+    if yield_vars
+      # Check if tuple unpkacing is needed
+      if yield_vars.size == 1 &&
+         (yield_var_type = yield_vars.first.type).is_a?(TupleInstanceType) &&
+         block.args.size > 1
+        yield_var_type.tuple_types.each_with_index do |tuple_type, i|
+          arg = block.args[i]?
+          arg.type = tuple_type if arg
+        end
+      else
+        yield_vars.each_with_index do |yield_var, i|
+          yield_var_type = yield_var.type
+          arg = block.args[i]?
+          arg.bind_to(yield_var || mod.nil_var) if arg
+        end
+      end
     end
 
     # If the block is used, we convert it to a function pointer
@@ -758,14 +786,14 @@ class Crystal::Call
 
       # Check if the call has a block arg (foo &bar). If so, we need to see if the
       # passed block has the same signature as the def's block arg. We use that
-      # same FunLiteral (bar) for this call.
+      # same ProcLiteral (bar) for this call.
       fun_literal = block.fun_literal
       unless fun_literal
         if call_block_arg = self.block_arg
           check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
           fun_literal = call_block_arg
         else
-          # Otherwise, we create a FunLiteral and type it
+          # Otherwise, we create a ProcLiteral and type it
           if block.args.size > fun_args.size
             wrong_number_of "block arguments", block.args.size, fun_args.size
           end
@@ -773,7 +801,7 @@ class Crystal::Call
           a_def = Def.new("->", fun_args, block.body)
           a_def.captured_block = true
 
-          fun_literal = FunLiteral.new(a_def).at(self)
+          fun_literal = ProcLiteral.new(a_def).at(self)
           fun_literal.expected_return_type = output_type if output_type
           fun_literal.force_nil = true unless output
           fun_literal.accept parent_visitor
@@ -781,12 +809,12 @@ class Crystal::Call
         block.fun_literal = fun_literal
       end
 
-      # Now check if the FunLiteral's type (the block's type) matches the block arg specification.
+      # Now check if the ProcLiteral's type (the block's type) matches the block arg specification.
       # If not, we delay it for later and compute the type based on the block arg return type, if any.
       fun_literal_type = fun_literal.type?
       if fun_literal_type
         block_arg_type = fun_literal_type
-        block_type = fun_literal_type.as(FunInstanceType).return_type
+        block_type = fun_literal_type.as(ProcInstanceType).return_type
         if output
           matched = MatchesLookup.match_arg(block_type, output, match.context)
           if !matched && !void_return_type?(match.context, output)
@@ -794,7 +822,7 @@ class Crystal::Call
               block_type = ident_lookup.lookup_node_type(output).virtual_type
               block.type = output_type || block_type
               block.freeze_type = output_type || block_type
-              block_arg_type = mod.fun_of(fun_args, block_type)
+              block_arg_type = mod.proc_of(fun_args, block_type)
             else
               raise "expected block to return #{output}, not #{block_type}"
             end
@@ -811,14 +839,14 @@ class Crystal::Call
             output_type = mod.nil if output_type.void?
             block.type = output_type
             block.freeze_type = output_type
-            block_arg_type = mod.fun_of(fun_args, output_type)
+            block_arg_type = mod.proc_of(fun_args, output_type)
           else
             cant_infer_block_return_type
           end
         else
           block.body.type = mod.void
           block.type = mod.void
-          block_arg_type = mod.fun_of(fun_args, mod.void)
+          block_arg_type = mod.proc_of(fun_args, mod.void)
         end
       end
 
@@ -876,7 +904,7 @@ class Crystal::Call
   end
 
   private def check_call_block_arg_matches_def_block_arg(call_block_arg, yield_vars)
-    call_block_arg_types = call_block_arg.type.as(FunInstanceType).arg_types
+    call_block_arg_types = call_block_arg.type.as(ProcInstanceType).arg_types
     if yield_vars
       if yield_vars.size != call_block_arg_types.size
         wrong_number_of "block argument's arguments", call_block_arg_types.size, yield_vars.size
@@ -986,6 +1014,8 @@ class Crystal::Call
   end
 
   def prepare_typed_def_with_args(untyped_def, owner, self_type, arg_types, block_arg_type, named_args_types)
+    original_untyped_def = untyped_def
+
     # If there's an argument count mismatch, or we have a splat, or a double splat, or there are
     # named arguments, we create another def that sets ups everything for the real call.
     if arg_types.size != untyped_def.args.size || untyped_def.splat_index || named_args_types || untyped_def.double_splat
@@ -1000,6 +1030,10 @@ class Crystal::Call
       else
         untyped_def = untyped_def.expand_default_arguments(mod, arg_types.size, named_args_names)
       end
+
+      # This is the case of Proc#call(*args), but could be applied to any primitive really
+      body = original_untyped_def.body
+      untyped_def.body = body.clone if body.is_a?(Primitive)
     end
 
     args_start_index = 0
@@ -1018,7 +1052,7 @@ class Crystal::Call
       args["self"] = MetaVar.new("self", self_type)
     end
 
-    strict_check = body.is_a?(Primitive) && body.name == "fun_call"
+    strict_check = body.is_a?(Primitive) && body.name == "proc_call"
 
     arg_types.each_index do |index|
       arg = typed_def.args[index]
@@ -1028,8 +1062,10 @@ class Crystal::Call
       args[arg.name] = var
 
       if strict_check
-        unless type.covariant?(arg.type)
-          self.args[index].raise "type must be #{arg.type}, not #{type}"
+        owner = owner.as(ProcInstanceType)
+        proc_arg_type = owner.arg_types[index]
+        unless type.covariant?(proc_arg_type)
+          self.args[index].raise "type must be #{proc_arg_type}, not #{type}"
         end
       end
 

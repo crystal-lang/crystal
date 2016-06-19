@@ -60,6 +60,20 @@ struct Int
   alias Unsigned = UInt8 | UInt16 | UInt32 | UInt64
   alias Primitive = Signed | Unsigned
 
+  # Returns a `Char` that has the unicode codepoint of *self*.
+  #
+  # Raises `ArgumentError` if this integer's value doesn't fit a char's range (`0..0x10ffff`).
+  #
+  # ```
+  # 97.chr # => 'a'
+  # ```
+  def chr
+    unless 0 <= self <= Char::MAX_CODEPOINT
+      raise ArgumentError.new("#{self} out of char range")
+    end
+    unsafe_chr
+  end
+
   def ~
     self ^ -1
   end

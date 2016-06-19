@@ -26,7 +26,7 @@ module Crystal
       false
     end
 
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       node.def.body.accept self
       unless node.def.type?
         node.def.type = @mod.no_return
@@ -34,16 +34,16 @@ module Crystal
       false
     end
 
-    def visit(node : FunPointer)
+    def visit(node : ProcPointer)
       node.call?.try &.accept self
       false
     end
 
-    def end_visit(node : FunPointer)
+    def end_visit(node : ProcPointer)
       if !node.type? && node.call?
         arg_types = node.call.args.map &.type
         arg_types.push @mod.no_return
-        node.type = node.call.type = @mod.fun_of(arg_types)
+        node.type = node.call.type = @mod.proc_of(arg_types)
       end
     end
 

@@ -88,13 +88,13 @@ end
 #
 # ```
 # a = 1
-# pp a # prints "a = 1"
+# pp a # prints "a # => 1"
 #
-# pp [1, 2, 3].map(&.to_s) # prints "[1, 2, 3].map(&.to_s) = ["1", "2", "3"]"
+# pp [1, 2, 3].map(&.to_s) # prints "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
 # ```
 macro pp(*exps)
   {% for exp in exps %}
-    ::puts "#{ {{exp.stringify}} } = #{ ({{exp}}).inspect }"
+    ::puts "#{ {{exp.stringify}} } # => #{ ({{exp}}).inspect }"
   {% end %}
 end
 

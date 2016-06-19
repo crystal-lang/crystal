@@ -99,6 +99,8 @@ class Crystal::Command
       puts USAGE
       exit
     end
+  rescue ex : Crystal::ToolException
+    error ex.message
   rescue ex : Crystal::Exception
     ex.color = @color
     if @config.try(&.output_format) == "json"
@@ -174,9 +176,9 @@ class Crystal::Command
     end
 
     vars = {
-      "CRYSTAL_CACHE_DIR": CacheDir.instance.dir,
-      "CRYSTAL_PATH":      CrystalPath.default_path,
-      "CRYSTAL_VERSION":   Config.version || "",
+      "CRYSTAL_CACHE_DIR" => CacheDir.instance.dir,
+      "CRYSTAL_PATH"      => CrystalPath.default_path,
+      "CRYSTAL_VERSION"   => Config.version || "",
     }
 
     if ARGV.empty?
@@ -390,7 +392,7 @@ class Crystal::Command
 
       opts.on("-h", "--help", "Show this message") do
         puts opts
-        exit 1
+        exit
       end
 
       opts.unknown_args do |before, after|
@@ -483,8 +485,8 @@ class Crystal::Command
 
       unless no_codegen
         unless run
-          opts.on("--cross-compile flags", "cross-compile") do |cross_compile|
-            compiler.cross_compile_flags = cross_compile
+          opts.on("--cross-compile", "cross-compile") do |cross_compile|
+            compiler.cross_compile = true
           end
         end
         opts.on("-d", "--debug", "Add symbolic debug info") do
@@ -520,7 +522,7 @@ class Crystal::Command
 
       opts.on("-h", "--help", "Show this message") do
         puts opts
-        exit 1
+        exit
       end
 
       unless no_codegen

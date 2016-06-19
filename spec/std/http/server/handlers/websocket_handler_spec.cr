@@ -22,9 +22,9 @@ describe HTTP::WebSocketHandler do
     it "gives upgrade response for websocket upgrade request with '{{connection.id}}' request" do
       io = MemoryIO.new
       headers = HTTP::Headers{
-        "Upgrade":           "websocket",
-        "Connection":        {{connection}},
-        "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ==",
+        "Upgrade" =>           "websocket",
+        "Connection" =>        {{connection}},
+        "Sec-WebSocket-Key" => "dGhlIHNhbXBsZSBub25jZQ==",
       }
       request = HTTP::Request.new("GET", "/", headers: headers)
       response = HTTP::Server::Response.new(io)

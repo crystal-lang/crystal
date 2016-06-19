@@ -29,7 +29,7 @@ describe "Type inference: class var" do
 
       Foo.x
       ),
-      "class variable '@@x' of Foo must be Int32, not Nil"
+      "class variable '@@x' of Foo is read here before it was initialized, rendering it nilable, but its type is Int32"
   end
   it "types class var" do
     assert_type("
@@ -72,7 +72,7 @@ describe "Type inference: class var" do
       ") { int32 }
   end
 
-  it "types class var inside fun literal inside class" do
+  it "types class var inside proc literal inside class" do
     assert_type("
       class Foo
         @@foo = 1
@@ -341,5 +341,80 @@ describe "Type inference: class var" do
       end
       ),
       "can't use Int as the type of a class variable yet, use a more specific type"
+  end
+
+  it "can find class var in subclass" do
+    assert_type(%(
+      class Foo
+        @@var = 1
+      end
+
+      class Bar < Foo
+        def self.var
+          @@var
+        end
+      end
+
+      Bar.var
+      )) { int32 }
+  end
+
+  it "can find class var through included module" do
+    assert_type(%(
+      module Moo
+        @@var = 1
+      end
+
+      class Bar
+        include Moo
+
+        def self.var
+          @@var
+        end
+      end
+
+      Bar.var
+      )) { int32 }
+  end
+
+  it "errors if redefining class var type in subclass" do
+    assert_error %(
+      class Foo
+        @@x : Int32
+      end
+
+      class Bar < Foo
+        @@x : Float64
+      end
+      ),
+      "class variable '@@x' of Bar is already defined as Int32 in Foo"
+  end
+
+  it "errors if redefining class var type in subclass, with guess" do
+    assert_error %(
+      class Foo
+        @@x = 1
+      end
+
+      class Bar < Foo
+        @@x = 'a'
+      end
+      ),
+      "class variable '@@x' of Bar is already defined as Int32 in Foo"
+  end
+
+  it "errors if redefining class var type in included module" do
+    assert_error %(
+      module Moo
+        @@x : Int32
+      end
+
+      class Bar
+        include Moo
+
+        @@x : Float64
+      end
+      ),
+      "class variable '@@x' of Bar is already defined as Int32 in Moo"
   end
 end

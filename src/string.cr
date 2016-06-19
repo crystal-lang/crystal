@@ -483,7 +483,7 @@ class String
 
     # Skip leading whitespace
     if whitespace
-      while ptr.value.chr.whitespace?
+      while ptr.value.unsafe_chr.whitespace?
         ptr += 1
       end
     end
@@ -493,7 +493,7 @@ class String
     mul_overflow = ~0_u64 / base
 
     # Check + and -
-    case ptr.value.chr
+    case ptr.value.unsafe_chr
     when '+'
       ptr += 1
     when '-'
@@ -502,11 +502,11 @@ class String
     end
 
     # Check leading zero
-    if ptr.value.chr == '0'
+    if ptr.value.unsafe_chr == '0'
       ptr += 1
 
       if prefix
-        case ptr.value.chr
+        case ptr.value.unsafe_chr
         when 'b'
           base = 2
           ptr += 1
@@ -528,7 +528,7 @@ class String
 
     digits = (base == 62 ? CHAR_TO_DIGIT62 : CHAR_TO_DIGIT).to_unsafe
     while ptr.value != 0
-      if ptr.value.chr == '_' && underscore
+      if ptr.value.unsafe_chr == '_' && underscore
         break if last_is_underscore
         last_is_underscore = true
         ptr += 1
@@ -562,7 +562,7 @@ class String
     if found_digit
       unless ptr.value == 0
         if whitespace
-          while ptr.value.chr.whitespace?
+          while ptr.value.unsafe_chr.whitespace?
             ptr += 1
           end
         end
@@ -685,6 +685,8 @@ class String
       return "" if count == 0
 
       count = end_pos - start_pos
+      return self if count == bytesize
+
       String.new(count) do |buffer|
         buffer.copy_from(to_unsafe + start_pos, count)
         {count, 0}
@@ -730,13 +732,13 @@ class String
   end
 
   def at(index : Int)
-    at(index) { raise IndexError }
+    at(index) { raise IndexError.new }
   end
 
   def at(index : Int)
     if single_byte_optimizable?
       byte = byte_at?(index)
-      return byte ? byte.chr : yield
+      return byte ? byte.unsafe_chr : yield
     end
 
     index += size if index < 0
@@ -759,6 +761,7 @@ class String
 
       count = bytesize - start if start + count > bytesize
       return "" if count == 0
+      return self if count == bytesize
 
       String.new(count) do |buffer|
         buffer.copy_from(to_unsafe + start, count)
@@ -1104,7 +1107,7 @@ class String
 
   private def calc_excess_right
     excess_right = 0
-    while to_unsafe[bytesize - 1 - excess_right].chr.whitespace?
+    while to_unsafe[bytesize - 1 - excess_right].unsafe_chr.whitespace?
       excess_right += 1
     end
     excess_right
@@ -1112,7 +1115,7 @@ class String
 
   private def calc_excess_left
     excess_left = 0
-    while to_unsafe[excess_left].chr.whitespace?
+    while to_unsafe[excess_left].unsafe_chr.whitespace?
       excess_left += 1
     end
     excess_left
@@ -1151,7 +1154,7 @@ class String
       each_char do |ch|
         if ch.ord < 256
           if (a = table[ch.ord]) >= 0
-            buffer << a.chr
+            buffer << a.unsafe_chr
           else
             buffer << ch
           end
@@ -1378,7 +1381,7 @@ class String
 
     while index = replacement.byte_index('\\'.ord.to_u8, index)
       index += 1
-      chr = replacement.to_unsafe[index].chr
+      chr = replacement.to_unsafe[index].unsafe_chr
       case chr
       when '\\'
         buffer.write(replacement.unsafe_byte_slice(first_index, index - first_index))
@@ -1391,7 +1394,7 @@ class String
         first_index = index
       when 'k'
         index += 1
-        chr = replacement.to_unsafe[index].chr
+        chr = replacement.to_unsafe[index].unsafe_chr
         next unless chr == '<'
 
         buffer.write(replacement.unsafe_byte_slice(first_index, index - 2 - first_index))
@@ -2088,7 +2091,7 @@ class String
         while i < bytesize
           c = to_unsafe[i]
           i += 1
-          if c.chr.whitespace?
+          if c.unsafe_chr.whitespace?
             piece_bytesize = i - 1 - index
             piece_size = single_byte_optimizable ? piece_bytesize : 0
             ary.push String.new(to_unsafe + index, piece_bytesize, piece_size)
@@ -2105,7 +2108,7 @@ class String
         while i < bytesize
           c = to_unsafe[i]
           i += 1
-          unless c.chr.whitespace?
+          unless c.unsafe_chr.whitespace?
             index = i - 1
             looking_for_space = true
             break
@@ -2636,7 +2639,7 @@ class String
   def each_char
     if single_byte_optimizable?
       each_byte do |byte|
-        yield byte.chr
+        yield byte.unsafe_chr
       end
     else
       Char::Reader.new(self).each do |char|

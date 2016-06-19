@@ -298,7 +298,7 @@ module Crystal
       nil
     end
 
-    def restrict(other : Fun, context)
+    def restrict(other : ProcNotation, context)
       nil
     end
 
@@ -370,7 +370,7 @@ module Crystal
       restrict_type_or_fun_or_generic other, context
     end
 
-    def restrict(other : Fun, context)
+    def restrict(other : ProcNotation, context)
       restrict_type_or_fun_or_generic other, context
     end
 
@@ -416,6 +416,48 @@ module Crystal
         end
         # We match named tuples in NamedTupleInstanceType
         return nil
+      end
+
+      # Consider the case of a splat in the type vars
+      splat_index = other.type_vars.index &.is_a?(Splat)
+      if splat_index
+        types = Array(Type).new(type_vars.size)
+        i = 0
+        type_vars.each_value do |var|
+          return nil unless var.is_a?(Var)
+
+          var_type = var.type
+          if i == self.splat_index
+            types.concat(var_type.as(TupleInstanceType).tuple_types)
+          else
+            types << var_type
+          end
+          i += 1
+        end
+
+        i = 0
+        other.type_vars.each do |type_var|
+          if type_var.is_a?(Splat)
+            count = types.size - (other.type_vars.size - 1)
+            return nil unless count >= 0
+
+            arg_types = types[i, count]
+            arg_types_tuple = context.type_lookup.program.tuple_of(arg_types)
+
+            restricted = arg_types_tuple.restrict(type_var.exp, context)
+            return nil unless restricted == arg_types_tuple
+
+            i += count
+          else
+            arg_type = types[i]
+            restricted = arg_type.restrict(type_var, context)
+            return unless restricted == arg_type
+
+            i += 1
+          end
+        end
+
+        return self
       end
 
       if generic_class.type_vars.size != other.type_vars.size
@@ -725,23 +767,48 @@ module Crystal
     end
   end
 
-  class FunInstanceType
-    def restrict(other : Fun, context)
+  class ProcInstanceType
+    def restrict(other : ProcNotation, context)
       inputs = other.inputs
-      inputs_len = inputs ? inputs.size : 0
+      inputs_size = inputs ? inputs.size : 0
       output = other.output
 
-      return nil if fun_types.size != inputs_len + 1
+      # Consider the case of a splat in the type vars
+      if inputs && (splat_index = inputs.index &.is_a?(Splat))
+        i = 0
+        inputs.each do |input|
+          if input.is_a?(Splat)
+            count = arg_types.size - (inputs.size - 1)
+            return nil unless count >= 0
 
-      if inputs
-        inputs.zip(fun_types) do |input, my_input|
-          restricted = my_input.restrict(input, context)
-          return nil unless restricted == my_input
+            input_arg_types = arg_types[i, count]
+            input_arg_types_tuple = context.type_lookup.program.tuple_of(input_arg_types)
+
+            restricted = input_arg_types_tuple.restrict(input.exp, context)
+            return nil unless restricted == input_arg_types_tuple
+
+            i += count
+          else
+            arg_type = arg_types[i]
+            restricted = arg_type.restrict(input, context)
+            return unless restricted == arg_type
+
+            i += 1
+          end
+        end
+      else
+        return nil if arg_types.size != inputs_size
+
+        if inputs
+          inputs.zip(arg_types) do |input, my_input|
+            restricted = my_input.restrict(input, context)
+            return nil unless restricted == my_input
+          end
         end
       end
 
       if output
-        my_output = fun_types.last
+        my_output = self.return_type
         if my_output.no_return?
           # Ok, NoReturn can be "cast" to anything
         else
@@ -751,38 +818,65 @@ module Crystal
 
         self
       else
-        program.fun_of(arg_types + [program.void])
+        program.proc_of(arg_types + [program.void])
       end
     end
 
-    def restrict(other : FunInstanceType, context)
+    def restrict(other : ProcInstanceType, context)
       compatible_with?(other) ? other : nil
     end
 
     def restrict(other : Generic, context)
       generic_class = context.type_lookup.lookup_type other.name
-      return super unless generic_class.is_a?(FunType)
+      return super unless generic_class.is_a?(ProcType)
 
-      return nil unless other.type_vars.size == fun_types.size
+      # Consider the case of a splat in the type vars
+      splat_index = other.type_vars.index &.is_a?(Splat)
+      if splat_index
+        proc_types = arg_types + [return_type]
 
-      fun_types.each_with_index do |fun_type, i|
-        other_type_var = other.type_vars[i]
-        restricted = fun_type.restrict other_type_var, context
-        return nil unless restricted == fun_type
+        i = 0
+        other.type_vars.each do |type_var|
+          if type_var.is_a?(Splat)
+            count = proc_types.size - (other.type_vars.size - 1)
+            return nil unless count >= 0
+
+            arg_types = proc_types[i, count]
+            arg_types_tuple = context.type_lookup.program.tuple_of(arg_types)
+
+            restricted = arg_types_tuple.restrict(type_var.exp, context)
+            return nil unless restricted == arg_types_tuple
+
+            i += count
+          else
+            arg_type = proc_types[i]
+            restricted = arg_type.restrict(type_var, context)
+            return unless restricted == arg_type
+
+            i += 1
+          end
+        end
+
+        return self
+      end
+
+      unless other.type_vars.size == arg_types.size + 1
+        return nil
+      end
+
+      other.type_vars.each_with_index do |other_type_var, i|
+        proc_type = arg_types[i]? || return_type
+        restricted = proc_type.restrict other_type_var, context
+        return nil unless restricted == proc_type
       end
 
       self
     end
 
-    def compatible_with?(other : FunInstanceType)
-      arg_types = arg_types()
-      return_type = return_type()
-      other_arg_types = other.arg_types
-      other_return_type = other.return_type
-
-      if return_type == other_return_type
+    def compatible_with?(other : ProcInstanceType)
+      if return_type == other.return_type
         # Ok
-      elsif other_return_type.nil_type?
+      elsif other.return_type.nil_type?
         # Ok, can cast fun to void
       elsif return_type.no_return?
         # Ok, NoReturn can be "cast" to anything
@@ -791,9 +885,9 @@ module Crystal
       end
 
       # Disallow casting a function to another one accepting different argument count
-      return nil if arg_types.size != other_arg_types.size
+      return nil if arg_types.size != other.arg_types.size
 
-      arg_types.zip(other_arg_types) do |arg_type, other_arg_type|
+      arg_types.zip(other.arg_types) do |arg_type, other_arg_type|
         return false unless arg_type == other_arg_type
       end
 

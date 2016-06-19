@@ -1010,7 +1010,7 @@ describe "Array" do
       calls = Hash(String, Int32).new(0)
       a = ["foo", "a", "hello"]
       a.sort_by! { |e| calls[e] += 1; e.size }
-      calls.should eq({"foo": 1, "a": 1, "hello": 1})
+      calls.should eq({"foo" => 1, "a" => 1, "hello" => 1})
     end
   end
 

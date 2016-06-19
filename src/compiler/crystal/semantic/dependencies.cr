@@ -98,7 +98,7 @@ module Crystal
       io << "["
       each_with_index do |node, i|
         io << ", " if i > 0
-        node.to_s(io)
+        node.inspect(io)
       end
       io << "]"
     end

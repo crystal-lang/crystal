@@ -2,8 +2,8 @@ require "spec"
 
 module ObjectSpec
   class StringWrapper
-    delegate downcase, @string
-    delegate upcase, capitalize, @string
+    delegate downcase, to: @string
+    delegate upcase, capitalize, at, scan, to: @string
 
     @string : String
 
@@ -95,6 +95,17 @@ describe Object do
       wrapper.downcase.should eq("hello")
       wrapper.upcase.should eq("HELLO")
       wrapper.capitalize.should eq("Hello")
+
+      wrapper.at(0).should eq('H')
+      wrapper.at(index: 1).should eq('e')
+
+      wrapper.at(10) { 20 }.should eq(20)
+
+      matches = [] of String
+      wrapper.scan(/l/) do |match|
+        matches << match[0]
+      end
+      matches.should eq(["l", "l"])
     end
   end
 

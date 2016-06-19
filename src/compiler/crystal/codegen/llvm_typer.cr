@@ -4,7 +4,7 @@ require "llvm"
 module Crystal
   class LLVMTyper
     TYPE_ID_POINTER = LLVM::Int32.pointer
-    FUN_TYPE        = LLVM::Type.struct [LLVM::VoidPointer, LLVM::VoidPointer], "->"
+    PROC_TYPE       = LLVM::Type.struct [LLVM::VoidPointer, LLVM::VoidPointer], "->"
     NIL_TYPE        = LLVM::Type.struct([] of LLVM::Type, "Nil")
     NIL_VALUE       = NIL_TYPE.null
 
@@ -75,8 +75,8 @@ module Crystal
       llvm_type(type.base_type)
     end
 
-    private def create_llvm_type(type : FunInstanceType)
-      FUN_TYPE
+    private def create_llvm_type(type : ProcInstanceType)
+      PROC_TYPE
     end
 
     private def create_llvm_type(type : CStructType)
@@ -151,8 +151,8 @@ module Crystal
       TYPE_ID_POINTER
     end
 
-    private def create_llvm_type(type : NilableFunType)
-      FUN_TYPE
+    private def create_llvm_type(type : NilableProcType)
+      PROC_TYPE
     end
 
     private def create_llvm_type(type : NilablePointerType)
@@ -323,7 +323,7 @@ module Crystal
       llvm_struct_type type
     end
 
-    private def llvm_embedded_type_impl(type : FunInstanceType)
+    private def llvm_embedded_type_impl(type : ProcInstanceType)
       llvm_type type
     end
 
@@ -355,20 +355,20 @@ module Crystal
       llvm_type type
     end
 
-    def llvm_embedded_c_type(type : FunInstanceType)
-      fun_type(type)
+    def llvm_embedded_c_type(type : ProcInstanceType)
+      proc_type(type)
     end
 
     def llvm_embedded_c_type(type)
       llvm_embedded_type type
     end
 
-    def llvm_c_type(type : FunInstanceType)
-      fun_type(type)
+    def llvm_c_type(type : ProcInstanceType)
+      proc_type(type)
     end
 
-    def llvm_c_type(type : NilableFunType)
-      fun_type(type.fun_type)
+    def llvm_c_type(type : NilableProcType)
+      proc_type(type.proc_type)
     end
 
     def llvm_c_type(type : CStructOrUnionType)
@@ -403,13 +403,13 @@ module Crystal
       llvm_type(type)
     end
 
-    def closure_type(type : FunInstanceType)
+    def closure_type(type : ProcInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type) }
       arg_types.insert(0, LLVM::VoidPointer)
       LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
     end
 
-    def fun_type(type : FunInstanceType)
+    def proc_type(type : ProcInstanceType)
       arg_types = type.arg_types.map { |arg_type| llvm_arg_type(arg_type).as(LLVM::Type) }
       LLVM::Type.function(arg_types, llvm_type(type.return_type)).pointer
     end

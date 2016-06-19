@@ -1,7 +1,7 @@
 require "c/stdio"
 require "c/string"
+require "c/dlfcn"
 require "unwind"
-require "dl"
 
 def caller
   CallStack.new.printable_backtrace
@@ -172,14 +172,6 @@ class Exception
       io.puts frame
     end
     io.flush
-  end
-end
-
-module Enumerable(T)
-  class EmptyError < Exception
-    def initialize(message = "Empty enumerable")
-      super(message)
-    end
   end
 end
 

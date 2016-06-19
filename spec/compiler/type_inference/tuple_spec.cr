@@ -30,7 +30,7 @@ describe "Type inference: tuples" do
   end
 
   it "types tuple [2]?" do
-    assert_type("{1, 'a'}[2]?") { |mod| mod.nil }
+    assert_type("{1, 'a'}[2]?") { nil_type }
   end
 
   it "types tuple metaclass [0]" do
@@ -43,7 +43,7 @@ describe "Type inference: tuples" do
 
   it "gives error when indexing out of range" do
     assert_error "{1, 'a'}[2]",
-      "index out of bounds for tuple {Int32, Char} (2 not in 0..1)"
+      "index out of bounds for Tuple(Int32, Char) (2 not in 0..1)"
   end
 
   it "gives error when indexing out of range on empty tuple" do
@@ -207,5 +207,16 @@ describe "Type inference: tuples" do
       end
       Tuple(Int32, String).types
       )) { tuple_of([int32.metaclass, string.metaclass]) }
+  end
+
+  it "can call [] on T" do
+    assert_type(%(
+      struct Tuple
+        def self.types
+          {{ T[0] }}
+        end
+      end
+      Tuple(Nil, Int32).types
+      )) { nil_type.metaclass }
   end
 end

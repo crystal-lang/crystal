@@ -25,7 +25,7 @@ class Crystal::Command
 
         opts.on("-h", "--help", "Show this message") do
           puts opts
-          exit 1
+          exit
         end
 
         opts.on("--no-color", "Disable colored output") do

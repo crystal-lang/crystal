@@ -17,7 +17,7 @@ describe "Type inference: exception" do
       rescue
         1
       end
-    ") { |mod| union_of(mod.nil, int32) }
+    ") { nilable int32 }
   end
 
   it "type union with empty rescue block" do
@@ -26,7 +26,7 @@ describe "Type inference: exception" do
         1
       rescue
       end
-    ") { |mod| union_of(mod.nil, int32) }
+    ") { nilable int32 }
   end
 
   it "type for exception handler for explicit types" do
@@ -88,7 +88,7 @@ describe "Type inference: exception" do
         a = ex
       end
       a
-    ") { |mod| union_of(mod.nil, exception.virtual_type) }
+    ") { union_of(nil_type, exception.virtual_type) }
   end
 
   it "types exception with type" do
@@ -102,7 +102,7 @@ describe "Type inference: exception" do
         a = ex
       end
       a
-    ") { |mod| union_of(mod.nil, types["Ex"].virtual_type) }
+    ") { union_of(nil_type, types["Ex"].virtual_type) }
   end
 
   it "types var as not nil if defined inside begin and defined inside rescue" do
@@ -127,7 +127,7 @@ describe "Type inference: exception" do
       rescue
       end
       a
-      ") { |mod| union_of(mod.int32, mod.nil) }
+      ") { nilable int32 }
   end
 
   it "types var as nialble if previously nilable (2)" do
@@ -141,7 +141,7 @@ describe "Type inference: exception" do
         a = 2
       end
       a
-      ") { |mod| union_of(mod.int32, mod.nil) }
+      ") { nilable int32 }
   end
 
   it "errors if catched exception is not a subclass of Exception" do
@@ -200,7 +200,7 @@ describe "Type inference: exception" do
       else
         1 || nil
       end
-    )) { |mod| union_of(mod.int32, mod.nil) }
+    )) { nilable int32 }
   end
 
   it "types var as nilable inside ensure (1)" do
@@ -219,7 +219,7 @@ describe "Type inference: exception" do
     mod = result.program
     eh = result.node.as(Expressions).expressions[-1]
     call_p_n = eh.as(ExceptionHandler).ensure.not_nil!.as(Call)
-    call_p_n.args.first.type.should eq(mod.union_of(mod.int32, mod.nil))
+    call_p_n.args.first.type.should eq(mod.nilable(mod.int32))
   end
 
   it "types var as nilable inside ensure (2)" do
@@ -237,7 +237,7 @@ describe "Type inference: exception" do
     mod = result.program
     eh = result.node.as(Expressions).expressions[-1]
     call_p_n = eh.as(ExceptionHandler).ensure.not_nil!.as(Call)
-    call_p_n.args.first.type.should eq(mod.union_of(mod.int32, mod.nil))
+    call_p_n.args.first.type.should eq(mod.nilable(mod.int32))
   end
 
   it "marks fun as raises" do
@@ -265,9 +265,9 @@ describe "Type inference: exception" do
     a_def.not_nil!.raises.should be_true
   end
 
-  it "marks fun literal as raises" do
-    result = assert_type("->{ 1 }.call", inject_primitives: false) { int32 }
-    call = result.node.as(Call)
+  it "marks proc literal as raises" do
+    result = assert_type("->{ 1 }.call", inject_primitives: true) { int32 }
+    call = result.node.as(Expressions).last.as(Call)
     call.target_def.raises.should be_true
   end
 

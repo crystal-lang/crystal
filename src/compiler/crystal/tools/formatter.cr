@@ -104,7 +104,7 @@ module Crystal
       @inside_def = 0
 
       # When we parse a type, parentheses information is not stored in ASTs, unlike
-      # for an Expressions node. So when we are printing a type (Path, Fun, Union, etc.)
+      # for an Expressions node. So when we are printing a type (Path, ProcNotation, Union, etc.)
       # we increment this when we find a '(', and decrement it when we find ')', but
       # only if `paren_count > 0`: it might be the case of `def foo(x : A)`, but we don't
       # want to print that last ')' when printing the type A.
@@ -674,7 +674,14 @@ module Crystal
           current_element = current_element.key
         end
 
-        if prefix == :"{" && i == 0 && !wrote_newline && (current_element.is_a?(TupleLiteral) || current_element.is_a?(NamedTupleLiteral) || current_element.is_a?(HashLiteral))
+        if prefix == :"{" && i == 0 && !wrote_newline && (
+             current_element.is_a?(TupleLiteral) ||
+             current_element.is_a?(NamedTupleLiteral) ||
+             current_element.is_a?(HashLiteral) ||
+             current_element.is_a?(MacroExpression) ||
+             current_element.is_a?(MacroIf) ||
+             current_element.is_a?(MacroFor)
+           )
           write " "
           write_space_at_end = true
         end
@@ -793,9 +800,7 @@ module Crystal
       start_line = @line
       start_column = @column
       found_in_same_line = false
-
-      write @token
-      next_token
+      format_named_argument_name(entry.key)
       slash_is_regex!
       write_token :":", " "
       middle_column = @column
@@ -805,6 +810,15 @@ module Crystal
 
       if found_in_same_line
         @hash_in_same_line << hash.object_id
+      end
+    end
+
+    def format_named_argument_name(name)
+      if @token.type == :DELIMITER_START
+        StringLiteral.new(name).accept self
+      else
+        write @token
+        next_token
       end
     end
 
@@ -1754,6 +1768,8 @@ module Crystal
       if node.external_name != node.name
         if node.external_name.empty?
           write "_"
+        elsif @token.type == :DELIMITER_START
+          accept StringLiteral.new(node.external_name)
         else
           write @token.value
         end
@@ -1818,7 +1834,7 @@ module Crystal
       false
     end
 
-    def visit(node : Fun)
+    def visit(node : ProcNotation)
       check_open_paren
 
       paren_count = @paren_count
@@ -2335,8 +2351,8 @@ module Crystal
     end
 
     def visit(node : NamedArgument)
-      write node.name
-      next_token_skip_space_or_newline
+      format_named_argument_name(node.name)
+      skip_space_or_newline
       write_token :":", " "
       skip_space_or_newline
       accept node.value
@@ -2511,6 +2527,10 @@ module Crystal
       write_token " ", :"|"
       skip_space_or_newline
       args.each_with_index do |arg, i|
+        if @token.type == :"*"
+          write_token :"*"
+        end
+
         if @token.type == :"("
           write :"("
           next_token_skip_space_or_newline
@@ -2775,7 +2795,7 @@ module Crystal
       write_keyword :module, " "
 
       accept node.name
-      format_type_vars node.type_vars
+      format_type_vars node.type_vars, node.splat_index
 
       format_nested_with_end node.body
 
@@ -2787,7 +2807,7 @@ module Crystal
       write_keyword (node.struct? ? :struct : :class), " "
 
       accept node.name
-      format_type_vars node.type_vars
+      format_type_vars node.type_vars, node.splat_index
 
       if superclass = node.superclass
         skip_space_or_newline
@@ -2801,12 +2821,13 @@ module Crystal
       false
     end
 
-    def format_type_vars(type_vars)
+    def format_type_vars(type_vars, splat_index)
       if type_vars
         skip_space
         write_token :"("
         skip_space_or_newline
         type_vars.each_with_index do |type_var, i|
+          write_token :"*" if i == splat_index
           write type_var
           next_token_skip_space_or_newline
           if @token.type == :","
@@ -3351,7 +3372,7 @@ module Crystal
       false
     end
 
-    def visit(node : FunPointer)
+    def visit(node : ProcPointer)
       write_token :"->"
       skip_space_or_newline
 
@@ -3361,7 +3382,7 @@ module Crystal
       false
     end
 
-    def visit(node : FunLiteral)
+    def visit(node : ProcLiteral)
       write_token :"->"
       skip_space_or_newline
 

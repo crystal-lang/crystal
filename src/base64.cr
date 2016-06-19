@@ -225,7 +225,7 @@ module Base64
 
   # :nodoc:
   DECODE_TABLE = Array(Int8).new(256) do |i|
-    case i.chr
+    case i.unsafe_chr
     when 'A'..'Z' then (i - 0x41).to_i8
     when 'a'..'z' then (i - 0x47).to_i8
     when '0'..'9' then (i + 0x04).to_i8

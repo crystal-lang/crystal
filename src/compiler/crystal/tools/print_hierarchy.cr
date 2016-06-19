@@ -117,7 +117,7 @@ module Crystal
       print type
 
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
-         !type.is_a?(PointerInstanceType) && !type.is_a?(FunInstanceType)
+         !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
         size = @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
         with_color.light_gray.push(STDOUT) do
           print " ("

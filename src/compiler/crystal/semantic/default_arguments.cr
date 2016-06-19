@@ -95,6 +95,7 @@ class Crystal::Def
     expansion.uses_block_arg = uses_block_arg
     expansion.yields = yields
     expansion.location = location
+    expansion.raises = self.raises
     if owner = self.owner?
       expansion.owner = owner
     end

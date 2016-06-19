@@ -7,7 +7,7 @@ describe "Block inference" do
 
       foo do
       end
-    ") { |mod| mod.nil }
+    ") { nil_type }
   end
 
   it "infer type of block body" do
@@ -71,6 +71,32 @@ describe "Block inference" do
     ") { union_of(array_of(int32), array_of(float64)) }
   end
 
+  it "uses block arg, too many arguments" do
+    assert_error %(
+      def foo
+        yield
+      end
+
+      foo do |x|
+        x
+      end
+      ),
+      "too many block arguments (given 1, expected maximum 0)"
+  end
+
+  it "yields with different types" do
+    assert_type(%(
+      def foo
+        yield 1
+        yield 'a'
+      end
+
+      foo do |x|
+        x
+      end
+      )) { union_of(int32, char) }
+  end
+
   it "break from block without value" do
     assert_type("
       def foo; yield; end
@@ -78,7 +104,7 @@ describe "Block inference" do
       foo do
         break
       end
-    ") { |mod| mod.nil }
+    ") { nil_type }
   end
 
   it "break without value has nil type" do
@@ -87,7 +113,7 @@ describe "Block inference" do
       foo do
         break if false
       end
-    ") { |mod| union_of(mod.nil, int32) }
+    ") { nilable int32 }
   end
 
   it "infers type of block before call" do
@@ -168,17 +194,7 @@ describe "Block inference" do
 
       foo {}
       ",
-      "type must be Int32, not (Float64 | Int32)"
-  end
-
-  it "doesn't report error if yields nil but nothing is yielded" do
-    assert_type("
-      def foo(&block: Int32, Nil -> )
-        yield 1
-      end
-
-      foo { |x| x }
-      ") { int32 }
+      "argument #1 of yield expected to be Int32, not (Float64 | Int32)"
   end
 
   it "reports error if missing arguments to yield" do
@@ -189,7 +205,7 @@ describe "Block inference" do
 
       foo { |x| x }
       ",
-      "missing argument #2 of yield with type Int32"
+      "wrong number of yield arguments (given 1, expected 2)"
   end
 
   it "reports error if block didn't return expected type" do
@@ -272,7 +288,7 @@ describe "Block inference" do
         a = x
       end
       a
-      ") { |mod| union_of(types["Foo"], mod.nil) }
+      ") { nilable types["Foo"] }
   end
 
   it "error with self input type doesn't match" do
@@ -304,7 +320,7 @@ describe "Block inference" do
   end
 
   it "errors when using local variable with block argument name" do
-    assert_error "def foo; yield; end; foo { |a| }; a",
+    assert_error "def foo; yield 1; end; foo { |a| }; a",
       "undefined local variable or method 'a'"
   end
 
@@ -316,7 +332,7 @@ describe "Block inference" do
       end
 
       foo { }
-    ") { |mod| mod.nil }
+    ") { nil_type }
   end
 
   it "preserves type filters in block" do
@@ -389,7 +405,7 @@ describe "Block inference" do
       foo do
         next
       end
-    ") { |mod| mod.nil }
+    ") { nil_type }
   end
 
   it "does next from block with value" do
@@ -678,7 +694,7 @@ describe "Block inference" do
       foo do |bar|
         method(bar).baz
       end
-      )) { fun_of(types["Bar"], void) }
+      )) { proc_of(types["Bar"], void) }
   end
 
   it "types bug with yield not_nil! that is never not nil" do
@@ -721,7 +737,7 @@ describe "Block inference" do
       foo do
         1
       end
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "ignores void return type (2) (#427)" do
@@ -1080,7 +1096,7 @@ describe "Block inference" do
       end
 
       foo { 1 }
-      )) { fun_of(union_of(int32, string)) }
+      )) { proc_of(union_of(int32, string)) }
   end
 
   it "sets captured block type to that of restriction with alias" do
@@ -1091,7 +1107,7 @@ describe "Block inference" do
       end
 
       foo { 1 }
-      )) { fun_of(union_of(int32, string)) }
+      )) { proc_of(union_of(int32, string)) }
   end
 
   it "matches block with generic type and free var" do
@@ -1153,5 +1169,161 @@ describe "Block inference" do
         ),
         "use a more specific type"
     end
+  end
+
+  it "yields splat" do
+    assert_type(%(
+      def foo
+        tup = {1, 'a'}
+        yield *tup
+      end
+
+      foo do |x, y|
+        {y, x}
+      end
+      )) { tuple_of([char, int32]) }
+  end
+
+  it "yields splat and non splat" do
+    assert_type(%(
+      def foo
+        tup = {1, 'a'}
+        yield *tup
+
+        yield true, nil
+      end
+
+      foo do |x, y|
+        {y, x}
+      end
+      )) { tuple_of([nilable(char), union_of(int32, bool)]) }
+  end
+
+  it "uses splat in block argument" do
+    assert_type(%(
+      def foo
+        yield 1, 'a'
+      end
+
+      foo do |*args|
+        args
+      end
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "uses splat in block argument, many args" do
+    assert_type(%(
+      def foo
+        yield 1, 'a', true, nil, 1.5, "hello"
+      end
+
+      foo do |x, *y, z, w|
+        {x, y, z, w}
+      end
+      )) { tuple_of([int32, tuple_of([char, bool, nil_type]), float64, string]) }
+  end
+
+  it "uses splat in block argument, but not enough yield expressions" do
+    assert_error %(
+      def foo
+        yield 1
+      end
+
+      foo do |x, y, z, *w|
+        {x, y, z, w}
+      end
+      ),
+      "too many block arguments (given 3+, expected maximum 1+)"
+  end
+
+  it "errors if splat argument becomes a union" do
+    assert_error %(
+      def foo
+        yield 1
+        yield 1, 2
+      end
+
+      foo do |*args|
+      end
+      ),
+      "block splat argument must be a tuple type"
+  end
+
+  it "auto-unpacks tuple" do
+    assert_type(%(
+      def foo
+        tup = {1, 'a'}
+        yield tup
+      end
+
+      foo do |x, y|
+        {x, y}
+      end
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "auto-unpacks tuple, less than max" do
+    assert_type(%(
+      def foo
+        tup = {1, 'a', true}
+        yield tup
+      end
+
+      foo do |x, y|
+        {x, y}
+      end
+      )) { tuple_of([int32, char]) }
+  end
+
+  it "auto-unpacks with block arg type" do
+    assert_type(%(
+      def foo(&block : {Int32, Int32} -> _)
+        yield({1, 2})
+      end
+
+      foo do |x, y|
+        x + y
+      end
+      )) { int32 }
+  end
+
+  it "doesn't auto-unpacks tuple, more args" do
+    assert_error %(
+      def foo
+        tup = {1, 'a'}
+        yield tup, true
+      end
+
+      foo do |x, y, z|
+      end
+      ),
+      "too many block arguments (given 3, expected maximum 2)"
+  end
+
+  it "auto-unpacks tuple, too many args" do
+    assert_error %(
+      def foo
+        tup = {1, 'a'}
+        yield tup
+      end
+
+      foo do |x, y, z|
+      end
+      ),
+      "too many block arguments (given 3, expected maximum 2)"
+  end
+
+  it "doesn't crash on #2531" do
+    run(%(
+      def foo
+        yield
+      end
+
+      value = true ? 1 : nil
+      foo do
+        value ? nil : nil
+      end
+      value ? 10 : 20
+      )).to_i.should eq(10)
   end
 end

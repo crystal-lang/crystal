@@ -265,6 +265,16 @@ describe IO do
       io.read_char.should eq('世')
       io.read_char.should eq('界')
       io.read_char.should be_nil
+
+      io.write UInt8.slice(0xf8, 0xff, 0xff, 0xff)
+      expect_raises(InvalidByteSequenceError) do
+        io.read_char
+      end
+
+      io.write UInt8.slice(0x81)
+      expect_raises(InvalidByteSequenceError) do
+        io.read_char
+      end
     end
 
     it "reads byte" do

@@ -125,12 +125,12 @@ class Crystal::Program
     union_of([type1, type2, type3] of Type).not_nil!
   end
 
-  def fun_of(type1 : Type)
-    fun_of([type1] of Type)
+  def proc_of(type1 : Type)
+    proc_of([type1] of Type)
   end
 
-  def fun_of(type1 : Type, type2 : Type)
-    fun_of([type1, type2] of Type)
+  def proc_of(type1 : Type, type2 : Type)
+    proc_of([type1, type2] of Type)
   end
 
   def generic_class(name, *type_vars)
@@ -216,9 +216,21 @@ def assert_syntax_error(str, message = nil, line = nil, column = nil, metafile =
       parse str
       fail "expected SyntaxException to be raised", metafile, metaline
     rescue ex : SyntaxException
-      ex.message.not_nil!.includes?(message.not_nil!).should be_true, metafile, metaline if message
-      ex.line_number.should eq(line.not_nil!), metafile, metaline if line
-      ex.column_number.should eq(column.not_nil!), metafile, metaline if column
+      if message
+        unless ex.message.not_nil!.includes?(message.not_nil!)
+          fail "expected message to include #{message.inspect} but got #{ex.message.inspect}", metafile, metaline
+        end
+      end
+      if line
+        unless ex.line_number == line
+          fail "expected line number to be #{line} but got #{ex.line_number}", metafile, metaline
+        end
+      end
+      if column
+        unless ex.column_number == column
+          fail "expected column number to be #{column} but got #{ex.column_number}", metafile, metaline
+        end
+      end
     end
   end
 end
@@ -276,11 +288,7 @@ class Crystal::SpecRunOutput
     @output
   end
 
-  delegate to_i, @output
-  delegate to_u64, @output
-  delegate to_f, @output
-  delegate to_f32, @output
-  delegate to_f64, @output
+  delegate to_i, to_u64, to_f, to_f32, to_f64, to: @output
 
   def to_b
     @output == "true"

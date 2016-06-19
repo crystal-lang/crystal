@@ -38,11 +38,11 @@ describe "Type inference: primitives" do
   end
 
   it "types nil" do
-    assert_type("nil") { |mod| mod.nil }
+    assert_type("nil") { nil_type }
   end
 
   it "types nop" do
-    assert_type("") { |mod| mod.nil }
+    assert_type("") { nil_type }
   end
 
   it "types an expression" do
@@ -91,7 +91,7 @@ describe "Type inference: primitives" do
       require "prelude"
 
       {"foo" => ->{ true }}
-      )) { generic_class "Hash", string, fun_of(bool) }
+      )) { generic_class "Hash", string, proc_of(bool) }
   end
 
   it "extends from Number and doesn't find + method" do

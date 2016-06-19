@@ -27,7 +27,7 @@ class Crypto::MD5
   # :nodoc:
   class ContextWrapper
     getter context : Context
-    delegate update, final, hex, context
+    delegate update, final, hex, to: context
 
     def initialize
       @context = Context.new

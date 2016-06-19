@@ -1,4 +1,4 @@
-require "./client"
+require "../client"
 require "../common"
 
 class HTTP::Client::Response

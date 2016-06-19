@@ -268,4 +268,26 @@ describe "Type inference: enum" do
     enum_type = result.program.types["SomeFacts"].as(EnumType)
     enum_type.has_attribute?("Flags").should be_true
   end
+
+  it "can use macro expression inside enum" do
+    assert_type(%(
+      enum Foo
+        {{ "A".id }}
+      end
+
+      Foo::A
+      )) { types["Foo"] }
+  end
+
+  it "can use macro for inside enum" do
+    assert_type(%(
+      enum Foo
+        {% for name in %w(A B C) %}
+          {{name.id}}
+        {% end %}
+      end
+
+      Foo::A
+      )) { types["Foo"] }
+  end
 end

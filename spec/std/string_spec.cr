@@ -791,8 +791,8 @@ describe "String" do
 
     it "subs with regex and hash" do
       str = "hello"
-      str.sub(/(he|l|o)/, {"he": "ha", "l": "la"}).should eq("hallo")
-      str.sub(/(he|l|o)/, {"l": "la"}).should be(str)
+      str.sub(/(he|l|o)/, {"he" => "ha", "l" => "la"}).should eq("hallo")
+      str.sub(/(he|l|o)/, {"l" => "la"}).should be(str)
     end
 
     it "subs using $~" do
@@ -943,7 +943,7 @@ describe "String" do
 
     it "gsubs with regex and hash" do
       str = "hello"
-      str.gsub(/(he|l|o)/, {"he": "ha", "l": "la"}).should eq("halala")
+      str.gsub(/(he|l|o)/, {"he" => "ha", "l" => "la"}).should eq("halala")
     end
 
     it "gsubs using $~" do
@@ -1629,18 +1629,18 @@ describe "String" do
 
   context "%" do
     it "substitutes one placeholder" do
-      res = "change %{this}" % {"this": "nothing"}
+      res = "change %{this}" % {"this" => "nothing"}
       res.should eq "change nothing"
     end
 
     it "substitutes multiple placeholder" do
-      res = "change %{this} and %{more}" % {"this": "nothing", "more": "something"}
+      res = "change %{this} and %{more}" % {"this" => "nothing", "more" => "something"}
       res.should eq "change nothing and something"
     end
 
     it "throws an error when the key is not found" do
       expect_raises KeyError do
-        "change %{this}" % {"that": "wrong key"}
+        "change %{this}" % {"that" => "wrong key"}
       end
     end
 
@@ -1652,12 +1652,12 @@ describe "String" do
 
     it "raises on unbalanced curly" do
       expect_raises(ArgumentError, "malformed name - unmatched parenthesis") do
-        "change %{this" % {"this": 1}
+        "change %{this" % {"this" => 1}
       end
     end
 
     it "applies formatting to %<...> placeholder" do
-      res = "change %<this>.2f" % {"this": 23.456}
+      res = "change %<this>.2f" % {"this" => 23.456}
       res.should eq "change 23.46"
     end
   end
@@ -1800,5 +1800,14 @@ describe "String" do
     string = "foo"
     clone = string.clone
     string.should be(clone)
+  end
+
+  it "#at" do
+    "foo".at(0).should eq('f')
+    "foo".at(4) { 'x' }.should eq('x')
+
+    expect_raises(IndexError) do
+      "foo".at(4)
+    end
   end
 end

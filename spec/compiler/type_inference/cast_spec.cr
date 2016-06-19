@@ -118,7 +118,7 @@ describe "Type inference: cast" do
       f = ->{ 1 }
       f as Void*
       ),
-      "can't cast ( -> Int32) to Pointer(Void)"
+      "can't cast Proc(Int32) to Pointer(Void)"
   end
 
   it "disallows casting pointer to fun" do
@@ -126,7 +126,7 @@ describe "Type inference: cast" do
       a = uninitialized Void*
       a as -> Int32
       ),
-      "can't cast Pointer(Void) to ( -> Int32)"
+      "can't cast Pointer(Void) to Proc(Int32)"
   end
 
   it "doesn't error if casting to a generic type" do
@@ -243,7 +243,7 @@ describe "Type inference: cast" do
 
       Gen(Foo).new
       Gen(Bar).new as Gen(Foo)
-      ), "can't cast Gen(Bar) to Gen(Foo+)"
+      ), "can't cast Gen(Bar) to Gen(Foo)"
   end
 
   it "allows casting NoReturn to any type (#2132)" do

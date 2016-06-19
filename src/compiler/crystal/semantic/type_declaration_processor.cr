@@ -151,7 +151,9 @@ module Crystal
       # give an error
       check_nilable_instance_vars
 
-      check_errors
+      check_cant_use_type_errors
+
+      check_class_var_errors(type_decl_visitor.class_vars, type_guess_visitor.class_vars)
 
       node
     end
@@ -189,7 +191,7 @@ module Crystal
       # If the variable is gueseed to be nilable because it is not initialized
       # in all of the initialize methods, and the explicit type is not nilable,
       # give an error right now
-      if !var.type.includes_type?(@program.nil)
+      if instance_var && !var.type.includes_type?(@program.nil)
         if nilable_instance_var?(owner, name)
           raise_not_initialized_in_all_initialize(var, name, owner)
         end
@@ -547,7 +549,7 @@ module Crystal
       @errors[type]?.try &.delete(name)
     end
 
-    private def check_errors
+    private def check_cant_use_type_errors
       @errors.each do |type, entries|
         entries.each do |name, error|
           case name
@@ -557,6 +559,28 @@ module Crystal
             error.node.raise "can't use #{error.type} as the type of class variable #{name} of #{type}, use a more specific type"
           when .starts_with?("@")
             error.node.raise "can't use #{error.type} as the type of instance variable #{name} of #{type}, use a more specific type"
+          end
+        end
+      end
+    end
+
+    private def check_class_var_errors(type_decl_class_vars, guesser_class_vars)
+      {type_decl_class_vars, guesser_class_vars}.each do |all_vars|
+        all_vars.each do |owner, vars|
+          vars.each do |name, info|
+            owner_class_var = owner.lookup_class_var?(name)
+            next unless owner_class_var
+
+            owner.ancestors.each do |ancestor|
+              next unless ancestor.is_a?(ClassVarContainer)
+
+              ancestor_class_var = ancestor.class_vars?.try &.[name]?
+              next unless ancestor_class_var
+
+              if owner_class_var.type != ancestor_class_var.type
+                raise TypeException.new("class variable '#{name}' of #{owner} is already defined as #{ancestor_class_var.type} in #{ancestor}", info.location)
+              end
+            end
           end
         end
       end

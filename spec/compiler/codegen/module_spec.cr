@@ -418,4 +418,20 @@ describe "Code gen: module" do
       end
       )).to_i.should eq(2)
   end
+
+  it "declares and includes generic module, in macros T is a tuple literal" do
+    run(%(
+      module Moo(*T)
+        def t
+          {{T.class_name}}
+        end
+      end
+
+      class Foo
+        include Moo(Int32, Char)
+      end
+
+      Foo.new.t
+      )).to_string.should eq("TupleLiteral")
+  end
 end

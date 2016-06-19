@@ -31,7 +31,7 @@ describe "Type inference: class" do
     ") { generic_class "Foo", int32 }
     mod = result.program
     type = result.node.type.as(GenericClassInstanceType)
-    type.instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
+    type.instance_vars["@coco"].type.should eq(mod.nilable(mod.int32))
   end
 
   it "types generic of generic type" do
@@ -72,10 +72,10 @@ describe "Type inference: class" do
     foo = mod.types["Foo"].as(GenericClassType)
 
     node[1].type.should eq(foo.instantiate([mod.int32] of TypeVar))
-    node[1].type.as(InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.int32))
+    node[1].type.as(InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.nilable(mod.int32))
 
     node[3].type.should eq(foo.instantiate([mod.float64] of TypeVar))
-    node[3].type.as(InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.union_of(mod.nil, mod.float64))
+    node[3].type.as(InstanceVarContainer).instance_vars["@coco"].type.should eq(mod.nilable(mod.float64))
   end
 
   it "types instance variable on getter" do
@@ -101,8 +101,8 @@ describe "Type inference: class" do
     result = infer_type input
     mod, node = result.program, result.node.as(Expressions)
 
-    node[3].type.should eq(mod.union_of(mod.nil, mod.int32))
-    input.last.type.should eq(mod.union_of(mod.nil, mod.float64))
+    node[3].type.should eq(mod.nilable(mod.int32))
+    input.last.type.should eq(mod.nilable(mod.float64))
   end
 
   it "types recursive type" do
@@ -125,7 +125,7 @@ describe "Type inference: class" do
     mod, input = result.program, result.node.as(Expressions)
     node = mod.types["Node"].as(NonGenericClassType)
 
-    node.lookup_instance_var("@next").type.should eq(mod.union_of(mod.nil, node))
+    node.lookup_instance_var("@next").type.should eq(mod.nilable(node))
     input.last.type.should eq(node)
   end
 
@@ -869,7 +869,7 @@ describe "Type inference: class" do
 
         @a  : Proc(String, Nil) = ->f(String)
       end
-      )) { |mod| mod.nil }
+      )) { nil_type }
   end
 
   it "errors if declares class inside if" do
@@ -982,41 +982,5 @@ describe "Type inference: class" do
 
       initialize
       )) { int32 }
-  end
-
-  it "error when using class var on virtual type" do
-    assert_error %(
-      class Foo
-        @@a = 1
-
-        def a
-          @@a
-        end
-      end
-
-      class Bar < Foo
-      end
-
-      (Bar.new as Foo).a
-      ),
-      "can't access class variable from a type that is Foo or any of its subclasses"
-  end
-
-  it "error when using class var on virtual metaclass type" do
-    assert_error %(
-      class Foo
-        @@a = 1
-
-        def self.a
-          @@a
-        end
-      end
-
-      class Bar < Foo
-      end
-
-      (Bar.new as Foo).class.a
-      ),
-      "can't access class variable from a type that is Foo or any of its subclasses"
   end
 end
