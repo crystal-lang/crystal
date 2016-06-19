@@ -398,7 +398,7 @@ describe "Codegen: super" do
   end
 
   it "calls super from virtual metaclass type (#2841)" do
-    codegen(%(
+    run(%(
       require "prelude"
 
       abstract class Foo
