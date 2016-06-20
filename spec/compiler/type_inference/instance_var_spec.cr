@@ -2401,6 +2401,22 @@ describe "Type inference: instance var" do
       )) { types["Bar"] }
   end
 
+  it "doesn't throw an error for abstract classes (#2827)" do
+    assert_type(%(
+      abstract class Foo
+        @a : Int32
+      end
+
+      class Bar < Foo
+        @b : Int32
+        def initialize(@a, @b)
+        end
+      end
+
+      Bar.new(1, 2)
+    )) {types["Bar"]}
+  end
+
   it "errors on undefined constant" do
     assert_error %(
       class Foo
