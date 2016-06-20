@@ -3836,6 +3836,8 @@ module Crystal
         after_comment_value = raw_after_comment_value.strip
         if after_comment_value.starts_with?("=>")
           value = "\# => #{after_comment_value[2..-1].strip}"
+        elsif after_comment_value.each_char.all? { |c| c.whitespace? || c == '#' }
+          # Nothing, leave sequences of whitespaces and '#' as is
         else
           char_1 = value[1]?
           if char_1 && !char_1.whitespace?
