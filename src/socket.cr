@@ -256,17 +256,16 @@ class Socket < IO::FileDescriptor
 
   private def nonblocking_connect(host, port, addrinfo, timeout = nil)
     loop do
-      ret =
-        {% if flag?(:freebsd) %}
-          LibC.connect(@fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
-        {% else %}
-          LibC.connect(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
-        {% end %}
-      return nil if ret == 0 # success
+      {% if flag?(:freebsd) %}
+        ret = LibC.connect(@fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
+      {% else %}
+        ret = LibC.connect(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
+      {% end %}
+      return if ret == 0 # success
 
       case Errno.value
       when Errno::EISCONN
-        return nil # success
+        return # success
       when Errno::EINPROGRESS, Errno::EALREADY
         wait_writable(msg: "connect timed out", timeout: timeout) { |err| return err }
       else

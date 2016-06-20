@@ -3,7 +3,7 @@ require "./ip_socket"
 class TCPSocket < IPSocket
   # Note: dns_timeout is currently ignored
   def initialize(host, port, dns_timeout = nil, connect_timeout = nil)
-    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP, timeout: dns_timeout) do |addrinfo|
+    Addrinfo.resolve(host, port, type: Type::STREAM, protocol: Protocol::TCP, timeout: dns_timeout) do |addrinfo|
       super(create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol))
 
       if err = nonblocking_connect host, port, addrinfo, timeout: connect_timeout

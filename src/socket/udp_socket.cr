@@ -59,7 +59,7 @@ class UDPSocket < IPSocket
   # server.bind "localhost", 1234
   # ```
   def bind(host, port, dns_timeout = nil)
-    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |addrinfo|
+    Addrinfo.resolve(host, port, type: Type::DGRAM, protocol: Protocol::UDP, timeout: dns_timeout) do |addrinfo|
       self.reuse_address = true
 
       ret =
@@ -84,7 +84,7 @@ class UDPSocket < IPSocket
   # client.connect "localhost", 1234
   # ```
   def connect(host, port, dns_timeout = nil, connect_timeout = nil)
-    getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |addrinfo|
+    Addrinfo.resolve(host, port, type: Type::DGRAM, protocol: Protocol::UDP, timeout: dns_timeout) do |addrinfo|
       if err = nonblocking_connect host, port, addrinfo, timeout: connect_timeout
         next false if addrinfo.ai_next
         raise err

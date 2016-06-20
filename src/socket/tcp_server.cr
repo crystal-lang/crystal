@@ -2,7 +2,7 @@ require "./tcp_socket"
 
 class TCPServer < TCPSocket
   def initialize(host, port, backlog = 128)
-    getaddrinfo(host, port, nil, LibC::SOCK_STREAM, LibC::IPPROTO_TCP) do |addrinfo|
+    Addrinfo.resolve(host, port, type: Type::STREAM, protocol: Protocol::TCP) do |addrinfo|
       sock = create_socket(addrinfo.ai_family, addrinfo.ai_socktype, addrinfo.ai_protocol)
       super sock
 

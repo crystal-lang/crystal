@@ -281,7 +281,7 @@ describe TCPSocket do
   end
 
   it "fails when host doesn't exist" do
-    expect_raises(Socket::Error, /^getaddrinfo: (.+ not known|no address .+|Non-recoverable failure in name resolution|Name does not resolve)$/i) do
+    expect_raises(Socket::Addrinfo::Error, /^(.+ not known|no address .+|Non-recoverable failure in name resolution|Name does not resolve)$/i) do
       TCPSocket.new("localhostttttt", 12345)
     end
   end
@@ -371,6 +371,13 @@ describe UDPSocket do
     client.connect("255.255.255.255", port)
     client.send("broadcast").should eq(9)
     client.close
+  end
+
+  it "fails when host doesn't exist" do
+    client = UDPSocket.new
+    expect_raises(Socket::Addrinfo::Error, /^(.+ not known|no address .+|Non-recoverable failure in name resolution|Name does not resolve)$/i) do
+      client.connect("localhostttttt", 12345)
+    end
   end
 end
 
