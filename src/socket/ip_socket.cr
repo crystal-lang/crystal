@@ -1,4 +1,5 @@
 class IPSocket < Socket
+  # Returns the `IPAddress` for the local end of the IP socket.
   def local_address
     sockaddr = uninitialized LibC::SockaddrIn6
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))
@@ -10,6 +11,7 @@ class IPSocket < Socket
     IPAddress.new(sockaddr, addrlen)
   end
 
+  # Returns the `IPAddress` for the remote end of the IP socket.
   def remote_address
     sockaddr = uninitialized LibC::SockaddrIn6
     addrlen = LibC::SocklenT.new(sizeof(LibC::SockaddrIn6))

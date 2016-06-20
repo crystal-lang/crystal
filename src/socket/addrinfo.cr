@@ -55,8 +55,8 @@ class Socket
       @@threadpool_size
     end
 
-    # Yields LibC::Addrinfo to the block while the block returns false and there
-    # are no more LibC::Addrinfo results.
+    # Yields LibC::Addrinfo until the block returns true or there are no more
+    # addrinfo structs available.
     #
     # The block must return true if it succeeded using that address info (eg: to
     # connect or bind), and a falsy value otherwise. If it returns false and the
