@@ -1,7 +1,7 @@
 require "c/pthread"
 
 # :nodoc:
-class Thread(T, R)
+class Thread
   # :nodoc:
   class Mutex
     def initialize
