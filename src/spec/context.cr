@@ -103,9 +103,17 @@ module Spec
       if Spec.slowest
         puts
         results = @results[:success] + @results[:fail]
-        topN = results.sort_by { |res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
-        topN.each do |res|
-          puts "#{res.description} : #{res.elapsed.not_nil!.to_f} sec"
+        top_n = results.sort_by { |res| -res.elapsed.not_nil!.to_f }[0..Spec.slowest.not_nil!]
+        top_n_time = top_n.sum &.elapsed.not_nil!.total_seconds
+        percent = (top_n_time * 100) / elapsed_time.total_seconds
+        puts "Top #{Spec.slowest} slowest examples (#{top_n_time} seconds, #{percent.round(2)}% of total time):"
+        top_n.each do |res|
+          puts "  #{res.description}"
+          res_elapsed = res.elapsed.not_nil!.total_seconds.to_s
+          if Spec.use_colors?
+            res_elapsed = res_elapsed.colorize.bold
+          end
+          puts "    #{res_elapsed} seconds #{Spec.relative_file(res.file)}:#{res.line}"
         end
       end
 
@@ -120,16 +128,7 @@ module Spec
                      else                                        :success
                      end
 
-      total_seconds = elapsed_time.total_seconds
-      if total_seconds < 1
-        puts "Finished in #{elapsed_time.total_milliseconds.round(2)} milliseconds"
-      elsif total_seconds < 60
-        puts "Finished in #{total_seconds.round(2)} seconds"
-      else
-        minutes = elapsed_time.minutes
-        seconds = elapsed_time.seconds
-        puts "Finished in #{minutes}:#{seconds < 10 ? "0" : ""}#{seconds} minutes"
-      end
+      puts "Finished in #{Spec.to_human(elapsed_time)}"
       puts Spec.color("#{total} examples, #{failures.size} failures, #{errors.size} errors, #{pendings.size} pending", final_status)
 
       unless failures_and_errors.empty?
