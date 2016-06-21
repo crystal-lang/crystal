@@ -1,5 +1,6 @@
 ## 0.18.4 (21-06.2016)
 
+* Fixed [#2887](https://github.com/crystal-lang/crystal/issues/2887)
 * Fix broken specs
 
 ## 0.18.3 (21-06.2016)
