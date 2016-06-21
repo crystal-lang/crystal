@@ -960,14 +960,13 @@ module Crystal
   # Ficticious node to bind yield expressions to block arguments
   class YieldBlockBinder < ASTNode
     getter block
-    property yield_vars : Array(Var)?
 
     def initialize(@mod : Program, @block : Block)
-      @yields = [] of Yield
+      @yields = [] of {Yield, Array(Var)?}
     end
 
-    def add_yield(node : Yield)
-      @yields << node
+    def add_yield(node : Yield, yield_vars : Array(Var)?)
+      @yields << {node, yield_vars}
       node.exps.each &.add_observer(self)
     end
 
@@ -976,9 +975,8 @@ module Crystal
       args_size = block.args.size
       block_arg_types = Array(Array(Type)?).new(args_size, nil)
       splat_index = block.splat_index
-      yield_vars = @yield_vars
 
-      @yields.each do |a_yield|
+      @yields.each do |(a_yield, yield_vars)|
         i = 0
 
         # Gather all exps types and then assign to block_arg_types.

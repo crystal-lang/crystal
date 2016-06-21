@@ -692,10 +692,7 @@ module Crystal
 
       # We use a binder to support splats and other complex forms
       binder = block.binder ||= YieldBlockBinder.new(@mod, block)
-      binder.add_yield(node)
-      if (yield_vars = @yield_vars) && !node.scope
-        binder.yield_vars ||= yield_vars
-      end
+      binder.add_yield(node, @yield_vars)
       binder.update
 
       unless block.visited
