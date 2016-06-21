@@ -218,7 +218,7 @@ class Crystal::Command
 
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
-    Crystal.print_hierarchy result.program, config.hierarchy_exp
+    Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
   end
 
   private def implementations
