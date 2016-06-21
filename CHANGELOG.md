@@ -1,3 +1,7 @@
+## 0.18.4 (21-06.2016)
+
+* Fix broken specs
+
 ## 0.18.3 (21-06.2016)
 
 * `TypeNode`: added `<`, `<=`, `>` and `>=` macro methods
