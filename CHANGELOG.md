@@ -1,3 +1,8 @@
+## 0.18.3 (21-06.2016)
+
+* `TypeNode`: added `<`, `<=`, `>` and `>=` macro methods
+* [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.3+is%3Aclosed)
+
 ## 0.18.2 (16-06.2016)
 
 * Fixed building Crystal from the source tarball
