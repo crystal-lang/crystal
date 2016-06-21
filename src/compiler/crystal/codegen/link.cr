@@ -18,12 +18,6 @@ module Crystal
       has_pkg_config = nil
 
       String.build do |flags|
-        # Add the default path as -L flags: important on FreeBSD,
-        # where the default cc doesn't use /usr/local/lib by default
-        library_path.each do |path|
-          flags << " -L#{path}"
-        end
-
         link_attributes.reverse_each do |attr|
           if ldflags = attr.ldflags
             flags << " " << ldflags
@@ -46,6 +40,12 @@ module Crystal
           if framework = attr.framework
             flags << " -framework " << framework
           end
+        end
+
+        # Append the default paths as -L flags in case the linker doesn't know
+        # about them (eg: FreeBSD won't search /usr/local/lib by default):
+        library_path.each do |path|
+          flags << " -L#{path}"
         end
       end
     end
