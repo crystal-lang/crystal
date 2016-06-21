@@ -123,5 +123,6 @@
    * [Coding style](conventions/coding_style.md)
    * [Documenting code](conventions/documenting_code.md)
 * [Guides](guides/README.md)
+   * [Performance](guides/performance.md)
    * [Concurrency](guides/concurrency.md)
 
