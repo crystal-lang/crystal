@@ -76,6 +76,7 @@ class Zlib::Inflate
       if @stream.avail_in == 0
         @stream.next_in = @buf.to_unsafe
         @stream.avail_in = @input.read(@buf.to_slice).to_u32
+        return 0 if @stream.avail_in == 0
       end
 
       @stream.avail_out = slice.size.to_u32

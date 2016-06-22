@@ -48,5 +48,11 @@ module Zlib
       inflate.closed?.should be_true
       io.closed?.should be_true
     end
+
+    it "should not inflate from empty stream" do
+      io = MemoryIO.new("")
+      inflate = Inflate.new(io)
+      inflate.read_byte.should be_nil
+    end
   end
 end
