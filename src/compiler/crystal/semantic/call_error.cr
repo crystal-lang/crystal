@@ -369,13 +369,21 @@ class Crystal::Call
         owner.all_subclasses.each do |subclass|
           submatches = subclass.lookup_matches(signature)
           if submatches.empty?
-            raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{subclass}"
+            raise_abstract_method_must_be_implemented a_def, subclass
           end
         end
-        raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{owner}"
+        raise_abstract_method_must_be_implemented a_def, owner
       else
-        raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{owner}"
+        raise_abstract_method_must_be_implemented a_def, owner
       end
+    end
+  end
+
+  def raise_abstract_method_must_be_implemented(a_def, owner)
+    if owner.abstract?
+      raise "undefined method '#{def_full_name(a_def.owner, a_def)}'"
+    else
+      raise "abstract `def #{def_full_name(a_def.owner, a_def)}` must be implemented by #{owner}"
     end
   end
 

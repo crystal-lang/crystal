@@ -1520,7 +1520,12 @@ module Crystal
 
       if @token.type == :"<"
         next_token_skip_space_or_newline
-        superclass = parse_ident
+        if @token.keyword?(:self)
+          superclass = Self.new.at(@token.location)
+          next_token
+        else
+          superclass = parse_ident
+        end
       end
       skip_statement_end
 

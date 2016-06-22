@@ -422,6 +422,8 @@ describe "Parser" do
   it_parses "abstract class Foo; end", ClassDef.new("Foo".path, abstract: true)
   it_parses "abstract struct Foo; end", ClassDef.new("Foo".path, abstract: true, struct: true)
 
+  it_parses "class Foo < self; end", ClassDef.new("Foo".path, superclass: Self.new)
+
   it_parses "module Foo(*T); end", ModuleDef.new("Foo".path, type_vars: ["T"], splat_index: 0)
   it_parses "class Foo(*T); end", ClassDef.new("Foo".path, type_vars: ["T"], splat_index: 0)
   it_parses "class Foo(T, *U); end", ClassDef.new("Foo".path, type_vars: ["T", "U"], splat_index: 1)
