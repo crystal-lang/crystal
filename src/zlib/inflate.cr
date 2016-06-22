@@ -72,6 +72,8 @@ class Zlib::Inflate
   def read(slice : Slice(UInt8))
     check_open
 
+    return 0 if slice.empty?
+
     while true
       if @stream.avail_in == 0
         @stream.next_in = @buf.to_unsafe
