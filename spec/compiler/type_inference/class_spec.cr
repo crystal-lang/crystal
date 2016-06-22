@@ -983,4 +983,48 @@ describe "Type inference: class" do
       initialize
       )) { int32 }
   end
+
+  it "inherits self (#2890)" do
+    assert_type(%(
+      class Foo
+        class Bar < self
+        end
+      end
+
+      {{Foo::Bar.superclass}}
+      )) { types["Foo"].metaclass }
+  end
+
+  it "inherits Gen(self) (#2890)" do
+    assert_type(%(
+      class Gen(T)
+        def self.t
+          T
+        end
+      end
+
+      class Foo
+        class Bar < Gen(self)
+        end
+      end
+
+      Foo::Bar.t
+      )) { types["Foo"].metaclass }
+  end
+
+  it "errors if inheriting Gen(self) and there's no self (#2890)" do
+    assert_error %(
+      class Gen(T)
+        def self.t
+          T
+        end
+      end
+
+      class Bar < Gen(self)
+      end
+
+      Bar.t
+      ),
+      "there's no self in this scope"
+  end
 end

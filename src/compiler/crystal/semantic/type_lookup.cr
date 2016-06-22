@@ -213,6 +213,10 @@ module Crystal
     end
 
     def visit(node : Self)
+      if @self_type.is_a?(Program)
+        node.raise "there's no self in this scope"
+      end
+
       @type = @self_type.virtual_type
       false
     end
@@ -374,11 +378,17 @@ module Crystal
   class InheritedGenericClass
     def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       if (names.size == 1) && (m = @mapping[names[0]]?)
+        extending_class = self.extending_class
         case extending_class
         when GenericClassType
           # skip
         else
-          return TypeLookup.lookup(extending_class, m)
+          if extending_class.is_a?(NamedType)
+            self_type = extending_class.container
+          else
+            self_type = extending_class.program
+          end
+          return TypeLookup.lookup(extending_class, m, self_type: self_type)
         end
       end
 
