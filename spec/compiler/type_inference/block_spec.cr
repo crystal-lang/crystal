@@ -1326,4 +1326,18 @@ describe "Block inference" do
       value ? 10 : 20
       )).to_i.should eq(10)
   end
+
+  it "yields in overload, matches type" do
+    assert_type(%(
+      struct Int
+        def foo(&block : self ->)
+          yield self
+        end
+      end
+
+      (1 || 1_i64).foo do |x|
+        x
+      end
+      )) { union_of(int32, int64) }
+  end
 end

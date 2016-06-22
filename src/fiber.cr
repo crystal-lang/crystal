@@ -160,7 +160,7 @@ class Fiber
   end
 
   def resume
-    current, @@current = @@current, self
+    current, Thread.current.current_fiber = Thread.current.current_fiber, self
     LibGC.stackbottom = @stack_bottom
     Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
   end
@@ -194,12 +194,10 @@ class Fiber
     @@root
   end
 
-  # TODO: Boehm GC doesn't scan thread local vars, so we can't use it yet
-  # @[ThreadLocal]
-  @@current : Fiber = root
+  Thread.current.current_fiber = root
 
   def self.current : self
-    @@current
+    Thread.current.current_fiber
   end
 
   @@prev_push_other_roots = LibGC.get_push_other_roots
@@ -210,7 +208,7 @@ class Fiber
 
     fiber = @@first_fiber
     while fiber
-      fiber.push_gc_roots unless fiber == @@current
+      fiber.push_gc_roots unless fiber == Thread.current.current_fiber
       fiber = fiber.next_fiber
     end
   end

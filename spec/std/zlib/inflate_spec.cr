@@ -48,5 +48,22 @@ module Zlib
       inflate.closed?.should be_true
       io.closed?.should be_true
     end
+
+    it "should not inflate from empty stream" do
+      io = MemoryIO.new("")
+      inflate = Inflate.new(io)
+      inflate.read_byte.should be_nil
+    end
+
+    it "should not freeze when reading empty slice" do
+      io = MemoryIO.new
+      "789c2bc9c82c5600a2448592d4e21285e292a2ccbc74054520e00200854f087b".scan(/../).each do |match|
+        io.write_byte match[0].to_u8(16)
+      end
+      io.rewind
+      inflate = Inflate.new(io)
+      slice = Slice(UInt8).new(0)
+      inflate.read(slice).should eq(0)
+    end
   end
 end

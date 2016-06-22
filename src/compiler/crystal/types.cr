@@ -2627,6 +2627,13 @@ module Crystal
       instance_type.virtual_type!.metaclass
     end
 
+    def remove_typedef
+      if instance_type.is_a?(TypeDefType)
+        return instance_type.remove_typedef.metaclass
+      end
+      self
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       io << @name
     end

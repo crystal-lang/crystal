@@ -599,6 +599,8 @@ describe Crystal::Formatter do
   assert_format "1#foo", "1 # foo"
   assert_format "1 # foo\n1234 # bar\n\n10 # bar", "1    # foo\n1234 # bar\n\n10 # bar"
   assert_format "# foo\na = 1 # bar"
+  assert_format "#### ###"
+  assert_format "#######"
 
   assert_format "A = 1\nFOO = 2\n\nEX = 3", "A   = 1\nFOO = 2\n\nEX = 3"
   assert_format "FOO = 2\nA = 1", "FOO = 2\nA   = 1"

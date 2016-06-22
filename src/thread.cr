@@ -2,28 +2,34 @@ require "c/pthread"
 require "./thread/*"
 
 # :nodoc:
-class Thread(T, R)
+class Thread
   # Don't use this class, it is used internally by the event scheduler.
   # Use spawn and channels instead.
 
-  def self.new(&func : -> R)
-    Thread(Nil, R).new(nil) { func.call }
-  end
-
   @th : LibC::PthreadT?
   @exception : Exception?
+  @detached = false
 
-  def initialize(@arg : T, &@func : T -> R)
-    @detached = false
-    @ret = uninitialized R
+  property current_fiber
+
+  def initialize(&@func : ->)
+    @current_fiber = uninitialized Fiber
+    @@threads << self
+
     ret = LibGC.pthread_create(out th, nil, ->(data) {
-      (data.as(Thread(T, R))).start
+      (data.as(Thread)).start
     }, self.as(Void*))
     @th = th
 
     if ret != 0
       raise Errno.new("pthread_create")
     end
+  end
+
+  def initialize
+    @current_fiber = uninitialized Fiber
+    @func = ->{}
+    @@threads << self
   end
 
   def finalize
@@ -39,15 +45,26 @@ class Thread(T, R)
     if exception = @exception
       raise exception
     end
+  end
 
-    @ret
+  # All threads, so the GC can see them (GC doesn't scan thread locals)
+  @@threads = Set(Thread).new
+
+  @[ThreadLocal]
+  @@current = new
+
+  def self.current
+    @@current
   end
 
   protected def start
+    @@current = self
     begin
-      @ret = @func.call(@arg)
+      @func.call
     rescue ex
       @exception = ex
+    ensure
+      @@threads.delete(self)
     end
   end
 end

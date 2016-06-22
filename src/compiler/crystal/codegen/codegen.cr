@@ -1956,9 +1956,13 @@ module Crystal
 
       if type.is_a?(VirtualType)
         if type.struct?
-          # For a struct we need to cast the second part of the union to the base type
-          value_ptr = gep(pointer, 0, 1)
-          pointer = bit_cast value_ptr, llvm_type(type.base_type).pointer
+          if type.remove_indirection.is_a?(UnionType)
+            # For a struct we need to cast the second part of the union to the base type
+            value_ptr = gep(pointer, 0, 1)
+            pointer = bit_cast value_ptr, llvm_type(type.base_type).pointer
+          else
+            # Nothing, there's only one subclass so it's the struct already
+          end
         else
           pointer = cast_to pointer, type.base_type
         end

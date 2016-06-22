@@ -406,4 +406,36 @@ describe "Code gen: pointer" do
       LibFoo.foo(Foo.new)
       ))
   end
+
+  it "uses correct llvm module for typedef metaclass (#2877)" do
+    run(%(
+      require "prelude"
+
+      lib LibFoo
+        type Foo = Void*
+        type Bar = Void*
+      end
+
+      class Class
+        def foo
+          foo(1)
+        end
+
+        def foo(x)
+        end
+      end
+
+      struct Pointer
+        def foo
+          T.foo
+        end
+      end
+
+      foo = uninitialized LibFoo::Foo*
+      bar = uninitialized LibFoo::Bar*
+      foo.foo
+      bar.foo
+      1
+      ))
+  end
 end
