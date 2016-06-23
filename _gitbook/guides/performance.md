@@ -12,6 +12,8 @@ However, if you are writing a program and you realize that writing a semanticall
 
 And always be sure to profile your program to learn what are its bottlenecks. For profiling, on Mac OSX you can use [Instruments Time Profiler](https://developer.apple.com/library/prerelease/content/documentation/DeveloperTools/Conceptual/InstrumentsUserGuide/Instrument-TimeProfiler.html) that comes with XCode. On Linux, and program that can profile C/C++ programs, like [gprof](https://sourceware.org/binutils/docs/gprof/), should work.
 
+Make sure to always profile programs with by compiling or running programs with the `--release` flag, which turns on optimizations.
+
 ## Avoiding memory allocations
 
 One of the best optimizations you can do in a program is avoiding extra/useless memory allocation. A memory allocation happens when you create an instance of a **class**, which ends up allocating heap memory. Creating an instance of a **struct** uses stack memory and doesn't have a performance penantly. If you don't know what's the difference between stack and help memory, be sure to [read this](https://www.google.com.ar/webhp?sourceid=chrome-instant&ion=1&espv=2&ie=UTF-8#q=stack%20vs%20heap%20memory).
@@ -184,4 +186,30 @@ Output:
 $ crystal class_vs_struct.cr --release
  class  28.17M (± 2.86%) 15.29× slower
 struct 430.82M (± 6.58%)       fastest
+```
+
+## Iterating strings
+
+Strings in crystal always contain UTF-8 encoded bytes. UTF-8 is a variable-length encoding: a character may be represented by several bytes, although characters in the ASCII range are always represented with a single byte. Because of this, indexing a string with `String#[]` is not a `O(1)` operation, because each time the bytes need to be decoded to find the character at the given position. There's an optimization that Crystal's String does here: if it knows all the characters in the string are ASCII, then `String#[]` can be implemented in `O(1)`. However, this isn't generally true.
+
+For this reason, iterating a String this way is not optimal, and in fact it has an order of `O(n^2)`:
+
+
+```crystal
+string = ...
+while i < string.size
+  char = string[i]
+  # ...
+end
+```
+
+There's a second problem with the above: computing the `size` of a String is also slow, because it's not simply the number of bytes in the string (the `bytesize`). However, once a String computes its size once it caches it. It's still slow because of `String#[]`.
+
+The way to do it is to either use one of the iteration methods (`each_char`, `each_byte`, `each_codepoint`), or use the more low-level `Char::Reader` struct. For example, using `each_char`:
+
+```crystal
+string = ...
+string.each_char do |char|
+  # ...
+end
 ```
