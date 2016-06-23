@@ -44,7 +44,7 @@ module Crystal
       if struct?(type)
         target = type
         checked = Set(Type).new
-        path = [] of Var
+        path = [] of Var | Type
         check_recursive_instance_var_container(target, type, checked, path)
       end
 
@@ -82,6 +82,15 @@ module Crystal
         type.union_types.each do |union_type|
           check_recursive(target, union_type, checked, path)
         end
+      when NonGenericModuleType
+        path.push type
+        # Check if the module is composed, recursively, of the target struct
+        type.raw_including_types.try &.each do |module_type|
+          path.push module_type
+          check_recursive(target, module_type, checked, path)
+          path.pop
+        end
+        path.pop
       end
     end
 
@@ -99,7 +108,14 @@ module Crystal
     end
 
     def path_to_s(path)
-      path.join(" -> ") { |var| "`#{var.name} : #{var.type}`" }
+      path.join(" -> ") do |var_or_type|
+        case var_or_type
+        when Var
+          "`#{var_or_type.name} : #{var_or_type.type}`"
+        else
+          "`#{var_or_type}`"
+        end
+      end
     end
 
     def struct?(type)
