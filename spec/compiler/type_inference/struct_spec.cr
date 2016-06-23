@@ -214,4 +214,19 @@ describe "Type inference: struct" do
       Bar.new as Foo
       )) { types["Foo"].virtual_type! }
   end
+
+  it "detects recursive struct through module" do
+    assert_error %(
+      module Moo
+      end
+
+      struct Foo
+        include Moo
+
+        def initialize(@moo : Moo)
+        end
+      end
+      ),
+      "recursive struct Foo detected: `@moo : Moo` -> `Moo` -> `Foo`"
+  end
 end
