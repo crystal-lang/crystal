@@ -5,7 +5,7 @@
         
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>Return types | Crystal Programming Language</title>
+        <title>Performance | Crystal Programming Language</title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="generator" content="GitBook 2.3.2">
@@ -25,10 +25,10 @@
         
     
     
-    <link rel="next" href="../syntax_and_semantics/default_values_named_arguments_splats_tuples_and_overloading.html" />
+    <link rel="next" href="../guides/concurrency.html" />
     
     
-    <link rel="prev" href="../syntax_and_semantics/type_restrictions.html" />
+    <link rel="prev" href="../guides/index.html" />
     
 
         
@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.8.3.8" data-basepath=".." data-revision="Thu Jun 23 2016 14:17:30 GMT+0000 (UTC)">
+    <div class="book" data-level="6.1" data-basepath=".." data-revision="Thu Jun 23 2016 14:17:30 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -1056,7 +1056,7 @@
             
         </li>
     
-        <li class="chapter active" data-level="4.8.3.8" data-path="syntax_and_semantics/return_types.html">
+        <li class="chapter " data-level="4.8.3.8" data-path="syntax_and_semantics/return_types.html">
             
                 
                     <a href="../syntax_and_semantics/return_types.html">
@@ -2011,7 +2011,7 @@
             <ul class="articles">
                 
     
-        <li class="chapter " data-level="6.1" data-path="guides/performance.html">
+        <li class="chapter active" data-level="6.1" data-path="guides/performance.html">
             
                 
                     <a href="../guides/performance.html">
@@ -2151,18 +2151,158 @@
                 
                     <section class="normal" id="section-">
                     
-                        <h1 id="return-types">Return types</h1>
-<p>A method&apos;s return type is always inferred by the compiler. However, you might want to specify it for two reasons:</p>
-<ol>
-<li>To make sure that the method returns the type that you want</li>
-<li>To make it appear in documentation comments</li>
-</ol>
-<p>For example:</p>
-<pre><code class="lang-crystal"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">some_method</span></span> <span class="hljs-symbol">:</span> <span class="hljs-constant">String</span>
-  <span class="hljs-string">&quot;hello&quot;</span>
+                        <h1 id="performance">Performance</h1>
+<p>Follow these tips to get the best out of your programs, both in speed and memory terms.</p>
+<h2 id="premature-optimization">Premature optimization</h2>
+<p>Donald Knuth once said:</p>
+<blockquote>
+<p>We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil. Yet we should not pass up our opportunities in that critical 3%</p>
+</blockquote>
+<p>However, if you are writing a program and you realize that writing a semantically equivalent, faster version involves just minor changes, you shouldn&apos;t miss that opportunity.</p>
+<p>And always be sure to profile your program to learn what are its bottlenecks. For profiling, on Mac OSX you can use <a href="https://developer.apple.com/library/prerelease/content/documentation/DeveloperTools/Conceptual/InstrumentsUserGuide/Instrument-TimeProfiler.html" target="_blank">Instruments Time Profiler</a> that comes with XCode. On Linux, and program that can profile C/C++ programs, like <a href="https://sourceware.org/binutils/docs/gprof/" target="_blank">gprof</a>, should work.</p>
+<p>Make sure to always profile programs with by compiling or running programs with the <code>--release</code> flag, which turns on optimizations.</p>
+<h2 id="avoiding-memory-allocations">Avoiding memory allocations</h2>
+<p>One of the best optimizations you can do in a program is avoiding extra/useless memory allocation. A memory allocation happens when you create an instance of a <strong>class</strong>, which ends up allocating heap memory. Creating an instance of a <strong>struct</strong> uses stack memory and doesn&apos;t have a performance penantly. If you don&apos;t know what&apos;s the difference between stack and help memory, be sure to <a href="https://www.google.com.ar/webhp?sourceid=chrome-instant&amp;ion=1&amp;espv=2&amp;ie=UTF-8#q=stack%20vs%20heap%20memory" target="_blank">read this</a>.</p>
+<p>Allocating heap memory is slow, and it puts more pressure on the the Garabge Collector (GC) as it will later have to free that memory.</p>
+<p>There are several ways to avoid heap memory allocations. The standard library is designed in a way to help you do that.</p>
+<h3 id="don-t-create-intermediate-strings-when-writing-to-an-io">Don&apos;t create intermediate strings when writing to an IO</h3>
+<p>To print a number to the standard output you write:</p>
+<pre><code>puts 123
+</code></pre><p>In many programming languages what will happen is that <code>to_s</code>, or a similar method for converting the object to its string representation, will be invoked, and then that string will be written to the standard output. This works, but it has a flaw: it creates an intermediate string, in heap memory, only to write it and then discard it. This, involves a heap memory allocation and gives a bit of work to the GC.</p>
+<p>In Crystal, <code>puts</code> will invoke <code>to_s(io)</code>, on the object, passing it the IO to which to write the string representation.</p>
+<p>So, you should never do this:</p>
+<pre><code>puts 123.to_s
+</code></pre><p>as it will create an intermediate strings. Always append an object directly to an IO.</p>
+<p>When writing custom types, always be sure to override <code>to_s(io)</code>, not <code>to_s</code>, and avoid creating intermediate strings in that method. For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyClass</span></span>
+  <span class="hljs-comment"># Good</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">to_s</span></span>(io)
+    <span class="hljs-comment"># appends &quot;1, 2&quot; to IO without creating intermediate strings</span>
+    x = <span class="hljs-number">1</span>
+    y = <span class="hljs-number">2</span>
+    io &lt;&lt; x &lt;&lt; <span class="hljs-string">&quot;, &quot;</span> &lt;&lt; y
+  <span class="hljs-keyword">end</span>
+
+  <span class="hljs-comment"># Bad</span>
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">to_s</span></span>(io)
+    x = <span class="hljs-number">1</span>
+    y = <span class="hljs-number">2</span>
+    <span class="hljs-comment"># using a string interpolation creates an intermediate string,</span>
+    <span class="hljs-comment"># this should be avoided</span>
+    io &lt;&lt; <span class="hljs-string">&quot;<span class="hljs-subst">#{x}</span>, <span class="hljs-subst">#{y}</span>&quot;</span>
+  <span class="hljs-keyword">end</span>
 <span class="hljs-keyword">end</span>
 </code></pre>
-<p>The return type follows the <a href="type_grammar.html">type grammar</a>.</p>
+<p>This philosophy of appending to an IO instead of returning an intermediate strings is present in other APIs, such as in the JSON and YAML apis, where one needs to define <code>to_json(io)</code> and <code>to_yaml(io)</code> methods to write this data directly to an IO. And you should use this strategy in your API definitions too.</p>
+<p>Let&apos;s compare the times:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># io_benchmark.cr</span>
+<span class="hljs-keyword">require</span> <span class="hljs-string">&quot;benchmark&quot;</span>
+
+io = <span class="hljs-constant">MemoryIO</span>.new
+
+<span class="hljs-constant">Benchmark</span>.ips <span class="hljs-keyword">do</span> |x|
+  x.report(<span class="hljs-string">&quot;without to_s&quot;</span>) <span class="hljs-keyword">do</span>
+    io &lt;&lt; <span class="hljs-number">123</span>
+    io.clear
+  <span class="hljs-keyword">end</span>
+
+  x.report(<span class="hljs-string">&quot;with to_s&quot;</span>) <span class="hljs-keyword">do</span>
+    io &lt;&lt; <span class="hljs-number">123</span>.to_s
+    io.clear
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Output:</p>
+<pre><code>$ crystal io_benchmark.cr --release
+without to_s  69.71M (&#xB1; 6.14%)       fastest
+   with to_s  14.68M (&#xB1; 2.38%)  4.75&#xD7; slower
+</code></pre><p>And always remember that it&apos;s not just the time that has improved: memory usage is also decreased.</p>
+<h3 id="avoid-creating-temporary-objects-over-and-over">Avoid creating temporary objects over and over</h3>
+<p>Consider this program:</p>
+<pre><code class="lang-crystal">lines_with_language_reference = <span class="hljs-number">0</span>
+<span class="hljs-keyword">while</span> line = gets
+  <span class="hljs-keyword">if</span> [<span class="hljs-string">&quot;crystal&quot;</span>, <span class="hljs-string">&quot;ruby&quot;</span>, <span class="hljs-string">&quot;java&quot;</span>].any? { |string| line.includes?(string) }
+    lines_with_language_reference += <span class="hljs-number">1</span>
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+puts <span class="hljs-string">&quot;Lines that mention crystal, ruby or java: <span class="hljs-subst">#{lines_with_language_reference}</span>&quot;</span>
+</code></pre>
+<p>The above program works but has a big performance problem: on every iteration a new array is created for <code>[&quot;crystal&quot;, &quot;ruby&quot;, &quot;java&quot;]</code>. Remember, an array literal is just syntax sugar for creating an instance of an array and adding some values to it, and this will happen over and over on each iteration.</p>
+<p>There are two ways to solve this:</p>
+<ol>
+<li><p>Use a tuple. If you use <code>{&quot;crystal&quot;, &quot;ruby&quot;, &quot;java&quot;}</code> in the above program it will work the same way, but since a tuple doesn&apos;t involve heap memory it will be faster, consume less memory and give more chances for the compiler to optimize the program.</p>
+<pre><code class="lang-crystal">lines_with_language_reference = <span class="hljs-number">0</span>
+<span class="hljs-keyword">while</span> line = gets
+ <span class="hljs-keyword">if</span> {<span class="hljs-string">&quot;crystal&quot;</span>, <span class="hljs-string">&quot;ruby&quot;</span>, <span class="hljs-string">&quot;java&quot;</span>}.any? { |string| line.includes?(string) }
+   lines_with_language_reference += <span class="hljs-number">1</span>
+ <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+puts <span class="hljs-string">&quot;Lines that mention crystal, ruby or java: <span class="hljs-subst">#{lines_with_language_reference}</span>&quot;</span>
+</code></pre>
+</li>
+<li><p>Move the array to a constant.</p>
+<pre><code class="lang-crystal"><span class="hljs-constant">LANGS</span> = [<span class="hljs-string">&quot;crystal&quot;</span>, <span class="hljs-string">&quot;ruby&quot;</span>, <span class="hljs-string">&quot;java&quot;</span>]
+
+lines_with_language_reference = <span class="hljs-number">0</span>
+<span class="hljs-keyword">while</span> line = gets
+ <span class="hljs-keyword">if</span> <span class="hljs-constant">LANGS</span>.any? { |string| line.includes?(string) }
+   lines_with_language_reference += <span class="hljs-number">1</span>
+ <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+puts <span class="hljs-string">&quot;Lines that mention crystal, ruby or java: <span class="hljs-subst">#{lines_with_language_reference}</span>&quot;</span>
+</code></pre>
+</li>
+</ol>
+<p>Using tuples is the preferred way.</p>
+<p>Explicit array literals in loops is one way to create temporary objects, but these can also be created via method calls. For example <code>Hash#keys</code> will return a new array with the keys each time it&apos;s invoked. Instead of doing that, you can use <code>Hash#each_key</code>, <code>Hash#has_key?</code> and other methods.</p>
+<h3 id="use-structs-when-possible">Use structs when possible</h3>
+<p>If you declare you type as a <strong>struct</strong> instead of a <strong>class</strong>, creating an instance of it will use stack memory, which is much cheaper than heap memory and doesn&apos;t put pressure on the GC.</p>
+<p>You shouldn&apos;t always use a struct, though. Structs are passed by value, so if you pass one to a method and the method makes changes to it, the caller won&apos;t see those changes, so they can be bug-prone. The best thing to do is to only use structs with immutable objects, specially if they are small.</p>
+<p>For example:</p>
+<pre><code class="lang-crystal"><span class="hljs-comment"># class_vs_struct.cr</span>
+<span class="hljs-keyword">require</span> <span class="hljs-string">&quot;benchmark&quot;</span>
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">PointClass</span></span>
+  getter x
+  getter y
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@x</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>, <span class="hljs-variable">@y</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">PointStruct</span></span>
+  getter x
+  getter y
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">initialize</span></span>(<span class="hljs-variable">@x</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>, <span class="hljs-variable">@y</span> <span class="hljs-symbol">:</span> <span class="hljs-constant">Int32</span>)
+  <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-constant">Benchmark</span>.ips <span class="hljs-keyword">do</span> |x|
+  x.report(<span class="hljs-string">&quot;class&quot;</span>) { <span class="hljs-constant">PointClass</span>.new(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>) }
+  x.report(<span class="hljs-string">&quot;struct&quot;</span>) { <span class="hljs-constant">PointStruct</span>.new(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>) }
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>Output:</p>
+<pre><code>$ crystal class_vs_struct.cr --release
+ class  28.17M (&#xB1; 2.86%) 15.29&#xD7; slower
+struct 430.82M (&#xB1; 6.58%)       fastest
+</code></pre><h2 id="iterating-strings">Iterating strings</h2>
+<p>Strings in crystal always contain UTF-8 encoded bytes. UTF-8 is a variable-length encoding: a character may be represented by several bytes, although characters in the ASCII range are always represented with a single byte. Because of this, indexing a string with <code>String#[]</code> is not a <code>O(1)</code> operation, because each time the bytes need to be decoded to find the character at the given position. There&apos;s an optimization that Crystal&apos;s String does here: if it knows all the characters in the string are ASCII, then <code>String#[]</code> can be implemented in <code>O(1)</code>. However, this isn&apos;t generally true.</p>
+<p>For this reason, iterating a String this way is not optimal, and in fact it has an order of <code>O(n^2)</code>:</p>
+<pre><code class="lang-crystal">string = ...
+<span class="hljs-keyword">while</span> i &lt; string.size
+  char = string[i]
+  <span class="hljs-comment"># ...</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
+<p>There&apos;s a second problem with the above: computing the <code>size</code> of a String is also slow, because it&apos;s not simply the number of bytes in the string (the <code>bytesize</code>). However, once a String computes its size once it caches it. It&apos;s still slow because of <code>String#[]</code>.</p>
+<p>The way to do it is to either use one of the iteration methods (<code>each_char</code>, <code>each_byte</code>, <code>each_codepoint</code>), or use the more low-level <code>Char::Reader</code> struct. For example, using <code>each_char</code>:</p>
+<pre><code class="lang-crystal">string = ...
+string.each_char <span class="hljs-keyword">do</span> |char|
+  <span class="hljs-comment"># ...</span>
+<span class="hljs-keyword">end</span>
+</code></pre>
 
                     
                     </section>
@@ -2173,10 +2313,10 @@
         </div>
 
         
-        <a href="../syntax_and_semantics/type_restrictions.html" class="navigation navigation-prev " aria-label="Previous page: Type restrictions"><i class="fa fa-angle-left"></i></a>
+        <a href="../guides/index.html" class="navigation navigation-prev " aria-label="Previous page: Guides"><i class="fa fa-angle-left"></i></a>
         
         
-        <a href="../syntax_and_semantics/default_values_named_arguments_splats_tuples_and_overloading.html" class="navigation navigation-next " aria-label="Next page: Method arguments"><i class="fa fa-angle-right"></i></a>
+        <a href="../guides/concurrency.html" class="navigation navigation-next " aria-label="Next page: Concurrency"><i class="fa fa-angle-right"></i></a>
         
     </div>
 </div>
