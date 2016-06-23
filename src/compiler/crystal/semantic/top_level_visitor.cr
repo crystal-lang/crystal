@@ -694,9 +694,9 @@ module Crystal
 
         return false
       when Call
-        if exp.expanded
-          return false
-        end
+        # Don't give an error yet: wait to see if the
+        # call doesn't resolve to a method/macro
+        return false
       end
 
       node.raise "can't apply visibility modifier"

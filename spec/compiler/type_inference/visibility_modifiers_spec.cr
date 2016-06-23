@@ -377,4 +377,11 @@ describe "Visibility modifiers" do
       Foo::Bar(Int32).new.bar
       )) { int32 }
   end
+
+  it "gives correct error on unknown call (#2838)" do
+    assert_error %(
+      private foo
+      ),
+      "undefined local variable or method 'foo'"
+  end
 end
