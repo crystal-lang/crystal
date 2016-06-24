@@ -1895,16 +1895,19 @@ module Crystal
 
     def array_malloc(type, count)
       @malloc_fun ||= @main_mod.functions[MALLOC_NAME]?
+      size = trunc(type.size, LLVM::Int32)
+      count = trunc(count, LLVM::Int32)
+      size = builder.mul size, count
       if malloc_fun = @malloc_fun
         malloc_fun = check_main_fun MALLOC_NAME, malloc_fun
-        size = trunc(type.size, LLVM::Int32)
-        count = trunc(count, LLVM::Int32)
-        size = builder.mul size, count
         pointer = call malloc_fun, size
         memset pointer, int8(0), size
         bit_cast pointer, type.pointer
       else
-        builder.array_malloc(type, count)
+        pointer = builder.array_malloc(type, count)
+        void_pointer = bit_cast pointer, LLVM::VoidPointer
+        memset void_pointer, int8(0), size
+        pointer
       end
     end
 
