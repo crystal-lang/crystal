@@ -699,7 +699,12 @@ module Crystal
 
       macros = (@macros ||= {} of String => Array(Macro))
       array = (macros[a_def.name] ||= [] of Macro)
-      array.push a_def
+      index = array.index { |existing_macro| a_def.overrides?(existing_macro) }
+      if index
+        array[index] = a_def
+      else
+        array.push a_def
+      end
     end
 
     def add_hook(kind, a_def, args_size = 0)

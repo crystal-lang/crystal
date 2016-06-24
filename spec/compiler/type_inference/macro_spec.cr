@@ -884,4 +884,18 @@ describe "Type inference: macro" do
       Foo.bar
       )) { int32 }
   end
+
+  it "can override macro (#2773)" do
+    assert_type(%(
+      macro foo
+        1
+      end
+
+      macro foo
+        'a'
+      end
+
+      foo
+      )) { char }
+  end
 end
