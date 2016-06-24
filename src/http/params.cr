@@ -64,6 +64,16 @@ module HTTP
       end
     end
 
+    # Creates an HTTP::Params instance from the key-value
+    # pairs of the given *hash*.
+    def self.from_hash(hash : Hash)
+      build do |builder|
+        hash.each do |key, value|
+          builder.add key, value
+        end
+      end
+    end
+
     # Builds an url-encoded HTTP form/query.
     #
     # The yielded object has an `add` method that accepts two arguments,
