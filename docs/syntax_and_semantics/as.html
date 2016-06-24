@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="4.9.4" data-basepath=".." data-revision="Thu Jun 23 2016 14:17:30 GMT+0000 (UTC)">
+    <div class="book" data-level="4.9.4" data-basepath=".." data-revision="Fri Jun 24 2016 12:24:28 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2170,7 +2170,7 @@ a_as_int.abs          <span class="hljs-comment"># works, compiler knows that a_
 <p>If it is impossible for a type to be restricted by another type, a compile-time error is issued:</p>
 <pre><code class="lang-crystal"><span class="hljs-number">1</span>.as(<span class="hljs-constant">String</span>) <span class="hljs-comment"># Compile-time error</span>
 </code></pre>
-<p><strong>Note: </strong> you can&apos;t use <code>as</code> to convert a type to an unrelated type: <code>as</code> is not like a <code>cast</code> in other languages. Methods on integers, floats and chars are provided for these convertions. Alternatively, use pointer casts as explained below.</p>
+<p><strong>Note: </strong> you can&apos;t use <code>as</code> to convert a type to an unrelated type: <code>as</code> is not like a <code>cast</code> in other languages. Methods on integers, floats and chars are provided for these conversions. Alternatively, use pointer casts as explained below.</p>
 <h2 id="converting-between-pointer-types">Converting between pointer types</h2>
 <p>The <code>as</code> pseudo-method also allows to cast between pointer types:</p>
 <pre><code class="lang-crystal">ptr = <span class="hljs-constant">Pointer</span>(<span class="hljs-constant">Int32</span>).malloc(<span class="hljs-number">1</span>)
