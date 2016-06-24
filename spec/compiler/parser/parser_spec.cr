@@ -791,6 +791,11 @@ describe "Parser" do
   it_parses "foo.nil?(  )", IsA.new("foo".call, Path.global("Nil"), nil_check: true)
 
   it_parses "foo &.nil?", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), Path.global("Nil"), nil_check: true)))
+  it_parses "foo &.baz.qux do\nend", Call.new(nil, "foo",
+    block: Block.new(["__arg0".var],
+      Call.new(Call.new("__arg0".var, "baz"), "qux", block: Block.new)
+    )
+  )
 
   it_parses "/foo/", regex("foo")
   it_parses "/foo/i", regex("foo", Regex::Options::IGNORE_CASE)
