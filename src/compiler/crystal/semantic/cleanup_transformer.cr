@@ -250,21 +250,6 @@ module Crystal
       node
     end
 
-    def transform(node : Path)
-      if target_const = node.target_const
-        if target_const.used && !target_const.initialized?
-          value = target_const.value
-          if (const_node = @const_being_initialized) && !simple_constant?(value)
-            const_being_initialized = const_node.target_const.not_nil!
-            const_node.raise "constant #{const_being_initialized} requires initialization of #{target_const}, \
-                                        which is initialized later. Initialize #{target_const} before #{const_being_initialized}"
-          end
-        end
-      end
-
-      super
-    end
-
     def transform(node : Global)
       if const_node = @const_being_initialized
         const_being_initialized = const_node.target_const.not_nil!
