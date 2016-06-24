@@ -502,9 +502,9 @@ describe "Type inference: closure" do
       end
 
       a = 1
-      LibC.foo Proc(Void).new do
+      LibC.foo(Proc(Void).new do
         a
-      end
+      end)
       ),
       "can't send closure to C function (closured vars: a)"
   end

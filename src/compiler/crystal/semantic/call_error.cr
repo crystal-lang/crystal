@@ -93,7 +93,7 @@ class Crystal::Call
         elsif convert_to_logical_operator(def_name)
           msg << "undefined method '#{def_name}'"
           similar_name = convert_to_logical_operator(def_name)
-        elsif args.size > 0 || has_parenthesis
+        elsif args.size > 0 || has_parentheses
           msg << "undefined method '#{def_name}'"
         else
           similar_name = parent_visitor.lookup_similar_var_name(def_name) unless similar_name

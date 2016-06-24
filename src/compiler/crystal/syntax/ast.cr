@@ -484,16 +484,16 @@ module Crystal
     property named_args : Array(NamedArgument)?
     property global : Bool
     property name_column_number : Int32
-    property has_parenthesis : Bool
+    property has_parentheses : Bool
     property name_size : Int32
     property doc : String?
     property? is_expansion : Bool
     property visibility : Visibility
 
-    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, global = false, @name_column_number = 0, has_parenthesis = false)
+    def initialize(@obj, @name, @args = [] of ASTNode, @block = nil, @block_arg = nil, @named_args = nil, global = false, @name_column_number = 0, has_parentheses = false)
       @name_size = -1
       @global = !!global
-      @has_parenthesis = !!has_parenthesis
+      @has_parentheses = !!has_parentheses
       @is_expansion = false
       @visibility = Visibility::Public
       if block = @block
@@ -533,7 +533,7 @@ module Crystal
     end
 
     def clone_without_location
-      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global, @name_column_number, @has_parenthesis)
+      clone = Call.new(@obj.clone, @name, @args.clone, @block.clone, @block_arg.clone, @named_args.clone, @global, @name_column_number, @has_parentheses)
       clone.name_size = name_size
       clone.is_expansion = is_expansion?
       clone
