@@ -149,6 +149,17 @@ module Crystal
     end
   end
 
+  class Macro
+    def overrides?(other : Macro)
+      # For now we consider that a macro overrides another macro
+      # if it has the same number of arguments, splat index and
+      # named arguments.
+      args.size == other.args.size &&
+        splat_index == other.splat_index &&
+        !!double_splat == !!other.double_splat
+    end
+  end
+
   class Path
     def restriction_of?(other : Path, owner)
       return true if self == other

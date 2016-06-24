@@ -1464,10 +1464,10 @@ module Crystal
             call.args << exp
           end
         else
-          # At this point we want to attach the "do" to the next call,
-          # so we set this var to true to make the parser think the call
-          # has parentheses and so a "do" must be attached to it
-          call = preserve_stop_on_do { parse_var_or_call(force_call: true).at(location) }
+          # At this point we want to attach the "do" to the next call
+          old_stop_on_do = @stop_on_do
+          @stop_on_do = false
+          call = parse_var_or_call(force_call: true).at(location)
 
           if call.is_a?(Call)
             call.obj = obj
@@ -1502,6 +1502,8 @@ module Crystal
               call.args << exp
             end
           end
+
+          @stop_on_do = old_stop_on_do
         end
 
         block = Block.new([Var.new(block_arg_name)], call).at(location)
