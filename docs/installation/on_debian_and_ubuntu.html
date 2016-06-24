@@ -36,7 +36,7 @@
     <body>
         
         
-    <div class="book" data-level="1.1" data-basepath=".." data-revision="Thu Jun 23 2016 14:17:30 GMT+0000 (UTC)">
+    <div class="book" data-level="1.1" data-basepath=".." data-revision="Fri Jun 24 2016 02:19:42 GMT+0000 (UTC)">
     
 
 <div class="book-summary">
@@ -2155,10 +2155,10 @@
 <p>In Debian derived distributions, you can use the official Crystal repository.</p>
 <h2 id="setup-repository">Setup repository</h2>
 <p>First you have to add the repository to your APT configuration. For easy setup just run in your command line:</p>
-<pre><code>  curl http://dist.crystal-lang.org/apt/setup.sh | sudo bash
+<pre><code>  curl https://dist.crystal-lang.org/apt/setup.sh | sudo bash
 </code></pre><p>That will add the signing key and the repository configuration. If you prefer to do it manually, execute the following commands as <em>root</em>:</p>
 <pre><code>apt-key adv --keyserver keys.gnupg.net --recv-keys 09617FD37CC06B54
-echo &quot;deb http://dist.crystal-lang.org/apt crystal main&quot; &gt; /etc/apt/sources.list.d/crystal.list
+echo &quot;deb https://dist.crystal-lang.org/apt crystal main&quot; &gt; /etc/apt/sources.list.d/crystal.list
 apt-get update
 </code></pre><h2 id="install">Install</h2>
 <p>Once the repository is configured you&apos;re ready to install Crystal:</p>
