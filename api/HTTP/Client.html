@@ -2994,7 +2994,7 @@ are silently ignored when reading text content.</p>
         <div class="doc"><p>Executes a DELETE request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3017,7 +3017,7 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a DELETE request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -3084,7 +3084,7 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a GET request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -3106,7 +3106,7 @@ response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></di
         <div class="doc"><p>Executes a GET request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3129,7 +3129,7 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a HEAD request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -3151,7 +3151,7 @@ response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></di
         <div class="doc"><p>Executes a HEAD request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3234,7 +3234,7 @@ is used.</p></div>
         <div class="doc"><p>Executes a PATCH request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -3256,7 +3256,7 @@ response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></di
         <div class="doc"><p>Executes a PATCH request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3279,7 +3279,7 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a POST request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3302,7 +3302,7 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a POST request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -3345,7 +3345,7 @@ to "application/x-www-form-urlencoded".</p>
         <div class="doc"><p>Executes a PUT request and yields the response to the block.
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
-<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+<pre><code><span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3368,7 +3368,7 @@ The response will have its body as an <code><a href="../IO.html">IO</a></code> a
         <div class="doc"><p>Executes a PUT request.
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
-<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+<pre><code>response <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -3563,7 +3563,7 @@ client.connect_timeout <span class="o">=</span> <span class="n">1.5</span>
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-client.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+client.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3587,7 +3587,7 @@ client.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTT
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-response <span class="o">=</span> client.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+response <span class="o">=</span> client.delete(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -3760,7 +3760,7 @@ client.exec(<span class="s">&quot;GET&quot;</span>, <span class="s">&quot;/&quot
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-client.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+client.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3784,7 +3784,7 @@ client.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-response <span class="o">=</span> client.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+response <span class="o">=</span> client.get(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -3807,7 +3807,7 @@ response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></di
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-response <span class="o">=</span> client.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+response <span class="o">=</span> client.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -3830,7 +3830,7 @@ response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></di
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-client.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+client.head(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3875,7 +3875,7 @@ client.host <span class="c"># &#61;&gt; &quot;www.example.com&quot;</span></code
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-client.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+client.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3899,7 +3899,7 @@ client.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-response <span class="o">=</span> client.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+response <span class="o">=</span> client.patch(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -3943,7 +3943,7 @@ client.port <span class="c"># &#61;&gt; 80</span></code></pre></div>
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-client.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+client.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -3967,7 +3967,7 @@ client.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP<
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-response <span class="o">=</span> client.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+response <span class="o">=</span> client.post(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
@@ -4034,7 +4034,7 @@ response <span class="o">=</span> client.post_form <span class="s">&quot;/&quot;
 The response will have its body as an <code><a href="../IO.html">IO</a></code> accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body_io-instance-method">Response#body_io</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-client.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
+client.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>) <span class="k">do</span> <span class="o">|</span>response<span class="o">|</span>
   response.body_io.gets <span class="c">#&#61;&gt; &quot;...&quot;</span>
 <span class="k">end</span></code></pre></div>
       
@@ -4058,7 +4058,7 @@ client.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</
 The response will have its body as a <code><a href="../String.html">String</a></code>, accessed via <code><a href="../HTTP/Client.html">HTTP::Client</a>::<a href="../HTTP/Client/Response.html#body-instance-method">Response#body</a></code>.</p>
 
 <pre><code>client <span class="o">=</span> <span class="t">HTTP</span><span class="t">::</span><span class="t">Client</span>.<span class="k">new</span>(<span class="s">&quot;www.example.com&quot;</span>)
-response <span class="o">=</span> client.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span>: <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
+response <span class="o">=</span> client.put(<span class="s">&quot;/&quot;</span>, headers: <span class="t">HTTP</span><span class="t">::</span><span class="t">Headers</span>{<span class="s">&quot;User-agent&quot;</span> => <span class="s">&quot;AwesomeApp&quot;</span>}, body: <span class="s">&quot;Hello&#33;&quot;</span>)
 response.body <span class="c">#&#61;&gt; &quot;...&quot;</span></code></pre></div>
       
       <br/>
