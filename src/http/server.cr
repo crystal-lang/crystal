@@ -110,18 +110,22 @@ class HTTP::Server
     new("127.0.0.1", port, handler)
   end
 
-  def initialize(@host : String, @port : Int32, &@handler : Context ->)
+  def initialize(@host : String, @port : Int32, &handler : Context ->)
+    @processor = RequestProcessor.new(handler)
   end
 
   def initialize(@host : String, @port : Int32, handlers : Array(HTTP::Handler), &handler : Context ->)
-    @handler = HTTP::Server.build_middleware handlers, handler
+    handler = HTTP::Server.build_middleware handlers, handler
+    @processor = RequestProcessor.new(handler)
   end
 
   def initialize(@host : String, @port : Int32, handlers : Array(HTTP::Handler))
-    @handler = HTTP::Server.build_middleware handlers
+    handler = HTTP::Server.build_middleware handlers
+    @processor = RequestProcessor.new(handler)
   end
 
-  def initialize(@host : String, @port : Int32, @handler : HTTP::Handler | HTTP::Handler::Proc)
+  def initialize(@host : String, @port : Int32, handler : HTTP::Handler | HTTP::Handler::Proc)
+    @processor = RequestProcessor.new(handler)
   end
 
   def port
@@ -145,6 +149,7 @@ class HTTP::Server
 
   def close
     @wants_close = true
+    @processor.close
     if server = @server
       server.close
       @server = nil
@@ -163,49 +168,7 @@ class HTTP::Server
       end
     end
 
-    must_close = true
-    response = Response.new(io)
-
-    begin
-      until @wants_close
-        begin
-          request = HTTP::Request.from_io(io)
-        rescue e
-          STDERR.puts "Bug: Unhandled exception while parsing request"
-          e.inspect_with_backtrace(STDERR)
-        end
-
-        unless request
-          response.respond_with_error("Bad Request", 400)
-          response.close
-          return
-        end
-
-        response.version = request.version
-        response.reset
-        response.headers["Connection"] = "keep-alive" if request.keep_alive?
-        context = Context.new(request, response)
-
-        @handler.call(context)
-
-        if response.upgraded?
-          must_close = false
-          return
-        end
-
-        response.output.close
-        io.flush
-
-        break unless request.keep_alive?
-      end
-    rescue e
-      response.respond_with_error
-      response.close
-      STDERR.puts "Unhandled exception while computing response, make sure to catch all your exceptions"
-      e.inspect_with_backtrace(STDERR)
-    ensure
-      io.close if must_close
-    end
+    @processor.process(io, io)
   end
 
   # Builds all handlers as the middleware for HTTP::Server.
