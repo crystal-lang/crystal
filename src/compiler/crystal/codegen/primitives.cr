@@ -422,7 +422,6 @@ class Crystal::CodeGenVisitor
     type = node.type.as(PointerInstanceType)
     llvm_type = llvm_embedded_type(type.element_type)
     last = array_malloc(llvm_type, call_args[1])
-    memset last, int8(0), llvm_type.size
     last
   end
 

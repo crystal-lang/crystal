@@ -1886,7 +1886,7 @@ module Crystal
       if malloc_fun = @malloc_fun
         malloc_fun = check_main_fun MALLOC_NAME, malloc_fun
         size = trunc(type.size, LLVM::Int32)
-        pointer = call malloc_fun, [size]
+        pointer = call malloc_fun, size
         bit_cast pointer, type.pointer
       else
         builder.malloc type
@@ -1900,7 +1900,8 @@ module Crystal
         size = trunc(type.size, LLVM::Int32)
         count = trunc(count, LLVM::Int32)
         size = builder.mul size, count
-        pointer = call malloc_fun, [size]
+        pointer = call malloc_fun, size
+        memset pointer, int8(0), size
         bit_cast pointer, type.pointer
       else
         builder.array_malloc(type, count)
