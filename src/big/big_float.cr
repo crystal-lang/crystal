@@ -47,20 +47,20 @@ struct BigFloat < Float
     LibGMP.mpf_set_default_prec(prec.to_u64)
   end
 
-  def <=>(other : BigFloat)
-    LibGMP.mpf_cmp(self, other)
+  def <=>(other : BigFloat) : Order
+    Order.from_value LibGMP.mpf_cmp(self, other)
   end
 
-  def <=>(other : Float)
-    LibGMP.mpf_cmp_d(self, other.to_f64)
+  def <=>(other : Float) : Order
+    Order.from_value LibGMP.mpf_cmp_d(self, other.to_f64)
   end
 
-  def <=>(other : Int::Signed)
-    LibGMP.mpf_cmp_si(self, other.to_i64)
+  def <=>(other : Int::Signed) : Order
+    Order.from_value LibGMP.mpf_cmp_si(self, other.to_i64)
   end
 
-  def <=>(other : Int::Unsigned)
-    LibGMP.mpf_cmp_ui(self, other.to_u64)
+  def <=>(other : Int::Unsigned) : Order
+    Order.from_value LibGMP.mpf_cmp_ui(self, other.to_u64)
   end
 
   def -

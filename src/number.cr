@@ -164,8 +164,8 @@ struct Number
   # Implements the comparison operator.
   #
   # See `Object#<=>`
-  def <=>(other)
-    self > other ? 1 : (self < other ? -1 : 0)
+  def <=>(other) : Order
+    self < other ? Order::LT : (self > other ? Order::GT : Order::EQ)
   end
 
   # Keeps *digits* significants digits of this number in the given *base*.

@@ -94,8 +94,8 @@ struct Char
   # ```
   # 'a' <=> 'c' # => -2
   # ```
-  def <=>(other : Char)
-    self - other
+  def <=>(other : Char) : Order
+    ord <=> other.ord
   end
 
   # Returns `true` if this char is an ASCII digit in specified base.

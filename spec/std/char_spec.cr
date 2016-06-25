@@ -179,9 +179,9 @@ describe "Char" do
   end
 
   it "does <=>" do
-    ('a' <=> 'b').should be < 0
-    ('a' <=> 'a').should eq(0)
-    ('b' <=> 'a').should be > 0
+    ('a' <=> 'b').lt?.should be_true
+    ('a' <=> 'a').eq?.should be_true
+    ('b' <=> 'a').gt?.should be_true
   end
 
   describe "+" do

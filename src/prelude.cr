@@ -11,6 +11,7 @@
 require "lib_c"
 require "macros"
 require "object"
+require "order"
 require "comparable"
 require "exception"
 require "iterable"

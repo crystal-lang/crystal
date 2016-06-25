@@ -1759,12 +1759,12 @@ class String
   # "abcdef" <=> "abcdefg" # => -1
   # "abcdef" <=> "ABCDEF"  # => 1
   # ```
-  def <=>(other : self)
-    return 0 if same?(other)
+  def <=>(other : self) : Order
+    return Order::EQ if same?(other)
     min_bytesize = Math.min(bytesize, other.bytesize)
 
     cmp = to_unsafe.memcmp(other.to_unsafe, bytesize)
-    cmp == 0 ? (bytesize <=> other.bytesize) : cmp.sign
+    cmp == 0 ? (bytesize <=> other.bytesize) : Order.from_value(cmp.sign)
   end
 
   # Compares this string with *other*, returning -1, 0 or +1 depending on whether
@@ -1776,15 +1776,15 @@ class String
   # case-insensitive way.
   #
   # ```
-  # "abcdef".compare("abcde")   # => 1
-  # "abcdef".compare("abcdef")  # => 0
-  # "abcdef".compare("abcdefg") # => -1
-  # "abcdef".compare("ABCDEF")  # => 1
+  # "abcdef".compare("abcde")   # => Order::GT
+  # "abcdef".compare("abcdef")  # => Order::EQ
+  # "abcdef".compare("abcdefg") # => Order::LT
+  # "abcdef".compare("ABCDEF")  # => Order::GT
   #
-  # "abcdef".compare("ABCDEF", case_insensitive: true) # => 0
-  # "abcdef".compare("ABCDEG", case_insensitive: true) # => -1
+  # "abcdef".compare("ABCDEF", case_insensitive: true) # => Order::EQ
+  # "abcdef".compare("ABCDEG", case_insensitive: true) # => Order::LT
   # ```
-  def compare(other : String, case_insensitive = false)
+  def compare(other : String, case_insensitive = false) : Order
     return self <=> other unless case_insensitive
 
     reader1 = Char::Reader.new(self)
@@ -1794,18 +1794,18 @@ class String
 
     while reader1.has_next? && reader2.has_next?
       cmp = ch1.downcase <=> ch2.downcase
-      return cmp.sign if cmp != 0
+      return cmp unless cmp.eq?
 
       ch1 = reader1.next_char
       ch2 = reader2.next_char
     end
 
     if reader1.has_next?
-      1
+      Order::GT
     elsif reader2.has_next?
-      -1
+      Order::LT
     else
-      0
+      Order::EQ
     end
   end
 

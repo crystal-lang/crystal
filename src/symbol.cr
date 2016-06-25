@@ -26,7 +26,7 @@ struct Symbol
   # or +1 depending on whether symbol is less than, equal to, or greater than
   # other_symbol.
   # See `String#<=>` for more information.
-  def <=>(other : Symbol)
+  def <=>(other : Symbol) : Order
     to_s <=> other.to_s
   end
 

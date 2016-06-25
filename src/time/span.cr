@@ -224,7 +224,7 @@ struct Time::Span
     Span.new(ticks / number)
   end
 
-  def <=>(other : self)
+  def <=>(other : self) : Order
     ticks <=> other.ticks
   end
 

@@ -1,19 +1,19 @@
 # The Comparable mixin is used by classes whose objects may be ordered.
 #
 # Including types must provide an `<=>` method, which compares the receiver against
-# another object, returning -1, 0, or +1 depending on whether the receiver is less than,
-# equal to, or greater than the other object.
+# another object, returning `Order::LT`, `Order::EQ`, or `Order::GT` depending on
+# whether the receiver is less than, equal to, or greater than the other object.
 #
 # Comparable uses `<=>` to implement the conventional comparison operators (`<`, `<=`, `==`, `>=`, and `>`).
 module Comparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `-1`.
   def <(other : T)
-    (self <=> other) < 0
+    (self <=> other).lt?
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `-1` or `0`.
   def <=(other : T)
-    (self <=> other) <= 0
+    (self <=> other).lt_eq?
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `0`.
@@ -27,17 +27,17 @@ module Comparable(T)
       return true if other.is_a?(Nil) && self.same?(other)
     end
 
-    (self <=> other) == 0
+    (self <=> other).eq?
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `1`.
   def >(other : T)
-    (self <=> other) > 0
+    (self <=> other).gt?
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `1` or `0`.
   def >=(other : T)
-    (self <=> other) >= 0
+    (self <=> other).gt_eq?
   end
 
   # Comparison operator. Returns 0 if the two objects are equal,
@@ -50,5 +50,5 @@ module Comparable(T)
   # # Sort in a descending way
   # [4, 7, 2].sort { |x, y| y <=> x } # => [7, 4, 2]
   # ```
-  abstract def <=>(other : T)
+  abstract def <=>(other : T) : Order
 end

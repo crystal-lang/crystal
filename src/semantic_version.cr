@@ -47,13 +47,13 @@ class SemanticVersion
     end
   end
 
-  def <=>(other : self) : Int32
+  def <=>(other : self) : Order
     r = major <=> other.major
-    return r if r != 0
+    return r unless r.eq?
     r = minor <=> other.minor
-    return r if r != 0
+    return r unless r.eq?
     r = patch <=> other.patch
-    return r if r != 0
+    return r unless r.eq?
 
     pre1 = prerelease
     pre2 = other.prerelease
@@ -86,37 +86,37 @@ class SemanticVersion
       end
     end
 
-    def <=>(other : self) : Int32
+    def <=>(other : self) : Order
       if identifiers.empty?
         if other.identifiers.empty?
-          return 0
+          return Order::EQ
         else
-          return 1
+          return Order::GT
         end
       elsif other.identifiers.empty?
-        return -1
+        return Order::LT
       else
         # continue
       end
 
       identifiers.each_with_index do |item, i|
-        return 1 if i >= other.identifiers.size # larger = higher precedenc
+        return Order::GT if i >= other.identifiers.size # larger = higher precedenc
 
         oitem = other.identifiers[i]
         r = compare item, oitem
-        return r if r != 0
+        return r if r != Order::EQ
       end
 
-      return -1 if identifiers.size != other.identifiers.size # larger = higher precedence
-      0
+      return Order::LT if identifiers.size != other.identifiers.size # larger = higher precedence
+      Order::EQ
     end
 
     private def compare(x : Int32, y : String)
-      -1
+      Order::LT
     end
 
     private def compare(x : String, y : Int32)
-      1
+      Order::GT
     end
 
     private def compare(x : Int32, y : Int32)

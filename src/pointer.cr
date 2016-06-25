@@ -97,7 +97,7 @@ struct Pointer(T)
   # respectively.
   #
   # See `Object#<=>`.
-  def <=>(other : self)
+  def <=>(other : self) : Order
     address <=> other.address
   end
 

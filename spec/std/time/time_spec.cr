@@ -226,7 +226,7 @@ describe Time do
     t1 = Time.new 2014, 10, 30, 21, 18, 13
     t2 = Time.new 2014, 10, 30, 21, 18, 14
 
-    (t1 <=> t2).should eq(-1)
+    (t1 <=> t2).lt?.should be_true
     (t1 == t2).should be_false
     (t1 < t2).should be_true
   end
@@ -594,7 +594,7 @@ describe Time do
 
   it "compares different kinds" do
     time = Time.now
-    (time.to_utc <=> time).should eq(0)
+    (time.to_utc <=> time).eq?.should be_true
   end
 
   it %(changes timezone with ENV["TZ"]) do
