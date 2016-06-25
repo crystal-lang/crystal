@@ -2172,8 +2172,8 @@ local = <span class="hljs-number">1</span>
 <span class="hljs-comment"># The above is valid with these operators:</span>
 <span class="hljs-comment"># +, -, *, /, %, |, &amp;, ^, **, &lt;&lt;, &gt;&gt;</span>
 
-local ||= <span class="hljs-number">1</span> <span class="hljs-comment"># same as: local || (local = 1)</span>
-local &amp;&amp;= <span class="hljs-number">1</span> <span class="hljs-comment"># same as: local &amp;&amp; (local = 1)</span>
+local ||= <span class="hljs-number">1</span> <span class="hljs-comment"># same as: local = local || 1</span>
+local &amp;&amp;= <span class="hljs-number">1</span> <span class="hljs-comment"># same as: local = local &amp;&amp; 1</span>
 </code></pre>
 <p>A method invocation that ends with <code>=</code> has syntax sugar:</p>
 <pre><code class="lang-crystal"><span class="hljs-comment"># A setter</span>
