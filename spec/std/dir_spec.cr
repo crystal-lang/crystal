@@ -72,6 +72,22 @@ describe "Dir" do
     end
   end
 
+  describe "tmpdir" do
+    it "returns default tmp directory" do
+      old_tmpdir = ENV["TMPDIR"]?
+        ENV.delete("TMPDIR")
+      Dir.tmpdir.should eq("/tmp")
+      ENV["TMPDIR"] = old_tmpdir if old_tmpdir
+    end
+
+    it "returns configured tmp directory" do
+      original_tmpdir = ENV["TMPDIR"]?
+        ENV["TMPDIR"] = "/my/tmp"
+      Dir.tmpdir.should eq("/my/tmp")
+      ENV["TMPDIR"] = original_tmpdir if original_tmpdir
+    end
+  end
+
   describe "glob" do
     it "tests glob with a single pattern" do
       assert_dir_glob [

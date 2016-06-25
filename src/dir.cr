@@ -191,6 +191,20 @@ class Dir
     0
   end
 
+  # Returns the tmp dir
+  #
+  # ```
+  # Dir.tmpdir # => "/tmp"
+  # ```
+  def self.tmpdir : String
+    unless tmpdir = ENV["TMPDIR"]?
+      tmpdir = "/tmp"
+    end
+    tmpdir = tmpdir + File::SEPARATOR unless tmpdir.ends_with? File::SEPARATOR
+
+    File.dirname(tmpdir)
+  end
+
   # Removes the directory at the given path.
   def self.rmdir(path)
     if LibC.rmdir(path.check_no_null_byte) == -1
