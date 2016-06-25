@@ -34,8 +34,7 @@ require "c/stdlib"
 class Tempfile < IO::FileDescriptor
   # Creates a `Tempfile` with the given filename.
   def initialize(name)
-    tmpdir = Dir.tmpdir + File::SEPARATOR
-    @path = "#{tmpdir}#{name}.XXXXXX"
+    @path = File.join(Dir.tmpdir, "#{name}.XXXXXX")
     fileno = LibC.mkstemp(@path)
     if fileno == -1
       raise Errno.new("mkstemp")

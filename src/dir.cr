@@ -1,6 +1,7 @@
 require "c/dirent"
 require "c/unistd"
 require "c/sys/stat"
+require "file_utils"
 
 # Objects of class Dir are directory streams representing directories in the underlying file system.
 # They provide a variety of ways to list directories and their contents. See also `File`.
@@ -191,12 +192,48 @@ class Dir
     0
   end
 
+  # Creates a new temporary directory
+  #
+  # ```
+  # Dir.mktmpdir # => "/tmp/c.a56b2F"
+  # ```
+  def self.mktmpdir(prefix = "c")
+    tmp_dir = File.join(Dir.tmpdir, "#{prefix}.XXXXXX")
+
+    fileno = LibC.mkdtemp(tmp_dir)
+    if fileno == nil
+      raise Errno.new("mkdtemp")
+    end
+
+    tmp_dir
+  end
+
+  # Creates a new temporary directory within the lifecycle
+  # of the given block and destroys it, and its content, later on.
+  #
+  # ```
+  # Dir.mktmpdir do |dir|
+  #   puts dir
+  # => "/tmp/c.a56b2F"
+  # end
+  # ```
+  def self.mktmpdir(prefix = "c", &block)
+    tmp_dir = Dir.mktmpdir(prefix)
+    begin
+      yield tmp_dir
+    ensure
+      FileUtils.rm_r(tmp_dir)
+    end
+
+    tmp_dir
+  end
+
   # Returns the tmp dir
   #
   # ```
   # Dir.tmpdir # => "/tmp"
   # ```
-  def self.tmpdir : String
+  def self.tmpdir
     unless tmpdir = ENV["TMPDIR"]?
       tmpdir = "/tmp"
     end

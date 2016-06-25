@@ -72,19 +72,57 @@ describe "Dir" do
     end
   end
 
+  describe "mktmpdir" do
+    it "creates the temporary directory" do
+      tmp_dir = Dir.mktmpdir
+
+      Dir.exists?(tmp_dir).should be_true
+    end
+
+    it "accepts a prefix when creating the temporary directory" do
+      prefix = "foo"
+      path = Dir.mktmpdir(prefix)
+
+      Dir.exists?(path).should be_true
+      (path =~ /#{prefix}/).should_not be_nil
+    end
+
+    describe "with a block" do
+      it "creates the dir" do
+        Dir.mktmpdir do |dir|
+          Dir.exists?(dir).should be_true
+        end
+      end
+
+      it "removes the dir" do
+        tmp_dir = "/"
+        Dir.mktmpdir do |dir|
+          tmp_dir = dir
+        end
+
+        Dir.exists?(tmp_dir).should be_false
+      end
+    end
+  end
+
   describe "tmpdir" do
     it "returns default tmp directory" do
-      old_tmpdir = ENV["TMPDIR"]?
-        ENV.delete("TMPDIR")
+      original_tmpdir = ENV["TMPDIR"]?
+      ENV.delete("TMPDIR")
       Dir.tmpdir.should eq("/tmp")
-      ENV["TMPDIR"] = old_tmpdir if old_tmpdir
+      ENV["TMPDIR"] = original_tmpdir if original_tmpdir
     end
 
     it "returns configured tmp directory" do
       original_tmpdir = ENV["TMPDIR"]?
-        ENV["TMPDIR"] = "/my/tmp"
+      ENV["TMPDIR"] = "/my/tmp"
       Dir.tmpdir.should eq("/my/tmp")
-      ENV["TMPDIR"] = original_tmpdir if original_tmpdir
+
+      if original_tmpdir
+        ENV["TMPDIR"] = original_tmpdir
+      else
+        ENV.delete("TMPDIR")
+      end
     end
   end
 
