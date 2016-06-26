@@ -41,9 +41,9 @@ struct Char
     #
     # ```
     # reader = Char::Reader.new("ab")
-    # reader.current_char # => 0
+    # reader.pos # => 0
     # reader.next_char
-    # reader.current_char # => 1
+    # reader.pos # => 1
     # ```
     getter pos : Int32
 
