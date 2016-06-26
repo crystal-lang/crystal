@@ -1,6 +1,24 @@
 require "spec"
 require "http/server"
 
+module IO
+  class RaiseErrno
+    def initialize(@value : Int32)
+    end
+
+    include IO
+
+    def read(slice : Slice(UInt8))
+      Errno.value = @value
+      raise Errno.new "..."
+    end
+
+    def write(slice : Slice(UInt8)) : Nil
+      raise "not implemented"
+    end
+  end
+end
+
 module HTTP
   class Server
     class ReverseResponseOutput
@@ -207,6 +225,46 @@ module HTTP
     end
   end
 
+  describe HTTP::Server::RequestProcessor do
+    it "works" do
+      processor = HTTP::Server::RequestProcessor.new do |context|
+        context.response.content_type = "text/plain"
+        context.response.print "Hello world"
+      end
+
+      input = MemoryIO.new("GET / HTTP/1.1\r\n\r\n")
+      output = MemoryIO.new
+      processor.process(input, output)
+      output.rewind
+      output.gets_to_end.should eq(requestize(<<-RESPONSE
+        HTTP/1.1 200 OK
+        Connection: keep-alive
+        Content-Type: text/plain
+        Content-Length: 11
+
+        Hello world
+        RESPONSE
+      ))
+    end
+
+    it "handles Errno" do
+      processor = HTTP::Server::RequestProcessor.new { }
+      input = IO::RaiseErrno.new(Errno::ECONNRESET)
+      output = MemoryIO.new
+      processor.process(input, output)
+      output.rewind.gets_to_end.empty?.should be_true
+    end
+
+    it "catches raised error on handler" do
+      processor = HTTP::Server::RequestProcessor.new { raise "OH NO" }
+      input = MemoryIO.new("GET / HTTP/1.1\r\n\r\n")
+      output = MemoryIO.new
+      error = MemoryIO.new
+      processor.process(input, output, error)
+      output.rewind.gets_to_end.should match(/Internal Server Error/)
+    end
+  end
+
   typeof(begin
     # Initialize with custom host
     server = Server.new("0.0.0.0", 0) { |ctx| }
@@ -246,4 +304,8 @@ module HTTP
     server.listen
     server.close
   end)
+end
+
+private def requestize(string)
+  string.gsub("\n", "\r\n")
 end
