@@ -832,4 +832,18 @@ describe "Type inference: def overload" do
       ),
       " - A::String.foo(a : A::String, b : Bool)"
   end
+
+  it "overloads on metaclass" do
+    assert_type(%(
+      def foo(x : String.class)
+        1
+      end
+
+      def foo(x : String?.class)
+        'a'
+      end
+
+      {foo(String), foo(typeof("" || nil))}
+      )) { tuple_of([int32, char]) }
+  end
 end
