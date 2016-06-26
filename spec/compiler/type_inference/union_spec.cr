@@ -149,4 +149,10 @@ describe "Type inference: union" do
       Union(Foo, Bar)
       )) { types["Foo"].virtual_type!.metaclass }
   end
+
+  it "treats void as nil in union" do
+    assert_type(%(
+      nil.as(Void?)
+      )) { nil_type }
+  end
 end
