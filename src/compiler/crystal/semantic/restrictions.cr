@@ -208,6 +208,7 @@ module Crystal
     end
 
     def restriction_of?(other : Union, owner)
+      # `true` if this type is a restriction of any type in the union
       other.types.any? { |o| self.restriction_of?(o, owner) }
     end
 
@@ -218,7 +219,11 @@ module Crystal
 
   class Union
     def restriction_of?(other : Path, owner)
-      types.any? &.restriction_of?(other, owner)
+      # For a union to be considered before a path,
+      # all types in the union must be considered before
+      # that path.
+      # For example when using all subtypes of a parent type.
+      types.all? &.restriction_of?(other, owner)
     end
   end
 

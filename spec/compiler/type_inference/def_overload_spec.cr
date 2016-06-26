@@ -846,4 +846,18 @@ describe "Type inference: def overload" do
       {foo(String), foo(typeof("" || nil))}
       )) { tuple_of([int32, char]) }
   end
+
+  it "overloads union against non-union (#2904)" do
+    assert_type(%(
+      def foo(x : Int32?)
+        true
+      end
+
+      def foo(x : Int32)
+        'a'
+      end
+
+      {foo(1), foo(nil)}
+      )) { tuple_of([char, bool]) }
+  end
 end
