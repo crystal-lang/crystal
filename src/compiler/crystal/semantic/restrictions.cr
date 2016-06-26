@@ -205,6 +205,12 @@ module Crystal
     end
   end
 
+  class Metaclass
+    def restriction_of?(other : Metaclass, owner)
+      self == other
+    end
+  end
+
   class Type
     def restrict(other : Nil, context)
       self
@@ -755,7 +761,7 @@ module Crystal
   class MetaclassType
     def restrict(other : Metaclass, context)
       restricted = instance_type.restrict(other.name, context)
-      restricted ? self : nil
+      instance_type == restricted ? self : nil
     end
 
     def restrict(other : VirtualMetaclassType, context)
@@ -767,7 +773,7 @@ module Crystal
   class GenericClassInstanceMetaclassType
     def restrict(other : Metaclass, context)
       restricted = instance_type.restrict(other.name, context)
-      restricted ? self : nil
+      instance_type == restricted ? self : nil
     end
 
     def restrict(other : MetaclassType, context)
