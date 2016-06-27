@@ -1,14 +1,21 @@
-## 0.18.4 (21-06.2016)
+## 0.18.5 (27-06-2016)
+
+* Added `OpenSSL::SSL::Socket#alpn_protocol`
+* Added `IO#copy(src, desc, limit)` (thanks @jreinert)
+* Added `TypeNode#instance` macro method
+* [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.5+is%3Aclosed)
+
+## 0.18.4 (21-06-2016)
 
 * Fixed [#2887](https://github.com/crystal-lang/crystal/issues/2887)
 * Fix broken specs
 
-## 0.18.3 (21-06.2016)
+## 0.18.3 (21-06-2016)
 
 * `TypeNode`: added `<`, `<=`, `>` and `>=` macro methods
 * [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.3+is%3Aclosed)
 
-## 0.18.2 (16-06.2016)
+## 0.18.2 (16-06-2016)
 
 * Fixed building Crystal from the source tarball
 

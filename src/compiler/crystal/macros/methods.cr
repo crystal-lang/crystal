@@ -1104,6 +1104,8 @@ module Crystal
         end
       when "class"
         interpret_argless_method(method, args) { TypeNode.new(type.metaclass) }
+      when "instance"
+        interpret_argless_method(method, args) { TypeNode.new(type.instance_type) }
       when "<", "<=", ">", ">="
         interpret_one_arg_method(method, args) do |arg|
           unless arg.is_a?(TypeNode)
