@@ -833,7 +833,7 @@ describe "Type inference: def overload" do
       " - A::String.foo(a : A::String, b : Bool)"
   end
 
-  it "overloads on metaclass" do
+  it "overloads on metaclass (#2916)" do
     assert_type(%(
       def foo(x : String.class)
         1
@@ -845,6 +845,40 @@ describe "Type inference: def overload" do
 
       {foo(String), foo(typeof("" || nil))}
       )) { tuple_of([int32, char]) }
+  end
+
+  it "overloads on metaclass (2) (#2916)" do
+    assert_type(%(
+      def foo(x : String.class)
+        1
+      end
+
+      def foo(x : ::String.class)
+        'a'
+      end
+
+      foo(String)
+      )) { char }
+  end
+
+  it "overloads on metaclass (3) (#2916)" do
+    assert_type(%(
+      class Foo
+      end
+
+      class Bar < Foo
+      end
+
+      def foo(x : Foo.class)
+        1
+      end
+
+      def foo(x : Bar.class)
+        'a'
+      end
+
+      {foo(Bar), foo(Foo)}
+      )) { tuple_of([char, int32]) }
   end
 
   it "overloads union against non-union (#2904)" do

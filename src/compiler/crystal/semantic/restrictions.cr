@@ -242,7 +242,13 @@ module Crystal
 
   class Metaclass
     def restriction_of?(other : Metaclass, owner)
-      self == other
+      self_type = TypeLookup.lookup?(owner, self)
+      other_type = TypeLookup.lookup?(owner, other)
+      if self_type && other_type
+        self_type.restriction_of?(other_type, owner)
+      else
+        self == other
+      end
     end
   end
 
@@ -802,6 +808,10 @@ module Crystal
     def restrict(other : VirtualMetaclassType, context)
       restricted = instance_type.restrict(other.instance_type.base_type, context)
       restricted ? self : nil
+    end
+
+    def restriction_of?(other : VirtualMetaclassType, owner)
+      restriction_of?(other.base_type.metaclass, owner)
     end
   end
 
