@@ -107,7 +107,9 @@ module HTTP
       request.method.should eq("GET")
       request.path.should eq("/")
       request.cookies["a"].value.should eq("b")
-      request.headers.should eq({"Host" => "host.example.org"})
+
+      # Headers should not be modified (#2920)
+      request.headers.should eq({"Host" => "host.example.org", "Cookie" => "a=b"})
     end
 
     it "headers are case insensitive" do
