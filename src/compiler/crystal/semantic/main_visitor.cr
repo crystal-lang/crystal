@@ -301,6 +301,21 @@ module Crystal
     end
 
     def visit(node : Global)
+      # Reading from a special global variable is actually
+      # reading from a local variable with that same not,
+      # invoking `not_nil!` on it (because these are usually
+      # accessed after invoking a method that brought them
+      # into the current scope, and it would be annoying
+      # to ask the user to always invoke `not_nil!` on it)
+      case node.name
+      when "$~", "$?"
+        expanded = Call.new(Var.new(node.name).at(node), "not_nil!").at(node)
+        expanded.accept self
+        node.bind_to expanded
+        node.expanded = expanded
+        return false
+      end
+
       visit_global node
       false
     end

@@ -1142,7 +1142,7 @@ module Crystal
                    ArrayLiteral HashLiteral RegexLiteral RangeLiteral
                    Case StringInterpolation
                    MacroExpression MacroIf MacroFor MultiAssign
-                   SizeOf InstanceSizeOf) %}
+                   SizeOf InstanceSizeOf Global) %}
     class {{name.id}}
       include ExpandableNode
     end

@@ -1920,27 +1920,12 @@ module Crystal
 
       obj = node.obj
 
-      # Special cases
-      if @token.type == :"$~" && node.name == "not_nil!" && obj.is_a?(Var) && obj.name == "$~"
-        write "$~"
+      # Special case: $1, $2, ...
+      if @token.type == :GLOBAL_MATCH_DATA_INDEX && node.name == "[]" && obj.is_a?(Global)
+        write "$"
+        write @token.value
         next_token
         return false
-      end
-
-      if @token.type == :"$?" && node.name == "not_nil!" && obj.is_a?(Var) && obj.name == "$?"
-        write "$?"
-        next_token
-        return false
-      end
-
-      if @token.type == :GLOBAL_MATCH_DATA_INDEX && node.name == "[]" && obj.is_a?(Call) && obj.name == "not_nil!"
-        obj2 = obj.obj
-        if obj2.is_a?(Var) && obj2.name == "$~"
-          write "$"
-          write @token.value
-          next_token
-          return false
-        end
       end
 
       write_token :"::" if node.global

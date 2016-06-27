@@ -830,11 +830,11 @@ describe "Parser" do
 
   it_parses "foo $a", Call.new(nil, "foo", Global.new("$a"))
 
-  it_parses "$~", Call.new("$~".var, "not_nil!")
-  it_parses "$~.foo", Call.new(Call.new("$~".var, "not_nil!"), "foo")
-  it_parses "$1", Call.new(Call.new("$~".var, "not_nil!"), "[]", 1.int32)
-  it_parses "$1?", Call.new(Call.new("$~".var, "not_nil!"), "[]?", 1.int32)
-  it_parses "foo $1", Call.new(nil, "foo", Call.new(Call.new("$~".var, "not_nil!"), "[]", 1.int32))
+  it_parses "$~", Global.new("$~")
+  it_parses "$~.foo", Call.new(Global.new("$~"), "foo")
+  it_parses "$1", Call.new(Global.new("$~"), "[]", 1.int32)
+  it_parses "$1?", Call.new(Global.new("$~"), "[]?", 1.int32)
+  it_parses "foo $1", Call.new(nil, "foo", Call.new(Global.new("$~"), "[]", 1.int32))
   it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
 
   it_parses "foo /a/", Call.new(nil, "foo", regex("a"))
@@ -843,9 +843,9 @@ describe "Parser" do
   it_parses "foo(/ /, / /)", Call.new(nil, "foo", [regex(" "), regex(" ")] of ASTNode)
   it_parses "foo a, / /", Call.new(nil, "foo", ["a".call, regex(" ")] of ASTNode)
 
-  it_parses "$?", Call.new("$?".var, "not_nil!")
-  it_parses "$?.foo", Call.new(Call.new("$?".var, "not_nil!"), "foo")
-  it_parses "foo $?", Call.new(nil, "foo", Call.new("$?".var, "not_nil!"))
+  it_parses "$?", Global.new("$?")
+  it_parses "$?.foo", Call.new(Global.new("$?"), "foo")
+  it_parses "foo $?", Call.new(nil, "foo", Global.new("$?"))
   it_parses "$? = 1", Assign.new("$?".var, 1.int32)
 
   it_parses "$0", Path.global("PROGRAM_NAME")
