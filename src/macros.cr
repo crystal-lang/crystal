@@ -93,8 +93,20 @@ end
 # pp [1, 2, 3].map(&.to_s) # prints "[1, 2, 3].map(&.to_s) # => ["1", "2", "3"]"
 # ```
 macro pp(*exps)
-  {% for exp in exps %}
+  {% if exps.size == 0 %}
+    # Nothing
+  {% elsif exps.size == 1 %}
+    {{ exp = exps.first }}
     ::puts "#{ {{exp.stringify}} } # => #{ ({{exp}}).inspect }"
+  {% else %}
+    %strings = [] of {String, String}
+    {% for exp in exps %}
+      %strings.push({ {{exp.stringify}}, ({{exp}}).inspect })
+    {% end %}
+    %max_size = %strings.max_of &.[0].size
+    %strings.each do |%left, %right|
+      ::puts "#{%left.ljust(%max_size)} # => #{%right}"
+    end
   {% end %}
 end
 
