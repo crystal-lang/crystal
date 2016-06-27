@@ -251,6 +251,10 @@ module Crystal
     end
 
     def transform(node : Global)
+      if expanded = node.expanded
+        return expanded
+      end
+
       if const_node = @const_being_initialized
         const_being_initialized = const_node.target_const.not_nil!
 

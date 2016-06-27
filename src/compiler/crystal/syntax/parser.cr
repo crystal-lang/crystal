@@ -957,7 +957,7 @@ module Crystal
           @token.copy_from(@temp_token)
           self.current_pos, @line_number, @column_number = old_pos, old_line, old_column
 
-          node_and_next_token Call.new(var, "not_nil!").at(location)
+          node_and_next_token Global.new(var.name).at(location)
         end
       when :GLOBAL_MATCH_DATA_INDEX
         value = @token.value.to_s
@@ -971,7 +971,7 @@ module Crystal
             method = "[]"
           end
           location = @token.location
-          node_and_next_token Call.new(Call.new(Var.new("$~").at(location), "not_nil!").at(location), method, NumberLiteral.new(value.to_i))
+          node_and_next_token Call.new(Global.new("$~").at(location), method, NumberLiteral.new(value.to_i))
         end
       when :__LINE__
         node_and_next_token MagicConstant.expand_line_node(@token.location)
