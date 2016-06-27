@@ -983,6 +983,13 @@ module Crystal
         return false
       end
 
+      # Check if it's T? instead of Union(T, Nil)
+      if first_name == "Union" && @token.value != "Union"
+        node.type_vars.first.accept self
+        write_token :"?"
+        return false
+      end
+
       accept name
       skip_space_or_newline
 

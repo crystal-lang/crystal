@@ -145,14 +145,12 @@ module HTTP
         values.each do |header|
           Cookie::Parser.parse_cookies(header) { |cookie| self << cookie }
         end
-        headers.delete "Cookie"
       end
 
       if values = headers.get?("Set-Cookie")
         values.each do |header|
           Cookie::Parser.parse_set_cookie(header).try { |cookie| self << cookie }
         end
-        headers.delete "Set-Cookie"
       end
       self
     end
