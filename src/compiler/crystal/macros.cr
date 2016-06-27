@@ -1203,6 +1203,11 @@ module Crystal::Macros
     def class : TypeNode
     end
 
+    # Returns the instance type of this type, if it's a class type,
+    # or `self` otherwise. This is the opposite of `#class`.
+    def instance : TypeNode
+    end
+
     # Returns `true` if *other* is an ancestor of `self`.
     def <(other : TypeNode) : BoolLiteral
     end

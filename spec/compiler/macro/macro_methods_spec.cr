@@ -915,6 +915,12 @@ describe "macro methods" do
       end
     end
 
+    it "executes instance" do
+      assert_macro("x", "{{x.class.instance}}", "String") do |program|
+        [TypeNode.new(program.string)] of ASTNode
+      end
+    end
+
     it "executes ==" do
       assert_macro("x", "{{x == Reference}}", "false") do |program|
         [TypeNode.new(program.string)] of ASTNode
