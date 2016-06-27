@@ -89,6 +89,12 @@ module Crystal
       add_type types, type.remove_alias
     end
 
+    # When Void participates in a union, it becomes Nil
+    # (users shouldn't deal with real Void values)
+    def add_type(types, type : VoidType)
+      add_type(types, nil_type)
+    end
+
     def add_type(types, type : Type)
       types << type unless types.includes? type
     end

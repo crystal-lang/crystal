@@ -1,6 +1,36 @@
 require "../syntax/ast"
 require "../types"
 
+# Here is the logic for deciding two things:
+#
+# 1. Whether a method should come before another one
+#    when considering overloads.
+#    This is what `restriction_of?` is for.
+# 2. What's the resulting type of filtering a type
+#    by a restriction.
+#    This is what `restrict` is for.
+#
+# If `a.restriction_of?(b)` is true, it means that
+# `a` should come before `b` when considering restrictions.
+# This applies almost always to AST nodes, which are
+# sometimes resolved to see if a type inherits another
+# one (and so it should be considered before that type),
+# but can apply to types when arguments have a fixed
+# type (mostly for primitive methods, though we should
+# get rid of this to simplify things).
+# A similar logic applies to a `Def`, where this logic
+# is applied for each of the arguments, though here
+# the number of arguments, splat index and other factors
+# are considered.
+# If `a.restriction_of?(b) == true` and `b.restriction_of?(a) == true`,
+# for `a` and `b` being `Def`s, then it means `a` and `b` are equivalent,
+# and so when adding `b` to a types methods it will replace `a`.
+#
+# The method `restrict` is different in that the return
+# value is not a boolean, but a type, and computing it
+# might be a bit more expensive. For example when restricting
+# `Int32 | String` against `Int32`, the result is `Int32`.
+
 module Crystal
   class ASTNode
     def restriction_of?(other : Underscore, owner)
@@ -178,6 +208,7 @@ module Crystal
     end
 
     def restriction_of?(other : Union, owner)
+      # `true` if this type is a restriction of any type in the union
       other.types.any? { |o| self.restriction_of?(o, owner) }
     end
 
@@ -188,7 +219,11 @@ module Crystal
 
   class Union
     def restriction_of?(other : Path, owner)
-      types.any? &.restriction_of?(other, owner)
+      # For a union to be considered before a path,
+      # all types in the union must be considered before
+      # that path.
+      # For example when using all subtypes of a parent type.
+      types.all? &.restriction_of?(other, owner)
     end
   end
 
@@ -207,7 +242,13 @@ module Crystal
 
   class Metaclass
     def restriction_of?(other : Metaclass, owner)
-      self == other
+      self_type = TypeLookup.lookup?(owner, self)
+      other_type = TypeLookup.lookup?(owner, other)
+      if self_type && other_type
+        self_type.restriction_of?(other_type, owner)
+      else
+        self == other
+      end
     end
   end
 
@@ -767,6 +808,10 @@ module Crystal
     def restrict(other : VirtualMetaclassType, context)
       restricted = instance_type.restrict(other.instance_type.base_type, context)
       restricted ? self : nil
+    end
+
+    def restriction_of?(other : VirtualMetaclassType, owner)
+      restriction_of?(other.base_type.metaclass, owner)
     end
   end
 
