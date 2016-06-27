@@ -61,6 +61,8 @@ module Crystal
 
     def visit(node : Metaclass)
       node.name.accept self
+      return false if !@raise && !@type
+
       @type = type.virtual_type.metaclass.virtual_type
       false
     end

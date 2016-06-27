@@ -881,6 +881,18 @@ describe "Type inference: def overload" do
       )) { tuple_of([char, int32]) }
   end
 
+  it "doesn't crash on unknown metaclass" do
+    assert_type(%(
+      def foo(x : Foo.class)
+      end
+
+      def foo(x : Bar.class)
+      end
+
+      1
+      )) { int32 }
+  end
+
   it "overloads union against non-union (#2904)" do
     assert_type(%(
       def foo(x : Int32?)
