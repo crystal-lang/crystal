@@ -34,3 +34,14 @@ notifications:
       - "%{repository_slug}#%{commit} (%{branch} - %{commit_subject}): %{message} %{build_url}"
   slack:
     secure: Ng3nTqGWY+9p1pS6yjGqDhmRvdgbIZgTNpMWbO/ngwpCyicmD3jafZkShqqXbULZTJJr3OxIGzi6GHGusT0Ic/Pi9JCM3X3v/xuBruKIR+EnNyPo7IL4ZYAlwnXyJHlCHHDBq0gSHGvGJwsXn6IgZBPRfeIq+CCyQHVPyvc9EHE=
+deploy:
+  provider: s3
+  access_key_id: AKIAIRL4BWFPN7P54TBQ
+  secret_access_key:
+    secure: XbirZ4olRckszhip5ljHl556WcgohwrTdI3e2uproJBUYLU/kLwvusATL38TAWeMNPaIzZMHHp+Q5EPDfsiCuXuLHlhAoVVSM3K2UGJ43H5iN2srSf15dCsVgeJmffwW1Pceew/y4wFbp6INc1XfwKuE8+aXIyH7WTfKrqQv/w8=
+  bucket: crystal-api
+  local_dir: doc
+  upload-dir: api/master
+  on:
+    branch: master
+  skip_cleanup: true
