@@ -1,3 +1,9 @@
+## 0.18.6 (28-06-2016)
+
+* `T?` is now parsed as `Union(T, Nil)` outside the type grammar
+* Added `String#sub` overloads for replacing an index or range with a char or string
+* [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.6+is%3Aclosed)
+
 ## 0.18.5 (27-06-2016)
 
 * Added `OpenSSL::SSL::Socket#alpn_protocol`
