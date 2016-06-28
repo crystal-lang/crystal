@@ -52,19 +52,16 @@ deploy:
       branch: master
       condition: $ARCH = x86_64
     skip_cleanup: true
-  - provider: s3
-    access_key_id: AKIAIRL4BWFPN7P54TBQ
-    secret_access_key:
-      secure: XbirZ4olRckszhip5ljHl556WcgohwrTdI3e2uproJBUYLU/kLwvusATL38TAWeMNPaIzZMHHp+Q5EPDfsiCuXuLHlhAoVVSM3K2UGJ43H5iN2srSf15dCsVgeJmffwW1Pceew/y4wFbp6INc1XfwKuE8+aXIyH7WTfKrqQv/w8=
-    bucket: crystal-api
-    local_dir: doc
-    upload-dir: api/${TRAVIS_TAG}
-    on:
-      tags: true
-      condition: $ARCH = x86_64
-    skip_cleanup: true
-after_deploy: |
-  if ["$TRAVIS_TAG" != ""] && ["$ARCH" = "x86_64"]
+after_success: |
+  if [ "$ARCH" = "x86_64" ]
   then
-    aws s3api put-object --bucket crystal-api --key api/index.html --website-redirect-location /api/$TRAVIS_TAG
+    CURRENT_TAG=`git describe --tags --exact-match 2> /dev/null`
+    if [ "$CURRENT_TAG" != "" ]
+    then
+      echo "deploying docs to s3 for tag $CURRENT_TAG"
+      aws s3 sync doc/ s3://crystal-api/api/$CURRENT_TAG
+      aws s3api put-object --bucket crystal-api --key api/index.html --website-redirect-location /api/$CURRENT_TAG
+    else
+      echo "deploying docs to s3 for tag skipped due to missing tag"
+    fi
   fi
