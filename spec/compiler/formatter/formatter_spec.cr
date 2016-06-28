@@ -884,6 +884,10 @@ describe Crystal::Formatter do
   assert_format "foo.as(T).bar"
   assert_format "foo &.as(T)"
   assert_format "foo &.bar.as(T)"
+  assert_format "foo &.as(T).bar"
+  assert_format "foo &.as?(T).bar"
+  assert_format "foo &.is_a?(T).bar"
+  assert_format "foo &.responds_to?(:foo).bar"
 
   assert_format "foo.as? ( Int32* )", "foo.as?(Int32*)"
   assert_format "foo.as?   Int32*", "foo.as? Int32*"

@@ -2397,7 +2397,7 @@ module Crystal
         case body
         when Call
           call = body
-          clear_obj call
+          clear_object call
 
           if !call.obj && (call.name == "[]" || call.name == "[]?")
             case @token.type
@@ -2501,13 +2501,29 @@ module Crystal
           clear_object(node.obj)
         end
       when IsA
-        clear_object(node.obj)
+        if node.obj.is_a?(Var)
+          node.obj = Nop.new
+        else
+          clear_object(node.obj)
+        end
       when RespondsTo
-        clear_object(node.obj)
+        if node.obj.is_a?(Var)
+          node.obj = Nop.new
+        else
+          clear_object(node.obj)
+        end
       when Cast
-        clear_object(node.obj)
+        if node.obj.is_a?(Var)
+          node.obj = Nop.new
+        else
+          clear_object(node.obj)
+        end
       when NilableCast
-        clear_object(node.obj)
+        if node.obj.is_a?(Var)
+          node.obj = Nop.new
+        else
+          clear_object(node.obj)
+        end
       end
     end
 
@@ -2618,9 +2634,11 @@ module Crystal
     end
 
     def format_special_call(node, keyword)
-      accept node.obj
-      skip_space_or_newline
-      write_token :"."
+      unless node.obj.is_a?(Nop)
+        accept node.obj
+        skip_space_or_newline
+        write_token :"."
+      end
       skip_space_or_newline
       write_keyword keyword
       skip_space_or_newline
@@ -3119,6 +3137,15 @@ module Crystal
     end
 
     def visit(node : Cast)
+      # This is for the case `&.as(...)`
+      if node.obj.is_a?(Nop)
+        write_keyword :as
+        write_token :"("
+        accept node.to
+        write_token :")"
+        return false
+      end
+
       accept node.obj
       skip_space
       if @token.type == :"."
@@ -3149,6 +3176,15 @@ module Crystal
     end
 
     def visit(node : NilableCast)
+      # This is for the case `&.as?(...)`
+      if node.obj.is_a?(Nop)
+        write_keyword :as?
+        write_token :"("
+        accept node.to
+        write_token :")"
+        return false
+      end
+
       accept node.obj
       skip_space
       check :"."
@@ -3966,15 +4002,6 @@ module Crystal
 
     def increment_lines(count)
       count.times { increment_line }
-    end
-
-    def clear_obj(call)
-      obj = call.obj
-      if obj.is_a?(Call)
-        clear_obj obj
-      else
-        call.obj = nil
-      end
     end
 
     def finish
