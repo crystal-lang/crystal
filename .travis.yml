@@ -64,7 +64,7 @@ deploy:
       condition: $ARCH = x86_64
     skip_cleanup: true
 after_deploy: |
-  if ["$TRAVIS_TAG" != ""] && ["$ARCH" = x86_64]
+  if ["$TRAVIS_TAG" != ""] && ["$ARCH" = "x86_64"]
   then
     aws s3api put-object --bucket crystal-api --key api/index.html --website-redirect-location /api/$TRAVIS_TAG
   fi
