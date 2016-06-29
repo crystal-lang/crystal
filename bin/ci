@@ -7,6 +7,7 @@ fail() {
 
 on_deploy() {
   if [ -z "$TRAVIS_PULL_REQUEST" -a "$DEPLOY" = "true" ]; then
+    echo "${@}"
     eval "${@}"
     return $?
   else
