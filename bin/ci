@@ -5,6 +5,25 @@ fail() {
   exit 1
 }
 
+on_deploy() {
+  if [ -z "$TRAVIS_PULL_REQUEST" -a "$DEPLOY" = "true" ]; then
+    eval "${@}"
+    return $?
+  else
+    return 0
+  fi
+}
+
+on_tag() {
+  if [ -n "$CURRENT_TAG" ]; then
+    echo "${@}"
+    eval "${@}"
+    return $?
+  else
+    return 0
+  fi
+}
+
 fail_on_error() {
   "${@}"
 
@@ -57,9 +76,29 @@ on_osx() {
 
 prepare_system() {
   on_osx brew update
+  on_deploy sudo pip install awscli
+}
+
+build() {
+  with_build_env 'make std_spec clean'
+  with_build_env 'make crystal std_spec compiler_spec doc'
+  with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal compile --no-codegen'
+  with_build_env './bin/crystal tool format --check'
+}
+
+deploy() {
+  export GIT_VERSION=`git describe --tags --long --always 2>/dev/null`
+  on_deploy echo $GIT_VERSION > doc/revision.txt
+
+  on_deploy aws s3 sync doc/ s3://crystal-api/api/$TRAVIS_BRANCH
+
+  on_deploy on_tag aws s3 sync doc/ s3://crystal-api/api/$CURRENT_TAG
+  on_deploy on_tag aws s3api put-object --bucket crystal-api --key api/index.html --website-redirect-location /api/$CURRENT_TAG
 }
 
 prepare_build() {
+  export CURRENT_TAG=`git describe --tags --exact-match 2> /dev/null`
+
   on_linux verify_linux_environment
 
   on_linux docker pull "jhass/crystal-build-$ARCH"
@@ -98,6 +137,8 @@ usage() {
   echo -e "Commands:"
   echo -e "  prepare_system          setup any necessaries repositories etc."
   echo -e "  prepare_build           download and extract any dependencies needed for the build"
+  echo -e "  build                   run specs, build crystal, run format check, build samples, build the docs"
+  echo -e "  deploy                  deploy the docs"
   echo -e "  with_build_env command  run command in the build environment"
   echo -e "  help                    display this"
   echo -e ""
@@ -115,6 +156,12 @@ case $command in
   with_build_env)
     target_command="${@}"
     with_build_env "$target_command"
+    ;;
+  build)
+    build
+    ;;
+  deploy)
+    deploy
     ;;
   -h|--help|help)
     usage

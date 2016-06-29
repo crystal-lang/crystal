@@ -7,24 +7,22 @@ matrix:
   include:
     - env: ARCH=i386 ARCH_CMD=linux32
       os: linux
-    - env: ARCH=x86_64 ARCH_CMD=linux64
+    - env: ARCH=x86_64 ARCH_CMD=linux64 DEPLOY=true
       os: linux
     - os: osx
     - os: osx
       osx_image: xcode7.3
 before_install:
   - bin/ci prepare_system
-  - if [ "$ARCH" = "x86_64" ]; then sudo pip install awscli; fi
-install: bin/ci prepare_build
+install:
+  - bin/ci prepare_build
 script:
-  - bin/ci with_build_env 'make std_spec clean'
-  - bin/ci with_build_env 'make crystal std_spec compiler_spec doc'
-  - bin/ci with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal compile --no-codegen'
-  - bin/ci with_build_env './bin/crystal tool format --check'
+  - bin/ci build
+after_success:
+  - bin/ci deploy
 branches:
   only:
     - master
-    - gh-pages
     - /\Arelease\/.+\z/
 notifications:
   irc:
@@ -40,28 +38,3 @@ env:
   global:
     - AWS_ACCESS_KEY_ID=AKIAIRL4BWFPN7P54TBQ
     - secure: Zd/tZVmV2dRMao9z+ky5BywSKuWOF3MiKsZetwd1upZ+uj9qzfbOZMnWFW9dlA+Co4MyYqP/I6ADzRpoKLINUqEIPcAPNYQB1qG79SafrRAvTqcjtEHTn2wXh2ZGu3f1T+SCK0ZD3xx1ML8502ENzXjvq+dEmi4kknqmPudkb6k=
-deploy:
-  - provider: s3
-    access_key_id: AKIAIRL4BWFPN7P54TBQ
-    secret_access_key:
-      secure: XbirZ4olRckszhip5ljHl556WcgohwrTdI3e2uproJBUYLU/kLwvusATL38TAWeMNPaIzZMHHp+Q5EPDfsiCuXuLHlhAoVVSM3K2UGJ43H5iN2srSf15dCsVgeJmffwW1Pceew/y4wFbp6INc1XfwKuE8+aXIyH7WTfKrqQv/w8=
-    bucket: crystal-api
-    local_dir: doc
-    upload-dir: api/master
-    on:
-      branch: master
-      condition: $ARCH = x86_64
-    skip_cleanup: true
-after_success: |
-  if [ "$ARCH" = "x86_64" ]
-  then
-    CURRENT_TAG=`git describe --tags --exact-match 2> /dev/null`
-    if [ "$CURRENT_TAG" != "" ]
-    then
-      echo "deploying docs to s3 for tag $CURRENT_TAG"
-      aws s3 sync doc/ s3://crystal-api/api/$CURRENT_TAG
-      aws s3api put-object --bucket crystal-api --key api/index.html --website-redirect-location /api/$CURRENT_TAG
-    else
-      echo "deploying docs to s3 for tag skipped due to missing tag"
-    fi
-  fi
