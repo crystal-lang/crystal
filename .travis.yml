@@ -38,3 +38,5 @@ env:
   global:
     - AWS_ACCESS_KEY_ID=AKIAIRL4BWFPN7P54TBQ
     - secure: Zd/tZVmV2dRMao9z+ky5BywSKuWOF3MiKsZetwd1upZ+uj9qzfbOZMnWFW9dlA+Co4MyYqP/I6ADzRpoKLINUqEIPcAPNYQB1qG79SafrRAvTqcjtEHTn2wXh2ZGu3f1T+SCK0ZD3xx1ML8502ENzXjvq+dEmi4kknqmPudkb6k=
+deploy:
+  skip_cleanup: true

@@ -87,6 +87,7 @@ build() {
 }
 
 deploy() {
+  export CURRENT_TAG=`git describe --tags --exact-match 2> /dev/null`
   export GIT_VERSION=`git describe --tags --long --always 2>/dev/null`
   on_deploy echo $GIT_VERSION > doc/revision.txt
 
@@ -97,8 +98,6 @@ deploy() {
 }
 
 prepare_build() {
-  export CURRENT_TAG=`git describe --tags --exact-match 2> /dev/null`
-
   on_linux verify_linux_environment
 
   on_linux docker pull "jhass/crystal-build-$ARCH"
