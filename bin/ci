@@ -92,7 +92,7 @@ build() {
 deploy() {
   export CURRENT_TAG=`git describe --tags --exact-match 2> /dev/null`
   export GIT_VERSION=`git describe --tags --long --always 2>/dev/null`
-  on_deploy echo $GIT_VERSION > doc/revision.txt
+  on_deploy 'echo $GIT_VERSION > doc/revision.txt'
 
   on_deploy aws s3 sync doc/ s3://crystal-api/api/$TRAVIS_BRANCH
 
