@@ -494,8 +494,12 @@ module Crystal
         end
 
         i = 0
+        found_splat = false
         other.type_vars.each do |type_var|
           if type_var.is_a?(Splat)
+            type_var.raise "can't specify more than one splat in restriction" if found_splat
+            found_splat = true
+
             count = types.size - (other.type_vars.size - 1)
             return nil unless count >= 0
 
@@ -592,9 +596,13 @@ module Crystal
       # Consider the case of a splat in the type vars
       splat_index = other.type_vars.index &.is_a?(Splat)
       if splat_index
+        found_splat = false
         i = 0
         other.type_vars.each do |type_var|
           if type_var.is_a?(Splat)
+            type_var.raise "can't specify more than one splat in restriction" if found_splat
+            found_splat = true
+
             count = tuple_types.size - (other.type_vars.size - 1)
             return nil unless count >= 0
 
