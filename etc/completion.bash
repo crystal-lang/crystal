@@ -14,7 +14,7 @@ _crystal()
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="init compile deps docs eval play run spec tool help version --help --version"
+    commands="init build deps docs eval play run spec tool help version --help --version"
 
     case "${cmd}" in
         init)

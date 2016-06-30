@@ -7,14 +7,14 @@ class Crystal::Command
 
     Command:
         init                     generate a new project
-        compile                  compile program
+        build                    build an executable
         deps                     install project dependencies
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
         play                     starts crystal playground server
-        run (default)            compile and run program
-        spec                     compile and run specs (in spec directory)
+        run (default)            build and run program
+        spec                     build and run specs (in spec directory)
         tool                     run a tool
         help, --help, -h         show this help
         version, --version, -v   show version
@@ -53,11 +53,11 @@ class Crystal::Command
         options.shift
         init
       when "build".starts_with?(command), "compile".starts_with?(command)
-        if "build".starts_with?(command)
-          STDERR.puts "Deprecation: The build command was renamed to compile and will be removed in a future version."
+        if "compile".starts_with?(command)
+          STDERR.puts "Deprecation: The compile command was renamed to build and will be removed in a future version."
         end
         options.shift
-        compile
+        build
       when "play".starts_with?(command)
         options.shift
         playground
@@ -155,8 +155,8 @@ class Crystal::Command
     Init.run(options)
   end
 
-  private def compile
-    config = create_compiler "compile"
+  private def build
+    config = create_compiler "build"
     config.compile
   end
 
