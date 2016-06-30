@@ -350,7 +350,10 @@ module Crystal
 
             push_def if needs_new_scope
 
-            if @token.keyword?(:uninitialized) && (atomic.is_a?(Var) || atomic.is_a?(InstanceVar))
+            if @token.keyword?(:uninitialized) && (
+                 atomic.is_a?(Var) || atomic.is_a?(InstanceVar) ||
+                 atomic.is_a?(ClassVar) || atomic.is_a?(Global)
+               )
               push_var atomic
               next_token_skip_space
               type = parse_single_type

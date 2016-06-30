@@ -59,9 +59,9 @@ module Crystal
           had_class_var = false
         end
 
-        self.class_var_and_const_being_typed.push class_var
+        self.class_var_and_const_being_typed.push class_var unless class_var.uninitialized
         node.accept main_visitor
-        self.class_var_and_const_being_typed.pop
+        self.class_var_and_const_being_typed.pop unless class_var.uninitialized
 
         unless had_class_var
           main_visitor.undefined_class_variable(class_var, owner)

@@ -694,4 +694,16 @@ describe "Global inference" do
       ),
       "can't use Int as the type of a global variable yet, use a more specific type"
   end
+
+  it "declares uninitialized (#2935)" do
+    assert_type(%(
+      $x = uninitialized Int32
+
+      def foo
+        $x
+      end
+
+      foo
+      )) { int32 }
+  end
 end

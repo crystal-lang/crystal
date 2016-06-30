@@ -910,6 +910,9 @@ module Crystal
     # The (optional) initial value of a class variable
     property initializer : ClassVarInitializer?
 
+    # Is this variable "unsafe" (no need to check if it was initialized)?
+    property uninitialized = false
+
     def kind
       case name[0]
       when '@'

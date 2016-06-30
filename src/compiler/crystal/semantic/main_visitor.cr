@@ -376,6 +376,8 @@ module Crystal
     end
 
     def first_time_accessing_meta_type_var?(var)
+      return false if var.uninitialized
+
       if var.freeze_type
         deps = var.dependencies?
         # If no dependencies it's the case of a global for a regex literal.

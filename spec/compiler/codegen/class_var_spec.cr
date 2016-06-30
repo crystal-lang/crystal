@@ -497,4 +497,27 @@ describe "Codegen: class var" do
       Bar.var
       )).to_i.should eq(2)
   end
+
+  it "declares var as uninitialized and initializes it unsafely" do
+    run(%(
+      class Foo
+        @@x = uninitialized Int32
+        @@x = Foo.bar
+
+        def self.bar
+          if 1 == 2
+            @@x
+          else
+            10
+          end
+        end
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x
+      )).to_i.should eq(10)
+  end
 end

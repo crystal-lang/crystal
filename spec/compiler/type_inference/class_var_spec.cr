@@ -417,4 +417,18 @@ describe "Type inference: class var" do
       ),
       "class variable '@@x' of Bar is already defined as Int32 in Moo"
   end
+
+  it "declares uninitialized (#2935)" do
+    assert_type(%(
+      class Foo
+        @@x = uninitialized Int32
+
+        def self.x
+          @@x
+        end
+      end
+
+      Foo.x
+      )) { int32 }
+  end
 end
