@@ -1,5 +1,4 @@
 ENV["CRYSTAL_PATH"] = "#{__DIR__}/../src"
-ENV["VERIFY"] = "1"
 
 require "spec"
 require "../src/compiler/crystal/**"

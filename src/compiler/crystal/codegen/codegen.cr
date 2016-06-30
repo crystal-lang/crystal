@@ -275,7 +275,6 @@ module Crystal
       end
 
       env_dump = ENV["DUMP"]?
-      env_verify = ENV["VERIFY"]? == "1"
       case env_dump
       when Nil
         # Nothing
@@ -292,7 +291,11 @@ module Crystal
 
         mod.dump if dump_all_llvm || name =~ dump_llvm_regex
         # puts mod
-        mod.verify if env_verify
+
+        # Always run verifications so we can catch bugs earlier and more often.
+        # We can probably remove this, or only enable this when compiling in
+        # release mode, once we reach 1.0.
+        mod.verify
       end
     end
 
