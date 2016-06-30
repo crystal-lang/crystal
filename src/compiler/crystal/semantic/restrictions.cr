@@ -494,8 +494,12 @@ module Crystal
         end
 
         i = 0
+        found_splat = false
         other.type_vars.each do |type_var|
           if type_var.is_a?(Splat)
+            type_var.raise "can't specify more than one splat in restriction" if found_splat
+            found_splat = true
+
             count = types.size - (other.type_vars.size - 1)
             return nil unless count >= 0
 
@@ -588,11 +592,44 @@ module Crystal
       return super unless generic_class == self.generic_class
 
       generic_class = generic_class.as(TupleType)
-      return nil unless other.type_vars.size == tuple_types.size
 
-      tuple_types.zip(other.type_vars) do |tuple_type, type_var|
-        restricted = tuple_type.restrict(type_var, context)
-        return nil unless restricted == tuple_type
+      # Consider the case of a splat in the type vars
+      splat_index = other.type_vars.index &.is_a?(Splat)
+      if splat_index
+        found_splat = false
+        i = 0
+        other.type_vars.each do |type_var|
+          if type_var.is_a?(Splat)
+            type_var.raise "can't specify more than one splat in restriction" if found_splat
+            found_splat = true
+
+            count = tuple_types.size - (other.type_vars.size - 1)
+            return nil unless count >= 0
+
+            arg_types = tuple_types[i, count]
+            arg_types_tuple = context.type_lookup.program.tuple_of(arg_types)
+
+            restricted = arg_types_tuple.restrict(type_var.exp, context)
+            return nil unless restricted == arg_types_tuple
+
+            i += count
+          else
+            arg_type = tuple_types[i]
+            restricted = arg_type.restrict(type_var, context)
+            return unless restricted == arg_type
+
+            i += 1
+          end
+        end
+
+        return self
+      else
+        return nil unless other.type_vars.size == tuple_types.size
+
+        tuple_types.zip(other.type_vars) do |tuple_type, type_var|
+          restricted = tuple_type.restrict(type_var, context)
+          return nil unless restricted == tuple_type
+        end
       end
 
       self

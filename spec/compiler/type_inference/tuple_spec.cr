@@ -219,4 +219,34 @@ describe "Type inference: tuples" do
       Tuple(Nil, Int32).types
       )) { nil_type.metaclass }
   end
+
+  it "matches tuple with splat (#2932)" do
+    assert_type(%(
+      def foo(x : Tuple(*T))
+        T
+      end
+
+      foo({1, 'a'})
+      )) { tuple_of([int32, char]).metaclass }
+  end
+
+  it "matches tuple with splat (2) (#2932)" do
+    assert_type(%(
+      def foo(x : Tuple(A, *B, C))
+        {A, B, C}
+      end
+
+      foo({1, 'a', true, 1.5})
+      )) { tuple_of([int32.metaclass, tuple_of([char, bool]).metaclass, float64.metaclass]) }
+  end
+
+  it "errors if using two splat indices on restriction" do
+    assert_error %(
+      def foo(x : Tuple(*A, *B))
+      end
+
+      foo({1, 'a'})
+      ),
+      "can't specify more than one splat in restriction"
+  end
 end

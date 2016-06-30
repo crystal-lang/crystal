@@ -471,6 +471,21 @@ describe "Type inference: splat" do
       )) { tuple_of([int32.metaclass, tuple_of([char, string]).metaclass, bool.metaclass]) }
   end
 
+  it "errors if using two splat indices on restriction" do
+    assert_error %(
+      class Foo(*T)
+      end
+
+      def method(x : Foo(A, *B, *C))
+        {A, B, C}
+      end
+
+      foo = Foo(Int32, Char, String, Bool).new
+      method(foo)
+      ),
+      "can't specify more than one splat in restriction"
+  end
+
   it "matches with splat" do
     assert_type(%(
     def foo(&block : *{Int32, Int32} -> U)
