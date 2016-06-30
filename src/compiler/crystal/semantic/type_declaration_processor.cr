@@ -13,7 +13,8 @@ module Crystal
   struct TypeDeclarationProcessor
     record TypeDeclarationWithLocation,
       type : TypeVar,
-      location : Location
+      location : Location,
+      uninitialized : Bool
 
     # This captures an initialize info: it's related Def,
     # and which instance variables are assigned. Useful
@@ -187,6 +188,9 @@ module Crystal
 
       var = declare_meta_type_var(vars, owner, name, info.type.as(Type))
       var.location = info.location
+
+      # Check if var is uninitialized
+      var.uninitialized = true if info.uninitialized
 
       # If the variable is gueseed to be nilable because it is not initialized
       # in all of the initialize methods, and the explicit type is not nilable,

@@ -58,4 +58,20 @@ describe "Code gen: global" do
       $one.value
       )).to_i.should eq(42)
   end
+
+  it "declares var as uninitialized and initializes it unsafely" do
+    run(%(
+      def bar
+        if 1 == 2
+          $x
+        else
+          10
+        end
+      end
+
+      $x = uninitialized Int32
+      $x = bar
+      $x
+      )).to_i.should eq(10)
+  end
 end
