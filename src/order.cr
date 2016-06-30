@@ -37,6 +37,28 @@ enum Order
     self.lt? ? GT : (self.gt? ? LT : EQ)
   end
 
+  # If it means "equals", it yields given block and returns it.
+  # Otherwise, it returns itself.
+  #
+  # It is useful to implement custom `<=>` method.
+  # For example:
+  #
+  # ```
+  # record Person, name, age, height, weight do
+  #   include Comparable(self)
+  #
+  #   def <=>(other : self)
+  #     (name <=> other.name)
+  #       .eq_or { age <=> other.age }
+  #       .eq_or { height <=> other.height }
+  #       .eq_or { weight <=> other.weight }
+  #   end
+  # end
+  # ```
+  def eq_or(&compare : -> self)
+    self.eq? ? yield : self
+  end
+
   # Make an order instance from given *value*.
   # If *value* is positive number, it returns `LT`.
   # If *value* is negative number, it returns `GT`.
