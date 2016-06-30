@@ -188,11 +188,11 @@ module Crystal
       var = declare_meta_type_var(vars, owner, name, info.type.as(Type))
       var.location = info.location
 
-      # If the variable is gueseed to be nilable because it is not initialized
-      # in all of the initialize methods, and the explicit type is not nilable,
-      # give an error right now
+      # If the variable is guessed to be nilable because it is not initialized
+      # in all of the initialize methods, the explicit type is not nilable, and
+      # the owner class is not abstract, give an error right now
       if instance_var && !var.type.includes_type?(@program.nil)
-        if nilable_instance_var?(owner, name)
+        if !owner.abstract? && nilable_instance_var?(owner, name)
           raise_not_initialized_in_all_initialize(var, name, owner)
         end
       end
