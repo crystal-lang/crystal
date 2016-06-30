@@ -377,6 +377,11 @@ module Crystal
     end
 
     def process_uninitialized_instance_var_on_non_generic(owner, target, value)
+      if @outside_def
+        outside_vars = @instance_vars_outside[owner] ||= [] of String
+        outside_vars << target.name unless outside_vars.includes?(target.name)
+      end
+
       # If there is already a type restriction, skip
       existing = @explicit_instance_vars[owner]?.try &.[target.name]?
       if existing
@@ -393,6 +398,11 @@ module Crystal
     end
 
     def process_uninitialized_instance_var_on_generic(owner, target, value)
+      if @outside_def
+        outside_vars = @instance_vars_outside[owner] ||= [] of String
+        outside_vars << target.name unless outside_vars.includes?(target.name)
+      end
+
       # Skip if the generic class already defines an explicit type
       existing = @explicit_instance_vars[owner]?.try &.[target.name]?
       if existing
