@@ -261,9 +261,9 @@ module Crystal
             next_token_skip_space
             ensure_body = parse_expression
             if atomic.is_a?(Assign)
-              atomic.value = ExceptionHandler.new(atomic.value, ensure: ensure_body).at(location)
+              atomic.value = ExceptionHandler.new(atomic.value, ensure: ensure_body).at(location).tap { |e| e.suffix = true }
             else
-              atomic = ExceptionHandler.new(atomic, ensure: ensure_body).at(location)
+              atomic = ExceptionHandler.new(atomic, ensure: ensure_body).at(location).tap { |e| e.suffix = true }
             end
           when :ifdef
             next_token_skip_statement_end

@@ -3304,9 +3304,20 @@ module Crystal
         if node.suffix
           accept node.body
           skip_space
-          write " rescue "
-          next_token_skip_space_or_newline
-          accept node.rescues.not_nil!.first.not_nil!.body
+          write " "
+          if @token.keyword?(:rescue)
+            write_keyword :rescue
+            write " "
+            next_token_skip_space_or_newline
+            accept node.rescues.not_nil!.first.not_nil!.body
+          elsif @token.keyword?(:ensure)
+            write_keyword :ensure
+            write " "
+            next_token_skip_space_or_newline
+            accept node.ensure.not_nil!
+          else
+            raise "expected 'rescue' or 'ensure'"
+          end
           return false
         end
       end

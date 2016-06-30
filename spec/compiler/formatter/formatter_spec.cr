@@ -465,6 +465,7 @@ describe Crystal::Formatter do
   assert_format "begin\n1\nrescue   Int32 \n3\nend", "begin\n  1\nrescue Int32\n  3\nend"
   assert_format "if 1\nbegin\n2\nensure\n3\nend\nend", "if 1\n  begin\n    2\n  ensure\n    3\n  end\nend"
   assert_format "1 rescue 2"
+  assert_format "1 ensure 2"
 
   assert_format "def foo\n1\nrescue\n2\nend", "def foo\n  1\nrescue\n  2\nend"
   assert_format "def foo\n1\nensure\n2\nend", "def foo\n  1\nensure\n  2\nend"
