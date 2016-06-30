@@ -99,41 +99,38 @@ deploy() {
   on_deploy on_tag aws s3 sync doc/ s3://crystal-api/api/$CURRENT_TAG
   cat - > .aws-config <<EOF
     {
-      "WebsiteConfiguration": {
-        "IndexDocument": {
-          "Suffix": "index.html"
-        },
-        "RoutingRules": [
-          {
-            "Condition": {
-              "KeyPrefixEquals": "api/latest/"
-            },
-            "Redirect": {
-              "HttpRedirectCode": "302",
-              "ReplaceKeyPrefixWith": "api/${CURRENT_TAG}/",
-              "Protocol": "https",
-              "HostName": "crystal-lang.org"
-            }
+      "IndexDocument": {
+        "Suffix": "index.html"
+      },
+      "RoutingRules": [
+        {
+          "Condition": {
+            "KeyPrefixEquals": "api/latest/"
           },
-          {
-            "Condition": {
-              "KeyPrefixEquals": "api/",
-              "HttpErrorCodeReturnedEquals": "404"
-            },
-            "Redirect": {
-              "HttpRedirectCode": "301",
-              "ReplaceKeyPrefixWith": "api/latest/",
-              "Protocol": "https",
-              "HostName": "crystal-lang.org"
-            }
+          "Redirect": {
+            "HttpRedirectCode": "302",
+            "ReplaceKeyPrefixWith": "api/${CURRENT_TAG}/",
+            "Protocol": "https",
+            "HostName": "crystal-lang.org"
           }
-        ]
-      }
+        },
+        {
+          "Condition": {
+            "KeyPrefixEquals": "api/",
+            "HttpErrorCodeReturnedEquals": "404"
+          },
+          "Redirect": {
+            "HttpRedirectCode": "301",
+            "ReplaceKeyPrefixWith": "api/latest/",
+            "Protocol": "https",
+            "HostName": "crystal-lang.org"
+          }
+        }
+      ]
     }
 EOF
   on_deploy on_tag cat .aws-config
-  on_deploy on_tag aws s3api put-bucket-website --bucket crystal-api --website-configuration .aws-config
-
+  on_deploy on_tag aws s3api put-bucket-website --bucket crystal-api --website-configuration file://.aws-config
 }
 
 prepare_build() {
