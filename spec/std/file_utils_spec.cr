@@ -98,5 +98,30 @@ describe "FileUtils" do
         Dir.rmdir(path) if Dir.exists?(path)
       end
     end
+
+    it "doesn't follow symlinks" do
+      data_path = File.join(__DIR__, "data")
+      removed_path = File.join(data_path, "rm_r_test_removed")
+      linked_path = File.join(data_path, "rm_r_test_linked")
+      link_path = File.join(removed_path, "link")
+      file_path = File.join(linked_path, "file")
+
+      begin
+        Dir.mkdir(removed_path)
+        Dir.mkdir(linked_path)
+        File.symlink(linked_path, link_path)
+        File.write(file_path, "")
+
+        FileUtils.rm_r(removed_path)
+        Dir.exists?(removed_path).should be_false
+        Dir.exists?(linked_path).should be_true
+        File.exists?(file_path).should be_true
+      ensure
+        File.delete(file_path) if File.exists?(file_path)
+        File.delete(link_path) if File.exists?(link_path)
+        Dir.rmdir(linked_path) if Dir.exists?(linked_path)
+        Dir.rmdir(removed_path) if Dir.exists?(removed_path)
+      end
+    end
   end
 end
