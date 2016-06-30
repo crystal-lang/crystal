@@ -98,6 +98,7 @@ deploy() {
 
   on_deploy on_tag aws s3 sync doc/ s3://crystal-api/api/$CURRENT_TAG
   on_deploy on_tag aws s3api put-object --bucket crystal-api --key api/index.html --website-redirect-location /api/$CURRENT_TAG
+  on_deploy on_tag aws s3api put-bucket-website --bucket crystal-api --cli-input-json '{"WebsiteConfiguration":{"IndexDocument": {"Suffix": "index.html"}, "RoutingRules": [{"Condition": { "KeyPrefixEquals" : "api/latest/" }, "Redirect": { "HttpRedirectCode" : "302", "ReplaceKeyPrefixWith" : "api/${CURRENT_TAG}/"}}]}}'
 }
 
 prepare_build() {
