@@ -241,7 +241,9 @@ module Crystal
             @vars[var.name] = MetaVar.new(var.name, var_type)
           end
         else
-          node.raise "can't uninitialize instance variable outside method"
+          # Already handled in a previous visitor
+          node.type = @mod.nil
+          return false
         end
 
         case type
