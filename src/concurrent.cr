@@ -55,8 +55,8 @@ end
 #
 # 2.times { ch.receive }
 # ```
-def spawn(&block)
-  fiber = Fiber.new(&block)
+def spawn(*, name : String? = nil, &block)
+  fiber = Fiber.new(name, &block)
   Scheduler.enqueue fiber
   fiber
 end
@@ -91,7 +91,7 @@ end
 # This is because in the first case all spawned fibers refer to
 # the same local variable, while in the second example copies of
 # `i` are passed to a Proc that eventually invokes the call.
-macro spawn(call)
+macro spawn(call, *, name = nil)
   {% if call.is_a?(Call) %}
     ->(
       {% for arg, i in call.args %}
@@ -103,7 +103,7 @@ macro spawn(call)
         {% end %}
       {% end %}
       ) {
-      spawn do
+      spawn(name: {{name}}) do
         {{call.name}}(
           {% for arg, i in call.args %}
             __arg{{i}},

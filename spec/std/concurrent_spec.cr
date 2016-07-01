@@ -4,6 +4,10 @@ private def method_with_named_args(chan, x = 1, y = 2)
   chan.send(x + y)
 end
 
+private def method_named(expected_named)
+  Fiber.current.name.should eq(expected_named)
+end
+
 describe "concurrent" do
   it "does four things concurrently" do
     a, b, c, d = parallel(1 + 2, "hello".size, [1, 2, 3, 4].size, nil)
@@ -24,5 +28,17 @@ describe "concurrent" do
 
     spawn method_with_named_args(chan, x: 10, y: 20)
     chan.receive.should eq(30)
+  end
+
+  it "spawns named" do
+    spawn(name: "sub") do
+      Fiber.current.name.should eq("sub")
+    end
+    Fiber.yield
+  end
+
+  it "spawns named with macro" do
+    spawn method_named("foo"), name: "foo"
+    Fiber.yield
   end
 end

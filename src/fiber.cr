@@ -20,8 +20,9 @@ class Fiber
   protected property stack_bottom : Void*
   protected property next_fiber : Fiber?
   protected property prev_fiber : Fiber?
+  property name : String?
 
-  def initialize(&@proc : ->)
+  def initialize(@name : String? = nil, &@proc : ->)
     @stack = Fiber.allocate_stack
     @stack_bottom = @stack + STACK_SIZE
     fiber_main = ->(f : Fiber) { f.run }
@@ -64,6 +65,7 @@ class Fiber
     @stack = Pointer(Void).null
     @stack_top = _fiber_get_stack_top
     @stack_bottom = LibGC.stackbottom
+    @name = "main"
 
     @@first_fiber = @@last_fiber = self
   end
@@ -181,6 +183,19 @@ class Fiber
 
   def self.yield
     Fiber.current.yield
+  end
+
+  def to_s(io)
+    io << "#<" << self.class.name << ":0x"
+    object_id.to_s(16, io)
+    if name = @name
+      io << ": " << name
+    end
+    io << ">"
+  end
+
+  def inspect(io)
+    to_s(io)
   end
 
   protected def push_gc_roots

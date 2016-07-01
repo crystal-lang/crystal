@@ -1,5 +1,5 @@
 require "spec"
-require "ecr"
+require "ecr/lexer"
 
 describe "ECR::Lexer" do
   it "lexes without interpolation" do
