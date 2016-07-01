@@ -1,6 +1,6 @@
 require "spec"
 require "ecr"
-require "ecr/macros"
+require "ecr/processor"
 
 class ECRSpecHelloView
   @msg : String
