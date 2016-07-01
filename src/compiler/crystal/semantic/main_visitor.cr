@@ -210,9 +210,11 @@ module Crystal
           var.raise "variable '#{var.name}' already declared"
         end
 
+        @in_type_args += 1
         node.declared_type.accept self
+        @in_type_args -= 1
 
-        var_type = check_declare_var_type node
+        var_type = check_declare_var_type node, node.declared_type.type, "a variable"
         var.type = var_type
 
         meta_var = @meta_vars[var.name] ||= new_meta_var(var.name)
@@ -229,16 +231,15 @@ module Crystal
       when InstanceVar
         type = scope? || current_type
         if @untyped_def
+          @in_type_args += 1
           node.declared_type.accept self
+          @in_type_args -= 1
 
-          var_type = check_declare_var_type node
-
-          ivar = lookup_instance_var var
-          ivar.type = var_type
-          var.type = var_type
+          check_declare_var_type node, node.declared_type.type, "an instance variable"
+          ivar = lookup_instance_var(var, type)
 
           if @is_initialize
-            @vars[var.name] = MetaVar.new(var.name, var_type)
+            @vars[var.name] = MetaVar.new(var.name, ivar.type)
           end
         else
           # Already handled in a previous visitor
@@ -248,11 +249,12 @@ module Crystal
 
         case type
         when NonGenericClassType
+          @in_type_args += 1
           node.declared_type.accept self
-          var_type = check_declare_var_type node
-          type.declare_instance_var(var.name, var_type)
+          @in_type_args -= 1
+          check_declare_var_type node, node.declared_type.type, "an instance variable"
         when GenericClassType
-          type.declare_instance_var(var.name, node.declared_type)
+          # OK
         when GenericClassInstanceType
           # OK
         else
