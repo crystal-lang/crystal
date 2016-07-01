@@ -67,9 +67,16 @@ module Crystal
           had_class_var = false
         end
 
-        self.class_var_and_const_being_typed.push class_var unless class_var.uninitialized
+        check_recursiveness = true
+        if class_var.uninitialized
+          check_recursiveness = false
+        elsif class_var.type?.try &.includes_type?(nil_type)
+          check_recursiveness = false
+        end
+
+        self.class_var_and_const_being_typed.push class_var if check_recursiveness
         node.accept main_visitor
-        self.class_var_and_const_being_typed.pop unless class_var.uninitialized
+        self.class_var_and_const_being_typed.pop if check_recursiveness
 
         unless had_class_var
           main_visitor.undefined_class_variable(class_var, owner)

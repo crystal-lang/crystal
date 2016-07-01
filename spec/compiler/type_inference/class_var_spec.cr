@@ -459,4 +459,23 @@ describe "Type inference: class var" do
       Bar.x.y
       )) { int32 }
   end
+
+  it "doesn't error on recursive depdendency if var is nilable (#2943)" do
+    assert_type(%(
+      class Foo
+        @@foo : Int32?
+        @@foo = Foo.bar
+
+        def self.bar
+          @@foo
+        end
+
+        def self.foo
+          @@foo
+        end
+      end
+
+      Foo.foo
+      )) { nilable int32 }
+  end
 end
