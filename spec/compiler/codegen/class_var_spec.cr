@@ -520,4 +520,27 @@ describe "Codegen: class var" do
       Foo.x
       )).to_i.should eq(10)
   end
+
+  it "doesn't crash with pointerof from another module" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        @@x : Int32?
+        @@x = 1
+
+        def self.x
+          pointerof(@@x).value
+        end
+      end
+
+      class Bar
+        def self.bar
+          Foo.x
+        end
+      end
+
+      Bar.bar
+      )).to_i.should eq(1)
+  end
 end

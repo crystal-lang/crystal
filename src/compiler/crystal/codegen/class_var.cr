@@ -31,6 +31,37 @@ class Crystal::CodeGenVisitor
     {declare_class_var(owner, name, type, thread_local), declare_class_var_initialized_flag(owner, name, thread_local)}
   end
 
+  def declare_class_var_and_initialized_flag_in_this_module(owner, name, type, thread_local)
+    global, initialized_flag = declare_class_var_and_initialized_flag(owner, name, type, thread_local)
+    global = ensure_class_var_in_this_module(global, owner, name, type, thread_local)
+    initialized_flag = ensure_class_var_initialized_flag_in_this_module(initialized_flag, owner, name, thread_local)
+    {global, initialized_flag}
+  end
+
+  def ensure_class_var_in_this_module(global, owner, name, type, thread_local)
+    if @llvm_mod != @main_mod
+      global_name = class_var_global_name(owner, name)
+      global = @llvm_mod.globals[global_name]?
+      unless global
+        global = @llvm_mod.globals.add(llvm_type(type), global_name)
+        global.thread_local = true if thread_local
+      end
+    end
+    global
+  end
+
+  def ensure_class_var_initialized_flag_in_this_module(initialized_flag, owner, name, thread_local)
+    if @llvm_mod != @main_mod
+      initialized_flag_name = class_var_global_initialized_name(owner, name)
+      initialized_flag = @llvm_mod.globals[initialized_flag_name]?
+      unless initialized_flag
+        initialized_flag = @llvm_mod.globals.add(LLVM::Int1, initialized_flag_name)
+        initialized_flag.thread_local = true if thread_local
+      end
+    end
+    initialized_flag
+  end
+
   def initialize_class_var(class_var : ClassVar)
     initialize_class_var(class_var.var)
   end
@@ -52,13 +83,16 @@ class Crystal::CodeGenVisitor
     # using a flag to know if they were initialized
     if class_var.uninitialized
       global = declare_class_var(owner, name, class_var.type, class_var.thread_local?)
+      global = ensure_class_var_in_this_module(global, owner, name, class_var.type, class_var.thread_local?)
       func = @main_mod.functions[init_function_name]? ||
         create_initialize_class_var_function(init_function_name, owner, name, class_var.type, class_var.thread_local?, meta_vars, node)
+      func = check_main_fun init_function_name, func
       call func
       return global
     end
 
-    global, initialized_flag = declare_class_var_and_initialized_flag(owner, name, class_var.type, class_var.thread_local?)
+    global, initialized_flag = declare_class_var_and_initialized_flag_in_this_module(owner, name, class_var.type, class_var.thread_local?)
+    # global, initialized_flag = declare_class_var_and_initialized_flag(owner, name, class_var.type, class_var.thread_local?)
 
     initialized_block, not_initialized_block = new_blocks "initialized", "not_initialized"
 
@@ -143,7 +177,11 @@ class Crystal::CodeGenVisitor
 
     initializer = class_var.initializer
     if !initializer || class_var.uninitialized
-      return get_global class_var_global_name(class_var.owner, class_var.name), class_var.type, class_var
+      # Read directly without init flag, but make sure to declare the global in this module too
+      global_name = class_var_global_name(class_var.owner, class_var.name)
+      global = get_global global_name, class_var.type, class_var
+      global = ensure_class_var_in_this_module(global, class_var.owner, class_var.name, class_var.type, class_var.thread_local?)
+      return global
     end
 
     initializer = initializer.not_nil!
