@@ -1,4 +1,5 @@
 require "event"
+require "thread"
 
 # :nodoc:
 class Scheduler
@@ -6,15 +7,17 @@ class Scheduler
 
   @@idle = [] of Scheduler
   @@all = [] of Scheduler
-  @@idle_mutex = Mutex.new
+  @@idle_mutex = Thread::Mutex.new
   @[ThreadLocal]
+  @@current = uninitialized Scheduler
   @@current = new(true)
+  @thread : UInt64
 
   def initialize(@own_event_loop = false)
     @runnables = Deque(Fiber).new
     @thread = LibC.pthread_self.address
-    @wait_mutex = Mutex.new
-    @wait_cv = ConditionVariable.new
+    @wait_mutex = Thread::Mutex.new
+    @wait_cv = Thread::ConditionVariable.new
     @reschedule_fiber = Fiber.new("reschedule #{LibC.pthread_self.address}") { loop { reschedule(true) } }
     @victim = 0
     @@all << self

@@ -15,8 +15,9 @@ class Fiber
   @@first_fiber : Fiber? = nil
   @@last_fiber : Fiber? = nil
   @@stack_pool = [] of Void*
-  @@fiber_list_mutex = Mutex.new
+  @@fiber_list_mutex = Thread::Mutex.new
   @thread : Void*
+  @callback : (->)?
   property name
 
   # @@gc_lock = LibCK.rwlock_init
@@ -233,7 +234,7 @@ class Fiber
   end
 
   def resume
-    log "Resume '%s' -> '%s'", @@current.@name, self.@name
+    log "Resume '%s' -> '%s'", Fiber.current.name, self.name
     Fiber.gc_read_lock
     current, Thread.current.current_fiber = Thread.current.current_fiber, self
     @callback = current.transfer_callback
@@ -268,6 +269,7 @@ class Fiber
     @callback = ->{
       log "Register sleep timer for '%s'", @name
       event.add(time)
+      nil
     }
     EventLoop.wait
     log "Resumed '%s' from sleep", @name
