@@ -431,4 +431,32 @@ describe "Type inference: class var" do
       Foo.x
       )) { int32 }
   end
+
+  it "doesn't error if accessing class variable before defined (#2941)" do
+    assert_type(%(
+      class Bar
+        @@x : Baz = Foo.x
+
+        def self.x
+          @@x
+        end
+      end
+
+      class Foo
+        @@x = Baz.new
+
+        def self.x
+          @@x
+        end
+      end
+
+      class Baz
+        def y
+          1
+        end
+      end
+
+      Bar.x.y
+      )) { int32 }
+  end
 end

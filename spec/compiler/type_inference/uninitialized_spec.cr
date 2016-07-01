@@ -88,6 +88,22 @@ describe "Type inference: uninitialized" do
       )) { int32 }
   end
 
+  it "can use uninitialized with class type (#2940)" do
+    assert_type(%(
+      class Foo(U)
+        def initialize
+          @x = uninitialized U
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo(Int32.class).new.x
+      )) { int32.metaclass }
+  end
+
   %w(Object Value Reference Number Int Float Struct Class Enum).each do |type|
     it "disallows declaring var of type #{type}" do
       assert_error %(
