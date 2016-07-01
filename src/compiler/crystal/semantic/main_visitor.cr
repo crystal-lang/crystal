@@ -258,6 +258,11 @@ module Crystal
         else
           node.raise "can only declare instance variables of a non-generic class, not a #{type.type_desc} (#{type})"
         end
+      when ClassVar
+        attributes = check_valid_attributes node, ValidGlobalAttributes, "global variable"
+
+        class_var = visit_class_var var
+        class_var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
       end
 
       node.type = @mod.nil
