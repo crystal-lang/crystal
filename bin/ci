@@ -105,6 +105,17 @@ deploy() {
       "RoutingRules": [
         {
           "Condition": {
+            "KeyPrefixEquals": "api/latest/${CURRENT_TAG}/"
+          },
+          "Redirect": {
+            "HttpRedirectCode": "302",
+            "ReplaceKeyWith": "404",
+            "Protocol": "https",
+            "HostName": "crystal-lang.org"
+          }
+        },
+        {
+          "Condition": {
             "KeyPrefixEquals": "api/latest/"
           },
           "Redirect": {
