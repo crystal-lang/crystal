@@ -34,8 +34,7 @@ require "c/stdlib"
 class Tempfile < IO::FileDescriptor
   # Creates a `Tempfile` with the given filename.
   def initialize(name)
-    tmpdir = self.class.dirname + File::SEPARATOR
-    @path = "#{tmpdir}#{name}.XXXXXX"
+    @path = File.join(Dir.tmpdir, "#{name}.XXXXXX")
     fileno = LibC.mkstemp(@path)
     if fileno == -1
       raise Errno.new("mkstemp")
@@ -66,18 +65,6 @@ class Tempfile < IO::FileDescriptor
       tempfile.close
     end
     tempfile
-  end
-
-  # Returns the tmp dir used for tempfile
-  # ```
-  # Tempfile.dirname # => "/tmp"
-  # ```
-  def self.dirname : String
-    unless tmpdir = ENV["TMPDIR"]?
-      tmpdir = "/tmp"
-    end
-    tmpdir = tmpdir + File::SEPARATOR unless tmpdir.ends_with? File::SEPARATOR
-    File.dirname(tmpdir)
   end
 
   # Deletes this tempfile.
