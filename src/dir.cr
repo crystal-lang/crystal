@@ -1,7 +1,6 @@
 require "c/dirent"
 require "c/unistd"
 require "c/sys/stat"
-require "file_utils"
 
 # Objects of class Dir are directory streams representing directories in the underlying file system.
 # They provide a variety of ways to list directories and their contents. See also `File`.
@@ -222,7 +221,7 @@ class Dir
     begin
       yield tmp_dir
     ensure
-      FileUtils.rm_r(tmp_dir)
+      Dir.rm_r(tmp_dir)
     end
 
     tmp_dir
