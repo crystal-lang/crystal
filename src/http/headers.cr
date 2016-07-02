@@ -61,8 +61,8 @@ struct HTTP::Headers
   def initialize(hash : Hash(String, Array(String)))
     @hash = hash.map do |key, val|
       check_invalid_header_content val
-       {wrap(key), val}
-     end.to_h
+      {wrap(key), val}
+    end.to_h
   end
 
   def []=(key, value : String)
