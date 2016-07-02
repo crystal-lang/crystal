@@ -52,6 +52,19 @@ struct HTTP::Headers
     @hash = Hash(Key, Array(String)).new
   end
 
+  def initialize(hash : Hash(String, String))
+    @hash = hash.map do |key, val|
+      {wrap(key), [val]}
+    end.to_h
+  end
+
+  def initialize(hash : Hash(String, Array(String)))
+    @hash = hash.map do |key, val|
+      check_invalid_header_content val
+       {wrap(key), val}
+     end.to_h
+  end
+
   def []=(key, value : String)
     self[wrap(key)] = [value]
   end
