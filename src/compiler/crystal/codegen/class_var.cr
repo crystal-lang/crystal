@@ -8,10 +8,15 @@ require "./codegen"
 class Crystal::CodeGenVisitor
   def declare_class_var(owner, name, type, thread_local)
     global_name = class_var_global_name(owner, name)
-    global = @main_mod.globals[global_name]? ||
-      @main_mod.globals.add(llvm_type(type), global_name)
-    global.linkage = LLVM::Linkage::Internal if @single_module
-    global.thread_local = true if thread_local
+    global = @main_mod.globals[global_name]?
+    unless global
+      global = @main_mod.globals.add(llvm_type(type), global_name)
+      global.linkage = LLVM::Linkage::Internal if @single_module
+      global.thread_local = true if thread_local
+      if !global.initializer && type.includes_type?(@mod.nil_type)
+        global.initializer = llvm_type(type).null
+      end
+    end
     global
   end
 
@@ -138,11 +143,7 @@ class Crystal::CodeGenVisitor
         elsif @last.constant? && (type.is_a?(PrimitiveType) || type.is_a?(EnumType))
           global.initializer = @last
         else
-          if type.passed_by_value?
-            global.initializer = llvm_type(type).undef
-          else
-            global.initializer = llvm_type(type).null
-          end
+          global.initializer = llvm_type(type).null
           assign global, type, node.type, @last
         end
 
