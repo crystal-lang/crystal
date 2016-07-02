@@ -238,20 +238,8 @@ module FileUtils
   # FileUtils.rm_r("dir")
   # FileUtils.rm_r("file.cr")
   # ```
-  def rm_r(path : String) : Nil
-    if Dir.exists?(path) && !File.symlink?(path)
-      Dir.open(path) do |dir|
-        dir.each do |entry|
-          if entry != "." && entry != ".."
-            src = File.join(path, entry)
-            rm_r(src)
-          end
-        end
-      end
-      Dir.rmdir(path)
-    else
-      File.delete(path)
-    end
+  def rm_r(path : String)
+    Dir.rm_r(path)
   end
 
   # Deletes a list of files or directories *paths*.

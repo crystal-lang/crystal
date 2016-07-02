@@ -274,6 +274,28 @@ class Dir
     0
   end
 
+  # Deletes a file or directory *path*
+  # If *path* is a directory, this method removes all its contents recursively
+  # ```
+  # Dir.rm_r("dir")
+  # Dir.rm_r("file.cr")
+  # ```
+  def self.rm_r(path : String)
+    if Dir.exists?(path)
+      Dir.open(path) do |dir|
+        dir.each do |entry|
+          if entry != "." && entry != ".."
+            src = File.join(path, entry)
+            rm_r(src)
+          end
+        end
+      end
+      Dir.rmdir(path)
+    else
+      File.delete(path)
+    end
+  end
+
   def to_s(io)
     io << "#<Dir:" << @path << ">"
   end
