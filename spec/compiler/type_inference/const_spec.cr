@@ -162,16 +162,6 @@ describe "Type inference: const" do
       )) { bool }
   end
 
-  it "detects recursive constant definition" do
-    assert_error %(
-      A = B
-      B = A
-
-      A
-      ),
-      "recursive dependency of constant A: A -> B -> A"
-  end
-
   ["nil", "true", "1", "'a'", %("foo"), "+ 1", "- 2", "~ 2", "1 + 2", "1 + Z"].each do |node|
     it "doesn't errors if constant depends on another one defined later through method, but constant is simple (#{node})" do
       infer_type(%(
@@ -205,19 +195,6 @@ describe "Type inference: const" do
 
       LibC::Foo::A
       )) { types["LibC"].types["Foo"] }
-  end
-
-  it "errors if constant depends on a global initialized later" do
-    assert_error %(
-      A = foo
-      $b = 1
-
-      def foo
-        $b
-      end
-
-      A
-      ), "constant A requires initialization of $b, which is initialized later. Initialize $b before A"
   end
 
   it "doesn't error if constant depends on a global var that is never initialized" do
@@ -254,19 +231,6 @@ describe "Type inference: const" do
       end
       ),
       "can't declare constant dynamically"
-  end
-
-  it "errors if recursive constant definition" do
-    assert_error %(
-      def foo(x)
-      end
-
-      foo B
-
-      B = A
-      A = B
-      ),
-      "recursive dependency of constant B: B -> A -> B"
   end
 
   it "can use constant defined later (#2906)" do

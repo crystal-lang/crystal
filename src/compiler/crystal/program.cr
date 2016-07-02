@@ -40,10 +40,6 @@ module Crystal
     # as the program starts, before the main code.
     getter! class_var_and_const_initializers
 
-    # The list of class vars and const being typed, to check
-    # a recursive dependency.
-    getter! class_var_and_const_being_typed
-
     getter! argc : Const
     getter! argv : Const
 
@@ -64,7 +60,6 @@ module Crystal
       @after_inference_types = Set(Type).new
       @string_pool = StringPool.new
       @class_var_and_const_initializers = [] of ClassVarInitializer | Const
-      @class_var_and_const_being_typed = [] of MetaTypeVar | Const
       @tempfiles = [] of String
 
       types = @types = {} of String => Type
