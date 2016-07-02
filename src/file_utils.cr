@@ -81,18 +81,6 @@ module FileUtils
   # FileUtils.rm_r("file.cr")
   # ```
   def rm_r(path : String)
-    if Dir.exists?(path)
-      Dir.open(path) do |dir|
-        dir.each do |entry|
-          if entry != "." && entry != ".."
-            src = File.join(path, entry)
-            rm_r(src)
-          end
-        end
-      end
-      Dir.rmdir(path)
-    else
-      File.delete(path)
-    end
+    Dir.rm_r(path)
   end
 end

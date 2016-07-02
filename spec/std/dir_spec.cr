@@ -126,6 +126,28 @@ describe "Dir" do
     end
   end
 
+  describe "rm_r" do
+    it "deletes a directory recursively" do
+      data_path = File.join(__DIR__, "data")
+      path = File.join(data_path, "rm_r_test")
+
+      begin
+        Dir.mkdir(path)
+        File.write(File.join(path, "a"), "")
+        Dir.mkdir(File.join(path, "b"))
+        File.write(File.join(path, "b/c"), "")
+
+        Dir.rm_r(path)
+        Dir.exists?(path).should be_false
+      ensure
+        File.delete(File.join(path, "b/c")) if File.exists?(File.join(path, "b/c"))
+        File.delete(File.join(path, "a")) if File.exists?(File.join(path, "a"))
+        Dir.rmdir(File.join(path, "b")) if Dir.exists?(File.join(path, "b"))
+        Dir.rmdir(path) if Dir.exists?(path)
+      end
+    end
+  end
+
   describe "glob" do
     it "tests glob with a single pattern" do
       assert_dir_glob [
