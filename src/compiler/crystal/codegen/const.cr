@@ -142,12 +142,7 @@ class Crystal::CodeGenVisitor
             const.initializer = @last
           end
         else
-          if const.value.type.passed_by_value?
-            global.initializer = llvm_type(const.value.type).undef
-          else
-            global.initializer = @last.type.null
-          end
-
+          global.initializer = llvm_type(const.value.type).null
           store @last, global
         end
 
