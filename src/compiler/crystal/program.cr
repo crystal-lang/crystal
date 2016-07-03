@@ -156,7 +156,6 @@ module Crystal
       types["Union"] = @union = GenericUnionType.new self, self, "Union", value, ["T"]
 
       types["Crystal"] = crystal_module = NonGenericModuleType.new self, self, "Crystal"
-      crystal_module.locations << Location.new(__LINE__ - 1, 0, __FILE__)
 
       argc_primitive = Primitive.new(:argc)
       argc_primitive.type = int32
@@ -190,7 +189,6 @@ module Crystal
 
     private def define_crystal_constants
       types["Crystal"] = @crystal = crystal = NonGenericModuleType.new self, self, "Crystal"
-      crystal.locations << Location.new(__LINE__ - 1, 0, __FILE__)
 
       version, sha = Crystal::Config.version_and_sha
 
@@ -218,7 +216,6 @@ module Crystal
 
     private def define_crystal_constant(name, value)
       crystal.types[name] = const = Const.new self, crystal, name, value
-      const.locations << Location.new(0, 0, __FILE__)
       const.initialized = true
     end
 
