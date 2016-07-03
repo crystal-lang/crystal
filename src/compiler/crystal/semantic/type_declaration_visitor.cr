@@ -6,6 +6,7 @@ module Crystal
     def visit_type_declarations(node)
       processor = TypeDeclarationProcessor.new(self)
       processor.process(node)
+      {node, processor}
     end
   end
 

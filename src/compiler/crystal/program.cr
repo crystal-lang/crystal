@@ -40,10 +40,6 @@ module Crystal
     # as the program starts, before the main code.
     getter! class_var_and_const_initializers
 
-    # The list of class vars and const being typed, to check
-    # a recursive dependency.
-    getter! class_var_and_const_being_typed
-
     getter! argc : Const
     getter! argv : Const
 
@@ -64,7 +60,6 @@ module Crystal
       @after_inference_types = Set(Type).new
       @string_pool = StringPool.new
       @class_var_and_const_initializers = [] of ClassVarInitializer | Const
-      @class_var_and_const_being_typed = [] of MetaTypeVar | Const
       @tempfiles = [] of String
 
       types = @types = {} of String => Type
@@ -156,7 +151,6 @@ module Crystal
       types["Union"] = @union = GenericUnionType.new self, self, "Union", value, ["T"]
 
       types["Crystal"] = crystal_module = NonGenericModuleType.new self, self, "Crystal"
-      crystal_module.locations << Location.new(__LINE__ - 1, 0, __FILE__)
 
       argc_primitive = Primitive.new(:argc)
       argc_primitive.type = int32
@@ -190,7 +184,6 @@ module Crystal
 
     private def define_crystal_constants
       types["Crystal"] = @crystal = crystal = NonGenericModuleType.new self, self, "Crystal"
-      crystal.locations << Location.new(__LINE__ - 1, 0, __FILE__)
 
       version, sha = Crystal::Config.version_and_sha
 
@@ -218,7 +211,6 @@ module Crystal
 
     private def define_crystal_constant(name, value)
       crystal.types[name] = const = Const.new self, crystal, name, value
-      const.locations << Location.new(0, 0, __FILE__)
       const.initialized = true
     end
 

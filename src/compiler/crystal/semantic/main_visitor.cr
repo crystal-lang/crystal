@@ -429,20 +429,6 @@ module Crystal
 
     def visit_class_var(node)
       var = lookup_class_var(node)
-
-      existing = @mod.class_var_and_const_being_typed.find &.same?(var)
-      if existing
-        raise_recursive_dependency node, var
-      end
-
-      if !var.initializer && first_time_accessing_meta_type_var?(var)
-        var_type = var.type?
-        if var_type && !var_type.includes_type?(mod.nil)
-          node.raise "class variable '#{var.name}' of #{var.owner} is read here before it was initialized, rendering it nilable, but its type is #{var_type}"
-        end
-        var.bind_to mod.nil_var
-      end
-
       node.bind_to var
       node.var = var
       var
@@ -641,13 +627,6 @@ module Crystal
 
       var = lookup_class_var(target)
       check_class_var_is_thread_local(target, var, attributes)
-
-      # If we are assigning to a class variable inside a method, make it nilable
-      # if this is the first time we are assigning to it, because
-      # the method might be called conditionally
-      if @typed_def && first_time_accessing_meta_type_var?(var)
-        var.bind_to mod.nil_var
-      end
 
       target.bind_to var
 

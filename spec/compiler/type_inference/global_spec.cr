@@ -478,17 +478,6 @@ describe "Global inference" do
       )) { int32 }
   end
 
-  it "doesn't crash when trying to infer from a recursive constant definition" do
-    assert_error %(
-      A = B
-      B = A
-
-      $x = A
-      $x
-      ),
-      "recursive dependency of constant A: A -> B -> A"
-  end
-
   it "doesn't infer from redefined method" do
     assert_type(%(
       def foo

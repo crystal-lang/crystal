@@ -32,11 +32,6 @@ module Crystal
       type = resolve_ident(node)
       case type
       when Const
-        existing = @mod.class_var_and_const_being_typed.find &.same?(type)
-        if existing
-          raise_recursive_dependency node, type
-        end
-
         if !type.value.type? && !type.visited?
           type.visited = true
 
@@ -46,14 +41,11 @@ module Crystal
           type_visitor.types = type.scope_types
           type_visitor.scope = type.scope
 
-          @mod.class_var_and_const_being_typed.push type
           type.value.accept type_visitor
-          @mod.class_var_and_const_being_typed.pop
 
           type.vars = const_def.vars
           type.visitor = self
           type.used = true
-          @mod.class_var_and_const_initializers << type
         end
 
         node.target_const = type
@@ -72,15 +64,6 @@ module Crystal
         type.accept self unless type.type?
         node.syntax_replacement = type
         node.bind_to type
-      end
-    end
-
-    private def raise_recursive_dependency(node, const_or_class_var)
-      msg = mod.class_var_and_const_being_typed.join(" -> ") { |x| const_or_class_var_name(x) }
-      if const_or_class_var.is_a?(Const)
-        node.raise "recursive dependency of constant #{const_or_class_var}: #{msg} -> #{const_or_class_var_name(const_or_class_var)}"
-      else
-        node.raise "recursive dependency of class var #{const_or_class_var_name(const_or_class_var)}: #{msg} -> #{const_or_class_var_name(const_or_class_var)}"
       end
     end
 

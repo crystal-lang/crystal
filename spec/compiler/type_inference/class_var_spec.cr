@@ -29,7 +29,7 @@ describe "Type inference: class var" do
 
       Foo.x
       ),
-      "class variable '@@x' of Foo is read here before it was initialized, rendering it nilable, but its type is Int32"
+      "class variable '@@x' of Foo is not nilable (it's Int32) so it must have an initializer"
   end
   it "types class var" do
     assert_type("
@@ -477,5 +477,27 @@ describe "Type inference: class var" do
 
       Foo.foo
       )) { nilable int32 }
+  end
+
+  it "types as nilable if doesn't have initializer" do
+    assert_type(%(
+      class Foo
+        def self.x
+          @@x = 1
+          @@x
+        end
+      end
+
+      Foo.x
+      )) { nilable int32 }
+  end
+
+  it "errors if class variable not nilable without initializer" do
+    assert_error %(
+      class Foo
+        @@foo : Int32
+      end
+      ),
+      "class variable '@@foo' of Foo is not nilable (it's Int32) so it must have an initializer"
   end
 end

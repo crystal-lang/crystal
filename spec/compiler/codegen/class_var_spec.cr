@@ -179,24 +179,6 @@ describe "Codegen: class var" do
       )).to_i.should eq(3)
   end
 
-  it "initializes class var conditionally" do
-    run(%(
-      class Foo
-        if 1 == 2
-          @@x = 3
-        else
-          @@x = 4
-        end
-
-        def self.x
-          @@x
-        end
-      end
-
-      Foo.x
-      )).to_i.should eq(4)
-  end
-
   it "codegens second class var initializer" do
     run(%(
       class Foo

@@ -23,11 +23,16 @@ module Crystal
     # - main: process "main" code, calls and method bodies (the whole program).
     # - check recursive structs (RecursiveStructChecker): check that structs are not recursive (impossible to codegen)
     def infer_type(node, stats = false)
-      infer_type_top_level(node, stats: stats)
+      node, processor = infer_type_top_level(node, stats: stats)
 
       Crystal.timing("Semantic (cvars initializers)", stats) do
         visit_class_vars_initializers(node)
       end
+
+      # Check that class vars without an initializer are nilable,
+      # give an error otherwise
+      processor.check_non_nilable_class_vars_without_initializers
+
       Crystal.timing("Semantic (ivars initializers)", stats) do
         visit_instance_vars_initializers(node)
       end

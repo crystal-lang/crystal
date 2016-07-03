@@ -66,8 +66,6 @@ module Crystal
   # idea on how to generate code for unreachable branches, because they have no type,
   # and for now the codegen only deals with typed nodes.
   class CleanupTransformer < Transformer
-    @const_being_initialized : Path?
-
     def initialize(@program : Program)
       @transformed = Set(UInt64).new
       @def_nest_count = 0
@@ -211,11 +209,7 @@ module Crystal
 
       if target.is_a?(Path)
         const = target.target_const.not_nil!
-        if const.used
-          @const_being_initialized = target
-        else
-          return node
-        end
+        return node unless const.used
       end
 
       node.value = node.value.transform self
@@ -228,7 +222,6 @@ module Crystal
         const = const.not_nil!
         const.initialized = true
         const.value = const.value.transform self
-        @const_being_initialized = nil
       end
 
       if target.is_a?(Global)
@@ -253,18 +246,6 @@ module Crystal
     def transform(node : Global)
       if expanded = node.expanded
         return expanded
-      end
-
-      if const_node = @const_being_initialized
-        const_being_initialized = const_node.target_const.not_nil!
-
-        if !@program.initialized_global_vars.includes?(node.name)
-          global_var = @program.global_vars[node.name]
-          if global_var.type?.try { |t| !t.includes_type?(@program.nil) }
-            const_node.raise "constant #{const_being_initialized} requires initialization of #{node}, \
-                                        which is initialized later. Initialize #{node} before #{const_being_initialized}"
-          end
-        end
       end
 
       node

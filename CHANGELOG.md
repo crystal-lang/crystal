@@ -1,3 +1,10 @@
+## 0.18.7 (03-07-2016)
+
+* The `compile` command was renamed back to `build`. The `compile` command is deprecated and will be removed in a future version
+* Fibers now can be spawned with a name
+* ECR macros can now be required with just `require "ecr"`
+* [Several bugs fixes and enhancements](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.7+is%3Aclosed)
+
 ## 0.18.6 (28-06-2016)
 
 * `T?` is now parsed as `Union(T, Nil)` outside the type grammar

@@ -80,7 +80,7 @@ module Crystal
     def type_top_level(sources : Array(Source))
       program = new_program(sources)
       node, original_node = parse program, sources
-      node = program.infer_type_top_level(node, @stats)
+      node, processor = program.infer_type_top_level(node, @stats)
       Result.new program, node, original_node
     end
 

@@ -2,12 +2,14 @@ class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
+  @is_crystal_repo : Bool
 
   def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
     compute_repository
+    @is_crystal_repo = @repo_name == "github.com/crystal-lang/crystal"
   end
 
   def run
@@ -102,6 +104,7 @@ class Crystal::Doc::Generator
 
   def must_include?(type : Crystal::Type)
     return false if nodoc?(type)
+    return true if crystal_builtin?(type)
 
     type.locations.any? do |type_location|
       must_include? type_location
@@ -149,6 +152,24 @@ class Crystal::Doc::Generator
 
   def nodoc?(obj)
     nodoc? obj.doc.try &.strip
+  end
+
+  def crystal_builtin?(type)
+    return false unless @is_crystal_repo
+    return false unless type.is_a?(Const) || type.is_a?(NonGenericModuleType)
+
+    crystal_type = @program.types["Crystal"]
+    return true if type == crystal_type
+
+    return false unless type.is_a?(Const)
+    return false unless type.container == crystal_type
+
+    {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
+      "DESCRIPTION", "PATH", "VERSION"}.each do |name|
+      return true if type == crystal_type.types[name]?
+    end
+
+    false
   end
 
   def type(type)
