@@ -202,10 +202,6 @@ class IO::FileDescriptor
     other
   end
 
-  def to_fd_io
-    self
-  end
-
   def inspect(io)
     io << "#<IO::FileDescriptor:"
     if closed?
