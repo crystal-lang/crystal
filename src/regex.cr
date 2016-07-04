@@ -101,10 +101,10 @@ require "./regex/*"
 # each capture group can be extracted on a successful match:
 #
 # ```
-# /a(sd)f/.match("_asdf_")                       # => #<Regex::MatchData "asdf" 1:"sd">
-# /a(sd)f/.match("_asdf_").not_nil![1]           # => "sd"
-# /a(?<grp>sd)f/.match("_asdf_")                 # => #<Regex::MatchData "asdf" grp:"sd">
-# /a(?<grp>sd)f/.match("_asdf_").not_nil!["grp"] # => "sd"
+# /a(sd)f/.match("_asdf_")                     # => #<Regex::MatchData "asdf" 1:"sd">
+# /a(sd)f/.match("_asdf_").try &.[1]           # => "sd"
+# /a(?<grp>sd)f/.match("_asdf_")               # => #<Regex::MatchData "asdf" grp:"sd">
+# /a(?<grp>sd)f/.match("_asdf_").try &.["grp"] # => "sd"
 # ```
 #
 # Capture groups are indexed starting from 1. Methods that accept a capture
@@ -405,9 +405,9 @@ class Regex
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```
-  # /(.)(.)(.)/.match("abc").not_nil![2]   # => "b"
-  # /(.)(.)/.match("abc", 1).not_nil![2]   # => "c"
-  # /(.)(.)/.match("クリスタル", 3).not_nil![2] # => "ル"
+  # /(.)(.)(.)/.match("abc").try &.[2]   # => "b"
+  # /(.)(.)/.match("abc", 1).try &.[2]   # => "c"
+  # /(.)(.)/.match("クリスタル", 3).try &.[2] # => "ル"
   # ```
   def match(str, pos = 0, options = Regex::Options::None) : MatchData?
     if byte_index = str.char_index_to_byte_index(pos)
@@ -425,9 +425,9 @@ class Regex
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```
-  # /(.)(.)(.)/.match_at_byte_index("abc").not_nil![2]   # => "b"
-  # /(.)(.)/.match_at_byte_index("abc", 1).not_nil![2]   # => "c"
-  # /(.)(.)/.match_at_byte_index("クリスタル", 3).not_nil![2] # => "ス"
+  # /(.)(.)(.)/.match_at_byte_index("abc").try &.[2]   # => "b"
+  # /(.)(.)/.match_at_byte_index("abc", 1).try &.[2]   # => "c"
+  # /(.)(.)/.match_at_byte_index("クリスタル", 3).try &.[2] # => "ス"
   # ```
   def match_at_byte_index(str, byte_index = 0, options = Regex::Options::None) : MatchData?
     return ($~ = nil) if byte_index > str.bytesize
