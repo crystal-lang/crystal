@@ -2652,30 +2652,10 @@ class String
   end
 
   # Finds match of *regex*, starting at *pos*.
-  def match(regex : Regex, pos = 0)
+  def match(regex : Regex, pos = 0) : Regex::MatchData?
     match = regex.match self, pos
     $~ = match
     match
-  end
-
-  # Searches the string for *regex* starting at *pos*, yielding the match if there is one.
-  #
-  # ```
-  # "Pine".match(/P/) do |match|
-  #   puts match
-  # end
-  # # => #<Regex::MatchData "P">
-  #
-  # "Oak".match(/P/) do |match|
-  #   # This is never invoked.
-  #   puts match
-  # end
-  # ```
-  def match(regex : Regex, pos = 0)
-    match = self.match(regex, pos)
-    if match
-      yield match
-    end
   end
 
   # Searches the string for instances of *pattern*, yielding a `Regex::MatchData` for each match.
