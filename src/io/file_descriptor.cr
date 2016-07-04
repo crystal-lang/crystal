@@ -206,6 +206,17 @@ class IO::FileDescriptor
     self
   end
 
+  def inspect(io)
+    io << "#<IO::FileDescriptor:"
+    if closed?
+      io << "(closed)"
+    else
+      io << " fd=" << @fd
+    end
+    io << ">"
+    io
+  end
+
   private def unbuffered_read(slice : Slice(UInt8))
     count = slice.size
     loop do

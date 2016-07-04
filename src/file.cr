@@ -516,7 +516,7 @@ class File < IO::FileDescriptor
     code
   end
 
-  def to_s(io)
+  def inspect(io)
     io << "#<File:" << @path
     io << " (closed)" if closed?
     io << ">"
