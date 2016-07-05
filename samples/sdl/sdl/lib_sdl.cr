@@ -5,6 +5,7 @@
 {% else %}
   @[Link("SDL")]
 {% end %}
+
 lib LibSDL
   INIT_TIMER       = 0x00000001_u32
   INIT_AUDIO       = 0x00000010_u32
@@ -160,6 +161,6 @@ end
   end
 {% elsif flag?(:darwin) %}
   redefine_main(SDL_main) do |main|
-    {{main}}
+    \{{main}}
   end
 {% end %}

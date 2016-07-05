@@ -1228,7 +1228,7 @@ module Crystal
     end
 
     def format_ifdef_cond(cond : ASTNode)
-      cond.raise "Bug: unexpected node in ifdef condition"
+      raise "Bug: unexpected node in ifdef condition"
     end
 
     def format_ifdef_nested_cond(cond)
