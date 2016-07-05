@@ -613,6 +613,9 @@ class Crystal::Command
 
     output_filename ||= original_output_filename
     output_format ||= "text"
+    if !["text", "json"].includes?(output_format)
+      error "You have input an invalid format, only text and JSON are supported"
+    end
 
     if !no_codegen && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"

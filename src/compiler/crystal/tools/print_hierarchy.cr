@@ -5,12 +5,10 @@ require "../syntax/ast"
 module Crystal
   def self.print_hierarchy(program, exp, format)
     case format
-    when "json"
-      JSONHierarchyPrinter.new(program, exp).execute
     when "text"
       HierarchyPrinter.new(program, exp).execute
-    else
-      Crystal.error "You have input an invalid format, currently only text and JSON are supported", false
+    when "json"
+      JSONHierarchyPrinter.new(program, exp).execute
     end
   end
 
@@ -274,16 +272,13 @@ module Crystal
         compute_targets(@program.types, exp, false)
       end
 
-      json = String.build do |io|
-        io.json_object do |json_object|
-          print_type(@program.object, json_object, io)
-        end
+      STDOUT.json_object do |json_object|
+        print_type(@program.object, json_object, STDOUT)
       end
-
-      puts json
+      STDOUT.flush
     end
 
-    def print_subtypes(types, json_object : JSON::ObjectBuilder(String::Builder), io : IO)
+    def print_subtypes(types, json_object, io : IO)
       types = types.sort_by &.to_s
 
       json_object.field "sub_types" do
@@ -302,19 +297,18 @@ module Crystal
       json_object
     end
 
-    def print_type_name(type, json_object : JSON::ObjectBuilder(String::Builder))
+    def print_type_name(type, json_object)
       json_object.field "name", type.to_s
       json_object.field "kind", type.struct? ? "struct" : "class"
 
       if (type.is_a?(NonGenericClassType) || type.is_a?(GenericClassInstanceType)) &&
          !type.is_a?(PointerInstanceType) && !type.is_a?(ProcInstanceType)
-        size = @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
-        json_object.field "size_in_bytes", size.to_s
+        json_object.field "size_in_bytes", @llvm_typer.size_of(@llvm_typer.llvm_struct_type(type))
       end
       json_object
     end
 
-    def print_type(type : GenericClassType | NonGenericClassType | GenericClassInstanceType, json_object : JSON::ObjectBuilder(String::Builder), io : IO)
+    def print_type(type : GenericClassType | NonGenericClassType | GenericClassInstanceType, json_object, io : IO)
       json_object = print_type_name(type, json_object)
       subtypes = type.subclasses.select { |sub| must_print?(sub) }
 
@@ -324,11 +318,11 @@ module Crystal
       json_object
     end
 
-    def print_type(type, json_object : JSON::ObjectBuilder(String::Builder), io : IO)
+    def print_type(type, json_object, io : IO)
       # Nothing to do
     end
 
-    def print_instance_vars(type : GenericClassType, has_subtypes, json_object : JSON::ObjectBuilder(String::Builder), io : IO)
+    def print_instance_vars(type : GenericClassType, has_subtypes, json_object, io : IO)
       instance_vars = type.declared_instance_vars
       return json_object unless instance_vars
 
@@ -347,7 +341,7 @@ module Crystal
       json_object
     end
 
-    def print_instance_vars(type, has_subtypes, json_object : JSON::ObjectBuilder(String::Builder), io : IO)
+    def print_instance_vars(type, has_subtypes, json_object, io : IO)
       instance_vars = type.instance_vars
       return json_object if instance_vars.empty?
 
@@ -360,7 +354,7 @@ module Crystal
             io.json_object do |ivar_object|
               ivar_object.field "name", instance_var.name.to_s
               ivar_object.field "type", ivar_type.to_s
-              ivar_object.field "size_in_bytes", @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar_type)).to_s
+              ivar_object.field "size_in_bytes", @llvm_typer.size_of(@llvm_typer.llvm_embedded_type(ivar_type))
             end
           end
         end
