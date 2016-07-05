@@ -41,4 +41,8 @@ module Crystal
   def self.tempfile(basename)
     CacheDir.instance.join("crystal-run-#{basename}.tmp")
   end
+
+  def self.with_line_numbers(source : String)
+    source.lines.map_with_index { |line, i| "#{"%3d" % (i + 1)}. #{line.to_s.chomp}" }.join "\n"
+  end
 end
