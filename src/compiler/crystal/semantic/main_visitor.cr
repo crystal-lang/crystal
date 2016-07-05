@@ -157,7 +157,7 @@ module Crystal
         special_var = define_special_var(node.name, mod.nil_var)
         node.bind_to special_var
       else
-        node.raise "read before definition of '#{node.name}'"
+        node.raise "read before definition of local variable '#{node.name}'"
       end
     end
 

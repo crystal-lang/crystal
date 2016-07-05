@@ -55,7 +55,7 @@ module Crystal
           end
         end
 
-        str << name.gsub('@', '.')
+        str << self.name.gsub('@', '.')
 
         next_def = self.next
         while next_def
