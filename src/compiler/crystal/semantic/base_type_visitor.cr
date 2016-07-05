@@ -857,7 +857,7 @@ module Crystal
       end
 
       location = node.location
-      filenames = @mod.find_in_path(node.string, location.try &.filename)
+      filenames = @mod.find_in_path(node.string, location.try &.original_filename)
       if filenames
         nodes = Array(ASTNode).new(filenames.size)
         filenames.each do |filename|
