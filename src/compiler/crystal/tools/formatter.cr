@@ -2340,7 +2340,7 @@ module Crystal
         end
         next_needs_indent = false
         unless last?(i, args)
-          if @last_is_heredoc
+          if @last_is_heredoc && @token.type == :NEWLINE
             write_line
             skip_space_or_newline
             write_indent
