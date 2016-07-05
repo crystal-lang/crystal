@@ -2833,7 +2833,7 @@ module Crystal
       @untyped_def || @block_context
     end
 
-    def visit(node : Require | When | Unless | Until | MacroLiteral)
+    def visit(node : When | Unless | Until | MacroLiteral)
       raise "Bug: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end

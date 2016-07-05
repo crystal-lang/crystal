@@ -351,7 +351,7 @@ module Crystal
       case node
       when Expressions, LibDef, ClassDef, ModuleDef, FunDef, Def, Macro,
            Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf, MacroExpression,
-           FileNode, TypeDeclaration
+           FileNode, TypeDeclaration, Require
         false
       else
         true
@@ -842,6 +842,50 @@ module Crystal
 
     def visit(node : ExternalVar)
       false
+    end
+
+    # Transform require to its source code.
+    # The source code can be a Nop if the file was already required.
+    def visit(node : Require)
+      if expanded = node.expanded
+        expanded.accept self
+        return false
+      end
+
+      if inside_exp?
+        node.raise "can't require dynamically"
+      end
+
+      location = node.location
+      filenames = @mod.find_in_path(node.string, location.try &.filename)
+      if filenames
+        nodes = Array(ASTNode).new(filenames.size)
+        filenames.each do |filename|
+          if @mod.add_to_requires(filename)
+            parser = Parser.new File.read(filename), @mod.string_pool
+            parser.filename = filename
+            parser.wants_doc = @mod.wants_doc?
+            parsed_nodes = parser.parse
+            parsed_nodes = @mod.normalize(parsed_nodes, inside_exp: inside_exp?)
+            # We must type the node immediately, in case a file requires another
+            # *before* one of the files in `filenames`
+            parsed_nodes.accept self
+            nodes << FileNode.new(parsed_nodes, filename)
+          end
+        end
+        expanded = Expressions.from(nodes)
+        expanded.bind_to(nodes)
+      else
+        expanded = Nop.new
+      end
+
+      node.expanded = expanded
+      node.bind_to(expanded)
+      false
+    rescue ex : Crystal::Exception
+      node.raise "while requiring \"#{node.string}\"", ex
+    rescue ex
+      node.raise "while requiring \"#{node.string}\": #{ex.message}"
     end
 
     def check_call_convention_attributes(node)

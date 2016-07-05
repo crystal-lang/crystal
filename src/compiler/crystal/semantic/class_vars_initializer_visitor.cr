@@ -120,7 +120,7 @@ module Crystal
         node.target.is_a?(ClassVar)
       when TypeDeclaration
         node.var.is_a?(ClassVar)
-      when FileNode, Expressions, ClassDef, ModuleDef, EnumDef, Alias, Include, Extend, LibDef, Def, Macro, Call
+      when FileNode, Expressions, ClassDef, ModuleDef, EnumDef, Alias, Include, Extend, LibDef, Def, Macro, Call, Require
         true
       else
         false

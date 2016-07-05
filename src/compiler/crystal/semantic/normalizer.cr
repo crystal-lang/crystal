@@ -218,35 +218,6 @@ module Crystal
       end
     end
 
-    # Transform require to its source code.
-    # The source code can be a Nop if the file was already required.
-    def transform(node : Require)
-      if @exp_nest > 0
-        node.raise "can't require dynamically"
-      end
-
-      location = node.location
-      filenames = @program.find_in_path(node.string, location.try &.filename)
-      if filenames
-        nodes = Array(ASTNode).new(filenames.size)
-        filenames.each do |filename|
-          if @program.add_to_requires(filename)
-            parser = Parser.new File.read(filename), @program.string_pool
-            parser.filename = filename
-            parser.wants_doc = @program.wants_doc?
-            nodes << FileNode.new(parser.parse.transform(self), filename)
-          end
-        end
-        Expressions.from(nodes)
-      else
-        Nop.new
-      end
-    rescue ex : Crystal::Exception
-      node.raise "while requiring \"#{node.string}\"", ex
-    rescue ex
-      node.raise "while requiring \"#{node.string}\": #{ex.message}"
-    end
-
     # Check if the right hand side is dead code
     def transform(node : Assign)
       super
