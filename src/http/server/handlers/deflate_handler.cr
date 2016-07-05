@@ -1,12 +1,14 @@
-require "zlib" ifdef !without_zlib
+{% if !flag?(:without_zlib) %}
+  require "zlib"
+{% end %}
 
 # A handler that configures an `HTTP::Server::Response` to compress the response
 # output, either using gzip or deflate, depending on the `Accept-Encoding` request header.
 class HTTP::DeflateHandler < HTTP::Handler
   def call(context)
-    ifdef without_zlib
+    {% if flag?(:without_zlib) %}
       call_next(context)
-    else
+    {% else %}
       request_headers = context.request.headers
 
       if request_headers.includes_word?("Accept-Encoding", "gzip")
@@ -18,6 +20,6 @@ class HTTP::DeflateHandler < HTTP::Handler
       end
 
       call_next(context)
-    end
+    {% end %}
   end
 end

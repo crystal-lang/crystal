@@ -103,9 +103,9 @@ module LLVM
 
   VoidPointer = Int8.pointer
 
-  ifdef x86_64
+  {% if flag?(:x86_64) %}
     SizeT = Int64
-  else
+  {% else %}
     SizeT = Int32
-  end
+  {% end %}
 end

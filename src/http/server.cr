@@ -1,4 +1,6 @@
-require "openssl" ifdef !without_openssl
+{% if !flag?(:without_openssl) %}
+  require "openssl"
+{% end %}
 require "socket"
 require "./server/context"
 require "./server/handler"
@@ -88,9 +90,9 @@ require "./common"
 # server.listen
 # ```
 class HTTP::Server
-  ifdef !without_openssl
+  {% if !flag?(:without_openssl) %}
     property tls : OpenSSL::SSL::Context::Server?
-  end
+  {% end %}
 
   @wants_close = false
 
@@ -162,11 +164,11 @@ class HTTP::Server
 
     io.sync = false
 
-    ifdef !without_openssl
+    {% if !flag?(:without_openssl) %}
       if tls = @tls
         io = OpenSSL::SSL::Socket::Server.new(io, tls, sync_close: true)
       end
-    end
+    {% end %}
 
     @processor.process(io, io)
   end

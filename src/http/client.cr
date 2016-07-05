@@ -77,20 +77,20 @@ class HTTP::Client
   # client = HTTP::Client.new "www.example.com", tls: true
   # client.tls # => #<OpenSSL::SSL::Context::Client ...>
   # ```
-  ifdef without_openssl
+  {% if flag?(:without_openssl) %}
     getter! tls : Nil
-  else
+  {% else %}
     getter! tls : OpenSSL::SSL::Context::Client?
-  end
+  {% end %}
 
   # Whether automatic compression/decompression is enabled.
   property? compress : Bool
 
-  ifdef without_openssl
+  {% if flag?(:without_openssl) %}
     @socket : TCPSocket | Nil
-  else
+  {% else %}
     @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
-  end
+  {% end %}
 
   @dns_timeout : Float64?
   @connect_timeout : Float64?
@@ -101,7 +101,7 @@ class HTTP::Client
   # be used depending on the *tls* arguments: 80 for if *tls* is `false`,
   # 443 if *tls* is truthy. If *tls* is `true` a new `OpenSSL::SSL::Context::Client` will
   # be used, else the given one. In any case the active context can be accessed through `tls`.
-  ifdef without_openssl
+  {% if flag?(:without_openssl) %}
     def initialize(@host, port = nil, tls : Bool = false)
       @tls = nil
       if tls
@@ -111,7 +111,7 @@ class HTTP::Client
       @port = (port || (@tls ? 443 : 80)).to_i
       @compress = true
     end
-  else
+  {% else %}
     def initialize(@host, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
       @tls = case tls
              when true
@@ -125,7 +125,7 @@ class HTTP::Client
       @port = (port || (@tls ? 443 : 80)).to_i
       @compress = true
     end
-  end
+  {% end %}
 
   # Creates a new HTTP client from a URI. Parses the *host*, *port*,
   # and *tls* configuration from the url provided. Port defaults to
@@ -486,16 +486,16 @@ class HTTP::Client
 
   private def set_defaults(request)
     request.headers["User-agent"] ||= "Crystal"
-    ifdef without_zlib
+    {% if flag?(:without_zlib) %}
       false
-    else
+    {% else %}
       if compress? && !request.headers.has_key?("Accept-Encoding")
         request.headers["Accept-Encoding"] = "gzip, deflate"
         true
       else
         false
       end
-    end
+    {% end %}
   end
 
   # Executes a request.
@@ -579,12 +579,12 @@ class HTTP::Client
     socket.sync = false
     @socket = socket
 
-    ifdef !without_openssl
+    {% if !flag?(:without_openssl) %}
       if tls = @tls
         tls_socket = OpenSSL::SSL::Socket::Client.new(socket, context: tls, sync_close: true, hostname: @host)
         @socket = socket = tls_socket
       end
-    end
+    {% end %}
 
     socket
   end
@@ -610,7 +610,7 @@ class HTTP::Client
     end
   end
 
-  ifdef without_openssl
+  {% if flag?(:without_openssl) %}
     protected def self.tls_flag(uri, context : Nil)
       scheme = uri.scheme
       case scheme
@@ -624,7 +624,7 @@ class HTTP::Client
         raise ArgumentError.new "Unsupported scheme: #{scheme}"
       end
     end
-  else
+  {% else %}
     protected def self.tls_flag(uri, context : OpenSSL::SSL::Context::Client?)
       scheme = uri.scheme
       case {scheme, context}
@@ -642,7 +642,7 @@ class HTTP::Client
         raise ArgumentError.new "Unsupported scheme: #{scheme}"
       end
     end
-  end
+  {% end %}
 
   protected def self.validate_host(uri)
     host = uri.host
@@ -669,7 +669,9 @@ class HTTP::Client
   end
 end
 
-require "openssl" ifdef !without_openssl
+{% if !flag?(:without_openssl) %}
+  require "openssl"
+{% end %}
 require "socket"
 require "uri"
 require "base64"

@@ -1,4 +1,5 @@
 require "spec"
+require "openssl"
 require "http/client"
 require "http/server"
 
@@ -54,7 +55,7 @@ module HTTP
         cl.port.should eq(80)
       end
 
-      ifdef !without_openssl
+      {% if !flag?(:without_openssl) %}
         it "detects HTTPS" do
           cl = Client.new(URI.parse("https://example.com"))
           cl.tls?.should be_truthy
@@ -79,13 +80,13 @@ module HTTP
           cl.tls?.should be_truthy
           cl.port.should eq(9999)
         end
-      else
+      {% else %}
         it "raises when trying to activate TLS" do
           expect_raises do
             Client.new "example.org", 443, tls: true
           end
         end
-      end
+      {% end %}
 
       it "raises error if not http schema" do
         expect_raises(ArgumentError, "Unsupported scheme: ssh") do

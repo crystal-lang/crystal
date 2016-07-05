@@ -194,7 +194,7 @@ describe "Code gen: if" do
       )).to_i.should eq(3)
   end
 
-  ifdef x86_64
+  {% if flag?(:x86_64) %}
     it "codegens if with pointer 0x100000000 pointer" do
       run(%(
         ptr = Pointer(Void).new(0x100000000_u64)
@@ -205,7 +205,7 @@ describe "Code gen: if" do
         end
       )).to_i.should eq(1)
     end
-  end
+  {% end %}
 
   it "doesn't crash with if !var using var in else" do
     run(%(

@@ -607,15 +607,15 @@ struct Time
   end
 
   private def self.compute_second_and_tenth_microsecond
-    ifdef darwin
+    {% if flag?(:darwin) %}
       ret = LibC.gettimeofday(out timeval, nil)
       raise Errno.new("gettimeofday") unless ret == 0
       {timeval.tv_sec, timeval.tv_usec.to_i64 * 10}
-    else
+    {% else %}
       ret = LibC.clock_gettime(LibC::CLOCK_REALTIME, out timespec)
       raise Errno.new("clock_gettime") unless ret == 0
       {timespec.tv_sec, timespec.tv_nsec / 100}
-    end
+    {% end %}
   end
 end
 
