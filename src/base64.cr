@@ -49,21 +49,42 @@ module Base64
   def encode(data)
     slice = data.to_slice
     String.new(encode_size(slice.size, new_lines: true)) do |buf|
-      inc = 0
       appender = buf.appender
-      to_base64(slice, CHARS_STD, pad: true) do |byte|
-        appender << byte
-        inc += 1
-        if inc >= LINE_SIZE
-          appender << NL
-          inc = 0
-        end
-      end
-      if inc > 0
-        appender << NL
-      end
+      encode_with_new_lines(slice) { |byte| appender << byte }
       size = appender.size
       {size, size}
+    end
+  end
+
+  # Write the Base64-encoded version of `data` to `io`.
+  # This method complies with RFC 2045.
+  # Line feeds are added to every 60 encoded characters.
+  #
+  #     require "base64"
+  #     Base64.encode("Now is the time for all good coders\nto learn Crystal", io)
+  def encode(data, io : IO)
+    count = 0
+    encode_with_new_lines(data.to_slice) do |byte|
+      io.write_byte byte
+      count += 1
+    end
+    io.flush
+    count
+  end
+
+  # :nodoc:
+  private def encode_with_new_lines(data)
+    inc = 0
+    to_base64(data.to_slice, CHARS_STD, pad: true) do |byte|
+      yield byte
+      inc += 1
+      if inc >= LINE_SIZE
+        yield NL
+        inc = 0
+      end
+    end
+    if inc > 0
+      yield NL
     end
   end
 
@@ -93,6 +114,26 @@ module Base64
     end
   end
 
+  # Write the Base64-encoded version of `data` with no newlines to `io`.
+  # This method complies with RFC 4648.
+  #
+  #     require "base64"
+  #     Base64.strict_encode("Now is the time for all good coders\nto learn Crystal", io)
+  def strict_encode(data, io : IO)
+    strict_encode_to_io_internal(data, io, CHARS_STD, pad: true)
+  end
+
+  # :nodoc:
+  private def strict_encode_to_io_internal(data, io, alphabet, pad)
+    count = 0
+    to_base64(data.to_slice, alphabet, pad: pad) do |byte|
+      count += 1
+      io.write_byte byte
+    end
+    io.flush
+    count
+  end
+
   # Returns the Base64-encoded version of `data` using a urlsafe alphabet.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
   # Alphabet" in RFC 4648.
@@ -111,14 +152,38 @@ module Base64
     end
   end
 
+  # Write the Base64-encoded version of `data` using a urlsafe alphabet to `io`.
+  # This method complies with "Base 64 Encoding with URL and Filename Safe
+  # Alphabet" in RFC 4648.
+  #
+  # The alphabet uses '-' instead of '+' and '_' instead of '/'.
+  #
+  # The `padding` parameter defaults to false. When true, enough `=` characters
+  # are added to make the output divisible by 3.
+  def urlsafe_encode(data, io : IO)
+    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: false)
+  end
+
   # Returns the Base64-decoded version of `data` as a *Slice(UInt8)*.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data)
     slice = data.to_slice
     buf = Pointer(UInt8).malloc(decode_size(slice.size))
     appender = buf.appender
-    from_base64(slice, DECODE_TABLE) { |byte| appender << byte }
+    from_base64(slice) { |byte| appender << byte }
     Slice.new(buf, appender.size.to_i32)
+  end
+
+  # Write the Base64-decoded version of `data` to `io`.
+  # This will decode either the normal or urlsafe alphabets.
+  def decode(data, io : IO)
+    count = 0
+    from_base64(data.to_slice) do |byte|
+      io.write_byte byte
+      count += 1
+    end
+    io.flush
+    count
   end
 
   # Returns the Base64-decoded version of `data` as a string.
@@ -129,7 +194,7 @@ module Base64
     slice = data.to_slice
     String.new(decode_size(slice.size)) do |buf|
       appender = buf.appender
-      from_base64(slice, DECODE_TABLE) { |byte| appender << byte }
+      from_base64(slice) { |byte| appender << byte }
       {appender.size, 0}
     end
   end
@@ -176,7 +241,7 @@ module Base64
     end
   end
 
-  private def from_base64(data, decode_table)
+  private def from_base64(data)
     size = data.size
     dt = DECODE_TABLE.to_unsafe
     cstr = data.pointer(size)
