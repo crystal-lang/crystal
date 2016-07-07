@@ -60,4 +60,20 @@ module HTTP::Multipart
     return nil unless body
     parse(MemoryIO.new(body), boundary) { |headers, io| yield headers, io }
   end
+
+  # Yields a `Multipart::Generator` to the given block, writing to *io* and
+  # using *boundary*.
+  def self.generate(io, boundary = "--------------------------#{SecureRandom.urlsafe_base64(18)}")
+    generator = Generator.new(io, boundary)
+    yield generator
+    generator.finish
+  end
+
+  # Yields a `Multipart::Generator` to the given block, returning the generated
+  # message as a `String`.
+  def self.generate(boundary = "--------------------------#{SecureRandom.urlsafe_base64(18)}")
+    String.build do |io|
+      generate(io, boundary) { |g| yield g }
+    end
+  end
 end
