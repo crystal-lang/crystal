@@ -14,7 +14,7 @@ module Crystal
     getter! splat_expansions : Hash(UInt64, Type)
     getter! after_inference_types : Set(Type)
     getter! file_modules : Hash(String, FileModule)
-    property! vars : Hash(String, MetaVar)
+    property! vars : MetaVars
     property literal_expander : LiteralExpander?
     property! initialized_global_vars : Set(String)
     property? wants_doc : Bool?
