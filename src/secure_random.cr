@@ -1,9 +1,5 @@
 require "base64"
 
-{% unless flag?(:without_openssl) %}
-  require "openssl/lib_crypto"
-{% end %}
-
 {% if flag?(:linux) %}
   require "c/unistd"
   require "c/sys/syscall"
@@ -23,10 +19,6 @@ require "base64"
 # [libsodium sysrandom](https://github.com/jedisct1/libsodium/blob/6fad3644b53021fb377ca1207fa6e1ac96d0b131/src/libsodium/randombytes/sysrandom/randombytes_sysrandom.c)
 # implementation and uses `getrandom` on Linux (when provided by the kernel),
 # then tries to read from `/dev/urandom`.
-#
-# Unlike libsodium, this implementation eventually falls back to using the RNG
-# (random number generator) of libcrypto (OpenSSL) when no other source is
-# available.
 module SecureRandom
   @@initialized = false
 
@@ -91,12 +83,6 @@ module SecureRandom
       urandom.read_fully(buf)
       return buf
     end
-
-    {% unless flag?(:without_openssl) %}
-      ret = LibCrypto.rand_bytes(buf, n)
-      raise String.new(LibCrypto.err_error_string(LibCrypto.err_get_error, nil)) unless ret == 1
-      return buf
-    {% end %}
 
     raise "Failed to access secure source to generate random bytes!"
   end
