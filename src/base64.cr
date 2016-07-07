@@ -67,6 +67,28 @@ module Base64
     end
   end
 
+  # :nodoc:
+  def encode(data, io : IO)
+    inc = 0
+    count = 0
+    to_base64(data.to_slice, CHARS_STD, pad: true) do |byte|
+      io.write_byte byte
+      count += 1
+      inc += 1
+      if inc >= LINE_SIZE
+        io.write_byte NL
+        count += 1
+        inc = 0
+      end
+    end
+    if inc > 0
+      io.write_byte NL
+      count += 1
+    end
+    io.flush
+    count
+  end
+
   # Returns the Base64-encoded version of `data` with no newlines.
   # This method complies with RFC 4648.
   #
@@ -93,6 +115,22 @@ module Base64
     end
   end
 
+  # :nodoc:
+  def strict_encode(data, io : IO)
+    strict_encode_to_io_internal(data, io, CHARS_STD, pad: true)
+  end
+
+  # :nodoc:
+  private def strict_encode_to_io_internal(data, io, alphabet, pad)
+    count = 0
+    to_base64(data.to_slice, alphabet, pad: pad) do |byte|
+      count += 1
+      io.write_byte byte
+    end
+    io.flush
+    count
+  end
+
   # Returns the Base64-encoded version of `data` using a urlsafe alphabet.
   # This method complies with "Base 64 Encoding with URL and Filename Safe
   # Alphabet" in RFC 4648.
@@ -111,14 +149,31 @@ module Base64
     end
   end
 
+  # :nodoc:
+  def urlsafe_encode(data, io : IO)
+    strict_encode_to_io_internal(data, io, CHARS_SAFE, pad: false)
+  end
+
   # Returns the Base64-decoded version of `data` as a *Slice(UInt8)*.
   # This will decode either the normal or urlsafe alphabets.
   def decode(data)
     slice = data.to_slice
     buf = Pointer(UInt8).malloc(decode_size(slice.size))
     appender = buf.appender
-    from_base64(slice, DECODE_TABLE) { |byte| appender << byte }
+    from_base64(slice) { |byte| appender << byte }
     Slice.new(buf, appender.size.to_i32)
+  end
+
+  # Write the Base64-decoded version of `data` to `io`.
+  # This will decode either the normal or urlsafe alphabets.
+  def decode(data, io : IO)
+    count = 0
+    from_base64(data.to_slice) do |byte|
+      io.write_byte byte
+      count += 1
+    end
+    io.flush
+    count
   end
 
   # Returns the Base64-decoded version of `data` as a string.
@@ -129,7 +184,7 @@ module Base64
     slice = data.to_slice
     String.new(decode_size(slice.size)) do |buf|
       appender = buf.appender
-      from_base64(slice, DECODE_TABLE) { |byte| appender << byte }
+      from_base64(slice) { |byte| appender << byte }
       {appender.size, 0}
     end
   end
@@ -176,7 +231,7 @@ module Base64
     end
   end
 
-  private def from_base64(data, decode_table)
+  private def from_base64(data)
     size = data.size
     dt = DECODE_TABLE.to_unsafe
     cstr = data.pointer(size)
