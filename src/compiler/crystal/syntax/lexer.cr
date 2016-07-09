@@ -29,6 +29,17 @@ module Crystal
       @slash_is_regex = true
       @wants_raw = false
       @string_pool = string_pool || StringPool.new
+
+      # When lexing macro tokens, when we encounter `#{` inside
+      # a string we push the current delimiter here and reset
+      # the current one to nil. The reason is, inside strings
+      # we don't want to consider %foo a macro variable, but
+      # we do want to do this inside interpolations.
+      # We then count curly braces, with @macro_curly_count,
+      # until we find the last `}` and then we pop from the stack
+      # and get the original delimiter.
+      @delimiter_state_stack = [] of Token::DelimiterState
+      @macro_curly_count = 0
     end
 
     def filename=(filename)
@@ -1951,6 +1962,9 @@ module Crystal
           @token.type = :MACRO_CONTROL_START
           @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
           return @token
+        else
+          # Make sure to decrease the '}' count if inside an interpolation
+          @macro_curly_count += 1 if @macro_curly_count > 0
         end
       end
 
@@ -1984,16 +1998,21 @@ module Crystal
         return @token
       end
 
-      if current_char == '%' && ident_start?(peek_next_char)
+      if !delimiter_state && current_char == '%' && ident_start?(peek_next_char)
         char = next_char
-        start = current_pos
-        while ident_part?(char)
-          char = next_char
+        if char == 'q' && (peek = peek_next_char) && {'(', '<', '[', '{'}.includes?(peek)
+          next_char
+          delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
+        else
+          start = current_pos
+          while ident_part?(char)
+            char = next_char
+          end
+          @token.type = :MACRO_VAR
+          @token.value = string_range_from_pool(start)
+          @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
+          return @token
         end
-        @token.type = :MACRO_VAR
-        @token.value = string_range_from_pool(start)
-        @token.macro_state = Token::MacroState.new(whitespace, nest, delimiter_state, beginning_of_line, yields, comment)
-        return @token
       end
 
       if !delimiter_state && current_char == 'e' && next_char == 'n'
@@ -2049,18 +2068,13 @@ module Crystal
           end
           whitespace = false
         when '%'
-          if delimiter_state
-            whitespace = false
-            break if ident_start?(peek_next_char)
+          case char = peek_next_char
+          when '(', '[', '<', '{'
+            next_char
+            delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
           else
-            case char = peek_next_char
-            when '(', '[', '<', '{'
-              next_char
-              delimiter_state = Token::DelimiterState.new(:string, char, closing_char, 1)
-            else
-              whitespace = false
-              break if ident_start?(char)
-            end
+            whitespace = false
+            break if !delimiter_state && ident_start?(char)
           end
         when '#'
           if delimiter_state
@@ -2068,10 +2082,25 @@ module Crystal
             # (macro expression inside a string interpolation)
             if peek_next_char == '{'
               char = next_char
+
+              # We should now consider things that follow as crystal expressions,
+              # so we reset the delimiter state but save it in a stack
+              @macro_curly_count += 1
+              @delimiter_state_stack.push delimiter_state
+              delimiter_state = nil
             end
             whitespace = false
           else
             break
+          end
+        when '}'
+          if @macro_curly_count > 0
+            # Once we find the final '}' that closes the interpolation,
+            # we are back inside the delimiter
+            if @macro_curly_count == 1
+              delimiter_state = @delimiter_state_stack.pop
+            end
+            @macro_curly_count -= 1
           end
         else
           if !delimiter_state && whitespace && char == 'y' && next_char == 'i' && next_char == 'e' && next_char == 'l' && next_char == 'd' && !ident_part_or_end?(peek_next_char)
