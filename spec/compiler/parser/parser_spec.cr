@@ -1210,7 +1210,7 @@ describe "Parser" do
 
   it_parses "Foo.foo(count: 3).bar { }", Call.new(Call.new("Foo".path, "foo", named_args: [NamedArgument.new("count", 3.int32)]), "bar", block: Block.new)
 
-  assert_syntax_error "a = a", "read before definition of local variable 'a'"
+  assert_syntax_error "a = a", "can't use variable name 'a' inside assignment to variable 'a'"
 
   assert_syntax_error "{{ {{ 1 }} }}", "can't nest macro expressions"
   assert_syntax_error "{{ {% begin %} }}", "can't nest macro expressions"

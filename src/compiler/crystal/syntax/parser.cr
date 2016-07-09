@@ -3669,7 +3669,7 @@ module Crystal
               Var.new name
             else
               if !force_call && !block_arg && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
-                raise "read before definition of local variable '#{name}'", location
+                raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
               end
 
               Call.new nil, name, [] of ASTNode, nil, block_arg, named_args, global, name_column_number, has_parentheses
