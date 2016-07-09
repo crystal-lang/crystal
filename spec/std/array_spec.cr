@@ -409,6 +409,18 @@ describe "Array" do
     end
   end
 
+  describe "delete_first" do
+    it "deletes first" do
+      a = ["a", "b", "b", "c"]
+      a.delete_first("b").should eq("b")
+    end
+
+    it "does not delete if not exists" do
+      a = ["a", "b", "b", "c"]
+      a.delete_first("d").should be_nil
+    end
+  end
+
   describe "delete_at" do
     it "deletes positive index" do
       a = [1, 2, 3, 4]

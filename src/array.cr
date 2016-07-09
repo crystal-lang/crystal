@@ -719,6 +719,21 @@ class Array(T)
     reject! { |e| e == obj } != nil
   end
 
+  # Removes first item from `self` that are equal to *obj*.
+  #
+  # ```
+  # a = ["a", "b", "b", "b", "c"]
+  # a.delete_first("b") => "b"
+  # a # => ["a", "b", "b", "c"]
+  # a = ["a", "b", "b", "b", "c"]
+  # a.delete_first("d") => nil
+  # a # => ["a", "b", "b", "b", "c"]
+  # ```
+  def delete_first(obj)
+    remove_index = index(obj)
+    delete_at(remove_index) if remove_index
+  end
+
   # Removes the element at *index*, returning that element.
   # Raises `IndexError` if *index* is out of range.
   #
