@@ -947,4 +947,23 @@ describe "Type inference: module" do
       {1, 'a'}.u
       )) { union_of(int32, char).metaclass }
   end
+
+  it "doesn't lookup type in ancestor when matches in current type (#2982)" do
+    assert_error %(
+      module Foo
+        module X
+          class Bar
+          end
+        end
+      end
+
+      class X
+      end
+
+      include Foo
+
+      X::Bar
+      ),
+      "undefined constant X::Bar"
+  end
 end
