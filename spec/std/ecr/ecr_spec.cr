@@ -32,6 +32,15 @@ describe "ECR" do
 
   it "does ECR.def_to_s" do
     view = ECRSpecHelloView.new("world!")
-    view.to_s.strip.should eq("Hello world! 012")
+    view.to_s.should eq("Hello world! 012\n")
   end
+
+  it "skips newlines" do
+    program = ECR.process_string "<% [1, 2].each do |num| -%>
+  <%= num %>
+<% end -%>", "foo.cr"
+    result = "#<loc:\"foo.cr\",1,3> [1, 2].each do |num| \n__str__ << \"  \"\n(#<loc:\"foo.cr\",2,5> num ).to_s __str__\n__str__ << \"\\n\"\n#<loc:\"foo.cr\",3,3> end \n"
+    program.should eq(result)
+  end
+
 end

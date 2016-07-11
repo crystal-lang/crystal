@@ -90,6 +90,19 @@ class ECR::Lexer
       when '\n'
         @line_number += 1
         @column_number = 0
+      when '-'
+        if string_range(current_pos + 1, current_pos + 3) == "%>"
+          @token.value = string_range(start_pos) #ignore escaping (<%%)
+          next_char
+          next_char
+          next_char
+          if current_char == '\n'
+            next_char
+            @line_number += 1
+            @column_number = 0
+          end
+          break
+        end
       when '%'
         if peek_next_char == '>'
           @token.value = if is_escape
