@@ -898,4 +898,14 @@ describe "Type inference: macro" do
       foo
       )) { char }
   end
+
+  it "works inside proc literal (#2984)" do
+    assert_type(%(
+      macro foo
+        1
+      end
+
+      ->{ foo }.call
+      )) { int32 }
+  end
 end
