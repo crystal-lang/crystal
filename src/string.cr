@@ -2238,26 +2238,40 @@ class String
     end
 
     ary = Array(String).new
+    split(separator, limit) do |str|
+      ary << str
+    end
+    ary
+  end
 
-    byte_offset = 0
+  # :nodoc:
+  def split(separator : Char, limit = nil, &block)
     single_byte_optimizable = single_byte_optimizable?
+    split_slice(separator, limit) do |slice|
+      yield String.new(slice.to_unsafe, slice.size, single_byte_optimizable ? slice.size : 0)
+    end
+  end
 
+  # :nodoc:
+  def split_slice(separator : Char, limit = nil, &block)
+    if empty? || (limit && limit <= 1)
+      yield to_slice
+      return
+    end
+
+    count = 0
+    byte_offset = 0
     reader = Char::Reader.new(self)
     reader.each_with_index do |char, i|
       if char == separator
-        piece_bytesize = reader.pos - byte_offset
-        piece_size = single_byte_optimizable ? piece_bytesize : 0
-        ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
+        yield Slice.new(to_unsafe + byte_offset, reader.pos - byte_offset)
+        count += 1
         byte_offset = reader.pos + reader.current_char_width
-        break if limit && ary.size + 1 == limit
+        break if limit && count + 1 == limit
       end
     end
 
-    piece_bytesize = bytesize - byte_offset
-    piece_size = single_byte_optimizable ? piece_bytesize : 0
-    ary.push String.new(to_unsafe + byte_offset, piece_bytesize, piece_size)
-
-    ary
+    yield Slice.new(to_unsafe + byte_offset, bytesize - byte_offset)
   end
 
   # Makes an array by splitting the string on *separator* (and removing instances of *separator*).
