@@ -30,4 +30,11 @@ describe Class do
   it "clones" do
     Int32.clone.should eq(Int32)
   end
+
+  it "#nilable" do
+    Int32.nilable?.should be_false
+    Nil.nilable?.should be_true
+    (Int32 | String).nilable?.should be_false
+    Int32?.nilable?.should be_true
+  end
 end
