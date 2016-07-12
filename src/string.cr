@@ -2055,6 +2055,16 @@ class String
     offset += size if offset < 0
     return nil if offset < 0
 
+    # If it's ASCII we can search from the end
+    if search.ord < 0x80
+      offset.downto(0) do |i|
+        if to_unsafe[i] == search.ord
+          return i
+        end
+      end
+      return nil
+    end
+
     last_index = nil
 
     each_char_with_index do |char, i|
