@@ -342,6 +342,12 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
+      # Special case: consider `Union(X, Y, ...)` the same as `X | Y | ...`
+      generic_class = context.type_lookup.lookup_type other.name
+      if generic_class.is_a?(GenericUnionType)
+        return restrict(Union.new(other.type_vars), context)
+      end
+
       parents.try &.each do |parent|
         next if parent.is_a?(NonGenericModuleType)
 
@@ -686,7 +692,7 @@ module Crystal
 
     def restrict(other : Generic, context)
       generic_module = context.type_lookup.lookup_type other.name
-      return nil unless generic_module == @module
+      return super unless generic_module == @module
 
       generic_module = generic_module.as(GenericModuleType)
       return nil unless generic_module.type_vars.size == @module.type_vars.size
@@ -728,7 +734,7 @@ module Crystal
 
     def restrict(other : Generic, context)
       generic_class = context.type_lookup.lookup_type other.name
-      return nil unless generic_class == @extended_class
+      return super unless generic_class == @extended_class
 
       generic_class = generic_class.as(GenericClassType)
       return nil unless generic_class.type_vars.size == type_vars.size

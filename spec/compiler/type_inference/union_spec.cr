@@ -155,4 +155,14 @@ describe "Type inference: union" do
       nil.as(Void?)
       )) { nil_type }
   end
+
+  it "can use Union in type restriction (#2988)" do
+    assert_type(%(
+      def foo(x : Union(Int32, String))
+        x
+      end
+
+      {foo(1), foo("hi")}
+      )) { tuple_of([int32, string]) }
+  end
 end
