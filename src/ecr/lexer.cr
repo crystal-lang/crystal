@@ -2,7 +2,7 @@
 class ECR::Lexer
   class Token
     property type : Symbol
-    property value : String
+    setter value : String
     property line_number : Int32
     property column_number : Int32
 
@@ -12,6 +12,84 @@ class ECR::Lexer
       @line_number = 0
       @column_number = 0
     end
+    
+    def suppress_leading?
+      !!(@type == :CONTROL && @value.match /^-/)
+    end
+    
+    def suppress_trailing?
+      !!(@type == :CONTROL && @value.match /-$/)
+    end
+
+    def is_output?
+      !!(@type == :CONTROL && @value.match /^=/)
+    end
+    
+    def is_escape?
+      !!(@type == :CONTROL && @value.match /^%/)
+    end
+    
+    def is_whitespace?
+      !!@value.match /^\s*$/
+    end
+    
+    def val
+      @value
+    end
+
+    def value
+      value = @value
+      if @type == :CONTROL
+        value = value.sub(/^-/, "") if suppress_leading? 
+        value = value.sub(/-$/, "") if suppress_trailing?
+        value = value.sub(/^=/, "") if is_output? 
+        value = value.sub(/^%(.*)/, "<%\\1%>") if is_escape?
+        value = value.strip
+      end
+      value
+    end
+    
+    def output
+      return :STRING if is_escape?
+      return :OUTPUT if is_output?
+      @type
+    end
+    
+    def append_value(str, buffer_name, filename)
+      case output
+      when :STRING
+        str << buffer_name
+        str << " << "
+        value.inspect(str)
+        str << "\n"
+      when :OUTPUT
+        str << "("
+        append_loc(str, filename)
+        str << value
+        str << ").to_s "
+        str << buffer_name
+        str << "\n"
+      when :CONTROL
+        append_loc(str, filename)
+        str << " " unless value.starts_with?(' ')
+        str << value
+        str << "\n"
+      end
+    end
+    
+    
+    private def append_loc(str, filename)
+      str << %(#<loc:")
+      str << filename
+      str << %(",)
+      str << @line_number
+      str << %(,)
+      str << @column_number
+      str << %(>)
+    end
+
+  
+
   end
 
   def initialize(string)
@@ -32,21 +110,8 @@ class ECR::Lexer
       if peek_next_char == '%'
         next_char
         next_char
-
-        case current_char
-        when '='
-          next_char
-          copy_location_info_to_token
-          is_output = true
-        when '%'
-          next_char
-          copy_location_info_to_token
-          is_escape = true
-        else
-          copy_location_info_to_token
-        end
-
-        return consume_control(is_output, is_escape)
+        copy_location_info_to_token
+        return consume_control
       end
     end
 
@@ -62,6 +127,8 @@ class ECR::Lexer
       when '\n'
         @line_number += 1
         @column_number = 0
+        next_char
+        break
       when '<'
         if peek_next_char == '%'
           break
@@ -75,41 +142,21 @@ class ECR::Lexer
     @token
   end
 
-  private def consume_control(is_output, is_escape)
+  private def consume_control
     start_pos = current_pos
     while true
       case current_char
       when '\0'
-        if is_output
-          raise "unexpected end of file inside <%= ..."
-        elsif is_escape
-          raise "unexpected end of file inside <%% ..."
-        else
-          raise "unexpected end of file inside <% ..."
-        end
+        raise "unexpected end of file inside <% ..."
       when '\n'
         @line_number += 1
         @column_number = 0
-      when '-'
-        if string_range(current_pos + 1, current_pos + 3) == "%>"
-          @token.value = string_range(start_pos) #ignore escaping (<%%)
-          next_char
-          next_char
-          next_char
-          if current_char == '\n'
-            next_char
-            @line_number += 1
-            @column_number = 0
-          end
-          break
-        end
+        next_char
+        break
       when '%'
         if peek_next_char == '>'
-          @token.value = if is_escape
-                           "<%#{string_range(start_pos, current_pos + 2)}"
-                         else
-                           string_range(start_pos)
-                         end
+          @token.type = :CONTROL
+          @token.value = string_range(start_pos)
           next_char
           next_char
           break
@@ -118,7 +165,6 @@ class ECR::Lexer
       next_char
     end
 
-    @token.type = is_escape ? :STRING : (is_output ? :OUTPUT : :CONTROL)
     @token
   end
 
