@@ -5,6 +5,13 @@
 # There are `<%= %>` and `<% %>` syntax. The former will render returned values.
 # The latter will not, but instead serve to control the structure as we do in Crystal.
 #
+# Using a dash inside `<...>` either eliminates previous indentation or removes the next newline:
+#
+# * `<%- ... %>`: removes previous indentation
+# * `<% ... -%>`: removes next newline
+# * `<%-= ... %>`: removes previous indentation
+# * `<%= ... -%>`: removes next newline
+#
 # Quick Example:
 #
 #     require "ecr"
@@ -25,11 +32,11 @@
 # Using logical statements:
 #
 #     # greeting.ecr
-#     <% if @name %>
-#       Greeting, <%= @name %>!
-#     <% else %>
-#       Greeting!
-#     <% end %>
+#     <%- if @name -%>
+#     Greeting, <%= @name %>!
+#     <%- else -%>
+#     Greeting!
+#     <%- end -%>
 #
 #     Greeting.new(nil).to_s
 #     #=> Greeting!
@@ -49,9 +56,9 @@
 #     end
 #
 #     # greeting.ecr
-#     <% @names.each do |name| %>
-#       Hi, <%= name %>!
-#     <% end %>
+#     <%- @names.each do |name| -%>
+#     Hi, <%= name %>!
+#     <%- end -%>
 #
 #     Greeting.new("John", "Zoe", "Ben").to_s
 #     #=> Hi, John!
