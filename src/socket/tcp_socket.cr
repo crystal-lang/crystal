@@ -40,20 +40,20 @@ class TCPSocket < IPSocket
 
   # The amount of time in seconds the connection must be idle before sending keepalive probes.
   def tcp_keepalive_idle
-    optname = ifdef darwin
+    optname = {% if flag?(:darwin) %}
       LibC::TCP_KEEPALIVE
-    else
+    {% else %}
       LibC::TCP_KEEPIDLE
-    end
+    {% end %}
     getsockopt optname, 0, level: LibC::IPPROTO_TCP
   end
 
   def tcp_keepalive_idle=(val : Int)
-    optname = ifdef darwin
+    optname = {% if flag?(:darwin) %}
       LibC::TCP_KEEPALIVE
-    else
+    {% else %}
       LibC::TCP_KEEPIDLE
-    end
+    {% end %}
     setsockopt optname, val, level: LibC::IPPROTO_TCP
     val
   end

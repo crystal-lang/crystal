@@ -208,6 +208,7 @@ module Crystal
         else
           next_exp = node.expressions[i + 1]
           needs_two_lines = !last?(i, node.expressions) && !exp.is_a?(Attribute) &&
+            !exp.is_a?(MacroIf) &&
             (!(exp.is_a?(IfDef) && next_exp.is_a?(LibDef))) &&
             (!(exp.is_a?(Def) && exp.abstract? && next_exp.is_a?(Def) && next_exp.abstract?)) &&
             (needs_two_lines?(exp) || needs_two_lines?(next_exp))
@@ -888,6 +889,14 @@ module Crystal
     end
 
     def visit(node : Path)
+      # This is the case of $0, which generates `PROGRAM_NAME` by the parser
+      if @token.type == :GLOBAL_MATCH_DATA_INDEX
+        write "$"
+        write @token.value
+        next_token
+        return false
+      end
+
       check_open_paren
 
       # Sometimes the :: is not present because the parser generates ::Nil, for example
@@ -1086,11 +1095,34 @@ module Crystal
 
     def visit_if_or_unless(node, keyword)
       if !@token.keyword?(keyword) && node.else.is_a?(Nop)
-        # Suffix if/unless
-        accept node.then
-        write_keyword " ", keyword, " "
-        inside_cond do
-          indent(@column, node.cond)
+        # Suffix if/unless/ifdef
+        if keyword == :ifdef
+          old_output = @output
+          @output = MemoryIO.new
+          accept node.then
+          string = @output.to_s
+          @output = old_output
+          skip_space
+          check_keyword :ifdef
+          next_token_skip_space_or_newline
+          write "{% if "
+          inside_cond do
+            format_ifdef_cond(node.cond)
+            write " %}"
+          end
+          write_line
+          indent do
+            write_indent
+            write string
+          end
+          write_line
+          write "{% end %}"
+        else
+          accept node.then
+          write_keyword " ", keyword, " "
+          inside_cond do
+            indent(@column, node.cond)
+          end
         end
         return false
       end
@@ -1109,15 +1141,27 @@ module Crystal
         return false
       end
 
-      write_keyword keyword, " "
-      format_if_at_cond node
+      # We write `ifdef x` to {% if flag?(:x) %}
+      if keyword == :ifdef
+        write "{% if "
+        next_token
+        skip_space_or_newline
+      else
+        write_keyword keyword, " "
+      end
+      format_if_at_cond node, keyword
 
       false
     end
 
-    def format_if_at_cond(node, check_end = true)
+    def format_if_at_cond(node, keyword, check_end = true)
       inside_cond do
-        indent(@column, node.cond)
+        if keyword == :ifdef
+          format_ifdef_cond(node.cond)
+          write " %}"
+        else
+          indent(@column, node.cond)
+        end
       end
 
       indent(@indent + 2) { skip_space }
@@ -1130,27 +1174,77 @@ module Crystal
 
       if @token.keyword?(:else)
         write_indent
-        write "else"
+        if keyword == :ifdef
+          write "{% else %}"
+        else
+          write "else"
+        end
         next_token
         indent(@indent + 2) { skip_space }
         skip_semicolon
         format_nested node.else
       elsif node_else.is_a?(If) && @token.keyword?(:elsif)
-        format_elsif node_else
+        format_elsif node_else, keyword
       elsif node_else.is_a?(IfDef) && @token.keyword?(:elsif)
-        format_elsif node_else
+        format_elsif node_else, keyword
       end
 
       if check_end
-        format_end @indent
+        format_end @indent, ifdef: keyword == :ifdef
       end
     end
 
-    def format_elsif(node_else)
+    def format_elsif(node_else, keyword)
       write_indent
-      write "elsif "
+      if keyword == :ifdef
+        write "{% elsif "
+      else
+        write "elsif "
+      end
       next_token_skip_space_or_newline
-      format_if_at_cond node_else, check_end: false
+      format_if_at_cond node_else, keyword, check_end: false
+    end
+
+    def format_ifdef_cond(cond : And)
+      format_ifdef_binary_cond cond, :"&&"
+    end
+
+    def format_ifdef_cond(cond : Or)
+      format_ifdef_binary_cond cond, :"||"
+    end
+
+    def format_ifdef_binary_cond(cond, op)
+      format_ifdef_nested_cond cond.left
+      skip_space_or_newline
+      write " "
+      write_token op
+      write " "
+      skip_space_or_newline
+      format_ifdef_nested_cond cond.right
+    end
+
+    def format_ifdef_cond(cond : Not)
+      write_token :"!"
+      format_ifdef_nested_cond(cond.exp)
+    end
+
+    def format_ifdef_cond(cond : Var)
+      write "flag?(:"
+      write cond.name
+      write ")"
+      next_token
+    end
+
+    def format_ifdef_cond(cond : ASTNode)
+      raise "Bug: unexpected node in ifdef condition"
+    end
+
+    def format_ifdef_nested_cond(cond)
+      needs_parens = !(cond.is_a?(Var) || cond.is_a?(Not))
+
+      write "(" if needs_parens
+      format_ifdef_cond cond
+      write ")" if needs_parens
     end
 
     def visit(node : While)
@@ -1212,11 +1306,15 @@ module Crystal
       format_end(column)
     end
 
-    def format_end(column)
+    def format_end(column, ifdef is_ifdef = false)
       indent(column + 2) { skip_space_or_newline last: true }
       check_end
       write_indent(column)
-      write "end"
+      if is_ifdef
+        write "{% end %}"
+      else
+        write "end"
+      end
       next_token
     end
 
@@ -1453,6 +1551,8 @@ module Crystal
     end
 
     def visit(node : Macro)
+      reset_macro_state
+
       write_keyword :macro, " "
 
       write node.name
@@ -1510,6 +1610,8 @@ module Crystal
     end
 
     def visit(node : MacroExpression)
+      reset_macro_state
+
       old_column = @column
 
       if node.output
@@ -1587,6 +1689,8 @@ module Crystal
     end
 
     def visit(node : MacroIf)
+      reset_macro_state
+
       if inside_macro?
         check :MACRO_CONTROL_START
       else
@@ -1674,6 +1778,8 @@ module Crystal
     end
 
     def visit(node : MacroFor)
+      reset_macro_state
+
       if inside_macro?
         check :MACRO_CONTROL_START
       else
@@ -1824,6 +1930,10 @@ module Crystal
       end
 
       false
+    end
+
+    def reset_macro_state
+      @macro_state = Token::MacroState.default unless inside_macro?
     end
 
     def visit(node : Splat)
@@ -2238,7 +2348,7 @@ module Crystal
         end
         next_needs_indent = false
         unless last?(i, args)
-          if @last_is_heredoc
+          if @last_is_heredoc && @token.type == :NEWLINE
             write_line
             skip_space_or_newline
             write_indent

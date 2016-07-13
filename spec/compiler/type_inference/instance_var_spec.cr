@@ -3072,6 +3072,39 @@ describe "Type inference: instance var" do
       "can't use Int as the type of an instance variable yet, use a more specific type"
   end
 
+  it "shouldn't error when accessing instance var in initialized that's always initialized (#2953)" do
+    assert_type(%(
+      class Foo
+        @baz = Baz.new
+
+        def baz
+          @baz
+        end
+      end
+
+      class Bar < Foo
+        def initialize
+          @baz.x = 2
+        end
+      end
+
+      class Baz
+        def initialize
+          @x = 1
+        end
+
+        def x=(@x)
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Bar.new.baz.x
+      )) { int32 }
+  end
+
   # -----------------
   # ||| OLD SPECS |||
   # vvv           vvv

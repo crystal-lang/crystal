@@ -96,7 +96,7 @@ describe Crystal::Formatter do
   assert_format "Foo( x:  Int32  )", "Foo(x: Int32)"
   assert_format "Foo( x:  Int32  ,  y: Float64 )", "Foo(x: Int32, y: Float64)"
 
-  %w(if unless ifdef).each do |keyword|
+  %w(if unless).each do |keyword|
     assert_format "#{keyword} a\n2\nend", "#{keyword} a\n  2\nend"
     assert_format "#{keyword} a\n2\n3\nend", "#{keyword} a\n  2\n  3\nend"
     assert_format "#{keyword} a\n2\nelse\nend", "#{keyword} a\n  2\nelse\nend"
@@ -109,11 +109,30 @@ describe Crystal::Formatter do
     assert_format "#{keyword} a\n2; 3\nelse\n3\nend", "#{keyword} a\n  2; 3\nelse\n  3\nend"
   end
 
+  assert_format "ifdef a\n2\nend", "{% if flag?(:a) %}\n  2\n{% end %}"
+  assert_format "ifdef a\n2\n3\nend", "{% if flag?(:a) %}\n  2\n  3\n{% end %}"
+  assert_format "ifdef a\n2\nelse\nend", "{% if flag?(:a) %}\n  2\n{% else %}\n{% end %}"
+  assert_format "ifdef a\nelse\n2\nend", "{% if flag?(:a) %}\n{% else %}\n  2\n{% end %}"
+  assert_format "ifdef a\n2\nelse\n3\nend", "{% if flag?(:a) %}\n  2\n{% else %}\n  3\n{% end %}"
+  assert_format "ifdef a\n2\n3\nelse\n4\n5\nend", "{% if flag?(:a) %}\n  2\n  3\n{% else %}\n  4\n  5\n{% end %}"
+  assert_format "ifdef a\nifdef b\n3\nelse\n4\nend\nend", "{% if flag?(:a) %}\n  {% if flag?(:b) %}\n    3\n  {% else %}\n    4\n  {% end %}\n{% end %}"
+  assert_format "ifdef a\nifdef b\nelse\n4\nend\nend", "{% if flag?(:a) %}\n  {% if flag?(:b) %}\n  {% else %}\n    4\n  {% end %}\n{% end %}"
+  assert_format "ifdef a\n    # hello\n 2\nend", "{% if flag?(:a) %}\n  # hello\n  2\n{% end %}"
+  assert_format "ifdef a\n2; 3\nelse\n3\nend", "{% if flag?(:a) %}\n  2; 3\n{% else %}\n  3\n{% end %}"
+
   assert_format "if 1\n2\nelsif\n3\n4\nend", "if 1\n  2\nelsif 3\n  4\nend"
   assert_format "if 1\n2\nelsif\n3\n4\nelsif 5\n6\nend", "if 1\n  2\nelsif 3\n  4\nelsif 5\n  6\nend"
   assert_format "if 1\n2\nelsif\n3\n4\nelse\n6\nend", "if 1\n  2\nelsif 3\n  4\nelse\n  6\nend"
-  assert_format "ifdef a\n2\nelsif b\n4\nend", "ifdef a\n  2\nelsif b\n  4\nend"
-  assert_format "ifdef !a\n2\nend", "ifdef !a\n  2\nend"
+
+  assert_format "ifdef a\n2\nelsif b\n4\nend", "{% if flag?(:a) %}\n  2\n{% elsif flag?(:b) %}\n  4\n{% end %}"
+  assert_format "ifdef !a\n2\nend", "{% if !flag?(:a) %}\n  2\n{% end %}"
+  assert_format "ifdef a && b\n2\nend", "{% if flag?(:a) && flag?(:b) %}\n  2\n{% end %}"
+  assert_format "ifdef a || b\n2\nend", "{% if flag?(:a) || flag?(:b) %}\n  2\n{% end %}"
+
+  assert_format "{% if 1 %}\n  2\n{% end %}\ndef foo\nend"
+
+  assert_format "1 ifdef a", "{% if flag?(:a) %}\n  1\n{% end %}"
+  assert_format "1 ifdef a\n2", "{% if flag?(:a) %}\n  1\n{% end %}\n2"
 
   assert_format "if 1\n2\nend\nif 3\nend", "if 1\n  2\nend\nif 3\nend"
   assert_format "if 1\nelse\n2\nend\n3", "if 1\nelse\n  2\nend\n3"
@@ -372,6 +391,8 @@ describe Crystal::Formatter do
   assert_format "$? = 1", "$? = 1"
   assert_format "$1", "$1"
   assert_format "$1.bar", "$1.bar"
+  assert_format "$0", "$0"
+  assert_format "$0.bar", "$0.bar"
 
   assert_format "foo . is_a? ( Bar )", "foo.is_a?(Bar)"
   assert_format "foo . responds_to?( :bar )", "foo.responds_to?(:bar)"
@@ -940,4 +961,9 @@ describe Crystal::Formatter do
   assert_format "Foo::Bar?"
   assert_format "Foo::Bar(T, U?)?"
   assert_format "Union(Foo::Bar?, Baz?, Qux(T, U?))"
+
+  assert_format "lib Foo\n  {% if 1 %}\n    2\n  {% end %}\nend\n\nmacro bar\n  1\nend"
+
+  assert_format %(puts(<<-FOO\n1\nFOO, 2))
+  assert_format %(puts <<-FOO\n1\nFOO, 2)
 end

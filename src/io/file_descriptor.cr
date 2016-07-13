@@ -202,8 +202,15 @@ class IO::FileDescriptor
     other
   end
 
-  def to_fd_io
-    self
+  def inspect(io)
+    io << "#<IO::FileDescriptor:"
+    if closed?
+      io << "(closed)"
+    else
+      io << " fd=" << @fd
+    end
+    io << ">"
+    io
   end
 
   private def unbuffered_read(slice : Slice(UInt8))

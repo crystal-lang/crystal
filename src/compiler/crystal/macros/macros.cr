@@ -46,7 +46,7 @@ module Crystal
         end
         normalize(generated_node, inside_exp: inside_exp)
       rescue ex : Crystal::SyntaxException
-        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{generated_source.lines.to_s_with_line_numbers}\n#{"-" * 80}\n#{ex.to_s_with_source(generated_source)}\n#{"=" * 80}"
+        node.raise "macro didn't expand to a valid program, it expanded to:\n\n#{"=" * 80}\n#{"-" * 80}\n#{Crystal.with_line_numbers(generated_source)}\n#{"-" * 80}\n#{ex.to_s_with_source(generated_source)}\n#{"=" * 80}"
       end
     end
   end

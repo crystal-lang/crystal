@@ -58,6 +58,7 @@ module Crystal
       #
       # then this flag is set to `true` when parsing `foo`'s arguments.
       @stop_on_do = false
+      @assigned_vars = [] of String
     end
 
     def wants_doc=(wants_doc)
@@ -360,7 +361,13 @@ module Crystal
               atomic = UninitializedVar.new(atomic, type).at(location)
               return atomic
             else
-              value = parse_op_assign_no_control
+              if atomic.is_a?(Var) && !var?(atomic.name)
+                @assigned_vars.push atomic.name
+                value = parse_op_assign_no_control
+                @assigned_vars.pop
+              else
+                value = parse_op_assign_no_control
+              end
             end
 
             pop_def if needs_new_scope
@@ -3619,12 +3626,21 @@ module Crystal
         #
         #     x = 1
         #     foo x do
+        #         ^~~~
         #     end
         #
         # In this case, since x is a variable and the previous call (foo)
         # doesn't have parentheses, we don't parse "x do end" as an invocation
         # to a method x with a block. Instead, we just stop on x and we don't
         # consume the block, leaving the block for 'foo' to consume.
+      elsif @stop_on_do && call_args && call_args.has_parentheses
+        # This is the case when we have:
+        #
+        #    foo x(y) do
+        #        ^~~~~~~
+        #    end
+        #
+        # We don't want to attach the block to `x`, but to `foo`.
       else
         block = parse_block(block)
       end
@@ -3652,6 +3668,10 @@ module Crystal
               end
               Var.new name
             else
+              if !force_call && !block_arg && !named_args && !global && !has_parentheses && @assigned_vars.includes?(name)
+                raise "can't use variable name '#{name}' inside assignment to variable '#{name}'", location
+              end
+
               Call.new nil, name, [] of ASTNode, nil, block_arg, named_args, global, name_column_number, has_parentheses
             end
           end

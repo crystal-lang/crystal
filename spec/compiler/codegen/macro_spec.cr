@@ -1357,4 +1357,42 @@ describe "Code gen: macro" do
       (Bar.new as Foo).method
       )).to_string.should eq("Bar")
   end
+
+  it "doesn't replace %s in string (#2178)" do
+    run(%(
+      {% begin %}
+        "hello %s"
+      {% end %}
+      )).to_string.should eq("hello %s")
+  end
+
+  it "doesn't replace %q() (#2178)" do
+    run(%(
+      {% begin %}
+        %q(hello)
+      {% end %}
+      )).to_string.should eq("hello")
+  end
+
+  it "replaces %s inside string inside interpolation (#2178)" do
+    run(%(
+      require "prelude"
+
+      {% begin %}
+        %a = "world"
+        "hello \#{ %a }"
+      {% end %}
+      )).to_string.should eq("hello world")
+  end
+
+  it "replaces %s inside string inside interpolation, with braces (#2178)" do
+    run(%(
+      require "prelude"
+
+      {% begin %}
+        %a = "world"
+        "hello \#{ [{ %a, %a }, %a] }"
+      {% end %}
+      )).to_string.should eq(%(hello [{"world", "world"}, "world"]))
+  end
 end

@@ -406,10 +406,6 @@ module Crystal
       node
     end
 
-    def number_lines(source)
-      source.lines.to_s_with_line_numbers
-    end
-
     class ClosuredVarsCollector < Visitor
       getter vars : Array(ASTNode)
       @a_def : Def

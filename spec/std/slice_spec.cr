@@ -185,4 +185,14 @@ describe "Slice" do
     slice[1].should eq('a')
     slice[2].should eq("foo")
   end
+
+  it "uses percent vars in [] macro (#2954)" do
+    slices = itself(Slice[1, 2], Slice[3])
+    slices[0].to_a.should eq([1, 2])
+    slices[1].to_a.should eq([3])
+  end
+end
+
+private def itself(*args)
+  args
 end

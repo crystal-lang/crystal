@@ -329,7 +329,7 @@
 ## 0.10.1 (2016-01-08)
 
 * Added `Int#popcount` (thanks @rmosolgo)
-* Added `@[Naked]` attribute for ommiting a method's prelude
+* Added `@[Naked]` attribute for omitting a method's prelude
 * Check that abstract methods are implemented by subtypes
 * Some bug fixes
 
@@ -647,7 +647,7 @@
 * Correctly support the X86_64 and X86 ABIs. Now bindings to C APIs that pass and return structs works perfectly fine.
 * Added `crystal init` to quickly create a skeleton library or application (thanks @waterlink)
 * Added `--emit` flag to the compiler. Now you can easily see the generated LLVM IR, LLVM bitcode, assembly and object files.
-* Added `--no-color` flag to supress color output, useful for editor tools.
+* Added `--no-color` flag to suppress color output, useful for editor tools.
 * Added macro vars: `%var` and `%var{x, y}` create uniqely named variables inside macros.
 * Added [typed splats](https://github.com/crystal-lang/crystal/issues/291).
 * Added `Iterator` and many methods that return iterators, like `Array#each`, `Hash#each`, `Int#times`, `Int#step`, `String#each_char`, etc.
@@ -985,7 +985,7 @@
 * Added a `Base64` module (thanks @kostya)
 * Allow default arguments in macros
 * Allow invoking `new` on a function type. For example: `alias F = Int32 -> Int32; f = F.new { |x| x + 1 }; f.call(2) #=> 3`.
-* Allow ommiting function argument types when invoking C functions that accept functions as arguments.
+* Allow omitting function argument types when invoking C functions that accept functions as arguments.
 * Renamed `@name` to `@class_name` inside macros. `@name` will be deprecated in the next version.
 * Added IO#read_fully
 * Macro hooks: `inherited`, `included` and `extended`
@@ -1044,7 +1044,7 @@
 
     Invoking `id` on any other kind of node has no effect on the pasted result.
 * Allow escaping curly braces inside macros with `\{`. This allows defining macros that, when expanded, can contain other macro expressions.
-* Added a special comment-like pragma to change the lexer's filename, line number and colum number.
+* Added a special comment-like pragma to change the lexer's filename, line number and column number.
 
     ```ruby
     # foo.cr

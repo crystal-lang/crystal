@@ -101,10 +101,10 @@ require "./regex/*"
 # each capture group can be extracted on a successful match:
 #
 # ```
-# /a(sd)f/.match("_asdf_")                          # => #<Regex::MatchData "asdf" 1:"sd">
-# /a(sd)f/.match("_asdf_") { |md| md[1] }           # => "sd"
-# /a(?<grp>sd)f/.match("_asdf_")                    # => #<Regex::MatchData "asdf" grp:"sd">
-# /a(?<grp>sd)f/.match("_asdf_") { |md| md["grp"] } # => "sd"
+# /a(sd)f/.match("_asdf_")                     # => #<Regex::MatchData "asdf" 1:"sd">
+# /a(sd)f/.match("_asdf_").try &.[1]           # => "sd"
+# /a(?<grp>sd)f/.match("_asdf_")               # => #<Regex::MatchData "asdf" grp:"sd">
+# /a(?<grp>sd)f/.match("_asdf_").try &.["grp"] # => "sd"
 # ```
 #
 # Capture groups are indexed starting from 1. Methods that accept a capture
@@ -405,11 +405,11 @@ class Regex
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```
-  # /(.)(.)(.)/.match("abc").not_nil![2]   # => "b"
-  # /(.)(.)/.match("abc", 1).not_nil![2]   # => "c"
-  # /(.)(.)/.match("クリスタル", 3).not_nil![2] # => "ル"
+  # /(.)(.)(.)/.match("abc").try &.[2]   # => "b"
+  # /(.)(.)/.match("abc", 1).try &.[2]   # => "c"
+  # /(.)(.)/.match("クリスタル", 3).try &.[2] # => "ル"
   # ```
-  def match(str, pos = 0, options = Regex::Options::None)
+  def match(str, pos = 0, options = Regex::Options::None) : MatchData?
     if byte_index = str.char_index_to_byte_index(pos)
       match = match_at_byte_index(str, byte_index, options)
     else
@@ -425,11 +425,11 @@ class Regex
   # `nil`. `$~` will contain the same value that was returned.
   #
   # ```
-  # /(.)(.)(.)/.match_at_byte_index("abc").not_nil![2]   # => "b"
-  # /(.)(.)/.match_at_byte_index("abc", 1).not_nil![2]   # => "c"
-  # /(.)(.)/.match_at_byte_index("クリスタル", 3).not_nil![2] # => "ス"
+  # /(.)(.)(.)/.match_at_byte_index("abc").try &.[2]   # => "b"
+  # /(.)(.)/.match_at_byte_index("abc", 1).try &.[2]   # => "c"
+  # /(.)(.)/.match_at_byte_index("クリスタル", 3).try &.[2] # => "ス"
   # ```
-  def match_at_byte_index(str, byte_index = 0, options = Regex::Options::None)
+  def match_at_byte_index(str, byte_index = 0, options = Regex::Options::None) : MatchData?
     return ($~ = nil) if byte_index > str.bytesize
 
     ovector_size = (@captures + 1) * 3
@@ -454,7 +454,7 @@ class Regex
   # /(?<foo>.)(?<bar>.)/.name_table          # => {2 => "bar", 1 => "foo"}
   # /(.)(?<foo>.)(.)(?<bar>.)(.)/.name_table # => {4 => "bar", 2 => "foo"}
   # ```
-  def name_table
+  def name_table : Hash(UInt16, String)
     LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMECOUNT, out name_count)
     LibPCRE.full_info(@re, @extra, LibPCRE::INFO_NAMEENTRYSIZE, out name_entry_size)
     table_pointer = Pointer(UInt8).null

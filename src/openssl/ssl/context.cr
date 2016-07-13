@@ -138,7 +138,7 @@ abstract class OpenSSL::SSL::Context
 
     set_default_verify_paths
 
-    add_options(OpenSSL::SSL.options_flags(
+    add_options(OpenSSL::SSL::Options.flags(
       ALL,
       NO_SSLV2,
       NO_SSLV3,
@@ -147,7 +147,7 @@ abstract class OpenSSL::SSL::Context
       SINGLE_DH_USE
     ))
 
-    add_modes(OpenSSL::SSL.modes_flags(AUTO_RETRY, RELEASE_BUFFERS))
+    add_modes(OpenSSL::SSL::Modes.flags(AUTO_RETRY, RELEASE_BUFFERS))
 
     self.ciphers = CIPHERS
 

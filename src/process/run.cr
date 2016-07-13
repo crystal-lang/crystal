@@ -65,9 +65,9 @@ class Process
           raise ArgumentError.new(%(can't specify arguments in both, command and args without including "${@}" into your command))
         end
 
-        ifdef freebsd
+        {% if flag?(:freebsd) %}
           shell_args << ""
-        end
+        {% end %}
 
         shell_args.concat(args)
       end

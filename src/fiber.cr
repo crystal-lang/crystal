@@ -16,6 +16,7 @@ class Fiber
 
   @stack : Void*
   @resume_event : Event::Event?
+  @stack_top = uninitialized Void*
   protected property stack_top : Void*
   protected property stack_bottom : Void*
   protected property next_fiber : Fiber?
@@ -33,13 +34,13 @@ class Fiber
     stack_ptr = Pointer(Void*).new(stack_ptr.address & ~0x0f_u64)
 
     # @stack_top will be the stack pointer on the initial call to `resume`
-    ifdef x86_64
+    {% if flag?(:x86_64) %}
       # In x86-64, the context switch push/pop 7 registers
       @stack_top = (stack_ptr - 7).as(Void*)
 
       stack_ptr[0] = fiber_main.pointer # Initial `resume` will `ret` to this address
       stack_ptr[-1] = self.as(Void*)    # This will be `pop` into %rdi (first argument)
-    elsif i686
+    {% elsif flag?(:i686) %}
       # In IA32, the context switch push/pops 4 registers.
       # Add two more to store the argument of `fiber_main`
       @stack_top = (stack_ptr - 6).as(Void*)
@@ -47,9 +48,9 @@ class Fiber
       stack_ptr[0] = self.as(Void*)      # First argument passed on the stack
       stack_ptr[-1] = Pointer(Void).null # Empty space to keep the stack alignment (16 bytes)
       stack_ptr[-2] = fiber_main.pointer # Initial `resume` will `ret` to this address
-    else
+    {% else %}
       {{ raise "Unsupported platform, only x86_64 and i686 are supported." }}
-    end
+    {% end %}
 
     @prev_fiber = nil
     if last_fiber = @@last_fiber
@@ -76,9 +77,9 @@ class Fiber
       LibC::MAP_PRIVATE | LibC::MAP_ANON,
       -1, 0).tap do |pointer|
       raise Errno.new("Cannot allocate new fiber stack") if pointer == LibC::MAP_FAILED
-      ifdef linux
+      {% if flag?(:linux) %}
         LibC.madvise(pointer, Fiber::STACK_SIZE, LibC::MADV_NOHUGEPAGE)
-      end
+      {% end %}
       LibC.mprotect(pointer, 4096, LibC::PROT_NONE)
     end
   end
@@ -95,12 +96,13 @@ class Fiber
   def run
     @proc.call
   rescue ex
-    # Don't use STDERR here because we are at a lower level than that
-    msg = String.build do |io|
-      io.puts "Unhandled exception:"
-      ex.inspect_with_backtrace io
+    if name = @name
+      STDERR.puts "Unhandled exception in spawn(name: #{name}):"
+    else
+      STDERR.puts "Unhandled exception in spawn:"
     end
-    LibC.write(2, msg, msg.bytesize)
+    ex.inspect_with_backtrace STDERR
+    STDERR.flush
   ensure
     @@stack_pool << @stack
 
@@ -126,43 +128,45 @@ class Fiber
   @[NoInline]
   @[Naked]
   protected def self.switch_stacks(current, to)
-    ifdef x86_64
-      asm(%(
-        pushq %rdi
-        pushq %rbx
-        pushq %rbp
-        pushq %r12
-        pushq %r13
-        pushq %r14
-        pushq %r15
-        movq %rsp, ($0)
-        movq ($1), %rsp
-        popq %r15
-        popq %r14
-        popq %r13
-        popq %r12
-        popq %rbp
-        popq %rbx
-        popq %rdi)
+    # TODO: these \% escapes are needed because of https://github.com/crystal-lang/crystal/issues/2178
+    # Remove them once that issue is fixed.
+    {% if flag?(:x86_64) %}
+      asm("
+        pushq \%rdi
+        pushq \%rbx
+        pushq \%rbp
+        pushq \%r12
+        pushq \%r13
+        pushq \%r14
+        pushq \%r15
+        movq \%rsp, ($0)
+        movq ($1), \%rsp
+        popq \%r15
+        popq \%r14
+        popq \%r13
+        popq \%r12
+        popq \%rbp
+        popq \%rbx
+        popq \%rdi"
               :: "r"(current), "r"(to))
-    elsif i686
-      asm(%(
-        pushl %edi
-        pushl %ebx
-        pushl %ebp
-        pushl %esi
-        movl %esp, ($0)
-        movl ($1), %esp
-        popl %esi
-        popl %ebp
-        popl %ebx
-        popl %edi)
+    {% elsif flag?(:i686) %}
+      asm("
+        pushl \%edi
+        pushl \%ebx
+        pushl \%ebp
+        pushl \%esi
+        movl \%esp, ($0)
+        movl ($1), \%esp
+        popl \%esi
+        popl \%ebp
+        popl \%ebx
+        popl \%edi"
               :: "r"(current), "r"(to))
-    end
+    {% end %}
   end
 
   def resume
-    current, @@current = @@current, self
+    current, Thread.current.current_fiber = Thread.current.current_fiber, self
     LibGC.stackbottom = @stack_bottom
     Fiber.switch_stacks(pointerof(current.@stack_top), pointerof(@stack_top))
   end
@@ -209,12 +213,10 @@ class Fiber
     @@root
   end
 
-  # TODO: Boehm GC doesn't scan thread local vars, so we can't use it yet
-  # @[ThreadLocal]
-  @@current : Fiber = root
+  Thread.current.current_fiber = root
 
   def self.current : self
-    @@current
+    Thread.current.current_fiber
   end
 
   @@prev_push_other_roots = LibGC.get_push_other_roots
@@ -225,7 +227,7 @@ class Fiber
 
     fiber = @@first_fiber
     while fiber
-      fiber.push_gc_roots unless fiber == @@current
+      fiber.push_gc_roots unless fiber == Thread.current.current_fiber
       fiber = fiber.next_fiber
     end
   end

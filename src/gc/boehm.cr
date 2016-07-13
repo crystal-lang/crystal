@@ -1,9 +1,9 @@
 @[Link("pthread")]
-ifdef freebsd
+{% if flag?(:freebsd) %}
   @[Link("gc-threaded")]
-else
+{% else %}
   @[Link("gc")]
-end
+{% end %}
 lib LibGC
   alias Int = LibC::Int
   alias SizeT = LibC::SizeT

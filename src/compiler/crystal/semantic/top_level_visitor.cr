@@ -703,6 +703,7 @@ module Crystal
     end
 
     def visit(node : ProcLiteral)
+      node.def.body.accept self
       false
     end
 
@@ -720,14 +721,17 @@ module Crystal
     end
 
     def visit(node : Cast)
+      node.obj.accept self
       false
     end
 
     def visit(node : NilableCast)
+      node.obj.accept self
       false
     end
 
     def visit(node : IsA)
+      node.obj.accept self
       false
     end
 
@@ -736,18 +740,6 @@ module Crystal
     end
 
     def visit(node : UninitializedVar)
-      false
-    end
-
-    def visit(node : InstanceSizeOf)
-      false
-    end
-
-    def visit(node : SizeOf)
-      false
-    end
-
-    def visit(node : PointerOf)
       false
     end
 

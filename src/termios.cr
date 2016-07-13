@@ -17,7 +17,7 @@ module Termios
     PARMRK = LibC::PARMRK
   end
 
-  ifdef freebsd
+  {% if flag?(:freebsd) %}
     @[Flags]
     enum OutputMode
       OPOST  = LibC::OPOST
@@ -29,7 +29,7 @@ module Termios
       TAB0   = LibC::TAB0
       TAB3   = LibC::TAB3
     end
-  else
+  {% else %}
     @[Flags]
     enum OutputMode
       OPOST  = LibC::OPOST
@@ -62,7 +62,7 @@ module Termios
       NL0    = LibC::NL0
       NL1    = LibC::NL1
     end
-  end
+  {% end %}
 
   enum BaudRate
     B0     = LibC::B0

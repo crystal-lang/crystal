@@ -36,18 +36,13 @@ describe "Type inference: var" do
     ", "undefined local variable or method 'something'"
   end
 
-  it "reports read before assignment" do
-    assert_error "a = a + 1",
-      "undefined local variable or method 'a'"
-  end
-
   it "reports there's no self" do
     assert_error "self", "there's no self in this scope"
   end
 
   it "reports variable always nil" do
     assert_error "1 == 2 ? (a = 1) : a",
-      "read before definition of 'a'"
+      "read before definition of local variable 'a'"
   end
 
   it "lets type on else side of if with a Bool | Nil union" do

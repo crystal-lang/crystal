@@ -202,12 +202,12 @@ describe "BigInt" do
     u64.should be_a(UInt64)
   end
 
-  ifdef x86_64
+  {% if flag?(:x86_64) %}
     # For 32 bits libgmp can't seem to be able to do it
     it "can cast UInt64::MAX to UInt64 (#2264)" do
       BigInt.new(UInt64::MAX).to_u64.should eq(UInt64::MAX)
     end
-  end
+  {% end %}
 
   it "does String#to_big_i" do
     "123456789123456789".to_big_i.should eq(BigInt.new("123456789123456789"))

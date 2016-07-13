@@ -7,11 +7,11 @@ lib LibGMP
   alias Double = LibC::Double
   alias BitcntT = ULong
 
-  ifdef x86_64
+  {% if flag?(:x86_64) %}
     alias MpExp = Int64
-  else
+  {% else %}
     alias MpExp = Int32
-  end
+  {% end %}
 
   struct MPZ
     _mp_alloc : Int32

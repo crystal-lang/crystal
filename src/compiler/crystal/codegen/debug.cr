@@ -56,8 +56,8 @@ module Crystal
 
     def create_debug_type(type : EnumType)
       elements = type.types.map do |name, item|
-        value = if item.is_a?(Const) && (value = item.value).is_a?(NumberLiteral)
-                  value.value.to_i64 rescue value.value.to_u64
+        value = if item.is_a?(Const) && (value2 = item.value).is_a?(NumberLiteral)
+                  value2.value.to_i64 rescue value2.value.to_u64
                 else
                   0
                 end

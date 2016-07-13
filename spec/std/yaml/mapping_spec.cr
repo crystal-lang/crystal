@@ -48,6 +48,7 @@ class YAMLWithDefaults
     f: {type: Int32, nilable: true, default: 1},
     g: {type: Int32, nilable: true, default: nil},
     h: {type: Array(Int32), default: [1, 2, 3]},
+    i: String?,
   })
 end
 
@@ -214,6 +215,12 @@ describe "YAML mapping" do
       json.e.should eq false
       json = YAMLWithDefaults.from_yaml(%({"e":true}))
       json.e.should eq true
+
+      json = YAMLWithDefaults.from_yaml(%({}))
+      json.i.should be_nil
+
+      json = YAMLWithDefaults.from_yaml(%({"i":"bla"}))
+      json.i.should eq("bla")
     end
 
     it "create new array every time" do

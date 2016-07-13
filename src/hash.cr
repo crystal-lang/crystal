@@ -389,20 +389,6 @@ class Hash(K, V)
     values
   end
 
-  # Returns a new `Array` of tuples populated with each key-value pair.
-  #
-  # ```
-  # h = {"foo" => "bar", "baz" => "qux"}
-  # h.to_a # => [{"foo", "bar"}, {"baz", "qux}]
-  # ```
-  def to_a
-    ary = Array({K, V}).new(@size)
-    each do |key, value|
-      ary << {key, value}
-    end
-    ary
-  end
-
   # Returns the index of the given key, or `nil` when not found.
   # The keys are ordered based on when they were inserted.
   #
@@ -412,11 +398,8 @@ class Hash(K, V)
   # h.key_index("qux") # => nil
   # ```
   def key_index(key)
-    # TODO: use each_with_index
-    i = 0
-    each do |my_key, my_value|
-      return i if key == my_key
-      i += 1
+    each_with_index do |(my_key, my_value), index|
+      return index if key == my_key
     end
     nil
   end
@@ -783,47 +766,6 @@ class Hash(K, V)
       hash[v] = k
     end
     hash
-  end
-
-  # Yields all key-value pairs to the given block, and returns *true*
-  # if the block returns a truthy value for all key-value pairs, else *false*.
-  #
-  # ```
-  # hash = {
-  #   "foo":   "bar",
-  #   "hello": "world",
-  # }
-  # hash.all? { |k, v| v.is_a? String } # => true
-  # hash.all? { |k, v| v.size == 3 }    # => false
-  # ```
-  def all?
-    each do |k, v|
-      return false unless yield(k, v)
-    end
-    true
-  end
-
-  # Yields all key-value pairs to the given block, and returns *true*
-  # if the block returns a truthy value for any key-value pair, else *false*.
-  #
-  # ```
-  # hash = {
-  #   "foo":   "bar",
-  #   "hello": "world",
-  # }
-  # hash.any? { |k, v| v.is_a? Int } # => false
-  # hash.any? { |k, v| v.size == 3 } # => true
-  # ```
-  def any?
-    each do |k, v|
-      return true if yield(k, v)
-    end
-    false
-  end
-
-  # Returns *true* if a `Hash` has any key-value pair.
-  def any?
-    !empty?
   end
 
   protected def find_entry(key)

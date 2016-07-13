@@ -1,15 +1,17 @@
 require "c/netdb"
 
-@[Link("rt")] ifdef linux
+{% if flag?(:linux) %}
+  @[Link("rt")]
+{% end %}
 @[Link("event")]
 lib LibEvent2
   alias Int = LibC::Int
 
-  ifdef windows
+  {% if flag?(:windows) %}
     # TODO
-  else
+  {% else %}
     alias EvutilSocketT = Int
-  end
+  {% end %}
 
   type EventBase = Void*
   type Event = Void*

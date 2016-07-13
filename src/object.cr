@@ -914,7 +914,7 @@ class Object
   #
   # ```
   # class StringWrapper
-  #   def initialize(@string)
+  #   def initialize(@string : String)
   #   end
   #
   #   delegate downcase, to: @string

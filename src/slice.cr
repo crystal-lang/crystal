@@ -23,11 +23,11 @@ struct Slice(T)
   #
   # See also: `Number.slice`.
   macro [](*args)
-    slice = Slice(typeof({{*args}})).new({{args.size}})
+    %slice = Slice(typeof({{*args}})).new({{args.size}})
     {% for arg, i in args %}
-      slice.to_unsafe[{{i}}] = {{arg}}
+      %slice.to_unsafe[{{i}}] = {{arg}}
     {% end %}
-    slice
+    %slice
   end
 
   # Returns the size of this slice.

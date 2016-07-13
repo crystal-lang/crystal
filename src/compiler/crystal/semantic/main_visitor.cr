@@ -157,7 +157,7 @@ module Crystal
         special_var = define_special_var(node.name, mod.nil_var)
         node.bind_to special_var
       else
-        node.raise "read before definition of '#{node.name}'"
+        node.raise "read before definition of local variable '#{node.name}'"
       end
     end
 
@@ -2833,7 +2833,7 @@ module Crystal
       @untyped_def || @block_context
     end
 
-    def visit(node : Require | When | Unless | Until | MacroLiteral)
+    def visit(node : When | Unless | Until | MacroLiteral)
       raise "Bug: #{node.class_desc} node '#{node}' (#{node.location}) should have been eliminated in normalize"
     end
   end

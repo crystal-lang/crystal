@@ -19,8 +19,12 @@ def Array.from_yaml(string : String)
 end
 
 def Nil.new(pull : YAML::PullParser)
-  pull.read_scalar
-  nil
+  value = pull.read_scalar
+  if value.empty?
+    nil
+  else
+    raise YAML::ParseException.new("expected nil, not #{value}", 0, 0)
+  end
 end
 
 def Bool.new(pull : YAML::PullParser)

@@ -155,8 +155,7 @@ describe "Tuple" do
       Tuple(Int32).from([1, 2])
     end
 
-    # TODO: simplify regex and use TypeCastError after 0.18
-    expect_raises(Exception, /cast (?:from String )?to Int32 failed/) do
+    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
       Tuple(Int32, String).from(["foo", 1])
     end
   end
@@ -170,8 +169,7 @@ describe "Tuple" do
       {Int32}.from([1, 2])
     end
 
-    # TODO: simplify regex and use TypeCastError after 0.18
-    expect_raises(Exception, /cast (?:from String )?to Int32 failed/) do
+    expect_raises(TypeCastError, /cast from String to Int32 failed/) do
       {Int32, String}.from(["foo", 1])
     end
   end
@@ -264,7 +262,7 @@ describe "Tuple" do
     (tuple1 <=> tuple2).should eq(0)
   end
 
-  it "does <=> with the same begining and different size" do
+  it "does <=> with the same beginning and different size" do
     tuple1 = {1, 2, 3}
     tuple2 = {1, 2}
     (tuple1 <=> tuple2).should eq(1)
