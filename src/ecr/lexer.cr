@@ -151,8 +151,6 @@ class ECR::Lexer
       when '\n'
         @line_number += 1
         @column_number = 0
-        next_char
-        break
       when '%'
         if peek_next_char == '>'
           @token.type = :CONTROL
