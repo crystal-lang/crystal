@@ -1,11 +1,10 @@
 .\"Crystal Programming Language
-.Dd February 11, 2016
+.Dd March 7, 2016
 .Dt CRYSTAL(1) "" "Crystal Programmers Reference Guide"
 .\".Dt CRYSTAL 1
 .Os UNIX
 .Sh NAME
-.Nm crystal
-.Nd Compiler for the statically type-checked programming language Crystal.
+.Nm crystal - Compiler for the Crystal language.
 .Sh SYNOPSYS
 .Nm
 .Op command
@@ -44,7 +43,7 @@ NAME - name of project to be generated,
 eg: example
 .Pp
 DIR  - directory where project will be generated,
-default: NAME, eg: ./custom/path/example
+default: NAME
 .Ed
 
 .Pp
@@ -87,7 +86,7 @@ Use given file as prelude
 .It Fl -release
 Compile in release mode
 .It Fl s, -stats
-Enable statistics output
+Print runtime statistics about the different compiler stages.
 .It Fl -single-module
 Generate a single LLVM module
 .It Fl -threads
