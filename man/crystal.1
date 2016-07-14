@@ -13,12 +13,50 @@
 .Op --
 .Op arguments
 .Sh DESCRIPTION
-crystal is a statically type-checked programming language. It was created with the beauty of ruby and the performance of pure c in mind.
+Crystal is a statically type-checked programming language. It was created with the beauty of ruby and the performance of pure C in mind.
+.Sh USAGE
+You can compile and run a program by invoking the compiler with a single filename:
+.Bd -offset indent-two
+.Nm
+.Ar some_program.cr
+.Ed
+
+Crystal files usually end with the .cr extension.
+
+Alternatively you can use the run command:
+.Bd -offset indent-two
+.Nm
+run
+.Ar some_program.cr
+.Ed
+
+To create an executable use the build command:
+.Bd -offset indent-two
+.Nm
+build
+.Ar some_program.cr
+.Ed
+
+This will create an executable named "some_program".
+
+Note that by default the generated executables are not fully optimized.
+To turn optimizations on, use the --release flag:
+.Bd -offset indent-two
+.Nm
+.Fl -release
+build
+.Ar some_program.cr
+.Ed
+
+Make sure to always use --release for production-ready executables and when performing benchmarks.
+
+The reason for this is that performance without full optimizations is still pretty good and provides fast compile times, so you can use the crystal command almost as if it were an interpreter.
+
 
 .Bl -tag -width "12345678" -compact
 .Pp
 .Sh OPTIONS
-The crystal command line accepts the following options 
+The crystal command accepts the following options 
 
 .Bl -tag -width "12345678" -compact
 .Pp
@@ -219,44 +257,6 @@ show type of main variables
 .Pp
 Show version.
 .El
-.Sh USAGE
-You can compile and run a program by invoking the compiler with a single filename
-.Bd -offset indent-two
-.Nm
-.Ar some_program.cr
-.Ed
-
-Crystal files usually end with the .cr extension.
-
-Alternatively you can use the run command
-.Bd -offset indent-two
-.Nm
-run
-.Ar some_program.cr
-.Ed
-
-To create an executable use the build command:
-.Bd -offset indent-two
-.Nm
-build
-.Ar some_program.cr
-.Ed
-
-This will create an executable named "some_program".
-
-Note that by default the generated executables are not fully optimized. 
-To turn optimizations on, use the --release flag:
-.Bd -offset indent-two
-.Nm
-.Fl -release
-build
-.Ar some_program.cr
-.Ed
-
-Make sure to always use --release for production-ready executables and when performing benchmarks.
-
-The reason for this is that performance without full optimizations is still pretty good and provides fast compile times, so you can use the crystal command almost as if it were an interpreter.
-
 .Sh SEE ALSO
 .Bl -hang -compact -width "https://github.com/crystal-lang/crystal/1234"
 .It https://crystal-lang.org/
