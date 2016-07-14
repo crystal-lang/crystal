@@ -14,40 +14,10 @@
 .Op --
 .Op arguments
 .Sh DESCRIPTION
-Once you install the compiler you will have a crystal binary at your disposal.
+crystal is a statically type-checked programming language. It was created with the beauty of ruby and the performance of pure c in mind.
 
 .Bl -tag -width "12345678" -compact
-.It Compiling 
 .Pp
-To compile and run a program in a single shot you can invoke crystal with a single filename:
-
-$ crystal some_program.cr
-
-Crystal files end with the .cr extension.
-
-Alternatively you can use the run command:
-
-$ crystal run some_program.cr
-
-.It Creating an executable
-.Pp
-To create an executable use the build command:
-
-$ crystal build some_program.cr
-
-This will create a some_program file that you can execute:
-
-$ ./some_program
-
-Note: By default the generated executables are not fully optimized. 
-To turn optimizations on, use the --release flag:
-
-$ crystal build some_program.cr --release
-
-Make sure to always use --release for production-ready executables and when performing benchmarks.
-
-The reason for this is that performance without full optimizations is still pretty good and provides fast compile times, so you can use the crystal command almost as if it were an interpreter.
-
 .Sh OPTIONS
 The crystal command line accepts the following options 
 
@@ -250,6 +220,44 @@ show type of main variables
 .Pp
 Show version.
 .El
+.Sh USAGE
+You can compile and run a program by invoking the compiler with a single filename
+.Bd -offset indent-two
+.Nm
+.Ar some_program.cr
+.Ed
+
+Crystal files usually end with the .cr extension.
+
+Alternatively you can use the run command
+.Bd -offset indent-two
+.Nm
+run
+.Ar some_program.cr
+.Ed
+
+To create an executable use the build command:
+.Bd -offset indent-two
+.Nm
+build
+.Ar some_program.cr
+.Ed
+
+This will create an executable named "some_program".
+
+Note that by default the generated executables are not fully optimized. 
+To turn optimizations on, use the --release flag:
+.Bd -offset indent-two
+.Nm
+.Fl -release
+build
+.Ar some_program.cr
+.Ed
+
+Make sure to always use --release for production-ready executables and when performing benchmarks.
+
+The reason for this is that performance without full optimizations is still pretty good and provides fast compile times, so you can use the crystal command almost as if it were an interpreter.
+
 .Sh SEE ALSO
 .Bl -hang -compact -width "https://github.com/crystal-lang/crystal/1234"
 .It https://crystal-lang.org/
