@@ -78,7 +78,7 @@ describe "Slice" do
     expect_raises(IndexError) { slice.pointer(-1) }
   end
 
-  it "does copy_from" do
+  it "does copy_from pointer" do
     pointer = Pointer.malloc(4) { |i| i + 1 }
     slice = Slice.new(4, 0)
     slice.copy_from(pointer, 4)
@@ -87,13 +87,141 @@ describe "Slice" do
     expect_raises(IndexError) { slice.copy_from(pointer, 5) }
   end
 
-  it "does copy_to" do
+  it "does copy_to pointer" do
     pointer = Pointer.malloc(4, 0)
     slice = Slice.new(4) { |i| i + 1 }
     slice.copy_to(pointer, 4)
     4.times { |i| pointer[i].should eq(i + 1) }
 
     expect_raises(IndexError) { slice.copy_to(pointer, 5) }
+  end
+
+  describe ".copy_to(Slice)" do
+    it "copies bytes" do
+      src = Slice.new(4) { 'a' }
+      dst = Slice.new(4) { 'b' }
+
+      src.copy_to(dst)
+      dst.should eq(src)
+    end
+
+    it "raises if dst is smaller" do
+      src = Slice.new(8) { 'a' }
+      dst = Slice.new(4) { 'b' }
+
+      expect_raises(IndexError) { src.copy_to(dst) }
+    end
+
+    it "copies at most src.size" do
+      src = Slice.new(4) { 'a' }
+      dst = Slice.new(8) { 'b' }
+
+      src.copy_to(dst)
+      dst.should eq(Slice['a', 'a', 'a', 'a', 'b', 'b', 'b', 'b'])
+    end
+  end
+
+  describe ".copy_from(Slice)" do
+    it "copies bytes" do
+      src = Slice.new(4) { 'a' }
+      dst = Slice.new(4) { 'b' }
+
+      dst.copy_from(src)
+      dst.should eq(src)
+    end
+
+    it "raises if dst is smaller" do
+      src = Slice.new(8) { 'a' }
+      dst = Slice.new(4) { 'b' }
+
+      expect_raises(IndexError) { dst.copy_from(src) }
+    end
+
+    it "copies at most src.size" do
+      src = Slice.new(4) { 'a' }
+      dst = Slice.new(8) { 'b' }
+
+      dst.copy_from(src)
+      dst.should eq(Slice['a', 'a', 'a', 'a', 'b', 'b', 'b', 'b'])
+    end
+  end
+
+  describe ".move_to(Slice)" do
+    it "moves bytes" do
+      src = Slice.new(4) { 'a' }
+      dst = Slice.new(4) { 'b' }
+
+      src.move_to(dst)
+      dst.should eq(src)
+    end
+
+    it "raises if dst is smaller" do
+      src = Slice.new(8) { 'a' }
+      dst = Slice.new(4) { 'b' }
+
+      expect_raises(IndexError) { src.move_to(dst) }
+    end
+
+    it "moves most src.size" do
+      src = Slice.new(4) { 'a' }
+      dst = Slice.new(8) { 'b' }
+
+      src.move_to(dst)
+      dst.should eq(Slice['a', 'a', 'a', 'a', 'b', 'b', 'b', 'b'])
+    end
+
+    it "handles intersecting ranges" do
+      # Test with ranges offset by 0 to 8 bytes
+      (0..8).each do |offset|
+        buf = Slice.new(16) { |i| ('a'.ord + i).chr }
+        dst = buf[0, 8]
+        src = buf[offset, 8]
+
+        src.move_to(dst)
+
+        result = (0..7).map { |i| ('a'.ord + i + offset).chr }
+        dst.should eq(Slice.new(result.to_unsafe, result.size))
+      end
+    end
+  end
+
+  describe ".move_from(Slice)" do
+    it "moves bytes" do
+      src = Slice.new(4) { 'a' }
+      dst = Slice.new(4) { 'b' }
+
+      dst.move_from(src)
+      dst.should eq(src)
+    end
+
+    it "raises if dst is smaller" do
+      src = Slice.new(8) { 'a' }
+      dst = Slice.new(4) { 'b' }
+
+      expect_raises(IndexError) { dst.move_from(src) }
+    end
+
+    it "moves at most src.size" do
+      src = Slice.new(4) { 'a' }
+      dst = Slice.new(8) { 'b' }
+
+      dst.move_from(src)
+      dst.should eq(Slice['a', 'a', 'a', 'a', 'b', 'b', 'b', 'b'])
+    end
+
+    it "handles intersecting ranges" do
+      # Test with ranges offset by 0 to 8 bytes
+      (0..8).each do |offset|
+        buf = Slice.new(16) { |i| ('a'.ord + i).chr }
+        dst = buf[0, 8]
+        src = buf[offset, 8]
+
+        dst.move_from(src)
+
+        result = (0..7).map { |i| ('a'.ord + i + offset).chr }
+        dst.should eq(Slice.new(result.to_unsafe, result.size))
+      end
+    end
   end
 
   it "does hexstring" do

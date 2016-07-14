@@ -239,6 +239,66 @@ struct Slice(T)
     pointer(count).copy_to(target, count)
   end
 
+  # Copies the contents of this slice into *target*.
+  #
+  # Raises if the desination slice cannot fit the data being transferred
+  # e.g. dest.size < self.size.
+  #
+  # ```
+  # src = Slice['a', 'a', 'a']
+  # dst = Slice['b', 'b', 'b', 'b', 'b']
+  # src.copy_to dst
+  # dst             # => Slice['a', 'a', 'a', 'b', 'b']
+  # dst.copy_to src # => IndexError
+  # ```
+  def copy_to(target : self)
+    @pointer.copy_to(target.pointer(size), size)
+  end
+
+  # Copies the contents of *source* into this slice.
+  #
+  # Truncates if the other slice doesn't fit. The same as `source.copy_to(self)`.
+  @[AlwaysInline]
+  def copy_from(source : self)
+    source.copy_to(self)
+  end
+
+  def move_from(source : Pointer(T), count)
+    pointer(count).move_from(source, count)
+  end
+
+  def move_to(target : Pointer(T), count)
+    pointer(count).move_to(target, count)
+  end
+
+  # Moves the contents of this slice into *target*. *target* and *self* may
+  # overlap; the copy is always done in a non-destructive manner.
+  #
+  # Raises if the desination slice cannot fit the data being transferred
+  # e.g. dest.size < self.size.
+  #
+  # See `Pointer#move_to`
+  #
+  # ```
+  # src = Slice['a', 'a', 'a']
+  # dst = Slice['b', 'b', 'b', 'b', 'b']
+  # src.move_to dst
+  # dst             # => Slice['a', 'a', 'a', 'b', 'b']
+  # dst.move_to src # => IndexError
+  # ```
+  def move_to(target : self)
+    @pointer.move_to(target.pointer(size), size)
+  end
+
+  # Moves the contents of *source* into this slice. *source* and *self* may
+  # overlap; the copy is always done in a non-destructive manner.
+  #
+  # Truncates if the other slice doesn't fit. The same as `source.move_to(self)`.
+  @[AlwaysInline]
+  def move_from(source : self)
+    source.move_to(self)
+  end
+
   def inspect(io)
     to_s(io)
   end
