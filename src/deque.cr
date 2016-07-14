@@ -216,7 +216,7 @@ class Deque(T)
   # a.delete("b")
   # a # => Deque{"a", "c"}
   # ```
-  def delete(obj)
+  def delete(obj : T)
     found = false
     i = 0
     while i < @size

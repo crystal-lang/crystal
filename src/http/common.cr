@@ -82,7 +82,7 @@ module HTTP
     bytesize = line.bytesize
 
     # Get the colon index and name
-    colon_index = cstr.to_slice(bytesize).index(':'.ord) || 0
+    colon_index = cstr.to_slice(bytesize).index(':'.ord.to_u8) || 0
     name = line.byte_slice(0, colon_index)
 
     # Get where the header value starts (skip space)

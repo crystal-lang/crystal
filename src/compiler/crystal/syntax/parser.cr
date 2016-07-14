@@ -3168,7 +3168,8 @@ module Crystal
     end
 
     def check_valid_def_name
-      if {:is_a?, :as, :as?, :responds_to?, :nil?}.includes?(@token.value)
+      value = @token.value
+      if value.is_a?(Symbol) && {:is_a?, :as, :as?, :responds_to?, :nil?}.includes?(value)
         raise "'#{@token.value}' is a pseudo-method and can't be redefined", @token
       end
     end
