@@ -157,41 +157,7 @@ Eval code from args or standard input.
 Compile and run program.
 .Pp
 Options:
-.Bl -tag -width "12345678" -compact
-.Pp
-.It Fl d, -debug                      
-Add symbolic debug info
-.It Fl D FLAG, -define FLAG           
-Define a compile-time flag
-.It Fl -emit [asm|llvm-bc|llvm-ir|obj]
-Comma separated list of types of output for the compiler to emit
-.It Fl f text|json, -format text|json
-Output format text (default) or json
-.It Fl -ll
-Dump ll to .crystal directory
-.It Fl -link-flags FLAGS
-Additional flags to pass to the linker
-.It Fl -mcpu CPU
-Target specific cpu type
-.It Fl -no-color
-Disable colored output
-.It Fl -no-codegen
-Don't do code generation
-.It Fl o
-Output filename
-.It Fl -prelude
-Use given file as prelude
-.It Fl -release
-Compile in release mode
-.It Fl s, -stats
-Enable statistics output
-.It Fl -single-module
-Generate a single LLVM module
-.It Fl -threads
-Maximum number of threads to use
-.It Fl -verbose
-Display executed commands
-.El
+Same as the build options.
 .Pp
 .It
 .Cm spec
