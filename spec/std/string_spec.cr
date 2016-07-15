@@ -1151,6 +1151,18 @@ describe "String" do
       str2.bytesize.should eq(8)
       str2.size.should eq(6)
     end
+
+    it "does when right is empty" do
+      str1 = "foo"
+      str2 = ""
+      (str1 + str2).should be(str1)
+    end
+
+    it "does when left is empty" do
+      str1 = ""
+      str2 = "foo"
+      (str1 + str2).should be(str2)
+    end
   end
 
   it "does %" do

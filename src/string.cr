@@ -1936,6 +1936,9 @@ class String
   # "abc" + 'd'   # => "abcd"
   # ```
   def +(other : self)
+    return self if other.empty?
+    return other if self.empty?
+
     size = bytesize + other.bytesize
     String.new(size) do |buffer|
       buffer.copy_from(to_unsafe, bytesize)
