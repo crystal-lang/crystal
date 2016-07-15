@@ -141,38 +141,7 @@ Display executed commands.
 .Op options
 .Ar <command>
 .Pp
-Install project dependencies.
-.Pp
-Commands:
-
-.Bl -tag -width "12345678" -compact
-.It Cm init
-Creates a shard.yml file with an initial template, this is already done when crystal init command is executed.
-.It Cm check
-Checks all dependencies are satisfied.
-.It Cm install
-Install all dependencies defined in shard.yml file.
-.It Cm update
-updates dependencies defined in shard.yml file.
-.It Cm list
-lists all dependencies installed.
-.It Cm prune
-removes unused dependencies.
-.El
-.Pp
-Options:
-.Bl -tag -offset indent
-.It Fl -no-colors                      
-.It Fl -version                        
-.It Fl -production                     
-.It Fl v, -verbose                    
-.It Fl q, -quiet                      
-.It Fl h, -help 
-.El
-.Pp
-.It Cm docs
-.Pp
-generate documentation.
+Alias for shards, the dependency manager for Crystal language.
 .Pp
 .It Cm eval
 .Pp
@@ -258,6 +227,7 @@ show type of main variables
 Show version.
 .El
 .Sh SEE ALSO
+.Fn shards 1
 .Bl -hang -compact -width "https://github.com/crystal-lang/crystal/1234"
 .It https://crystal-lang.org/
 The official web site.
