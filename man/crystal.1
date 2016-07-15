@@ -97,42 +97,42 @@ Compile program.
 Options:
 .Bl -tag -width "12345678" -compact
 .Pp
-.It Fl -cross-compile flags
-cross-compile
+.It Fl -cross-compile
+Generate object files for cross compilation and prints the command to build the executable.
 .It Fl -d, Fl -debug
-Add symbolic debug info
+Generate the output with symbolic debug info.
 .It Fl D FLAG, -define FLAG
-Define a compile-time flag
+Define a compile-time flag.
 .It Fl -emit [asm|llvm-bc|llvm-ir|obj]
-Comma separated list of types of output for the compiler to emit
+Comma separated list of types of output for the compiler to emit, e.g, obj emits a .o object file.
 .It Fl f text|json, -format text|json
-Output format text (default) or json
+Format of output. Defaults to text.
 .It Fl -ll
-Dump ll to .crystal directory
+Dump ll to output directory.
 .It Fl -link-flags FLAGS
-Additional flags to pass to the linker
+Additional flags to pass to the linker.
 .It Fl -mcpu CPU
-Target specific cpu type
+Specify the name of the processor.
 .It Fl -no-color
-Disable colored output
+Disable colored output.
 .It Fl -no-codegen
-Don't do code generation
+Don't do code generation, just parse the file.
 .It Fl o
-Output filename
+Specify filename of output.
 .It Fl -prelude
-Use given file as prelude
+Use given file as prelude.
 .It Fl -release
-Compile in release mode
+Generate optimized output.
 .It Fl s, -stats
 Print runtime statistics about the different compiler stages.
 .It Fl -single-module
-Generate a single LLVM module
+Generate a single LLVM module.
 .It Fl -threads
-Maximum number of threads to use
+Maximum number of threads to use.
 .It Fl -target TRIPLE
-Target triple
+Enable target triple.
 .It Fl -verbose
-Display executed commands
+Display executed commands.
 .El
 
 .Pp
