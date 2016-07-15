@@ -1223,6 +1223,8 @@ describe "Parser" do
     Path.global("Nil"),
   ] of ASTNode)
 
+  it_parses "{1 => 2 / 3}", HashLiteral.new([HashLiteral::Entry.new(1.int32, Call.new(2.int32, "/", 3.int32))])
+
   assert_syntax_error "return do\nend", "unexpected token: do"
 
   %w(def macro class struct module fun alias abstract include extend lib).each do |keyword|

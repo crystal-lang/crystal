@@ -2187,8 +2187,6 @@ module Crystal
     end
 
     def parse_hash_literal(first_key, location, allow_of)
-      slash_is_regex!
-
       line = @line_number
       column = @token.column_number
       end_location = nil
