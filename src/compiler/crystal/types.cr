@@ -1316,6 +1316,10 @@ module Crystal
     def reference_like?
       true
     end
+
+    def primitive_like?
+      false
+    end
   end
 
   abstract class EmptyType < Type
@@ -3241,7 +3245,7 @@ module Crystal
     end
 
     def primitive_like?
-      arg_types.all?(&.primitive_like?) && return_type.primitive_like?
+      arg_types.all?(&.primitive_like?) && (return_type.primitive_like? || return_type.nil_type?)
     end
 
     def passed_by_value?

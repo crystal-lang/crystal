@@ -92,6 +92,11 @@ describe "Type inference: lib" do
       "only primitive types"
   end
 
+  it "reports error on fun argument type not primitive like, Nil (#2994)" do
+    assert_error "lib LibFoo; fun foo(x : Nil); end",
+      "only primitive types"
+  end
+
   it "reports error on fun return type not primitive like" do
     assert_error "lib LibFoo; fun foo : Reference; end",
       "only primitive types"

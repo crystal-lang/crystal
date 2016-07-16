@@ -235,7 +235,7 @@ module Crystal
         processing_types do
           node_return_type.accept self
         end
-        return_type = check_primitive_like(node_return_type)
+        return_type = check_return_type_primitive_like(node_return_type)
         return_type = @mod.nil if return_type.void?
       else
         return_type = @mod.nil
@@ -705,6 +705,13 @@ module Crystal
       end
 
       type
+    end
+
+    def check_return_type_primitive_like(node)
+      type = node.type.instance_type
+      return type if type.nil_type?
+
+      check_primitive_like(node)
     end
 
     def check_primitive_like(node)
