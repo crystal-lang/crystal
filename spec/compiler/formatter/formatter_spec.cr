@@ -398,6 +398,7 @@ describe Crystal::Formatter do
   assert_format "foo . responds_to?( :bar )", "foo.responds_to?(:bar)"
   assert_format "foo . is_a? Bar", "foo.is_a? Bar"
   assert_format "foo . responds_to? :bar", "foo.responds_to? :bar"
+  assert_format "foo.responds_to? :bar\n1"
 
   assert_format "include  Foo", "include Foo"
   assert_format "extend  Foo", "extend Foo"

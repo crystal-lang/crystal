@@ -2739,7 +2739,7 @@ module Crystal
       format_special_call(node, :responds_to?) do
         check :SYMBOL
         write @token.raw
-        next_token_skip_space_or_newline
+        next_token
       end
     end
 
@@ -2764,7 +2764,10 @@ module Crystal
 
       yield
 
-      write_token :")" if has_parentheses
+      if has_parentheses
+        skip_space_or_newline
+        write_token :")"
+      end
 
       false
     end
