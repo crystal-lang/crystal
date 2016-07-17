@@ -148,6 +148,25 @@ Alias for shards, the dependency manager for Crystal language.
 Eval code from args or standard input.
 .Pp
 .It
+.Cm play
+.Op options
+.Pp
+Starts the crystal playground server.
+.Pp
+Options:
+.Bl -tag -width "12345678" -compact
+.Pp
+.It Fl p Fl -port
+Run the playground on the specified port. Default is 8080.
+.It Fl b Ar HOST Fl -binding Ar HOST
+Bind the playground to the specified IP.
+.It Fl v Fl -verbose
+Display detailed information of the executed code.
+.It Fl h Fl -help
+Show a help message about play command options.
+.El
+.Pp
+.It
 .Cm run
 .Op options
 .Op programfile
