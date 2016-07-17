@@ -855,4 +855,35 @@ describe "Code gen: class" do
       end
       ))
   end
+
+  it "can assign virtual metaclass to virtual metaclass (#3007)" do
+    run(%(
+      class Foo
+        def self.foo
+          1
+        end
+      end
+
+      class Bar < Foo
+        def self.foo
+          2
+        end
+      end
+
+      class Baz < Bar
+        def self.foo
+          3
+        end
+      end
+
+      class Gen(T)
+        def initialize(x : T)
+        end
+      end
+
+      ptr = Pointer(Foo.class).malloc(1_u64)
+      ptr.value = Bar || Baz
+      ptr.value.foo
+      )).to_i.should eq(2)
+  end
 end

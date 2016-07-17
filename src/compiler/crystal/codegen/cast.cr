@@ -206,6 +206,10 @@ class Crystal::CodeGenVisitor
     store value, target_pointer
   end
 
+  def assign_distinct(target_pointer, target_type : VirtualMetaclassType, value_type : VirtualMetaclassType, value)
+    store value, target_pointer
+  end
+
   def assign_distinct(target_pointer, target_type : NilableProcType, value_type : NilType, value)
     nilable_fun = make_nilable_fun target_type
     store nilable_fun, target_pointer

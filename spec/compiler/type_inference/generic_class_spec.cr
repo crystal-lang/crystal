@@ -796,4 +796,35 @@ describe "Type inference: generic class" do
       Foo(Int32, Float64, Char).new.t
       )) { tuple_of([int32.metaclass, tuple_of([float64]).metaclass, char.metaclass]) }
   end
+
+  it "virtual metaclass type implements super virtual metaclass type (#3007)" do
+    assert_type(%(
+      class Base
+      end
+
+      class Child < Base
+      end
+
+      class Child1 < Child
+      end
+
+      class Gen(T)
+        class Entry(T)
+          def initialize(@x : T)
+          end
+
+          def foo
+            1
+          end
+        end
+
+        def foo(x)
+          Entry(T).new(x).foo
+        end
+      end
+
+      gen = Gen(Base.class).new
+      gen.foo(Child || Child1)
+      )) { int32 }
+  end
 end

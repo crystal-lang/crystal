@@ -3176,6 +3176,10 @@ module Crystal
       nil
     end
 
+    def implements?(other : VirtualMetaclassType)
+      base_type.implements?(other.base_type)
+    end
+
     def to_s_with_options(io : IO, skip_union_parens : Bool = false, generic_args : Bool = true, codegen = false)
       instance_type.to_s_with_options(io, codegen: codegen)
       io << ":Class"
