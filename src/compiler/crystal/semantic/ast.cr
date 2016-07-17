@@ -1,11 +1,11 @@
 require "../syntax/ast"
 
-# TODO: 10 is a pretty big number for the number of nested generic instantiations,
+# TODO: 300 is a pretty big number for the number of nested generic instantiations,
 # (think Array(Array(Array(Array(Array(Array(Array(Array(Array(Array(Array(...))))))))))
 # but we might want to implement an algorithm that correctly identifies this
 # infinite recursion.
 private def generic_type_too_nested?(nest_level)
-  nest_level > 10
+  nest_level > 300
 end
 
 module Crystal
