@@ -1,10 +1,12 @@
+require "json"
+
 class Crystal::Doc::Generator
   getter program : Program
 
   @base_dir : String
   @is_crystal_repo : Bool
 
-  def initialize(@program : Program, @included_dirs : Array(String), @dir = "./doc")
+  def initialize(@program : Program, @included_dirs : Array(String), @format = "html", @dir = "./doc")
     @base_dir = `pwd`.chomp
     @types = {} of Crystal::Type => Doc::Type
     @repo_name = ""
@@ -22,14 +24,25 @@ class Crystal::Doc::Generator
       types.insert 0, program_type
     end
 
-    generate_docs program_type, types
+    case @format
+    when "html"
+      generate_html_docs program_type, types
+    when "json"
+      generate_json_docs types
+    else
+      abort "Unknown format specified: #{@format}"
+    end
   end
 
   def program_type
     type(@program)
   end
 
-  def generate_docs(program_type, types)
+  def generate_json_docs(types)
+    types.to_json(STDOUT)
+  end
+
+  def generate_html_docs(program_type, types)
     copy_files
     generate_types_docs types, @dir, types
     generate_readme program_type, types
@@ -307,6 +320,17 @@ class Crystal::Doc::Generator
   end
 
   record RelativeLocation, filename : String, line_number : Int32, url : String?
+
+  struct RelativeLocation
+    def to_json(io)
+      {
+        filename:    @filename,
+        line_number: @line_number,
+        url:         @url,
+      }.to_json(io)
+    end
+  end
+
   SRC_SEP = "src#{File::SEPARATOR}"
 
   def relative_locations(type)

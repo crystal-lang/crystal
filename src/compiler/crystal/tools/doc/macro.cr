@@ -1,5 +1,6 @@
 require "html"
 require "uri"
+require "json"
 require "./item"
 
 class Crystal::Doc::Macro
@@ -91,5 +92,13 @@ class Crystal::Doc::Macro
 
   def must_be_included?
     @generator.must_include? @macro
+  end
+
+  def to_json(io)
+    {
+      name: name,
+      args: args_to_s,
+      doc:  doc,
+    }.to_json(io)
   end
 end
