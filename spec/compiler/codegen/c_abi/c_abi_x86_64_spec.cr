@@ -63,7 +63,7 @@ require "../../../spec_helper"
         LibFoo.foo(s)
         )).first_value
       str = mod.to_s
-      str.should contain("call void (...)* @foo({ i64 }")
+      str.should contain("call void (...)")
     end
 
     it "passes struct between 64 and 128 bits as { i64, i64 }" do
