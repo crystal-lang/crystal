@@ -126,8 +126,14 @@ module Crystal
         scope, var_name, file, location.line_number, debug_type
       expr = di_builder.create_expression(nil, 0)
 
+      {% begin %}
+      {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
       declare = di_builder.insert_declare_at_end(alloca, var, expr, alloca_block)
+      {% else %}
+      declare = di_builder.insert_declare_at_end(alloca, var, expr, builder.current_debug_location, alloca_block)
+      {% end %}
       builder.set_metadata(declare, @dbg_kind, builder.current_debug_location)
+      {% end %}
     end
 
     def file_and_dir(file)
@@ -204,9 +210,16 @@ module Crystal
     def emit_main_def_debug_metadata(main_fun, filename)
       file, dir = file_and_dir(filename)
       scope = di_builder.create_file(file, dir)
+      {% begin %}
+      {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
       fn_metadata = di_builder.create_function(scope, MAIN_NAME, MAIN_NAME, scope,
         0, fun_metadata_type, 1, 1, 0, 0_u32, 0, main_fun)
+      {% else %}
+      fn_metadata = di_builder.create_function(scope, MAIN_NAME, MAIN_NAME, scope,
+        0, fun_metadata_type, true, true, 0, 0_u32, false, main_fun)
+      {% end %}
       fun_metadatas[main_fun] = fn_metadata
+      {% end %}
     end
 
     def emit_def_debug_metadata(target_def)
@@ -215,9 +228,16 @@ module Crystal
 
       file, dir = file_and_dir(location.filename)
       scope = di_builder.create_file(file, dir)
+      {% begin %}
+      {% if LibLLVM::IS_36 || LibLLVM::IS_35 %}
       fn_metadata = di_builder.create_function(scope, target_def.name, target_def.name, scope,
         location.line_number, fun_metadata_type, 1, 1, location.line_number, 0_u32, 0, context.fun)
+      {% else %}
+      fn_metadata = di_builder.create_function(scope, target_def.name, target_def.name, scope,
+        location.line_number, fun_metadata_type, true, true, location.line_number, 0_u32, false, context.fun)
+      {% end %}
       fun_metadatas[context.fun] = fn_metadata
+      {% end %}
     end
   end
 end
