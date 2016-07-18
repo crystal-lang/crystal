@@ -262,6 +262,14 @@ describe "JSON serialization" do
     it "does for empty Hash" do
       ({} of Nil => Nil).to_pretty_json.should eq(%({}))
     end
+
+    it "does for Array with indent" do
+      [1, 2, 3].to_pretty_json(indent: " ").should eq("[\n 1,\n 2,\n 3\n]")
+    end
+
+    it "does for nested Hash with indent" do
+      {"foo" => {"bar" => 1}}.to_pretty_json(indent: " ").should eq(%({\n "foo": {\n  "bar": 1\n }\n}))
+    end
   end
 
   it "generates an array with JSON::Builder" do
