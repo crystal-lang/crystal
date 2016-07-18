@@ -6,7 +6,7 @@ SPEC_SOURCES := $(shell find spec -name '*.cr')
 FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(threads),--threads $(threads) )$(if $(debug),-d )
 EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
 SHELL = bash
-LLVM_CONFIG := $(shell command -v llvm-config-3.6 llvm-config36 llvm-config-3.5 llvm-config35 llvm-config | head -n 1)
+LLVM_CONFIG := $(shell command -v llvm-config-3.8 llvm-config38 llvm-config-3.6 llvm-config36 llvm-config-3.5 llvm-config35 llvm-config | head -n 1)
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 LIB_CRYSTAL_SOURCES = $(shell find src/ext -name '*.c')
