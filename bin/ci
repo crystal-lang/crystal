@@ -84,7 +84,7 @@ prepare_system() {
 
 build() {
   with_build_env 'make std_spec clean'
-  with_build_env 'make crystal std_spec compiler_spec doc'
+  with_build_env 'make crystal spec doc'
   with_build_env 'find samples -name "*.cr" | xargs -L 1 ./bin/crystal build --no-codegen'
   with_build_env './bin/crystal tool format --check'
 }
@@ -147,10 +147,9 @@ EOF
 prepare_build() {
   on_linux verify_linux_environment
 
-  on_linux docker pull "jhass/crystal-build-$ARCH"
+  on_linux docker pull "jhass/crystal-build-$ARCH:llvm38"
 
-  on_osx brew install libevent crystal-lang
-  on_osx /bin/bash -c "'curl \"http://crystal-lang.s3.amazonaws.com/llvm/llvm-3.5.0-1-darwin-x86_64.tar.gz\" | tar xz -C /tmp'"
+  on_osx brew install llvm libevent crystal-lang
 }
 
 with_build_env() {
@@ -166,10 +165,10 @@ with_build_env() {
     -v $(pwd):/mnt \
     -w /mnt \
     -e LIBRARY_PATH="/opt/crystal/embedded/lib/" \
-    "jhass/crystal-build-$ARCH" \
+    "jhass/crystal-build-$ARCH:llvm38" \
     "$ARCH_CMD" /bin/bash -c "'$command'"
 
-  on_osx PATH="/tmp/llvm-3.5.0-1/bin:\$PATH" \
+  on_osx PATH="/usr/local/opt/llvm/bin:\$PATH" \
     CRYSTAL_CACHE_DIR="/tmp/crystal" \
     /bin/bash -c "'$command'"
 
