@@ -192,7 +192,7 @@ Compile and run specs (in spec directory).
 .Cm tool
 .Op tool
 .Op switches
-.Op program file
+.Ar program file
 .Op Fl -
 .Op arguments
 .Pp
@@ -201,15 +201,21 @@ Run a tool.
 Tools:
 .Bl -tag -offset indent
 .It Cm context
-show context for given location
+Show context for given location.
 .It Cm format
-format project, directories and/or files
+Format project, directories and/or files with the coding style used in the standard library. You can use the
+.Fl -check
+flag to check whether the formatter would make any changes.
 .It Cm hierarchy
-show type hierarchy
+Show hierarchy of types from file. Also show class and struct members, with type and size. Types can be filtered with a regex by using the
+.Fl e
+flag.
 .It Cm implementations
-show implementations for given call in location
+Show implementations for a given call. Use
+.Fl -cursor
+to specify the cursor position. The format for the cursor position is file:line:column.
 .It Cm types
-show type of main variables
+Show type of main variables of file.
 .El
 .Pp
 .It Cm version, Fl -version, v
