@@ -52,15 +52,15 @@ class Crystal::Doc::Generator
       Markdown.parse body, MarkdownDocRenderer.new(program_type, io)
     end
 
-    write_template "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
+    File.write "#{@dir}/index.html", MainTemplate.new(body, types, repository_name)
   end
 
   def copy_files
     Dir.mkdir_p "#{@dir}/css"
     Dir.mkdir_p "#{@dir}/js"
 
-    write_template "#{@dir}/css/style.css", StyleTemplate.new
-    write_template "#{@dir}/js/doc.js", JsTypeTemplate.new
+    File.write "#{@dir}/css/style.css", StyleTemplate.new
+    File.write "#{@dir}/js/doc.js", JsTypeTemplate.new
   end
 
   def generate_types_docs(types, dir, all_types)
@@ -71,7 +71,7 @@ class Crystal::Doc::Generator
         filename = "#{dir}/#{type.name}.html"
       end
 
-      write_template filename, TypeTemplate.new(type, all_types)
+      File.write filename, TypeTemplate.new(type, all_types)
 
       next if type.program?
 
@@ -81,12 +81,6 @@ class Crystal::Doc::Generator
         Dir.mkdir_p dirname
         generate_types_docs subtypes, dirname, all_types
       end
-    end
-  end
-
-  def write_template(filename, template)
-    File.open(filename, "w") do |file|
-      template.to_s file
     end
   end
 
