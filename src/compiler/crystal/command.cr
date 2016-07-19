@@ -1,3 +1,10 @@
+# Here we process the compiler's command line options and
+# execute the relevant commands.
+#
+# Some commands are implemented in the `commands` directory,
+# some in `tools`, some here, and some create a Compiler and
+# manipulate it.
+
 require "json"
 require "./command/*"
 
@@ -78,7 +85,7 @@ class Crystal::Command
         run_command(single_file: false)
       when "spec/".starts_with?(command)
         options.shift
-        run_specs
+        spec
       when "tool".starts_with?(command)
         options.shift
         tool
@@ -160,115 +167,9 @@ class Crystal::Command
     config.compile
   end
 
-  private def env
-    if ARGV.size == 1 && {"--help", "-h"}.includes?(ARGV[0])
-      puts <<-USAGE
-      Usage: crystal env [var ...]
-
-      Prints Crystal environment information.
-
-      By default it prints information as a shell script.
-      If one or more variable names is given as arguments,
-      it prints the value of each named variable on its own line.
-      USAGE
-
-      exit
-    end
-
-    vars = {
-      "CRYSTAL_CACHE_DIR" => CacheDir.instance.dir,
-      "CRYSTAL_PATH"      => CrystalPath.default_path,
-      "CRYSTAL_VERSION"   => Config.version || "",
-    }
-
-    if ARGV.empty?
-      vars.each do |key, value|
-        puts "#{key}=#{value.inspect}"
-      end
-    else
-      ARGV.each do |key|
-        puts vars[key]?
-      end
-    end
-  end
-
-  private def eval
-    if options.empty?
-      program_source = STDIN.gets_to_end
-      program_args = [] of String
-    else
-      double_dash_index = options.index("--")
-      if double_dash_index
-        program_source = options[0...double_dash_index].join " "
-        program_args = options[double_dash_index + 1..-1]
-      else
-        program_source = options.join " "
-        program_args = [] of String
-      end
-    end
-
-    compiler = Compiler.new
-    sources = [Compiler::Source.new("eval", program_source)]
-
-    output_filename = tempfile "eval"
-
-    result = compiler.compile sources, output_filename
-    execute output_filename, program_args
-  end
-
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
     Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
-  end
-
-  private def implementations
-    cursor_command("tool implementations") do |location, config, result|
-      result = ImplementationsVisitor.new(location).process(result)
-    end
-  end
-
-  private def context
-    cursor_command("tool context") do |location, config, result|
-      result = ContextVisitor.new(location).process(result)
-    end
-  end
-
-  private def cursor_command(command)
-    config, result = compile_no_codegen command, cursor_command: true
-
-    format = config.output_format
-
-    file = ""
-    line = ""
-    col = ""
-
-    loc = config.cursor_location.not_nil!.split(':')
-    if loc.size != 3
-      error "cursor location must be file:line:column"
-    end
-
-    file, line, col = loc
-
-    line_number = line.to_i? || 0
-    if line_number <= 0
-      error "line must be a positive integer, not #{line}"
-    end
-
-    column_number = col.to_i? || 0
-    if column_number <= 0
-      error "column must be a positive integer, not #{col}"
-    end
-
-    file = File.expand_path(file)
-
-    result = yield Location.new(line_number, column_number, file), config, result
-
-    case format
-    when "json"
-      result.to_json(STDOUT)
-    else
-      result.to_text(STDOUT)
-    end
   end
 
   private def run_command(single_file = false)
@@ -278,131 +179,15 @@ class Crystal::Command
       return
     end
 
-    output_filename = tempfile(config.output_filename)
+    output_filename = Crystal.tempfile(config.output_filename)
 
     result = config.compile output_filename
     execute output_filename, config.arguments unless config.compiler.no_codegen?
   end
 
-  private def run_specs
-    # Assume spec files end with ".cr" and optionally with a colon and a number
-    # (for the target line number). Everything else is an option we forward.
-    filenames = options.select { |option| option =~ /\.cr(\:\d+)?\Z/ }
-    options.reject! { |option| filenames.includes?(option) }
-
-    locations = [] of {String, String}
-
-    if filenames.empty?
-      target_filenames = Dir["spec/**/*_spec.cr"]
-    else
-      target_filenames = [] of String
-      filenames.each do |filename|
-        if filename =~ /\A(.+?)\:(\d+)\Z/
-          file, line = $1, $2
-          unless File.file?(file)
-            error "'#{file}' is not a file"
-          end
-          target_filenames << file
-          locations << {file, line}
-        else
-          if Dir.exists?(filename)
-            target_filenames.concat Dir["#{filename}/**/*_spec.cr"]
-          elsif File.file?(filename)
-            target_filenames << filename
-          else
-            error "'#{filename}' is not a file"
-          end
-        end
-      end
-    end
-
-    if target_filenames.size == 1
-      if locations.size == 1
-        # This is in case other spec runners use `-l`, we keep compatibility
-        options << "-l" << locations.first[1]
-      end
-    else
-      locations.each do |(file, line)|
-        options << "--location" << "#{file}:#{line}"
-      end
-    end
-
-    source_filename = File.expand_path("spec")
-
-    source = target_filenames.map { |filename| %(require "./#{filename}") }.join("\n")
-    sources = [Compiler::Source.new(source_filename, source)]
-
-    output_filename = tempfile "spec"
-
-    compiler = Compiler.new
-    result = compiler.compile sources, output_filename
-    execute output_filename, options
-  end
-
-  private def deps
-    path_to_shards = `which shards`.chomp
-    if path_to_shards.empty?
-      error "`shards` executable is missing. Please install shards: https://github.com/ysbaddaden/shards"
-    end
-
-    status = Process.run(path_to_shards, args: options, output: true, error: true)
-    exit status.exit_code unless status.success?
-  end
-
-  private def docs
-    if options.empty?
-      sources = [Compiler::Source.new("require", %(require "./src/**"))]
-      included_dirs = [] of String
-    else
-      filenames = options
-      sources = gather_sources(filenames)
-      included_dirs = sources.map { |source| File.dirname(source.filename) }
-    end
-
-    included_dirs << File.expand_path("./src")
-
-    compiler = Compiler.new
-    compiler.wants_doc = true
-    result = compiler.type_top_level sources
-    Crystal.generate_docs result.program, included_dirs
-  end
-
   private def types
     config, result = compile_no_codegen "tool types"
     Crystal.print_types result.original_node
-  end
-
-  private def playground
-    server = Playground::Server.new
-
-    OptionParser.parse(options) do |opts|
-      opts.banner = "Usage: crystal play [options] [file]\n\nOptions:"
-
-      opts.on("-p PORT", "--port PORT", "Runs the playground on the specified port") do |port|
-        server.port = port.to_i
-      end
-
-      opts.on("-b HOST", "--binding HOST", "Binds the playground to the specified IP") do |host|
-        server.host = host
-      end
-
-      opts.on("-v", "--verbose", "Display detailed information of executed code") do
-        server.logger.level = Logger::Severity::DEBUG
-      end
-
-      opts.on("-h", "--help", "Show this message") do
-        puts opts
-        exit
-      end
-
-      opts.unknown_args do |before, after|
-        if before.size > 0
-          server.source = gather_sources([before.first]).first
-        end
-      end
-    end
-
-    server.start
   end
 
   private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false, top_level = false)
@@ -443,11 +228,7 @@ class Crystal::Command
     end
   end
 
-  private def tempfile(basename)
-    Crystal.tempfile(basename)
-  end
-
-  record(CompilerConfig,
+  record CompilerConfig,
     compiler : Compiler,
     sources : Array(Compiler::Source),
     output_filename : String,
@@ -456,7 +237,7 @@ class Crystal::Command
     specified_output : Bool,
     hierarchy_exp : String?,
     cursor_location : String?,
-    output_format : String?) do
+    output_format : String? do
     def compile(output_filename = self.output_filename)
       compiler.original_output_filename = original_output_filename
       compiler.compile sources, output_filename

@@ -1,3 +1,8 @@
+# Implementation of the `crystal tool format` command
+#
+# This is just the command-line part. The formatter
+# logic is in `crystal/tools/formatter.cr`.
+
 class Crystal::Command
   record FormatResult, filename : String, code : Code do
     enum Code
