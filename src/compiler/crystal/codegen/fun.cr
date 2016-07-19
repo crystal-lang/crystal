@@ -404,6 +404,7 @@ class Crystal::CodeGenVisitor
 
       @modules[type_name] ||= begin
         llvm_mod = LLVM::Module.new(type_name)
+        llvm_mod.data_layout = self.data_layout
         define_symbol_table llvm_mod
         llvm_mod
       end

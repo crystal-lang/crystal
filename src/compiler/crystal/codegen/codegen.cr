@@ -15,6 +15,9 @@ module Crystal
   PERSONALITY_NAME   = "__crystal_personality"
   GET_EXCEPTION_NAME = "__crystal_get_exception"
 
+  DataLayout32 = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
+  DataLayout64 = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
+
   class Program
     def run(code, filename = nil)
       parser = Parser.new(code)
@@ -184,6 +187,8 @@ module Crystal
 
       @node_ensure_exception_handlers = {} of UInt64 => Handler
 
+      @llvm_mod.data_layout = self.data_layout
+
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
       # to avoid some memory being allocated with plain malloc.
       codgen_well_known_functions @node
@@ -221,6 +226,10 @@ module Crystal
 
     def define_symbol_table(llvm_mod)
       llvm_mod.globals.add llvm_type(@mod.string).array(@symbol_table_values.size), SYMBOL_TABLE_NAME
+    end
+
+    def data_layout
+      @mod.has_flag?("x86_64") ? DataLayout64 : DataLayout32
     end
 
     class CodegenWellKnownFunctions < Visitor

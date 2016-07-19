@@ -4,6 +4,9 @@
 # Some commands are implemented in the `commands` directory,
 # some in `tools`, some here, and some create a Compiler and
 # manipulate it.
+#
+# Other commands create a `Compiler` and use it to to build
+# an executable.
 
 require "json"
 require "./command/*"
@@ -187,7 +190,7 @@ class Crystal::Command
 
   private def types
     config, result = compile_no_codegen "tool types"
-    Crystal.print_types result.original_node
+    Crystal.print_types result.node
   end
 
   private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false, top_level = false)
@@ -239,7 +242,7 @@ class Crystal::Command
     cursor_location : String?,
     output_format : String? do
     def compile(output_filename = self.output_filename)
-      compiler.original_output_filename = original_output_filename
+      compiler.emit_base_filename = original_output_filename
       compiler.compile sources, output_filename
     end
 
@@ -276,7 +279,7 @@ class Crystal::Command
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
-        compiler.add_flag flag
+        compiler.flags << flag
       end
 
       unless no_codegen
@@ -307,7 +310,7 @@ class Crystal::Command
       end
 
       unless no_codegen
-        opts.on("--ll", "Dump ll to .crystal directory") do
+        opts.on("--ll", "Dump ll to Crystal's cache directory") do
           compiler.dump_ll = true
         end
         opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
