@@ -278,4 +278,16 @@ describe "Type inference: cast" do
       ),
       "can't cast to Class yet"
   end
+
+  it "can cast from Void* to virtual type (#3014)" do
+    assert_type(%(
+      abstract class A
+      end
+
+      class B < A
+      end
+
+      B.new.as(Void*).as(A)
+      )) { types["A"].virtual_type! }
+  end
 end

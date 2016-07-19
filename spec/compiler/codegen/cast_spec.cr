@@ -255,4 +255,20 @@ describe "Code gen: cast" do
       123
       )).to_i.should eq(123)
   end
+
+  it "can cast from Void* to virtual type (#3014)" do
+    run(%(
+      abstract class A
+        abstract def hi
+      end
+
+      class B < A
+        def hi
+          42
+        end
+      end
+
+      B.new.as(Void*).as(A).hi
+      )).to_i.should eq(42)
+  end
 end

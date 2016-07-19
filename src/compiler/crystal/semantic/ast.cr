@@ -567,19 +567,40 @@ module Crystal
     property? upcast = false
 
     def update(from = nil)
+      obj_type = obj.type?
       to_type = to.type
 
-      obj_type = obj.type?
+      if obj_type && !(obj_type.pointer? || to_type.pointer?)
+        filtered_type = obj_type.filter_by(to_type)
 
-      # If we don't know what type we are casting from, leave it as the to_type
-      unless obj_type
-        self.type = to_type.virtual_type
-        return
+        # If the filtered type didn't change it means that an
+        # upcast is being made, for example:
+        #
+        #   1 as Int32 | Float64
+        #   Bar.new as Foo # where Bar < Foo
+        if obj_type == filtered_type && obj_type != to_type && !to_type.is_a?(GenericClassType)
+          filtered_type = to_type
+          @upcast = true
+        end
       end
 
-      if obj_type.pointer? || to_type.pointer?
-        self.type = to_type
-      else
+      # If we don't have a matching type, leave it as the to_type:
+      # later (in after type inference) we will check again.
+      filtered_type ||= to_type
+
+      self.type = filtered_type.virtual_type
+    end
+  end
+
+  class NilableCast
+    property? upcast = false
+    getter! non_nilable_type : Type
+
+    def update(from = nil)
+      obj_type = obj.type?
+      to_type = to.type
+
+      if obj_type
         filtered_type = obj_type.filter_by(to_type)
 
         # If the filtered type didn't change it means that an
@@ -591,48 +612,12 @@ module Crystal
           filtered_type = to_type.virtual_type
           @upcast = true
         end
-
-        # If we don't have a matching type, leave it as the to_type:
-        # later (in after type inference) we will check again.
-        filtered_type ||= to_type.virtual_type
-
-        self.type = filtered_type
-      end
-    end
-  end
-
-  class NilableCast
-    property? upcast = false
-    getter! non_nilable_type : Type
-
-    def update(from = nil)
-      to_type = to.type
-
-      obj_type = obj.type?
-
-      # If we don't know what type we are casting from, leave it as nilable to_type
-      unless obj_type
-        @non_nilable_type = non_nilable_type = to_type.virtual_type
-
-        self.type = to_type.program.nilable(non_nilable_type)
-        return
-      end
-
-      filtered_type = obj_type.filter_by(to_type)
-
-      # If the filtered type didn't change it means that an
-      # upcast is being made, for example:
-      #
-      #   1 as Int32 | Float64
-      #   Bar.new as Foo # where Bar < Foo
-      if obj_type == filtered_type && obj_type != to_type && !to_type.is_a?(GenericClassType)
-        filtered_type = to_type.virtual_type
-        @upcast = true
       end
 
       # If we don't have a matching type, leave it as the to_type:
       # later (in after type inference) we will check again.
-      filtered_type ||= to_type.virtual_type
+      filtered_type ||= to_type
+      filtered_type = filtered_type.virtual_type
 
       @non_nilable_type = filtered_type
 
