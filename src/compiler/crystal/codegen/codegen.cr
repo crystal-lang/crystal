@@ -1882,7 +1882,11 @@ module Crystal
         end
 
         with_cloned_context do
+          # Instance var initializers must run with "self"
+          # properly set up to the type being allocated
+          context.type = real_type
           context.vars = LLVMVars.new
+          context.vars["self"] = LLVMVar.new(type_ptr, real_type)
           alloca_vars init.meta_vars
 
           value.accept self
