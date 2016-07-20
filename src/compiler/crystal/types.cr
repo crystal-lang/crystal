@@ -2936,14 +2936,12 @@ module Crystal
     property vars : MetaVars?
     property used : Bool
     property? visited : Bool
-    property? initialized : Bool
     property visitor : BaseTypeVisitor?
 
     def initialize(program, container, name, @value, @scope_types = [] of Type, @scope = nil)
       super(program, container, name)
       @used = false
       @visited = false
-      @initialized = false
     end
 
     def type_desc

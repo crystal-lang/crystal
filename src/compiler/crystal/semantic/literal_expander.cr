@@ -1,9 +1,6 @@
 module Crystal
   class LiteralExpander
-    @program : Program
-    @regexes : Array({String, Regex::Options})
-
-    def initialize(@program)
+    def initialize(@program : Program)
       @regexes = [] of {String, Regex::Options}
     end
 
@@ -188,7 +185,6 @@ module Crystal
 
         @program.global_vars[global_name] = global_var
 
-        @program.initialized_global_vars.add global_name
         first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
         regex = regex_new_call(node, StringLiteral.new(string))
         second_assign = Assign.new(Global.new(global_name), regex)

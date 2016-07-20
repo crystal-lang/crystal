@@ -220,12 +220,7 @@ module Crystal
 
       if target.is_a?(Path)
         const = const.not_nil!
-        const.initialized = true
         const.value = const.value.transform self
-      end
-
-      if target.is_a?(Global)
-        @program.initialized_global_vars.add target.name
       end
 
       if node.target == node.value
@@ -246,18 +241,6 @@ module Crystal
     def transform(node : Global)
       if expanded = node.expanded
         return expanded
-      end
-
-      node
-    end
-
-    def transform(node : EnumDef)
-      super
-
-      if node.created_new_type
-        node.resolved_type.types.each_value do |const|
-          const.as(Const).initialized = true
-        end
       end
 
       node
