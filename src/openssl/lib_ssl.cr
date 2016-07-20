@@ -1,6 +1,6 @@
 require "./lib_crypto"
 
-@[Link(ldflags: "`pkg-config --libs libssl || printf %s '-lssl -lcrypto'`")]
+@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs libssl || printf %s '-lssl -lcrypto'`")]
 lib LibSSL
   alias Int = LibC::Int
   alias Char = LibC::Char
@@ -166,7 +166,7 @@ lib LibSSL
   fun ssl_ctx_set_cert_verify_callback = SSL_CTX_set_cert_verify_callback(ctx : SSLContext, callback : CertVerifyCallback, arg : Void*)
 end
 
-{% if `(pkg-config --atleast-version=1.0.2 libssl && printf %s true) || printf %s false` == "true" %}
+{% if `(command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libssl && printf %s true) || printf %s false` == "true" %}
 lib LibSSL
   OPENSSL_102 = true
 end

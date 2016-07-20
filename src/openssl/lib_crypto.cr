@@ -1,4 +1,4 @@
-@[Link(ldflags: "`pkg-config --libs libcrypto || printf %s '-lcrypto'`")]
+@[Link(ldflags: "`command -v pkg-config > /dev/null && pkg-config --libs libcrypto || printf %s '-lcrypto'`")]
 lib LibCrypto
   alias Char = LibC::Char
   alias Int = LibC::Int
@@ -237,7 +237,7 @@ lib LibCrypto
   fun x509v3_ext_print = X509V3_EXT_print(out : Bio*, ext : X509_EXTENSION, flag : Int, indent : Int) : Int
 end
 
-{% if `(pkg-config --atleast-version=1.0.2 libcrypto && printf %s true) || printf %s false` == "true" %}
+{% if `(command -v pkg-config > /dev/null && pkg-config --atleast-version=1.0.2 libcrypto && printf %s true) || printf %s false` == "true" %}
 lib LibCrypto
   OPENSSL_102 = true
 end
