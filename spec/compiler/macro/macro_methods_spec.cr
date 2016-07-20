@@ -2,6 +2,28 @@ require "../../spec_helper"
 
 describe "macro methods" do
   describe "node methods" do
+    describe "location" do
+      it "filename" do
+        assert_macro "x", "{{x.filename}}", ["hello".string.tap { |n| n.location = Location.new(1, 2, "foo.cr") }] of ASTNode, %("foo.cr")
+      end
+
+      it "line_number" do
+        assert_macro "x", "{{x.line_number}}", ["hello".string.tap { |n| n.location = Location.new(1, 2, "foo.cr") }] of ASTNode, %(1)
+      end
+
+      it "column number" do
+        assert_macro "x", "{{x.column_number}}", ["hello".string.tap { |n| n.location = Location.new(1, 2, "foo.cr") }] of ASTNode, %(2)
+      end
+
+      it "end line_number" do
+        assert_macro "x", "{{x.end_line_number}}", ["hello".string.tap { |n| n.end_location = Location.new(1, 2, "foo.cr") }] of ASTNode, %(1)
+      end
+
+      it "end column number" do
+        assert_macro "x", "{{x.end_column_number}}", ["hello".string.tap { |n| n.end_location = Location.new(1, 2, "foo.cr") }] of ASTNode, %(2)
+      end
+    end
+
     describe "stringify" do
       it "expands macro with stringify call on string" do
         assert_macro "x", "{{x.stringify}}", ["hello".string] of ASTNode, "\"\\\"hello\\\"\""

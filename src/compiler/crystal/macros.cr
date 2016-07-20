@@ -75,6 +75,39 @@ module Crystal::Macros
   def run(filename, *args) : MacroId
   end
 
+  # Returns the filename where this node is located.
+  # Might return nil if the location is not known.
+  def filename : StringLiteral | NilLiteral
+  end
+
+  # Returns the line number where this node begins.
+  # Might return nil if the location is not known.
+  #
+  # The first line number in a file is 1.
+  def line_number : StringLiteral | NilLiteral
+  end
+
+  # Returns the column number where this node begins.
+  # Might return nil if the location is not known.
+  #
+  # The first column number in a line is 1.
+  def column_number : StringLiteral | NilLiteral
+  end
+
+  # Returns the line number where this node ends.
+  # Might return nil if the location is not known.
+  #
+  # The first line number in a file is 1.
+  def end_line_number : StringLiteral | NilLiteral
+  end
+
+  # Returns the column number where this node ends.
+  # Might return nil if the location is not known.
+  #
+  # The first column number in a line is 1.
+  def end_column_number : StringLiteral | NilLiteral
+  end
+
   # This is the base class of all AST nodes. This methods are
   # available to all AST nodes.
   abstract class ASTNode

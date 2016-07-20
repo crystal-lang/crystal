@@ -200,6 +200,31 @@ module Crystal
         interpret_one_arg_method(method, args) do |arg|
           raise arg.to_s
         end
+      when "filename"
+        interpret_argless_method("filename", args) do
+          filename = location.try &.original_filename
+          filename ? StringLiteral.new(filename) : NilLiteral.new
+        end
+      when "line_number"
+        interpret_argless_method("line_number", args) do
+          line_number = location.try &.original_location.try &.line_number
+          line_number ? NumberLiteral.new(line_number) : NilLiteral.new
+        end
+      when "column_number"
+        interpret_argless_method("column_number", args) do
+          column_number = location.try &.original_location.try &.column_number
+          column_number ? NumberLiteral.new(column_number) : NilLiteral.new
+        end
+      when "end_line_number"
+        interpret_argless_method("end_line_number", args) do
+          line_number = end_location.try &.original_location.try &.line_number
+          line_number ? NumberLiteral.new(line_number) : NilLiteral.new
+        end
+      when "end_column_number"
+        interpret_argless_method("end_column_number", args) do
+          column_number = end_location.try &.original_location.try &.column_number
+          column_number ? NumberLiteral.new(column_number) : NilLiteral.new
+        end
       when "=="
         interpret_one_arg_method(method, args) do |arg|
           BoolLiteral.new(self == arg)

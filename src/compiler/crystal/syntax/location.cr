@@ -36,7 +36,7 @@ module Crystal
     end
 
     def original_filename
-      original_location.try &.filename
+      original_location.try &.filename.as?(String)
     end
 
     def between?(min, max)
