@@ -178,7 +178,7 @@ describe "String" do
     end
   end
 
-  describe "to_i" do
+  describe "i" do
     assert { "1234".to_i.should eq(1234) }
     assert { "   +1234   ".to_i.should eq(1234) }
     assert { "   -1234   ".to_i.should eq(-1234) }
@@ -330,14 +330,41 @@ describe "String" do
 
   it "does to_f" do
     "1234.56".to_f.should eq(1234.56_f64)
+    "1234.56".to_f?.should eq(1234.56_f64)
+    expect_raises(ArgumentError) { "foo".to_f }
+    "foo".to_f?.should be_nil
+    "  1234.56  ".to_f.should eq(1234.56_f64)
+    "  1234.56  ".to_f?.should eq(1234.56_f64)
+    expect_raises(ArgumentError) { "  1234.56  ".to_f(whitespace: false) }
+    "  1234.56  ".to_f?(whitespace: false).should be_nil
+    expect_raises(ArgumentError) { "  1234.56foo".to_f }
+    "  1234.56foo".to_f?.should be_nil
   end
 
   it "does to_f32" do
     "1234.56".to_f32.should eq(1234.56_f32)
+    "1234.56".to_f32?.should eq(1234.56_f32)
+    expect_raises(ArgumentError) { "foo".to_f32 }
+    "foo".to_f32?.should be_nil
+    "  1234.56  ".to_f32.should eq(1234.56_f32)
+    "  1234.56  ".to_f32?.should eq(1234.56_f32)
+    expect_raises(ArgumentError) { "  1234.56  ".to_f32(whitespace: false) }
+    "  1234.56  ".to_f32?(whitespace: false).should be_nil
+    expect_raises(ArgumentError) { "  1234.56foo".to_f32 }
+    "  1234.56foo".to_f32?.should be_nil
   end
 
   it "does to_f64" do
     "1234.56".to_f64.should eq(1234.56_f64)
+    "1234.56".to_f64?.should eq(1234.56_f64)
+    expect_raises(ArgumentError) { "foo".to_f64 }
+    "foo".to_f64?.should be_nil
+    "  1234.56  ".to_f64.should eq(1234.56_f64)
+    "  1234.56  ".to_f64?.should eq(1234.56_f64)
+    expect_raises(ArgumentError) { "  1234.56  ".to_f64(whitespace: false) }
+    "  1234.56  ".to_f64?(whitespace: false).should be_nil
+    expect_raises(ArgumentError) { "  1234.56foo".to_f64 }
+    "  1234.56foo".to_f64?.should be_nil
   end
 
   it "compares strings: different size" do
