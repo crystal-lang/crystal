@@ -1217,12 +1217,12 @@ module Crystal
       context.vars[var.name] ||= LLVMVar.new(alloca(llvm_type(var.type), var.name), var.type)
     end
 
-    def declare_lib_var(name, type, attributes)
+    def declare_lib_var(name, type, thread_local)
       var = @llvm_mod.globals[name]?
       unless var
         var = llvm_mod.globals.add(llvm_c_return_type(type), name)
         var.linkage = LLVM::Linkage::External
-        var.thread_local = true if Attribute.any?(attributes, "ThreadLocal")
+        var.thread_local = thread_local
       end
       var
     end

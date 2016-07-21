@@ -216,7 +216,7 @@ module Crystal
       end
 
       call_convention = check_call_convention_attributes node
-      check_valid_attributes node, ValidFunDefAttributes, "fun"
+      attributes = check_valid_attributes node, ValidFunDefAttributes, "fun"
       node.doc ||= attributes_doc()
 
       args = node.args.map do |arg|
@@ -248,10 +248,14 @@ module Crystal
         # because we declared it in TopLevelVisitor
         external.body = body
       else
-        external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
+        external = External.new(node.name, args, node.body, node.real_name).at(node)
+        external.set_type(return_type)
+        external.varargs = node.varargs
+        external.fun_def = node
+        external.call_convention = call_convention
         external.doc = node.doc
         check_ditto external
-        external.call_convention = call_convention
+        node.external = external
       end
 
       if node_body = node.body
@@ -284,7 +288,7 @@ module Crystal
       end
 
       unless had_external
-        external.raises = true if node.has_attribute?("Raises")
+        process_def_attributes(external, attributes)
 
         begin
           old_external = current_type.add_def external
@@ -305,6 +309,18 @@ module Crystal
       node.type = @program.nil
 
       false
+    end
+
+    private def process_def_attributes(node, attributes)
+      attributes.try &.each do |attribute|
+        case attribute.name
+        when "NoInline"     then node.no_inline = true
+        when "AlwaysInline" then node.always_inline = true
+        when "Naked"        then node.naked = true
+        when "ReturnsTwice" then node.returns_twice = true
+        when "Raises"       then node.raises = true
+        end
+      end
     end
 
     def processing_types
@@ -675,21 +691,22 @@ module Crystal
     end
 
     def check_valid_attributes(node, valid_attributes, desc)
-      if attributes = @attributes
-        attributes.each do |attr|
-          unless valid_attributes.includes?(attr.name)
-            attr.raise "illegal attribute for #{desc}, valid attributes are: #{valid_attributes.join ", "}"
-          end
+      attributes = @attributes
+      return unless attributes
 
-          if attr.name != "Primitive"
-            if !attr.args.empty? || attr.named_args
-              attr.raise "#{attr.name} attribute can't receive arguments"
-            end
+      attributes.each do |attr|
+        unless valid_attributes.includes?(attr.name)
+          attr.raise "illegal attribute for #{desc}, valid attributes are: #{valid_attributes.join ", "}"
+        end
+
+        if attr.name != "Primitive"
+          if !attr.args.empty? || attr.named_args
+            attr.raise "#{attr.name} attribute can't receive arguments"
           end
         end
-        node.attributes = attributes
-        attributes
       end
+
+      attributes
     end
 
     def attributes_doc

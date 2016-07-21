@@ -40,24 +40,13 @@ module Crystal
       clone = clone_without_location
       clone.location = location
       clone.end_location = end_location
-      clone.attributes = attributes
       clone
-    end
-
-    def attributes
-    end
-
-    def attributes=(attributes)
     end
 
     def doc
     end
 
     def doc=(doc)
-    end
-
-    def has_attribute?(name)
-      Attribute.any?(attributes, name)
     end
 
     def name_column_number
@@ -929,7 +918,6 @@ module Crystal
     property assigns_special_var : Bool
     property name_column_number : Int32
     property? abstract : Bool
-    property attributes : Array(Attribute)?
     property splat_index : Int32?
     property doc : String?
     property visibility : Visibility
@@ -1336,7 +1324,6 @@ module Crystal
     property? abstract : Bool
     property? struct : Bool
     property name_column_number : Int32
-    property attributes : Array(Attribute)?
     property doc : String?
     property splat_index : Int32?
 
@@ -1777,7 +1764,6 @@ module Crystal
     property varargs : Bool
     property body : ASTNode?
     property real_name : String
-    property attributes : Array(Attribute)?
     property doc : String?
 
     def initialize(@name, @args = [] of Arg, @return_type = nil, @varargs = false, @body = nil, @real_name = name)
@@ -1831,8 +1817,6 @@ module Crystal
   end
 
   class StructDef < StructOrUnionDef
-    property attributes : Array(Attribute)?
-
     def clone_without_location
       StructDef.new(@name, @body.clone)
     end
@@ -1848,7 +1832,6 @@ module Crystal
     property name : Path
     property members : Array(ASTNode)
     property base_type : ASTNode?
-    property attributes : Array(Attribute)?
     property doc : String?
 
     def initialize(@name, @members = [] of ASTNode, @base_type = nil)
@@ -1870,7 +1853,6 @@ module Crystal
     property name : String
     property type_spec : ASTNode
     property real_name : String?
-    property attributes : Array(Attribute)?
 
     def initialize(@name, @type_spec, @real_name = nil)
     end
@@ -1909,17 +1891,6 @@ module Crystal
       end
 
       type == other.type
-    end
-
-    def self.for_fun(name, real_name, args, return_type, varargs, body, fun_def)
-      external = External.new(name, args, body, real_name)
-      external.varargs = varargs
-      external.set_type(return_type)
-      external.fun_def = fun_def
-      external.location = fun_def.location
-      external.attributes = fun_def.attributes
-      fun_def.external = external
-      external
     end
 
     def_hash @real_name, @varargs, @fun_def

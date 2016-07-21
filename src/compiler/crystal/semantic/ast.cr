@@ -381,6 +381,18 @@ module Crystal
     property block_nest = 0
     property? captured_block = false
 
+    # `true` if this def has the `@[NoInline]` attribute
+    property? no_inline = false
+
+    # `true` if this def has the `@[AlwaysInline]` attribute
+    property? always_inline = false
+
+    # `true` if this def has the `@[ReturnsTwice]` attribute
+    property? returns_twice = false
+
+    # `true` if this def has the `@[Naked]` attribute
+    property? naked = false
+
     # Is this a `new` method that was expanded from an initialize?
     property? new = false
 
@@ -417,6 +429,10 @@ module Crystal
       a_def = previous_def
       a_def.raises = raises
       a_def.previous = previous
+      a_def.no_inline = no_inline?
+      a_def.always_inline = always_inline?
+      a_def.returns_twice = returns_twice?
+      a_def.naked = naked?
       a_def
     end
 
@@ -1180,6 +1196,11 @@ module Crystal
     property dead = false
     property used = false
     property call_convention : LLVM::CallConvention?
+
+    # An External is also used to represent external variables
+    # such as libc's `$errno`, which can be annotated with
+    # `@[ThreadLocal]`. This property is `true` in that case.
+    property? thread_local = false
   end
 
   class EnumDef

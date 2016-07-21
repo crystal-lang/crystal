@@ -340,7 +340,7 @@ module Crystal
     def visit(node : Def)
       check_outside_block_or_exp node, "declare def"
 
-      check_valid_attributes node, ValidDefAttributes, "def"
+      attributes = check_valid_attributes node, ValidDefAttributes, "def"
       node.doc ||= attributes_doc()
       check_ditto node
 
@@ -361,7 +361,7 @@ module Crystal
                       type
                     end
 
-      node.raises = true if node.has_attribute?("Raises")
+      process_def_attributes node, attributes
 
       if node.abstract?
         if (target_type.class? || target_type.struct?) && !target_type.abstract?
@@ -372,7 +372,7 @@ module Crystal
         end
       end
 
-      primitive_attribute = node.attributes.try &.find { |attr| attr.name == "Primitive" }
+      primitive_attribute = attributes.try &.find { |attr| attr.name == "Primitive" }
       if primitive_attribute
         process_primitive_attribute(node, primitive_attribute)
       end
@@ -470,7 +470,7 @@ module Crystal
 
     def visit(node : StructDef)
       if @lib_def_pass == 1
-        check_valid_attributes node, ValidStructDefAttributes, "struct"
+        attributes = check_valid_attributes node, ValidStructDefAttributes, "struct"
       end
 
       type = process_struct_or_union_def(node, CStructType) do |t|
@@ -480,7 +480,7 @@ module Crystal
       end
 
       if @lib_def_pass == 1
-        if node.has_attribute?("Packed")
+        if Attribute.any?(attributes, "Packed")
           type.as(CStructType).packed = true
         end
       end
@@ -519,7 +519,7 @@ module Crystal
 
       check_outside_block_or_exp node, "declare enum"
 
-      check_valid_attributes node, ValidEnumDefAttributes, "enum"
+      attributes = check_valid_attributes node, ValidEnumDefAttributes, "enum"
       attributes_doc = attributes_doc()
 
       scope, name = process_type_name(node.name)
@@ -543,7 +543,7 @@ module Crystal
         enum_base_type = @program.int32
       end
 
-      is_flags = node.has_attribute?("Flags")
+      is_flags = Attribute.any?(attributes, "Flags")
       all_value = interpret_enum_value(NumberLiteral.new(0), enum_base_type)
       existed = !!enum_type
       enum_type ||= EnumType.new(@program, scope, name, enum_base_type, is_flags)
@@ -664,16 +664,17 @@ module Crystal
     def visit(node : ExternalVar)
       return unless @lib_def_pass == 2
 
-      check_valid_attributes node, ValidExternalVarAttributes, "external var"
+      attributes = check_valid_attributes node, ValidExternalVarAttributes, "external var"
 
       processing_types do
         node.type_spec.accept self
       end
 
       var_type = check_primitive_like node.type_spec
+      thread_local = Attribute.any?(attributes, "ThreadLocal")
 
       type = current_type.as(LibType)
-      type.add_var node.name, var_type, (node.real_name || node.name), node.attributes
+      type.add_var node.name, var_type, (node.real_name || node.name), thread_local
 
       false
     end

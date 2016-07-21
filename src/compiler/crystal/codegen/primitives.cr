@@ -547,7 +547,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_external_var_set(node, target_def, call_args)
     external = target_def.as(External)
     name = external.real_name
-    var = declare_lib_var name, node.type, external.attributes
+    var = declare_lib_var name, node.type, external.thread_local?
 
     @last = call_args[0]
 
@@ -565,7 +565,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_external_var_get(node, target_def, call_args)
     external = target_def.as(External)
     name = target_def.as(External).real_name
-    var = declare_lib_var name, node.type, external.attributes
+    var = declare_lib_var name, node.type, external.thread_local?
 
     if external.type.passed_by_value?
       @last = var

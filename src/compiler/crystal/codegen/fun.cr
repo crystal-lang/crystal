@@ -182,9 +182,9 @@ class Crystal::CodeGenVisitor
       offset = 0
     end
 
-    no_inline = setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
+    setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
 
-    if @single_module && !no_inline
+    if @single_module && !target_def.no_inline?
       context.fun.linkage = LLVM::Linkage::Internal
     end
 
@@ -286,31 +286,18 @@ class Crystal::CodeGenVisitor
     @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?)
   end
 
-  def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
-    context.fun = @llvm_mod.functions.add(
-      mangled_name,
-      llvm_args_types,
-      llvm_return_type,
-      target_def.varargs,
-    )
+  def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
+    context.fun = @llvm_mod.functions.add(mangled_name, llvm_args_types, llvm_return_type, target_def.varargs)
+
+    context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
+    context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
+    context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
 
-    no_inline = false
-    target_def.attributes.try &.each do |attribute|
-      case attribute.name
-      when "NoInline"
-        context.fun.add_attribute LLVM::Attribute::NoInline
-        context.fun.linkage = LLVM::Linkage::External
-        no_inline = true
-      when "AlwaysInline"
-        context.fun.add_attribute LLVM::Attribute::AlwaysInline
-      when "ReturnsTwice"
-        context.fun.add_attribute LLVM::Attribute::ReturnsTwice
-      when "Naked"
-        context.fun.add_attribute LLVM::Attribute::Naked
-      end
+    if target_def.no_inline?
+      context.fun.add_attribute LLVM::Attribute::NoInline
+      context.fun.linkage = LLVM::Linkage::External
     end
-    no_inline
   end
 
   def setup_closure_vars(closure_vars, context = self.context, closure_ptr = fun_literal_closure_ptr)

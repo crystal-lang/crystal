@@ -2266,14 +2266,14 @@ module Crystal
       self
     end
 
-    def add_var(name, type, real_name, attributes)
+    def add_var(name, type, real_name, thread_local)
       setter = External.new("#{name}=", [Arg.new("value", type: type)], Primitive.new(:external_var_set, type), real_name)
       setter.set_type(type)
-      setter.attributes = attributes
+      setter.thread_local = thread_local
 
       getter = External.new("#{name}", [] of Arg, Primitive.new(:external_var_get, type), real_name)
       getter.set_type(type)
-      getter.attributes = attributes
+      getter.thread_local = thread_local
 
       add_def setter
       add_def getter
