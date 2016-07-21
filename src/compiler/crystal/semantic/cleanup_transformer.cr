@@ -384,8 +384,6 @@ module Crystal
         node.named_args = nil
       end
 
-      # check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
-
       node
     end
 
@@ -511,22 +509,6 @@ module Crystal
 
       node
     end
-
-    # def check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
-    #   if (node.name == :< || node.name == :<=) && node.obj && node.obj.type && node.obj.type.integer? && node.obj.type.unsigned?
-    #     arg = node.args[0]
-    #     if arg.is_a?(NumberLiteral) && arg.integer? && arg.value.to_i <= 0
-    #       node.raise "'#{node.name}' comparison of unsigned integer with zero or negative literal will always be false"
-    #     end
-    #   end
-
-    #   if (node.name == :> || node.name == :>=) && node.obj && node.obj.type && node.obj.is_a?(NumberLiteral) && node.obj.integer? && node.obj.value.to_i <= 0
-    #     arg = node.args[0]
-    #     if arg.type.integer? && arg.type.unsigned?
-    #       node.raise "'#{node.name}' comparison of unsigned integer with zero or negative literal will always be false"
-    #     end
-    #   end
-    # end
 
     def transform(node : While)
       super

@@ -32,8 +32,7 @@ module Crystal
 
       # Failed git and no explicit version set: ""
       # We inherit the version of the compiler building us for now.
-      # TODO: Remove interpolation once formatter bug is fixed.
-      return {"#{{{Crystal::VERSION}}}", nil} if git_version.empty?
+      return { {{Crystal::VERSION}}, nil } if git_version.empty?
 
       # Shallow clone with no tag in reach: abcd123
       # We assume being compiled with the latest released compiler

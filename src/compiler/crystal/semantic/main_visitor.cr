@@ -2027,7 +2027,7 @@ module Crystal
         when "to_u64"                then program.uint64
         when "to_f", "to_f64"        then program.float64
         when "to_f32"                then program.float32
-        when "unsafe_chr", "chr"     then program.char # TODO: remove "chr" after 0.18.0
+        when "unsafe_chr"            then program.char
         else
           raise "Bug: unknown cast operator #{typed_def.name}"
         end
