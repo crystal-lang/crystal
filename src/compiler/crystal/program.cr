@@ -19,9 +19,6 @@ module Crystal
   # types (the top-level types) and methods (the top-level methods), and which
   # can also include other modules (this happens when you do `include Module`
   # at the top-level).
-  #
-  # TODO: Because it's the top-level module, some parts of the code use `@mod`
-  # to denote the program, but these ocurrences should be renamed to just `@program`.
   class Program < NonGenericModuleType
     include DefContainer
     include DefInstanceContainer

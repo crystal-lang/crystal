@@ -184,7 +184,7 @@ class Crystal::Call
   def check_fun_arg_type_matches(obj_type, self_arg, typed_def_arg, index)
     expected_type = typed_def_arg.type
     actual_type = self_arg.type
-    actual_type = mod.pointer_of(actual_type) if self_arg.is_a?(Out)
+    actual_type = program.pointer_of(actual_type) if self_arg.is_a?(Out)
     return if actual_type.compatible_with?(expected_type)
     return if actual_type.implicitly_converted_in_c_to?(expected_type)
 

@@ -79,15 +79,15 @@ module Crystal
       idx = 0
       ivars.each do |name, ivar|
         if (ivar_type = ivar.type?) && (ivar_debug_type = get_debug_type(ivar_type))
-          offset = @mod.target_machine.data_layout.offset_of_element(struct_type, idx + (type.struct? ? 0 : 1))
-          size = @mod.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
+          offset = @program.target_machine.data_layout.offset_of_element(struct_type, idx + (type.struct? ? 0 : 1))
+          size = @program.target_machine.data_layout.size_in_bits(llvm_embedded_type(ivar_type))
           member = di_builder.create_member_type(nil, name[1..-1], nil, 1, size, size, offset * 8, 0, ivar_debug_type)
           element_types << member
         end
         idx += 1
       end
 
-      size = @mod.target_machine.data_layout.size_in_bits(struct_type)
+      size = @program.target_machine.data_layout.size_in_bits(struct_type)
       debug_type = di_builder.create_struct_type(nil, type.to_s, nil, 1, size, size, 0, nil, di_builder.get_or_create_type_array(element_types))
       unless type.struct?
         debug_type = di_builder.create_pointer_type(debug_type, llvm_typer.pointer_size * 8, llvm_typer.pointer_size * 8, type.to_s)

@@ -78,19 +78,19 @@ module Crystal
     # `yields` hash.
     record ExpandedMacro, source : String, yields : Hash(String, ASTNode)?
 
-    def initialize(@mod : Program)
+    def initialize(@program : Program)
       @cache = {} of String => String
     end
 
     def expand(a_macro : Macro, call : Call, scope : Type, type_lookup : Type)
-      visitor = MacroVisitor.new self, @mod, scope, type_lookup, a_macro, call
+      visitor = MacroVisitor.new self, @program, scope, type_lookup, a_macro, call
       a_macro.body.accept visitor
       source = visitor.to_s
       ExpandedMacro.new source, visitor.yields
     end
 
     def expand(node : ASTNode, scope : Type, type_lookup : Type, free_vars = nil)
-      visitor = MacroVisitor.new self, @mod, scope, type_lookup, node.location
+      visitor = MacroVisitor.new self, @program, scope, type_lookup, node.location
       visitor.free_vars = free_vars
       node.accept visitor
       source = visitor.to_s
@@ -129,7 +129,7 @@ module Crystal
 
       safe_filename = filename.gsub(/[^a-zA-Z\_\-\.]/, "_")
 
-      tempfile_path = @mod.new_tempfile("macro-run-#{safe_filename}")
+      tempfile_path = @program.new_tempfile("macro-run-#{safe_filename}")
 
       compiler.compile Compiler::Source.new(filename, source), tempfile_path
 
@@ -211,7 +211,7 @@ module Crystal
 
       record MacroVarKey, name : String, exps : Array(ASTNode)?
 
-      def initialize(@expander : MacroExpander, @mod : Program,
+      def initialize(@expander : MacroExpander, @program : Program,
                      @scope : Type, @type_lookup : Type, @location : Location?,
                      @vars = {} of String => ASTNode, @block : Block? = nil)
         @str = MemoryIO.new(512)
@@ -237,7 +237,7 @@ module Crystal
 
         if node.output
           if node.exp.is_a?(Yield) && !@last.is_a?(Nop)
-            var_name = @mod.new_temp_var_name
+            var_name = @program.new_temp_var_name
             yields = @yields ||= {} of String => ASTNode
             yields[var_name] = @last
             @last = Var.new(var_name)
@@ -408,7 +408,7 @@ module Crystal
         key = MacroVarKey.new(node.name, exps)
 
         macro_vars = @macro_vars ||= {} of MacroVarKey => String
-        macro_var = macro_vars[key] ||= @mod.new_temp_var_name
+        macro_var = macro_vars[key] ||= @program.new_temp_var_name
         @str << macro_var
         false
       end
@@ -606,7 +606,7 @@ module Crystal
       def visit(node : InstanceVar)
         case node.name
         when "@type"
-          target = @scope == @mod.class_type ? @scope : @scope.instance_type
+          target = @scope == @program.class_type ? @scope : @scope.instance_type
           return @last = TypeNode.new(target)
         end
 

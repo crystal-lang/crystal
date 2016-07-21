@@ -758,13 +758,13 @@ module Crystal
   end
 
   class TupleLiteral
-    property! mod : Program
+    property! program : Program
 
     def update(from = nil)
       return unless elements.all? &.type?
 
       types = elements.map { |exp| exp.type.as(TypeVar) }
-      tuple_type = mod.tuple_of types
+      tuple_type = program.tuple_of types
 
       if generic_type_too_nested?(tuple_type.generic_nest)
         raise "tuple type too nested: #{tuple_type}"
@@ -775,7 +775,7 @@ module Crystal
   end
 
   class NamedTupleLiteral
-    property! mod : Program
+    property! program : Program
 
     def update(from = nil)
       return unless entries.all? &.value.type?
@@ -784,7 +784,7 @@ module Crystal
         NamedArgumentType.new(element.key, element.value.type)
       end
 
-      named_tuple_type = mod.named_tuple_of(entries)
+      named_tuple_type = program.named_tuple_of(entries)
 
       if generic_type_too_nested?(named_tuple_type.generic_nest)
         raise "named tuple type too nested: #{named_tuple_type}"
@@ -949,7 +949,7 @@ module Crystal
   class YieldBlockBinder < ASTNode
     getter block
 
-    def initialize(@mod : Program, @block : Block)
+    def initialize(@program : Program, @block : Block)
       @yields = [] of {Yield, Array(Var)?}
     end
 
@@ -1018,7 +1018,7 @@ module Crystal
             types = block_arg_types[i] ||= [] of Type
             if i == splat_index
               tuple_types = exps_types[i, exps_types.size - (args_size - 1)]
-              types << @mod.tuple_of(tuple_types)
+              types << @program.tuple_of(tuple_types)
               j += tuple_types.size
             else
               types << exps_types[j]
@@ -1058,7 +1058,7 @@ module Crystal
       block.args.each_with_index do |arg, i|
         block_arg_type = block_arg_types[i]
         if block_arg_type
-          arg_type = Type.merge(block_arg_type) || @mod.nil
+          arg_type = Type.merge(block_arg_type) || @program.nil
           if i == splat_index && !arg_type.is_a?(TupleInstanceType)
             arg.raise "block splat argument must be a tuple type, not #{arg_type}"
           end

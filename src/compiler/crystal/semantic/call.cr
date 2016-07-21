@@ -12,7 +12,7 @@ class Crystal::Call
   property? uses_with_scope = false
   getter? raises = false
 
-  def mod
+  def program
     scope.program
   end
 
@@ -179,7 +179,7 @@ class Crystal::Call
   end
 
   def lookup_matches_in(owner : FileModule, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true)
-    lookup_matches_in mod, arg_types, named_args_types, search_in_parents: search_in_parents
+    lookup_matches_in program, arg_types, named_args_types, search_in_parents: search_in_parents
   end
 
   def lookup_matches_in(owner : NonGenericModuleType, arg_types, named_args_types, self_type = nil, def_name = self.name, search_in_parents = true)
@@ -243,9 +243,9 @@ class Crystal::Call
 
     # If we didn't find a match and this call doesn't have a receiver,
     # and we are not at the top level, let's try searching the top-level
-    if matches.empty? && !obj && owner != mod
-      mod_matches = lookup_matches_with_signature(mod, signature, search_in_parents)
-      matches = mod_matches unless mod_matches.empty?
+    if matches.empty? && !obj && owner != program
+      program_matches = lookup_matches_with_signature(program, signature, search_in_parents)
+      matches = program_matches unless program_matches.empty?
     end
 
     if matches.empty? && owner.class? && owner.abstract? && name != "super"
@@ -274,7 +274,7 @@ class Crystal::Call
     end
 
     # If this call is an implicit call to self
-    if !obj && !mod_matches && !owner.is_a?(Program)
+    if !obj && !program_matches && !owner.is_a?(Program)
       parent_visitor.check_self_closured
     end
 
@@ -383,7 +383,7 @@ class Crystal::Call
 
         check_recursive_splat_call match.def, typed_def_args do
           bubbling_exception do
-            visitor = MainVisitor.new(mod, typed_def_args, typed_def)
+            visitor = MainVisitor.new(program, typed_def_args, typed_def)
             visitor.yield_vars = yield_vars
             visitor.free_vars = match.context.free_vars
             visitor.untyped_def = match.def
@@ -429,15 +429,15 @@ class Crystal::Call
   end
 
   def check_return_type(typed_def, typed_def_return_type, match, match_owner)
-    if match.def.owner == mod.class_type
-      root_type = mod.class_type
+    if match.def.owner == program.class_type
+      root_type = program.class_type
     else
       self_type = match_owner.instance_type
       root_type = self_type.ancestors.find(&.instance_of?(match.def.owner.instance_type)) || self_type
     end
     type_lookup = MatchTypeLookup.new(self, match.context)
     return_type = type_lookup.lookup_node_type(typed_def_return_type)
-    return_type = mod.nil if return_type.void?
+    return_type = program.nil if return_type.void?
     typed_def.freeze_type = return_type
     typed_def.type = return_type if return_type.no_return? || return_type.nil_type?
   end
@@ -520,7 +520,7 @@ class Crystal::Call
 
         arg_type.tuple_types.each_with_index do |tuple_type, index|
           num = NumberLiteral.new(index)
-          num.type = mod.int32
+          num.type = program.int32
           tuple_indexer = Call.new(arg.exp, "[]", num)
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
@@ -535,8 +535,8 @@ class Crystal::Call
 
         arg_type.entries.each do |entry|
           sym = SymbolLiteral.new(entry.name)
-          sym.type = mod.symbol
-          mod.symbols.add sym.value
+          sym.type = program.symbol
+          program.symbols.add sym.value
           tuple_indexer = Call.new(arg.exp, "[]", sym)
           parent_visitor.prepare_call(tuple_indexer)
           tuple_indexer.recalculate
@@ -675,12 +675,12 @@ class Crystal::Call
 
     macros = yield node_scope
     if !macros && node_scope.metaclass? && node_scope.instance_type.module?
-      macros = yield mod.object.metaclass
+      macros = yield program.object.metaclass
     end
 
-    macros ||= yield mod
+    macros ||= yield program
 
-    if !macros && (location = self.location) && (filename = location.original_filename).is_a?(String) && (file_module = mod.file_module?(filename))
+    if !macros && (location = self.location) && (filename = location.original_filename).is_a?(String) && (file_module = program.file_module?(filename))
       macros ||= yield file_module
     end
 
@@ -742,7 +742,7 @@ class Crystal::Call
       end
       output = block_arg_type.return_type
       output_type = output
-      output_type = mod.nil if output_type.void?
+      output_type = program.nil if output_type.void?
     end
 
     if yield_vars
@@ -758,7 +758,7 @@ class Crystal::Call
         yield_vars.each_with_index do |yield_var, i|
           yield_var_type = yield_var.type
           arg = block.args[i]?
-          arg.bind_to(yield_var || mod.nil_var) if arg
+          arg.bind_to(yield_var || program.nil_var) if arg
         end
       end
     end
@@ -768,7 +768,7 @@ class Crystal::Call
       # Create the arguments of the function literal
       if yield_vars
         fun_args = yield_vars.map_with_index do |var, i|
-          arg_name = block.args[i]?.try(&.name) || mod.new_temp_var_name
+          arg_name = block.args[i]?.try(&.name) || program.new_temp_var_name
           Arg.new(arg_name, type: var.type)
         end
       else
@@ -778,7 +778,7 @@ class Crystal::Call
       if output.is_a?(ASTNode) && !output.is_a?(Underscore)
         output_type = ident_lookup.lookup_node_type?(output)
         if output_type
-          output_type = mod.nil if output_type.void?
+          output_type = program.nil if output_type.void?
           Crystal.check_type_allowed_in_generics(output, output_type, "can't use #{output_type} as a block return type")
           output_type = output_type.virtual_type
         end
@@ -822,7 +822,7 @@ class Crystal::Call
               block_type = ident_lookup.lookup_node_type(output).virtual_type
               block.type = output_type || block_type
               block.freeze_type = output_type || block_type
-              block_arg_type = mod.proc_of(fun_args, block_type)
+              block_arg_type = program.proc_of(fun_args, block_type)
             else
               raise "expected block to return #{output}, not #{block_type}"
             end
@@ -836,17 +836,17 @@ class Crystal::Call
         if output
           if output.is_a?(ASTNode) && !output.is_a?(Underscore)
             output_type = ident_lookup.lookup_node_type(output).virtual_type
-            output_type = mod.nil if output_type.void?
+            output_type = program.nil if output_type.void?
             block.type = output_type
             block.freeze_type = output_type
-            block_arg_type = mod.proc_of(fun_args, output_type)
+            block_arg_type = program.proc_of(fun_args, output_type)
           else
             cant_infer_block_return_type
           end
         else
-          block.body.type = mod.void
-          block.type = mod.void
-          block_arg_type = mod.proc_of(fun_args, mod.void)
+          block.body.type = program.void
+          block.type = program.void
+          block_arg_type = program.proc_of(fun_args, program.void)
         end
       end
 
@@ -866,7 +866,7 @@ class Crystal::Call
           if output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
               block_type = ident_lookup.lookup_node_type(output).virtual_type
-              block_type = mod.nil if block_type.void?
+              block_type = program.nil if block_type.void?
             rescue ex : Crystal::Exception
               cant_infer_block_return_type
             end
@@ -1028,7 +1028,7 @@ class Crystal::Call
       if untyped_def.new?
         untyped_def = untyped_def.expand_new_default_arguments(self_type.instance_type, arg_types.size, named_args_names)
       else
-        untyped_def = untyped_def.expand_default_arguments(mod, arg_types.size, named_args_names)
+        untyped_def = untyped_def.expand_default_arguments(program, arg_types.size, named_args_names)
       end
 
       # This is the case of Proc#call(*args), but could be applied to any primitive really
@@ -1079,9 +1079,9 @@ class Crystal::Call
       default_value = arg.default_value.as(MagicConstant)
       case default_value.name
       when :__LINE__
-        type = mod.int32
+        type = program.int32
       when :__FILE__, :__DIR__
-        type = mod.string
+        type = program.string
       else
         default_value.raise "Bug: unknown magic constant: #{default_value.name}"
       end

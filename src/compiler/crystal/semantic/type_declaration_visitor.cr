@@ -191,7 +191,7 @@ module Crystal
 
     def visit(node : Call)
       if node.global
-        node.scope = @mod
+        node.scope = @program
       else
         node.scope = current_type.metaclass
       end

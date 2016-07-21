@@ -68,7 +68,7 @@ module Crystal
       if node.args.size == 1
         node.args[0].accept self
         flag = @last.to_macro_id
-        @last = BoolLiteral.new(@mod.has_flag?(flag))
+        @last = BoolLiteral.new(@program.has_flag?(flag))
       else
         node.wrong_number_of_arguments "macro call 'flag?'", node.args.size, 1
       end
@@ -144,7 +144,7 @@ module Crystal
       else
         begin
           relative_to = @location.try &.original_filename
-          found_filenames = @mod.find_in_path(filename, relative_to)
+          found_filenames = @program.find_in_path(filename, relative_to)
         rescue ex
           node.raise "error executing macro run: #{ex.message}"
         end

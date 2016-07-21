@@ -2,7 +2,7 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   def target_def_fun(target_def, self_type)
-    mangled_name = target_def.mangled_name(@mod, self_type)
+    mangled_name = target_def.mangled_name(@program, self_type)
     self_type_mod = type_module(self_type)
 
     func = self_type_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
@@ -68,7 +68,7 @@ class Crystal::CodeGenVisitor
         emit_def_debug_metadata target_def if @debug
 
         context.fun.add_attribute LLVM::Attribute::UWTable
-        if @mod.has_flag?("darwin")
+        if @program.has_flag?("darwin")
           # Disable frame pointer elimination in Darwin, as it causes issues during stack unwind
           context.fun.add_target_dependent_attribute "no-frame-pointer-elim", "true"
           context.fun.add_target_dependent_attribute "no-frame-pointer-elim-non-leaf", "true"

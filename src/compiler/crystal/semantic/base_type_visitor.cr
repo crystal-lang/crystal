@@ -1,6 +1,6 @@
 module Crystal
   abstract class BaseTypeVisitor < Visitor
-    getter mod : Program
+    getter program : Program
     property types : Array(Type)
     property in_type_args
 
@@ -11,8 +11,8 @@ module Crystal
     @last_doc : String?
     @block : Block?
 
-    def initialize(@mod, @vars = MetaVars.new)
-      @types = [@mod] of Type
+    def initialize(@program, @vars = MetaVars.new)
+      @types = [@program] of Type
       @exp_nest = 0
       @attributes = nil
       @lib_def_pass = 0
@@ -37,7 +37,7 @@ module Crystal
 
           meta_vars = MetaVars.new
           const_def = Def.new("const", [] of Arg)
-          type_visitor = MainVisitor.new(@mod, meta_vars, const_def)
+          type_visitor = MainVisitor.new(@program, meta_vars, const_def)
           type_visitor.types = type.scope_types
           type_visitor.scope = type.scope
 
@@ -92,10 +92,10 @@ module Crystal
       if output = node.output
         types << output.type.instance_type.virtual_type
       else
-        types << mod.void
+        types << program.void
       end
 
-      node.type = mod.proc_of(types)
+      node.type = program.proc_of(types)
 
       false
     end
@@ -118,9 +118,9 @@ module Crystal
       @in_is_a = old_in_is_a
 
       if @in_is_a
-        node.type = @mod.type_merge_union_of(types)
+        node.type = @program.type_merge_union_of(types)
       else
-        node.type = @mod.type_merge(types)
+        node.type = @program.type_merge(types)
       end
 
       false
@@ -236,9 +236,9 @@ module Crystal
           node_return_type.accept self
         end
         return_type = check_return_type_primitive_like(node_return_type)
-        return_type = @mod.nil if return_type.void?
+        return_type = @program.nil if return_type.void?
       else
-        return_type = @mod.nil
+        return_type = @program.nil
       end
 
       external = node.external?
@@ -263,9 +263,9 @@ module Crystal
         end
         external.set_type(nil)
 
-        visitor = MainVisitor.new(@mod, vars, external)
+        visitor = MainVisitor.new(@program, vars, external)
         visitor.untyped_def = external
-        visitor.scope = @mod
+        visitor.scope = @program
         visitor.block_nest = @block_nest
 
         begin
@@ -274,9 +274,9 @@ module Crystal
           node.raise ex.message, ex
         end
 
-        inferred_return_type = @mod.type_merge([node_body.type?, external.type?])
+        inferred_return_type = @program.type_merge([node_body.type?, external.type?])
 
-        if return_type && return_type != @mod.nil && inferred_return_type != return_type
+        if return_type && return_type != @program.nil && inferred_return_type != return_type
           node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
         end
 
@@ -302,7 +302,7 @@ module Crystal
         end
       end
 
-      node.type = @mod.nil
+      node.type = @program.nil
 
       false
     end
@@ -395,7 +395,7 @@ module Crystal
 
         error_msg = String.build do |msg|
           msg << "undefined constant #{node}"
-          msg << @mod.colorize(" (did you mean '#{similar_name}'?)").yellow.bold if similar_name
+          msg << @program.colorize(" (did you mean '#{similar_name}'?)").yellow.bold if similar_name
         end
         node.raise error_msg
       end
@@ -415,7 +415,7 @@ module Crystal
           target_type = type_var
         end
       else
-        base_lookup = node.global ? mod : (@type_lookup || @scope || @types.last)
+        base_lookup = node.global ? program : (@type_lookup || @scope || @types.last)
         target_type = lookup_type base_lookup, node, node
 
         unless target_type
@@ -428,7 +428,7 @@ module Crystal
                   node.raise "execpted #{name} to be a type"
                 end
               else
-                next_type = NonGenericModuleType.new(@mod, base_lookup, name)
+                next_type = NonGenericModuleType.new(@program, base_lookup, name)
 
                 if (location = node.location)
                   next_type.locations << location
@@ -468,7 +468,7 @@ module Crystal
     end
 
     def attach_doc(type, node)
-      if @mod.wants_doc?
+      if @program.wants_doc?
         type.doc ||= node.doc
       end
 
@@ -504,9 +504,9 @@ module Crystal
 
           expanded = expand_macro(hook.macro, node) do
             if call
-              @mod.expand_macro hook.macro, call, current_type.instance_type, @type_lookup
+              @program.expand_macro hook.macro, call, current_type.instance_type, @type_lookup
             else
-              @mod.expand_macro hook.macro.body, current_type.instance_type, @type_lookup
+              @program.expand_macro hook.macro.body, current_type.instance_type, @type_lookup
             end
           end
 
@@ -568,7 +568,7 @@ module Crystal
       generated_nodes = expand_macro(the_macro, node) do
         old_args = node.args
         node.args = args
-        expanded = @mod.expand_macro the_macro, node, expansion_scope, @type_lookup
+        expanded = @program.expand_macro the_macro, node, expansion_scope, @type_lookup
         node.args = old_args
         expanded
       end
@@ -593,7 +593,7 @@ module Crystal
                  MacroExpansionMode::Normal
                end
 
-      generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
+      generated_nodes = @program.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
         inside_def: !!@typed_def,
         inside_type: !current_type.is_a?(Program),
         inside_exp: @exp_nest > 0,
@@ -665,7 +665,7 @@ module Crystal
       the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
 
       generated_nodes = expand_macro(the_macro, node, mode: mode) do
-        @mod.expand_macro node, (@scope || current_type), @type_lookup, @free_vars
+        @program.expand_macro node, (@scope || current_type), @type_lookup, @free_vars
       end
 
       node.expanded = generated_nodes
@@ -720,8 +720,8 @@ module Crystal
       unless type.primitive_like?
         msg = String.build do |msg|
           msg << "only primitive types, pointers, structs, unions, enums and tuples are allowed in lib declarations"
-          msg << " (did you mean Int32?)" if type == @mod.int
-          msg << " (did you mean Float32?)" if type == @mod.float
+          msg << " (did you mean Int32?)" if type == @program.int
+          msg << " (did you mean Float32?)" if type == @program.float
         end
         node.raise msg
       end
@@ -813,7 +813,7 @@ module Crystal
 
     def interpret_enum_value_call_macro?(node : Call, target_type = nil)
       if node.global
-        node.scope = @mod
+        node.scope = @program
       else
         node.scope = @scope || current_type.metaclass
       end
@@ -864,16 +864,16 @@ module Crystal
       end
 
       location = node.location
-      filenames = @mod.find_in_path(node.string, location.try &.original_filename)
+      filenames = @program.find_in_path(node.string, location.try &.original_filename)
       if filenames
         nodes = Array(ASTNode).new(filenames.size)
         filenames.each do |filename|
-          if @mod.add_to_requires(filename)
-            parser = Parser.new File.read(filename), @mod.string_pool
+          if @program.add_to_requires(filename)
+            parser = Parser.new File.read(filename), @program.string_pool
             parser.filename = filename
-            parser.wants_doc = @mod.wants_doc?
+            parser.wants_doc = @program.wants_doc?
             parsed_nodes = parser.parse
-            parsed_nodes = @mod.normalize(parsed_nodes, inside_exp: inside_exp?)
+            parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
             # We must type the node immediately, in case a file requires another
             # *before* one of the files in `filenames`
             parsed_nodes.accept self
@@ -965,7 +965,7 @@ module Crystal
 
     def undefined_class_variable(node, owner)
       similar_name = lookup_similar_class_variable_name(node, owner)
-      @mod.undefined_class_variable(node, owner, similar_name)
+      @program.undefined_class_variable(node, owner, similar_name)
     end
 
     def lookup_similar_class_variable_name(node, owner)

@@ -39,13 +39,13 @@ class Crystal::CodeGenVisitor
       type_id = load union_type_id(@last)
 
       if has_nil
-        is_nil = equal? type_id, type_id(@mod.nil)
+        is_nil = equal? type_id, type_id(@program.nil)
         cond = and cond, not(is_nil)
       end
 
       if has_bool
         value = load(bit_cast union_value(@last), LLVM::Int1.pointer)
-        is_bool = equal? type_id, type_id(@mod.bool)
+        is_bool = equal? type_id, type_id(@program.bool)
         cond = and cond, not(and(is_bool, not(value)))
       end
 

@@ -13,7 +13,7 @@ class Crystal::CodeGenVisitor
       global = @main_mod.globals.add(llvm_type(type), global_name)
       global.linkage = LLVM::Linkage::Internal if @single_module
       global.thread_local = true if thread_local
-      if !global.initializer && type.includes_type?(@mod.nil_type)
+      if !global.initializer && type.includes_type?(@program.nil_type)
         global.initializer = llvm_type(type).null
       end
     end

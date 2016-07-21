@@ -344,7 +344,7 @@ class Crystal::CodeGenVisitor
             call_arg.set_type(a_def_arg.type)
           end
           if (node_block = node.block) && node_block.break.type?
-            call.set_type(@mod.type_merge [a_def.type, node_block.break.type] of Type)
+            call.set_type(@program.type_merge [a_def.type, node_block.break.type] of Type)
           else
             call.set_type(a_def.type)
           end

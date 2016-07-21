@@ -381,7 +381,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_cast(from_type : IntegerType, to_type : CharType, arg)
-    codegen_cast from_type, @mod.int32, arg
+    codegen_cast from_type, @program.int32, arg
   end
 
   def codegen_cast(from_type : CharType, to_type : IntegerType, arg)

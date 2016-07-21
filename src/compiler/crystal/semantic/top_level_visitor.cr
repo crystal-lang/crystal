@@ -104,12 +104,12 @@ module Crystal
 
       target.bind_to value
 
-      const = Const.new(@mod, current_type, target.names.first, value, @types.dup, @scope)
+      const = Const.new(@program, current_type, target.names.first, value, @types.dup, @scope)
       attach_doc const, node
 
       current_type.types[target.names.first] = const
 
-      node.type = @mod.nil
+      node.type = @program.nil
       target.target_const = const
     end
 
@@ -126,7 +126,7 @@ module Crystal
       if node_superclass
         superclass = lookup_path_type(node_superclass)
       else
-        superclass = node.struct? ? mod.struct : mod.reference
+        superclass = node.struct? ? program.struct : program.reference
       end
 
       if node_superclass.is_a?(Generic)
@@ -191,7 +191,7 @@ module Crystal
         when GenericClassType
           if node_superclass.is_a?(Generic)
             mapping = Hash.zip(superclass.type_vars, node_superclass.type_vars)
-            superclass = InheritedGenericClass.new(@mod, superclass, mapping)
+            superclass = InheritedGenericClass.new(@program, superclass, mapping)
           else
             node_superclass.not_nil!.wrong_number_of "type vars", superclass, 0, superclass.type_vars.size
           end
@@ -201,10 +201,10 @@ module Crystal
 
         created_new_type = true
         if type_vars = node.type_vars
-          type = GenericClassType.new @mod, scope, name, superclass, type_vars, false
+          type = GenericClassType.new @program, scope, name, superclass, type_vars, false
           type.splat_index = node.splat_index
         else
-          type = NonGenericClassType.new @mod, scope, name, superclass, false
+          type = NonGenericClassType.new @program, scope, name, superclass, false
         end
         type.abstract = node.abstract?
         type.struct = node.struct?
@@ -234,7 +234,7 @@ module Crystal
         type.force_add_subclass
       end
 
-      node.type = @mod.nil
+      node.type = @program.nil
 
       false
     end
@@ -253,10 +253,10 @@ module Crystal
         end
       else
         if type_vars = node.type_vars
-          type = GenericModuleType.new @mod, scope, name, type_vars
+          type = GenericModuleType.new @program, scope, name, type_vars
           type.splat_index = node.splat_index
         else
-          type = NonGenericModuleType.new @mod, scope, name
+          type = NonGenericModuleType.new @program, scope, name
         end
         scope.types[name] = type
       end
@@ -269,7 +269,7 @@ module Crystal
         node.body.accept self
       end
 
-      node.type = @mod.nil
+      node.type = @program.nil
 
       false
     end
@@ -290,11 +290,11 @@ module Crystal
         end
       end
 
-      alias_type = AliasType.new(@mod, current_type, node.name, node.value)
+      alias_type = AliasType.new(@program, current_type, node.name, node.value)
       attach_doc alias_type, node
       current_type.types[node.name] = alias_type
 
-      node.type = @mod.nil
+      node.type = @program.nil
 
       false
     end
@@ -333,7 +333,7 @@ module Crystal
         node.raise ex.message
       end
 
-      node.set_type @mod.nil
+      node.set_type @program.nil
       false
     end
 
@@ -378,7 +378,7 @@ module Crystal
       end
 
       target_type.add_def node
-      node.set_type @mod.nil
+      node.set_type @program.nil
 
       if is_instance_method
         # If it's an initialize method, we define a `self.new` for
@@ -391,7 +391,7 @@ module Crystal
           target_type.metaclass.add_def(new_method)
 
           # And we register it to later complete it
-          @mod.new_expansions << Program::NewExpansion.new(node, new_method)
+          @program.new_expansions << Program::NewExpansion.new(node, new_method)
         end
 
         run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)
@@ -424,7 +424,7 @@ module Crystal
 
       include_in current_type, node, :included
 
-      node.type = @mod.nil
+      node.type = @program.nil
 
       false
     end
@@ -434,7 +434,7 @@ module Crystal
 
       include_in current_type.metaclass, node, :extended
 
-      node.type = @mod.nil
+      node.type = @program.nil
 
       false
     end
@@ -448,7 +448,7 @@ module Crystal
       if type
         node.raise "#{node.name} is not a lib" unless type.is_a?(LibType)
       else
-        type = LibType.new @mod, current_type, node.name
+        type = LibType.new @program, current_type, node.name
         current_type.types[node.name] = type
       end
       node.resolved_type = type
@@ -463,7 +463,7 @@ module Crystal
         @lib_def_pass = 0
       end
 
-      node.type = @mod.nil
+      node.type = @program.nil
 
       false
     end
@@ -510,7 +510,7 @@ module Crystal
         end
 
         typed_def_type = check_primitive_like node.type_spec
-        current_type.types[node.name] = TypeDefType.new @mod, current_type, node.name, typed_def_type
+        current_type.types[node.name] = TypeDefType.new @program, current_type, node.name, typed_def_type
       end
     end
 
@@ -540,13 +540,13 @@ module Crystal
           base_type.raise "enum base type must be an integer type"
         end
       else
-        enum_base_type = @mod.int32
+        enum_base_type = @program.int32
       end
 
       is_flags = node.has_attribute?("Flags")
       all_value = interpret_enum_value(NumberLiteral.new(0), enum_base_type)
       existed = !!enum_type
-      enum_type ||= EnumType.new(@mod, scope, name, enum_base_type, is_flags)
+      enum_type ||= EnumType.new(@program, scope, name, enum_base_type, is_flags)
 
       node.resolved_type = enum_type
       attach_doc enum_type, node
@@ -582,7 +582,7 @@ module Crystal
         node.created_new_type = true
       end
 
-      node.type = mod.nil
+      node.type = program.nil
 
       false
     end
@@ -681,14 +681,14 @@ module Crystal
     def visit(node : VisibilityModifier)
       node.exp.visibility = node.modifier
       node.exp.accept self
-      node.type = @mod.nil
+      node.type = @program.nil
 
       # Can only apply visibility modifier to def, macro or a macro call
       case exp = node.exp
       when Def
         return false
       when Macro
-        if current_type != @mod.program
+        if current_type != @program.program
           node.raise "#{node.modifier.to_s.downcase} macros can only be declared at the top-level"
         end
 
@@ -767,7 +767,7 @@ module Crystal
 
     def visit(node : Call)
       if node.global
-        node.scope = @mod
+        node.scope = @program
       else
         node.scope = current_type.metaclass
       end
@@ -957,7 +957,7 @@ module Crystal
         end
 
         mapping = Hash.zip(type.type_vars, node_name_type_vars)
-        module_to_include = IncludedGenericModule.new(@mod, type, current_type, mapping)
+        module_to_include = IncludedGenericModule.new(@program, type, current_type, mapping)
 
         type.add_inherited(current_type)
       else
@@ -985,7 +985,7 @@ module Crystal
           node.raise "#{node.name} is already defined"
         end
       else
-        type = current_type.types[node.name] = klass.new @mod, current_type, node.name
+        type = current_type.types[node.name] = klass.new @program, current_type, node.name
       end
 
       if @lib_def_pass == 2

@@ -34,7 +34,7 @@ class Crystal::CodeGenVisitor
   # in the main function
   def initialize_argv_and_argc
     {"ARGC_UNSAFE", "ARGV_UNSAFE"}.each do |name|
-      const = @mod.types[name].as(Const)
+      const = @program.types[name].as(Const)
       global = declare_const(const)
       request_value do
         accept const.value
@@ -162,7 +162,7 @@ class Crystal::CodeGenVisitor
   end
 
   def read_const_pointer(const)
-    if const == @mod.argc || const == @mod.argv
+    if const == @program.argc || const == @program.argv
       global_name = const.llvm_name
       global = declare_const(const)
 

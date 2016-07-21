@@ -376,7 +376,7 @@ class Crystal::CodeGenVisitor
 
   def downcast_distinct(value, to_type : BoolType, from_type : MixedUnionType)
     value_ptr = union_value(value)
-    value = cast_to_pointer(value_ptr, @mod.int8)
+    value = cast_to_pointer(value_ptr, @program.int8)
     value = load(value)
     trunc value, LLVM::Int1
   end
@@ -564,7 +564,7 @@ class Crystal::CodeGenVisitor
   end
 
   def store_bool_in_union(union_type, union_pointer, value)
-    store type_id(value, @mod.bool), union_type_id(union_pointer)
+    store type_id(value, @program.bool), union_type_id(union_pointer)
 
     # To store a boolean in a union
     # we sign-extend it to the size in bits of the union
@@ -581,7 +581,7 @@ class Crystal::CodeGenVisitor
     union_value_type = llvm_union_value_type(target_type)
     value = union_value_type.null
 
-    store type_id(value, @mod.nil), union_type_id(union_pointer)
+    store type_id(value, @program.nil), union_type_id(union_pointer)
     casted_value_ptr = bit_cast union_value(union_pointer), union_value_type.pointer
     store value, casted_value_ptr
   end
