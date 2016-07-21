@@ -161,7 +161,7 @@ module Crystal
         node.raise "#{instance_type} is not a generic class, it's a #{instance_type.type_desc}"
       end
 
-      if instance_type.double_variadic
+      if instance_type.double_variadic?
         unless node.named_args
           node.raise "can only instantiate NamedTuple with named arguments"
         end
@@ -250,7 +250,7 @@ module Crystal
       else
         external = External.new(node.name, args, node.body, node.real_name).at(node)
         external.set_type(return_type)
-        external.varargs = node.varargs
+        external.varargs = node.varargs?
         external.fun_def = node
         external.call_convention = call_convention
         external.doc = node.doc
@@ -421,7 +421,7 @@ module Crystal
 
     def resolve_ident?(node : Path, create_modules_if_missing = false)
       free_vars = @free_vars
-      if free_vars && !node.global && (type_var = free_vars[node.names.first]?)
+      if free_vars && !node.global? && (type_var = free_vars[node.names.first]?)
         if type_var.is_a?(Type)
           target_type = type_var
           if node.names.size > 1
@@ -431,7 +431,7 @@ module Crystal
           target_type = type_var
         end
       else
-        base_lookup = node.global ? program : (@type_lookup || @scope || @types.last)
+        base_lookup = node.global? ? program : (@type_lookup || @scope || @types.last)
         target_type = lookup_type base_lookup, node, node
 
         unless target_type
@@ -473,7 +473,7 @@ module Crystal
     end
 
     def process_type_name(node_name)
-      if node_name.names.size == 1 && !node_name.global
+      if node_name.names.size == 1 && !node_name.global?
         scope = current_type
         name = node_name.names.first
       else
@@ -829,7 +829,7 @@ module Crystal
     end
 
     def interpret_enum_value_call_macro?(node : Call, target_type = nil)
-      if node.global
+      if node.global?
         node.scope = @program
       else
         node.scope = @scope || current_type.metaclass

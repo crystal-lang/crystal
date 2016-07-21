@@ -132,12 +132,12 @@ module Crystal
         meta_var = @meta_vars[node.name]
         check_closured meta_var
 
-        if var.nil_if_read
+        if var.nil_if_read?
           meta_var.bind_to(@program.nil_var) unless meta_var.dependencies.try &.any? &.same?(@program.nil_var)
           node.bind_to(@program.nil_var)
         end
 
-        if meta_var.closured
+        if meta_var.closured?
           var.bind_to(meta_var)
         end
 
@@ -383,7 +383,7 @@ module Crystal
     end
 
     def first_time_accessing_meta_type_var?(var)
-      return false if var.uninitialized
+      return false if var.uninitialized?
 
       if var.freeze_type
         deps = var.dependencies?
@@ -506,7 +506,7 @@ module Crystal
       simple_var = MetaVar.new(var_name)
       simple_var.bind_to(target)
 
-      if meta_var.closured
+      if meta_var.closured?
         simple_var.bind_to(meta_var)
       end
 
@@ -700,7 +700,7 @@ module Crystal
       binder.add_yield(node, @yield_vars)
       binder.update
 
-      unless block.visited
+      unless block.visited?
         # When we yield, we are no longer inside `untyped_def`, so we un-nest
         untyped_def = @untyped_def
         untyped_def.block_nest -= 1 if untyped_def
@@ -725,7 +725,7 @@ module Crystal
     end
 
     def visit(node : Block)
-      return if node.visited
+      return if node.visited?
 
       node.visited = true
       node.context = current_non_block_context
@@ -975,12 +975,12 @@ module Crystal
         @vars.each do |name, var|
           before_var = MetaVar.new(name)
           before_var.bind_to(var)
-          before_var.nil_if_read = var.nil_if_read
+          before_var.nil_if_read = var.nil_if_read?
           before_vars[name] = before_var
 
           after_var = MetaVar.new(name)
           after_var.bind_to(var)
-          after_var.nil_if_read = var.nil_if_read
+          after_var.nil_if_read = var.nil_if_read?
           after_vars[name] = after_var
           @vars[name] = after_var
         end
@@ -1004,7 +1004,7 @@ module Crystal
     end
 
     def prepare_call(node)
-      if node.global
+      if node.global?
         node.scope = @program
       else
         node.scope = @scope || current_type.metaclass
@@ -1647,7 +1647,7 @@ module Crystal
         next if then_var.same?(else_var)
 
         if_var = MetaVar.new(name)
-        if_var.nil_if_read = !!(then_var.try(&.nil_if_read) || else_var.try(&.nil_if_read))
+        if_var.nil_if_read = !!(then_var.try(&.nil_if_read?) || else_var.try(&.nil_if_read?))
 
         if then_var && else_var
           if then_unreachable
@@ -1709,7 +1709,7 @@ module Crystal
       @vars.each do |name, var|
         before_var = MetaVar.new(name)
         before_var.bind_to(var)
-        before_var.nil_if_read = var.nil_if_read
+        before_var.nil_if_read = var.nil_if_read?
         @vars[name] = before_var
       end
 
@@ -1739,7 +1739,7 @@ module Crystal
       @block = old_block
       @while_vars = old_while_vars
 
-      unless node.has_breaks
+      unless node.has_breaks?
         if endless_while
           node.type = program.no_return
           return
@@ -1765,7 +1765,7 @@ module Crystal
         if cond_var && (cond_var.name == name) && after_cond_var && !after_cond_var.same?(before_cond_var)
           after_while_var = MetaVar.new(name)
           after_while_var.bind_to(after_cond_var)
-          after_while_var.nil_if_read = after_cond_var.nil_if_read
+          after_while_var.nil_if_read = after_cond_var.nil_if_read?
           after_while_vars[name] = after_while_var
 
           # If there was a previous variable, we use that type merged
@@ -1776,14 +1776,14 @@ module Crystal
           # If the loop is endless
           if endless
             after_while_var.bind_to(while_var)
-            after_while_var.nil_if_read = while_var.nil_if_read
+            after_while_var.nil_if_read = while_var.nil_if_read?
           else
             # We need to bind to the variable *before* the condition, even
             # after before the variables that are used in the condition
             # `before_cond_vars` are modified in the while body
             after_while_var.bind_to(before_cond_vars_copy[name])
             after_while_var.bind_to(while_var)
-            after_while_var.nil_if_read = before_cond_var.nil_if_read || while_var.nil_if_read
+            after_while_var.nil_if_read = before_cond_var.nil_if_read? || while_var.nil_if_read?
           end
           after_while_vars[name] = after_while_var
 
@@ -2385,7 +2385,7 @@ module Crystal
       all_rescue_vars.each do |rescue_vars|
         rescue_vars.each do |name, var|
           after_var = (after_vars[name] ||= new_meta_var(name))
-          if var.nil_if_read || !body_vars[name]?
+          if var.nil_if_read? || !body_vars[name]?
             after_var.bind_to(program.nil_var)
             after_var.nil_if_read = true
           end
@@ -2762,7 +2762,7 @@ module Crystal
 
       @vars.each do |name, var|
         if name.starts_with? '@'
-          if var.nil_if_read
+          if var.nil_if_read?
             ivar = owner.lookup_instance_var(name)
             ivar.bind_to program.nil_var
           end

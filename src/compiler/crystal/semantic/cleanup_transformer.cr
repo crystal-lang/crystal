@@ -402,7 +402,7 @@ module Crystal
       end
 
       def visit(node : Var)
-        if @a_def.vars.try &.[node.name].closured
+        if @a_def.vars.try &.[node.name].closured?
           @vars << node
         end
       end
@@ -420,7 +420,7 @@ module Crystal
       node.args.each do |arg|
         case arg
         when ProcLiteral
-          if arg.def.closure
+          if arg.def.closure?
             vars = ClosuredVarsCollector.collect arg.def
             unless vars.empty?
               message += " (closured vars: #{vars.join ", "})"

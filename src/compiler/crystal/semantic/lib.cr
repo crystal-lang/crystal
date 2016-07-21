@@ -29,7 +29,7 @@ class Crystal::Call
     self.unbind_from old_target_defs if old_target_defs
     self.bind_to untyped_defs
 
-    if (parent_visitor = @parent_visitor) && (ptyped_def = parent_visitor.typed_def?) && untyped_defs.try(&.any?(&.raises))
+    if (parent_visitor = @parent_visitor) && (ptyped_def = parent_visitor.typed_def?) && untyped_defs.try(&.any?(&.raises?))
       ptyped_def.raises = true
     end
   end
@@ -38,7 +38,7 @@ class Crystal::Call
     named_args = self.named_args
     return unless named_args
 
-    if external.varargs
+    if external.varargs?
       raise "can't use named args with variadic function"
     end
 
@@ -97,7 +97,7 @@ class Crystal::Call
     call_args_count = args.size
     all_args_count = external.args.size
 
-    if external.varargs && call_args_count >= all_args_count
+    if external.varargs? && call_args_count >= all_args_count
       return
     end
 
@@ -133,7 +133,7 @@ class Crystal::Call
     end
 
     # Check that there are no out args more then the number of arguments in the fun
-    if untyped_def.varargs
+    if untyped_def.varargs?
       untyped_def.args.size.upto(self.args.size - 1) do |i|
         self_arg = self.args[i]
         if self_arg.is_a?(Out)
@@ -150,7 +150,7 @@ class Crystal::Call
     end
 
     # Need to call to_unsafe on variadic args too
-    if typed_def.varargs
+    if typed_def.varargs?
       typed_def.args.size.upto(self.args.size - 1) do |i|
         self_arg = self.args[i]
         self_arg_type = self_arg.type?

@@ -86,7 +86,7 @@ class Crystal::CodeGenVisitor
 
     # For unsafe class var we just initialize them without
     # using a flag to know if they were initialized
-    if class_var.uninitialized
+    if class_var.uninitialized?
       global = declare_class_var(owner, name, class_var.type, class_var.thread_local?)
       global = ensure_class_var_in_this_module(global, owner, name, class_var.type, class_var.thread_local?)
       func = @main_mod.functions[init_function_name]? ||
@@ -177,7 +177,7 @@ class Crystal::CodeGenVisitor
     end
 
     initializer = class_var.initializer
-    if !initializer || class_var.uninitialized
+    if !initializer || class_var.uninitialized?
       # Read directly without init flag, but make sure to declare the global in this module too
       global_name = class_var_global_name(class_var.owner, class_var.name)
       global = get_global global_name, class_var.type, class_var

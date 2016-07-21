@@ -372,13 +372,13 @@ module Crystal
     property! original_owner : Type
     property vars : MetaVars?
     property yield_vars : Array(Var)?
-    getter raises = false
-    property closure = false
-    property self_closured = false
     property previous : DefWithMetadata?
     property next : Def?
     getter special_vars : Set(String)?
     property block_nest = 0
+    getter? raises = false
+    property? closure = false
+    property? self_closured = false
     property? captured_block = false
 
     # `true` if this def has the `@[NoInline]` attribute
@@ -427,8 +427,8 @@ module Crystal
 
     def clone_without_location
       a_def = previous_def
-      a_def.raises = raises
       a_def.previous = previous
+      a_def.raises = raises?
       a_def.no_inline = no_inline?
       a_def.always_inline = always_inline?
       a_def.returns_twice = returns_twice?
@@ -463,6 +463,91 @@ module Crystal
       Splat.match(self, objects) do |arg, arg_index, object, object_index|
         yield arg, arg_index, object, object_index
       end
+    end
+
+    def matches?(call_args, named_args)
+      call_args_size = call_args.size
+      my_args_size = args.size
+      min_args_size = args.index(&.default_value) || my_args_size
+      max_args_size = my_args_size
+      splat_index = self.splat_index
+
+      if splat_index
+        if args[splat_index].external_name.empty?
+          min_args_size = max_args_size = splat_index
+        else
+          min_args_size -= 1
+          max_args_size = Int32::MAX
+        end
+      end
+
+      # If there are arguments past the splat index and no named args, there's no match,
+      # unless all args past it have default values
+      if splat_index && my_args_size > splat_index + 1 && !named_args
+        unless (splat_index + 1...args.size).all? { |i| args[i].default_value }
+          return false
+        end
+      end
+
+      # If there are more positional arguments than those required, there's no match
+      # (if there's less they might be matched with named arguments)
+      if call_args_size > max_args_size
+        return false
+      end
+
+      # If there are named args we must check that all mandatory args
+      # are covered by positional arguments or named arguments.
+      if named_args
+        mandatory_args = BitArray.new(my_args_size)
+      elsif call_args_size < min_args_size
+        # Otherwise, they must be matched by positional arguments
+        return false
+      end
+
+      self.match(call_args) do |my_arg, my_arg_index, call_arg, call_arg_index|
+        mandatory_args[my_arg_index] = true if mandatory_args
+      end
+
+      # Check named args
+      named_args.try &.each do |named_arg|
+        found_index = args.index { |arg| arg.external_name == named_arg.name }
+        if found_index
+          # A named arg can't target the splat index
+          if found_index == splat_index
+            return false
+          end
+
+          # Check whether the named arg refers to an argument that was already specified
+          if mandatory_args
+            if mandatory_args[found_index]
+              return false
+            end
+
+            mandatory_args[found_index] = true
+          else
+            if found_index < call_args_size
+              return false
+            end
+          end
+        else
+          # A double splat matches all named args
+          next if double_splat
+
+          return false
+        end
+      end
+
+      # Check that all mandatory args were specified
+      # (either with positional arguments or with named arguments)
+      if mandatory_args
+        self.args.each_with_index do |arg, index|
+          if index != splat_index && !arg.default_value && !mandatory_args[index]
+            return false
+          end
+        end
+      end
+
+      true
     end
   end
 
@@ -557,7 +642,7 @@ module Crystal
   end
 
   class TypeOf
-    property in_type_args = false
+    property? in_type_args = false
 
     def map_type(type)
       @in_type_args ? type : type.metaclass
@@ -647,7 +732,7 @@ module Crystal
   end
 
   class ProcLiteral
-    property force_nil = false
+    property? force_nil = false
     property expected_return_type : Type?
 
     def update(from = nil)
@@ -675,7 +760,7 @@ module Crystal
   class Generic
     property! instance_type : GenericClassType
     property scope : Type?
-    property in_type_args = false
+    property? in_type_args = false
 
     def update(from = nil)
       instance_type = self.instance_type
@@ -842,21 +927,21 @@ module Crystal
 
     property name : String
 
-    # True if we need to mark this variable as nilable
-    # if this variable is read.
-    property nil_if_read = false
-
     # This is the context of the variable: who allocates it.
     # It can either be the Program (for top level variables),
     # a Def or a Block.
     property context : ASTNode | NonGenericModuleType | Nil
 
+    # True if we need to mark this variable as nilable
+    # if this variable is read.
+    property? nil_if_read = false
+
     # A variable is closured if it's used in a ProcLiteral context
     # where it wasn't created.
-    property closured = false
+    property? closured = false
 
     # Is this metavar assigned a value?
-    property assigned_to = false
+    property? assigned_to = false
 
     def initialize(@name : String, @type : Type? = nil)
     end
@@ -864,7 +949,7 @@ module Crystal
     # True if this variable belongs to the given context
     # but must be allocated in a closure.
     def closure_in?(context)
-      closured && belongs_to?(context)
+      closured? && belongs_to?(context)
     end
 
     # True if this variable belongs to the given context.
@@ -886,9 +971,9 @@ module Crystal
         io << " : "
         type.to_s(io)
       end
-      io << " (nil-if-read)" if nil_if_read
-      io << " (closured)" if closured
-      io << " (assigned-to)" if assigned_to
+      io << " (nil-if-read)" if nil_if_read?
+      io << " (closured)" if closured?
+      io << " (assigned-to)" if assigned_to?
       io << " (object id: #{object_id})"
     end
   end
@@ -904,15 +989,15 @@ module Crystal
     # error messages.
     property! owner : Type
 
+    # The (optional) initial value of a class variable
+    property initializer : ClassVarInitializer?
+
     # Is this variable thread local? Only applicable
     # to global and class variables.
     property? thread_local = false
 
-    # The (optional) initial value of a class variable
-    property initializer : ClassVarInitializer?
-
     # Is this variable "unsafe" (no need to check if it was initialized)?
-    property uninitialized = false
+    property? uninitialized = false
 
     def kind
       case name[0]
@@ -1091,13 +1176,13 @@ module Crystal
   end
 
   class Block
-    property visited = false
     property scope : Type?
     property vars : MetaVars?
     property after_vars : MetaVars?
     property context : Def | NonGenericModuleType | Nil
     property fun_literal : ASTNode?
     property binder : YieldBlockBinder?
+    property? visited = false
 
     def break
       @break ||= Var.new("%break")
@@ -1105,8 +1190,8 @@ module Crystal
   end
 
   class While
-    property has_breaks = false
     property break_vars : Array(MetaVars)?
+    property? has_breaks = false
   end
 
   class Break
@@ -1165,7 +1250,7 @@ module Crystal
     include RuntimeInitializable
 
     property! resolved_type : ClassType
-    property created_new_type = false
+    property? created_new_type = false
   end
 
   class ModuleDef
@@ -1193,9 +1278,10 @@ module Crystal
   end
 
   class External
-    property dead = false
-    property used = false
     property call_convention : LLVM::CallConvention?
+
+    property? dead = false
+    property? used = false
 
     # An External is also used to represent external variables
     # such as libc's `$errno`, which can be annotated with
@@ -1205,7 +1291,7 @@ module Crystal
 
   class EnumDef
     property! resolved_type : EnumType
-    property created_new_type = false
+    property? created_new_type = false
   end
 
   class Yield

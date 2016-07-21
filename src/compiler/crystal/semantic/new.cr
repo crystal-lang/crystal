@@ -120,7 +120,7 @@ module Crystal
       new_def.new = true
 
       # Forward block argument if any
-      if uses_block_arg
+      if uses_block_arg?
         block_arg = self.block_arg.not_nil!
         new_def.block_arg = block_arg.clone
         new_def.uses_block_arg = true
@@ -192,7 +192,7 @@ module Crystal
       exps << obj
 
       # Forward block argument if any
-      if uses_block_arg
+      if uses_block_arg?
         block_arg = self.block_arg.not_nil!
         init.block_arg = Var.new(block_arg.name)
       end
@@ -255,7 +255,7 @@ module Crystal
       expansion = Def.new(name, def_args, Nop.new, splat_index: splat_index)
       expansion.yields = yields
       expansion.visibility = Visibility::Private if visibility.private?
-      if uses_block_arg
+      if uses_block_arg?
         block_arg = self.block_arg.not_nil!
         expansion.block_arg = block_arg.clone
         expansion.uses_block_arg = true

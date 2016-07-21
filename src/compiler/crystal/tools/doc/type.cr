@@ -520,7 +520,7 @@ class Crystal::Doc::Type
     type = @type
     if type_vars = type_vars()
       io << '('
-      io << "**" if type.is_a?(GenericType) && type.double_variadic
+      io << "**" if type.is_a?(GenericType) && type.double_variadic?
       type_vars.each_with_index do |type_var, i|
         io << ", " if i > 0
         io << '*' if type.is_a?(GenericType) && type.splat_index == i
@@ -536,7 +536,7 @@ class Crystal::Doc::Type
 
   def node_to_html(node : Path, io, links = true)
     # We don't want "::" prefixed in from of paths in the docs
-    old_global = node.global
+    old_global = node.global?
     node.global = false
 
     begin

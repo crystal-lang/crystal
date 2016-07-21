@@ -265,7 +265,7 @@ module Crystal
       need_parens = need_parens(node_obj)
       call_args_need_parens = false
 
-      @str << "::" if node.global
+      @str << "::" if node.global?
 
       if node_obj && (node.name == "[]" || node.name == "[]?")
         in_parenthesis(need_parens, node_obj)
@@ -656,11 +656,11 @@ module Crystal
     end
 
     def visit(node : MacroExpression)
-      @str << (node.output ? "{{" : "{% ")
-      @str << " " if node.output
+      @str << (node.output? ? "{{" : "{% ")
+      @str << " " if node.output?
       node.exp.accept self
-      @str << " " if node.output
-      @str << (node.output ? "}}" : " %}")
+      @str << " " if node.output?
+      @str << (node.output? ? "}}" : " %}")
       false
     end
 
@@ -777,7 +777,7 @@ module Crystal
 
     def visit(node : Path)
       node.names.each_with_index do |name, i|
-        @str << "::" if i > 0 || node.global
+        @str << "::" if i > 0 || node.global?
         @str << name
       end
     end
@@ -1071,11 +1071,11 @@ module Crystal
           end
           arg.restriction.not_nil!.accept self
         end
-        if node.varargs
+        if node.varargs?
           @str << ", ..."
         end
         @str << ")"
-      elsif node.varargs
+      elsif node.varargs?
         @str << "(...)"
       end
       if node_return_type = node.return_type
@@ -1145,7 +1145,7 @@ module Crystal
 
     def visit(node : RangeLiteral)
       node.from.accept self
-      if node.exclusive
+      if node.exclusive?
         @str << "..."
       else
         @str << ".."
@@ -1389,19 +1389,19 @@ module Crystal
           clobber.inspect(@str)
         end
       end
-      if node.volatile || node.alignstack || node.intel
+      if node.volatile? || node.alignstack? || node.intel?
         @str << " : "
         comma = false
-        if node.volatile
+        if node.volatile?
           @str << %("volatile")
           comma = true
         end
-        if node.alignstack
+        if node.alignstack?
           @str << ", " if comma
           @str << %("alignstack")
           comma = true
         end
-        if node.intel
+        if node.intel?
           @str << ", " if comma
           @str << %("intel")
           comma = true

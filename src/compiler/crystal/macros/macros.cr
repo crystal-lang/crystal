@@ -235,7 +235,7 @@ module Crystal
       def visit(node : MacroExpression)
         node.exp.accept self
 
-        if node.output
+        if node.output?
           if node.exp.is_a?(Yield) && !@last.is_a?(Nop)
             var_name = @program.new_temp_var_name
             yields = @yields ||= {} of String => ASTNode
@@ -320,12 +320,10 @@ module Crystal
 
           to = to.to_number.to_i
 
-          exclusive = exp.exclusive
-
           element_var = node.vars[0]
           index_var = node.vars[1]?
 
-          range = Range.new(from, to, exclusive)
+          range = Range.new(from, to, exp.exclusive?)
           range.each_with_index do |element, index|
             @vars[element_var.name] = NumberLiteral.new(element)
             if index_var
@@ -538,7 +536,7 @@ module Crystal
             when GenericClassInstanceType
               produce_tuple = ((splat_index = type_lookup.splat_index) &&
                 type_lookup.type_vars.keys.index(node.names.first) == splat_index) ||
-                (type_lookup.double_variadic && type_lookup.type_vars.first_key == node.names.first)
+                (type_lookup.double_variadic? && type_lookup.type_vars.first_key == node.names.first)
             when IncludedGenericModule
               a_module = type_lookup.module
               produce_tuple = (splat_index = a_module.splat_index) &&

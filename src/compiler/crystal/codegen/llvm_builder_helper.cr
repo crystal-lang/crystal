@@ -72,23 +72,9 @@ module Crystal
       builder.inbounds_gep ptr, index0, index1, name
     end
 
-    delegate ptr2int, to: builder
-    delegate int2ptr, to: builder
-    delegate and, to: builder
-    delegate or, to: builder
-    delegate not, to: builder
-    delegate call, to: builder
-    delegate bit_cast, to: builder
-    delegate trunc, to: builder
-    delegate load, to: builder
-    delegate store, to: builder
-    delegate br, to: builder
-    delegate insert_block, to: builder
-    delegate position_at_end, to: builder
-    delegate unreachable, to: builder
-    delegate cond, to: builder
-    delegate phi, to: builder
-    delegate extract_value, to: builder
+    delegate ptr2int, int2ptr, and, or, not, call, bit_cast,
+      trunc, load, store, br, insert_block, position_at_end, unreachable,
+      cond, phi, extract_value, to: builder
 
     def ret
       builder.ret
@@ -142,13 +128,8 @@ module Crystal
       bit_cast value, llvm_type(type).pointer
     end
 
-    delegate llvm_type, to: llvm_typer
-    delegate llvm_struct_type, to: llvm_typer
-    delegate llvm_arg_type, to: llvm_typer
-    delegate llvm_embedded_type, to: llvm_typer
-    delegate llvm_c_type, to: llvm_typer
-    delegate llvm_c_return_type, to: llvm_typer
-    delegate llvm_return_type, to: llvm_typer
+    delegate llvm_type, llvm_struct_type, llvm_arg_type, llvm_embedded_type,
+      llvm_c_type, llvm_c_return_type, llvm_return_type, to: llvm_typer
 
     def llvm_proc_type(type)
       llvm_typer.proc_type(type.as(ProcInstanceType))

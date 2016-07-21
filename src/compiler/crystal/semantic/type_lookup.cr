@@ -261,7 +261,7 @@ module Crystal
 
   class Type
     def lookup_type(node : Path, lookup_in_container = true)
-      (node.global ? program : self).lookup_type(node.names, lookup_in_container: lookup_in_container)
+      (node.global? ? program : self).lookup_type(node.names, lookup_in_container: lookup_in_container)
     rescue ex : Crystal::Exception
       raise ex
     rescue ex
@@ -455,7 +455,6 @@ module Crystal
   end
 
   class AliasType
-    delegate types, to: aliased_type
-    delegate types?, to: aliased_type
+    delegate types, types?, to: aliased_type
   end
 end

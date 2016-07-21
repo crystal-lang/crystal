@@ -80,7 +80,7 @@ class Crystal::Call
     bind_to block.break if block
 
     if (parent_visitor = @parent_visitor) && matches
-      if parent_visitor.typed_def? && matches.any?(&.raises)
+      if parent_visitor.typed_def? && matches.any?(&.raises?)
         @raises = true
         parent_visitor.typed_def.raises = true
       end
@@ -294,7 +294,7 @@ class Crystal::Call
     # If this call is an expansion (because of default or named args) we must
     # resolve the call in the type that defined the original method, without
     # triggering a virtual lookup. But the context of lookup must be preseved.
-    if is_expansion?
+    if expansion?
       matches = bubbling_exception do
         target = parent_visitor.typed_def.original_owner
         if search_in_parents
@@ -391,7 +391,7 @@ class Crystal::Call
             visitor.scope = lookup_self_type
             visitor.type_lookup = match.context.type_lookup
 
-            yields_to_block = block && !match.def.uses_block_arg
+            yields_to_block = block && !match.def.uses_block_arg?
 
             if yields_to_block
               raise_if_block_too_nested(match.def.block_nest)
@@ -691,7 +691,7 @@ class Crystal::Call
   def match_block_arg(match)
     block_arg = match.def.block_arg
     return nil, nil unless block_arg
-    return nil, nil unless match.def.yields || match.def.uses_block_arg
+    return nil, nil unless match.def.yields || match.def.uses_block_arg?
 
     yield_vars = nil
     block_arg_type = nil
@@ -764,7 +764,7 @@ class Crystal::Call
     end
 
     # If the block is used, we convert it to a function pointer
-    if match.def.uses_block_arg
+    if match.def.uses_block_arg?
       # Create the arguments of the function literal
       if yield_vars
         fun_args = yield_vars.map_with_index do |var, i|

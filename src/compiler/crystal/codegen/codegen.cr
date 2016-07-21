@@ -317,8 +317,8 @@ module Crystal
         return false
       end
 
-      unless node.external.dead
-        if node.external.used
+      unless node.external.dead?
+        if node.external.used?
           codegen_fun node.real_name, node.external, @program, is_exported_fun: true
         else
           # If the fun is not invoked we codegen it at the end so
@@ -450,12 +450,12 @@ module Crystal
 
     def visit(node : ProcLiteral)
       fun_literal_name = fun_literal_name(node)
-      is_closure = node.def.closure
+      is_closure = node.def.closure?
 
       # If we don't care about a proc literal's return type then we mark the associated
       # def as returning void. This can't be done in the type inference phase because
       # of bindings and type propagation.
-      if node.force_nil
+      if node.force_nil?
         node.def.set_type @program.nil
       else
         # Use proc literal's type, which might have a broader type then the body
@@ -1644,13 +1644,8 @@ module Crystal
     end
 
     def alloca_vars(vars, obj = nil, args = nil, parent_context = nil)
-      self_closured = false
-      if obj.is_a?(Def)
-        self_closured = obj.self_closured
-      end
-
+      self_closured = obj.is_a?(Def) && obj.self_closured?
       closured_vars = closured_vars(vars, obj)
-
       alloca_non_closured_vars(vars, obj, args)
       malloc_closure closured_vars, context, parent_context, self_closured
     end

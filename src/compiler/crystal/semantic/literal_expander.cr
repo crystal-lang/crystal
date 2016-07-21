@@ -287,7 +287,7 @@ module Crystal
     #    Range.new(1, 3, false)
     def expand(node : RangeLiteral)
       path = Path.global("Range").at(node)
-      bool = BoolLiteral.new(node.exclusive).at(node)
+      bool = BoolLiteral.new(node.exclusive?).at(node)
       Call.new(path, "new", [node.from, node.to, bool]).at(node)
     end
 

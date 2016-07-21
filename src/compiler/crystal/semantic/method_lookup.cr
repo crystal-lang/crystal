@@ -328,8 +328,7 @@ module Crystal
   end
 
   class AliasType
-    delegate lookup_matches, to: aliased_type
-    delegate lookup_matches_without_parents, to: aliased_type
+    delegate lookup_matches, lookup_matches_without_parents, to: aliased_type
   end
 
   module VirtualTypeLookup

@@ -128,7 +128,7 @@ class Crystal::CodeGenVisitor
   def call_abi_info(target_def, node)
     # For varargs we need to compute abi info for the arguments, which may be more
     # than those specified in the function definition
-    if target_def.varargs
+    if target_def.varargs?
       abi_info(target_def, node)
     else
       abi_info(target_def)
@@ -272,7 +272,7 @@ class Crystal::CodeGenVisitor
     fun_literal.accept self
     call_args.push @last
 
-    codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
+    codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises?, target_def.type)
   end
 
   def codegen_dispatch(node, target_defs)
@@ -379,7 +379,7 @@ class Crystal::CodeGenVisitor
     end
 
     func = target_def_fun(target_def, self_type)
-    codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises, target_def.type)
+    codegen_call_or_invoke(node, target_def, self_type, func, call_args, target_def.raises?, target_def.type)
   end
 
   # If a method's body is just a simple literal, "self", or an instance variable,

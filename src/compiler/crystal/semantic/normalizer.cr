@@ -85,7 +85,7 @@ module Crystal
       # Copy enclosing def's args to super/previous_def without parenthesis
       case node.name
       when "super", "previous_def"
-        if node.args.empty? && !node.has_parentheses
+        if node.args.empty? && !node.has_parentheses?
           if current_def = @current_def
             current_def.args.each_with_index do |arg, i|
               arg = Var.new(arg.name)
@@ -137,7 +137,7 @@ module Crystal
       # and it doesn't use it, we remove it because it's useless
       # and the semantic code won't have to bother checking it
       block_arg = node.block_arg
-      if !node.uses_block_arg && block_arg
+      if !node.uses_block_arg? && block_arg
         block_arg_restriction = block_arg.restriction
         if block_arg_restriction.is_a?(ProcNotation) && !block_arg_restriction.inputs && !block_arg_restriction.output
           node.block_arg = nil

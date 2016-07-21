@@ -429,7 +429,7 @@ module Crystal
       # super or assign all of those variables
       if ancestor_non_nilable
         infos.each do |info|
-          unless info.def.calls_super || info.def.calls_initialize
+          unless info.def.calls_super? || info.def.calls_initialize?
             ancestor_non_nilable.each do |name|
               # If the variable is initialized outside, it's OK
               next if initialized_outside?(owner, name)
@@ -458,7 +458,7 @@ module Crystal
         infos.each do |info|
           # If an initialize calls another initialize, consider it like it initializes
           # all instance vars, because the other initialize will have to do that
-          next if info.def.calls_initialize
+          next if info.def.calls_initialize?
 
           # It's non-nilable if it's initialized outside
           next if initialized_outside?(owner, instance_var)
@@ -573,7 +573,7 @@ module Crystal
       class_var = owner.class_vars[name]?
       return unless class_var
 
-      return if class_var.uninitialized
+      return if class_var.uninitialized?
 
       var_type = class_var.type?
       return unless var_type

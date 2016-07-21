@@ -190,7 +190,7 @@ module Crystal
       when Underscore, Var, InstanceVar, ClassVar, Global, Path, Assign
         true
       when Call
-        !exp.has_parentheses && (
+        !exp.has_parentheses? && (
           (exp.args.empty? && !exp.named_args) ||
             (exp.name[0].alpha? && exp.name.ends_with?('=')) ||
             exp.name == "[]" || exp.name == "[]="

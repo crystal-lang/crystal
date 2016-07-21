@@ -867,7 +867,7 @@ module Crystal
     def visit(node : RangeLiteral)
       accept node.from
       skip_space_or_newline
-      write_token(node.exclusive ? :"..." : :"..")
+      write_token(node.exclusive? ? :"..." : :"..")
       skip_space_or_newline
       accept node.to
       false
@@ -900,7 +900,7 @@ module Crystal
       check_open_paren
 
       # Sometimes the :: is not present because the parser generates ::Nil, for example
-      if node.global && @token.type == :"::"
+      if node.global? && @token.type == :"::"
         write "::"
         next_token_skip_space_or_newline
       end
@@ -924,7 +924,7 @@ module Crystal
 
     def visit(node : Generic)
       name = node.name
-      first_name = name.global && name.names.size == 1 && name.names.first
+      first_name = name.global? && name.names.size == 1 && name.names.first
 
       # Check if it's T* instead of Pointer(T)
       if first_name == "Pointer" && @token.value != "Pointer"
@@ -1534,7 +1534,7 @@ module Crystal
         end
       end
 
-      format_def_args node.args, nil, nil, node.varargs, nil
+      format_def_args node.args, nil, nil, node.varargs?, nil
 
       if return_type = node.return_type
         skip_space
@@ -1614,7 +1614,7 @@ module Crystal
 
       old_column = @column
 
-      if node.output
+      if node.output?
         if inside_macro?
           check :MACRO_EXPRESSION_START
         else
@@ -1638,7 +1638,7 @@ module Crystal
       has_newline = @token.type == :NEWLINE
       skip_space_or_newline
 
-      if (has_space || !node.output) && !has_newline
+      if (has_space || !node.output?) && !has_newline
         write " "
       end
 
@@ -1656,7 +1656,7 @@ module Crystal
       skip_space_or_newline
       @macro_state = macro_state
 
-      if node.output
+      if node.output?
         if has_space && !has_newline
           write " "
         elsif has_newline
@@ -2045,7 +2045,7 @@ module Crystal
         return false
       end
 
-      write_token :"::" if node.global
+      write_token :"::" if node.global?
 
       if obj
         {:"!", :"+", :"-", :"~"}.each do |op|

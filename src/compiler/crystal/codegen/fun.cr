@@ -151,7 +151,7 @@ class Crystal::CodeGenVisitor
 
     args.concat target_def.args
 
-    if target_def.uses_block_arg
+    if target_def.uses_block_arg?
       block_arg = target_def.block_arg.not_nil!
       args.push Arg.new(block_arg.name, type: block_arg.type)
     end
@@ -287,7 +287,7 @@ class Crystal::CodeGenVisitor
   end
 
   def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
-    context.fun = @llvm_mod.functions.add(mangled_name, llvm_args_types, llvm_return_type, target_def.varargs)
+    context.fun = @llvm_mod.functions.add(mangled_name, llvm_args_types, llvm_return_type, target_def.varargs?)
 
     context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
     context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
@@ -364,7 +364,7 @@ class Crystal::CodeGenVisitor
     else
       # We don't need to create a copy of the argument if it's never
       # assigned a value inside the function.
-      needs_copy = target_def_var.try &.assigned_to
+      needs_copy = target_def_var.try &.assigned_to?
       if needs_copy && !arg.special_var?
         pointer = alloca(llvm_type(var_type), arg.name)
         context.vars[arg.name] = LLVMVar.new(pointer, var_type)

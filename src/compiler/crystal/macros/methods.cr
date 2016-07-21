@@ -457,7 +457,7 @@ module Crystal
             end
 
             from, to = from.to_number.to_i, to = to.to_number.to_i
-            range = Range.new(from, to, arg.exclusive)
+            range = Range.new(from, to, arg.exclusive?)
             StringLiteral.new(@value[range])
           else
             raise "wrong argument for StringLiteral#[] (#{arg.class_desc}): #{arg}"
@@ -786,7 +786,7 @@ module Crystal
       when "end"
         interpret_argless_method(method, args) { self.to }
       when "excludes_end?"
-        interpret_argless_method(method, args) { BoolLiteral.new(self.exclusive) }
+        interpret_argless_method(method, args) { BoolLiteral.new(self.exclusive?) }
       when "map"
         raise "map expects a block" unless block
 
@@ -831,7 +831,7 @@ module Crystal
       from = from.to_number.to_i
       to = to.to_number.to_i
 
-      self.exclusive ? (from...to) : (from..to)
+      self.exclusive? ? (from...to) : (from..to)
     end
   end
 

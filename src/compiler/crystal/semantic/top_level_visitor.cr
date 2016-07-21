@@ -767,11 +767,7 @@ module Crystal
     end
 
     def visit(node : Call)
-      if node.global
-        node.scope = @program
-      else
-        node.scope = current_type.metaclass
-      end
+      node.scope = node.global? ? @program : current_type.metaclass
 
       if expand_macro(node, raise_on_missing_const: false, first_pass: true)
         false
