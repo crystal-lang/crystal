@@ -1,28 +1,41 @@
 module Crystal
   # Base class for nodes in the grammar.
   abstract class ASTNode
+    # The location where this node starts, or `nil`
+    # if the location is not known.
     property location : Location?
+
+    # The location where this node ends, or `nil`
+    # if the location is not known.
     property end_location : Location?
 
+    # Updates this node's location and returns `self`
     def at(@location : Location?)
       self
     end
 
+    # Sets this node's location and end location to those
+    # of `node`, and returns `self`
     def at(node : ASTNode)
       @location = node.location
       @end_location = node.end_location
       self
     end
 
+    # Updates this node's end location and returns `self`
+    def at_end(@end_location : Location?)
+      self
+    end
+
+    # Sets this node's end location to those of `node` and
+    # returns self
     def at_end(node : ASTNode)
       @end_location = node.end_location
       self
     end
 
-    def at_end(@end_location : Location?)
-      self
-    end
-
+    # Returns a deep copy of this node. Copied nodes retain
+    # the location and end location of the original nodes.
     def clone
       clone = clone_without_location
       clone.location = location
@@ -541,12 +554,12 @@ module Crystal
 
     def name_location
       loc = location.not_nil!
-      Location.new(loc.line_number, name_column_number, loc.filename)
+      Location.new(loc.filename, loc.line_number, name_column_number)
     end
 
     def name_end_location
       loc = location.not_nil!
-      Location.new(loc.line_number, name_column_number + name_size, loc.filename)
+      Location.new(loc.filename, loc.line_number, name_column_number + name_size)
     end
 
     def_equals_and_hash obj, name, args, block, block_arg, named_args, global

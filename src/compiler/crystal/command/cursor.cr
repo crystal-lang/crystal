@@ -45,7 +45,7 @@ class Crystal::Command
 
     file = File.expand_path(file)
 
-    result = yield Location.new(line_number, column_number, file), config, result
+    result = yield Location.new(file, line_number, column_number), config, result
 
     case format
     when "json"

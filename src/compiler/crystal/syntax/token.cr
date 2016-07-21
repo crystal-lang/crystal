@@ -83,7 +83,7 @@ module Crystal
     @location : Location?
 
     def location
-      @location ||= Location.new(line_number, column_number, filename)
+      @location ||= Location.new(filename, line_number, column_number)
     end
 
     def location=(@location)

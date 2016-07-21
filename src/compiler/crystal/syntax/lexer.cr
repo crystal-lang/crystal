@@ -1083,7 +1083,7 @@ module Crystal
     end
 
     def token_end_location
-      @token_end_location ||= Location.new(@line_number, @column_number - 1, @filename)
+      @token_end_location ||= Location.new(@filename, @line_number, @column_number - 1)
     end
 
     def slash_is_regex!
