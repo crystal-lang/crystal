@@ -182,11 +182,11 @@ class Array(T)
   # [2] <=> [4, 2, 3] # => -1
   # [1, 2] <=> [1, 2] # => 0
   # ```
-  def <=>(other : Array)
+  def <=>(other : Array) : Order
     min_size = Math.min(size, other.size)
     0.upto(min_size - 1) do |i|
       n = @buffer[i] <=> other.to_unsafe[i]
-      return n if n != 0
+      return n if n != Order::EQ
     end
     size <=> other.size
   end
@@ -1794,7 +1794,7 @@ class Array(T)
     dup.sort!
   end
 
-  def sort(&block : T, T -> Int32)
+  def sort(&block : T, T -> Order)
     dup.sort! &block
   end
 
@@ -1813,7 +1813,7 @@ class Array(T)
     self
   end
 
-  def sort!(&block : T, T -> Int32)
+  def sort!(&block : T, T -> Order)
     Array.quicksort!(@buffer, @size, block)
     self
   end
@@ -2048,9 +2048,9 @@ class Array(T)
     l = a
     r = a + n - 1
     while l <= r
-      if comp.call(l.value, p) < 0
+      if comp.call(l.value, p) < Order::EQ
         l += 1
-      elsif comp.call(r.value, p) > 0
+      elsif comp.call(r.value, p) > Order::EQ
         r -= 1
       else
         t = l.value

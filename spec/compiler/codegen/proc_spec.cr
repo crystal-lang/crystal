@@ -171,7 +171,7 @@ describe "Code gen: proc" do
       LibC.qsort((ary.to_unsafe as Void*), LibC::SizeT.new(ary.size), LibC::SizeT.new(sizeof(Int32)), ->(a : Void*, b : Void*) {
         a = a as Int32*
         b = b as Int32*
-        a.value <=> b.value
+        (a.value <=> b.value).value
       })
       ary[0]
       )).to_i.should eq(1)

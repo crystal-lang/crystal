@@ -8,18 +8,18 @@ end
 private def test_comp(val, less, equal, greater, file = __FILE__, line = __LINE__)
   (val < greater).should eq(true), file, line
   (greater < val).should eq(false), file, line
-  (val <=> greater).should eq(-1), file, line
-  (greater <=> val).should eq(1), file, line
+  (val <=> greater).lt?.should be_true, file, line
+  (greater <=> val).gt?.should be_true, file, line
 
   (val == equal).should eq(true), file, line
   (equal == val).should eq(true), file, line
-  (val <=> equal).should eq(0), file, line
-  (equal <=> val).should eq(0), file, line
+  (val <=> equal).eq?.should be_true, file, line
+  (equal <=> val).eq?.should be_true, file, line
 
   (val > less).should eq(true), file, line
   (less > val).should eq(false), file, line
-  (val <=> less).should eq(1), file, line
-  (less <=> val).should eq(-1), file, line
+  (val <=> less).gt?.should be_true, file, line
+  (less <=> val).lt?.should be_true, file, line
 end
 
 describe BigRational do

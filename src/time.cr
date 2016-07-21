@@ -288,7 +288,7 @@ struct Time
     kind == Kind::Local
   end
 
-  def <=>(other : self)
+  def <=>(other : self) : Order
     if utc? && other.local?
       self <=> other.to_utc
     elsif local? && other.utc?

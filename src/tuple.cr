@@ -303,20 +303,20 @@ struct Tuple
   # ```
   #
   # See `Object#<=>`.
-  def <=>(other : self)
+  def <=>(other : self) : Order
     {% for i in 0...T.size %}
       cmp = self[{{i}}] <=> other[{{i}}]
-      return cmp unless cmp == 0
+      return cmp unless cmp.eq?
     {% end %}
-    0
+    Order::EQ
   end
 
   # ditto
-  def <=>(other : Tuple)
+  def <=>(other : Tuple) : Order
     min_size = Math.min(size, other.size)
     min_size.times do |i|
       cmp = self[i] <=> other[i]
-      return cmp unless cmp == 0
+      return cmp unless cmp.eq?
     end
     size <=> other.size
   end

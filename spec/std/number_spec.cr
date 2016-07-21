@@ -109,9 +109,9 @@ describe "Number" do
   end
 
   it "compare the numbers" do
-    10.<=>(10).should eq(0)
-    10.<=>(11).should eq(-1)
-    11.<=>(10).should eq(1)
+    (10 <=> 10).eq?.should be_true
+    (10 <=> 11).lt?.should be_true
+    (11 <=> 10).gt?.should be_true
   end
 
   it "creates an array with [] and some elements" do

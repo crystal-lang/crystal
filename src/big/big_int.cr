@@ -74,28 +74,28 @@ struct BigInt < Int
     new(mpz)
   end
 
-  def <=>(other : BigInt)
-    LibGMP.cmp(mpz, other)
+  def <=>(other : BigInt) : Order
+    Order.from_value LibGMP.cmp(mpz, other)
   end
 
-  def <=>(other : Int::Signed)
+  def <=>(other : Int::Signed) : Order
     if LibC::Long::MIN <= other <= LibC::Long::MAX
-      LibGMP.cmp_si(mpz, other)
+      Order.from_value LibGMP.cmp_si(mpz, other)
     else
       self <=> BigInt.new(other)
     end
   end
 
-  def <=>(other : Int::Unsigned)
+  def <=>(other : Int::Unsigned) : Order
     if other <= LibC::ULong::MAX
-      LibGMP.cmp_ui(mpz, other)
+      Order.from_value LibGMP.cmp_ui(mpz, other)
     else
       self <=> BigInt.new(other)
     end
   end
 
-  def <=>(other : Float)
-    LibGMP.cmp_d(mpz, other)
+  def <=>(other : Float) : Order
+    Order.from_value LibGMP.cmp_d(mpz, other)
   end
 
   def +(other : BigInt) : BigInt
@@ -333,8 +333,8 @@ end
 struct Int
   include Comparable(BigInt)
 
-  def <=>(other : BigInt)
-    -(other <=> self)
+  def <=>(other : BigInt) : Order
+    (other <=> self).reverse
   end
 
   def +(other : BigInt) : BigInt
@@ -375,8 +375,8 @@ end
 struct Float
   include Comparable(BigInt)
 
-  def <=>(other : BigInt)
-    -(other <=> self)
+  def <=>(other : BigInt) : Order
+    (other <=> self).reverse
   end
 
   # Returns a BigInt representing this float (rounded using `floor`).

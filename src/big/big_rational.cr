@@ -55,16 +55,16 @@ struct BigRational < Number
     BigInt.new { |mpz| LibGMP.mpq_get_den(mpz, self) }
   end
 
-  def <=>(other : BigRational)
-    LibGMP.mpq_cmp(mpq, other)
+  def <=>(other : BigRational) : Order
+    Order.from_value LibGMP.mpq_cmp(mpq, other)
   end
 
-  def <=>(other : Float)
+  def <=>(other : Float) : Order
     self.to_f <=> other
   end
 
-  def <=>(other : Int)
-    LibGMP.mpq_cmp(mpq, other.to_big_r)
+  def <=>(other : Int) : Order
+    Order.from_value LibGMP.mpq_cmp(mpq, other.to_big_r)
   end
 
   def +(other : BigRational)
@@ -202,8 +202,8 @@ struct Int
     BigRational.new(self, 1)
   end
 
-  def <=>(other : BigRational)
-    -(other <=> self)
+  def <=>(other : BigRational) : Order
+    (other <=> self).reverse
   end
 
   def +(other : BigRational)
@@ -226,7 +226,7 @@ end
 struct Float
   include Comparable(BigRational)
 
-  def <=>(other : BigRational)
-    -(other <=> self)
+  def <=>(other : BigRational) : Order
+    (other <=> self).reverse
   end
 end

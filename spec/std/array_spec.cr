@@ -5,8 +5,8 @@ alias RecursiveArray = Array(RecursiveArray)
 class BadSortingClass
   include Comparable(self)
 
-  def <=>(other)
-    1
+  def <=>(other) : Order
+    Order::GT
   end
 end
 
@@ -971,7 +971,7 @@ describe "Array" do
     end
 
     it "doesn't crash on special situations" do
-      [1, 2, 3].sort { 1 }
+      [1, 2, 3].sort { Order::GT }
       Array.new(10) { BadSortingClass.new }.sort
     end
   end
@@ -1128,16 +1128,16 @@ describe "Array" do
     b = [4, 5, 6]
     c = [1, 2]
 
-    (a <=> b).should be < 1
-    (a <=> c).should be > 0
-    (b <=> c).should be > 0
-    (b <=> a).should be > 0
-    (c <=> a).should be < 0
-    (c <=> b).should be < 0
-    (a <=> a).should eq(0)
+    (a <=> b).lt_eq?.should be_true
+    (a <=> c).gt?.should be_true
+    (b <=> c).gt?.should be_true
+    (b <=> a).gt?.should be_true
+    (c <=> a).lt?.should be_true
+    (c <=> b).lt?.should be_true
+    (a <=> a).eq?.should be_true
 
-    ([8] <=> [1, 2, 3]).should be > 0
-    ([8] <=> [8, 1, 2]).should be < 0
+    ([8] <=> [1, 2, 3]).gt?.should be_true
+    ([8] <=> [8, 1, 2]).lt?.should be_true
 
     [[1, 2, 3], [4, 5], [8], [1, 2, 3, 4]].sort.should eq([[1, 2, 3], [1, 2, 3, 4], [4, 5], [8]])
   end

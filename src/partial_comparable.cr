@@ -1,22 +1,23 @@
 # The PartialComparable mixin is used by classes whose objects may be partially ordered.
 #
 # Including types must provide an `<=>` method, which compares the receiver against
-# another object, returning -1, 0, +1 or nil depending on whether the receiver is less than,
-# equal to, greater than the other object, or no order can be established.
+# another object, returning `Order::LT`, `Order::EQ`, `Order::GT` or `nil`depending
+# on whether the receiver is less than, equal to, greater than the other object, or
+# no order can be established.
 #
 # PartialComparable uses `<=>` to implement the conventional comparison operators (`<`, `<=`, `==`, `>=`, and `>`).
 module PartialComparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `-1`.
   def <(other : T)
     compare_with(other) do |cmp|
-      cmp < 0
+      cmp.lt?
     end
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `-1` or `0`.
   def <=(other : T)
     compare_with(other) do |cmp|
-      cmp <= 0
+      cmp.lt_eq?
     end
   end
 
@@ -28,21 +29,21 @@ module PartialComparable(T)
     end
 
     compare_with(other) do |cmp|
-      cmp == 0
+      cmp.eq?
     end
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `1`.
   def >(other : T)
     compare_with(other) do |cmp|
-      cmp > 0
+      cmp.gt?
     end
   end
 
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `1` or `0`.
   def >=(other : T)
     compare_with(other) do |cmp|
-      cmp >= 0
+      cmp.gt_eq?
     end
   end
 
@@ -54,4 +55,6 @@ module PartialComparable(T)
       false
     end
   end
+
+  abstract def <=>(other : T) : Order?
 end

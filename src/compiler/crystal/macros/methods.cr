@@ -316,7 +316,7 @@ module Crystal
       when "<="
         bool_bin_op(method, args) { |me, other| me <= other }
       when "<=>"
-        num_bin_op(method, args) { |me, other| me <=> other }
+        num_bin_op(method, args) { |me, other| (me <=> other).value }
       when "+"
         if args.empty?
           self
@@ -369,7 +369,7 @@ module Crystal
     end
 
     def interpret_compare(other : NumberLiteral)
-      to_number <=> other.to_number
+      (to_number <=> other.to_number).value
     end
 
     def bool_bin_op(op, args)
@@ -619,7 +619,7 @@ module Crystal
     end
 
     def interpret_compare(other : StringLiteral | MacroId)
-      value <=> other.value
+      (value <=> other.value).value
     end
 
     def to_macro_id
@@ -993,7 +993,7 @@ module Crystal
     end
 
     def interpret_compare(other : MacroId | StringLiteral)
-      value <=> other.value
+      (value <=> other.value).value
     end
   end
 
@@ -1490,7 +1490,7 @@ private def intepret_array_or_tuple_method(object, klass, method, args, block, i
   when "shuffle"
     klass.new(object.elements.shuffle)
   when "sort"
-    klass.new(object.elements.sort { |x, y| x.interpret_compare(y) })
+    klass.new(object.elements.sort { |x, y| Order.from_value x.interpret_compare(y) })
   when "uniq"
     klass.new(object.elements.uniq)
   when "[]"

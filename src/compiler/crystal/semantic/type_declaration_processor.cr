@@ -660,10 +660,10 @@ module Crystal
           if t2.module?
             t1.object_id <=> t2.object_id
           else
-            -1
+            Order::LT
           end
         elsif t2.module?
-          1
+          Order::GT
         else
           t1.depth <=> t2.depth
         end

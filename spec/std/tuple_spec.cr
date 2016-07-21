@@ -252,20 +252,20 @@ describe "Tuple" do
   it "does comparison" do
     tuple1 = {"a", "a", "c"}
     tuple2 = {"a", "b", "c"}
-    (tuple1 <=> tuple2).should eq(-1)
-    (tuple2 <=> tuple1).should eq(1)
+    (tuple1 <=> tuple2).lt?.should be_true
+    (tuple2 <=> tuple1).gt?.should be_true
   end
 
   it "does <=> for equality" do
     tuple1 = {0, 1}
     tuple2 = {0.0, 1}
-    (tuple1 <=> tuple2).should eq(0)
+    (tuple1 <=> tuple2).eq?.should be_true
   end
 
   it "does <=> with the same beginning and different size" do
     tuple1 = {1, 2, 3}
     tuple2 = {1, 2}
-    (tuple1 <=> tuple2).should eq(1)
+    (tuple1 <=> tuple2).gt?.should be_true
   end
 
   it "does types" do

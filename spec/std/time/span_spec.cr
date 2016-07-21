@@ -132,10 +132,10 @@ describe Time::Span do
     t1 = Time::Span.new -1
     t2 = Time::Span.new 1
 
-    (t1 <=> t2).should eq(-1)
-    (t2 <=> t1).should eq(1)
-    (t2 <=> t2).should eq(0)
-    (Time::Span::MinValue <=> Time::Span::MaxValue).should eq(-1)
+    (t1 <=> t2).lt?.should be_true
+    (t2 <=> t1).gt?.should be_true
+    (t2 <=> t2).eq?.should be_true
+    (Time::Span::MinValue <=> Time::Span::MaxValue).lt?.should be_true
 
     (t1 == t2).should be_false
     (t1 > t2).should be_false

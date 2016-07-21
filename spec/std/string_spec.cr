@@ -1743,21 +1743,21 @@ describe "String" do
   end
 
   it "compares non-case insensitive" do
-    "fo".compare("foo").should eq(-1)
-    "foo".compare("fo").should eq(1)
-    "foo".compare("foo").should eq(0)
-    "foo".compare("fox").should eq(-1)
-    "fox".compare("foo").should eq(1)
-    "foo".compare("Foo").should eq(1)
+    "fo".compare("foo").lt?.should be_true
+    "foo".compare("fo").gt?.should be_true
+    "foo".compare("foo").eq?.should be_true
+    "foo".compare("fox").lt?.should be_true
+    "fox".compare("foo").gt?.should be_true
+    "foo".compare("Foo").gt?.should be_true
   end
 
   it "compares case insensitive" do
-    "fo".compare("FOO", case_insensitive: true).should eq(-1)
-    "foo".compare("FO", case_insensitive: true).should eq(1)
-    "foo".compare("FOO", case_insensitive: true).should eq(0)
-    "foo".compare("FOX", case_insensitive: true).should eq(-1)
-    "fox".compare("FOO", case_insensitive: true).should eq(1)
-    "fo\u{0000}".compare("FO", case_insensitive: true).should eq(1)
+    "fo".compare("FOO", case_insensitive: true).lt?.should be_true
+    "foo".compare("FO", case_insensitive: true).gt?.should be_true
+    "foo".compare("FOO", case_insensitive: true).eq?.should be_true
+    "foo".compare("FOX", case_insensitive: true).lt?.should be_true
+    "fox".compare("FOO", case_insensitive: true).gt?.should be_true
+    "fo\u{0000}".compare("FO", case_insensitive: true).gt?.should be_true
   end
 
   it "raises if String.build negative capacity" do
