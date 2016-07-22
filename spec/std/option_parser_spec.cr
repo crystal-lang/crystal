@@ -183,6 +183,32 @@ describe "OptionParser" do
     end
   end
 
+  it "calls the handler for invalid options" do
+    called = false
+    OptionParser.parse(["-f", "-j"]) do |opts|
+      opts.on("-f", "some flag") { }
+      opts.invalid_option do |flag|
+        flag.should eq("-j")
+        called = true
+      end
+    end
+
+    called.should be_true
+  end
+
+  it "calls the handler for missing options" do
+    called = false
+    OptionParser.parse(["-f"]) do |opts|
+      opts.on("-f FOO", "some flag") { }
+      opts.missing_option do |flag|
+        flag.should eq("-f")
+        called = true
+      end
+    end
+
+    called.should be_true
+  end
+
   describe "multiple times" do
     it "gets an existence flag multiple times" do
       args = %w(-f -f -f)

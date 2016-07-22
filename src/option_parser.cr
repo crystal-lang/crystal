@@ -59,11 +59,18 @@ class OptionParser
   protected property flags : Array(String)
   protected property handlers : Array(Handler)
   protected property unknown_args
+  protected property! missing_option
+  protected property! invalid_option
 
   # Creates a new parser.
   def initialize
     @flags = [] of String
     @handlers = [] of Handler
+    missing_option { |flag| raise MissingOption.new(flag) }
+    invalid_option { |flag| raise InvalidOption.new(flag) }
+    # TODO: switch to these and change property! to property above after 0.19.0
+    # @missing_option = ->(option : String) { raise MissingOption.new(option) }
+    # @invalid_option = ->(option : String) { raise InvalidOption.new(option) }
   end
 
   # Creates a new parser, with its configuration specified in the block.
@@ -111,10 +118,22 @@ class OptionParser
     @flags << message.to_s
   end
 
-  # Sets a handler for arguments that didn't match any of the setup options.
+  # Sets a handler for regular arguments that didn't match any of the setup options.
   #
   # You typically use this to get the main arguments (not modifiers) that your program expects (for example, filenames)
   def unknown_args(&@unknown_args : Array(String), Array(String) ->)
+  end
+
+  # Sets a handler for when a option that expects an argument wasn't given any.
+  #
+  # You typically use this to display a help message. The default raises `MissingOption`.
+  def missing_option(&@missing_option : String ->)
+  end
+
+  # Sets a handler for option arguments that didn't match any of the setup options.
+  #
+  # You typically use this to display a help message. The default raises `InvalidOption`.
+  def invalid_option(&@invalid_option : String ->)
   end
 
   # Returns all the setup options, formatted in a help message.
@@ -213,14 +232,14 @@ class OptionParser
             block.call delete_arg_at_index(index)
           else
             if raise_if_missing
-              raise MissingOption.new(flag)
+              @parser.missing_option.call(flag)
             end
           end
         elsif arg[flag.size] == '='
           delete_arg_at_index(index)
           value = arg[flag.size + 1..-1]
           if value.empty?
-            raise MissingOption.new(flag)
+            @parser.missing_option.call(flag)
           else
             block.call value
           end
@@ -235,11 +254,11 @@ class OptionParser
           if index < args_size
             block.call delete_arg_at_index(index)
           else
-            raise MissingOption.new(flag) if raise_if_missing
+            @parser.missing_option.call(flag) if raise_if_missing
           end
         else
           value = arg[2..-1]
-          raise MissingOption.new(flag) if raise_if_missing && value.empty?
+          @parser.missing_option.call(flag) if raise_if_missing && value.empty?
           block.call value
         end
       end
@@ -280,7 +299,7 @@ class OptionParser
         return if (double_dash_index = @double_dash_index) && index >= double_dash_index
 
         if arg.starts_with?('-') && arg != "-"
-          raise InvalidOption.new(arg)
+          @parser.invalid_option.call(arg)
         end
       end
     end
