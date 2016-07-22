@@ -966,4 +966,20 @@ describe "Type inference: module" do
       ),
       "undefined constant X::Bar"
   end
+
+  it "can restrict module with module (#3029)" do
+    assert_type(%(
+      module Foo
+      end
+
+      class Gen(T)
+      end
+
+      def foo(x : Gen(Foo))
+        1
+      end
+
+      foo(Gen(Foo).new)
+      )) { int32 }
+  end
 end

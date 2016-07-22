@@ -802,9 +802,7 @@ module Crystal
 
   class NonGenericModuleType
     def restrict(other, context)
-      return self if self == other
-
-      including_types.try &.restrict(other, context)
+      super || including_types.try(&.restrict(other, context))
     end
   end
 
