@@ -17,9 +17,9 @@ module Crystal
   end
 
   class ASTNode
-    property! dependencies : Dependencies
+    property! dependencies : Array(ASTNode)
     property freeze_type : Type?
-    property observers : Dependencies?
+    property observers : Array(ASTNode)?
     property input_observer : Call?
 
     @dirty = false
@@ -121,7 +121,7 @@ module Crystal
         raise_frozen_type freeze_type, from_type, from
       end
 
-      dependencies = @dependencies ||= Dependencies.new
+      dependencies = @dependencies ||= [] of ASTNode
 
       node = yield dependencies
 
@@ -130,6 +130,7 @@ module Crystal
       else
         new_type = Type.merge dependencies
       end
+
       return if @type.same? new_type
       return unless new_type
 
@@ -152,20 +153,13 @@ module Crystal
       node.remove_observer self
     end
 
-    def unbind_from(nodes : Array)
-      nodes.each do |node|
-        unbind_from node
-      end
-    end
-
-    def unbind_from(nodes : Dependencies)
-      nodes.each do |node|
-        unbind_from node
-      end
+    def unbind_from(nodes : Array(ASTNode))
+      @dependencies.try &.reject! { |dep| nodes.any? &.same?(dep) }
+      nodes.each &.remove_observer self
     end
 
     def add_observer(observer)
-      observers = (@observers ||= Dependencies.new)
+      observers = @observers ||= [] of ASTNode
       observers.push observer
     end
 
