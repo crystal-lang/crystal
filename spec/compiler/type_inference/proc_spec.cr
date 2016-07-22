@@ -899,4 +899,26 @@ describe "Type inference: proc" do
       Foo.new.x
       )) { proc_of([int32, char, string]) }
   end
+
+  it "can assign NoReturn proc to other proc (#3032)" do
+    assert_type(%(
+      lib LibC
+        fun exit : NoReturn
+      end
+
+      class Foo
+        @x : -> Int32
+
+        def initialize
+          @x = ->{ LibC.exit }
+        end
+
+        def x
+          @x
+        end
+      end
+
+      Foo.new.x
+      )) { proc_of(int32) }
+  end
 end

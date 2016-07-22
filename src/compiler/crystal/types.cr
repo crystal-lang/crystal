@@ -3140,7 +3140,8 @@ module Crystal
 
     def implements?(other : Type)
       if other.is_a?(ProcInstanceType)
-        if other.return_type.void? && arg_types == other.arg_types
+        if (self.return_type.no_return? || other.return_type.void?) &&
+           arg_types == other.arg_types
           return true
         end
       end
