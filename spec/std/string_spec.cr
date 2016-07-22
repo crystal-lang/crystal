@@ -329,8 +329,18 @@ describe "String" do
   end
 
   it "does to_f" do
+    expect_raises(ArgumentError) { "".to_f }
+    "".to_f?.should be_nil
+    expect_raises(ArgumentError) { " ".to_f }
+    " ".to_f?.should be_nil
+    "0".to_f.should eq(0_f64)
+    "0.0".to_f.should eq(0_f64)
+    "+0.0".to_f.should eq(0_f64)
+    "-0.0".to_f.should eq(0_f64)
     "1234.56".to_f.should eq(1234.56_f64)
     "1234.56".to_f?.should eq(1234.56_f64)
+    "+1234.56".to_f?.should eq(1234.56_f64)
+    "-1234.56".to_f?.should eq(-1234.56_f64)
     expect_raises(ArgumentError) { "foo".to_f }
     "foo".to_f?.should be_nil
     "  1234.56  ".to_f.should eq(1234.56_f64)
@@ -339,11 +349,26 @@ describe "String" do
     "  1234.56  ".to_f?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f }
     "  1234.56foo".to_f?.should be_nil
+    "123.45 x".to_f64(strict: false).should eq(123.45_f64)
+    expect_raises(ArgumentError) { "x1.2".to_f64 }
+    "x1.2".to_f64?.should be_nil
+    expect_raises(ArgumentError) { "x1.2".to_f64(strict: false) }
+    "x1.2".to_f64?(strict: false).should be_nil
   end
 
   it "does to_f32" do
+    expect_raises(ArgumentError) { "".to_f32 }
+    "".to_f32?.should be_nil
+    expect_raises(ArgumentError) { " ".to_f32 }
+    " ".to_f32?.should be_nil
+    "0".to_f32.should eq(0_f32)
+    "0.0".to_f32.should eq(0_f32)
+    "+0.0".to_f32.should eq(0_f32)
+    "-0.0".to_f32.should eq(0_f32)
     "1234.56".to_f32.should eq(1234.56_f32)
     "1234.56".to_f32?.should eq(1234.56_f32)
+    "+1234.56".to_f32?.should eq(1234.56_f32)
+    "-1234.56".to_f32?.should eq(-1234.56_f32)
     expect_raises(ArgumentError) { "foo".to_f32 }
     "foo".to_f32?.should be_nil
     "  1234.56  ".to_f32.should eq(1234.56_f32)
@@ -352,11 +377,26 @@ describe "String" do
     "  1234.56  ".to_f32?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f32 }
     "  1234.56foo".to_f32?.should be_nil
+    "123.45 x".to_f32(strict: false).should eq(123.45_f32)
+    expect_raises(ArgumentError) { "x1.2".to_f32 }
+    "x1.2".to_f32?.should be_nil
+    expect_raises(ArgumentError) { "x1.2".to_f32(strict: false) }
+    "x1.2".to_f32?(strict: false).should be_nil
   end
 
   it "does to_f64" do
+    expect_raises(ArgumentError) { "".to_f64 }
+    "".to_f64?.should be_nil
+    expect_raises(ArgumentError) { " ".to_f64 }
+    " ".to_f64?.should be_nil
+    "0".to_f64.should eq(0_f64)
+    "0.0".to_f64.should eq(0_f64)
+    "+0.0".to_f64.should eq(0_f64)
+    "-0.0".to_f64.should eq(0_f64)
     "1234.56".to_f64.should eq(1234.56_f64)
     "1234.56".to_f64?.should eq(1234.56_f64)
+    "+1234.56".to_f?.should eq(1234.56_f64)
+    "-1234.56".to_f?.should eq(-1234.56_f64)
     expect_raises(ArgumentError) { "foo".to_f64 }
     "foo".to_f64?.should be_nil
     "  1234.56  ".to_f64.should eq(1234.56_f64)
@@ -365,6 +405,11 @@ describe "String" do
     "  1234.56  ".to_f64?(whitespace: false).should be_nil
     expect_raises(ArgumentError) { "  1234.56foo".to_f64 }
     "  1234.56foo".to_f64?.should be_nil
+    "123.45 x".to_f64(strict: false).should eq(123.45_f64)
+    expect_raises(ArgumentError) { "x1.2".to_f64 }
+    "x1.2".to_f64?.should be_nil
+    expect_raises(ArgumentError) { "x1.2".to_f64(strict: false) }
+    "x1.2".to_f64?(strict: false).should be_nil
   end
 
   it "compares strings: different size" do
