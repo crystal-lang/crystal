@@ -209,7 +209,7 @@ module Crystal
 
       if target.is_a?(Path)
         const = target.target_const.not_nil!
-        return node unless const.used
+        return node unless const.used?
       end
 
       node.value = node.value.transform self

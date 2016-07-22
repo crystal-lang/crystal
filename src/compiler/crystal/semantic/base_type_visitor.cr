@@ -46,6 +46,8 @@ module Crystal
           type.vars = const_def.vars
           type.visitor = self
           type.used = true
+
+          program.class_var_and_const_initializers << type
         end
 
         node.target_const = type

@@ -2834,7 +2834,7 @@ module Crystal
     getter scope_types : Array(Type)
     getter scope : Type?
     property vars : MetaVars?
-    property used : Bool
+    property? used : Bool
     property? visited : Bool
     property visitor : BaseTypeVisitor?
 

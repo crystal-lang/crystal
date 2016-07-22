@@ -837,7 +837,7 @@ module Crystal
         return false
       when Path
         const = target.target_const.not_nil!
-        if const.used && !const.simple?
+        if const.used? && !const.simple?
           initialize_const(const)
         end
         @last = llvm_nil
