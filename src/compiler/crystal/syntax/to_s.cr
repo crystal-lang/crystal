@@ -716,11 +716,6 @@ module Crystal
       false
     end
 
-    def visit(node : External)
-      node.fun_def?.try &.accept self
-      false
-    end
-
     def visit(node : ExternalVar)
       @str << "$"
       @str << node.name
@@ -1415,14 +1410,6 @@ module Crystal
       @str << '('
       node.exp.accept self
       @str << ')'
-      false
-    end
-
-    def visit(node : FileNode)
-      @str.puts
-      @str << "# " << node.filename
-      @str.puts
-      node.node.accept self
       false
     end
 

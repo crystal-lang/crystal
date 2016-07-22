@@ -137,41 +137,41 @@ class Crystal::Program
   end
 end
 
-record InferTypeResult,
+record SemanticResult,
   program : Program,
   node : ASTNode,
   type : Type
 
 def assert_type(str, flags = nil, inject_primitives = true)
-  result = infer_type_result(str, flags, inject_primitives: inject_primitives)
+  result = semantic_result(str, flags, inject_primitives: inject_primitives)
   program = result.program
   expected_type = with program yield program
   result.type.should eq(expected_type)
   result
 end
 
-def infer_type(code : String, wants_doc = false)
+def semantic(code : String, wants_doc = false)
   code = inject_primitives(code)
-  infer_type parse(code, wants_doc: wants_doc), wants_doc: wants_doc
+  semantic parse(code, wants_doc: wants_doc), wants_doc: wants_doc
 end
 
-def infer_type(node : ASTNode, wants_doc = false)
+def semantic(node : ASTNode, wants_doc = false)
   program = Program.new
   program.wants_doc = wants_doc
   node = program.normalize node
-  node = program.infer_type node
-  InferTypeResult.new(program, node, node.type)
+  node = program.semantic node
+  SemanticResult.new(program, node, node.type)
 end
 
-def infer_type_result(str, flags = nil, inject_primitives = true)
+def semantic_result(str, flags = nil, inject_primitives = true)
   str = inject_primitives(str) if inject_primitives
   program = Program.new
   program.flags = flags if flags
   input = parse str
   input = program.normalize input
-  input = program.infer_type input
+  input = program.semantic input
   input_type = input.is_a?(Expressions) ? input.last.type : input.type
-  InferTypeResult.new(program, input, input_type)
+  SemanticResult.new(program, input, input_type)
 end
 
 def assert_normalize(from, to, flags = nil)
@@ -205,7 +205,7 @@ end
 def assert_after_cleanup(before, after)
   # before = inject_primitives(before)
   node = Parser.parse(before)
-  result = infer_type node
+  result = semantic node
   result.node.to_s.strip.should eq(after.strip)
 end
 
@@ -238,7 +238,7 @@ def assert_error(str, message, inject_primitives = true)
   str = inject_primitives(str) if inject_primitives
   nodes = parse str
   expect_raises TypeException, message do
-    infer_type nodes
+    semantic nodes
   end
 end
 
@@ -273,7 +273,7 @@ end
 def codegen(code)
   code = inject_primitives(code)
   node = parse code
-  result = infer_type node
+  result = semantic node
   result.program.codegen result.node, single_module: false
 end
 

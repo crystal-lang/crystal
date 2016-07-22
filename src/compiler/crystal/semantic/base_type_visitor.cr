@@ -626,6 +626,26 @@ module Crystal
       generated_nodes
     end
 
+    class PropagateDocVisitor < Visitor
+      @doc : String
+
+      def initialize(@doc)
+      end
+
+      def visit(node : Expressions)
+        true
+      end
+
+      def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Alias | Assign)
+        node.doc ||= @doc
+        false
+      end
+
+      def visit(node : ASTNode)
+        true
+      end
+    end
+
     def expand_macro_arguments(node, expansion_scope)
       # If any argument is a MacroExpression, solve it first and
       # replace Path with Const/TypeNode if it denotes such thing

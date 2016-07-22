@@ -645,7 +645,7 @@ module Crystal
     end
 
     def type_assign(target, value, node)
-      raise "Bug: unknown assign target in type inference: #{target}"
+      raise "Bug: unknown assign target in MainVisitor: #{target}"
     end
 
     def visit(node : Def)
@@ -1992,7 +1992,7 @@ module Crystal
       when "enum_new"
         # Nothing to do
       else
-        node.raise "Bug: unhandled primitive in type inference: #{node.name}"
+        node.raise "Bug: unhandled primitive in MainVisitor: #{node.name}"
       end
     end
 

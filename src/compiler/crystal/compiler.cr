@@ -112,13 +112,13 @@ module Crystal
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node = program.infer_type node, @stats
+      node = program.semantic node, @stats
       codegen program, node, source, output_filename unless @no_codegen
       Result.new program, node
     end
 
-    # Analyzes the given source, without generating an executable nor
-    # analyzing methods. The returned `Program` in the result will
+    # Runs the semantic pass on the given source, without generating an
+    # executable nor analyzing methods. The returned `Program` in the result will
     # contain all types and methods. This can be useful to generate
     # API docs, analyze type relationships, etc.
     #
@@ -127,11 +127,11 @@ module Crystal
     #
     # Raies `InvalidByteSequenceError` if the source code is not
     # valid UTF-8.
-    def type_top_level(source : Source | Array(Source)) : Result
+    def top_level_semantic(source : Source | Array(Source)) : Result
       source = [source] unless source.is_a?(Array)
       program = new_program(source)
       node = parse program, source
-      node, processor = program.infer_type_top_level(node, @stats)
+      node, processor = program.top_level_semantic(node, @stats)
       Result.new program, node
     end
 

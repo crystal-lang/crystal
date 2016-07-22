@@ -997,19 +997,16 @@ module Crystal
     end
 
     class StructOrUnionVisitor < Visitor
-      @type_inference : TopLevelVisitor
-      @struct_or_union : CStructOrUnionType
-
-      def initialize(@type_inference, @struct_or_union)
+      def initialize(@top_level_visitor : TopLevelVisitor, @struct_or_union : CStructOrUnionType)
       end
 
       def visit(field : Arg)
-        @type_inference.processing_types do
-          field.accept @type_inference
+        @top_level_visitor.processing_types do
+          field.accept @top_level_visitor
         end
 
         restriction = field.restriction.not_nil!
-        field_type = @type_inference.check_primitive_like restriction
+        field_type = @top_level_visitor.check_primitive_like restriction
         if field_type.remove_typedef.void?
           if @struct_or_union.is_a?(CStructType)
             restriction.raise "can't use Void as a struct field type"
@@ -1027,8 +1024,8 @@ module Crystal
       end
 
       def visit(node : Include)
-        @type_inference.processing_types do
-          node.name.accept @type_inference
+        @top_level_visitor.processing_types do
+          node.name.accept @top_level_visitor
         end
 
         type = node.name.type.instance_type
@@ -1047,7 +1044,7 @@ module Crystal
       end
 
       def visit(node : MacroIf | MacroFor | MacroExpression)
-        expanded = @type_inference.expand_inline_macro(node, mode: MacroExpansionMode::StructOrUnion)
+        expanded = @top_level_visitor.expand_inline_macro(node, mode: MacroExpansionMode::StructOrUnion)
         expanded.accept self
         false
       end

@@ -1,7 +1,7 @@
 require "llvm"
 require "../syntax/parser"
 require "../syntax/visitor"
-require "../semantic/type_inference"
+require "../semantic"
 require "../program"
 require "./llvm_builder_helper"
 
@@ -24,7 +24,7 @@ module Crystal
       parser.filename = filename
       node = parser.parse
       node = normalize node
-      node = infer_type node
+      node = semantic node
       evaluate node
     end
 

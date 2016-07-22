@@ -680,7 +680,7 @@ module Crystal
       end
 
       # If we don't have a matching type, leave it as the to_type:
-      # later (in after type inference) we will check again.
+      # later (in cleanup) we will check again.
       filtered_type ||= to_type
 
       self.type = filtered_type.virtual_type
@@ -710,7 +710,7 @@ module Crystal
       end
 
       # If we don't have a matching type, leave it as the to_type:
-      # later (in after type inference) we will check again.
+      # later (in cleanup) we will check again.
       filtered_type ||= to_type
       filtered_type = filtered_type.virtual_type
 
@@ -1286,16 +1286,40 @@ module Crystal
     include RuntimeInitializable
   end
 
-  class External
+  class External < Def
+    property real_name : String
+    property! fun_def : FunDef
     property call_convention : LLVM::CallConvention?
 
     property? dead = false
     property? used = false
+    property? varargs = false
 
     # An External is also used to represent external variables
     # such as libc's `$errno`, which can be annotated with
     # `@[ThreadLocal]`. This property is `true` in that case.
     property? thread_local = false
+
+    def initialize(name : String, args : Array(Arg), body, @real_name : String)
+      super(name, args, body, nil, nil, nil)
+    end
+
+    def mangled_name(program, obj_type)
+      real_name
+    end
+
+    def compatible_with?(other)
+      return false if args.size != other.args.size
+      return false if varargs? != other.varargs?
+
+      args.each_with_index do |arg, i|
+        return false if arg.type != other.args[i].type
+      end
+
+      type == other.type
+    end
+
+    def_hash @real_name, @varargs, @fun_def
   end
 
   class EnumDef
@@ -1323,6 +1347,25 @@ module Crystal
 
   class Asm
     property ptrof : PointerOf?
+  end
+
+  # Fictitious node that means "all these nodes come from this file"
+  class FileNode < ASTNode
+    property node : ASTNode
+    property filename : String
+
+    def initialize(@node : ASTNode, @filename : String)
+    end
+
+    def accept_children(visitor)
+      @node.accept visitor
+    end
+
+    def clone_without_location
+      self
+    end
+
+    def_equals_and_hash node, filename
   end
 
   class Assign

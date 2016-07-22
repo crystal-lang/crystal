@@ -1757,33 +1757,6 @@ module Crystal
     def_equals_and_hash @name, @type_spec, @real_name
   end
 
-  class External < Def
-    property real_name : String
-    property! fun_def : FunDef
-    property? varargs = false
-
-    def initialize(name : String, args : Array(Arg), body, @real_name : String)
-      super(name, args, body, nil, nil, nil)
-    end
-
-    def mangled_name(program, obj_type)
-      real_name
-    end
-
-    def compatible_with?(other)
-      return false if args.size != other.args.size
-      return false if varargs? != other.varargs?
-
-      args.each_with_index do |arg, i|
-        return false if arg.type != other.args[i].type
-      end
-
-      type == other.type
-    end
-
-    def_hash @real_name, @varargs, @fun_def
-  end
-
   class Alias < ASTNode
     property name : String
     property value : ASTNode
@@ -2156,25 +2129,6 @@ module Crystal
     end
 
     def_equals_and_hash value
-  end
-
-  # Fictitious node that means "all these nodes come from this file"
-  class FileNode < ASTNode
-    property node : ASTNode
-    property filename : String
-
-    def initialize(@node : ASTNode, @filename : String)
-    end
-
-    def accept_children(visitor)
-      @node.accept visitor
-    end
-
-    def clone_without_location
-      self
-    end
-
-    def_equals_and_hash node, filename
   end
 
   enum Visibility : Int8

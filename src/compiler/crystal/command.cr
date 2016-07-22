@@ -197,7 +197,7 @@ class Crystal::Command
     config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
     config.compiler.no_codegen = true
     config.compiler.wants_doc = wants_doc
-    result = top_level ? config.type_top_level : config.compile
+    result = top_level ? config.top_level_semantic : config.compile
     {config, result}
   end
 
@@ -246,8 +246,8 @@ class Crystal::Command
       compiler.compile sources, output_filename
     end
 
-    def type_top_level
-      compiler.type_top_level sources
+    def top_level_semantic
+      compiler.top_level_semantic sources
     end
   end
 
