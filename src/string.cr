@@ -578,31 +578,95 @@ class String
     ToU64Info.new value, negative, invalid
   end
 
-  # Returns the result of interpreting leading characters in this string as a floating point number (`Float64`).
-  # Extraneous characters past the end of a valid number are ignored. If there is not a valid number at the start of str,
-  # 0.0 is returned. This method never raises an exception.
+  # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
+  # This method raises an exception if the string is not a valid float representation.
+  #
+  # Options:
+  # * **whitespace**: if true, leading and trailing whitespaces are allowed
+  # * **strict**: if true, extraneous characters past the end of the number are disallowed
   #
   # ```
-  # "123.45e1".to_f      # => 1234.5
-  # "45.67 degrees".to_f # => 45.67
-  # "thx1138".to_f       # => 0.0
+  # "123.45e1".to_f                # => 1234.5
+  # "45.67 degrees".to_f           # => 45.67
+  # "thx1138".to_f                 # => ArgumentError
+  # " 1.2".to_f(whitespace: false) # => ArgumentError
+  # "1.2foo".to_f(strict: false)   # => 1.2
   # ```
-  def to_f
-    to_f64
+  def to_f(whitespace = true, strict = true)
+    to_f64(whitespace: whitespace, strict: strict)
   end
 
-  # Returns the result of interpreting leading characters in this string as a floating point number (`Float32`).
-  # Extraneous characters past the end of a valid number are ignored. If there is not a valid number at the start of str,
-  # 0.0 is returned. This method never raises an exception.
+  # Returns the result of interpreting characters in this string as a floating point number (`Float64`).
+  # This method returns `nil` if the string is not a valid float representation.
   #
-  # See `#to_f`.
-  def to_f32
-    LibC.strtof self, nil
+  # Options:
+  # * **whitespace**: if true, leading and trailing whitespaces are allowed
+  # * **strict**: if true, extraneous characters past the end of the number are disallowed
+  #
+  # ```
+  # "123.45e1".to_f?                # => 1234.5
+  # "45.67 degrees".to_f?           # => 45.67
+  # "thx1138".to_f?                 # => nil
+  # " 1.2".to_f?(whitespace: false) # => nil
+  # "1.2foo".to_f?(strict: false)   # => 1.2
+  # ```
+  def to_f?(whitespace = true, strict = true)
+    to_f64?(whitespace: whitespace, strict: strict)
+  end
+
+  # Same as `#to_f` but returns a Float32.
+  def to_f32(whitespace = true, strict = true)
+    to_f32?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float32: #{self}")
+  end
+
+  # Same as `#to_f?` but returns a Float32.
+  def to_f32?(whitespace = true, strict = true)
+    to_f_impl(whitespace: whitespace, strict: strict) do
+      v = LibC.strtof self, out endptr
+      {v, endptr}
+    end
   end
 
   # Same as `#to_f`.
-  def to_f64
-    LibC.atof self
+  def to_f64(whitespace = true, strict = true)
+    to_f64?(whitespace: whitespace, strict: strict) || raise ArgumentError.new("Invalid Float64: #{self}")
+  end
+
+  # Same as `#to_f?`.
+  def to_f64?(whitespace = true, strict = true)
+    to_f_impl(whitespace: whitespace, strict: strict) do
+      v = LibC.strtod self, out endptr
+      {v, endptr}
+    end
+  end
+
+  private def to_f_impl(whitespace = true, strict = true)
+    return unless whitespace || '0' <= self[0] <= '9' || self[0] == '-' || self[0] == '+'
+
+    v, endptr = yield
+    string_end = to_unsafe + bytesize
+
+    # blank string
+    return if endptr == to_unsafe
+
+    if strict
+      if whitespace
+        while endptr < string_end && endptr.value.chr.whitespace?
+          endptr += 1
+        end
+      end
+      # reached the end of the string
+      v if endptr == string_end
+    else
+      ptr = to_unsafe
+      if whitespace
+        while ptr < string_end && ptr.value.chr.whitespace?
+          ptr += 1
+        end
+      end
+      # consumed some bytes
+      v if endptr > ptr
+    end
   end
 
   # Returns the `Char` at the given *index*, or raises `IndexError` if out of bounds.
