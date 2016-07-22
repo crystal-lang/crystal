@@ -1605,11 +1605,10 @@ module Crystal
       merge_if_vars node, cond_vars, then_vars, else_vars, then_unreachable, else_unreachable
 
       if needs_type_filters?
-        case node.binary
-        when :and
+        if node.and?
           @type_filters = TypeFilters.and(cond_type_filters, then_type_filters, else_type_filters)
           # TODO: or type filters
-          # when :or
+          # elsif node.or?
           #   node.type_filters = or_type_filters(node.then.type_filters, node.else.type_filters)
         end
       end
@@ -1846,7 +1845,7 @@ module Crystal
       when And
         return get_while_cond_assign_target(node.left)
       when If
-        if node.binary == :and
+        if node.and?
           return get_while_cond_assign_target(node.cond)
         end
       when Call

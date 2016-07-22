@@ -578,7 +578,6 @@ module Crystal
     property cond : ASTNode
     property then : ASTNode
     property else : ASTNode
-    property binary : Symbol?
 
     def initialize(@cond, a_then = nil, a_else = nil)
       @then = Expressions.from a_then
@@ -592,9 +591,7 @@ module Crystal
     end
 
     def clone_without_location
-      a_if = If.new(@cond.clone, @then.clone, @else.clone)
-      a_if.binary = binary
-      a_if
+      If.new(@cond.clone, @then.clone, @else.clone)
     end
 
     def_equals_and_hash @cond, @then, @else

@@ -858,6 +858,21 @@ module Crystal
     end
   end
 
+  class If
+    # This is set to `true` for an `If` that was created from an `&&` expression.
+    property? and = false
+
+    # This is set to `true` for an `If` that was created from an `||` expression.
+    property? or = false
+
+    def clone_without_location
+      a_if = previous_def
+      a_if.and = and?
+      a_if.or = or?
+      a_if
+    end
+  end
+
   class TupleLiteral
     property! program : Program
 

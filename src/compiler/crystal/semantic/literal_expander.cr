@@ -226,7 +226,7 @@ module Crystal
                    temp_var = new_temp_var
                    If.new(Assign.new(temp_var.clone, left), node.right, temp_var.clone)
                  end
-      new_node.binary = :and
+      new_node.and = true
       new_node.location = node.location
       new_node
     end
@@ -263,7 +263,7 @@ module Crystal
                    temp_var = new_temp_var
                    If.new(Assign.new(temp_var.clone, left), temp_var.clone, node.right)
                  end
-      new_node.binary = :or
+      new_node.or = true
       new_node.location = node.location
       new_node
     end

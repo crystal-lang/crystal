@@ -567,7 +567,7 @@ module Crystal
 
       reset_last_status
 
-      if node.binary == :and
+      if node.and?
         @last_is_truthy = cond_is_truthy && then_is_truthy
         @last_is_falsey = cond_is_falsey || then_is_falsey
       end
