@@ -381,7 +381,7 @@ class Crystal::CodeGenVisitor
   end
 
   def codegen_cast(from_type : IntegerType, to_type : CharType, arg)
-    codegen_cast from_type, @mod.int32, arg
+    codegen_cast from_type, @program.int32, arg
   end
 
   def codegen_cast(from_type : CharType, to_type : IntegerType, arg)
@@ -422,7 +422,6 @@ class Crystal::CodeGenVisitor
     type = node.type.as(PointerInstanceType)
     llvm_type = llvm_embedded_type(type.element_type)
     last = array_malloc(llvm_type, call_args[1])
-    memset last, int8(0), llvm_type.size
     last
   end
 
@@ -548,7 +547,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_external_var_set(node, target_def, call_args)
     external = target_def.as(External)
     name = external.real_name
-    var = declare_lib_var name, node.type, external.attributes
+    var = declare_lib_var name, node.type, external.thread_local?
 
     @last = call_args[0]
 
@@ -566,7 +565,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_external_var_get(node, target_def, call_args)
     external = target_def.as(External)
     name = target_def.as(External).real_name
-    var = declare_lib_var name, node.type, external.attributes
+    var = declare_lib_var name, node.type, external.thread_local?
 
     if external.type.passed_by_value?
       @last = var

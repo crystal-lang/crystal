@@ -75,7 +75,7 @@ describe "Code gen: alias" do
   end
 
   it "doesn't break with alias for link attributes" do
-    result = infer_type(%(
+    result = semantic(%(
       alias Foo = Int32
 
       module B

@@ -87,9 +87,8 @@ module Crystal
           append_error_message io, msg
         end
       when VirtualFile
-        lines = filename.source.lines.to_a
         io << "in macro '#{filename.macro.name}' #{filename.macro.location.try &.filename}:#{filename.macro.location.try &.line_number}, line #{@line}:\n\n"
-        io << lines.to_s_with_line_numbers
+        io << Crystal.with_line_numbers(filename.source)
         is_macro = true
       else
         lines = source ? source.lines.to_a : nil

@@ -160,4 +160,10 @@ describe HTTP::Headers do
     headers.includes_word?("foo", "bar").should be_false
     headers.includes_word?("foo", "").should be_false
   end
+
+  it "can create header value with all US-ASCII visible chars (#2999)" do
+    headers = HTTP::Headers.new
+    value = (32..126).map(&.chr).join
+    headers.add("foo", value)
+  end
 end

@@ -6,18 +6,18 @@ require "c/unistd"
 
 class File < IO::FileDescriptor
   # The file/directory separator character. '/' in unix, '\\' in windows.
-  SEPARATOR = ifdef windows
+  SEPARATOR = {% if flag?(:windows) %}
     '\\'
-  else
+  {% else %}
     '/'
-  end
+  {% end %}
 
   # The file/directory separator string. "/" in unix, "\\" in windows.
-  SEPARATOR_STRING = ifdef windows
+  SEPARATOR_STRING = {% if flag?(:windows) %}
     "\\"
-  else
+  {% else %}
     "/"
-  end
+  {% end %}
 
   # :nodoc:
   DEFAULT_CREATE_MODE = LibC::S_IRUSR | LibC::S_IWUSR | LibC::S_IRGRP | LibC::S_IROTH
@@ -313,9 +313,9 @@ class File < IO::FileDescriptor
     end
 
     String.build do |str|
-      ifdef !windows
+      {% if !flag?(:windows) %}
         str << SEPARATOR_STRING
-      end
+      {% end %}
       items.join SEPARATOR_STRING, str
     end
   end
@@ -516,7 +516,7 @@ class File < IO::FileDescriptor
     code
   end
 
-  def to_s(io)
+  def inspect(io)
     io << "#<File:" << @path
     io << " (closed)" if closed?
     io << ">"

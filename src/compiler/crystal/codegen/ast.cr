@@ -55,7 +55,7 @@ module Crystal
           end
         end
 
-        str << name.gsub('@', '.')
+        str << self.name.gsub('@', '.')
 
         next_def = self.next
         while next_def
@@ -63,7 +63,7 @@ module Crystal
           next_def = next_def.next
         end
 
-        if args.size > 0 || uses_block_arg
+        if args.size > 0 || uses_block_arg?
           str << "<"
           if args.size > 0
             args.each_with_index do |arg, i|
@@ -71,7 +71,7 @@ module Crystal
               arg.type.llvm_name(str)
             end
           end
-          if uses_block_arg
+          if uses_block_arg?
             str << ", " if args.size > 0
             str << "&"
             block_arg.not_nil!.type.llvm_name(str)
@@ -87,7 +87,7 @@ module Crystal
       Crystal.safe_mangling(program, name)
     end
 
-    def varargs
+    def varargs?
       false
     end
   end

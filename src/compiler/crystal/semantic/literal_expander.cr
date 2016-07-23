@@ -1,9 +1,6 @@
 module Crystal
   class LiteralExpander
-    @program : Program
-    @regexes : Array({String, Regex::Options})
-
-    def initialize(@program)
+    def initialize(@program : Program)
       @regexes = [] of {String, Regex::Options}
     end
 
@@ -188,7 +185,6 @@ module Crystal
 
         @program.global_vars[global_name] = global_var
 
-        @program.initialized_global_vars.add global_name
         first_assign = Assign.new(Var.new(temp_name), Global.new(global_name))
         regex = regex_new_call(node, StringLiteral.new(string))
         second_assign = Assign.new(Global.new(global_name), regex)
@@ -230,7 +226,7 @@ module Crystal
                    temp_var = new_temp_var
                    If.new(Assign.new(temp_var.clone, left), node.right, temp_var.clone)
                  end
-      new_node.binary = :and
+      new_node.and = true
       new_node.location = node.location
       new_node
     end
@@ -267,7 +263,7 @@ module Crystal
                    temp_var = new_temp_var
                    If.new(Assign.new(temp_var.clone, left), temp_var.clone, node.right)
                  end
-      new_node.binary = :or
+      new_node.or = true
       new_node.location = node.location
       new_node
     end
@@ -291,7 +287,7 @@ module Crystal
     #    Range.new(1, 3, false)
     def expand(node : RangeLiteral)
       path = Path.global("Range").at(node)
-      bool = BoolLiteral.new(node.exclusive).at(node)
+      bool = BoolLiteral.new(node.exclusive?).at(node)
       Call.new(path, "new", [node.from, node.to, bool]).at(node)
     end
 

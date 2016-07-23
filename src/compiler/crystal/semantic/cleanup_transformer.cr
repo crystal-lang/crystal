@@ -66,8 +66,6 @@ module Crystal
   # idea on how to generate code for unreachable branches, because they have no type,
   # and for now the codegen only deals with typed nodes.
   class CleanupTransformer < Transformer
-    @const_being_initialized : Path?
-
     def initialize(@program : Program)
       @transformed = Set(UInt64).new
       @def_nest_count = 0
@@ -211,11 +209,7 @@ module Crystal
 
       if target.is_a?(Path)
         const = target.target_const.not_nil!
-        if const.used
-          @const_being_initialized = target
-        else
-          return node
-        end
+        return node unless const.used?
       end
 
       node.value = node.value.transform self
@@ -226,13 +220,7 @@ module Crystal
 
       if target.is_a?(Path)
         const = const.not_nil!
-        const.initialized = true
         const.value = const.value.transform self
-        @const_being_initialized = nil
-      end
-
-      if target.is_a?(Global)
-        @program.initialized_global_vars.add target.name
       end
 
       if node.target == node.value
@@ -250,44 +238,9 @@ module Crystal
       node
     end
 
-    def transform(node : Path)
-      if target_const = node.target_const
-        if target_const.used && !target_const.initialized?
-          value = target_const.value
-          if (const_node = @const_being_initialized) && !simple_constant?(value)
-            const_being_initialized = const_node.target_const.not_nil!
-            const_node.raise "constant #{const_being_initialized} requires initialization of #{target_const}, \
-                                        which is initialized later. Initialize #{target_const} before #{const_being_initialized}"
-          end
-        end
-      end
-
-      super
-    end
-
     def transform(node : Global)
-      if const_node = @const_being_initialized
-        const_being_initialized = const_node.target_const.not_nil!
-
-        if !@program.initialized_global_vars.includes?(node.name)
-          global_var = @program.global_vars[node.name]
-          if global_var.type?.try { |t| !t.includes_type?(@program.nil) }
-            const_node.raise "constant #{const_being_initialized} requires initialization of #{node}, \
-                                        which is initialized later. Initialize #{node} before #{const_being_initialized}"
-          end
-        end
-      end
-
-      node
-    end
-
-    def transform(node : EnumDef)
-      super
-
-      if node.created_new_type
-        node.resolved_type.types.each_value do |const|
-          const.as(Const).initialized = true
-        end
+      if expanded = node.expanded
+        return expanded
       end
 
       node
@@ -431,13 +384,7 @@ module Crystal
         node.named_args = nil
       end
 
-      # check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
-
       node
-    end
-
-    def number_lines(source)
-      source.lines.to_s_with_line_numbers
     end
 
     class ClosuredVarsCollector < Visitor
@@ -455,7 +402,7 @@ module Crystal
       end
 
       def visit(node : Var)
-        if @a_def.vars.try &.[node.name].closured
+        if @a_def.vars.try &.[node.name].closured?
           @vars << node
         end
       end
@@ -473,7 +420,7 @@ module Crystal
       node.args.each do |arg|
         case arg
         when ProcLiteral
-          if arg.def.closure
+          if arg.def.closure?
             vars = ClosuredVarsCollector.collect arg.def
             unless vars.empty?
               message += " (closured vars: #{vars.join ", "})"
@@ -563,22 +510,6 @@ module Crystal
       node
     end
 
-    # def check_comparison_of_unsigned_integer_with_zero_or_negative_literal(node)
-    #   if (node.name == :< || node.name == :<=) && node.obj && node.obj.type && node.obj.type.integer? && node.obj.type.unsigned?
-    #     arg = node.args[0]
-    #     if arg.is_a?(NumberLiteral) && arg.integer? && arg.value.to_i <= 0
-    #       node.raise "'#{node.name}' comparison of unsigned integer with zero or negative literal will always be false"
-    #     end
-    #   end
-
-    #   if (node.name == :> || node.name == :>=) && node.obj && node.obj.type && node.obj.is_a?(NumberLiteral) && node.obj.integer? && node.obj.value.to_i <= 0
-    #     arg = node.args[0]
-    #     if arg.type.integer? && arg.type.unsigned?
-    #       node.raise "'#{node.name}' comparison of unsigned integer with zero or negative literal will always be false"
-    #     end
-    #   end
-    # end
-
     def transform(node : While)
       super
 
@@ -636,7 +567,7 @@ module Crystal
 
       reset_last_status
 
-      if node.binary == :and
+      if node.and?
         @last_is_truthy = cond_is_truthy && then_is_truthy
         @last_is_falsey = cond_is_falsey || then_is_falsey
       end

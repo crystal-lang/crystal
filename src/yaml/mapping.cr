@@ -121,7 +121,7 @@ module YAML
 
       {% for key, value in properties %}
         {% unless value[:nilable] || value[:default] != nil %}
-          if %var{key.id}.is_a?(Nil) && !%found{key.id}
+          if %var{key.id}.is_a?(Nil) && !%found{key.id} && !Union({{value[:type]}}).nilable?
             raise YAML::ParseException.new("missing yaml attribute: {{(value[:key] || key).id}}", 0, 0)
           end
         {% end %}
@@ -137,7 +137,7 @@ module YAML
         {% elsif value[:default] != nil %}
           @{{key.id}} = %var{key.id}.is_a?(Nil) ? {{value[:default]}} : %var{key.id}
         {% else %}
-          @{{key.id}} = %var{key.id}.not_nil!
+          @{{key.id}} = %var{key.id}.as({{value[:type]}})
         {% end %}
       {% end %}
     end

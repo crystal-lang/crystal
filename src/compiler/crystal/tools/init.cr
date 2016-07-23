@@ -1,3 +1,5 @@
+# Implementation of the `crystal init` command
+
 require "ecr/macros"
 require "option_parser"
 

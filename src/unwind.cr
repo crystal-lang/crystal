@@ -29,13 +29,13 @@ lib LibUnwind
     CONTINUE_UNWIND          = 8
   end
 
-  ifdef x86_64
+  {% if flag?(:x86_64) %}
     EH_REGISTER_0 = 0
     EH_REGISTER_1 = 1
-  else
+  {% else %}
     EH_REGISTER_0 = 0
     EH_REGISTER_1 = 2
-  end
+  {% end %}
 
   alias Context = Void*
 

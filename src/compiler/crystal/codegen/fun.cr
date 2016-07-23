@@ -2,7 +2,7 @@ require "./codegen"
 
 class Crystal::CodeGenVisitor
   def target_def_fun(target_def, self_type)
-    mangled_name = target_def.mangled_name(@mod, self_type)
+    mangled_name = target_def.mangled_name(@program, self_type)
     self_type_mod = type_module(self_type)
 
     func = self_type_mod.functions[mangled_name]? || codegen_fun(mangled_name, target_def, self_type)
@@ -68,7 +68,7 @@ class Crystal::CodeGenVisitor
         emit_def_debug_metadata target_def if @debug
 
         context.fun.add_attribute LLVM::Attribute::UWTable
-        if @mod.has_flag?("darwin")
+        if @program.has_flag?("darwin")
           # Disable frame pointer elimination in Darwin, as it causes issues during stack unwind
           context.fun.add_target_dependent_attribute "no-frame-pointer-elim", "true"
           context.fun.add_target_dependent_attribute "no-frame-pointer-elim-non-leaf", "true"
@@ -151,7 +151,7 @@ class Crystal::CodeGenVisitor
 
     args.concat target_def.args
 
-    if target_def.uses_block_arg
+    if target_def.uses_block_arg?
       block_arg = target_def.block_arg.not_nil!
       args.push Arg.new(block_arg.name, type: block_arg.type)
     end
@@ -182,9 +182,9 @@ class Crystal::CodeGenVisitor
       offset = 0
     end
 
-    no_inline = setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
+    setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
 
-    if @single_module && !no_inline
+    if @single_module && !target_def.no_inline?
       context.fun.linkage = LLVM::Linkage::Internal
     end
 
@@ -286,31 +286,18 @@ class Crystal::CodeGenVisitor
     @abi.abi_info(llvm_args_types, llvm_return_type, !llvm_return_type.void?)
   end
 
-  def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type)
-    context.fun = @llvm_mod.functions.add(
-      mangled_name,
-      llvm_args_types,
-      llvm_return_type,
-      target_def.varargs,
-    )
+  def setup_context_fun(mangled_name, target_def, llvm_args_types, llvm_return_type) : Nil
+    context.fun = @llvm_mod.functions.add(mangled_name, llvm_args_types, llvm_return_type, target_def.varargs?)
+
+    context.fun.add_attribute LLVM::Attribute::AlwaysInline if target_def.always_inline?
+    context.fun.add_attribute LLVM::Attribute::ReturnsTwice if target_def.returns_twice?
+    context.fun.add_attribute LLVM::Attribute::Naked if target_def.naked?
     context.fun.add_attribute LLVM::Attribute::NoReturn if target_def.no_returns?
 
-    no_inline = false
-    target_def.attributes.try &.each do |attribute|
-      case attribute.name
-      when "NoInline"
-        context.fun.add_attribute LLVM::Attribute::NoInline
-        context.fun.linkage = LLVM::Linkage::External
-        no_inline = true
-      when "AlwaysInline"
-        context.fun.add_attribute LLVM::Attribute::AlwaysInline
-      when "ReturnsTwice"
-        context.fun.add_attribute LLVM::Attribute::ReturnsTwice
-      when "Naked"
-        context.fun.add_attribute LLVM::Attribute::Naked
-      end
+    if target_def.no_inline?
+      context.fun.add_attribute LLVM::Attribute::NoInline
+      context.fun.linkage = LLVM::Linkage::External
     end
-    no_inline
   end
 
   def setup_closure_vars(closure_vars, context = self.context, closure_ptr = fun_literal_closure_ptr)
@@ -377,7 +364,7 @@ class Crystal::CodeGenVisitor
     else
       # We don't need to create a copy of the argument if it's never
       # assigned a value inside the function.
-      needs_copy = target_def_var.try &.assigned_to
+      needs_copy = target_def_var.try &.assigned_to?
       if needs_copy && !arg.special_var?
         pointer = alloca(llvm_type(var_type), arg.name)
         context.vars[arg.name] = LLVMVar.new(pointer, var_type)
@@ -404,6 +391,7 @@ class Crystal::CodeGenVisitor
 
       @modules[type_name] ||= begin
         llvm_mod = LLVM::Module.new(type_name)
+        llvm_mod.data_layout = self.data_layout
         define_symbol_table llvm_mod
         llvm_mod
       end

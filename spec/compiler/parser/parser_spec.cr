@@ -339,6 +339,9 @@ describe "Parser" do
 
   it_parses "foo(a: 1, &block)", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
   it_parses "foo a: 1, &block", Call.new(nil, "foo", named_args: [NamedArgument.new("a", 1.int32)], block_arg: "block".call)
+  it_parses "foo a: b(1) do\nend", Call.new(nil, "foo", named_args: [NamedArgument.new("a", Call.new(nil, "b", 1.int32))], block: Block.new)
+
+  it_parses "Foo.bar x.y do\nend", Call.new("Foo".path, "bar", args: [Call.new("x".call, "y")] of ASTNode, block: Block.new)
 
   it_parses "x = 1; foo x do\nend", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", ["x".var] of ASTNode, Block.new)]
   it_parses "x = 1; foo x { }", [Assign.new("x".var, 1.int32), Call.new(nil, "foo", [Call.new(nil, "x", block: Block.new)] of ASTNode)]
@@ -421,6 +424,8 @@ describe "Parser" do
   it_parses "class Foo(T1); end", ClassDef.new("Foo".path, type_vars: ["T1"])
   it_parses "abstract class Foo; end", ClassDef.new("Foo".path, abstract: true)
   it_parses "abstract struct Foo; end", ClassDef.new("Foo".path, abstract: true, struct: true)
+
+  it_parses "class Foo < self; end", ClassDef.new("Foo".path, superclass: Self.new)
 
   it_parses "module Foo(*T); end", ModuleDef.new("Foo".path, type_vars: ["T"], splat_index: 0)
   it_parses "class Foo(*T); end", ClassDef.new("Foo".path, type_vars: ["T"], splat_index: 0)
@@ -787,6 +792,11 @@ describe "Parser" do
   it_parses "foo.nil?(  )", IsA.new("foo".call, Path.global("Nil"), nil_check: true)
 
   it_parses "foo &.nil?", Call.new(nil, "foo", block: Block.new([Var.new("__arg0")], IsA.new(Var.new("__arg0"), Path.global("Nil"), nil_check: true)))
+  it_parses "foo &.baz.qux do\nend", Call.new(nil, "foo",
+    block: Block.new(["__arg0".var],
+      Call.new(Call.new("__arg0".var, "baz"), "qux", block: Block.new)
+    )
+  )
 
   it_parses "/foo/", regex("foo")
   it_parses "/foo/i", regex("foo", Regex::Options::IGNORE_CASE)
@@ -821,11 +831,11 @@ describe "Parser" do
 
   it_parses "foo $a", Call.new(nil, "foo", Global.new("$a"))
 
-  it_parses "$~", Call.new("$~".var, "not_nil!")
-  it_parses "$~.foo", Call.new(Call.new("$~".var, "not_nil!"), "foo")
-  it_parses "$1", Call.new(Call.new("$~".var, "not_nil!"), "[]", 1.int32)
-  it_parses "$1?", Call.new(Call.new("$~".var, "not_nil!"), "[]?", 1.int32)
-  it_parses "foo $1", Call.new(nil, "foo", Call.new(Call.new("$~".var, "not_nil!"), "[]", 1.int32))
+  it_parses "$~", Global.new("$~")
+  it_parses "$~.foo", Call.new(Global.new("$~"), "foo")
+  it_parses "$1", Call.new(Global.new("$~"), "[]", 1.int32)
+  it_parses "$1?", Call.new(Global.new("$~"), "[]?", 1.int32)
+  it_parses "foo $1", Call.new(nil, "foo", Call.new(Global.new("$~"), "[]", 1.int32))
   it_parses "$~ = 1", Assign.new("$~".var, 1.int32)
 
   it_parses "foo /a/", Call.new(nil, "foo", regex("a"))
@@ -834,9 +844,9 @@ describe "Parser" do
   it_parses "foo(/ /, / /)", Call.new(nil, "foo", [regex(" "), regex(" ")] of ASTNode)
   it_parses "foo a, / /", Call.new(nil, "foo", ["a".call, regex(" ")] of ASTNode)
 
-  it_parses "$?", Call.new("$?".var, "not_nil!")
-  it_parses "$?.foo", Call.new(Call.new("$?".var, "not_nil!"), "foo")
-  it_parses "foo $?", Call.new(nil, "foo", Call.new("$?".var, "not_nil!"))
+  it_parses "$?", Global.new("$?")
+  it_parses "$?.foo", Call.new(Global.new("$?"), "foo")
+  it_parses "foo $?", Call.new(nil, "foo", Global.new("$?"))
   it_parses "$? = 1", Assign.new("$?".var, 1.int32)
 
   it_parses "$0", Path.global("PROGRAM_NAME")
@@ -917,6 +927,8 @@ describe "Parser" do
 
   it_parses "a = uninitialized Foo; a", [UninitializedVar.new("a".var, "Foo".path), "a".var]
   it_parses "@a = uninitialized Foo", UninitializedVar.new("@a".instance_var, "Foo".path)
+  it_parses "@@a = uninitialized Foo", UninitializedVar.new("@@a".class_var, "Foo".path)
+  it_parses "$a = uninitialized Foo", UninitializedVar.new(Global.new("$a"), "Foo".path)
 
   it_parses "()", NilLiteral.new
   it_parses "(1; 2; 3)", [1.int32, 2.int32, 3.int32] of ASTNode
@@ -1126,6 +1138,9 @@ describe "Parser" do
   it_parses "<<-'HERE'\n  hello \\n world\n  \#{1}\n  HERE", StringLiteral.new("hello \\n world\n\#{1}")
   assert_syntax_error "<<-'HERE\n", "expecting closing single quote"
 
+  it_parses "<<-FOO\n1\nFOO.bar", Call.new("1".string, "bar")
+  it_parses "<<-FOO\n1\nFOO + 2", Call.new("1".string, "+", 2.int32)
+
   it_parses "enum Foo; A\nB, C\nD = 1; end", EnumDef.new("Foo".path, [Arg.new("A"), Arg.new("B"), Arg.new("C"), Arg.new("D", 1.int32)] of ASTNode)
   it_parses "enum Foo; A = 1, B; end", EnumDef.new("Foo".path, [Arg.new("A", 1.int32), Arg.new("B")] of ASTNode)
   it_parses "enum Foo : UInt16; end", EnumDef.new("Foo".path, base_type: "UInt16".path)
@@ -1195,8 +1210,20 @@ describe "Parser" do
 
   it_parses "Foo.foo(count: 3).bar { }", Call.new(Call.new("Foo".path, "foo", named_args: [NamedArgument.new("count", 3.int32)]), "bar", block: Block.new)
 
+  assert_syntax_error "a = a", "can't use variable name 'a' inside assignment to variable 'a'"
+
   assert_syntax_error "{{ {{ 1 }} }}", "can't nest macro expressions"
   assert_syntax_error "{{ {% begin %} }}", "can't nest macro expressions"
+
+  it_parses "Foo?", Crystal::Generic.new(Path.global("Union"), ["Foo".path, Path.global("Nil")] of ASTNode)
+  it_parses "Foo::Bar?", Crystal::Generic.new(Path.global("Union"), [Path.new(%w(Foo Bar)), Path.global("Nil")] of ASTNode)
+  it_parses "Foo(T)?", Crystal::Generic.new(Path.global("Union"), [Generic.new("Foo".path, ["T".path] of ASTNode), Path.global("Nil")] of ASTNode)
+  it_parses "Foo??", Crystal::Generic.new(Path.global("Union"), [
+    Crystal::Generic.new(Path.global("Union"), ["Foo".path, Path.global("Nil")] of ASTNode),
+    Path.global("Nil"),
+  ] of ASTNode)
+
+  it_parses "{1 => 2 / 3}", HashLiteral.new([HashLiteral::Entry.new(1.int32, Call.new(2.int32, "/", 3.int32))])
 
   assert_syntax_error "return do\nend", "unexpected token: do"
 

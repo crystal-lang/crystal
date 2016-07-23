@@ -321,7 +321,7 @@ class URI
     if char == '%' && i < bytesize - 2
       i += 1
       first = string.unsafe_byte_at(i)
-      first_num = first.unsafe_chr.to_i 16, or_else: nil
+      first_num = first.unsafe_chr.to_i? 16
       unless first_num
         io.write_byte byte
         return i
@@ -329,7 +329,7 @@ class URI
 
       i += 1
       second = string.unsafe_byte_at(i)
-      second_num = second.unsafe_chr.to_i 16, or_else: nil
+      second_num = second.unsafe_chr.to_i? 16
       unless second_num
         io.write_byte byte
         io.write_byte first

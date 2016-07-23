@@ -410,7 +410,9 @@ describe "File" do
   end
 
   it "does to_s" do
-    File.new(__FILE__).to_s.should eq("#<File:#{__FILE__}>")
+    file = File.new(__FILE__)
+    file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
+    File.new(__FILE__).inspect.should eq("#<File:#{__FILE__}>")
   end
 
   describe "close" do
@@ -434,7 +436,8 @@ describe "File" do
     it "does to_s when closed" do
       file = File.new(__FILE__)
       file.close
-      file.to_s.should eq("#<File:#{__FILE__} (closed)>")
+      file.to_s.should eq("#<File:0x#{file.object_id.to_s(16)}>")
+      file.inspect.should eq("#<File:#{__FILE__} (closed)>")
     end
   end
 

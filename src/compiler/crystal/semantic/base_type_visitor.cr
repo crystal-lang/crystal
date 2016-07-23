@@ -1,6 +1,6 @@
 module Crystal
   abstract class BaseTypeVisitor < Visitor
-    getter mod : Program
+    getter program : Program
     property types : Array(Type)
     property in_type_args
 
@@ -11,8 +11,8 @@ module Crystal
     @last_doc : String?
     @block : Block?
 
-    def initialize(@mod, @vars = MetaVars.new)
-      @types = [@mod] of Type
+    def initialize(@program, @vars = MetaVars.new)
+      @types = [@program] of Type
       @exp_nest = 0
       @attributes = nil
       @lib_def_pass = 0
@@ -32,28 +32,22 @@ module Crystal
       type = resolve_ident(node)
       case type
       when Const
-        existing = @mod.class_var_and_const_being_typed.find &.same?(type)
-        if existing
-          raise_recursive_dependency node, type
-        end
-
         if !type.value.type? && !type.visited?
           type.visited = true
 
           meta_vars = MetaVars.new
           const_def = Def.new("const", [] of Arg)
-          type_visitor = MainVisitor.new(@mod, meta_vars, const_def)
+          type_visitor = MainVisitor.new(@program, meta_vars, const_def)
           type_visitor.types = type.scope_types
           type_visitor.scope = type.scope
 
-          @mod.class_var_and_const_being_typed.push type
           type.value.accept type_visitor
-          @mod.class_var_and_const_being_typed.pop
 
           type.vars = const_def.vars
           type.visitor = self
           type.used = true
-          @mod.class_var_and_const_initializers << type
+
+          program.class_var_and_const_initializers << type
         end
 
         node.target_const = type
@@ -72,15 +66,6 @@ module Crystal
         type.accept self unless type.type?
         node.syntax_replacement = type
         node.bind_to type
-      end
-    end
-
-    private def raise_recursive_dependency(node, const_or_class_var)
-      msg = mod.class_var_and_const_being_typed.join(" -> ") { |x| const_or_class_var_name(x) }
-      if const_or_class_var.is_a?(Const)
-        node.raise "recursive dependency of constant #{const_or_class_var}: #{msg} -> #{const_or_class_var_name(const_or_class_var)}"
-      else
-        node.raise "recursive dependency of class var #{const_or_class_var_name(const_or_class_var)}: #{msg} -> #{const_or_class_var_name(const_or_class_var)}"
       end
     end
 
@@ -109,10 +94,10 @@ module Crystal
       if output = node.output
         types << output.type.instance_type.virtual_type
       else
-        types << mod.void
+        types << program.void
       end
 
-      node.type = mod.proc_of(types)
+      node.type = program.proc_of(types)
 
       false
     end
@@ -135,9 +120,9 @@ module Crystal
       @in_is_a = old_in_is_a
 
       if @in_is_a
-        node.type = @mod.type_merge_union_of(types)
+        node.type = @program.type_merge_union_of(types)
       else
-        node.type = @mod.type_merge(types)
+        node.type = @program.type_merge(types)
       end
 
       false
@@ -178,7 +163,7 @@ module Crystal
         node.raise "#{instance_type} is not a generic class, it's a #{instance_type.type_desc}"
       end
 
-      if instance_type.double_variadic
+      if instance_type.double_variadic?
         unless node.named_args
           node.raise "can only instantiate NamedTuple with named arguments"
         end
@@ -233,7 +218,7 @@ module Crystal
       end
 
       call_convention = check_call_convention_attributes node
-      check_valid_attributes node, ValidFunDefAttributes, "fun"
+      attributes = check_valid_attributes node, ValidFunDefAttributes, "fun"
       node.doc ||= attributes_doc()
 
       args = node.args.map do |arg|
@@ -252,10 +237,10 @@ module Crystal
         processing_types do
           node_return_type.accept self
         end
-        return_type = check_primitive_like(node_return_type)
-        return_type = @mod.nil if return_type.void?
+        return_type = check_return_type_primitive_like(node_return_type)
+        return_type = @program.nil if return_type.void?
       else
-        return_type = @mod.nil
+        return_type = @program.nil
       end
 
       external = node.external?
@@ -265,10 +250,14 @@ module Crystal
         # because we declared it in TopLevelVisitor
         external.body = body
       else
-        external = External.for_fun(node.name, node.real_name, args, return_type, node.varargs, node.body, node)
+        external = External.new(node.name, args, node.body, node.real_name).at(node)
+        external.set_type(return_type)
+        external.varargs = node.varargs?
+        external.fun_def = node
+        external.call_convention = call_convention
         external.doc = node.doc
         check_ditto external
-        external.call_convention = call_convention
+        node.external = external
       end
 
       if node_body = node.body
@@ -280,9 +269,9 @@ module Crystal
         end
         external.set_type(nil)
 
-        visitor = MainVisitor.new(@mod, vars, external)
+        visitor = MainVisitor.new(@program, vars, external)
         visitor.untyped_def = external
-        visitor.scope = @mod
+        visitor.scope = @program
         visitor.block_nest = @block_nest
 
         begin
@@ -291,9 +280,9 @@ module Crystal
           node.raise ex.message, ex
         end
 
-        inferred_return_type = @mod.type_merge([node_body.type?, external.type?])
+        inferred_return_type = @program.type_merge([node_body.type?, external.type?])
 
-        if return_type && return_type != @mod.nil && inferred_return_type != return_type
+        if return_type && return_type != @program.nil && inferred_return_type != return_type
           node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
         end
 
@@ -301,7 +290,7 @@ module Crystal
       end
 
       unless had_external
-        external.raises = true if node.has_attribute?("Raises")
+        process_def_attributes(external, attributes)
 
         begin
           old_external = current_type.add_def external
@@ -319,9 +308,21 @@ module Crystal
         end
       end
 
-      node.type = @mod.nil
+      node.type = @program.nil
 
       false
+    end
+
+    private def process_def_attributes(node, attributes)
+      attributes.try &.each do |attribute|
+        case attribute.name
+        when "NoInline"     then node.no_inline = true
+        when "AlwaysInline" then node.always_inline = true
+        when "Naked"        then node.naked = true
+        when "ReturnsTwice" then node.returns_twice = true
+        when "Raises"       then node.raises = true
+        end
+      end
     end
 
     def processing_types
@@ -368,7 +369,7 @@ module Crystal
       case node
       when Expressions, LibDef, ClassDef, ModuleDef, FunDef, Def, Macro,
            Alias, Include, Extend, EnumDef, VisibilityModifier, MacroFor, MacroIf, MacroExpression,
-           FileNode, TypeDeclaration
+           FileNode, TypeDeclaration, Require
         false
       else
         true
@@ -412,7 +413,7 @@ module Crystal
 
         error_msg = String.build do |msg|
           msg << "undefined constant #{node}"
-          msg << @mod.colorize(" (did you mean '#{similar_name}'?)").yellow.bold if similar_name
+          msg << @program.colorize(" (did you mean '#{similar_name}'?)").yellow.bold if similar_name
         end
         node.raise error_msg
       end
@@ -422,7 +423,7 @@ module Crystal
 
     def resolve_ident?(node : Path, create_modules_if_missing = false)
       free_vars = @free_vars
-      if free_vars && !node.global && (type_var = free_vars[node.names.first]?)
+      if free_vars && !node.global? && (type_var = free_vars[node.names.first]?)
         if type_var.is_a?(Type)
           target_type = type_var
           if node.names.size > 1
@@ -432,7 +433,7 @@ module Crystal
           target_type = type_var
         end
       else
-        base_lookup = node.global ? mod : (@type_lookup || @scope || @types.last)
+        base_lookup = node.global? ? program : (@type_lookup || @scope || @types.last)
         target_type = lookup_type base_lookup, node, node
 
         unless target_type
@@ -445,7 +446,7 @@ module Crystal
                   node.raise "execpted #{name} to be a type"
                 end
               else
-                next_type = NonGenericModuleType.new(@mod, base_lookup, name)
+                next_type = NonGenericModuleType.new(@program, base_lookup, name)
 
                 if (location = node.location)
                   next_type.locations << location
@@ -474,7 +475,7 @@ module Crystal
     end
 
     def process_type_name(node_name)
-      if node_name.names.size == 1 && !node_name.global
+      if node_name.names.size == 1 && !node_name.global?
         scope = current_type
         name = node_name.names.first
       else
@@ -485,7 +486,7 @@ module Crystal
     end
 
     def attach_doc(type, node)
-      if @mod.wants_doc?
+      if @program.wants_doc?
         type.doc ||= node.doc
       end
 
@@ -521,9 +522,9 @@ module Crystal
 
           expanded = expand_macro(hook.macro, node) do
             if call
-              @mod.expand_macro hook.macro, call, current_type.instance_type, @type_lookup
+              @program.expand_macro hook.macro, call, current_type.instance_type, @type_lookup
             else
-              @mod.expand_macro hook.macro.body, current_type.instance_type, @type_lookup
+              @program.expand_macro hook.macro.body, current_type.instance_type, @type_lookup
             end
           end
 
@@ -585,7 +586,7 @@ module Crystal
       generated_nodes = expand_macro(the_macro, node) do
         old_args = node.args
         node.args = args
-        expanded = @mod.expand_macro the_macro, node, expansion_scope, @type_lookup
+        expanded = @program.expand_macro the_macro, node, expansion_scope, @type_lookup
         node.args = old_args
         expanded
       end
@@ -610,7 +611,7 @@ module Crystal
                  MacroExpansionMode::Normal
                end
 
-      generated_nodes = @mod.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
+      generated_nodes = @program.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),
         inside_def: !!@typed_def,
         inside_type: !current_type.is_a?(Program),
         inside_exp: @exp_nest > 0,
@@ -623,6 +624,26 @@ module Crystal
 
       generated_nodes.accept self
       generated_nodes
+    end
+
+    class PropagateDocVisitor < Visitor
+      @doc : String
+
+      def initialize(@doc)
+      end
+
+      def visit(node : Expressions)
+        true
+      end
+
+      def visit(node : ClassDef | ModuleDef | EnumDef | Def | FunDef | Alias | Assign)
+        node.doc ||= @doc
+        false
+      end
+
+      def visit(node : ASTNode)
+        true
+      end
     end
 
     def expand_macro_arguments(node, expansion_scope)
@@ -682,7 +703,7 @@ module Crystal
       the_macro = Macro.new("macro_#{node.object_id}", [] of Arg, node).at(node.location)
 
       generated_nodes = expand_macro(the_macro, node, mode: mode) do
-        @mod.expand_macro node, (@scope || current_type), @type_lookup, @free_vars
+        @program.expand_macro node, (@scope || current_type), @type_lookup, @free_vars
       end
 
       node.expanded = generated_nodes
@@ -692,21 +713,22 @@ module Crystal
     end
 
     def check_valid_attributes(node, valid_attributes, desc)
-      if attributes = @attributes
-        attributes.each do |attr|
-          unless valid_attributes.includes?(attr.name)
-            attr.raise "illegal attribute for #{desc}, valid attributes are: #{valid_attributes.join ", "}"
-          end
+      attributes = @attributes
+      return unless attributes
 
-          if attr.name != "Primitive"
-            if !attr.args.empty? || attr.named_args
-              attr.raise "#{attr.name} attribute can't receive arguments"
-            end
+      attributes.each do |attr|
+        unless valid_attributes.includes?(attr.name)
+          attr.raise "illegal attribute for #{desc}, valid attributes are: #{valid_attributes.join ", "}"
+        end
+
+        if attr.name != "Primitive"
+          if !attr.args.empty? || attr.named_args
+            attr.raise "#{attr.name} attribute can't receive arguments"
           end
         end
-        node.attributes = attributes
-        attributes
       end
+
+      attributes
     end
 
     def attributes_doc
@@ -724,14 +746,21 @@ module Crystal
       type
     end
 
+    def check_return_type_primitive_like(node)
+      type = node.type.instance_type
+      return type if type.nil_type?
+
+      check_primitive_like(node)
+    end
+
     def check_primitive_like(node)
       type = node.type.instance_type
 
       unless type.primitive_like?
         msg = String.build do |msg|
           msg << "only primitive types, pointers, structs, unions, enums and tuples are allowed in lib declarations"
-          msg << " (did you mean Int32?)" if type == @mod.int
-          msg << " (did you mean Float32?)" if type == @mod.float
+          msg << " (did you mean Int32?)" if type == @program.int
+          msg << " (did you mean Float32?)" if type == @program.float
         end
         node.raise msg
       end
@@ -822,8 +851,8 @@ module Crystal
     end
 
     def interpret_enum_value_call_macro?(node : Call, target_type = nil)
-      if node.global
-        node.scope = @mod
+      if node.global?
+        node.scope = @program
       else
         node.scope = @scope || current_type.metaclass
       end
@@ -861,6 +890,50 @@ module Crystal
       false
     end
 
+    # Transform require to its source code.
+    # The source code can be a Nop if the file was already required.
+    def visit(node : Require)
+      if expanded = node.expanded
+        expanded.accept self
+        return false
+      end
+
+      if inside_exp?
+        node.raise "can't require dynamically"
+      end
+
+      location = node.location
+      filenames = @program.find_in_path(node.string, location.try &.original_filename)
+      if filenames
+        nodes = Array(ASTNode).new(filenames.size)
+        filenames.each do |filename|
+          if @program.add_to_requires(filename)
+            parser = Parser.new File.read(filename), @program.string_pool
+            parser.filename = filename
+            parser.wants_doc = @program.wants_doc?
+            parsed_nodes = parser.parse
+            parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
+            # We must type the node immediately, in case a file requires another
+            # *before* one of the files in `filenames`
+            parsed_nodes.accept self
+            nodes << FileNode.new(parsed_nodes, filename)
+          end
+        end
+        expanded = Expressions.from(nodes)
+        expanded.bind_to(nodes)
+      else
+        expanded = Nop.new
+      end
+
+      node.expanded = expanded
+      node.bind_to(expanded)
+      false
+    rescue ex : Crystal::Exception
+      node.raise "while requiring \"#{node.string}\"", ex
+    rescue ex
+      node.raise "while requiring \"#{node.string}\": #{ex.message}"
+    end
+
     def check_call_convention_attributes(node)
       attributes = @attributes
       return unless attributes
@@ -893,18 +966,6 @@ module Crystal
       end
 
       call_convention
-    end
-
-    def check_declare_var_type(node)
-      type = node.declared_type.type.instance_type
-
-      if type.is_a?(GenericClassType)
-        node.raise "can't declare variable of generic non-instantiated type #{type}"
-      end
-
-      Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as a Proc argument type")
-
-      type
     end
 
     def check_declare_var_type(node, declared_type, variable_kind)
@@ -943,7 +1004,7 @@ module Crystal
 
     def undefined_class_variable(node, owner)
       similar_name = lookup_similar_class_variable_name(node, owner)
-      @mod.undefined_class_variable(node, owner, similar_name)
+      @program.undefined_class_variable(node, owner, similar_name)
     end
 
     def lookup_similar_class_variable_name(node, owner)

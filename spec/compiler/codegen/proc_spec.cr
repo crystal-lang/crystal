@@ -699,4 +699,18 @@ describe "Code gen: proc" do
       ->(x : Int32) { 'a' }.t
       )).to_string.should eq("TupleLiteral")
   end
+
+  it "codegens proc in instance var initialize (#3016)" do
+    run(%(
+      class Foo
+        @f : -> Int32 = ->foo
+
+        def foo
+          42
+        end
+      end
+
+      Foo.new.@f.call
+      )).to_i.should eq(42)
+  end
 end

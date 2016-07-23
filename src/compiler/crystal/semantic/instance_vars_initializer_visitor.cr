@@ -34,17 +34,13 @@ module Crystal
   # end
   # ```
   class InstanceVarsInitializerVisitor < BaseTypeVisitor
-    def initialize(mod)
-      super(mod)
-    end
-
     def visit_any(node)
       case node
       when Assign
         node.target.is_a?(InstanceVar)
       when TypeDeclaration
         node.var.is_a?(InstanceVar)
-      when FileNode, Expressions, ClassDef, ModuleDef, Alias, Include, Extend, LibDef, Def, Macro, Call
+      when FileNode, Expressions, ClassDef, ModuleDef, Alias, Include, Extend, LibDef, Def, Macro, Call, Require
         true
       else
         false
@@ -115,11 +111,7 @@ module Crystal
     end
 
     def visit(node : Call)
-      if node.global
-        node.scope = @mod
-      else
-        node.scope = current_type.metaclass
-      end
+      node.scope = node.global? ? @program : current_type.metaclass
 
       if expand_macro(node, raise_on_missing_const: false)
         false
@@ -149,7 +141,7 @@ module Crystal
         node.raise "can't use instance variables at the top level"
       when ClassType, NonGenericModuleType, GenericModuleType
         meta_vars = MetaVars.new
-        ivar_visitor = MainVisitor.new(mod, meta_vars: meta_vars)
+        ivar_visitor = MainVisitor.new(program, meta_vars: meta_vars)
         ivar_visitor.scope = current_type
 
         unless current_type.is_a?(GenericType)
@@ -177,7 +169,7 @@ module Crystal
         end
 
         current_type.add_instance_var_initializer(target.name, value, meta_vars)
-        node.type = @mod.nil
+        node.type = @program.nil
         return
       end
     end

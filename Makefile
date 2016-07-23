@@ -6,7 +6,8 @@ SPEC_SOURCES := $(shell find spec -name '*.cr')
 FLAGS := $(if $(release),--release )$(if $(stats),--stats )$(if $(threads),--threads $(threads) )$(if $(debug),-d )
 EXPORTS := $(if $(release),,CRYSTAL_CONFIG_PATH=`pwd`/src)
 SHELL = bash
-LLVM_CONFIG := $(shell command -v llvm-config-3.6 llvm-config36 llvm-config-3.5 llvm-config35 llvm-config | head -n 1)
+LLVM_CONFIG_FINDER := command -v llvm-config-3.8 || command -v llvm-config38 || (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || command -v llvm-config-3.6 || command -v llvm-config36 || command -v llvm-config-3.5 || command -v llvm-config35 || command -v llvm-config
+LLVM_CONFIG := $(shell $(LLVM_CONFIG_FINDER))
 LLVM_EXT_DIR = src/llvm/ext
 LLVM_EXT_OBJ = $(LLVM_EXT_DIR)/llvm_ext.o
 LIB_CRYSTAL_SOURCES = $(shell find src/ext -name '*.c')
@@ -59,19 +60,19 @@ deps: llvm_ext libcrystal
 
 $(O)/all_spec: deps $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) ./bin/crystal compile $(FLAGS) -o $@ spec/all_spec.cr
+	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/all_spec.cr
 
 $(O)/std_spec: deps $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) ./bin/crystal compile $(FLAGS) -o $@ spec/std_spec.cr
+	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/std_spec.cr
 
 $(O)/compiler_spec: deps $(SOURCES) $(SPEC_SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) ./bin/crystal compile $(FLAGS) -o $@ spec/compiler_spec.cr
+	$(BUILD_PATH) ./bin/crystal build $(FLAGS) -o $@ spec/compiler_spec.cr
 
 $(O)/crystal: deps $(SOURCES)
 	@mkdir -p $(O)
-	$(BUILD_PATH) $(EXPORTS) ./bin/crystal compile $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
+	$(BUILD_PATH) $(EXPORTS) ./bin/crystal build $(FLAGS) -o $@ src/compiler/crystal.cr -D without_openssl -D without_zlib
 
 $(LLVM_EXT_OBJ): $(LLVM_EXT_DIR)/llvm_ext.cc
 	$(CXX) -c -o $@ $< `$(LLVM_CONFIG) --cxxflags`

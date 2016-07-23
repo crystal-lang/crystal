@@ -1,6 +1,6 @@
 require "../../spec_helper"
 
-describe "Type inference: yield with scope" do
+describe "Semantic: yield with scope" do
   it "uses scope in global method" do
     run("
       require \"prelude\"

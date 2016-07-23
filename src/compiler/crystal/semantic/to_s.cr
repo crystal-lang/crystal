@@ -47,5 +47,18 @@ module Crystal
     def visit(node : YieldBlockBinder)
       false
     end
+
+    def visit(node : FileNode)
+      @str.puts
+      @str << "# " << node.filename
+      @str.puts
+      node.node.accept self
+      false
+    end
+
+    def visit(node : External)
+      node.fun_def?.try &.accept self
+      false
+    end
   end
 end

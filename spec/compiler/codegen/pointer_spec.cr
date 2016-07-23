@@ -438,4 +438,23 @@ describe "Code gen: pointer" do
       1
       ))
   end
+
+  it "generates correct code for Pointer.malloc(0) (#2905)" do
+    run(%(
+      require "prelude"
+
+      class Foo
+        def initialize(@value : Int32)
+        end
+
+        def value
+          @value
+        end
+      end
+
+      foo = Foo.new(3)
+      Pointer(Int32 | UInt8[9]).malloc(0_u64)
+      foo.value
+      )).to_i.should eq(3)
+  end
 end

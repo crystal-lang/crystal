@@ -61,6 +61,8 @@ module Crystal
 
     def visit(node : Metaclass)
       node.name.accept self
+      return false if !@raise && !@type
+
       @type = type.virtual_type.metaclass.virtual_type
       false
     end
@@ -213,6 +215,10 @@ module Crystal
     end
 
     def visit(node : Self)
+      if @self_type.is_a?(Program)
+        node.raise "there's no self in this scope"
+      end
+
       @type = @self_type.virtual_type
       false
     end
@@ -255,7 +261,7 @@ module Crystal
 
   class Type
     def lookup_type(node : Path, lookup_in_container = true)
-      (node.global ? program : self).lookup_type(node.names, lookup_in_container: lookup_in_container)
+      (node.global? ? program : self).lookup_type(node.names, lookup_in_container: lookup_in_container)
     rescue ex : Crystal::Exception
       raise ex
     rescue ex
@@ -283,11 +289,8 @@ module Crystal
       names.each_with_index do |name, i|
         next_type = type.types?.try &.[name]?
         if !next_type && i != 0
-          next_type = type.lookup_type_in_parents(names[i..-1])
-          if next_type
-            type = next_type
-            break
-          end
+          # Once we find a first type we search in it and don't backtrack
+          return type.lookup_type_in_parents(names[i..-1])
         end
         type = next_type
         break unless type
@@ -374,11 +377,17 @@ module Crystal
   class InheritedGenericClass
     def lookup_type(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
       if (names.size == 1) && (m = @mapping[names[0]]?)
+        extending_class = self.extending_class
         case extending_class
         when GenericClassType
           # skip
         else
-          return TypeLookup.lookup(extending_class, m)
+          if extending_class.is_a?(NamedType)
+            self_type = extending_class.container
+          else
+            self_type = extending_class.program
+          end
+          return TypeLookup.lookup(extending_class, m, self_type: self_type)
         end
       end
 
@@ -446,7 +455,6 @@ module Crystal
   end
 
   class AliasType
-    delegate types, to: aliased_type
-    delegate types?, to: aliased_type
+    delegate types, types?, to: aliased_type
   end
 end

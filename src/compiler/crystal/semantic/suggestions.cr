@@ -3,7 +3,7 @@ require "../types"
 module Crystal
   class Type
     def lookup_similar_type_name(node : Path)
-      (node.global ? program : self).lookup_similar_type_name(node.names)
+      (node.global? ? program : self).lookup_similar_type_name(node.names)
     end
 
     def lookup_similar_type_name(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
@@ -98,13 +98,11 @@ module Crystal
   end
 
   class IncludedGenericModule
-    delegate lookup_similar_def, to: @module
-    delegate lookup_similar_type_name, to: @module
+    delegate lookup_similar_def, lookup_similar_type_name, to: @module
   end
 
   class InheritedGenericClass
-    delegate lookup_similar_def, to: @extended_class
-    delegate lookup_similar_type_name, to: @extended_class
+    delegate lookup_similar_def, lookup_similar_type_name, to: @extended_class
   end
 
   class AliasType
@@ -120,8 +118,7 @@ module Crystal
   end
 
   class VirtualType
-    delegate lookup_similar_def, to: base_type
-    delegate lookup_similar_type_name, to: base_type
+    delegate lookup_similar_def, lookup_similar_type_name, to: base_type
   end
 
   class VirtualMetaclassType

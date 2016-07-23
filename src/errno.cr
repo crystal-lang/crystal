@@ -2,16 +2,16 @@ require "c/errno"
 require "c/string"
 
 lib LibC
-  ifdef linux
-    ifdef musl
+  {% if flag?(:linux) %}
+    {% if flag?(:musl) %}
       fun __errno_location : Int*
-    else
+    {% else %}
       @[ThreadLocal]
       $errno : Int
-    end
-  elsif darwin || freebsd
+    {% end %}
+  {% elsif flag?(:darwin) || flag?(:freebsd) %}
     fun __error : Int*
-  end
+  {% end %}
 end
 
 # Errno wraps and gives access to libc's errno. This is mostly useful when
@@ -129,27 +129,27 @@ class Errno < Exception
 
   # Returns the value of libc's errno.
   def self.value : LibC::Int
-    ifdef linux
-      ifdef musl
+    {% if flag?(:linux) %}
+      {% if flag?(:musl) %}
         LibC.__errno_location.value
-      else
+      {% else %}
         LibC.errno
-      end
-    elsif darwin || freebsd
+      {% end %}
+    {% elsif flag?(:darwin) || flag?(:freebsd) %}
       LibC.__error.value
-    end
+    {% end %}
   end
 
   # Sets the value of libc's errno.
   def self.value=(value)
-    ifdef linux
-      ifdef musl
+    {% if flag?(:linux) %}
+      {% if flag?(:musl) %}
         LibC.__errno_location.value = value
-      else
+      {% else %}
         LibC.errno = value
-      end
-    elsif darwin || freebsd
+      {% end %}
+    {% elsif flag?(:darwin) || flag?(:freebsd) %}
       LibC.__error.value = value
-    end
+    {% end %}
   end
 end

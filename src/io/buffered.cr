@@ -240,8 +240,6 @@ module IO::Buffered
   # will be done (that is, writing to this IO is immediately synced to the
   # underlying IO).
   def sync=(sync)
-    # TODO: maybe instead of `sync=` we should rename this to `buffer=`,
-    # because otherwise you have to think in a reversed way.
     flush if sync && !@sync
     @sync = !!sync
   end

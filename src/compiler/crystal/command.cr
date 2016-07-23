@@ -1,3 +1,13 @@
+# Here we process the compiler's command line options and
+# execute the relevant commands.
+#
+# Some commands are implemented in the `commands` directory,
+# some in `tools`, some here, and some create a Compiler and
+# manipulate it.
+#
+# Other commands create a `Compiler` and use it to to build
+# an executable.
+
 require "json"
 require "./command/*"
 
@@ -7,14 +17,14 @@ class Crystal::Command
 
     Command:
         init                     generate a new project
-        compile                  compile program
+        build                    build an executable
         deps                     install project dependencies
         docs                     generate documentation
         env                      print Crystal environment information
         eval                     eval code from args or standard input
         play                     starts crystal playground server
-        run (default)            compile and run program
-        spec                     compile and run specs (in spec directory)
+        run (default)            build and run program
+        spec                     build and run specs (in spec directory)
         tool                     run a tool
         help, --help, -h         show this help
         version, --version, -v   show version
@@ -53,11 +63,11 @@ class Crystal::Command
         options.shift
         init
       when "build".starts_with?(command), "compile".starts_with?(command)
-        if "build".starts_with?(command)
-          STDERR.puts "Deprecation: The build command was renamed to compile and will be removed in a future version."
+        if "compile".starts_with?(command)
+          STDERR.puts "Deprecation: The compile command was renamed to build and will be removed in a future version."
         end
         options.shift
-        compile
+        build
       when "play".starts_with?(command)
         options.shift
         playground
@@ -78,7 +88,7 @@ class Crystal::Command
         run_command(single_file: false)
       when "spec/".starts_with?(command)
         options.shift
-        run_specs
+        spec
       when "tool".starts_with?(command)
         options.shift
         tool
@@ -155,120 +165,14 @@ class Crystal::Command
     Init.run(options)
   end
 
-  private def compile
-    config = create_compiler "compile"
+  private def build
+    config = create_compiler "build"
     config.compile
-  end
-
-  private def env
-    if ARGV.size == 1 && {"--help", "-h"}.includes?(ARGV[0])
-      puts <<-USAGE
-      Usage: crystal env [var ...]
-
-      Prints Crystal environment information.
-
-      By default it prints information as a shell script.
-      If one or more variable names is given as arguments,
-      it prints the value of each named variable on its own line.
-      USAGE
-
-      exit
-    end
-
-    vars = {
-      "CRYSTAL_CACHE_DIR" => CacheDir.instance.dir,
-      "CRYSTAL_PATH"      => CrystalPath.default_path,
-      "CRYSTAL_VERSION"   => Config.version || "",
-    }
-
-    if ARGV.empty?
-      vars.each do |key, value|
-        puts "#{key}=#{value.inspect}"
-      end
-    else
-      ARGV.each do |key|
-        puts vars[key]?
-      end
-    end
-  end
-
-  private def eval
-    if options.empty?
-      program_source = STDIN.gets_to_end
-      program_args = [] of String
-    else
-      double_dash_index = options.index("--")
-      if double_dash_index
-        program_source = options[0...double_dash_index].join " "
-        program_args = options[double_dash_index + 1..-1]
-      else
-        program_source = options.join " "
-        program_args = [] of String
-      end
-    end
-
-    compiler = Compiler.new
-    sources = [Compiler::Source.new("eval", program_source)]
-
-    output_filename = tempfile "eval"
-
-    result = compiler.compile sources, output_filename
-    execute output_filename, program_args
   end
 
   private def hierarchy
     config, result = compile_no_codegen "tool hierarchy", hierarchy: true, top_level: true
-    Crystal.print_hierarchy result.program, config.hierarchy_exp
-  end
-
-  private def implementations
-    cursor_command("tool implementations") do |location, config, result|
-      result = ImplementationsVisitor.new(location).process(result)
-    end
-  end
-
-  private def context
-    cursor_command("tool context") do |location, config, result|
-      result = ContextVisitor.new(location).process(result)
-    end
-  end
-
-  private def cursor_command(command)
-    config, result = compile_no_codegen command, cursor_command: true
-
-    format = config.output_format
-
-    file = ""
-    line = ""
-    col = ""
-
-    loc = config.cursor_location.not_nil!.split(':')
-    if loc.size != 3
-      error "cursor location must be file:line:column"
-    end
-
-    file, line, col = loc
-
-    line_number = line.to_i? || 0
-    if line_number <= 0
-      error "line must be a positive integer, not #{line}"
-    end
-
-    column_number = col.to_i? || 0
-    if column_number <= 0
-      error "column must be a positive integer, not #{col}"
-    end
-
-    file = File.expand_path(file)
-
-    result = yield Location.new(line_number, column_number, file), config, result
-
-    case format
-    when "json"
-      result.to_json(STDOUT)
-    else
-      result.to_text(STDOUT)
-    end
+    Crystal.print_hierarchy result.program, config.hierarchy_exp, config.output_format
   end
 
   private def run_command(single_file = false)
@@ -278,138 +182,22 @@ class Crystal::Command
       return
     end
 
-    output_filename = tempfile(config.output_filename)
+    output_filename = Crystal.tempfile(config.output_filename)
 
     result = config.compile output_filename
     execute output_filename, config.arguments unless config.compiler.no_codegen?
   end
 
-  private def run_specs
-    # Assume spec files end with ".cr" and optionally with a colon and a number
-    # (for the target line number). Everything else is an option we forward.
-    filenames = options.select { |option| option =~ /\.cr(\:\d+)?\Z/ }
-    options.reject! { |option| filenames.includes?(option) }
-
-    locations = [] of {String, String}
-
-    if filenames.empty?
-      target_filenames = Dir["spec/**/*_spec.cr"]
-    else
-      target_filenames = [] of String
-      filenames.each do |filename|
-        if filename =~ /\A(.+?)\:(\d+)\Z/
-          file, line = $1, $2
-          unless File.file?(file)
-            error "'#{file}' is not a file"
-          end
-          target_filenames << file
-          locations << {file, line}
-        else
-          if Dir.exists?(filename)
-            target_filenames.concat Dir["#{filename}/**/*_spec.cr"]
-          elsif File.file?(filename)
-            target_filenames << filename
-          else
-            error "'#{filename}' is not a file"
-          end
-        end
-      end
-    end
-
-    if target_filenames.size == 1
-      if locations.size == 1
-        # This is in case other spec runners use `-l`, we keep compatibility
-        options << "-l" << locations.first[1]
-      end
-    else
-      locations.each do |(file, line)|
-        options << "--location" << "#{file}:#{line}"
-      end
-    end
-
-    source_filename = File.expand_path("spec")
-
-    source = target_filenames.map { |filename| %(require "./#{filename}") }.join("\n")
-    sources = [Compiler::Source.new(source_filename, source)]
-
-    output_filename = tempfile "spec"
-
-    compiler = Compiler.new
-    result = compiler.compile sources, output_filename
-    execute output_filename, options
-  end
-
-  private def deps
-    path_to_shards = `which shards`.chomp
-    if path_to_shards.empty?
-      error "`shards` executable is missing. Please install shards: https://github.com/ysbaddaden/shards"
-    end
-
-    status = Process.run(path_to_shards, args: options, output: true, error: true)
-    exit status.exit_code unless status.success?
-  end
-
-  private def docs
-    if options.empty?
-      sources = [Compiler::Source.new("require", %(require "./src/**"))]
-      included_dirs = [] of String
-    else
-      filenames = options
-      sources = gather_sources(filenames)
-      included_dirs = sources.map { |source| File.dirname(source.filename) }
-    end
-
-    included_dirs << File.expand_path("./src")
-
-    compiler = Compiler.new
-    compiler.wants_doc = true
-    result = compiler.type_top_level sources
-    Crystal.generate_docs result.program, included_dirs
-  end
-
   private def types
     config, result = compile_no_codegen "tool types"
-    Crystal.print_types result.original_node
-  end
-
-  private def playground
-    server = Playground::Server.new
-
-    OptionParser.parse(options) do |opts|
-      opts.banner = "Usage: crystal play [options] [file]\n\nOptions:"
-
-      opts.on("-p PORT", "--port PORT", "Runs the playground on the specified port") do |port|
-        server.port = port.to_i
-      end
-
-      opts.on("-b HOST", "--binding HOST", "Binds the playground to the specified IP") do |host|
-        server.host = host
-      end
-
-      opts.on("-v", "--verbose", "Display detailed information of executed code") do
-        server.logger.level = Logger::Severity::DEBUG
-      end
-
-      opts.on("-h", "--help", "Show this message") do
-        puts opts
-        exit
-      end
-
-      opts.unknown_args do |before, after|
-        if before.size > 0
-          server.source = gather_sources([before.first]).first
-        end
-      end
-    end
-
-    server.start
+    Crystal.print_types result.node
   end
 
   private def compile_no_codegen(command, wants_doc = false, hierarchy = false, cursor_command = false, top_level = false)
     config = create_compiler command, no_codegen: true, hierarchy: hierarchy, cursor_command: cursor_command
     config.compiler.no_codegen = true
     config.compiler.wants_doc = wants_doc
-    result = top_level ? config.type_top_level : config.compile
+    result = top_level ? config.top_level_semantic : config.compile
     {config, result}
   end
 
@@ -443,11 +231,7 @@ class Crystal::Command
     end
   end
 
-  private def tempfile(basename)
-    Crystal.tempfile(basename)
-  end
-
-  record(CompilerConfig,
+  record CompilerConfig,
     compiler : Compiler,
     sources : Array(Compiler::Source),
     output_filename : String,
@@ -456,14 +240,14 @@ class Crystal::Command
     specified_output : Bool,
     hierarchy_exp : String?,
     cursor_location : String?,
-    output_format : String?) do
+    output_format : String? do
     def compile(output_filename = self.output_filename)
-      compiler.original_output_filename = original_output_filename
+      compiler.emit_base_filename = original_output_filename
       compiler.compile sources, output_filename
     end
 
-    def type_top_level
-      compiler.type_top_level sources
+    def top_level_semantic
+      compiler.top_level_semantic sources
     end
   end
 
@@ -495,7 +279,7 @@ class Crystal::Command
       end
 
       opts.on("-D FLAG", "--define FLAG", "Define a compile-time flag") do |flag|
-        compiler.add_flag flag
+        compiler.flags << flag
       end
 
       unless no_codegen
@@ -526,7 +310,7 @@ class Crystal::Command
       end
 
       unless no_codegen
-        opts.on("--ll", "Dump ll to .crystal directory") do
+        opts.on("--ll", "Dump ll to Crystal's cache directory") do
           compiler.dump_ll = true
         end
         opts.on("--link-flags FLAGS", "Additional flags to pass to the linker") do |some_link_flags|
@@ -613,6 +397,9 @@ class Crystal::Command
 
     output_filename ||= original_output_filename
     output_format ||= "text"
+    if !["text", "json"].includes?(output_format)
+      error "You have input an invalid format, only text and JSON are supported"
+    end
 
     if !no_codegen && !run && Dir.exists?(output_filename)
       error "can't use `#{output_filename}` as output filename because it's a directory"

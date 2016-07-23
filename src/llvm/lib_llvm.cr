@@ -1,7 +1,27 @@
 require "./enums"
 
-@[Link("stdc++")]
-@[Link(ldflags: "`$(command -v llvm-config-3.6 || command -v llvm-config36 || command -v llvm-config-3.5 || command -v llvm-config35 || command -v llvm-config) --libs --system-libs --ldflags 2> /dev/null`")]
+{% begin %}
+lib LibLLVM
+  LLVM_CONFIG = {{`command -v llvm-config-3.8 || command -v llvm-config38 || (command -v llvm-config > /dev/null && (case "$(llvm-config --version)" in 3.8*) command -v llvm-config;; *) false;; esac)) || command -v llvm-config-3.6 || command -v llvm-config36 || command -v llvm-config-3.5 || command -v llvm-config35 || command -v llvm-config `.chomp.stringify}}
+end
+{% end %}
+
+{% begin %}
+  @[Link("stdc++")]
+  @[Link(ldflags: "`{{LibLLVM::LLVM_CONFIG.id}} --libs --system-libs --ldflags 2> /dev/null`")]
+  lib LibLLVM
+    VERSION = {{`#{LibLLVM::LLVM_CONFIG} --version`.chomp.stringify}}
+  end
+{% end %}
+
+{% begin %}
+  lib LibLLVM
+    IS_38 = {{LibLLVM::VERSION.starts_with?("3.8")}}
+    IS_36 = {{LibLLVM::VERSION.starts_with?("3.6")}}
+    IS_35 = {{LibLLVM::VERSION.starts_with?("3.5")}}
+  end
+{% end %}
+
 lib LibLLVM
   type ContextRef = Void*
   type ModuleRef = Void*

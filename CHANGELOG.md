@@ -1,14 +1,34 @@
-## 0.18.4 (21-06.2016)
+## 0.18.7 (03-07-2016)
+
+* The `compile` command was renamed back to `build`. The `compile` command is deprecated and will be removed in a future version
+* Fibers now can be spawned with a name
+* ECR macros can now be required with just `require "ecr"`
+* [Several bugs fixes and enhancements](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.7+is%3Aclosed)
+
+## 0.18.6 (28-06-2016)
+
+* `T?` is now parsed as `Union(T, Nil)` outside the type grammar
+* Added `String#sub` overloads for replacing an index or range with a char or string
+* [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.6+is%3Aclosed)
+
+## 0.18.5 (27-06-2016)
+
+* Added `OpenSSL::SSL::Socket#alpn_protocol`
+* Added `IO#copy(src, desc, limit)` (thanks @jreinert)
+* Added `TypeNode#instance` macro method
+* [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.5+is%3Aclosed)
+
+## 0.18.4 (21-06-2016)
 
 * Fixed [#2887](https://github.com/crystal-lang/crystal/issues/2887)
 * Fix broken specs
 
-## 0.18.3 (21-06.2016)
+## 0.18.3 (21-06-2016)
 
 * `TypeNode`: added `<`, `<=`, `>` and `>=` macro methods
 * [Several bugs fixes](https://github.com/crystal-lang/crystal/issues?q=milestone%3A0.18.3+is%3Aclosed)
 
-## 0.18.2 (16-06.2016)
+## 0.18.2 (16-06-2016)
 
 * Fixed building Crystal from the source tarball
 

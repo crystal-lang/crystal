@@ -140,6 +140,12 @@ class JSONWithNilableUnion
   })
 end
 
+class JSONWithNilableUnion2
+  JSON.mapping({
+    value: Int32?,
+  })
+end
+
 describe "JSON mapping" do
   it "parses person" do
     person = JSONPerson.from_json(%({"name": "John", "age": 30}))
@@ -400,6 +406,24 @@ describe "JSON mapping" do
     obj.to_json.should eq(%({"value":1}))
 
     obj = JSONWithNilableUnion.from_json(%({"value": null}))
+    obj.value.should be_nil
+    obj.to_json.should eq(%({}))
+
+    obj = JSONWithNilableUnion.from_json(%({}))
+    obj.value.should be_nil
+    obj.to_json.should eq(%({}))
+  end
+
+  it "parses nilable union2" do
+    obj = JSONWithNilableUnion2.from_json(%({"value": 1}))
+    obj.value.should eq(1)
+    obj.to_json.should eq(%({"value":1}))
+
+    obj = JSONWithNilableUnion2.from_json(%({"value": null}))
+    obj.value.should be_nil
+    obj.to_json.should eq(%({}))
+
+    obj = JSONWithNilableUnion2.from_json(%({}))
     obj.value.should be_nil
     obj.to_json.should eq(%({}))
   end

@@ -77,20 +77,20 @@ class HTTP::Client
   # client = HTTP::Client.new "www.example.com", tls: true
   # client.tls # => #<OpenSSL::SSL::Context::Client ...>
   # ```
-  ifdef without_openssl
+  {% if flag?(:without_openssl) %}
     getter! tls : Nil
-  else
+  {% else %}
     getter! tls : OpenSSL::SSL::Context::Client?
-  end
+  {% end %}
 
   # Whether automatic compression/decompression is enabled.
   property? compress : Bool
 
-  ifdef without_openssl
+  {% if flag?(:without_openssl) %}
     @socket : TCPSocket | Nil
-  else
+  {% else %}
     @socket : TCPSocket | OpenSSL::SSL::Socket | Nil
-  end
+  {% end %}
 
   @dns_timeout : Float64?
   @connect_timeout : Float64?
@@ -101,7 +101,7 @@ class HTTP::Client
   # be used depending on the *tls* arguments: 80 for if *tls* is `false`,
   # 443 if *tls* is truthy. If *tls* is `true` a new `OpenSSL::SSL::Context::Client` will
   # be used, else the given one. In any case the active context can be accessed through `tls`.
-  ifdef without_openssl
+  {% if flag?(:without_openssl) %}
     def initialize(@host, port = nil, tls : Bool = false)
       @tls = nil
       if tls
@@ -111,7 +111,7 @@ class HTTP::Client
       @port = (port || (@tls ? 443 : 80)).to_i
       @compress = true
     end
-  else
+  {% else %}
     def initialize(@host, port = nil, tls : Bool | OpenSSL::SSL::Context::Client = false)
       @tls = case tls
              when true
@@ -125,7 +125,7 @@ class HTTP::Client
       @port = (port || (@tls ? 443 : 80)).to_i
       @compress = true
     end
-  end
+  {% end %}
 
   # Creates a new HTTP client from a URI. Parses the *host*, *port*,
   # and *tls* configuration from the url provided. Port defaults to
@@ -297,7 +297,7 @@ class HTTP::Client
     #
     # ```
     # client = HTTP::Client.new("www.example.com")
-    # response = client.{{method.id}}("/", headers: HTTP::Headers{"User-agent": "AwesomeApp"}, body: "Hello!")
+    # response = client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
     def {{method.id}}(path, headers : HTTP::Headers? = nil, body : String? = nil) : HTTP::Client::Response
@@ -309,7 +309,7 @@ class HTTP::Client
     #
     # ```
     # client = HTTP::Client.new("www.example.com")
-    # client.{{method.id}}("/", headers: HTTP::Headers{"User-agent": "AwesomeApp"}, body: "Hello!") do |response|
+    # client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!") do |response|
     #   response.body_io.gets #=> "..."
     # end
     # ```
@@ -323,7 +323,7 @@ class HTTP::Client
     # The response will have its body as a `String`, accessed via `HTTP::Client::Response#body`.
     #
     # ```
-    # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-agent": "AwesomeApp"}, body: "Hello!")
+    # response = HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!")
     # response.body #=> "..."
     # ```
     def self.{{method.id}}(url : String | URI, headers : HTTP::Headers? = nil, body : String? = nil, tls = nil) : HTTP::Client::Response
@@ -334,7 +334,7 @@ class HTTP::Client
     # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
     #
     # ```
-    # HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-agent": "AwesomeApp"}, body: "Hello!") do |response|
+    # HTTP::Client.{{method.id}}("/", headers: HTTP::Headers{"User-agent" => "AwesomeApp"}, body: "Hello!") do |response|
     #   response.body_io.gets #=> "..."
     # end
     # ```
@@ -358,6 +358,24 @@ class HTTP::Client
     exec request
   end
 
+  # Executes a POST with form data and yields the response to the block.
+  # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
+  # The "Content-type" header is set to "application/x-www-form-urlencoded".
+  #
+  # ```
+  # client = HTTP::Client.new "www.example.com"
+  # client.post_form("/", "foo=bar") do |response|
+  #   response.body_io.gets
+  # end
+  # ```
+  def post_form(path, form : String, headers : HTTP::Headers? = nil)
+    request = new_request("POST", path, headers, form)
+    request.headers["Content-type"] = "application/x-www-form-urlencoded"
+    exec(request) do |response|
+      yield response
+    end
+  end
+
   # Executes a POST with form data. The "Content-type" header is set
   # to "application/x-www-form-urlencoded".
   #
@@ -366,13 +384,25 @@ class HTTP::Client
   # response = client.post_form "/", {"foo": "bar"}
   # ```
   def post_form(path, form : Hash, headers : HTTP::Headers? = nil) : HTTP::Client::Response
-    body = HTTP::Params.build do |form_builder|
-      form.each do |key, value|
-        form_builder.add key, value
-      end
-    end
-
+    body = HTTP::Params.from_hash(form)
     post_form path, body, headers
+  end
+
+  # Executes a POST with form data and yields the response to the block.
+  # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
+  # The "Content-type" header is set to "application/x-www-form-urlencoded".
+  #
+  # ```
+  # client = HTTP::Client.new "www.example.com"
+  # client.post_form("/", {"foo": "bar"}) do |response|
+  #   response.body_io.gets
+  # end
+  # ```
+  def post_form(path, form : Hash, headers : HTTP::Headers? = nil)
+    body = HTTP::Params.from_hash(form)
+    post_form(path, body, headers) do |response|
+      yield response
+    end
   end
 
   # Executes a POST with form data. The "Content-type" header is set
@@ -384,6 +414,23 @@ class HTTP::Client
   def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil, tls = nil) : HTTP::Client::Response
     exec(url, tls) do |client, path|
       client.post_form(path, form, headers)
+    end
+  end
+
+  # Executes a POST with form data and yields the response to the block.
+  # The response will have its body as an `IO` accessed via `HTTP::Client::Response#body_io`.
+  # The "Content-type" header is set to "application/x-www-form-urlencoded".
+  #
+  # ```
+  # HTTP::Client.post_form("http://www.example.com", "foo=bar") do |response|
+  #   response.body_io.gets
+  # end
+  # ```
+  def self.post_form(url, form : String | Hash, headers : HTTP::Headers? = nil, tls = nil)
+    exec(url, tls) do |client, path|
+      client.post_form(path, form, headers) do |response|
+        yield response
+      end
     end
   end
 
@@ -439,16 +486,16 @@ class HTTP::Client
 
   private def set_defaults(request)
     request.headers["User-agent"] ||= "Crystal"
-    ifdef without_zlib
+    {% if flag?(:without_zlib) %}
       false
-    else
+    {% else %}
       if compress? && !request.headers.has_key?("Accept-Encoding")
         request.headers["Accept-Encoding"] = "gzip, deflate"
         true
       else
         false
       end
-    end
+    {% end %}
   end
 
   # Executes a request.
@@ -532,12 +579,12 @@ class HTTP::Client
     socket.sync = false
     @socket = socket
 
-    ifdef !without_openssl
+    {% if !flag?(:without_openssl) %}
       if tls = @tls
         tls_socket = OpenSSL::SSL::Socket::Client.new(socket, context: tls, sync_close: true, hostname: @host)
         @socket = socket = tls_socket
       end
-    end
+    {% end %}
 
     socket
   end
@@ -563,7 +610,7 @@ class HTTP::Client
     end
   end
 
-  ifdef without_openssl
+  {% if flag?(:without_openssl) %}
     protected def self.tls_flag(uri, context : Nil)
       scheme = uri.scheme
       case scheme
@@ -577,7 +624,7 @@ class HTTP::Client
         raise ArgumentError.new "Unsupported scheme: #{scheme}"
       end
     end
-  else
+  {% else %}
     protected def self.tls_flag(uri, context : OpenSSL::SSL::Context::Client?)
       scheme = uri.scheme
       case {scheme, context}
@@ -595,7 +642,7 @@ class HTTP::Client
         raise ArgumentError.new "Unsupported scheme: #{scheme}"
       end
     end
-  end
+  {% end %}
 
   protected def self.validate_host(uri)
     host = uri.host
@@ -622,7 +669,9 @@ class HTTP::Client
   end
 end
 
-require "openssl" ifdef !without_openssl
+{% if !flag?(:without_openssl) %}
+  require "openssl"
+{% end %}
 require "socket"
 require "uri"
 require "base64"

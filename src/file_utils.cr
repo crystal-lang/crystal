@@ -81,7 +81,7 @@ module FileUtils
   # FileUtils.rm_r("file.cr")
   # ```
   def rm_r(path : String)
-    if Dir.exists?(path)
+    if Dir.exists?(path) && !File.symlink?(path)
       Dir.open(path) do |dir|
         dir.each do |entry|
           if entry != "." && entry != ".."

@@ -1,5 +1,7 @@
 require "base64"
-require "openssl/lib_crypto" ifdef !without_openssl
+{% if !flag?(:without_openssl) %}
+  require "openssl/lib_crypto"
+{% end %}
 
 # The SecureRandom module is an interface for creating secure random values in different formats.
 # It uses the RNG (random number generator) of libcrypto (OpenSSL).

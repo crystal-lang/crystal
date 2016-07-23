@@ -7,13 +7,13 @@ lib LibC
   alias Int = Int32
   alias UInt = UInt32
 
-  ifdef x86_64
+  {% if flag?(:x86_64) %}
     alias Long = Int64
     alias ULong = UInt64
-  elsif i686
+  {% elsif flag?(:i686) %}
     alias Long = Int32
     alias ULong = UInt32
-  end
+  {% end %}
 
   alias LongLong = Int64
   alias ULongLong = UInt64

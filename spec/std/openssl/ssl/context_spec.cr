@@ -80,21 +80,24 @@ describe OpenSSL::SSL::Context do
   it "adds options" do
     context = OpenSSL::SSL::Context::Client.new
     context.remove_options(context.options) # reset
-    context.add_options(OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::ALL)
+    default_options = context.options       # options we can't unset
+    context.add_options(OpenSSL::SSL::Options::ALL).should eq(default_options | OpenSSL::SSL::Options::ALL)
     context.add_options(OpenSSL::SSL::Options.flags(NO_SSLV2, NO_SSLV3))
            .should eq(OpenSSL::SSL::Options.flags(ALL, NO_SSLV2, NO_SSLV3))
   end
 
   it "removes options" do
     context = OpenSSL::SSL::Context::Client.insecure
-    context.add_options(OpenSSL::SSL::Options.flags(ALL, NO_SSLV2))
-    context.remove_options(OpenSSL::SSL::Options::ALL).should eq(OpenSSL::SSL::Options::NO_SSLV2)
+    default_options = context.options
+    context.add_options(OpenSSL::SSL::Options.flags(NO_TLSV1, NO_SSLV2))
+    context.remove_options(OpenSSL::SSL::Options::NO_TLSV1).should eq(default_options | OpenSSL::SSL::Options::NO_SSLV2)
   end
 
   it "returns options" do
     context = OpenSSL::SSL::Context::Client.insecure
+    default_options = context.options
     context.add_options(OpenSSL::SSL::Options.flags(ALL, NO_SSLV2))
-    context.options.should eq(OpenSSL::SSL::Options.flags(ALL, NO_SSLV2))
+    context.options.should eq(default_options | OpenSSL::SSL::Options.flags(ALL, NO_SSLV2))
   end
 
   it "adds modes" do

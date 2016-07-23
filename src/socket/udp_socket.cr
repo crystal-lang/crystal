@@ -62,11 +62,12 @@ class UDPSocket < IPSocket
     getaddrinfo(host, port, nil, LibC::SOCK_DGRAM, LibC::IPPROTO_UDP, timeout: dns_timeout) do |addrinfo|
       self.reuse_address = true
 
-      ifdef freebsd
-        ret = LibC.bind(fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
-      else
-        ret = LibC.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
-      end
+      ret =
+        {% if flag?(:freebsd) %}
+          LibC.bind(fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
+        {% else %}
+          LibC.bind(fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
+        {% end %}
       unless ret == 0
         next false if addrinfo.ai_next
         raise Errno.new("Error binding UDP socket at #{host}:#{port}")

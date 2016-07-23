@@ -6,6 +6,7 @@ module Crystal
     def visit_type_declarations(node)
       processor = TypeDeclarationProcessor.new(self)
       processor.process(node)
+      {node, processor}
     end
   end
 
@@ -31,7 +32,7 @@ module Crystal
       super(mod)
 
       # The type of global variables. The last one wins.
-      @globals = {} of String => Type
+      @globals = {} of String => TypeDeclarationWithLocation
 
       # The type of class variables. The last one wins.
       # This is type => variables.
@@ -108,9 +109,9 @@ module Crystal
       when InstanceVar
         declare_instance_var(node, var)
       when ClassVar
-        declare_class_var(node, var)
+        declare_class_var(node, var, false)
       when Global
-        declare_global_var(node, var)
+        declare_global_var(node, var, false)
       end
 
       false
@@ -149,29 +150,29 @@ module Crystal
       var_type = lookup_type(node.declared_type)
       var_type = check_declare_var_type(node, var_type, "an instance variable")
       owner_vars = @instance_vars[owner] ||= {} of String => TypeDeclarationWithLocation
-      type_decl = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!)
+      type_decl = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, false)
       owner_vars[var.name] = type_decl
     end
 
     def declare_instance_var_on_generic(owner, node, var)
       # For generic types we must delay the type resolution
       owner_vars = @instance_vars[owner] ||= {} of String => TypeDeclarationWithLocation
-      type_decl = TypeDeclarationWithLocation.new(node.declared_type, node.location.not_nil!)
+      type_decl = TypeDeclarationWithLocation.new(node.declared_type, node.location.not_nil!, false)
       owner_vars[var.name] = type_decl
     end
 
-    def declare_class_var(node, var)
+    def declare_class_var(node, var, uninitialized)
       owner = class_var_owner(node)
       var_type = lookup_type(node.declared_type)
       var_type = check_declare_var_type(node, var_type, "a class variable")
       owner_vars = @class_vars[owner] ||= {} of String => TypeDeclarationWithLocation
-      owner_vars[var.name] = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!)
+      owner_vars[var.name] = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, uninitialized)
     end
 
-    def declare_global_var(node, var)
+    def declare_global_var(node, var, uninitialized)
       var_type = lookup_type(node.declared_type)
       var_type = check_declare_var_type(node, var_type, "a global variable")
-      @globals[var.name] = var_type.virtual_type
+      @globals[var.name] = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, uninitialized)
     end
 
     def visit(node : Def)
@@ -189,11 +190,7 @@ module Crystal
     end
 
     def visit(node : Call)
-      if node.global
-        node.scope = @mod
-      else
-        node.scope = current_type.metaclass
-      end
+      node.scope = node.global? ? @program : current_type.metaclass
 
       if expand_macro(node, raise_on_missing_const: false)
         false
@@ -207,6 +204,13 @@ module Crystal
     end
 
     def visit(node : UninitializedVar)
+      var = node.var
+      case var
+      when ClassVar
+        declare_class_var(node, var, true)
+      when Global
+        declare_global_var(node, var, true)
+      end
       false
     end
 
@@ -215,42 +219,22 @@ module Crystal
     end
 
     def visit(node : ProcLiteral)
+      node.def.body.accept self
       false
     end
 
     def visit(node : IsA)
+      node.obj.accept self
       false
     end
 
     def visit(node : Cast)
+      node.obj.accept self
       false
     end
 
     def visit(node : NilableCast)
-      false
-    end
-
-    def visit(node : InstanceSizeOf)
-      false
-    end
-
-    def visit(node : SizeOf)
-      false
-    end
-
-    def visit(node : TypeOf)
-      false
-    end
-
-    def visit(node : PointerOf)
-      false
-    end
-
-    def visit(node : ArrayLiteral)
-      false
-    end
-
-    def visit(node : HashLiteral)
+      node.obj.accept self
       false
     end
 
@@ -275,10 +259,6 @@ module Crystal
     end
 
     def visit(node : Self)
-      false
-    end
-
-    def visit(node : TypeOf)
       false
     end
 

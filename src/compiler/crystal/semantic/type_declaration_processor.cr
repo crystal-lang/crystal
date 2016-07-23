@@ -13,7 +13,8 @@ module Crystal
   struct TypeDeclarationProcessor
     record TypeDeclarationWithLocation,
       type : TypeVar,
-      location : Location
+      location : Location,
+      uninitialized : Bool
 
     # This captures an initialize info: it's related Def,
     # and which instance variables are assigned. Useful
@@ -67,6 +68,9 @@ module Crystal
       info : InitializeInfo,
       name : String
 
+    private getter type_decl_visitor
+    private getter type_guess_visitor
+
     def initialize(@program : Program)
       # The type of instance variables. The last one wins.
       #
@@ -105,11 +109,15 @@ module Crystal
       # instance variables. These are gathered by the guesser, and later
       # removed if an explicit type is found (in remove_error).
       @errors = {} of Type => Hash(String, Error)
+
+      @type_decl_visitor = TypeDeclarationVisitor.new(@program, @explicit_instance_vars)
+
+      @type_guess_visitor = TypeGuessVisitor.new(@program, @explicit_instance_vars,
+        @guessed_instance_vars, @initialize_infos, @instance_vars_outside, @errors)
     end
 
     def process(node)
       # First check type declarations
-      type_decl_visitor = TypeDeclarationVisitor.new(@program, @explicit_instance_vars)
       node.accept type_decl_visitor
 
       # Use the last type found for global variables to declare them
@@ -126,8 +134,6 @@ module Crystal
 
       # Then use several syntactic rules to infer the types of
       # variables that don't have an explicit type set
-      type_guess_visitor = TypeGuessVisitor.new(@program, @explicit_instance_vars,
-        @guessed_instance_vars, @initialize_infos, @instance_vars_outside, @errors)
       node.accept type_guess_visitor
 
       # Process global variables
@@ -170,6 +176,7 @@ module Crystal
       var.type = type
       var.bind_to(var)
       var.freeze_type = type
+      var.location = location
       vars[name] = var
       var
     end
@@ -187,6 +194,9 @@ module Crystal
 
       var = declare_meta_type_var(vars, owner, name, info.type.as(Type))
       var.location = info.location
+
+      # Check if var is uninitialized
+      var.uninitialized = true if info.uninitialized
 
       # If the variable is gueseed to be nilable because it is not initialized
       # in all of the initialize methods, and the explicit type is not nilable,
@@ -419,7 +429,7 @@ module Crystal
       # super or assign all of those variables
       if ancestor_non_nilable
         infos.each do |info|
-          unless info.def.calls_super || info.def.calls_initialize
+          unless info.def.calls_super? || info.def.calls_initialize?
             ancestor_non_nilable.each do |name|
               # If the variable is initialized outside, it's OK
               next if initialized_outside?(owner, name)
@@ -448,7 +458,7 @@ module Crystal
         infos.each do |info|
           # If an initialize calls another initialize, consider it like it initializes
           # all instance vars, because the other initialize will have to do that
-          next if info.def.calls_initialize
+          next if info.def.calls_initialize?
 
           # It's non-nilable if it's initialized outside
           next if initialized_outside?(owner, instance_var)
@@ -542,6 +552,34 @@ module Crystal
             end
           end
         end
+      end
+    end
+
+    def check_non_nilable_class_vars_without_initializers
+      type_decl_visitor.class_vars.each do |owner, vars|
+        vars.each_key do |name|
+          check_non_nilable_class_var_without_initializers(owner, name)
+        end
+      end
+
+      type_guess_visitor.class_vars.each do |owner, vars|
+        vars.each_key do |name|
+          check_non_nilable_class_var_without_initializers(owner, name)
+        end
+      end
+    end
+
+    private def check_non_nilable_class_var_without_initializers(owner, name)
+      class_var = owner.class_vars[name]?
+      return unless class_var
+
+      return if class_var.uninitialized?
+
+      var_type = class_var.type?
+      return unless var_type
+
+      if !class_var.initializer && !var_type.includes_type?(@program.nil_type)
+        class_var.raise "class variable '#{name}' of #{owner} is not nilable (it's #{var_type}) so it must have an initializer"
       end
     end
 

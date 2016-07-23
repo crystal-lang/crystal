@@ -44,10 +44,6 @@ class IO::BufferedWrapper
     @io.closed?
   end
 
-  def to_fd_io
-    @io.to_fd_io
-  end
-
   private def unbuffered_rewind
     @io.rewind
   end

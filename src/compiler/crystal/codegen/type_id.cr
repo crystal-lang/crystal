@@ -10,7 +10,7 @@ class Crystal::CodeGenVisitor
   end
 
   private def type_id_impl(value, type : NilableType)
-    builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.not_nil_type)
+    builder.select null_pointer?(value), type_id(@program.nil), type_id(type.not_nil_type)
   end
 
   private def type_id_impl(value, type : ReferenceUnionType)
@@ -28,7 +28,7 @@ class Crystal::CodeGenVisitor
     cond null_pointer?(value), nil_block, not_nil_block
 
     position_at_end nil_block
-    phi_table.add insert_block, type_id(@mod.nil)
+    phi_table.add insert_block, type_id(@program.nil)
     br exit_block
 
     position_at_end not_nil_block
@@ -40,12 +40,12 @@ class Crystal::CodeGenVisitor
   end
 
   private def type_id_impl(value, type : NilablePointerType)
-    builder.select null_pointer?(value), type_id(@mod.nil), type_id(type.pointer_type)
+    builder.select null_pointer?(value), type_id(@program.nil), type_id(type.pointer_type)
   end
 
   private def type_id_impl(value, type : NilableProcType)
     fun_ptr = extract_value value, 0
-    builder.select null_pointer?(fun_ptr), type_id(@mod.nil), type_id(type.proc_type)
+    builder.select null_pointer?(fun_ptr), type_id(@program.nil), type_id(type.proc_type)
   end
 
   private def type_id_impl(value, type : MixedUnionType)

@@ -117,6 +117,15 @@ abstract class OpenSSL::SSL::Socket
     @bio.io.flush
   end
 
+  {% if LibSSL::OPENSSL_102 %}
+  # Returns the negotiated ALPN protocol (eg: "h2") of nil if no protocol was
+  # negotiated.
+  def alpn_protocol
+    LibSSL.ssl_get0_alpn_selected(@ssl, out protocol, out len)
+    String.new(protocol, len) unless protocol.null?
+  end
+  {% end %}
+
   def close
     return if @closed
     @closed = true

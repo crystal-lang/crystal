@@ -20,7 +20,7 @@ struct CallStack
     @backtrace ||= decode_backtrace
   end
 
-  ifdef i686
+  {% if flag?(:i686) %}
     # This is only used for the workaround described in `Exception.unwind`
     @@makecontext_range : Range(Void*, Void*)?
 
@@ -38,7 +38,7 @@ struct CallStack
         (makecontext_start...makecontext_end)
       end
     end
-  end
+  {% end %}
 
   protected def self.unwind
     callstack = [] of Void*
@@ -47,14 +47,14 @@ struct CallStack
       ip = Pointer(Void).new(LibUnwind.get_ip(context))
       bt << ip
 
-      ifdef i686
+      {% if flag?(:i686) %}
         # This is a workaround for glibc bug: https://sourceware.org/bugzilla/show_bug.cgi?id=18635
         # The unwind info is corrupted when `makecontext` is used.
         # Stop the backtrace here. There is nothing interest beyond this point anyway.
         if CallStack.makecontext_range.includes?(ip)
           return LibUnwind::ReasonCode::END_OF_STACK
         end
-      end
+      {% end %}
 
       LibUnwind::ReasonCode::NO_REASON
     end

@@ -581,11 +581,6 @@ module Crystal
       node
     end
 
-    def transform(node : FileNode)
-      node.node = node.node.transform self
-      node
-    end
-
     def transform_many(exps)
       exps.map! { |exp| exp.transform(self) } if exps
     end

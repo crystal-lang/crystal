@@ -34,7 +34,7 @@ class Crystal::Def
       end
     end
 
-    retain_body = yields || splat_index || double_splat || assigns_special_var || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
+    retain_body = yields || splat_index || double_splat || assigns_special_var? || macro_def? || args.any? { |arg| arg.default_value && arg.restriction }
 
     splat_index = self.splat_index
     double_splat = self.double_splat
@@ -89,13 +89,13 @@ class Crystal::Def
 
     expansion = Def.new(new_name, new_args, nil, receiver.clone, block_arg.clone, return_type.clone, macro_def?, yields)
     expansion.args.each { |arg| arg.default_value = nil }
-    expansion.calls_super = calls_super
-    expansion.calls_initialize = calls_initialize
-    expansion.calls_previous_def = calls_previous_def
-    expansion.uses_block_arg = uses_block_arg
+    expansion.calls_super = calls_super?
+    expansion.calls_initialize = calls_initialize?
+    expansion.calls_previous_def = calls_previous_def?
+    expansion.uses_block_arg = uses_block_arg?
     expansion.yields = yields
     expansion.location = location
-    expansion.raises = self.raises
+    expansion.raises = raises?
     if owner = self.owner?
       expansion.owner = owner
     end
@@ -194,7 +194,7 @@ class Crystal::Def
       end
 
       call = Call.new(nil, name, new_args)
-      call.is_expansion = true
+      call.expansion = true
       body << call
 
       expansion.body = Expressions.new(body)
@@ -214,7 +214,7 @@ class Crystal::Def
     end
 
     def transform(node : Path)
-      if !node.global && node.names.size == 1 && node.names.first == @free_var_name
+      if !node.global? && node.names.size == 1 && node.names.first == @free_var_name
         TypeOf.new([Var.new(@replacement_name)] of ASTNode)
       else
         node

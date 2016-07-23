@@ -4,7 +4,7 @@
 # another object, returning -1, 0, +1 or nil depending on whether the receiver is less than,
 # equal to, greater than the other object, or no order can be established.
 #
-# Comparable uses `<=>` to implement the conventional comparison operators (`<`, `<=`, `==`, `>=`, and `>`).
+# PartialComparable uses `<=>` to implement the conventional comparison operators (`<`, `<=`, `==`, `>=`, and `>`).
 module PartialComparable(T)
   # Compares this object to *other* based on the receiver’s `<=>` method, returning `true` if it returns `-1`.
   def <(other : T)

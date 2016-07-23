@@ -37,6 +37,14 @@ module Crystal
       simple_vars, complex_vars = class_var_initializers.partition &.node.simple_literal?
       class_var_initializers = simple_vars + complex_vars
 
+      # Next assign their initializer, so we know which are initialized
+      # and shouldn't raise an error when trying to accessing them
+      # before they are defined
+      class_var_initializers.each do |initializer|
+        class_var = initializer.owner.class_vars[initializer.name]?
+        class_var.initializer = initializer if class_var
+      end
+
       # Now type them
       class_var_initializers.each do |initializer|
         owner = initializer.owner
@@ -59,9 +67,7 @@ module Crystal
           had_class_var = false
         end
 
-        self.class_var_and_const_being_typed.push class_var
         node.accept main_visitor
-        self.class_var_and_const_being_typed.pop
 
         unless had_class_var
           main_visitor.undefined_class_variable(class_var, owner)
@@ -114,7 +120,7 @@ module Crystal
         node.target.is_a?(ClassVar)
       when TypeDeclaration
         node.var.is_a?(ClassVar)
-      when FileNode, Expressions, ClassDef, ModuleDef, EnumDef, Alias, Include, Extend, LibDef, Def, Macro, Call
+      when FileNode, Expressions, ClassDef, ModuleDef, EnumDef, Alias, Include, Extend, LibDef, Def, Macro, Call, Require
         true
       else
         false
@@ -195,11 +201,7 @@ module Crystal
     end
 
     def visit(node : Call)
-      if node.global
-        node.scope = @mod
-      else
-        node.scope = current_type.metaclass
-      end
+      node.scope = node.global? ? @program : current_type.metaclass
 
       if expand_macro(node, raise_on_missing_const: false)
         false

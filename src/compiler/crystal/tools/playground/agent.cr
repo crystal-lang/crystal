@@ -45,18 +45,6 @@ class Crystal::Playground::Agent
     to_value(value) rescue "(error)"
   end
 
-  def to_value(value : Void)
-    "(void)"
-  end
-
-  def to_value(value : Void?)
-    if value
-      "(void)"
-    else
-      nil.inspect
-    end
-  end
-
   def to_value(value)
     value.inspect
   end

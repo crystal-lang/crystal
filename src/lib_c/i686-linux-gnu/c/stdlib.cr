@@ -19,5 +19,6 @@ lib LibC
   fun realpath(name : Char*, resolved : Char*) : Char*
   fun setenv(name : Char*, value : Char*, replace : Int) : Int
   fun strtof(nptr : Char*, endptr : Char**) : Float
+  fun strtod(nptr : Char*, endptr : Char**) : Double
   fun unsetenv(name : Char*) : Int
 end

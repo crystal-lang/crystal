@@ -896,6 +896,28 @@ module IO
     len < 0 ? len : count
   end
 
+  # Copy at most *limit* bytes from *src* to *dst*.
+  #
+  # ```
+  # io = MemoryIO.new "hello"
+  # io2 = MemoryIO.new
+  #
+  # IO.copy io, io2, 3
+  #
+  # io2.to_s # => "hel"
+  # ```
+  def self.copy(src, dst, limit : Int)
+    raise ArgumentError.new("negative limit") if limit < 0
+
+    buffer = uninitialized UInt8[1024]
+    remaining = limit
+    while (len = src.read(buffer.to_slice[0, Math.min(buffer.size, Math.max(remaining, 0))])) > 0
+      dst.write buffer.to_slice[0, len]
+      remaining -= len
+    end
+    limit - remaining
+  end
+
   # :nodoc:
   struct LineIterator(I, A)
     include Iterator(String)

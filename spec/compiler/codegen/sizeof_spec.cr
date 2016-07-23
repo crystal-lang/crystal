@@ -48,11 +48,11 @@ describe "Code gen: sizeof" do
     # be struct { 8 bytes, 8 bytes }.
     #
     # In 32 bits structs are aligned to 4 bytes, so it remains the same.
-    ifdef x86_64
+    {% if flag?(:x86_64) %}
       size.should eq(16)
-    else
+    {% else %}
       size.should eq(12)
-    end
+    {% end %}
   end
 
   it "gets instance_sizeof class" do
