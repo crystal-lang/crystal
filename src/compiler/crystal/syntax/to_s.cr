@@ -311,7 +311,7 @@ module Crystal
           @str << "."
         end
         if node.name.ends_with?('=') && node.name[0].alpha?
-          @str << decorate_call(node, node.name[0..-2])
+          @str << decorate_call(node, node.name.chop)
           @str << " = "
           node.args.each_with_index do |arg, i|
             @str << ", " if i > 0

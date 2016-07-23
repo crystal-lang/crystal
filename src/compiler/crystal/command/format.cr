@@ -130,7 +130,7 @@ class Crystal::Command
     if File.file?(filename)
       format_file filename, check_files
     elsif Dir.exists?(filename)
-      filename = filename[0...-1] if filename.ends_with?('/')
+      filename = filename.chomp('/')
       filenames = Dir["#{filename}/**/*.cr"]
       format_many filenames, check_files
     else

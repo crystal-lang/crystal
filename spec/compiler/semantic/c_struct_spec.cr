@@ -6,8 +6,8 @@ describe "Semantic: struct" do
     mod = result.program
 
     bar = mod.types["LibFoo"].types["Bar"].as(CStructType)
-    bar.vars["x"].type.should eq(mod.int32)
-    bar.vars["y"].type.should eq(mod.float64)
+    bar.instance_vars["@x"].type.should eq(mod.int32)
+    bar.instance_vars["@y"].type.should eq(mod.float64)
   end
 
   it "types Struct#new" do

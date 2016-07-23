@@ -75,10 +75,6 @@ module Crystal
       false
     end
 
-    def value?
-      false
-    end
-
     def module?
       false
     end
@@ -1121,11 +1117,6 @@ module Crystal
       end
     end
 
-    def each_instance_var(&block)
-      superclass.try &.each_instance_var &block
-      instance_vars.each(&block)
-    end
-
     def all_instance_vars
       if sup = superclass
         sup.all_instance_vars.merge(instance_vars)
@@ -1218,10 +1209,6 @@ module Crystal
       self.struct = true
     end
 
-    def value?
-      true
-    end
-
     def primitive_like?
       true
     end
@@ -1232,10 +1219,6 @@ module Crystal
 
     def abstract?
       false
-    end
-
-    def hierarcy_type
-      self
     end
   end
 
@@ -2346,12 +2329,10 @@ module Crystal
   abstract class CStructOrUnionType < NonGenericClassType
     include DefContainer
     include DefInstanceContainer
-
-    getter vars : Hash(String, MetaTypeVar)
+    include InstanceVarContainer
 
     def initialize(program, container, name)
       super(program, container, name, program.struct)
-      @vars = {} of String => MetaTypeVar
       @struct = true
     end
 
@@ -2362,56 +2343,15 @@ module Crystal
     def primitive_like?
       true
     end
-
-    def has_var?(name)
-      @vars.has_key?(name)
-    end
-
-    def lookup_instance_var(name, create = nil)
-      lookup_instance_var?(name).not_nil!
-    end
-
-    def lookup_instance_var?(name, create = nil)
-      @vars[remove_at_from_var_name(name)]
-    end
-
-    def lookup_instance_var_with_owner?(name)
-      ivar = lookup_instance_var?(name)
-      if ivar
-        InstanceVarWithOwner.new(ivar, self)
-      else
-        nil
-      end
-    end
-
-    def all_instance_vars
-      @vars
-    end
-
-    def instance_vars
-      @vars
-    end
-
-    def index_of_var(name)
-      @vars.key_index(remove_at_from_var_name(name)).not_nil!
-    end
-
-    def index_of_instance_var(name)
-      index_of_var(name)
-    end
-
-    private def remove_at_from_var_name(name)
-      name.starts_with?('@') ? name[1..-1] : name
-    end
   end
 
   class CStructType < CStructOrUnionType
     property packed = false
 
-    def add_var(var)
-      @vars[var.name] = var
-      add_def Def.new("#{var.name}=", [Arg.new("value")], Primitive.new(:struct_set))
-      add_def Def.new(var.name, body: Primitive.new(:struct_get))
+    def add_var(field_name, var)
+      instance_vars[var.name] = var
+      add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new(:struct_set))
+      add_def Def.new(field_name, body: Primitive.new(:struct_get))
     end
 
     def initialize_metaclass(metaclass)
@@ -2429,10 +2369,10 @@ module Crystal
   end
 
   class CUnionType < CStructOrUnionType
-    def add_var(var)
-      @vars[var.name] = var
-      add_def Def.new("#{var.name}=", [Arg.new("value")], Primitive.new(:union_set))
-      add_def Def.new(var.name, body: Primitive.new(:union_get))
+    def add_var(field_name, var)
+      instance_vars[var.name] = var
+      add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new(:union_set))
+      add_def Def.new(field_name, body: Primitive.new(:union_get))
     end
 
     def initialize_metaclass(metaclass)

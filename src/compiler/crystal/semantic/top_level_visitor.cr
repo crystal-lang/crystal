@@ -978,7 +978,7 @@ module Crystal
       if type
         yield type
         type = type.as(CStructOrUnionType)
-        unless type.vars.empty?
+        unless type.instance_vars.empty?
           node.raise "#{node.name} is already defined"
         end
       else
@@ -1015,12 +1015,14 @@ module Crystal
           end
         end
 
-        if @struct_or_union.has_var?(field.name)
+        var_name = '@' + field.name
+
+        if @struct_or_union.lookup_instance_var?(var_name)
           field.raise "#{@struct_or_union.type_desc} #{@struct_or_union} already defines a field named '#{field.name}'"
         end
-        ivar = MetaTypeVar.new(field.name, field_type)
+        ivar = MetaTypeVar.new(var_name, field_type)
         ivar.owner = @struct_or_union
-        @struct_or_union.add_var ivar
+        @struct_or_union.add_var field.name, ivar
       end
 
       def visit(node : Include)
@@ -1033,11 +1035,12 @@ module Crystal
           node.name.raise "can only include C struct, not #{type.type_desc}"
         end
 
-        type.vars.each_value do |var|
-          if @struct_or_union.has_var?(var.name)
-            node.raise "struct #{type} has a field named '#{var.name}', which #{@struct_or_union} already defines"
+        type.instance_vars.each_value do |var|
+          field_name = var.name[1..-1]
+          if @struct_or_union.lookup_instance_var?(var.name)
+            node.raise "struct #{type} has a field named '#{field_name}', which #{@struct_or_union} already defines"
           end
-          @struct_or_union.add_var(var)
+          @struct_or_union.add_var(field_name, var)
         end
 
         false

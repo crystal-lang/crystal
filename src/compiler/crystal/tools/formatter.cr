@@ -2201,7 +2201,7 @@ module Crystal
       assignment = node.name.ends_with?('=') && node.name.chars.any?(&.alpha?)
 
       if assignment
-        write node.name[0...-1]
+        write node.name.chop
       else
         write node.name
       end

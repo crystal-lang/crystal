@@ -3,7 +3,7 @@ require "../../spec_helper"
 class Crystal::Program
   def t(type)
     if type.ends_with?('+')
-      types[type[0..-2]].virtual_type
+      types[type.chop].virtual_type
     else
       types[type]
     end

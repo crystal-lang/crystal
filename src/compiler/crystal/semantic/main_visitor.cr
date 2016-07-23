@@ -2091,8 +2091,8 @@ module Crystal
     def visit_struct_or_union_set(node)
       scope = @scope.as(CStructOrUnionType)
 
-      field_name = call.not_nil!.name[0...-1]
-      expected_type = scope.vars[field_name].type
+      field_name = call.not_nil!.name.chop
+      expected_type = scope.instance_vars['@' + field_name].type
       value = @vars["value"]
       actual_type = value.type
 
@@ -2132,12 +2132,12 @@ module Crystal
 
     def visit_struct_get(node)
       scope = @scope.as(CStructType)
-      node.bind_to scope.vars[untyped_def.name]
+      node.bind_to scope.instance_vars['@' + untyped_def.name]
     end
 
     def visit_union_get(node)
       scope = @scope.as(CUnionType)
-      node.bind_to scope.vars[untyped_def.name]
+      node.bind_to scope.instance_vars['@' + untyped_def.name]
     end
 
     def visit(node : PointerOf)

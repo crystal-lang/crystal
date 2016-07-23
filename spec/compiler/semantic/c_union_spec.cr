@@ -5,8 +5,8 @@ describe "Semantic: c union" do
     result = assert_type("lib LibFoo; union Bar; x : Int32; y : Float64; end; end; LibFoo::Bar") { types["LibFoo"].types["Bar"].metaclass }
     mod = result.program
     bar = mod.types["LibFoo"].types["Bar"].as(CUnionType)
-    bar.vars["x"].type.should eq(mod.int32)
-    bar.vars["y"].type.should eq(mod.float64)
+    bar.instance_vars["@x"].type.should eq(mod.int32)
+    bar.instance_vars["@y"].type.should eq(mod.float64)
   end
 
   it "types Union#new" do

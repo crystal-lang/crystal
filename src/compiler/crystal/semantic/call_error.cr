@@ -30,11 +30,8 @@ class Crystal::Call
   end
 
   def raise_struct_or_union_field_not_found(owner, def_name)
-    if def_name.ends_with?('=')
-      def_name = def_name[0..-2]
-    end
-
-    var = owner.vars[def_name]?
+    def_name = def_name.chomp('=')
+    var = owner.instance_vars['@' + def_name]?
     if var
       args[0].raise "field '#{def_name}' of #{owner.type_desc} #{owner} has type #{var.type}, not #{args[0].type}"
     else

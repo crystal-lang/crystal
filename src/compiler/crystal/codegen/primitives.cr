@@ -469,7 +469,7 @@ class Crystal::CodeGenVisitor
   def codegen_primitive_struct_set(node, target_def, call_args)
     set_aggregate_field(node, target_def, call_args) do
       type = context.type.as(CStructOrUnionType)
-      name = target_def.name[0..-2]
+      name = target_def.name.chop
 
       struct_field_ptr(type, name, call_args[0])
     end
@@ -483,7 +483,7 @@ class Crystal::CodeGenVisitor
   end
 
   def struct_field_ptr(type, field_name, pointer)
-    index = type.index_of_var(field_name)
+    index = type.index_of_instance_var('@' + field_name)
     aggregate_index pointer, index
   end
 
@@ -516,9 +516,9 @@ class Crystal::CodeGenVisitor
       context.vars["value"] = existing_value if existing_value
     end
 
-    var_name = target_def.name[0...-1]
+    var_name = '@' + target_def.name.chop
     scope = context.type.as(CStructOrUnionType)
-    field_type = scope.vars[var_name].type
+    field_type = scope.instance_vars[var_name].type
 
     # Check nil to pointer
     if node.type.nil_type? && (field_type.pointer? || field_type.proc?)

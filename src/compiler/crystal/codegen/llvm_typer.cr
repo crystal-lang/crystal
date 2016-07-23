@@ -293,7 +293,7 @@ module Crystal
         end
 
         @types_being_computed.add(type)
-        types = type.vars.map { |name, var| llvm_embedded_c_type(var.type, wants_size).as(LLVM::Type) }
+        types = type.instance_vars.map { |name, var| llvm_embedded_c_type(var.type, wants_size).as(LLVM::Type) }
         @types_being_computed.delete(type)
         types
       end
@@ -312,7 +312,7 @@ module Crystal
         max_align_type = nil
         max_align_type_size = 0
 
-        type.vars.each do |name, var|
+        type.instance_vars.each do |name, var|
           var_type = var.type
           unless var_type.void?
             llvm_type = llvm_embedded_c_type(var_type, wants_size: true)
