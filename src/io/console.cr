@@ -111,24 +111,4 @@ module IO
       LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(before))
     end
   end
-
-  def read_nonblock(size)
-    before = LibC.fcntl(fd, LibC::F_GETFL)
-    LibC.fcntl(fd, LibC::F_SETFL, before | LibC::O_NONBLOCK)
-
-    begin
-      String.new(size) do |buffer|
-        read_size = read Slice.new(buffer, size)
-        if read_size == 0
-          raise EOFError.new "read_nonblock: read nothing"
-        elsif Errno.value == LibC::EWOULDBLOCK
-          raise Errno.new "exception in read_nonblock"
-        else
-          {read_size.to_i, 0}
-        end
-      end
-    ensure
-      LibC.fcntl(fd, LibC::F_SETFL, before)
-    end
-  end
 end
