@@ -934,12 +934,12 @@ class String
     case to_unsafe[bytesize - 1]
     when '\n'
       if bytesize > 1 && to_unsafe[bytesize - 2] === '\r'
-        byte_slice 0, bytesize - 2
+        unsafe_byte_slice_string(0, bytesize - 2)
       else
-        byte_slice 0, bytesize - 1
+        unsafe_byte_slice_string(0, bytesize - 1)
       end
     when '\r'
-      byte_slice 0, bytesize - 1
+      unsafe_byte_slice_string(0, bytesize - 1)
     else
       self
     end
@@ -953,7 +953,7 @@ class String
   # ```
   def chomp(char : Char)
     if ends_with?(char)
-      String.new(unsafe_byte_slice(0, bytesize - char.bytesize))
+      unsafe_byte_slice_string(0, bytesize - char.bytesize)
     else
       self
     end
@@ -967,7 +967,7 @@ class String
   # ```
   def chomp(str : String)
     if ends_with?(str)
-      String.new(unsafe_byte_slice(0, bytesize - str.bytesize))
+      unsafe_byte_slice_string(0, bytesize - str.bytesize)
     else
       self
     end
@@ -990,11 +990,11 @@ class String
     return "" if bytesize <= 1
 
     if bytesize >= 2 && to_unsafe[bytesize - 1] === '\n' && to_unsafe[bytesize - 2] === '\r'
-      return byte_slice(0, bytesize - 2)
+      return unsafe_byte_slice_string(0, bytesize - 2)
     end
 
     if to_unsafe[bytesize - 1] < 128 || ascii_only?
-      return byte_slice(0, bytesize - 1)
+      return unsafe_byte_slice_string(0, bytesize - 1)
     end
 
     self[0, size - 1]
@@ -1125,7 +1125,7 @@ class String
     if excess_right == 0 && excess_left == 0
       self
     else
-      String.new(unsafe_byte_slice excess_left, bytesize - excess_left - excess_right)
+      unsafe_byte_slice_string(excess_left, bytesize - excess_left - excess_right)
     end
   end
 
@@ -2489,12 +2489,12 @@ class String
     offset = 0
 
     while byte_index = byte_index('\n'.ord.to_u8, offset)
-      yield String.new(unsafe_byte_slice(offset, byte_index + 1 - offset))
+      yield unsafe_byte_slice_string(offset, byte_index + 1 - offset)
       offset = byte_index + 1
     end
 
     unless offset == bytesize
-      yield String.new(unsafe_byte_slice(offset))
+      yield unsafe_byte_slice_string(offset)
     end
   end
 
@@ -3156,6 +3156,14 @@ class String
     Slice.new(to_unsafe + byte_offset, bytesize - byte_offset)
   end
 
+  protected def unsafe_byte_slice_string(byte_offset)
+    String.new(unsafe_byte_slice(byte_offset))
+  end
+
+  protected def unsafe_byte_slice_string(byte_offset, count)
+    String.new(unsafe_byte_slice(byte_offset, count))
+  end
+
   protected def self.char_bytes_and_bytesize(char : Char)
     bytes = uninitialized UInt8[4]
 
@@ -3252,13 +3260,13 @@ class String
 
       byte_index = @string.byte_index('\n'.ord.to_u8, @offset)
       if byte_index
-        value = String.new(@string.unsafe_byte_slice(@offset, byte_index + 1 - @offset))
+        value = @string.unsafe_byte_slice_string(@offset, byte_index + 1 - @offset)
         @offset = byte_index + 1
       else
         if @offset == @string.bytesize
           value = stop
         else
-          value = String.new(@string.unsafe_byte_slice(@offset))
+          value = @string.unsafe_byte_slice_string(@offset)
         end
         @end = true
       end
