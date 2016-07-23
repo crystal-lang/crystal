@@ -1,6 +1,25 @@
 require "termios"
 
 module IO
+  def noecho
+    preserving_tc_mode("can't set IO#noecho") do |mode|
+      noecho_from_tc_mode!
+      yield self
+    end
+  end
+
+  def noecho!
+    if LibC.tcgetattr(fd, out mode) != 0
+      raise Errno.new "can't set IO#noecho!"
+    end
+    noecho_from_tc_mode!
+  end
+
+  macro noecho_from_tc_mode!
+    mode.c_lflag &= ~(Termios::LocalMode.flags(ECHO, ECHOE, ECHOK, ECHONL).value)
+    LibC.tcsetattr(fd, Termios::LineControl::TCSANOW, pointerof(mode))
+  end
+
   def cooked
     preserving_tc_mode("can't set IO#cooked") do |mode|
       cooked_from_tc_mode!
