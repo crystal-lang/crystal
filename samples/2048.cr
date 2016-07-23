@@ -5,7 +5,7 @@ require "colorize"
 
 module Screen
   TILES = {
-        0 => {:white, :black},
+        0 => {:white, nil},
         2 => {:black, :white},
         4 => {:blue, :white},
         8 => {:black, :yellow},
@@ -26,7 +26,9 @@ module Screen
 
   def self.colorize_for(tile)
     fg_color, bg_color = TILES[tile]
-    with_color(fg_color).on(bg_color).surround do
+    color = with_color(fg_color)
+    color = color.on(bg_color) if bg_color
+    color.surround do
       yield
     end
   end
@@ -37,14 +39,10 @@ module Screen
 
   def self.read_keypress
     STDIN.raw do |io|
-      input = io.gets 1
-      return :unknown unless input
-      if input == "\e"
-        next_two_bytes = io.read_nonblock(2) rescue nil
-        # third_byte = io.read_nonblock(1) rescue nil
-        input += next_two_bytes if next_two_bytes
-        # input += third_byte if third_byte
-      end
+      buffer = Bytes.new(3)
+      bytes_read = io.read(buffer)
+      return :unknown if bytes_read == 0
+      input = String.new(buffer[0, bytes_read])
 
       case input
       when "\e[A", "w"
