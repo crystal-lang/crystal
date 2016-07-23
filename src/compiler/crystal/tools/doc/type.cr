@@ -626,6 +626,20 @@ class Crystal::Doc::Type
     io << "}"
   end
 
+  def type_to_html(type : Crystal::NamedTupleInstanceType, io, text = nil, links = true)
+    io << "{"
+    type.entries.join(", ", io) do |entry|
+      if Symbol.needs_quotes?(entry.name)
+        entry.name.inspect(io)
+      else
+        io << entry.name
+      end
+      io << ": "
+      type_to_html entry.type, io, links: links
+    end
+    io << "}"
+  end
+
   def type_to_html(type : Crystal::GenericClassInstanceType, io, text = nil, links = true)
     generic_class = @generator.type(type.generic_class)
     if generic_class.must_be_included?
