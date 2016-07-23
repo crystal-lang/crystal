@@ -237,9 +237,7 @@ class File < IO::FileDescriptor
   # ```
   def self.basename(path, suffix) : String
     suffix.check_no_null_byte
-    basename = basename(path)
-    basename = basename[0, basename.size - suffix.size] if basename.ends_with?(suffix)
-    basename
+    basename(path).chomp(suffix)
   end
 
   # Delete the file at *path*. Deleting non-existent file will raise an exception.

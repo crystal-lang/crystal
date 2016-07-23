@@ -90,7 +90,7 @@ class HTTP::StaticFileHandler < HTTP::Handler
     def escaped_request_path
       @escaped_request_path ||= begin
         esc_path = URI.escape(request_path) { |b| URI.unreserved?(b) || b != '/' }
-        esc_path = esc_path[0..-2] if !esc_path.empty? && esc_path[-1] == '/'
+        esc_path = esc_path.chomp('/')
         esc_path
       end
     end
