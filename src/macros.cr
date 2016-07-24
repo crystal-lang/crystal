@@ -96,7 +96,7 @@ macro pp(*exps)
   {% if exps.size == 0 %}
     # Nothing
   {% elsif exps.size == 1 %}
-    {{ exp = exps.first }}
+    {% exp = exps.first %}
     ::puts "#{ {{exp.stringify}} } # => #{ ({{exp}}).inspect }"
   {% else %}
     %strings = [] of {String, String}
