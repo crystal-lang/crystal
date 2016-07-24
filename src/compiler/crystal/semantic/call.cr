@@ -36,21 +36,24 @@ class Crystal::Call
     obj = @obj
     obj_type = obj.type? if obj
 
-    if obj_type.is_a?(LibType)
-      recalculate_lib_call obj_type
+    case obj_type
+    when NoReturnType
+      # A call on NoReturn will be NoReturn, so there's nothing to do
       return
+    when LibType
+      # `LibFoo.call` has a separate logic
+      return recalculate_lib_call obj_type
     end
 
+    # Check if it's call inside LibFoo
+    # (can happen when assigning the call to a constant)
     if !obj && (lib_type = scope()).is_a?(LibType)
-      recalculate_lib_call lib_type
-      return
+      return recalculate_lib_call lib_type
     end
 
     check_not_lib_out_args
 
-    if args.any? &.type?.try &.no_return?
-      return
-    end
+    return if args.any? &.type?.try &.no_return?
 
     return unless obj_and_args_types_set?
 
@@ -260,16 +263,13 @@ class Crystal::Call
     end
 
     if matches.empty?
-      # For now, if the owner is a NoReturn just ignore the error (this call should be recomputed later)
-      unless owner.no_return?
-        # If the owner is abstract type without subclasses,
-        # or if the owner is an abstract generic instance type,
-        # don't give error. This is to allow small code comments without giving
-        # compile errors, which will anyway appear once you add concrete
-        # subclasses and instances.
-        if def_name == "new" || !(owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType)))
-          raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches)
-        end
+      # If the owner is abstract type without subclasses,
+      # or if the owner is an abstract generic instance type,
+      # don't give error. This is to allow small code comments without giving
+      # compile errors, which will anyway appear once you add concrete
+      # subclasses and instances.
+      if def_name == "new" || !(owner.abstract? && (owner.leaf? || owner.is_a?(GenericClassInstanceType)))
+        raise_matches_not_found(matches.owner || owner, def_name, arg_types, named_args_types, matches)
       end
     end
 
@@ -284,10 +284,6 @@ class Crystal::Call
     end
 
     instantiate matches, owner, self_type, named_args_types
-  end
-
-  def lookup_matches_in(owner : Nil, arg_types)
-    raise "Bug: trying to lookup matches in nil in #{self}"
   end
 
   def lookup_matches_checking_expansion(owner, signature, search_in_parents = true)

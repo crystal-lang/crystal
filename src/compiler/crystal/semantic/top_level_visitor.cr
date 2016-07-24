@@ -104,7 +104,7 @@ module Crystal
 
       target.bind_to value
 
-      const = Const.new(@program, current_type, target.names.first, value, @types.dup, @scope)
+      const = Const.new(@program, current_type, target.names.first, value, @scope)
       attach_doc const, node
 
       current_type.types[target.names.first] = const
@@ -966,7 +966,7 @@ module Crystal
       end
 
       begin
-        current_type.include module_to_include
+        current_type.as(ModuleType).include module_to_include
         run_hooks type.metaclass, current_type, kind, node
       rescue ex : TypeException
         node.raise "at '#{kind}' hook", ex

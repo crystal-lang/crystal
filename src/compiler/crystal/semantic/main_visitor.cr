@@ -852,7 +852,7 @@ module Crystal
       node.def.vars = meta_vars
 
       block_visitor = MainVisitor.new(program, fun_vars, node.def, meta_vars)
-      block_visitor.types = @types
+      block_visitor.current_type = current_type
       block_visitor.yield_vars = @yield_vars
       block_visitor.free_vars = @free_vars
       block_visitor.untyped_def = node.def

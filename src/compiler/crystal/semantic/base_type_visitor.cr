@@ -1,8 +1,8 @@
 module Crystal
   abstract class BaseTypeVisitor < Visitor
     getter program : Program
-    property types : Array(Type)
     property in_type_args
+    property current_type : Type
 
     @free_vars : Hash(String, TypeVar)?
     @type_lookup : Type?
@@ -12,7 +12,7 @@ module Crystal
     @block : Block?
 
     def initialize(@program, @vars = MetaVars.new)
-      @types = [@program] of Type
+      @current_type = @program
       @exp_nest = 0
       @attributes = nil
       @lib_def_pass = 0
@@ -38,9 +38,8 @@ module Crystal
           meta_vars = MetaVars.new
           const_def = Def.new("const", [] of Arg)
           type_visitor = MainVisitor.new(@program, meta_vars, const_def)
-          type_visitor.types = type.scope_types
           type_visitor.scope = type.scope
-
+          type_visitor.current_type = type.container
           type.value.accept type_visitor
 
           type.vars = const_def.vars
@@ -433,7 +432,7 @@ module Crystal
           target_type = type_var
         end
       else
-        base_lookup = node.global? ? program : (@type_lookup || @scope || @types.last)
+        base_lookup = node.global? ? program : (@type_lookup || @scope || @current_type)
         target_type = lookup_type base_lookup, node, node
 
         unless target_type
@@ -756,7 +755,7 @@ module Crystal
     def check_primitive_like(node)
       type = node.type.instance_type
 
-      unless type.primitive_like?
+      unless type.allowed_in_lib?
         msg = String.build do |msg|
           msg << "only primitive types, pointers, structs, unions, enums and tuples are allowed in lib declarations"
           msg << " (did you mean Int32?)" if type == @program.int
@@ -1020,13 +1019,10 @@ module Crystal
     end
 
     def pushing_type(type)
-      @types.push type
+      old_type = @current_type
+      @current_type = type
       yield
-      @types.pop
-    end
-
-    def current_type
-      @types.last
+      @current_type = old_type
     end
   end
 end

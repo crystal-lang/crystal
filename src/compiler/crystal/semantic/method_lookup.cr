@@ -321,12 +321,6 @@ module Crystal
     end
   end
 
-  class EmptyType
-    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
-      Matches.new(nil, nil, self, false)
-    end
-  end
-
   class AliasType
     delegate lookup_matches, lookup_matches_without_parents, to: aliased_type
   end

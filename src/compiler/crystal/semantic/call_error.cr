@@ -640,8 +640,15 @@ class Crystal::Call
     Call.full_name(owner, def_name)
   end
 
-  def self.full_name(owner, def_name = name)
-    owner.to_s_with_method_name(def_name)
+  def self.full_name(owner, method_name = name)
+    case owner
+    when Program
+      method_name
+    when .metaclass?
+      "#{owner.instance_type}.#{method_name}"
+    else
+      "#{owner}##{method_name}"
+    end
   end
 
   private def colorize(obj)

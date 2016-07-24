@@ -155,7 +155,7 @@ class Crystal::Call
         self_arg = self.args[i]
         self_arg_type = self_arg.type?
         if self_arg_type
-          unless self_arg_type.nil_type? || self_arg_type.primitive_like?
+          unless self_arg_type.nil_type? || self_arg_type.allowed_in_lib?
             implicit_call = Conversions.try_to_unsafe(self_arg.clone, parent_visitor) do |ex|
               if Conversions.to_unsafe_lookup_failed?(ex)
                 self_arg.raise "argument ##{i + 1} of '#{full_name(obj_type)}' is not a primitive type and no #{self_arg_type}#to_unsafe method found"
@@ -165,7 +165,7 @@ class Crystal::Call
             end
             implicit_call_type = implicit_call.type?
             if implicit_call_type
-              if implicit_call_type.primitive_like?
+              if implicit_call_type.allowed_in_lib?
                 self.args[i] = implicit_call
               else
                 self_arg.raise "converted #{self_arg_type} invoking to_unsafe, but #{implicit_call_type} is not a primitive type"
@@ -250,6 +250,61 @@ class Crystal::Call
 
     self.args[index] = convert_call
     true
+  end
+end
+
+class Crystal::Type
+  # Returns `true` if this type can be used in a lib declaration:
+  # in a fun, struct/union member, or typedef.
+  def allowed_in_lib?
+    case self
+    when NilType
+      false
+    when PrimitiveType, NoReturnType, VoidType, TypeDefType,
+         CStructOrUnionType, EnumType
+      true
+    when PointerInstanceType
+      self.element_type.allowed_in_lib?
+    when TupleInstanceType
+      self.tuple_types.all? &.allowed_in_lib?
+    when NamedTupleInstanceType
+      self.entries.all? &.type.allowed_in_lib?
+    when NilableType
+      self.not_nil_type.allowed_in_lib?
+    when NilableProcType
+      self.proc_type.allowed_in_lib?
+    when NilablePointerType
+      self.pointer_type.allowed_in_lib?
+    when ProcInstanceType
+      self.arg_types.all?(&.allowed_in_lib?) && (self.return_type.allowed_in_lib? || self.return_type.nil_type?)
+    when StaticArrayInstanceType
+      self.element_type.allowed_in_lib?
+    else
+      false
+    end
+  end
+
+  # Returns `true` if this type can be implicitly converted to
+  # `expected_type` when this is a lib fun argument, without
+  # involving `to_unsafe` or numeric conversions.
+  # For example `nil` can be passed to an argument of type pointer.
+  def implicitly_converted_in_c_to?(expected_type)
+    case self
+    when NilType
+      # nil will be sent as pointer
+      expected_type.pointer? || expected_type.proc?
+    when ProcInstanceType
+      # fun will be cast to return nil
+      expected_type.is_a?(ProcInstanceType) && expected_type.return_type == program.nil && expected_type.arg_types == self.arg_types
+    when NilablePointerType
+      # nilable pointer is just a pointer
+      self.pointer_type == expected_type
+    when PointerInstanceType
+      # any pointer matches a void*
+      expected_type.is_a?(PointerInstanceType) && expected_type.element_type.void?
+    else
+      false
+    end
   end
 end
 
