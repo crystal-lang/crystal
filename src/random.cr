@@ -76,7 +76,7 @@ module Random
     next_float
   end
 
-  # Returns a random `Int32` which is greater than 0 and less than *max*.
+  # Returns a random `Int32` which is greater than or equal to 0 and less than *max*.
   #
   # ```
   # Random.new.rand(10)   # => 5
