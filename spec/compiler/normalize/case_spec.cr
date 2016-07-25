@@ -33,6 +33,22 @@ describe "Normalize: case" do
     assert_expand "case x; when .foo(1); 2; end", "__temp_1 = x\nif __temp_1.foo(1)\n  2\nend"
   end
 
+  it "normalizes case with implicit responds_to? (#3040)" do
+    assert_expand "case x; when .responds_to?(:foo); 2; end", "__temp_1 = x\nif __temp_1.responds_to?(:foo)\n  2\nend"
+  end
+
+  it "normalizes case with implicit is_a? (#3040)" do
+    assert_expand "case x; when .is_a?(T); 2; end", "__temp_1 = x\nif __temp_1.is_a?(T)\n  2\nend"
+  end
+
+  it "normalizes case with implicit as (#3040)" do
+    assert_expand "case x; when .as(T); 2; end", "__temp_1 = x\nif __temp_1.as(T)\n  2\nend"
+  end
+
+  it "normalizes case with implicit as? (#3040)" do
+    assert_expand "case x; when .as?(T); 2; end", "__temp_1 = x\nif __temp_1.as?(T)\n  2\nend"
+  end
+
   it "normalizes case with assignment" do
     assert_expand "case x = 1; when 2; 3; end", "x = 1\nif 2 === x\n  3\nend"
   end

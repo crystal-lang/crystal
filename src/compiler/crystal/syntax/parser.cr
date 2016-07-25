@@ -2479,8 +2479,16 @@ module Crystal
     def parse_when_expression(cond)
       if cond && @token.type == :"."
         next_token
-        call = parse_var_or_call(force_call: true).as(Call)
-        call.obj = ImplicitObj.new
+        call = parse_var_or_call(force_call: true)
+        case call
+        when Call        then call.obj = ImplicitObj.new
+        when RespondsTo  then call.obj = ImplicitObj.new
+        when IsA         then call.obj = ImplicitObj.new
+        when Cast        then call.obj = ImplicitObj.new
+        when NilableCast then call.obj = ImplicitObj.new
+        else
+          raise "Bug: expected Call, RespondsTo, IsA, Cast or NilableCast"
+        end
         call
       else
         parse_op_assign_no_control

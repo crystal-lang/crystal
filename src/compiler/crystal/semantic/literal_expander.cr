@@ -552,6 +552,12 @@ module Crystal
 
       right_side = temp_var.clone
 
+      check_implicit_obj Call
+      check_implicit_obj RespondsTo
+      check_implicit_obj IsA
+      check_implicit_obj Cast
+      check_implicit_obj NilableCast
+
       case cond
       when NilLiteral
         return IsA.new(right_side, Path.global("Nil"))
@@ -560,10 +566,6 @@ module Crystal
       when Call
         obj = cond.obj
         case obj
-        when ImplicitObj
-          implicit_call = cond.clone.as(Call)
-          implicit_call.obj = temp_var.clone
-          return implicit_call
         when Path
           if cond.name == "class"
             return IsA.new(right_side, Metaclass.new(obj.clone).at(obj))
@@ -576,6 +578,16 @@ module Crystal
       end
 
       Call.new(cond, "===", right_side)
+    end
+
+    macro check_implicit_obj(type)
+      if cond.is_a?({{type}})
+        if (obj = cond.obj).is_a?(ImplicitObj)
+          implicit_call = cond.clone.as({{type}})
+          implicit_call.obj = temp_var.clone
+          return implicit_call
+        end
+      end
     end
 
     private def regex_new_call(node, value)
