@@ -179,6 +179,30 @@ describe "BigInt" do
     a.to_s(32).should eq(d)
   end
 
+  it "does gcd and lcm" do
+    # 3 primes
+    a = BigInt.new("48112959837082048697")
+    b = BigInt.new("12764787846358441471")
+    c = BigInt.new("36413321723440003717")
+    abc = a * b * c
+    a_17 = a * 17
+
+    (abc * b).gcd(abc * c).should eq(abc)
+    (abc * b).lcm(abc * c).should eq(abc * b * c)
+    (abc * b).gcd(abc * c).should be_a(BigInt)
+
+    (a_17).gcd(17).should eq(17)
+    (17).gcd(a_17).should eq(17)
+    (-a_17).gcd(17).should eq(17)
+    (-17).gcd(a_17).should eq(17)
+
+    (a_17).gcd(17).should be_a(Int::Unsigned)
+    (17).gcd(a_17).should be_a(Int::Unsigned)
+
+    (a_17).lcm(17).should eq(a_17)
+    (17).lcm(a_17).should eq(a_17)
+  end
+
   it "can use Number::[]" do
     a = BigInt[146, "3464", 97, "545"]
     b = [BigInt.new(146), BigInt.new(3464), BigInt.new(97), BigInt.new(545)]

@@ -84,6 +84,13 @@ lib LibGMP
   fun cmp_ui = __gmpz_cmp_ui(op1 : MPZ*, op2 : ULong) : Int
   fun cmp_d = __gmpz_cmp_d(op1 : MPZ*, op2 : Double) : Int
 
+  # # Number Theoretic Functions
+
+  fun gcd = __gmpz_gcd(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+  fun gcd_ui = __gmpz_gcd_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong) : ULong
+  fun lcm = __gmpz_lcm(rop : MPZ*, op1 : MPZ*, op2 : MPZ*)
+  fun lcm_ui = __gmpz_lcm_ui(rop : MPZ*, op1 : MPZ*, op2 : ULong)
+
   # MPQ
   struct MPQ
     _mp_num : MPZ
