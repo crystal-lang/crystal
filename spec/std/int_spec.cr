@@ -206,6 +206,13 @@ describe "Int" do
     assert { (~1_u32).should eq(4294967294) }
   end
 
+  describe "-" do
+    assert { (-(42_u8)).should eq(-42_i16) }
+    assert { (-(42_u16)).should eq(-42_i32) }
+    assert { (-(42_u32)).should eq(-42_i64) }
+    assert { (-(42_u64)).should eq(-42_i64) }
+  end
+
   describe ">>" do
     assert { (8000 >> 1).should eq(4000) }
     assert { (8000 >> 2).should eq(2000) }
