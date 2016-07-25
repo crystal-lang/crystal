@@ -1181,7 +1181,7 @@ module Crystal
     end
 
     def self.instance_vars(type)
-      if type.is_a?(InstanceVarContainer) && !type.is_a?(CUnionType)
+      if type.is_a?(InstanceVarContainer)
         ArrayLiteral.map(type.all_instance_vars) do |name, ivar|
           MetaVar.new(name[1..-1], ivar.type)
         end

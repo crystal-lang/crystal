@@ -468,31 +468,42 @@ module Crystal
       false
     end
 
-    def visit(node : StructDef)
-      if @lib_def_pass == 1
+    def visit(node : CStructOrUnionDef)
+      if @lib_def_pass == 1 && !node.union?
         attributes = check_valid_attributes node, ValidStructDefAttributes, "struct"
       end
 
-      type = process_struct_or_union_def(node, CStructType) do |t|
-        unless t.is_a?(CStructType)
-          node.raise "#{node.name} is already defined as #{t.type_desc}"
+      type = current_type.types[node.name]?
+      if type
+        unless type.is_a?(NonGenericClassType)
+          node.raise "#{node.name} is already defined as #{type.type_desc}"
+        end
+
+        if !type.extern? || (type.extern_union? != node.union?)
+          node.raise "#{node.name} is already defined as #{type.type_desc}"
+        end
+
+        unless type.instance_vars.empty?
+          node.raise "#{node.name} is already defined"
+        end
+      else
+        type = NonGenericClassType.new(@program, current_type, node.name, @program.struct)
+        type.struct = true
+        type.extern = true
+        type.extern_union = node.union?
+        current_type.types[node.name] = type
+      end
+
+      if @lib_def_pass == 2
+        pushing_type(type) do
+          node.body.accept StructOrUnionVisitor.new(self, type)
         end
       end
 
-      if @lib_def_pass == 1
-        if Attribute.any?(attributes, "Packed")
-          type.as(CStructType).packed = true
-        end
-      end
+      node.type = type
 
-      false
-    end
-
-    def visit(node : UnionDef)
-      process_struct_or_union_def(node, CUnionType) do |t|
-        unless t.is_a?(CUnionType)
-          node.raise "#{node.name} is already defined as #{t.type_desc}"
-        end
+      if @lib_def_pass == 1 && !type.extern_union? && Attribute.any?(attributes, "Packed")
+        type.packed = true
       end
 
       false
@@ -973,31 +984,8 @@ module Crystal
       end
     end
 
-    def process_struct_or_union_def(node, klass)
-      type = current_type.types[node.name]?
-      if type
-        yield type
-        type = type.as(CStructOrUnionType)
-        unless type.instance_vars.empty?
-          node.raise "#{node.name} is already defined"
-        end
-      else
-        type = current_type.types[node.name] = klass.new @program, current_type, node.name
-      end
-
-      if @lib_def_pass == 2
-        pushing_type(type) do
-          node.body.accept StructOrUnionVisitor.new(self, type)
-        end
-      end
-
-      node.type = type
-
-      type
-    end
-
     class StructOrUnionVisitor < Visitor
-      def initialize(@top_level_visitor : TopLevelVisitor, @struct_or_union : CStructOrUnionType)
+      def initialize(@top_level_visitor : TopLevelVisitor, @struct_or_union : NonGenericClassType)
       end
 
       def visit(field : Arg)
@@ -1008,11 +996,7 @@ module Crystal
         restriction = field.restriction.not_nil!
         field_type = @top_level_visitor.check_primitive_like restriction
         if field_type.remove_typedef.void?
-          if @struct_or_union.is_a?(CStructType)
-            restriction.raise "can't use Void as a struct field type"
-          else
-            restriction.raise "can't use Void as a union field type"
-          end
+          restriction.raise "can't use Void as a #{@struct_or_union.type_desc} field type"
         end
 
         var_name = '@' + field.name
@@ -1022,7 +1006,7 @@ module Crystal
         end
         ivar = MetaTypeVar.new(var_name, field_type)
         ivar.owner = @struct_or_union
-        @struct_or_union.add_var field.name, ivar
+        add_field @struct_or_union, field.name, ivar
       end
 
       def visit(node : Include)
@@ -1031,7 +1015,7 @@ module Crystal
         end
 
         type = node.name.type.instance_type
-        unless type.is_a?(CStructType)
+        unless type.is_a?(NonGenericClassType) && type.extern? && !type.extern_union?
           node.name.raise "can only include C struct, not #{type.type_desc}"
         end
 
@@ -1040,7 +1024,7 @@ module Crystal
           if @struct_or_union.lookup_instance_var?(var.name)
             node.raise "struct #{type} has a field named '#{field_name}', which #{@struct_or_union} already defines"
           end
-          @struct_or_union.add_var(field_name, var)
+          add_field @struct_or_union, field_name, var
         end
 
         false
@@ -1054,6 +1038,12 @@ module Crystal
 
       def visit(node : ASTNode)
         true
+      end
+
+      def add_field(type, field_name, var)
+        type.instance_vars[var.name] = var
+        type.add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new(type.extern_union? ? :union_set : :struct_set))
+        type.add_def Def.new(field_name, body: InstanceVar.new(var.name))
       end
     end
   end

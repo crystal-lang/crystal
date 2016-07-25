@@ -18,8 +18,7 @@ module Crystal
       case self
       when PrimitiveType, PointerInstanceType, ProcInstanceType
         false
-      when TupleInstanceType, NamedTupleInstanceType,
-           CStructOrUnionType, MixedUnionType
+      when TupleInstanceType, NamedTupleInstanceType, MixedUnionType
         true
       when VirtualType
         self.struct?
@@ -62,16 +61,12 @@ module Crystal
     end
   end
 
-  class CStructType
+  class NonGenericClassType
     def llvm_name(io)
-      io << "struct."
-      to_s_with_options io, codegen: true
-    end
-  end
-
-  class CUnionType
-    def llvm_name(io)
-      io << "union."
+      if extern?
+        io << (extern_union? ? "union" : "struct")
+        io << "."
+      end
       to_s_with_options io, codegen: true
     end
   end

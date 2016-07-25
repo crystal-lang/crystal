@@ -116,14 +116,6 @@ module Crystal
       PROC_TYPE
     end
 
-    private def create_llvm_type(type : CStructType, wants_size)
-      llvm_struct_type(type, wants_size)
-    end
-
-    private def create_llvm_type(type : CUnionType, wants_size)
-      llvm_struct_type(type, wants_size)
-    end
-
     private def create_llvm_type(type : InstanceVarContainer, wants_size)
       final_type = llvm_struct_type(type, wants_size)
       unless type.struct?
@@ -284,22 +276,40 @@ module Crystal
       llvm_type(type, wants_size)
     end
 
-    private def create_llvm_struct_type(type : CStructType, wants_size)
-      LLVM::Type.struct(type.llvm_name, type.packed) do |a_struct|
+    private def create_llvm_struct_type(type : InstanceVarContainer, wants_size)
+      if type.extern_union?
+        return create_llvm_c_union_struct_type(type, wants_size)
+      end
+
+      LLVM::Type.struct(type.llvm_name, type.packed?) do |a_struct|
         if wants_size
           @wants_size_struct_cache[type] = a_struct
         else
           @struct_cache[type] = a_struct
         end
 
+        ivars = type.all_instance_vars
+        ivars_size = ivars.size
+        ivars_size += 1 unless type.struct?
+
+        element_types = Array(LLVM::Type).new(ivars_size)
+        element_types.push LLVM::Int32 unless type.struct? # For the type id
+
         @types_being_computed.add(type)
-        types = type.instance_vars.map { |name, var| llvm_embedded_c_type(var.type, wants_size).as(LLVM::Type) }
+        ivars.each do |name, ivar|
+          if type.extern?
+            element_types.push llvm_embedded_c_type(ivar.type, wants_size)
+          else
+            element_types.push llvm_embedded_type(ivar.type, wants_size)
+          end
+        end
         @types_being_computed.delete(type)
-        types
+
+        element_types
       end
     end
 
-    private def create_llvm_struct_type(type : CUnionType, wants_size)
+    private def create_llvm_c_union_struct_type(type, wants_size)
       LLVM::Type.struct(type.llvm_name) do |a_struct|
         if wants_size
           @wants_size_struct_cache[type] = a_struct
@@ -341,42 +351,6 @@ module Crystal
       end
     end
 
-    private def create_llvm_struct_type(type : InstanceVarContainer, wants_size)
-      LLVM::Type.struct(type.llvm_name) do |a_struct|
-        if wants_size
-          @wants_size_struct_cache[type] = a_struct
-        else
-          @struct_cache[type] = a_struct
-        end
-
-        ivars = type.all_instance_vars
-        ivars_size = ivars.size
-
-        unless type.struct?
-          ivars_size += 1
-        end
-
-        element_types = Array(LLVM::Type).new(ivars_size)
-
-        unless type.struct?
-          element_types.push LLVM::Int32 # For the type id
-        end
-
-        @types_being_computed.add(type)
-        ivars.each do |name, ivar|
-          if ivar_type = ivar.type?
-            element_types.push llvm_embedded_type(ivar_type, wants_size)
-          else
-            # This is for untyped fields: we don't really care how to represent them in memory.
-            element_types.push LLVM::Int8
-          end
-        end
-        @types_being_computed.delete(type)
-
-        element_types
-      end
-    end
-
     private def create_llvm_struct_type(type : Type, wants_size)
       raise "Bug: called llvm_struct_type for #{type}"
     end
@@ -394,47 +368,13 @@ module Crystal
     end
 
     def llvm_embedded_type(type, wants_size = false)
-      llvm_embedded_type_impl(type.remove_indirection, wants_size)
-    end
-
-    private def llvm_embedded_type_impl(type : CStructType, wants_size)
-      llvm_struct_type(type, wants_size)
-    end
-
-    private def llvm_embedded_type_impl(type : CUnionType, wants_size)
-      llvm_struct_type(type, wants_size)
-    end
-
-    private def llvm_embedded_type_impl(type : ProcInstanceType, wants_size)
-      llvm_type(type, wants_size)
-    end
-
-    private def llvm_embedded_type_impl(type : PointerInstanceType, wants_size)
-      llvm_type(type, wants_size)
-    end
-
-    private def llvm_embedded_type_impl(type : InstanceVarContainer, wants_size)
-      if type.struct?
-        llvm_struct_type(type, wants_size)
+      type = type.remove_indirection
+      case type
+      when NoReturnType, VoidType
+        LLVM::Int8
       else
         llvm_type(type, wants_size)
       end
-    end
-
-    private def llvm_embedded_type_impl(type : StaticArrayInstanceType, wants_size)
-      llvm_type(type, wants_size)
-    end
-
-    private def llvm_embedded_type_impl(type : NoReturnType, wants_size)
-      LLVM::Int8
-    end
-
-    private def llvm_embedded_type_impl(type : VoidType, wants_size)
-      LLVM::Int8
-    end
-
-    private def llvm_embedded_type_impl(type, wants_size)
-      llvm_type(type, wants_size)
     end
 
     def llvm_embedded_c_type(type : ProcInstanceType, wants_size = false)
@@ -453,20 +393,16 @@ module Crystal
       proc_type(type.proc_type)
     end
 
-    def llvm_c_type(type : CStructOrUnionType)
-      llvm_struct_type(type)
-    end
-
     def llvm_c_type(type : TupleInstanceType)
       llvm_struct_type(type)
     end
 
     def llvm_c_type(type)
-      llvm_arg_type(type)
-    end
-
-    def llvm_c_return_type(type : CStructType)
-      llvm_type(type)
+      if type.extern?
+        llvm_struct_type(type)
+      else
+        llvm_arg_type(type)
+      end
     end
 
     def llvm_c_return_type(type : NilType)

@@ -38,6 +38,22 @@ module Crystal
       false
     end
 
+    # Returns `true` if this is an extern C struct or union (`extern_union?` tells which one)
+    def extern?
+      false
+    end
+
+    # Returns `true` if this is an extern C union (`extern?` will be `true` too)
+    def extern_union?
+      false
+    end
+
+    # Returns `true` if this type has the `@[Packed]` attribute on it
+    # (only applicable for C structs)
+    def packed?
+      false
+    end
+
     def allowed_in_generics?
       true
     end
@@ -966,6 +982,12 @@ module Crystal
     property? allowed_in_generics = true
     property? lookup_new_in_ancestors = false
 
+    property? extern = false
+    property? extern_union = false
+
+    # If `true`, this type has the `@[Packed]` attribute on it
+    property? packed = false
+
     def initialize(program, container, name, @superclass, add_subclass = true)
       super(program, container, name)
       @depth = superclass ? (superclass.depth + 1) : 0
@@ -1004,8 +1026,20 @@ module Crystal
       @struct
     end
 
+    def has_attribute?(name)
+      return true if packed? && name == "Packed"
+      false
+    end
+
     def type_desc
-      struct? ? "struct" : "class"
+      case
+      when extern? && extern_union?
+        "union"
+      when struct?
+        "struct"
+      else
+        "class"
+      end
     end
   end
 
@@ -2162,56 +2196,6 @@ module Crystal
 
     def type_desc
       "alias"
-    end
-  end
-
-  abstract class CStructOrUnionType < NonGenericClassType
-    include DefContainer
-    include DefInstanceContainer
-    include InstanceVarContainer
-
-    def initialize(program, container, name)
-      super(program, container, name, program.struct)
-      @struct = true
-    end
-  end
-
-  class CStructType < CStructOrUnionType
-    property packed = false
-
-    def add_var(field_name, var)
-      instance_vars[var.name] = var
-      add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new(:struct_set))
-      add_def Def.new(field_name, body: Primitive.new(:struct_get))
-    end
-
-    def initialize_metaclass(metaclass)
-      metaclass.add_def Def.new("new", body: Primitive.new(:struct_new))
-    end
-
-    def has_attribute?(name)
-      return true if packed && name == "Packed"
-      false
-    end
-
-    def type_desc
-      "struct"
-    end
-  end
-
-  class CUnionType < CStructOrUnionType
-    def add_var(field_name, var)
-      instance_vars[var.name] = var
-      add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new(:union_set))
-      add_def Def.new(field_name, body: Primitive.new(:union_get))
-    end
-
-    def initialize_metaclass(metaclass)
-      metaclass.add_def Def.new("new", body: Primitive.new(:union_new))
-    end
-
-    def type_desc
-      "union"
     end
   end
 

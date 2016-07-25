@@ -1067,7 +1067,7 @@ module Crystal
       ivar = type.lookup_instance_var_with_owner(name).instance_var
       ivar_ptr = instance_var_ptr type, name, value
       @last = downcast ivar_ptr, node_type, ivar.type, false
-      if type.is_a?(CStructOrUnionType)
+      if type.extern?
         # When reading the instance variable of a C struct or union
         # we need to convert C functions to Crystal procs. This
         # can happen for example in Struct#to_s, where all fields
@@ -1963,6 +1963,10 @@ module Crystal
     end
 
     def instance_var_ptr(type, name, pointer)
+      if type.extern_union?
+        return union_field_ptr(type.instance_vars[name].type, pointer)
+      end
+
       index = type.index_of_instance_var(name)
 
       unless type.struct?

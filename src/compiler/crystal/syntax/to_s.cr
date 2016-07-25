@@ -20,7 +20,7 @@ module Crystal
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
-      @inside_struct_or_union = false
+      @inside_c_struct = false
     end
 
     def visit(node : Nop)
@@ -1096,22 +1096,14 @@ module Crystal
       false
     end
 
-    def visit(node : StructDef)
-      visit_struct_or_union "struct", node
-    end
-
-    def visit(node : UnionDef)
-      visit_struct_or_union "union", node
-    end
-
-    def visit_struct_or_union(name, node)
-      @str << keyword(name)
+    def visit(node : CStructOrUnionDef)
+      @str << keyword(node.union? ? "union" : "struct")
       @str << " "
       @str << node.name.to_s
       newline
-      @inside_struct_or_union = true
+      @inside_c_struct = true
       accept_with_indent node.body
-      @inside_struct_or_union = false
+      @inside_c_struct = false
       append_indent
       @str << keyword("end")
       false

@@ -37,18 +37,10 @@ class Crystal::CodeGenVisitor
               codegen_primitive_pointer_add node, target_def, call_args
             when "pointer_diff"
               codegen_primitive_pointer_diff node, target_def, call_args
-            when "struct_new"
-              codegen_primitive_struct_new node, target_def, call_args
             when "struct_set"
               codegen_primitive_struct_set node, target_def, call_args
-            when "struct_get"
-              codegen_primitive_struct_get node, target_def, call_args
-            when "union_new"
-              codegen_primitive_union_new node, target_def, call_args
             when "union_set"
               codegen_primitive_union_set node, target_def, call_args
-            when "union_get"
-              codegen_primitive_union_get node, target_def, call_args
             when "external_var_set"
               codegen_primitive_external_var_set node, target_def, call_args
             when "external_var_get"
@@ -462,24 +454,12 @@ class Crystal::CodeGenVisitor
     gep call_args[0], call_args[1]
   end
 
-  def codegen_primitive_struct_new(node, target_def, call_args)
-    allocate_aggregate node.type
-  end
-
   def codegen_primitive_struct_set(node, target_def, call_args)
     set_aggregate_field(node, target_def, call_args) do
-      type = context.type.as(CStructOrUnionType)
+      type = context.type.as(NonGenericClassType)
       name = target_def.name.chop
-
       struct_field_ptr(type, name, call_args[0])
     end
-  end
-
-  def codegen_primitive_struct_get(node, target_def, call_args)
-    type = context.type.as(CStructType)
-    value = to_lhs struct_field_ptr(type, target_def.name, call_args[0]), node.type
-    value = check_c_fun node.type, value
-    value
   end
 
   def struct_field_ptr(type, field_name, pointer)
@@ -487,20 +467,10 @@ class Crystal::CodeGenVisitor
     aggregate_index pointer, index
   end
 
-  def codegen_primitive_union_new(node, target_def, call_args)
-    allocate_aggregate node.type
-  end
-
   def codegen_primitive_union_set(node, target_def, call_args)
     set_aggregate_field(node, target_def, call_args) do |field_type|
       union_field_ptr(field_type, call_args[0])
     end
-  end
-
-  def codegen_primitive_union_get(node, target_def, call_args)
-    value = to_lhs union_field_ptr(node.type, call_args[0]), node.type
-    value = check_c_fun node.type, value
-    value
   end
 
   def set_aggregate_field(node, target_def, call_args)
@@ -517,7 +487,7 @@ class Crystal::CodeGenVisitor
     end
 
     var_name = '@' + target_def.name.chop
-    scope = context.type.as(CStructOrUnionType)
+    scope = context.type.as(NonGenericClassType)
     field_type = scope.instance_vars[var_name].type
 
     # Check nil to pointer

@@ -325,8 +325,10 @@ class Crystal::Doc::Type
         subclasses = [] of Type
         type.subclasses.each do |subclass|
           case subclass
-          when GenericClassInstanceType, CStructOrUnionType
+          when GenericClassInstanceType
             next
+          when NonGenericClassType
+            next if subclass.extern?
           end
 
           next unless @generator.must_include?(subclass)

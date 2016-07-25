@@ -3520,7 +3520,7 @@ module Crystal
       when :lib
         parse_lib_body_expressions
       when :struct_or_union
-        parse_struct_or_union_body_expressions
+        parse_c_struct_or_union_body_expressions
       else
         parse_expressions
       end
@@ -4792,11 +4792,11 @@ module Crystal
           parse_type_def
         when :struct
           @inside_c_struct = true
-          node = parse_struct_or_union StructDef
+          node = parse_c_struct_or_union union: false
           @inside_c_struct = false
           node
         when :union
-          parse_struct_or_union UnionDef
+          parse_c_struct_or_union union: true
         when :enum
           parse_enum_def
         when :ifdef
@@ -5015,23 +5015,23 @@ module Crystal
       TypeDef.new name, type, name_column_number
     end
 
-    def parse_struct_or_union(klass)
+    def parse_c_struct_or_union(union : Bool)
       next_token_skip_space_or_newline
       name = check_const
       next_token_skip_statement_end
-      body = parse_struct_or_union_body_expressions
+      body = parse_c_struct_or_union_body_expressions
       check_ident :end
       next_token_skip_space
 
-      klass.new name, Expressions.from(body)
+      CStructOrUnionDef.new name, Expressions.from(body), union: union
     end
 
-    def parse_struct_or_union_body
+    def parse_c_struct_or_union_body
       next_token_skip_statement_end
-      Expressions.from(parse_struct_or_union_body_expressions)
+      Expressions.from(parse_c_struct_or_union_body_expressions)
     end
 
-    private def parse_struct_or_union_body_expressions
+    private def parse_c_struct_or_union_body_expressions
       exps = [] of ASTNode
 
       while true
@@ -5045,14 +5045,14 @@ module Crystal
               location = @token.location
               exps << parse_include.at(location)
             else
-              parse_struct_or_union_fields exps
+              parse_c_struct_or_union_fields exps
             end
           when :else
             break
           when :end
             break
           else
-            parse_struct_or_union_fields exps
+            parse_c_struct_or_union_fields exps
           end
         when :"{{"
           exps << parse_percent_macro_expression
@@ -5068,7 +5068,7 @@ module Crystal
       exps
     end
 
-    def parse_struct_or_union_fields(exps)
+    def parse_c_struct_or_union_fields(exps)
       args = [Arg.new(@token.value.to_s).at(@token.location)]
 
       next_token_skip_space_or_newline

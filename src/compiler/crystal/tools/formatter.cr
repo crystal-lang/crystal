@@ -330,7 +330,7 @@ module Crystal
 
     def needs_two_lines?(node)
       case node
-      when Def, ClassDef, ModuleDef, LibDef, StructOrUnionDef, Macro
+      when Def, ClassDef, ModuleDef, LibDef, CStructOrUnionDef, Macro
         true
       else
         false
@@ -2963,8 +2963,8 @@ module Crystal
       end
     end
 
-    def visit(node : StructOrUnionDef)
-      keyword = node.is_a?(StructDef) ? :struct : :union
+    def visit(node : CStructOrUnionDef)
+      keyword = node.union? ? :union : :struct
       write_keyword keyword, " "
 
       write node.name

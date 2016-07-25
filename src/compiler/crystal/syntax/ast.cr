@@ -1690,11 +1690,13 @@ module Crystal
     def_equals_and_hash @name, @type_spec
   end
 
-  abstract class StructOrUnionDef < ASTNode
+  # A c struct/union definition inside a lib declaration
+  class CStructOrUnionDef < ASTNode
     property name : String
     property body : ASTNode
+    property? union : Bool
 
-    def initialize(@name, body = nil)
+    def initialize(@name, body = nil, @union = false)
       @body = Expressions.from(body)
     end
 
@@ -1702,19 +1704,11 @@ module Crystal
       @body.accept visitor
     end
 
-    def_equals_and_hash @name, @body
-  end
-
-  class StructDef < StructOrUnionDef
     def clone_without_location
-      StructDef.new(@name, @body.clone)
+      CStructOrUnionDef.new(@name, @body.clone, @union)
     end
-  end
 
-  class UnionDef < StructOrUnionDef
-    def clone_without_location
-      UnionDef.new(@name, @body.clone)
-    end
+    def_equals_and_hash @name, @union, @body
   end
 
   class EnumDef < ASTNode

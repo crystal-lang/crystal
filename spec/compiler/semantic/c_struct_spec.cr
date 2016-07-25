@@ -5,7 +5,9 @@ describe "Semantic: struct" do
     result = assert_type("lib LibFoo; struct Bar; x : Int32; y : Float64; end; end; LibFoo::Bar") { types["LibFoo"].types["Bar"].metaclass }
     mod = result.program
 
-    bar = mod.types["LibFoo"].types["Bar"].as(CStructType)
+    bar = mod.types["LibFoo"].types["Bar"].as(NonGenericClassType)
+    bar.extern?.should be_true
+    bar.extern_union?.should be_false
     bar.instance_vars["@x"].type.should eq(mod.int32)
     bar.instance_vars["@y"].type.should eq(mod.float64)
   end
@@ -60,7 +62,7 @@ describe "Semantic: struct" do
 
   it "errors on struct if no field" do
     assert_error "lib LibFoo; struct Bar; x : Int32; end; end; f = LibFoo::Bar.new; f.y = 'a'",
-      "struct LibFoo::Bar has no field 'y'"
+      "undefined method 'y=' for LibFoo::Bar"
   end
 
   it "errors on struct setter if different type" do
@@ -255,8 +257,8 @@ describe "Semantic: struct" do
         end
       end
       ))
-    foo_struct = result.program.types["LibFoo"].types["Struct"].as(CStructType)
-    foo_struct.packed.should be_true
+    foo_struct = result.program.types["LibFoo"].types["Struct"].as(NonGenericClassType)
+    foo_struct.packed?.should be_true
   end
 
   it "errors on empty c struct (#633)" do

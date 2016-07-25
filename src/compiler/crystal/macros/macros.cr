@@ -39,7 +39,7 @@ module Crystal
         when .lib?
           parser.parse_lib_body
         when .struct_or_union?
-          parser.parse_struct_or_union_body
+          parser.parse_c_struct_or_union_body
         when .enum?
           parser.parse_enum_body
         else

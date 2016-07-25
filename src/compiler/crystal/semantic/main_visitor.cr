@@ -1188,9 +1188,9 @@ module Crystal
         case instance_type
         when ProcInstanceType
           return special_proc_type_new_call(node, instance_type)
-        when CStructOrUnionType
+        when .extern?
           if named_args = node.named_args
-            return special_struct_or_union_new_with_named_args(node, instance_type, named_args)
+            return special_c_struct_or_union_new_with_named_args(node, instance_type, named_args)
           end
         end
       end
@@ -1243,7 +1243,7 @@ module Crystal
     #   temp.arg0 = value0
     #   temp.argN = valueN
     #   temp
-    def special_struct_or_union_new_with_named_args(node, type, named_args)
+    def special_c_struct_or_union_new_with_named_args(node, type, named_args)
       exps = [] of ASTNode
 
       temp_name = @program.new_temp_var_name
@@ -1530,11 +1530,7 @@ module Crystal
       false
     end
 
-    def visit(node : StructDef)
-      false
-    end
-
-    def visit(node : UnionDef)
+    def visit(node : CStructOrUnionDef)
       false
     end
 
@@ -1957,18 +1953,10 @@ module Crystal
         # Already typed
       when "argv"
         # Already typed
-      when "struct_new"
-        node.type = scope.instance_type
       when "struct_set"
         visit_struct_or_union_set node
-      when "struct_get"
-        visit_struct_get node
-      when "union_new"
-        node.type = scope.instance_type
       when "union_set"
         visit_struct_or_union_set node
-      when "union_get"
-        visit_union_get node
       when "external_var_set"
         # Nothing to do
       when "external_var_get"
@@ -2089,7 +2077,7 @@ module Crystal
     end
 
     def visit_struct_or_union_set(node)
-      scope = @scope.as(CStructOrUnionType)
+      scope = @scope.as(NonGenericClassType)
 
       field_name = call.not_nil!.name.chop
       expected_type = scope.instance_vars['@' + field_name].type
@@ -2128,16 +2116,6 @@ module Crystal
 
     def convert_struct_or_union_numeric_argument(node, unaliased_type, expected_type, actual_type)
       Conversions.numeric_argument(node, Var.new("value"), self, unaliased_type, expected_type, actual_type)
-    end
-
-    def visit_struct_get(node)
-      scope = @scope.as(CStructType)
-      node.bind_to scope.instance_vars['@' + untyped_def.name]
-    end
-
-    def visit_union_get(node)
-      scope = @scope.as(CUnionType)
-      node.bind_to scope.instance_vars['@' + untyped_def.name]
     end
 
     def visit(node : PointerOf)

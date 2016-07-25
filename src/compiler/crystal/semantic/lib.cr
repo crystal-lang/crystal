@@ -260,8 +260,7 @@ class Crystal::Type
     case self
     when NilType
       false
-    when PrimitiveType, NoReturnType, VoidType, TypeDefType,
-         CStructOrUnionType, EnumType
+    when PrimitiveType, NoReturnType, VoidType, TypeDefType, EnumType
       true
     when PointerInstanceType
       self.element_type.allowed_in_lib?
@@ -280,7 +279,7 @@ class Crystal::Type
     when StaticArrayInstanceType
       self.element_type.allowed_in_lib?
     else
-      false
+      self.extern?
     end
   end
 
