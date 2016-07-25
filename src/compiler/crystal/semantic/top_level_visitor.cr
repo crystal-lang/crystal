@@ -104,7 +104,7 @@ module Crystal
 
       target.bind_to value
 
-      const = Const.new(@program, current_type, target.names.first, value, @scope)
+      const = Const.new(@program, current_type, target.names.first, value)
       attach_doc const, node
 
       current_type.types[target.names.first] = const

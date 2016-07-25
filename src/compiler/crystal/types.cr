@@ -2553,16 +2553,13 @@ module Crystal
 
   class Const < NamedType
     property value : ASTNode
-    getter scope : Type?
     property vars : MetaVars?
-    property? used : Bool
-    property? visited : Bool
+    property? used = false
+    property? visited = false
     property visitor : BaseTypeVisitor?
 
-    def initialize(program, container, name, @value, @scope = nil)
+    def initialize(program, container, name, @value)
       super(program, container, name)
-      @used = false
-      @visited = false
     end
 
     def type_desc
