@@ -873,7 +873,7 @@ module IO
 
   # Returns this IO's encoding. The default is UTF-8.
   def encoding : String
-    @encoding || "UTF-8"
+    @encoding.try(&.name) || "UTF-8"
   end
 
   # Copy all contents from *src* to *dst*.
