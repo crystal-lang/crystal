@@ -1027,4 +1027,18 @@ describe "Semantic: class" do
       ),
       "there's no self in this scope"
   end
+
+  it "preserves order of instance vars (#3050)" do
+    result = semantic("
+      class Foo
+        @x = uninitialized Int32
+        @y : Int32
+
+        def initialize(@y)
+        end
+      end
+      ")
+    instance_vars = result.program.types["Foo"].instance_vars.to_a.map(&.[0])
+    instance_vars.should eq(%w(@x @y))
+  end
 end

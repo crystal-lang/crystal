@@ -355,6 +355,8 @@ module Crystal
     def visit(node : UninitializedVar)
       var = node.var
       case var
+      when InstanceVar
+        declare_instance_var(node, var)
       when ClassVar
         declare_class_var(node, var, true)
       when Global
