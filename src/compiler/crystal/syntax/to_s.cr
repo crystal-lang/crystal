@@ -20,7 +20,6 @@ module Crystal
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
-      @inside_c_struct = false
     end
 
     def visit(node : Nop)
@@ -1101,9 +1100,7 @@ module Crystal
       @str << " "
       @str << node.name.to_s
       newline
-      @inside_c_struct = true
       accept_with_indent node.body
-      @inside_c_struct = false
       append_indent
       @str << keyword("end")
       false
