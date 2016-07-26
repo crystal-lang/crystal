@@ -1897,15 +1897,6 @@ module Crystal
 
       if restriction
         skip_space_or_newline
-
-        # This is for a case like `x, y : Int32`
-        if @inside_struct_or_union && @token.type == :","
-          @exp_needs_indent = false
-          write ", "
-          next_token
-          return false
-        end
-
         write_token " ", :":", " "
         skip_space_or_newline
         accept restriction
@@ -3025,7 +3016,16 @@ module Crystal
 
     def visit(node : TypeDeclaration)
       accept node.var
-      skip_space
+      skip_space_or_newline
+
+      # This is for a case like `x, y : Int32`
+      if @inside_struct_or_union && @token.type == :","
+        @exp_needs_indent = false
+        write ", "
+        next_token
+        return false
+      end
+
       check :":"
       next_token_skip_space_or_newline
       write " : "

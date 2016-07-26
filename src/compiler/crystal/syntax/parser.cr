@@ -5069,13 +5069,13 @@ module Crystal
     end
 
     def parse_c_struct_or_union_fields(exps)
-      args = [Arg.new(@token.value.to_s).at(@token.location)]
+      vars = [Var.new(@token.value.to_s).at(@token.location)]
 
       next_token_skip_space_or_newline
 
       while @token.type == :","
         next_token_skip_space_or_newline
-        args << Arg.new(check_ident).at(@token.location)
+        vars << Var.new(check_ident).at(@token.location)
         next_token_skip_space_or_newline
       end
 
@@ -5086,9 +5086,8 @@ module Crystal
 
       skip_statement_end
 
-      args.each do |an_arg|
-        an_arg.restriction = type
-        exps << an_arg
+      vars.each do |var|
+        exps << TypeDeclaration.new(var, type).at(var).at_end(type)
       end
     end
 

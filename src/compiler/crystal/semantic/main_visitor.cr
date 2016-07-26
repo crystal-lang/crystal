@@ -1539,9 +1539,38 @@ module Crystal
     end
 
     def visit(node : FunDef)
-      return false unless node.body
+      body = node.body
+      return false unless body
 
-      visit_fun_def(node)
+      external = node.external
+      return_type = external.type
+
+      vars = MetaVars.new
+      external.args.each do |arg|
+        var = MetaVar.new(arg.name, arg.type)
+        var.bind_to var
+        vars[arg.name] = var
+      end
+
+      visitor = MainVisitor.new(@program, vars, external)
+      visitor.untyped_def = external
+      visitor.scope = @program
+
+      begin
+        body.accept visitor
+      rescue ex : Crystal::Exception
+        node.raise ex.message, ex
+      end
+
+      inferred_return_type = @program.type_merge([body.type?, external.type?])
+
+      if return_type && return_type != @program.nil && inferred_return_type != return_type
+        node.raise "expected fun to return #{return_type} but it returned #{inferred_return_type}"
+      end
+
+      external.set_type(return_type)
+
+      false
     end
 
     def visit(node : EnumDef)

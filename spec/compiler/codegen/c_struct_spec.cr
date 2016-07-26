@@ -252,34 +252,6 @@ describe "Code gen: struct" do
       ))
   end
 
-  it "allows forward declarations" do
-    run(%(
-      lib LibC
-        struct A; end
-        struct B; end
-
-        struct A
-          x : B*
-          y : Int32
-        end
-
-        struct B
-          x : A*
-          y : Int32
-        end
-      end
-
-      a = LibC::A.new
-      a.y = 1
-
-      b = Pointer(LibC::B).malloc(1_u64)
-      b.value.y = 2
-      a.x = b
-
-      a.y + a.x.value.y
-      )).to_i.should eq(3)
-  end
-
   it "allows using named arguments for new" do
     run(%(
       lib LibC

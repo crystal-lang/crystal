@@ -1270,6 +1270,10 @@ module Crystal
     property! resolved_type : LibType
   end
 
+  class CStructOrUnionDef
+    property! resolved_type : NonGenericClassType
+  end
+
   class Include
     include RuntimeInitializable
 

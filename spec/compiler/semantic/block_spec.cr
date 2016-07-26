@@ -533,7 +533,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare fun inside block"
+      "can't declare fun dynamically"
   end
 
   it "errors if declares class inside block" do

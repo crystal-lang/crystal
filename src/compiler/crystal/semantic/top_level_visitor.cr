@@ -90,8 +90,6 @@ module Crystal
     end
 
     def type_assign(target : Path, value, node)
-      return if @lib_def_pass == 2
-
       # We are inside the assign, so we go outside it to check if we are inside an outer expression
       @exp_nest -= 1
       check_outside_block_or_exp node, "declare constant"
@@ -275,8 +273,6 @@ module Crystal
     end
 
     def visit(node : Alias)
-      return false if @lib_def_pass == 2
-
       check_outside_block_or_exp node, "declare alias"
 
       check_no_typeof node.value
@@ -456,11 +452,9 @@ module Crystal
       type.add_link_attributes(link_attributes)
 
       pushing_type(type) do
-        @lib_def_pass = 1
+        @in_lib = true
         node.body.accept self
-        @lib_def_pass = 2
-        node.body.accept self
-        @lib_def_pass = 0
+        @in_lib = false
       end
 
       node.type = @program.nil
@@ -469,7 +463,7 @@ module Crystal
     end
 
     def visit(node : CStructOrUnionDef)
-      if @lib_def_pass == 1 && !node.union?
+      unless node.union?
         attributes = check_valid_attributes node, ValidStructDefAttributes, "struct"
       end
 
@@ -483,9 +477,7 @@ module Crystal
           node.raise "#{node.name} is already defined as #{type.type_desc}"
         end
 
-        unless type.instance_vars.empty?
-          node.raise "#{node.name} is already defined"
-        end
+        node.raise "#{node.name} is already defined"
       else
         type = NonGenericClassType.new(@program, current_type, node.name, @program.struct)
         type.struct = true
@@ -494,24 +486,14 @@ module Crystal
         current_type.types[node.name] = type
       end
 
-      if @lib_def_pass == 2
-        pushing_type(type) do
-          node.body.accept StructOrUnionVisitor.new(self, type)
-        end
-      end
+      node.resolved_type = type
 
-      node.type = type
-
-      if @lib_def_pass == 1 && !type.extern_union? && Attribute.any?(attributes, "Packed")
-        type.packed = true
-      end
+      type.packed = true if Attribute.any?(attributes, "Packed")
 
       false
     end
 
     def visit(node : TypeDef)
-      return if @lib_def_pass == 2
-
       type = current_type.types[node.name]?
       if type
         node.raise "#{node.name} is already defined"
@@ -520,14 +502,12 @@ module Crystal
           node.type_spec.accept self
         end
 
-        typed_def_type = check_primitive_like node.type_spec
+        typed_def_type = check_allowed_in_lib node.type_spec
         current_type.types[node.name] = TypeDefType.new @program, current_type, node.name, typed_def_type
       end
     end
 
     def visit(node : EnumDef)
-      return false if @lib_def_pass == 2
-
       check_outside_block_or_exp node, "declare enum"
 
       attributes = check_valid_attributes node, ValidEnumDefAttributes, "enum"
@@ -673,20 +653,7 @@ module Crystal
     end
 
     def visit(node : ExternalVar)
-      return unless @lib_def_pass == 2
-
-      attributes = check_valid_attributes node, ValidExternalVarAttributes, "external var"
-
-      processing_types do
-        node.type_spec.accept self
-      end
-
-      var_type = check_primitive_like node.type_spec
-      thread_local = Attribute.any?(attributes, "ThreadLocal")
-
-      type = current_type.as(LibType)
-      type.add_var node.name, var_type, (node.real_name || node.name), thread_local
-
+      # Check in TypeDeclarationVisitor
       false
     end
 
@@ -720,15 +687,6 @@ module Crystal
     end
 
     def visit(node : FunDef)
-      return false if @lib_def_pass == 1
-
-      # Only declare the function, but do not type it
-      # (we do that later in MainVisitor)
-      body = node.body
-      node.body = nil
-      visit_fun_def(node)
-      node.body = body
-
       false
     end
 
@@ -981,69 +939,6 @@ module Crystal
         run_hooks type.metaclass, current_type, kind, node
       rescue ex : TypeException
         node.raise "at '#{kind}' hook", ex
-      end
-    end
-
-    class StructOrUnionVisitor < Visitor
-      def initialize(@top_level_visitor : TopLevelVisitor, @struct_or_union : NonGenericClassType)
-      end
-
-      def visit(field : Arg)
-        @top_level_visitor.processing_types do
-          field.accept @top_level_visitor
-        end
-
-        restriction = field.restriction.not_nil!
-        field_type = @top_level_visitor.check_primitive_like restriction
-        if field_type.remove_typedef.void?
-          restriction.raise "can't use Void as a #{@struct_or_union.type_desc} field type"
-        end
-
-        var_name = '@' + field.name
-
-        if @struct_or_union.lookup_instance_var?(var_name)
-          field.raise "#{@struct_or_union.type_desc} #{@struct_or_union} already defines a field named '#{field.name}'"
-        end
-        ivar = MetaTypeVar.new(var_name, field_type)
-        ivar.owner = @struct_or_union
-        add_field @struct_or_union, field.name, ivar
-      end
-
-      def visit(node : Include)
-        @top_level_visitor.processing_types do
-          node.name.accept @top_level_visitor
-        end
-
-        type = node.name.type.instance_type
-        unless type.is_a?(NonGenericClassType) && type.extern? && !type.extern_union?
-          node.name.raise "can only include C struct, not #{type.type_desc}"
-        end
-
-        type.instance_vars.each_value do |var|
-          field_name = var.name[1..-1]
-          if @struct_or_union.lookup_instance_var?(var.name)
-            node.raise "struct #{type} has a field named '#{field_name}', which #{@struct_or_union} already defines"
-          end
-          add_field @struct_or_union, field_name, var
-        end
-
-        false
-      end
-
-      def visit(node : MacroIf | MacroFor | MacroExpression)
-        expanded = @top_level_visitor.expand_inline_macro(node, mode: MacroExpansionMode::StructOrUnion)
-        expanded.accept self
-        false
-      end
-
-      def visit(node : ASTNode)
-        true
-      end
-
-      def add_field(type, field_name, var)
-        type.instance_vars[var.name] = var
-        type.add_def Def.new("#{field_name}=", [Arg.new("value")], Primitive.new(type.extern_union? ? :union_set : :struct_set))
-        type.add_def Def.new(field_name, body: InstanceVar.new(var.name))
       end
     end
   end

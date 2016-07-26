@@ -984,8 +984,6 @@ module Crystal
 
     property? extern = false
     property? extern_union = false
-
-    # If `true`, this type has the `@[Packed]` attribute on it
     property? packed = false
 
     def initialize(program, container, name, @superclass, add_subclass = true)

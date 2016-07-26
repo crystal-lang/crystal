@@ -772,7 +772,7 @@ module Crystal
     end
 
     def transform(node : CStructOrUnionDef)
-      type = node.type.as(NonGenericClassType)
+      type = node.resolved_type.as(NonGenericClassType)
       node.raise "empty #{type.type_desc}s are disallowed" if type.instance_vars.empty?
       node
     end

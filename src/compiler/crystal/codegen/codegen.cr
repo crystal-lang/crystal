@@ -600,12 +600,7 @@ module Crystal
       false
     end
 
-    def visit(node : StructDef)
-      @last = llvm_nil
-      false
-    end
-
-    def visit(node : UnionDef)
+    def visit(node : CStructOrUnionDef)
       @last = llvm_nil
       false
     end
