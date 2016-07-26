@@ -672,5 +672,17 @@ describe IO do
         end
       end
     end
+
+    describe "#encoding" do
+      it "returns \"UTF-8\" if the encoding is not manually set" do
+        SimpleMemoryIO.new.encoding.should eq("UTF-8")
+      end
+
+      it "returns the name of the encoding set via #set_encoding" do
+        io = SimpleMemoryIO.new
+        io.set_encoding("UTF-16LE")
+        io.encoding.should eq("UTF-16LE")
+      end
+    end
   end
 end
