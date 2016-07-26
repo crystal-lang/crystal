@@ -7,10 +7,10 @@
 .Nm crystal - Compiler for the Crystal language.
 .Sh SYNOPSYS
 .Nm
-.Op command
+command
 .Op switches
-.Op program file
-.Op --
+programfile
+--
 .Op arguments
 .Sh DESCRIPTION
 Crystal is a statically type-checked programming language. It was created with the beauty of ruby and the performance of pure C in mind.
@@ -18,7 +18,7 @@ Crystal is a statically type-checked programming language. It was created with t
 You can compile and run a program by invoking the compiler with a single filename:
 .Bd -offset indent-two
 .Nm
-.Ar some_program.cr
+some_program.cr
 .Ed
 
 Crystal files usually end with the .cr extension.
@@ -27,14 +27,14 @@ Alternatively you can use the run command:
 .Bd -offset indent-two
 .Nm
 run
-.Ar some_program.cr
+some_program.cr
 .Ed
 
 To create an executable use the build command:
 .Bd -offset indent-two
 .Nm
 build
-.Ar some_program.cr
+some_program.cr
 .Ed
 
 This will create an executable named "some_program".
@@ -43,9 +43,9 @@ Note that by default the generated executables are not fully optimized.
 To turn optimizations on, use the --release flag:
 .Bd -offset indent-two
 .Nm
-.Fl -release
+--release
 build
-.Ar some_program.cr
+some_program.cr
 .Ed
 
 Make sure to always use --release for production-ready executables and when performing benchmarks.
@@ -62,8 +62,8 @@ The crystal command accepts the following options
 .Pp
 .It 
 .Cm init
-.Ar TYPE
-.Ar NAME
+TYPE
+NAME
 .Op DIR
 .Pp
 Generate a new project.
@@ -77,19 +77,17 @@ Creates a library skeleton
 Creates an application skeleton
 .El
 .Bd -literal -offset
-NAME - name of project to be generated,
-eg: example
+NAME - name of project to be generated, eg: example
 .Pp
-DIR  - directory where project will be generated,
-default: NAME
+DIR  - directory where project will be generated, default: NAME
 .Ed
 
 .Pp
 .It
 .Cm build
 .Op options
-.Op programfile
-.Op --
+programfile
+--
 .Op arguments
 .Pp
 Compile program.
@@ -101,11 +99,11 @@ Options:
 Generate object files for cross compilation and prints the command to build the executable.
 .It Fl -d, Fl -debug
 Generate the output with symbolic debug info.
-.It Fl D FLAG, -define FLAG
+.It Fl D Ar FLAG, Fl -define Ar FLAG
 Define a compile-time flag.
-.It Fl -emit [asm|llvm-bc|llvm-ir|obj]
+.It Fl -emit Op asm|llvm-bc|llvm-ir|obj
 Comma separated list of types of output for the compiler to emit, e.g, obj emits a .o object file.
-.It Fl f text|json, -format text|json
+.It Fl f Ar text|json, Fl -format Ar text|json
 Format of output. Defaults to text.
 .It Fl -ll
 Dump ll to output directory.
@@ -129,8 +127,8 @@ Print runtime statistics about the different compiler stages.
 Generate a single LLVM module.
 .It Fl -threads
 Maximum number of threads to use.
-.It Fl -target TRIPLE
-Enable target triple.
+.It Fl -target Ar TRIPLE
+Enable target triple. See llvm documentation for more information about target triple.
 .It Fl -verbose
 Display executed commands.
 .El
@@ -150,13 +148,13 @@ Generate documentation from comments using a subset of markdown. The output is s
 .Pp
 .It Cm eval
 .Pp
-Eval code from args or standard input.
+Evaluate code from arguments or, if no arguments are passed, from the standard input.
 .Pp
 .It
 .Cm play
 .Op options
 .Pp
-Starts the crystal playground server.
+Starts the crystal playground server on port 8080, by default.
 .Pp
 Options:
 .Bl -tag -width "12345678" -compact
@@ -174,8 +172,8 @@ Show a help message about play command options.
 .It
 .Cm run
 .Op options
-.Op programfile
-.Op Fl -
+programfile
+--
 .Op arguments
 .Pp
 The default command. Compile and run program.
@@ -192,11 +190,11 @@ Compile and run specs (in spec directory).
 .Cm tool
 .Op tool
 .Op switches
-.Ar program file
-.Op Fl -
+programfile
+--
 .Op arguments
 .Pp
-Run a tool.
+Run a tool. The available tools are: context, format, hierarchy, implementations, and types.
 .Pp
 Tools:
 .Bl -tag -offset indent
