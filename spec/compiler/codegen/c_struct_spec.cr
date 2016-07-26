@@ -357,4 +357,26 @@ describe "Code gen: struct" do
       foo.x
       )).to_i.should eq(123)
   end
+
+  it "sets instance var to proc" do
+    run(%(
+      require "prelude"
+
+      lib LibFoo
+        struct Foo
+          x : Int32 -> Int32
+        end
+      end
+
+      struct LibFoo::Foo
+        def set(f)
+          @x = f
+        end
+      end
+
+      foo = LibFoo::Foo.new
+      foo.set(->(x : Int32) { x + 1 })
+      foo.x.call(1)
+      )).to_i.should eq(2)
+  end
 end

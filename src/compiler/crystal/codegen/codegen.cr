@@ -892,6 +892,14 @@ module Crystal
             end
 
       @last = last
+      llvm_value = last
+
+      # When setting an instance variable of an extern type, if it's a Proc
+      # type we need to check that the value is not a closure and just get
+      # the function pointer
+      if target.is_a?(InstanceVar) && context.type.extern? && target.type.proc?
+        llvm_value = check_proc_is_not_closure(llvm_value, target.type)
+      end
 
       if target.is_a?(Var) && target.special_var? && !target_type.reference_like?
         # For special vars that are not reference-like, the function argument will
@@ -899,10 +907,10 @@ module Crystal
         # that type (without the pointer), load it, and store it in the argument.
         # If it's a reference-like then it's just a pointer and we can reuse the
         # logic in the other branch.
-        upcasted_value = upcast @last, target_type, value.type
-        store load(upcasted_value), ptr
+        llvm_value = upcast llvm_value, target_type, value.type
+        store load(llvm_value), ptr
       else
-        assign ptr, target_type, value.type, @last
+        assign ptr, target_type, value.type, llvm_value
       end
 
       false
