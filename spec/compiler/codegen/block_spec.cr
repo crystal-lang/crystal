@@ -1429,4 +1429,16 @@ describe "Code gen: block" do
       x + y + z + w
       )).to_i.should eq(10)
   end
+
+  it "codegens block with multiple underscores (#3054)" do
+    run(%(
+      def foo(&block : Int32, Int32 -> Int32)
+        block.call(1, 2)
+      end
+
+      foo do |_, _|
+        3
+      end
+      )).to_i.should eq(3)
+  end
 end

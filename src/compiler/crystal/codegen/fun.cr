@@ -354,6 +354,10 @@ class Crystal::CodeGenVisitor
   end
 
   def create_local_copy_of_arg(target_def_vars, arg, value)
+    # An argument name can be "_" in the case of a captured block,
+    # and we must ignore these
+    return if arg.name == "_"
+
     target_def_var = target_def_vars.try &.[arg.name]
 
     var_type = (target_def_var || arg).type
