@@ -2792,6 +2792,18 @@ module Crystal
     end
 
     def check_macro_expression_end
+      if @token.type == :","
+        raise <<-MSG
+          expecting token ',', not '}'
+
+          If you are nesting tuples or hashes you must write them like this:
+
+              { {x, y}, {z, w} } # Note the space after the first curly brace
+
+          because {{...}} is parsed as a macro expression.
+          MSG
+      end
+
       check :"}"
 
       next_token
