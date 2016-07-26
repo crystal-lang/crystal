@@ -3725,6 +3725,7 @@ module Crystal
       location = @token.location
 
       block_args = [] of Var
+      all_names = [] of String
       extra_assigns = nil
       block_body = nil
       arg_index = 0
@@ -3745,6 +3746,10 @@ module Crystal
           case @token.type
           when :IDENT
             arg_name = @token.value.to_s
+            if all_names.includes?(arg_name)
+              raise "duplicated block argument name: #{arg_name}", @token
+            end
+            all_names << arg_name
           when :UNDERSCORE
             arg_name = "_"
           when :"("
@@ -3758,6 +3763,10 @@ module Crystal
               case @token.type
               when :IDENT
                 sub_arg_name = @token.value.to_s
+                if all_names.includes?(sub_arg_name)
+                  raise "duplicated block argument name: #{sub_arg_name}", @token
+                end
+                all_names << sub_arg_name
               when :UNDERSCORE
                 sub_arg_name = "_"
               else
