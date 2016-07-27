@@ -7,14 +7,14 @@ describe Crypto::MD5 do
   end
 
   it "calculates hash from UInt8 slices" do
-    s = UInt8.slice(0x66, 0x6f, 0x6f) # f,o,o
+    s = Bytes[0x66, 0x6f, 0x6f] # f,o,o
     Crypto::MD5.hex_digest(s).should eq("acbd18db4cc2f85cedef654fccc4a4d8")
   end
 
   it "can take a block" do
     Crypto::MD5.hex_digest do |ctx|
       ctx.update "f"
-      ctx.update UInt8.slice(0x6f, 0x6f)
+      ctx.update Bytes[0x6f, 0x6f]
     end.should eq("acbd18db4cc2f85cedef654fccc4a4d8")
   end
 end

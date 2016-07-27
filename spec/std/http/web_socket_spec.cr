@@ -2,7 +2,7 @@ require "spec"
 require "http/web_socket"
 
 private macro packet(*bytes)
-  UInt8.slice({{*bytes}}).pointer({{bytes.size}})
+  Bytes[{{*bytes}}].pointer({{bytes.size}})
 end
 
 private def assert_text_packet(packet, size, final = false)

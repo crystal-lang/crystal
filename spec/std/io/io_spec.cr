@@ -283,12 +283,12 @@ describe IO do
       io.read_char.should eq('界')
       io.read_char.should be_nil
 
-      io.write UInt8.slice(0xf8, 0xff, 0xff, 0xff)
+      io.write Bytes[0xf8, 0xff, 0xff, 0xff]
       expect_raises(InvalidByteSequenceError) do
         io.read_char
       end
 
-      io.write UInt8.slice(0x81)
+      io.write_byte 0x81_u8
       expect_raises(InvalidByteSequenceError) do
         io.read_char
       end
