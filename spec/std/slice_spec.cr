@@ -314,6 +314,12 @@ describe "Slice" do
     slice[2].should eq("foo")
   end
 
+  it "does macro [] with numbers (#3055)" do
+    slice = Bytes[1, 2, 3]
+    slice.should be_a(Bytes)
+    slice.to_a.should eq([1, 2, 3])
+  end
+
   it "uses percent vars in [] macro (#2954)" do
     slices = itself(Slice[1, 2], Slice[3])
     slices[0].to_a.should eq([1, 2])

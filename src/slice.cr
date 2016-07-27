@@ -21,13 +21,22 @@ struct Slice(T)
   # slice.class # => Slice(Char | Int32)
   # ```
   #
+  # If T is a `Number` then this is equivalent to
+  # `Number.slice` (numbers will be coerced to the type T)
+  #
   # See also: `Number.slice`.
   macro [](*args)
-    %slice = Slice(typeof({{*args}})).new({{args.size}})
-    {% for arg, i in args %}
-      %slice.to_unsafe[{{i}}] = {{arg}}
+    # TODO: there should be a better way to check this, probably
+    # asking if @type was instantiated or if T is defined
+    {% if @type.name != "Slice(T)" && T < Number %}
+      {{T}}.slice({{*args}})
+    {% else %}
+      %slice = Slice(typeof({{*args}})).new({{args.size}})
+      {% for arg, i in args %}
+        %slice.to_unsafe[{{i}}] = {{arg}}
+      {% end %}
+      %slice
     {% end %}
-    %slice
   end
 
   # Returns the size of this slice.
