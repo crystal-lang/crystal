@@ -426,11 +426,6 @@ module Crystal
       false
     end
 
-    def visit(node : MacroId)
-      @str << node.value
-      false
-    end
-
     def visit_backtick(exp)
       @str << '`'
       case exp

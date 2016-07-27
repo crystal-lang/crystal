@@ -505,7 +505,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare def inside block"
+      "can't declare def dynamically"
   end
 
   it "errors if declares macro inside block" do
@@ -519,7 +519,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare macro inside block"
+      "can't declare macro dynamically"
   end
 
   it "errors if declares fun inside block" do
@@ -547,7 +547,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare class inside block"
+      "can't declare class dynamically"
   end
 
   it "errors if declares module inside block" do
@@ -561,7 +561,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare module inside block"
+      "can't declare module dynamically"
   end
 
   it "errors if declares lib inside block" do
@@ -575,7 +575,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare lib inside block"
+      "can't declare lib dynamically"
   end
 
   it "errors if declares alias inside block" do
@@ -588,7 +588,7 @@ describe "Block inference" do
         alias A = Int32
       end
       ),
-      "can't declare alias inside block"
+      "can't declare alias dynamically"
   end
 
   it "errors if declares include inside block" do
@@ -601,7 +601,7 @@ describe "Block inference" do
         include Int32
       end
       ),
-      "can't include inside block"
+      "can't include dynamically"
   end
 
   it "errors if declares extend inside block" do
@@ -614,7 +614,7 @@ describe "Block inference" do
         extend Int32
       end
       ),
-      "can't extend inside block"
+      "can't extend dynamically"
   end
 
   it "errors if declares enum inside block" do
@@ -629,7 +629,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare enum inside block"
+      "can't declare enum dynamically"
   end
 
   it "allows alias as block fun type" do
@@ -934,7 +934,7 @@ describe "Block inference" do
         end
       end
       ),
-      "can't declare class inside block"
+      "can't declare class dynamically"
   end
 
   it "doesn't assign block variable type to last value (#694)" do

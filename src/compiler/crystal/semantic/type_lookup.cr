@@ -3,9 +3,12 @@ require "../types"
 module Crystal
   class TypeLookup < Visitor
     getter! type : Type
+    setter type
+    property? raise : Bool
+    property free_vars : Hash(String, TypeVar)?
     @root : Type
     @self_type : Type
-    @raise : Bool
+    @in_generic_args = 0
 
     def self.lookup(root_type, node, self_type = root_type, allow_typeof = true)
       lookup = new root_type, self_type, allow_typeof: allow_typeof
@@ -35,8 +38,23 @@ module Crystal
     end
 
     def visit(node : Path)
+      if (free_vars = @free_vars) && node.names.size == 1
+        if (type = free_vars[node.names.first]?).is_a?(Type)
+          @type = type
+          return
+        end
+      end
+
       the_type = @root.lookup_type(node)
       if the_type && the_type.is_a?(Type)
+        if @in_generic_args == 0 && the_type.is_a?(AliasType) && !the_type.aliased_type?
+          if the_type.value_processed?
+            node.raise "infinite recursive definition of alias #{the_type}"
+          else
+            the_type.process_value
+          end
+        end
+
         @type = the_type.remove_alias_if_simple
       else
         TypeLookup.check_cant_infer_generic_type_parameter(@root, node) if @raise
@@ -51,7 +69,7 @@ module Crystal
         ident.accept self
         return false if !@raise && !@type
 
-        Crystal.check_type_allowed_in_generics(ident, type, "can't use #{type} in a union type")
+        Crystal.check_type_allowed_in_generics(ident, type, "can't use #{type} in unions")
 
         type.virtual_type
       end
@@ -89,7 +107,7 @@ module Crystal
             node.raise "can't use number as type for NamedTuple"
           end
 
-          node.accept self
+          in_generic_args { node.accept self }
           return false if !@raise && !@type
 
           Crystal.check_type_allowed_in_generics(node, type, "can't use #{type} as a generic type argument")
@@ -129,7 +147,7 @@ module Crystal
           type_vars << type_var
         when Splat
           @type = nil
-          type_var.exp.accept self
+          in_generic_args { type_var.exp.accept self }
           return false if !@raise && !@type
 
           splat_type = type
@@ -151,7 +169,7 @@ module Crystal
           end
 
           @type = nil
-          type_var.accept self
+          in_generic_args { type_var.accept self }
           return false if !@raise && !@type
 
           Crystal.check_type_allowed_in_generics(type_var, type, "can't use #{type} as a generic type argument")
@@ -174,7 +192,7 @@ module Crystal
       if inputs = node.inputs
         inputs.each do |input|
           if input.is_a?(Splat)
-            input.exp.accept self
+            in_generic_args { input.exp.accept self }
             return false if !@raise && !@type
 
             a_type = type
@@ -188,7 +206,7 @@ module Crystal
               end
             end
           else
-            input.accept self
+            in_generic_args { input.accept self }
             return false if !@raise && !@type
 
             Crystal.check_type_allowed_in_generics(input, type, "can't use #{type} as proc argument")
@@ -200,7 +218,7 @@ module Crystal
 
       if output = node.output
         @type = nil
-        output.accept self
+        in_generic_args { output.accept self }
         return false if !@raise && !@type
 
         Crystal.check_type_allowed_in_generics(output, type, "can't use #{type} as proc return type")
@@ -245,6 +263,12 @@ module Crystal
 
     def visit(node : Underscore)
       node.raise "can't use underscore as generic type argument" if @raise
+    end
+
+    def in_generic_args
+      @in_generic_args += 1
+      yield
+      @in_generic_args -= 1
     end
 
     def self.check_cant_infer_generic_type_parameter(scope, node : Path)
@@ -405,56 +429,22 @@ module Crystal
   end
 
   class TypeDefType
-    def lookup_type(node : Path, lookup_in_container = true)
-      typedef.lookup_type(node, lookup_in_container: lookup_in_container)
-    end
-
-    def lookup_type(node : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
-      typedef.lookup_type(node, already_looked_up: already_looked_up, lookup_in_container: lookup_in_container)
-    end
+    delegate lookup_type, to: typedef
   end
 
   class MetaclassType
-    def lookup_type(node : Path, lookup_in_container = true)
-      instance_type.lookup_type(node, lookup_in_container: lookup_in_container)
-    end
-
-    def lookup_type(node : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
-      instance_type.lookup_type(node, already_looked_up: already_looked_up, lookup_in_container: lookup_in_container)
-    end
+    delegate lookup_type, to: instance_type
   end
 
   class GenericClassInstanceMetaclassType
-    def lookup_type(node : Path, lookup_in_container = true)
-      instance_type.lookup_type(node, lookup_in_container: lookup_in_container)
-    end
-
-    def lookup_type(node : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
-      instance_type.lookup_type(node, already_looked_up: already_looked_up, lookup_in_container: lookup_in_container)
-    end
+    delegate lookup_type, to: instance_type
   end
 
   class VirtualType
-    def lookup_type(node : Path, lookup_in_container = true)
-      base_type.lookup_type(node, lookup_in_container: lookup_in_container)
-    end
-
-    def lookup_type(node : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
-      base_type.lookup_type(node, already_looked_up: already_looked_up, lookup_in_container: lookup_in_container)
-    end
+    delegate lookup_type, to: base_type
   end
 
   class VirtualMetaclassType
-    def lookup_type(node : Path, lookup_in_container = true)
-      instance_type.lookup_type(node, lookup_in_container: lookup_in_container)
-    end
-
-    def lookup_type(node : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
-      instance_type.lookup_type(node, already_looked_up: already_looked_up, lookup_in_container: lookup_in_container)
-    end
-  end
-
-  class AliasType
-    delegate types, types?, to: aliased_type
+    delegate lookup_type, to: instance_type
   end
 end

@@ -2107,24 +2107,6 @@ module Crystal
     def_equals_and_hash constraint, exp
   end
 
-  # Fictitious node to represent an id inside a macro
-  class MacroId < ASTNode
-    property value : String
-
-    def initialize(@value)
-    end
-
-    def to_macro_id
-      @value
-    end
-
-    def clone_without_location
-      self
-    end
-
-    def_equals_and_hash value
-  end
-
   enum Visibility : Int8
     Public
     Protected

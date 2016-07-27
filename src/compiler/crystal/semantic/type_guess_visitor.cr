@@ -1,9 +1,9 @@
-require "./base_type_visitor"
+require "./semantic_visitor"
 
 module Crystal
   # Guess the type of global, class and instance variables
   # from assignments to them.
-  class TypeGuessVisitor < BaseTypeVisitor
+  class TypeGuessVisitor < SemanticVisitor
     alias TypeDeclarationWithLocation = TypeDeclarationProcessor::TypeDeclarationWithLocation
     alias InitializeInfo = TypeDeclarationProcessor::InitializeInfo
     alias InstanceVarTypeInfo = TypeDeclarationProcessor::InstanceVarTypeInfo
@@ -114,13 +114,7 @@ module Crystal
 
     def visit(node : Call)
       if @outside_def
-        node.scope = node.global? ? @program : current_type.metaclass
-
-        if expand_macro(node, raise_on_missing_const: false)
-          false
-        else
-          true
-        end
+        !expand_macro(node, raise_on_missing_const: false)
       else
         # If it's "self.class", don't consider this as self being passed to a method
         return false if self_dot_class?(node)
@@ -1293,66 +1287,13 @@ module Crystal
     end
 
     def visit(node : ClassDef)
-      check_outside_block_or_exp node, "declare class"
-
       @initialize_infos[node.resolved_type] ||= [] of InitializeInfo
-
-      pushing_type(node.resolved_type) do
-        node.runtime_initializers.try &.each &.accept self
-        node.body.accept self
-      end
-
-      false
+      super
     end
 
     def visit(node : ModuleDef)
-      check_outside_block_or_exp node, "declare module"
-
       @initialize_infos[node.resolved_type] ||= [] of InitializeInfo
-
-      pushing_type(node.resolved_type) do
-        node.body.accept self
-      end
-
-      false
-    end
-
-    def visit(node : EnumDef)
-      check_outside_block_or_exp node, "declare enum"
-
-      pushing_type(node.resolved_type) do
-        node.members.each &.accept self
-      end
-
-      false
-    end
-
-    def visit(node : Alias)
-      check_outside_block_or_exp node, "declare alias"
-
-      false
-    end
-
-    def visit(node : Include)
-      check_outside_block_or_exp node, "include"
-
-      node.runtime_initializers.try &.each &.accept self
-
-      false
-    end
-
-    def visit(node : Extend)
-      check_outside_block_or_exp node, "extend"
-
-      node.runtime_initializers.try &.each &.accept self
-
-      false
-    end
-
-    def visit(node : LibDef)
-      check_outside_block_or_exp node, "declare lib"
-
-      false
+      super
     end
 
     def visit(node : TypeDeclaration)
@@ -1370,9 +1311,7 @@ module Crystal
         return false
       end
 
-      check_outside_block_or_exp node, "declare def"
-
-      node.runtime_initializers.try &.each &.accept self
+      super
 
       @outside_def = false
       @found_self = false
@@ -1398,8 +1337,6 @@ module Crystal
     end
 
     def visit(node : FunDef)
-      check_outside_block_or_exp node, "declare fun"
-
       if body = node.body
         @outside_def = false
         @args = node.args
@@ -1411,45 +1348,12 @@ module Crystal
       false
     end
 
-    def visit(node : Macro)
-      check_outside_block_or_exp node, "declare macro"
-
-      false
-    end
-
     def visit(node : ProcLiteral)
       node.def.body.accept self
       false
     end
 
-    def visit(node : Cast)
-      node.obj.accept self
-      false
-    end
-
-    def visit(node : NilableCast)
-      node.obj.accept self
-      false
-    end
-
-    def visit(node : IsA)
-      node.obj.accept self
-      false
-    end
-
-    def visit(node : InstanceSizeOf)
-      false
-    end
-
-    def visit(node : SizeOf)
-      false
-    end
-
-    def visit(node : TypeOf)
-      false
-    end
-
-    def visit(node : PointerOf)
+    def visit(node : InstanceSizeOf | SizeOf | TypeOf | PointerOf)
       false
     end
 
@@ -1465,42 +1369,10 @@ module Crystal
       @outside_def ? super : false
     end
 
-    def visit(node : Path)
-      false
-    end
-
-    def visit(node : Generic)
-      false
-    end
-
-    def visit(node : ProcNotation)
-      false
-    end
-
-    def visit(node : Union)
-      false
-    end
-
-    def visit(node : Metaclass)
-      false
-    end
-
-    def visit(node : Self)
-      false
-    end
-
-    def visit(node : TypeOf)
-      false
-    end
-
     def gather_returns(node)
       gatherer = ReturnGatherer.new
       node.accept gatherer
       gatherer.returns
-    end
-
-    def inside_block?
-      false
     end
   end
 

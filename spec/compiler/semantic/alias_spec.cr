@@ -223,7 +223,7 @@ describe "Semantic: alias" do
     assert_error %(
       alias Foo = typeof(1)
       ),
-      "can't use typeof inside alias declaration"
+      "can't use 'typeof' here"
   end
 
   it "can use .class in alias (#2835)" do

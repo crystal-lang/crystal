@@ -60,5 +60,10 @@ module Crystal
       node.fun_def?.try &.accept self
       false
     end
+
+    def visit(node : MacroId)
+      @str << node.value
+      false
+    end
   end
 end

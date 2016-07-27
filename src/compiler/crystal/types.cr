@@ -2116,8 +2116,7 @@ module Crystal
 
   class AliasType < NamedType
     getter? value_processed = false
-
-    @aliased_type : Type?
+    property! aliased_type : Type
 
     def initialize(program, container, name, @value : ASTNode)
       super(program, container, name)
@@ -2126,16 +2125,7 @@ module Crystal
 
     delegate lookup_defs, lookup_defs_with_modules, lookup_first_def,
       def_instances, add_def_instance, lookup_def_instance,
-      lookup_macro, lookup_macros, to: aliased_type
-
-    def aliased_type
-      aliased_type?.not_nil!
-    end
-
-    def aliased_type?
-      process_value
-      @aliased_type
-    end
+      lookup_macro, lookup_macros, types, types?, to: aliased_type
 
     def remove_alias
       process_value
@@ -2149,11 +2139,7 @@ module Crystal
 
     def remove_alias_if_simple
       process_value
-      if @simple
-        remove_alias
-      else
-        self
-      end
+      @simple ? remove_alias : self
     end
 
     def remove_indirection
@@ -2178,14 +2164,7 @@ module Crystal
     def process_value
       return if @value_processed
       @value_processed = true
-
-      visitor = TopLevelVisitor.new(@program)
-      visitor.current_type = container
-      visitor.processing_types do
-        @value.accept visitor
-      end
-
-      @aliased_type = @value.type.instance_type
+      @aliased_type = TypeLookup.lookup(container, @value, allow_typeof: false)
     end
 
     def includes_type?(other)
@@ -2554,7 +2533,7 @@ module Crystal
     property vars : MetaVars?
     property? used = false
     property? visited = false
-    property visitor : BaseTypeVisitor?
+    property visitor : MainVisitor?
 
     def initialize(program, container, name, @value)
       super(program, container, name)

@@ -553,10 +553,6 @@ module Crystal
       node
     end
 
-    def transform(node : MacroId)
-      node
-    end
-
     def transform(node : MacroVar)
       node
     end

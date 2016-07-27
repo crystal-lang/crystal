@@ -1,5 +1,5 @@
 module Crystal
-  abstract class BaseTypeVisitor < Visitor
+  abstract class SemanticVisitor < Visitor
     getter program : Program
     property in_type_args
     property current_type : Type
@@ -8,7 +8,6 @@ module Crystal
     @type_lookup : Type?
     @scope : Type?
     @typed_def : Def?
-    @last_doc : String?
     @block : Block?
 
     def initialize(@program, @vars = MetaVars.new)
@@ -17,10 +16,74 @@ module Crystal
       @attributes = nil
       @in_lib = false
       @in_c_struct_or_union = false
-      @in_type_args = 0
-      @in_generic_args = 0
-      @block_nest = 0
       @in_is_a = false
+    end
+
+    def visit(node : ClassDef)
+      check_outside_exp node, "declare class"
+      pushing_type(node.resolved_type) do
+        node.runtime_initializers.try &.each &.accept self
+        node.body.accept self
+      end
+      node.set_type(@program.nil)
+      false
+    end
+
+    def visit(node : ModuleDef)
+      check_outside_exp node, "declare module"
+      pushing_type(node.resolved_type) do
+        node.body.accept self
+      end
+      node.set_type(@program.nil)
+      false
+    end
+
+    def visit(node : EnumDef)
+      check_outside_exp node, "declare enum"
+      pushing_type(node.resolved_type) do
+        node.members.each &.accept self
+      end
+      node.set_type(@program.nil)
+      false
+    end
+
+    def visit(node : LibDef)
+      check_outside_exp node, "declare lib"
+      node.set_type(@program.nil)
+      false
+    end
+
+    def visit(node : Include)
+      check_outside_exp node, "include"
+      node.runtime_initializers.try &.each &.accept self
+      node.set_type(@program.nil)
+      false
+    end
+
+    def visit(node : Extend)
+      check_outside_exp node, "extend"
+      node.runtime_initializers.try &.each &.accept self
+      node.set_type(@program.nil)
+      false
+    end
+
+    def visit(node : Alias)
+      check_outside_exp node, "declare alias"
+      node.set_type(@program.nil)
+      false
+    end
+
+    def visit(node : Def)
+      check_outside_exp node, "declare def"
+      node.runtime_initializers.try &.each &.accept self
+      node.set_type(@program.nil)
+      false
+    end
+
+    def visit(node : Macro)
+      check_outside_exp node, "declare macro"
+      node.set_type(@program.nil)
+      false
     end
 
     def visit(node : Attribute)
@@ -29,210 +92,8 @@ module Crystal
       false
     end
 
-    def visit(node : Path)
-      type = resolve_ident(node)
-      case type
-      when Const
-        if !type.value.type? && !type.visited?
-          type.visited = true
-
-          meta_vars = MetaVars.new
-          const_def = Def.new("const", [] of Arg)
-          type_visitor = MainVisitor.new(@program, meta_vars, const_def)
-          type_visitor.current_type = type.container
-          type.value.accept type_visitor
-
-          type.vars = const_def.vars
-          type.visitor = self
-          type.used = true
-
-          program.class_var_and_const_initializers << type
-        end
-
-        node.target_const = type
-        node.bind_to type.value
-      when Type
-        if type.is_a?(AliasType) && @in_generic_args == 0 && !type.aliased_type?
-          if type.value_processed?
-            node.raise "infinite recursive definition of alias #{type}"
-          else
-            type.process_value
-          end
-        end
-
-        node.type = check_type_in_type_args(type.remove_alias_if_simple)
-      when ASTNode
-        type.accept self unless type.type?
-        node.syntax_replacement = type
-        node.bind_to type
-      end
-    end
-
-    private def const_or_class_var_name(const_or_class_var)
-      if const_or_class_var.is_a?(Const)
-        const_or_class_var.to_s
-      else
-        "#{const_or_class_var.owner}::#{const_or_class_var.name}"
-      end
-    end
-
-    def visit(node : ProcNotation)
-      @in_type_args += 1
-      @in_generic_args += 1
-      node.inputs.try &.each &.accept(self)
-      node.output.try &.accept(self)
-      @in_generic_args -= 1
-      @in_type_args -= 1
-
-      if inputs = node.inputs
-        types = inputs.map &.type.instance_type.virtual_type
-      else
-        types = [] of Type
-      end
-
-      if output = node.output
-        types << output.type.instance_type.virtual_type
-      else
-        types << program.void
-      end
-
-      node.type = program.proc_of(types)
-
-      false
-    end
-
-    def visit(node : Union)
-      @in_type_args += 1
-      node.types.each &.accept self
-      @in_type_args -= 1
-
-      old_in_is_a, @in_is_a = @in_is_a, false
-
-      types = node.types.map do |subtype|
-        instance_type = subtype.type
-        unless instance_type.allowed_in_generics?
-          subtype.raise "can't use #{instance_type} in unions yet, use a more specific type"
-        end
-        instance_type.virtual_type
-      end
-
-      @in_is_a = old_in_is_a
-
-      if @in_is_a
-        node.type = @program.type_merge_union_of(types)
-      else
-        node.type = @program.type_merge(types)
-      end
-
-      false
-    end
-
-    def visit(node : Metaclass)
-      node.name.accept self
-      node.type = node.name.type.virtual_type.metaclass
-      false
-    end
-
-    def visit(node : Self)
-      the_self = (@scope || current_type)
-      if the_self.is_a?(Program)
-        node.raise "there's no self in this scope"
-      end
-
-      node.type = the_self.instance_type
-    end
-
-    def visit(node : Generic)
-      node.in_type_args = @in_type_args > 0
-      node.scope = @scope
-
-      node.name.accept self
-
-      @in_type_args += 1
-      @in_generic_args += 1
-      node.type_vars.each &.accept self
-      node.named_args.try &.each &.value.accept self
-      @in_generic_args -= 1
-      @in_type_args -= 1
-
-      return false if node.type?
-
-      instance_type = node.name.type.instance_type
-      unless instance_type.is_a?(GenericClassType)
-        node.raise "#{instance_type} is not a generic class, it's a #{instance_type.type_desc}"
-      end
-
-      if instance_type.double_variadic?
-        unless node.named_args
-          node.raise "can only instantiate NamedTuple with named arguments"
-        end
-      elsif instance_type.splat_index
-        if node.named_args
-          node.raise "can only use named arguments with NamedTuple"
-        end
-
-        min_needed = instance_type.type_vars.size - 1
-        if node.type_vars.size < min_needed
-          node.wrong_number_of "type vars", instance_type, node.type_vars.size, "#{min_needed}+"
-        end
-      else
-        if node.named_args
-          node.raise "can only use named arguments with NamedTuple"
-        end
-
-        # Need to count type vars because there might be splats
-        type_vars_count = 0
-        knows_count = true
-        node.type_vars.each do |type_var|
-          if type_var.is_a?(Splat)
-            if type_var.type?
-              type_vars_count += type_var.type.as(TupleInstanceType).size
-            else
-              knows_count = false
-              break
-            end
-          else
-            type_vars_count += 1
-          end
-        end
-
-        if knows_count && instance_type.type_vars.size != type_vars_count
-          node.wrong_number_of "type vars", instance_type, type_vars_count, instance_type.type_vars.size
-        end
-      end
-
-      node.instance_type = instance_type
-      node.type_vars.each &.add_observer(node)
-      node.named_args.try &.each &.value.add_observer(node)
-      node.update
-
-      false
-    end
-
-    private def process_def_attributes(node, attributes)
-      attributes.try &.each do |attribute|
-        case attribute.name
-        when "NoInline"     then node.no_inline = true
-        when "AlwaysInline" then node.always_inline = true
-        when "Naked"        then node.naked = true
-        when "ReturnsTwice" then node.returns_twice = true
-        when "Raises"       then node.raises = true
-        end
-      end
-    end
-
-    def processing_types
-      yield
-    end
-
-    def visit(node : ASTNode)
-      true
-    end
-
     def visit_any(node)
-      if nesting_exp?(node)
-        @exp_nest += 1
-      end
+      @exp_nest += 1 if nesting_exp?(node)
 
       true
     end
@@ -269,14 +130,6 @@ module Crystal
         false
       else
         true
-      end
-    end
-
-    def check_type_in_type_args(type)
-      if @in_type_args > 0
-        type
-      else
-        type.metaclass
       end
     end
 
@@ -362,6 +215,10 @@ module Crystal
       {target_type, similar_name}
     end
 
+    def lookup_type(node : ASTNode)
+      TypeLookup.lookup(current_type, node, allow_typeof: false)
+    end
+
     def lookup_type(base_type, names, node, lookup_in_container = true)
       base_type.lookup_type names, lookup_in_container: lookup_in_container
     rescue ex : Crystal::Exception
@@ -381,56 +238,8 @@ module Crystal
       {scope, name}
     end
 
-    def attach_doc(type, node)
-      if @program.wants_doc?
-        type.doc ||= node.doc
-      end
-
-      if node_location = node.location
-        type.locations << node_location
-      end
-    end
-
-    def check_ditto(node)
-      stripped_doc = node.doc.try &.strip
-      if stripped_doc == ":ditto:" || stripped_doc == "ditto"
-        node.doc = @last_doc
-      end
-
-      @last_doc = node.doc
-    end
-
-    def check_outside_block_or_exp(node, op)
-      if inside_block?
-        node.raise "can't #{op} inside block"
-      end
-
-      if inside_exp?
-        node.raise "can't #{op} dynamically"
-      end
-    end
-
-    def run_hooks(type_with_hooks, current_type, kind, node, call = nil)
-      hooks = type_with_hooks.hooks
-      if hooks
-        hooks.each do |hook|
-          next if hook.kind != kind
-
-          expanded = expand_macro(hook.macro, node) do
-            if call
-              @program.expand_macro hook.macro, call, current_type.instance_type, @type_lookup
-            else
-              @program.expand_macro hook.macro.body, current_type.instance_type, @type_lookup
-            end
-          end
-
-          node.add_runtime_initializer(expanded)
-        end
-      end
-
-      if kind == :inherited && (superclass = type_with_hooks.instance_type.superclass)
-        run_hooks(superclass.metaclass, current_type, kind, node)
-      end
+    def check_outside_exp(node, op)
+      node.raise "can't #{op} dynamically" if inside_exp?
     end
 
     def expand_macro(node, raise_on_missing_const = true, first_pass = false)
@@ -625,10 +434,6 @@ module Crystal
       attributes
     end
 
-    def attributes_doc
-      @attributes.try(&.first?).try &.doc
-    end
-
     def check_allowed_in_lib(node, type = node.type.instance_type)
       unless type.allowed_in_lib?
         msg = String.build do |msg|
@@ -760,10 +565,6 @@ module Crystal
       node.raise "invalid constant value"
     end
 
-    def visit(node : ExternalVar)
-      false
-    end
-
     # Transform require to its source code.
     # The source code can be a Nop if the file was already required.
     def visit(node : Require)
@@ -808,40 +609,6 @@ module Crystal
       node.raise "while requiring \"#{node.string}\": #{ex.message}"
     end
 
-    def check_call_convention_attributes(node)
-      attributes = @attributes
-      return unless attributes
-
-      call_convention = nil
-
-      attributes.reject! do |attr|
-        next false unless attr.name == "CallConvention"
-
-        if call_convention
-          attr.raise "call convention already specified"
-        end
-
-        if attr.args.size != 1
-          attr.wrong_number_of_arguments "attribute CallConvention", attr.args.size, 1
-        end
-
-        call_convention_node = attr.args.first
-        unless call_convention_node.is_a?(StringLiteral)
-          call_convention_node.raise "argument to CallConvention must be a string"
-        end
-
-        value = call_convention_node.value
-        call_convention = LLVM::CallConvention.parse?(value)
-        unless call_convention
-          call_convention_node.raise "invalid call convention. Valid values are #{LLVM::CallConvention.values.join ", "}"
-        end
-
-        true
-      end
-
-      call_convention
-    end
-
     def check_declare_var_type(node, declared_type, variable_kind)
       type = declared_type.instance_type
 
@@ -867,28 +634,6 @@ module Crystal
       scope.as(ClassVarContainer)
     end
 
-    def lookup_class_var(node)
-      class_var_owner = class_var_owner(node)
-      var = class_var_owner.lookup_class_var?(node.name)
-      unless var
-        undefined_class_variable(node, class_var_owner)
-      end
-      var
-    end
-
-    def undefined_class_variable(node, owner)
-      similar_name = lookup_similar_class_variable_name(node, owner)
-      @program.undefined_class_variable(node, owner, similar_name)
-    end
-
-    def lookup_similar_class_variable_name(node, owner)
-      Levenshtein.find(node.name) do |finder|
-        owner.class_vars.each_key do |name|
-          finder.test(name)
-        end
-      end
-    end
-
     def inside_exp?
       @exp_nest > 0
     end
@@ -898,6 +643,14 @@ module Crystal
       @current_type = type
       yield
       @current_type = old_type
+    end
+
+    def visit(node : ExternalVar | Path | Generic | ProcNotation | Union | Metaclass | Self | TypeOf)
+      false
+    end
+
+    def visit(node : ASTNode)
+      true
     end
   end
 end

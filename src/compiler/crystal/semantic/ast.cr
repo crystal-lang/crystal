@@ -1276,14 +1276,14 @@ module Crystal
 
   class Include
     include RuntimeInitializable
-
-    property! resolved_type
   end
 
   class Extend
     include RuntimeInitializable
+  end
 
-    property! resolved_type
+  class Alias
+    property! resolved_type : AliasType
   end
 
   class Def
@@ -1396,5 +1396,23 @@ module Crystal
     # end
     # ```
     property? discarded = false
+  end
+
+  # Fictitious node to represent an id inside a macro
+  class MacroId < ASTNode
+    property value : String
+
+    def initialize(@value)
+    end
+
+    def to_macro_id
+      @value
+    end
+
+    def clone_without_location
+      self
+    end
+
+    def_equals_and_hash value
   end
 end

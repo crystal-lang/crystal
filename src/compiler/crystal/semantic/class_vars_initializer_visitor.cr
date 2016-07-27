@@ -1,4 +1,4 @@
-require "./base_type_visitor"
+require "./semantic_visitor"
 
 module Crystal
   class ClassVarInitializer
@@ -93,11 +93,7 @@ module Crystal
   # The last initializer set for a type is the one that
   # will be used.
   #
-  # These initializers will be run as soon as the program
-  # starts. This means that using such value before
-  # reaching that line is possible (hoisting), and some
-  # circular dependencies issues are also solved by this.
-  # It also means that class variables don't have access to
+  # Class variables don't have access to
   # outside local variables. This won't compile:
   #
   # ```
@@ -105,7 +101,8 @@ module Crystal
   #   a = 1
   #   @@x = a # ERROR
   # end
-  class ClassVarsInitializerVisitor < BaseTypeVisitor
+  # ```
+  class ClassVarsInitializerVisitor < SemanticVisitor
     getter class_vars
 
     def initialize(mod)
@@ -127,87 +124,8 @@ module Crystal
       end
     end
 
-    def visit(node : ClassDef)
-      check_outside_block_or_exp node, "declare class"
-
-      pushing_type(node.resolved_type) do
-        node.runtime_initializers.try &.each &.accept self
-        node.body.accept self
-      end
-
-      false
-    end
-
-    def visit(node : ModuleDef)
-      check_outside_block_or_exp node, "declare module"
-
-      pushing_type(node.resolved_type) do
-        node.body.accept self
-      end
-
-      false
-    end
-
-    def visit(node : EnumDef)
-      check_outside_block_or_exp node, "declare enum"
-
-      pushing_type(node.resolved_type) do
-        node.members.each &.accept self
-      end
-
-      false
-    end
-
-    def visit(node : Alias)
-      check_outside_block_or_exp node, "declare alias"
-
-      false
-    end
-
-    def visit(node : Include)
-      check_outside_block_or_exp node, "include"
-
-      node.runtime_initializers.try &.each &.accept self
-
-      false
-    end
-
-    def visit(node : Extend)
-      check_outside_block_or_exp node, "extend"
-
-      node.runtime_initializers.try &.each &.accept self
-
-      false
-    end
-
-    def visit(node : LibDef)
-      check_outside_block_or_exp node, "declare lib"
-
-      false
-    end
-
-    def visit(node : Def)
-      check_outside_block_or_exp node, "declare def"
-
-      node.runtime_initializers.try &.each &.accept self
-
-      false
-    end
-
-    def visit(node : Macro)
-      check_outside_block_or_exp node, "declare macro"
-
-      false
-    end
-
     def visit(node : Call)
-      node.scope = node.global? ? @program : current_type.metaclass
-
-      if expand_macro(node, raise_on_missing_const: false)
-        false
-      else
-        true
-      end
+      !expand_macro(node, raise_on_missing_const: false)
     end
 
     def visit(node : Assign)
@@ -238,10 +156,6 @@ module Crystal
           node_to_discard.discarded = true
         end
       end
-    end
-
-    def inside_block?
-      false
     end
   end
 end

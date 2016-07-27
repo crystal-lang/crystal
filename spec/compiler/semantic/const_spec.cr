@@ -221,7 +221,7 @@ describe "Semantic: const" do
         A = 1
       end
       ),
-      "can't declare constant inside block"
+      "can't declare constant dynamically"
   end
 
   it "errors on dynamic constant assignment inside if" do

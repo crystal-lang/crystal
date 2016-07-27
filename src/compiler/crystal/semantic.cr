@@ -4,10 +4,10 @@ require "./syntax/visitor"
 require "./semantic/*"
 
 # The overall algorithm for semantic analysis of a program is:
-# - top level (TopLevelVisitor): declare clases, modules, macros, defs and other top-level stuff
+# - top level: declare clases, modules, macros, defs and other top-level stuff
 # - new methods: create `new` methods for every `initialize` method
-# - check abstract defs (AbstractDefChecker): check that abstract defs are implemented
-# - type declarations (TypeDeclarationVisitor): process type declarations like `@x : Int32`
+# - type declarations: process type declarations like `@x : Int32`
+# - check abstract defs: check that abstract defs are implemented
 # - class_vars_initializers (ClassVarsInitializerVisitor): process initializers like `@@x = 1`
 # - instance_vars_initializers (InstanceVarsInitializerVisitor): process initializers like `@x = 1`
 # - main: process "main" code, calls and method bodies (the whole program).
@@ -40,7 +40,7 @@ module Crystal
       processor.check_non_nilable_class_vars_without_initializers
 
       Crystal.timing("Semantic (ivars initializers)", stats) do
-        visit_instance_vars_initializers(node)
+        node.accept InstanceVarsInitializerVisitor.new(self)
       end
       result = Crystal.timing("Semantic (main)", stats) do
         visit_main(node)
@@ -50,7 +50,7 @@ module Crystal
         cleanup_files
       end
       Crystal.timing("Semantic (recursive struct check)", stats) do
-        check_recursive_structs
+        RecursiveStructChecker.new(self).run
       end
       result
     end
@@ -62,17 +62,18 @@ module Crystal
     # where a full semantic of the program is not needed.
     def top_level_semantic(node, stats = false)
       Crystal.timing("Semantic (top level)", stats) do
-        visit_top_level(node)
+        node.accept TopLevelVisitor.new(self)
       end
       Crystal.timing("Semantic (new)", stats) do
         define_new_methods
       end
+      node, processor = Crystal.timing("Semantic (type declarations)", stats) do
+        TypeDeclarationProcessor.new(self).process(node)
+      end
       Crystal.timing("Semantic (abstract def check)", stats) do
-        check_abstract_defs
+        AbstractDefChecker.new(self).run
       end
-      Crystal.timing("Semantic (type declarations)", stats) do
-        visit_type_declarations(node)
-      end
+      {node, processor}
     end
   end
 end

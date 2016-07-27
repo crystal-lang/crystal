@@ -1,125 +1,117 @@
-module Crystal
-  class Program
-    def check_recursive_structs
-      RecursiveStructChecker.new(self).run
+# Checks that there are no recursive structs in the program.
+#
+# An example of a recursive struct is:
+#
+# ```
+# struct Test
+#   def initialize(@test)
+#   end
+# end
+#
+# Test.new(Test.new(nil))
+# ```
+#
+# Because the type of `Test.@test` would be: `Test | Nil`.
+class Crystal::RecursiveStructChecker
+  @program : Program
+  @all_checked : Set(Type)
+
+  def initialize(@program)
+    @all_checked = Set(Type).new
+  end
+
+  def run
+    check_types(@program)
+  end
+
+  def check_types(type)
+    type.types?.try &.each_value do |type|
+      check_single(type)
     end
   end
 
-  # Checks that there are no recursive structs in the program.
-  #
-  # An example of a recursive struct is:
-  #
-  # ```
-  # struct Test
-  #   def initialize(@test)
-  #   end
-  # end
-  #
-  # Test.new(Test.new(nil))
-  # ```
-  #
-  # Because the type of `Test.@test` would be: `Test | Nil`.
-  class RecursiveStructChecker
-    @program : Program
-    @all_checked : Set(Type)
+  def check_single(type)
+    return if @all_checked.includes?(type)
+    @all_checked << type
 
-    def initialize(@program)
-      @all_checked = Set(Type).new
+    if struct?(type)
+      target = type
+      checked = Set(Type).new
+      path = [] of Var | Type
+      check_recursive_instance_var_container(target, type, checked, path)
     end
 
-    def run
-      check_types(@program)
-    end
+    check_types(type)
+    check_generic_instances(type)
+  end
 
-    def check_types(type)
-      type.types?.try &.each_value do |type|
-        check_single(type)
+  def check_generic_instances(type)
+    if type.struct? && type.is_a?(GenericType)
+      type.generic_types.each_value do |instance|
+        check_single(instance)
+      end
+    end
+  end
+
+  def check_recursive(target, type, checked, path)
+    if target == type
+      msg = "recursive struct #{target} detected: #{path_to_s(path)}"
+      location = target.locations.first?
+      if location
+        raise TypeException.new(msg, location)
+      else
+        raise TypeException.new(msg)
       end
     end
 
-    def check_single(type)
-      return if @all_checked.includes?(type)
-      @all_checked << type
+    return if checked.includes?(type)
 
+    case type
+    when InstanceVarContainer
       if struct?(type)
-        target = type
-        checked = Set(Type).new
-        path = [] of Var | Type
         check_recursive_instance_var_container(target, type, checked, path)
       end
-
-      check_types(type)
-      check_generic_instances(type)
-    end
-
-    def check_generic_instances(type)
-      if type.struct? && type.is_a?(GenericType)
-        type.generic_types.each_value do |instance|
-          check_single(instance)
-        end
+    when UnionType
+      type.union_types.each do |union_type|
+        check_recursive(target, union_type, checked, path)
       end
-    end
-
-    def check_recursive(target, type, checked, path)
-      if target == type
-        msg = "recursive struct #{target} detected: #{path_to_s(path)}"
-        location = target.locations.first?
-        if location
-          raise TypeException.new(msg, location)
-        else
-          raise TypeException.new(msg)
-        end
-      end
-
-      return if checked.includes?(type)
-
-      case type
-      when InstanceVarContainer
-        if struct?(type)
-          check_recursive_instance_var_container(target, type, checked, path)
-        end
-      when UnionType
-        type.union_types.each do |union_type|
-          check_recursive(target, union_type, checked, path)
-        end
-      when NonGenericModuleType
-        path.push type
-        # Check if the module is composed, recursively, of the target struct
-        type.raw_including_types.try &.each do |module_type|
-          path.push module_type
-          check_recursive(target, module_type, checked, path)
-          path.pop
-        end
+    when NonGenericModuleType
+      path.push type
+      # Check if the module is composed, recursively, of the target struct
+      type.raw_including_types.try &.each do |module_type|
+        path.push module_type
+        check_recursive(target, module_type, checked, path)
         path.pop
       end
+      path.pop
     end
+  end
 
-    def check_recursive_instance_var_container(target, type, checked, path)
-      checked.add type
-      type.as(InstanceVarContainer).all_instance_vars.each_value do |var|
-        var_type = var.type?
-        next unless var_type
+  def check_recursive_instance_var_container(target, type, checked, path)
+    checked.add type
+    type.as(InstanceVarContainer).all_instance_vars.each_value do |var|
+      var_type = var.type?
+      next unless var_type
 
-        path.push var
-        check_recursive(target, var_type, checked, path)
-        path.pop
+      path.push var
+      check_recursive(target, var_type, checked, path)
+      path.pop
+    end
+    checked.delete type
+  end
+
+  def path_to_s(path)
+    path.join(" -> ") do |var_or_type|
+      case var_or_type
+      when Var
+        "`#{var_or_type.name} : #{var_or_type.type}`"
+      else
+        "`#{var_or_type}`"
       end
-      checked.delete type
     end
+  end
 
-    def path_to_s(path)
-      path.join(" -> ") do |var_or_type|
-        case var_or_type
-        when Var
-          "`#{var_or_type.name} : #{var_or_type.type}`"
-        else
-          "`#{var_or_type}`"
-        end
-      end
-    end
-
-    def struct?(type)
-      type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.is_a?(ProcInstanceType) && !type.is_a?(GenericClassType) && !type.abstract?
-    end
+  def struct?(type)
+    type.struct? && type.is_a?(InstanceVarContainer) && !type.is_a?(PrimitiveType) && !type.is_a?(ProcInstanceType) && !type.is_a?(GenericClassType) && !type.abstract?
   end
 end
