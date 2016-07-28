@@ -301,7 +301,7 @@ class Crystal::Call
       end
       matches.each do |match|
         match.context.owner = owner
-        match.context.type_lookup = parent_visitor.type_lookup.not_nil!
+        match.context.path_lookup = parent_visitor.path_lookup.not_nil!
       end
       matches
     else
@@ -385,7 +385,7 @@ class Crystal::Call
             visitor.untyped_def = match.def
             visitor.call = self
             visitor.scope = lookup_self_type
-            visitor.type_lookup = match.context.type_lookup
+            visitor.path_lookup = match.context.path_lookup
 
             yields_to_block = block && !match.def.uses_block_arg?
 
@@ -431,8 +431,7 @@ class Crystal::Call
       self_type = match_owner.instance_type
       root_type = self_type.ancestors.find(&.instance_of?(match.def.owner.instance_type)) || self_type
     end
-    type_lookup = new_match_type_lookup(match.context)
-    return_type = lookup_node_type(type_lookup, typed_def_return_type)
+    return_type = lookup_node_type(match.context, typed_def_return_type)
     return_type = program.nil if return_type.void?
     typed_def.freeze_type = return_type
     typed_def.type = return_type if return_type.no_return? || return_type.nil_type?
@@ -693,7 +692,6 @@ class Crystal::Call
     block_arg_type = nil
 
     block = @block.not_nil!
-    ident_lookup = new_match_type_lookup(match.context)
 
     block_arg_restriction = block_arg.restriction
 
@@ -705,7 +703,7 @@ class Crystal::Call
         i = 0
         inputs.each do |input|
           if input.is_a?(Splat)
-            tuple_type = lookup_node_type(ident_lookup, input.exp)
+            tuple_type = lookup_node_type(match.context, input.exp)
             unless tuple_type.is_a?(TupleInstanceType)
               input.raise "expected type to be a tuple type, not #{tuple_type}"
             end
@@ -715,7 +713,7 @@ class Crystal::Call
               i += 1
             end
           else
-            arg_type = lookup_node_type(ident_lookup, input)
+            arg_type = lookup_node_type(match.context, input)
             MainVisitor.check_type_allowed_as_proc_argument(input, arg_type)
 
             yield_vars << Var.new("var#{i}", arg_type.virtual_type)
@@ -727,7 +725,7 @@ class Crystal::Call
     elsif block_arg_restriction
       # Otherwise, the block spec could be something like &block : Foo, and that
       # is valid too only if Foo is an alias/typedef that referes to a FunctionType
-      block_arg_type = lookup_node_type(ident_lookup, block_arg_restriction).remove_typedef
+      block_arg_type = lookup_node_type(match.context, block_arg_restriction).remove_typedef
       unless block_arg_type.is_a?(ProcInstanceType)
         block_arg_restriction.raise "expected block type to be a function type, not #{block_arg_type}"
         return nil, nil
@@ -772,7 +770,7 @@ class Crystal::Call
       end
 
       if output.is_a?(ASTNode) && !output.is_a?(Underscore)
-        output_type = lookup_node_type?(ident_lookup, output)
+        output_type = lookup_node_type?(match.context, output)
         if output_type
           output_type = program.nil if output_type.void?
           Crystal.check_type_allowed_in_generics(output, output_type, "can't use #{output_type} as a block return type")
@@ -815,7 +813,7 @@ class Crystal::Call
           matched = MatchesLookup.match_arg(block_type, output, match.context)
           if !matched && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore) && block_type.no_return?
-              block_type = lookup_node_type(ident_lookup, output).virtual_type
+              block_type = lookup_node_type(match.context, output).virtual_type
               block.type = output_type || block_type
               block.freeze_type = output_type || block_type
               block_arg_type = program.proc_of(fun_args, block_type)
@@ -831,7 +829,7 @@ class Crystal::Call
       else
         if output
           if output.is_a?(ASTNode) && !output.is_a?(Underscore)
-            output_type = lookup_node_type(ident_lookup, output).virtual_type
+            output_type = lookup_node_type(match.context, output).virtual_type
             output_type = program.nil if output_type.void?
             block.type = output_type
             block.freeze_type = output_type
@@ -861,7 +859,7 @@ class Crystal::Call
         if !block.type?
           if output.is_a?(ASTNode) && !output.is_a?(Underscore)
             begin
-              block_type = lookup_node_type(ident_lookup, output).virtual_type
+              block_type = lookup_node_type(match.context, output).virtual_type
               block_type = program.nil if block_type.void?
             rescue ex : Crystal::Exception
               cant_infer_block_return_type
@@ -875,7 +873,7 @@ class Crystal::Call
           if (!matched || (matched && !block_type.implements?(matched))) && !void_return_type?(match.context, output)
             if output.is_a?(ASTNode) && !output.is_a?(Underscore)
               begin
-                block_type = lookup_node_type(ident_lookup, output).virtual_type
+                block_type = lookup_node_type(match.context, output).virtual_type
               rescue ex : Crystal::Exception
                 if block_type
                   raise "couldn't match #{block_type} to #{output}", ex
@@ -920,7 +918,7 @@ class Crystal::Call
 
   private def void_return_type?(match_context, output)
     if output.is_a?(Path)
-      type = match_context.type_lookup.lookup_type(output)
+      type = match_context.path_lookup.lookup_path(output)
     else
       type = output
     end
@@ -932,29 +930,14 @@ class Crystal::Call
     raise "can't infer block return type, try to cast the block body with `as`. See: https://github.com/crystal-lang/crystal/wiki/Compiler-error-messages#cant-infer-block-return-type"
   end
 
-  private def lookup_node_type(lookup, node)
-    lookup.type = nil
+  private def lookup_node_type(context, node)
     bubbling_exception do
-      node.accept(lookup)
+      context.path_lookup.lookup_type(node, self_type: context.owner.instance_type, free_vars: context.free_vars)
     end
-    lookup.type
   end
 
-  private def lookup_node_type?(lookup, node)
-    lookup.type = nil
-    old_raise = lookup.raise?
-    lookup.raise = false
-    bubbling_exception do
-      node.accept(lookup)
-    end
-    lookup.raise = old_raise
-    lookup.type?
-  end
-
-  private def new_match_type_lookup(context)
-    lookup = TypeLookup.new(root: context.type_lookup, self_type: context.owner.instance_type)
-    lookup.free_vars = context.free_vars
-    lookup
+  private def lookup_node_type?(context, node)
+    context.path_lookup.lookup_type?(node, self_type: context.owner.instance_type, free_vars: context.free_vars)
   end
 
   def bubbling_exception

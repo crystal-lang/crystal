@@ -31,7 +31,7 @@ module Crystal
     setter untyped_def
     getter block : Block?
     property call : Call?
-    property type_lookup
+    property path_lookup
     property fun_literal_context : Def | Program | Nil
     property parent : MainVisitor?
     property block_nest = 0
@@ -918,7 +918,7 @@ module Crystal
       block_visitor.scope = block_scope
 
       block_visitor.block = node
-      block_visitor.type_lookup = type_lookup || current_type
+      block_visitor.path_lookup = path_lookup || current_type
       block_visitor.block_nest = @block_nest
 
       node.body.accept block_visitor
@@ -1004,7 +1004,7 @@ module Crystal
       block_visitor.untyped_def = node.def
       block_visitor.call = @call
       block_visitor.scope = @scope
-      block_visitor.type_lookup = type_lookup
+      block_visitor.path_lookup = path_lookup
       block_visitor.fun_literal_context = @fun_literal_context || @typed_def || @program
       block_visitor.block_nest = @block_nest + 1
       block_visitor.parent = self

@@ -25,12 +25,12 @@ module Crystal
       filename
     end
 
-    def expand_macro(a_macro : Macro, call : Call, scope : Type, type_lookup : Type?)
-      macro_expander.expand a_macro, call, scope, type_lookup || scope
+    def expand_macro(a_macro : Macro, call : Call, scope : Type, path_lookup : Type?)
+      macro_expander.expand a_macro, call, scope, path_lookup || scope
     end
 
-    def expand_macro(node : ASTNode, scope : Type, type_lookup : Type?, free_vars = nil)
-      macro_expander.expand node, scope, type_lookup || scope, free_vars
+    def expand_macro(node : ASTNode, scope : Type, path_lookup : Type?, free_vars = nil)
+      macro_expander.expand node, scope, path_lookup || scope, free_vars
     end
 
     def parse_macro_source(expanded_macro, the_macro, node, vars, inside_def = false, inside_type = false, inside_exp = false, mode : MacroExpansionMode = MacroExpansionMode::Normal)
@@ -82,15 +82,15 @@ module Crystal
       @cache = {} of String => String
     end
 
-    def expand(a_macro : Macro, call : Call, scope : Type, type_lookup : Type)
-      visitor = MacroVisitor.new self, @program, scope, type_lookup, a_macro, call
+    def expand(a_macro : Macro, call : Call, scope : Type, path_lookup : Type)
+      visitor = MacroVisitor.new self, @program, scope, path_lookup, a_macro, call
       a_macro.body.accept visitor
       source = visitor.to_s
       ExpandedMacro.new source, visitor.yields
     end
 
-    def expand(node : ASTNode, scope : Type, type_lookup : Type, free_vars = nil)
-      visitor = MacroVisitor.new self, @program, scope, type_lookup, node.location
+    def expand(node : ASTNode, scope : Type, path_lookup : Type, free_vars = nil)
+      visitor = MacroVisitor.new self, @program, scope, path_lookup, node.location
       visitor.free_vars = free_vars
       node.accept visitor
       source = visitor.to_s
@@ -141,7 +141,7 @@ module Crystal
       getter yields : Hash(String, ASTNode)?
       property free_vars : Hash(String, TypeVar)?
 
-      def self.new(expander, mod, scope : Type, type_lookup : Type, a_macro : Macro, call)
+      def self.new(expander, mod, scope : Type, path_lookup : Type, a_macro : Macro, call)
         vars = {} of String => ASTNode
         splat_index = a_macro.splat_index
         double_splat = a_macro.double_splat
@@ -206,13 +206,13 @@ module Crystal
           vars[macro_block_arg.name] = call_block || Nop.new
         end
 
-        new(expander, mod, scope, type_lookup, a_macro.location, vars, call.block)
+        new(expander, mod, scope, path_lookup, a_macro.location, vars, call.block)
       end
 
       record MacroVarKey, name : String, exps : Array(ASTNode)?
 
       def initialize(@expander : MacroExpander, @program : Program,
-                     @scope : Type, @type_lookup : Type, @location : Location?,
+                     @scope : Type, @path_lookup : Type, @location : Location?,
                      @vars = {} of String => ASTNode, @block : Block? = nil)
         @str = MemoryIO.new(512)
         @last = Nop.new
@@ -512,7 +512,7 @@ module Crystal
         if node.names.size == 1 && (match = @free_vars.try &.[node.names.first]?)
           matched_type = match
         else
-          matched_type = @type_lookup.lookup_type(node)
+          matched_type = @path_lookup.lookup_path(node)
         end
 
         unless matched_type
@@ -528,19 +528,19 @@ module Crystal
           # (a tuple type, or a named tuple type) but the user should see
           # them as literals, and having them as a type doesn't add
           # any useful information.
-          type_lookup = @type_lookup.instance_type
+          path_lookup = @path_lookup.instance_type
           if node.names.size == 1
-            case type_lookup
+            case path_lookup
             when UnionType
               produce_tuple = node.names.first == "T"
             when GenericClassInstanceType
-              produce_tuple = ((splat_index = type_lookup.splat_index) &&
-                type_lookup.type_vars.keys.index(node.names.first) == splat_index) ||
-                (type_lookup.double_variadic? && type_lookup.type_vars.first_key == node.names.first)
+              produce_tuple = ((splat_index = path_lookup.splat_index) &&
+                path_lookup.type_vars.keys.index(node.names.first) == splat_index) ||
+                (path_lookup.double_variadic? && path_lookup.type_vars.first_key == node.names.first)
             when IncludedGenericModule
-              a_module = type_lookup.module
+              a_module = path_lookup.module
               produce_tuple = (splat_index = a_module.splat_index) &&
-                type_lookup.mapping.keys.index(node.names.first) == splat_index
+                path_lookup.mapping.keys.index(node.names.first) == splat_index
             else
               produce_tuple = false
             end

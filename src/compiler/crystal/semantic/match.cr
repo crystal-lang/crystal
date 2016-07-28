@@ -1,11 +1,11 @@
 module Crystal
   class MatchContext
     property owner : Type
-    property type_lookup : Type
+    property path_lookup : Type
     getter free_vars : Hash(String, TypeVar)?
     getter? strict : Bool
 
-    def initialize(@owner, @type_lookup, @free_vars = nil, @strict = false)
+    def initialize(@owner, @path_lookup, @free_vars = nil, @strict = false)
     end
 
     def get_free_var(name)
@@ -18,7 +18,7 @@ module Crystal
     end
 
     def clone
-      MatchContext.new(@owner, @type_lookup, @free_vars.dup)
+      MatchContext.new(@owner, @path_lookup, @free_vars.dup)
     end
   end
 

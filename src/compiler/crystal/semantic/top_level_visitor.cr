@@ -739,9 +739,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
         expanded = expand_macro(hook.macro, node) do
           if call
-            @program.expand_macro hook.macro, call, current_type.instance_type, @type_lookup
+            @program.expand_macro hook.macro, call, current_type.instance_type, @path_lookup
           else
-            @program.expand_macro hook.macro.body, current_type.instance_type, @type_lookup
+            @program.expand_macro hook.macro.body, current_type.instance_type, @path_lookup
           end
         end
 

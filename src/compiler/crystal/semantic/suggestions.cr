@@ -2,11 +2,11 @@ require "../types"
 
 module Crystal
   class Type
-    def lookup_similar_type_name(node : Path)
-      (node.global? ? program : self).lookup_similar_type_name(node.names)
+    def lookup_similar_path(node : Path)
+      (node.global? ? program : self).lookup_similar_path(node.names)
     end
 
-    def lookup_similar_type_name(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
+    def lookup_similar_path(names : Array, lookup_in_container = true)
       nil
     end
 
@@ -56,13 +56,7 @@ module Crystal
   end
 
   class ModuleType
-    def lookup_similar_type_name(names : Array, already_looked_up = ObjectIdSet.new, lookup_in_container = true)
-      return nil if already_looked_up.includes?(object_id)
-
-      if lookup_in_container
-        already_looked_up.add(object_id)
-      end
-
+    def lookup_similar_path(names : Array, lookup_in_container = true)
       type = self
       names.each_with_index do |name, idx|
         previous_type = type
@@ -83,11 +77,11 @@ module Crystal
       end
 
       parents.each do |parent|
-        match = parent.lookup_similar_type_name(names, already_looked_up, false)
+        match = parent.lookup_similar_path(names, false)
         return match if match
       end
 
-      lookup_in_container && container ? container.lookup_similar_type_name(names, already_looked_up) : nil
+      lookup_in_container && self != program ? container.lookup_similar_path(names) : nil
     end
   end
 
@@ -98,11 +92,11 @@ module Crystal
   end
 
   class IncludedGenericModule
-    delegate lookup_similar_def, lookup_similar_type_name, to: @module
+    delegate lookup_similar_def, lookup_similar_path, to: @module
   end
 
   class InheritedGenericClass
-    delegate lookup_similar_def, lookup_similar_type_name, to: @extended_class
+    delegate lookup_similar_def, lookup_similar_path, to: @extended_class
   end
 
   class AliasType
@@ -110,18 +104,18 @@ module Crystal
   end
 
   class MetaclassType
-    delegate lookup_similar_type_name, to: instance_type
+    delegate lookup_similar_path, to: instance_type
   end
 
   class GenericClassInstanceMetaclassType
-    delegate lookup_similar_type_name, to: instance_type
+    delegate lookup_similar_path, to: instance_type
   end
 
   class VirtualType
-    delegate lookup_similar_def, lookup_similar_type_name, to: base_type
+    delegate lookup_similar_def, lookup_similar_path, to: base_type
   end
 
   class VirtualMetaclassType
-    delegate lookup_similar_type_name, to: instance_type
+    delegate lookup_similar_path, to: instance_type
   end
 end

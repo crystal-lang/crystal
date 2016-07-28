@@ -461,8 +461,8 @@ class Crystal::Doc::Type
     @type.doc
   end
 
-  def lookup_type(path_or_names)
-    match = @type.lookup_type(path_or_names)
+  def lookup_path(path_or_names)
+    match = @type.lookup_path(path_or_names)
     return unless match.is_a?(Crystal::Type)
 
     @generator.type(match)
@@ -542,7 +542,7 @@ class Crystal::Doc::Type
     node.global = false
 
     begin
-      match = lookup_type(node)
+      match = lookup_path(node)
       if match
         type_to_html match, io, node.to_s, links: links
       else
@@ -554,7 +554,7 @@ class Crystal::Doc::Type
   end
 
   def node_to_html(node : Generic, io, links = true)
-    match = lookup_type(node.name)
+    match = lookup_path(node.name)
     if match
       if match.must_be_included?
         if links

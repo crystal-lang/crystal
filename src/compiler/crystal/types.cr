@@ -298,7 +298,7 @@ module Crystal
     def solve_type_vars(type_vars : Array(TypeVar))
       types = type_vars.map do |type_var|
         if type_var.is_a?(ASTNode)
-          TypeLookup.lookup(self, type_var).virtual_type
+          self.lookup_type(type_var).virtual_type
         else
           type_var
         end
@@ -1475,7 +1475,6 @@ module Crystal
 
     def initialize_instance(instance)
       if decl_ivars = @declared_instance_vars
-        visitor = TypeLookup.new(instance)
         decl_ivars.each do |name, type_vars|
           type = instance.solve_type_vars(type_vars)
 
@@ -2164,7 +2163,7 @@ module Crystal
     def process_value
       return if @value_processed
       @value_processed = true
-      @aliased_type = TypeLookup.lookup(container, @value, allow_typeof: false)
+      @aliased_type = container.lookup_type(@value, allow_typeof: false)
     end
 
     def includes_type?(other)
@@ -2547,10 +2546,6 @@ module Crystal
   module VirtualTypeLookup
     record Change, type : Type, def : Def
 
-    def virtual_lookup(type)
-      type
-    end
-
     def filter_by_responds_to(name)
       filtered = virtual_lookup(base_type).filter_by_responds_to(name)
       return filtered.virtual_type if filtered
@@ -2704,10 +2699,6 @@ module Crystal
     end
 
     delegate base_type, lookup_first_def, to: instance_type
-
-    def virtual_lookup(type)
-      type.metaclass
-    end
 
     def lookup_macro(name, args : Array, named_args)
       nil

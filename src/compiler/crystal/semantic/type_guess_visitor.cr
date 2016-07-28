@@ -151,7 +151,7 @@ module Crystal
           fun_arg = fun_def.args[index]?
           next unless fun_arg
 
-          type = TypeLookup.lookup?(obj_type, fun_arg.restriction.not_nil!)
+          type = obj_type.lookup_type?(fun_arg.restriction.not_nil!)
           next unless type.is_a?(PointerInstanceType)
 
           type = type.element_type
@@ -719,7 +719,7 @@ module Crystal
       defs.try &.each do |metadata|
         external = metadata.def.as(External)
         if def_return_type = external.fun_def?.try &.return_type
-          return_type = TypeLookup.lookup(obj_type, def_return_type)
+          return_type = obj_type.lookup_type(def_return_type)
           return return_type if return_type
         elsif external_type = external.type?
           # This is the case of an External being an external variable
@@ -1256,12 +1256,12 @@ module Crystal
     end
 
     def lookup_type?(node, root = current_type)
-      type = TypeLookup.lookup?(root, node, allow_typeof: false)
+      type = root.lookup_type?(node, allow_typeof: false)
       check_allowed_in_generics(node, type)
     end
 
     def lookup_type_no_check?(node)
-      TypeLookup.lookup?(current_type, node, allow_typeof: false)
+      current_type.lookup_type?(node, allow_typeof: false)
     end
 
     def check_allowed_in_generics(node, type)

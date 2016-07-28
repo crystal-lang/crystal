@@ -2,23 +2,23 @@ require "../types"
 
 module Crystal
   class Type
-    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil)
       raise "Bug: #{self} doesn't implement lookup_matches"
     end
 
-    def lookup_matches_without_parents(signature, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = nil)
       raise "Bug: #{self} doesn't implement lookup_matches_without_parents"
     end
 
-    def lookup_matches_with_modules(signature, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches_with_modules(signature, owner = self, path_lookup = self, matches_array = nil)
       raise "Bug: #{self} doesn't implement lookup_matches_with_modules"
     end
   end
 
   module MatchesLookup
-    def lookup_matches_without_parents(signature, owner = self, type_lookup = self, matches_array = nil)
+    def lookup_matches_without_parents(signature, owner = self, path_lookup = self, matches_array = nil)
       if defs = self.defs.try &.[signature.name]?
-        context = MatchContext.new(owner, type_lookup)
+        context = MatchContext.new(owner, path_lookup)
 
         defs.each do |item|
           next if item.def.abstract?
@@ -28,11 +28,11 @@ module Crystal
           # we need to use the type that defined the `macro def` as a
           # type lookup for arguments.
           macro_owner = item.def.macro_owner?
-          context.type_lookup = macro_owner if macro_owner
+          context.path_lookup = macro_owner if macro_owner
 
           match = MatchesLookup.match_def(signature, item, context)
 
-          context.type_lookup = type_lookup if macro_owner
+          context.path_lookup = path_lookup if macro_owner
 
           if match
             matches_array ||= [] of Match
@@ -64,8 +64,8 @@ module Crystal
       Matches.new(matches_array, Cover.create(signature, matches_array), owner)
     end
 
-    def lookup_matches_with_modules(signature, owner = self, type_lookup = self, matches_array = nil)
-      matches = lookup_matches_without_parents(signature, owner, type_lookup, matches_array)
+    def lookup_matches_with_modules(signature, owner = self, path_lookup = self, matches_array = nil)
+      matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array)
       return matches unless matches.empty?
 
       is_new = owner.metaclass? && signature.name == "new"
@@ -86,10 +86,10 @@ module Crystal
 
           # If this is a generic instance type and our parent is the generic class, use
           # this type as the type lookup (so we can find type arguments)
-          type_lookup = parent
-          type_lookup = self if self.is_a?(GenericClassInstanceType) && type_lookup == self.generic_class
+          path_lookup = parent
+          path_lookup = self if self.is_a?(GenericClassInstanceType) && path_lookup == self.generic_class
 
-          matches = parent.lookup_matches_with_modules(signature, owner, type_lookup, matches_array)
+          matches = parent.lookup_matches_with_modules(signature, owner, path_lookup, matches_array)
           return matches unless matches.empty?
         end
       end
@@ -97,8 +97,8 @@ module Crystal
       Matches.new(matches_array, Cover.create(signature, matches_array), owner, false)
     end
 
-    def lookup_matches(signature, owner = self, type_lookup = self, matches_array = nil)
-      matches = lookup_matches_without_parents(signature, owner, type_lookup, matches_array)
+    def lookup_matches(signature, owner = self, path_lookup = self, matches_array = nil)
+      matches = lookup_matches_without_parents(signature, owner, path_lookup, matches_array)
       return matches if matches.cover_all?
 
       matches_array = matches.matches
@@ -121,10 +121,10 @@ module Crystal
         my_parents.each do |parent|
           # If this is a generic instance type and our parent is the generic class, use
           # this type as the type lookup (so we can find type arguments)
-          type_lookup = parent
-          type_lookup = self if self.is_a?(GenericClassInstanceType) && type_lookup == self.generic_class
+          path_lookup = parent
+          path_lookup = self if self.is_a?(GenericClassInstanceType) && path_lookup == self.generic_class
 
-          matches = parent.lookup_matches(signature, owner, type_lookup, matches_array)
+          matches = parent.lookup_matches(signature, owner, path_lookup, matches_array)
           if matches.cover_all?
             return matches
           else
@@ -326,7 +326,11 @@ module Crystal
   end
 
   module VirtualTypeLookup
-    def lookup_matches(signature, owner = self, type_lookup = self)
+    def virtual_lookup(type)
+      type
+    end
+
+    def lookup_matches(signature, owner = self, path_lookup = self)
       is_new = virtual_metaclass? && signature.name == "new"
 
       base_type_lookup = virtual_lookup(base_type)
@@ -388,7 +392,7 @@ module Crystal
                   changes << Change.new(subtype_lookup, cloned_def)
 
                   new_subtype_matches ||= [] of Match
-                  new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.type_lookup, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
+                  new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.path_lookup, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
                 end
               end
             end
@@ -443,6 +447,12 @@ module Crystal
         superclass = superclass.superclass
       end
       false
+    end
+  end
+
+  class VirtualMetaclassType
+    def virtual_lookup(type)
+      type.metaclass
     end
   end
 end

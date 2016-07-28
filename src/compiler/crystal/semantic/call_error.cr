@@ -419,7 +419,7 @@ class Crystal::Call
           # argument type have the same string representation
           res_to_s = res.to_s
           if (arg_type = arg_types.try &.[i]?) && arg_type.to_s == res_to_s &&
-             (matching_type = TypeLookup.lookup?(a_def.owner, res))
+             (matching_type = a_def.owner.lookup_type?(res))
             str << matching_type
           else
             str << res_to_s

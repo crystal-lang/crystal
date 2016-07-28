@@ -124,8 +124,8 @@ class Crystal::AbstractDefChecker
       if r2 && r1 && r1 != r2
         # Check if a1.restriction is contravariant with a2.restriction
         begin
-          rt1 = TypeLookup.lookup(t1, r1)
-          rt2 = TypeLookup.lookup(t2, r2)
+          rt1 = t1.lookup_type(r1)
+          rt2 = t2.lookup_type(r2)
           return false unless rt2.covariant?(rt1)
         rescue Crystal::TypeException
           # Ignore if we can't find a type (assume the method is implemented)
