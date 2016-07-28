@@ -1786,32 +1786,6 @@ module Crystal
       value
     end
 
-    def in_const_block(container)
-      old_llvm_mod = @llvm_mod
-      @llvm_mod = @main_mod
-
-      old_ensure_exception_handlers = @ensure_exception_handlers
-      old_rescue_block = @rescue_block
-      @ensure_exception_handlers = nil
-      @rescue_block = nil
-
-      with_cloned_context do
-        context.fun = @main
-
-        # "self" in a constant is the constant's container
-        context.type = container
-
-        # Start with fresh variables
-        context.vars = LLVMVars.new
-
-        yield
-      end
-
-      @llvm_mod = old_llvm_mod
-      @ensure_exception_handlers = old_ensure_exception_handlers
-      @rescue_block = old_rescue_block
-    end
-
     def printf(format, args = [] of LLVM::Value)
       call @program.printf(@llvm_mod), [builder.global_string_pointer(format)] + args
     end
