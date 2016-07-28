@@ -51,4 +51,10 @@ describe HTTP do
       end
     end
   end
+
+  describe ".dequote_string" do
+    it "dequotes a string" do
+      HTTP.dequote_string(%q(foo\"\\bar\ baz\\)).should eq(%q(foo"\bar baz\))
+    end
+  end
 end

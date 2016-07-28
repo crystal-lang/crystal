@@ -271,6 +271,24 @@ module HTTP
     else          ""
     end
   end
+
+  # Dequotes a RFC2616 quoted-string
+  def self.dequote_string(str)
+    data = str.to_slice
+    quoted_pair_index = data.index('\\'.ord)
+    return str unless quoted_pair_index
+
+    String.build do |io|
+      while quoted_pair_index
+        io.write(data[0, quoted_pair_index])
+        io << data[quoted_pair_index + 1].chr
+
+        data += quoted_pair_index + 2
+        quoted_pair_index = data.index('\\'.ord)
+      end
+      io.write(data)
+    end
+  end
 end
 
 require "./request"

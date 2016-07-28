@@ -28,10 +28,15 @@ module HTTP::Multipart
   # HTTP::Multipart.parse_boundary("multipart/mixed; boundary=\"abcde\"") # => "abcde"
   # ```
   def self.parse_boundary(content_type)
-    # TODO: optimise and handle escapes in quoted strings
-    match = content_type.match(/\Amultipart\/.*boundary="?([^";,]+)"?/i)
+    # TODO: optimise
+    match = content_type.match(/\Amultipart\/.*boundary=\s*?"?([^";,]+)"?/i)
     return nil unless match
-    match[1]
+    boundary = match[1]
+    if boundary[0] == '"'
+      boundary = HTTP.dequote_string(boundary[1...-1])
+    end
+
+    boundary
   end
 
   # Parses a MIME multipart message, yielding `HTTP::Headers` and an `IO` for
