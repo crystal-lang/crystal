@@ -6,7 +6,7 @@ module Crystal
       (node.global? ? program : self).lookup_similar_path(node.names)
     end
 
-    def lookup_similar_path(names : Array, lookup_in_container = true)
+    def lookup_similar_path(names : Array, lookup_in_namespace = true)
       nil
     end
 
@@ -56,7 +56,7 @@ module Crystal
   end
 
   class ModuleType
-    def lookup_similar_path(names : Array, lookup_in_container = true)
+    def lookup_similar_path(names : Array, lookup_in_namespace = true)
       type = self
       names.each_with_index do |name, idx|
         previous_type = type
@@ -81,7 +81,7 @@ module Crystal
         return match if match
       end
 
-      lookup_in_container && self != program ? container.lookup_similar_path(names) : nil
+      lookup_in_namespace && self != program ? namespace.lookup_similar_path(names) : nil
     end
   end
 

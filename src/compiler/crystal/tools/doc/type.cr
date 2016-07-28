@@ -74,7 +74,7 @@ class Crystal::Doc::Type
   def parents_of?(type)
     return false unless type
 
-    while type = type.container
+    while type = type.namespace
       return true if type.full_name == full_name
     end
 
@@ -367,19 +367,19 @@ class Crystal::Doc::Type
     including_types.uniq!.sort_by! &.full_name.downcase
   end
 
-  def container
+  def namespace
     case type = @type
     when NamedType
-      container = type.container
-      if container.is_a?(Program)
+      namespace = type.namespace
+      if namespace.is_a?(Program)
         nil
       else
-        @generator.type(container)
+        @generator.type(namespace)
       end
     when IncludedGenericModule
-      @generator.type(type.module).container
+      @generator.type(type.module).namespace
     when InheritedGenericClass
-      @generator.type(type.extended_class).container
+      @generator.type(type.extended_class).namespace
     else
       nil
     end
@@ -399,8 +399,8 @@ class Crystal::Doc::Type
   end
 
   def full_name_without_type_vars(io)
-    if container = container()
-      container.full_name_without_type_vars(io)
+    if namespace = self.namespace
+      namespace.full_name_without_type_vars(io)
       io << "::"
     end
     io << name
@@ -409,8 +409,8 @@ class Crystal::Doc::Type
   def path
     if program?
       "toplevel.html"
-    elsif container = container()
-      "#{container.dir}/#{name}.html"
+    elsif namespace = self.namespace
+      "#{namespace.dir}/#{name}.html"
     else
       "#{name}.html"
     end
@@ -430,8 +430,8 @@ class Crystal::Doc::Type
 
   def path_to(type : Type)
     if type.const?
-      container = type.container || @generator.program_type
-      "#{path_to(container)}##{type.name}"
+      namespace = type.namespace || @generator.program_type
+      "#{path_to(namespace)}##{type.name}"
     else
       path_to(type.path)
     end
@@ -442,16 +442,16 @@ class Crystal::Doc::Type
   end
 
   def dir
-    if container = container()
-      "#{container.dir}/#{name}"
+    if namespace = self.namespace
+      "#{namespace.dir}/#{name}"
     else
       name.to_s
     end
   end
 
   def nesting
-    if container = container()
-      1 + container.nesting
+    if namespace = self.namespace
+      1 + namespace.nesting
     else
       0
     end
@@ -735,8 +735,8 @@ class Crystal::Doc::Type
     "#{@generator.repository_name}/" + (
       if program?
         "toplevel"
-      elsif container = container()
-        "#{container.dir}/#{name}"
+      elsif namespace = self.namespace
+        "#{namespace.dir}/#{name}"
       else
         "#{name}"
       end

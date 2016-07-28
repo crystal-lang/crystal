@@ -188,7 +188,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
         if create_modules_if_missing
           next_type = base_lookup
           node.names.each do |name|
-            next_type = lookup_path base_lookup, [name], node, lookup_in_container: false
+            next_type = lookup_path base_lookup, [name], node, lookup_in_namespace: false
             if next_type
               if next_type.is_a?(ASTNode)
                 node.raise "execpted #{name} to be a type"
@@ -218,8 +218,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     current_type.lookup_type(node, allow_typeof: false)
   end
 
-  def lookup_path(base_type, names, node, lookup_in_container = true)
-    base_type.lookup_path names, lookup_in_container: lookup_in_container
+  def lookup_path(base_type, names, node, lookup_in_namespace = true)
+    base_type.lookup_path names, lookup_in_namespace: lookup_in_namespace
   rescue ex : Crystal::Exception
     raise ex
   rescue ex

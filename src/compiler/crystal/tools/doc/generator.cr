@@ -156,7 +156,7 @@ class Crystal::Doc::Generator
     return true if type == crystal_type
 
     return false unless type.is_a?(Const)
-    return false unless type.container == crystal_type
+    return false unless type.namespace == crystal_type
 
     {"BUILD_COMMIT", "BUILD_DATE", "CACHE_DIR", "DEFAULT_PATH",
       "DESCRIPTION", "PATH", "VERSION"}.each do |name|

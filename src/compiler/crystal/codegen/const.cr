@@ -117,8 +117,8 @@ class Crystal::CodeGenVisitor
 
     define_main_function(fun_name, ([] of LLVM::Type), LLVM::Void, needs_alloca: true) do |func|
       with_cloned_context do
-        # "self" in a constant is the constant's container
-        context.type = const.container
+        # "self" in a constant is the constant's namespace
+        context.type = const.namespace
 
         # Start with fresh variables
         context.vars = LLVMVars.new

@@ -235,7 +235,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "allows invoking protected method from container to contained" do
+  it "allows invoking protected method from namespace to namespaced type" do
     assert_type(%(
       class Foo
         def foo
@@ -253,7 +253,7 @@ describe "Visibility modifiers" do
       )) { int32 }
   end
 
-  it "allows invoking protected method from contained to container" do
+  it "allows invoking protected method from namespaced type to namespace" do
     assert_type(%(
       class Foo
         protected def foo

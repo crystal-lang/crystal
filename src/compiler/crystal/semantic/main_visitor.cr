@@ -134,7 +134,7 @@ module Crystal
           meta_vars = MetaVars.new
           const_def = Def.new("const", [] of Arg)
           type_visitor = MainVisitor.new(@program, meta_vars, const_def)
-          type_visitor.current_type = type.container
+          type_visitor.current_type = type.namespace
           type.value.accept type_visitor
 
           type.vars = const_def.vars

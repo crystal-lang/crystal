@@ -17,7 +17,7 @@ module Crystal
     # we'll get `Foo::Bar::Baz` as the return value.
     #
     # The path is searched in the current type's ancestors, and optionally
-    # in its container (namespace), according to *lookup_in_container*.
+    # in its namespace, according to *lookup_in_namespace*.
     #
     # Returns `nil` if the path can't be found.
     #
@@ -27,8 +27,8 @@ module Crystal
     #
     # If the path is global (for example ::Foo::Bar), the search starts at
     # the top level.
-    def lookup_path(path : Path, lookup_in_container = true) : Type | ASTNode | Nil
-      (path.global? ? program : self).lookup_path(path.names, lookup_in_container: lookup_in_container)
+    def lookup_path(path : Path, lookup_in_namespace = true) : Type | ASTNode | Nil
+      (path.global? ? program : self).lookup_path(path.names, lookup_in_namespace: lookup_in_namespace)
     rescue ex : Crystal::Exception
       raise ex
     rescue ex
@@ -36,13 +36,13 @@ module Crystal
     end
 
     # ditto
-    def lookup_path(path : Array(String), lookup_in_container = true) : Type | ASTNode | Nil
+    def lookup_path(path : Array(String), lookup_in_namespace = true) : Type | ASTNode | Nil
       raise "Bug: #{self} doesn't implement lookup_path"
     end
   end
 
   class NamedType
-    def lookup_path(names : Array, lookup_in_container = true)
+    def lookup_path(names : Array, lookup_in_namespace = true)
       type = self
       names.each_with_index do |name, i|
         next_type = type.types?.try &.[name]?
@@ -59,12 +59,12 @@ module Crystal
       parent_match = lookup_path_in_parents(names)
       return parent_match if parent_match
 
-      lookup_in_container && self != program ? container.lookup_path(names) : nil
+      lookup_in_namespace && self != program ? namespace.lookup_path(names) : nil
     end
 
-    protected def lookup_path_in_parents(names : Array, lookup_in_container = false)
+    protected def lookup_path_in_parents(names : Array, lookup_in_namespace = false)
       parents.try &.each do |parent|
-        match = parent.lookup_path(names, lookup_in_container)
+        match = parent.lookup_path(names, lookup_in_namespace)
         return match if match.is_a?(Type)
       end
       nil
@@ -72,9 +72,9 @@ module Crystal
   end
 
   module GenericType
-    def lookup_path(names : Array, lookup_in_container = true)
+    def lookup_path(names : Array, lookup_in_namespace = true)
       # If we are Foo(T) and somebody looks up the type T, we return `nil` because we don't
-      # know what type T is, and we don't want to continue search in the container
+      # know what type T is, and we don't want to continue search in the namespace
       if !names.empty? && type_vars.includes?(names[0])
         return nil
       end
@@ -83,7 +83,7 @@ module Crystal
   end
 
   class GenericClassInstanceType
-    def lookup_path(names : Array, lookup_in_container = true)
+    def lookup_path(names : Array, lookup_in_namespace = true)
       if !names.empty? && (type_var = type_vars[names[0]]?)
         case type_var
         when Var
@@ -94,7 +94,7 @@ module Crystal
 
         if names.size > 1
           if type_var_type.is_a?(Type)
-            type_var_type.lookup_path(names[1..-1], lookup_in_container)
+            type_var_type.lookup_path(names[1..-1], lookup_in_namespace)
           else
             raise "#{names[0]} is not a type, it's #{type_var_type}"
           end
@@ -102,13 +102,13 @@ module Crystal
           type_var_type
         end
       else
-        generic_class.lookup_path(names, lookup_in_container)
+        generic_class.lookup_path(names, lookup_in_namespace)
       end
     end
   end
 
   class IncludedGenericModule
-    def lookup_path(names : Array, lookup_in_container = true)
+    def lookup_path(names : Array, lookup_in_namespace = true)
       if (names.size == 1) && (m = @mapping[names[0]]?)
         # Case of a variadic tuple
         if m.is_a?(TupleLiteral)
@@ -126,12 +126,12 @@ module Crystal
         end
       end
 
-      @module.lookup_path(names, lookup_in_container)
+      @module.lookup_path(names, lookup_in_namespace)
     end
   end
 
   class InheritedGenericClass
-    def lookup_path(names : Array, lookup_in_container = true)
+    def lookup_path(names : Array, lookup_in_namespace = true)
       if (names.size == 1) && (m = @mapping[names[0]]?)
         extending_class = self.extending_class
         case extending_class
@@ -139,7 +139,7 @@ module Crystal
           # skip
         else
           if extending_class.is_a?(NamedType)
-            self_type = extending_class.container
+            self_type = extending_class.namespace
           else
             self_type = extending_class.program
           end
@@ -147,16 +147,16 @@ module Crystal
         end
       end
 
-      @extended_class.lookup_path(names, lookup_in_container)
+      @extended_class.lookup_path(names, lookup_in_namespace)
     end
   end
 
   class UnionType
-    def lookup_path(names : Array, lookup_in_container = true)
+    def lookup_path(names : Array, lookup_in_namespace = true)
       if names.size == 1 && names[0] == "T"
         return program.tuple_of(union_types)
       end
-      program.lookup_path(names, lookup_in_container)
+      program.lookup_path(names, lookup_in_namespace)
     end
   end
 
