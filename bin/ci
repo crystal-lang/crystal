@@ -149,7 +149,7 @@ prepare_build() {
 
   on_linux docker pull "jhass/crystal-build-$ARCH:llvm38"
 
-  on_osx brew install llvm libevent crystal-lang
+  on_osx brew install llvm libevent pcre crystal-lang
 }
 
 with_build_env() {
