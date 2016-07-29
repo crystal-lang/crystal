@@ -68,6 +68,23 @@ describe "Lexer: location" do
     token.filename.should eq("foo")
   end
 
+  it "uses two consecutive loc pragma " do
+    lexer = Lexer.new %(1#<loc:"foo",12,34>#<loc:"foo",56,78>2)
+    lexer.filename = "bar"
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.line_number.should eq(1)
+    token.column_number.should eq(1)
+    token.filename.should eq("bar")
+
+    token = lexer.next_token
+    token.type.should eq(:NUMBER)
+    token.line_number.should eq(56)
+    token.column_number.should eq(78)
+    token.filename.should eq("foo")
+  end
+
   it "assigns correct loc location to node" do
     exps = Parser.parse(%[(#<loc:"foo.txt",2,3>1 + 2)]).as(Expressions)
     node = exps.expressions.first

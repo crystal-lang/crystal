@@ -52,7 +52,7 @@ module Crystal
       start = current_pos
 
       # Skip comments
-      if current_char == '#'
+      while current_char == '#'
         char = next_char_no_column_increment
 
         # Check #<loc:"file",line,column> pragma comment
