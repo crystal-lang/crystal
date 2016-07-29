@@ -283,15 +283,11 @@ class Object
         @{{name.var.id}} : {{name.type}}?
 
         def {{name.var.id}}
-          @{{name.var.id}} ||= begin
-            {{yield}}
-          end
+          @{{name.var.id}} ||= {{yield}}
         end
       {% else %}
         def {{name.id}}
-          @{{name.id}} ||= begin
-            {{yield}}
-          end
+          @{{name.id}} ||= {{yield}}
         end
       {% end %}
     {% else %}
@@ -745,15 +741,11 @@ class Object
         @{{name.var.id}} : {{name.type}}?
 
         def {{name.var.id}}
-          @{{name.var.id}} ||= begin
-            {{yield}}
-          end
+          @{{name.var.id}} ||= {{yield}}
         end
       {% else %}
         def {{name.id}}
-          @{{name.id}} ||= begin
-            {{yield}}
-          end
+          @{{name.id}} ||= {{yield}}
         end
       {% end %}
     {% else %}
