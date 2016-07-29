@@ -461,13 +461,13 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit_enum_member(node, member, counter, all_value, **options)
     case member
     when MacroIf
-      expanded = expand_inline_macro(member, mode: MacroExpansionMode::Enum)
+      expanded = expand_inline_macro(member, mode: Program::MacroExpansionMode::Enum)
       visit_enum_member(node, expanded, counter, all_value, **options)
     when MacroExpression
-      expanded = expand_inline_macro(member, mode: MacroExpansionMode::Enum)
+      expanded = expand_inline_macro(member, mode: Program::MacroExpansionMode::Enum)
       visit_enum_member(node, expanded, counter, all_value, **options)
     when MacroFor
-      expanded = expand_inline_macro(member, mode: MacroExpansionMode::Enum)
+      expanded = expand_inline_macro(member, mode: Program::MacroExpansionMode::Enum)
       visit_enum_member(node, expanded, counter, all_value, **options)
     when Expressions
       visit_enum_members(node, member.expressions, counter, all_value, **options)
@@ -744,9 +744,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
         expansion = expand_macro(hook.macro, node) do
           if call
-            @program.expand_macro hook.macro, call, current_type.instance_type, @path_lookup
+            @program.expand_macro hook.macro, call, current_type.instance_type
           else
-            @program.expand_macro hook.macro.body, current_type.instance_type, @path_lookup
+            @program.expand_macro hook.macro.body, current_type.instance_type
           end
         end
 

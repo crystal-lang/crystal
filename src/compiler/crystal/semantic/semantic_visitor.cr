@@ -379,11 +379,11 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
 
     mode ||= if @in_c_struct_or_union
-               MacroExpansionMode::Normal
+               Program::MacroExpansionMode::Normal
              elsif @in_lib
-               MacroExpansionMode::Lib
+               Program::MacroExpansionMode::Lib
              else
-               MacroExpansionMode::Normal
+               Program::MacroExpansionMode::Normal
              end
 
     generated_nodes = @program.parse_macro_source(expanded_macro, the_macro, node, Set.new(@vars.keys),

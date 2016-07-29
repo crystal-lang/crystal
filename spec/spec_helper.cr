@@ -259,7 +259,6 @@ def assert_macro_internal(program, sub_node, macro_args, macro_body, expected)
 
   call = Call.new(nil, "", sub_node)
   result = program.expand_macro a_macro, call, program, program
-  result = result.source
   result = result.chomp(';')
   result.should eq(expected)
 end

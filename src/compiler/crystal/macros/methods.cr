@@ -2,7 +2,7 @@ require "../semantic/ast"
 require "./macros"
 
 module Crystal
-  class MacroExpander::MacroVisitor
+  class MacroInterpreter
     def interpret_top_level_call(node)
       case node.name
       when "debug"
@@ -168,7 +168,7 @@ module Crystal
         run_args << @last.to_macro_id
       end
 
-      success, result = @expander.run(filename, run_args)
+      success, result = @program.macro_run(filename, run_args)
       if success
         @last = MacroId.new(result)
       else

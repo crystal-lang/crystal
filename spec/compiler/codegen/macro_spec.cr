@@ -1395,4 +1395,20 @@ describe "Code gen: macro" do
       {% end %}
       )).to_string.should eq(%(hello [{"world", "world"}, "world"]))
   end
+
+  it "retains original yield expression (#2923)" do
+    run(%(
+      macro foo
+        def bar(baz)
+          {{yield}}
+        end
+      end
+
+      foo do
+        baz
+      end
+
+      bar("hi")
+      )).to_string.should eq("hi")
+  end
 end

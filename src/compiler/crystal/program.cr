@@ -210,9 +210,6 @@ module Crystal
     # Returns a `CrystalPath` for this program.
     getter(crystal_path) { CrystalPath.new(target_triple: target_machine.triple) }
 
-    # Returns a `MacroExpander` to expand macro code into crystal code.
-    getter(macro_expander) { MacroExpander.new self }
-
     # Returns a `Var` that has `Nil` as a type.
     # This variable is bound to other nodes in the semantic phase for things
     # that need to be nilable, for example to a variable that's only declared

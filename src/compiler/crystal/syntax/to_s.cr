@@ -7,8 +7,8 @@ module Crystal
       to_s(io)
     end
 
-    def to_s(io)
-      visitor = ToSVisitor.new(io)
+    def to_s(io, emit_loc_pragma = false)
+      visitor = ToSVisitor.new(io, emit_loc_pragma: emit_loc_pragma)
       self.accept visitor
     end
   end
@@ -16,10 +16,30 @@ module Crystal
   class ToSVisitor < Visitor
     @str : IO
 
-    def initialize(@str = MemoryIO.new)
+    def initialize(@str = MemoryIO.new, @emit_loc_pragma = false)
       @indent = 0
       @inside_macro = 0
       @inside_lib = false
+    end
+
+    def visit_any(node)
+      return true unless @emit_loc_pragma
+
+      location = node.location
+      return true unless location
+
+      filename = location.filename
+      return true unless filename.is_a?(String)
+
+      @str << "#<loc:"
+      filename.inspect(@str)
+      @str << ","
+      @str << location.line_number
+      @str << ","
+      @str << location.column_number
+      @str << ">"
+
+      true
     end
 
     def visit(node : Nop)
