@@ -76,7 +76,7 @@ module Crystal
     def initialize(@program : Program,
                    @scope : Type, @path_lookup : Type, @location : Location?,
                    @vars = {} of String => ASTNode, @block : Block? = nil)
-      @str = String::Builder.new(512)
+      @str = MemoryIO.new(512) # Can't be String::Builder because of `{{debug()}}
       @last = Nop.new
     end
 
