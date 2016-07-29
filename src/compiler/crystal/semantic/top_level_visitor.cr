@@ -35,6 +35,9 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   ValidStructDefAttributes = %w(Packed)
   ValidEnumDefAttributes   = %w(Flags)
 
+  # These are `new` methods (expanded) that was created from `initialize` methods (original)
+  getter new_expansions = [] of {original: Def, expanded: Def}
+
   @last_doc : String?
 
   def visit(node : ClassDef)
@@ -277,7 +280,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
         target_type.metaclass.add_def(new_method)
 
         # And we register it to later complete it
-        @program.new_expansions << Program::NewExpansion.new(node, new_method)
+        new_expansions << {original: node, expanded: new_method}
       end
 
       run_hooks target_type.metaclass, target_type, :method_added, node, Call.new(nil, "method_added", [node] of ASTNode).at(node.location)

@@ -51,11 +51,13 @@ class Crystal::Program
   # This alone is useful for some tools like doc or hierarchy
   # where a full semantic of the program is not needed.
   def top_level_semantic(node, stats = false)
-    Crystal.timing("Semantic (top level)", stats) do
-      node.accept TopLevelVisitor.new(self)
+    new_expansions = Crystal.timing("Semantic (top level)", stats) do
+      visitor = TopLevelVisitor.new(self)
+      node.accept visitor
+      visitor.new_expansions
     end
     Crystal.timing("Semantic (new)", stats) do
-      define_new_methods
+      define_new_methods(new_expansions)
     end
     node, processor = Crystal.timing("Semantic (type declarations)", stats) do
       TypeDeclarationProcessor.new(self).process(node)

@@ -1,22 +1,15 @@
 module Crystal
   class Program
-    # This is a recording of a `new` method (expanded) that
-    # was created from an `initialize` method (original)
-    record NewExpansion, original : Def, expanded : Def
-
-    @new_expansions = [] of NewExpansion
-    getter new_expansions
-
-    def define_new_methods
+    def define_new_methods(new_expansions)
       # Here we complete the body of `self.new` methods
       # created from `initialize` methods.
-      @new_expansions.each do |expansion|
-        expansion.expanded.fill_body_from_initialize(expansion.original.owner)
+      new_expansions.each do |expansion|
+        expansion[:expanded].fill_body_from_initialize(expansion[:original].owner)
       end
 
       # We also need to define empty `new` methods for types
       # that don't have any `initialize` methods.
-      define_default_new(@program)
+      define_default_new(self)
     end
 
     def define_default_new(type)
