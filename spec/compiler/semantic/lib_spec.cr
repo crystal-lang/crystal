@@ -850,4 +850,27 @@ describe "Semantic: lib" do
       LibFoo::Foo.new.x
       )) { int32 }
   end
+
+  it "errors if defining incompatible funs with the same name in the same lib (#3045)" do
+    assert_error %(
+      lib LibFoo
+        fun foo1 = foo
+        fun foo2 = foo(x : Int32)
+      end
+      ),
+      "fun redefinition with different signature"
+  end
+
+  it "errors if defining incompatible funs with the same name in different libs (#3045)" do
+    assert_error %(
+      lib LibFoo1
+        fun foo1 = foo
+      end
+
+      lib LibFoo2
+        fun foo2 = foo(x : Int32)
+      end
+      ),
+      "fun redefinition with different signature"
+  end
 end

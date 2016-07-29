@@ -615,10 +615,6 @@ module Crystal
     getter hooks : Array(Hook)?
 
     def add_def(a_def)
-      if a_def.is_a?(External)
-        check_fun_redefinition(a_def)
-      end
-
       a_def.owner = self
 
       if a_def.visibility.public? && a_def.name == "initialize"
@@ -686,20 +682,6 @@ module Crystal
 
       hooks = @hooks ||= [] of Hook
       hooks << Hook.new(kind, a_def)
-    end
-
-    private def check_fun_redefinition(a_def)
-      if defs = self.defs
-        if existing_defs = defs[a_def.name]?
-          existing = existing_defs.first?
-          if existing
-            existing = existing.def.as(External)
-            unless existing.compatible_with?(a_def)
-              a_def.raise "fun redefinition with different signature (was #{existing})"
-            end
-          end
-        end
-      end
     end
 
     def filter_by_responds_to(name)

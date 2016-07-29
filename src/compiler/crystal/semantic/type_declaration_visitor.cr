@@ -40,6 +40,10 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     # The type of class variables. The last one wins.
     # This is type => variables.
     @class_vars = {} of ClassVarContainer => Hash(String, TypeDeclarationWithLocation)
+
+    # A hash of all defined funs, so we can detect when
+    # a fun is redefined with a different signautre
+    @externals = {} of String => External
   end
 
   def visit(node : Alias)
@@ -131,13 +135,10 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
 
     external.set_type(return_type)
 
-    begin
-      old_external = current_type.add_def external
-    rescue ex : Crystal::Exception
-      node.raise ex.message
-    end
+    old_external = add_external external
+    old_external.dead = true if old_external
 
-    old_external.dead = true if old_external.is_a?(External)
+    current_type.add_def(external)
 
     if current_type.is_a?(Program)
       key = DefInstanceKey.new external.object_id, external.args.map(&.type), nil, nil
@@ -167,6 +168,19 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     end
 
     false
+  end
+
+  def add_external(external : External)
+    existing = @externals[external.real_name]?
+    if existing
+      if existing.compatible_with?(external)
+        return existing
+      else
+        external.raise "fun redefinition with different signature (was `#{existing}` at #{existing.location})"
+      end
+    end
+    @externals[external.real_name] = external
+    nil
   end
 
   def declare_c_struct_or_union_field(node)
