@@ -74,4 +74,9 @@ describe "Logger" do
       r.gets.should match(/  ANY -- shard: another message\n/)
     end
   end
+
+  it "can create a logger with nil (#3065)" do
+    logger = Logger.new(nil)
+    logger.error("ouch")
+  end
 end
