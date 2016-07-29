@@ -253,10 +253,6 @@ class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
     @globals[var.name] = TypeDeclarationWithLocation.new(var_type.virtual_type, node.location.not_nil!, uninitialized)
   end
 
-  def visit(node : Call)
-    !expand_macro(node, raise_on_missing_const: false)
-  end
-
   def visit(node : UninitializedVar)
     var = node.var
     case var

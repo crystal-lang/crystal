@@ -124,10 +124,6 @@ module Crystal
       end
     end
 
-    def visit(node : Call)
-      !expand_macro(node, raise_on_missing_const: false)
-    end
-
     def visit(node : Assign)
       target = node.target.as(ClassVar)
       value = node.value

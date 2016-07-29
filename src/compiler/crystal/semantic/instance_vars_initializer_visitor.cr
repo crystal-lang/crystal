@@ -39,10 +39,6 @@ class Crystal::InstanceVarsInitializerVisitor < Crystal::SemanticVisitor
     end
   end
 
-  def visit(node : Call)
-    !expand_macro(node, raise_on_missing_const: false)
-  end
-
   def visit(node : Assign)
     target = node.target.as(InstanceVar)
     value = node.value

@@ -183,7 +183,14 @@ module Crystal
     end
 
     def truthy?
-      true
+      case self
+      when NilLiteral, Nop
+        false
+      when BoolLiteral
+        self.value
+      else
+        true
+      end
     end
 
     def interpret(method, args, block, interpreter)
@@ -278,29 +285,15 @@ module Crystal
     end
   end
 
-  class Nop
-    def truthy?
-      false
-    end
-  end
-
   class NilLiteral
     def to_macro_id
       "nil"
-    end
-
-    def truthy?
-      false
     end
   end
 
   class BoolLiteral
     def to_macro_id
       @value ? "true" : "false"
-    end
-
-    def truthy?
-      @value
     end
   end
 

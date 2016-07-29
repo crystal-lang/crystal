@@ -114,7 +114,7 @@ module Crystal
 
     def visit(node : Call)
       if @outside_def
-        !expand_macro(node, raise_on_missing_const: false)
+        super
       else
         # If it's "self.class", don't consider this as self being passed to a method
         return false if self_dot_class?(node)

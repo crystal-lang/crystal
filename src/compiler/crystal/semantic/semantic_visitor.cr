@@ -11,7 +11,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
   def initialize(@program, @vars = MetaVars.new)
     @current_type = @program
     @exp_nest = 0
-    @attributes = nil
     @in_lib = false
     @in_c_struct_or_union = false
     @in_is_a = false
@@ -132,6 +131,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     attributes = @attributes ||= [] of Attribute
     attributes << node
     false
+  end
+
+  def visit(node : Call)
+    !expand_macro(node, raise_on_missing_const: false)
   end
 
   def visit(node : MacroExpression)
