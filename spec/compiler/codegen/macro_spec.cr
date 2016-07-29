@@ -1411,4 +1411,19 @@ describe "Code gen: macro" do
       bar("hi")
       )).to_string.should eq("hi")
   end
+
+  it "surrounds {{yield}} with begin/end" do
+    run(%(
+      macro foo
+        a = {{yield}}
+      end
+
+      a = 0
+      foo do
+        1
+        2
+      end
+      a
+      )).to_i.should eq(2)
+  end
 end
