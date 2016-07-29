@@ -45,4 +45,13 @@ module Crystal
   def self.with_line_numbers(source : String)
     source.lines.map_with_index { |line, i| "#{"%3d" % (i + 1)}. #{line.to_s.chomp}" }.join "\n"
   end
+
+  def self.check_cant_infer_generic_type_parameter(scope, node : Path)
+    if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericClassType)
+      first_name = node.names.first
+      if instance_type.type_vars.includes?(first_name)
+        node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"
+      end
+    end
+  end
 end

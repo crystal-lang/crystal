@@ -28,11 +28,11 @@ module Crystal
           # we need to use the type that defined the `macro def` as a
           # type lookup for arguments.
           macro_owner = item.def.macro_owner?
-          context.path_lookup = macro_owner if macro_owner
+          context.defining_type = macro_owner if macro_owner
 
           match = MatchesLookup.match_def(signature, item, context)
 
-          context.path_lookup = path_lookup if macro_owner
+          context.defining_type = path_lookup if macro_owner
 
           if match
             matches_array ||= [] of Match
@@ -207,7 +207,7 @@ module Crystal
 
       # Match splat arguments against splat restriction
       if splat_arg_types && splat_restriction.is_a?(Splat)
-        tuple_type = context.owner.program.tuple_of(splat_arg_types)
+        tuple_type = context.instantiated_type.program.tuple_of(splat_arg_types)
         match_arg_type = match_arg(tuple_type, splat_restriction.exp, context)
         unless match_arg_type
           return nil
@@ -281,7 +281,7 @@ module Crystal
 
       # Match double splat arguments against double splat restriction
       if double_splat_entries && double_splat_restriction.is_a?(DoubleSplat)
-        named_tuple_type = context.owner.program.named_tuple_of(double_splat_entries)
+        named_tuple_type = context.instantiated_type.program.named_tuple_of(double_splat_entries)
         value = match_arg(named_tuple_type, double_splat_restriction.exp, context)
         unless value
           return nil
@@ -392,7 +392,7 @@ module Crystal
                   changes << Change.new(subtype_lookup, cloned_def)
 
                   new_subtype_matches ||= [] of Match
-                  new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.path_lookup, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
+                  new_subtype_matches.push Match.new(cloned_def, full_subtype_match.arg_types, MatchContext.new(subtype_lookup, full_subtype_match.context.defining_type, full_subtype_match.context.free_vars), full_subtype_match.named_arg_types)
                 end
               end
             end

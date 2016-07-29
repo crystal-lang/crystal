@@ -1,3 +1,5 @@
+require "markdown"
+
 class Crystal::Doc::MarkdownDocRenderer < Markdown::HTMLRenderer
   def self.new(obj : Constant | Macro | Method, io)
     new obj.type, io

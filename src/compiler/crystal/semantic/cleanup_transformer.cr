@@ -127,24 +127,24 @@ module Crystal
     end
 
     def transform(node : Def)
-      node.runtime_initializers.try &.map! &.transform self
+      node.hook_expansions.try &.map! &.transform self
       node
     end
 
     def transform(node : ClassDef)
       super
 
-      node.runtime_initializers.try &.map! &.transform self
+      node.hook_expansions.try &.map! &.transform self
       node
     end
 
     def transform(node : Include)
-      node.runtime_initializers.try &.map! &.transform self
+      node.hook_expansions.try &.map! &.transform self
       node
     end
 
     def transform(node : Extend)
-      node.runtime_initializers.try &.map! &.transform self
+      node.hook_expansions.try &.map! &.transform self
       node
     end
 

@@ -267,7 +267,7 @@ module Crystal
         return self
       end
 
-      if parents.try &.any? &.restriction_of?(other, context.owner)
+      if parents.try &.any? &.restriction_of?(other, context.instantiated_type)
         return self
       end
 
@@ -283,16 +283,16 @@ module Crystal
     end
 
     def restrict(other : Self, context)
-      restrict(context.owner.instance_type, context)
+      restrict(context.instantiated_type.instance_type, context)
     end
 
     def restrict(other : TypeOf, context)
-      lookup_type = self.lookup_type(other, self_type: context.owner.instance_type)
+      lookup_type = self.lookup_type(other, self_type: context.instantiated_type.instance_type)
       restrict lookup_type, context
     end
 
     def restrict(other : UnionType, context)
-      restricted = other.union_types.any? { |union_type| restriction_of?(union_type, context.owner) }
+      restricted = other.union_types.any? { |union_type| restriction_of?(union_type, context.instantiated_type) }
       restricted ? self : nil
     end
 
@@ -310,7 +310,7 @@ module Crystal
     def restrict(other : Path, context)
       single_name = other.names.size == 1
       if single_name
-        owner = context.owner
+        owner = context.instantiated_type
 
         # Special case: if we have an *uninstantiated* generic type like Foo(X)
         # and a restriction X, it matches, and we add X to the free vars.
@@ -325,7 +325,7 @@ module Crystal
         ident_type = context.get_free_var(other.names.first)
       end
 
-      ident_type ||= context.path_lookup.lookup_path other
+      ident_type ||= context.defining_type.lookup_path other
 
       if ident_type
         restrict ident_type, context
@@ -342,7 +342,7 @@ module Crystal
 
     def restrict(other : Generic, context)
       # Special case: consider `Union(X, Y, ...)` the same as `X | Y | ...`
-      generic_class = context.path_lookup.lookup_path other.name
+      generic_class = context.defining_type.lookup_path other.name
       if generic_class.is_a?(GenericUnionType)
         return restrict(Union.new(other.type_vars), context)
       end
@@ -455,7 +455,7 @@ module Crystal
 
   class GenericClassInstanceType
     def restrict(other : Path, context)
-      ident_type = context.path_lookup.lookup_path other
+      ident_type = context.defining_type.lookup_path other
       if ident_type
         restrict(ident_type, context)
       else
@@ -468,7 +468,7 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      generic_class = context.path_lookup.lookup_path other.name
+      generic_class = context.defining_type.lookup_path other.name
       return super unless generic_class == self.generic_class
 
       generic_class = generic_class.as(GenericClassType)
@@ -509,7 +509,7 @@ module Crystal
             return nil unless count >= 0
 
             arg_types = types[i, count]
-            arg_types_tuple = context.owner.program.tuple_of(arg_types)
+            arg_types_tuple = context.instantiated_type.program.tuple_of(arg_types)
 
             restricted = arg_types_tuple.restrict(type_var.exp, context)
             return nil unless restricted == arg_types_tuple
@@ -576,7 +576,7 @@ module Crystal
       end
 
       if type_var.is_a?(ASTNode)
-        type_var.restriction_of?(other_type_var, context.owner)
+        type_var.restriction_of?(other_type_var, context.instantiated_type)
       elsif context.strict?
         type_var == other_type_var
       else
@@ -593,7 +593,7 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      generic_class = context.path_lookup.lookup_path other.name
+      generic_class = context.defining_type.lookup_path other.name
       return super unless generic_class == self.generic_class
 
       generic_class = generic_class.as(TupleType)
@@ -612,7 +612,7 @@ module Crystal
             return nil unless count >= 0
 
             arg_types = tuple_types[i, count]
-            arg_types_tuple = context.owner.program.tuple_of(arg_types)
+            arg_types_tuple = context.instantiated_type.program.tuple_of(arg_types)
 
             restricted = arg_types_tuple.restrict(type_var.exp, context)
             return nil unless restricted == arg_types_tuple
@@ -653,7 +653,7 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      generic_class = context.path_lookup.lookup_path other.name
+      generic_class = context.defining_type.lookup_path other.name
       return super unless generic_class == self.generic_class
 
       other_named_args = other.named_args
@@ -690,7 +690,7 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      generic_module = context.path_lookup.lookup_path other.name
+      generic_module = context.defining_type.lookup_path other.name
       return super unless generic_module == @module
 
       generic_module = generic_module.as(GenericModuleType)
@@ -732,7 +732,7 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      generic_class = context.path_lookup.lookup_path other.name
+      generic_class = context.defining_type.lookup_path other.name
       return super unless generic_class == @extended_class
 
       generic_class = generic_class.as(GenericClassType)
@@ -813,7 +813,7 @@ module Crystal
     end
 
     def restrict(other : Path, context)
-      other_type = context.path_lookup.lookup_path other
+      other_type = context.defining_type.lookup_path other
       if other_type
         if other_type == self
           return self
@@ -884,7 +884,7 @@ module Crystal
             return nil unless count >= 0
 
             input_arg_types = arg_types[i, count]
-            input_arg_types_tuple = context.owner.program.tuple_of(input_arg_types)
+            input_arg_types_tuple = context.instantiated_type.program.tuple_of(input_arg_types)
 
             restricted = input_arg_types_tuple.restrict(input.exp, context)
             return nil unless restricted == input_arg_types_tuple
@@ -929,7 +929,7 @@ module Crystal
     end
 
     def restrict(other : Generic, context)
-      generic_class = context.path_lookup.lookup_path other.name
+      generic_class = context.defining_type.lookup_path other.name
       return super unless generic_class.is_a?(ProcType)
 
       # Consider the case of a splat in the type vars
@@ -944,7 +944,7 @@ module Crystal
             return nil unless count >= 0
 
             arg_types = proc_types[i, count]
-            arg_types_tuple = context.owner.program.tuple_of(arg_types)
+            arg_types_tuple = context.instantiated_type.program.tuple_of(arg_types)
 
             restricted = arg_types_tuple.restrict(type_var.exp, context)
             return nil unless restricted == arg_types_tuple

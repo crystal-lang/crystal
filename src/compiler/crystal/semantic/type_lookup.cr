@@ -16,6 +16,9 @@ class Crystal::Type
   #
   # Passing other AST nodes will raise an exception.
   #
+  # *self_type* is the type that will be used when `self` is encountered
+  # in the node.
+  #
   # If *allow_typeof* is `false`, this method raises if there's a typeof
   # in the given node.
   #
@@ -35,12 +38,12 @@ class Crystal::Type
   # ```
   #
   # If `self` is `Foo` and `Bar(Baz)` is given, the result will be `Foo::Bar(Baz)`.
-  def lookup_type(node : ASTNode, self_type = self, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil) : Type
+  def lookup_type(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil) : Type
     TypeLookup.new(self, self_type, true, allow_typeof, free_vars).lookup(node).not_nil!
   end
 
   # Similar to `lookup_type`, but returns `nil` if a type can't be found.
-  def lookup_type?(node : ASTNode, self_type = self, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil) : Type?
+  def lookup_type?(node : ASTNode, self_type = self.instance_type, allow_typeof = true, free_vars : Hash(String, TypeVar)? = nil) : Type?
     TypeLookup.new(self, self_type, false, allow_typeof, free_vars).lookup(node)
   end
 
@@ -71,7 +74,7 @@ class Crystal::Type
         type.remove_alias_if_simple
       else
         if @raise
-          TypeLookup.check_cant_infer_generic_type_parameter(@root, node)
+          Crystal.check_cant_infer_generic_type_parameter(@root, node)
           node.raise("undefined constant #{node}")
         else
           nil
@@ -287,15 +290,6 @@ class Crystal::Type
       value = yield
       @in_generic_args -= 1
       value
-    end
-
-    def self.check_cant_infer_generic_type_parameter(scope, node : Path)
-      if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericClassType)
-        first_name = node.names.first
-        if instance_type.type_vars.includes?(first_name)
-          node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"
-        end
-      end
     end
   end
 end

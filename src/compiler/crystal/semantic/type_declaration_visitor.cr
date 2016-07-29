@@ -22,6 +22,8 @@ require "./type_guess_visitor"
 # declared all types so now we can search them and always find
 # them, not needing any kind of forward referencing.
 class Crystal::TypeDeclarationVisitor < Crystal::SemanticVisitor
+  ValidExternalVarAttributes = %w(ThreadLocal)
+
   alias TypeDeclarationWithLocation = TypeDeclarationProcessor::TypeDeclarationWithLocation
 
   getter globals

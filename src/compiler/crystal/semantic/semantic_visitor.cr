@@ -1,6 +1,5 @@
 abstract class Crystal::SemanticVisitor < Crystal::Visitor
   getter program : Program
-  property in_type_args
   property current_type : Type
 
   @free_vars : Hash(String, TypeVar)?
@@ -18,10 +17,54 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     @in_is_a = false
   end
 
+  # Transform require to its source code.
+  # The source code can be a Nop if the file was already required.
+  def visit(node : Require)
+    if expanded = node.expanded
+      expanded.accept self
+      return false
+    end
+
+    if inside_exp?
+      node.raise "can't require dynamically"
+    end
+
+    location = node.location
+    filenames = @program.find_in_path(node.string, location.try &.original_filename)
+    if filenames
+      nodes = Array(ASTNode).new(filenames.size)
+      filenames.each do |filename|
+        if @program.add_to_requires(filename)
+          parser = Parser.new File.read(filename), @program.string_pool
+          parser.filename = filename
+          parser.wants_doc = @program.wants_doc?
+          parsed_nodes = parser.parse
+          parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
+          # We must type the node immediately, in case a file requires another
+          # *before* one of the files in `filenames`
+          parsed_nodes.accept self
+          nodes << FileNode.new(parsed_nodes, filename)
+        end
+      end
+      expanded = Expressions.from(nodes)
+      expanded.bind_to(nodes)
+    else
+      expanded = Nop.new
+    end
+
+    node.expanded = expanded
+    node.bind_to(expanded)
+    false
+  rescue ex : Crystal::Exception
+    node.raise "while requiring \"#{node.string}\"", ex
+  rescue ex
+    node.raise "while requiring \"#{node.string}\": #{ex.message}"
+  end
+
   def visit(node : ClassDef)
     check_outside_exp node, "declare class"
     pushing_type(node.resolved_type) do
-      node.runtime_initializers.try &.each &.accept self
+      node.hook_expansions.try &.each &.accept self
       node.body.accept self
     end
     node.set_type(@program.nil)
@@ -54,14 +97,14 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def visit(node : Include)
     check_outside_exp node, "include"
-    node.runtime_initializers.try &.each &.accept self
+    node.hook_expansions.try &.each &.accept self
     node.set_type(@program.nil)
     false
   end
 
   def visit(node : Extend)
     check_outside_exp node, "extend"
-    node.runtime_initializers.try &.each &.accept self
+    node.hook_expansions.try &.each &.accept self
     node.set_type(@program.nil)
     false
   end
@@ -74,7 +117,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def visit(node : Def)
     check_outside_exp node, "declare def"
-    node.runtime_initializers.try &.each &.accept self
+    node.hook_expansions.try &.each &.accept self
     node.set_type(@program.nil)
     false
   end
@@ -89,6 +132,29 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     attributes = @attributes ||= [] of Attribute
     attributes << node
     false
+  end
+
+  def visit(node : MacroExpression)
+    expand_inline_macro node
+    false
+  end
+
+  def visit(node : MacroIf)
+    expand_inline_macro node
+    false
+  end
+
+  def visit(node : MacroFor)
+    expand_inline_macro node
+    false
+  end
+
+  def visit(node : ExternalVar | Path | Generic | ProcNotation | Union | Metaclass | Self | TypeOf)
+    false
+  end
+
+  def visit(node : ASTNode)
+    true
   end
 
   def visit_any(node)
@@ -157,7 +223,7 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     target_type, similar_name = resolve_ident?(node, create_modules_if_missing)
 
     unless target_type
-      Type::TypeLookup.check_cant_infer_generic_type_parameter(@scope, node)
+      Crystal.check_cant_infer_generic_type_parameter(@scope, node)
 
       error_msg = String.build do |msg|
         msg << "undefined constant #{node}"
@@ -377,21 +443,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     args
   end
 
-  def visit(node : MacroExpression)
-    expand_inline_macro node
-    false
-  end
-
-  def visit(node : MacroIf)
-    expand_inline_macro node
-    false
-  end
-
-  def visit(node : MacroFor)
-    expand_inline_macro node
-    false
-  end
-
   def expand_inline_macro(node, mode = nil)
     if expanded = node.expanded
       begin
@@ -450,164 +501,6 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     type
   end
 
-  def interpret_enum_value(node : NumberLiteral, target_type = nil)
-    case node.kind
-    when :i8, :i16, :i32, :i64, :u8, :u16, :u32, :u64, :i64
-      target_kind = target_type.try(&.kind) || node.kind
-      case target_kind
-      when :i8  then node.value.to_i8? || node.raise "invalid Int8: #{node.value}"
-      when :u8  then node.value.to_u8? || node.raise "invalid UInt8: #{node.value}"
-      when :i16 then node.value.to_i16? || node.raise "invalid Int16: #{node.value}"
-      when :u16 then node.value.to_u16? || node.raise "invalid UInt16: #{node.value}"
-      when :i32 then node.value.to_i32? || node.raise "invalid Int32: #{node.value}"
-      when :u32 then node.value.to_u32? || node.raise "invalid UInt32: #{node.value}"
-      when :i64 then node.value.to_i64? || node.raise "invalid Int64: #{node.value}"
-      when :u64 then node.value.to_u64? || node.raise "invalid UInt64: #{node.value}"
-      else
-        node.raise "enum type must be an integer, not #{target_kind}"
-      end
-    else
-      node.raise "constant value must be an integer, not #{node.kind}"
-    end
-  end
-
-  def interpret_enum_value(node : Call, target_type = nil)
-    obj = node.obj
-    if obj
-      if obj.is_a?(Path)
-        value = interpret_enum_value_call_macro?(node, target_type)
-        return value if value
-      end
-
-      case node.args.size
-      when 0
-        left = interpret_enum_value(obj, target_type)
-
-        case node.name
-        when "+" then +left
-        when "-"
-          case left
-          when Int8  then -left
-          when Int16 then -left
-          when Int32 then -left
-          when Int64 then -left
-          else
-            interpret_enum_value_call_macro(node, target_type)
-          end
-        when "~" then ~left
-        else
-          interpret_enum_value_call_macro(node, target_type)
-        end
-      when 1
-        left = interpret_enum_value(obj, target_type)
-        right = interpret_enum_value(node.args.first, target_type)
-
-        case node.name
-        when "+"  then left + right
-        when "-"  then left - right
-        when "*"  then left * right
-        when "/"  then left / right
-        when "&"  then left & right
-        when "|"  then left | right
-        when "<<" then left << right
-        when ">>" then left >> right
-        when "%"  then left % right
-        else
-          interpret_enum_value_call_macro(node, target_type)
-        end
-      else
-        node.raise "invalid constant value"
-      end
-    else
-      interpret_enum_value_call_macro(node, target_type)
-    end
-  end
-
-  def interpret_enum_value_call_macro(node : Call, target_type = nil)
-    interpret_enum_value_call_macro?(node, target_type) ||
-      node.raise("invalid constant value")
-  end
-
-  def interpret_enum_value_call_macro?(node : Call, target_type = nil)
-    if node.global?
-      node.scope = @program
-    else
-      node.scope = @scope || current_type.metaclass
-    end
-
-    if expand_macro(node, raise_on_missing_const: false, first_pass: true)
-      return interpret_enum_value(node.expanded.not_nil!, target_type)
-    end
-
-    nil
-  end
-
-  def interpret_enum_value(node : Path, target_type = nil)
-    type = resolve_ident(node)
-    case type
-    when Const
-      interpret_enum_value(type.value, target_type)
-    else
-      node.raise "invalid constant value"
-    end
-  end
-
-  def interpret_enum_value(node : Expressions, target_type = nil)
-    if node.expressions.size == 1
-      interpret_enum_value(node.expressions.first)
-    else
-      node.raise "invalid constant value"
-    end
-  end
-
-  def interpret_enum_value(node : ASTNode, target_type = nil)
-    node.raise "invalid constant value"
-  end
-
-  # Transform require to its source code.
-  # The source code can be a Nop if the file was already required.
-  def visit(node : Require)
-    if expanded = node.expanded
-      expanded.accept self
-      return false
-    end
-
-    if inside_exp?
-      node.raise "can't require dynamically"
-    end
-
-    location = node.location
-    filenames = @program.find_in_path(node.string, location.try &.original_filename)
-    if filenames
-      nodes = Array(ASTNode).new(filenames.size)
-      filenames.each do |filename|
-        if @program.add_to_requires(filename)
-          parser = Parser.new File.read(filename), @program.string_pool
-          parser.filename = filename
-          parser.wants_doc = @program.wants_doc?
-          parsed_nodes = parser.parse
-          parsed_nodes = @program.normalize(parsed_nodes, inside_exp: inside_exp?)
-          # We must type the node immediately, in case a file requires another
-          # *before* one of the files in `filenames`
-          parsed_nodes.accept self
-          nodes << FileNode.new(parsed_nodes, filename)
-        end
-      end
-      expanded = Expressions.from(nodes)
-      expanded.bind_to(nodes)
-    else
-      expanded = Nop.new
-    end
-
-    node.expanded = expanded
-    node.bind_to(expanded)
-    false
-  rescue ex : Crystal::Exception
-    node.raise "while requiring \"#{node.string}\"", ex
-  rescue ex
-    node.raise "while requiring \"#{node.string}\": #{ex.message}"
-  end
-
   def check_declare_var_type(node, declared_type, variable_kind)
     type = declared_type.instance_type
 
@@ -642,13 +535,5 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     @current_type = type
     yield
     @current_type = old_type
-  end
-
-  def visit(node : ExternalVar | Path | Generic | ProcNotation | Union | Metaclass | Self | TypeOf)
-    false
-  end
-
-  def visit(node : ASTNode)
-    true
   end
 end

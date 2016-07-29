@@ -16,6 +16,7 @@ class Crystal::Program
     @flags = parse_flags(flags.split)
   end
 
+  # Returns `true` if *name* is in the program's flags.
   def has_flag?(name : String)
     flags.includes?(name)
   end

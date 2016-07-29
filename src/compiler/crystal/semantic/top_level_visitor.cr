@@ -30,6 +30,11 @@ require "./semantic_visitor"
 # subclasses or not and we can tag it as "virtual" (having subclasses), but that concept
 # might disappear in the future and we'll make consider everything as "maybe virtual".
 class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
+  ValidDefAttributes       = %w(AlwaysInline Naked NoInline Raises ReturnsTwice Primitive)
+  ValidFunDefAttributes    = %w(AlwaysInline Naked NoInline Raises ReturnsTwice CallConvention)
+  ValidStructDefAttributes = %w(Packed)
+  ValidEnumDefAttributes   = %w(Flags)
+
   @last_doc : String?
 
   def visit(node : ClassDef)
@@ -737,7 +742,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       hooks.each do |hook|
         next if hook.kind != kind
 
-        expanded = expand_macro(hook.macro, node) do
+        expansion = expand_macro(hook.macro, node) do
           if call
             @program.expand_macro hook.macro, call, current_type.instance_type, @path_lookup
           else
@@ -745,7 +750,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
           end
         end
 
-        node.add_runtime_initializer(expanded)
+        node.add_hook_expansion(expansion)
       end
     end
 

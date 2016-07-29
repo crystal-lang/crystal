@@ -25,6 +25,9 @@ module Crystal
   #
   # Call resolution logic is in `Call#recalculate`, where method lookup is done.
   class MainVisitor < SemanticVisitor
+    ValidGlobalAttributes   = %w(ThreadLocal)
+    ValidClassVarAttributes = %w(ThreadLocal)
+
     property! scope
     getter! typed_def
     property! untyped_def : Def

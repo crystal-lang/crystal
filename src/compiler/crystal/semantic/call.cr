@@ -300,8 +300,8 @@ class Crystal::Call
         end
       end
       matches.each do |match|
-        match.context.owner = owner
-        match.context.path_lookup = parent_visitor.path_lookup.not_nil!
+        match.context.instantiated_type = owner
+        match.context.defining_type = parent_visitor.path_lookup.not_nil!
       end
       matches
     else
@@ -341,7 +341,7 @@ class Crystal::Call
 
     matches.each do |match|
       # Discard abstract defs for abstract classes
-      next if match.def.abstract? && match.context.owner.abstract?
+      next if match.def.abstract? && match.context.instantiated_type.abstract?
 
       check_visibility match
 
@@ -355,7 +355,7 @@ class Crystal::Call
         use_cache = false unless block_type
       end
 
-      lookup_self_type = self_type || match.context.owner
+      lookup_self_type = self_type || match.context.instantiated_type
       if self_type
         lookup_arg_types = Array(Type).new(match.arg_types.size + 1)
         lookup_arg_types.push self_type
@@ -363,7 +363,7 @@ class Crystal::Call
       else
         lookup_arg_types = match.arg_types
       end
-      match_owner = match.context.owner
+      match_owner = match.context.instantiated_type
       def_instance_owner = self_type || match_owner
 
       def_instance_key = DefInstanceKey.new(match.def.object_id, lookup_arg_types, block_type, named_args_types)
@@ -385,7 +385,7 @@ class Crystal::Call
             visitor.untyped_def = match.def
             visitor.call = self
             visitor.scope = lookup_self_type
-            visitor.path_lookup = match.context.path_lookup
+            visitor.path_lookup = match.context.defining_type
 
             yields_to_block = block && !match.def.uses_block_arg?
 
@@ -883,7 +883,7 @@ class Crystal::Call
               end
             else
               if output.is_a?(Self)
-                raise "expected block to return #{match.context.owner}, not #{block_type}"
+                raise "expected block to return #{match.context.instantiated_type}, not #{block_type}"
               else
                 raise "expected block to return #{output}, not #{block_type}"
               end
@@ -918,7 +918,7 @@ class Crystal::Call
 
   private def void_return_type?(match_context, output)
     if output.is_a?(Path)
-      type = match_context.path_lookup.lookup_path(output)
+      type = match_context.defining_type.lookup_path(output)
     else
       type = output
     end
@@ -932,12 +932,12 @@ class Crystal::Call
 
   private def lookup_node_type(context, node)
     bubbling_exception do
-      context.path_lookup.lookup_type(node, self_type: context.owner.instance_type, free_vars: context.free_vars)
+      context.defining_type.lookup_type(node, self_type: context.instantiated_type.instance_type, free_vars: context.free_vars)
     end
   end
 
   private def lookup_node_type?(context, node)
-    context.path_lookup.lookup_type?(node, self_type: context.owner.instance_type, free_vars: context.free_vars)
+    context.defining_type.lookup_type?(node, self_type: context.instantiated_type.instance_type, free_vars: context.free_vars)
   end
 
   def bubbling_exception

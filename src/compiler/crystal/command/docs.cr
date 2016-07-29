@@ -19,6 +19,7 @@ class Crystal::Command
     compiler = Compiler.new
     compiler.wants_doc = true
     result = compiler.top_level_semantic sources
-    Crystal.generate_docs result.program, included_dirs
+
+    Doc::Generator.new(result.program, included_dirs).run
   end
 end
