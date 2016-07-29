@@ -174,8 +174,8 @@ module Crystal
         new_vars << DoubleSplat.new(Var.new(double_splat.name))
       end
 
-      assign = Assign.new(obj, alloc)
-      init = Call.new(obj, "initialize", new_vars, named_args: named_args)
+      assign = Assign.new(obj.clone, alloc)
+      init = Call.new(obj.clone, "initialize", new_vars, named_args: named_args)
 
       # If the initialize yields, call it with a block
       # that yields those arguments.
@@ -188,7 +188,8 @@ module Crystal
       exps = Array(ASTNode).new(4)
       exps << assign
       exps << init
-      exps << Call.new(Path.global("GC"), "add_finalizer", obj) if instance_type.has_finalizer?
+      exps << If.new(RespondsTo.new(obj.clone, "finalize"),
+        Call.new(Path.global("GC"), "add_finalizer", obj.clone))
       exps << obj
 
       # Forward block argument if any
@@ -205,7 +206,7 @@ module Crystal
       #
       #    def new
       #      x = allocate
-      #      GC.add_finalizer x
+      #      GC.add_finalizer x if x.responds_to? :finalize
       #      x
       #    end
       var = Var.new("x")
@@ -214,8 +215,9 @@ module Crystal
 
       exps = Array(ASTNode).new(3)
       exps << assign
-      exps << Call.new(Path.global("GC"), "add_finalizer", var) if instance_type.has_finalizer?
-      exps << var
+      exps << If.new(RespondsTo.new(var.clone, "finalize"),
+        Call.new(Path.global("GC"), "add_finalizer", var.clone))
+      exps << var.clone
 
       Def.new("new", body: exps)
     end
