@@ -115,7 +115,7 @@ class Logger
   # Logs *message* if *severity* is higher or equal with the logger's current
   # severity. *progname* overrides a default progname set in this logger.
   def log(severity, message, progname = nil)
-    return if severity < level
+    return if severity < level || !@io
     write(severity, Time.now, progname || @progname, message)
   end
 
@@ -123,7 +123,7 @@ class Logger
   # is higher or equal with the loggers current severity. The block is not run
   # if *severity* is lower. *progname* overrides a default progname set in this logger.
   def log(severity, progname = nil)
-    return if severity < level
+    return if severity < level || !@io
     write(severity, Time.now, progname || @progname, yield)
   end
 

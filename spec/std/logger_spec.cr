@@ -79,4 +79,11 @@ describe "Logger" do
     logger = Logger.new(nil)
     logger.error("ouch")
   end
+
+  it "doesn't yield to the block with nil" do
+    a = 0
+    logger = Logger.new(nil)
+    logger.info { a = 1 }
+    a.should eq(0)
+  end
 end
