@@ -5,7 +5,7 @@ module Crystal
     def visit_main(node, visitor = MainVisitor.new(self))
       node.accept visitor
 
-      fix_empty_types node
+      node.accept FixMissingTypes.new(self)
       node = cleanup node
 
       node
