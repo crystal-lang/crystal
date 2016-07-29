@@ -319,7 +319,7 @@ module Crystal
         else
           @str << decorate_call(node, node.name)
 
-          call_args_need_parens = !node.args.empty? || node.block_arg || node.named_args
+          call_args_need_parens = node.has_parentheses? || !node.args.empty? || node.block_arg || node.named_args
 
           @str << "(" if call_args_need_parens
 
@@ -355,14 +355,16 @@ module Crystal
             block_obj = block_body.obj
             if block_obj.is_a?(Var) && block_obj.name == first_block_arg.name
               if node.args.empty?
-                @str << "("
+                unless call_args_need_parens
+                  @str << "("
+                  call_args_need_parens = true
+                end
               else
                 @str << ", "
               end
               @str << "&."
               visit_call block_body, ignore_obj: true
-              @str << ")"
-              return false
+              block = nil
             end
           end
         end
