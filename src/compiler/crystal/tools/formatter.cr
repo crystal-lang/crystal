@@ -1040,6 +1040,7 @@ module Crystal
       check_open_paren
 
       paren_count = @paren_count
+      column = @column
 
       node.types.each_with_index do |type, i|
         if @token.type == :"?"
@@ -1059,8 +1060,12 @@ module Crystal
           case @token.type
           when :"|"
             write " | "
-            next_token
-            skip_space_or_newline
+            next_token_skip_space
+            if @token.type == :NEWLINE
+              write_line
+              write_indent(column)
+              next_token_skip_space_or_newline
+            end
           when :")"
             if @paren_count > 0
               @paren_count -= 1
