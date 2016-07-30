@@ -230,7 +230,7 @@ describe "Lexer" do
   assert_syntax_error "'\\", "unterminated char literal"
   it_lexes_operators [:"=", :"<", :"<=", :">", :">=", :"+", :"-", :"*", :"(", :")",
     :"==", :"!=", :"=~", :"!", :",", :".", :"..", :"...", :"&&", :"||",
-    :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"/=", :"%=", :"&=",
+    :"|", :"{", :"}", :"?", :":", :"+=", :"-=", :"*=", :"%=", :"&=",
     :"|=", :"^=", :"**=", :"<<", :">>", :"%", :"&", :"|", :"^", :"**", :"<<=",
     :">>=", :"~", :"[]", :"[]=", :"[", :"]", :"::", :"<=>", :"=>", :"||=",
     :"&&=", :"===", :";", :"->", :"[]?", :"{%", :"{{", :"%}", :"@[", :"!~"]
@@ -436,6 +436,13 @@ describe "Lexer" do
     token = lexer.next_token
     token.type.should eq(:SYMBOL)
     token.value.should eq("\\")
+  end
+
+  it "lexes /=" do
+    lexer = Lexer.new("/=")
+    lexer.slash_is_regex = false
+    token = lexer.next_token
+    token.type.should eq(:"/=")
   end
 
   assert_syntax_error "'\\uFEDZ'", "expected hexadecimal character in unicode escape"

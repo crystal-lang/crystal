@@ -269,7 +269,7 @@ module Crystal
         line = @line_number
         column = @column_number
         char = next_char
-        if char == '='
+        if !@slash_is_regex && char == '='
           next_char :"/="
         elsif @slash_is_regex
           @token.type = :DELIMITER_START

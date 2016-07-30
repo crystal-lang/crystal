@@ -808,6 +808,7 @@ describe "Parser" do
   it_parses "/(fo\#{\"bar\"}\#{1}o)/", RegexLiteral.new(StringInterpolation.new(["(fo".string, "bar".string, 1.int32, "o)".string] of ASTNode))
   it_parses "%r(foo(bar))", regex("foo(bar)")
   it_parses "/ /", regex(" ")
+  it_parses "/=/", regex("=")
   it_parses "/ hi /", regex(" hi ")
   it_parses "self / number", Call.new("self".var, "/", "number".call)
   it_parses "a == / /", Call.new("a".call, "==", regex(" "))
@@ -815,6 +816,7 @@ describe "Parser" do
   it_parses "/ /; / /", [regex(" "), regex(" ")] of ASTNode
   it_parses "/ /\n/ /", [regex(" "), regex(" ")] of ASTNode
   it_parses "a = / /", Assign.new("a".var, regex(" "))
+  it_parses "a = /=/", Assign.new("a".var, regex("="))
   it_parses "a; if / /; / /; elsif / /; / /; end", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
   it_parses "a; if / /\n/ /\nelsif / /\n/ /\nend", ["a".call, If.new(regex(" "), regex(" "), If.new(regex(" "), regex(" ")))]
   it_parses "a; while / /; / /; end", ["a".call, While.new(regex(" "), regex(" "))]
