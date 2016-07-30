@@ -103,8 +103,7 @@ module Crystal
         # are shown in the block instead of in the generated macro source
         is_yield = node.exp.is_a?(Yield) && !@last.is_a?(Nop)
         @str << " begin " if is_yield
-        emit_loc_pragma = is_yield
-        @last.to_s(@str, emit_loc_pragma: emit_loc_pragma)
+        @last.to_s(@str, emit_loc_pragma: is_yield)
         @str << " end " if is_yield
       end
 
