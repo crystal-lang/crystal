@@ -55,7 +55,7 @@ class Crystal::Doc::Method
 
   def id
     String.build do |io|
-      io << to_s.gsub(' ', "")
+      io << to_s.gsub(/<.+?>/, "").gsub(' ', "")
       if @class_method
         io << "-class-method"
       else
