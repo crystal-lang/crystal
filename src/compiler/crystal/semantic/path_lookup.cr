@@ -21,61 +21,68 @@ module Crystal
     #
     # Returns `nil` if the path can't be found.
     #
-    # The result can be an ASTNode in the case the path denotes a type variable
-    # whose variable is an ASTNode. One such example is the `N` of `StaticArray(T, N)`
+    # The result can be an `ASTNode` in the case the path denotes a type variable
+    # whose variable is an `ASTNode`. One such example is the `N` of `StaticArray(T, N)`
     # for some instantiated `StaticArray`.
     #
     # If the path is global (for example ::Foo::Bar), the search starts at
     # the top level.
     def lookup_path(path : Path, lookup_in_namespace = true) : Type | ASTNode | Nil
       (path.global? ? program : self).lookup_path(path.names, lookup_in_namespace: lookup_in_namespace)
-    rescue ex : Crystal::Exception
-      raise ex
-    rescue ex
-      path.raise ex.message
     end
 
     # ditto
-    def lookup_path(path : Array(String), lookup_in_namespace = true) : Type | ASTNode | Nil
-      raise "Bug: #{self} doesn't implement lookup_path"
-    end
-  end
-
-  class NamedType
-    def lookup_path(names : Array, lookup_in_namespace = true)
+    def lookup_path(names : Array(String), lookup_in_namespace = true) : Type | ASTNode | Nil
       type = self
       names.each_with_index do |name, i|
-        next_type = type.types?.try &.[name]?
-        if !next_type && i != 0
-          # Once we find a first type we search in it and don't backtrack
-          return type.lookup_path_in_parents(names[i..-1])
-        end
-        type = next_type
-        break unless type
+        # The search must continue in the namespace only for the first path
+        # item: for subsequent path items only the parents must be looked up
+        type = type.lookup_path_item(name, lookup_in_namespace: lookup_in_namespace && i == 0)
+        return unless type
+
+        # Stop if this is the last name
+        break if i == names.size - 1
+
+        # An intermediate match could be an ASTNode, for example
+        # when searching T::N::X, and T denotes a static array:
+        # in this case we can't continue searching past `N`
+        return unless type.is_a?(Type)
       end
-
-      return type if type
-
-      parent_match = lookup_path_in_parents(names)
-      return parent_match if parent_match
-
-      lookup_in_namespace && self != program ? namespace.lookup_path(names) : nil
+      type
     end
 
-    protected def lookup_path_in_parents(names : Array, lookup_in_namespace = false)
+    # Looks up a single path item relative to *self`.
+    #
+    # If *lookup_in_namespace* is `true`, if the type is not found
+    # in `self` or `self`'s parents, the path item is searched in this
+    # type's namespace. This parameter is useful because when writing
+    # `Foo::Bar::Baz`, `Foo` should be searched in enclosing namespaces,
+    # but `Bar` and `Baz` not.
+    def lookup_path_item(name : String, lookup_in_namespace) : Type | ASTNode | Nil
+      # First search in our types
+      type = types?.try &.[name]?
+      return type if type
+
+      # Then try out parents, but don't search in our parents namespace
       parents.try &.each do |parent|
-        match = parent.lookup_path(names, lookup_in_namespace)
-        return match if match.is_a?(Type)
+        match = parent.lookup_path_item(name, lookup_in_namespace: false)
+        return match if match
       end
+
+      # Try our namespace, unless we are the top-level
+      if lookup_in_namespace && self != program
+        return namespace.lookup_path_item(name, lookup_in_namespace)
+      end
+
       nil
     end
   end
 
   module GenericType
-    def lookup_path(names : Array, lookup_in_namespace = true)
+    def lookup_path_item(name : String, lookup_in_namespace)
       # If we are Foo(T) and somebody looks up the type T, we return `nil` because we don't
       # know what type T is, and we don't want to continue search in the namespace
-      if !names.empty? && type_vars.includes?(names[0])
+      if type_vars.includes?(name)
         return nil
       end
       super
@@ -83,33 +90,23 @@ module Crystal
   end
 
   class GenericClassInstanceType
-    def lookup_path(names : Array, lookup_in_namespace = true)
-      if !names.empty? && (type_var = type_vars[names[0]]?)
-        case type_var
-        when Var
-          type_var_type = type_var.type
+    def lookup_path_item(name : String, lookup_in_namespace)
+      # Check if *name* is a type variable
+      if type_var = type_vars[name]?
+        if type_var.is_a?(Var)
+          type_var.type
         else
-          type_var_type = type_var
-        end
-
-        if names.size > 1
-          if type_var_type.is_a?(Type)
-            type_var_type.lookup_path(names[1..-1], lookup_in_namespace)
-          else
-            raise "#{names[0]} is not a type, it's #{type_var_type}"
-          end
-        else
-          type_var_type
+          type_var
         end
       else
-        generic_class.lookup_path(names, lookup_in_namespace)
+        generic_class.lookup_path_item(name, lookup_in_namespace)
       end
     end
   end
 
   class IncludedGenericModule
-    def lookup_path(names : Array, lookup_in_namespace = true)
-      if (names.size == 1) && (m = @mapping[names[0]]?)
+    def lookup_path_item(name : String, lookup_in_namespace)
+      if m = @mapping[name]?
         # Case of a variadic tuple
         if m.is_a?(TupleLiteral)
           types = m.elements.map do |element|
@@ -126,13 +123,13 @@ module Crystal
         end
       end
 
-      @module.lookup_path(names, lookup_in_namespace)
+      @module.lookup_path_item(name, lookup_in_namespace)
     end
   end
 
   class InheritedGenericClass
-    def lookup_path(names : Array, lookup_in_namespace = true)
-      if (names.size == 1) && (m = @mapping[names[0]]?)
+    def lookup_path_item(name : String, lookup_in_namespace)
+      if m = @mapping[name]?
         extending_class = self.extending_class
         case extending_class
         when GenericClassType
@@ -147,16 +144,18 @@ module Crystal
         end
       end
 
-      @extended_class.lookup_path(names, lookup_in_namespace)
+      @extended_class.lookup_path_item(name, lookup_in_namespace)
     end
   end
 
   class UnionType
-    def lookup_path(names : Array, lookup_in_namespace = true)
-      if names.size == 1 && names[0] == "T"
+    def lookup_path_item(name : String, lookup_in_namespace)
+      # Union type does not currently inherit GenericClassInstanceType,
+      # so we check if *name* is the only type variable of Union(*T)
+      if name == "T"
         return program.tuple_of(union_types)
       end
-      program.lookup_path(names, lookup_in_namespace)
+      program.lookup_path_item(name, lookup_in_namespace)
     end
   end
 

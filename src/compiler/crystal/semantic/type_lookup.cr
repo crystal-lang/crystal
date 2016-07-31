@@ -47,6 +47,17 @@ class Crystal::Type
     TypeLookup.new(self, self_type, false, allow_typeof, free_vars).lookup(node)
   end
 
+  # Similar to `lookup_type`, but the result might also be an ASTNode, for example when
+  # looking `N` relative to a StaticArray.
+  def lookup_type_var(node : Path, free_vars : Hash(String, TypeVar)? = nil) : Type | ASTNode
+    TypeLookup.new(self, self.instance_type, true, false, free_vars).lookup_type_var(node).not_nil!
+  end
+
+  # Similar to `lookup_type_var`, but might return `nil`.
+  def lookup_type_var?(node : Path, free_vars : Hash(String, TypeVar)? = nil, raise = false) : Type | ASTNode | Nil
+    TypeLookup.new(self, self.instance_type, raise, false, free_vars).lookup_type_var?(node)
+  end
+
   # :nodoc:
   struct TypeLookup
     def initialize(@root : Type, @self_type : Type, @raise : Bool, @allow_typeof : Bool, @free_vars : Hash(String, TypeVar)? = nil)
@@ -56,13 +67,39 @@ class Crystal::Type
     delegate program, to: @root
 
     def lookup(node : Path)
-      if (free_vars = @free_vars) && node.names.size == 1
-        if (type = free_vars[node.names.first]?).is_a?(Type)
-          return type
+      type_var = lookup_type_var?(node)
+      return type_var if type_var.is_a?(Type)
+
+      if @raise
+        raise_undefined_constant(node)
+      else
+        nil
+      end
+    end
+
+    def lookup_type_var(node : Path)
+      type_var = lookup_type_var?(node)
+      return type_var if type_var
+
+      if @raise
+        raise_undefined_constant(node)
+      else
+        nil
+      end
+    end
+
+    def lookup_type_var?(node : Path)
+      # Check if the Path begins with a free variable
+      if !node.global? && (free_var = @free_vars.try &.[node.names.first]?)
+        if node.names.size == 1
+          return free_var
+        elsif free_var.is_a?(Type)
+          type = free_var.lookup_path(node.names[1..-1])
         end
+      else
+        type = @root.lookup_path(node)
       end
 
-      type = @root.lookup_path(node)
       if type.is_a?(Type)
         if @in_generic_args == 0 && type.is_a?(AliasType) && !type.aliased_type?
           if type.value_processed?
@@ -71,15 +108,10 @@ class Crystal::Type
             type.process_value
           end
         end
-        type.remove_alias_if_simple
-      else
-        if @raise
-          Crystal.check_cant_infer_generic_type_parameter(@root, node)
-          node.raise("undefined constant #{node}")
-        else
-          nil
-        end
+        type = type.remove_alias_if_simple
       end
+
+      type
     end
 
     def lookup(node : Union)
@@ -283,6 +315,25 @@ class Crystal::Type
 
     def lookup(node : ASTNode)
       raise "Bug: unknown node in TypeLookup: #{node} #{node.class_desc}"
+    end
+
+    def raise_undefined_constant(node)
+      check_cant_infer_generic_type_parameter(@root, node)
+      similar_name = @root.lookup_similar_path(node)
+      if similar_name
+        node.raise("undefined constant #{node} #{@root.program.colorize("(did you mean '#{similar_name}')").yellow.bold}")
+      else
+        node.raise("undefined constant #{node}")
+      end
+    end
+
+    def check_cant_infer_generic_type_parameter(scope, node)
+      if scope.is_a?(MetaclassType) && (instance_type = scope.instance_type).is_a?(GenericClassType)
+        first_name = node.names.first
+        if instance_type.type_vars.includes?(first_name)
+          node.raise "can't infer the type parameter #{first_name} for the #{instance_type.type_desc} #{instance_type}. Please provide it explicitly"
+        end
+      end
     end
 
     def in_generic_args

@@ -46,7 +46,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     node_superclass = node.superclass
 
     if node_superclass
-      superclass = lookup_path_type(node_superclass)
+      superclass = lookup_type_name(node_superclass)
     else
       superclass = node.struct? ? program.struct : program.reference
     end
@@ -61,7 +61,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       end
     end
 
-    scope, name = process_type_name(node.name)
+    scope, name = lookup_type_def_name(node.name)
 
     type = scope.types[name]?
 
@@ -162,7 +162,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
   def visit(node : ModuleDef)
     check_outside_exp node, "declare module"
 
-    scope, name = process_type_name(node.name)
+    scope, name = lookup_type_def_name(node.name)
 
     type = scope.types[name]?
     if type
@@ -245,7 +245,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
                     end
                     current_type.metaclass
                   else
-                    type = lookup_path_type(receiver).metaclass
+                    type = lookup_type(receiver).metaclass
                     node.raise "can't define 'def' for lib" if type.is_a?(LibType)
                     type
                   end
@@ -393,7 +393,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
     attributes = check_valid_attributes node, ValidEnumDefAttributes, "enum"
     attributes_doc = attributes_doc()
 
-    scope, name = process_type_name(node.name)
+    scope, name = lookup_type_def_name(node.name)
 
     enum_type = scope.types[name]?
     if enum_type
@@ -683,7 +683,7 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
 
   def include_in(current_type, node, kind)
     node_name = node.name
-    type = lookup_path_type(node_name)
+    type = lookup_type_name(node_name)
 
     unless type.module?
       node_name.raise "#{type} is not a module, it's a #{type.type_desc}"
@@ -829,5 +829,49 @@ class Crystal::TopLevelVisitor < Crystal::SemanticVisitor
       when "Raises"       then node.raises = true
       end
     end
+  end
+
+  def lookup_type_def_name(path)
+    if path.names.size == 1 && !path.global?
+      scope = current_type
+      name = path.names.first
+    else
+      path = path.clone
+      name = path.names.pop
+      scope = lookup_type_def_name_creating_modules path
+    end
+    {scope, name}
+  end
+
+  def lookup_type_name(node)
+    node = node.name if node.is_a?(Generic)
+    lookup_type(node)
+  end
+
+  def lookup_type_def_name_creating_modules(path : Path)
+    base_type = path.global? ? program : current_type
+    target_type = base_type.lookup_path(path).as?(Type).try &.remove_alias_if_simple
+
+    unless target_type
+      next_type = base_type
+      path.names.each do |name|
+        next_type = base_type.lookup_path_item(name, lookup_in_namespace: false)
+        if next_type
+          if next_type.is_a?(ASTNode)
+            path.raise "execpted #{name} to be a type"
+          end
+        else
+          next_type = NonGenericModuleType.new(@program, base_type, name)
+          if (location = path.location)
+            next_type.locations << location
+          end
+          base_type.types[name] = next_type
+        end
+        base_type = next_type
+      end
+      target_type = next_type
+    end
+
+    target_type
   end
 end

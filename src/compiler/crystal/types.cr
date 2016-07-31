@@ -30,6 +30,10 @@ module Crystal
       self.is_a?(NilType) ? 0_u64 : object_id
     end
 
+    def namespace : Type
+      program
+    end
+
     def abstract?
       false
     end

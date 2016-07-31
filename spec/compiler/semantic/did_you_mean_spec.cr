@@ -261,4 +261,16 @@ describe "Semantic: did you mean" do
       end
       ), message
   end
+
+  it "says did you mean in instance var declaration" do
+    assert_error %(
+      class FooBar
+      end
+
+      class Foo
+        @x : FooBaz
+      end
+      ),
+      "did you mean 'FooBar'"
+  end
 end

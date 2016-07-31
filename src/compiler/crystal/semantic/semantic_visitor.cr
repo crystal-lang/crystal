@@ -201,109 +201,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     end
   end
 
-  def lookup_path_type(node : Self, create_modules_if_missing = false)
-    current_type
-  end
-
-  def lookup_path_type(node : Path, create_modules_if_missing = false)
-    target_type = resolve_ident(node, create_modules_if_missing)
-    if target_type.is_a?(Type)
-      target_type.remove_alias_if_simple
-    else
-      node.raise "#{node} must be a type here, not #{target_type}"
-    end
-  end
-
-  def lookup_path_type(node : Generic, create_modules_if_missing = false)
-    lookup_path_type node.name, create_modules_if_missing
-  end
-
-  def lookup_path_type(node, create_modules_if_missing = false)
-    raise "lookup_path_type not implemented for #{node}"
-  end
-
-  def resolve_ident(node : Path, create_modules_if_missing = false)
-    target_type, similar_name = resolve_ident?(node, create_modules_if_missing)
-
-    unless target_type
-      Crystal.check_cant_infer_generic_type_parameter(@scope, node)
-
-      error_msg = String.build do |msg|
-        msg << "undefined constant #{node}"
-        msg << @program.colorize(" (did you mean '#{similar_name}'?)").yellow.bold if similar_name
-      end
-      node.raise error_msg
-    end
-
-    target_type
-  end
-
-  def resolve_ident?(node : Path, create_modules_if_missing = false)
-    free_vars = @free_vars
-    if free_vars && !node.global? && (type_var = free_vars[node.names.first]?)
-      if type_var.is_a?(Type)
-        target_type = type_var
-        if node.names.size > 1
-          target_type = lookup_path target_type, node.names[1..-1], node
-        end
-      else
-        target_type = type_var
-      end
-    else
-      base_lookup = node.global? ? program : (@path_lookup || @scope || @current_type)
-      target_type = lookup_path base_lookup, node, node
-
-      unless target_type
-        if create_modules_if_missing
-          next_type = base_lookup
-          node.names.each do |name|
-            next_type = lookup_path base_lookup, [name], node, lookup_in_namespace: false
-            if next_type
-              if next_type.is_a?(ASTNode)
-                node.raise "execpted #{name} to be a type"
-              end
-            else
-              next_type = NonGenericModuleType.new(@program, base_lookup, name)
-
-              if (location = node.location)
-                next_type.locations << location
-              end
-
-              base_lookup.types[name] = next_type
-            end
-            base_lookup = next_type
-          end
-          target_type = next_type
-        else
-          similar_name = base_lookup.lookup_similar_path(node)
-        end
-      end
-    end
-
-    {target_type, similar_name}
-  end
-
   def lookup_type(node : ASTNode)
     current_type.lookup_type(node, allow_typeof: false)
-  end
-
-  def lookup_path(base_type, names, node, lookup_in_namespace = true)
-    base_type.lookup_path names, lookup_in_namespace: lookup_in_namespace
-  rescue ex : Crystal::Exception
-    raise ex
-  rescue ex
-    node.raise ex.message
-  end
-
-  def process_type_name(node_name)
-    if node_name.names.size == 1 && !node_name.global?
-      scope = current_type
-      name = node_name.names.first
-    else
-      name = node_name.names.pop
-      scope = lookup_path_type node_name, create_modules_if_missing: true
-    end
-    {scope, name}
   end
 
   def check_outside_exp(node, op)
@@ -325,11 +224,8 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
     obj = node.obj
     case obj
     when Path
-      if raise_on_missing_const
-        macro_scope = resolve_ident(obj)
-      else
-        macro_scope, similar_name = resolve_ident?(obj)
-      end
+      base_type = @path_lookup || @scope || @current_type
+      macro_scope = base_type.lookup_type_var?(obj, free_vars: @free_vars, raise: raise_on_missing_const)
       return false unless macro_scope.is_a?(Type)
 
       macro_scope = macro_scope.remove_alias
@@ -518,11 +414,10 @@ abstract class Crystal::SemanticVisitor < Crystal::Visitor
 
   def class_var_owner(node)
     scope = (@scope || current_type).class_var_owner
-    if scope.is_a?(Program)
+    case scope
+    when Program
       node.raise "can't use class variables at the top level"
-    end
-
-    if scope.is_a?(GenericClassType) || scope.is_a?(GenericModuleType)
+    when GenericClassType, GenericModuleType
       node.raise "can't use class variables in generic types"
     end
 

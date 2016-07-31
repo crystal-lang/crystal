@@ -128,7 +128,7 @@ module Crystal
     end
 
     def visit(node : Path)
-      type = resolve_ident(node)
+      type = (@path_lookup || @scope || @current_type).lookup_type_var(node, free_vars: @free_vars)
       case type
       when Const
         if !type.value.type? && !type.visited?

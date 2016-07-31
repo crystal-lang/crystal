@@ -94,7 +94,7 @@ class Crystal::SemanticVisitor
   end
 
   def interpret_enum_value(node : Path, target_type = nil)
-    type = resolve_ident(node)
+    type = lookup_type(node)
     case type
     when Const
       interpret_enum_value(type.value, target_type)
