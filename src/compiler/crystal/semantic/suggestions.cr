@@ -2,35 +2,49 @@ require "../types"
 
 module Crystal
   class Type
+    SuggestableDefName = /\A[a-z_]/
+
     def lookup_similar_path(node : Path)
       (node.global? ? program : self).lookup_similar_path(node.names)
     end
 
-    def lookup_similar_path(names : Array, lookup_in_namespace = true)
-      nil
+    def lookup_similar_path(names : Array(String), lookup_in_namespace = true)
+      type = self
+      names.each_with_index do |name, idx|
+        previous_type = type
+        type = previous_type.types?.try &.[name]?
+        unless type
+          best_match = Levenshtein.find(name.downcase) do |finder|
+            previous_type.types?.try &.each_key do |type_name|
+              finder.test(type_name.downcase, type_name)
+            end
+          end
+
+          if best_match
+            return (names[0...idx] + [best_match]).join "::"
+          else
+            break
+          end
+        end
+      end
+
+      parents.try &.each do |parent|
+        match = parent.lookup_similar_path(names, false)
+        return match if match
+      end
+
+      lookup_in_namespace && self != program ? namespace.lookup_similar_path(names) : nil
     end
 
     def lookup_similar_def(name, args_size, block)
-      nil
-    end
-
-    def lookup_similar_def_name(name, args_size, block)
-      lookup_similar_def(name, args_size, block).try &.name
-    end
-  end
-
-  module MatchesLookup
-    SuggestableName = /\A[a-z_]/
-
-    def lookup_similar_def(name, args_size, block)
-      return nil unless name =~ SuggestableName
+      return nil unless name =~ SuggestableDefName
 
       if (defs = self.defs)
         best_def = nil
         best_match = nil
         Levenshtein.find(name) do |finder|
           defs.each do |def_name, hash|
-            if def_name =~ SuggestableName
+            if def_name =~ SuggestableDefName
               hash.each do |def_with_metadata|
                 if def_with_metadata.max_size == args_size && def_with_metadata.yields == !!block && def_with_metadata.def.name != name
                   finder.test(def_name)
@@ -53,35 +67,9 @@ module Crystal
 
       nil
     end
-  end
 
-  class ModuleType
-    def lookup_similar_path(names : Array, lookup_in_namespace = true)
-      type = self
-      names.each_with_index do |name, idx|
-        previous_type = type
-        type = previous_type.types?.try &.[name]?
-        unless type
-          best_match = Levenshtein.find(name.downcase) do |finder|
-            previous_type.types?.try &.each_key do |type_name|
-              finder.test(type_name.downcase, type_name)
-            end
-          end
-
-          if best_match
-            return (names[0...idx] + [best_match]).join "::"
-          else
-            break
-          end
-        end
-      end
-
-      parents.each do |parent|
-        match = parent.lookup_similar_path(names, false)
-        return match if match
-      end
-
-      lookup_in_namespace && self != program ? namespace.lookup_similar_path(names) : nil
+    def lookup_similar_def_name(name, args_size, block)
+      lookup_similar_def(name, args_size, block).try &.name
     end
   end
 
