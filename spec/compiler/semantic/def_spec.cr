@@ -388,4 +388,15 @@ describe "Semantic: def" do
       foo("")
       )) { int32 }
   end
+
+  it "doesn't find type in namespace through free var" do
+    assert_error %(
+      def foo(x : T)
+        T::String
+      end
+
+      foo(1)
+      ),
+      "undefined constant T::String"
+  end
 end

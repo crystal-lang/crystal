@@ -94,7 +94,7 @@ class Crystal::Type
         if node.names.size == 1
           return free_var
         elsif free_var.is_a?(Type)
-          type = free_var.lookup_path(node.names[1..-1])
+          type = free_var.lookup_path(node.names[1..-1], lookup_in_namespace: false)
         end
       else
         type = @root.lookup_path(node)
