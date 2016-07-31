@@ -4,7 +4,7 @@
 #
 # ```
 # struct Test
-#   def initialize(@test)
+#   def initialize(@test : Test | Nil)
 #   end
 # end
 #
@@ -55,7 +55,20 @@ class Crystal::RecursiveStructChecker
 
   def check_recursive(target, type, checked, path)
     if target == type
-      msg = "recursive struct #{target} detected: #{path_to_s(path)}"
+      msg = <<-MSG
+        recursive struct #{target} detected: #{path_to_s(path)}
+
+        The struct #{target} has, either directly or indirectly,
+        an instance variable whose type is, eventually, this same
+        struct. This makes it impossible to represent the struct
+        in memory, because the size of this instance variable depends
+        on the size of this struct, which depends on the size of
+        this instance variable, causing an infinite cycle.
+
+        You should probably be using classes here, as classes
+        instance variables are always behind a pointer, which makes
+        it possible to always compute a size for them.
+        MSG
       location = target.locations.first?
       if location
         raise TypeException.new(msg, location)
@@ -67,6 +80,16 @@ class Crystal::RecursiveStructChecker
     return if checked.includes?(type)
 
     case type
+    when VirtualType
+      if type.struct?
+        path.push type
+        type.subtypes.each do |subtype|
+          path.push subtype
+          check_recursive(target, subtype, checked, path)
+          path.pop
+        end
+        path.pop
+      end
     when InstanceVarContainer
       if struct?(type)
         check_recursive_instance_var_container(target, type, checked, path)
@@ -104,9 +127,9 @@ class Crystal::RecursiveStructChecker
     path.join(" -> ") do |var_or_type|
       case var_or_type
       when Var
-        "`#{var_or_type.name} : #{var_or_type.type}`"
+        "`#{var_or_type.name} : #{var_or_type.type.devirtualize}`"
       else
-        "`#{var_or_type}`"
+        "`#{var_or_type.devirtualize}`"
       end
     end
   end
