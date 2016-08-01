@@ -66,7 +66,7 @@ end
 
 describe Socket::IPAddress do
   it "transforms an IPv4 address into a C struct and back again" do
-    addr1 = Socket::IPAddress.new(Socket::Family::INET, "127.0.0.1", 8080.to_i16)
+    addr1 = Socket::IPAddress.new(Socket::Family::INET, "127.0.0.1", 8080)
     addr2 = Socket::IPAddress.new(addr1.sockaddr, addr1.addrlen)
 
     addr1.family.should eq(addr2.family)
@@ -76,7 +76,7 @@ describe Socket::IPAddress do
   end
 
   it "transforms an IPv6 address into a C struct and back again" do
-    addr1 = Socket::IPAddress.new(Socket::Family::INET6, "2001:db8:8714:3a90::12", 8080.to_i16)
+    addr1 = Socket::IPAddress.new(Socket::Family::INET6, "2001:db8:8714:3a90::12", 8080)
     addr2 = Socket::IPAddress.new(addr1.sockaddr, addr1.addrlen)
 
     addr1.family.should eq(addr2.family)
@@ -92,7 +92,90 @@ describe Socket::UNIXAddress do
   end
 end
 
+describe UNIXServer do
+  it "raises when path is too long" do
+    path = "/tmp/crystal-test-too-long-unix-socket-#{("a" * 2048)}.sock"
+    expect_raises(ArgumentError, "Path size exceeds the maximum size") { UNIXServer.new(path) }
+    File.exists?(path).should be_false
+  end
+
+  it "creates the socket file" do
+    path = "/tmp/crystal-test-unix-sock"
+
+    UNIXServer.open(path) do
+      File.exists?(path).should be_true
+    end
+
+    File.exists?(path).should be_false
+  end
+
+  describe "accept" do
+    it "returns the client UNIXSocket" do
+      UNIXServer.open("/tmp/crystal-test-unix-sock") do |server|
+        UNIXSocket.open("/tmp/crystal-test-unix-sock") do |_|
+          client = server.accept
+          client.should be_a(UNIXSocket)
+          client.close
+        end
+      end
+    end
+
+    it "raises when server is closed" do
+      server = UNIXServer.new("/tmp/crystal-test-unix-sock")
+      exception = nil
+
+      spawn do
+        begin
+          server.accept
+        rescue ex
+          exception = ex
+        end
+      end
+
+      server.close
+      until exception
+        Fiber.yield
+      end
+
+      exception.should be_a(IO::Error)
+      exception.try(&.message).should eq("closed stream")
+    end
+  end
+
+  describe "accept?" do
+    it "returns the client UNIXSocket" do
+      UNIXServer.open("/tmp/crystal-test-unix-sock") do |server|
+        UNIXSocket.open("/tmp/crystal-test-unix-sock") do |_|
+          client = server.accept?.not_nil!
+          client.should be_a(UNIXSocket)
+          client.close
+        end
+      end
+    end
+
+    it "returns nil when server is closed" do
+      server = UNIXServer.new("/tmp/crystal-test-unix-sock")
+      ret = :initial
+
+      spawn { ret = server.accept? }
+      server.close
+
+      while ret == :initial
+        Fiber.yield
+      end
+
+      ret.should be_nil
+    end
+  end
+end
+
 describe UNIXSocket do
+  it "raises when path is too long" do
+    path = "/tmp/crystal-test-too-long-unix-socket-#{("a" * 2048)}.sock"
+    expect_raises(ArgumentError, "Path size exceeds the maximum size") { UNIXSocket.new(path) }
+    File.exists?(path).should be_false
+  end
+
   it "sends and receives messages" do
     path = "/tmp/crystal-test-unix-sock"
 
@@ -171,14 +254,6 @@ describe UNIXSocket do
 
       (left.recv_buffer_size = size).should eq(size)
       sizes.should contain(left.recv_buffer_size)
-    end
-  end
-
-  it "creates the socket file" do
-    path = "/tmp/crystal-test-unix-sock"
-
-    UNIXServer.open(path) do
-      File.exists?(path).should be_true
     end
   end
 end
@@ -270,9 +345,8 @@ describe TCPSocket do
   end
 
   it "fails when connection is refused" do
-    port = 0
-    TCPServer.open("localhost", port) do |server|
-      port = server.local_address.port
+    port = TCPServer.open("localhost", 0) do |server|
+      server.local_address.port
     end
 
     expect_raises(Errno, "Error connecting to 'localhost:#{port}': Connection refused") do
@@ -281,7 +355,7 @@ describe TCPSocket do
   end
 
   it "fails when host doesn't exist" do
-    expect_raises(Socket::Error, /^getaddrinfo: (.+ not known|no address .+|Non-recoverable failure in name resolution|Name does not resolve)$/i) do
+    expect_raises(Socket::Addrinfo::Error, /^(.+ not known|no address .+|Non-recoverable failure in name resolution|Name does not resolve)$/i) do
       TCPSocket.new("localhostttttt", 12345)
     end
   end
@@ -315,10 +389,8 @@ describe UDPSocket do
   end
 
   it "sends and receives messages by send and receive over IPv4" do
-    port = free_udp_socket_port
-
     server = UDPSocket.new(Socket::Family::INET)
-    server.bind("127.0.0.1", port)
+    server.bind("127.0.0.1", 0)
 
     client = UDPSocket.new(Socket::Family::INET)
 
@@ -343,10 +415,8 @@ describe UDPSocket do
   end
 
   it "sends and receives messages by send and receive over IPv6" do
-    port = free_udp_socket_port
-
     server = UDPSocket.new(Socket::Family::INET6)
-    server.bind("::1", port)
+    server.bind("::1", 0)
 
     client = UDPSocket.new(Socket::Family::INET6)
 
@@ -371,6 +441,13 @@ describe UDPSocket do
     client.connect("255.255.255.255", port)
     client.send("broadcast").should eq(9)
     client.close
+  end
+
+  it "fails when host doesn't exist" do
+    client = UDPSocket.new
+    expect_raises(Socket::Addrinfo::Error, /^(.+ not known|no address .+|Non-recoverable failure in name resolution|Name does not resolve)$/i) do
+      client.connect("localhostttttt", 12345)
+    end
   end
 end
 

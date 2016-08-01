@@ -34,14 +34,14 @@ class Socket < IO::FileDescriptor
   struct IPAddress
     getter family : Family
     getter address : String
-    getter port : UInt16
+    getter port : Int32
 
-    def initialize(@family : Family, @address : String, port : Int)
+    def initialize(@family : Family, @address : String, port : Int32)
       if family != Family::INET && family != Family::INET6
         raise ArgumentError.new("Unsupported address family")
       end
 
-      @port = port.to_u16
+      @port = port
     end
 
     def initialize(sockaddr : LibC::SockaddrIn6, addrlen : LibC::SocklenT)
@@ -58,7 +58,7 @@ class Socket < IO::FileDescriptor
       else
         raise ArgumentError.new("Unsupported address family")
       end
-      @port = LibC.htons(sockaddr.sin6_port).to_u16
+      @port = LibC.ntohs(sockaddr.sin6_port).to_i32
     end
 
     def sockaddr
@@ -78,7 +78,7 @@ class Socket < IO::FileDescriptor
         sockaddrin6.sin6_addr = addr6
       end
 
-      sockaddrin6.sin6_port = LibC.ntohs(port).to_i16
+      sockaddrin6.sin6_port = LibC.htons(port)
       sockaddrin6
     end
 
@@ -256,17 +256,16 @@ class Socket < IO::FileDescriptor
 
   private def nonblocking_connect(host, port, addrinfo, timeout = nil)
     loop do
-      ret =
-        {% if flag?(:freebsd) %}
-          LibC.connect(@fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
-        {% else %}
-          LibC.connect(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
-        {% end %}
-      return nil if ret == 0 # success
+      {% if flag?(:freebsd) %}
+        ret = LibC.connect(@fd, addrinfo.ai_addr.as(LibC::Sockaddr*), addrinfo.ai_addrlen)
+      {% else %}
+        ret = LibC.connect(@fd, addrinfo.ai_addr, addrinfo.ai_addrlen)
+      {% end %}
+      return if ret == 0 # success
 
       case Errno.value
       when Errno::EISCONN
-        return nil # success
+        return # success
       when Errno::EINPROGRESS, Errno::EALREADY
         wait_writable(msg: "connect timed out", timeout: timeout) { |err| return err }
       else
