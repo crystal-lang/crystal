@@ -128,6 +128,19 @@ class HTTP::Request
     value
   end
 
+  # Return request host from headers
+  def host
+    host = @headers["Host"]?
+    return unless host
+    index = host.index(":")
+    index ? host[0...index] : host
+  end
+
+  # Return request host with port from headers
+  def host_with_port
+    @headers["Host"]?
+  end
+
   private def uri
     (@uri ||= URI.parse(@resource)).not_nil!
   end
