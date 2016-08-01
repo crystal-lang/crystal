@@ -109,6 +109,29 @@ describe UNIXServer do
     File.exists?(path).should be_false
   end
 
+  it "deletes socket file on close" do
+    path = "/tmp/crystal-test-unix-sock"
+
+    begin
+      server = UNIXServer.new(path)
+      server.close
+      File.exists?(path).should be_false
+    rescue
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
+  it "raises when socket file already exists" do
+    path = "/tmp/crystal-test-unix-sock"
+    server = UNIXServer.new(path)
+
+    begin
+      expect_raises(Errno) { UNIXServer.new(path) }
+    ensure
+      server.close
+    end
+  end
+
   describe "accept" do
     it "returns the client UNIXSocket" do
       UNIXServer.open("/tmp/crystal-test-unix-sock") do |server|

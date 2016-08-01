@@ -22,8 +22,6 @@ class UNIXServer < UNIXSocket
   # UNIXServer.new("/tmp/dgram.sock", Socket::Type::DGRAM)
   # ```
   def initialize(@path : String, type : Type = Type::STREAM, backlog = 128)
-    File.delete(path) if File.exists?(path)
-
     addr = LibC::SockaddrUn.new
     addr.sun_family = typeof(addr.sun_family).new(Family::UNIX)
 
