@@ -1168,4 +1168,23 @@ describe "Code gen: exception" do
       foo(10).as(Int32)
       )).to_i.should eq(10)
   end
+
+  it "runs NoReturn ensure (#3082)" do
+    run(%(
+      require "prelude"
+
+      begin
+        print 1
+        raise "OH NO"
+        print 0
+      rescue
+        print 2
+      ensure
+        print 3
+        exit
+        print 4
+      end
+      print 5
+      )).to_i.should eq(123)
+  end
 end

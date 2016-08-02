@@ -259,7 +259,7 @@ class Crystal::CodeGenVisitor
             accept target_def.body
           end
 
-          phi.add_last @last, target_def.body.type?
+          phi.add @last, target_def.body.type?, last: true
         end
       end
     end

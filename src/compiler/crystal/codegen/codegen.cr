@@ -185,8 +185,6 @@ module Crystal
       @unused_fun_defs = [] of FunDef
       @proc_counts = Hash(String, Int32).new(0)
 
-      @node_ensure_exception_handlers = {} of UInt64 => Handler
-
       @llvm_mod.data_layout = self.data_layout
 
       # We need to define __crystal_malloc and __crystal_realloc as soon as possible,
@@ -800,27 +798,6 @@ module Crystal
       end
     end
 
-    def execute_ensures_until(node)
-      stop_exception_handler = @node_ensure_exception_handlers[node.object_id]?.try &.node
-
-      @ensure_exception_handlers.try &.reverse_each do |exception_handler|
-        break if exception_handler.node.same?(stop_exception_handler)
-
-        target_ensure = exception_handler.node.ensure
-        next unless target_ensure
-
-        with_context(exception_handler.context) do
-          target_ensure.accept self
-        end
-      end
-    end
-
-    def set_ensure_exception_handler(node)
-      if eh = @ensure_exception_handlers.try &.last?
-        @node_ensure_exception_handlers[node.object_id] = eh
-      end
-    end
-
     def visit(node : Assign)
       return false if node.discarded?
 
@@ -1371,130 +1348,12 @@ module Crystal
           accept block.body
         end
 
-        phi.add_last @last, block.body.type?
+        phi.add @last, block.body.type?, last: true
       end
 
       if old_scope
         block_context.vars["%scope"] = old_scope
       end
-
-      false
-    end
-
-    def visit(node : ExceptionHandler)
-      rescue_block = new_block "rescue"
-
-      node_rescues = node.rescues
-      node_ensure = node.ensure
-      rescue_ensure_block = nil
-
-      Phi.open(self, node, @needs_value) do |phi|
-        exception_handler = Handler.new(node, context)
-
-        ensure_exception_handlers = (@ensure_exception_handlers ||= [] of Handler)
-        ensure_exception_handlers.push exception_handler
-
-        old_rescue_block = @rescue_block
-        @rescue_block = rescue_block
-        accept node.body
-        @rescue_block = old_rescue_block
-
-        if node_else = node.else
-          accept node_else
-          phi.add @last, node_else.type?
-        else
-          phi.add @last, node.body.type?
-        end
-
-        position_at_end rescue_block
-        lp_ret_type = llvm_typer.landing_pad_type
-        lp = builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LLVM::Value
-        unwind_ex_obj = extract_value lp, 0
-        ex_type_id = extract_value lp, 1
-
-        if node_rescues
-          if node_ensure
-            rescue_ensure_block = new_block "rescue_ensure"
-          end
-
-          node_rescues.each do |a_rescue|
-            this_rescue_block, next_rescue_block = new_blocks "this_rescue", "next_rescue"
-            if a_rescue_types = a_rescue.types
-              cond = nil
-              a_rescue_types.each do |type|
-                rescue_type = type.type.instance_type.virtual_type
-                rescue_type_cond = match_any_type_id(rescue_type, ex_type_id)
-                cond = cond ? or(cond, rescue_type_cond) : rescue_type_cond
-              end
-              cond cond.not_nil!, this_rescue_block, next_rescue_block
-            else
-              br this_rescue_block
-            end
-            position_at_end this_rescue_block
-
-            with_cloned_context do
-              if a_rescue_name = a_rescue.name
-                context.vars = context.vars.dup
-                get_exception_fun = main_fun(GET_EXCEPTION_NAME)
-                exception_ptr = call get_exception_fun, [bit_cast(unwind_ex_obj, get_exception_fun.params.first.type)]
-                exception = int2ptr exception_ptr, LLVMTyper::TYPE_ID_POINTER
-                unless a_rescue.type.virtual?
-                  exception = cast_to exception, a_rescue.type
-                end
-                var = context.vars[a_rescue_name]
-                assign var.pointer, var.type, a_rescue.type, exception
-              end
-
-              # Make sure the rescue knows about the current ensure
-              # and the previous catch block
-              old_rescue_block = @rescue_block
-              @rescue_block = rescue_ensure_block || @rescue_block
-
-              accept a_rescue.body
-
-              @rescue_block = old_rescue_block
-            end
-            phi.add @last, a_rescue.body.type?
-
-            position_at_end next_rescue_block
-          end
-        end
-
-        ensure_exception_handlers.pop
-
-        if node_ensure
-          accept node_ensure
-        end
-
-        raise_fun = main_fun(RAISE_NAME)
-        codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj, raise_fun.params.first.type)], true, @program.no_return)
-      end
-
-      old_last = @last
-      builder_end = @builder.end
-
-      if node_ensure && !builder_end
-        accept node_ensure
-      end
-
-      if node_ensure && node_rescues
-        old_block = insert_block
-        position_at_end rescue_ensure_block.not_nil!
-        lp_ret_type = llvm_typer.landing_pad_type
-        lp = builder.landing_pad lp_ret_type, main_fun(PERSONALITY_NAME), [] of LLVM::Value
-        unwind_ex_obj = extract_value lp, 0
-
-        accept node_ensure
-        raise_fun = main_fun(RAISE_NAME)
-        codegen_call_or_invoke(node, nil, nil, raise_fun, [bit_cast(unwind_ex_obj, raise_fun.params.first.type)], true, @program.no_return)
-
-        position_at_end old_block
-
-        # Since we went to another block, we must restore the 'end' state
-        @builder.end = builder_end
-      end
-
-      @last = old_last
 
       false
     end
